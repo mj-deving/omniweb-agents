@@ -11,7 +11,8 @@
     "session-review": "tsx tools/session-review.ts",
     "gate": "tsx tools/gate.ts",
     "engage": "tsx tools/engage.ts",
-    "verify": "tsx tools/verify.ts"
+    "verify": "tsx tools/verify.ts",
+    "session": "tsx tools/session-runner.ts"
   },
   "dependencies": {
     "@kynesyslabs/demosdk": "^2.11.0"

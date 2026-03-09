@@ -129,13 +129,12 @@ export function acquireLock(sessionNumber: number): void {
     return;
   }
 
-  const lockAge = Date.now() - new Date(lockData.createdAt).getTime();
-
-  // Check if lock is stale (dead PID or too old)
-  if (isPidAlive(lockData.pid) && lockAge < STALE_LOCK_MS) {
+  // Lock is held if PID is alive (regardless of age — Codex review MED-6).
+  // Only use age for dead-PID recovery (process crashed, PID recycled).
+  if (isPidAlive(lockData.pid)) {
     throw new Error(
       `Session ${sessionNumber} is locked by PID ${lockData.pid} (started ${lockData.createdAt}). ` +
-        `Use --resume to continue, or wait for the lock to expire.`
+        `Use --resume to continue, or kill PID ${lockData.pid} to release.`
     );
   }
   // Stale lock — remove and re-acquire

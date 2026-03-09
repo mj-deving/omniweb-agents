@@ -1,0 +1,265 @@
+/**
+ * Provider-agnostic LLM abstraction.
+ *
+ * Every LLM is just prompt → text. This module provides a minimal interface
+ * and a resolution function that discovers the best available provider from
+ * the environment — explicit config first, then CLI autodetect.
+ *
+ * Resolution order (explicit-first, CLI-preferred):
+ *   1. LLM_PROVIDER env var → use that adapter
+ *   2. LLM_CLI_COMMAND env var → CLIProvider
+ *   3. ANTHROPIC_API_KEY alone → AnthropicProvider
+ *   4. OPENAI_API_KEY alone → OpenAIProvider
+ *   5. Multiple keys without LLM_PROVIDER → error
+ *   6. CLI autodetect (which codex/claude/ollama)
+ *   7. Nothing → null
+ */
+
+import { execSync, spawn } from "node:child_process";
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
+import { resolve } from "node:path";
+import { homedir } from "node:os";
+
+// ── Interface ─────────────────────────────────────
+
+export interface LLMProvider {
+  /** The only method — every LLM is just prompt→text */
+  complete(prompt: string, options?: {
+    system?: string;
+    maxTokens?: number;
+  }): Promise<string>;
+
+  /** Human-readable name for logging ("anthropic", "codex-cli", "ollama") */
+  readonly name: string;
+}
+
+// ── CLI Provider ──────────────────────────────────
+
+/**
+ * Subprocess adapter for any CLI that accepts a prompt.
+ * Covers: codex exec, claude --print, ollama run, or any custom LLM_CLI_COMMAND.
+ * Handles its own auth (OAuth, local, whatever).
+ */
+export class CLIProvider implements LLMProvider {
+  readonly name: string;
+  private command: string;
+
+  constructor(command: string, name?: string) {
+    this.command = command;
+    this.name = name || `cli:${command.split(/\s+/)[0]}`;
+  }
+
+  async complete(prompt: string, options?: { system?: string; maxTokens?: number }): Promise<string> {
+    const fullPrompt = options?.system
+      ? `${options.system}\n\n${prompt}`
+      : prompt;
+
+    // Write prompt to temp file, pass path as last arg via shell
+    // This avoids: (1) shell escaping issues with special chars in prompt,
+    // (2) ARG_MAX limits for large prompts, (3) split-on-whitespace for quoted CLI flags
+    const tmpFile = resolve(process.env.TMPDIR || "/tmp", `.llm-prompt-${process.pid}-${Date.now()}.txt`);
+    writeFileSync(tmpFile, fullPrompt);
+
+    try {
+      return await new Promise<string>((resolvePromise, reject) => {
+        const child = spawn("sh", ["-c", `${this.command} "$(cat '${tmpFile}')" 2>&1`], {
+          stdio: ["pipe", "pipe", "pipe"],
+          timeout: 120_000,
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
+        child.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
+
+        child.on("close", (code) => {
+          if (code !== 0) {
+            reject(new Error(`CLI provider "${this.name}" exited with code ${code}: ${(stderr || stdout).slice(0, 500)}`));
+          } else {
+            resolvePromise(stdout.trim());
+          }
+        });
+
+        child.on("error", (err) => {
+          reject(new Error(`CLI provider "${this.name}" failed to spawn: ${err.message}`));
+        });
+      });
+    } finally {
+      try { if (existsSync(tmpFile)) unlinkSync(tmpFile); } catch { /* cleanup */ }
+    }
+  }
+}
+
+// ── Anthropic Provider ────────────────────────────
+
+/**
+ * Wraps @anthropic-ai/sdk. Activated by ANTHROPIC_API_KEY.
+ * Uses dynamic import so the SDK is optional.
+ */
+export class AnthropicProvider implements LLMProvider {
+  readonly name = "anthropic";
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  async complete(prompt: string, options?: { system?: string; maxTokens?: number }): Promise<string> {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: this.apiKey });
+
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: options?.maxTokens || 1024,
+      messages: [{ role: "user", content: prompt }],
+      ...(options?.system ? { system: options.system } : {}),
+    });
+
+    const content = response.content[0];
+    if (content.type !== "text") {
+      throw new Error("Anthropic returned non-text response");
+    }
+    return content.text;
+  }
+}
+
+// ── OpenAI Provider ───────────────────────────────
+
+/**
+ * Wraps openai SDK. Activated by OPENAI_API_KEY.
+ * Uses dynamic import so the SDK is optional.
+ */
+export class OpenAIProvider implements LLMProvider {
+  readonly name = "openai";
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  async complete(prompt: string, options?: { system?: string; maxTokens?: number }): Promise<string> {
+    // Dynamic import — openai is an optional dependency
+    // Use string variable to prevent tsc from resolving the module at compile time
+    const pkg = "openai";
+    let OpenAI: any;
+    try {
+      OpenAI = (await import(/* webpackIgnore: true */ pkg)).default;
+    } catch {
+      throw new Error("openai package not installed. Run: npm install openai");
+    }
+    const client = new OpenAI({ apiKey: this.apiKey });
+
+    const messages: Array<{ role: string; content: string }> = [];
+    if (options?.system) {
+      messages.push({ role: "system", content: options.system });
+    }
+    messages.push({ role: "user", content: prompt });
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o",
+      max_tokens: options?.maxTokens || 1024,
+      messages,
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (!text) {
+      throw new Error("OpenAI returned empty response");
+    }
+    return text;
+  }
+}
+
+// ── Resolution ────────────────────────────────────
+
+/** Check if a CLI command is available on PATH */
+function whichSync(cmd: string): boolean {
+  try {
+    execSync(`which ${cmd}`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Load an API key from env or .env file */
+function loadKeyFromEnv(key: string, envPath?: string): string | undefined {
+  if (process.env[key]) return process.env[key];
+
+  if (envPath) {
+    try {
+      const resolved = resolve(envPath.replace(/^~/, homedir()));
+      if (existsSync(resolved)) {
+        const content = readFileSync(resolved, "utf-8");
+        const match = content.match(new RegExp(`${key}="?([^"\\n]+)"?`));
+        if (match) return match[1];
+      }
+    } catch { /* non-fatal */ }
+  }
+
+  return undefined;
+}
+
+/**
+ * Resolve the best available LLM provider from the environment.
+ * Returns null if no LLM is available (callers must handle gracefully).
+ */
+export function resolveProvider(envPath?: string): LLMProvider | null {
+  // Step 1: Explicit LLM_PROVIDER env var
+  const explicitProvider = process.env.LLM_PROVIDER;
+  if (explicitProvider) {
+    switch (explicitProvider.toLowerCase()) {
+      case "anthropic": {
+        const key = loadKeyFromEnv("ANTHROPIC_API_KEY", envPath);
+        if (!key) throw new Error("LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY not found");
+        return new AnthropicProvider(key);
+      }
+      case "openai": {
+        const key = loadKeyFromEnv("OPENAI_API_KEY", envPath);
+        if (!key) throw new Error("LLM_PROVIDER=openai but OPENAI_API_KEY not found");
+        return new OpenAIProvider(key);
+      }
+      case "cli": {
+        const cmd = process.env.LLM_CLI_COMMAND;
+        if (!cmd) throw new Error("LLM_PROVIDER=cli but LLM_CLI_COMMAND not set");
+        return new CLIProvider(cmd);
+      }
+      default:
+        throw new Error(`Unknown LLM_PROVIDER="${explicitProvider}". Valid: anthropic, openai, cli`);
+    }
+  }
+
+  // Step 2: LLM_CLI_COMMAND env var
+  const cliCommand = process.env.LLM_CLI_COMMAND;
+  if (cliCommand) {
+    return new CLIProvider(cliCommand);
+  }
+
+  // Steps 3-5: API key detection
+  const anthropicKey = loadKeyFromEnv("ANTHROPIC_API_KEY", envPath);
+  const openaiKey = loadKeyFromEnv("OPENAI_API_KEY", envPath);
+
+  if (anthropicKey && openaiKey) {
+    // Step 5: Multiple keys — error
+    throw new Error(
+      "Multiple LLM credentials found (ANTHROPIC_API_KEY + OPENAI_API_KEY). " +
+      "Set LLM_PROVIDER=anthropic|openai|cli to disambiguate."
+    );
+  }
+  if (anthropicKey) return new AnthropicProvider(anthropicKey);
+  if (openaiKey) return new OpenAIProvider(openaiKey);
+
+  // Step 6: CLI autodetect
+  if (whichSync("codex")) {
+    return new CLIProvider("codex exec --full-auto -q", "codex-cli");
+  }
+  if (whichSync("claude")) {
+    return new CLIProvider("claude --print", "claude-cli");
+  }
+  if (whichSync("ollama")) {
+    return new CLIProvider("ollama run llama3", "ollama");
+  }
+
+  // Step 7: Nothing
+  return null;
+}

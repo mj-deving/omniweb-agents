@@ -1,6 +1,6 @@
 # Sentinel Strategy — Self-improving verification loop
 #
-# Adapted from the proven isidore v4 loop (AUDIT->SCAN->ENGAGE->GATE->PUBLISH->VERIFY->REVIEW).
+# Adapted from the proven isidore v4 loop (AUDIT->SCAN->ENGAGE->GATE->PUBLISH->VERIFY->REVIEW->HARDEN).
 # Sentinel specializes in gap detection, evidence attestation, and signal contribution.
 #
 # This is NOT a formal spec — it's a working configuration that evolves through use.
@@ -174,7 +174,8 @@ phases:
           - "Check scoring formula against latest posts"
           - "Check API behavior for changes"
           - "Check strategy assumptions against data"
-    outputAction: "Write Pending Improvement entries for actionable findings"
+    outputAction: "All Q1-Q4 findings feed into HARDEN phase for classification and action"
+    feedsInto: harden
 
   - id: harden
     basePhase: learn

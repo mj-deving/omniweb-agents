@@ -1,19 +1,16 @@
 /**
  * LLM text generation for Sentinel autonomous publishing.
  *
- * Uses Anthropic Claude Sonnet for post text generation.
+ * Provider-agnostic: accepts any LLMProvider instance.
  * Loads persona from agents/sentinel/personas/sentinel.md.
  * Loads strategy constraints from agents/sentinel/strategy.yaml.
- *
- * API key resolution: ANTHROPIC_API_KEY from .env file or process.env.
  */
 
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
-import Anthropic from "@anthropic-ai/sdk";
 import { info } from "./sdk.js";
+import type { LLMProvider } from "./llm-provider.js";
 
 // ── Constants ──────────────────────────────────────
 
@@ -22,7 +19,6 @@ const REPO_ROOT = resolve(__dirname, "../..");
 const PERSONA_PATH = resolve(REPO_ROOT, "agents/sentinel/personas/sentinel.md");
 const STRATEGY_PATH = resolve(REPO_ROOT, "agents/sentinel/strategy.yaml");
 
-const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 1024;
 
 // ── Types ──────────────────────────────────────────
@@ -61,28 +57,7 @@ export interface GeneratePostInput {
   calibrationOffset: number;
 }
 
-// ── API Key Resolution ─────────────────────────────
-
-function loadApiKey(envPath?: string): string {
-  // Check process.env first
-  if (process.env.ANTHROPIC_API_KEY) {
-    return process.env.ANTHROPIC_API_KEY;
-  }
-
-  // Try loading from .env file
-  if (envPath) {
-    const resolved = resolve(envPath.replace(/^~/, homedir()));
-    if (existsSync(resolved)) {
-      const content = readFileSync(resolved, "utf-8");
-      const match = content.match(/ANTHROPIC_API_KEY="?([^"\n]+)"?/);
-      if (match) return match[1];
-    }
-  }
-
-  throw new Error(
-    "ANTHROPIC_API_KEY not found. Set it in your environment or add to .env file."
-  );
-}
+// (API key resolution removed — now handled by LLMProvider in llm-provider.ts)
 
 // ── Persona & Strategy Loading ─────────────────────
 
@@ -121,10 +96,8 @@ function loadStrategyContext(): string {
 
 export async function generatePost(
   input: GeneratePostInput,
-  envPath?: string
+  provider: LLMProvider
 ): Promise<PostDraft> {
-  const apiKey = loadApiKey(envPath);
-  const client = new Anthropic({ apiKey });
   const persona = loadPersona();
   const strategyContext = loadStrategyContext();
 
@@ -178,23 +151,15 @@ Data: ${input.attestedData.summary}`;
 "${input.replyTo.text.slice(0, 300)}"`;
   }
 
-  info(`Generating ${input.category} post about "${input.topic}" via ${MODEL}...`);
+  info(`Generating ${input.category} post about "${input.topic}" via ${provider.name}...`);
 
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
-    messages: [{ role: "user", content: userPrompt }],
+  const responseText = await provider.complete(userPrompt, {
     system: systemPrompt,
+    maxTokens: MAX_TOKENS,
   });
 
-  // Extract text content
-  const content = response.content[0];
-  if (content.type !== "text") {
-    throw new Error("LLM returned non-text response");
-  }
-
   // Parse JSON from response (handle markdown code blocks)
-  let jsonStr = content.text.trim();
+  let jsonStr = responseText.trim();
   if (jsonStr.startsWith("```")) {
     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }

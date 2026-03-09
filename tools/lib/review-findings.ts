@@ -16,13 +16,17 @@ const MAX_SESSIONS = 5;
 
 // ── Types ──────────────────────────────────────────
 
+export type Q1FailureType = "score_miss" | "gate_fail" | "publish_error" | "attest_error";
+export type Q4StaleType = "unaudited" | "calibration_drift" | "assumption_conflict";
+
 export interface ReviewFindings {
   sessionNumber: number;
   timestamp: string;
   q1_failures: Array<{
-    txHash: string;
-    category: string;
+    txHash?: string;        // optional — gate/attest failures have no txHash
+    category?: string;      // optional — gate failures have no category
     reason: string;
+    type?: Q1FailureType;   // classification for HARDEN
   }>;
   q2_suggestions: string[];
   q3_insights: Array<{
@@ -31,8 +35,9 @@ export interface ReviewFindings {
     delta: number;
   }>;
   q4_stale: Array<{
-    txHash: string;
+    txHash?: string;        // optional — calibration/assumption items have no txHash
     description: string;
+    type?: Q4StaleType;     // classification for HARDEN
   }>;
 }
 

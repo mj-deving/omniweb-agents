@@ -34,6 +34,14 @@ capabilities:
       - playwright          # Required for TLSN attestation pipeline
       - bird-cli            # Twitter cross-platform signal scanning
 
+llm:
+  capabilities:
+    - text-generation       # Autonomous post drafting
+    - code-review           # HARDEN finding classification
+  required: false           # Loop works without LLM (full/approve modes)
+  resolution: runtime       # Provider resolved from environment
+  auth: agnostic            # Supports API keys, OAuth tokens, CLI-managed auth
+
 strategy:
   ref: "strategy.yaml"     # Sentinel-specific loop (extends base-loop.yaml)
 

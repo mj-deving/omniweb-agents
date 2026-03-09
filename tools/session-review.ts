@@ -86,6 +86,7 @@ interface Q1Failure {
   actual: number | null;
   score: number | null;
   reason: string;
+  type: "score_miss";   // session-review.ts only produces score_miss (log-based)
 }
 
 interface Q3Insight {
@@ -101,6 +102,7 @@ interface Q3Insight {
 interface Q4StaleItem {
   txHash: string;
   description: string;
+  type: "unaudited";    // session-review.ts only produces unaudited (log-based)
 }
 
 interface ReviewOutput {
@@ -208,6 +210,7 @@ function findFailures(entries: SessionLogEntry[]): Q1Failure[] {
         actual: e.actual_reactions ?? null,
         score: e.actual_score ?? null,
         reason: reasons.join("; "),
+        type: "score_miss",
       });
     }
   }
@@ -297,6 +300,7 @@ function findStale(entries: SessionLogEntry[]): Q4StaleItem[] {
       stale.push({
         txHash: e.txHash,
         description: `Posted ${Math.floor((now - ts) / (24 * 60 * 60 * 1000))}d ago, still unaudited`,
+        type: "unaudited",
       });
     }
   }
@@ -335,7 +339,8 @@ function prettyPrint(review: ReviewOutput): void {
     console.log(`    (nothing — all posts met or exceeded expectations)`);
   } else {
     for (const f of review.q1_failures) {
-      console.log(`    - ${f.txHash.slice(0, 8)} (${f.category}, ${f.attestation_type}): ${f.reason}`);
+      const id = f.txHash ? f.txHash.slice(0, 8) : f.type;
+      console.log(`    - ${id} (${f.category || "n/a"}, ${f.attestation_type}): ${f.reason}`);
     }
   }
 
@@ -362,7 +367,8 @@ function prettyPrint(review: ReviewOutput): void {
     console.log(`    (nothing flagged)`);
   } else {
     for (const s of review.q4_stale) {
-      console.log(`    - ${s.txHash.slice(0, 8)}: ${s.description}`);
+      const id = s.txHash ? s.txHash.slice(0, 8) : s.type;
+      console.log(`    - ${id}: ${s.description}`);
     }
   }
 

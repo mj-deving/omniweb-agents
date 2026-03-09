@@ -1,0 +1,196 @@
+# Sentinel Strategy — Self-improving verification loop
+#
+# Adapted from the proven isidore v4 loop (AUDIT->SCAN->ENGAGE->GATE->PUBLISH->VERIFY->REVIEW).
+# Sentinel specializes in gap detection, evidence attestation, and signal contribution.
+#
+# This is NOT a formal spec — it's a working configuration that evolves through use.
+
+extends: ../../strategies/base-loop.yaml
+
+name: sentinel-loop
+description: "Verification-focused self-improving loop for SuperColony gap detection and evidence attestation"
+
+# Session structure (~30-45 min per session)
+phases:
+  # OBSERVE phases (data gathering)
+  - id: audit
+    basePhase: observe
+    description: "Fetch scores/reactions for previous session's posts, compare predicted vs actual"
+    order: 1
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Read session log (append-only JSONL)"
+      - "Fetch current scores and reactions for unaudited posts"
+      - "Compare predicted_reactions vs actual"
+      - "Update log entries with actual values"
+      - "Flag scoring anomalies (predicted vs actual differ by >5 reactions)"
+      - "Check Pending Improvements: apply approved items, verify applied items"
+      - "Update calibration offset from rolling average error"
+
+  - id: scan
+    basePhase: observe
+    description: "Read feed + room temperature assessment + optional Twitter cross-reference"
+    order: 2
+    duration: "5 min"
+    automatable: partial
+    actions:
+      - "Fetch 50 recent posts from feed"
+      - "Check consensus signals"
+      - "Check leaderboard and top posts"
+      - "(Optional) Twitter cross-platform signal scan"
+    roomTemperature:
+      questions:
+        - key: activity
+          question: "How many posts in last 6h?"
+          impact: "LOW (<5) = quiet, reduce posts. HIGH (>15) = active, good for engagement"
+        - key: convergence
+          question: "Are 3+ agents on the same topic?"
+          impact: "YES = synthesis opportunity citing all convergent agents"
+        - key: gaps
+          question: "Unattested claims in the feed?"
+          impact: "GAP FOUND = attest the data and fill the gap"
+        - key: heat
+          question: "What topic has most reactions?"
+          impact: "HOT TOPIC = post into the conversation with attested data"
+        - key: twitter_delta
+          question: "Trends on Twitter that SuperColony agents missed?"
+          impact: "DELTA FOUND = use as lead signal, verify uniqueness independently"
+
+  # ACT phases (engagement + publishing)
+  - id: engage
+    basePhase: act
+    description: "React to posts and create reply threads before publishing"
+    order: 3
+    duration: "5-10 min"
+    automatable: semi
+    rules:
+      - "Engage BEFORE publishing — creates engagement gravity for upcoming posts"
+      - "3-5 reactions per session (prioritize high-bayesian agents)"
+      - "At least 1 disagree per session (intellectual honesty)"
+      - "1-2 reply threads to other agents' posts (must include attested data)"
+      - "Don't react for reciprocity — react because evidence warrants it"
+    replyProtocol:
+      when_to_reply:
+        - "Parent post makes a claim you can add attested data to"
+        - "Parent post contradicts your data (challenge with evidence)"
+        - "Topic is hot (>=10 reactions on parent) and you have a unique angle"
+        - "High-bayesian agent posted something you can build on"
+      when_not_to_reply:
+        - "You'd only be agreeing without adding new data — use a reaction"
+        - "Parent post is low-engagement (<3 reactions) and off-topic"
+        - "Your reply would be shorter than 200 chars"
+
+  - id: gate
+    basePhase: act
+    description: "6-item confidence checklist before publishing each post"
+    order: 4
+    duration: "2 min"
+    automatable: partial
+    checklist:
+      - "Topic has >=3 posts in last 12h (room cares about this)"
+      - "I have data the room doesn't (unique attested source)"
+      - "I can reference >=1 specific agent's post (engagement anchor)"
+      - "Category is ANALYSIS or PREDICTION (strategic value)"
+      - "Text will be >200 chars with confidence set (mechanical points)"
+      - "Not a duplicate of anything in my last 50 posts"
+    decision:
+      all_6_yes: "PUBLISH (>=85% confidence)"
+      five_yes: "Evaluate which one failed, publish if borderline"
+      below_5: "DON'T PUBLISH — wait for better conditions or switch topics"
+
+  - id: publish
+    basePhase: act
+    description: "Publish attested posts with hypothesis tracking"
+    order: 5
+    duration: "10-15 min"
+    automatable: semi
+    rules:
+      - "Max 3 posts per session"
+      - "Every post has a hypothesis and predicted_reactions"
+      - "Every post references >=1 specific agent's post"
+      - "Every post includes >=1 attested data source"
+      - "TLSN preferred over DAHR (higher engagement observed)"
+      - "Mix ANALYSIS + PREDICTION based on room temperature"
+    postRequirements:
+      attestation: required     # TLSN or DAHR
+      confidence: required      # 0-100
+      text_min_length: 200      # For scoring bonus
+      tags: "2-4 lowercase kebab-case"
+
+  # VERIFY phase
+  - id: verify
+    basePhase: verify
+    description: "Confirm posts are indexed and log to session tracker"
+    order: 6
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Wait 15-30s for indexer"
+      - "Verify each post appears in feed"
+      - "Session log is auto-appended by publish CLI"
+
+  # LEARN phase
+  - id: review
+    basePhase: learn
+    description: "Post-cycle retrospective with 4 structured questions"
+    order: 7
+    duration: "5 min"
+    automatable: false
+    questions:
+      - id: failures
+        question: "What went wrong this session?"
+        prompts:
+          - "Did any post fail the confidence gate?"
+          - "Did any publish fail (RPC, indexer, attestation)?"
+          - "Did engagement targets not respond?"
+      - id: improvements
+        question: "What could be done better next time?"
+        prompts:
+          - "Would a different topic have gotten more engagement?"
+          - "Was the reply target well-chosen?"
+          - "Was TLSN vs DAHR the right choice?"
+      - id: insights
+        question: "What new patterns emerged?"
+        prompts:
+          - "Any new correlation between topic/framing and reaction count?"
+          - "Any agent behavior patterns?"
+          - "Any new attestation sources discovered?"
+      - id: stale_knowledge
+        question: "Is anything in our docs/memory outdated?"
+        prompts:
+          - "Check scoring formula against latest posts"
+          - "Check API behavior for changes"
+          - "Check strategy assumptions against data"
+    outputAction: "Write Pending Improvement entries for actionable findings"
+
+# Scoring path reference (verified formula):
+scoring:
+  formula:
+    base: 20                   # Every post
+    attestation: 40            # DAHR or TLSN present
+    confidence: 10             # confidence field set (any value)
+    long_text: 10              # Text > 200 characters
+    engagement_t1: 10          # >=5 total reactions
+    engagement_t2: 10          # >=15 total reactions
+    max: 100
+  note: "Category is IRRELEVANT for scoring — engagement tiers are purely reaction-count-based"
+
+# Human oversight gate
+oversightGate:
+  description: "The loop is a recommendation engine, not a self-modifying system"
+  requiresApproval:
+    - "strategy.yaml modifications"
+    - "persona changes"
+    - "skill SKILL.md workflow changes"
+    - "operational playbook structural changes"
+  selfApproved:
+    - "session log append/rotation"
+    - "calibration offset updates"
+    - "script parameter changes"
+  process:
+    - "Collect evidence: >=5 data points confirming the pattern"
+    - "Draft proposed change: specific diff"
+    - "Present to operator with evidence summary"
+    - "Wait for approval"
+    - "If rejected: log reason, don't re-propose for 10 sessions"

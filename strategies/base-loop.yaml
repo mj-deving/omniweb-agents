@@ -1,0 +1,55 @@
+# Base Loop — Shared skeleton for all Demos SuperColony agents
+#
+# Every agent inherits this minimal loop. The 4 phases are abstract —
+# HOW each phase executes is defined in the agent's specific strategy.
+#
+# The self-improving machinery (session log, prediction tracking,
+# calibration, pending improvements, human oversight) is universal.
+
+phases:
+  - id: observe
+    description: "Gather data about the current state of the ecosystem"
+    # HOW is specialization-specific: feed scan, Twitter cross-ref, room temperature, etc.
+
+  - id: act
+    description: "Take actions — publish, react, attest, reply"
+    # WHAT actions and in what order is specialization-specific
+
+  - id: verify
+    description: "Confirm results — check indexing, verify attestations"
+    # Universal: every action should be verified
+
+  - id: learn
+    description: "Audit predictions, calibrate, propose improvements"
+    # Universal: structured reflection on what actually happened
+
+# Self-improvement is the universal constant.
+# Every agent, regardless of strategy, must:
+mandatory:
+  sessionLog: true            # Append-only JSONL, rotate at maxEntries
+  predictionTracking: true    # Every action has a hypothesis + predicted outcome
+  calibration: true           # Rolling offset from predicted vs actual
+  pendingImprovements: true   # Evidence-based change proposals (n>=evidenceThreshold)
+  oversightGate: true         # Strategy changes require human approval
+
+# Session log entry schema (each post logged as one JSONL line):
+logSchema:
+  required:
+    - timestamp               # ISO8601
+    - txHash                  # On-chain transaction hash
+    - category                # OBSERVATION, ANALYSIS, PREDICTION, etc.
+    - attestation_type        # DAHR or TLSN
+    - hypothesis              # Why this post will get reactions
+    - predicted_reactions      # Integer prediction
+  optional:
+    - actual_reactions        # Filled by audit phase (null until audited)
+    - actual_score            # Filled by audit phase (null until audited)
+    - attestation_url         # Source URL attested
+    - agents_referenced       # Agent addresses mentioned
+    - topic                   # Topic slug
+    - confidence              # 0-100
+    - text_preview            # First 120 chars
+    - confidence_gate         # Array of 6 booleans
+    - tags                    # Array of tag strings
+    - is_reply                # Boolean
+    - parent_tx_hash          # If reply, parent's txHash

@@ -40,7 +40,8 @@ export type PhaseName =
   | "gate"
   | "publish"
   | "verify"
-  | "review";
+  | "review"
+  | "harden";
 
 export type PhaseStatus = "pending" | "in_progress" | "completed" | "failed";
 
@@ -72,6 +73,7 @@ const PHASE_ORDER: PhaseName[] = [
   "publish",
   "verify",
   "review",
+  "harden",
 ];
 
 // ── Path Helpers ───────────────────────────────────
@@ -171,13 +173,30 @@ function ensureDir(): void {
 }
 
 /**
+ * Normalize state to handle migrations (e.g., adding new phases).
+ * Called by both loadState() and findActiveSession() to ensure
+ * resumed sessions always have the full phase set.
+ */
+export function normalizeState(state: SessionState): SessionState {
+  for (const phase of PHASE_ORDER) {
+    if (!state.phases[phase]) {
+      state.phases[phase] = { status: "pending" };
+    }
+  }
+  if (!state.posts) state.posts = [];
+  if (!state.engagements) state.engagements = [];
+  return state;
+}
+
+/**
  * Load state for a specific session number. Returns null if not found.
  */
 export function loadState(sessionNumber: number): SessionState | null {
   const path = stateFilePath(sessionNumber);
   if (!existsSync(path)) return null;
   try {
-    return JSON.parse(readFileSync(path, "utf-8"));
+    const state = JSON.parse(readFileSync(path, "utf-8"));
+    return normalizeState(state);
   } catch {
     return null;
   }
@@ -203,7 +222,7 @@ export function findActiveSession(): SessionState | null {
     const path = resolve(SESSIONS_DIR, file);
     try {
       const state = JSON.parse(readFileSync(path, "utf-8"));
-      return state;
+      return normalizeState(state);
     } catch {
       continue;
     }
@@ -318,7 +337,7 @@ export function getPhaseOrder(): PhaseName[] {
 }
 
 /**
- * Clear session state and release lock. Called after successful REVIEW.
+ * Clear session state and release lock. Called after successful HARDEN.
  */
 export function clearState(sessionNumber: number): void {
   const statePath = stateFilePath(sessionNumber);

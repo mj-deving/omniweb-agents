@@ -2,11 +2,11 @@
 /**
  * Session Runner — Sentinel Phase 3 orchestrator
  *
- * Runs the full 7-phase Sentinel loop from a single command.
+ * Runs the full 8-phase Sentinel loop from a single command.
  * Supports three oversight levels: full (interactive), approve (semi-auto), autonomous (fully automated).
  * State persists between phases for --resume capability.
  *
- * Phase sequence: AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW
+ * Phase sequence: AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN
  *
  * Usage:
  *   npx tsx tools/session-runner.ts [--env PATH] [--log PATH] [--oversight LEVEL] [--resume] [--skip-to PHASE] [--dry-run] [--pretty]
@@ -44,6 +44,7 @@ import {
 import { readSessionLog, appendSessionLog, resolveLogPath } from "./lib/log.js";
 import { saveReviewFindings, loadLatestFindings } from "./lib/review-findings.js";
 import { generatePost, type PostDraft } from "./lib/llm.js";
+import { resolveProvider, type LLMProvider } from "./lib/llm-provider.js";
 import { connectWallet } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
 import { attestAndPublish, type PublishResult } from "./lib/publish-pipeline.js";
@@ -60,6 +61,7 @@ function getPhaseMode(phase: PhaseName, oversight: OversightLevel): string {
       case "gate": return "interactive";
       case "publish": return "manual";
       case "review": return "interactive";
+      case "harden": return "interactive";
       default: return "automatic";
     }
   }
@@ -68,6 +70,7 @@ function getPhaseMode(phase: PhaseName, oversight: OversightLevel): string {
       case "gate": return "auto-suggest";
       case "publish": return "manual";
       case "review": return "auto-propose";
+      case "harden": return "auto-apply";
       default: return "automatic";
     }
   }
@@ -76,6 +79,7 @@ function getPhaseMode(phase: PhaseName, oversight: OversightLevel): string {
     case "gate": return "auto-pick";
     case "publish": return "auto (LLM + attest + post)";
     case "review": return "auto-propose";
+    case "harden": return "automatic";
     default: return "automatic";
   }
 }
@@ -149,7 +153,7 @@ function parseArgs(): RunnerFlags {
 
 function printHelp(): void {
   console.log(`
-Session Runner — Sentinel 7-phase loop orchestrator
+Session Runner — Sentinel 8-phase loop orchestrator
 
 USAGE:
   npx tsx tools/session-runner.ts [flags]
@@ -159,7 +163,7 @@ FLAGS:
   --log PATH             Session log path (default: ~/.sentinel-session-log.jsonl)
   --oversight LEVEL      Oversight level: full|approve|autonomous (default: full)
   --resume               Resume interrupted session from last completed phase
-  --skip-to PHASE        Start from specific phase (audit|scan|engage|gate|publish|verify|review)
+  --skip-to PHASE        Start from specific phase (audit|scan|engage|gate|publish|verify|review|harden)
   --force-skip-audit     Required with --skip-to when skipping AUDIT phase
   --dry-run              Show what would run without executing
   --pretty               Human-readable output (default for interactive)
@@ -181,6 +185,7 @@ PHASE SEQUENCE:
   5. PUBLISH  (varies)   — Publish posts (manual/auto)
   6. VERIFY   (auto)     — Verify published posts in feed
   7. REVIEW   (varies)   — Session review + improvements (interactive/auto-propose)
+  8. HARDEN   (varies)   — Classify and apply REVIEW findings via improvement lifecycle
 
 EXAMPLES:
   npx tsx tools/session-runner.ts --pretty
@@ -201,9 +206,10 @@ function banner(sessionNumber: number, oversight: OversightLevel): void {
 }
 
 function phaseHeader(phase: PhaseName, oversight: OversightLevel): void {
-  const idx = getPhaseOrder().indexOf(phase) + 1;
+  const phases = getPhaseOrder();
+  const idx = phases.indexOf(phase) + 1;
   const mode = getPhaseMode(phase, oversight);
-  console.log(`\nPhase ${idx}/7: ${phase.toUpperCase()} (${mode})`);
+  console.log(`\nPhase ${idx}/${phases.length}: ${phase.toUpperCase()} (${mode})`);
 }
 
 function phaseResult(msg: string): void {
@@ -298,7 +304,7 @@ async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> 
     if (prevFindings.q1_failures.length > 0) {
       console.log(`    Failures: ${prevFindings.q1_failures.length}`);
       for (const f of prevFindings.q1_failures.slice(0, 3)) {
-        console.log(`      - ${f.txHash.slice(0, 8)}: ${f.reason}`);
+        console.log(`      - ${f.txHash ? f.txHash.slice(0, 8) : (f as any).type || "?"}: ${f.reason}`);
       }
     }
     if (prevFindings.q2_suggestions.length > 0) {
@@ -666,7 +672,11 @@ async function runPublishAutonomous(
   for (const gp of gatePosts) {
     try {
       // Step 1: Generate post text via LLM
-      info(`Generating text for "${gp.topic}"...`);
+      const provider = resolveProvider(flags.env);
+      if (!provider) {
+        throw new Error("Autonomous publish requires an LLM provider. Set LLM_PROVIDER or ANTHROPIC_API_KEY.");
+      }
+      info(`Generating text for "${gp.topic}" via ${provider.name}...`);
       const draft: PostDraft = await generatePost(
         {
           topic: gp.topic,
@@ -681,7 +691,7 @@ async function runPublishAutonomous(
           },
           calibrationOffset,
         },
-        flags.env
+        provider
       );
 
       console.log(`\n  LLM draft for "${gp.topic}":`);
@@ -830,7 +840,7 @@ async function runReviewFull(
   if (result.q1_failures?.length > 0) {
     console.log(`\n  Q1 Failures (${result.q1_failures.length}):`);
     for (const f of result.q1_failures.slice(0, 5)) {
-      console.log(`    - ${f.txHash?.slice(0, 8) || "?"}: ${f.reason}`);
+      console.log(`    - ${f.txHash ? f.txHash.slice(0, 8) : (f.type || "?")}: ${f.reason}`);
     }
   }
   if (result.q2_suggestions?.length > 0) {
@@ -899,9 +909,10 @@ function persistReviewFindings(sessionNumber: number, result: any): void {
       sessionNumber,
       timestamp: new Date().toISOString(),
       q1_failures: (result.q1_failures || []).map((f: any) => ({
-        txHash: f.txHash || "",
-        category: f.category || "",
+        txHash: f.txHash || undefined,
+        category: f.category || undefined,
         reason: f.reason || "",
+        type: f.type || "score_miss",
       })),
       q2_suggestions: result.q2_suggestions || [],
       q3_insights: (result.q3_insights || []).map((i: any) => ({
@@ -910,14 +921,383 @@ function persistReviewFindings(sessionNumber: number, result: any): void {
         delta: i.delta || 0,
       })),
       q4_stale: (result.q4_stale || []).map((s: any) => ({
-        txHash: s.txHash || "",
+        txHash: s.txHash || undefined,
         description: s.description || "",
+        type: s.type || "unaudited",
       })),
     });
     info("Review findings persisted for next session's AUDIT");
   } catch (e: any) {
     info(`Warning: could not persist review findings: ${e.message}`);
   }
+}
+
+// ── HARDEN Phase ──────────────────────────────────
+
+type HardenType = "CODE-FIX" | "GUARDRAIL" | "GOTCHA" | "PLAYBOOK" | "STRATEGY" | "INFO";
+
+interface HardenFinding {
+  source: "q1" | "q2" | "q3" | "q4" | "phase_error";
+  type: HardenType;
+  text: string;
+  rawData?: any;
+}
+
+/** Classify a REVIEW finding into a HARDEN type using rule-based defaults */
+function classifyFinding(source: string, subtype?: string): HardenType {
+  switch (source) {
+    case "q1":
+      switch (subtype) {
+        case "gate_fail": return "CODE-FIX";
+        case "publish_error": return "CODE-FIX";
+        case "attest_error": return "GUARDRAIL";
+        case "score_miss":
+        default: return "INFO";
+      }
+    case "q2": return "CODE-FIX"; // suggestions are actionable
+    case "q3": return "PLAYBOOK"; // new patterns → document
+    case "q4":
+      switch (subtype) {
+        case "calibration_drift": return "PLAYBOOK";
+        case "assumption_conflict": return "STRATEGY";
+        case "unaudited":
+        default: return "INFO";
+      }
+    case "phase_error":
+      switch (subtype) {
+        case "gate_fail": return "CODE-FIX";
+        case "publish_error": return "CODE-FIX";
+        case "attest_error": return "GUARDRAIL";
+        default: return "CODE-FIX";
+      }
+    default: return "INFO";
+  }
+}
+
+/** Collect findings from REVIEW result + session state */
+function collectHardenFindings(state: SessionState): HardenFinding[] {
+  const findings: HardenFinding[] = [];
+  const reviewResult = state.phases.review?.result || {};
+
+  // Q1 failures
+  for (const f of (reviewResult.q1_failures || [])) {
+    findings.push({
+      source: "q1",
+      type: classifyFinding("q1", f.type),
+      text: `Q1: ${f.reason}${f.txHash ? ` (tx: ${f.txHash.slice(0, 8)})` : ""}`,
+      rawData: f,
+    });
+  }
+
+  // Q2 suggestions
+  for (const s of (reviewResult.q2_suggestions || [])) {
+    if (s.includes("No systemic patterns")) continue;
+    findings.push({
+      source: "q2",
+      type: classifyFinding("q2"),
+      text: `Q2: ${s}`,
+    });
+  }
+
+  // Q3 insights
+  for (const i of (reviewResult.q3_insights || [])) {
+    findings.push({
+      source: "q3",
+      type: classifyFinding("q3"),
+      text: `Q3: ${i.txHash?.slice(0, 8) || "?"} outperformed by +${i.delta}rx (${i.category})`,
+      rawData: i,
+    });
+  }
+
+  // Q4 stale items
+  for (const s of (reviewResult.q4_stale || [])) {
+    findings.push({
+      source: "q4",
+      type: classifyFinding("q4", s.type),
+      text: `Q4: ${s.description}`,
+      rawData: s,
+    });
+  }
+
+  // Phase errors from current session (enrichment from state — not available to session-review.ts)
+  const phases = getPhaseOrder();
+  for (const phase of phases) {
+    if (phase === "harden") continue;
+    const p = state.phases[phase];
+    if (p?.status === "failed" && p.error) {
+      const subtype = phase === "gate" ? "gate_fail" : phase === "publish" ? "publish_error" : "attest_error";
+      findings.push({
+        source: "phase_error",
+        type: classifyFinding("phase_error", subtype),
+        text: `Phase ${phase.toUpperCase()} failed: ${p.error}`,
+        rawData: { phase, error: p.error },
+      });
+    }
+  }
+
+  return findings;
+}
+
+/** Use LLM to reclassify findings (if available) */
+async function llmClassify(findings: HardenFinding[], provider: LLMProvider): Promise<HardenFinding[]> {
+  const prompt = `Classify each finding into exactly one type: CODE-FIX, GUARDRAIL, GOTCHA, PLAYBOOK, STRATEGY, or INFO.
+
+Types:
+- CODE-FIX: Broken flag, wrong default, missing alias — needs code change
+- GUARDRAIL: Safe default to prevent known failure — add validation/cap
+- GOTCHA: Verified pattern to document — add to playbook gotchas
+- PLAYBOOK: Factual/technical operational insight — update playbook
+- STRATEGY: Topic selection, scoring approach, engagement model — needs human review
+- INFO: Platform stats, one-off observations — log only
+
+Findings:
+${findings.map((f, i) => `${i + 1}. [${f.type}] ${f.text}`).join("\n")}
+
+Respond with ONLY a JSON array of types, one per finding. Example: ["CODE-FIX","INFO","STRATEGY"]`;
+
+  try {
+    const response = await provider.complete(prompt, { maxTokens: 256 });
+    let jsonStr = response.trim();
+    if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    }
+    const types = JSON.parse(jsonStr) as string[];
+    const validTypes = new Set<string>(["CODE-FIX", "GUARDRAIL", "GOTCHA", "PLAYBOOK", "STRATEGY", "INFO"]);
+    for (let i = 0; i < findings.length && i < types.length; i++) {
+      if (validTypes.has(types[i])) {
+        findings[i].type = types[i] as HardenType;
+      }
+    }
+  } catch (e: any) {
+    info(`LLM classification failed (using rule-based defaults): ${e.message}`);
+  }
+  return findings;
+}
+
+/** Propose an improvement via the improvements.ts subprocess */
+async function proposeImprovement(
+  description: string,
+  evidence: string,
+  target: string,
+  source: string
+): Promise<void> {
+  const impArgs = [
+    "propose", description,
+    "--evidence", evidence,
+    "--target", target,
+    "--source", source,
+  ];
+  await runTool("tools/improvements.ts", impArgs, {
+    cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+    timeout: 30_000,
+  });
+}
+
+/** HARDEN: full oversight — show each finding, ask y/n */
+async function runHardenFull(
+  state: SessionState,
+  flags: RunnerFlags,
+  rl: ReturnType<typeof createInterface>
+): Promise<void> {
+  let findings = collectHardenFindings(state);
+
+  if (findings.length === 0) {
+    phaseSkipped("No findings to harden");
+    completePhase(state, "harden", { findings: 0, classified: 0, applied: 0, proposed: 0, skipped: 0 });
+    return;
+  }
+
+  // Try LLM classification
+  const provider = resolveProvider(flags.env);
+  if (provider) {
+    info(`Classifying ${findings.length} findings via ${provider.name}...`);
+    findings = await llmClassify(findings, provider);
+  }
+
+  let applied = 0;
+  let proposed = 0;
+  let skipped = 0;
+
+  for (const f of findings) {
+    console.log(`\n  [${f.type}] ${f.text}`);
+
+    if (f.type === "INFO") {
+      console.log("    → INFO: logged only");
+      skipped++;
+      continue;
+    }
+
+    if (f.type === "STRATEGY") {
+      const proceed = await ask(rl, "    Propose for human review? (y/n): ");
+      if (proceed.toLowerCase() === "y") {
+        try {
+          await proposeImprovement(f.text, `HARDEN finding from session ${state.sessionNumber}`, "strategy.yaml", f.source);
+          proposed++;
+          phaseResult(`Proposed: ${f.text.slice(0, 60)}...`);
+        } catch (e: any) {
+          info(`Warning: could not propose: ${e.message}`);
+          skipped++;
+        }
+      } else {
+        skipped++;
+      }
+      continue;
+    }
+
+    // CODE-FIX, GUARDRAIL, GOTCHA, PLAYBOOK
+    const proceed = await ask(rl, "    Apply? (y/n): ");
+    if (proceed.toLowerCase() === "y") {
+      try {
+        await proposeImprovement(f.text, `HARDEN auto-applied, session ${state.sessionNumber}`, "workflow", f.source);
+        applied++;
+        phaseResult(`Applied: ${f.text.slice(0, 60)}...`);
+      } catch (e: any) {
+        info(`Warning: could not apply: ${e.message}`);
+        skipped++;
+      }
+    } else {
+      skipped++;
+    }
+  }
+
+  phaseResult(`${findings.length} findings: ${applied} applied, ${proposed} proposed, ${skipped} skipped`);
+  completePhase(state, "harden", {
+    findings: findings.length,
+    classified: findings.length,
+    applied,
+    proposed,
+    skipped,
+  });
+}
+
+/** HARDEN: approve oversight — auto-apply non-STRATEGY, ask for STRATEGY */
+async function runHardenApprove(
+  state: SessionState,
+  flags: RunnerFlags,
+  rl: ReturnType<typeof createInterface>
+): Promise<void> {
+  let findings = collectHardenFindings(state);
+
+  if (findings.length === 0) {
+    phaseSkipped("No findings to harden");
+    completePhase(state, "harden", { findings: 0, classified: 0, applied: 0, proposed: 0, skipped: 0 });
+    return;
+  }
+
+  const provider = resolveProvider(flags.env);
+  if (provider) {
+    info(`Classifying ${findings.length} findings via ${provider.name}...`);
+    findings = await llmClassify(findings, provider);
+  }
+
+  let applied = 0;
+  let proposed = 0;
+  let skipped = 0;
+
+  for (const f of findings) {
+    if (f.type === "INFO") {
+      skipped++;
+      continue;
+    }
+
+    if (f.type === "STRATEGY") {
+      // STRATEGY: always ask human, even in approve mode
+      console.log(`\n  [STRATEGY] ${f.text}`);
+      const proceed = await ask(rl, "    Propose for human review? (y/n): ");
+      if (proceed.toLowerCase() === "y") {
+        try {
+          await proposeImprovement(f.text, `HARDEN finding, session ${state.sessionNumber}`, "strategy.yaml", f.source);
+          proposed++;
+        } catch (e: any) {
+          info(`Warning: could not propose: ${e.message}`);
+          skipped++;
+        }
+      } else {
+        skipped++;
+      }
+      continue;
+    }
+
+    // Auto-apply CODE-FIX, GUARDRAIL, GOTCHA, PLAYBOOK
+    try {
+      await proposeImprovement(f.text, `HARDEN auto-applied, session ${state.sessionNumber}`, "workflow", f.source);
+      applied++;
+    } catch (e: any) {
+      info(`Warning: could not apply "${f.text.slice(0, 40)}": ${e.message}`);
+      skipped++;
+    }
+  }
+
+  phaseResult(`${findings.length} findings: ${applied} applied, ${proposed} proposed, ${skipped} skipped`);
+  completePhase(state, "harden", {
+    findings: findings.length,
+    classified: findings.length,
+    applied,
+    proposed,
+    skipped,
+  });
+}
+
+/** HARDEN: autonomous oversight — auto-apply non-STRATEGY, propose STRATEGY for next session */
+async function runHardenAutonomous(
+  state: SessionState,
+  flags: RunnerFlags
+): Promise<void> {
+  let findings = collectHardenFindings(state);
+
+  if (findings.length === 0) {
+    phaseSkipped("No findings to harden");
+    completePhase(state, "harden", { findings: 0, classified: 0, applied: 0, proposed: 0, skipped: 0 });
+    return;
+  }
+
+  const provider = resolveProvider(flags.env);
+  if (provider) {
+    info(`Classifying ${findings.length} findings via ${provider.name}...`);
+    findings = await llmClassify(findings, provider);
+  }
+
+  let applied = 0;
+  let proposed = 0;
+  let skipped = 0;
+
+  for (const f of findings) {
+    if (f.type === "INFO") {
+      skipped++;
+      continue;
+    }
+
+    if (f.type === "STRATEGY") {
+      // STRATEGY: propose only, NEVER auto-apply (AGENT.yaml hard rule)
+      try {
+        await proposeImprovement(f.text, `HARDEN autonomous propose, session ${state.sessionNumber}`, "strategy.yaml", f.source);
+        proposed++;
+        info(`Proposed STRATEGY: ${f.text.slice(0, 60)}...`);
+      } catch (e: any) {
+        info(`Warning: could not propose: ${e.message}`);
+        skipped++;
+      }
+      continue;
+    }
+
+    // Auto-apply CODE-FIX, GUARDRAIL, GOTCHA, PLAYBOOK silently
+    try {
+      await proposeImprovement(f.text, `HARDEN auto-applied, session ${state.sessionNumber}`, "workflow", f.source);
+      applied++;
+    } catch (e: any) {
+      info(`Warning: could not apply: ${e.message}`);
+      skipped++;
+    }
+  }
+
+  phaseResult(`${findings.length} findings: ${applied} applied, ${proposed} proposed, ${skipped} skipped`);
+  completePhase(state, "harden", {
+    findings: findings.length,
+    classified: findings.length,
+    applied,
+    proposed,
+    skipped,
+  });
 }
 
 // ── Session Report ─────────────────────────────────
@@ -1009,7 +1389,7 @@ function writeSessionReport(state: SessionState, oversight: OversightLevel): voi
     for (let i = 0; i < txHashes.length; i++) {
       const tx = txHashes[i];
       const gp = gatePosts[i] || {};
-      lines.push(`- ${tx.slice(0, 16)}... (${gp.category || "?"}, predicted: ${gp.confidence || "?"} reactions)`);
+      lines.push(`- ${tx.slice(0, 16)}... (${gp.category || "?"}, confidence: ${gp.confidence || "?"}%)`);
     }
   } else {
     lines.push("- No posts published");
@@ -1040,6 +1420,17 @@ function writeSessionReport(state: SessionState, oversight: OversightLevel): voi
   }
   if (!reviewStats && !review.q2_suggestions?.length) {
     lines.push("- No improvements proposed");
+  }
+  lines.push("");
+
+  // HARDEN
+  const harden = state.phases.harden?.result || {};
+  lines.push(`## 8. HARDEN${phaseDuration(state, "harden")}`);
+  if (harden.findings !== undefined) {
+    lines.push(`- ${harden.findings} findings classified`);
+    lines.push(`- Applied: ${harden.applied || 0} | Proposed: ${harden.proposed || 0} | Skipped: ${harden.skipped || 0}`);
+  } else {
+    lines.push("- Skipped");
   }
   lines.push("");
 
@@ -1199,6 +1590,11 @@ async function main(): Promise<void> {
           case "review":
             if (flags.oversight === "full") await runReviewFull(state, flags, rl!);
             else await runReviewAuto(state, flags);
+            break;
+          case "harden":
+            if (flags.oversight === "full") await runHardenFull(state, flags, rl!);
+            else if (flags.oversight === "approve") await runHardenApprove(state, flags, rl!);
+            else await runHardenAutonomous(state, flags);
             break;
         }
       } catch (e: any) {

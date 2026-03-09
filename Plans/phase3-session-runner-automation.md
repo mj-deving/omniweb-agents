@@ -2,7 +2,7 @@
 
 ## Context
 
-Phase 2 shipped 5 CLI tools (room-temp, audit, improvements, session-review, gate) that automate individual loop phases. But they're standalone — the operator runs them manually in sequence, pipes nothing between them, and tracks session state in their head. Phase 3 closes this gap with a session-runner that orchestrates the full 7-phase loop.
+Phase 2 shipped 5 CLI tools (room-temp, audit, improvements, session-review, gate) that automate individual loop phases. But they're standalone — the operator runs them manually in sequence, pipes nothing between them, and tracks session state in their head. Phase 3 closes this gap with a session-runner that orchestrates the full 8-phase loop.
 
 **Goal:** Build the minimum viable orchestrator to run one full Sentinel loop session from a single command, with automated phases running automatically and human-required phases prompting the operator.
 
@@ -30,7 +30,7 @@ Phase 2 shipped 5 CLI tools (room-temp, audit, improvements, session-review, gat
 |------|-------|-------------|----------|
 | `engage.ts` | ENGAGE | Reactions with tools/ conventions (reactions-only) | P0 |
 | `verify.ts` | VERIFY | Checks feed for post, reports log status | P0 |
-| `session-runner.ts` | ALL | Orchestrates 7-phase loop with state tracking | P0 |
+| `session-runner.ts` | ALL | Orchestrates 8-phase loop with state tracking | P0 |
 | `lib/state.ts` | N/A | Session state persistence (namespaced, lockfile) | P0 |
 | `lib/subprocess.ts` | N/A | Spawn tools as subprocesses, capture JSON stdout | P0 |
 
@@ -47,7 +47,7 @@ Why orchestrate instead of running tools manually?
 
 1. **State continuity** — tracks which phases completed, allows `--resume` if session interrupted
 2. **Data piping** — room-temp output feeds gate decisions automatically
-3. **Phase ordering** — enforces AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW sequence
+3. **Phase ordering** — enforces AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN sequence
 4. **Session identity** — auto-increments session counter from improvements.ts envelope
 5. **Time tracking** — logs phase start/end for session duration analysis
 6. **Guard rails** — prevents skipping AUDIT (the #1 cause of stale calibration)
@@ -196,7 +196,7 @@ npx tsx tools/verify.ts <txHash...> [--log PATH] [--env PATH] [--pretty] [--json
 
 ### 4. `tools/session-runner.ts` — Loop Orchestrator
 
-**Maps to:** The full 7-phase loop (strategy.yaml)
+**Maps to:** The full 8-phase loop (strategy.yaml)
 
 **What it does:** Runs the Sentinel loop from start to finish. Automated phases execute and pipe results forward. Human phases pause and prompt. State persists between phases for resume capability.
 
@@ -403,8 +403,8 @@ Why not a TUI framework?
 - [ ] `tools/lib/state.ts` creates, updates, and clears session state correctly
 - [ ] `tools/lib/state.ts` uses namespaced path `~/.sentinel/sessions/sentinel-<N>.json`
 - [ ] `tools/lib/subprocess.ts` captures tool JSON stdout correctly
-- [ ] `tools/session-runner.ts --dry-run` shows all 7 phases without executing
-- [ ] `tools/session-runner.ts` runs AUDIT→SCAN→ENGAGE automatically then prompts at GATE
+- [ ] `tools/session-runner.ts --dry-run` shows all 8 phases without executing
+- [ ] `tools/session-runner.ts` runs AUDIT→SCAN→ENGAGE automatically then prompts at GATE, ends with HARDEN
 - [ ] `tools/session-runner.ts --resume` picks up from last completed phase
 - [ ] `tools/session-runner.ts --skip-to scan --force-skip-audit` skips AUDIT with explicit flag
 - [ ] `tools/session-runner.ts --skip-to scan` (without --force-skip-audit) errors with warning

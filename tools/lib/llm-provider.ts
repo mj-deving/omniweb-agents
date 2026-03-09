@@ -16,7 +16,7 @@
  */
 
 import { execSync, spawn } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 
@@ -36,9 +36,13 @@ export interface LLMProvider {
 // ── CLI Provider ──────────────────────────────────
 
 /**
- * Subprocess adapter for any CLI that accepts a prompt.
+ * Subprocess adapter for any CLI that accepts a prompt on stdin.
  * Covers: codex exec, claude --print, ollama run, or any custom LLM_CLI_COMMAND.
  * Handles its own auth (OAuth, local, whatever).
+ *
+ * Contract: prompt is delivered via stdin (shell redirect from temp file).
+ * The command string is the full shell command WITHOUT a prompt argument.
+ * Example: "claude --print", "ollama run llama3", "codex exec --full-auto -q"
  */
 export class CLIProvider implements LLMProvider {
   readonly name: string;
@@ -54,35 +58,45 @@ export class CLIProvider implements LLMProvider {
       ? `${options.system}\n\n${prompt}`
       : prompt;
 
-    // Pass prompt via stdin to avoid ARG_MAX limits.
-    // stderr is kept separate so CLI warnings don't corrupt model output.
-    return await new Promise<string>((resolvePromise, reject) => {
-      const child = spawn("sh", ["-c", this.command], {
-        stdio: ["pipe", "pipe", "pipe"],
-        timeout: 120_000,
+    // Write prompt to temp file, then use shell stdin redirect (< file).
+    // This avoids ARG_MAX (only the short file path is in the command),
+    // keeps stderr separate, and works with any CLI that reads stdin.
+    const tmpFile = resolve(process.env.TMPDIR || "/tmp", `.llm-prompt-${process.pid}-${Date.now()}.txt`);
+    writeFileSync(tmpFile, fullPrompt);
+
+    try {
+      return await new Promise<string>((resolvePromise, reject) => {
+        const child = spawn("sh", ["-c", `${this.command} < '${tmpFile}'`], {
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 120_000,
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
+        child.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
+
+        child.on("close", (code) => {
+          if (code !== 0) {
+            reject(new Error(`CLI provider "${this.name}" exited with code ${code}: ${(stderr || stdout).slice(0, 500)}`));
+          } else {
+            const result = stdout.trim();
+            if (!result) {
+              reject(new Error(`CLI provider "${this.name}" returned empty output. Does the command read from stdin?`));
+            } else {
+              resolvePromise(result);
+            }
+          }
+        });
+
+        child.on("error", (err) => {
+          reject(new Error(`CLI provider "${this.name}" failed to spawn: ${err.message}`));
+        });
       });
-
-      let stdout = "";
-      let stderr = "";
-
-      child.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
-      child.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
-
-      child.stdin.write(fullPrompt);
-      child.stdin.end();
-
-      child.on("close", (code) => {
-        if (code !== 0) {
-          reject(new Error(`CLI provider "${this.name}" exited with code ${code}: ${(stderr || stdout).slice(0, 500)}`));
-        } else {
-          resolvePromise(stdout.trim());
-        }
-      });
-
-      child.on("error", (err) => {
-        reject(new Error(`CLI provider "${this.name}" failed to spawn: ${err.message}`));
-      });
-    });
+    } finally {
+      try { unlinkSync(tmpFile); } catch { /* cleanup best-effort */ }
+    }
   }
 }
 

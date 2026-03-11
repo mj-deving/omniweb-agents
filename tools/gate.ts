@@ -11,6 +11,7 @@
  */
 
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import { connectWallet, apiCall, info } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
 import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
@@ -55,6 +56,7 @@ FLAGS:
   --category TEXT     Post category: ANALYSIS or PREDICTION (optional)
   --confidence N      Confidence value 0-100 (optional)
   --reply-to TX_HASH  Parent post txHash (checks reply target reactions)
+  --scan-cache PATH   Path to session state JSON with scan rawPosts cache
   --env PATH          Path to .env file (default: .env in cwd)
   --pretty            Human-readable formatted output
   --json              Compact single-line JSON output
@@ -105,12 +107,24 @@ interface GateResult {
 
 /**
  * Gate 1: Topic activity ≥3 posts in feed.
- * Uses search API (server-side filtering) with feed fallback.
+ * Uses cached scan posts if available, then search API, then feed fallback.
  */
 async function checkTopicActivity(
   topic: string,
-  token: string
+  token: string,
+  cachedPosts?: any[]
 ): Promise<GateItem> {
+  const topicLower = topic.toLowerCase();
+  const validCache = Array.isArray(cachedPosts) ? cachedPosts : undefined;
+
+  // Helper: client-side topic matching (tags, assets, text)
+  const matchTopic = (posts: any[]) => posts.filter((p: any) => {
+    const tags = (p.payload?.tags || []).map((t: string) => t.toLowerCase());
+    const assets = (p.payload?.assets || []).map((a: string) => a.toLowerCase());
+    const text = (p.payload?.text || "").toLowerCase();
+    return tags.includes(topicLower) || assets.includes(topicLower) || text.includes(topicLower);
+  });
+
   // Primary: search API — server-side text+asset filtering
   // Note: search `text` param may not match tags/assets. If search passes (≥3), trust it.
   // If search returns < 3 or fails, fall through to feed for client-side tag/asset matching.
@@ -128,18 +142,17 @@ async function checkTopicActivity(
   const feedRes = await apiCall(`/api/feed?limit=50`, token);
   if (!feedRes.ok) {
     const searchNote = searchRes.ok ? "search found < 3" : `search failed (${searchRes.status})`;
+    // If we had cached scan data, use that instead of warning
+    if (validCache) {
+      const matching = matchTopic(validCache);
+      return { number: 1, name: "Topic activity", status: matching.length >= 3 ? "pass" : "fail", detail: `${matching.length} posts via scan cache (API unavailable)` };
+    }
     return { number: 1, name: "Topic activity", status: "warning", detail: `${searchNote}, feed failed (${feedRes.status}) — cannot verify` };
   }
 
   const rawPosts = feedRes.data?.posts ?? feedRes.data;
   const posts = Array.isArray(rawPosts) ? rawPosts : [];
-  const topicLower = topic.toLowerCase();
-  const matching = posts.filter((p: any) => {
-    const tags = (p.payload?.tags || []).map((t: string) => t.toLowerCase());
-    const assets = (p.payload?.assets || []).map((a: string) => a.toLowerCase());
-    const text = (p.payload?.text || "").toLowerCase();
-    return tags.includes(topicLower) || assets.includes(topicLower) || text.includes(topicLower);
-  });
+  const matching = matchTopic(posts);
 
   const count = matching.length;
   if (count >= 3) {
@@ -349,6 +362,21 @@ async function main(): Promise<void> {
   const category = flags["category"];
   const confidence = flags["confidence"];
   const replyTo = flags["reply-to"];
+  const scanCachePath = flags["scan-cache"];
+
+  // Load cached scan posts if available
+  let cachedPosts: any[] | undefined;
+  if (scanCachePath) {
+    try {
+      const stateData = JSON.parse(readFileSync(resolve(scanCachePath), "utf-8"));
+      cachedPosts = stateData?.phases?.scan?.result?.rawPosts;
+      if (cachedPosts) {
+        info(`Loaded ${cachedPosts.length} cached posts from scan phase`);
+      }
+    } catch {
+      info("Could not load scan cache — will use API only");
+    }
+  }
 
   // Connect and auth
   const { demos, address } = await connectWallet(envPath);
@@ -360,7 +388,7 @@ async function main(): Promise<void> {
 
   // Parallel API checks + sync checks
   const apiChecks: Promise<GateItem>[] = [
-    checkTopicActivity(topic, token),
+    checkTopicActivity(topic, token, cachedPosts),
     checkDuplicate(topic, token, address),
   ];
   if (replyTo) {

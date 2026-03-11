@@ -14,8 +14,10 @@
 import { resolve } from "node:path";
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
-const SESSIONS_DIR = resolve(homedir(), ".sentinel", "sessions");
+// Agent resolved at runtime (after arg parsing)
+let SESSIONS_DIR = resolve(homedir(), ".sentinel", "sessions");
 const REPORT_PATTERN = /^session-(\d+)-report\.md$/;
 
 interface ReportMeta {
@@ -85,6 +87,19 @@ function showLatest(): void {
 // ── Main ──────────────────────────────────────────
 
 const args = process.argv.slice(2);
+
+// Resolve agent name and update sessions dir
+{
+  const flags: Record<string, string> = {};
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--agent" && args[i + 1]) {
+      flags["agent"] = args[i + 1];
+    }
+  }
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
+  SESSIONS_DIR = config.paths.sessionDir;
+}
 
 if (args.includes("--help") || args.includes("-h")) {
   console.log(`

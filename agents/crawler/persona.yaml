@@ -1,0 +1,28 @@
+apiVersion: demos-agents/v1
+kind: PersonaConfig
+
+name: crawler
+displayName: "Crawler"
+
+topics:
+  primary: [crypto, defi, ai, macro, science, infrastructure]
+  secondary: [source-discovery, attestation-breadth, evidence-gaps]
+
+engagement:
+  minDisagreePerSession: 1
+  replyMinParentReactions: 10
+  maxReactionsPerSession: 10
+
+gate:
+  predictedReactionsThreshold: 15
+  allow5Of6: true
+
+calibration:
+  offset: 0
+
+envFile: null
+
+sourceDiscovery:
+  maxPerSession: 5
+  promotionThreshold: 3
+  urlSafety: strict

@@ -1,8 +1,8 @@
 /**
- * Session state manager for Sentinel session-runner.
+ * Session state manager for agent session-runner.
  *
  * Persists session state between phases to enable --resume after interruption.
- * State files are namespaced under ~/.sentinel/sessions/ with PID-based lockfiles.
+ * State files are namespaced under ~/.{agent}/sessions/ with PID-based lockfiles.
  *
  * State lifecycle:
  *   startSession() → completePhase() × N → clearState()
@@ -28,7 +28,7 @@ import { homedir } from "node:os";
 
 // ── Constants ──────────────────────────────────────
 
-const SESSIONS_DIR = resolve(homedir(), ".sentinel", "sessions");
+const DEFAULT_SESSIONS_DIR = resolve(homedir(), ".sentinel", "sessions");
 const STALE_LOCK_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // ── Types ──────────────────────────────────────────
@@ -78,12 +78,12 @@ const PHASE_ORDER: PhaseName[] = [
 
 // ── Path Helpers ───────────────────────────────────
 
-function stateFilePath(sessionNumber: number): string {
-  return resolve(SESSIONS_DIR, `sentinel-${sessionNumber}.json`);
+function stateFilePath(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): string {
+  return resolve(sessionsDir, `${agentName}-${sessionNumber}.json`);
 }
 
-function lockFilePath(sessionNumber: number): string {
-  return resolve(SESSIONS_DIR, `sentinel-${sessionNumber}.lock`);
+function lockFilePath(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): string {
+  return resolve(sessionsDir, `${agentName}-${sessionNumber}.lock`);
 }
 
 // ── Lock Management ────────────────────────────────
@@ -102,9 +102,9 @@ function isPidAlive(pid: number): boolean {
  * Recovers stale locks (dead PID or >2h old).
  * Uses O_CREAT|O_EXCL for atomic creation (fixes TOCTOU race — Codex finding #1).
  */
-export function acquireLock(sessionNumber: number): void {
-  ensureDir();
-  const lockPath = lockFilePath(sessionNumber);
+export function acquireLock(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): void {
+  ensureDir(sessionsDir);
+  const lockPath = lockFilePath(sessionNumber, sessionsDir, agentName);
   const lockContent = JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() });
 
   // Try atomic create first (O_CREAT | O_EXCL | O_WRONLY)
@@ -149,8 +149,8 @@ export function acquireLock(sessionNumber: number): void {
 /**
  * Release a session lock. Only removes if we own it (Codex finding #2).
  */
-export function releaseLock(sessionNumber: number): void {
-  const lockPath = lockFilePath(sessionNumber);
+export function releaseLock(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): void {
+  const lockPath = lockFilePath(sessionNumber, sessionsDir, agentName);
   if (!existsSync(lockPath)) return;
   try {
     const lockData = JSON.parse(readFileSync(lockPath, "utf-8"));
@@ -166,9 +166,9 @@ export function releaseLock(sessionNumber: number): void {
 /**
  * Ensure sessions directory exists.
  */
-function ensureDir(): void {
-  if (!existsSync(SESSIONS_DIR)) {
-    mkdirSync(SESSIONS_DIR, { recursive: true });
+function ensureDir(sessionsDir: string = DEFAULT_SESSIONS_DIR): void {
+  if (!existsSync(sessionsDir)) {
+    mkdirSync(sessionsDir, { recursive: true });
   }
 }
 
@@ -191,8 +191,8 @@ export function normalizeState(state: SessionState): SessionState {
 /**
  * Load state for a specific session number. Returns null if not found.
  */
-export function loadState(sessionNumber: number): SessionState | null {
-  const path = stateFilePath(sessionNumber);
+export function loadState(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): SessionState | null {
+  const path = stateFilePath(sessionNumber, sessionsDir, agentName);
   if (!existsSync(path)) return null;
   try {
     const state = JSON.parse(readFileSync(path, "utf-8"));
@@ -206,20 +206,22 @@ export function loadState(sessionNumber: number): SessionState | null {
  * Find the most recent active session (any session with a state file).
  * Returns null if no active sessions.
  */
-export function findActiveSession(): SessionState | null {
-  ensureDir();
-  const files: string[] = readdirSync(SESSIONS_DIR);
+export function findActiveSession(sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): SessionState | null {
+  ensureDir(sessionsDir);
+  const files: string[] = readdirSync(sessionsDir);
+  const pattern = new RegExp(`^${agentName}-\\d+\\.json$`);
+  const numPattern = new RegExp(`${agentName}-(\\d+)\\.json`);
   const sessionFiles = files
-    .filter((f: string) => f.match(/^sentinel-\d+\.json$/))
+    .filter((f: string) => pattern.test(f))
     .sort((a, b) => {
       // Numeric sort by session number (Codex finding #4)
-      const numA = parseInt(a.match(/sentinel-(\d+)\.json/)![1], 10);
-      const numB = parseInt(b.match(/sentinel-(\d+)\.json/)![1], 10);
+      const numA = parseInt(a.match(numPattern)![1], 10);
+      const numB = parseInt(b.match(numPattern)![1], 10);
       return numB - numA; // descending
     });
 
   for (const file of sessionFiles) {
-    const path = resolve(SESSIONS_DIR, file);
+    const path = resolve(sessionsDir, file);
     try {
       const state = JSON.parse(readFileSync(path, "utf-8"));
       return normalizeState(state);
@@ -233,9 +235,10 @@ export function findActiveSession(): SessionState | null {
 /**
  * Save session state to disk.
  */
-export function saveState(state: SessionState): void {
-  ensureDir();
-  writeFileSync(stateFilePath(state.sessionNumber), JSON.stringify(state, null, 2));
+export function saveState(state: SessionState, sessionsDir?: string): void {
+  const dir = sessionsDir || resolve(homedir(), `.${state.agentName}`, "sessions");
+  ensureDir(dir);
+  writeFileSync(stateFilePath(state.sessionNumber, dir, state.agentName), JSON.stringify(state, null, 2));
 }
 
 /**
@@ -243,10 +246,11 @@ export function saveState(state: SessionState): void {
  */
 export function startSession(
   sessionNumber: number,
-  agentName: string = "sentinel"
+  agentName: string = "sentinel",
+  sessionsDir: string = DEFAULT_SESSIONS_DIR
 ): SessionState {
-  ensureDir();
-  acquireLock(sessionNumber);
+  ensureDir(sessionsDir);
+  acquireLock(sessionNumber, sessionsDir, agentName);
 
   const phases: Record<PhaseName, PhaseState> = {} as any;
   for (const phase of PHASE_ORDER) {
@@ -263,19 +267,19 @@ export function startSession(
     engagements: [],
   };
 
-  saveState(state);
+  saveState(state, sessionsDir);
   return state;
 }
 
 /**
  * Mark a phase as in_progress.
  */
-export function beginPhase(state: SessionState, phase: PhaseName): SessionState {
+export function beginPhase(state: SessionState, phase: PhaseName, sessionsDir?: string): SessionState {
   state.phases[phase] = {
     status: "in_progress",
     startedAt: new Date().toISOString(),
   };
-  saveState(state);
+  saveState(state, sessionsDir);
   return state;
 }
 
@@ -285,7 +289,8 @@ export function beginPhase(state: SessionState, phase: PhaseName): SessionState 
 export function completePhase(
   state: SessionState,
   phase: PhaseName,
-  result?: any
+  result?: any,
+  sessionsDir?: string
 ): SessionState {
   state.phases[phase] = {
     ...state.phases[phase],
@@ -293,7 +298,7 @@ export function completePhase(
     completedAt: new Date().toISOString(),
     result,
   };
-  saveState(state);
+  saveState(state, sessionsDir);
   return state;
 }
 
@@ -303,7 +308,8 @@ export function completePhase(
 export function failPhase(
   state: SessionState,
   phase: PhaseName,
-  error: string
+  error: string,
+  sessionsDir?: string
 ): SessionState {
   state.phases[phase] = {
     ...state.phases[phase],
@@ -311,7 +317,7 @@ export function failPhase(
     completedAt: new Date().toISOString(),
     error,
   };
-  saveState(state);
+  saveState(state, sessionsDir);
   return state;
 }
 
@@ -339,8 +345,8 @@ export function getPhaseOrder(): PhaseName[] {
 /**
  * Clear session state and release lock. Called after successful HARDEN.
  */
-export function clearState(sessionNumber: number): void {
-  const statePath = stateFilePath(sessionNumber);
+export function clearState(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): void {
+  const statePath = stateFilePath(sessionNumber, sessionsDir, agentName);
   if (existsSync(statePath)) unlinkSync(statePath);
-  releaseLock(sessionNumber);
+  releaseLock(sessionNumber, sessionsDir, agentName);
 }

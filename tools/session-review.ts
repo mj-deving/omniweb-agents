@@ -15,6 +15,7 @@
 import { readSessionLog, resolveLogPath } from "./lib/log.js";
 import type { SessionLogEntry } from "./lib/log.js";
 import { info } from "./lib/sdk.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -50,7 +51,8 @@ USAGE:
   npx tsx tools/session-review.ts [flags]
 
 FLAGS:
-  --log PATH       Session log path (default: ~/.sentinel-session-log.jsonl)
+  --agent NAME     Agent name (default: sentinel)
+  --log PATH       Session log path (default: ~/.{agent}-session-log.jsonl)
   --last N         Review only the last N entries (default: all)
   --pretty         Human-readable formatted output
   --json           Compact single-line JSON output
@@ -380,7 +382,9 @@ function prettyPrint(review: ReviewOutput): void {
 function main(): void {
   const { flags } = parseArgs();
 
-  const logPath = resolveLogPath(flags["log"]);
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
+  const logPath = resolveLogPath(flags["log"], agentName);
   const lastN = flags["last"] ? parseInt(flags["last"], 10) : 0;
 
   // Read log

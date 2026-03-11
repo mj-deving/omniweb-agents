@@ -16,10 +16,18 @@ import type { LLMProvider } from "./llm-provider.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
-const PERSONA_PATH = resolve(REPO_ROOT, "agents/sentinel/personas/sentinel.md");
-const STRATEGY_PATH = resolve(REPO_ROOT, "agents/sentinel/strategy.yaml");
+const DEFAULT_PERSONA_PATH = resolve(REPO_ROOT, "agents/sentinel/persona.md");
+const DEFAULT_STRATEGY_PATH = resolve(REPO_ROOT, "agents/sentinel/strategy.yaml");
 
 const MAX_TOKENS = 1024;
+
+// ── Config Type ────────────────────────────────────
+
+export interface LLMConfig {
+  personaMdPath: string;
+  strategyYamlPath: string;
+  agentName: string;
+}
 
 // ── Types ──────────────────────────────────────────
 
@@ -61,16 +69,21 @@ export interface GeneratePostInput {
 
 // ── Persona & Strategy Loading ─────────────────────
 
-function loadPersona(): string {
-  if (!existsSync(PERSONA_PATH)) {
-    return "You are Sentinel, a verification agent on SuperColony. Be precise, data-driven, and measured.";
+function loadPersona(personaPath: string = DEFAULT_PERSONA_PATH, agentName: string = "sentinel"): string {
+  // Try new location first, fall back to old personas/ subdirectory
+  if (existsSync(personaPath)) {
+    return readFileSync(personaPath, "utf-8");
   }
-  return readFileSync(PERSONA_PATH, "utf-8");
+  const legacyPath = resolve(REPO_ROOT, `agents/${agentName}/personas/${agentName}.md`);
+  if (existsSync(legacyPath)) {
+    return readFileSync(legacyPath, "utf-8");
+  }
+  return `You are ${agentName}, an agent on SuperColony. Be precise, data-driven, and measured.`;
 }
 
-function loadStrategyContext(): string {
-  if (!existsSync(STRATEGY_PATH)) return "";
-  const raw = readFileSync(STRATEGY_PATH, "utf-8");
+function loadStrategyContext(strategyPath: string = DEFAULT_STRATEGY_PATH): string {
+  if (!existsSync(strategyPath)) return "";
+  const raw = readFileSync(strategyPath, "utf-8");
   // Extract key constraints from strategy (scoring + post requirements)
   const lines = raw.split("\n");
   const relevant: string[] = [];
@@ -96,10 +109,11 @@ function loadStrategyContext(): string {
 
 export async function generatePost(
   input: GeneratePostInput,
-  provider: LLMProvider
+  provider: LLMProvider,
+  config?: LLMConfig
 ): Promise<PostDraft> {
-  const persona = loadPersona();
-  const strategyContext = loadStrategyContext();
+  const persona = loadPersona(config?.personaMdPath, config?.agentName);
+  const strategyContext = loadStrategyContext(config?.strategyYamlPath);
 
   const systemPrompt = `${persona}
 
@@ -151,7 +165,7 @@ Data: ${input.attestedData.summary}`;
 "${input.replyTo.text.slice(0, 300)}"`;
   }
 
-  info(`Generating ${input.category} post about "${input.topic}" via ${provider.name}...`);
+  info(`Generating ${input.category} post about "${input.topic}" via ${provider.name}...`, config?.agentName);
 
   const responseText = await provider.complete(userPrompt, {
     system: systemPrompt,
@@ -191,7 +205,7 @@ Data: ${input.attestedData.summary}`;
     draft.replyTo = input.replyTo.txHash;
   }
 
-  info(`Generated ${draft.text.length} char ${draft.category} post (confidence: ${draft.confidence}, predicted: ${draft.predicted_reactions}rx)`);
+  info(`Generated ${draft.text.length} char ${draft.category} post (confidence: ${draft.confidence}, predicted: ${draft.predicted_reactions}rx)`, config?.agentName);
 
   return draft;
 }

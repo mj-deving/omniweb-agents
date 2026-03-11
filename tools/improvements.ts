@@ -26,6 +26,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { info } from "./lib/sdk.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Constants ──────────────────────────────────────
 
@@ -163,7 +164,8 @@ COMMANDS:
   session next             Increment session number
 
 FLAGS:
-  --file PATH              Improvements file (default: ~/.sentinel-improvements.json)
+  --agent NAME             Agent name (default: sentinel)
+  --file PATH              Improvements file (default: ~/.{agent}-improvements.json)
   --status STATUS          Filter list (proposed/approved/applied/verified/rejected)
   --evidence TEXT          Evidence text for propose/verify
   --target TEXT            Target file/system for propose
@@ -362,9 +364,11 @@ function prettyPrint(data: any): void {
 
 function main(): void {
   const { command, positional, flags } = parseArgs();
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
   const filePath = flags["file"]
     ? resolve(flags["file"].replace(/^~/, homedir()))
-    : DEFAULT_FILE;
+    : config.paths.improvementsFile;
 
   if (!command) {
     printHelp();

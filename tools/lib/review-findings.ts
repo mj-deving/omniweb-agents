@@ -2,7 +2,7 @@
  * Review findings persistence — stores structured Q1-Q4 review data
  * across sessions for the AUDIT → REVIEW feedback loop.
  *
- * Storage: ~/.sentinel-review-findings.json (FIFO, last 5 sessions)
+ * Storage: ~/.{agent}-review-findings.json (FIFO, last 5 sessions)
  */
 
 import { readFileSync, writeFileSync, existsSync, renameSync } from "node:fs";
@@ -11,7 +11,7 @@ import { homedir } from "node:os";
 
 // ── Constants ──────────────────────────────────────
 
-const FINDINGS_PATH = resolve(homedir(), ".sentinel-review-findings.json");
+const DEFAULT_FINDINGS_PATH = resolve(homedir(), ".sentinel-review-findings.json");
 const MAX_SESSIONS = 5;
 
 // ── Types ──────────────────────────────────────────
@@ -48,12 +48,12 @@ interface FindingsFile {
 
 // ── I/O ────────────────────────────────────────────
 
-function loadFile(): FindingsFile {
-  if (!existsSync(FINDINGS_PATH)) {
+function loadFile(findingsPath: string = DEFAULT_FINDINGS_PATH): FindingsFile {
+  if (!existsSync(findingsPath)) {
     return { version: 1, sessions: [] };
   }
   try {
-    const data = JSON.parse(readFileSync(FINDINGS_PATH, "utf-8"));
+    const data = JSON.parse(readFileSync(findingsPath, "utf-8"));
     if (!data.version || !Array.isArray(data.sessions)) {
       return { version: 1, sessions: [] };
     }
@@ -63,10 +63,10 @@ function loadFile(): FindingsFile {
   }
 }
 
-function saveFile(data: FindingsFile): void {
-  const tmpPath = FINDINGS_PATH + ".tmp";
+function saveFile(data: FindingsFile, findingsPath: string = DEFAULT_FINDINGS_PATH): void {
+  const tmpPath = findingsPath + ".tmp";
   writeFileSync(tmpPath, JSON.stringify(data, null, 2) + "\n");
-  renameSync(tmpPath, FINDINGS_PATH);
+  renameSync(tmpPath, findingsPath);
 }
 
 // ── Public API ─────────────────────────────────────
@@ -75,8 +75,8 @@ function saveFile(data: FindingsFile): void {
  * Save review findings for a completed session.
  * Maintains FIFO of last MAX_SESSIONS sessions.
  */
-export function saveReviewFindings(findings: ReviewFindings): void {
-  const data = loadFile();
+export function saveReviewFindings(findings: ReviewFindings, findingsPath: string = DEFAULT_FINDINGS_PATH): void {
+  const data = loadFile(findingsPath);
 
   // Remove existing entry for this session number (idempotent)
   data.sessions = data.sessions.filter(
@@ -91,15 +91,15 @@ export function saveReviewFindings(findings: ReviewFindings): void {
     data.sessions = data.sessions.slice(-MAX_SESSIONS);
   }
 
-  saveFile(data);
+  saveFile(data, findingsPath);
 }
 
 /**
  * Load the most recent review findings (from the previous session).
  * Returns null if no findings exist.
  */
-export function loadLatestFindings(): ReviewFindings | null {
-  const data = loadFile();
+export function loadLatestFindings(findingsPath: string = DEFAULT_FINDINGS_PATH): ReviewFindings | null {
+  const data = loadFile(findingsPath);
   if (data.sessions.length === 0) return null;
   return data.sessions[data.sessions.length - 1];
 }
@@ -107,6 +107,6 @@ export function loadLatestFindings(): ReviewFindings | null {
 /**
  * Load all stored review findings (up to MAX_SESSIONS).
  */
-export function loadAllFindings(): ReviewFindings[] {
-  return loadFile().sessions;
+export function loadAllFindings(findingsPath: string = DEFAULT_FINDINGS_PATH): ReviewFindings[] {
+  return loadFile(findingsPath).sessions;
 }

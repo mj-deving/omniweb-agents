@@ -60,7 +60,7 @@ FLAGS:
   --help, -h          Show this help
 
 GATE ITEMS (from strategy.yaml):
-  1. Topic activity ≥3 posts         [AUTO — searches feed]
+  1. Topic activity ≥3 posts         [AUTO — search API, feed fallback]
   2. Unique data                     [MANUAL — operator confirms]
   3. Agent reference                 [MANUAL — operator confirms]
   4. ANALYSIS or PREDICTION category [AUTO — checks --category]
@@ -103,26 +103,35 @@ interface GateResult {
 
 /**
  * Gate 1: Topic activity ≥3 posts in feed.
- * Searches feed for posts with matching tags/assets.
+ * Uses search API (server-side filtering) with feed fallback.
  */
 async function checkTopicActivity(
   topic: string,
   token: string
 ): Promise<GateItem> {
+  // Primary: search API — server-side text+asset filtering
+  // Note: search `text` param may not match tags/assets. If search passes (≥3), trust it.
+  // If search returns < 3 or fails, fall through to feed for client-side tag/asset matching.
+  const searchRes = await apiCall(`/api/feed/search?text=${encodeURIComponent(topic)}&asset=${encodeURIComponent(topic)}&limit=10`, token);
+  if (searchRes.ok) {
+    const rawPosts = searchRes.data?.posts ?? searchRes.data;
+    const posts = Array.isArray(rawPosts) ? rawPosts : [];
+    if (posts.length >= 3) {
+      return { number: 1, name: "Topic activity", status: "pass", detail: `${posts.length} posts found via search (threshold: 3)` };
+    }
+    // Search returned < 3 — fall through to feed for broader tag/asset matching
+  }
+
+  // Fallback: feed API with client-side filtering (search returned few results or is down)
   const feedRes = await apiCall(`/api/feed?limit=50`, token);
   if (!feedRes.ok) {
-    return {
-      number: 1,
-      name: "Topic activity",
-      status: "warning",
-      detail: `Feed request failed (${feedRes.status}) — cannot verify`,
-    };
+    const searchNote = searchRes.ok ? "search found < 3" : `search failed (${searchRes.status})`;
+    return { number: 1, name: "Topic activity", status: "warning", detail: `${searchNote}, feed failed (${feedRes.status}) — cannot verify` };
   }
 
   const rawPosts = feedRes.data?.posts ?? feedRes.data;
   const posts = Array.isArray(rawPosts) ? rawPosts : [];
   const topicLower = topic.toLowerCase();
-
   const matching = posts.filter((p: any) => {
     const tags = (p.payload?.tags || []).map((t: string) => t.toLowerCase());
     const assets = (p.payload?.assets || []).map((a: string) => a.toLowerCase());
@@ -132,20 +141,9 @@ async function checkTopicActivity(
 
   const count = matching.length;
   if (count >= 3) {
-    return {
-      number: 1,
-      name: "Topic activity",
-      status: "pass",
-      detail: `${count} posts found (threshold: 3)`,
-    };
-  } else {
-    return {
-      number: 1,
-      name: "Topic activity",
-      status: "fail",
-      detail: `${count} posts found (need ≥3)`,
-    };
+    return { number: 1, name: "Topic activity", status: "pass", detail: `${count} posts found via feed fallback (threshold: 3)` };
   }
+  return { number: 1, name: "Topic activity", status: "fail", detail: `${count} posts found via feed fallback (need ≥3)` };
 }
 
 /**
@@ -243,21 +241,23 @@ function checkTextAndConfidence(text?: string, confidence?: string): GateItem {
 
 /**
  * Gate 6: Not a duplicate of own recent posts.
- * Checks author feed for tag/asset overlap with topic.
+ * Uses author feed (search API lacks author filter). Retries once on 502.
  */
 async function checkDuplicate(
   topic: string,
   token: string,
   address: string
 ): Promise<GateItem> {
-  const feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
+  let feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
+
+  // Retry once on 502 (transient indexer stall)
+  if (!feedRes.ok && feedRes.status === 502) {
+    await new Promise(r => setTimeout(r, 3000));
+    feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
+  }
+
   if (!feedRes.ok) {
-    return {
-      number: 6,
-      name: "Not duplicate",
-      status: "warning",
-      detail: `Author feed request failed (${feedRes.status}) — cannot verify`,
-    };
+    return { number: 6, name: "Not duplicate", status: "warning", detail: `Author feed failed (${feedRes.status}) — cannot verify` };
   }
 
   const rawPosts = feedRes.data?.posts ?? feedRes.data;
@@ -272,20 +272,10 @@ async function checkDuplicate(
   });
 
   if (duplicates.length === 0) {
-    return {
-      number: 6,
-      name: "Not duplicate",
-      status: "pass",
-      detail: "No matching posts found in your history",
-    };
+    return { number: 6, name: "Not duplicate", status: "pass", detail: "No matching posts found in your history" };
   }
 
-  return {
-    number: 6,
-    name: "Not duplicate",
-    status: "fail",
-    detail: `${duplicates.length} existing post(s) match topic "${topic}" — check for overlap`,
-  };
+  return { number: 6, name: "Not duplicate", status: "fail", detail: `${duplicates.length} existing post(s) match topic "${topic}" — check for overlap` };
 }
 
 // ── Pretty Output ──────────────────────────────────

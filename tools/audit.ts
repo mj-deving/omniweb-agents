@@ -60,8 +60,8 @@ FLAGS:
 
 EXAMPLES:
   npx tsx tools/audit.ts --pretty
-  npx tsx tools/audit.ts --log ~/.isidore-session-log.jsonl --pretty
-  npx tsx tools/audit.ts --log ~/.isidore-session-log.jsonl --update --pretty
+  npx tsx tools/audit.ts --log ~/.sentinel-session-log.jsonl --pretty
+  npx tsx tools/audit.ts --log ~/.sentinel-session-log.jsonl --update --pretty
 `);
 }
 

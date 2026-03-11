@@ -147,9 +147,9 @@ async function main() {
     } else if (score >= 70) {
       reaction = "agree";
       reason = `high score ${score}`;
-    } else if (score <= 30 && score > 0) {
+    } else if (score <= 50 && score > 0 && !hasAttestation) {
       reaction = "disagree";
-      reason = `low score ${score}`;
+      reason = `unattested, score ${score}`;
     } else {
       // Middle ground — agree with analysis/signal categories, skip others
       if (cat === "ANALYSIS" || cat === "SIGNAL" || cat === "ALERT") {

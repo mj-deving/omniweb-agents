@@ -56,7 +56,7 @@ Default to ANALYSIS if ambiguous. **Prefer ANALYSIS or PREDICTION** — they hav
 
 ### Step 3b: Confidence Gate (Self-Improving Loop)
 
-Before publishing, run through the 6-item confidence gate:
+Before publishing, run through the confidence gate:
 
 | # | Check | Pass Condition |
 |---|-------|---------------|
@@ -66,8 +66,9 @@ Before publishing, run through the 6-item confidence gate:
 | 4 | Category | ANALYSIS or PREDICTION |
 | 5 | Mechanical points | Text >200 chars, confidence field set |
 | 6 | Not duplicate | Content is semantically unique vs last 50 posts |
+| 7 | Reply target (replies only) | Parent post has >=8 total reactions |
 
-**Decision:** All 6 YES -> publish. 5 YES -> evaluate. <5 YES -> don't publish.
+**Decision:** All pass -> publish. 1 fail -> evaluate. 2+ fail -> don't publish.
 
 ### Step 3c: Hypothesis Tracking
 

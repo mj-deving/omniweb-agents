@@ -75,6 +75,7 @@ interface AuditResult {
   actual_reactions: number | null;
   actual_score: number | null;
   delta: number | null;
+  highDisagree: boolean;
   status: "audited" | "not_found" | "already_audited" | "error";
   error?: string;
 }
@@ -102,25 +103,25 @@ async function fetchPostState(
   txHash: string,
   token: string,
   authorAddress: string
-): Promise<{ reactions: number; score: number } | null> {
+): Promise<{ reactions: number; agrees: number; disagrees: number; score: number } | null> {
   // Try direct thread lookup (returns post + replies)
   const threadRes = await apiCall(`/api/feed/thread/${txHash}`, token);
   if (threadRes.ok && threadRes.data) {
     // Thread response may be the post itself or contain a posts array
     const post = threadRes.data.post || threadRes.data;
     if (post && post.txHash === txHash) {
-      const reactions = (post.reactions?.agree || 0) +
-                        (post.reactions?.disagree || 0);
-      return { reactions, score: post.score ?? 0 };
+      const agrees = post.reactions?.agree || 0;
+      const disagrees = post.reactions?.disagree || 0;
+      return { reactions: agrees + disagrees, agrees, disagrees, score: post.score ?? 0 };
     }
     // Check posts array
     const threadPosts = threadRes.data?.posts;
     if (Array.isArray(threadPosts)) {
       const found = threadPosts.find((p: any) => p.txHash === txHash);
       if (found) {
-        const reactions = (found.reactions?.agree || 0) +
-                          (found.reactions?.disagree || 0);
-        return { reactions, score: found.score ?? 0 };
+        const agrees = found.reactions?.agree || 0;
+        const disagrees = found.reactions?.disagree || 0;
+        return { reactions: agrees + disagrees, agrees, disagrees, score: found.score ?? 0 };
       }
     }
   }
@@ -132,9 +133,9 @@ async function fetchPostState(
     const posts = Array.isArray(rawPosts) ? rawPosts : [];
     const found = posts.find((p: any) => p.txHash === txHash);
     if (found) {
-      const reactions = (found.reactions?.agree || 0) +
-                        (found.reactions?.disagree || 0);
-      return { reactions, score: found.score ?? 0 };
+      const agrees = found.reactions?.agree || 0;
+      const disagrees = found.reactions?.disagree || 0;
+      return { reactions: agrees + disagrees, agrees, disagrees, score: found.score ?? 0 };
     }
   }
 
@@ -212,12 +213,13 @@ function prettyPrint(results: AuditResult[], stats: AuditStats): void {
 
   for (const r of results) {
     const txShort = r.txHash.slice(0, 8);
+    const disagreeFlag = r.highDisagree ? " ⚡ HIGH DISAGREE" : "";
     if (r.status === "audited") {
       const delta = r.delta! >= 0 ? `+${r.delta}` : `${r.delta}`;
-      console.log(`  Post ${txShort} (${r.category}, ${r.attestation_type}): predicted ${r.predicted_reactions}rx → actual ${r.actual_reactions}rx (Δ ${delta}) | score ${r.actual_score}`);
+      console.log(`  Post ${txShort} (${r.category}, ${r.attestation_type}): predicted ${r.predicted_reactions}rx → actual ${r.actual_reactions}rx (Δ ${delta}) | score ${r.actual_score}${disagreeFlag}`);
     } else if (r.status === "already_audited") {
       const delta = r.delta! >= 0 ? `+${r.delta}` : `${r.delta}`;
-      console.log(`  Post ${txShort} (${r.category}, ${r.attestation_type}): ${r.actual_reactions}rx (Δ ${delta}) | score ${r.actual_score} [cached]`);
+      console.log(`  Post ${txShort} (${r.category}, ${r.attestation_type}): ${r.actual_reactions}rx (Δ ${delta}) | score ${r.actual_score}${disagreeFlag} [cached]`);
     } else if (r.status === "not_found") {
       console.log(`  Post ${txShort} (${r.category}, ${r.attestation_type}): NOT FOUND in feed`);
     } else {
@@ -284,7 +286,10 @@ async function main(): Promise<void> {
 
   for (const entry of entries) {
     // Already audited? (must have non-null values — 0 reactions is valid)
-    if (entry.actual_reactions != null && entry.actual_score != null) {
+    // If agree/disagree breakdown is missing (pre-IMP-11-5 entries), refetch to populate
+    if (entry.actual_reactions != null && entry.actual_score != null && entry.actual_agrees != null) {
+      const agrees = entry.actual_agrees ?? 0;
+      const disagrees = entry.actual_disagrees ?? 0;
       results.push({
         txHash: entry.txHash,
         category: entry.category,
@@ -293,6 +298,7 @@ async function main(): Promise<void> {
         actual_reactions: entry.actual_reactions,
         actual_score: entry.actual_score,
         delta: entry.actual_reactions - entry.predicted_reactions,
+        highDisagree: disagrees > agrees && disagrees >= 5,
         status: "already_audited",
       });
       continue;
@@ -311,14 +317,17 @@ async function main(): Promise<void> {
           actual_reactions: null,
           actual_score: null,
           delta: null,
+          highDisagree: false,
           status: "not_found",
         });
         continue;
       }
 
-      // Update entry in-memory
+      // Update entry in-memory (store agree/disagree for future cached runs)
       entry.actual_reactions = state.reactions;
       entry.actual_score = state.score;
+      entry.actual_agrees = state.agrees;
+      entry.actual_disagrees = state.disagrees;
 
       results.push({
         txHash: entry.txHash,
@@ -328,6 +337,7 @@ async function main(): Promise<void> {
         actual_reactions: state.reactions,
         actual_score: state.score,
         delta: state.reactions - entry.predicted_reactions,
+        highDisagree: state.disagrees > state.agrees && state.disagrees >= 5,
         status: "audited",
       });
     } catch (err: any) {
@@ -339,6 +349,7 @@ async function main(): Promise<void> {
         actual_reactions: null,
         actual_score: null,
         delta: null,
+        highDisagree: false,
         status: "error",
         error: err.message,
       });

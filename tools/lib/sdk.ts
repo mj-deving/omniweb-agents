@@ -76,19 +76,38 @@ export async function apiCall(
 
   const url = path.startsWith("http") ? path : `${SUPERCOLONY_API}${path}`;
 
-  try {
-    const res = await fetch(url, { ...options, headers });
-    const text = await res.text();
-    let data: any;
+  const MAX_RETRIES = 3;
+  const BASE_DELAY_MS = 3000; // 3s, 6s, 12s exponential backoff
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
+      const res = await fetch(url, { ...options, headers });
+
+      // Retry on 502 Bad Gateway — GET only (POST/PUT may have side effects)
+      const method = (options.method || "GET").toUpperCase();
+      if (res.status === 502 && attempt < MAX_RETRIES && method === "GET") {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        info(`502 Bad Gateway on ${path} — retry ${attempt + 1}/${MAX_RETRIES} in ${delay / 1000}s`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = text;
+      }
+      return { ok: res.ok, status: res.status, data };
+    } catch (err: any) {
+      // Network-level errors are NOT retried — only 502 responses
+      return { ok: false, status: 0, data: err.message };
     }
-    return { ok: res.ok, status: res.status, data };
-  } catch (err: any) {
-    return { ok: false, status: 0, data: err.message };
   }
+
+  // Should never reach here, but satisfy TypeScript
+  return { ok: false, status: 502, data: "Max retries exceeded on 502" };
 }
 
 /**

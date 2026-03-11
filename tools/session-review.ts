@@ -60,7 +60,7 @@ FLAGS:
 
 EXAMPLES:
   npx tsx tools/session-review.ts --pretty
-  npx tsx tools/session-review.ts --log ~/.isidore-session-log.jsonl --last 5 --pretty
+  npx tsx tools/session-review.ts --log ~/.sentinel-session-log.jsonl --last 5 --pretty
   npx tsx tools/session-review.ts --json
 `);
 }

@@ -2,7 +2,7 @@ node_modules/
 .env
 *.log
 .supercolony-auth.json
-.isidore-session-log.jsonl
+.*-session-log.jsonl
 .session-log*.jsonl
 .session-summary.json
 dist/

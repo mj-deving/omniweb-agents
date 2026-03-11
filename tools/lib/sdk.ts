@@ -94,6 +94,6 @@ export async function apiCall(
 /**
  * Log info to stderr (keeps stdout clean for JSON output).
  */
-export function info(msg: string): void {
-  console.error(`[sentinel] ${msg}`);
+export function info(msg: string, agentName: string = "sentinel"): void {
+  console.error(`[${agentName}] ${msg}`);
 }

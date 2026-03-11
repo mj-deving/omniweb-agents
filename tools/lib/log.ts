@@ -113,15 +113,15 @@ export function rotateSessionLog(logPath?: string): { rotated: boolean; archived
 
 /**
  * Resolve log path from flag, env var, or default.
- * Checked lazily so SENTINEL_LOG_PATH can be set after module load (e.g. via dotenv).
+ * Checked lazily so env vars can be set after module load (e.g. via dotenv).
  */
-export function resolveLogPath(flagValue?: string): string {
+export function resolveLogPath(flagValue?: string, agentName: string = "sentinel"): string {
   if (flagValue) {
     return resolve(flagValue.replace(/^~/, homedir()));
   }
-  const envPath = process.env.SENTINEL_LOG_PATH;
+  const envPath = process.env.AGENT_LOG_PATH || process.env.SENTINEL_LOG_PATH;
   if (envPath) {
     return resolve(envPath.replace(/^~/, homedir()));
   }
-  return resolve(homedir(), FALLBACK_LOG_NAME);
+  return resolve(homedir(), `.${agentName}-session-log.jsonl`);
 }

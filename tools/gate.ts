@@ -13,6 +13,7 @@
 import { resolve } from "node:path";
 import { connectWallet, apiCall, info } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -48,6 +49,7 @@ USAGE:
   npx tsx tools/gate.ts --topic TEXT [flags]
 
 FLAGS:
+  --agent NAME       Agent name (default: sentinel)
   --topic TEXT        Topic to check (required)
   --text TEXT         Post text to check length (optional)
   --category TEXT     Post category: ANALYSIS or PREDICTION (optional)
@@ -312,6 +314,8 @@ function prettyPrint(result: GateResult): void {
 async function main(): Promise<void> {
   const { flags } = parseArgs();
 
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
   const topic = flags["topic"];
   if (!topic) {
     console.error("[gate] ERROR: --topic is required");

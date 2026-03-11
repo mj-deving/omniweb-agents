@@ -20,6 +20,7 @@
 import { resolve } from "node:path";
 import { connectWallet, apiCall, info } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -55,7 +56,8 @@ USAGE:
   npx tsx tools/engage.ts [flags]
 
 FLAGS:
-  --max N           Max reactions to cast (default: 5, range: 1-8)
+  --agent NAME      Agent name (default: sentinel)
+  --max N           Max reactions to cast (default: from agent config, range: 1-20)
   --env PATH        Path to .env file (default: .env in cwd)
   --pretty          Human-readable formatted output
   --json            Compact single-line JSON output
@@ -142,20 +144,22 @@ function selectReaction(
 async function main(): Promise<void> {
   const { flags } = parseArgs();
 
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
   const envPath = resolve(flags.env || ".env");
   const pretty = flags.pretty === "true";
   const jsonMode = flags.json === "true";
 
-  // Strict --max validation (Phase 2 learning: parseInt silently truncates)
-  let maxReactions = 5;
+  // Default to agent config, allow CLI override
+  let maxReactions = config.engagement.maxReactionsPerSession;
   if (flags.max !== undefined) {
     if (!/^\d+$/.test(flags.max)) {
       console.error(`Error: --max must be a positive integer, got "${flags.max}"`);
       process.exit(1);
     }
     const parsed = Number(flags.max);
-    if (parsed < 1 || parsed > 8) {
-      console.error(`Error: --max must be between 1 and 8, got ${parsed}`);
+    if (parsed < 1 || parsed > 20) {
+      console.error(`Error: --max must be between 1 and 20, got ${parsed}`);
       process.exit(1);
     }
     maxReactions = parsed;
@@ -249,7 +253,7 @@ async function main(): Promise<void> {
   // Format output
   if (pretty) {
     console.log("\n" + "═".repeat(60));
-    console.log(`  SENTINEL — Engagement (max: ${maxReactions})`);
+    console.log(`  ${agentName.toUpperCase()} — Engagement (max: ${maxReactions})`);
     console.log("═".repeat(60));
 
     for (const t of targets) {

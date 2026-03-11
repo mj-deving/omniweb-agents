@@ -19,6 +19,7 @@ import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { connectWallet, apiCall, info } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -54,6 +55,7 @@ USAGE:
   npx tsx tools/room-temp.ts [flags]
 
 FLAGS:
+  --agent NAME   Agent name (default: sentinel)
   --env PATH     Path to .env file (default: .env in cwd)
   --limit N      Feed posts to fetch (default: 50)
   --hours N      Time window for activity count (default: 6)
@@ -369,6 +371,8 @@ function prettyPrint(result: RoomTempResult): void {
 async function main(): Promise<void> {
   const { flags } = parseArgs();
 
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
   const envPath = flags["env"] || resolve(process.cwd(), ".env");
   const limit = parseInt(flags["limit"] || "50") || 50;
   const hours = parseInt(flags["hours"] || "6") || 6;

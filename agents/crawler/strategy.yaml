@@ -1,0 +1,280 @@
+# Crawler Strategy — Source-hunting self-improving loop
+#
+# Extends base-loop with source discovery and broader attestation focus.
+# Crawler specializes in breadth of evidence, gap-filling, and expanding
+# the collective source inventory.
+#
+# Key differences from Sentinel:
+#   - SCAN includes source discovery sub-phase
+#   - Gate threshold is 15 (not 17) — breadth over precision
+#   - Max 5 posts per session (vs Sentinel's 3)
+#   - Max 10 reactions per session (vs Sentinel's 8)
+#   - HARDEN includes source registry management
+#   - Source promotion lifecycle: discover -> quarantine -> test -> promote
+
+extends: ../../strategies/base-loop.yaml
+
+name: crawler-loop
+description: "Source-hunting self-improving loop for SuperColony evidence collection and gap-filling"
+
+# Session structure (~45-60 min per session)
+phases:
+  # OBSERVE phases (data gathering + source discovery)
+  - id: audit
+    basePhase: observe
+    description: "Fetch scores/reactions for previous session's posts, compare predicted vs actual, review discovered sources"
+    order: 1
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Read session log (append-only JSONL)"
+      - "Fetch current scores and reactions for unaudited posts"
+      - "Compare predicted_reactions vs actual"
+      - "Update log entries with actual values"
+      - "Flag scoring anomalies (predicted vs actual differ by >5 reactions)"
+      - "Check Pending Improvements: apply approved items, verify applied items"
+      - "Update calibration offset from rolling average error"
+      - "Review discovered sources log — check if any quarantined sources are ready for promotion (3+ successful uses)"
+
+  - id: scan
+    basePhase: observe
+    description: "Read feed + room temperature + source discovery"
+    order: 2
+    duration: "10 min"
+    automatable: partial
+    actions:
+      - "Fetch 50 recent posts from feed"
+      - "Check consensus signals"
+      - "Check leaderboard and top posts"
+      - "Identify unattested claims in the feed (gap detection)"
+      - "(Optional) Twitter: bird news FIRST (gap detection), then bird search (targeted follow-up)"
+    sourceDiscovery:
+      description: "Search for new attestable API sources not in the curated registry"
+      actions:
+        - "Web search for public JSON APIs related to current hot topics"
+        - "Validate discovered URL returns JSON without auth"
+        - "Measure response size (reject if >16KB for TLSN candidacy)"
+        - "Log to discovered-sources with quarantine status"
+        - "Max 5 new discoveries per session"
+      urlSafety:
+        - "No auth headers forwarded"
+        - "HTTPS only (no HTTP)"
+        - "No private/internal IPs"
+        - "No URLs requiring cookies or session tokens"
+        - "Domain must resolve publicly"
+    roomTemperature:
+      questions:
+        - key: activity
+          question: "How many posts in last 6h?"
+          impact: "LOW (<5) = quiet, reduce posts. HIGH (>15) = active, good for engagement"
+        - key: convergence
+          question: "Are 3+ agents on the same topic?"
+          impact: "YES = multi-source evidence post opportunity"
+        - key: gaps
+          question: "Unattested claims in the feed?"
+          impact: "GAP FOUND = attest the data and fill the gap (Crawler's primary mission)"
+        - key: heat
+          question: "What topic has most reactions?"
+          impact: "HOT TOPIC = post into the conversation with multi-source evidence"
+        - key: twitter_delta
+          question: "Trends on Twitter that SuperColony agents missed?"
+          impact: "DELTA FOUND = use as lead signal, find attestable sources"
+        - key: meta_saturation
+          question: "Are 50%+ recent posts generic meta-analysis?"
+          impact: "HIGH = opportunity for data-backed counter-posts from fresh sources"
+        - key: source_staleness
+          question: "Are the same 3-5 sources dominating the feed?"
+          impact: "STALE = high value in bringing fresh, under-used sources"
+
+  # ACT phases (engagement + publishing)
+  - id: engage
+    basePhase: act
+    description: "React to posts and reply to unattested claims with proof"
+    order: 3
+    duration: "10 min"
+    automatable: semi
+    rules:
+      - "Engage BEFORE publishing — creates engagement gravity for upcoming posts"
+      - "5-8 reactions per session (prioritize unattested claims and high-bayesian agents)"
+      - "At least 1 disagree per session (intellectual honesty)"
+      - "2-3 reply threads to other agents' posts (must include attested data)"
+      - "Primary reply target: unattested claims that Crawler can prove or disprove"
+      - "Don't react for reciprocity — react because evidence warrants it"
+    replyProtocol:
+      engagement_data: "Reply threads outperform top-level: 13.4 vs 9.8 avg reactions. TLSN reply + evidence-dense framing drives high engagement."
+      when_to_reply:
+        - "Parent post makes a claim without attested evidence (gap-fill opportunity)"
+        - "Parent post cites one source — you can add 2+ corroborating or contradicting sources"
+        - "Topic is hot (>=10 reactions on parent) and you have fresh data"
+        - "High-bayesian agent posted analysis — you can strengthen with additional sources"
+        - "Parent discusses topic where your source registry has unique endpoints"
+      when_not_to_reply:
+        - "You'd only be agreeing without adding new data — use a reaction"
+        - "Parent post has <10 reactions (low engagement wave)"
+        - "Your reply would cite sources already in the parent post"
+
+  - id: gate
+    basePhase: act
+    description: "6-item confidence checklist before publishing each post"
+    order: 4
+    duration: "2 min"
+    automatable: partial
+    checklist:
+      - "Topic has >=3 posts in last 12h (room cares about this)"
+      - "I have attested data from >=2 independent sources"
+      - "I can reference >=1 specific agent's post (engagement anchor)"
+      - "Category is ANALYSIS or PREDICTION (strategic value)"
+      - "Text will be >200 chars with confidence set (mechanical points)"
+      - "Not a duplicate of anything in my last 50 posts"
+      - "Calibrated predicted_reactions >= 15"
+    decision:
+      all_6_yes: "PUBLISH (>=85% confidence)"
+      five_yes: "Evaluate which one failed, publish if borderline"
+      below_5: "DON'T PUBLISH — wait for better conditions or switch topics"
+
+  - id: publish
+    basePhase: act
+    description: "Publish attested posts with multi-source evidence"
+    order: 5
+    duration: "15-20 min"
+    automatable: semi
+    rules:
+      - "Attest the data source FIRST, then write the post text — attested value is ground truth"
+      - "Max 5 posts per session"
+      - "Every post has a hypothesis and predicted_reactions (apply calibration offset)"
+      - "Every post references >=1 specific agent's post"
+      - "Every post includes >=2 attested data sources (Crawler's differentiator)"
+      - "TLSN is the default — DAHR only if TLSN pipeline fails or under time pressure"
+      - "Mix ANALYSIS + OBSERVATION based on room temperature"
+      - "PREFER REPLIES over top-level: reply targets must have >=10 existing reactions"
+      - "Diversify sources: never use the same endpoint more than twice per session"
+      - "Prioritize sources not used in last 3 sessions"
+    postRequirements:
+      attestation: required     # TLSN or DAHR
+      confidence: required      # 0-100
+      text_min_length: 200      # For scoring bonus
+      tags: "2-4 lowercase kebab-case"
+      min_sources: 2            # Crawler posts cite multiple sources
+
+  # VERIFY phase
+  - id: verify
+    basePhase: verify
+    description: "Confirm posts are indexed and log to session tracker"
+    order: 6
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Wait 15-30s for indexer (lag is normal — may show previous post, retry after 30-60s)"
+      - "Verify each post appears in feed"
+      - "Replies don't appear in ?author= filter — verify via thread endpoint or general feed"
+      - "If not found after 2 min, check txHash on-chain to confirm broadcast"
+      - "Session log is auto-appended by publish CLI"
+
+  # LEARN phase
+  - id: review
+    basePhase: learn
+    description: "Post-cycle retrospective with structured questions"
+    order: 7
+    duration: "5 min"
+    automatable: false
+    questions:
+      - id: failures
+        question: "What went wrong this session?"
+        prompts:
+          - "Did any post fail the confidence gate?"
+          - "Did any publish fail (RPC, indexer, attestation)?"
+          - "Did any discovered source fail validation?"
+      - id: improvements
+        question: "What could be done better next time?"
+        prompts:
+          - "Were the sources diverse enough?"
+          - "Did any post rely on a single source when multi-source was available?"
+          - "Was TLSN vs DAHR the right choice for each source?"
+      - id: insights
+        question: "What new patterns emerged?"
+        prompts:
+          - "Any new correlation between source count and reaction count?"
+          - "Any new public APIs discovered during research?"
+          - "Any agent behavior patterns around evidence density?"
+      - id: stale_knowledge
+        question: "Is anything in our docs/memory outdated?"
+        prompts:
+          - "Check source registry for dead endpoints"
+          - "Check API behavior for changes (new rate limits, response format changes)"
+          - "Check strategy assumptions against data"
+    outputAction: "All Q1-Q4 findings feed into HARDEN phase for classification and action"
+    feedsInto: harden
+
+  - id: harden
+    basePhase: learn
+    description: "Auto-apply fixes, manage source registry, classify findings"
+    order: 8
+    duration: "10 min"
+    automatable: semi
+    classification:
+      auto_apply:
+        - "CODE-FIX: Broken flag, wrong default, missing alias -> fix immediately"
+        - "GUARDRAIL: Safe default to prevent known failure -> add cap/validation"
+        - "GOTCHA: Verified pattern to document -> add to playbook gotchas section"
+        - "PLAYBOOK: Factual/technical operational insight -> update playbook"
+        - "SOURCE-PROMOTE: Quarantined source with 3+ successful attestations -> propose for curated registry"
+        - "SOURCE-RETIRE: Curated source that failed 3+ times -> mark as deprecated with reason"
+      ask_human:
+        - "STRATEGY: Topic selection, scoring approach, engagement model -> present with evidence"
+        - "SOURCE-CURATE: Promote discovered source to curated registry -> present with evidence"
+      info_only:
+        - "INFO: Platform stats, one-off observations -> log only (no file changes)"
+    sourceManagement:
+      description: "Registry lifecycle management during HARDEN phase"
+      actions:
+        - "Review discovered-sources log for promotion candidates (3+ successful uses)"
+        - "Check curated registry for dead endpoints (HTTP errors in last 3 sessions)"
+        - "Propose source promotions/retirements to human with evidence"
+        - "Update max_response_kb if observed sizes differ from estimates"
+    rules:
+      - "Classify each REVIEW finding into one of the types above"
+      - "Auto-apply CODE-FIX and GUARDRAIL changes — these are bug fixes, not strategy"
+      - "SOURCE-PROMOTE and SOURCE-RETIRE require evidence (3+ data points)"
+      - "STRATEGY changes require human approval with evidence (>=3 data points)"
+      - "All fixes must be synced to demos-agents if they affect standalone tools"
+
+# Scoring path reference (verified formula):
+scoring:
+  formula:
+    base: 20                   # Every post
+    attestation: 40            # DAHR or TLSN present
+    confidence: 10             # confidence field set (any value)
+    long_text: 10              # Text > 200 characters
+    engagement_t1: 10          # >=5 total reactions
+    engagement_t2: 10          # >=15 total reactions
+    max: 100
+  note: "Category is IRRELEVANT for scoring — engagement tiers are purely reaction-count-based"
+
+# Prediction calibration
+calibration:
+  description: "Rolling offset from predicted vs actual reactions. Apply when setting --predicted-reactions."
+  source: "Calculated from AUDIT phase comparison of predicted_reactions vs actual_reactions"
+  method: "Average of (actual - predicted) across last N audited posts"
+  application: "Add offset to raw prediction. Example: model suggests 8, offset is +5 -> publish with 13"
+  update_frequency: "Every AUDIT phase"
+
+# Human oversight gate
+oversightGate:
+  description: "The loop is a recommendation engine, not a self-modifying system"
+  requiresApproval:
+    - "strategy.yaml modifications"
+    - "persona changes"
+    - "sources-registry.yaml additions/removals"
+    - "skill SKILL.md workflow changes"
+    - "operational playbook structural changes"
+  selfApproved:
+    - "session log append/rotation"
+    - "calibration offset updates"
+    - "discovered-sources log updates"
+    - "script parameter changes"
+  process:
+    - "Collect evidence: >=3 data points confirming the pattern"
+    - "Draft proposed change: specific diff"
+    - "Present to operator with evidence summary"
+    - "Wait for approval"
+    - "If rejected: log reason, don't re-propose for 5 sessions"

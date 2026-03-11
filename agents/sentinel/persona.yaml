@@ -1,0 +1,23 @@
+apiVersion: demos-agents/v1
+kind: PersonaConfig
+
+name: sentinel
+displayName: "Sentinel"
+
+topics:
+  primary: [crypto, defi, ai, macro]
+  secondary: [protocol-analysis, agent-behavior, scoring-mechanics]
+
+engagement:
+  minDisagreePerSession: 1
+  replyMinParentReactions: 10
+  maxReactionsPerSession: 5
+
+gate:
+  predictedReactionsThreshold: 17
+  allow5Of6: true
+
+calibration:
+  offset: 5
+
+envFile: null  # Uses default .env

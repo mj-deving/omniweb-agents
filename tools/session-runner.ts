@@ -48,10 +48,13 @@ import { resolveProvider, type LLMProvider } from "./lib/llm-provider.js";
 import { connectWallet } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
 import { attestAndPublish, type PublishResult } from "./lib/publish-pipeline.js";
+import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent-config.js";
 
 // ── Constants ──────────────────────────────────────
 
-const IMPROVEMENTS_PATH = resolve(homedir(), ".sentinel-improvements.json");
+// Resolved at runtime based on --agent flag
+let IMPROVEMENTS_PATH = resolve(homedir(), ".sentinel-improvements.json");
+let agentConfig: AgentConfig;
 
 type OversightLevel = "full" | "approve" | "autonomous";
 
@@ -87,6 +90,7 @@ function getPhaseMode(phase: PhaseName, oversight: OversightLevel): string {
 // ── Arg Parsing ────────────────────────────────────
 
 interface RunnerFlags {
+  agent: string;
   env: string;
   log: string;
   resume: boolean;
@@ -139,9 +143,12 @@ function parseArgs(): RunnerFlags {
     oversight = val as OversightLevel;
   }
 
+  const agentName = resolveAgentName(flags);
+
   return {
+    agent: agentName,
     env: resolve(flags.env || ".env"),
-    log: resolveLogPath(flags.log),
+    log: resolveLogPath(flags.log, agentName),
     resume: flags.resume === "true",
     skipTo,
     forceSkipAudit: flags["force-skip-audit"] === "true",
@@ -153,14 +160,15 @@ function parseArgs(): RunnerFlags {
 
 function printHelp(): void {
   console.log(`
-Session Runner — Sentinel 8-phase loop orchestrator
+Session Runner — Agent 8-phase loop orchestrator
 
 USAGE:
   npx tsx tools/session-runner.ts [flags]
 
 FLAGS:
+  --agent NAME           Agent name (default: sentinel)
   --env PATH             Path to .env file (default: .env in cwd)
-  --log PATH             Session log path (default: ~/.sentinel-session-log.jsonl)
+  --log PATH             Session log path (default: ~/.{agent}-session-log.jsonl)
   --oversight LEVEL      Oversight level: full|approve|autonomous (default: full)
   --resume               Resume interrupted session from last completed phase
   --skip-to PHASE        Start from specific phase (audit|scan|engage|gate|publish|verify|review|harden)
@@ -241,9 +249,11 @@ function getNextSessionNumber(): number {
 }
 
 function incrementSessionNumber(): void {
-  if (!existsSync(IMPROVEMENTS_PATH)) return;
   try {
-    const data = JSON.parse(readFileSync(IMPROVEMENTS_PATH, "utf-8"));
+    let data: any = { version: 1, nextSession: 1, items: [] };
+    if (existsSync(IMPROVEMENTS_PATH)) {
+      data = JSON.parse(readFileSync(IMPROVEMENTS_PATH, "utf-8"));
+    }
     data.nextSession = (data.nextSession || 1) + 1;
     writeFileSync(IMPROVEMENTS_PATH, JSON.stringify(data, null, 2));
     info(`Session number incremented to ${data.nextSession}`);
@@ -298,7 +308,7 @@ async function runToolAndParse(
 
 async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> {
   // Load and display previous review findings
-  const prevFindings = loadLatestFindings();
+  const prevFindings = loadLatestFindings(agentConfig.paths.findingsFile);
   if (prevFindings) {
     console.log(`\n  Previous review (session ${prevFindings.sessionNumber}):`);
     if (prevFindings.q1_failures.length > 0) {
@@ -332,7 +342,7 @@ async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> 
     } catch { /* non-fatal */ }
   }
 
-  const args = ["--update", "--log", flags.log, "--env", flags.env];
+  const args = ["--agent", flags.agent, "--update", "--log", flags.log, "--env", flags.env];
   const result = await runToolAndParse("tools/audit.ts", args, "audit.ts");
 
   const stats = result.stats || {};
@@ -348,7 +358,7 @@ async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> 
 // ── SCAN Phase ─────────────────────────────────────
 
 async function runScan(state: SessionState, flags: RunnerFlags): Promise<void> {
-  const args = ["--json", "--env", flags.env];
+  const args = ["--agent", flags.agent, "--json", "--env", flags.env];
   const result = await runToolAndParse("tools/room-temp.ts", args, "room-temp.ts");
 
   const level = result.activity?.level || "unknown";
@@ -362,7 +372,7 @@ async function runScan(state: SessionState, flags: RunnerFlags): Promise<void> {
 // ── ENGAGE Phase ───────────────────────────────────
 
 async function runEngage(state: SessionState, flags: RunnerFlags): Promise<void> {
-  const args = ["--max", "5", "--json", "--env", flags.env];
+  const args = ["--agent", flags.agent, "--max", String(agentConfig.engagement.maxReactionsPerSession), "--json", "--env", flags.env];
   const result = await runToolAndParse("tools/engage.ts", args, "engage.ts");
 
   phaseResult(
@@ -691,7 +701,12 @@ async function runPublishAutonomous(
           },
           calibrationOffset,
         },
-        provider
+        provider,
+        {
+          personaMdPath: agentConfig.paths.personaMd,
+          strategyYamlPath: agentConfig.paths.strategyYaml,
+          agentName: agentConfig.name,
+        }
       );
 
       console.log(`\n  LLM draft for "${gp.topic}":`);
@@ -804,6 +819,7 @@ async function autoPropose(
     try {
       const impArgs = [
         "propose", suggestion,
+        "--agent", agentConfig.name,
         "--evidence", `auto-detected in session ${sessionNumber} review`,
         "--target", "workflow",
         "--source", "Q2",
@@ -925,7 +941,7 @@ function persistReviewFindings(sessionNumber: number, result: any): void {
         description: s.description || "",
         type: s.type || "unaudited",
       })),
-    });
+    }, agentConfig.paths.findingsFile);
     info("Review findings persisted for next session's AUDIT");
   } catch (e: any) {
     info(`Warning: could not persist review findings: ${e.message}`);
@@ -1088,6 +1104,7 @@ async function proposeImprovement(
 ): Promise<void> {
   const impArgs = [
     "propose", description,
+    "--agent", agentConfig.name,
     "--evidence", evidence,
     "--target", target,
     "--source", source,
@@ -1316,8 +1333,8 @@ function phaseDuration(state: SessionState, phase: PhaseName): string {
   return ` (${(ms / 60000).toFixed(1)} min)`;
 }
 
-function writeSessionReport(state: SessionState, oversight: OversightLevel): void {
-  const sessDir = resolve(homedir(), ".sentinel", "sessions");
+function writeSessionReport(state: SessionState, oversight: OversightLevel, sessionsDir?: string): void {
+  const sessDir = sessionsDir || resolve(homedir(), `.${state.agentName}`, "sessions");
   mkdirSync(sessDir, { recursive: true });
   const reportPath = resolve(sessDir, `session-${state.sessionNumber}-report.md`);
 
@@ -1326,7 +1343,7 @@ function writeSessionReport(state: SessionState, oversight: OversightLevel): voi
   const engage = state.phases.engage.result || {};
   const lines: string[] = [];
 
-  lines.push(`# Sentinel Session ${state.sessionNumber} — ${date}`);
+  lines.push(`# ${state.agentName.charAt(0).toUpperCase() + state.agentName.slice(1)} Session ${state.sessionNumber} — ${date}`);
   lines.push("");
   lines.push(`**Duration:** ${duration} min | **Posts:** ${state.posts.length} | **Reactions:** ${engage.reactions_cast || 0} (${engage.agrees || 0} agree, ${engage.disagrees || 0} disagree) | **Oversight:** ${oversight}`);
   lines.push("");
@@ -1472,12 +1489,16 @@ function dryRun(sessionNumber: number, flags: RunnerFlags, startPhase: PhaseName
 async function main(): Promise<void> {
   const flags = parseArgs();
 
+  agentConfig = loadAgentConfig(flags.agent);
+  IMPROVEMENTS_PATH = agentConfig.paths.improvementsFile;
+  const sessionsDir = agentConfig.paths.sessionDir;
+
   let state: SessionState;
   let sessionNumber: number;
   let startPhase: PhaseName | null = null;
 
   if (flags.resume) {
-    const active = findActiveSession();
+    const active = findActiveSession(sessionsDir, flags.agent);
     if (!active) {
       console.error("Error: no active session to resume. Start a new session without --resume.");
       process.exit(1);
@@ -1486,7 +1507,7 @@ async function main(): Promise<void> {
     sessionNumber = state.sessionNumber;
 
     try {
-      acquireLock(sessionNumber);
+      acquireLock(sessionNumber, sessionsDir, flags.agent);
     } catch (e: any) {
       if (e.message.includes("is locked by PID")) {
         console.error(`Error: ${e.message}`);
@@ -1496,12 +1517,12 @@ async function main(): Promise<void> {
     }
 
     state.pid = process.pid;
-    saveState(state);
+    saveState(state, sessionsDir);
 
     startPhase = getNextPhase(state);
     if (!startPhase) {
       console.log("Session already complete — nothing to resume.");
-      clearState(sessionNumber);
+      clearState(sessionNumber, sessionsDir, flags.agent);
       process.exit(0);
     }
     info(`Resuming session ${sessionNumber} from ${startPhase.toUpperCase()}`);
@@ -1529,14 +1550,14 @@ async function main(): Promise<void> {
       process.exit(0);
     }
 
-    state = startSession(sessionNumber);
+    state = startSession(sessionNumber, flags.agent, sessionsDir);
     info(`Started session ${sessionNumber}`);
 
     if (startPhase) {
       const phases = getPhaseOrder();
       for (const phase of phases) {
         if (phase === startPhase) break;
-        completePhase(state, phase, { skipped: true, reason: `--skip-to ${startPhase}` });
+        completePhase(state, phase, { skipped: true, reason: `--skip-to ${startPhase}` }, sessionsDir);
       }
     }
   }
@@ -1548,8 +1569,8 @@ async function main(): Promise<void> {
     if (shuttingDown) process.exit(1);
     shuttingDown = true;
     console.log("\n\n  ⚠️ Interrupted — saving state...");
-    saveState(state);
-    console.log(`  Resume with: npx tsx tools/session-runner.ts --resume --pretty`);
+    saveState(state, sessionsDir);
+    console.log(`  Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
     console.log();
     process.exit(0);
   });
@@ -1569,7 +1590,7 @@ async function main(): Promise<void> {
       if (state.phases[phase].status === "completed") continue;
 
       phaseHeader(phase, flags.oversight);
-      beginPhase(state, phase);
+      beginPhase(state, phase, sessionsDir);
 
       try {
         switch (phase) {
@@ -1605,9 +1626,9 @@ async function main(): Promise<void> {
             break;
         }
       } catch (e: any) {
-        failPhase(state, phase, e.message);
+        failPhase(state, phase, e.message, sessionsDir);
         phaseError(e.message);
-        console.error(`\n  Session state saved. Resume with: npx tsx tools/session-runner.ts --resume --pretty`);
+        console.error(`\n  Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
         rl?.close();
         process.exit(1);
       }
@@ -1635,19 +1656,19 @@ async function main(): Promise<void> {
     console.log("═".repeat(50) + "\n");
 
     try {
-      writeSessionReport(state, flags.oversight);
+      writeSessionReport(state, flags.oversight, sessionsDir);
     } catch (e: any) {
       info(`Warning: could not write session report: ${e.message}`);
     }
 
     incrementSessionNumber();
-    clearState(sessionNumber);
+    clearState(sessionNumber, sessionsDir, flags.agent);
     info("Session state cleared.");
   } catch (e: any) {
     rl?.close();
-    saveState(state);
+    saveState(state, sessionsDir);
     console.error(`\nFATAL: ${e.message}`);
-    console.error(`Session state saved. Resume with: npx tsx tools/session-runner.ts --resume --pretty`);
+    console.error(`Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
     process.exit(1);
   }
 }

@@ -14,6 +14,7 @@ import { connectWallet, apiCall, info } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
 import { readSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "./lib/log.js";
 import type { SessionLogEntry } from "./lib/log.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -49,7 +50,8 @@ USAGE:
   npx tsx tools/audit.ts [flags]
 
 FLAGS:
-  --log PATH     Session log path (default: $SENTINEL_LOG_PATH or ~/.sentinel-session-log.jsonl)
+  --agent NAME   Agent name (default: sentinel)
+  --log PATH     Session log path (default: ~/.{agent}-session-log.jsonl)
   --env PATH     Path to .env file (default: .env in cwd)
   --update       Write actual scores/reactions back to log (default: dry-run)
   --pretty       Human-readable formatted output
@@ -256,7 +258,9 @@ function prettyPrint(results: AuditResult[], stats: AuditStats): void {
 async function main(): Promise<void> {
   const { flags } = parseArgs();
 
-  const logPath = resolveLogPath(flags["log"]);
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
+  const logPath = resolveLogPath(flags["log"], agentName);
   const envPath = flags["env"] || ".env";
   const shouldUpdate = flags["update"] === "true";
   const prettyOutput = flags["pretty"] === "true";

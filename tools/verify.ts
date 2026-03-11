@@ -18,6 +18,7 @@ import { resolve } from "node:path";
 import { connectWallet, apiCall, info } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
 import { readSessionLog, resolveLogPath } from "./lib/log.js";
+import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -59,7 +60,8 @@ ARGS:
   <txHash...>       One or more txHashes to verify (positional)
 
 FLAGS:
-  --log PATH        Session log path (default: ~/.sentinel-session-log.jsonl)
+  --agent NAME      Agent name (default: sentinel)
+  --log PATH        Session log path (default: ~/.{agent}-session-log.jsonl)
   --env PATH        Path to .env file (default: .env in cwd)
   --wait N          Seconds to wait before checking (default: 15, for indexer lag)
   --pretty          Human-readable formatted output
@@ -159,8 +161,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const agentName = resolveAgentName(flags);
+  const config = loadAgentConfig(agentName);
   const envPath = resolve(flags.env || ".env");
-  const logPath = resolveLogPath(flags.log);
+  const logPath = resolveLogPath(flags.log, agentName);
   const pretty = flags.pretty === "true";
   const jsonMode = flags.json === "true";
 
@@ -231,7 +235,7 @@ async function main(): Promise<void> {
   // Format output
   if (pretty) {
     console.log("\n" + "═".repeat(60));
-    console.log("  SENTINEL — Post Verification");
+    console.log(`  ${agentName.toUpperCase()} — Post Verification`);
     console.log("═".repeat(60));
 
     for (const r of verified) {

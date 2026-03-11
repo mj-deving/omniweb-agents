@@ -422,6 +422,11 @@ function extractTopicsFromScan(state: SessionState): Array<{ topic: string; cate
   return topics.slice(0, 3); // Max 3 per strategy
 }
 
+/** Get state file path for --scan-cache */
+function getStateFilePath(state: SessionState): string {
+  return resolve(homedir(), `.${state.agentName}`, "sessions", `${state.agentName}-${state.sessionNumber}.json`);
+}
+
 /** GATE: full oversight — interactive topic/category/text prompts */
 async function runGateFull(
   state: SessionState,
@@ -445,7 +450,7 @@ async function runGateFull(
     const text = await ask(rl, "  Draft text (or 'skip'): ");
     const confStr = await ask(rl, "  Confidence (60-100): ");
 
-    const gateArgs = ["--agent", flags.agent, "--topic", topic, "--json", "--env", flags.env];
+    const gateArgs = ["--agent", flags.agent, "--topic", topic, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
     if (category && category.toLowerCase() !== "skip") gateArgs.push("--category", category.toUpperCase());
     if (text && text.toLowerCase() !== "skip") gateArgs.push("--text", text);
     if (confStr && /^\d+$/.test(confStr)) gateArgs.push("--confidence", confStr);
@@ -501,7 +506,7 @@ async function runGateApprove(
   }
 
   for (const suggestion of suggestions) {
-    const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env];
+    const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
     const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
 
     const checks = Array.isArray(result.checks) ? result.checks : [];
@@ -539,7 +544,7 @@ async function runGateAutonomous(
   }
 
   for (const suggestion of suggestions) {
-    const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env];
+    const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
     const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
 
     const checks = Array.isArray(result.checks) ? result.checks : [];

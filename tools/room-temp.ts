@@ -132,6 +132,7 @@ interface RoomTempResult {
     total_count: number;
   };
   recommendation: string;
+  rawPosts?: FeedPost[];
 }
 
 // ── Analysis Functions ─────────────────────────────
@@ -413,6 +414,7 @@ async function main(): Promise<void> {
     twitter_delta: null,
     meta_saturation: metaSaturation,
     recommendation,
+    rawPosts: posts,
   };
 
   // Output

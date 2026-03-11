@@ -2,7 +2,7 @@
 /**
  * Confidence Gate Checker — Sentinel Phase 2 tool
  *
- * Maps to strategy.yaml GATE phase (6-item checklist).
+ * Maps to strategy.yaml GATE phase (6+1 item checklist).
  * Automates checkable items, marks manual items as MANUAL in output.
  * No interactive prompts — pure CLI, fully agentic.
  *
@@ -54,6 +54,7 @@ FLAGS:
   --text TEXT         Post text to check length (optional)
   --category TEXT     Post category: ANALYSIS or PREDICTION (optional)
   --confidence N      Confidence value 0-100 (optional)
+  --reply-to TX_HASH  Parent post txHash (checks reply target reactions)
   --env PATH          Path to .env file (default: .env in cwd)
   --pretty            Human-readable formatted output
   --json              Compact single-line JSON output
@@ -66,6 +67,7 @@ GATE ITEMS (from strategy.yaml):
   4. ANALYSIS or PREDICTION category [AUTO — checks --category]
   5. >200 chars + confidence set     [AUTO — checks --text + --confidence]
   6. Not duplicate                   [AUTO — searches own posts]
+  7. Reply target reactions           [AUTO — checks --reply-to parent, if provided]
 
 EXAMPLES:
   npx tsx tools/gate.ts --topic "bitcoin" --pretty
@@ -248,13 +250,8 @@ async function checkDuplicate(
   token: string,
   address: string
 ): Promise<GateItem> {
-  let feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
-
-  // Retry once on 502 (transient indexer stall)
-  if (!feedRes.ok && feedRes.status === 502) {
-    await new Promise(r => setTimeout(r, 3000));
-    feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
-  }
+  // 502 retry handled by apiCall() — no manual retry needed
+  const feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
 
   if (!feedRes.ok) {
     return { number: 6, name: "Not duplicate", status: "warning", detail: `Author feed failed (${feedRes.status}) — cannot verify` };
@@ -276,6 +273,41 @@ async function checkDuplicate(
   }
 
   return { number: 6, name: "Not duplicate", status: "fail", detail: `${duplicates.length} existing post(s) match topic "${topic}" — check for overlap` };
+}
+
+/**
+ * Gate 7: Reply target has enough reactions (uses config.engagement.replyMinParentReactions).
+ * Only runs when --reply-to is provided.
+ */
+async function checkReplyTarget(
+  replyTo: string,
+  token: string,
+  minReactions: number
+): Promise<GateItem> {
+  const threadRes = await apiCall(`/api/feed/thread/${replyTo}`, token);
+  if (!threadRes.ok) {
+    return { number: 7, name: "Reply target", status: "warning", detail: `Cannot fetch parent post ${replyTo.slice(0, 8)}... (${threadRes.status})` };
+  }
+
+  // Thread response may be the post itself, contain .post, or have a .posts array
+  let post = threadRes.data?.post || threadRes.data;
+  if (!post || post.txHash !== replyTo) {
+    // Check posts array (same pattern as audit.ts)
+    const threadPosts = threadRes.data?.posts;
+    if (Array.isArray(threadPosts)) {
+      post = threadPosts.find((p: any) => p.txHash === replyTo);
+    }
+  }
+  if (!post || post.txHash !== replyTo) {
+    return { number: 7, name: "Reply target", status: "warning", detail: `Parent post ${replyTo.slice(0, 8)}... not found in thread response` };
+  }
+
+  const reactions = (post.reactions?.agree || 0) + (post.reactions?.disagree || 0);
+  if (reactions >= minReactions) {
+    return { number: 7, name: "Reply target", status: "pass", detail: `Parent has ${reactions} reactions (threshold: ${minReactions})` };
+  }
+
+  return { number: 7, name: "Reply target", status: "fail", detail: `Parent has ${reactions} reactions (need ≥${minReactions})` };
 }
 
 // ── Pretty Output ──────────────────────────────────
@@ -316,6 +348,7 @@ async function main(): Promise<void> {
   const text = flags["text"];
   const category = flags["category"];
   const confidence = flags["confidence"];
+  const replyTo = flags["reply-to"];
 
   // Connect and auth
   const { demos, address } = await connectWallet(envPath);
@@ -326,10 +359,14 @@ async function main(): Promise<void> {
   const items: GateItem[] = [];
 
   // Parallel API checks + sync checks
-  const [topicActivity, duplicate] = await Promise.all([
+  const apiChecks: Promise<GateItem>[] = [
     checkTopicActivity(topic, token),
     checkDuplicate(topic, token, address),
-  ]);
+  ];
+  if (replyTo) {
+    apiChecks.push(checkReplyTarget(replyTo, token, config.engagement.replyMinParentReactions));
+  }
+  const [topicActivity, duplicate, replyTarget] = await Promise.all(apiChecks);
 
   items.push(topicActivity);
   items.push(checkUniqueData());
@@ -337,6 +374,9 @@ async function main(): Promise<void> {
   items.push(checkCategory(category));
   items.push(checkTextAndConfidence(text, confidence));
   items.push(duplicate);
+  if (replyTarget) {
+    items.push(replyTarget);
+  }
 
   // Summary
   const pass = items.filter(i => i.status === "pass").length;
@@ -349,8 +389,10 @@ async function main(): Promise<void> {
   const autoPass = autoCheckable.filter(i => i.status === "pass").length;
   const autoTotal = autoCheckable.length;
 
-  if (fail > 0) {
-    recommendation = `HOLD — ${fail} check(s) failed. Fix before publishing.`;
+  if (fail >= 2) {
+    recommendation = `HOLD — ${fail} checks failed. Don't publish — wait for better conditions.`;
+  } else if (fail === 1) {
+    recommendation = `REVIEW — 1 check failed. Evaluate if borderline and publish if justified.`;
   } else if (warning > 0 && autoPass < autoTotal) {
     recommendation = `REVIEW — ${warning} check(s) need data. Provide missing flags for full evaluation.`;
   } else if (autoPass === autoTotal) {

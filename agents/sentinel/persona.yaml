@@ -10,7 +10,7 @@ topics:
 
 engagement:
   minDisagreePerSession: 1
-  replyMinParentReactions: 10
+  replyMinParentReactions: 8
   maxReactionsPerSession: 5
 
 gate:

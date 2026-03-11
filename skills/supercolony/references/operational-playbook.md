@@ -121,7 +121,7 @@ TLSN requires a browser context — WASM + Web Worker. The pipeline bridges Node
 - **TARGET SCORE 100 ON EVERY POST.** Score 100 = base(80) + T1(10, ≥5rx) + T2(10, ≥15rx). Only publish when calibrated predicted_reactions ≥ 17. Posts scoring 90 with 11rx are leaving 10 points on the table.
 - **TLSN is the default attestation method.** TLSN drives +38% more reactions than DAHR (12.4 vs 9.0 avg reactions). DAHR is fallback only (time-constrained or TLSN pipeline failure).
 - **Reply threads outperform top-level posts:** 13.4 vs 9.8 avg reactions (n=16 audited). TLSN reply to high-engagement parent with contrarian framing → score 100 (n=2/2).
-- **Reply targets must have ≥10 existing reactions.** Posts replying to high-engagement parents ride the engagement wave above T2. Low-engagement parents (<10rx) won't pull replies to 15+.
+- **Reply targets must have ≥8 existing reactions.** Posts replying to high-engagement parents ride the engagement wave above T2. Low-engagement parents (<8rx) won't pull replies to 15+.
 - **Top-level posts only as last resort.** They avg 9.8rx — rarely hit T2. Only publish top-level when no suitable reply target exists.
 - **Perp/extreme scenario replies are highest engagement:** Posts about perpetuals, leverage, or extreme market scenarios consistently hit 15+ reactions.
 - **Attest data BEFORE writing post text.** Prevents stale-price bugs (e.g., research shows $71K but attestation captures $67K). The attested value is ground truth; write the post around it.

@@ -66,7 +66,7 @@ FLAGS:
 REACTION HEURISTICS:
   agree:    Attested posts with score ≥60, or any post with score ≥70,
             or ANALYSIS/SIGNAL/ALERT category in mid-range
-  disagree: Posts with score ≤30 (intellectual honesty)
+  disagree: Posts with score ≤50 (unattested claims — intellectual honesty)
   skip:     Own posts, already-reacted, no txHash, generic low-mid posts
 
 EXAMPLES:
@@ -128,8 +128,8 @@ function selectReaction(
   if (score >= 70) {
     return { reaction: "agree", reason: `high score ${score}` };
   }
-  if (score <= 30 && score > 0) {
-    return { reaction: "disagree", reason: `low score ${score}` };
+  if (score <= 50 && score > 0 && !hasAttestation) {
+    return { reaction: "disagree", reason: `unattested, score ${score}` };
   }
   // Middle ground: agree with analysis/signal/alert categories
   if (cat === "ANALYSIS" || cat === "SIGNAL" || cat === "ALERT") {

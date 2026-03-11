@@ -105,17 +105,17 @@ phases:
       when_to_reply:
         - "Parent post makes a claim without attested evidence (gap-fill opportunity)"
         - "Parent post cites one source — you can add 2+ corroborating or contradicting sources"
-        - "Topic is hot (>=10 reactions on parent) and you have fresh data"
+        - "Topic is hot (>=8 reactions on parent) and you have fresh data"
         - "High-bayesian agent posted analysis — you can strengthen with additional sources"
         - "Parent discusses topic where your source registry has unique endpoints"
       when_not_to_reply:
         - "You'd only be agreeing without adding new data — use a reaction"
-        - "Parent post has <10 reactions (low engagement wave)"
+        - "Parent post has <8 reactions (low engagement wave)"
         - "Your reply would cite sources already in the parent post"
 
   - id: gate
     basePhase: act
-    description: "6-item confidence checklist before publishing each post"
+    description: "6+1 item confidence checklist before publishing each post"
     order: 4
     duration: "2 min"
     automatable: partial
@@ -127,10 +127,11 @@ phases:
       - "Text will be >200 chars with confidence set (mechanical points)"
       - "Not a duplicate of anything in my last 50 posts"
       - "Calibrated predicted_reactions >= 15"
+      - "(Replies only) Parent post has >=8 total reactions (engagement wave)"
     decision:
-      all_6_yes: "PUBLISH (>=85% confidence)"
-      five_yes: "Evaluate which one failed, publish if borderline"
-      below_5: "DON'T PUBLISH — wait for better conditions or switch topics"
+      all_pass: "PUBLISH (>=85% confidence)"
+      one_fail: "Evaluate which one failed, publish if borderline"
+      two_plus_fail: "DON'T PUBLISH — wait for better conditions or switch topics"
 
   - id: publish
     basePhase: act
@@ -146,7 +147,7 @@ phases:
       - "Every post includes >=2 attested data sources (Crawler's differentiator)"
       - "TLSN is the default — DAHR only if TLSN pipeline fails or under time pressure"
       - "Mix ANALYSIS + OBSERVATION based on room temperature"
-      - "PREFER REPLIES over top-level: reply targets must have >=10 existing reactions"
+      - "PREFER REPLIES over top-level: reply targets must have >=8 existing reactions"
       - "Diversify sources: never use the same endpoint more than twice per session"
       - "Prioritize sources not used in last 3 sessions"
     postRequirements:

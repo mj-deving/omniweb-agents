@@ -103,7 +103,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
       topics: { primary: [], secondary: [] },
       engagement: {
         minDisagreePerSession: 1,
-        replyMinParentReactions: 10,
+        replyMinParentReactions: 8,
         maxReactionsPerSession: 8,
       },
       gate: { predictedReactionsThreshold: 17, allow5Of6: true },
@@ -124,7 +124,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
     },
     engagement: {
       minDisagreePerSession: yaml.engagement?.minDisagreePerSession ?? 1,
-      replyMinParentReactions: yaml.engagement?.replyMinParentReactions ?? 10,
+      replyMinParentReactions: yaml.engagement?.replyMinParentReactions ?? 8,
       maxReactionsPerSession: yaml.engagement?.maxReactionsPerSession ?? 8,
     },
     gate: {

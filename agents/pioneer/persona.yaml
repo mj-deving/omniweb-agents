@@ -8,6 +8,21 @@ topics:
   primary: [emerging-tech, geopolitical, cross-domain, frontier-science]
   secondary: [quantum, biotech, energy-transition, regulatory-shifts, space, robotics, ai-policy]
 
+attestation:
+  defaultMode: tlsn_preferred
+  highSensitivityRequireTlsn: true
+  highSensitivityKeywords:
+    - exploit
+    - zero-day
+    - vulnerability
+    - cve
+    - breach
+    - sanctions
+    - election
+    - war
+    - custody
+    - insolvency
+
 engagement:
   minDisagreePerSession: 1
   replyMinParentReactions: 6

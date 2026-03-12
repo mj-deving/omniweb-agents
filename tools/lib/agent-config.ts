@@ -25,6 +25,11 @@ export interface AgentConfig {
   name: string;
   displayName: string;
   topics: { primary: string[]; secondary: string[] };
+  attestation: {
+    defaultMode: "dahr_only" | "tlsn_preferred" | "tlsn_only";
+    highSensitivityRequireTlsn: boolean;
+    highSensitivityKeywords: string[];
+  };
   engagement: {
     minDisagreePerSession: number;
     replyMinParentReactions: number;
@@ -104,6 +109,11 @@ interface ValidatedPersonaConfig {
   name?: string;
   displayName?: string;
   topics?: { primary?: string[]; secondary?: string[] };
+  attestation?: {
+    defaultMode?: "dahr_only" | "tlsn_preferred" | "tlsn_only";
+    highSensitivityRequireTlsn?: boolean;
+    highSensitivityKeywords?: string[];
+  };
   engagement?: { minDisagreePerSession?: number; replyMinParentReactions?: number; maxReactionsPerSession?: number };
   gate?: {
     predictedReactionsThreshold?: number;
@@ -155,6 +165,9 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
   if (yaml.engagement !== undefined && (typeof yaml.engagement !== "object" || yaml.engagement === null || Array.isArray(yaml.engagement))) {
     errors.push(`engagement: expected object, got ${Array.isArray(yaml.engagement) ? "array" : typeof yaml.engagement}`);
   }
+  if (yaml.attestation !== undefined && (typeof yaml.attestation !== "object" || yaml.attestation === null || Array.isArray(yaml.attestation))) {
+    errors.push(`attestation: expected object, got ${Array.isArray(yaml.attestation) ? "array" : typeof yaml.attestation}`);
+  }
   if (yaml.gate !== undefined && (typeof yaml.gate !== "object" || yaml.gate === null || Array.isArray(yaml.gate))) {
     errors.push(`gate: expected object, got ${Array.isArray(yaml.gate) ? "array" : typeof yaml.gate}`);
   }
@@ -181,6 +194,23 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
 
   if (yaml.gate?.allow5Of6 !== undefined && typeof yaml.gate.allow5Of6 !== "boolean") {
     errors.push(`gate.allow5Of6: expected boolean, got ${typeof yaml.gate.allow5Of6}`);
+  }
+  if (yaml.attestation?.defaultMode !== undefined) {
+    if (typeof yaml.attestation.defaultMode !== "string") {
+      errors.push(`attestation.defaultMode: expected string, got ${typeof yaml.attestation.defaultMode}`);
+    } else if (!["dahr_only", "tlsn_preferred", "tlsn_only"].includes(yaml.attestation.defaultMode)) {
+      errors.push(`attestation.defaultMode: expected "dahr_only", "tlsn_preferred", or "tlsn_only", got "${yaml.attestation.defaultMode}"`);
+    }
+  }
+  if (yaml.attestation?.highSensitivityRequireTlsn !== undefined && typeof yaml.attestation.highSensitivityRequireTlsn !== "boolean") {
+    errors.push(`attestation.highSensitivityRequireTlsn: expected boolean, got ${typeof yaml.attestation.highSensitivityRequireTlsn}`);
+  }
+  if (yaml.attestation?.highSensitivityKeywords !== undefined) {
+    if (!Array.isArray(yaml.attestation.highSensitivityKeywords)) {
+      errors.push(`attestation.highSensitivityKeywords: expected string array, got ${typeof yaml.attestation.highSensitivityKeywords}`);
+    } else if (yaml.attestation.highSensitivityKeywords.some((v: unknown) => typeof v !== "string")) {
+      errors.push(`attestation.highSensitivityKeywords: all elements must be strings`);
+    }
   }
   if (yaml.gate?.duplicateWindowHours !== undefined) {
     const hours = yaml.gate.duplicateWindowHours;
@@ -235,6 +265,11 @@ export function loadAgentConfig(name?: string): AgentConfig {
       name: agentName,
       displayName: agentName.charAt(0).toUpperCase() + agentName.slice(1),
       topics: { primary: [], secondary: [] },
+      attestation: {
+        defaultMode: "dahr_only",
+        highSensitivityRequireTlsn: true,
+        highSensitivityKeywords: [],
+      },
       engagement: {
         minDisagreePerSession: 1,
         replyMinParentReactions: 8,
@@ -255,6 +290,11 @@ export function loadAgentConfig(name?: string): AgentConfig {
     topics: {
       primary: yaml.topics?.primary || [],
       secondary: yaml.topics?.secondary || [],
+    },
+    attestation: {
+      defaultMode: yaml.attestation?.defaultMode ?? "dahr_only",
+      highSensitivityRequireTlsn: yaml.attestation?.highSensitivityRequireTlsn ?? true,
+      highSensitivityKeywords: yaml.attestation?.highSensitivityKeywords ?? [],
     },
     engagement: {
       minDisagreePerSession: yaml.engagement?.minDisagreePerSession ?? 1,

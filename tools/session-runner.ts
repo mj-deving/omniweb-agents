@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
+import { parse as parseYaml } from "yaml";
 
 import { runTool } from "./lib/subprocess.js";
 import {
@@ -55,6 +56,14 @@ import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent
 let IMPROVEMENTS_PATH = resolve(homedir(), ".sentinel-improvements.json");
 let agentConfig: AgentConfig;
 let runnerAgentName = "sentinel";
+
+interface SourceRecord {
+  name: string;
+  url: string;
+  topics?: string[];
+  dahr_safe?: boolean;
+  max_response_kb?: number;
+}
 
 type OversightLevel = "full" | "approve" | "autonomous";
 
@@ -234,6 +243,112 @@ function phaseError(msg: string): void {
 
 function info(msg: string): void {
   console.error(`[runner] ${msg}`);
+}
+
+function loadSourceRegistry(path: string): SourceRecord[] {
+  if (!existsSync(path)) return [];
+  try {
+    const parsed = parseYaml(readFileSync(path, "utf-8")) as any;
+    const sources = Array.isArray(parsed?.sources) ? parsed.sources : [];
+    return sources.filter((s: any) => !!s?.name && !!s?.url);
+  } catch {
+    return [];
+  }
+}
+
+function fillUrlTemplate(url: string, vars: Record<string, string>): string {
+  return url.replace(/\{([^}]+)\}/g, (match, key: string) => {
+    if (key in vars) return encodeURIComponent(vars[key]);
+    return match;
+  });
+}
+
+function unresolvedPlaceholders(url: string): string[] {
+  const matches = url.match(/\{([^}]+)\}/g) || [];
+  return matches.map((m) => m.slice(1, -1));
+}
+
+function extractTopicVars(topic: string): Record<string, string> {
+  const t = topic.toLowerCase();
+  const firstWord = (t.match(/[a-z0-9-]+/)?.[0] || "topic").replace(/[^a-z0-9-]/g, "");
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    asset: firstWord,
+    symbol: "",
+    query: topic,
+    protocol: firstWord,
+    package: firstWord,
+    title: firstWord,
+    name: firstWord,
+    date: today,
+    base: "USD",
+    lang: "en",
+  };
+}
+
+function topicTokenSet(topic: string): Set<string> {
+  const out = new Set(
+    topic
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 2)
+  );
+
+  // Canonical aliases for common assets/symbols.
+  if (/\bbitcoin|\bbtc\b/.test(topic.toLowerCase())) {
+    out.add("bitcoin");
+    out.add("btc");
+  } else if (/\bethereum|\beth\b/.test(topic.toLowerCase())) {
+    out.add("ethereum");
+    out.add("eth");
+  } else if (/\bsolana|\bsol\b/.test(topic.toLowerCase())) {
+    out.add("solana");
+    out.add("sol");
+  }
+
+  return out;
+}
+
+function sourceTokenSet(source: SourceRecord): Set<string> {
+  const out = new Set<string>();
+  for (const tag of source.topics || []) {
+    for (const tok of String(tag).toLowerCase().split(/[^a-z0-9]+/)) {
+      if (tok.length >= 2) out.add(tok);
+    }
+  }
+  return out;
+}
+
+function selectAttestationSource(topic: string, sources: SourceRecord[]): { source: SourceRecord; url: string } | null {
+  if (sources.length === 0) return null;
+
+  const vars = extractTopicVars(topic);
+  const topicWords = topicTokenSet(topic);
+
+  const ranked = sources
+    .map((source) => {
+      let overlap = 0;
+      const tags = sourceTokenSet(source);
+      for (const w of topicWords) {
+        if (tags.has(w)) overlap++;
+      }
+
+      let score = overlap * 4;
+      if (overlap > 0 && source.dahr_safe) score += 2;
+      if ((source.max_response_kb || 999) <= 16) score += 1;
+
+      const resolvedUrl = fillUrlTemplate(source.url, vars);
+      const unresolved = unresolvedPlaceholders(resolvedUrl);
+      return { source, score, overlap, resolvedUrl, unresolved };
+    })
+    .filter((x) => x.source.dahr_safe === true)
+    .filter((x) => x.overlap > 0)
+    .filter((x) => x.unresolved.length === 0)
+    .sort((a, b) => b.score - a.score || (a.source.max_response_kb || 999) - (b.source.max_response_kb || 999));
+
+  const chosen = ranked[0];
+  if (!chosen) return null;
+  return { source: chosen.source, url: chosen.resolvedUrl };
 }
 
 // ── Session Number ─────────────────────────────────
@@ -904,6 +1019,7 @@ async function runPublishAutonomous(
 
   // Connect wallet for publishing (no auth needed — publish uses on-chain TX, not API)
   const { demos } = await connectWallet(flags.env);
+  const sources = loadSourceRegistry(agentConfig.paths.sourcesRegistry);
 
   let existingLog: any[] = [];
   try {
@@ -949,17 +1065,12 @@ async function runPublishAutonomous(
       console.log(`    Confidence: ${draft.confidence}`);
       console.log(`    Predicted: ${draft.predicted_reactions} reactions`);
 
-      // Step 2: DAHR attest (using a default data source for the topic)
-      // For now, use CoinGecko for crypto topics, or skip attestation
-      let attestUrl: string | undefined;
-      const topicLower = gp.topic.toLowerCase();
-      if (topicLower.includes("btc") || topicLower.includes("bitcoin") || topicLower.includes("crypto")) {
-        attestUrl = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
-      } else if (topicLower.includes("eth") || topicLower.includes("ethereum")) {
-        attestUrl = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd";
-      } else if (topicLower.includes("gold") || topicLower.includes("oil") || topicLower.includes("commodity")) {
-        attestUrl = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"; // Fallback
+      // Step 2: Select source-registry attestation target (hard requirement)
+      const sourceSelection = selectAttestationSource(gp.topic, sources);
+      if (!sourceSelection) {
+        throw new Error(`No matching dahr_safe source for topic "${gp.topic}" in ${agentConfig.paths.sourcesRegistry}`);
       }
+      info(`Attesting source "${sourceSelection.source.name}" for topic "${gp.topic}"`);
 
       // Step 3: Attest + Publish
       const pubResult: PublishResult = await attestAndPublish(
@@ -971,7 +1082,7 @@ async function runPublishAutonomous(
           confidence: draft.confidence,
           replyTo: draft.replyTo,
         },
-        attestUrl
+        sourceSelection.url
       );
 
       phaseResult(`Published: ${pubResult.txHash.slice(0, 16)}... (${pubResult.category}, ${pubResult.textLength} chars)`);

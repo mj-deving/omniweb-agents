@@ -27,6 +27,8 @@ export interface LLMProvider {
   complete(prompt: string, options?: {
     system?: string;
     maxTokens?: number;
+    model?: string;
+    modelTier?: "fast" | "standard" | "premium";
   }): Promise<string>;
 
   /** Human-readable name for logging ("anthropic", "codex-cli", "ollama") */
@@ -62,17 +64,22 @@ export class CLIProvider implements LLMProvider {
     this.name = name || `cli:${this.executable}`;
   }
 
-  async complete(prompt: string, options?: { system?: string; maxTokens?: number }): Promise<string> {
+  async complete(prompt: string, options?: { system?: string; maxTokens?: number; modelTier?: "fast" | "standard" | "premium" }): Promise<string> {
     const fullPrompt = options?.system
       ? `${options.system}\n\n${prompt}`
       : prompt;
 
     // Pipe prompt directly via stdin — no shell, no temp files.
     // spawn() without shell prevents command injection from env vars.
+    // Pass modelTier as LLM_MODEL_TIER env var so CLI tools can use it.
     return new Promise<string>((resolvePromise, reject) => {
       const child = spawn(this.executable, this.args, {
         stdio: ["pipe", "pipe", "pipe"],
         timeout: 120_000,
+        env: {
+          ...process.env,
+          ...(options?.modelTier ? { LLM_MODEL_TIER: options.modelTier } : {}),
+        },
       });
 
       let stdout = "";
@@ -114,17 +121,23 @@ export class CLIProvider implements LLMProvider {
 export class AnthropicProvider implements LLMProvider {
   readonly name = "anthropic";
   private apiKey: string;
+  private envPath?: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, envPath?: string) {
     this.apiKey = apiKey;
+    this.envPath = envPath;
   }
 
-  async complete(prompt: string, options?: { system?: string; maxTokens?: number }): Promise<string> {
+  async complete(
+    prompt: string,
+    options?: { system?: string; maxTokens?: number; model?: string; modelTier?: "fast" | "standard" | "premium" }
+  ): Promise<string> {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey: this.apiKey });
+    const model = resolveModel(options, this.envPath);
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: options?.maxTokens || 1024,
       messages: [{ role: "user", content: prompt }],
       ...(options?.system ? { system: options.system } : {}),
@@ -147,12 +160,17 @@ export class AnthropicProvider implements LLMProvider {
 export class OpenAIProvider implements LLMProvider {
   readonly name = "openai";
   private apiKey: string;
+  private envPath?: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, envPath?: string) {
     this.apiKey = apiKey;
+    this.envPath = envPath;
   }
 
-  async complete(prompt: string, options?: { system?: string; maxTokens?: number }): Promise<string> {
+  async complete(
+    prompt: string,
+    options?: { system?: string; maxTokens?: number; model?: string; modelTier?: "fast" | "standard" | "premium" }
+  ): Promise<string> {
     // Dynamic import — openai is an optional dependency
     // Use string variable to prevent tsc from resolving the module at compile time
     const pkg = "openai";
@@ -171,7 +189,7 @@ export class OpenAIProvider implements LLMProvider {
     messages.push({ role: "user", content: prompt });
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: resolveModel(options, this.envPath),
       max_tokens: options?.maxTokens || 1024,
       messages,
     });
@@ -214,6 +232,28 @@ function loadKeyFromEnv(key: string, envPath?: string): string | undefined {
   return undefined;
 }
 
+function resolveModel(
+  options?: { model?: string; modelTier?: "fast" | "standard" | "premium" },
+  envPath?: string
+): string {
+  if (options?.model && options.model.trim()) return options.model.trim();
+
+  const tier = options?.modelTier || "standard";
+  const key = tier === "fast"
+    ? "LLM_MODEL_FAST"
+    : tier === "premium"
+      ? "LLM_MODEL_PREMIUM"
+      : "LLM_MODEL_STANDARD";
+
+  const model = loadKeyFromEnv(key, envPath);
+  if (!model) {
+    throw new Error(
+      `${key} not found. Set ${key} in environment or .env (tiers: fast/standard/premium).`
+    );
+  }
+  return model;
+}
+
 /**
  * Resolve the best available LLM provider from the environment.
  * Returns null if no LLM is available (callers must handle gracefully).
@@ -226,12 +266,12 @@ export function resolveProvider(envPath?: string): LLMProvider | null {
       case "anthropic": {
         const key = loadKeyFromEnv("ANTHROPIC_API_KEY", envPath);
         if (!key) throw new Error("LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY not found");
-        return new AnthropicProvider(key);
+        return new AnthropicProvider(key, envPath);
       }
       case "openai": {
         const key = loadKeyFromEnv("OPENAI_API_KEY", envPath);
         if (!key) throw new Error("LLM_PROVIDER=openai but OPENAI_API_KEY not found");
-        return new OpenAIProvider(key);
+        return new OpenAIProvider(key, envPath);
       }
       case "cli": {
         const cmd = loadKeyFromEnv("LLM_CLI_COMMAND", envPath);
@@ -260,12 +300,12 @@ export function resolveProvider(envPath?: string): LLMProvider | null {
       "Set LLM_PROVIDER=anthropic|openai|cli to disambiguate."
     );
   }
-  if (anthropicKey) return new AnthropicProvider(anthropicKey);
-  if (openaiKey) return new OpenAIProvider(openaiKey);
+  if (anthropicKey) return new AnthropicProvider(anthropicKey, envPath);
+  if (openaiKey) return new OpenAIProvider(openaiKey, envPath);
 
   // Step 6: CLI autodetect
   if (whichSync("codex")) {
-    return new CLIProvider("codex exec --full-auto -q", "codex-cli");
+    return new CLIProvider("codex exec --full-auto", "codex-cli");
   }
   if (whichSync("claude")) {
     return new CLIProvider("claude --print", "claude-cli");

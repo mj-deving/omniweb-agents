@@ -11,6 +11,8 @@
     "session-review": "tsx tools/session-review.ts",
     "gate": "tsx tools/gate.ts",
     "engage": "tsx tools/engage.ts",
+    "publish": "tsx tools/publish.ts",
+    "run-loop": "tsx tools/run-loop.ts",
     "verify": "tsx tools/verify.ts",
     "session": "tsx tools/session-runner.ts",
     "validate:plugin": "node tools/validate-plugin.mjs",

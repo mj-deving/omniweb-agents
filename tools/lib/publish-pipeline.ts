@@ -124,6 +124,15 @@ export async function publishPost(
   demos: Demos,
   input: PublishInput
 ): Promise<PublishResult> {
+  if (!input.sourceAttestations || input.sourceAttestations.length === 0) {
+    throw new Error("Refusing unattested publish: sourceAttestations is required");
+  }
+  for (const att of input.sourceAttestations) {
+    if (!att?.url || !att?.responseHash || !att?.txHash) {
+      throw new Error("Refusing publish: invalid sourceAttestations entry (url/responseHash/txHash required)");
+    }
+  }
+
   const post: any = {
     v: 1,
     cat: input.category,
@@ -196,14 +205,20 @@ export async function attestAndPublish(
   }
 
   // Step 2: Publish
+  const sourceAttestations = attestation ? [{
+    url: attestation.url,
+    responseHash: attestation.responseHash,
+    txHash: attestation.txHash,
+    timestamp: Date.now(),
+  }] : input.sourceAttestations;
+
+  if (!sourceAttestations || sourceAttestations.length === 0) {
+    throw new Error("Refusing unattested publish: attestation step did not produce a source attestation");
+  }
+
   const result = await publishPost(demos, {
     ...input,
-    sourceAttestations: attestation ? [{
-      url: attestation.url,
-      responseHash: attestation.responseHash,
-      txHash: attestation.txHash,
-      timestamp: Date.now(),
-    }] : input.sourceAttestations,
+    sourceAttestations,
   });
   result.attestation = attestation;
 

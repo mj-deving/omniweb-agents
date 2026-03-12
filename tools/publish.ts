@@ -537,14 +537,18 @@ async function main(): Promise<void> {
 
     try {
       const selection = selectSource(candidate.topic, sources);
-      if (selection) {
-        row.source = { name: selection.source.name, url: selection.url };
+      if (!selection) {
+        row.status = "rejected";
+        row.reject_reasons.push("no matching attestation source in sources-registry (attestation required)");
+        results.push(row);
+        continue;
       }
+      row.source = { name: selection.source.name, url: selection.url };
 
       let attested: AttestResult | undefined;
       let attestedSummary: string | undefined;
 
-      if (!dryRun && selection) {
+      if (!dryRun) {
         attested = await retry502("DAHR attestation", () => attestDahr(demos, selection.url));
         row.attestation = { txHash: attested.txHash, responseHash: attested.responseHash };
         attestedSummary = summarizeAttestedData(attested.data);

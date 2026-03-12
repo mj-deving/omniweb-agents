@@ -63,6 +63,7 @@ export interface GeneratePostInput {
     text: string;
   };
   calibrationOffset: number;
+  modelTier?: "fast" | "standard" | "premium";
 }
 
 // (API key resolution removed — now handled by LLMProvider in llm-provider.ts)
@@ -170,6 +171,7 @@ Data: ${input.attestedData.summary}`;
   const responseText = await provider.complete(userPrompt, {
     system: systemPrompt,
     maxTokens: MAX_TOKENS,
+    modelTier: input.modelTier || "standard",
   });
 
   // Parse JSON from response (handle markdown code blocks)

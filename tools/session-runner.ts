@@ -45,7 +45,7 @@ import { readSessionLog, appendSessionLog, resolveLogPath } from "./lib/log.js";
 import { saveReviewFindings, loadLatestFindings } from "./lib/review-findings.js";
 import { generatePost, type PostDraft } from "./lib/llm.js";
 import { resolveProvider, type LLMProvider } from "./lib/llm-provider.js";
-import { connectWallet } from "./lib/sdk.js";
+import { connectWallet, setLogAgent } from "./lib/sdk.js";
 import { attestAndPublish, type PublishResult } from "./lib/publish-pipeline.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent-config.js";
 
@@ -54,6 +54,7 @@ import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent
 // Resolved at runtime based on --agent flag
 let IMPROVEMENTS_PATH = resolve(homedir(), ".sentinel-improvements.json");
 let agentConfig: AgentConfig;
+let runnerAgentName = "sentinel";
 
 type OversightLevel = "full" | "approve" | "autonomous";
 
@@ -205,9 +206,9 @@ EXAMPLES:
 
 // ── Display Helpers ────────────────────────────────
 
-function banner(sessionNumber: number, oversight: OversightLevel): void {
+function banner(sessionNumber: number, oversight: OversightLevel, agentName: string): void {
   console.log("\n" + "═".repeat(50));
-  console.log(`  SENTINEL SESSION ${sessionNumber}`);
+  console.log(`  ${agentName.toUpperCase()} SESSION ${sessionNumber}`);
   console.log(`  Oversight: ${oversight}`);
   console.log("═".repeat(50));
 }
@@ -286,6 +287,7 @@ async function runToolAndParse(
   const result = await runTool(toolPath, args, {
     cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
     timeout: 180_000,
+    env: { AGENT_NAME: runnerAgentName },
   });
 
   if (result.stderr.trim()) {
@@ -392,29 +394,253 @@ interface GatePost {
   gateResult: any;
 }
 
-/** Extract post topics from scan results (gaps + heat) */
-function extractTopicsFromScan(state: SessionState): Array<{ topic: string; category: string; reason: string }> {
+type GateItemStatus = "pass" | "fail" | "manual" | "warning";
+
+interface NormalizedGateCheck {
+  name: string;
+  detail: string;
+  status: GateItemStatus;
+  passed: boolean;
+}
+
+interface NormalizedGateEval {
+  checks: NormalizedGateCheck[];
+  passed: number;
+  total: number;
+  fail: number;
+  warning: number;
+  manual: number;
+}
+
+function normalizeGateResult(result: any): NormalizedGateEval {
+  if (Array.isArray(result?.items)) {
+    const checks: NormalizedGateCheck[] = result.items.map((item: any) => {
+      const status: GateItemStatus =
+        item?.status === "pass" || item?.status === "fail" || item?.status === "manual" || item?.status === "warning"
+          ? item.status
+          : "fail";
+      return {
+        name: String(item?.name || "check"),
+        detail: String(item?.detail || ""),
+        status,
+        passed: status === "pass",
+      };
+    });
+
+    const autoChecks = checks.filter((c) => c.status !== "manual");
+    return {
+      checks,
+      passed: autoChecks.filter((c) => c.passed).length,
+      total: autoChecks.length,
+      fail: checks.filter((c) => c.status === "fail").length,
+      warning: checks.filter((c) => c.status === "warning").length,
+      manual: checks.filter((c) => c.status === "manual").length,
+    };
+  }
+
+  const legacyChecksRaw = Array.isArray(result?.checks) ? result.checks : [];
+  const checks: NormalizedGateCheck[] = legacyChecksRaw.map((c: any) => ({
+    name: String(c?.name || "check"),
+    detail: String(c?.detail || ""),
+    status: c?.passed ? "pass" : "fail",
+    passed: Boolean(c?.passed),
+  }));
+  return {
+    checks,
+    passed: checks.filter((c) => c.passed).length,
+    total: checks.length,
+    fail: checks.filter((c) => c.status === "fail").length,
+    warning: 0,
+    manual: 0,
+  };
+}
+
+function gateIcon(status: GateItemStatus): string {
+  switch (status) {
+    case "pass": return "✓";
+    case "manual": return "?";
+    case "warning": return "!";
+    case "fail":
+    default:
+      return "✗";
+  }
+}
+
+function shouldAutoPassGate(result: any, normalized: NormalizedGateEval): boolean {
+  // New gate.ts result shape has explicit fail count — treat this as authoritative.
+  if (typeof result?.summary?.fail === "number") {
+    return result.summary.fail === 0;
+  }
+
+  // Legacy fallback: keep historical "5/6+" behavior.
+  if (normalized.total === 0) return false;
+  return normalized.passed >= Math.ceil(normalized.total * 5 / 6);
+}
+
+function tokenizeTopicText(raw: string): string[] {
+  return raw
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 2);
+}
+
+/**
+ * Extract post topics from scan results.
+ * Standard mode: preserve previous heat+gaps behavior.
+ * Pioneer mode: prefer frontier/focus-aligned topics and filter generic feed noise.
+ */
+function extractTopicsFromScan(
+  state: SessionState,
+  sessionLogPath?: string
+): Array<{ topic: string; category: string; reason: string }> {
   const scan = state.phases.scan.result || {};
+  const mode = agentConfig.gate.mode === "pioneer" ? "pioneer" : "standard";
   const topics: Array<{ topic: string; category: string; reason: string }> = [];
 
-  // Hot topic first (highest engagement potential)
+  if (mode === "standard") {
+    // Hot topic first (highest engagement potential)
+    if (scan.heat?.topic) {
+      topics.push({
+        topic: scan.heat.topic,
+        category: "ANALYSIS",
+        reason: `hot topic (${scan.heat.reactions || 0} reactions)`,
+      });
+    }
+
+    // Gap topics (unique signal opportunities)
+    const gaps = scan.gaps?.topics || [];
+    for (const gap of gaps.slice(0, 3)) {
+      if (!topics.some((t) => t.topic === gap)) {
+        topics.push({
+          topic: gap,
+          category: "ANALYSIS",
+          reason: "gap in feed coverage",
+        });
+      }
+    }
+
+    return topics.slice(0, 3); // Max 3 per strategy
+  }
+
+  // Pioneer mode
+  const focusTopics = [...agentConfig.topics.primary, ...agentConfig.topics.secondary]
+    .map((t) => String(t).toLowerCase().trim())
+    .filter(Boolean);
+  const focusTokenSet = new Set<string>();
+  for (const ft of focusTopics) {
+    for (const tok of tokenizeTopicText(ft)) focusTokenSet.add(tok);
+  }
+
+  const genericLowSignal = new Set([
+    "opinion", "action", "analysis", "prediction", "question", "signal", "refuted", "meta", "news",
+  ]);
+
+  const recentSelfTopics = new Set<string>();
+  if (sessionLogPath) {
+    const now = Date.now();
+    const windowMs = (agentConfig.gate.duplicateWindowHours || 24) * 60 * 60 * 1000;
+    for (const entry of readSessionLog(sessionLogPath)) {
+      const ts = Date.parse(String(entry.timestamp || ""));
+      if (!Number.isFinite(ts) || now - ts > windowMs) continue;
+      if (entry.topic) recentSelfTopics.add(String(entry.topic).toLowerCase());
+      for (const tag of entry.tags || []) {
+        recentSelfTopics.add(String(tag).toLowerCase());
+      }
+    }
+  }
+
+  const candidateMap = new Map<string, { score: number; reasons: string[] }>();
+  const addCandidate = (rawTopic: string, baseScore: number, reason: string): void => {
+    const topic = String(rawTopic || "").trim().toLowerCase();
+    if (!topic) return;
+    if (recentSelfTopics.has(topic)) return;
+
+    const topicTokens = tokenizeTopicText(topic);
+    if (topicTokens.length === 0) return;
+
+    let score = baseScore;
+    const reasons = [reason];
+
+    if (genericLowSignal.has(topic)) {
+      score -= 5;
+      reasons.push("generic");
+    }
+    if (/^[a-z]{1,3}$/i.test(topic)) {
+      score -= 3;
+      reasons.push("too-short");
+    }
+
+    const focusOverlap = topicTokens.filter((t) => focusTokenSet.has(t)).length;
+    if (focusTopics.includes(topic)) {
+      score += 4;
+      reasons.push("focus-exact");
+    } else if (focusOverlap > 0) {
+      const bonus = Math.min(3, focusOverlap + 1);
+      score += bonus;
+      reasons.push(`focus-overlap+${bonus}`);
+    } else {
+      score -= 2;
+      reasons.push("off-focus");
+    }
+
+    if (topic.includes("-") && topic.length >= 8) {
+      score += 1;
+      reasons.push("specific");
+    }
+
+    const existing = candidateMap.get(topic);
+    if (!existing || score > existing.score) {
+      candidateMap.set(topic, { score, reasons });
+    } else if (existing) {
+      existing.reasons.push(...reasons);
+    }
+  };
+
   if (scan.heat?.topic) {
+    addCandidate(
+      scan.heat.topic,
+      2,
+      `heat ${scan.heat.reactions || 0}rx`
+    );
+  }
+
+  const gaps = Array.isArray(scan.gaps?.topics) ? scan.gaps.topics : [];
+  for (const gap of gaps.slice(0, 15)) {
+    addCandidate(gap, 4, "gap");
+  }
+
+  if (scan.convergence?.topic) {
+    addCandidate(
+      scan.convergence.topic,
+      2,
+      `convergence ${scan.convergence.agent_count || 0} agents`
+    );
+  }
+
+  const ranked = [...candidateMap.entries()]
+    .map(([topic, meta]) => ({ topic, ...meta }))
+    .filter((c) => c.score >= 4)
+    .sort((a, b) => b.score - a.score);
+
+  for (const c of ranked.slice(0, 3)) {
     topics.push({
-      topic: scan.heat.topic,
-      category: "ANALYSIS",
-      reason: `hot topic (${scan.heat.reactions || 0} reactions)`,
+      topic: c.topic,
+      category: "QUESTION",
+      reason: `pioneer scoop (${c.reasons.slice(0, 3).join(", ")})`,
     });
   }
 
-  // Gap topics (unique signal opportunities)
-  const gaps = scan.gaps?.topics || [];
-  for (const gap of gaps.slice(0, 3)) {
-    if (!topics.some((t) => t.topic === gap)) {
+  // Fallback to configured frontier topics if scan candidates are weak.
+  if (topics.length === 0) {
+    for (const ft of agentConfig.topics.secondary.slice(0, 3)) {
+      const lowered = String(ft).toLowerCase();
+      if (recentSelfTopics.has(lowered)) continue;
       topics.push({
-        topic: gap,
-        category: "ANALYSIS",
-        reason: "gap in feed coverage",
+        topic: lowered,
+        category: "QUESTION",
+        reason: "pioneer fallback focus topic",
       });
+      if (topics.length >= 3) break;
     }
   }
 
@@ -445,7 +671,11 @@ async function runGateFull(
       break;
     }
 
-    const category = await ask(rl, "  Category (ANALYSIS/PREDICTION): ");
+    const mode = agentConfig.gate.mode === "pioneer" ? "pioneer" : "standard";
+    const categoryPrompt = mode === "pioneer"
+      ? "  Category (ANALYSIS/PREDICTION/QUESTION): "
+      : "  Category (ANALYSIS/PREDICTION): ";
+    const category = await ask(rl, categoryPrompt);
     const text = await ask(rl, "  Draft text (or 'skip'): ");
     const confStr = await ask(rl, "  Confidence (60-100): ");
 
@@ -456,11 +686,10 @@ async function runGateFull(
 
     const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
 
-    const checks = Array.isArray(result.checks) ? result.checks : [];
-    const passed = checks.filter((c: any) => c.passed).length;
-    console.log(`\n  Gate result: ${passed}/${checks.length} checks passed`);
-    for (const check of checks) {
-      console.log(`    ${check.passed ? "✓" : "✗"} ${check.name}: ${check.detail || ""}`);
+    const gateEval = normalizeGateResult(result);
+    console.log(`\n  Gate result: ${gateEval.passed}/${gateEval.total} automated checks passed`);
+    for (const check of gateEval.checks) {
+      console.log(`    ${gateIcon(check.status)} ${check.name}: ${check.detail}`);
     }
 
     const proceed = await ask(rl, "\n  Proceed to publish? (y/n/skip): ");
@@ -490,7 +719,7 @@ async function runGateApprove(
   rl: ReturnType<typeof createInterface>
 ): Promise<void> {
   const gatePosts: GatePost[] = [];
-  const suggestions = extractTopicsFromScan(state);
+  const suggestions = extractTopicsFromScan(state, flags.log);
 
   if (suggestions.length === 0) {
     phaseSkipped("No topics found in scan — skipping gate");
@@ -508,9 +737,8 @@ async function runGateApprove(
     const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
     const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
 
-    const checks = Array.isArray(result.checks) ? result.checks : [];
-    const passed = checks.filter((c: any) => c.passed).length;
-    console.log(`\n  Gate: ${suggestion.topic} — ${passed}/${checks.length} checks`);
+    const gateEval = normalizeGateResult(result);
+    console.log(`\n  Gate: ${suggestion.topic} — ${gateEval.passed}/${gateEval.total} automated checks`);
 
     const proceed = await ask(rl, `  Approve "${suggestion.topic}"? (y/n): `);
     if (proceed.toLowerCase() === "y" || proceed.toLowerCase() === "yes") {
@@ -528,13 +756,13 @@ async function runGateApprove(
   completePhase(state, "gate", { posts: gatePosts });
 }
 
-/** GATE: autonomous oversight — auto-pick topics from scan, auto-accept if 5/6+ */
+/** GATE: autonomous oversight — auto-pick topics from scan, auto-accept by gate summary */
 async function runGateAutonomous(
   state: SessionState,
   flags: RunnerFlags
 ): Promise<void> {
   const gatePosts: GatePost[] = [];
-  const suggestions = extractTopicsFromScan(state);
+  const suggestions = extractTopicsFromScan(state, flags.log);
 
   if (suggestions.length === 0) {
     phaseSkipped("No topics found in scan — skipping gate");
@@ -546,12 +774,14 @@ async function runGateAutonomous(
     const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
     const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
 
-    const checks = Array.isArray(result.checks) ? result.checks : [];
-    const passed = checks.filter((c: any) => c.passed).length;
-    const total = checks.length;
+    const gateEval = normalizeGateResult(result);
+    const passed = gateEval.passed;
+    const total = gateEval.total;
+    const failCount = typeof result?.summary?.fail === "number" ? result.summary.fail : gateEval.fail;
+    const canPublish = shouldAutoPassGate(result, gateEval);
 
-    if (total > 0 && passed >= Math.ceil(total * 5 / 6)) {
-      info(`Gate PASS: ${suggestion.topic} (${passed}/${total})`);
+    if (canPublish) {
+      info(`Gate PASS: ${suggestion.topic} (${passed}/${total}, fail=${failCount})`);
       gatePosts.push({
         topic: suggestion.topic,
         category: suggestion.category,
@@ -560,7 +790,7 @@ async function runGateAutonomous(
         gateResult: result,
       });
     } else {
-      info(`Gate FAIL: ${suggestion.topic} (${passed}/${total}) — skipping`);
+      info(`Gate FAIL: ${suggestion.topic} (${passed}/${total}, fail=${failCount}) — skipping`);
     }
   }
 
@@ -1470,7 +1700,7 @@ function writeSessionReport(state: SessionState, oversight: OversightLevel, sess
 // ── Dry Run ────────────────────────────────────────
 
 function dryRun(sessionNumber: number, flags: RunnerFlags, startPhase: PhaseName | null): void {
-  banner(sessionNumber, flags.oversight);
+  banner(sessionNumber, flags.oversight, flags.agent);
   console.log("  MODE: dry-run (no execution)\n");
 
   const phases = getPhaseOrder();
@@ -1493,6 +1723,8 @@ function dryRun(sessionNumber: number, flags: RunnerFlags, startPhase: PhaseName
 
 async function main(): Promise<void> {
   const flags = parseArgs();
+  runnerAgentName = flags.agent;
+  setLogAgent(flags.agent);
 
   agentConfig = loadAgentConfig(flags.agent);
   IMPROVEMENTS_PATH = agentConfig.paths.improvementsFile;
@@ -1567,7 +1799,7 @@ async function main(): Promise<void> {
     }
   }
 
-  banner(sessionNumber, flags.oversight);
+  banner(sessionNumber, flags.oversight, flags.agent);
 
   let shuttingDown = false;
   process.on("SIGINT", () => {

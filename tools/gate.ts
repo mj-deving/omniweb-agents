@@ -171,7 +171,8 @@ async function checkTopicActivity(
 function checkSignalStrength(
   topic: string,
   scanResult: any | undefined,
-  signalStrengthThreshold: number
+  signalStrengthThreshold: number,
+  focusTopics: string[] = []
 ): GateItem {
   const threshold = Number.isFinite(signalStrengthThreshold) ? signalStrengthThreshold : 6;
 
@@ -241,6 +242,24 @@ function checkSignalStrength(
     const heatPoints = heatReactions >= 10 ? 2 : 1;
     score += heatPoints;
     reasons.push(`topic-heat=${heatPoints}`);
+  }
+
+  // Pioneer topic scoop boost: reward alignment with configured frontier focus.
+  if (Array.isArray(focusTopics) && focusTopics.length > 0) {
+    const topicTokens = new Set(topicLower.split(/[^a-z0-9]+/).filter((t) => t.length >= 2));
+    const focusTokens = new Set(
+      focusTopics
+        .flatMap((ft) => String(ft).toLowerCase().split(/[^a-z0-9]+/))
+        .filter((t) => t.length >= 2)
+    );
+    const overlap = [...topicTokens].filter((t) => focusTokens.has(t)).length;
+    if (focusTopics.map((t) => String(t).toLowerCase()).includes(topicLower)) {
+      score += 2;
+      reasons.push("focus=2");
+    } else if (overlap > 0) {
+      score += 1;
+      reasons.push("focus=1");
+    }
   }
 
   const detail = reasons.length > 0
@@ -602,7 +621,14 @@ async function main(): Promise<void> {
   const items: GateItem[] = [];
 
   const gate1Promise = mode === "pioneer"
-    ? Promise.resolve(checkSignalStrength(topic, scanResult, config.gate.signalStrengthThreshold ?? 6))
+    ? Promise.resolve(
+        checkSignalStrength(
+          topic,
+          scanResult,
+          config.gate.signalStrengthThreshold ?? 6,
+          [...config.topics.primary, ...config.topics.secondary]
+        )
+      )
     : checkTopicActivity(topic, token, cachedPosts);
 
   const gate3Promise = mode === "pioneer"

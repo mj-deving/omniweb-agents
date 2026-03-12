@@ -141,11 +141,16 @@ export async function publishPost(
 
   const result = await DemosTransactions.broadcast(validity, demos);
 
-  // Extract txHash (same pattern as supercolony.ts)
+  // Extract txHash across known SDK response shapes.
+  const confirmHash = (validity as any)?.response?.data?.transaction?.hash;
   const results = (result as any).response?.results;
-  const txHash = results
+  const txHash = confirmHash || (results
     ? results[Object.keys(results)[0]]?.hash
-    : (result as any)?.hash || (result as any)?.txHash;
+    : (result as any)?.response?.data?.transaction?.hash ||
+      (result as any)?.response?.data?.hash ||
+      (result as any)?.data?.transaction?.hash ||
+      (result as any)?.hash ||
+      (result as any)?.txHash);
 
   if (!txHash) {
     throw new Error("Broadcast succeeded but txHash not found in response");

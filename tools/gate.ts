@@ -68,7 +68,7 @@ GATE ITEMS (from strategy.yaml):
   3. Agent reference                 [MANUAL — operator confirms]
   4. ANALYSIS or PREDICTION category [AUTO — checks --category]
   5. >200 chars + confidence set     [AUTO — checks --text + --confidence]
-  6. Not duplicate                   [AUTO — searches own posts]
+  6. Not duplicate                   [AUTO — searches own posts; window from gate.duplicateWindowHours]
   7. Reply target reactions           [AUTO — checks --reply-to parent, if provided]
 
 EXAMPLES:
@@ -261,7 +261,8 @@ function checkTextAndConfidence(text?: string, confidence?: string): GateItem {
 async function checkDuplicate(
   topic: string,
   token: string,
-  address: string
+  address: string,
+  duplicateWindowHours: number
 ): Promise<GateItem> {
   // 502 retry handled by apiCall() — no manual retry needed
   const feedRes = await apiCall(`/api/feed?author=${address}&limit=50`, token);
@@ -273,7 +274,8 @@ async function checkDuplicate(
   const rawPosts = feedRes.data?.posts ?? feedRes.data;
   const posts = Array.isArray(rawPosts) ? rawPosts : [];
   const topicLower = topic.toLowerCase();
-  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const windowMs = duplicateWindowHours * 60 * 60 * 1000;
+  const windowStart = Date.now() - windowMs;
 
   const duplicates = posts.filter((p: any) => {
     const tags = (p.payload?.tags || []).map((t: string) => t.toLowerCase());
@@ -282,22 +284,71 @@ async function checkDuplicate(
     return tags.includes(topicLower) || assets.includes(topicLower) || text.includes(topicLower);
   });
 
-  // Only recent duplicates (last 24h) are hard failures — older matches are informational
-  const recentDuplicates = duplicates.filter((p: any) => {
-    const ts = Number(p.timestamp || p.createdAt || 0);
-    // SuperColony timestamps are Unix ms
-    return ts > oneDayAgo;
-  });
+  const toTimestampMs = (raw: unknown): number | null => {
+    if (raw === null || raw === undefined || raw === 0 || raw === "0") return null;
+    if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+      // SuperColony uses Unix ms; tolerate second-based inputs defensively.
+      return raw < 1_000_000_000_000 ? raw * 1000 : raw;
+    }
+    if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      if (!trimmed) return null;
+      const numeric = Number(trimmed);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        return numeric < 1_000_000_000_000 ? numeric * 1000 : numeric;
+      }
+      const parsed = Date.parse(trimmed);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return null;
+  };
+
+  let recentCount = 0;
+  let olderCount = 0;
+  let unknownTimestampCount = 0;
+  for (const p of duplicates) {
+    const ts = toTimestampMs(p.timestamp ?? p.createdAt);
+    if (ts === null) {
+      unknownTimestampCount++;
+      continue;
+    }
+    if (ts > windowStart) {
+      recentCount++;
+    } else {
+      olderCount++;
+    }
+  }
 
   if (duplicates.length === 0) {
     return { number: 6, name: "Not duplicate", status: "pass", detail: "No matching posts found in your history" };
   }
 
-  if (recentDuplicates.length === 0) {
-    return { number: 6, name: "Not duplicate", status: "pass", detail: `${duplicates.length} older post(s) match topic "${topic}" but none in last 24h` };
+  if (recentCount > 0) {
+    return {
+      number: 6,
+      name: "Not duplicate",
+      status: "fail",
+      detail: `${recentCount} post(s) in last ${duplicateWindowHours}h match topic "${topic}" — too recent to repeat`,
+    };
   }
 
-  return { number: 6, name: "Not duplicate", status: "fail", detail: `${recentDuplicates.length} post(s) in last 24h match topic "${topic}" — too recent to repeat` };
+  if (unknownTimestampCount > 0) {
+    return {
+      number: 6,
+      name: "Not duplicate",
+      status: "fail",
+      detail: `${unknownTimestampCount} matching post(s) have missing/invalid timestamps — cannot verify ${duplicateWindowHours}h window`,
+    };
+  }
+
+  return {
+    number: 6,
+    name: "Not duplicate",
+    status: "pass",
+    detail: `${olderCount} older post(s) match topic "${topic}" but none in last ${duplicateWindowHours}h`,
+  };
 }
 
 /**
@@ -401,7 +452,7 @@ async function main(): Promise<void> {
   // Parallel API checks + sync checks
   const apiChecks: Promise<GateItem>[] = [
     checkTopicActivity(topic, token, cachedPosts),
-    checkDuplicate(topic, token, address),
+    checkDuplicate(topic, token, address, config.gate.duplicateWindowHours),
   ];
   if (replyTo) {
     apiChecks.push(checkReplyTarget(replyTo, token, config.engagement.replyMinParentReactions));

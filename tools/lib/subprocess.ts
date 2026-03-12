@@ -50,16 +50,16 @@ export class ToolError extends Error {
 export async function runTool(
   toolPath: string,
   args: string[] = [],
-  options: { cwd?: string; timeout?: number } = {}
+  options: { cwd?: string; timeout?: number; env?: Record<string, string | undefined> } = {}
 ): Promise<ToolResult> {
-  const { cwd, timeout = 120_000 } = options;
+  const { cwd, timeout = 120_000, env = {} } = options;
   const resolvedTool = resolve(cwd || process.cwd(), toolPath);
 
   return new Promise<ToolResult>((resolvePromise, reject) => {
     const child = spawn("npx", ["tsx", resolvedTool, ...args], {
       cwd: cwd || process.cwd(),
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env },
+      env: { ...process.env, ...env },
     });
 
     const stdoutChunks: Buffer[] = [];

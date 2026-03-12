@@ -37,17 +37,24 @@ const XDG_CREDENTIALS = resolve(homedir(), ".config/demos/credentials");
  * Trims whitespace from the result.
  */
 function parseMnemonic(content: string, filePath: string): string {
-  // Try double-quoted: DEMOS_MNEMONIC="value"
-  const dq = content.match(/DEMOS_MNEMONIC="(.+?)"/);
-  if (dq) return dq[1].trim();
+  // Process line-by-line, skip comments. Anchored to line start to avoid
+  // matching commented-out lines like "# DEMOS_MNEMONIC=old".
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
 
-  // Try single-quoted: DEMOS_MNEMONIC='value'
-  const sq = content.match(/DEMOS_MNEMONIC='(.+?)'/);
-  if (sq) return sq[1].trim();
+    // Double-quoted: DEMOS_MNEMONIC="value"
+    const dq = trimmed.match(/^DEMOS_MNEMONIC="(.+?)"/);
+    if (dq) return dq[1].trim();
 
-  // Try unquoted: DEMOS_MNEMONIC=value (everything to end of line)
-  const uq = content.match(/DEMOS_MNEMONIC=(.+)/);
-  if (uq) return uq[1].trim();
+    // Single-quoted: DEMOS_MNEMONIC='value'
+    const sq = trimmed.match(/^DEMOS_MNEMONIC='(.+?)'/);
+    if (sq) return sq[1].trim();
+
+    // Unquoted: DEMOS_MNEMONIC=value (strip inline comments)
+    const uq = trimmed.match(/^DEMOS_MNEMONIC=(\S+)/);
+    if (uq) return uq[1].trim();
+  }
 
   throw new Error(`No DEMOS_MNEMONIC found in ${filePath}`);
 }
@@ -110,10 +117,16 @@ export async function apiCall(
 
   // Only attach bearer token to SuperColony API requests — prevents
   // accidental token exfiltration to arbitrary URLs passed via path param.
-  // Fast path: relative paths (start with /) always resolve to SUPERCOLONY_API.
-  // Absolute URLs: check scheme + hostname before attaching token.
+  // Uses URL origin check (not string prefix) to block subdomain spoofing
+  // like "supercolony.ai.evil.test".
   if (token) {
-    const isSuperColony = !path.startsWith("http") || url.startsWith(SUPERCOLONY_API);
+    let isSuperColony = !path.startsWith("http"); // relative paths are always SC
+    if (!isSuperColony) {
+      try {
+        const origin = new URL(url).origin;
+        isSuperColony = origin === "https://www.supercolony.ai" || origin === "https://supercolony.ai";
+      } catch { /* malformed URL — don't attach token */ }
+    }
     if (isSuperColony) {
       headers["Authorization"] = `Bearer ${token}`;
     }

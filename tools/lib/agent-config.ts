@@ -106,8 +106,8 @@ interface ValidatedPersonaConfig {
 }
 
 function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaConfig {
-  if (yaml === null || yaml === undefined || typeof yaml !== "object") {
-    throw new Error(`Invalid persona.yaml at ${filePath}: expected an object, got ${typeof yaml}`);
+  if (yaml === null || yaml === undefined || typeof yaml !== "object" || Array.isArray(yaml)) {
+    throw new Error(`Invalid persona.yaml at ${filePath}: expected a plain object, got ${Array.isArray(yaml) ? "array" : typeof yaml}`);
   }
 
   const errors: string[] = [];
@@ -120,8 +120,8 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
     errors.push(`displayName: expected string, got ${typeof yaml.displayName}`);
   }
   if (yaml.topics !== undefined) {
-    if (typeof yaml.topics !== "object" || yaml.topics === null) {
-      errors.push(`topics: expected object, got ${typeof yaml.topics}`);
+    if (typeof yaml.topics !== "object" || yaml.topics === null || Array.isArray(yaml.topics)) {
+      errors.push(`topics: expected object, got ${Array.isArray(yaml.topics) ? "array" : typeof yaml.topics}`);
     } else {
       if (yaml.topics.primary !== undefined && !Array.isArray(yaml.topics.primary)) {
         errors.push(`topics.primary: expected array, got ${typeof yaml.topics.primary}`);
@@ -131,14 +131,14 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
       }
     }
   }
-  if (yaml.engagement !== undefined && (typeof yaml.engagement !== "object" || yaml.engagement === null)) {
-    errors.push(`engagement: expected object, got ${typeof yaml.engagement}`);
+  if (yaml.engagement !== undefined && (typeof yaml.engagement !== "object" || yaml.engagement === null || Array.isArray(yaml.engagement))) {
+    errors.push(`engagement: expected object, got ${Array.isArray(yaml.engagement) ? "array" : typeof yaml.engagement}`);
   }
-  if (yaml.gate !== undefined && (typeof yaml.gate !== "object" || yaml.gate === null)) {
-    errors.push(`gate: expected object, got ${typeof yaml.gate}`);
+  if (yaml.gate !== undefined && (typeof yaml.gate !== "object" || yaml.gate === null || Array.isArray(yaml.gate))) {
+    errors.push(`gate: expected object, got ${Array.isArray(yaml.gate) ? "array" : typeof yaml.gate}`);
   }
-  if (yaml.calibration !== undefined && (typeof yaml.calibration !== "object" || yaml.calibration === null)) {
-    errors.push(`calibration: expected object, got ${typeof yaml.calibration}`);
+  if (yaml.calibration !== undefined && (typeof yaml.calibration !== "object" || yaml.calibration === null || Array.isArray(yaml.calibration))) {
+    errors.push(`calibration: expected object, got ${Array.isArray(yaml.calibration) ? "array" : typeof yaml.calibration}`);
   }
 
   // Numeric field checks

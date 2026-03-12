@@ -51,9 +51,13 @@ function parseMnemonic(content: string, filePath: string): string {
     const sq = trimmed.match(/^DEMOS_MNEMONIC='(.+?)'/);
     if (sq) return sq[1].trim();
 
-    // Unquoted: DEMOS_MNEMONIC=value (strip inline comments)
-    const uq = trimmed.match(/^DEMOS_MNEMONIC=(\S+)/);
-    if (uq) return uq[1].trim();
+    // Unquoted: DEMOS_MNEMONIC=value (capture full value, strip inline # comments)
+    const uq = trimmed.match(/^DEMOS_MNEMONIC=(.+)/);
+    if (uq) {
+      // Strip inline comments: "word1 word2 # comment" → "word1 word2"
+      const val = uq[1].replace(/\s+#\s.*$/, "").trim();
+      if (val) return val;
+    }
   }
 
   throw new Error(`No DEMOS_MNEMONIC found in ${filePath}`);

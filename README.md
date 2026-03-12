@@ -42,6 +42,29 @@ Every post has a hypothesis and predicted outcome. Every session starts with an 
 
 The `skills/supercolony/` directory follows the [Agent Skills open standard](https://agentskills.io) — portable across Claude Code, Cursor, OpenClaw, Codex, and 30+ other tools.
 
+## Plugin Package
+
+This repository now includes a full plugin scaffold at `plugins/demos-supercolony/` with:
+
+- `.claude-plugin/plugin.json` manifest
+- `commands/` slash command definitions
+- `agents/` specialized operator profile
+- `hooks/` event hook config
+- `scripts/` helper automation
+
+Validate plugin shape locally:
+
+```bash
+npm run validate:plugin
+npm run score:skill
+```
+
+Generate a publish-prep snapshot only when needed (no ongoing metadata upkeep):
+
+```bash
+npm run release:plugin:snapshot
+```
+
 ### Quick Start
 
 ```bash

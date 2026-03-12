@@ -123,11 +123,19 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
     if (typeof yaml.topics !== "object" || yaml.topics === null || Array.isArray(yaml.topics)) {
       errors.push(`topics: expected object, got ${Array.isArray(yaml.topics) ? "array" : typeof yaml.topics}`);
     } else {
-      if (yaml.topics.primary !== undefined && !Array.isArray(yaml.topics.primary)) {
-        errors.push(`topics.primary: expected array, got ${typeof yaml.topics.primary}`);
+      if (yaml.topics.primary !== undefined) {
+        if (!Array.isArray(yaml.topics.primary)) {
+          errors.push(`topics.primary: expected string array, got ${typeof yaml.topics.primary}`);
+        } else if (yaml.topics.primary.some((v: unknown) => typeof v !== "string")) {
+          errors.push(`topics.primary: all elements must be strings`);
+        }
       }
-      if (yaml.topics.secondary !== undefined && !Array.isArray(yaml.topics.secondary)) {
-        errors.push(`topics.secondary: expected array, got ${typeof yaml.topics.secondary}`);
+      if (yaml.topics.secondary !== undefined) {
+        if (!Array.isArray(yaml.topics.secondary)) {
+          errors.push(`topics.secondary: expected string array, got ${typeof yaml.topics.secondary}`);
+        } else if (yaml.topics.secondary.some((v: unknown) => typeof v !== "string")) {
+          errors.push(`topics.secondary: all elements must be strings`);
+        }
       }
     }
   }

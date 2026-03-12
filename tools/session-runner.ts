@@ -754,6 +754,7 @@ async function runPublishAutonomous(
             txHash: pubResult.txHash,
             category: draft.category,
             attestation_type: pubResult.attestation ? "DAHR" : "none",
+            attestation_url: pubResult.attestation?.url,
             hypothesis: draft.hypothesis || "",
             predicted_reactions: draft.predicted_reactions,
             agents_referenced: [],

@@ -29,17 +29,22 @@ export interface PublishInput {
     txHash: string;
     timestamp?: number;
   }>;
+  tlsnAttestations?: Array<{
+    url: string;
+    txHash: string;
+    timestamp?: number;
+  }>;
 }
 
 export interface AttestResult {
-  type: "dahr";
+  type: "dahr" | "tlsn";
   /** The URL that was actually attested (may differ from requested due to guardrails) */
   url: string;
   /** The original URL requested before any guardrail rewrites */
   requestedUrl: string;
-  responseHash: string;
+  responseHash?: string;
   txHash: string;
-  data: any;
+  data?: any;
 }
 
 export interface PublishResult {
@@ -114,6 +119,35 @@ export async function attestDahr(
   };
 }
 
+/**
+ * TLSN attestation placeholder.
+ *
+ * Runtime note: TLSN requires a working tlsn-js runtime + WASM pipeline.
+ * If unavailable, this throws a hard error so callers can either fallback
+ * to DAHR (for low sensitivity) or fail closed (for high sensitivity).
+ */
+export async function attestTlsn(
+  demos: Demos,
+  url: string,
+  method: string = "GET"
+): Promise<AttestResult> {
+  const _method = method; // reserved for future TLSN request support
+  void _method;
+  try {
+    // Probe runtime availability first for clear error messaging.
+    const tlsn = await (demos as any).tlsnotary();
+    if (!tlsn || typeof tlsn.attest !== "function") {
+      throw new Error("TLSN SDK initialized but attest() is unavailable");
+    }
+
+    // Full proof lifecycle (request token + attest + store proof) is not yet
+    // wired into this Node toolchain. Fail closed to avoid false attestations.
+    throw new Error("TLSN attestation flow not yet integrated in publish pipeline (token/proof storage missing)");
+  } catch (err: any) {
+    throw new Error(`TLSN unavailable: ${String(err?.message || err)}`);
+  }
+}
+
 // ── Publish ────────────────────────────────────────
 
 /**
@@ -124,12 +158,24 @@ export async function publishPost(
   demos: Demos,
   input: PublishInput
 ): Promise<PublishResult> {
-  if (!input.sourceAttestations || input.sourceAttestations.length === 0) {
-    throw new Error("Refusing unattested publish: sourceAttestations is required");
+  const hasDahr = Array.isArray(input.sourceAttestations) && input.sourceAttestations.length > 0;
+  const hasTlsn = Array.isArray(input.tlsnAttestations) && input.tlsnAttestations.length > 0;
+  if (!hasDahr && !hasTlsn) {
+    throw new Error("Refusing unattested publish: sourceAttestations or tlsnAttestations is required");
   }
-  for (const att of input.sourceAttestations) {
-    if (!att?.url || !att?.responseHash || !att?.txHash) {
-      throw new Error("Refusing publish: invalid sourceAttestations entry (url/responseHash/txHash required)");
+
+  if (hasDahr) {
+    for (const att of input.sourceAttestations || []) {
+      if (!att?.url || !att?.responseHash || !att?.txHash) {
+        throw new Error("Refusing publish: invalid sourceAttestations entry (url/responseHash/txHash required)");
+      }
+    }
+  }
+  if (hasTlsn) {
+    for (const att of input.tlsnAttestations || []) {
+      if (!att?.url || !att?.txHash) {
+        throw new Error("Refusing publish: invalid tlsnAttestations entry (url/txHash required)");
+      }
     }
   }
 
@@ -146,6 +192,13 @@ export async function publishPost(
     post.sourceAttestations = input.sourceAttestations.map((a) => ({
       url: a.url,
       responseHash: a.responseHash,
+      txHash: a.txHash,
+      timestamp: typeof a.timestamp === "number" ? a.timestamp : Date.now(),
+    }));
+  }
+  if (input.tlsnAttestations && input.tlsnAttestations.length > 0) {
+    post.tlsnAttestations = input.tlsnAttestations.map((a) => ({
+      url: a.url,
       txHash: a.txHash,
       timestamp: typeof a.timestamp === "number" ? a.timestamp : Date.now(),
     }));
@@ -205,20 +258,30 @@ export async function attestAndPublish(
   }
 
   // Step 2: Publish
-  const sourceAttestations = attestation ? [{
-    url: attestation.url,
-    responseHash: attestation.responseHash,
-    txHash: attestation.txHash,
-    timestamp: Date.now(),
-  }] : input.sourceAttestations;
+  const sourceAttestations = attestation?.type === "dahr"
+    ? [{
+        url: attestation.url,
+        responseHash: String(attestation.responseHash || ""),
+        txHash: attestation.txHash,
+        timestamp: Date.now(),
+      }]
+    : input.sourceAttestations;
+  const tlsnAttestations = attestation?.type === "tlsn"
+    ? [{
+        url: attestation.url,
+        txHash: attestation.txHash,
+        timestamp: Date.now(),
+      }]
+    : input.tlsnAttestations;
 
-  if (!sourceAttestations || sourceAttestations.length === 0) {
+  if ((!sourceAttestations || sourceAttestations.length === 0) && (!tlsnAttestations || tlsnAttestations.length === 0)) {
     throw new Error("Refusing unattested publish: attestation step did not produce a source attestation");
   }
 
   const result = await publishPost(demos, {
     ...input,
     sourceAttestations,
+    tlsnAttestations,
   });
   result.attestation = attestation;
 

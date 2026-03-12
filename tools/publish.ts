@@ -18,7 +18,7 @@ import { resolveProvider } from "./lib/llm-provider.js";
 import { generatePost, type PostDraft } from "./lib/llm.js";
 import { connectWallet, apiCall, info, setLogAgent } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
-import { attestDahr, publishPost, type AttestResult, type PublishResult } from "./lib/publish-pipeline.js";
+import { attestDahr, attestTlsn, publishPost, type AttestResult, type PublishResult } from "./lib/publish-pipeline.js";
 import { readSessionLog, appendSessionLog, resolveLogPath, type SessionLogEntry } from "./lib/log.js";
 
 // ── Types ──────────────────────────────────────────
@@ -27,6 +27,7 @@ interface SourceRecord {
   name: string;
   url: string;
   topics?: string[];
+  tlsn_safe?: boolean;
   dahr_safe?: boolean;
   max_response_kb?: number;
   note?: string;
@@ -51,12 +52,14 @@ interface CandidateResult {
   reject_reasons: string[];
   source?: { name: string; url: string };
   txHash?: string;
-  attestation?: { txHash: string; responseHash: string };
+  attestation?: { type: "DAHR" | "TLSN"; txHash: string; responseHash?: string };
   text_preview?: string;
   confidence?: number;
   predicted_reactions?: number;
   error?: string;
 }
+
+type AttestationType = "DAHR" | "TLSN";
 
 interface PublishOutput {
   timestamp: string;
@@ -299,7 +302,11 @@ function inferAssetAlias(topic: string): { asset: string; symbol: string } | nul
   return null;
 }
 
-function selectSource(topic: string, sources: SourceRecord[]): { source: SourceRecord; url: string } | null {
+function selectSource(
+  topic: string,
+  sources: SourceRecord[],
+  attestationType: AttestationType
+): { source: SourceRecord; url: string } | null {
   if (sources.length === 0) return null;
 
   const vars = extractTopicVars(topic);
@@ -336,7 +343,7 @@ function selectSource(topic: string, sources: SourceRecord[]): { source: SourceR
       const unresolved = unresolvedPlaceholders(resolvedUrl);
       return { source, score, overlap, resolvedUrl, unresolved };
     })
-    .filter((x) => x.source.dahr_safe === true)
+    .filter((x) => attestationType === "TLSN" ? x.source.tlsn_safe === true : x.source.dahr_safe === true)
     .filter((x) => x.overlap > 0)
     .filter((x) => x.unresolved.length === 0)
     .sort((a, b) => b.score - a.score || (a.source.max_response_kb || 999) - (b.source.max_response_kb || 999));
@@ -344,6 +351,45 @@ function selectSource(topic: string, sources: SourceRecord[]): { source: SourceR
   const chosen = ranked[0];
   if (!chosen) return null;
   return { source: chosen.source, url: chosen.resolvedUrl };
+}
+
+function isHighSensitivityTopic(topic: string, keywords: string[]): boolean {
+  const normalized = topic.toLowerCase();
+  const topicTokens = new Set(normalized.split(/[^a-z0-9]+/).filter((t) => t.length >= 2));
+  for (const keywordRaw of keywords || []) {
+    const keyword = String(keywordRaw || "").toLowerCase().trim();
+    if (!keyword) continue;
+    if (normalized.includes(keyword)) return true;
+    const parts = keyword.split(/[^a-z0-9]+/).filter((t) => t.length >= 2);
+    if (parts.length > 0 && parts.every((p) => topicTokens.has(p))) return true;
+  }
+  return false;
+}
+
+function resolveAttestationPlan(
+  topic: string,
+  config: ReturnType<typeof loadAgentConfig>
+): { required: AttestationType; fallback: AttestationType | null; sensitive: boolean; reason: string } {
+  const sensitive = isHighSensitivityTopic(topic, config.attestation.highSensitivityKeywords || []);
+
+  if (sensitive && config.attestation.highSensitivityRequireTlsn) {
+    return {
+      required: "TLSN",
+      fallback: null,
+      sensitive: true,
+      reason: "high-sensitivity topic requires TLSN",
+    };
+  }
+
+  switch (config.attestation.defaultMode) {
+    case "tlsn_only":
+      return { required: "TLSN", fallback: null, sensitive, reason: "tlsn_only policy" };
+    case "tlsn_preferred":
+      return { required: "TLSN", fallback: "DAHR", sensitive, reason: "tlsn_preferred policy" };
+    case "dahr_only":
+    default:
+      return { required: "DAHR", fallback: null, sensitive, reason: "dahr_only policy" };
+  }
 }
 
 // ── Quality Validation ─────────────────────────────
@@ -536,21 +582,57 @@ async function main(): Promise<void> {
     };
 
     try {
-      const selection = selectSource(candidate.topic, sources);
+      const plan = resolveAttestationPlan(candidate.topic, config);
+      const requiredSelection = selectSource(candidate.topic, sources, plan.required);
+      const fallbackSelection = plan.fallback ? selectSource(candidate.topic, sources, plan.fallback) : null;
+      let selection = requiredSelection;
+      let selectedAttestationType: AttestationType = plan.required;
+
+      if (!selection && fallbackSelection && plan.fallback) {
+        selection = fallbackSelection;
+        selectedAttestationType = plan.fallback;
+        row.warnings.push(
+          `Attestation policy fallback: required ${plan.required} source unavailable, using ${plan.fallback} source`
+        );
+      }
+
       if (!selection) {
         row.status = "rejected";
-        row.reject_reasons.push("no matching attestation source in sources-registry (attestation required)");
+        row.reject_reasons.push(
+          `no matching ${plan.required} source in sources-registry (policy: ${plan.reason})`
+        );
         results.push(row);
         continue;
       }
-      row.source = { name: selection.source.name, url: selection.url };
+      let activeSelection = selection;
+      row.source = { name: activeSelection.source.name, url: activeSelection.url };
+      row.warnings.push(`Attestation policy: ${plan.reason}; selected ${selectedAttestationType}`);
 
       let attested: AttestResult | undefined;
       let attestedSummary: string | undefined;
 
       if (!dryRun) {
-        attested = await retry502("DAHR attestation", () => attestDahr(demos, selection.url));
-        row.attestation = { txHash: attested.txHash, responseHash: attested.responseHash };
+        if (selectedAttestationType === "TLSN") {
+          try {
+            attested = await retry502("TLSN attestation", () => attestTlsn(demos, activeSelection.url));
+          } catch (err: any) {
+            if (plan.fallback === "DAHR" && fallbackSelection) {
+              row.warnings.push(`TLSN failed (${String(err?.message || err)}), falling back to DAHR`);
+              activeSelection = fallbackSelection;
+              selectedAttestationType = "DAHR";
+              attested = await retry502("DAHR attestation", () => attestDahr(demos, activeSelection.url));
+            } else {
+              throw err;
+            }
+          }
+        } else {
+          attested = await retry502("DAHR attestation", () => attestDahr(demos, activeSelection.url));
+        }
+        row.attestation = {
+          type: attested.type === "tlsn" ? "TLSN" : "DAHR",
+          txHash: attested.txHash,
+          responseHash: attested.responseHash,
+        };
         attestedSummary = summarizeAttestedData(attested.data);
       }
 
@@ -588,13 +670,11 @@ async function main(): Promise<void> {
               gaps: scanContext?.gaps?.topics,
               meta_saturation: scanContext?.meta_saturation?.level === "HIGH",
             },
-            attestedData: selection
-              ? {
-                  source: selection.source.name,
-                  url: selection.url,
-                  summary: attestedSummary || "Source selected; run without --dry-run to include live attested payload.",
-                }
-              : undefined,
+            attestedData: {
+              source: activeSelection.source.name,
+              url: activeSelection.url,
+              summary: attestedSummary || "Source selected; run without --dry-run to include live attested payload.",
+            },
           },
           provider,
           {
@@ -653,9 +733,14 @@ async function main(): Promise<void> {
           tags: draft.tags,
           confidence: draft.confidence,
           replyTo: draft.replyTo,
-          sourceAttestations: attested ? [{
+          sourceAttestations: attested?.type === "dahr" ? [{
             url: attested.url,
-            responseHash: attested.responseHash,
+            responseHash: String(attested.responseHash || ""),
+            txHash: attested.txHash,
+            timestamp: Date.now(),
+          }] : undefined,
+          tlsnAttestations: attested?.type === "tlsn" ? [{
+            url: attested.url,
             txHash: attested.txHash,
             timestamp: Date.now(),
           }] : undefined,
@@ -670,7 +755,7 @@ async function main(): Promise<void> {
           timestamp: new Date().toISOString(),
           txHash: publish.txHash,
           category: draft.category,
-          attestation_type: attested ? "DAHR" : "none",
+          attestation_type: attested ? (attested.type === "tlsn" ? "TLSN" : "DAHR") : "none",
           attestation_url: attested?.url,
           hypothesis: draft.hypothesis || "",
           predicted_reactions: draft.predicted_reactions,

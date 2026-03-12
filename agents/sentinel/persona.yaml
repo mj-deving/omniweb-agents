@@ -19,5 +19,3 @@ gate:
 
 calibration:
   offset: 5
-
-envFile: null  # Uses default .env

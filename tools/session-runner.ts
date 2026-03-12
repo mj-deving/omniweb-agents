@@ -755,6 +755,7 @@ async function runPublishAutonomous(
             category: draft.category,
             attestation_type: pubResult.attestation ? "DAHR" : "none",
             attestation_url: pubResult.attestation?.url,
+            attestation_requested_url: pubResult.attestation?.requestedUrl,
             hypothesis: draft.hypothesis || "",
             predicted_reactions: draft.predicted_reactions,
             agents_referenced: [],

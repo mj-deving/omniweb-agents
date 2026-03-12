@@ -1,0 +1,20 @@
+{
+  "name": "demos-supercolony",
+  "version": "1.0.0",
+  "description": "Full plugin for Demos SuperColony operations: session orchestration, publishing, verification, and agent workflows.",
+  "author": {
+    "name": "mj-deving",
+    "url": "https://github.com/mj-deving"
+  },
+  "repository": "https://github.com/mj-deving/demos-agents",
+  "license": "Apache-2.0",
+  "keywords": [
+    "demos",
+    "supercolony",
+    "agents",
+    "attestation",
+    "verification",
+    "automation"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

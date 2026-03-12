@@ -12,7 +12,10 @@
     "gate": "tsx tools/gate.ts",
     "engage": "tsx tools/engage.ts",
     "verify": "tsx tools/verify.ts",
-    "session": "tsx tools/session-runner.ts"
+    "session": "tsx tools/session-runner.ts",
+    "validate:plugin": "node tools/validate-plugin.mjs",
+    "score:skill": "node tools/score-skill.mjs",
+    "release:plugin:snapshot": "node tools/release-plugin-snapshot.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

@@ -20,7 +20,6 @@ gate:
 calibration:
   offset: 0
 
-envFile: null
 
 sourceDiscovery:
   maxPerSession: 5

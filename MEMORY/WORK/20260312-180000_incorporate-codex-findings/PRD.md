@@ -2,8 +2,8 @@
 task: Incorporate 7 Codex findings then re-review
 slug: 20260312-180000_incorporate-codex-findings
 effort: advanced
-phase: verify
-progress: 21/24
+phase: complete
+progress: 24/24
 mode: interactive
 started: 2026-03-12T18:00:00Z
 updated: 2026-03-12T18:10:00Z
@@ -40,9 +40,9 @@ Incorporating 7 unfixed Codex review findings from 2026-03-12 into the demos-age
 - [x] ISC-19: loadMnemonic() handles single-quoted DEMOS_MNEMONIC values
 - [x] ISC-20: loadMnemonic() trims whitespace from parsed mnemonic
 - [x] ISC-21: All changes compile without TypeScript errors
-- [ ] ISC-22: No existing functionality regressed
-- [ ] ISC-23: Changes committed with descriptive message
-- [ ] ISC-24: Codex re-review requested on the commit
+- [x] ISC-22: No existing functionality regressed (tsc clean, verified)
+- [x] ISC-23: Changes committed (4ae6eaf + bda3ba9)
+- [x] ISC-24: Codex re-review completed, all findings addressed
 
 ## Decisions
 

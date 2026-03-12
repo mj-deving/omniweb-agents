@@ -16,6 +16,7 @@ engagement:
 gate:
   predictedReactionsThreshold: 17
   allow5Of6: true
+  duplicateWindowHours: 24
 
 calibration:
   offset: 5

@@ -33,6 +33,7 @@ export interface AgentConfig {
   gate: {
     predictedReactionsThreshold: number;
     allow5Of6: boolean;
+    duplicateWindowHours: number;
   };
   calibration: { offset: number };
   paths: AgentPaths;
@@ -100,7 +101,7 @@ interface ValidatedPersonaConfig {
   displayName?: string;
   topics?: { primary?: string[]; secondary?: string[] };
   engagement?: { minDisagreePerSession?: number; replyMinParentReactions?: number; maxReactionsPerSession?: number };
-  gate?: { predictedReactionsThreshold?: number; allow5Of6?: boolean };
+  gate?: { predictedReactionsThreshold?: number; allow5Of6?: boolean; duplicateWindowHours?: number };
   calibration?: { offset?: number };
   [key: string]: unknown; // Allow extra fields from YAML
 }
@@ -155,6 +156,7 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
     ["engagement.replyMinParentReactions", yaml.engagement?.replyMinParentReactions],
     ["engagement.maxReactionsPerSession", yaml.engagement?.maxReactionsPerSession],
     ["gate.predictedReactionsThreshold", yaml.gate?.predictedReactionsThreshold],
+    ["gate.duplicateWindowHours", yaml.gate?.duplicateWindowHours],
     ["calibration.offset", yaml.calibration?.offset],
   ] as const;
   for (const [field, val] of numericChecks) {
@@ -165,6 +167,12 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
 
   if (yaml.gate?.allow5Of6 !== undefined && typeof yaml.gate.allow5Of6 !== "boolean") {
     errors.push(`gate.allow5Of6: expected boolean, got ${typeof yaml.gate.allow5Of6}`);
+  }
+  if (yaml.gate?.duplicateWindowHours !== undefined) {
+    const hours = yaml.gate.duplicateWindowHours;
+    if (!Number.isFinite(hours) || hours <= 0 || hours > 720) {
+      errors.push(`gate.duplicateWindowHours: expected number in range (0, 720], got ${hours}`);
+    }
   }
 
   if (errors.length > 0) {
@@ -196,7 +204,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
         replyMinParentReactions: 8,
         maxReactionsPerSession: 8,
       },
-      gate: { predictedReactionsThreshold: 17, allow5Of6: true },
+      gate: { predictedReactionsThreshold: 17, allow5Of6: true, duplicateWindowHours: 24 },
       calibration: { offset: 0 },
       paths,
     };
@@ -220,6 +228,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
     gate: {
       predictedReactionsThreshold: yaml.gate?.predictedReactionsThreshold ?? 17,
       allow5Of6: yaml.gate?.allow5Of6 ?? true,
+      duplicateWindowHours: yaml.gate?.duplicateWindowHours ?? 24,
     },
     calibration: { offset: yaml.calibration?.offset ?? 0 },
     paths,

@@ -89,13 +89,29 @@ export function selectSourceForTopicV2(
 
     let score = 0;
     const tags = sourceTopicTokens(source);
-    let overlap = 0;
+    let topicOverlap = 0;
     for (const w of topicWords) {
-      if (tags.has(w)) overlap++;
+      if (tags.has(w)) topicOverlap++;
     }
-    if (overlap === 0) continue; // no topic overlap after index lookup
+    score += topicOverlap * 4;
 
-    score += overlap * 4;
+    // Alias token overlap (candidates retrieved by alias via index)
+    let aliasOverlap = 0;
+    for (const alias of source.topicAliases || []) {
+      for (const tok of alias.toLowerCase().split(/[^a-z0-9]+/)) {
+        if (tok.length >= 2 && topicWords.has(tok)) aliasOverlap++;
+      }
+    }
+    score += aliasOverlap * 3;
+
+    // Domain tag overlap (candidates retrieved by domain tag via index)
+    let domainOverlap = 0;
+    for (const tag of source.domainTags) {
+      if (topicWords.has(tag.toLowerCase())) domainOverlap++;
+    }
+    score += domainOverlap * 3;
+
+    if (topicOverlap === 0 && aliasOverlap === 0 && domainOverlap === 0) continue;
 
     // Name match bonus
     for (const w of topicWords) {
@@ -178,8 +194,8 @@ export function preflight(
   if (plan.fallback) {
     const fallbackSelection = selectSourceForTopicV2(topic, sourceView, plan.fallback);
     if (fallbackSelection) {
-      // Only add if it's a different source
-      if (!candidates.some((c) => c.sourceId === fallbackSelection.source.id)) {
+      // Only add if it's a different source+method combo (preserve both TLSN and DAHR for same source)
+      if (!candidates.some((c) => c.sourceId === fallbackSelection.source.id && c.method === plan.fallback)) {
         candidates.push({
           sourceId: fallbackSelection.source.id,
           source: fallbackSelection.source,
@@ -192,9 +208,13 @@ export function preflight(
   }
 
   if (candidates.length > 0) {
+    const hasRequired = candidates.some((c) => c.method === plan.required);
+    const reason = hasRequired
+      ? `${plan.required} source available (${candidates.length} candidate(s))`
+      : `${plan.fallback} fallback source available (${candidates.length} candidate(s), no ${plan.required} source)`;
     return {
       pass: true,
-      reason: `${plan.required} source available (${candidates.length} candidate(s))`,
+      reason,
       reasonCode: "PASS",
       candidates,
       plan,

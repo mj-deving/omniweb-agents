@@ -423,6 +423,9 @@ export function loadAgentConfig(name?: string): AgentConfig {
     sourceRegistryMode: ((): AgentConfig["sourceRegistryMode"] => {
       const mode = (yaml as any).sourceRegistryMode;
       if (mode === "catalog-only" || mode === "yaml-only") return mode;
+      if (mode && mode !== "catalog-preferred") {
+        console.warn(`[agent-config] Unknown sourceRegistryMode "${mode}" in ${personaYamlPath}, defaulting to catalog-preferred`);
+      }
       return "catalog-preferred";
     })(),
     paths,

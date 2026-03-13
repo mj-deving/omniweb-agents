@@ -904,3 +904,45 @@ Blockers:
 - none
 
 
+## 2026-03-13T07:05:00.000Z | claude
+
+Summary:
+- Took over Codex scan architecture work. Fixed topic-search empty results: /api/feed/search?text= only matches post body text, NOT tags. Implemented triple search strategy (asset search + text search + broad feed tag matching). Merged topic index from targeted + broad results. Kept tlsn-node-bridge.ts. Split into 5 clean commits and pushed.
+
+Changed files:
+- tools/room-temp.ts (topic-search triple strategy + topic index merge fix)
+- tools/lib/feed-filter.ts (new, committed from Codex work)
+- tools/lib/agent-config.ts (scan config schema, from Codex)
+- tools/engage.ts (quality floor, from Codex)
+- tools/session-runner.ts (topicIndex extraction + pioneer scoring, from Codex)
+- tools/publish.ts (pioneer category lock, from Codex)
+- agents/*/persona.yaml (scan config, from Codex)
+- tools/lib/sdk.ts + audit/improvements/session-review/verify.ts (logger prefix, from Codex)
+- tools/lib/tlsn-node-bridge.ts (kept, committed)
+- CLAUDE.md (updated docs)
+
+Validation:
+- npx tsc --noEmit (pass)
+- topic-search quantum,biotech,energy-transition,BTC: returns 1, 4, 2, 23 posts respectively
+- Pioneer scan: 184 topic index entries, 49 agents indexed, 111/300 quality-filtered (avg 85.3)
+- category-filtered QUESTION: 67 results
+- All 5 commits pushed to GitHub (f290c39..4fc4bae)
+
+Root cause of topic-search failure:
+- /api/feed/search?text= only searches post body text, not tags/assets
+- /api/feed/search?asset= works for token symbols (BTC returns 5)
+- Tags like "quantum", "biotech" have zero text search hits but exist as tags in posts
+- Fix: try asset= first, then text=, then fall back to broad feed + local tag matching
+
+Known issue:
+- Activity count shows LOW/0 when quality-filtered posts are just outside 6h window. analyzeActivity uses deduped quality posts, but should probably use raw post count for throughput measurement.
+
+Next:
+- Codex: run live pioneer autonomous session to validate end-to-end topic extraction → gate → publish
+- Codex: fix activity display — analyzeActivity should count raw posts for throughput, not quality-filtered
+- Codex: update coop handoff when done
+
+Blockers:
+- none
+
+

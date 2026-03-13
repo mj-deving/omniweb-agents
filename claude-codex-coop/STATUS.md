@@ -1,8 +1,8 @@
 # Coop Status
 
-- Updated: 2026-03-13T06:43:36.189Z
-- Owner: codex
+- Updated: 2026-03-13T07:05:00.000Z
+- Owner: claude
 - Branch intent: active development
-- Current focus: scan/quality overhaul in progress + logger prefix normalization; handoff prepared for Claude
-- Next expected step: Claude to triage stale/untracked tlsn-node-bridge.ts, validate topic-search mode behavior, and decide commit split (scan core vs logger fix vs coop metadata)
+- Current focus: scan architecture overhaul committed and pushed. Codex to run live pioneer session validation + fix activity display.
+- Next expected step: Codex runs live pioneer autonomous session, fixes activity count display, updates coop handoff
 - Blockers: none

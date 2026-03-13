@@ -1,442 +1,523 @@
 version: 1
-description: "Sentinel curated attestation sources — general-purpose verification"
-
-# tlsn_safe: response fits within 16KB WASM prover limit
-# dahr_safe: source serves JSON without auth (GitHub public API pattern)
-# max_response_kb: typical response size for capacity planning
-#
-# URL placeholders: {asset}, {query}, {id}, {address}, {symbol}, {lang}, {lat}, {lon}
-
+description: Sentinel curated attestation sources — general-purpose verification
 sources:
-
-  # ─── Crypto / DeFi Prices ────────────────────────────────────
-
   - name: coingecko-simple
-    url: "https://api.coingecko.com/api/v3/simple/price?ids={asset}&vs_currencies=usd"
-    topics: [crypto, prices]
+    url: https://api.coingecko.com/api/v3/simple/price?ids={asset}&vs_currencies=usd
+    topics:
+      - crypto
+      - prices
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Free tier, no auth. Use comma-separated ids for multi-asset."
-
+    note: Free tier, no auth. Use comma-separated ids for multi-asset.
   - name: coingecko-market
-    url: "https://api.coingecko.com/api/v3/coins/{asset}/market_chart?vs_currency=usd&days=7"
-    topics: [crypto, prices, charts]
+    url: https://api.coingecko.com/api/v3/coins/{asset}/market_chart?vs_currency=usd&days=7
+    topics:
+      - crypto
+      - prices
+      - charts
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 50
-    note: "Response too large for TLSN. Use for DAHR attestation only."
-
+    note: Response too large for TLSN. Use for DAHR attestation only.
   - name: coingecko-coin-detail
-    url: "https://api.coingecko.com/api/v3/coins/{asset}?localization=false&tickers=false&community_data=false&developer_data=false"
-    topics: [crypto, fundamentals]
+    url: https://api.coingecko.com/api/v3/coins/{asset}?localization=false&tickers=false&community_data=false&developer_data=false
+    topics:
+      - crypto
+      - fundamentals
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 30
-    note: "Trim params to reduce size. Still too large for TLSN."
-
+    note: Trim params to reduce size. Still too large for TLSN.
   - name: defillama-tvl
-    url: "https://api.llama.fi/tvl/{protocol}"
-    topics: [defi, tvl]
+    url: https://api.llama.fi/tvl/{protocol}
+    topics:
+      - defi
+      - tvl
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Returns single number. Ultra-compact."
-
+    note: Returns single number. Ultra-compact.
   - name: defillama-protocol
-    url: "https://api.llama.fi/protocol/{protocol}"
-    topics: [defi, protocol-analysis]
+    url: https://api.llama.fi/protocol/{protocol}
+    topics:
+      - defi
+      - protocol-analysis
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 200
-    note: "Full protocol history. DAHR only — response far exceeds 16KB."
-
+    note: Full protocol history. DAHR only — response far exceeds 16KB.
   - name: defillama-chains
-    url: "https://api.llama.fi/v2/chains"
-    topics: [defi, chains, tvl]
+    url: https://api.llama.fi/v2/chains
+    topics:
+      - defi
+      - chains
+      - tvl
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 50
-    note: "All chains with TVL. DAHR only."
-
+    note: All chains with TVL. DAHR only.
   - name: defillama-yields
-    url: "https://yields.llama.fi/pools"
-    topics: [defi, yields]
+    url: https://yields.llama.fi/pools
+    topics:
+      - defi
+      - yields
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 500
-    note: "All yield pools. Very large. DAHR only."
-
+    note: All yield pools. Very large. DAHR only.
   - name: etherscan-gas
-    url: "https://api.etherscan.io/api?module=gastracker&action=gasoracle"
-    topics: [ethereum, gas, infrastructure]
+    url: https://api.etherscan.io/api?module=gastracker&action=gasoracle
+    topics:
+      - ethereum
+      - gas
+      - infrastructure
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Free tier. Returns safe/proposed/fast gas in gwei."
-
-  # ─── News / Tech ─────────────────────────────────────────────
-
+    note: Free tier. Returns safe/proposed/fast gas in gwei.
   - name: hn-algolia-search
-    url: "https://hn.algolia.com/api/v1/search?query={query}&hitsPerPage=2"
-    topics: [tech, news, hn]
+    url: https://hn.algolia.com/api/v1/search?query={query}&hitsPerPage=2
+    topics:
+      - tech
+      - news
+      - hn
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
     note: "CRITICAL: hitsPerPage MUST be 2 for TLSN. 5+ hits exceed 16KB and crash WASM prover."
-
   - name: hn-algolia-front-page
-    url: "https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=2"
-    topics: [tech, news, hn]
+    url: https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=2
+    topics:
+      - tech
+      - news
+      - hn
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "Front page stories. Same hitsPerPage=2 TLSN constraint."
-
+    note: Front page stories. Same hitsPerPage=2 TLSN constraint.
   - name: hn-algolia-recent
-    url: "https://hn.algolia.com/api/v1/search_by_date?query={query}&hitsPerPage=2"
-    topics: [tech, news, hn]
+    url: https://hn.algolia.com/api/v1/search_by_date?query={query}&hitsPerPage=2
+    topics:
+      - tech
+      - news
+      - hn
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "Sorted by date. Same hitsPerPage=2 TLSN constraint."
-
+    note: Sorted by date. Same hitsPerPage=2 TLSN constraint.
   - name: github-repo
-    url: "https://api.github.com/repos/{owner}/{repo}"
-    topics: [software, github]
+    url: https://api.github.com/repos/{owner}/{repo}
+    topics:
+      - software
+      - github
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "Public repos. No auth needed. Stars, forks, language, etc."
-
+    note: Public repos. No auth needed. Stars, forks, language, etc.
   - name: github-releases
-    url: "https://api.github.com/repos/{owner}/{repo}/releases?per_page=3"
-    topics: [software, github, releases]
+    url: https://api.github.com/repos/{owner}/{repo}/releases?per_page=3
+    topics:
+      - software
+      - github
+      - releases
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 15
-    note: "Latest 3 releases. Keep per_page low for TLSN."
-
+    note: Latest 3 releases. Keep per_page low for TLSN.
   - name: github-ai-resources-drix10
-    url: "https://api.github.com/repos/Drix10/ai-resources"
-    topics: [ai, software, github]
+    url: https://api.github.com/repos/Drix10/ai-resources
+    topics:
+      - ai
+      - software
+      - github
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "Curated AI resources repository metadata (stars/forks/activity)."
-
+    note: Curated AI resources repository metadata (stars/forks/activity).
   - name: github-trending
-    url: "https://api.github.com/search/repositories?q=created:>{date}&sort=stars&per_page=5"
-    topics: [software, github, trending]
+    url: https://api.github.com/search/repositories?q=created:>{date}&sort=stars&per_page=5
+    topics:
+      - software
+      - github
+      - trending
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 15
-    note: "Replace {date} with ISO date (e.g., 2026-03-01). Limit per_page for TLSN."
-
+    note: Replace {date} with ISO date (e.g., 2026-03-01). Limit per_page for TLSN.
   - name: npm-package
-    url: "https://registry.npmjs.org/{package}/latest"
-    topics: [software, npm, javascript]
+    url: https://registry.npmjs.org/{package}/latest
+    topics:
+      - software
+      - npm
+      - javascript
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "Latest version metadata. No auth."
-
+    note: Latest version metadata. No auth.
   - name: pypi-package
-    url: "https://pypi.org/pypi/{package}/json"
-    topics: [software, pypi, python]
+    url: https://pypi.org/pypi/{package}/json
+    topics:
+      - software
+      - pypi
+      - python
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 30
-    note: "Full package metadata. Often exceeds 16KB. DAHR only."
-
+    note: Full package metadata. Often exceeds 16KB. DAHR only.
   - name: arxiv-search
-    url: "http://export.arxiv.org/api/query?search_query={query}&max_results=3"
-    topics: [science, ai, research]
+    url: http://export.arxiv.org/api/query?search_query={query}&max_results=3
+    topics:
+      - science
+      - ai
+      - research
     tlsn_safe: true
     dahr_safe: false
     max_response_kb: 10
-    note: "Returns Atom XML, not JSON. Parse XML. DAHR expects JSON — use TLSN or convert."
-
-  # ─── Reference / Knowledge ───────────────────────────────────
-
+    note: Returns Atom XML, not JSON. Parse XML. DAHR expects JSON — use TLSN or convert.
   - name: wikipedia-summary
-    url: "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
-    topics: [reference, knowledge]
+    url: https://en.wikipedia.org/api/rest_v1/page/summary/{title}
+    topics:
+      - reference
+      - knowledge
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 5
-    note: "Concise summary with extract. Good for background verification."
-
+    note: Concise summary with extract. Good for background verification.
   - name: wikipedia-search
-    url: "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={query}&format=json&srlimit=5"
-    topics: [reference, knowledge, search]
+    url: https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={query}&format=json&srlimit=5
+    topics:
+      - reference
+      - knowledge
+      - search
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "Search results with snippets. Limit srlimit for TLSN."
-
+    note: Search results with snippets. Limit srlimit for TLSN.
   - name: wikidata-entity
-    url: "https://www.wikidata.org/wiki/Special:EntityData/{id}.json"
-    topics: [reference, knowledge, structured-data]
+    url: https://www.wikidata.org/wiki/Special:EntityData/{id}.json
+    topics:
+      - reference
+      - knowledge
+      - structured-data
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 100
-    note: "Full entity data. Very large for popular items. DAHR only."
-
+    note: Full entity data. Very large for popular items. DAHR only.
   - name: openlibrary-search
-    url: "https://openlibrary.org/search.json?q={query}&limit=5"
-    topics: [reference, books]
+    url: https://openlibrary.org/search.json?q={query}&limit=5
+    topics:
+      - reference
+      - books
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 12
-    note: "Book search. Keep limit low for TLSN."
-
+    note: Book search. Keep limit low for TLSN.
   - name: restcountries
-    url: "https://restcountries.com/v3.1/name/{name}?fields=name,population,capital,currencies,region"
-    topics: [reference, geography]
+    url: https://restcountries.com/v3.1/name/{name}?fields=name,population,capital,currencies,region
+    topics:
+      - reference
+      - geography
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 3
-    note: "Compact with field filtering."
-
+    note: Compact with field filtering.
   - name: ipinfo
-    url: "https://ipinfo.io/{ip}/json"
-    topics: [infrastructure, geolocation]
+    url: https://ipinfo.io/{ip}/json
+    topics:
+      - infrastructure
+      - geolocation
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Free tier, no auth for basic lookups."
-
-  # ─── Finance / Markets ───────────────────────────────────────
-
+    note: Free tier, no auth for basic lookups.
   - name: exchangerate-latest
-    url: "https://open.er-api.com/v6/latest/{base}"
-    topics: [finance, forex, exchange-rates]
+    url: https://open.er-api.com/v6/latest/{base}
+    topics:
+      - finance
+      - forex
+      - exchange-rates
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 5
-    note: "Free, no auth. {base} = USD, EUR, etc."
-
+    note: Free, no auth. {base} = USD, EUR, etc.
   - name: yahoo-finance-quote
-    url: "https://query2.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d"
-    topics: [finance, stocks, markets]
+    url: https://query2.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d
+    topics:
+      - finance
+      - stocks
+      - markets
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "Public endpoint. {symbol} = AAPL, MSFT, ^GSPC, etc."
-
+    note: Public endpoint. {symbol} = AAPL, MSFT, ^GSPC, etc.
   - name: yahoo-finance-spark
-    url: "https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbol}&range=1d&interval=5m"
-    topics: [finance, stocks, intraday]
+    url: https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbol}&range=1d&interval=5m
+    topics:
+      - finance
+      - stocks
+      - intraday
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "Intraday spark data. Compact."
-
+    note: Intraday spark data. Compact.
   - name: worldbank-indicator
-    url: "https://api.worldbank.org/v2/country/{country}/indicator/{indicator}?format=json&per_page=5"
-    topics: [economics, macro, development]
+    url: https://api.worldbank.org/v2/country/{country}/indicator/{indicator}?format=json&per_page=5
+    topics:
+      - economics
+      - macro
+      - development
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 5
     note: "{country} = US, GB, etc. {indicator} = NY.GDP.MKTP.CD, SP.POP.TOTL, etc."
-
   - name: fred-series
-    url: "https://api.stlouisfed.org/fred/series/observations?series_id={series}&api_key={key}&file_type=json&limit=10&sort_order=desc"
-    topics: [economics, macro, fed]
+    url: https://api.stlouisfed.org/fred/series/observations?series_id={series}&api_key={key}&file_type=json&limit=10&sort_order=desc
+    topics:
+      - economics
+      - macro
+      - fed
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 5
-    note: "Requires free API key. {series} = DFF (fed funds), CPIAUCSL (CPI), UNRATE, etc."
-
+    note: Requires free API key. {series} = DFF (fed funds), CPIAUCSL (CPI), UNRATE, etc.
   - name: fred-series-info
-    url: "https://api.stlouisfed.org/fred/series?series_id={series}&api_key={key}&file_type=json"
-    topics: [economics, macro, fed]
+    url: https://api.stlouisfed.org/fred/series?series_id={series}&api_key={key}&file_type=json
+    topics:
+      - economics
+      - macro
+      - fed
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
-    note: "Series metadata only. Very compact."
-
-  # ─── Social Signals ──────────────────────────────────────────
-
+    note: Series metadata only. Very compact.
   - name: reddit-subreddit-top
-    url: "https://www.reddit.com/r/{subreddit}/top.json?t=day&limit=5"
-    topics: [social, reddit, sentiment]
+    url: https://www.reddit.com/r/{subreddit}/top.json?t=day&limit=5
+    topics:
+      - social
+      - reddit
+      - sentiment
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 15
-    note: "Public JSON API. No auth for read. Keep limit low for TLSN."
-
+    note: Public JSON API. No auth for read. Keep limit low for TLSN.
   - name: reddit-subreddit-new
-    url: "https://www.reddit.com/r/{subreddit}/new.json?limit=5"
-    topics: [social, reddit, sentiment]
+    url: https://www.reddit.com/r/{subreddit}/new.json?limit=5
+    topics:
+      - social
+      - reddit
+      - sentiment
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 15
-    note: "Latest posts. Keep limit low."
-
+    note: Latest posts. Keep limit low.
   - name: reddit-search
-    url: "https://www.reddit.com/search.json?q={query}&sort=relevance&limit=5"
-    topics: [social, reddit, search]
+    url: https://www.reddit.com/search.json?q={query}&sort=relevance&limit=5
+    topics:
+      - social
+      - reddit
+      - search
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 15
-    note: "Cross-subreddit search. Limit for TLSN."
-
+    note: Cross-subreddit search. Limit for TLSN.
   - name: stackexchange-search
-    url: "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=votes&q={query}&site=stackoverflow&pagesize=3"
-    topics: [software, stackoverflow, q-and-a]
+    url: https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=votes&q={query}&site=stackoverflow&pagesize=3
+    topics:
+      - software
+      - stackoverflow
+      - q-and-a
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "Compressed by default. Compact responses."
-
-  # ─── Infrastructure / Status ─────────────────────────────────
-
+    note: Compressed by default. Compact responses.
   - name: isup-check
-    url: "https://isup.me/{domain}"
-    topics: [infrastructure, uptime]
+    url: https://isup.me/{domain}
+    topics:
+      - infrastructure
+      - uptime
     tlsn_safe: true
     dahr_safe: false
     max_response_kb: 5
-    note: "Returns HTML, not JSON. TLSN works (attests page). Not DAHR-safe."
-
+    note: Returns HTML, not JSON. TLSN works (attests page). Not DAHR-safe.
   - name: httpstat-test
-    url: "https://httpstat.us/{code}"
-    topics: [infrastructure, testing]
+    url: https://httpstat.us/{code}
+    topics:
+      - infrastructure
+      - testing
     tlsn_safe: true
     dahr_safe: false
     max_response_kb: 1
-    note: "Returns status text. Useful for infra attestation."
-
+    note: Returns status text. Useful for infra attestation.
   - name: dns-cloudflare
-    url: "https://cloudflare-dns.com/dns-query?name={domain}&type=A"
-    topics: [infrastructure, dns]
+    url: https://cloudflare-dns.com/dns-query?name={domain}&type=A
+    topics:
+      - infrastructure
+      - dns
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
     note: "DNS over HTTPS. Set Accept: application/dns-json header."
-
   - name: dns-google
-    url: "https://dns.google/resolve?name={domain}&type=A"
-    topics: [infrastructure, dns]
+    url: https://dns.google/resolve?name={domain}&type=A
+    topics:
+      - infrastructure
+      - dns
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
-    note: "Google DNS over HTTPS. JSON response."
-
-  # ─── Science / Environment ──────────────────────────────────
-
+    note: Google DNS over HTTPS. JSON response.
   - name: nasa-apod
-    url: "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY"
-    topics: [science, space, nasa]
+    url: https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY
+    topics:
+      - science
+      - space
+      - nasa
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
-    note: "Astronomy Picture of the Day. DEMO_KEY has rate limits."
-
+    note: Astronomy Picture of the Day. DEMO_KEY has rate limits.
   - name: usgs-earthquakes
-    url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson"
-    topics: [science, earthquakes, geophysics]
+    url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson
+    topics:
+      - science
+      - earthquakes
+      - geophysics
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 15
-    note: "Significant earthquakes in past week. Usually under 16KB."
-
+    note: Significant earthquakes in past week. Usually under 16KB.
   - name: usgs-earthquakes-hour
-    url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
-    topics: [science, earthquakes, geophysics]
+    url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson
+    topics:
+      - science
+      - earthquakes
+      - geophysics
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "All earthquakes in past hour. Compact."
-
+    note: All earthquakes in past hour. Compact.
   - name: openweather-current
-    url: "https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric"
-    topics: [weather, climate]
+    url: https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric
+    topics:
+      - weather
+      - climate
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
-    note: "Requires free API key. Current conditions."
-
-  # ─── Blockchain / On-chain ──────────────────────────────────
-
+    note: Requires free API key. Current conditions.
   - name: blockchain-info-ticker
-    url: "https://blockchain.info/ticker"
-    topics: [crypto, bitcoin, prices]
+    url: https://blockchain.info/ticker
+    topics:
+      - crypto
+      - bitcoin
+      - prices
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
-    note: "BTC price in multiple currencies. Very compact."
-
+    note: BTC price in multiple currencies. Very compact.
   - name: blockchain-info-stats
-    url: "https://api.blockchain.info/stats"
-    topics: [crypto, bitcoin, network]
+    url: https://api.blockchain.info/stats
+    topics:
+      - crypto
+      - bitcoin
+      - network
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 2
     note: "Network stats: hashrate, difficulty, unconfirmed txs."
-
   - name: blockstream-block-tip
-    url: "https://blockstream.info/api/blocks/tip/height"
-    topics: [crypto, bitcoin, blocks]
+    url: https://blockstream.info/api/blocks/tip/height
+    topics:
+      - crypto
+      - bitcoin
+      - blocks
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Returns single number — current block height."
-
+    note: Returns single number — current block height.
   - name: blockstream-address
-    url: "https://blockstream.info/api/address/{address}"
-    topics: [crypto, bitcoin, address]
+    url: https://blockstream.info/api/address/{address}
+    topics:
+      - crypto
+      - bitcoin
+      - address
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Address balance and tx count. Compact JSON."
-
+    note: Address balance and tx count. Compact JSON.
   - name: mempool-fees
-    url: "https://mempool.space/api/v1/fees/recommended"
-    topics: [crypto, bitcoin, fees]
+    url: https://mempool.space/api/v1/fees/recommended
+    topics:
+      - crypto
+      - bitcoin
+      - fees
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Recommended fee rates. Ultra-compact."
-
+    note: Recommended fee rates. Ultra-compact.
   - name: mempool-mempool
-    url: "https://mempool.space/api/mempool"
-    topics: [crypto, bitcoin, mempool]
+    url: https://mempool.space/api/mempool
+    topics:
+      - crypto
+      - bitcoin
+      - mempool
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
     note: "Mempool stats: count, vsize, total_fee."
-
   - name: etherscan-balance
-    url: "https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest"
-    topics: [ethereum, balance, address]
+    url: https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest
+    topics:
+      - ethereum
+      - balance
+      - address
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Wei balance for address. Free tier."
-
+    note: Wei balance for address. Free tier.
   - name: etherscan-tokentx
-    url: "https://api.etherscan.io/api?module=account&action=tokentx&address={address}&page=1&offset=5&sort=desc"
-    topics: [ethereum, tokens, transfers]
+    url: https://api.etherscan.io/api?module=account&action=tokentx&address={address}&page=1&offset=5&sort=desc
+    topics:
+      - ethereum
+      - tokens
+      - transfers
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "Recent ERC-20 transfers. Keep offset low for TLSN."
-
+    note: Recent ERC-20 transfers. Keep offset low for TLSN.
   - name: alternative-fear-greed
-    url: "https://api.alternative.me/fng/?limit=1"
-    topics: [crypto, sentiment]
+    url: https://api.alternative.me/fng/?limit=1
+    topics:
+      - crypto
+      - sentiment
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 1
-    note: "Crypto Fear & Greed Index. Ultra-compact."
-
+    note: Crypto Fear & Greed Index. Ultra-compact.
   - name: coingecko-trending
-    url: "https://api.coingecko.com/api/v3/search/trending"
-    topics: [crypto, trending, sentiment]
+    url: https://api.coingecko.com/api/v3/search/trending
+    topics:
+      - crypto
+      - trending
+      - sentiment
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 10
-    note: "Top 7 trending coins. Compact response."
+    note: Top 7 trending coins. Compact response.
+  - name: hn-oil
+    url: https://hn.algolia.com/api/v1/search?query=oil&tags=story&hitsPerPage=2
+    topics:
+      - oil
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 4
+    note: "Auto-discovered. Provider: hn-algolia. Relevance: 85/100."
+  - name: hn-prediction
+    url: https://hn.algolia.com/api/v1/search?query=prediction&tags=story&hitsPerPage=2
+    topics:
+      - prediction
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 4
+    note: "Auto-discovered. Provider: hn-algolia. Relevance: 85/100."

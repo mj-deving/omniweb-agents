@@ -54,6 +54,7 @@ export interface AgentConfig {
   };
   calibration: { offset: number };
   phaseBudgets?: Partial<Record<string, number>>;
+  loopExtensions: string[];
   paths: AgentPaths;
 }
 
@@ -71,6 +72,9 @@ export interface AgentPaths {
 // ── Resolution ─────────────────────────────────────
 
 const VALID_AGENT_NAME = /^[a-z0-9-]+$/;
+// Import canonical extension list from state.ts to avoid duplication
+import { KNOWN_EXTENSIONS } from "./state.js";
+const KNOWN_LOOP_EXTENSIONS = new Set<string>(KNOWN_EXTENSIONS);
 
 /**
  * Resolve agent name from CLI flags, env, or default.
@@ -306,6 +310,28 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
   return yaml;
 }
 
+// ── Loop Extension Validation ─────────────────────
+
+function parseLoopExtensions(yaml: any, filePath: string): string[] {
+  const raw = yaml?.loop?.extensions;
+  if (!raw) return [];
+  if (!Array.isArray(raw)) {
+    console.warn(`Warning: loop.extensions in ${filePath} is not an array — ignored`);
+    return [];
+  }
+  const validated: string[] = [];
+  for (const ext of raw) {
+    const name = String(ext || "").trim();
+    if (!name) continue;
+    if (!KNOWN_LOOP_EXTENSIONS.has(name)) {
+      console.warn(`Warning: unknown loop extension "${name}" in ${filePath} — ignored`);
+      continue;
+    }
+    validated.push(name);
+  }
+  return validated;
+}
+
 // ── Loader ─────────────────────────────────────────
 
 /**
@@ -343,6 +369,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
       },
       gate: { predictedReactionsThreshold: 17, allow5Of6: true, duplicateWindowHours: 24 },
       calibration: { offset: 0 },
+      loopExtensions: [],
       paths,
     };
   }
@@ -385,7 +412,8 @@ export function loadAgentConfig(name?: string): AgentConfig {
       noveltyMentionThreshold: yaml.gate?.noveltyMentionThreshold,
     },
     calibration: { offset: yaml.calibration?.offset ?? 0 },
-    phaseBudgets: yaml.phaseBudgets,
+    phaseBudgets: yaml.phaseBudgets as Partial<Record<string, number>> | undefined,
+    loopExtensions: parseLoopExtensions(yaml, personaYamlPath),
     paths,
   };
 }

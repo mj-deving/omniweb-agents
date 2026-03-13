@@ -24,7 +24,6 @@ Private agent toolkit for the Demos Network / SuperColony ecosystem. Contains ag
 - File naming: kebab-case
 - **Plan files:** `Plans/<descriptive-kebab-case-name>.md` (gitignored — reference copies from DEMOS-Work)
 - **Zero-tolerance errors:** Every error encountered during the agent loop MUST be (1) fixed immediately, (2) saved to MEMORY.md as a learning, (3) proposed as an update to relevant files, and (4) Codex review requested on the fix
-- SDK requires Node.js (not Bun — NAPI crash). `connectWallet()` takes mnemonic directly
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). Legacy `.env` fallback still works. Explicit `--env` flag always overrides.
 
 ## Project Structure
@@ -40,9 +39,15 @@ demos-agents/
 │   │   ├── persona.md                 # Voice, tone, post guidelines
 │   │   ├── strategy.yaml              # Self-improving loop config
 │   │   └── sources-registry.yaml      # 50+ data sources
-│   └── crawler/                       # Deep research agent (100+ sources)
-│       ├── persona.yaml               # Config (higher engagement limits)
-│       └── ...
+│   ├── crawler/                       # Deep research agent (100+ sources)
+│   │   ├── persona.yaml               # Config (higher engagement limits)
+│   │   └── ...
+│   └── pioneer/                       # Novel content originator (signal-gated)
+│       ├── AGENT.yaml                 # Catalyst identity, thesis-question pattern
+│       ├── persona.yaml               # Config: signal threshold, novelty check
+│       ├── persona.md                 # Voice, framing guidelines
+│       ├── strategy.yaml              # Signal-scored loop config
+│       └── sources-registry.yaml      # 17 external sources
 ├── tools/
 │   ├── session-runner.ts              # Full 8-phase loop orchestrator
 │   ├── audit.ts                       # AUDIT phase — score/prediction calibration
@@ -61,6 +66,9 @@ demos-agents/
 │       ├── llm.ts                     # LLM generation interface
 │       ├── llm-provider.ts            # Provider-agnostic adapters (Claude/OpenAI/CLI)
 │       ├── publish-pipeline.ts        # DAHR/TLSN attestation + HIVE publish
+│       ├── tlsn-playwright-bridge.ts  # TLSN Playwright WASM bridge (production)
+│       ├── tlsn-node-bridge.ts        # TLSN Node.js bridge (experimental)
+│       ├── attestation-policy.ts      # Source selection + TLSN safety checks
 │       ├── state.ts                   # Session state persistence
 │       ├── subprocess.ts              # Tool subprocess runner
 │       ├── log.ts                     # Session log (JSONL, append-only)
@@ -157,11 +165,10 @@ npx tsx skills/supercolony/scripts/supercolony.ts leaderboard --limit 10 --prett
 
 ## Current State
 
-- **Two agents:** sentinel (general-purpose, 50+ sources) + crawler (deep research, 100+ sources)
-- **41+ on-chain posts** (21 ANALYSIS + 2 PREDICTION, avg score 91.1)
-- **PQC identity:** Falcon + ML-DSA bound on-chain (tx: `5bbdab08...`)
-- **TLSN pipeline:** operational (Playwright bridge)
-- **Session counter:** `~/.sentinel-improvements.json` `nextSession` field
+- **Three agents:** sentinel (verification, 50+ sources) + crawler (deep research, 100+ sources) + pioneer (novel content, signal-gated, 17 sources)
+- **45+ on-chain posts** across all agents. PQC identity bound (tx: `5bbdab08...`)
+- **TLSN pipeline:** operational (Playwright bridge, 120s timeout). Attestation quality guard rejects non-2xx/auth errors.
+- **Session counter:** `~/.sentinel-improvements.json` / `~/.pioneer-improvements.json` `nextSession` field
 
 ## Session Workflow
 

@@ -683,7 +683,7 @@ async function main(): Promise<void> {
   if (scanCachePath) {
     try {
       const stateData = JSON.parse(readFileSync(resolve(scanCachePath), "utf-8"));
-      scanResult = stateData?.phases?.scan?.result || stateData?.scan || stateData;
+      scanResult = stateData?.phases?.scan?.result ?? stateData?.phases?.sense?.result ?? stateData?.scan ?? stateData;
       cachedPosts = Array.isArray(scanResult?.rawPosts) ? scanResult.rawPosts : undefined;
       if (cachedPosts) {
         info(`Loaded ${cachedPosts.length} cached posts from scan phase`);

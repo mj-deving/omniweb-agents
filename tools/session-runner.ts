@@ -1312,14 +1312,15 @@ async function runGateApprove(
   state: AnySessionState,
   flags: RunnerFlags,
   rl: ReturnType<typeof createInterface>
-): Promise<void> {
+): Promise<{ posts: GatePost[] }> {
   const gatePosts: GatePost[] = [];
   const suggestions = extractTopicsFromScan(state, flags.log);
 
   if (suggestions.length === 0) {
     phaseSkipped("No topics found in scan — skipping gate");
-    completePhase(state, "gate", { posts: [] });
-    return;
+    const result = { posts: [] as GatePost[] };
+    if (!isV2(state)) completePhase(state, "gate", result);
+    return result;
   }
 
   console.log(`\n  Auto-suggested ${suggestions.length} topic(s) from scan:`);
@@ -1348,14 +1349,16 @@ async function runGateApprove(
   }
 
   if (gatePosts.length === 0) phaseSkipped("No topics approved");
-  completePhase(state, "gate", { posts: gatePosts });
+  const result = { posts: gatePosts };
+  if (!isV2(state)) completePhase(state, "gate", result);
+  return result;
 }
 
 /** GATE: autonomous oversight — auto-pick topics from scan, auto-accept by gate summary */
 async function runGateAutonomous(
   state: AnySessionState,
   flags: RunnerFlags
-): Promise<void> {
+): Promise<{ posts: GatePost[] }> {
   const gatePosts: GatePost[] = [];
   const suggestions = extractTopicsFromScan(state, flags.log);
 
@@ -1365,8 +1368,9 @@ async function runGateAutonomous(
       source: "session-runner.ts:runGateAutonomous",
     });
     phaseSkipped("No topics found in scan — skipping gate");
-    completePhase(state, "gate", { posts: [] });
-    return;
+    const result = { posts: [] as GatePost[] };
+    if (!isV2(state)) completePhase(state, "gate", result);
+    return result;
   }
 
   // Pre-load sources so we can reject topics with no attestable source before wasting LLM calls.
@@ -1421,7 +1425,9 @@ async function runGateAutonomous(
 
   if (gatePosts.length === 0) phaseSkipped("No topics passed auto-gate");
   else phaseResult(`${gatePosts.length} topic(s) auto-gated`);
-  completePhase(state, "gate", { posts: gatePosts });
+  const result = { posts: gatePosts };
+  if (!isV2(state)) completePhase(state, "gate", result);
+  return result;
 }
 
 // ── PUBLISH Phase ──────────────────────────────────
@@ -1431,14 +1437,15 @@ async function runPublishManual(
   state: AnySessionState,
   flags: RunnerFlags,
   rl: ReturnType<typeof createInterface>
-): Promise<void> {
+): Promise<{ txHashes: string[] }> {
   const gateResult = getGateResult(state) || { posts: [] };
   const gatePosts = gateResult.posts || [];
 
   if (gatePosts.length === 0) {
     phaseSkipped("No posts gated — nothing to publish");
-    completePhase(state, "publish", { posts: [] });
-    return;
+    const result = { txHashes: [] as string[] };
+    if (!isV2(state)) completePhase(state, "publish", result);
+    return result;
   }
 
   console.log("\n  Publish your post(s) now using isidore-publish.ts");
@@ -1500,22 +1507,25 @@ async function runPublishManual(
   }
 
   phaseResult(`${publishedHashes.length} post(s) captured`);
-  completePhase(state, "publish", { txHashes: publishedHashes });
+  const result = { txHashes: publishedHashes };
+  if (!isV2(state)) completePhase(state, "publish", result);
+  return result;
 }
 
 /** PUBLISH: autonomous oversight — LLM text gen + attestation + publish */
 async function runPublishAutonomous(
   state: AnySessionState,
   flags: RunnerFlags
-): Promise<void> {
+): Promise<{ txHashes: string[] }> {
   const gateResult = getGateResult(state) || { posts: [] };
   const gatePosts: GatePost[] = gateResult.posts || [];
   const scanResult = getScanResult(state) || {};
 
   if (gatePosts.length === 0) {
     phaseSkipped("No posts gated — nothing to publish");
-    completePhase(state, "publish", { posts: [] });
-    return;
+    const result = { txHashes: [] as string[] };
+    if (!isV2(state)) completePhase(state, "publish", result);
+    return result;
   }
 
   // Load calibration offset from improvements file
@@ -1753,11 +1763,13 @@ async function runPublishAutonomous(
   phaseResult(`${publishedHashes.length}/${gatePosts.length} post(s) auto-published`);
 
   if (publishedHashes.length === 0 && gatePosts.length > 0) {
-    failPhase(state, "publish", `All ${gatePosts.length} posts failed to publish`);
+    if (!isV2(state)) failPhase(state, "publish", `All ${gatePosts.length} posts failed to publish`);
     throw new Error(`Autonomous publish failed: 0/${gatePosts.length} posts succeeded`);
   }
 
-  completePhase(state, "publish", { txHashes: publishedHashes });
+  const result = { txHashes: publishedHashes };
+  if (!isV2(state)) completePhase(state, "publish", result);
+  return result;
 }
 
 // ── VERIFY Phase ───────────────────────────────────
@@ -2460,13 +2472,19 @@ async function runV2Loop(
   const senseCompleted = state.phases.sense?.status === "completed";
   const actCompleted = state.phases.act?.status === "completed";
 
-  // Extension: calibrate (reuses runAudit)
+  // Extension: calibrate — run audit tool directly without writing v1 phase keys
   if (agentConfig.loopExtensions.includes("calibrate") && !senseCompleted) {
     info("Extension: calibrate (running audit)...");
-    // Create a temporary v1-shaped wrapper to call runAudit which expects SessionState
-    await runAudit(state as any, flags);
-    // Note: runAudit calls completePhase(state, "audit", ...) — that's fine for v1 callers,
-    // but for v2 we just discard the result (calibrate is informational only).
+    try {
+      const auditArgs = ["--agent", flags.agent, "--update", "--log", flags.log, "--env", flags.env];
+      const auditResult = await runToolAndParse("tools/audit.ts", auditArgs, "audit.ts (calibrate)");
+      const stats = auditResult.stats || {};
+      phaseResult(
+        `Calibrate: ${stats.total_entries || 0} entries | avg error: ${stats.avg_prediction_error !== undefined ? stats.avg_prediction_error.toFixed(1) : "N/A"}`
+      );
+    } catch (e: any) {
+      phaseError(`Calibrate failed (non-critical): ${e.message}`);
+    }
   }
 
   // ── SENSE ──────────────────────────────────────
@@ -2510,71 +2528,88 @@ async function runV2Loop(
   beginPhase(state, "act" as any, sessionsDir);
   const actStartMs = Date.now();
 
-  const substages: ActSubstageState[] = [];
+  // Restore substages from persisted state on resume, or start fresh
+  const substages: ActSubstageState[] = (state.substages && state.substages.length > 0)
+    ? state.substages.map(s => ({ ...s }))
+    : [];
+
+  function ensureSubstage(name: "engage" | "gate" | "publish"): ActSubstageState {
+    const existing = substages.find(s => s.substage === name);
+    if (existing) return existing;
+    const created = createSubstage(name);
+    substages.push(created);
+    return created;
+  }
+
   let engageResult: any = {};
   let gateResult: any = { posts: [] };
   let publishResult: any = { txHashes: [] };
 
   // ACT substage 1: ENGAGE
-  const engageSub = createSubstage("engage");
-  substages.push(engageSub);
-  try {
-    v2PhaseHeader("act", "engage");
-    startSubstage(engageSub);
-    const args = ["--agent", flags.agent, "--max", String(agentConfig.engagement.maxReactionsPerSession), "--json", "--env", flags.env];
-    engageResult = await runToolAndParse("tools/engage.ts", args, "engage.ts (ACT/engage)");
-    phaseResult(
-      `${engageResult.reactions_cast || 0} reactions (${engageResult.agrees || 0} agree, ${engageResult.disagrees || 0} disagree)`
-    );
-    state.engagements = engageResult.targets || [];
-    completeSubstage(engageSub, engageResult);
-    state.substages = substages;
-    saveState(state, sessionsDir);
-  } catch (e: any) {
-    // engage fails → continue to gate (non-critical)
-    failSubstage(engageSub, e.message);
-    state.substages = substages;
-    saveState(state, sessionsDir);
-    observe("error", `ACT/engage failed: ${e.message}`, { phase: "act", substage: "engage", source: "session-runner.ts:runV2Loop" });
-    phaseError(`Engage failed (non-critical): ${e.message}`);
+  const engageSub = ensureSubstage("engage");
+  if (engageSub.status === "completed") {
+    engageResult = engageSub.result || {};
+    info("ACT/engage already completed — skipping (resume)");
+  } else if (engageSub.status === "skipped") {
+    info("ACT/engage already skipped — skipping (resume)");
+  } else {
+    try {
+      v2PhaseHeader("act", "engage");
+      startSubstage(engageSub);
+      const args = ["--agent", flags.agent, "--max", String(agentConfig.engagement.maxReactionsPerSession), "--json", "--env", flags.env];
+      engageResult = await runToolAndParse("tools/engage.ts", args, "engage.ts (ACT/engage)");
+      phaseResult(
+        `${engageResult.reactions_cast || 0} reactions (${engageResult.agrees || 0} agree, ${engageResult.disagrees || 0} disagree)`
+      );
+      state.engagements = engageResult.targets || [];
+      completeSubstage(engageSub, engageResult);
+      state.substages = substages;
+      saveState(state, sessionsDir);
+    } catch (e: any) {
+      // engage fails → continue to gate (non-critical)
+      failSubstage(engageSub, e.message);
+      state.substages = substages;
+      saveState(state, sessionsDir);
+      observe("error", `ACT/engage failed: ${e.message}`, { phase: "act", substage: "engage", source: "session-runner.ts:runV2Loop" });
+      phaseError(`Engage failed (non-critical): ${e.message}`);
+    }
   }
 
   // ACT substage 2: GATE
-  const gateSub = createSubstage("gate");
-  substages.push(gateSub);
-  try {
-    v2PhaseHeader("act", "gate");
-    startSubstage(gateSub);
-    if (flags.oversight === "full" && rl) {
-      // Re-purpose the v1 gate handlers — they call completePhase(state, "gate", ...)
-      // For v2 we capture the result differently.
-      // Inline a simplified autonomous gate for v2 (the refactor goal).
-      await runGateAutonomous(state, flags);
-    } else if (flags.oversight === "approve" && rl) {
-      await runGateApprove(state, flags, rl);
-    } else {
-      await runGateAutonomous(state, flags);
+  const gateSub = ensureSubstage("gate");
+  if (gateSub.status === "completed") {
+    gateResult = gateSub.result || getGateResult(state) || { posts: [] };
+    info("ACT/gate already completed — skipping (resume)");
+  } else {
+    try {
+      v2PhaseHeader("act", "gate");
+      startSubstage(gateSub);
+      if (flags.oversight === "full" && rl) {
+        gateResult = await runGateAutonomous(state, flags);
+      } else if (flags.oversight === "approve" && rl) {
+        gateResult = await runGateApprove(state, flags, rl);
+      } else {
+        gateResult = await runGateAutonomous(state, flags);
+      }
+      completeSubstage(gateSub, gateResult);
+      state.substages = substages;
+      saveState(state, sessionsDir);
+    } catch (e: any) {
+      // gate fails → skip publish
+      failSubstage(gateSub, e.message);
+      state.substages = substages;
+      saveState(state, sessionsDir);
+      observe("error", `ACT/gate failed: ${e.message}`, { phase: "act", substage: "gate", source: "session-runner.ts:runV2Loop" });
+      phaseError(`Gate failed: ${e.message} — skipping publish`);
     }
-    // Gate result: v1 handlers write to state.phases.gate via completePhase.
-    // For v2, getGateResult() returns from the correct location.
-    gateResult = getGateResult(state) || { posts: [] };
-    completeSubstage(gateSub, gateResult);
-    state.substages = substages;
-    saveState(state, sessionsDir);
-  } catch (e: any) {
-    // gate fails → skip publish
-    failSubstage(gateSub, e.message);
-    state.substages = substages;
-    saveState(state, sessionsDir);
-    observe("error", `ACT/gate failed: ${e.message}`, { phase: "act", substage: "gate", source: "session-runner.ts:runV2Loop" });
-    phaseError(`Gate failed: ${e.message} — skipping publish`);
   }
 
   // ACT substage 3: PUBLISH
-  const publishSub = createSubstage("publish");
-  substages.push(publishSub);
-
-  if (flags.shadow) {
+  const publishSub = ensureSubstage("publish");
+  if (publishSub.status === "completed" || publishSub.status === "skipped") {
+    publishResult = publishSub.result || { txHashes: [] };
+    info(`ACT/publish already ${publishSub.status} — skipping (resume)`);
+  } else if (flags.shadow) {
     // Shadow mode: hard skip — no LLM calls, no wallet, no API
     skipSubstage(publishSub);
     state.publishSuppressed = true;
@@ -2592,11 +2627,10 @@ async function runV2Loop(
       v2PhaseHeader("act", "publish");
       startSubstage(publishSub);
       if (flags.oversight === "autonomous") {
-        await runPublishAutonomous(state, flags);
+        publishResult = await runPublishAutonomous(state, flags);
       } else if (rl) {
-        await runPublishManual(state, flags, rl);
+        publishResult = await runPublishManual(state, flags, rl);
       }
-      publishResult = (state as any).phases.publish?.result || { txHashes: [] };
       completeSubstage(publishSub, publishResult);
       state.substages = substages;
       saveState(state, sessionsDir);

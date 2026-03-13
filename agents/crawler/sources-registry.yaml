@@ -195,6 +195,14 @@ sources:
     max_response_kb: 10
     note: "Public repos. No auth needed. Stars, forks, language, etc."
 
+  - name: github-ai-resources-drix10
+    url: "https://api.github.com/repos/Drix10/ai-resources"
+    topics: [ai, software, github]
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 8
+    note: "Curated AI resources repository metadata (stars/forks/activity)."
+
   - name: github-releases
     url: "https://api.github.com/repos/{owner}/{repo}/releases?per_page=3"
     topics: [software, github, releases]

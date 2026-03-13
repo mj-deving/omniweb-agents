@@ -25,6 +25,14 @@ export interface AgentConfig {
   name: string;
   displayName: string;
   topics: { primary: string[]; secondary: string[] };
+  scan: {
+    modes: string[];
+    qualityFloor: number;
+    requireAttestation: boolean;
+    depth: number;
+    topicSearchLimit: number;
+    cacheHours: number;
+  };
   attestation: {
     defaultMode: "dahr_only" | "tlsn_preferred" | "tlsn_only";
     highSensitivityRequireTlsn: boolean;
@@ -109,6 +117,14 @@ interface ValidatedPersonaConfig {
   name?: string;
   displayName?: string;
   topics?: { primary?: string[]; secondary?: string[] };
+  scan?: {
+    modes?: string[];
+    qualityFloor?: number;
+    requireAttestation?: boolean;
+    depth?: number;
+    topicSearchLimit?: number;
+    cacheHours?: number;
+  };
   attestation?: {
     defaultMode?: "dahr_only" | "tlsn_preferred" | "tlsn_only";
     highSensitivityRequireTlsn?: boolean;
@@ -165,6 +181,9 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
   if (yaml.engagement !== undefined && (typeof yaml.engagement !== "object" || yaml.engagement === null || Array.isArray(yaml.engagement))) {
     errors.push(`engagement: expected object, got ${Array.isArray(yaml.engagement) ? "array" : typeof yaml.engagement}`);
   }
+  if (yaml.scan !== undefined && (typeof yaml.scan !== "object" || yaml.scan === null || Array.isArray(yaml.scan))) {
+    errors.push(`scan: expected object, got ${Array.isArray(yaml.scan) ? "array" : typeof yaml.scan}`);
+  }
   if (yaml.attestation !== undefined && (typeof yaml.attestation !== "object" || yaml.attestation === null || Array.isArray(yaml.attestation))) {
     errors.push(`attestation: expected object, got ${Array.isArray(yaml.attestation) ? "array" : typeof yaml.attestation}`);
   }
@@ -180,6 +199,10 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
     ["engagement.minDisagreePerSession", yaml.engagement?.minDisagreePerSession],
     ["engagement.replyMinParentReactions", yaml.engagement?.replyMinParentReactions],
     ["engagement.maxReactionsPerSession", yaml.engagement?.maxReactionsPerSession],
+    ["scan.qualityFloor", yaml.scan?.qualityFloor],
+    ["scan.depth", yaml.scan?.depth],
+    ["scan.topicSearchLimit", yaml.scan?.topicSearchLimit],
+    ["scan.cacheHours", yaml.scan?.cacheHours],
     ["gate.predictedReactionsThreshold", yaml.gate?.predictedReactionsThreshold],
     ["gate.duplicateWindowHours", yaml.gate?.duplicateWindowHours],
     ["gate.signalStrengthThreshold", yaml.gate?.signalStrengthThreshold],
@@ -194,6 +217,40 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
 
   if (yaml.gate?.allow5Of6 !== undefined && typeof yaml.gate.allow5Of6 !== "boolean") {
     errors.push(`gate.allow5Of6: expected boolean, got ${typeof yaml.gate.allow5Of6}`);
+  }
+  if (yaml.scan?.requireAttestation !== undefined && typeof yaml.scan.requireAttestation !== "boolean") {
+    errors.push(`scan.requireAttestation: expected boolean, got ${typeof yaml.scan.requireAttestation}`);
+  }
+  if (yaml.scan?.modes !== undefined) {
+    if (!Array.isArray(yaml.scan.modes)) {
+      errors.push(`scan.modes: expected string array, got ${typeof yaml.scan.modes}`);
+    } else if (yaml.scan.modes.some((v: unknown) => typeof v !== "string")) {
+      errors.push(`scan.modes: all elements must be strings`);
+    }
+  }
+  if (yaml.scan?.qualityFloor !== undefined) {
+    const floor = yaml.scan.qualityFloor;
+    if (!Number.isFinite(floor) || floor < 0 || floor > 100) {
+      errors.push(`scan.qualityFloor: expected number in range [0, 100], got ${floor}`);
+    }
+  }
+  if (yaml.scan?.depth !== undefined) {
+    const depth = yaml.scan.depth;
+    if (!Number.isFinite(depth) || depth < 1 || depth > 200) {
+      errors.push(`scan.depth: expected number in range [1, 200], got ${depth}`);
+    }
+  }
+  if (yaml.scan?.topicSearchLimit !== undefined) {
+    const limit = yaml.scan.topicSearchLimit;
+    if (!Number.isFinite(limit) || limit < 1 || limit > 100) {
+      errors.push(`scan.topicSearchLimit: expected number in range [1, 100], got ${limit}`);
+    }
+  }
+  if (yaml.scan?.cacheHours !== undefined) {
+    const hours = yaml.scan.cacheHours;
+    if (!Number.isFinite(hours) || hours < 1 || hours > 168) {
+      errors.push(`scan.cacheHours: expected number in range [1, 168], got ${hours}`);
+    }
   }
   if (yaml.attestation?.defaultMode !== undefined) {
     if (typeof yaml.attestation.defaultMode !== "string") {
@@ -265,6 +322,14 @@ export function loadAgentConfig(name?: string): AgentConfig {
       name: agentName,
       displayName: agentName.charAt(0).toUpperCase() + agentName.slice(1),
       topics: { primary: [], secondary: [] },
+      scan: {
+        modes: ["lightweight"],
+        qualityFloor: 70,
+        requireAttestation: false,
+        depth: 200,
+        topicSearchLimit: 30,
+        cacheHours: 4,
+      },
       attestation: {
         defaultMode: "dahr_only",
         highSensitivityRequireTlsn: true,
@@ -290,6 +355,14 @@ export function loadAgentConfig(name?: string): AgentConfig {
     topics: {
       primary: yaml.topics?.primary || [],
       secondary: yaml.topics?.secondary || [],
+    },
+    scan: {
+      modes: yaml.scan?.modes ?? ["lightweight"],
+      qualityFloor: yaml.scan?.qualityFloor ?? 70,
+      requireAttestation: yaml.scan?.requireAttestation ?? false,
+      depth: yaml.scan?.depth ?? 200,
+      topicSearchLimit: yaml.scan?.topicSearchLimit ?? 30,
+      cacheHours: yaml.scan?.cacheHours ?? 4,
     },
     attestation: {
       defaultMode: yaml.attestation?.defaultMode ?? "dahr_only",

@@ -8,6 +8,13 @@ topics:
   primary: [emerging-tech, geopolitical, cross-domain, frontier-science]
   secondary: [quantum, biotech, energy-transition, regulatory-shifts, space, robotics, ai-policy]
 
+scan:
+  modes: [topic-search, category-filtered, lightweight]
+  qualityFloor: 70
+  requireAttestation: true
+  depth: 200
+  topicSearchLimit: 30
+
 attestation:
   defaultMode: tlsn_preferred
   highSensitivityRequireTlsn: true

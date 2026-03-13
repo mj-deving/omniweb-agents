@@ -18,9 +18,10 @@
  */
 
 import { resolve } from "node:path";
-import { connectWallet, apiCall, info } from "./lib/sdk.js";
+import { connectWallet, apiCall, info, setLogAgent } from "./lib/sdk.js";
 import { ensureAuth } from "./lib/auth.js";
 import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
+import { NUMERIC_CLAIM_PATTERN } from "./lib/feed-filter.js";
 
 // ── Arg Parsing ────────────────────────────────────
 
@@ -64,10 +65,11 @@ FLAGS:
   --help, -h        Show this help
 
 REACTION HEURISTICS:
-  agree:    Attested posts with score ≥60, or any post with score ≥70,
-            or ANALYSIS/SIGNAL/ALERT category in mid-range
-  disagree: Posts with score ≤50 (unattested claims — intellectual honesty)
-  skip:     Own posts, already-reacted, no txHash, generic low-mid posts
+  hard skip: score < 70
+  agree:     attested + score ≥80
+  agree:     attested + score ≥70 + category ANALYSIS/PREDICTION
+  disagree:  unattested + score ≥70 + numeric claim detected
+  skip:      everything else
 
 EXAMPLES:
   npx tsx tools/engage.ts --max 5 --pretty
@@ -105,7 +107,8 @@ interface EngageOutput {
  */
 function selectReaction(
   post: any,
-  ourAddress: string
+  ourAddress: string,
+  qualityFloor: number
 ): { reaction: "agree" | "disagree"; reason: string } | null {
   const author = (post.author || post.address || "").toLowerCase();
   if (author === ourAddress.toLowerCase()) return null;
@@ -119,24 +122,23 @@ function selectReaction(
   const hasAttestation =
     post.payload?.sourceAttestations?.length > 0 ||
     post.payload?.tlsnAttestations?.length > 0;
-  const cat = post.payload?.cat || post.cat || "?";
+  const cat = String(post.payload?.cat || post.cat || "?").toUpperCase();
   const score = post.score ?? post.qualityScore ?? 0;
+  const text = String(post.payload?.text || post.text || "");
 
-  if (hasAttestation && score >= 60) {
-    return { reaction: "agree", reason: `attested, score ${score}` };
+  if (score < qualityFloor) return null;
+
+  if (hasAttestation && score >= 80) {
+    return { reaction: "agree", reason: `attested + high score ${score}` };
   }
-  if (score >= 70) {
-    return { reaction: "agree", reason: `high score ${score}` };
+  if (hasAttestation && score >= qualityFloor && (cat === "ANALYSIS" || cat === "PREDICTION")) {
+    return { reaction: "agree", reason: `attested ${cat}, score ${score}` };
   }
-  if (score <= 50 && score > 0 && !hasAttestation) {
-    return { reaction: "disagree", reason: `unattested, score ${score}` };
-  }
-  // Middle ground: agree with analysis/signal/alert categories
-  if (cat === "ANALYSIS" || cat === "SIGNAL" || cat === "ALERT") {
-    return { reaction: "agree", reason: `${cat} post, score ${score}` };
+  if (!hasAttestation && score >= qualityFloor && NUMERIC_CLAIM_PATTERN.test(text)) {
+    return { reaction: "disagree", reason: `unattested numeric claim, score ${score}` };
   }
 
-  return null; // Skip
+  return null;
 }
 
 // ── Main ───────────────────────────────────────────
@@ -145,10 +147,12 @@ async function main(): Promise<void> {
   const { flags } = parseArgs();
 
   const agentName = resolveAgentName(flags);
+  setLogAgent(agentName);
   const config = loadAgentConfig(agentName);
   const envPath = resolve(flags.env || ".env");
   const pretty = flags.pretty === "true";
   const jsonMode = flags.json === "true";
+  const qualityFloor = Math.max(70, config.scan.qualityFloor);
 
   // Default to agent config, allow CLI override
   let maxReactions = config.engagement.maxReactionsPerSession;
@@ -196,7 +200,7 @@ async function main(): Promise<void> {
   for (const post of allPosts) {
     if (agrees + disagrees >= maxReactions) break;
 
-    const decision = selectReaction(post, address);
+    const decision = selectReaction(post, address, qualityFloor);
     if (!decision) {
       skipped++;
       continue;

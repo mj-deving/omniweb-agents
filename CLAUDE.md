@@ -66,6 +66,7 @@ demos-agents/
 │       ├── llm.ts                     # LLM generation interface
 │       ├── llm-provider.ts            # Provider-agnostic adapters (Claude/OpenAI/CLI)
 │       ├── feed-filter.ts             # Quality filter + topic/agent index (pure utility)
+│       ├── observe.ts                 # Observation logger (JSONL, append-only, zero-overhead)
 │       ├── publish-pipeline.ts        # DAHR/TLSN attestation + HIVE publish
 │       ├── tlsn-playwright-bridge.ts  # TLSN Playwright WASM bridge (production)
 │       ├── tlsn-node-bridge.ts        # TLSN Node.js bridge (experimental)
@@ -187,6 +188,9 @@ npx tsx skills/supercolony/scripts/supercolony.ts leaderboard --limit 10 --prett
 - **Scan architecture:** multi-mode (lightweight, since-last, topic-search, category-filtered, quality-indexed). Quality floor 70, attestation-aware. Feed rate ~182 posts/hr.
 - **Feed search limitation:** `/api/feed/search?text=` only searches post body text, not tags. Topic-search uses triple strategy: asset search + text search + broad feed tag matching.
 - **Session counter:** `~/.sentinel-improvements.json` / `~/.pioneer-improvements.json` `nextSession` field
+- **Observation logging:** `tools/lib/observe.ts` — append-only JSONL to `~/.{agent}/observations.jsonl`. Typed failure codes (EngageFailureCode, GateFailureCode, PublishFailureCode). Zero-overhead, sync append, silent-fail.
+- **Publish preflight:** `preflight()` in `attestation-policy.ts` — checks source availability before LLM generation. Wired into both `runPublishAutonomous()` and `runGateAutonomous()`.
+- **Phase budgets:** Warn-only phase deadlines in session-runner.ts. Defaults: audit 2m, scan 3m, engage/gate 5m, publish 15m, verify 2m, review/harden 2-3m. Configurable via `phaseBudgets` in strategy.yaml.
 
 ## Session Workflow
 

@@ -170,11 +170,20 @@ npx tsx skills/supercolony/scripts/supercolony.ts leaderboard --limit 10 --prett
 - Resolution: `LLM_PROVIDER` env → `LLM_CLI_COMMAND` env → auto-detect from API keys
 - **PAI Inference Tool:** `bun Tools/Inference.ts fast|standard|smart` for direct AI calls
 
+### Source Registry
+
+- **Current:** 170+ sources across 3 agents (sentinel 50+, crawler 100+, pioneer 17), static YAML, O(n) scan
+- **Dynamic discovery:** `source-discovery.ts` generates candidate URLs, fetches, scores content relevance (threshold 40/100), auto-persists to registry
+- **Gate pre-check:** `runGateAutonomous()` verifies source availability (static + dynamic) before running gate checks
+- **Content matching:** keyword overlap + title-level verification + data density scoring
+- **Planned v2:** Global JSON catalog with inverted index, provider adapters, standalone testing CLI, post-generation content matching. See `Plans/source-registry-v2.md`
+- **Provider adapters planned:** HN Algolia, CoinGecko, Binance, Kraken, DefiLlama, GitHub, arXiv, Wikipedia, World Bank, PubMed (Tier 1, no auth)
+
 ## Current State
 
 - **Three agents:** sentinel (verification, 50+ sources) + crawler (deep research, 100+ sources) + pioneer (novel content, signal-gated, 17 sources)
 - **45+ on-chain posts** across all agents. PQC identity bound (tx: `5bbdab08...`)
-- **TLSN pipeline:** operational (Playwright bridge, 120s timeout). Attestation quality guard rejects non-2xx/auth errors.
+- **TLSN pipeline:** operational (Playwright bridge, 180s timeout). Attestation quality guard rejects non-2xx/auth errors.
 - **Scan architecture:** multi-mode (lightweight, since-last, topic-search, category-filtered, quality-indexed). Quality floor 70, attestation-aware. Feed rate ~182 posts/hr.
 - **Feed search limitation:** `/api/feed/search?text=` only searches post body text, not tags. Topic-search uses triple strategy: asset search + text search + broad feed tag matching.
 - **Session counter:** `~/.sentinel-improvements.json` / `~/.pioneer-improvements.json` `nextSession` field

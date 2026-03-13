@@ -122,13 +122,13 @@ sources:
     max_response_kb: 8
     note: "PyPI recent updates — detect new tooling trends. RSS/XML."
 
-  - name: wikipedia-current-events
-    url: "https://en.wikipedia.org/w/api.php?action=parse&page=Portal:Current_events&prop=text&format=json"
-    topics: [geopolitical, cross-domain]
-    tlsn_safe: false
+  - name: hn-recent-geopolitical
+    url: "https://hn.algolia.com/api/v1/search?query=geopolitical+trade+sanctions&tags=story&hitsPerPage=2"
+    topics: [geopolitical, cross-domain, trade-sanctions, regulatory-shifts]
+    tlsn_safe: true
     dahr_safe: true
-    max_response_kb: 100
-    note: "Wikipedia current events portal. Large response — DAHR only."
+    max_response_kb: 4
+    note: "Geopolitical/trade stories. Replaces wikipedia-current-events (DAHR 401 + 100KB). hitsPerPage=2 for TLSN."
 
   # ─── Space / Robotics ─────────────────────────────────────────
 

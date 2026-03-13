@@ -18,13 +18,14 @@
  */
 
 import { resolve, dirname } from "node:path";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { createInterface } from "node:readline/promises";
+import { spawn, spawnSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 
-import { runTool } from "./lib/subprocess.js";
+import { runTool, ToolError, type ToolResult } from "./lib/subprocess.js";
 import {
   startSession,
   loadState,
@@ -52,12 +53,20 @@ import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent
 
 // ── Constants ──────────────────────────────────────
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(__dirname, "..");
+const TMUX_ADAPTER_ENV = "SESSION_RUNNER_TMUX_ADAPTER";
+
 // Resolved at runtime based on --agent flag
 let IMPROVEMENTS_PATH = resolve(homedir(), ".sentinel-improvements.json");
 let agentConfig: AgentConfig;
 let runnerAgentName = "sentinel";
+let runnerExecBackend: ExecBackend = "spawn";
+let detectedTmuxAdapter: TmuxAdapter | null = null;
 
 type OversightLevel = "full" | "approve" | "autonomous";
+type ExecBackend = "spawn" | "tmux";
+type TmuxAdapter = "native" | "tmux-cli";
 
 function getPhaseMode(phase: PhaseName, oversight: OversightLevel): string {
   if (oversight === "full") {
@@ -100,6 +109,7 @@ interface RunnerFlags {
   dryRun: boolean;
   pretty: boolean;
   oversight: OversightLevel;
+  execBackend: ExecBackend;
 }
 
 function parseArgs(): RunnerFlags {
@@ -144,6 +154,16 @@ function parseArgs(): RunnerFlags {
     oversight = val as OversightLevel;
   }
 
+  let execBackend: ExecBackend = "spawn";
+  if (flags["exec-backend"]) {
+    const val = flags["exec-backend"].toLowerCase();
+    if (!["spawn", "tmux"].includes(val)) {
+      console.error(`Error: --exec-backend must be one of: spawn, tmux`);
+      process.exit(1);
+    }
+    execBackend = val as ExecBackend;
+  }
+
   const agentName = resolveAgentName(flags);
 
   return {
@@ -156,6 +176,7 @@ function parseArgs(): RunnerFlags {
     dryRun: flags["dry-run"] === "true",
     pretty: flags.pretty === "true",
     oversight,
+    execBackend,
   };
 }
 
@@ -175,6 +196,7 @@ FLAGS:
   --skip-to PHASE        Start from specific phase (audit|scan|engage|gate|publish|verify|review|harden)
   --force-skip-audit     Required with --skip-to when skipping AUDIT phase
   --dry-run              Show what would run without executing
+  --exec-backend MODE    Subprocess backend: spawn|tmux (default: spawn)
   --pretty               Human-readable output (default for interactive)
   --help, -h             Show this help
 
@@ -200,6 +222,8 @@ EXAMPLES:
   npx tsx tools/session-runner.ts --pretty
   npx tsx tools/session-runner.ts --oversight approve --pretty
   npx tsx tools/session-runner.ts --oversight autonomous --pretty
+  npx tsx tools/session-runner.ts --exec-backend tmux --oversight autonomous --pretty
+  SESSION_RUNNER_TMUX_ADAPTER=tmux-cli npx tsx tools/session-runner.ts --exec-backend tmux --pretty
   npx tsx tools/session-runner.ts --resume --pretty
   npx tsx tools/session-runner.ts --dry-run --oversight autonomous
 `);
@@ -279,14 +303,253 @@ async function ask(
 
 // ── Phase Handlers ─────────────────────────────────
 
+function shellQuote(input: string): string {
+  return `'${input.replace(/'/g, `'\"'\"'`)}'`;
+}
+
+function isSafeEnvKey(input: string): boolean {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(input);
+}
+
+function commandExists(command: string): boolean {
+  const probe = spawnSync(command, ["--help"], { stdio: "ignore" });
+  if (probe.error) {
+    const err = probe.error as NodeJS.ErrnoException;
+    return err.code !== "ENOENT";
+  }
+  return true;
+}
+
+function resolveTmuxAdapter(): TmuxAdapter {
+  if (detectedTmuxAdapter) return detectedTmuxAdapter;
+
+  const forced = (process.env[TMUX_ADAPTER_ENV] || "").trim().toLowerCase();
+  if (forced === "native" || forced === "tmux-cli") {
+    detectedTmuxAdapter = forced as TmuxAdapter;
+    return detectedTmuxAdapter;
+  }
+
+  detectedTmuxAdapter = commandExists("tmux-cli") ? "tmux-cli" : "native";
+  return detectedTmuxAdapter;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
+}
+
+async function runCommand(
+  command: string,
+  args: string[] = [],
+  options: { cwd?: string; timeout?: number; env?: Record<string, string | undefined> } = {}
+): Promise<ToolResult> {
+  const { cwd, timeout = 120_000, env = {} } = options;
+
+  return new Promise<ToolResult>((resolvePromise, reject) => {
+    const child = spawn(command, args, {
+      cwd: cwd || process.cwd(),
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, ...env },
+    });
+
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    child.stdout.on("data", (chunk: Buffer) => stdoutChunks.push(chunk));
+    child.stderr.on("data", (chunk: Buffer) => stderrChunks.push(chunk));
+
+    let exited = false;
+    let settled = false;
+    const settleReject = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    const settleResolve = (result: ToolResult) => {
+      if (settled) return;
+      settled = true;
+      resolvePromise(result);
+    };
+
+    const timer = setTimeout(() => {
+      try { child.kill("SIGTERM"); } catch { /* no-op */ }
+      setTimeout(() => {
+        if (!exited) {
+          try { child.kill("SIGKILL"); } catch { /* no-op */ }
+        }
+      }, 2_000);
+      settleReject(new ToolError(command, -1, `Timed out after ${timeout}ms`));
+    }, timeout);
+
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      settleReject(new ToolError(command, -1, err.message));
+    });
+
+    child.on("close", (code) => {
+      exited = true;
+      clearTimeout(timer);
+      const stdout = Buffer.concat(stdoutChunks).toString("utf-8");
+      const stderr = Buffer.concat(stderrChunks).toString("utf-8");
+      const exitCode = code ?? 1;
+
+      if (exitCode !== 0) {
+        settleReject(new ToolError(command, exitCode, stderr));
+        return;
+      }
+      settleResolve({ stdout, stderr, exitCode });
+    });
+  });
+}
+
+async function runToolViaTmux(
+  toolPath: string,
+  args: string[] = [],
+  options: { cwd?: string; timeout?: number; env?: Record<string, string | undefined> } = {}
+): Promise<ToolResult> {
+  const { cwd = REPO_ROOT, timeout = 120_000, env = {} } = options;
+  const resolvedTool = resolve(cwd, toolPath);
+  const tempDir = mkdtempSync(resolve(tmpdir(), "session-runner-tmux-"));
+  const stdoutPath = resolve(tempDir, "stdout.log");
+  const stderrPath = resolve(tempDir, "stderr.log");
+  const exitPath = resolve(tempDir, "exit.code");
+  const sessionName = `${runnerAgentName}-runner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    .replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  const quotedCommand = ["npx", "tsx", resolvedTool, ...args].map(shellQuote).join(" ");
+  const envPrefix = Object.entries(env)
+    .filter(([key, value]) => isSafeEnvKey(key) && value !== undefined)
+    .map(([key, value]) => `${key}=${shellQuote(value as string)}`)
+    .join(" ");
+  const execCommand = envPrefix ? `${envPrefix} ${quotedCommand}` : quotedCommand;
+  const shellCommand =
+    `cd ${shellQuote(cwd)} && ` +
+    `${execCommand} > ${shellQuote(stdoutPath)} 2> ${shellQuote(stderrPath)}; ` +
+    `printf '%s' $? > ${shellQuote(exitPath)}`;
+
+  try {
+    await runCommand(
+      "tmux",
+      ["new-session", "-d", "-P", "-F", "#{session_name}", "-s", sessionName, shellCommand],
+      { cwd, timeout: 10_000 }
+    );
+
+    const deadline = Date.now() + timeout;
+    while (!existsSync(exitPath) && Date.now() < deadline) {
+      await sleep(250);
+    }
+
+    if (!existsSync(exitPath)) {
+      throw new ToolError(toolPath, -1, `Timed out after ${timeout}ms`);
+    }
+
+    const stdout = existsSync(stdoutPath) ? readFileSync(stdoutPath, "utf-8") : "";
+    const stderr = existsSync(stderrPath) ? readFileSync(stderrPath, "utf-8") : "";
+    const exitRaw = readFileSync(exitPath, "utf-8").trim();
+    const exitCode = Number.parseInt(exitRaw, 10);
+    if (Number.isNaN(exitCode)) {
+      throw new ToolError(toolPath, -1, "tmux backend did not report an exit code");
+    }
+    if (exitCode !== 0) {
+      throw new ToolError(toolPath, exitCode, stderr);
+    }
+
+    return { stdout, stderr, exitCode };
+  } finally {
+    try {
+      await runCommand("tmux", ["kill-session", "-t", sessionName], { timeout: 5_000 });
+    } catch {
+      // Session may already have exited or been cleaned up.
+    }
+    try {
+      rmSync(tempDir, { recursive: true, force: true });
+    } catch {
+      // Best effort cleanup.
+    }
+  }
+}
+
+async function runToolViaTmuxCli(
+  toolPath: string,
+  args: string[] = [],
+  options: { cwd?: string; timeout?: number; env?: Record<string, string | undefined> } = {}
+): Promise<ToolResult> {
+  const { cwd = REPO_ROOT, timeout = 120_000, env = {} } = options;
+  const resolvedTool = resolve(cwd, toolPath);
+  const tempDir = mkdtempSync(resolve(tmpdir(), "session-runner-tmux-cli-"));
+  const stdoutPath = resolve(tempDir, "stdout.log");
+  const stderrPath = resolve(tempDir, "stderr.log");
+  const exitPath = resolve(tempDir, "exit.code");
+
+  const quotedCommand = ["npx", "tsx", resolvedTool, ...args].map(shellQuote).join(" ");
+  const envPrefix = Object.entries(env)
+    .filter(([key, value]) => isSafeEnvKey(key) && value !== undefined)
+    .map(([key, value]) => `${key}=${shellQuote(value as string)}`)
+    .join(" ");
+  const execCommand = envPrefix ? `${envPrefix} ${quotedCommand}` : quotedCommand;
+  const shellCommand =
+    `cd ${shellQuote(cwd)} && ` +
+    `${execCommand} > ${shellQuote(stdoutPath)} 2> ${shellQuote(stderrPath)}; ` +
+    `printf '%s' $? > ${shellQuote(exitPath)}`;
+
+  const timeoutSeconds = Math.max(1, Math.ceil(timeout / 1000));
+
+  try {
+    await runCommand("tmux-cli", ["execute", shellCommand, `--timeout=${timeoutSeconds}`], {
+      cwd,
+      timeout: timeout + 15_000,
+    });
+
+    const deadline = Date.now() + 2_000;
+    while (!existsSync(exitPath) && Date.now() < deadline) {
+      await sleep(100);
+    }
+
+    if (!existsSync(exitPath)) {
+      throw new ToolError(toolPath, -1, `tmux-cli backend did not report an exit code`);
+    }
+
+    const stdout = existsSync(stdoutPath) ? readFileSync(stdoutPath, "utf-8") : "";
+    const stderr = existsSync(stderrPath) ? readFileSync(stderrPath, "utf-8") : "";
+    const exitRaw = readFileSync(exitPath, "utf-8").trim();
+    const exitCode = Number.parseInt(exitRaw, 10);
+    if (Number.isNaN(exitCode)) {
+      throw new ToolError(toolPath, -1, "tmux-cli backend returned an invalid exit code");
+    }
+    if (exitCode !== 0) {
+      throw new ToolError(toolPath, exitCode, stderr);
+    }
+
+    return { stdout, stderr, exitCode };
+  } finally {
+    try {
+      rmSync(tempDir, { recursive: true, force: true });
+    } catch {
+      // Best effort cleanup.
+    }
+  }
+}
+
+async function runToolWithBackend(
+  toolPath: string,
+  args: string[] = [],
+  options: { cwd?: string; timeout?: number; env?: Record<string, string | undefined> } = {}
+): Promise<ToolResult> {
+  if (runnerExecBackend === "tmux") {
+    if (resolveTmuxAdapter() === "tmux-cli") {
+      return runToolViaTmuxCli(toolPath, args, options);
+    }
+    return runToolViaTmux(toolPath, args, options);
+  }
+  return runTool(toolPath, args, options);
+}
+
 async function runToolAndParse(
   toolPath: string,
   args: string[],
   label: string
 ): Promise<any> {
   info(`Running ${label}...`);
-  const result = await runTool(toolPath, args, {
-    cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+  const result = await runToolWithBackend(toolPath, args, {
+    cwd: REPO_ROOT,
     timeout: 180_000,
     env: { AGENT_NAME: runnerAgentName },
   });
@@ -1120,8 +1383,8 @@ async function autoPropose(
         "--target", "workflow",
         "--source", "Q2",
       ];
-      await runTool("tools/improvements.ts", impArgs, {
-        cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+      await runToolWithBackend("tools/improvements.ts", impArgs, {
+        cwd: REPO_ROOT,
         timeout: 30_000,
       });
       proposed++;
@@ -1405,8 +1668,8 @@ async function proposeImprovement(
     "--target", target,
     "--source", source,
   ];
-  await runTool("tools/improvements.ts", impArgs, {
-    cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+  await runToolWithBackend("tools/improvements.ts", impArgs, {
+    cwd: REPO_ROOT,
     timeout: 30_000,
   });
 }
@@ -1785,6 +2048,10 @@ function dryRun(sessionNumber: number, flags: RunnerFlags, startPhase: PhaseName
 async function main(): Promise<void> {
   const flags = parseArgs();
   runnerAgentName = flags.agent;
+  runnerExecBackend = flags.execBackend;
+  if (runnerExecBackend === "tmux") {
+    info(`tmux backend adapter: ${resolveTmuxAdapter()}`);
+  }
   setLogAgent(flags.agent);
 
   agentConfig = loadAgentConfig(flags.agent);

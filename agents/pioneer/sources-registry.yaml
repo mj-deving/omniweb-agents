@@ -68,6 +68,14 @@ sources:
     max_response_kb: 20
     note: "Post-quantum crypto repos. DAHR only."
 
+  - name: github-ai-resources-drix10
+    url: "https://api.github.com/repos/Drix10/ai-resources"
+    topics: [ai, ai-tools, emerging-tech]
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 8
+    note: "Curated AI resources repository metadata (stars/forks/activity)."
+
   # ─── arXiv (Research Frontier) ─────────────────────────────────
 
   - name: arxiv-cs-ai

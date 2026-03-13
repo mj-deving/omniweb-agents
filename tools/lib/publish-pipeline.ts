@@ -9,6 +9,8 @@
 
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
 import { info } from "./sdk.js";
+import { attestTlsnViaNodeBridge } from "./tlsn-node-bridge.js";
+import { attestTlsnViaPlaywrightBridge } from "./tlsn-playwright-bridge.js";
 
 // ── Constants ──────────────────────────────────────
 
@@ -120,29 +122,34 @@ export async function attestDahr(
 }
 
 /**
- * TLSN attestation placeholder.
+ * Create a TLSN attestation for an HTTPS URL.
  *
- * Runtime note: TLSN requires a working tlsn-js runtime + WASM pipeline.
- * If unavailable, this throws a hard error so callers can either fallback
- * to DAHR (for low sensitivity) or fail closed (for high sensitivity).
+ * Flow:
+ * 1) request TLSN token + proxy from node
+ * 2) run tlsn-js prover in Node bridge runtime
+ * 3) store proof on-chain via native tlsn_store tx
  */
 export async function attestTlsn(
   demos: Demos,
   url: string,
   method: string = "GET"
 ): Promise<AttestResult> {
-  const _method = method; // reserved for future TLSN request support
-  void _method;
   try {
-    // Probe runtime availability first for clear error messaging.
-    const tlsn = await (demos as any).tlsnotary();
-    if (!tlsn || typeof tlsn.attest !== "function") {
-      throw new Error("TLSN SDK initialized but attest() is unavailable");
-    }
-
-    // Full proof lifecycle (request token + attest + store proof) is not yet
-    // wired into this Node toolchain. Fail closed to avoid false attestations.
-    throw new Error("TLSN attestation flow not yet integrated in publish pipeline (token/proof storage missing)");
+    info(`TLSN attesting: ${url}`);
+    const result = process.env.TLSN_NODE_BRIDGE_EXPERIMENTAL === "1"
+      ? await attestTlsnViaNodeBridge(demos, url, method)
+      : await attestTlsnViaPlaywrightBridge(demos, url, method);
+    return {
+      type: "tlsn",
+      url: result.attestedUrl,
+      requestedUrl: result.requestedUrl,
+      txHash: result.proofTxHash,
+      data: {
+        tokenId: result.tokenId,
+        requestTxHash: result.requestTxHash,
+        storageFee: result.storageFee,
+      },
+    };
   } catch (err: any) {
     throw new Error(`TLSN unavailable: ${String(err?.message || err)}`);
   }

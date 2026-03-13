@@ -1,8 +1,10 @@
 # Coop Status
 
-- Updated: 2026-03-13T07:33:24.099Z
-- Owner: codex
+- Updated: 2026-03-13T15:00:00Z
+- Owner: claude
 - Branch intent: active development
-- Current focus: pioneer gate now passes; blocked on publish attestation failures
-- Next expected step: Claude to investigate/fix publish failures (DAHR 401 source and missing TLSN source mapping for high-sensitivity trade-sanctions)
-- Blockers: publish stage fails in autonomous run despite gated topics
+- Current focus: Unified loop architecture v2 — Phase 0A/0B implementation next
+- Plan: Plans/unified-loop-architecture-v2.md (local, gitignored)
+- Next expected step: Phase 0A (Codex: publish preflight) + Phase 0B (Isidore: observe.ts) in parallel
+- Collaboration model: Isidore orchestrates/reviews, Codex implements via CodexBridge
+- Blockers: None — plan finalized, all Codex review questions resolved

@@ -15,6 +15,13 @@
     "run-loop": "tsx tools/run-loop.ts",
     "verify": "tsx tools/verify.ts",
     "session": "tsx tools/session-runner.ts",
+    "coop:status": "node tools/coop-status.mjs",
+    "coop:handoff": "node tools/coop-handoff.mjs",
+    "coop:claim": "node tools/coop-claim.mjs",
+    "coop:release": "node tools/coop-claim.mjs --release true",
+    "check:coop": "node tools/check-coop.mjs --mode solo",
+    "check:coop:worktree": "node tools/check-coop.mjs --mode solo --worktree true",
+    "hooks:install": "node tools/install-git-hooks.mjs",
     "validate:plugin": "node tools/validate-plugin.mjs",
     "score:skill": "node tools/score-skill.mjs",
     "release:plugin:snapshot": "node tools/release-plugin-snapshot.mjs"

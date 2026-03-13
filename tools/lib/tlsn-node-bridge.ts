@@ -479,7 +479,7 @@ export async function attestTlsnViaNodeBridge(
     };
 
     info("TLSN notarize: generating proof");
-    const notarized = await withTimeout("TLSN notarize", 120_000, prover.notarize(commitRanges));
+    const notarized = await withTimeout("TLSN notarize", 180_000, prover.notarize(commitRanges));
     info("TLSN notarize: proof generated");
     const presentation = new tlsn.Presentation({
       attestationHex: notarized.attestation,

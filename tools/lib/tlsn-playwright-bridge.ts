@@ -283,7 +283,7 @@ async function runBrowserTlsnAttestation(
 
     const result = await withTimeout(
       "Playwright TLSN evaluate",
-      120_000,
+      180_000,
       page.evaluate(
         async (args: {
           targetUrl: string;

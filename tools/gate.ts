@@ -203,63 +203,144 @@ function checkSignalStrength(
   }
 
   // Heuristic fallback for current room-temp output shape.
+  // Pioneer should reward *opportunity* (novel/underexplored topics) rather
+  // than requiring swarm activity to already be high.
   let score = 0;
   const reasons: string[] = [];
   const topicLower = topic.toLowerCase();
+  const now = Date.now();
 
-  const postsPerHour = Number(scanResult?.activity?.posts_per_hour || 0);
-  if (postsPerHour >= 6) {
-    score += 3;
-    reasons.push("recency=3");
-  } else if (postsPerHour >= 3) {
+  const topicTokens = new Set(topicLower.split(/[^a-z0-9]+/).filter((t) => t.length >= 2));
+  const focusLower = Array.isArray(focusTopics) ? focusTopics.map((t) => String(t).toLowerCase()) : [];
+  const focusTokens = new Set(
+    focusLower.flatMap((ft) => ft.split(/[^a-z0-9]+/)).filter((t) => t.length >= 2)
+  );
+
+  let focusOverlap = 0;
+  for (const tok of topicTokens) {
+    if (focusTokens.has(tok)) focusOverlap++;
+  }
+  if (focusLower.includes(topicLower)) {
     score += 2;
-    reasons.push("recency=2");
-  } else if (postsPerHour > 0) {
+    reasons.push("focus=2");
+  } else if (focusOverlap > 0) {
     score += 1;
-    reasons.push("recency=1");
+    reasons.push("focus=1");
   }
 
-  const convergenceAgents = Number(scanResult?.convergence?.agent_count || 0);
-  if (convergenceAgents >= 4) {
+  // Topic-level opportunity signal from scan.topicIndex
+  const topicIndex = scanResult?.topicIndex && typeof scanResult.topicIndex === "object"
+    ? scanResult.topicIndex
+    : {};
+
+  // Exact key first, then fuzzy token overlap fallback.
+  let topicStats: any = topicIndex[topicLower];
+  if (!topicStats) {
+    const entries = Object.entries(topicIndex);
+    let best: { key: string; overlap: number; stats: any } | null = null;
+    for (const [key, stats] of entries) {
+      const keyTokens = String(key).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 2);
+      let overlap = 0;
+      for (const tok of keyTokens) {
+        if (topicTokens.has(tok)) overlap++;
+      }
+      if (overlap > 0 && (!best || overlap > best.overlap)) {
+        best = { key: String(key), overlap, stats };
+      }
+    }
+    if (best) topicStats = best.stats;
+  }
+
+  const topicCount = Number(topicStats?.count || 0);
+  const topicReactions = Number(topicStats?.totalReactions || 0);
+  const topicAttested = Number(topicStats?.attestedCount || 0);
+  const topicNewestTs = Number(topicStats?.newestTimestamp || 0);
+  const topicUniqueAuthors = Array.isArray(topicStats?.uniqueAuthors) ? topicStats.uniqueAuthors.length : 0;
+
+  if (topicCount > 0) {
+    // Underexplored topics are exactly pioneer opportunity.
+    if (topicCount <= 2) {
+      score += 3;
+      reasons.push("underexplored=3");
+    } else if (topicCount <= 5) {
+      score += 2;
+      reasons.push("underexplored=2");
+    } else if (topicCount <= 10) {
+      score += 1;
+      reasons.push("underexplored=1");
+    }
+
+    // High reactions per mention = demand signal even when coverage is low.
+    const reactionDensity = topicCount > 0 ? topicReactions / topicCount : 0;
+    if (reactionDensity >= 12) {
+      score += 2;
+      reasons.push("reaction-density=2");
+    } else if (reactionDensity >= 5) {
+      score += 1;
+      reasons.push("reaction-density=1");
+    }
+
+    // Missing attestations indicate verification opportunity.
+    if (topicCount > 0) {
+      const attestationRate = topicAttested / topicCount;
+      if (topicAttested === 0) {
+        score += 2;
+        reasons.push("attestation-gap=2");
+      } else if (attestationRate < 0.5) {
+        score += 1;
+        reasons.push("attestation-gap=1");
+      }
+    }
+
+    // Fresh topic signal.
+    const ageMs = topicNewestTs > 0 ? now - topicNewestTs : Number.POSITIVE_INFINITY;
+    if (ageMs <= 6 * 60 * 60 * 1000) {
+      score += 2;
+      reasons.push("recency=2");
+    } else if (ageMs <= 24 * 60 * 60 * 1000) {
+      score += 1;
+      reasons.push("recency=1");
+    }
+
+    // Mild reward for independent contributors, but don't require swarm.
+    if (topicUniqueAuthors >= 4) {
+      score += 1;
+      reasons.push("source-diversity=1");
+    }
+  } else {
+    // Unknown topic in index: frontier candidate.
     score += 2;
-    reasons.push("cross-source=2");
-  } else if (convergenceAgents >= 3) {
+    reasons.push("frontier-unknown=2");
+  }
+
+  // Keep a small global-throughput bonus, but no longer dominant.
+  const postsPerHour = Number(scanResult?.activity?.posts_per_hour || 0);
+  if (postsPerHour >= 8) {
     score += 1;
-    reasons.push("cross-source=1");
+    reasons.push("global-throughput=1");
+  }
+
+  // Legacy convergence can still contribute slightly.
+  const convergenceAgents = Number(scanResult?.convergence?.agent_count || 0);
+  if (convergenceAgents >= 3) {
+    score += 1;
+    reasons.push("convergence=1");
   }
 
   const gapTopics: string[] = Array.isArray(scanResult?.gaps?.topics)
     ? scanResult.gaps.topics.map((t: string) => String(t).toLowerCase())
     : [];
   if (gapTopics.includes(topicLower)) {
-    score += 2;
-    reasons.push("topic-gap=2");
+    score += 1;
+    reasons.push("topic-gap=1");
   }
 
   const heatTopic = String(scanResult?.heat?.topic || "").toLowerCase();
   const heatReactions = Number(scanResult?.heat?.reactions || 0);
   if (heatTopic && heatTopic === topicLower) {
-    const heatPoints = heatReactions >= 10 ? 2 : 1;
+    const heatPoints = heatReactions >= 10 ? 1 : 0;
     score += heatPoints;
-    reasons.push(`topic-heat=${heatPoints}`);
-  }
-
-  // Pioneer topic scoop boost: reward alignment with configured frontier focus.
-  if (Array.isArray(focusTopics) && focusTopics.length > 0) {
-    const topicTokens = new Set(topicLower.split(/[^a-z0-9]+/).filter((t) => t.length >= 2));
-    const focusTokens = new Set(
-      focusTopics
-        .flatMap((ft) => String(ft).toLowerCase().split(/[^a-z0-9]+/))
-        .filter((t) => t.length >= 2)
-    );
-    const overlap = [...topicTokens].filter((t) => focusTokens.has(t)).length;
-    if (focusTopics.map((t) => String(t).toLowerCase()).includes(topicLower)) {
-      score += 2;
-      reasons.push("focus=2");
-    } else if (overlap > 0) {
-      score += 1;
-      reasons.push("focus=1");
-    }
+    if (heatPoints > 0) reasons.push(`topic-heat=${heatPoints}`);
   }
 
   const detail = reasons.length > 0

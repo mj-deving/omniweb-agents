@@ -7,6 +7,7 @@ const root = process.cwd();
 const STATUS_FILE = "claude-codex-coop/STATUS.md";
 const HANDOFF_FILE = "claude-codex-coop/logs/SESSION-HANDOFFS.md";
 const CLAIMS_FILE = "claude-codex-coop/CLAIMS.json";
+const ACK_FILE = "claude-codex-coop/ACKS.json";
 
 function parseArgs(argv) {
   const out = {};
@@ -183,6 +184,27 @@ function loadActiveClaims() {
   return claims.filter((c) => Number.isFinite(Date.parse(String(c.expiresAt || ""))) && Date.parse(String(c.expiresAt)) > now);
 }
 
+function loadAcks() {
+  const abs = path.join(root, ACK_FILE);
+  if (!fs.existsSync(abs)) return [];
+  try {
+    const parsed = JSON.parse(fs.readFileSync(abs, "utf8"));
+    const rows = Array.isArray(parsed?.acks) ? parsed.acks : [];
+    return rows.filter((r) => typeof r?.agent === "string" && typeof r?.timestamp === "string");
+  } catch {
+    return [];
+  }
+}
+
+function latestAckFor(agentName) {
+  const target = String(agentName || "").toLowerCase();
+  if (!target) return null;
+  const rows = loadAcks()
+    .filter((r) => String(r.agent || "").toLowerCase() === target)
+    .sort((a, b) => Date.parse(String(b.timestamp || "")) - Date.parse(String(a.timestamp || "")));
+  return rows[0] || null;
+}
+
 function fail(msg, extra = []) {
   console.error(`coop-check: FAIL - ${msg}`);
   for (const line of extra) console.error(`  ${line}`);
@@ -199,6 +221,9 @@ const mode = args.mode || "solo";
 const useWorktree = args.worktree === "true";
 const range = getRange(args);
 const requireClaim = args["require-claim"] !== "false";
+const softAck = args["soft-ack"] === "true" || process.env.COOP_SOFT_ACK === "1";
+const softAckHoursRaw = args["soft-ack-hours"] || process.env.COOP_SOFT_ACK_HOURS || "24";
+const softAckHours = Number(softAckHoursRaw);
 
 const changed = useWorktree ? changedFilesFromWorktree() : changedFilesFromRange(range);
 
@@ -258,6 +283,8 @@ if (!statusLooksValid) {
   ]);
 }
 
+const owner = readStatusOwner();
+
 const declared = latestHandoffChangedFiles();
 const missingFromHandoff = substantive.filter((f) => !declared.some((p) => patternMatchesFile(p, f)));
 if (missingFromHandoff.length > 0) {
@@ -268,7 +295,6 @@ if (missingFromHandoff.length > 0) {
 }
 
 if (requireClaim) {
-  const owner = readStatusOwner();
   const activeClaims = loadActiveClaims();
   const ownerClaims = activeClaims.filter((c) => String(c.agent || "").toLowerCase() === owner);
 
@@ -312,6 +338,31 @@ if (requireClaim) {
       ...[...new Set(conflicts)],
       "fix: coordinate scope split or set both claims as shared=true for intentional pair-editing",
     ]);
+  }
+}
+
+if (softAck) {
+  const ageLimitHours = Number.isFinite(softAckHours) && softAckHours > 0 ? softAckHours : 24;
+  const ageLimitMs = ageLimitHours * 60 * 60 * 1000;
+  const latestAck = latestAckFor(owner);
+  if (!latestAck) {
+    console.warn(`coop-check: WARN - no coop read ack found for owner "${owner}"`);
+    console.warn("  soft-guard only: push is allowed");
+    console.warn("  fix: run `npm run coop:latest` then `npm run coop:ack -- --agent " + owner + "`");
+  } else {
+    const ackMs = Date.parse(String(latestAck.timestamp || ""));
+    if (!Number.isFinite(ackMs)) {
+      console.warn(`coop-check: WARN - invalid ack timestamp for owner "${owner}"`);
+      console.warn("  soft-guard only: push is allowed");
+    } else {
+      const ageMs = Date.now() - ackMs;
+      if (ageMs > ageLimitMs) {
+        const ageHours = +(ageMs / (60 * 60 * 1000)).toFixed(1);
+        console.warn(`coop-check: WARN - latest ack for "${owner}" is stale (${ageHours}h > ${ageLimitHours}h)`);
+        console.warn("  soft-guard only: push is allowed");
+        console.warn("  fix: run `npm run coop:latest` then `npm run coop:ack -- --agent " + owner + "`");
+      }
+    }
   }
 }
 

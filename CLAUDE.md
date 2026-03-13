@@ -157,7 +157,11 @@ npx tsx skills/supercolony/scripts/supercolony.ts leaderboard --limit 10 --prett
 - **Notary URL:** Demos node returns `ws://` — must convert to `http://` for `Prover.notarize()`. maxRecvData capped at 16384 (16KB).
 - **HN Algolia TLSN:** always use `hitsPerPage=2` — responses with 5+ hits exceed 16KB and crash WASM prover.
 - TLSN runs in Web Worker (Playwright bridge). `TLSNotaryService` runs in Node.js.
-- **Notary ports (7047, 55001, 55002)** on node2.demos.sh are OPEN. Full pipeline: token → MPC-TLS (~60s) → proof storage. Cost: ~12 DEM per attestation.
+- **Notary ports (7047, 55001, 55002)** on node2.demos.sh are OPEN. Full pipeline: token → MPC-TLS (50-120s) → proof generation → storage. Cost: ~12 DEM per attestation.
+- **Timeouts:** Playwright evaluate 180s, Node bridge notarize 180s, page default 180s. MPC-TLS empirically 50-120s, proof generation adds 30-60s more. Previous 120s timeout was too tight.
+- **Timing breakdown (Node bridge):** WASM init 30s, session negotiate 30s, prover setup 45s, attested request 90s, transcript 30s, notarize/proof 180s, presentation 30s.
+- **Proof sizes:** 8.7KB (simple API) to 34.1KB (large response). Storage fee: 1 + ceil(proofSizeKB) DEM.
+- **TLSN vs DAHR performance:** TLSN avg 12.4rx (score 96), DAHR avg 9.0rx (score 90). TLSN outperforms by +38% reactions.
 
 ### LLM Provider
 

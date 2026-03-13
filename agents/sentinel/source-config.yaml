@@ -1,0 +1,6 @@
+agent: sentinel
+minRating: 0
+allowStatuses:
+  - active
+  - degraded
+maxCandidatesPerTopic: 5

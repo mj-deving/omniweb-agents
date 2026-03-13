@@ -55,6 +55,7 @@ export interface AgentConfig {
   calibration: { offset: number };
   phaseBudgets?: Partial<Record<string, number>>;
   loopExtensions: string[];
+  sourceRegistryMode: "catalog-preferred" | "catalog-only" | "yaml-only";
   paths: AgentPaths;
 }
 
@@ -63,6 +64,8 @@ export interface AgentPaths {
   strategyYaml: string;
   agentYaml: string;
   sourcesRegistry: string;
+  sourceCatalog: string;
+  sourceConfig: string;
   sessionDir: string;
   logFile: string;
   improvementsFile: string;
@@ -104,6 +107,8 @@ function buildPaths(name: string): AgentPaths {
     strategyYaml: resolve(agentDir, "strategy.yaml"),
     agentYaml: resolve(agentDir, "AGENT.yaml"),
     sourcesRegistry: resolve(agentDir, "sources-registry.yaml"),
+    sourceCatalog: resolve(REPO_ROOT, "sources", "catalog.json"),
+    sourceConfig: resolve(agentDir, "source-config.yaml"),
     sessionDir: resolve(home, `.${name}`, "sessions"),
     logFile: resolve(home, `.${name}-session-log.jsonl`),
     improvementsFile: resolve(home, `.${name}-improvements.json`),
@@ -370,6 +375,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
       gate: { predictedReactionsThreshold: 17, allow5Of6: true, duplicateWindowHours: 24 },
       calibration: { offset: 0 },
       loopExtensions: [],
+      sourceRegistryMode: "catalog-preferred",
       paths,
     };
   }
@@ -414,6 +420,11 @@ export function loadAgentConfig(name?: string): AgentConfig {
     calibration: { offset: yaml.calibration?.offset ?? 0 },
     phaseBudgets: yaml.phaseBudgets as Partial<Record<string, number>> | undefined,
     loopExtensions: parseLoopExtensions(yaml, personaYamlPath),
+    sourceRegistryMode: ((): AgentConfig["sourceRegistryMode"] => {
+      const mode = (yaml as any).sourceRegistryMode;
+      if (mode === "catalog-only" || mode === "yaml-only") return mode;
+      return "catalog-preferred";
+    })(),
     paths,
   };
 }

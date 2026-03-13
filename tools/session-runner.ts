@@ -56,15 +56,22 @@ import { generatePost, type PostDraft } from "./lib/llm.js";
 import { resolveProvider, type LLMProvider } from "./lib/llm-provider.js";
 import { connectWallet, setLogAgent } from "./lib/sdk.js";
 import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "./lib/publish-pipeline.js";
-import { loadSourceRegistry, resolveAttestationPlan, selectSourceForTopic, preflight, type AttestationType } from "./lib/attestation-policy.js";
-import { discoverSourceForTopic, persistSourceToRegistry } from "./lib/source-discovery.js";
+import { resolveAttestationPlan, type AttestationType } from "./lib/attestation-policy.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent-config.js";
 import { initObserver, setObserverPhase, observe, type SubstageResult, type SubstageFailureCode } from "./lib/observe.js";
 import {
   runBeforeSense,
+  runBeforePublishDraft,
+  runAfterPublishDraft,
   registerHook,
   type BeforeSenseContext,
 } from "./lib/extensions.js";
+import {
+  loadAgentSourceView,
+  preflight as sourcesPreflight,
+  selectSourceForTopicV2,
+  type AgentSourceView,
+} from "./lib/sources/index.js";
 
 // ── Constants ──────────────────────────────────────
 
@@ -78,6 +85,19 @@ let agentConfig: AgentConfig;
 let runnerAgentName = "sentinel";
 let runnerExecBackend: ExecBackend = "spawn";
 let detectedTmuxAdapter: TmuxAdapter | null = null;
+let cachedSourceView: AgentSourceView | null = null;
+
+/** Load source view once per session, cached for gate + publish reuse */
+function getSourceView(): AgentSourceView {
+  if (cachedSourceView) return cachedSourceView;
+  cachedSourceView = loadAgentSourceView(
+    agentConfig.name as import("./lib/sources/catalog.js").AgentName,
+    agentConfig.paths.sourceCatalog,
+    agentConfig.paths.sourcesRegistry,
+    agentConfig.sourceRegistryMode
+  );
+  return cachedSourceView;
+}
 
 type OversightLevel = "full" | "approve" | "autonomous";
 type ExecBackend = "spawn" | "tmux";
@@ -1378,31 +1398,21 @@ async function runGateAutonomous(
     return result;
   }
 
-  // Pre-load sources so we can reject topics with no attestable source before wasting LLM calls.
-  const sources = loadSourceRegistry(agentConfig.paths.sourcesRegistry);
+  // Load source view (cached per session — shared with publish phase)
+  const sourceView = getSourceView();
+  info(`Gate: ${sourceView.sources.length} sources available (catalog v${sourceView.catalogVersion})`);
 
   for (const suggestion of suggestions) {
-    // Source-availability pre-check via preflight
-    const preflightResult = preflight(suggestion.topic, sources, agentConfig);
+    // Source-availability pre-check via preflight (v2 — uses catalog index, no discovery)
+    const preflightResult = sourcesPreflight(suggestion.topic, sourceView, agentConfig);
     if (!preflightResult.pass) {
-      // Try dynamic discovery before rejecting
-      const plan = resolveAttestationPlan(suggestion.topic, agentConfig);
-      const discovered = await discoverSourceForTopic(suggestion.topic, plan.required);
-      const discoveredFallback = !discovered && plan.fallback
-        ? await discoverSourceForTopic(suggestion.topic, plan.fallback)
-        : null;
-      if (discovered) {
-        persistSourceToRegistry(agentConfig.paths.sourcesRegistry, discovered.source);
-        sources.push(discovered.source);
-        info(`Gate preflight: discovered source "${discovered.source.name}" for "${suggestion.topic}" (relevance ${discovered.relevanceScore})`);
-      } else if (discoveredFallback) {
-        persistSourceToRegistry(agentConfig.paths.sourcesRegistry, discoveredFallback.source);
-        sources.push(discoveredFallback.source);
-        info(`Gate preflight: discovered fallback source "${discoveredFallback.source.name}" for "${suggestion.topic}" (relevance ${discoveredFallback.relevanceScore})`);
-      } else {
-        info(`Gate SKIP: ${suggestion.topic} — ${preflightResult.reason} (${preflightResult.reasonCode})`);
-        continue;
-      }
+      observe("insight", `Gate preflight rejected topic "${suggestion.topic}": ${preflightResult.reason}`, {
+        phase: "gate", substage: "gate",
+        source: "session-runner.ts:runGateAutonomous",
+        data: { topic: suggestion.topic, reasonCode: preflightResult.reasonCode },
+      });
+      info(`Gate SKIP: ${suggestion.topic} — ${preflightResult.reason} (${preflightResult.reasonCode})`);
+      continue;
     }
 
     const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
@@ -1544,7 +1554,9 @@ async function runPublishAutonomous(
 
   // Connect wallet for publishing (no auth needed — publish uses on-chain TX, not API)
   const { demos } = await connectWallet(flags.env);
-  const sources = loadSourceRegistry(agentConfig.paths.sourcesRegistry);
+
+  // Load source view (cached per session — shared with gate phase)
+  const sourceView = getSourceView();
 
   let existingLog: any[] = [];
   try {
@@ -1555,34 +1567,17 @@ async function runPublishAutonomous(
 
   for (const gp of gatePosts) {
     try {
-      // Step 0: Preflight — check source availability before spending LLM time
-      const preflightResult = preflight(gp.topic, sources, agentConfig);
+      // Step 0: Preflight — check source availability before spending LLM time (v2, no discovery)
+      const preflightResult = sourcesPreflight(gp.topic, sourceView, agentConfig);
       if (!preflightResult.pass) {
-        // Try dynamic discovery before giving up
-        const plan = resolveAttestationPlan(gp.topic, agentConfig);
-        const discovered = await discoverSourceForTopic(gp.topic, plan.required);
-        const discoveredFallback = !discovered && plan.fallback
-          ? await discoverSourceForTopic(gp.topic, plan.fallback)
-          : null;
-
-        if (discovered) {
-          persistSourceToRegistry(agentConfig.paths.sourcesRegistry, discovered.source);
-          sources.push(discovered.source);
-          info(`Preflight: discovered source "${discovered.source.name}" for "${gp.topic}"`);
-        } else if (discoveredFallback) {
-          persistSourceToRegistry(agentConfig.paths.sourcesRegistry, discoveredFallback.source);
-          sources.push(discoveredFallback.source);
-          info(`Preflight: discovered fallback source "${discoveredFallback.source.name}" for "${gp.topic}"`);
-        } else {
-          observe("insight", `Preflight rejected topic "${gp.topic}": ${preflightResult.reason}`, {
-            phase: "publish",
-            substage: "publish",
-            source: "session-runner.ts:runPublishAutonomous",
-            data: { topic: gp.topic, reasonCode: preflightResult.reasonCode },
-          });
-          info(`Preflight SKIP: ${gp.topic} — ${preflightResult.reason} (${preflightResult.reasonCode})`);
-          continue; // Skip to next topic without LLM call
-        }
+        observe("insight", `Preflight rejected topic "${gp.topic}": ${preflightResult.reason}`, {
+          phase: "publish",
+          substage: "publish",
+          source: "session-runner.ts:runPublishAutonomous",
+          data: { topic: gp.topic, reasonCode: preflightResult.reasonCode },
+        });
+        info(`Preflight SKIP: ${gp.topic} — ${preflightResult.reason} (${preflightResult.reasonCode})`);
+        continue; // Skip to next topic without LLM call
       }
 
       // Step 1: Generate post text via LLM
@@ -1639,10 +1634,10 @@ async function runPublishAutonomous(
       console.log(`    Confidence: ${draft.confidence}`);
       console.log(`    Predicted: ${draft.predicted_reactions} reactions`);
 
-      // Step 2: Attestation policy + source selection (hard requirement)
+      // Step 2: Source selection via V2 catalog (no runtime discovery)
       const plan = resolveAttestationPlan(gp.topic, agentConfig);
-      let requiredSelection = selectSourceForTopic(gp.topic, sources, plan.required);
-      let fallbackSelection = plan.fallback ? selectSourceForTopic(gp.topic, sources, plan.fallback) : null;
+      let requiredSelection = selectSourceForTopicV2(gp.topic, sourceView, plan.required);
+      let fallbackSelection = plan.fallback ? selectSourceForTopicV2(gp.topic, sourceView, plan.fallback) : null;
       let sourceSelection = requiredSelection;
       let selectedMethod: AttestationType = plan.required;
       if (!sourceSelection && fallbackSelection && plan.fallback) {
@@ -1650,25 +1645,13 @@ async function runPublishAutonomous(
         selectedMethod = plan.fallback;
         info(`Attestation fallback: required ${plan.required} source unavailable, using ${plan.fallback}`);
       }
-      // Dynamic source discovery: if no static source matches, try to find one on-demand
       if (!sourceSelection) {
-        info(`No static source for "${gp.topic}" — attempting dynamic discovery...`);
-        const discovered = await discoverSourceForTopic(gp.topic, plan.required);
-        if (!discovered && plan.fallback) {
-          const discoveredFallback = await discoverSourceForTopic(gp.topic, plan.fallback);
-          if (discoveredFallback) {
-            sourceSelection = { source: discoveredFallback.source, url: discoveredFallback.url };
-            selectedMethod = plan.fallback;
-            info(`Dynamic discovery: found ${plan.fallback} source "${discoveredFallback.source.name}" (relevance ${discoveredFallback.relevanceScore})`);
-            persistSourceToRegistry(agentConfig.paths.sourcesRegistry, discoveredFallback.source);
-          }
-        } else if (discovered) {
-          sourceSelection = { source: discovered.source, url: discovered.url };
-          info(`Dynamic discovery: found ${plan.required} source "${discovered.source.name}" (relevance ${discovered.relevanceScore})`);
-          persistSourceToRegistry(agentConfig.paths.sourcesRegistry, discovered.source);
-        }
-      }
-      if (!sourceSelection) {
+        observe("insight", `No source for topic "${gp.topic}" after V2 catalog lookup`, {
+          phase: "publish",
+          substage: "publish",
+          source: "session-runner.ts:runPublishAutonomous",
+          data: { topic: gp.topic, reasonCode: "PUBLISH_NO_MATCHING_SOURCE" },
+        });
         throw new Error(`No matching ${plan.required} source for topic "${gp.topic}" (${plan.reason})`);
       }
       info(`Attesting (${selectedMethod}) source "${sourceSelection.source.name}" for topic "${gp.topic}"`);

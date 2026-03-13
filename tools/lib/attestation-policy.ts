@@ -25,7 +25,7 @@ export interface AttestationPlan {
   reason: string;
 }
 
-const ASSET_MAP: Array<[RegExp, string, string]> = [
+export const ASSET_MAP: Array<[RegExp, string, string]> = [
   [/\bbitcoin|\bbtc\b/, "bitcoin", "BTC"],
   [/\bethereum|\beth\b/, "ethereum", "ETH"],
   [/\bsolana|\bsol\b/, "solana", "SOL"],
@@ -62,12 +62,12 @@ function sourceTopicTokens(source: SourceRecord): Set<string> {
   return out;
 }
 
-function unresolvedPlaceholders(url: string): string[] {
+export function unresolvedPlaceholders(url: string): string[] {
   const matches = url.match(/\{([^}]+)\}/g) || [];
   return matches.map((m) => m.slice(1, -1));
 }
 
-function inferAssetAlias(topic: string): { asset: string; symbol: string } | null {
+export function inferAssetAlias(topic: string): { asset: string; symbol: string } | null {
   const t = topic.toLowerCase();
   for (const [rx, asset, symbol] of ASSET_MAP) {
     if (rx.test(t)) return { asset, symbol };
@@ -75,7 +75,7 @@ function inferAssetAlias(topic: string): { asset: string; symbol: string } | nul
   return null;
 }
 
-function extractTopicVars(topic: string): Record<string, string> {
+export function extractTopicVars(topic: string): Record<string, string> {
   const t = topic.toLowerCase();
   const firstWord = (t.match(/[a-z0-9-]+/)?.[0] || "topic").replace(/[^a-z0-9-]/g, "");
   const today = new Date().toISOString().slice(0, 10);
@@ -93,7 +93,7 @@ function extractTopicVars(topic: string): Record<string, string> {
   };
 }
 
-function fillUrlTemplate(url: string, vars: Record<string, string>): string {
+export function fillUrlTemplate(url: string, vars: Record<string, string>): string {
   return url.replace(/\{([^}]+)\}/g, (match, key: string) => {
     if (key in vars) return encodeURIComponent(vars[key]);
     return match;

@@ -547,6 +547,7 @@ async function main(): Promise<void> {
   const logPath = resolveLogPath(flags["log"], agentName);
   const operatorText = flags["text"]?.trim() || undefined;
   const operatorPredicted = parsePredictedOverride(flags["predicted-reactions"]);
+  const operatorCategoryProvided = typeof flags["category"] === "string" && flags["category"].trim().length > 0;
 
   const candidates = loadCandidates(flags);
   const scanContext = loadScanContext(flags);
@@ -640,6 +641,7 @@ async function main(): Promise<void> {
       const candidateText = candidate.text?.trim() || undefined;
       const forcedText = operatorText || candidateText;
       const forcedPredicted = operatorPredicted ?? candidate.predicted_reactions;
+      const pioneerCategoryLock = config.gate.mode === "pioneer" && !operatorCategoryProvided;
 
       if (forcedText) {
         if (forcedText.length < 200) {
@@ -684,7 +686,11 @@ async function main(): Promise<void> {
           }
         );
         if (draft.category !== candidate.category) {
-          row.warnings.push(`Category override applied: LLM=${draft.category} -> requested=${candidate.category}`);
+          if (pioneerCategoryLock) {
+            row.warnings.push(`Pioneer category lock: LLM=${draft.category} -> gated=${candidate.category}`);
+          } else {
+            row.warnings.push(`Category override applied: LLM=${draft.category} -> requested=${candidate.category}`);
+          }
           draft.category = candidate.category;
         }
       } else {

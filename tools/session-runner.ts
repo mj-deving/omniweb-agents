@@ -748,6 +748,61 @@ function tokenizeTopicText(raw: string): string[] {
     .filter((t) => t.length >= 2);
 }
 
+interface ScanTopicStats {
+  count: number;
+  totalReactions: number;
+  attestedCount: number;
+  uniqueAuthors: string[];
+  avgScore: number;
+  newestTimestamp: number;
+}
+
+interface ScanAgentStats {
+  address: string;
+  avgScore: number;
+}
+
+function normalizeScanTopicIndex(raw: any): Array<{ topic: string; stats: ScanTopicStats }> {
+  if (!raw || typeof raw !== "object") return [];
+
+  const out: Array<{ topic: string; stats: ScanTopicStats }> = [];
+  for (const [topicRaw, statsRaw] of Object.entries(raw)) {
+    const topic = String(topicRaw || "").trim().toLowerCase();
+    if (!topic) continue;
+    const statsObj = statsRaw as any;
+    out.push({
+      topic,
+      stats: {
+        count: Number(statsObj?.count || 0),
+        totalReactions: Number(statsObj?.totalReactions || 0),
+        attestedCount: Number(statsObj?.attestedCount || 0),
+        uniqueAuthors: Array.isArray(statsObj?.uniqueAuthors)
+          ? statsObj.uniqueAuthors.map((a: unknown) => String(a || "").toLowerCase()).filter(Boolean)
+          : [],
+        avgScore: Number(statsObj?.avgScore || 0),
+        newestTimestamp: Number(statsObj?.newestTimestamp || 0),
+      },
+    });
+  }
+  return out;
+}
+
+function normalizeScanAgentIndex(raw: any): Map<string, ScanAgentStats> {
+  const out = new Map<string, ScanAgentStats>();
+  if (!raw || typeof raw !== "object") return out;
+
+  for (const [keyRaw, statsRaw] of Object.entries(raw)) {
+    const key = String(keyRaw || "").toLowerCase();
+    if (!key) continue;
+    const statsObj = statsRaw as any;
+    out.set(key, {
+      address: key,
+      avgScore: Number(statsObj?.avgScore || 0),
+    });
+  }
+  return out;
+}
+
 /**
  * Extract post topics from scan results.
  * Standard mode: preserve previous heat+gaps behavior.
@@ -760,6 +815,86 @@ function extractTopicsFromScan(
   const scan = state.phases.scan.result || {};
   const mode = agentConfig.gate.mode === "pioneer" ? "pioneer" : "standard";
   const topics: Array<{ topic: string; category: string; reason: string }> = [];
+  const topicIndex = normalizeScanTopicIndex(scan.topicIndex);
+  const agentIndex = normalizeScanAgentIndex(scan.agentIndex);
+
+  const allAuthorsLowQuality = (stats: ScanTopicStats): boolean => {
+    if (!Array.isArray(stats.uniqueAuthors) || stats.uniqueAuthors.length === 0) return false;
+    let known = 0;
+    for (const author of stats.uniqueAuthors) {
+      const agent = agentIndex.get(author.toLowerCase());
+      if (!agent) return false;
+      known++;
+      if (agent.avgScore >= 70) return false;
+    }
+    return known > 0;
+  };
+
+  if (topicIndex.length > 0) {
+    const focusTopics = [...agentConfig.topics.primary, ...agentConfig.topics.secondary]
+      .map((t) => String(t).toLowerCase().trim())
+      .filter(Boolean);
+    const focusTokens = new Set<string>();
+    for (const ft of focusTopics) {
+      for (const tok of tokenizeTopicText(ft)) focusTokens.add(tok);
+    }
+
+    if (mode === "pioneer") {
+      const ranked = topicIndex
+        .filter((entry) => !allAuthorsLowQuality(entry.stats))
+        .map((entry) => {
+          const topicTokens = tokenizeTopicText(entry.topic);
+          const focusOverlap = topicTokens.filter((t) => focusTokens.has(t)).length;
+          let score = entry.stats.attestedCount > 0
+            ? entry.stats.totalReactions / entry.stats.attestedCount
+            : entry.stats.totalReactions * 2;
+          const reasons: string[] = [
+            `opportunity=${entry.stats.totalReactions}/${Math.max(1, entry.stats.attestedCount)}`
+          ];
+
+          if (entry.stats.count < 5 && (focusTopics.includes(entry.topic) || focusOverlap > 0)) {
+            score += 2;
+            reasons.push("underexplored+focus");
+          }
+          if (focusTopics.includes(entry.topic)) {
+            score += 1.5;
+            reasons.push("focus-exact");
+          } else if (focusOverlap > 0) {
+            score += 0.75;
+            reasons.push("focus-overlap");
+          }
+
+          return { topic: entry.topic, score, reasons };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      for (const item of ranked.slice(0, 3)) {
+        topics.push({
+          topic: item.topic,
+          category: "QUESTION",
+          reason: `topic-index pioneer (${item.reasons.slice(0, 3).join(", ")})`,
+        });
+      }
+      if (topics.length > 0) return topics;
+    } else {
+      const ranked = topicIndex
+        .filter((entry) => !allAuthorsLowQuality(entry.stats))
+        .sort((a, b) =>
+          b.stats.totalReactions - a.stats.totalReactions ||
+          b.stats.count - a.stats.count ||
+          b.stats.newestTimestamp - a.stats.newestTimestamp
+        );
+
+      for (const entry of ranked.slice(0, 3)) {
+        topics.push({
+          topic: entry.topic,
+          category: "ANALYSIS",
+          reason: `topic-index (${entry.stats.totalReactions} reactions, ${entry.stats.attestedCount} attested)`,
+        });
+      }
+      if (topics.length > 0) return topics;
+    }
+  }
 
   if (mode === "standard") {
     // Hot topic first (highest engagement potential)
@@ -830,7 +965,7 @@ function extractTopicsFromScan(
     }
     if (recentSelfTopics.has(topic)) {
       // Penalize recent self-topics instead of hard-excluding them so gate doesn't starve.
-      score -= 4;
+      score -= 2;
       reasons.push("recent-self");
     }
     if (/^[a-z]{1,3}$/i.test(topic)) {
@@ -847,7 +982,7 @@ function extractTopicsFromScan(
       score += bonus;
       reasons.push(`focus-overlap+${bonus}`);
     } else {
-      score -= 2;
+      score -= 1;
       reasons.push("off-focus");
     }
 
@@ -874,7 +1009,7 @@ function extractTopicsFromScan(
 
   const gaps = Array.isArray(scan.gaps?.topics) ? scan.gaps.topics : [];
   for (const gap of gaps.slice(0, 15)) {
-    addCandidate(gap, 4, "gap");
+    addCandidate(gap, 5, "gap");
   }
 
   if (scan.convergence?.topic) {
@@ -911,6 +1046,17 @@ function extractTopicsFromScan(
       });
       if (topics.length >= 3) break;
     }
+  }
+
+  if (topics.length === 0) {
+    const fallback =
+      String(scan.heat?.topic || scan.convergence?.topic || scan.gaps?.topics?.[0] || "").toLowerCase() ||
+      String(agentConfig.topics.secondary[0] || agentConfig.topics.primary[0] || "frontier-tech").toLowerCase();
+    topics.push({
+      topic: fallback,
+      category: "QUESTION",
+      reason: "pioneer hard fallback (never empty)",
+    });
   }
 
   return topics.slice(0, 3); // Max 3 per strategy

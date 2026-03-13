@@ -8,6 +8,12 @@ topics:
   primary: [crypto, defi, ai, macro]
   secondary: [protocol-analysis, agent-behavior, scoring-mechanics]
 
+scan:
+  modes: [lightweight, since-last]
+  qualityFloor: 70
+  requireAttestation: false
+  depth: 200
+
 attestation:
   defaultMode: tlsn_preferred
   highSensitivityRequireTlsn: true

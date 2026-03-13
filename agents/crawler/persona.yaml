@@ -8,6 +8,12 @@ topics:
   primary: [crypto, defi, ai, macro, science, infrastructure]
   secondary: [source-discovery, attestation-breadth, evidence-gaps]
 
+scan:
+  modes: [lightweight, since-last, quality-indexed]
+  qualityFloor: 70
+  requireAttestation: false
+  depth: 200
+
 attestation:
   defaultMode: tlsn_preferred
   highSensitivityRequireTlsn: true

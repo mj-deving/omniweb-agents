@@ -289,16 +289,12 @@ function loadImprovements(agentName: string): ImprovementsFile {
   if (!existsSync(filePath)) {
     return { version: 1, nextSession: 1, nextSequence: {}, items: [] };
   }
-  try {
-    const data = JSON.parse(readFileSync(filePath, "utf-8"));
-    if (!data.version || !Array.isArray(data.items)) {
-      return { version: 1, nextSession: 1, nextSequence: {}, items: [] };
-    }
-    if (!data.nextSequence) data.nextSequence = {};
-    return data;
-  } catch {
-    return { version: 1, nextSession: 1, nextSequence: {}, items: [] };
+  const data = JSON.parse(readFileSync(filePath, "utf-8"));
+  if (!data.version || !Array.isArray(data.items)) {
+    throw new Error(`Malformed improvements file at ${filePath} — missing version or items array. Fix manually or delete to reset.`);
   }
+  if (!data.nextSequence) data.nextSequence = {};
+  return data;
 }
 
 function saveImprovements(agentName: string, data: ImprovementsFile): void {
@@ -381,27 +377,26 @@ async function cmdDefault(
   const dryRun = flags["dry-run"] === "true";
   const envPath = flags["env"] || resolve(process.cwd(), ".env");
 
-  let observations = loadObservations(agentName);
-  if (observations.length === 0) {
+  const allObservations = loadObservations(agentName);
+  if (allObservations.length === 0) {
     if (pretty) console.log("  No observations found. Run a session first.");
     else console.log(JSON.stringify({ issues: [], total: 0 }));
     return;
   }
 
-  // Filter by session window
+  // Filter for display/classification — keep allObservations intact for saving
+  let filtered = allObservations;
   if (since !== undefined) {
-    const maxSession = Math.max(...observations.map(o => o.session));
+    const maxSession = Math.max(...allObservations.map(o => o.session));
     const minSession = maxSession - since + 1;
-    observations = observations.filter(o => o.session >= minSession);
+    filtered = filtered.filter(o => o.session >= minSession);
   }
-
-  // Filter unresolved
   if (unresolvedOnly) {
-    observations = observations.filter(o => o.resolved === null);
+    filtered = filtered.filter(o => o.resolved === null);
   }
 
   // Group into issues
-  const issues = groupIntoIssues(observations, since);
+  const issues = groupIntoIssues(filtered, since);
 
   if (issues.length === 0) {
     if (pretty) console.log("  No issues found.");
@@ -420,7 +415,7 @@ async function cmdDefault(
   // Display results
   if (pretty) {
     console.log(`\n  Improve Report — ${agentName}`);
-    console.log(`  ${observations.length} observations → ${issues.length} issue(s)\n`);
+    console.log(`  ${filtered.length} observations → ${issues.length} issue(s)\n`);
 
     for (let i = 0; i < issues.length; i++) {
       console.log(formatIssue(issues[i], i, true));
@@ -457,14 +452,14 @@ async function cmdDefault(
       }
 
       const id = proposeImprovement(improvements, issue, issue.category!);
-      markResolved(observations, issue, id);
+      markResolved(allObservations, issue, id);
       proposed.push(id);
       if (pretty) console.log(`\n  Proposed ${id}: ${issue.category} — ${issue.proposal}`);
     }
 
     if (!dryRun && proposed.length > 0) {
       saveImprovements(agentName, improvements);
-      saveObservations(agentName, observations);
+      saveObservations(agentName, allObservations);
       if (pretty) console.log(`\n  ✓ ${proposed.length} improvement(s) proposed: ${proposed.join(", ")}`);
     }
   }

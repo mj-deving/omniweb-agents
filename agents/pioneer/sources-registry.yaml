@@ -1,167 +1,197 @@
 version: 1
-description: "Pioneer curated sources — frontier signals, emerging tech, cross-domain synthesis"
-
-# Pioneer sources complement sentinel's price/DeFi focus.
-# Priority: forward-looking signals that SuperColony hasn't covered yet.
-# tlsn_safe: response fits within 16KB WASM prover limit
-# dahr_safe: source serves JSON without auth (GitHub public API pattern)
-
+description: Pioneer curated sources — frontier signals, emerging tech, cross-domain synthesis
 sources:
-
-  # ─── HackerNews (Frontier Tech Signals) ───────────────────────
-
   - name: hn-front-page
-    url: "https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=2"
-    topics: [emerging-tech, frontier-science, ai-policy]
+    url: https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=2
+    topics:
+      - emerging-tech
+      - frontier-science
+      - ai-policy
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Front page stories = high-signal. hitsPerPage=2 for TLSN safety."
-
+    note: Front page stories = high-signal. hitsPerPage=2 for TLSN safety.
   - name: hn-recent-ai
-    url: "https://hn.algolia.com/api/v1/search?query=AI+regulation&tags=story&hitsPerPage=2"
-    topics: [ai-policy, regulatory-shifts]
+    url: https://hn.algolia.com/api/v1/search?query=AI+regulation&tags=story&hitsPerPage=2
+    topics:
+      - ai-policy
+      - regulatory-shifts
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "AI policy/regulation stories. hitsPerPage=2 for TLSN."
-
+    note: AI policy/regulation stories. hitsPerPage=2 for TLSN.
   - name: hn-recent-quantum
-    url: "https://hn.algolia.com/api/v1/search?query=quantum+computing&tags=story&hitsPerPage=2"
-    topics: [quantum, emerging-tech]
+    url: https://hn.algolia.com/api/v1/search?query=quantum+computing&tags=story&hitsPerPage=2
+    topics:
+      - quantum
+      - emerging-tech
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Quantum computing stories."
-
+    note: Quantum computing stories.
   - name: hn-recent-biotech
-    url: "https://hn.algolia.com/api/v1/search?query=biotech+CRISPR&tags=story&hitsPerPage=2"
-    topics: [biotech, frontier-science]
+    url: https://hn.algolia.com/api/v1/search?query=biotech+CRISPR&tags=story&hitsPerPage=2
+    topics:
+      - biotech
+      - frontier-science
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Biotech/CRISPR frontier stories."
-
+    note: Biotech/CRISPR frontier stories.
   - name: hn-recent-energy
-    url: "https://hn.algolia.com/api/v1/search?query=fusion+energy+transition&tags=story&hitsPerPage=2"
-    topics: [energy-transition, emerging-tech]
+    url: https://hn.algolia.com/api/v1/search?query=fusion+energy+transition&tags=story&hitsPerPage=2
+    topics:
+      - energy-transition
+      - emerging-tech
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Energy transition / fusion stories."
-
-  # ─── GitHub Trending (Developer Signal) ────────────────────────
-
+    note: Energy transition / fusion stories.
   - name: github-trending-repos
-    url: "https://api.github.com/search/repositories?q=created:>{date}&sort=stars&order=desc&per_page=5"
-    topics: [emerging-tech, cross-domain]
+    url: https://api.github.com/search/repositories?q=created:>{date}&sort=stars&order=desc&per_page=5
+    topics:
+      - emerging-tech
+      - cross-domain
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 30
     note: "Trending repos by stars. {date} placeholder: scan phase fills with YYYY-MM-DD 7 days ago. DAHR only."
-
   - name: github-pqc-repos
-    url: "https://api.github.com/search/repositories?q=post-quantum+cryptography&sort=updated&per_page=5"
-    topics: [quantum, emerging-tech]
+    url: https://api.github.com/search/repositories?q=post-quantum+cryptography&sort=updated&per_page=5
+    topics:
+      - quantum
+      - emerging-tech
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 20
-    note: "Post-quantum crypto repos. DAHR only."
-
+    note: Post-quantum crypto repos. DAHR only.
   - name: github-ai-resources-drix10
-    url: "https://api.github.com/repos/Drix10/ai-resources"
-    topics: [ai, ai-tools, emerging-tech]
+    url: https://api.github.com/repos/Drix10/ai-resources
+    topics:
+      - ai
+      - ai-tools
+      - emerging-tech
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "Curated AI resources repository metadata (stars/forks/activity)."
-
-  # ─── arXiv (Research Frontier) ─────────────────────────────────
-
+    note: Curated AI resources repository metadata (stars/forks/activity).
   - name: arxiv-cs-ai
-    url: "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=3"
-    topics: [ai-policy, frontier-science]
+    url: https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=3
+    topics:
+      - ai-policy
+      - frontier-science
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 15
-    note: "Latest AI papers. XML response — parse for titles/abstracts. DAHR only."
-
+    note: Latest AI papers. XML response — parse for titles/abstracts. DAHR only.
   - name: arxiv-quant-ph
-    url: "https://export.arxiv.org/api/query?search_query=cat:quant-ph&sortBy=submittedDate&sortOrder=descending&max_results=3"
-    topics: [quantum, frontier-science]
+    url: https://export.arxiv.org/api/query?search_query=cat:quant-ph&sortBy=submittedDate&sortOrder=descending&max_results=3
+    topics:
+      - quantum
+      - frontier-science
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 15
-    note: "Latest quantum physics papers. DAHR only."
-
-  # ─── CoinGecko (Crypto Frontier — Complements Sentinel) ───────
-
+    note: Latest quantum physics papers. DAHR only.
   - name: coingecko-trending
-    url: "https://api.coingecko.com/api/v3/search/trending"
-    topics: [crypto, cross-domain]
+    url: https://api.coingecko.com/api/v3/search/trending
+    topics:
+      - crypto
+      - cross-domain
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
     note: "Trending coins — pioneer angle: what's emerging that sentinel isn't tracking."
-
   - name: coingecko-categories
-    url: "https://api.coingecko.com/api/v3/coins/categories?order=market_cap_change_24h_desc"
-    topics: [crypto, cross-domain]
+    url: https://api.coingecko.com/api/v3/coins/categories?order=market_cap_change_24h_desc
+    topics:
+      - crypto
+      - cross-domain
     tlsn_safe: false
     dahr_safe: true
     max_response_kb: 40
-    note: "Categories sorted by 24h market cap change. Detects sector rotation. DAHR only."
-
-  # ─── Financial / Derivatives ──────────────────────────────────
-
+    note: Categories sorted by 24h market cap change. Detects sector rotation. DAHR only.
   - name: hn-recent-derivatives
-    url: "https://hn.algolia.com/api/v1/search?query=derivatives+futures+options&tags=story&hitsPerPage=2"
-    topics: [derivatives, derivatives-expert, derivatives-market, financial-markets, futures]
+    url: https://hn.algolia.com/api/v1/search?query=derivatives+futures+options&tags=story&hitsPerPage=2
+    topics:
+      - derivatives
+      - derivatives-expert
+      - derivatives-market
+      - financial-markets
+      - futures
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Derivatives/futures/options stories. hitsPerPage=2 for TLSN."
-
+    note: Derivatives/futures/options stories. hitsPerPage=2 for TLSN.
   - name: hn-recent-finance
-    url: "https://hn.algolia.com/api/v1/search?query=financial+markets+risk&tags=story&hitsPerPage=2"
-    topics: [financial-markets, risk, cross-domain, macro]
+    url: https://hn.algolia.com/api/v1/search?query=financial+markets+risk&tags=story&hitsPerPage=2
+    topics:
+      - financial-markets
+      - risk
+      - cross-domain
+      - macro
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Financial markets / risk stories."
-
-  # ─── Regulatory / Geopolitical ─────────────────────────────────
-
+    note: Financial markets / risk stories.
   - name: pypi-recent
-    url: "https://pypi.org/rss/updates.xml"
-    topics: [emerging-tech]
+    url: https://pypi.org/rss/updates.xml
+    topics:
+      - emerging-tech
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 8
-    note: "PyPI recent updates — detect new tooling trends. RSS/XML."
-
+    note: PyPI recent updates — detect new tooling trends. RSS/XML.
   - name: hn-recent-geopolitical
-    url: "https://hn.algolia.com/api/v1/search?query=geopolitical+trade+sanctions&tags=story&hitsPerPage=2"
-    topics: [geopolitical, cross-domain, trade-sanctions, regulatory-shifts]
+    url: https://hn.algolia.com/api/v1/search?query=geopolitical+trade+sanctions&tags=story&hitsPerPage=2
+    topics:
+      - geopolitical
+      - cross-domain
+      - trade-sanctions
+      - regulatory-shifts
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Geopolitical/trade stories. Replaces wikipedia-current-events (DAHR 401 + 100KB). hitsPerPage=2 for TLSN."
-
-  # ─── Space / Robotics ─────────────────────────────────────────
-
+    note: Geopolitical/trade stories. Replaces wikipedia-current-events (DAHR 401 + 100KB). hitsPerPage=2 for TLSN.
   - name: hn-recent-space
-    url: "https://hn.algolia.com/api/v1/search?query=SpaceX+rocket+satellite&tags=story&hitsPerPage=2"
-    topics: [space, emerging-tech]
+    url: https://hn.algolia.com/api/v1/search?query=SpaceX+rocket+satellite&tags=story&hitsPerPage=2
+    topics:
+      - space
+      - emerging-tech
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Space industry stories."
-
+    note: Space industry stories.
   - name: hn-recent-robotics
-    url: "https://hn.algolia.com/api/v1/search?query=robotics+humanoid&tags=story&hitsPerPage=2"
-    topics: [robotics, emerging-tech]
+    url: https://hn.algolia.com/api/v1/search?query=robotics+humanoid&tags=story&hitsPerPage=2
+    topics:
+      - robotics
+      - emerging-tech
     tlsn_safe: true
     dahr_safe: true
     max_response_kb: 4
-    note: "Robotics / humanoid robot stories."
+    note: Robotics / humanoid robot stories.
+  - name: hn-chemicals
+    url: https://hn.algolia.com/api/v1/search?query=chemicals&tags=story&hitsPerPage=2
+    topics:
+      - chemicals
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 4
+    note: "Auto-discovered. Provider: hn-algolia. Relevance: 85/100."
+  - name: hn-remx
+    url: https://hn.algolia.com/api/v1/search?query=remx&tags=story&hitsPerPage=2
+    topics:
+      - remx
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 4
+    note: "Auto-discovered. Provider: hn-algolia. Relevance: 80/100."
+  - name: hn-usds
+    url: https://hn.algolia.com/api/v1/search?query=usds&tags=story&hitsPerPage=2
+    topics:
+      - usds
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 4
+    note: "Auto-discovered. Provider: hn-algolia. Relevance: 85/100."

@@ -733,7 +733,28 @@ function gateIcon(status: GateItemStatus): string {
 function shouldAutoPassGate(result: any, normalized: NormalizedGateEval): boolean {
   // New gate.ts result shape has explicit fail count — treat this as authoritative.
   if (typeof result?.summary?.fail === "number") {
-    return result.summary.fail === 0;
+    if (result.summary.fail === 0) return true;
+
+    // Pioneer-friendly soft-pass: allow exactly one fail when the only failed
+    // item is Signal strength and safety checks still pass.
+    if (result.summary.fail === 1 && Array.isArray(result?.items)) {
+      const items = result.items;
+      const failed = items.filter((i: any) => i?.status === "fail");
+      const onlySignalFail =
+        failed.length === 1 &&
+        String(failed[0]?.name || "").toLowerCase() === "signal strength";
+      if (onlySignalFail) {
+        const novelty = items.find((i: any) => String(i?.name || "").toLowerCase() === "novelty");
+        const category = items.find((i: any) => String(i?.name || "").toLowerCase() === "category");
+        const duplicate = items.find((i: any) => String(i?.name || "").toLowerCase() === "not duplicate");
+        const safetyPass =
+          novelty?.status === "pass" &&
+          category?.status === "pass" &&
+          duplicate?.status === "pass";
+        if (safetyPass) return true;
+      }
+    }
+    return false;
   }
 
   // Legacy fallback: keep historical "5/6+" behavior.

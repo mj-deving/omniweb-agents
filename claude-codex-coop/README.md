@@ -51,6 +51,18 @@ JSON output:
 npm run coop:latest -- --json
 ```
 
+Record read acknowledgment (optional, recommended):
+
+```bash
+npm run coop:ack -- --agent codex
+```
+
+Combined takeover helper (read latest + ack in one step):
+
+```bash
+npm run coop:takeover -- --agent codex
+```
+
 Append handoff entry:
 
 ```bash
@@ -106,6 +118,17 @@ Manual check:
 ```bash
 npm run check:coop
 ```
+
+Manual check with soft read-ack warning:
+
+```bash
+npm run check:coop:soft-ack
+```
+
+Read-ack soft guard:
+- non-blocking warning only; never fails push/CI
+- warns when `STATUS.md` owner has no ack, or latest ack is older than 24h
+- tune with `--soft-ack-hours N` or env `COOP_SOFT_ACK_HOURS=N`
 
 Strict worktree check (includes uncommitted/untracked files):
 

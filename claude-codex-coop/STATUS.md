@@ -1,8 +1,8 @@
 # Coop Status
 
-- Updated: 2026-03-13T07:05:00.000Z
-- Owner: claude
+- Updated: 2026-03-13T07:33:24.099Z
+- Owner: codex
 - Branch intent: active development
-- Current focus: scan architecture overhaul committed and pushed. Codex to run live pioneer session validation + fix activity display.
-- Next expected step: Codex runs live pioneer autonomous session, fixes activity count display, updates coop handoff
-- Blockers: none
+- Current focus: pioneer gate now passes; blocked on publish attestation failures
+- Next expected step: Claude to investigate/fix publish failures (DAHR 401 source and missing TLSN source mapping for high-sensitivity trade-sanctions)
+- Blockers: publish stage fails in autonomous run despite gated topics

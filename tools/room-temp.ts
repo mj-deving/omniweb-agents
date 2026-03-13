@@ -268,15 +268,41 @@ function dedupePosts(posts: FilteredPost[]): FilteredPost[] {
   return [...byTx.values()];
 }
 
+function dedupeRawFeedPosts(posts: any[]): any[] {
+  const byKey = new Map<string, any>();
+  for (const p of posts) {
+    const txHash = String(p?.txHash || "");
+    const timestamp = Number(p?.timestamp || 0);
+    const fallbackKey = [
+      String(p?.author || p?.address || ""),
+      String(p?.payload?.cat || p?.cat || ""),
+      String(p?.payload?.text || p?.text || "").slice(0, 64),
+      String(timestamp),
+    ].join("|");
+    const key = txHash ? `tx:${txHash}` : `raw:${fallbackKey}`;
+
+    const existing = byKey.get(key);
+    const existingTs = Number(existing?.timestamp || 0);
+    if (!existing || timestamp > existingTs) {
+      byKey.set(key, p);
+    }
+  }
+  return [...byKey.values()];
+}
+
 function updateCounters(counters: QualityCounters, fetched: number, filtered: FilteredPost[]): void {
   counters.totalFetched += fetched;
   counters.passedFilter += filtered.length;
   for (const post of filtered) counters.totalPassedScore += post.score;
 }
 
-function analyzeActivity(posts: FilteredPost[], hours: number): RoomTempResult["activity"] {
+function analyzeActivity(
+  posts: FilteredPost[],
+  hours: number,
+  throughputPosts: Array<{ timestamp?: number }> = posts
+): RoomTempResult["activity"] {
   const cutoff = Date.now() - hours * 60 * 60 * 1000;
-  const recent = posts.filter((p) => p.timestamp > cutoff);
+  const recent = throughputPosts.filter((p) => Number(p?.timestamp || 0) > cutoff);
   const count = recent.length;
   const postsPerHour = hours > 0 ? +(count / hours).toFixed(1) : 0;
 
@@ -506,6 +532,7 @@ async function main(): Promise<void> {
 
   const counters: QualityCounters = { totalFetched: 0, passedFilter: 0, totalPassedScore: 0 };
   const allFiltered: FilteredPost[] = [];
+  const allRawFetched: any[] = [];
 
   let topicIndexOut: Record<string, TopicStatsJson> | undefined;
   let agentIndexOut: Record<string, AgentStats> | undefined;
@@ -516,6 +543,7 @@ async function main(): Promise<void> {
     if (mode === "lightweight") {
       info(`Mode lightweight: /api/feed?limit=${depth}`);
       const raw = await budget.get(`/api/feed?limit=${depth}`, "lightweight feed");
+      allRawFetched.push(...raw);
       const filtered = filterPosts(raw, qualityFilter);
       updateCounters(counters, raw.length, filtered);
       allFiltered.push(...filtered);
@@ -533,6 +561,7 @@ async function main(): Promise<void> {
       for (let page = 0; page < 5; page++) {
         const offset = page * depth;
         const raw = await budget.get(`/api/feed?limit=${depth}&offset=${offset}`, `since-last page ${page + 1}`);
+        allRawFetched.push(...raw);
         counters.totalFetched += raw.length;
 
         if (raw.length === 0) break;
@@ -584,6 +613,7 @@ async function main(): Promise<void> {
           `/api/feed/search?asset=${encodeURIComponent(topic)}&limit=${topicSearchLimit}`,
           `topic-search asset="${topic}"`
         );
+        allRawFetched.push(...assetRaw);
         const assetFiltered = filterPosts(assetRaw, qualityFilter);
         updateCounters(counters, assetRaw.length, assetFiltered);
         topicPosts.push(...assetFiltered);
@@ -593,6 +623,7 @@ async function main(): Promise<void> {
           `/api/feed/search?text=${encodeURIComponent(topic)}&limit=${topicSearchLimit}`,
           `topic-search text="${topic}"`
         );
+        allRawFetched.push(...textRaw);
         const textFiltered = filterPosts(textRaw, qualityFilter);
         updateCounters(counters, textRaw.length, textFiltered);
         topicPosts.push(...textFiltered);
@@ -602,6 +633,7 @@ async function main(): Promise<void> {
           if (broadPool === null) {
             info("Topic-search: fetching broad feed for tag matching");
             broadPool = await budget.get(`/api/feed?limit=${depth}`, "topic-search broad pool");
+            allRawFetched.push(...broadPool);
             counters.totalFetched += broadPool.length;
           }
           const topicLower = topic.toLowerCase();
@@ -644,6 +676,7 @@ async function main(): Promise<void> {
         const endpoint = `/api/feed?category=${encodeURIComponent(upper)}&limit=${depth}`;
         info(`Mode category-filtered: ${upper}`);
         const raw = await budget.get(endpoint, `category-filtered "${upper}"`);
+        allRawFetched.push(...raw);
         const filtered = filterPosts(raw, qualityFilter);
         updateCounters(counters, raw.length, filtered);
         allFiltered.push(...filtered);
@@ -678,6 +711,7 @@ async function main(): Promise<void> {
       for (let page = 0; page < 5; page++) {
         const offset = page * depth;
         const raw = await budget.get(`/api/feed?limit=${depth}&offset=${offset}`, `quality-indexed page ${page + 1}`);
+        allRawFetched.push(...raw);
         counters.totalFetched += raw.length;
         rawAll.push(...raw);
         if (raw.length < depth) break;
@@ -703,6 +737,7 @@ async function main(): Promise<void> {
   }
 
   const posts = dedupePosts(allFiltered);
+  const dedupedRawPosts = dedupeRawFeedPosts(allRawFetched);
 
   // Always build topic index from the full deduped post set and merge with
   // any topic-search results so that extractTopicsFromScan sees the complete
@@ -722,7 +757,7 @@ async function main(): Promise<void> {
     agentIndexOut = agentMapToJson(buildAgentIndex(posts));
   }
 
-  const activity = analyzeActivity(posts, hours);
+  const activity = analyzeActivity(posts, hours, dedupedRawPosts.length > 0 ? dedupedRawPosts : posts);
   const convergence = analyzeConvergence(posts);
   const gaps = analyzeGaps(posts);
   const heat = analyzeHeat(posts);

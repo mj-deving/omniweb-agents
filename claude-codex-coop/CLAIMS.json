@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "agent": "codex",
+      "lane": "coop-hardening",
+      "task": "harden coop completeness + parallel claim flow",
+      "files": [
+        ".gitignore",
+        ".github/workflows/validate-plugin.yml",
+        "package.json",
+        ".githooks/pre-push",
+        "claude-codex-coop/",
+        "tools/check-coop.mjs",
+        "tools/coop-claim.mjs",
+        "tools/coop-handoff.mjs",
+        "tools/coop-status.mjs",
+        "tools/install-git-hooks.mjs",
+        "tools/lib/tlsn-node-bridge.ts"
+      ],
+      "shared": false,
+      "updatedAt": "2026-03-13T05:40:31.729Z",
+      "expiresAt": "2026-03-14T05:40:31.729Z"
+    }
+  ]
+}

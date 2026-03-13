@@ -5,7 +5,8 @@
  * Admin operations (discover, test, updateRatings) are exported from admin.ts
  * and should never be imported by session-runner.ts.
  *
- * Phase 3 Step 3 will add: preflight, match
+ * Runtime API: preflight, match, loadAgentSourceView, catalog operations.
+ * Admin operations (discover, test, updateRatings) are in admin.ts.
  */
 
 // ── Types ──────────────────────────────────────────
@@ -21,6 +22,17 @@ export type {
   SourceRegistryMode,
 } from "./catalog.js";
 
+export type {
+  PreflightCandidate,
+  PreflightResult,
+  SourceSelectionResult,
+} from "./policy.js";
+
+export type {
+  MatchInput,
+  MatchResult,
+} from "./matcher.js";
+
 // ── Constants ──────────────────────────────────────
 export { ALL_AGENT_NAMES } from "./catalog.js";
 
@@ -34,3 +46,9 @@ export {
   tokenizeTopic,
   sourceTopicTokens,
 } from "./catalog.js";
+
+// ── Source Policy ──────────────────────────────────
+export { preflight, selectSourceForTopicV2 } from "./policy.js";
+
+// ── Source Matcher ─────────────────────────────────
+export { match, extractClaims, scoreMatch } from "./matcher.js";

@@ -16,6 +16,8 @@ import type { AgentConfig } from "./agent-config.js";
 import type { AnySessionState, V2SessionState } from "./state.js";
 import type { AttestationType } from "./attestation-policy.js";
 import type { AgentSourceView, SourceRecordV2 } from "./sources/catalog.js";
+import { preflight as sourcesPreflight, type PreflightCandidate } from "./sources/policy.js";
+import { match as sourcesMatch } from "./sources/matcher.js";
 
 // ── Context Types ─────────────────────────────────
 
@@ -51,8 +53,8 @@ export interface AfterPublishDraftContext {
   category: string;
   config: AgentConfig;
   state: AnySessionState;
-  /** Candidates from preflight (beforePublishDraft) */
-  preflightCandidates?: SourceRecordV2[];
+  /** Candidates from preflight (beforePublishDraft) — includes resolved URL + method */
+  preflightCandidates?: PreflightCandidate[];
   /** Source view for the current agent */
   sourceView?: AgentSourceView;
 }
@@ -63,8 +65,8 @@ export interface PublishGateDecision {
   pass: boolean;
   reason: string;
   reasonCode: string;
-  /** Pre-selected candidates for downstream match() */
-  candidates?: SourceRecordV2[];
+  /** Pre-selected candidates for downstream match() — includes resolved URL + method */
+  candidates?: PreflightCandidate[];
 }
 
 export interface SourceMatchDecision {
@@ -94,6 +96,61 @@ export interface LoopExtensionHooks {
 
 export type KnownExtension = (typeof KNOWN_EXTENSIONS)[number];
 
+// ── Sources Hook Implementations ─────────────────
+
+/**
+ * beforePublishDraft hook for sources extension.
+ * Runs preflight check using the catalog index.
+ */
+async function runSourcesPreflightHook(
+  ctx: BeforePublishDraftContext
+): Promise<PublishGateDecision | void> {
+  if (!ctx.sourceView) return; // no source view loaded — skip silently
+
+  const result = sourcesPreflight(ctx.topic, ctx.sourceView, ctx.config);
+
+  if (!result.pass) {
+    return {
+      pass: false,
+      reason: result.reason,
+      reasonCode: result.reasonCode,
+    };
+  }
+
+  return {
+    pass: true,
+    reason: result.reason,
+    reasonCode: result.reasonCode,
+    candidates: result.candidates,
+  };
+}
+
+/**
+ * afterPublishDraft hook for sources extension.
+ * Runs match() to verify post-generation source alignment.
+ */
+async function runSourcesMatchHook(
+  ctx: AfterPublishDraftContext
+): Promise<SourceMatchDecision | void> {
+  if (!ctx.sourceView || !ctx.preflightCandidates) return;
+
+  const result = sourcesMatch({
+    topic: ctx.topic,
+    postText: ctx.postText,
+    postTags: ctx.postTags,
+    candidates: ctx.preflightCandidates,
+    sourceView: ctx.sourceView,
+  });
+
+  return {
+    pass: result.pass,
+    reason: result.reason,
+    reasonCode: result.reasonCode,
+    best: result.best,
+    considered: result.considered,
+  };
+}
+
 // ── Registry ──────────────────────────────────────
 
 /**
@@ -102,9 +159,6 @@ export type KnownExtension = (typeof KNOWN_EXTENSIONS)[number];
  * Each extension maps to its hook implementations. Extensions that operate
  * inline (like observe) have empty hook objects — they're invoked directly
  * by the code that emits observations, not through the dispatcher.
- *
- * Hook implementations are wired here as stubs initially. Phase 3 Step 3
- * will fill in the sources hooks with real preflight/match logic.
  */
 const EXTENSION_REGISTRY: Record<KnownExtension, LoopExtensionHooks> = {
   calibrate: {
@@ -112,9 +166,8 @@ const EXTENSION_REGISTRY: Record<KnownExtension, LoopExtensionHooks> = {
     // because it needs runToolAndParse() which lives in session-runner scope
   },
   sources: {
-    // Phase 3 Step 3 will wire these to real implementations:
-    // beforePublishDraft: runSourcesPreflightHook,
-    // afterPublishDraft: runSourcesMatchHook,
+    beforePublishDraft: runSourcesPreflightHook,
+    afterPublishDraft: runSourcesMatchHook,
   },
   observe: {
     // Observe is inline (appendFileSync calls), not hook-driven.

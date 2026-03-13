@@ -76,6 +76,45 @@ const PHASE_ORDER: PhaseName[] = [
   "harden",
 ];
 
+// ── V2 Types ─────────────────────────────────────
+
+export type CorePhase = "sense" | "act" | "confirm";
+export type LoopVersion = 1 | 2;
+export const CORE_PHASE_ORDER: CorePhase[] = ["sense", "act", "confirm"];
+export const KNOWN_EXTENSIONS = ["calibrate", "sources", "observe"] as const;
+
+export type SubstageStatus = "pending" | "running" | "completed" | "failed" | "skipped";
+
+export interface ActSubstageState {
+  substage: "engage" | "gate" | "publish";
+  status: SubstageStatus;
+  startedAt?: string;
+  completedAt?: string;
+  durationMs?: number;
+  failureCode?: string;
+  result?: any;
+}
+
+export interface V2SessionState {
+  loopVersion: 2;
+  sessionNumber: number;
+  agentName: string;
+  startedAt: string;
+  pid: number;
+  phases: Record<CorePhase, PhaseState>;
+  substages: ActSubstageState[];
+  posts: string[];
+  engagements: any[];
+  /** Set when --shadow suppresses publish */
+  publishSuppressed?: boolean;
+}
+
+export type AnySessionState = SessionState | V2SessionState;
+
+export function isV2(state: AnySessionState): state is V2SessionState {
+  return (state as any).loopVersion === 2;
+}
+
 // ── Path Helpers ───────────────────────────────────
 
 function stateFilePath(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): string {
@@ -177,10 +216,22 @@ function ensureDir(sessionsDir: string = DEFAULT_SESSIONS_DIR): void {
  * Called by both loadState() and findActiveSession() to ensure
  * resumed sessions always have the full phase set.
  */
-export function normalizeState(state: SessionState): SessionState {
-  for (const phase of PHASE_ORDER) {
-    if (!state.phases[phase]) {
-      state.phases[phase] = { status: "pending" };
+export function normalizeState(state: SessionState): SessionState;
+export function normalizeState(state: V2SessionState): V2SessionState;
+export function normalizeState(state: AnySessionState): AnySessionState;
+export function normalizeState(state: AnySessionState): AnySessionState {
+  if (isV2(state)) {
+    for (const phase of CORE_PHASE_ORDER) {
+      if (!state.phases[phase]) {
+        state.phases[phase] = { status: "pending" };
+      }
+    }
+    if (!state.substages) state.substages = [];
+  } else {
+    for (const phase of PHASE_ORDER) {
+      if (!state.phases[phase]) {
+        state.phases[phase] = { status: "pending" };
+      }
     }
   }
   if (!state.posts) state.posts = [];
@@ -191,12 +242,12 @@ export function normalizeState(state: SessionState): SessionState {
 /**
  * Load state for a specific session number. Returns null if not found.
  */
-export function loadState(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): SessionState | null {
+export function loadState(sessionNumber: number, sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): AnySessionState | null {
   const path = stateFilePath(sessionNumber, sessionsDir, agentName);
   if (!existsSync(path)) return null;
   try {
     const state = JSON.parse(readFileSync(path, "utf-8"));
-    return normalizeState(state);
+    return normalizeState(state as AnySessionState);
   } catch {
     return null;
   }
@@ -206,7 +257,7 @@ export function loadState(sessionNumber: number, sessionsDir: string = DEFAULT_S
  * Find the most recent active session (any session with a state file).
  * Returns null if no active sessions.
  */
-export function findActiveSession(sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): SessionState | null {
+export function findActiveSession(sessionsDir: string = DEFAULT_SESSIONS_DIR, agentName: string = "sentinel"): AnySessionState | null {
   ensureDir(sessionsDir);
   const files: string[] = readdirSync(sessionsDir);
   const pattern = new RegExp(`^${agentName}-\\d+\\.json$`);
@@ -224,7 +275,7 @@ export function findActiveSession(sessionsDir: string = DEFAULT_SESSIONS_DIR, ag
     const path = resolve(sessionsDir, file);
     try {
       const state = JSON.parse(readFileSync(path, "utf-8"));
-      return normalizeState(state);
+      return normalizeState(state as AnySessionState);
     } catch {
       continue;
     }
@@ -235,7 +286,7 @@ export function findActiveSession(sessionsDir: string = DEFAULT_SESSIONS_DIR, ag
 /**
  * Save session state to disk.
  */
-export function saveState(state: SessionState, sessionsDir?: string): void {
+export function saveState(state: AnySessionState, sessionsDir?: string): void {
   const dir = sessionsDir || resolve(homedir(), `.${state.agentName}`, "sessions");
   ensureDir(dir);
   writeFileSync(stateFilePath(state.sessionNumber, dir, state.agentName), JSON.stringify(state, null, 2));
@@ -247,10 +298,33 @@ export function saveState(state: SessionState, sessionsDir?: string): void {
 export function startSession(
   sessionNumber: number,
   agentName: string = "sentinel",
-  sessionsDir: string = DEFAULT_SESSIONS_DIR
-): SessionState {
+  sessionsDir: string = DEFAULT_SESSIONS_DIR,
+  loopVersion: LoopVersion = 1
+): AnySessionState {
   ensureDir(sessionsDir);
   acquireLock(sessionNumber, sessionsDir, agentName);
+
+  if (loopVersion === 2) {
+    const phases: Record<CorePhase, PhaseState> = {} as any;
+    for (const phase of CORE_PHASE_ORDER) {
+      phases[phase] = { status: "pending" };
+    }
+
+    const state: V2SessionState = {
+      loopVersion: 2,
+      sessionNumber,
+      agentName,
+      startedAt: new Date().toISOString(),
+      pid: process.pid,
+      phases,
+      substages: [],
+      posts: [],
+      engagements: [],
+    };
+
+    saveState(state, sessionsDir);
+    return state;
+  }
 
   const phases: Record<PhaseName, PhaseState> = {} as any;
   for (const phase of PHASE_ORDER) {
@@ -274,8 +348,8 @@ export function startSession(
 /**
  * Mark a phase as in_progress.
  */
-export function beginPhase(state: SessionState, phase: PhaseName, sessionsDir?: string): SessionState {
-  state.phases[phase] = {
+export function beginPhase(state: AnySessionState, phase: PhaseName | CorePhase, sessionsDir?: string): AnySessionState {
+  (state.phases as any)[phase] = {
     status: "in_progress",
     startedAt: new Date().toISOString(),
   };
@@ -287,13 +361,13 @@ export function beginPhase(state: SessionState, phase: PhaseName, sessionsDir?: 
  * Mark a phase as completed with optional result data.
  */
 export function completePhase(
-  state: SessionState,
-  phase: PhaseName,
+  state: AnySessionState,
+  phase: PhaseName | CorePhase,
   result?: any,
   sessionsDir?: string
-): SessionState {
-  state.phases[phase] = {
-    ...state.phases[phase],
+): AnySessionState {
+  (state.phases as any)[phase] = {
+    ...(state.phases as any)[phase],
     status: "completed",
     completedAt: new Date().toISOString(),
     result,
@@ -306,13 +380,13 @@ export function completePhase(
  * Mark a phase as failed with error message.
  */
 export function failPhase(
-  state: SessionState,
-  phase: PhaseName,
+  state: AnySessionState,
+  phase: PhaseName | CorePhase,
   error: string,
   sessionsDir?: string
-): SessionState {
-  state.phases[phase] = {
-    ...state.phases[phase],
+): AnySessionState {
+  (state.phases as any)[phase] = {
+    ...(state.phases as any)[phase],
     status: "failed",
     completedAt: new Date().toISOString(),
     error,
@@ -325,7 +399,16 @@ export function failPhase(
  * Get the next pending phase (first non-completed in order).
  * Returns null if all phases are completed.
  */
-export function getNextPhase(state: SessionState): PhaseName | null {
+export function getNextPhase(state: AnySessionState): PhaseName | CorePhase | null {
+  if (isV2(state)) {
+    for (const phase of CORE_PHASE_ORDER) {
+      const status = state.phases[phase].status;
+      if (status === "pending" || status === "in_progress" || status === "failed") {
+        return phase;
+      }
+    }
+    return null;
+  }
   for (const phase of PHASE_ORDER) {
     const status = state.phases[phase].status;
     if (status === "pending" || status === "in_progress" || status === "failed") {
@@ -336,9 +419,10 @@ export function getNextPhase(state: SessionState): PhaseName | null {
 }
 
 /**
- * Get ordered list of all phases.
+ * Get ordered list of all phases for the given state version.
  */
-export function getPhaseOrder(): PhaseName[] {
+export function getPhaseOrder(state?: AnySessionState): (PhaseName | CorePhase)[] {
+  if (state && isV2(state)) return [...CORE_PHASE_ORDER];
   return [...PHASE_ORDER];
 }
 

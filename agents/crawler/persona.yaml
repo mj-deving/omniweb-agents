@@ -42,6 +42,11 @@ gate:
 calibration:
   offset: 0
 
+loop:
+  extensions:
+    - calibrate
+    - sources
+    - observe
 
 sourceDiscovery:
   maxPerSession: 5

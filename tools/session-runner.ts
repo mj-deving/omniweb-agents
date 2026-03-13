@@ -39,8 +39,16 @@ import {
   getPhaseOrder,
   clearState,
   releaseLock,
+  isV2,
+  CORE_PHASE_ORDER,
   type SessionState,
+  type V2SessionState,
+  type AnySessionState,
   type PhaseName,
+  type CorePhase,
+  type LoopVersion,
+  type ActSubstageState,
+  type SubstageStatus,
 } from "./lib/state.js";
 import { readSessionLog, appendSessionLog, resolveLogPath } from "./lib/log.js";
 import { saveReviewFindings, loadLatestFindings } from "./lib/review-findings.js";
@@ -112,6 +120,8 @@ interface RunnerFlags {
   pretty: boolean;
   oversight: OversightLevel;
   execBackend: ExecBackend;
+  loopVersion: LoopVersion;
+  shadow: boolean;
 }
 
 function parseArgs(): RunnerFlags {
@@ -166,6 +176,30 @@ function parseArgs(): RunnerFlags {
     execBackend = val as ExecBackend;
   }
 
+  // Parse loop version
+  let loopVersion: LoopVersion = 1;
+  if (flags["loop-version"]) {
+    const val = Number(flags["loop-version"]);
+    if (val !== 1 && val !== 2) {
+      console.error(`Error: --loop-version must be 1 or 2, got "${flags["loop-version"]}"`);
+      process.exit(1);
+    }
+    loopVersion = val as LoopVersion;
+  }
+
+  // Parse shadow mode
+  const shadow = flags["shadow"] === "true";
+  if (shadow && loopVersion !== 2) {
+    console.error("Error: --shadow requires --loop-version 2");
+    process.exit(1);
+  }
+
+  // --skip-to is not supported in v2 (v2 has different phase names)
+  if (skipTo && loopVersion === 2) {
+    console.error("Error: --skip-to is not supported with --loop-version 2. Use --resume instead.");
+    process.exit(1);
+  }
+
   const agentName = resolveAgentName(flags);
 
   return {
@@ -179,6 +213,8 @@ function parseArgs(): RunnerFlags {
     pretty: flags.pretty === "true",
     oversight,
     execBackend,
+    loopVersion,
+    shadow,
   };
 }
 
@@ -197,6 +233,8 @@ FLAGS:
   --resume               Resume interrupted session from last completed phase
   --skip-to PHASE        Start from specific phase (audit|scan|engage|gate|publish|verify|review|harden)
   --force-skip-audit     Required with --skip-to when skipping AUDIT phase
+  --loop-version 1|2     Loop version: 1 (8-phase) or 2 (3-phase SENSE/ACT/CONFIRM) (default: 1)
+  --shadow               Shadow mode: skip publish substage (requires --loop-version 2)
   --dry-run              Show what would run without executing
   --exec-backend MODE    Subprocess backend: spawn|tmux (default: spawn)
   --pretty               Human-readable output (default for interactive)
@@ -365,6 +403,97 @@ function getPhaseBudgetMs(phase: PhaseName, config: AgentConfig): number {
   }
   const defaultSec = DEFAULT_PHASE_BUDGETS[phase];
   return defaultSec ? defaultSec * 1000 : 0;
+}
+
+// ── V2 State Accessors ────────────────────────────
+
+function getScanResult(state: AnySessionState): any {
+  if (isV2(state)) return state.phases.sense?.result;
+  return state.phases.scan?.result;
+}
+
+function getGateResult(state: AnySessionState): any {
+  if (isV2(state)) {
+    // Prefer act.result.gate (final state), fall back to v1-compat phases.gate
+    // written by v1 gate handlers during ACT substage execution.
+    const actResult = state.phases.act?.result;
+    return actResult?.gate || (state as any).phases.gate?.result;
+  }
+  return state.phases.gate?.result;
+}
+
+function getEngageResult(state: AnySessionState): any {
+  if (isV2(state)) {
+    const actResult = state.phases.act?.result;
+    return actResult?.engage;
+  }
+  return state.phases.engage?.result;
+}
+
+function getVerifyResult(state: AnySessionState): any {
+  if (isV2(state)) return state.phases.confirm?.result;
+  return state.phases.verify?.result;
+}
+
+// ── V2 Phase Budgets ──────────────────────────────
+
+const V2_PHASE_BUDGETS: Record<CorePhase, number> = {
+  sense: 180,    // 3 min
+  act: 1500,     // 25 min (sum of substages)
+  confirm: 120,  // 2 min
+};
+
+function getV2PhaseBudgetMs(phase: CorePhase, config: AgentConfig): number {
+  const configBudgets = config.phaseBudgets;
+  if (configBudgets && typeof configBudgets[phase] === "number") {
+    return configBudgets[phase] * 1000;
+  }
+  return (V2_PHASE_BUDGETS[phase] || 0) * 1000;
+}
+
+/** Check v2 phase budget and observe if exceeded */
+function checkV2PhaseBudget(phase: CorePhase, durationMs: number): void {
+  const budgetMs = getV2PhaseBudgetMs(phase, agentConfig);
+  if (budgetMs > 0 && durationMs > budgetMs) {
+    const overage = Math.round(((durationMs - budgetMs) / budgetMs) * 100);
+    observe("inefficiency", `${phase.toUpperCase()} exceeded budget: ${Math.round(durationMs / 1000)}s vs ${Math.round(budgetMs / 1000)}s (+${overage}%)`, {
+      phase, source: "session-runner.ts:phase-budget",
+      data: { phase, durationMs, budgetMs, overage },
+    });
+  }
+}
+
+// ── V2 Substage Runner ────────────────────────────
+
+function createSubstage(name: "engage" | "gate" | "publish"): ActSubstageState {
+  return {
+    substage: name,
+    status: "pending" as SubstageStatus,
+  };
+}
+
+function startSubstage(sub: ActSubstageState): void {
+  sub.status = "running";
+  sub.startedAt = new Date().toISOString();
+}
+
+function completeSubstage(sub: ActSubstageState, result?: any): void {
+  sub.status = "completed";
+  sub.completedAt = new Date().toISOString();
+  sub.durationMs = sub.startedAt ? Date.now() - new Date(sub.startedAt).getTime() : 0;
+  sub.result = result;
+}
+
+function failSubstage(sub: ActSubstageState, failureCode: string): void {
+  sub.status = "failed";
+  sub.completedAt = new Date().toISOString();
+  sub.durationMs = sub.startedAt ? Date.now() - new Date(sub.startedAt).getTime() : 0;
+  sub.failureCode = failureCode;
+}
+
+function skipSubstage(sub: ActSubstageState): void {
+  sub.status = "skipped";
+  sub.durationMs = 0;
 }
 
 async function runCommand(
@@ -860,10 +989,10 @@ function normalizeScanAgentIndex(raw: any): Map<string, ScanAgentStats> {
  * Pioneer mode: prefer frontier/focus-aligned topics and filter generic feed noise.
  */
 function extractTopicsFromScan(
-  state: SessionState,
+  state: AnySessionState,
   sessionLogPath?: string
 ): Array<{ topic: string; category: string; reason: string }> {
-  const scan = state.phases.scan.result || {};
+  const scan = getScanResult(state) || {};
   const mode = agentConfig.gate.mode === "pioneer" ? "pioneer" : "standard";
   const topics: Array<{ topic: string; category: string; reason: string }> = [];
   const topicIndex = normalizeScanTopicIndex(scan.topicIndex);
@@ -1114,7 +1243,7 @@ function extractTopicsFromScan(
 }
 
 /** Get state file path for --scan-cache */
-function getStateFilePath(state: SessionState): string {
+function getStateFilePath(state: AnySessionState): string {
   return resolve(homedir(), `.${state.agentName}`, "sessions", `${state.agentName}-${state.sessionNumber}.json`);
 }
 
@@ -1180,7 +1309,7 @@ async function runGateFull(
 
 /** GATE: approve oversight — auto-suggest topics from scan, operator confirms */
 async function runGateApprove(
-  state: SessionState,
+  state: AnySessionState,
   flags: RunnerFlags,
   rl: ReturnType<typeof createInterface>
 ): Promise<void> {
@@ -1224,7 +1353,7 @@ async function runGateApprove(
 
 /** GATE: autonomous oversight — auto-pick topics from scan, auto-accept by gate summary */
 async function runGateAutonomous(
-  state: SessionState,
+  state: AnySessionState,
   flags: RunnerFlags
 ): Promise<void> {
   const gatePosts: GatePost[] = [];
@@ -1299,11 +1428,11 @@ async function runGateAutonomous(
 
 /** PUBLISH: full/approve oversight — manual with log capture */
 async function runPublishManual(
-  state: SessionState,
+  state: AnySessionState,
   flags: RunnerFlags,
   rl: ReturnType<typeof createInterface>
 ): Promise<void> {
-  const gateResult = state.phases.gate.result || { posts: [] };
+  const gateResult = getGateResult(state) || { posts: [] };
   const gatePosts = gateResult.posts || [];
 
   if (gatePosts.length === 0) {
@@ -1376,12 +1505,12 @@ async function runPublishManual(
 
 /** PUBLISH: autonomous oversight — LLM text gen + attestation + publish */
 async function runPublishAutonomous(
-  state: SessionState,
+  state: AnySessionState,
   flags: RunnerFlags
 ): Promise<void> {
-  const gateResult = state.phases.gate.result || { posts: [] };
+  const gateResult = getGateResult(state) || { posts: [] };
   const gatePosts: GatePost[] = gateResult.posts || [];
-  const scanResult = state.phases.scan.result || {};
+  const scanResult = getScanResult(state) || {};
 
   if (gatePosts.length === 0) {
     phaseSkipped("No posts gated — nothing to publish");
@@ -1884,10 +2013,10 @@ function collectHardenFindings(state: SessionState): HardenFinding[] {
   }
 
   // Phase errors from current session (enrichment from state — not available to session-review.ts)
-  const phases = getPhaseOrder();
+  const phases = getPhaseOrder() as PhaseName[];
   for (const phase of phases) {
     if (phase === "harden") continue;
-    const p = state.phases[phase];
+    const p = state.phases[phase as PhaseName];
     if (p?.status === "failed" && p.error) {
       const subtype = phase === "gate" ? "gate_fail" : phase === "publish" ? "publish_error" : "attest_error";
       findings.push({
@@ -2313,24 +2442,351 @@ function writeSessionReport(state: SessionState, oversight: OversightLevel, sess
   info(`Session report written to ${reportPath}`);
 }
 
+// ── V2 Loop ─────────────────────────────────────────
+
+function v2PhaseHeader(phase: CorePhase, substage?: string): void {
+  const idx = CORE_PHASE_ORDER.indexOf(phase) + 1;
+  const label = substage ? `${phase.toUpperCase()} → ${substage.toUpperCase()}` : phase.toUpperCase();
+  console.log(`\nPhase ${idx}/${CORE_PHASE_ORDER.length}: ${label}`);
+}
+
+async function runV2Loop(
+  state: V2SessionState,
+  flags: RunnerFlags,
+  sessionsDir: string,
+  rl: ReturnType<typeof createInterface> | null
+): Promise<void> {
+  // Determine which phases to skip on resume
+  const senseCompleted = state.phases.sense?.status === "completed";
+  const actCompleted = state.phases.act?.status === "completed";
+
+  // Extension: calibrate (reuses runAudit)
+  if (agentConfig.loopExtensions.includes("calibrate") && !senseCompleted) {
+    info("Extension: calibrate (running audit)...");
+    // Create a temporary v1-shaped wrapper to call runAudit which expects SessionState
+    await runAudit(state as any, flags);
+    // Note: runAudit calls completePhase(state, "audit", ...) — that's fine for v1 callers,
+    // but for v2 we just discard the result (calibrate is informational only).
+  }
+
+  // ── SENSE ──────────────────────────────────────
+  if (senseCompleted) {
+    info("SENSE already completed — skipping (resume)");
+  } else {
+    v2PhaseHeader("sense");
+    setObserverPhase("sense");
+    beginPhase(state, "sense" as any, sessionsDir);
+    const senseStartMs = Date.now();
+    try {
+      const scanArgs = ["--agent", flags.agent, "--json", "--env", flags.env];
+      const scanResult = await runToolAndParse("tools/room-temp.ts", scanArgs, "room-temp.ts (SENSE)");
+
+      const level = scanResult.activity?.level || "unknown";
+      const pph = scanResult.activity?.posts_per_hour ?? "?";
+      const gapCount = scanResult.gaps?.topics?.length || 0;
+      phaseResult(`${level} activity (${pph} posts/hr) | ${gapCount} gap topics found`);
+
+      observe("insight", `SENSE complete: ${level} activity, ${gapCount} gaps`, {
+        phase: "sense",
+        source: "session-runner.ts:runV2Loop",
+      });
+
+      completePhase(state, "sense" as any, scanResult, sessionsDir);
+    } catch (e: any) {
+      observe("error", `SENSE failed: ${e.message}`, { phase: "sense", source: "session-runner.ts:runV2Loop" });
+      failPhase(state, "sense" as any, e.message, sessionsDir);
+      throw e;
+    }
+
+    checkV2PhaseBudget("sense", Date.now() - senseStartMs);
+  }
+
+  // ── ACT ────────────────────────────────────────
+  if (actCompleted) {
+    info("ACT already completed — skipping (resume)");
+  } else {
+  v2PhaseHeader("act");
+  setObserverPhase("act");
+  beginPhase(state, "act" as any, sessionsDir);
+  const actStartMs = Date.now();
+
+  const substages: ActSubstageState[] = [];
+  let engageResult: any = {};
+  let gateResult: any = { posts: [] };
+  let publishResult: any = { txHashes: [] };
+
+  // ACT substage 1: ENGAGE
+  const engageSub = createSubstage("engage");
+  substages.push(engageSub);
+  try {
+    v2PhaseHeader("act", "engage");
+    startSubstage(engageSub);
+    const args = ["--agent", flags.agent, "--max", String(agentConfig.engagement.maxReactionsPerSession), "--json", "--env", flags.env];
+    engageResult = await runToolAndParse("tools/engage.ts", args, "engage.ts (ACT/engage)");
+    phaseResult(
+      `${engageResult.reactions_cast || 0} reactions (${engageResult.agrees || 0} agree, ${engageResult.disagrees || 0} disagree)`
+    );
+    state.engagements = engageResult.targets || [];
+    completeSubstage(engageSub, engageResult);
+    state.substages = substages;
+    saveState(state, sessionsDir);
+  } catch (e: any) {
+    // engage fails → continue to gate (non-critical)
+    failSubstage(engageSub, e.message);
+    state.substages = substages;
+    saveState(state, sessionsDir);
+    observe("error", `ACT/engage failed: ${e.message}`, { phase: "act", substage: "engage", source: "session-runner.ts:runV2Loop" });
+    phaseError(`Engage failed (non-critical): ${e.message}`);
+  }
+
+  // ACT substage 2: GATE
+  const gateSub = createSubstage("gate");
+  substages.push(gateSub);
+  try {
+    v2PhaseHeader("act", "gate");
+    startSubstage(gateSub);
+    if (flags.oversight === "full" && rl) {
+      // Re-purpose the v1 gate handlers — they call completePhase(state, "gate", ...)
+      // For v2 we capture the result differently.
+      // Inline a simplified autonomous gate for v2 (the refactor goal).
+      await runGateAutonomous(state, flags);
+    } else if (flags.oversight === "approve" && rl) {
+      await runGateApprove(state, flags, rl);
+    } else {
+      await runGateAutonomous(state, flags);
+    }
+    // Gate result: v1 handlers write to state.phases.gate via completePhase.
+    // For v2, getGateResult() returns from the correct location.
+    gateResult = getGateResult(state) || { posts: [] };
+    completeSubstage(gateSub, gateResult);
+    state.substages = substages;
+    saveState(state, sessionsDir);
+  } catch (e: any) {
+    // gate fails → skip publish
+    failSubstage(gateSub, e.message);
+    state.substages = substages;
+    saveState(state, sessionsDir);
+    observe("error", `ACT/gate failed: ${e.message}`, { phase: "act", substage: "gate", source: "session-runner.ts:runV2Loop" });
+    phaseError(`Gate failed: ${e.message} — skipping publish`);
+  }
+
+  // ACT substage 3: PUBLISH
+  const publishSub = createSubstage("publish");
+  substages.push(publishSub);
+
+  if (flags.shadow) {
+    // Shadow mode: hard skip — no LLM calls, no wallet, no API
+    skipSubstage(publishSub);
+    state.publishSuppressed = true;
+    observe("insight", "Publish skipped (shadow mode)", { phase: "act", substage: "publish", source: "session-runner.ts:runV2Loop" });
+    phaseSkipped("Publish skipped (shadow mode)");
+  } else if (gateSub.status === "failed") {
+    // Gate failed → skip publish
+    skipSubstage(publishSub);
+    phaseSkipped("Publish skipped (gate failed)");
+  } else if ((gateResult.posts || []).length === 0) {
+    skipSubstage(publishSub);
+    phaseSkipped("No posts gated — skipping publish");
+  } else {
+    try {
+      v2PhaseHeader("act", "publish");
+      startSubstage(publishSub);
+      if (flags.oversight === "autonomous") {
+        await runPublishAutonomous(state, flags);
+      } else if (rl) {
+        await runPublishManual(state, flags, rl);
+      }
+      publishResult = (state as any).phases.publish?.result || { txHashes: [] };
+      completeSubstage(publishSub, publishResult);
+      state.substages = substages;
+      saveState(state, sessionsDir);
+    } catch (e: any) {
+      failSubstage(publishSub, e.message);
+      state.substages = substages;
+      saveState(state, sessionsDir);
+      observe("error", `ACT/publish failed: ${e.message}`, { phase: "act", substage: "publish", source: "session-runner.ts:runV2Loop" });
+      phaseError(`Publish failed: ${e.message}`);
+    }
+  }
+
+  // Save substages to state
+  state.substages = substages;
+
+  // Determine ACT phase status
+  const actResult = {
+    engage: engageResult,
+    gate: gateResult,
+    publish: publishResult,
+    substages: substages.map(s => ({ substage: s.substage, status: s.status, durationMs: s.durationMs, failureCode: s.failureCode })),
+  };
+
+  if (publishSub.status === "failed") {
+    failPhase(state, "act" as any, publishSub.failureCode || "publish failed", sessionsDir);
+    // Don't throw — continue to CONFIRM for verification of whatever was published
+  } else {
+    completePhase(state, "act" as any, actResult, sessionsDir);
+  }
+
+  checkV2PhaseBudget("act", Date.now() - actStartMs);
+  } // end ACT else block
+
+  // ── CONFIRM ────────────────────────────────────
+  const confirmCompleted = state.phases.confirm?.status === "completed";
+  if (confirmCompleted) {
+    info("CONFIRM already completed — skipping (resume)");
+  } else {
+    v2PhaseHeader("confirm");
+    setObserverPhase("confirm");
+    beginPhase(state, "confirm" as any, sessionsDir);
+    const confirmStartMs = Date.now();
+
+    try {
+      if (state.posts.length === 0) {
+        phaseSkipped("No posts to verify — skipping");
+        completePhase(state, "confirm" as any, { skipped: true, reason: "no posts" }, sessionsDir);
+      } else {
+        const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env, "--wait", "15"];
+        const verifyResult = await runToolAndParse("tools/verify.ts", args, "verify.ts (CONFIRM)");
+        const summary = verifyResult.summary || {};
+        phaseResult(`${summary.verified || 0}/${summary.total || 0} verified`);
+        observe("insight", `CONFIRM: ${summary.verified || 0}/${summary.total || 0} verified`, {
+          phase: "confirm", source: "session-runner.ts:runV2Loop",
+        });
+        completePhase(state, "confirm" as any, verifyResult, sessionsDir);
+      }
+    } catch (e: any) {
+      observe("error", `CONFIRM failed: ${e.message}`, { phase: "confirm", source: "session-runner.ts:runV2Loop" });
+      failPhase(state, "confirm" as any, e.message, sessionsDir);
+      throw e;
+    }
+
+    checkV2PhaseBudget("confirm", Date.now() - confirmStartMs);
+  }
+}
+
+// ── V2 Session Report ─────────────────────────────
+
+function writeV2SessionReport(state: V2SessionState, oversight: OversightLevel, sessionsDir?: string): void {
+  const sessDir = sessionsDir || resolve(homedir(), `.${state.agentName}`, "sessions");
+  mkdirSync(sessDir, { recursive: true });
+  const reportPath = resolve(sessDir, `session-${state.sessionNumber}-report.md`);
+
+  const duration = ((Date.now() - new Date(state.startedAt).getTime()) / 60000).toFixed(1);
+  const date = new Date(state.startedAt).toISOString().slice(0, 10);
+  const lines: string[] = [];
+
+  lines.push(`# ${state.agentName.charAt(0).toUpperCase() + state.agentName.slice(1)} Session ${state.sessionNumber} — ${date} (v2)`);
+  lines.push("");
+  lines.push(`**Duration:** ${duration} min | **Posts:** ${state.posts.length} | **Oversight:** ${oversight} | **Loop:** v2${state.publishSuppressed ? " (shadow)" : ""}`);
+  lines.push("");
+
+  // SENSE
+  const sense = state.phases.sense?.result || {};
+  lines.push(`## 1. SENSE`);
+  if (sense.activity) {
+    lines.push(`- ${sense.activity.level || "?"} activity (${sense.activity.posts_per_hour ?? "?"} posts/hr)`);
+    if (sense.heat?.topic) lines.push(`- Hot topic: ${sense.heat.topic} (${sense.heat.reactions || 0} reactions)`);
+    if (sense.gaps?.topics?.length) lines.push(`- ${sense.gaps.topics.length} gap topics`);
+  } else {
+    lines.push("- No scan data");
+  }
+  lines.push("");
+
+  // ACT (with substage breakdown)
+  const actResult = state.phases.act?.result || {};
+  lines.push(`## 2. ACT`);
+
+  for (const sub of state.substages || []) {
+    const icon = sub.status === "completed" ? "✓" : sub.status === "skipped" ? "⊘" : sub.status === "failed" ? "✗" : "?";
+    const dur = sub.durationMs !== undefined ? ` (${(sub.durationMs / 1000).toFixed(1)}s)` : "";
+    const fail = sub.failureCode ? ` — ${sub.failureCode}` : "";
+    lines.push(`- ${icon} ${sub.substage.toUpperCase()}: ${sub.status}${dur}${fail}`);
+  }
+
+  const engage = actResult.engage || {};
+  if (engage.reactions_cast !== undefined) {
+    lines.push(`- Reactions: ${engage.reactions_cast} (${engage.agrees || 0} agree, ${engage.disagrees || 0} disagree)`);
+  }
+
+  const gate = actResult.gate || {};
+  const gatePosts = gate.posts || [];
+  if (gatePosts.length > 0) {
+    lines.push(`- ${gatePosts.length} post(s) gated`);
+  }
+
+  if (state.posts.length > 0) {
+    for (const tx of state.posts) {
+      lines.push(`- Published: ${tx.slice(0, 16)}...`);
+    }
+  }
+
+  if (state.publishSuppressed) {
+    lines.push("- **Shadow mode: publish suppressed**");
+  }
+  lines.push("");
+
+  // CONFIRM
+  const confirm = state.phases.confirm?.result || {};
+  lines.push(`## 3. CONFIRM`);
+  if (confirm.skipped) {
+    lines.push("- Skipped (no posts)");
+  } else if (confirm.summary) {
+    lines.push(`- ${confirm.summary.verified || 0}/${confirm.summary.total || 0} verified in feed`);
+  } else {
+    lines.push("- No verification data");
+  }
+  lines.push("");
+
+  writeFileSync(reportPath, lines.join("\n"));
+  info(`V2 session report written to ${reportPath}`);
+}
+
+// ── V2 Dry Run ────────────────────────────────────
+
+function dryRunV2(sessionNumber: number, flags: RunnerFlags): void {
+  banner(sessionNumber, flags.oversight, flags.agent);
+  console.log(`  MODE: dry-run (v2 loop, 3 phases)${flags.shadow ? " [SHADOW]" : ""}\n`);
+
+  for (let i = 0; i < CORE_PHASE_ORDER.length; i++) {
+    const phase = CORE_PHASE_ORDER[i];
+    if (phase === "act") {
+      console.log(`  ${i + 1}. ${phase.toUpperCase()}`);
+      console.log(`     a. ENGAGE`);
+      console.log(`     b. GATE`);
+      if (flags.shadow) {
+        console.log(`     c. PUBLISH — SKIPPED (shadow mode)`);
+      } else {
+        console.log(`     c. PUBLISH`);
+      }
+    } else {
+      console.log(`  ${i + 1}. ${phase.toUpperCase()}`);
+    }
+  }
+
+  if (agentConfig.loopExtensions.length > 0) {
+    console.log(`\n  Extensions: ${agentConfig.loopExtensions.join(", ")}`);
+  }
+  console.log();
+}
+
 // ── Dry Run ────────────────────────────────────────
 
 function dryRun(sessionNumber: number, flags: RunnerFlags, startPhase: PhaseName | null): void {
   banner(sessionNumber, flags.oversight, flags.agent);
   console.log("  MODE: dry-run (no execution)\n");
 
-  const phases = getPhaseOrder();
+  const phases = getPhaseOrder() as PhaseName[];
   let started = startPhase === null;
 
   for (const phase of phases) {
     if (!started && phase === startPhase) started = true;
     if (!started) {
-      console.log(`  ${getPhaseOrder().indexOf(phase) + 1}. ${phase.toUpperCase()} — SKIPPED`);
+      console.log(`  ${phases.indexOf(phase) + 1}. ${phase.toUpperCase()} — SKIPPED`);
       continue;
     }
 
     const mode = getPhaseMode(phase, flags.oversight);
-    console.log(`  ${getPhaseOrder().indexOf(phase) + 1}. ${phase.toUpperCase()} (${mode})`);
+    console.log(`  ${phases.indexOf(phase) + 1}. ${phase.toUpperCase()} (${mode})`);
   }
   console.log();
 }
@@ -2350,7 +2806,7 @@ async function main(): Promise<void> {
   IMPROVEMENTS_PATH = agentConfig.paths.improvementsFile;
   const sessionsDir = agentConfig.paths.sessionDir;
 
-  let state: SessionState;
+  let state: AnySessionState;
   let sessionNumber: number;
   let startPhase: PhaseName | null = null;
 
@@ -2360,6 +2816,19 @@ async function main(): Promise<void> {
       console.error("Error: no active session to resume. Start a new session without --resume.");
       process.exit(1);
     }
+
+    // Resume guard: block cross-version resume (Codex #6)
+    const stateVersion = isV2(active) ? 2 : 1;
+    if (stateVersion !== flags.loopVersion) {
+      console.error(
+        `Error: saved state is loop version ${stateVersion} but --loop-version ${flags.loopVersion} was requested.\n` +
+        `Cross-version resume is not supported. Either:\n` +
+        `  - Resume with --loop-version ${stateVersion}\n` +
+        `  - Clear the session state and start fresh with --loop-version ${flags.loopVersion}`
+      );
+      process.exit(1);
+    }
+
     state = active;
     sessionNumber = state.sessionNumber;
 
@@ -2376,7 +2845,7 @@ async function main(): Promise<void> {
     state.pid = process.pid;
     saveState(state, sessionsDir);
 
-    startPhase = getNextPhase(state);
+    startPhase = getNextPhase(state) as PhaseName | null;
     if (!startPhase) {
       console.log("Session already complete — nothing to resume.");
       clearState(sessionNumber, sessionsDir, flags.agent);
@@ -2403,14 +2872,18 @@ async function main(): Promise<void> {
     }
 
     if (flags.dryRun) {
-      dryRun(sessionNumber, flags, startPhase);
+      if (flags.loopVersion === 2) {
+        dryRunV2(sessionNumber, flags);
+      } else {
+        dryRun(sessionNumber, flags, startPhase);
+      }
       process.exit(0);
     }
 
-    state = startSession(sessionNumber, flags.agent, sessionsDir);
-    info(`Started session ${sessionNumber}`);
+    state = startSession(sessionNumber, flags.agent, sessionsDir, flags.loopVersion);
+    info(`Started session ${sessionNumber} (loop v${flags.loopVersion})`);
 
-    if (startPhase) {
+    if (startPhase && !isV2(state)) {
       const phases = getPhaseOrder();
       for (const phase of phases) {
         if (phase === startPhase) break;
@@ -2423,6 +2896,9 @@ async function main(): Promise<void> {
   initObserver(flags.agent, sessionNumber);
 
   banner(sessionNumber, flags.oversight, flags.agent);
+  if (isV2(state)) {
+    console.log(`  Loop: v2 (SENSE → ACT → CONFIRM)${flags.shadow ? " [SHADOW]" : ""}`);
+  }
 
   let shuttingDown = false;
   process.on("SIGINT", () => {
@@ -2430,7 +2906,7 @@ async function main(): Promise<void> {
     shuttingDown = true;
     console.log("\n\n  ⚠️ Interrupted — saving state...");
     saveState(state, sessionsDir);
-    console.log(`  Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
+    console.log(`  Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
     console.log();
     process.exit(0);
   });
@@ -2441,105 +2917,147 @@ async function main(): Promise<void> {
     ? createInterface({ input: stdin, output: stdout })
     : null;
 
-  const phases = getPhaseOrder();
-  const startIdx = startPhase ? phases.indexOf(startPhase) : 0;
-
   try {
-    for (let i = startIdx; i < phases.length; i++) {
-      const phase = phases[i];
-      if (state.phases[phase].status === "completed") continue;
+    if (isV2(state)) {
+      // ── V2 Loop ────────────────────────────────
+      await runV2Loop(state, flags, sessionsDir, rl);
 
-      phaseHeader(phase, flags.oversight);
-      setObserverPhase(phase);
-      beginPhase(state, phase, sessionsDir);
-      const phaseStartMs = Date.now();
+      rl?.close();
+
+      // V2 summary
+      const duration = ((Date.now() - new Date(state.startedAt).getTime()) / 60000).toFixed(1);
+      console.log("\n" + "═".repeat(50));
+      console.log("  SESSION COMPLETE (v2)");
+      console.log("═".repeat(50));
+      console.log(`  Session: ${sessionNumber}`);
+      console.log(`  Oversight: ${flags.oversight}`);
+      console.log(`  Duration: ${duration} min`);
+      console.log(`  Posts: ${state.posts.length}`);
+      if (state.publishSuppressed) console.log("  Shadow: publish suppressed");
+
+      const engResult = getEngageResult(state) || {};
+      console.log(`  Reactions: ${engResult.reactions_cast || 0} (${engResult.agrees || 0} agree, ${engResult.disagrees || 0} disagree)`);
+
+      const verResult = getVerifyResult(state) || {};
+      if (!verResult.skipped) {
+        console.log(`  Verified: ${verResult.summary?.verified || 0}/${verResult.summary?.total || 0}`);
+      }
+
+      // Substage breakdown
+      for (const sub of state.substages || []) {
+        const icon = sub.status === "completed" ? "✓" : sub.status === "skipped" ? "⊘" : sub.status === "failed" ? "✗" : "?";
+        const dur = sub.durationMs !== undefined ? ` (${(sub.durationMs / 1000).toFixed(1)}s)` : "";
+        console.log(`  ${icon} ${sub.substage}: ${sub.status}${dur}`);
+      }
+      console.log("═".repeat(50) + "\n");
 
       try {
-        switch (phase) {
-          case "audit":
-            await runAudit(state, flags);
-            break;
-          case "scan":
-            await runScan(state, flags);
-            break;
-          case "engage":
-            await runEngage(state, flags);
-            break;
-          case "gate":
-            if (flags.oversight === "full") await runGateFull(state, flags, rl!);
-            else if (flags.oversight === "approve") await runGateApprove(state, flags, rl!);
-            else await runGateAutonomous(state, flags);
-            break;
-          case "publish":
-            if (flags.oversight === "autonomous") await runPublishAutonomous(state, flags);
-            else await runPublishManual(state, flags, rl!);
-            break;
-          case "verify":
-            await runVerify(state, flags);
-            break;
-          case "review":
-            if (flags.oversight === "full") await runReviewFull(state, flags, rl!);
-            else await runReviewAuto(state, flags);
-            break;
-          case "harden":
-            if (flags.oversight === "full") await runHardenFull(state, flags, rl!);
-            else if (flags.oversight === "approve") await runHardenApprove(state, flags, rl!);
-            else await runHardenAutonomous(state, flags);
-            break;
-        }
-
-        // Phase deadline check — warn (don't kill) if phase exceeded its budget
-        const phaseDurationMs = Date.now() - phaseStartMs;
-        const budgetMs = getPhaseBudgetMs(phase, agentConfig);
-        if (budgetMs > 0 && phaseDurationMs > budgetMs) {
-          const overagePercent = Math.round(((phaseDurationMs - budgetMs) / budgetMs) * 100);
-          observe("inefficiency", `Phase ${phase} exceeded budget: ${Math.round(phaseDurationMs / 1000)}s vs ${Math.round(budgetMs / 1000)}s budget (+${overagePercent}%)`, {
-            phase,
-            source: "session-runner.ts:phase-budget",
-            data: { phase, durationMs: phaseDurationMs, budgetMs, overagePercent },
-          });
-          info(`⚠️ Phase ${phase} exceeded budget: ${Math.round(phaseDurationMs / 1000)}s (budget: ${Math.round(budgetMs / 1000)}s, +${overagePercent}%)`);
-        }
+        writeV2SessionReport(state, flags.oversight, sessionsDir);
       } catch (e: any) {
-        // Observe phase failure before exiting
-        observe("error", `Phase ${phase} failed: ${e.message}`, {
-          phase,
-          source: "session-runner.ts:main-loop",
-          data: { phase, durationMs: Date.now() - phaseStartMs },
-        });
-        failPhase(state, phase, e.message, sessionsDir);
-        phaseError(e.message);
-        console.error(`\n  Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
-        rl?.close();
-        process.exit(1);
+        info(`Warning: could not write session report: ${e.message}`);
       }
-    }
+    } else {
+      // ── V1 Loop (unchanged) ────────────────────
+      const v1State = state as SessionState;
+      const phases = getPhaseOrder();
+      const startIdx = startPhase ? phases.indexOf(startPhase) : 0;
 
-    rl?.close();
+      for (let i = startIdx; i < phases.length; i++) {
+        const phase = phases[i] as PhaseName;
+        if (v1State.phases[phase].status === "completed") continue;
 
-    // Display summary
-    const duration = ((Date.now() - new Date(state.startedAt).getTime()) / 60000).toFixed(1);
-    console.log("\n" + "═".repeat(50));
-    console.log("  SESSION COMPLETE");
-    console.log("═".repeat(50));
-    console.log(`  Session: ${sessionNumber}`);
-    console.log(`  Oversight: ${flags.oversight}`);
-    console.log(`  Duration: ${duration} min`);
-    console.log(`  Posts: ${state.posts.length}`);
+        phaseHeader(phase, flags.oversight);
+        setObserverPhase(phase);
+        beginPhase(v1State, phase, sessionsDir);
+        const phaseStartMs = Date.now();
 
-    const engageResult = state.phases.engage.result || {};
-    console.log(`  Reactions: ${engageResult.reactions_cast || 0} (${engageResult.agrees || 0} agree, ${engageResult.disagrees || 0} disagree)`);
+        try {
+          switch (phase) {
+            case "audit":
+              await runAudit(v1State, flags);
+              break;
+            case "scan":
+              await runScan(v1State, flags);
+              break;
+            case "engage":
+              await runEngage(v1State, flags);
+              break;
+            case "gate":
+              if (flags.oversight === "full") await runGateFull(v1State, flags, rl!);
+              else if (flags.oversight === "approve") await runGateApprove(v1State, flags, rl!);
+              else await runGateAutonomous(v1State, flags);
+              break;
+            case "publish":
+              if (flags.oversight === "autonomous") await runPublishAutonomous(v1State, flags);
+              else await runPublishManual(v1State, flags, rl!);
+              break;
+            case "verify":
+              await runVerify(v1State, flags);
+              break;
+            case "review":
+              if (flags.oversight === "full") await runReviewFull(v1State, flags, rl!);
+              else await runReviewAuto(v1State, flags);
+              break;
+            case "harden":
+              if (flags.oversight === "full") await runHardenFull(v1State, flags, rl!);
+              else if (flags.oversight === "approve") await runHardenApprove(v1State, flags, rl!);
+              else await runHardenAutonomous(v1State, flags);
+              break;
+          }
 
-    const verifyResult = state.phases.verify.result || {};
-    if (!verifyResult.skipped) {
-      console.log(`  Verified: ${verifyResult.summary?.verified || 0}/${verifyResult.summary?.total || 0}`);
-    }
-    console.log("═".repeat(50) + "\n");
+          // Phase deadline check — warn (don't kill) if phase exceeded its budget
+          const phaseDurationMs = Date.now() - phaseStartMs;
+          const budgetMs = getPhaseBudgetMs(phase, agentConfig);
+          if (budgetMs > 0 && phaseDurationMs > budgetMs) {
+            const overagePercent = Math.round(((phaseDurationMs - budgetMs) / budgetMs) * 100);
+            observe("inefficiency", `Phase ${phase} exceeded budget: ${Math.round(phaseDurationMs / 1000)}s vs ${Math.round(budgetMs / 1000)}s budget (+${overagePercent}%)`, {
+              phase,
+              source: "session-runner.ts:phase-budget",
+              data: { phase, durationMs: phaseDurationMs, budgetMs, overagePercent },
+            });
+            info(`⚠️ Phase ${phase} exceeded budget: ${Math.round(phaseDurationMs / 1000)}s (budget: ${Math.round(budgetMs / 1000)}s, +${overagePercent}%)`);
+          }
+        } catch (e: any) {
+          // Observe phase failure before exiting
+          observe("error", `Phase ${phase} failed: ${e.message}`, {
+            phase,
+            source: "session-runner.ts:main-loop",
+            data: { phase, durationMs: Date.now() - phaseStartMs },
+          });
+          failPhase(v1State, phase, e.message, sessionsDir);
+          phaseError(e.message);
+          console.error(`\n  Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
+          rl?.close();
+          process.exit(1);
+        }
+      }
 
-    try {
-      writeSessionReport(state, flags.oversight, sessionsDir);
-    } catch (e: any) {
-      info(`Warning: could not write session report: ${e.message}`);
+      rl?.close();
+
+      // Display summary
+      const duration = ((Date.now() - new Date(v1State.startedAt).getTime()) / 60000).toFixed(1);
+      console.log("\n" + "═".repeat(50));
+      console.log("  SESSION COMPLETE");
+      console.log("═".repeat(50));
+      console.log(`  Session: ${sessionNumber}`);
+      console.log(`  Oversight: ${flags.oversight}`);
+      console.log(`  Duration: ${duration} min`);
+      console.log(`  Posts: ${v1State.posts.length}`);
+
+      const engageResult = v1State.phases.engage.result || {};
+      console.log(`  Reactions: ${engageResult.reactions_cast || 0} (${engageResult.agrees || 0} agree, ${engageResult.disagrees || 0} disagree)`);
+
+      const verifyResult = v1State.phases.verify.result || {};
+      if (!verifyResult.skipped) {
+        console.log(`  Verified: ${verifyResult.summary?.verified || 0}/${verifyResult.summary?.total || 0}`);
+      }
+      console.log("═".repeat(50) + "\n");
+
+      try {
+        writeSessionReport(v1State, flags.oversight, sessionsDir);
+      } catch (e: any) {
+        info(`Warning: could not write session report: ${e.message}`);
+      }
     }
 
     incrementSessionNumber();
@@ -2549,7 +3067,7 @@ async function main(): Promise<void> {
     rl?.close();
     saveState(state, sessionsDir);
     console.error(`\nFATAL: ${e.message}`);
-    console.error(`Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
+    console.error(`Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
     process.exit(1);
   }
 }

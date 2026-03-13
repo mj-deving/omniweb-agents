@@ -46,3 +46,9 @@ gate:
 
 calibration:
   offset: -11
+
+loop:
+  extensions:
+    - calibrate
+    - sources
+    - observe

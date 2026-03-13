@@ -95,6 +95,17 @@ export async function attestDahr(
   const dahr = await (demos as any).web2.createDahr();
   const proxyResponse = await dahr.startProxy({ url: attestUrl, method });
 
+  // GUARDRAIL: Reject non-2xx / auth-error / rate-limit responses before attesting.
+  // The SDK proxy returns the upstream status — a 401/403/429 response is valid HTTP
+  // but garbage evidence. Fail closed so callers can fall back or abort.
+  const httpStatus = proxyResponse.status ?? proxyResponse.statusCode ?? proxyResponse.httpStatus;
+  if (typeof httpStatus === "number" && (httpStatus < 200 || httpStatus >= 300)) {
+    throw new Error(
+      `DAHR source returned HTTP ${httpStatus} — refusing to attest error response. ` +
+      `URL: ${attestUrl}`
+    );
+  }
+
   let data: any;
   if (typeof proxyResponse.data === "string") {
     const trimmed = proxyResponse.data.trim();
@@ -104,9 +115,36 @@ export async function attestDahr(
         `First 100 chars: ${trimmed.slice(0, 100)}`
       );
     }
-    data = JSON.parse(proxyResponse.data);
+    try {
+      data = JSON.parse(proxyResponse.data);
+    } catch {
+      throw new Error(
+        `DAHR returned non-JSON response. First 100 chars: ${trimmed.slice(0, 100)}`
+      );
+    }
   } else {
     data = proxyResponse.data;
+  }
+
+  // GUARDRAIL: Detect auth/error responses in JSON body even when SDK doesn't expose status code.
+  // Some APIs return 200 with error payloads (e.g., {"error": "Unauthorized"}).
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const errField = data.error ?? data.Error ?? data.message ?? data.detail;
+    if (typeof errField === "string") {
+      const errLower = errField.toLowerCase();
+      if (
+        errLower.includes("unauthorized") ||
+        errLower.includes("forbidden") ||
+        errLower.includes("rate limit") ||
+        errLower.includes("api key") ||
+        errLower.includes("authentication") ||
+        errLower.includes("access denied")
+      ) {
+        throw new Error(
+          `DAHR source returned error payload: "${errField}" — refusing to attest. URL: ${attestUrl}`
+        );
+      }
+    }
   }
 
   info(`DAHR attested: hash=${proxyResponse.responseHash}, tx=${proxyResponse.txHash}`);

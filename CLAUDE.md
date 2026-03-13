@@ -58,6 +58,7 @@ demos-agents/
 │   ├── session-report.ts              # Session history viewer
 │   ├── session-review.ts              # REVIEW phase template
 │   ├── improvements.ts                # Improvement tracker (CRUD lifecycle)
+│   ├── improve.ts                     # On-demand observation processor (Phase 1)
 │   ├── generate-profile.ts            # Agent profile generator
 │   └── lib/
 │       ├── sdk.ts                     # Wallet connection, API calls, 502 retry
@@ -108,6 +109,10 @@ npx tsx tools/gate.ts --agent sentinel --topic "topic" --pretty
 npx tsx tools/verify.ts --agent sentinel --pretty
 npx tsx tools/session-report.ts --list --agent sentinel
 npx tsx tools/improvements.ts list --agent sentinel
+
+# Improve skill (on-demand observation processor)
+npx tsx tools/improve.ts --agent sentinel --pretty
+# Flags: --since N, --unresolved, --trace OBS_ID, --auto-apply, --dry-run
 
 # SuperColony CLI
 npx tsx skills/supercolony/scripts/supercolony.ts auth

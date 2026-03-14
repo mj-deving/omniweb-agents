@@ -861,3 +861,112 @@ describe("declarative: additional operation coverage", () => {
     expect(parsed.normalized).toBeUndefined();
   });
 });
+
+// ════════════════════════════════════════════════════
+// BUG FIX TESTS (PR5 follow-up)
+// ════════════════════════════════════════════════════
+
+describe("declarative: pubmed esummary fix", () => {
+  const adapter = getAdapter("pubmed");
+
+  const esummarySource = makeSource({
+    id: "pm-summary", provider: "pubmed",
+    url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
+    adapter: { operation: "esummary" },
+  });
+
+  it("esummary produces per-UID entries (not single result entry)", () => {
+    const fixture = JSON.stringify({
+      result: {
+        uids: ["12345", "67890"],
+        "12345": {
+          uid: "12345",
+          title: "CRISPR-Cas9 Gene Editing",
+          source: "Nature",
+          pubdate: "2026 Jan",
+          sortpubdate: "2026/01/01",
+          authors: [{ name: "Smith J" }],
+          pmcrefcount: 42,
+        },
+        "67890": {
+          uid: "67890",
+          title: "mRNA Vaccine Development",
+          source: "Science",
+          pubdate: "2026 Feb",
+          authors: [{ name: "Jones A" }],
+          pmcrefcount: 15,
+        },
+      },
+    });
+    const resp = makeResponse(fixture);
+    const parsed = adapter.parseResponse(esummarySource, resp);
+    // Should produce 2 entries (one per UID), NOT 1 entry for "result"
+    expect(parsed.entries.length).toBe(2);
+    expect(parsed.entries.map(e => e.id).sort()).toEqual(["12345", "67890"]);
+  });
+
+  it("esummary entries have title and pmcrefcount metric", () => {
+    const fixture = JSON.stringify({
+      result: {
+        uids: ["11111"],
+        "11111": {
+          uid: "11111",
+          title: "Test Article",
+          source: "JAMA",
+          pmcrefcount: 7,
+        },
+      },
+    });
+    const resp = makeResponse(fixture);
+    const parsed = adapter.parseResponse(esummarySource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].title).toBe("Test Article");
+    expect(parsed.entries[0].metrics?.pmcrefcount).toBeDefined();
+  });
+});
+
+describe("declarative: object-entries jsonPath navigation", () => {
+  it("object-entries applies jsonPath to navigate before iterating", () => {
+    // This tests the engine fix: object-entries mode should apply items.jsonPath
+    // Tested indirectly via pubmed esummary (items.jsonPath: "$.result")
+    const adapter = getAdapter("pubmed");
+    const source = makeSource({
+      id: "pm-summary", provider: "pubmed",
+      url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
+      adapter: { operation: "esummary" },
+    });
+    const fixture = JSON.stringify({
+      result: {
+        uids: ["99999"],
+        "99999": { uid: "99999", title: "Nested Article", source: "BMJ", pmcrefcount: 3 },
+      },
+    });
+    const resp = makeResponse(fixture);
+    const parsed = adapter.parseResponse(source, resp);
+    // If jsonPath works: navigates to $.result, iterates entries, skips uids array
+    // If jsonPath broken: iterates top-level, gets "result" as single key
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("99999");
+  });
+
+  it("object-entries skips non-object values (arrays, primitives)", () => {
+    // The uids array in pubmed result should be filtered out
+    const adapter = getAdapter("pubmed");
+    const source = makeSource({
+      id: "pm-summary", provider: "pubmed",
+      url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
+      adapter: { operation: "esummary" },
+    });
+    const fixture = JSON.stringify({
+      result: {
+        uids: ["55555"],
+        "55555": { uid: "55555", title: "Only Article", source: "Lancet", pmcrefcount: 1 },
+      },
+    });
+    const resp = makeResponse(fixture);
+    const parsed = adapter.parseResponse(source, resp);
+    // Should NOT include an entry with id "uids"
+    expect(parsed.entries.every(e => e.id !== "uids")).toBe(true);
+    expect(parsed.entries.length).toBe(1);
+  });
+});

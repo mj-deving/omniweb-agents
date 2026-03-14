@@ -85,9 +85,9 @@ operations:
             regex: "<author>\\s*<name>([^<]*)</name>"
         raw:
           mode: matched-block
-    hooks:
-      module: "../hooks/arxiv.js"
-      # Hook handles:
-      # - Canonical URL cleanup (http://arxiv.org/abs/... -> cleaned ID)
-      # - Author count extraction
-      # - Multi-author aggregation (regex only gets first match per block)
+      hooks:
+        module: "../hooks/arxiv.js"
+        # Hook handles:
+        # - Canonical URL cleanup (http://arxiv.org/abs/... -> cleaned ID)
+        # - Author count extraction
+        # - Multi-author aggregation (regex only gets first match per block)

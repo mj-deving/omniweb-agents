@@ -694,8 +694,15 @@ function extractItems(
     }
 
     case "object-entries": {
-      if (typeof root !== "object" || root === null || Array.isArray(root)) break;
-      for (const [key, val] of Object.entries(root)) {
+      // Navigate to target object via jsonPath if specified
+      let target = root;
+      if (parseSpec.items.jsonPath && parseSpec.items.jsonPath !== "$") {
+        target = jsonPathGet(root, parseSpec.items.jsonPath);
+      }
+      if (typeof target !== "object" || target === null || Array.isArray(target)) break;
+      for (const [key, val] of Object.entries(target)) {
+        // Skip non-object values (e.g., pubmed's "uids" array in result)
+        if (val == null || typeof val !== "object" || Array.isArray(val)) continue;
         items.push({ item: val, key });
       }
       break;

@@ -80,7 +80,6 @@ operations:
         jsonPath: "$.result"
       items:
         mode: object-entries
-        jsonPath: "$.result"
       fields:
         id:
           template: "{key}"
@@ -110,12 +109,12 @@ operations:
             jsonPath: "$.o"
         raw:
           mode: item
-    hooks:
-      module: "../hooks/kraken.js"
-      # Hook handles:
-      # - Error array checking (non-empty error = fail)
-      # - Dynamic result key resolution
-      # - Pair normalization (XXBTZUSD -> standard format)
+      hooks:
+        module: "../hooks/kraken.js"
+        # Hook handles:
+        # - Error array checking (non-empty error = fail)
+        # - Dynamic result key resolution
+        # - Pair normalization (XXBTZUSD -> standard format)
 
   assets:
     when:
@@ -143,7 +142,6 @@ operations:
         jsonPath: "$.result"
       items:
         mode: object-entries
-        jsonPath: "$.result"
       fields:
         id:
           template: "{key}"
@@ -163,8 +161,8 @@ operations:
             jsonPath: "$.display_decimals"
         raw:
           mode: item
-    hooks:
-      module: "../hooks/kraken.js"
+      hooks:
+        module: "../hooks/kraken.js"
 
   ohlc:
     when:
@@ -235,7 +233,6 @@ operations:
         jsonPath: "$.result"
       items:
         mode: object-entries
-        jsonPath: "$.result"
       fields:
         id:
           template: "{key}-ohlc-{0}"
@@ -264,10 +261,10 @@ operations:
             default: 0
         raw:
           mode: item
-    hooks:
-      module: "../hooks/kraken.js"
-      # Hook handles:
-      # - Error array checking
-      # - Dynamic result key resolution (skip "last" key)
-      # - TLSN since-param injection (now-5h) for compact response
-      # - Candle array unpacking from dynamic pair key
+      hooks:
+        module: "../hooks/kraken.js"
+        # Hook handles:
+        # - Error array checking
+        # - Dynamic result key resolution (skip "last" key)
+        # - TLSN since-param injection (now-5h) for compact response
+        # - Candle array unpacking from dynamic pair key

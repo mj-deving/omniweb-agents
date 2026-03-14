@@ -1,0 +1,297 @@
+schemaVersion: 1
+
+provider:
+  name: github
+  displayName: GitHub
+  matches:
+    providers: [github]
+    hosts: [api.github.com]
+  domains: [tech, oss, repos, developer]
+  rateLimit:
+    bucket: github
+    maxPerMinute: 60
+    byOperation:
+      search-repos:
+        bucket: github-search
+        maxPerMinute: 10
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  repo:
+    when:
+      sourceAdapterOperation: [repo]
+      urlPatterns: ["/repos/[^/]+/[^/]+$"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.github.com/repos/{owner}/{repo}"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "{owner}"
+        - "{repo}"
+    variables:
+      owner:
+        sources: [vars.owner]
+        required: true
+      repo:
+        sources: [vars.repo]
+        required: true
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.full_name"
+        summary:
+          jsonPath: "$.description"
+        bodyText:
+          template: "{description|full_name}"
+        canonicalUrl:
+          jsonPath: "$.html_url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          jsonPath: "$.topics[*]"
+          default: []
+        metrics:
+          stars:
+            jsonPath: "$.stargazers_count"
+            default: 0
+          forks:
+            jsonPath: "$.forks_count"
+            default: 0
+          open_issues:
+            jsonPath: "$.open_issues_count"
+            default: 0
+          watchers:
+            jsonPath: "$.watchers_count"
+            default: 0
+        raw:
+          mode: item
+
+  search-repos:
+    when:
+      sourceAdapterOperation: [search-repos]
+      urlPatterns: ["/search/repositories"]
+    request:
+      method: GET
+      urlTemplate: "https://api.github.com/search/repositories"
+      query:
+        q: "{query}"
+        per_page: "{perPage}"
+        sort: stars
+        order: desc
+      estimatedSizeKb:
+        TLSN: 10
+        DAHR: 20
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      perPage:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          per_page:
+            default: 3
+            max: 3
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.items[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.full_name"
+        summary:
+          jsonPath: "$.description"
+        bodyText:
+          template: "{full_name}: {description}"
+        canonicalUrl:
+          jsonPath: "$.html_url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          template: "github,{language}"
+        metrics:
+          stars:
+            jsonPath: "$.stargazers_count"
+            default: 0
+          forks:
+            jsonPath: "$.forks_count"
+            default: 0
+        raw:
+          mode: item
+
+  commits:
+    when:
+      sourceAdapterOperation: [commits]
+      urlPatterns: ["/commits"]
+    request:
+      method: GET
+      urlTemplate: "https://api.github.com/repos/{owner}/{repo}/commits"
+      query:
+        per_page: "{perPage}"
+      estimatedSizeKb:
+        TLSN: 10
+        DAHR: 20
+      matchHints:
+        - "{owner}"
+        - "{repo}"
+    variables:
+      owner:
+        sources: [vars.owner]
+        required: true
+      repo:
+        sources: [vars.repo]
+        required: true
+      perPage:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          per_page:
+            default: 3
+            max: 3
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.sha"
+          required: true
+          transforms:
+            - truncate: 12
+        title:
+          jsonPath: "$.commit.message"
+        bodyText:
+          jsonPath: "$.commit.message"
+        canonicalUrl:
+          jsonPath: "$.html_url"
+        publishedAt:
+          jsonPath: "$.commit.author.date"
+        topics:
+          template: "github,commit"
+        metrics:
+          sha:
+            jsonPath: "$.sha"
+          author:
+            jsonPath: "$.commit.author.name"
+        raw:
+          mode: item
+
+  releases:
+    when:
+      sourceAdapterOperation: [releases]
+      urlPatterns: ["/releases"]
+    request:
+      method: GET
+      urlTemplate: "https://api.github.com/repos/{owner}/{repo}/releases"
+      query:
+        per_page: "{perPage}"
+      estimatedSizeKb:
+        TLSN: 10
+        DAHR: 20
+      matchHints:
+        - "{owner}"
+        - "{repo}"
+    variables:
+      owner:
+        sources: [vars.owner]
+        required: true
+      repo:
+        sources: [vars.repo]
+        required: true
+      perPage:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          per_page:
+            default: 3
+            max: 3
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          template: "{name|tag_name}"
+        summary:
+          jsonPath: "$.body"
+          transforms:
+            - truncate: 500
+        bodyText:
+          template: "{body|name}"
+        canonicalUrl:
+          jsonPath: "$.html_url"
+        publishedAt:
+          jsonPath: "$.published_at"
+        topics:
+          template: "github,release,{tag_name}"
+        metrics:
+          tag:
+            jsonPath: "$.tag_name"
+          prerelease:
+            jsonPath: "$.prerelease"
+            default: false
+          draft:
+            jsonPath: "$.draft"
+            default: false
+        raw:
+          mode: item

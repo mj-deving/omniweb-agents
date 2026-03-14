@@ -1,0 +1,148 @@
+schemaVersion: 1
+
+provider:
+  name: pubmed
+  displayName: PubMed / NCBI
+  matches:
+    providers: [pubmed]
+    hosts: [eutils.ncbi.nlm.nih.gov]
+  domains: [biotech, medical, pharma, health]
+  rateLimit:
+    bucket: pubmed
+    maxPerMinute: 10
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  esearch:
+    when:
+      sourceAdapterOperation: [esearch]
+      urlPatterns: ["esearch"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+      query:
+        db: pubmed
+        retmode: json
+        term: "{term}"
+        retmax: "{retmax}"
+      estimatedSizeKb:
+        TLSN: 3
+        DAHR: 8
+      matchHints:
+        - "{term}"
+    variables:
+      term:
+        sources: [vars.query, vars.term, topic]
+        required: true
+      retmax:
+        sources:
+          - literal: "20"
+        default: "20"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          retmax:
+            default: 3
+            max: 3
+        requireQuery:
+          retmode: json
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.esearchresult.idlist[*]"
+      fields:
+        id:
+          template: "{.}"
+          required: true
+        title:
+          template: "PMID:{.}"
+        bodyText:
+          template: "PubMed article {.}"
+        canonicalUrl:
+          template: "https://pubmed.ncbi.nlm.nih.gov/{.}/"
+        topics:
+          default: []
+        metrics:
+          count:
+            jsonPath: "$.esearchresult.count"
+            default: 0
+          retmax:
+            jsonPath: "$.esearchresult.retmax"
+            default: 0
+        raw:
+          mode: item
+
+  esummary:
+    when:
+      sourceAdapterOperation: [esummary]
+      urlPatterns: ["esummary"]
+    request:
+      method: GET
+      urlTemplate: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+      query:
+        db: pubmed
+        retmode: json
+        id: "{ids}"
+      estimatedSizeKb:
+        TLSN: 6
+        DAHR: 6
+      matchHints:
+        - "{ids}"
+    variables:
+      ids:
+        sources: [vars.ids, vars.id]
+        required: true
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        requireQuery:
+          retmode: json
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      # Response: { result: { uids: [...], "12345": { title, source, authors, ... } } }
+      # Dynamic keys require object-entries on result (excluding uids key)
+      items:
+        mode: object-entries
+        jsonPath: "$.result"
+      fields:
+        id:
+          template: "{key}"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          jsonPath: "$.sorttitle"
+        bodyText:
+          template: "{title} | {source}"
+        canonicalUrl:
+          template: "https://pubmed.ncbi.nlm.nih.gov/{key}/"
+        publishedAt:
+          template: "{pubdate|sortpubdate}"
+        topics:
+          default: []
+        metrics:
+          pmcrefcount:
+            jsonPath: "$.pmcrefcount"
+            default: 0
+          source:
+            jsonPath: "$.source"
+        raw:
+          mode: item

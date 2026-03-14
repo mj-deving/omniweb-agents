@@ -1,0 +1,169 @@
+schemaVersion: 1
+
+provider:
+  name: fred
+  displayName: FRED
+  matches:
+    providers: [fred]
+    hosts: [api.stlouisfed.org]
+    urlPatterns: ["/fred/series"]
+  domains: [economics, macro, fed]
+  rateLimit:
+    bucket: fred
+    maxPerMinute: 60
+    maxPerDay: 2000
+  auth:
+    mode: query-param-env
+    envVar: FRED_API_KEY
+    queryParam: api_key
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  series:
+    when:
+      sourceAdapterOperation: [series, series-observations]
+      urlPatterns: ["/fred/series/observations"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.stlouisfed.org/fred/series/observations"
+      query:
+        series_id: "{series}"
+        file_type: json
+        limit: "{limit}"
+        sort_order: desc
+      estimatedSizeKb:
+        TLSN: 5
+        DAHR: 5
+      matchHints:
+        - "{series}"
+        - "{topic}"
+    variables:
+      series:
+        sources: [vars.series, vars.query, topic]
+        required: true
+        transforms:
+          - trim
+          - uppercase
+          - map:
+              fed-funds: DFF
+              inflation: CPIAUCSL
+              unemployment: UNRATE
+              gdp: GDP
+              interest-rate: FEDFUNDS
+              cpi: CPIAUCSL
+              money-supply: M2SL
+              housing: HOUST
+              retail-sales: RSXFS
+              industrial-production: INDPRO
+      limit:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          limit:
+            default: 10
+            max: 10
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.observations[*]"
+      fields:
+        id:
+          template: "{series}-{date}"
+          required: true
+        title:
+          template: "{series} observation {date}"
+        summary:
+          template: "{series}: {value}"
+        bodyText:
+          template: "{series} on {date}: {value}"
+        publishedAt:
+          jsonPath: "$.date"
+        topics:
+          template: "economics,macro,{series}"
+        metrics:
+          value:
+            jsonPath: "$.value"
+          realtime_start:
+            jsonPath: "$.realtime_start"
+          realtime_end:
+            jsonPath: "$.realtime_end"
+        raw:
+          mode: item
+
+  search:
+    when:
+      sourceAdapterOperation: [search, series-search]
+      urlPatterns: ["/fred/series/search"]
+    request:
+      method: GET
+      urlTemplate: "https://api.stlouisfed.org/fred/series/search"
+      query:
+        search_text: "{query}"
+        file_type: json
+        limit: "{limit}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      limit:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          limit:
+            default: 5
+            max: 5
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.seriess[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          jsonPath: "$.notes"
+        bodyText:
+          template: "{title} | {frequency} | {units}"
+        topics:
+          template: "economics,macro,{id}"
+        metrics:
+          frequency:
+            jsonPath: "$.frequency_short"
+          units:
+            jsonPath: "$.units_short"
+          popularity:
+            jsonPath: "$.popularity"
+            default: 0
+        raw:
+          mode: item

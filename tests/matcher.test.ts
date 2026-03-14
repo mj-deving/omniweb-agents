@@ -368,3 +368,117 @@ describe("diversity scoring in match()", () => {
     expect(result.best!.score).toBe(baseline.score);
   });
 });
+
+describe("prefetchedResponses cache in match()", () => {
+  beforeEach(() => {
+    fetchSourceMock.mockReset();
+    getProviderAdapterMock.mockReset();
+  });
+
+  it("uses cached response instead of fetching when URL matches", async () => {
+    const source = makeSource({ id: "src-cached", topics: ["bitcoin"] });
+    const candidate = makeCandidate(source);
+
+    const cachedResponse = {
+      url: source.url,
+      status: 200,
+      headers: {},
+      bodyText: '{"bitcoin":{"usd":64000}}',
+    };
+
+    const mockAdapter = {
+      provider: "coingecko",
+      domains: ["crypto"],
+      rateLimit: { bucket: "cg" },
+      supports: () => true,
+      buildCandidates: () => [],
+      validateCandidate: () => ({ ok: true }),
+      parseResponse: () => ({
+        entries: [{ id: "e1", title: "Bitcoin price", bodyText: "bitcoin 64000", topics: ["crypto"], raw: {} }],
+      }),
+    };
+    getProviderAdapterMock.mockReturnValue(mockAdapter);
+
+    const prefetchedResponses = new Map([[source.url, cachedResponse]]);
+
+    await match({
+      topic: "bitcoin price",
+      postText: "Bitcoin is trading at $64,000",
+      postTags: ["bitcoin"],
+      candidates: [candidate],
+      sourceView: emptySourceView,
+      prefetchedResponses,
+    });
+
+    // fetchSource should NOT be called — cache was used
+    expect(fetchSourceMock).not.toHaveBeenCalled();
+  });
+
+  it("falls back to fetchSource when URL not in cache", async () => {
+    const source = makeSource({ id: "src-uncached", topics: ["ethereum"] });
+    const candidate = makeCandidate(source);
+
+    const mockAdapter = {
+      provider: "coingecko",
+      domains: ["crypto"],
+      rateLimit: { bucket: "cg" },
+      supports: () => true,
+      buildCandidates: () => [],
+      validateCandidate: () => ({ ok: true }),
+      parseResponse: () => ({
+        entries: [{ id: "e1", title: "Ethereum", bodyText: "ethereum data", topics: ["crypto"], raw: {} }],
+      }),
+    };
+    getProviderAdapterMock.mockReturnValue(mockAdapter);
+    fetchSourceMock.mockResolvedValue({
+      ok: true,
+      response: { url: source.url, status: 200, headers: {}, bodyText: "{}" },
+      attempts: 1,
+      totalMs: 100,
+    });
+
+    await match({
+      topic: "ethereum",
+      postText: "Ethereum network analysis",
+      postTags: ["ethereum"],
+      candidates: [candidate],
+      sourceView: emptySourceView,
+      prefetchedResponses: new Map(),
+    });
+
+    expect(fetchSourceMock).toHaveBeenCalledOnce();
+  });
+
+  it("works without prefetchedResponses (backward compatible)", async () => {
+    const source = makeSource({ id: "src-compat" });
+    const candidate = makeCandidate(source);
+
+    const mockAdapter = {
+      provider: "coingecko",
+      domains: ["crypto"],
+      rateLimit: { bucket: "cg" },
+      supports: () => true,
+      buildCandidates: () => [],
+      validateCandidate: () => ({ ok: true }),
+      parseResponse: () => ({ entries: [] }),
+    };
+    getProviderAdapterMock.mockReturnValue(mockAdapter);
+    fetchSourceMock.mockResolvedValue({
+      ok: true,
+      response: { url: source.url, status: 200, headers: {}, bodyText: "{}" },
+      attempts: 1,
+      totalMs: 50,
+    });
+
+    const result = await match({
+      topic: "test",
+      postText: "Test post content here",
+      postTags: ["test"],
+      candidates: [candidate],
+      sourceView: emptySourceView,
+    });
+
+    expect(fetchSourceMock).toHaveBeenCalledOnce();
+    expect(result.reasonCode).toBeDefined();
+  });
+});

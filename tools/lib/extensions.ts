@@ -61,6 +61,8 @@ export interface AfterPublishDraftContext {
   sourceView?: AgentSourceView;
   /** Optional LLM provider for enhanced claim extraction (PR6 wiring) */
   llm?: LLMProvider | null;
+  /** Pre-fetched responses — avoids double-fetching sources already fetched for LLM context */
+  prefetchedResponses?: Map<string, import("./sources/providers/types.js").FetchedResponse>;
 }
 
 export interface AfterConfirmContext {
@@ -163,6 +165,7 @@ async function runSourcesMatchHook(
     candidates: ctx.preflightCandidates,
     sourceView: ctx.sourceView,
     llm: ctx.llm,
+    prefetchedResponses: ctx.prefetchedResponses,
   });
 
   return {

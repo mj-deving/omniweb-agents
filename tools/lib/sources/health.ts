@@ -28,6 +28,9 @@ export type SourceTestStatus =
   | "FETCH_FAILED"
   | "PARSE_FAILED"
   | "NO_ADAPTER"
+  | "NOT_SUPPORTED"
+  | "VALIDATION_REJECTED"
+  | "NO_CANDIDATES"
   | "UNRESOLVED_VARS";
 
 export interface SourceTestResult {
@@ -177,7 +180,19 @@ export async function testSource(
     };
   }
 
-  // Step 2: Build test URL via adapter pipeline
+  // Step 2: Check adapter supports this source
+  if (!adapter.supports(source)) {
+    return {
+      ...base,
+      status: "NOT_SUPPORTED",
+      latencyMs: 0,
+      entryCount: 0,
+      sampleTitles: [],
+      error: `Adapter "${adapter.provider}" does not support source "${source.id}"`,
+    };
+  }
+
+  // Step 3: Build test URL via adapter pipeline
   let testUrl: string;
   const testTopic = source.topicAliases?.[0] || source.topics?.[0] || "test";
   const tokens = tokenizeTopic(testTopic);
@@ -192,17 +207,40 @@ export async function testSource(
       maxCandidates: 1,
     });
 
-    if (candidates.length > 0) {
-      // Validate the candidate
-      const validation = adapter.validateCandidate(candidates[0]);
-      testUrl = validation.rewrittenUrl || candidates[0].url;
-    } else {
-      // Fallback: resolve URL template directly
-      testUrl = resolveTestUrl(source.url, customVars, source);
+    if (candidates.length === 0) {
+      // Adapter exists but produced no candidates — matches runtime behavior (skip)
+      return {
+        ...base,
+        status: "NO_CANDIDATES",
+        latencyMs: 0,
+        entryCount: 0,
+        sampleTitles: [],
+        error: "Adapter produced no candidates for test topic",
+      };
     }
-  } catch {
-    // buildCandidates failed — fall back to direct URL resolution
-    testUrl = resolveTestUrl(source.url, customVars, source);
+
+    // Validate the candidate
+    const validation = adapter.validateCandidate(candidates[0]);
+    if (!validation.ok) {
+      return {
+        ...base,
+        status: "VALIDATION_REJECTED",
+        latencyMs: 0,
+        entryCount: 0,
+        sampleTitles: [],
+        error: validation.reason || "Candidate validation failed",
+      };
+    }
+    testUrl = validation.rewrittenUrl || candidates[0].url;
+  } catch (err: unknown) {
+    return {
+      ...base,
+      status: "NO_CANDIDATES",
+      latencyMs: 0,
+      entryCount: 0,
+      sampleTitles: [],
+      error: `buildCandidates failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 
   // Step 3: Check for unresolved variables

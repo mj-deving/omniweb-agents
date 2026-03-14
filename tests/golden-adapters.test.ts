@@ -686,3 +686,180 @@ describe("declarative: attestation blocking", () => {
     }
   });
 });
+
+// ════════════════════════════════════════════════════
+// ADDITIONAL COVERAGE (Codex Review Findings)
+// ════════════════════════════════════════════════════
+
+describe("declarative: additional operation coverage", () => {
+  it("hn-algolia: search_by_date produces correct URL", () => {
+    const source = makeSource({
+      id: "hn-date", provider: "hn-algolia",
+      url: "https://hn.algolia.com/api/v1/search_by_date",
+      adapter: { operation: "search_by_date" },
+    });
+    const ctx = makeCtx(source, "GPT-5");
+    const candidates = getAdapter("hn-algolia").buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/search_by_date");
+    expect(candidates[0].operation).toBe("search_by_date");
+  });
+
+  it("hn-algolia: front_page produces correct URL", () => {
+    const source = makeSource({
+      id: "hn-front", provider: "hn-algolia",
+      url: "https://hn.algolia.com/api/v1/search?tags=front_page",
+      adapter: { operation: "front_page" },
+    });
+    const ctx = makeCtx(source, "news");
+    const candidates = getAdapter("hn-algolia").buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(urlParam(candidates[0].url, "tags")).toBe("front_page");
+  });
+
+  it("github: repo with explicit vars produces URL", () => {
+    const source = makeSource({
+      id: "gh-repo", provider: "github",
+      url: "https://api.github.com/repos/{owner}/{repo}",
+      adapter: { operation: "repo" },
+    });
+    const ctx = makeCtx(source, "openai gpt", "DAHR", { owner: "openai", repo: "gpt-oss" });
+    const candidates = getAdapter("github").buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/repos/openai/gpt-oss");
+  });
+
+  it("github: commits with vars produces URL", () => {
+    const source = makeSource({
+      id: "gh-commits", provider: "github",
+      url: "https://api.github.com/repos/{owner}/{repo}/commits",
+      adapter: { operation: "commits" },
+    });
+    const ctx = makeCtx(source, "commits", "DAHR", { owner: "facebook", repo: "react" });
+    const candidates = getAdapter("github").buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/repos/facebook/react/commits");
+  });
+
+  it("github: commits parseResponse extracts sha-based entries", () => {
+    const source = makeSource({
+      id: "gh-commits", provider: "github",
+      url: "https://api.github.com/repos/facebook/react/commits",
+      adapter: { operation: "commits" },
+    });
+    const fixture = JSON.stringify([
+      { sha: "abc123def456789", commit: { message: "Fix bug", author: { name: "Alice", date: "2026-01-01" } }, html_url: "https://github.com/facebook/react/commit/abc123def456789" },
+    ]);
+    const resp = makeResponse(fixture);
+    const parsed = getAdapter("github").parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(1);
+    // ID should be truncated sha
+    expect(parsed.entries[0].id.length).toBeLessThanOrEqual(12);
+  });
+
+  it("binance: ticker-24hr parseResponse extracts stats", () => {
+    const source = makeSource({
+      id: "bn-24hr", provider: "binance",
+      url: "https://api.binance.com/api/v3/ticker/24hr",
+      adapter: { operation: "ticker-24hr" },
+    });
+    const fixture = JSON.stringify({
+      symbol: "ETHUSDT", lastPrice: "3200.50", priceChange: "-50.00",
+      priceChangePercent: "-1.54", highPrice: "3300.00", lowPrice: "3150.00",
+      volume: "500000", quoteVolume: "1600000000", weightedAvgPrice: "3225.00",
+    });
+    const resp = makeResponse(fixture);
+    const parsed = getAdapter("binance").parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("ETHUSDT");
+    expect(parsed.entries[0].metrics?.lastPrice).toBeDefined();
+  });
+
+  it("binance: klines parseResponse extracts candles", () => {
+    const source = makeSource({
+      id: "bn-klines", provider: "binance",
+      url: "https://api.binance.com/api/v3/klines",
+      adapter: { operation: "klines" },
+    });
+    const fixture = JSON.stringify([
+      [1700000000000, "64000.00", "65000.00", "63500.00", "64500.00", "1000.5", 1700003600000, "64250000.00", 5000],
+      [1700003600000, "64500.00", "65500.00", "64000.00", "65000.00", "800.3", 1700007200000, "52000000.00", 4000],
+    ]);
+    const resp = makeResponse(fixture);
+    const parsed = getAdapter("binance").parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(2);
+    expect(parsed.entries[0].id).toContain("kline-");
+    expect(parsed.entries[0].metrics?.open).toBeDefined();
+  });
+
+  it("defillama: chains buildCandidates blocked for TLSN", () => {
+    const source = makeSource({
+      id: "dl-chains", provider: "defillama",
+      url: "https://api.llama.fi/chains",
+      adapter: { operation: "chains" },
+    });
+    const ctx = makeCtx(source, "chains", "TLSN");
+    expect(getAdapter("defillama").buildCandidates(ctx).length).toBe(0);
+  });
+
+  it("defillama: yields parseResponse extracts pools", () => {
+    const source = makeSource({
+      id: "dl-yields", provider: "defillama",
+      url: "https://yields.llama.fi/pools",
+      adapter: { operation: "yields" },
+    });
+    const fixture = JSON.stringify({
+      status: "success",
+      data: [
+        { pool: "pool-1", chain: "Ethereum", project: "Aave", symbol: "USDC", apy: 5.2, tvlUsd: 1000000000 },
+      ],
+    });
+    const resp = makeResponse(fixture);
+    const parsed = getAdapter("defillama").parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("pool-1");
+    expect(parsed.entries[0].metrics?.apy).toBeDefined();
+  });
+
+  it("worldbank: country parseResponse extracts from tuple", () => {
+    const source = makeSource({
+      id: "wb-country", provider: "worldbank",
+      url: "https://api.worldbank.org/v2/country/US",
+      adapter: { operation: "country" },
+    });
+    const fixture = JSON.stringify([
+      { page: 1, pages: 1, per_page: 50, total: 1 },
+      [{ id: "US", iso2Code: "US", name: "United States", region: { value: "North America" }, incomeLevel: { value: "High income" }, capitalCity: "Washington D.C.", longitude: "-77.032", latitude: "38.8895" }],
+    ]);
+    const resp = makeResponse(fixture);
+    const parsed = getAdapter("worldbank").parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].title).toBe("United States");
+  });
+
+  it("parseResponse: JSON providers produce normalized output", () => {
+    // CoinGecko should produce normalized (normalizeJson: true in spec)
+    const source = makeSource({
+      id: "cg-price", provider: "coingecko",
+      url: "https://api.coingecko.com/api/v3/simple/price",
+      adapter: { operation: "simple-price" },
+    });
+    const fixture = JSON.stringify({ bitcoin: { usd: 64000 } });
+    const resp = makeResponse(fixture);
+    const parsed = getAdapter("coingecko").parseResponse(source, resp);
+    expect(parsed.normalized).toBeDefined();
+  });
+
+  it("parseResponse: arxiv does NOT produce normalized output", () => {
+    const source = makeSource({
+      id: "arxiv", provider: "arxiv",
+      url: "https://export.arxiv.org/api/query",
+      adapter: { operation: "search" },
+      responseFormat: "xml",
+    });
+    const xml = `<feed><entry><id>http://arxiv.org/abs/2301.00001</id><title>Test</title><summary>Test</summary></entry></feed>`;
+    const resp = makeResponse(xml);
+    const parsed = getAdapter("arxiv").parseResponse(source, resp);
+    expect(parsed.normalized).toBeUndefined();
+  });
+});

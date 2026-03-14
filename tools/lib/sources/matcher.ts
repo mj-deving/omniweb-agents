@@ -51,6 +51,8 @@ export interface MatchInput {
   sourceView: AgentSourceView;
   /** Optional LLM provider for enhanced claim extraction (PR6) */
   llm?: LLMProvider | null;
+  /** Pre-fetched responses keyed by URL — avoids double-fetching sources already fetched for LLM context */
+  prefetchedResponses?: Map<string, import("./providers/types.js").FetchedResponse>;
 }
 
 export interface MatchResult {
@@ -492,7 +494,7 @@ interface ScoredCandidate {
  * reasonCode MATCH_THRESHOLD_NOT_MET.
  */
 export async function match(input: MatchInput): Promise<MatchResult> {
-  const { postText, postTags, candidates, llm } = input;
+  const { postText, postTags, candidates, llm, prefetchedResponses } = input;
 
   if (candidates.length === 0) {
     return {
@@ -515,6 +517,7 @@ export async function match(input: MatchInput): Promise<MatchResult> {
   }
 
   // Fetch all candidates in parallel (network I/O is the bottleneck)
+  // Uses prefetchedResponses cache when available to avoid double-fetching
   const fetchResults = await Promise.all(
     candidates.map(async (candidate) => {
       const adapter = getProviderAdapter(candidate.source.provider);
@@ -522,14 +525,26 @@ export async function match(input: MatchInput): Promise<MatchResult> {
         return { candidate, entries: [] as EvidenceEntry[] };
       }
       try {
-        const result = await fetchSource(candidate.url, candidate.source, {
-          rateLimitBucket: adapter.rateLimit.bucket,
-          rateLimitRpm: adapter.rateLimit.maxPerMinute,
-          rateLimitRpd: adapter.rateLimit.maxPerDay,
-        });
-        if (result.ok && result.response) {
+        // Check cache first — pre-fetched by session-runner for LLM context
+        const cached = prefetchedResponses?.get(candidate.url);
+        let response: import("./providers/types.js").FetchedResponse | undefined;
+
+        if (cached) {
+          response = cached;
+        } else {
+          const result = await fetchSource(candidate.url, candidate.source, {
+            rateLimitBucket: adapter.rateLimit.bucket,
+            rateLimitRpm: adapter.rateLimit.maxPerMinute,
+            rateLimitRpd: adapter.rateLimit.maxPerDay,
+          });
+          if (result.ok && result.response) {
+            response = result.response;
+          }
+        }
+
+        if (response) {
           try {
-            const parsed = adapter.parseResponse(candidate.source, result.response);
+            const parsed = adapter.parseResponse(candidate.source, response);
             return { candidate, entries: parsed.entries };
           } catch {
             return { candidate, entries: [] as EvidenceEntry[] };

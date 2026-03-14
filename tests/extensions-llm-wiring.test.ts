@@ -176,4 +176,20 @@ describe("extensions LLM wiring", () => {
     expect(callArg.sourceView).toBe(emptySourceView);
     expect(callArg.llm).toBe(llm);
   });
+
+  it("passes prefetchedResponses from context to sourcesMatch", async () => {
+    const cachedResponse = {
+      url: "https://api.example.com/btc",
+      status: 200,
+      headers: {},
+      bodyText: '{"price": 64000}',
+    };
+    const prefetchedResponses = new Map([["https://api.example.com/btc", cachedResponse]]);
+    const ctx = makeContext({ prefetchedResponses });
+
+    await runAfterPublishDraft(["sources"], ctx);
+
+    const callArg = matchMock.mock.calls[0][0];
+    expect(callArg.prefetchedResponses).toBe(prefetchedResponses);
+  });
 });

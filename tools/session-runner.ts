@@ -1664,7 +1664,9 @@ async function runPublishAutonomous(
       }
 
       // Pre-fetch source data for LLM context (before generation, not after)
+      // The response is cached in prefetchedResponses to avoid double-fetching in match()
       let attestedData: { source: string; url: string; summary: string } | undefined;
+      const prefetchedResponses = new Map<string, any>();
       if (preflightDecision?.candidates && preflightDecision.candidates.length > 0) {
         const topCandidate = preflightDecision.candidates[0];
         try {
@@ -1677,6 +1679,9 @@ async function runPublishAutonomous(
             rateLimitRpd: adapter?.rateLimit.maxPerDay,
           });
           if (fetchResult.ok && fetchResult.response) {
+            // Cache for reuse by match() — eliminates double-fetch
+            prefetchedResponses.set(topCandidate.url, fetchResult.response);
+
             // Extract a text summary from the response (first 800 chars of body)
             const body = fetchResult.response.bodyText;
             let summary: string;
@@ -1692,6 +1697,8 @@ async function runPublishAutonomous(
               summary,
             };
             info(`Source data fetched for LLM: ${attestedData.source} (${summary.length} chars)`);
+          } else {
+            info(`Source pre-fetch returned ok=false for "${topCandidate.sourceId}": ${fetchResult.error || "unknown"}`);
           }
         } catch (e: any) {
           info(`Source pre-fetch failed (non-fatal): ${e.message}`);
@@ -1760,6 +1767,7 @@ async function runPublishAutonomous(
         preflightCandidates: preflightDecision?.candidates,
         sourceView,
         llm: provider,
+        prefetchedResponses: prefetchedResponses.size > 0 ? prefetchedResponses : undefined,
       });
 
       // Resolve source selection from match/preflight/legacy

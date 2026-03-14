@@ -71,6 +71,8 @@ export interface GeneratePostInput {
     agentCount: number;
     divergence: boolean;
   };
+  /** Colony briefing summary from /api/report (PR2) */
+  briefingContext?: string;
 }
 
 // (API key resolution removed — now handled by LLMProvider in llm-provider.ts)
@@ -167,6 +169,10 @@ Room temperature:
     userPrompt += `\n\nColony consensus signal:
 - Direction: ${sc.direction} (${sc.confidence}% confidence, ${sc.agentCount} agents)
 - Divergence: ${sc.divergence ? "YES — high-credibility agents disagree with majority" : "no"}`;
+  }
+
+  if (input.briefingContext) {
+    userPrompt += `\n\nColony briefing (latest 12h summary):\n${input.briefingContext.slice(0, 500)}`;
   }
 
   if (input.attestedData) {

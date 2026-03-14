@@ -1,9 +1,11 @@
 /**
  * Provider adapter registry — maps provider names to adapter instances.
  *
- * PR4: Hybrid registry — declarative YAML specs loaded at init time,
- * with generic.ts as the only hand-written adapter (quarantine fallback).
- * Hand-written adapters kept as fallback during migration.
+ * All provider adapters are declarative (YAML specs loaded at init time),
+ * except generic.ts which serves as the quarantine fallback adapter.
+ *
+ * PR4: Declarative engine shipped.
+ * PR5: Hand-written adapters removed — declarative-only registry.
  */
 
 import { resolve, dirname } from "node:path";
@@ -11,40 +13,16 @@ import { fileURLToPath } from "node:url";
 import type { ProviderAdapter } from "./types.js";
 import { adapter as generic } from "./generic.js";
 
-// Hand-written adapters (kept as fallback — declarative specs take priority)
-import { adapter as hnAlgolia } from "./hn-algolia.js";
-import { adapter as coingecko } from "./coingecko.js";
-import { adapter as defillama } from "./defillama.js";
-import { adapter as github } from "./github.js";
-import { adapter as arxiv } from "./arxiv.js";
-import { adapter as wikipedia } from "./wikipedia.js";
-import { adapter as worldbank } from "./worldbank.js";
-import { adapter as pubmed } from "./pubmed.js";
-import { adapter as binance } from "./binance.js";
-import { adapter as kraken } from "./kraken.js";
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Registry ────────────────────────────────────────
 
-// Start with hand-written adapters as baseline
+// Start with generic adapter (quarantine fallback)
 const ADAPTER_REGISTRY: Map<string, ProviderAdapter> = new Map([
-  ["hn-algolia", hnAlgolia],
-  ["coingecko", coingecko],
-  ["defillama", defillama],
-  ["github", github],
-  ["arxiv", arxiv],
-  ["wikipedia", wikipedia],
-  ["worldbank", worldbank],
-  ["pubmed", pubmed],
-  ["binance", binance],
-  ["kraken", kraken],
   ["generic", generic],
 ]);
 
-// Load declarative specs with async loader (enables hooks for arxiv/kraken).
-// Declarative adapters override hand-written ones — the engine now supports
-// dotted templates and hooks, so declarative specs are the preferred path.
+// Load declarative specs (async loader enables hooks for arxiv/kraken)
 let declarativeLoaded = false;
 try {
   const { loadDeclarativeProviderAdapters } = await import("./declarative-engine.js");
@@ -57,7 +35,7 @@ try {
   }
   declarativeLoaded = true;
 } catch {
-  // Declarative engine not available or specs dir missing — fall back to hand-written only
+  // Declarative engine not available or specs dir missing — generic-only fallback
 }
 
 // ── Public API ──────────────────────────────────────

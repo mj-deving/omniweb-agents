@@ -1,14 +1,15 @@
 /**
- * Golden adapter tests — compare hand-written adapter output against
- * declarative YAML spec adapter output for functional equivalence.
+ * Declarative adapter tests — validate that YAML spec-based adapters produce
+ * correct output for all 10 providers.
  *
- * These tests validate that declarative specs produce equivalent results
- * to hand-written adapters, enabling the removal of hand-written code.
+ * Originally golden tests comparing hand-written vs declarative adapters.
+ * After validating equivalence, hand-written adapters were removed (PR5).
+ * These tests now serve as the canonical correctness tests for declarative adapters.
  *
- * Test strategy: structural equivalence (not exact string matching).
- * - buildCandidates: URL path matches, key query params present, operation matches
- * - validateCandidate: ok status matches, rewrite behavior consistent
- * - parseResponse: entry count matches, entry IDs match, key metrics present
+ * Test strategy:
+ * - buildCandidates: correct URLs, query params, attestation handling
+ * - validateCandidate: TLSN rewrite behavior, DAHR blocking
+ * - parseResponse: entry extraction, IDs, metrics
  */
 
 import { describe, it, expect } from "vitest";
@@ -23,18 +24,6 @@ import type {
 } from "../tools/lib/sources/providers/types.js";
 import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
 
-// ── Hand-written adapters ───────────────────────────
-import { adapter as hwHnAlgolia } from "../tools/lib/sources/providers/hn-algolia.js";
-import { adapter as hwCoingecko } from "../tools/lib/sources/providers/coingecko.js";
-import { adapter as hwGithub } from "../tools/lib/sources/providers/github.js";
-import { adapter as hwDefillama } from "../tools/lib/sources/providers/defillama.js";
-import { adapter as hwArxiv } from "../tools/lib/sources/providers/arxiv.js";
-import { adapter as hwWikipedia } from "../tools/lib/sources/providers/wikipedia.js";
-import { adapter as hwWorldbank } from "../tools/lib/sources/providers/worldbank.js";
-import { adapter as hwPubmed } from "../tools/lib/sources/providers/pubmed.js";
-import { adapter as hwBinance } from "../tools/lib/sources/providers/binance.js";
-import { adapter as hwKraken } from "../tools/lib/sources/providers/kraken.js";
-
 // ── Declarative adapters ────────────────────────────
 import { loadDeclarativeProviderAdaptersSync } from "../tools/lib/sources/providers/declarative-engine.js";
 
@@ -45,7 +34,7 @@ const declAdapters = loadDeclarativeProviderAdaptersSync({
   strictValidation: false,
 });
 
-function getDeclAdapter(name: string): ProviderAdapter {
+function getAdapter(name: string): ProviderAdapter {
   const a = declAdapters.get(name);
   if (!a) throw new Error(`Declarative adapter "${name}" not found`);
   return a;
@@ -68,13 +57,11 @@ function makeSource(overrides: Partial<SourceRecordV2> & { id: string; provider:
   } as SourceRecordV2;
 }
 
-// ── Helper: build context ───────────────────────────
 function makeCtx(source: SourceRecordV2, topic: string, attestation: "TLSN" | "DAHR" = "DAHR", vars: Record<string, string> = {}): BuildCandidatesContext {
   const tokens = topic.toLowerCase().split(/\s+/);
   return { source, topic, tokens, vars, attestation, maxCandidates: 5 };
 }
 
-// ── Helper: URL path extraction ─────────────────────
 function urlPath(url: string): string {
   try { return new URL(url).pathname; } catch { return url; }
 }
@@ -83,7 +70,6 @@ function urlParam(url: string, param: string): string | null {
   try { return new URL(url).searchParams.get(param); } catch { return null; }
 }
 
-// ── Helper: mock response ───────────────────────────
 function makeResponse(bodyText: string, url = "https://example.com", status = 200): FetchedResponse {
   return { url, status, headers: { "content-type": "application/json" }, bodyText };
 }
@@ -92,65 +78,51 @@ function makeResponse(bodyText: string, url = "https://example.com", status = 20
 // HN-ALGOLIA
 // ════════════════════════════════════════════════════
 
-describe("golden: hn-algolia", () => {
-  const hw = hwHnAlgolia;
-  const dc = getDeclAdapter("hn-algolia");
-
+describe("declarative: hn-algolia", () => {
+  const adapter = getAdapter("hn-algolia");
   const source = makeSource({
     id: "hn-search", provider: "hn-algolia",
     url: "https://hn.algolia.com/api/v1/search",
     adapter: { operation: "search" },
   });
 
-  it("buildCandidates: URL contains /search path for both", () => {
+  it("buildCandidates: URL contains /search path", () => {
     const ctx = makeCtx(source, "artificial intelligence");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(urlPath(hwC[0].url)).toContain("/search");
-    expect(urlPath(dcC[0].url)).toContain("/search");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(urlPath(candidates[0].url)).toContain("/search");
   });
 
-  it("buildCandidates: both include query param", () => {
+  it("buildCandidates: includes query param", () => {
     const ctx = makeCtx(source, "AI safety");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "query")).toBeTruthy();
-    expect(urlParam(dcC[0].url, "query")).toBeTruthy();
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "query")).toBeTruthy();
   });
 
-  it("buildCandidates: TLSN hitsPerPage=2 for both", () => {
+  it("buildCandidates: TLSN hitsPerPage=2", () => {
     const ctx = makeCtx(source, "LLMs", "TLSN");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "hitsPerPage")).toBe("2");
-    expect(urlParam(dcC[0].url, "hitsPerPage")).toBe("2");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "hitsPerPage")).toBe("2");
   });
 
-  it("buildCandidates: same operation name", () => {
+  it("buildCandidates: operation is search", () => {
     const ctx = makeCtx(source, "test");
-    expect(hw.buildCandidates(ctx)[0].operation).toBe("search");
-    expect(dc.buildCandidates(ctx)[0].operation).toBe("search");
+    expect(adapter.buildCandidates(ctx)[0].operation).toBe("search");
   });
 
-  it("validateCandidate: both rewrite hitsPerPage>2 for TLSN", () => {
+  it("validateCandidate: rewrites hitsPerPage>2 for TLSN", () => {
     const candidate: CandidateRequest = {
       sourceId: "hn-search", provider: "hn-algolia", operation: "search",
       method: "GET", url: "https://hn.algolia.com/api/v1/search?query=test&hitsPerPage=10",
       attestation: "TLSN", matchHints: ["test"],
     };
-    const hwV = hw.validateCandidate(candidate);
-    const dcV = dc.validateCandidate(candidate);
-    expect(hwV.ok).toBe(true);
-    expect(dcV.ok).toBe(true);
-    expect(hwV.rewrittenUrl).toBeTruthy();
-    expect(dcV.rewrittenUrl).toBeTruthy();
-    expect(urlParam(hwV.rewrittenUrl!, "hitsPerPage")).toBe("2");
-    expect(urlParam(dcV.rewrittenUrl!, "hitsPerPage")).toBe("2");
+    const result = adapter.validateCandidate(candidate);
+    expect(result.ok).toBe(true);
+    expect(result.rewrittenUrl).toBeTruthy();
+    expect(urlParam(result.rewrittenUrl!, "hitsPerPage")).toBe("2");
   });
 
-  it("parseResponse: same entry count and IDs", () => {
+  it("parseResponse: extracts entries with correct IDs", () => {
     const fixture = JSON.stringify({
       hits: [
         { objectID: "40001", title: "AI paper", story_text: "Good stuff", points: 100, num_comments: 50, _tags: ["story"], url: "https://example.com", created_at: "2026-01-01T00:00:00Z", author: "jdoe" },
@@ -158,21 +130,18 @@ describe("golden: hn-algolia", () => {
       ],
     });
     const resp = makeResponse(fixture, "https://hn.algolia.com/api/v1/search?query=test");
-    const hwP = hw.parseResponse(source, resp);
-    const dcP = dc.parseResponse(source, resp);
-    expect(hwP.entries.length).toBe(dcP.entries.length);
-    expect(hwP.entries.map(e => e.id).sort()).toEqual(dcP.entries.map(e => e.id).sort());
+    const parsed = adapter.parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(2);
+    expect(parsed.entries.map(e => e.id).sort()).toEqual(["40001", "40002"]);
   });
 
-  it("parseResponse: both have points metric", () => {
+  it("parseResponse: entries have points metric", () => {
     const fixture = JSON.stringify({
       hits: [{ objectID: "40001", title: "Test", points: 42, num_comments: 5, _tags: [] }],
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(source, resp);
-    const dcP = dc.parseResponse(source, resp);
-    expect(hwP.entries[0].metrics?.points).toBeDefined();
-    expect(dcP.entries[0].metrics?.points).toBeDefined();
+    const parsed = adapter.parseResponse(source, resp);
+    expect(parsed.entries[0].metrics?.points).toBeDefined();
   });
 });
 
@@ -180,9 +149,8 @@ describe("golden: hn-algolia", () => {
 // COINGECKO
 // ════════════════════════════════════════════════════
 
-describe("golden: coingecko", () => {
-  const hw = hwCoingecko;
-  const dc = getDeclAdapter("coingecko");
+describe("declarative: coingecko", () => {
+  const adapter = getAdapter("coingecko");
 
   const simplePriceSource = makeSource({
     id: "cg-price", provider: "coingecko",
@@ -204,36 +172,27 @@ describe("golden: coingecko", () => {
 
   it("buildCandidates: simple-price URL contains /simple/price", () => {
     const ctx = makeCtx(simplePriceSource, "bitcoin", "DAHR", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(urlPath(hwC[0].url)).toContain("/simple/price");
-    expect(urlPath(dcC[0].url)).toContain("/simple/price");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(urlPath(candidates[0].url)).toContain("/simple/price");
   });
 
   it("buildCandidates: simple-price includes ids param", () => {
     const ctx = makeCtx(simplePriceSource, "bitcoin", "DAHR", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "ids")).toBeTruthy();
-    expect(urlParam(dcC[0].url, "ids")).toBeTruthy();
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "ids")).toBeTruthy();
   });
 
-  it("buildCandidates: coin-detail returns empty for TLSN in both", () => {
+  it("buildCandidates: coin-detail returns empty for TLSN", () => {
     const ctx = makeCtx(coinDetailSource, "bitcoin", "TLSN", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBe(0);
-    expect(dcC.length).toBe(0);
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBe(0);
   });
 
   it("buildCandidates: trending URL contains /search/trending", () => {
     const ctx = makeCtx(trendingSource, "crypto");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC[0].url).toContain("/search/trending");
-    expect(dcC[0].url).toContain("/search/trending");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates[0].url).toContain("/search/trending");
   });
 
   it("parseResponse: simple-price extracts entries by coin ID", () => {
@@ -241,12 +200,9 @@ describe("golden: coingecko", () => {
       bitcoin: { usd: 64000, usd_market_cap: 1200000000000, usd_24h_vol: 25000000000 },
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(simplePriceSource, resp);
-    const dcP = dc.parseResponse(simplePriceSource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    expect(hwP.entries[0].id).toBe("bitcoin");
-    expect(dcP.entries[0].id).toBe("bitcoin");
+    const parsed = adapter.parseResponse(simplePriceSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("bitcoin");
   });
 
   it("parseResponse: simple-price has price_usd metric", () => {
@@ -254,10 +210,8 @@ describe("golden: coingecko", () => {
       bitcoin: { usd: 64000, usd_market_cap: 1200000000000, usd_24h_vol: 25000000000 },
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(simplePriceSource, resp);
-    const dcP = dc.parseResponse(simplePriceSource, resp);
-    expect(hwP.entries[0].metrics?.price_usd).toBeDefined();
-    expect(dcP.entries[0].metrics?.price_usd).toBeDefined();
+    const parsed = adapter.parseResponse(simplePriceSource, resp);
+    expect(parsed.entries[0].metrics?.price_usd).toBeDefined();
   });
 
   it("parseResponse: trending extracts from coins[*].item", () => {
@@ -267,12 +221,9 @@ describe("golden: coingecko", () => {
       ],
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(trendingSource, resp);
-    const dcP = dc.parseResponse(trendingSource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    expect(hwP.entries[0].id).toBe("pepe");
-    expect(dcP.entries[0].id).toBe("pepe");
+    const parsed = adapter.parseResponse(trendingSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("pepe");
   });
 });
 
@@ -280,9 +231,8 @@ describe("golden: coingecko", () => {
 // GITHUB
 // ════════════════════════════════════════════════════
 
-describe("golden: github", () => {
-  const hw = hwGithub;
-  const dc = getDeclAdapter("github");
+describe("declarative: github", () => {
+  const adapter = getAdapter("github");
 
   const searchSource = makeSource({
     id: "gh-search", provider: "github",
@@ -298,36 +248,27 @@ describe("golden: github", () => {
 
   it("buildCandidates: search-repos URL contains /search/repositories", () => {
     const ctx = makeCtx(searchSource, "machine learning", "DAHR", { query: "machine learning" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/search/repositories");
-    expect(dcC[0].url).toContain("/search/repositories");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/search/repositories");
   });
 
   it("buildCandidates: TLSN search-repos per_page=3", () => {
     const ctx = makeCtx(searchSource, "AI", "TLSN", { query: "AI" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "per_page")).toBe("3");
-    expect(urlParam(dcC[0].url, "per_page")).toBe("3");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "per_page")).toBe("3");
   });
 
-  it("validateCandidate: both rewrite per_page>3 for TLSN", () => {
+  it("validateCandidate: rewrites per_page>3 for TLSN", () => {
     const candidate: CandidateRequest = {
       sourceId: "gh-search", provider: "github", operation: "search-repos",
       method: "GET", url: "https://api.github.com/search/repositories?q=test&per_page=10",
       attestation: "TLSN", matchHints: ["test"],
     };
-    const hwV = hw.validateCandidate(candidate);
-    const dcV = dc.validateCandidate(candidate);
-    expect(hwV.ok).toBe(true);
-    expect(dcV.ok).toBe(true);
-    expect(hwV.rewrittenUrl).toBeTruthy();
-    expect(dcV.rewrittenUrl).toBeTruthy();
-    expect(urlParam(hwV.rewrittenUrl!, "per_page")).toBe("3");
-    expect(urlParam(dcV.rewrittenUrl!, "per_page")).toBe("3");
+    const result = adapter.validateCandidate(candidate);
+    expect(result.ok).toBe(true);
+    expect(result.rewrittenUrl).toBeTruthy();
+    expect(urlParam(result.rewrittenUrl!, "per_page")).toBe("3");
   });
 
   it("parseResponse: search-repos extracts items array", () => {
@@ -338,12 +279,9 @@ describe("golden: github", () => {
       ],
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(searchSource, resp);
-    const dcP = dc.parseResponse(searchSource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    expect(String(hwP.entries[0].id)).toBe("12345");
-    expect(String(dcP.entries[0].id)).toBe("12345");
+    const parsed = adapter.parseResponse(searchSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(String(parsed.entries[0].id)).toBe("12345");
   });
 
   it("parseResponse: repo has stars metric", () => {
@@ -353,10 +291,8 @@ describe("golden: github", () => {
       topics: ["hello"], language: "JavaScript", created_at: "2020-01-01",
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(repoSource, resp);
-    const dcP = dc.parseResponse(repoSource, resp);
-    expect(hwP.entries[0].metrics?.stars).toBeDefined();
-    expect(dcP.entries[0].metrics?.stars).toBeDefined();
+    const parsed = adapter.parseResponse(repoSource, resp);
+    expect(parsed.entries[0].metrics?.stars).toBeDefined();
   });
 });
 
@@ -364,9 +300,8 @@ describe("golden: github", () => {
 // DEFILLAMA
 // ════════════════════════════════════════════════════
 
-describe("golden: defillama", () => {
-  const hw = hwDefillama;
-  const dc = getDeclAdapter("defillama");
+describe("declarative: defillama", () => {
+  const adapter = getAdapter("defillama");
 
   const tvlSource = makeSource({
     id: "dl-tvl", provider: "defillama",
@@ -382,33 +317,23 @@ describe("golden: defillama", () => {
 
   it("buildCandidates: tvl URL contains /tvl/", () => {
     const ctx = makeCtx(tvlSource, "aave", "DAHR", { asset: "aave" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/tvl/");
-    expect(dcC[0].url).toContain("/tvl/");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/tvl/");
   });
 
-  it("buildCandidates: protocol returns empty for TLSN in both", () => {
+  it("buildCandidates: protocol returns empty for TLSN", () => {
     const ctx = makeCtx(protocolSource, "aave", "TLSN", { asset: "aave" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBe(0);
-    expect(dcC.length).toBe(0);
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBe(0);
   });
 
-  it("parseResponse: tvl extracts single entry with tvl metric", () => {
-    // DefiLlama TVL returns a single number
+  it("parseResponse: tvl extracts single entry", () => {
     const fixture = "1234567890.12";
     const resp = makeResponse(fixture, "https://api.llama.fi/tvl/aave");
-    const hwP = hw.parseResponse(tvlSource, resp);
-    const dcP = dc.parseResponse(tvlSource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    // Both should have some form of tvl in ID
-    expect(hwP.entries[0].id).toContain("tvl");
-    expect(dcP.entries[0].id).toContain("tvl");
+    const parsed = adapter.parseResponse(tvlSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toContain("tvl");
   });
 });
 
@@ -416,10 +341,8 @@ describe("golden: defillama", () => {
 // ARXIV
 // ════════════════════════════════════════════════════
 
-describe("golden: arxiv", () => {
-  const hw = hwArxiv;
-  const dc = getDeclAdapter("arxiv");
-
+describe("declarative: arxiv", () => {
+  const adapter = getAdapter("arxiv");
   const source = makeSource({
     id: "arxiv-search", provider: "arxiv",
     url: "https://export.arxiv.org/api/query",
@@ -427,34 +350,25 @@ describe("golden: arxiv", () => {
     responseFormat: "xml",
   });
 
-  it("buildCandidates: returns empty for DAHR in both", () => {
+  it("buildCandidates: returns empty for DAHR", () => {
     const ctx = makeCtx(source, "quantum computing", "DAHR");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBe(0);
-    expect(dcC.length).toBe(0);
+    expect(adapter.buildCandidates(ctx).length).toBe(0);
   });
 
   it("buildCandidates: TLSN URL has max_results=3", () => {
     const ctx = makeCtx(source, "transformers", "TLSN");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(urlParam(hwC[0].url, "max_results")).toBe("3");
-    expect(urlParam(dcC[0].url, "max_results")).toBe("3");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(urlParam(candidates[0].url, "max_results")).toBe("3");
   });
 
-  it("validateCandidate: DAHR rejected in both", () => {
+  it("validateCandidate: DAHR rejected", () => {
     const candidate: CandidateRequest = {
       sourceId: "arxiv-search", provider: "arxiv", operation: "search",
       method: "GET", url: "https://export.arxiv.org/api/query?search_query=test&max_results=5",
       attestation: "DAHR", matchHints: ["test"],
     };
-    const hwV = hw.validateCandidate(candidate);
-    const dcV = dc.validateCandidate(candidate);
-    expect(hwV.ok).toBe(false);
-    expect(dcV.ok).toBe(false);
+    expect(adapter.validateCandidate(candidate).ok).toBe(false);
   });
 
   it("parseResponse: extracts entries from XML", () => {
@@ -478,10 +392,8 @@ describe("golden: arxiv", () => {
 </entry>
 </feed>`;
     const resp = makeResponse(xml, "https://export.arxiv.org/api/query?search_query=test");
-    const hwP = hw.parseResponse(source, resp);
-    const dcP = dc.parseResponse(source, resp);
-    expect(hwP.entries.length).toBe(2);
-    expect(dcP.entries.length).toBe(2);
+    const parsed = adapter.parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(2);
   });
 });
 
@@ -489,9 +401,8 @@ describe("golden: arxiv", () => {
 // WIKIPEDIA
 // ════════════════════════════════════════════════════
 
-describe("golden: wikipedia", () => {
-  const hw = hwWikipedia;
-  const dc = getDeclAdapter("wikipedia");
+describe("declarative: wikipedia", () => {
+  const adapter = getAdapter("wikipedia");
 
   const summarySource = makeSource({
     id: "wiki-summary", provider: "wikipedia",
@@ -507,20 +418,15 @@ describe("golden: wikipedia", () => {
 
   it("buildCandidates: summary URL contains /page/summary/", () => {
     const ctx = makeCtx(summarySource, "quantum computing");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/page/summary/");
-    expect(dcC[0].url).toContain("/page/summary/");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/page/summary/");
   });
 
   it("buildCandidates: TLSN search has srlimit=2", () => {
     const ctx = makeCtx(searchSource, "AI", "TLSN");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "srlimit")).toBe("2");
-    expect(urlParam(dcC[0].url, "srlimit")).toBe("2");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "srlimit")).toBe("2");
   });
 
   it("parseResponse: summary extracts single entry", () => {
@@ -531,12 +437,9 @@ describe("golden: wikipedia", () => {
       content_urls: { desktop: { page: "https://en.wikipedia.org/wiki/Quantum_computing" } },
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(summarySource, resp);
-    const dcP = dc.parseResponse(summarySource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    expect(hwP.entries[0].title).toBe("Quantum computing");
-    expect(dcP.entries[0].title).toBe("Quantum computing");
+    const parsed = adapter.parseResponse(summarySource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].title).toBe("Quantum computing");
   });
 
   it("parseResponse: search extracts from query.search array", () => {
@@ -549,10 +452,8 @@ describe("golden: wikipedia", () => {
       },
     });
     const resp = makeResponse(fixture, "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=test");
-    const hwP = hw.parseResponse(searchSource, resp);
-    const dcP = dc.parseResponse(searchSource, resp);
-    expect(hwP.entries.length).toBe(2);
-    expect(dcP.entries.length).toBe(2);
+    const parsed = adapter.parseResponse(searchSource, resp);
+    expect(parsed.entries.length).toBe(2);
   });
 });
 
@@ -560,9 +461,8 @@ describe("golden: wikipedia", () => {
 // WORLDBANK
 // ════════════════════════════════════════════════════
 
-describe("golden: worldbank", () => {
-  const hw = hwWorldbank;
-  const dc = getDeclAdapter("worldbank");
+describe("declarative: worldbank", () => {
+  const adapter = getAdapter("worldbank");
 
   const indicatorSource = makeSource({
     id: "wb-gdp", provider: "worldbank",
@@ -572,28 +472,21 @@ describe("golden: worldbank", () => {
 
   it("buildCandidates: indicator URL contains /indicator/", () => {
     const ctx = makeCtx(indicatorSource, "gdp", "DAHR", { indicator: "gdp" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/indicator/");
-    expect(dcC[0].url).toContain("/indicator/");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/indicator/");
   });
 
   it("buildCandidates: includes format=json", () => {
     const ctx = makeCtx(indicatorSource, "gdp", "DAHR", { indicator: "gdp" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "format")).toBe("json");
-    expect(urlParam(dcC[0].url, "format")).toBe("json");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "format")).toBe("json");
   });
 
   it("buildCandidates: TLSN has per_page=5", () => {
     const ctx = makeCtx(indicatorSource, "gdp", "TLSN", { indicator: "gdp" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "per_page")).toBe("5");
-    expect(urlParam(dcC[0].url, "per_page")).toBe("5");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "per_page")).toBe("5");
   });
 
   it("parseResponse: indicator extracts from [meta, data] tuple", () => {
@@ -602,13 +495,9 @@ describe("golden: worldbank", () => {
       [{ countryiso3code: "WLD", country: { value: "World" }, indicator: { id: "NY.GDP.MKTP.CD", value: "GDP (current US$)" }, date: "2025", value: 96513077000000 }],
     ]);
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(indicatorSource, resp);
-    const dcP = dc.parseResponse(indicatorSource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    // Both should include value metric
-    expect(hwP.entries[0].metrics?.value).toBeDefined();
-    expect(dcP.entries[0].metrics?.value).toBeDefined();
+    const parsed = adapter.parseResponse(indicatorSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].metrics?.value).toBeDefined();
   });
 });
 
@@ -616,9 +505,8 @@ describe("golden: worldbank", () => {
 // PUBMED
 // ════════════════════════════════════════════════════
 
-describe("golden: pubmed", () => {
-  const hw = hwPubmed;
-  const dc = getDeclAdapter("pubmed");
+describe("declarative: pubmed", () => {
+  const adapter = getAdapter("pubmed");
 
   const esearchSource = makeSource({
     id: "pm-search", provider: "pubmed",
@@ -628,37 +516,27 @@ describe("golden: pubmed", () => {
 
   it("buildCandidates: esearch URL contains /esearch.fcgi", () => {
     const ctx = makeCtx(esearchSource, "CRISPR gene editing");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/esearch.fcgi");
-    expect(dcC[0].url).toContain("/esearch.fcgi");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/esearch.fcgi");
   });
 
   it("buildCandidates: TLSN has retmax=3", () => {
     const ctx = makeCtx(esearchSource, "CRISPR", "TLSN");
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "retmax")).toBe("3");
-    expect(urlParam(dcC[0].url, "retmax")).toBe("3");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "retmax")).toBe("3");
   });
 
-  it("validateCandidate: both enforce retmode=json", () => {
+  it("validateCandidate: enforces retmode=json for TLSN", () => {
     const candidate: CandidateRequest = {
       sourceId: "pm-search", provider: "pubmed", operation: "esearch",
       method: "GET", url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=xml&term=test&retmax=20",
       attestation: "TLSN", matchHints: ["test"],
     };
-    const hwV = hw.validateCandidate(candidate);
-    const dcV = dc.validateCandidate(candidate);
-    expect(hwV.ok).toBe(true);
-    expect(dcV.ok).toBe(true);
-    // Both should rewrite
-    expect(hwV.rewrittenUrl).toBeTruthy();
-    expect(dcV.rewrittenUrl).toBeTruthy();
-    expect(urlParam(hwV.rewrittenUrl!, "retmode")).toBe("json");
-    expect(urlParam(dcV.rewrittenUrl!, "retmode")).toBe("json");
+    const result = adapter.validateCandidate(candidate);
+    expect(result.ok).toBe(true);
+    expect(result.rewrittenUrl).toBeTruthy();
+    expect(urlParam(result.rewrittenUrl!, "retmode")).toBe("json");
   });
 
   it("parseResponse: esearch extracts PMIDs from idlist", () => {
@@ -666,12 +544,9 @@ describe("golden: pubmed", () => {
       esearchresult: { count: 100, retmax: 3, idlist: ["38001", "38002", "38003"] },
     });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(esearchSource, resp);
-    const dcP = dc.parseResponse(esearchSource, resp);
-    expect(hwP.entries.length).toBe(3);
-    expect(dcP.entries.length).toBe(3);
-    expect(hwP.entries.map(e => e.id).sort()).toEqual(["38001", "38002", "38003"]);
-    expect(dcP.entries.map(e => e.id).sort()).toEqual(["38001", "38002", "38003"]);
+    const parsed = adapter.parseResponse(esearchSource, resp);
+    expect(parsed.entries.length).toBe(3);
+    expect(parsed.entries.map(e => e.id).sort()).toEqual(["38001", "38002", "38003"]);
   });
 });
 
@@ -679,9 +554,8 @@ describe("golden: pubmed", () => {
 // BINANCE
 // ════════════════════════════════════════════════════
 
-describe("golden: binance", () => {
-  const hw = hwBinance;
-  const dc = getDeclAdapter("binance");
+describe("declarative: binance", () => {
+  const adapter = getAdapter("binance");
 
   const tickerSource = makeSource({
     id: "bn-ticker", provider: "binance",
@@ -691,50 +565,24 @@ describe("golden: binance", () => {
 
   it("buildCandidates: ticker-price URL contains /ticker/price", () => {
     const ctx = makeCtx(tickerSource, "BTC", "DAHR", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/ticker/price");
-    expect(dcC[0].url).toContain("/ticker/price");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/ticker/price");
   });
 
-  it("buildCandidates: both resolve bitcoin to BTCUSDT", () => {
+  it("buildCandidates: resolves bitcoin to BTCUSDT", () => {
     const ctx = makeCtx(tickerSource, "BTC", "DAHR", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "symbol")).toBe("BTCUSDT");
-    expect(urlParam(dcC[0].url, "symbol")).toBe("BTCUSDT");
-  });
-
-  it("validateCandidate: hand-written rejects missing symbol (declarative passes through)", () => {
-    // Known difference: hand-written adapter validates missing symbol param,
-    // declarative engine does not (validateCandidate only checks attestation constraints).
-    // This is acceptable — buildCandidates always includes symbol, so this case
-    // doesn't occur in production.
-    const candidate: CandidateRequest = {
-      sourceId: "bn-ticker", provider: "binance", operation: "ticker-price",
-      method: "GET", url: "https://api.binance.com/api/v3/ticker/price",
-      attestation: "DAHR", matchHints: [],
-    };
-    const hwV = hw.validateCandidate(candidate);
-    expect(hwV.ok).toBe(false);
-    // Declarative engine is more permissive — documents the difference
-    const dcV = dc.validateCandidate(candidate);
-    expect(dcV.ok).toBe(true);
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "symbol")).toBe("BTCUSDT");
   });
 
   it("parseResponse: ticker-price extracts symbol and price", () => {
     const fixture = JSON.stringify({ symbol: "BTCUSDT", price: "64000.50" });
     const resp = makeResponse(fixture);
-    const hwP = hw.parseResponse(tickerSource, resp);
-    const dcP = dc.parseResponse(tickerSource, resp);
-    expect(hwP.entries.length).toBe(1);
-    expect(dcP.entries.length).toBe(1);
-    expect(hwP.entries[0].id).toBe("BTCUSDT");
-    expect(dcP.entries[0].id).toBe("BTCUSDT");
-    expect(hwP.entries[0].metrics?.price).toBeDefined();
-    expect(dcP.entries[0].metrics?.price).toBeDefined();
+    const parsed = adapter.parseResponse(tickerSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("BTCUSDT");
+    expect(parsed.entries[0].metrics?.price).toBeDefined();
   });
 });
 
@@ -742,9 +590,8 @@ describe("golden: binance", () => {
 // KRAKEN
 // ════════════════════════════════════════════════════
 
-describe("golden: kraken", () => {
-  const hw = hwKraken;
-  const dc = getDeclAdapter("kraken");
+describe("declarative: kraken", () => {
+  const adapter = getAdapter("kraken");
 
   const tickerSource = makeSource({
     id: "kr-ticker", provider: "kraken",
@@ -760,32 +607,24 @@ describe("golden: kraken", () => {
 
   it("buildCandidates: ticker URL contains /Ticker", () => {
     const ctx = makeCtx(tickerSource, "BTC", "DAHR", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(hwC.length).toBeGreaterThan(0);
-    expect(dcC.length).toBeGreaterThan(0);
-    expect(hwC[0].url).toContain("/Ticker");
-    expect(dcC[0].url).toContain("/Ticker");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/Ticker");
   });
 
-  it("buildCandidates: both resolve bitcoin to XXBTZUSD", () => {
+  it("buildCandidates: resolves bitcoin to XXBTZUSD", () => {
     const ctx = makeCtx(tickerSource, "BTC", "DAHR", { asset: "bitcoin" });
-    const hwC = hw.buildCandidates(ctx);
-    const dcC = dc.buildCandidates(ctx);
-    expect(urlParam(hwC[0].url, "pair")).toBe("XXBTZUSD");
-    expect(urlParam(dcC[0].url, "pair")).toBe("XXBTZUSD");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(urlParam(candidates[0].url, "pair")).toBe("XXBTZUSD");
   });
 
-  it("validateCandidate: TLSN assets returns not-ok in both", () => {
+  it("validateCandidate: TLSN assets returns not-ok", () => {
     const candidate: CandidateRequest = {
       sourceId: "kr-assets", provider: "kraken", operation: "assets",
       method: "GET", url: "https://api.kraken.com/0/public/Assets",
       attestation: "TLSN", matchHints: [],
     };
-    const hwV = hw.validateCandidate(candidate);
-    const dcV = dc.validateCandidate(candidate);
-    expect(hwV.ok).toBe(false);
-    expect(dcV.ok).toBe(false);
+    expect(adapter.validateCandidate(candidate).ok).toBe(false);
   });
 
   it("parseResponse: ticker extracts from result object", () => {
@@ -793,55 +632,57 @@ describe("golden: kraken", () => {
       error: [],
       result: {
         XXBTZUSD: {
-          a: ["64000.00", "1", "1.000"],
-          b: ["63999.00", "1", "1.000"],
-          c: ["64000.50", "0.1"],
-          v: ["1000", "5000"],
-          p: ["63500.00", "63800.00"],
-          t: [200, 1000],
-          l: ["62000.00", "61000.00"],
-          h: ["65000.00", "66000.00"],
+          a: ["64000.00", "1", "1.000"], b: ["63999.00", "1", "1.000"],
+          c: ["64000.50", "0.1"], v: ["1000", "5000"],
+          p: ["63500.00", "63800.00"], t: [200, 1000],
+          l: ["62000.00", "61000.00"], h: ["65000.00", "66000.00"],
           o: "63000.00",
         },
       },
     });
     const resp = makeResponse(fixture, "https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD");
-    const hwP = hw.parseResponse(tickerSource, resp);
-    const dcP = dc.parseResponse(tickerSource, resp);
-    expect(hwP.entries.length).toBeGreaterThan(0);
-    expect(dcP.entries.length).toBeGreaterThan(0);
-    expect(hwP.entries[0].id).toBe("XXBTZUSD");
-    expect(dcP.entries[0].id).toBe("XXBTZUSD");
+    const parsed = adapter.parseResponse(tickerSource, resp);
+    expect(parsed.entries.length).toBeGreaterThan(0);
+    expect(parsed.entries[0].id).toBe("XXBTZUSD");
   });
 });
 
 // ════════════════════════════════════════════════════
-// CROSS-PROVIDER: TLSN/DAHR BLOCKING
+// CROSS-PROVIDER: ATTESTATION BLOCKING
 // ════════════════════════════════════════════════════
 
-describe("golden: attestation blocking consistency", () => {
-  const providers = [
-    { hw: hwHnAlgolia, name: "hn-algolia", source: makeSource({ id: "hn", provider: "hn-algolia", url: "https://hn.algolia.com/api/v1/search", adapter: { operation: "search" } }) },
-    { hw: hwCoingecko, name: "coingecko", source: makeSource({ id: "cg-detail", provider: "coingecko", url: "https://api.coingecko.com/api/v3/coins/bitcoin", adapter: { operation: "coin-detail" } }) },
-    { hw: hwDefillama, name: "defillama", source: makeSource({ id: "dl-proto", provider: "defillama", url: "https://api.llama.fi/protocol/aave", adapter: { operation: "protocol" } }) },
-    { hw: hwArxiv, name: "arxiv", source: makeSource({ id: "arxiv", provider: "arxiv", url: "https://export.arxiv.org/api/query", adapter: { operation: "search" }, responseFormat: "xml" }) },
-  ];
+describe("declarative: attestation blocking", () => {
+  it("coingecko: coin-detail blocked for TLSN", () => {
+    const source = makeSource({ id: "cg-detail", provider: "coingecko", url: "https://api.coingecko.com/api/v3/coins/bitcoin", adapter: { operation: "coin-detail" } });
+    const ctx = makeCtx(source, "bitcoin", "TLSN", { asset: "bitcoin" });
+    expect(getAdapter("coingecko").buildCandidates(ctx).length).toBe(0);
+  });
 
-  for (const { hw, name, source } of providers) {
-    it(`${name}: TLSN/DAHR blocking matches between adapters`, () => {
-      const dc = getDeclAdapter(name);
-      for (const attestation of ["TLSN", "DAHR"] as const) {
-        const ctx = makeCtx(source, "test", attestation, { asset: "test", query: "test" });
-        const hwC = hw.buildCandidates(ctx);
-        const dcC = dc.buildCandidates(ctx);
-        // If one returns empty, the other should too (blocked)
-        if (hwC.length === 0) {
-          expect(dcC.length).toBe(0);
-        }
-        if (dcC.length === 0) {
-          expect(hwC.length).toBe(0);
-        }
-      }
-    });
-  }
+  it("defillama: protocol blocked for TLSN", () => {
+    const source = makeSource({ id: "dl-proto", provider: "defillama", url: "https://api.llama.fi/protocol/aave", adapter: { operation: "protocol" } });
+    const ctx = makeCtx(source, "aave", "TLSN", { asset: "aave" });
+    expect(getAdapter("defillama").buildCandidates(ctx).length).toBe(0);
+  });
+
+  it("arxiv: DAHR blocked", () => {
+    const source = makeSource({ id: "arxiv", provider: "arxiv", url: "https://export.arxiv.org/api/query", adapter: { operation: "search" }, responseFormat: "xml" });
+    const ctx = makeCtx(source, "test", "DAHR");
+    expect(getAdapter("arxiv").buildCandidates(ctx).length).toBe(0);
+  });
+
+  it("kraken: assets blocked for TLSN via validateCandidate", () => {
+    const candidate: CandidateRequest = {
+      sourceId: "kr-assets", provider: "kraken", operation: "assets",
+      method: "GET", url: "https://api.kraken.com/0/public/Assets",
+      attestation: "TLSN", matchHints: [],
+    };
+    expect(getAdapter("kraken").validateCandidate(candidate).ok).toBe(false);
+  });
+
+  it("all 11 declarative adapters loaded successfully", () => {
+    const expected = ["hn-algolia", "coingecko", "github", "defillama", "arxiv", "wikipedia", "worldbank", "pubmed", "binance", "kraken", "fred"];
+    for (const name of expected) {
+      expect(declAdapters.has(name)).toBe(true);
+    }
+  });
 });

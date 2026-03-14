@@ -195,21 +195,19 @@ describe("declarative: coingecko", () => {
     expect(candidates[0].url).toContain("/search/trending");
   });
 
+  const simplePriceFixture = JSON.stringify({
+    bitcoin: { usd: 64000, usd_market_cap: 1200000000000, usd_24h_vol: 25000000000 },
+  });
+
   it("parseResponse: simple-price extracts entries by coin ID", () => {
-    const fixture = JSON.stringify({
-      bitcoin: { usd: 64000, usd_market_cap: 1200000000000, usd_24h_vol: 25000000000 },
-    });
-    const resp = makeResponse(fixture);
+    const resp = makeResponse(simplePriceFixture);
     const parsed = adapter.parseResponse(simplePriceSource, resp);
     expect(parsed.entries.length).toBe(1);
     expect(parsed.entries[0].id).toBe("bitcoin");
   });
 
   it("parseResponse: simple-price has price_usd metric", () => {
-    const fixture = JSON.stringify({
-      bitcoin: { usd: 64000, usd_market_cap: 1200000000000, usd_24h_vol: 25000000000 },
-    });
-    const resp = makeResponse(fixture);
+    const resp = makeResponse(simplePriceFixture);
     const parsed = adapter.parseResponse(simplePriceSource, resp);
     expect(parsed.entries[0].metrics?.price_usd).toBeDefined();
   });

@@ -543,6 +543,13 @@ function extractField(
  * Resolve a template string with fallback chains.
  * Template format: "{field1|field2|(fallback literal)}"
  * Also supports simple interpolation: "prefix {field} suffix"
+ *
+ * Special tokens:
+ *   {key}  — the object-entries key (for object-entries parse mode)
+ *   {.}    — self-reference: the item itself when it's a primitive (string/number)
+ *            Example: item="38001" → {.} resolves to "38001"
+ *            Used by pubmed esearch where idlist contains bare strings.
+ *   {(literal)} — literal fallback text in parentheses
  */
 /**
  * Resolve a dotted/bracketed path against an object.

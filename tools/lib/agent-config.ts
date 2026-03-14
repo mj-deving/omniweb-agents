@@ -43,6 +43,15 @@ export interface AgentConfig {
     replyMinParentReactions: number;
     maxReactionsPerSession: number;
   };
+  tipping: {
+    enabled: boolean;
+    maxTipsPerSession: number;
+    maxPerRecipientPerDay: number;
+    minMinutesBetweenTips: number;
+    minSessionsBeforeLive: number;
+    minScore: number;
+    requireAttestation: boolean;
+  };
   gate: {
     predictedReactionsThreshold: number;
     allow5Of6: boolean;
@@ -141,6 +150,15 @@ interface ValidatedPersonaConfig {
     highSensitivityKeywords?: string[];
   };
   engagement?: { minDisagreePerSession?: number; replyMinParentReactions?: number; maxReactionsPerSession?: number };
+  tipping?: {
+    enabled?: boolean;
+    maxTipsPerSession?: number;
+    maxPerRecipientPerDay?: number;
+    minMinutesBetweenTips?: number;
+    minSessionsBeforeLive?: number;
+    minScore?: number;
+    requireAttestation?: boolean;
+  };
   gate?: {
     predictedReactionsThreshold?: number;
     allow5Of6?: boolean;
@@ -191,6 +209,9 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
   if (yaml.engagement !== undefined && (typeof yaml.engagement !== "object" || yaml.engagement === null || Array.isArray(yaml.engagement))) {
     errors.push(`engagement: expected object, got ${Array.isArray(yaml.engagement) ? "array" : typeof yaml.engagement}`);
   }
+  if (yaml.tipping !== undefined && (typeof yaml.tipping !== "object" || yaml.tipping === null || Array.isArray(yaml.tipping))) {
+    errors.push(`tipping: expected object, got ${Array.isArray(yaml.tipping) ? "array" : typeof yaml.tipping}`);
+  }
   if (yaml.scan !== undefined && (typeof yaml.scan !== "object" || yaml.scan === null || Array.isArray(yaml.scan))) {
     errors.push(`scan: expected object, got ${Array.isArray(yaml.scan) ? "array" : typeof yaml.scan}`);
   }
@@ -209,6 +230,11 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
     ["engagement.minDisagreePerSession", yaml.engagement?.minDisagreePerSession],
     ["engagement.replyMinParentReactions", yaml.engagement?.replyMinParentReactions],
     ["engagement.maxReactionsPerSession", yaml.engagement?.maxReactionsPerSession],
+    ["tipping.maxTipsPerSession", yaml.tipping?.maxTipsPerSession],
+    ["tipping.maxPerRecipientPerDay", yaml.tipping?.maxPerRecipientPerDay],
+    ["tipping.minMinutesBetweenTips", yaml.tipping?.minMinutesBetweenTips],
+    ["tipping.minSessionsBeforeLive", yaml.tipping?.minSessionsBeforeLive],
+    ["tipping.minScore", yaml.tipping?.minScore],
     ["scan.qualityFloor", yaml.scan?.qualityFloor],
     ["scan.depth", yaml.scan?.depth],
     ["scan.topicSearchLimit", yaml.scan?.topicSearchLimit],
@@ -227,6 +253,12 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
 
   if (yaml.gate?.allow5Of6 !== undefined && typeof yaml.gate.allow5Of6 !== "boolean") {
     errors.push(`gate.allow5Of6: expected boolean, got ${typeof yaml.gate.allow5Of6}`);
+  }
+  if (yaml.tipping?.enabled !== undefined && typeof yaml.tipping.enabled !== "boolean") {
+    errors.push(`tipping.enabled: expected boolean, got ${typeof yaml.tipping.enabled}`);
+  }
+  if (yaml.tipping?.requireAttestation !== undefined && typeof yaml.tipping.requireAttestation !== "boolean") {
+    errors.push(`tipping.requireAttestation: expected boolean, got ${typeof yaml.tipping.requireAttestation}`);
   }
   if (yaml.scan?.requireAttestation !== undefined && typeof yaml.scan.requireAttestation !== "boolean") {
     errors.push(`scan.requireAttestation: expected boolean, got ${typeof yaml.scan.requireAttestation}`);
@@ -260,6 +292,36 @@ function validatePersonaConfig(yaml: any, filePath: string): ValidatedPersonaCon
     const hours = yaml.scan.cacheHours;
     if (!Number.isFinite(hours) || hours < 1 || hours > 168) {
       errors.push(`scan.cacheHours: expected number in range [1, 168], got ${hours}`);
+    }
+  }
+  if (yaml.tipping?.maxTipsPerSession !== undefined) {
+    const maxTips = yaml.tipping.maxTipsPerSession;
+    if (!Number.isFinite(maxTips) || maxTips < 1 || maxTips > 2) {
+      errors.push(`tipping.maxTipsPerSession: expected number in range [1, 2], got ${maxTips}`);
+    }
+  }
+  if (yaml.tipping?.maxPerRecipientPerDay !== undefined) {
+    const maxPerRecipient = yaml.tipping.maxPerRecipientPerDay;
+    if (!Number.isFinite(maxPerRecipient) || maxPerRecipient < 1 || maxPerRecipient > 10) {
+      errors.push(`tipping.maxPerRecipientPerDay: expected number in range [1, 10], got ${maxPerRecipient}`);
+    }
+  }
+  if (yaml.tipping?.minMinutesBetweenTips !== undefined) {
+    const minutes = yaml.tipping.minMinutesBetweenTips;
+    if (!Number.isFinite(minutes) || minutes < 1 || minutes > 1440) {
+      errors.push(`tipping.minMinutesBetweenTips: expected number in range [1, 1440], got ${minutes}`);
+    }
+  }
+  if (yaml.tipping?.minSessionsBeforeLive !== undefined) {
+    const sessions = yaml.tipping.minSessionsBeforeLive;
+    if (!Number.isFinite(sessions) || sessions < 0 || sessions > 1000) {
+      errors.push(`tipping.minSessionsBeforeLive: expected number in range [0, 1000], got ${sessions}`);
+    }
+  }
+  if (yaml.tipping?.minScore !== undefined) {
+    const minScore = yaml.tipping.minScore;
+    if (!Number.isFinite(minScore) || minScore < 0 || minScore > 100) {
+      errors.push(`tipping.minScore: expected number in range [0, 100], got ${minScore}`);
     }
   }
   if (yaml.attestation?.defaultMode !== undefined) {
@@ -372,6 +434,15 @@ export function loadAgentConfig(name?: string): AgentConfig {
         replyMinParentReactions: 8,
         maxReactionsPerSession: 8,
       },
+      tipping: {
+        enabled: false,
+        maxTipsPerSession: 2,
+        maxPerRecipientPerDay: 2,
+        minMinutesBetweenTips: 5,
+        minSessionsBeforeLive: 3,
+        minScore: 80,
+        requireAttestation: true,
+      },
       gate: { predictedReactionsThreshold: 17, allow5Of6: true, duplicateWindowHours: 24 },
       calibration: { offset: 0 },
       loopExtensions: [],
@@ -407,6 +478,15 @@ export function loadAgentConfig(name?: string): AgentConfig {
       minDisagreePerSession: yaml.engagement?.minDisagreePerSession ?? 1,
       replyMinParentReactions: yaml.engagement?.replyMinParentReactions ?? 8,
       maxReactionsPerSession: yaml.engagement?.maxReactionsPerSession ?? 8,
+    },
+    tipping: {
+      enabled: yaml.tipping?.enabled ?? false,
+      maxTipsPerSession: yaml.tipping?.maxTipsPerSession ?? 2,
+      maxPerRecipientPerDay: yaml.tipping?.maxPerRecipientPerDay ?? 2,
+      minMinutesBetweenTips: yaml.tipping?.minMinutesBetweenTips ?? 5,
+      minSessionsBeforeLive: yaml.tipping?.minSessionsBeforeLive ?? 3,
+      minScore: yaml.tipping?.minScore ?? 80,
+      requireAttestation: yaml.tipping?.requireAttestation ?? true,
     },
     gate: {
       predictedReactionsThreshold: yaml.gate?.predictedReactionsThreshold ?? 17,

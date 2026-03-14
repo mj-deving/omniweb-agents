@@ -54,7 +54,8 @@ import { readSessionLog, appendSessionLog, resolveLogPath } from "./lib/log.js";
 import { saveReviewFindings, loadLatestFindings } from "./lib/review-findings.js";
 import { generatePost, type PostDraft } from "./lib/llm.js";
 import { resolveProvider, type LLMProvider } from "./lib/llm-provider.js";
-import { connectWallet, setLogAgent } from "./lib/sdk.js";
+import { apiCall, connectWallet, setLogAgent } from "./lib/sdk.js";
+import { ensureAuth } from "./lib/auth.js";
 import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "./lib/publish-pipeline.js";
 import { resolveAttestationPlan, type AttestationType } from "./lib/attestation-policy.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "./lib/agent-config.js";
@@ -63,6 +64,7 @@ import {
   runBeforeSense,
   runBeforePublishDraft,
   runAfterPublishDraft,
+  runAfterAct,
   runAfterConfirm,
   registerHook,
   type BeforeSenseContext,
@@ -71,6 +73,19 @@ import type { PublishedPostRecord } from "./lib/state.js";
 import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "./lib/write-rate-limit.js";
 import { fetchSignals, scoreSignalAlignment, type SignalSnapshot } from "./lib/signals.js";
 import { loadPredictions, savePredictions, registerPrediction, resolvePendingPredictions, getCalibrationAdjustment } from "./lib/predictions.js";
+import { loadMentionState, saveMentionState, fetchMentions } from "./lib/mentions.js";
+import {
+  executeTip,
+  incrementWarmupCounter,
+  loadTipState,
+  saveTipState,
+  selectTipCandidates,
+} from "./lib/tips.js";
+import {
+  defaultSpendingPolicy,
+  loadSpendingLedger,
+  saveSpendingLedger,
+} from "./lib/spending-policy.js";
 import {
   loadAgentSourceView,
   preflight as sourcesPreflight,
@@ -2783,6 +2798,20 @@ async function runV2Loop(
   }
 
   checkV2PhaseBudget("act", Date.now() - actStartMs);
+
+  try {
+    await runAfterAct(agentConfig.loopExtensions, {
+      state,
+      config: agentConfig,
+      actResult,
+      flags: { agent: flags.agent, env: flags.env, log: flags.log, dryRun: flags.dryRun, pretty: flags.pretty },
+    });
+  } catch (e: any) {
+    observe("error", `afterAct hooks failed: ${e.message}`, {
+      phase: "act",
+      source: "session-runner.ts:runV2Loop",
+    });
+  }
   } // end ACT else block
 
   // ── CONFIRM ────────────────────────────────────
@@ -3143,6 +3172,92 @@ async function main(): Promise<void> {
     }
     savePredictions(store);
     phaseResult(`Predictions registered: ${predictionPosts.length}`);
+  });
+
+  registerHook("tips", "beforeSense", async (ctx: BeforeSenseContext) => {
+    info("Extension: tips (polling mentions)...");
+    const mentionState = loadMentionState(ctx.config.name);
+    saveMentionState(mentionState, ctx.config.name);
+
+    const { demos, address } = await connectWallet(ctx.flags.env);
+    const token = await ensureAuth(demos, address);
+    const mentions = await fetchMentions(address, token, {
+      cursor: mentionState.lastProcessedMention,
+      limit: 100,
+    });
+
+    if (ctx.state.loopVersion === 2) {
+      ctx.state.pendingMentions = mentions.slice(-20);
+      saveState(ctx.state, ctx.config.paths.sessionDir);
+    }
+
+    phaseResult(`Mentions queued: ${mentions.length}`);
+  });
+
+  registerHook("tips", "afterAct", async (ctx) => {
+    info("Extension: tips (evaluating tip candidates)...");
+    const { demos, address } = await connectWallet(ctx.flags.env);
+    const token = await ensureAuth(demos, address);
+
+    const feedRes = await apiCall("/api/feed?limit=50", token);
+    if (!feedRes.ok) {
+      throw new Error(`Tip feed fetch failed (${feedRes.status})`);
+    }
+
+    const rawPosts = Array.isArray(feedRes.data?.posts)
+      ? feedRes.data.posts
+      : Array.isArray(feedRes.data)
+        ? feedRes.data
+        : [];
+
+    let tipState = loadTipState(ctx.config.name);
+    const completedWarmupSessions = tipState.warmupCounter;
+    tipState = incrementWarmupCounter(tipState, ctx.state.sessionNumber);
+
+    const candidates = selectTipCandidates(rawPosts, {
+      agentAddress: address,
+      config: ctx.config,
+      tipState,
+    });
+
+    let ledger = loadSpendingLedger(address, ctx.config.name);
+    const spendingConfig = defaultSpendingPolicy();
+    const liveTippingEnabled =
+      ctx.config.tipping.enabled &&
+      !ctx.flags.dryRun &&
+      completedWarmupSessions >= ctx.config.tipping.minSessionsBeforeLive;
+    spendingConfig.dryRun = !liveTippingEnabled;
+
+    observe("insight", "Tips afterAct policy resolved", {
+      phase: "act",
+      source: "session-runner.ts:tips-afterAct",
+      data: {
+        tippingEnabled: ctx.config.tipping.enabled,
+        runnerDryRun: ctx.flags.dryRun,
+        completedWarmupSessions,
+        minSessionsBeforeLive: ctx.config.tipping.minSessionsBeforeLive,
+        liveTippingEnabled,
+        candidateCount: candidates.length,
+      },
+    });
+
+    for (const candidate of candidates) {
+      const result = await executeTip({
+        agentName: ctx.config.name,
+        candidate,
+        demos,
+        token,
+        spendingConfig,
+        ledger,
+        tipState,
+      });
+      ledger = result.ledger;
+      tipState = result.tipState;
+    }
+
+    saveSpendingLedger(ledger, ctx.config.name);
+    saveTipState(tipState, ctx.config.name);
+    phaseResult(`Tips evaluated: ${candidates.length}${liveTippingEnabled ? "" : " (dry-run)"}`);
   });
 
   banner(sessionNumber, flags.oversight, flags.agent);

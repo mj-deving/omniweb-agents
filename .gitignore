@@ -13,3 +13,4 @@ claude-codex-coop/
 MEMORY/WORK/
 CLAUDE.md
 .sessions/
+.claude/worktrees/

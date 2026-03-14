@@ -124,19 +124,6 @@ const LLM_MAX_TEXT_LENGTH = 1500;
 /** Timeout for LLM claim extraction call (ms) */
 const LLM_CLAIM_TIMEOUT_MS = 10_000;
 
-const CLAIMS_EXTRACTION_PROMPT = `Extract the key factual claims from this text. Return ONLY a JSON array of strings — each string is one claim term or phrase (entity, number, relationship).
-
-Categories to extract:
-- Named entities (people, organizations, protocols, tokens)
-- Numeric facts (prices, percentages, dates, amounts)
-- Causal claims (X causes Y, X leads to Y)
-- Temporal claims (timeframes, deadlines, predictions)
-
-Text: "{TEXT}"
-Tags: {TAGS}
-
-Return ONLY the JSON array, no other text. Example: ["bitcoin", "$64000", "45% increase", "2026", "Federal Reserve"]`;
-
 /**
  * Extract structured claims using an LLM provider.
  * Returns a flat string[] of claim terms compatible with the regex-based format.
@@ -151,9 +138,21 @@ export async function extractClaimsLLM(
     ? postText.slice(0, LLM_MAX_TEXT_LENGTH) + "…"
     : postText;
 
-  const prompt = CLAIMS_EXTRACTION_PROMPT
-    .replace("{TEXT}", truncatedText)
-    .replace("{TAGS}", postTags.join(", "));
+  // Build prompt by concatenation (not sequential .replace()) to avoid
+  // placeholder collision when postText contains literal "{TAGS}"
+  const tagsStr = postTags.join(", ");
+  const prompt = `Extract the key factual claims from this text. Return ONLY a JSON array of strings — each string is one claim term or phrase (entity, number, relationship).
+
+Categories to extract:
+- Named entities (people, organizations, protocols, tokens)
+- Numeric facts (prices, percentages, dates, amounts)
+- Causal claims (X causes Y, X leads to Y)
+- Temporal claims (timeframes, deadlines, predictions)
+
+Text: "${truncatedText}"
+Tags: ${tagsStr}
+
+Return ONLY the JSON array, no other text. Example: ["bitcoin", "$64000", "45% increase", "2026", "Federal Reserve"]`;
 
   try {
     // Race LLM call against timeout to prevent pipeline stalls
@@ -218,26 +217,35 @@ const DIVERSITY_POINTS_PER_CLAIM = 5;
  * Calculate diversity bonus — extra points when multiple sources
  * corroborate the same claims. Only additive, never reduces scores.
  */
+/**
+ * Calculate diversity bonus and the set of corroborated claims.
+ * Returns both the bonus points and which claims were corroborated,
+ * so the caller can apply the bonus only to contributing candidates.
+ */
 function calculateDiversityBonus(
   scoredCandidates: ScoredCandidate[],
-): number {
-  if (scoredCandidates.length < 2) return 0;
+): { bonus: number; corroboratedClaims: Set<string> } {
+  const empty = { bonus: 0, corroboratedClaims: new Set<string>() };
+  if (scoredCandidates.length < 2) return empty;
 
-  // Track how many sources matched each claim (e.g., "bitcoin" → 2 sources)
-  const sourceCountPerClaim = new Map<string, number>();
+  // Track DISTINCT sources per claim (dedupe within each source)
+  const sourcesPerClaim = new Map<string, Set<string>>();
   for (const candidate of scoredCandidates) {
-    for (const claim of candidate.matchedClaims) {
-      sourceCountPerClaim.set(claim, (sourceCountPerClaim.get(claim) ?? 0) + 1);
+    const uniqueClaims = new Set(candidate.matchedClaims);
+    for (const claim of uniqueClaims) {
+      if (!sourcesPerClaim.has(claim)) sourcesPerClaim.set(claim, new Set());
+      sourcesPerClaim.get(claim)!.add(candidate.sourceId);
     }
   }
 
-  // A claim with count >= 2 means multiple sources corroborate it
-  let corroboratedCount = 0;
-  for (const count of sourceCountPerClaim.values()) {
-    if (count >= 2) corroboratedCount++;
+  // Claims corroborated by 2+ distinct sources
+  const corroboratedClaims = new Set<string>();
+  for (const [claim, sources] of sourcesPerClaim) {
+    if (sources.size >= 2) corroboratedClaims.add(claim);
   }
 
-  return Math.min(DIVERSITY_BONUS_CAP, corroboratedCount * DIVERSITY_POINTS_PER_CLAIM);
+  const bonus = Math.min(DIVERSITY_BONUS_CAP, corroboratedClaims.size * DIVERSITY_POINTS_PER_CLAIM);
+  return { bonus, corroboratedClaims };
 }
 
 // ── Evidence-Based Scoring ──────────────────────────
@@ -567,12 +575,14 @@ export async function match(input: MatchInput): Promise<MatchResult> {
     };
   }
 
-  // Apply cross-source diversity bonus (PR6)
-  const diversityBonus = calculateDiversityBonus(scored);
+  // Apply cross-source diversity bonus only to contributing candidates (PR6)
+  const { bonus: diversityBonus, corroboratedClaims } = calculateDiversityBonus(scored);
   if (diversityBonus > 0) {
-    // Apply bonus to all candidates (improves ranking fairness)
     for (const s of scored) {
-      s.score = Math.min(100, s.score + diversityBonus);
+      const contributed = s.matchedClaims.some((c) => corroboratedClaims.has(c));
+      if (contributed) {
+        s.score = Math.min(100, s.score + diversityBonus);
+      }
     }
   }
 

@@ -185,10 +185,10 @@ export async function resolvePendingPredictions(
   for (const [txHash, pred] of Object.entries(store.predictions)) {
     if (pred.status !== "pending") continue;
 
-    // Check deadline expiry
+    // Check deadline expiry — handle free-text deadlines (Q2 2026, March 2026, EOY, etc.)
     if (pred.deadline) {
-      const deadlineDate = new Date(pred.deadline);
-      if (!isNaN(deadlineDate.getTime()) && deadlineDate <= now) {
+      const deadlineDate = parseFlexibleDeadline(pred.deadline);
+      if (deadlineDate && deadlineDate <= now) {
         pred.status = "expired";
         pred.resolvedAt = now.toISOString();
         expired++;
@@ -274,6 +274,45 @@ function emptyStore(agent: string): PredictionStore {
  *
  * Returns extracted fields and whether structured data was found.
  */
+function parseFlexibleDeadline(deadline: string): Date | null {
+  // Try standard date parse first
+  const direct = new Date(deadline);
+  if (!isNaN(direct.getTime())) return direct;
+
+  const lower = deadline.toLowerCase().trim();
+  const currentYear = new Date().getFullYear();
+
+  // Quarter patterns: Q1 2026, Q2, etc.
+  const qMatch = lower.match(/q([1-4])\s*(\d{4})?/);
+  if (qMatch) {
+    const quarter = parseInt(qMatch[1], 10);
+    const year = qMatch[2] ? parseInt(qMatch[2], 10) : currentYear;
+    return new Date(year, quarter * 3, 0); // last day of quarter's final month
+  }
+
+  // Month + year: March 2026, Jan 2027
+  const monthMatch = lower.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s*(\d{4})?/);
+  if (monthMatch) {
+    const months: Record<string, number> = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+    const month = months[monthMatch[1].slice(0, 3)];
+    const year = monthMatch[2] ? parseInt(monthMatch[2], 10) : currentYear;
+    if (month !== undefined) return new Date(year, month + 1, 0); // last day of month
+  }
+
+  // EOY, end of year
+  if (lower.includes("eoy") || lower.includes("end of year")) {
+    return new Date(currentYear, 11, 31);
+  }
+
+  // EOQ, end of quarter
+  if (lower.includes("eoq") || lower.includes("end of quarter")) {
+    const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
+    return new Date(currentYear, currentQuarter * 3, 0);
+  }
+
+  return null; // can't parse — prediction won't auto-expire
+}
+
 function extractPredictionStructure(text: string): {
   value?: string;
   direction?: "up" | "down" | "stable";

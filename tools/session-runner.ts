@@ -1523,6 +1523,21 @@ async function runPublishManual(
 
     publishedHashes.push(txHash);
     state.posts.push(txHash);
+
+    // Build partial PublishedPostRecord for afterConfirm hooks (PR1)
+    const v2State = state as import("./lib/state.js").V2SessionState;
+    if (!v2State.publishedPosts) v2State.publishedPosts = [];
+    v2State.publishedPosts.push({
+      txHash,
+      topic: gp.topic || "",
+      category: gp.category || "ANALYSIS",
+      text: gp.text || "",
+      confidence: gp.confidence || 0,
+      predictedReactions: predicted,
+      tags: [],
+      publishedAt: new Date().toISOString(),
+      attestationType: "DAHR",
+    });
     saveState(state);
   }
 
@@ -1558,7 +1573,7 @@ async function runPublishAutonomous(
   }
 
   // Connect wallet for publishing (no auth needed — publish uses on-chain TX, not API)
-  const { demos } = await connectWallet(flags.env);
+  const { demos, address: walletAddress } = await connectWallet(flags.env);
 
   // Load source view (cached per session — shared with gate phase)
   const sourceView = getSourceView();
@@ -1572,9 +1587,6 @@ async function runPublishAutonomous(
 
   // Resolve enabled extensions for hook dispatch
   const enabledExtensions = agentConfig.loopExtensions;
-
-  // Load write-rate ledger for this wallet address (PR1 — persistent, address-scoped)
-  const walletAddress = (demos as any).address || "";
   let writeRateLedger = loadWriteRateLedger(walletAddress);
 
   for (const gp of gatePosts) {
@@ -1648,6 +1660,7 @@ async function runPublishAutonomous(
           },
           calibrationOffset,
           signalContext,
+          briefingContext: (state as any).briefingContext as string | undefined,
         },
         provider,
         {
@@ -3065,9 +3078,9 @@ async function main(): Promise<void> {
     );
   });
 
-  // PR1: Register signals extension — fetch consensus signals before SENSE
+  // PR1+PR2: Register signals extension — fetch consensus signals + briefing before SENSE
   registerHook("signals", "beforeSense", async (ctx: BeforeSenseContext) => {
-    info("Extension: signals (fetching consensus)...");
+    info("Extension: signals (fetching consensus + briefing)...");
     try {
       const { loadAuthCache } = await import("./lib/auth.js");
       const cached = loadAuthCache();
@@ -3080,8 +3093,15 @@ async function main(): Promise<void> {
         (ctx.state as any).signalSnapshot = snapshot;
         phaseResult(`Signals: ${snapshot.topics.length} topic(s), ${snapshot.alerts.length} alert(s)`);
       }
+      // PR2: Also fetch latest colony briefing
+      const { fetchLatestBriefing } = await import("./lib/signals.js");
+      const briefing = await fetchLatestBriefing(cached.token);
+      if (briefing && ctx.state.loopVersion === 2) {
+        (ctx.state as any).briefingContext = briefing;
+        info(`Briefing: ${briefing.length} chars`);
+      }
     } catch (e: any) {
-      observe("error", `Signals fetch failed: ${e.message}`, {
+      observe("error", `Signals/briefing fetch failed: ${e.message}`, {
         phase: "sense", source: "session-runner.ts:signals-hook",
       });
     }
@@ -3147,6 +3167,29 @@ async function main(): Promise<void> {
 
   try {
     if (isV2(state)) {
+      // PR2: Auto-register agent profile on first session (non-fatal)
+      try {
+        const { loadAuthCache } = await import("./lib/auth.js");
+        const { apiCall } = await import("./lib/sdk.js");
+        const cached = loadAuthCache();
+        if (cached) {
+          const profileRes = await apiCall(`/api/agent/${cached.address}`, cached.token);
+          if (!profileRes.ok || !profileRes.data?.name) {
+            await apiCall("/api/agents/register", cached.token, {
+              method: "POST",
+              body: JSON.stringify({
+                name: agentConfig.name,
+                description: agentConfig.displayName || `${agentConfig.name} agent`,
+                specialties: agentConfig.topics?.primary || [],
+              }),
+            });
+            info(`Auto-registered agent profile: ${agentConfig.name}`);
+          }
+        }
+      } catch {
+        // Non-fatal — agent can operate without profile
+      }
+
       // ── V2 Loop ────────────────────────────────
       await runV2Loop(state, flags, sessionsDir, rl);
 

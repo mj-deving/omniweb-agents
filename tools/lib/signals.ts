@@ -93,6 +93,38 @@ export async function fetchSignals(token: string): Promise<SignalSnapshot | null
   }
 }
 
+// ── Briefing ────────────────────────────────────────
+
+/**
+ * Fetch the latest colony briefing/report summary.
+ * Returns the summary text on success, null on any failure.
+ * Never throws.
+ */
+export async function fetchLatestBriefing(token: string): Promise<string | null> {
+  try {
+    const res = await apiCall("/api/report", token);
+    if (!res.ok) {
+      observe("error", `Briefing fetch failed: HTTP ${res.status}`, {
+        phase: "scan", source: "signals.ts", data: { status: res.status },
+      });
+      return null;
+    }
+
+    const data = res.data;
+    const summary = data?.summary || data?.data?.summary || data?.text || data?.data?.text;
+    if (!summary || typeof summary !== "string") {
+      return null; // no summary field — briefing not available
+    }
+
+    observe("insight", `Fetched briefing: ${summary.length} chars`, {
+      phase: "scan", source: "signals.ts",
+    });
+    return summary;
+  } catch (err: unknown) {
+    return null;
+  }
+}
+
 // ── Scoring ────────────────────────────────────────
 
 /**

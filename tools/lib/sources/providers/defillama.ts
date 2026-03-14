@@ -26,9 +26,9 @@ import type {
   EvidenceEntry,
 } from "./types.js";
 
-type DlOperation = "tvl" | "protocol" | "chains" | "yields" | "dexs";
+type DlOperation = "tvl" | "protocol" | "chains" | "yields" | "dexs" | "stablecoins";
 
-const VALID_OPERATIONS: DlOperation[] = ["tvl", "protocol", "chains", "yields", "dexs"];
+const VALID_OPERATIONS: DlOperation[] = ["tvl", "protocol", "chains", "yields", "dexs", "stablecoins"];
 
 /** Operations safe for TLSN (very small response bodies) */
 const TLSN_SAFE_OPS: DlOperation[] = ["tvl"];
@@ -48,6 +48,8 @@ function buildUrl(operation: DlOperation, protocol: string): string {
       return "https://yields.llama.fi/pools";
     case "dexs":
       return "https://api.llama.fi/overview/dexs";
+    case "stablecoins":
+      return "https://stablecoins.llama.fi/stablecoins?includePrices=true";
   }
 }
 
@@ -65,6 +67,7 @@ function inferOperation(source: SourceRecordV2): DlOperation {
   if (url.includes("/chains")) return "chains";
   if (url.includes("yields.llama.fi") || url.includes("/pools")) return "yields";
   if (url.includes("/overview/dexs")) return "dexs";
+  if (url.includes("/stablecoins") || url.includes("stablecoins.llama.fi")) return "stablecoins";
   return "tvl";
 }
 
@@ -120,6 +123,9 @@ export const adapter: ProviderAdapter = {
         break;
       case "dexs":
         estimatedSizeKb = 40;
+        break;
+      case "stablecoins":
+        estimatedSizeKb = 80;
         break;
       default:
         estimatedSizeKb = 10;
@@ -271,6 +277,28 @@ export const adapter: ProviderAdapter = {
               change_24h: typeof d.change_1d === "number" ? d.change_1d : 0,
             },
             raw: dex,
+          });
+        }
+        break;
+      }
+
+      case "stablecoins": {
+        // Response: { peggedAssets: [{ name, symbol, circulating: {peggedUSD}, ... }] }
+        const stableData = parsed as Record<string, unknown>;
+        const assets = Array.isArray(stableData?.peggedAssets) ? stableData.peggedAssets : [];
+        for (const asset of assets.slice(0, 20)) {
+          if (typeof asset !== "object" || asset === null) continue;
+          const a = asset as Record<string, unknown>;
+          const circulating = (a.circulating as Record<string, unknown>)?.peggedUSD;
+          entries.push({
+            id: String(a.name ?? "").toLowerCase().replace(/\s+/g, "-"),
+            title: `${a.name ?? "?"} (${a.symbol ?? "?"})`,
+            bodyText: `Stablecoin ${a.name}: circulating $${typeof circulating === "number" ? circulating.toLocaleString() : "?"}`,
+            topics: ["defi", "stablecoin", String(a.symbol ?? "").toLowerCase()],
+            metrics: {
+              circulating: typeof circulating === "number" ? circulating : 0,
+            },
+            raw: asset,
           });
         }
         break;

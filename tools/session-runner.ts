@@ -1655,28 +1655,40 @@ async function runPublishAutonomous(
         sourceView,
       });
 
-      // Resolve source selection: prefer match result, fall back to preflight
+      // Resolve source selection from match/preflight/legacy
+      //
+      // Three cases:
+      //   1. matchDecision.pass=true → use match result (evidence-backed)
+      //   2. matchDecision.pass=false → SKIP publish (post not substantiated)
+      //   3. matchDecision=undefined → no sources extension; use preflight or legacy
       let selectedUrl: string;
       let selectedMethod: AttestationType;
       let selectedSourceName: string;
 
       if (matchDecision?.pass && matchDecision.best) {
-        // Best match from evidence-based scoring
+        // Case 1: Evidence-based match succeeded
         selectedUrl = matchDecision.best.url;
         selectedMethod = matchDecision.best.method;
         selectedSourceName = matchDecision.best.sourceId;
         info(`Match PASS: source "${selectedSourceName}" score ${matchDecision.best.score} for "${gp.topic}"`);
+      } else if (matchDecision && !matchDecision.pass) {
+        // Case 2: Match explicitly failed — skip publish (P0 fix: don't fall through)
+        observe("insight", `Match rejected post for "${gp.topic}": ${matchDecision.reason}`, {
+          phase: "publish",
+          substage: "publish",
+          source: "session-runner.ts:runPublishAutonomous",
+          data: { topic: gp.topic, reasonCode: matchDecision.reasonCode },
+        });
+        info(`Match SKIP: ${gp.topic} — ${matchDecision.reason}`);
+        continue;
       } else if (preflightDecision?.candidates && preflightDecision.candidates.length > 0) {
-        // Fall back to preflight's best candidate
+        // Case 3a: No match extension — use preflight's best candidate
         const best = preflightDecision.candidates[0];
         selectedUrl = best.url;
         selectedMethod = best.method;
         selectedSourceName = best.source?.name || best.sourceId;
-        if (matchDecision && !matchDecision.pass) {
-          info(`Match FALLBACK: ${matchDecision.reason} — using preflight candidate "${selectedSourceName}"`);
-        }
       } else {
-        // No source at all — use legacy direct lookup as last resort
+        // Case 3b: No hooks returned anything — legacy direct lookup
         const plan = resolveAttestationPlan(gp.topic, agentConfig);
         const legacySelection = selectSourceForTopicV2(gp.topic, sourceView, plan.required);
         if (!legacySelection) {

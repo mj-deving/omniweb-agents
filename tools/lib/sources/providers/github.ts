@@ -130,24 +130,28 @@ export const adapter: ProviderAdapter = {
     const operation = inferOperation(ctx.source);
     const perPage = ctx.attestation === "TLSN" ? TLSN_MAX_PER_PAGE : DAHR_DEFAULT_PER_PAGE;
 
-    const ownerRepo = extractOwnerRepo(ctx.source.url);
+    // Resolve owner/repo: first try extracting from URL, then fall back to template vars
+    const resolvedUrl = ctx.source.url.replace(/\{([^}]+)\}/g, (_, key: string) => {
+      return ctx.vars[key.trim()] ?? "";
+    });
+    const ownerRepo = extractOwnerRepo(resolvedUrl) || extractOwnerRepo(ctx.source.url);
     const query = ctx.vars.query || ctx.topic;
 
     let url: string;
     switch (operation) {
       case "repo":
-        if (!ownerRepo) return [];
+        if (!ownerRepo || ownerRepo.owner.includes("{")) return []; // still unresolved
         url = buildUrl("repo", { owner: ownerRepo.owner, repo: ownerRepo.repo, perPage });
         break;
       case "search-repos":
         url = buildUrl("search-repos", { query, perPage });
         break;
       case "commits":
-        if (!ownerRepo) return [];
+        if (!ownerRepo || ownerRepo.owner.includes("{")) return [];
         url = buildUrl("commits", { owner: ownerRepo.owner, repo: ownerRepo.repo, perPage });
         break;
       case "releases":
-        if (!ownerRepo) return [];
+        if (!ownerRepo || ownerRepo.owner.includes("{")) return [];
         url = buildUrl("releases", { owner: ownerRepo.owner, repo: ownerRepo.repo, perPage });
         break;
     }

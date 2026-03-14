@@ -4422,7 +4422,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "quarantined",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -4437,7 +4437,8 @@
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
-        "discoveredBy": "import"
+        "discoveredBy": "import",
+        "failureReason": "esummary requires specific PMIDs — not available from topic vars at runtime"
       },
       "adapter": {
         "operation": "esummary"

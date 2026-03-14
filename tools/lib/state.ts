@@ -81,7 +81,7 @@ const PHASE_ORDER: PhaseName[] = [
 export type CorePhase = "sense" | "act" | "confirm";
 export type LoopVersion = 1 | 2;
 export const CORE_PHASE_ORDER: CorePhase[] = ["sense", "act", "confirm"];
-export const KNOWN_EXTENSIONS = ["calibrate", "sources", "observe", "signals", "predictions"] as const;
+export const KNOWN_EXTENSIONS = ["calibrate", "sources", "observe", "signals", "predictions", "tips"] as const;
 
 export type SubstageStatus = "pending" | "running" | "completed" | "failed" | "skipped";
 
@@ -112,6 +112,14 @@ export interface PublishedPostRecord {
   verified?: boolean;
 }
 
+export interface PendingMentionRecord {
+  txHash: string;
+  author: string;
+  timestamp: number;
+  textPreview: string;
+  mentions: string[];
+}
+
 export interface V2SessionState {
   loopVersion: 2;
   sessionNumber: number;
@@ -130,6 +138,8 @@ export interface V2SessionState {
   signalSnapshot?: unknown;
   /** Colony briefing summary from /api/report — consumed by LLM prompt assembly (PR2) */
   briefingContext?: string;
+  /** Mention candidates discovered during beforeSense polling (PR3). */
+  pendingMentions?: PendingMentionRecord[];
 }
 
 export type AnySessionState = SessionState | V2SessionState;
@@ -259,6 +269,7 @@ export function normalizeState(state: AnySessionState): AnySessionState {
   }
   if (!state.posts) state.posts = [];
   if (!state.engagements) state.engagements = [];
+  if (isV2(state) && !state.pendingMentions) state.pendingMentions = [];
   return state;
 }
 

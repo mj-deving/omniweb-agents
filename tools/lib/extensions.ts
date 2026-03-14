@@ -9,6 +9,7 @@
  *   - beforeSense: runs before SENSE phase (e.g., calibrate)
  *   - beforePublishDraft: inside ACT/publish, before LLM generation (e.g., source preflight)
  *   - afterPublishDraft: inside ACT/publish, after draft validation (e.g., source match)
+ *   - afterAct: runs after ACT completion, even if nothing was published (e.g., tips)
  */
 
 import type { KNOWN_EXTENSIONS } from "./state.js";
@@ -68,6 +69,13 @@ export interface AfterConfirmContext {
   confirmResult?: unknown;
 }
 
+export interface AfterActContext {
+  state: V2SessionState;
+  config: AgentConfig;
+  actResult?: unknown;
+  flags: BeforeSenseFlags;
+}
+
 // ── Decision Types ────────────────────────────────
 
 export interface PublishGateDecision {
@@ -99,6 +107,7 @@ export interface LoopExtensionHooks {
   beforeSense?(ctx: BeforeSenseContext): Promise<void>;
   beforePublishDraft?(ctx: BeforePublishDraftContext): Promise<PublishGateDecision | void>;
   afterPublishDraft?(ctx: AfterPublishDraftContext): Promise<SourceMatchDecision | void>;
+  afterAct?(ctx: AfterActContext): Promise<void>;
   afterConfirm?(ctx: AfterConfirmContext): Promise<void>;
 }
 
@@ -191,6 +200,10 @@ const EXTENSION_REGISTRY: Record<KnownExtension, LoopExtensionHooks> = {
     // beforeSense (resolution) + afterConfirm (registration) registered at runtime
     // because they need auth token and agent config from session context
   },
+  tips: {
+    // beforeSense (mention polling) + afterAct (tip execution) registered at runtime
+    // because they need auth token, wallet access, and session context
+  },
 };
 
 // ── Dispatcher ────────────────────────────────────
@@ -254,6 +267,22 @@ export async function runAfterPublishDraft(
     }
   }
   return lastDecision;
+}
+
+/**
+ * Run all afterAct hooks for the agent's enabled extensions.
+ * Hooks run sequentially. No short-circuit — all hooks execute.
+ */
+export async function runAfterAct(
+  enabledExtensions: string[],
+  ctx: AfterActContext
+): Promise<void> {
+  for (const ext of enabledExtensions) {
+    const hooks = EXTENSION_REGISTRY[ext as KnownExtension];
+    if (hooks?.afterAct) {
+      await hooks.afterAct(ctx);
+    }
+  }
 }
 
 /**

@@ -49,6 +49,7 @@ loop:
     - predictions
     - sources
     - observe
+    - tips
 
 sourceDiscovery:
   maxPerSession: 5

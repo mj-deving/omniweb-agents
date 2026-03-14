@@ -35,6 +35,15 @@ engagement:
   replyMinParentReactions: 6
   maxReactionsPerSession: 5
 
+tipping:
+  enabled: false
+  maxTipsPerSession: 2
+  maxPerRecipientPerDay: 2
+  minMinutesBetweenTips: 5
+  minSessionsBeforeLive: 3
+  minScore: 80
+  requireAttestation: true
+
 gate:
   predictedReactionsThreshold: 12
   allow5Of6: true
@@ -54,3 +63,4 @@ loop:
     - predictions
     - sources
     - observe
+    - tips

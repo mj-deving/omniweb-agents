@@ -223,6 +223,82 @@ describe("testSource", () => {
     expect(fetchSourceMock).not.toHaveBeenCalled();
   });
 
+  it("returns NOT_SUPPORTED when adapter.supports returns false", async () => {
+    const source = makeSource();
+    const adapter = makeAdapter({ supports: vi.fn().mockReturnValue(false) });
+    getProviderAdapterMock.mockReturnValue(adapter);
+
+    const result = await testSource(source);
+
+    expect(result.status).toBe("NOT_SUPPORTED");
+    expect(fetchSourceMock).not.toHaveBeenCalled();
+  });
+
+  it("returns VALIDATION_REJECTED when validateCandidate returns ok=false", async () => {
+    const source = makeSource();
+    const adapter = makeAdapter({
+      validateCandidate: vi.fn().mockReturnValue({ ok: false, reason: "Response too large for TLSN" }),
+    });
+    getProviderAdapterMock.mockReturnValue(adapter);
+
+    const result = await testSource(source);
+
+    expect(result.status).toBe("VALIDATION_REJECTED");
+    expect(result.error).toContain("Response too large");
+    expect(fetchSourceMock).not.toHaveBeenCalled();
+  });
+
+  it("returns NO_CANDIDATES when buildCandidates returns empty", async () => {
+    const source = makeSource();
+    const adapter = makeAdapter({
+      buildCandidates: vi.fn().mockReturnValue([]),
+    });
+    getProviderAdapterMock.mockReturnValue(adapter);
+
+    const result = await testSource(source);
+
+    expect(result.status).toBe("NO_CANDIDATES");
+    expect(fetchSourceMock).not.toHaveBeenCalled();
+  });
+
+  it("returns NO_CANDIDATES when buildCandidates throws", async () => {
+    const source = makeSource();
+    const adapter = makeAdapter({
+      buildCandidates: vi.fn().mockImplementation(() => {
+        throw new Error("Missing required variable");
+      }),
+    });
+    getProviderAdapterMock.mockReturnValue(adapter);
+
+    const result = await testSource(source);
+
+    expect(result.status).toBe("NO_CANDIDATES");
+    expect(result.error).toContain("Missing required variable");
+  });
+
+  it("uses rewritten URL from validateCandidate", async () => {
+    const rewrittenUrl = "https://api.example.com/rewritten?limit=2";
+    const source = makeSource();
+    const adapter = makeAdapter({
+      validateCandidate: vi.fn().mockReturnValue({ ok: true, rewrittenUrl }),
+    });
+    getProviderAdapterMock.mockReturnValue(adapter);
+    fetchSourceMock.mockResolvedValue({
+      ok: true,
+      response: makeResponse(),
+      attempts: 1,
+      totalMs: 100,
+    });
+
+    await testSource(source);
+
+    expect(fetchSourceMock).toHaveBeenCalledWith(
+      rewrittenUrl,
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it("records latency in milliseconds", async () => {
     const source = makeSource();
     const adapter = makeAdapter();
@@ -264,13 +340,20 @@ describe("testSource", () => {
     expect(result.sampleTitles).toEqual(["Alpha", "Beta", "Gamma"]);
   });
 
-  it("returns UNRESOLVED_VARS when URL has unresolved template variables", async () => {
-    const source = makeSource({
-      url: "https://api.example.com/{unknown_var}/data",
-    });
-    // Adapter returns no candidates, so it falls back to direct URL resolution
+  it("returns UNRESOLVED_VARS when adapter generates URL with unresolved variables", async () => {
+    const source = makeSource();
     const adapter = makeAdapter({
-      buildCandidates: vi.fn().mockReturnValue([]),
+      buildCandidates: vi.fn().mockReturnValue([
+        {
+          sourceId: "test",
+          provider: "test",
+          operation: "test",
+          method: "GET",
+          url: "https://api.example.com/{unknown_var}/data",
+          attestation: "TLSN",
+          matchHints: [],
+        },
+      ]),
     });
     getProviderAdapterMock.mockReturnValue(adapter);
 

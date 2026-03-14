@@ -66,7 +66,17 @@ if (!catalog) {
 
 // ── Filter Sources ───────────────────────────────────
 
-const sources = filterSources(catalog.sources as SourceRecordV2[], {
+let allSources = catalog.sources as SourceRecordV2[];
+
+// Agent filter: only include sources scoped to this agent
+if (agent) {
+  allSources = allSources.filter((s) => {
+    const agents = s.scope?.agents || s.scope?.importedFrom || [];
+    return agents.some((a: string) => a.toLowerCase() === agent.toLowerCase());
+  });
+}
+
+const sources = filterSources(allSources, {
   sourceId,
   provider,
   quarantined,
@@ -86,6 +96,9 @@ const statusIcons: Record<SourceTestStatus, string> = {
   FETCH_FAILED: "✗",
   PARSE_FAILED: "✗",
   NO_ADAPTER: "⊘",
+  NOT_SUPPORTED: "⊘",
+  VALIDATION_REJECTED: "✗",
+  NO_CANDIDATES: "○",
   UNRESOLVED_VARS: "?",
 };
 
@@ -132,6 +145,9 @@ async function main(): Promise<void> {
     FETCH_FAILED: 0,
     PARSE_FAILED: 0,
     NO_ADAPTER: 0,
+    NOT_SUPPORTED: 0,
+    VALIDATION_REJECTED: 0,
+    NO_CANDIDATES: 0,
     UNRESOLVED_VARS: 0,
   };
   for (const r of results) summary[r.status]++;
@@ -144,6 +160,9 @@ async function main(): Promise<void> {
     if (summary.FETCH_FAILED > 0) parts.push(`${summary.FETCH_FAILED} FETCH`);
     if (summary.PARSE_FAILED > 0) parts.push(`${summary.PARSE_FAILED} PARSE`);
     if (summary.NO_ADAPTER > 0) parts.push(`${summary.NO_ADAPTER} NO_ADAPTER`);
+    if (summary.NOT_SUPPORTED > 0) parts.push(`${summary.NOT_SUPPORTED} NOT_SUPPORTED`);
+    if (summary.VALIDATION_REJECTED > 0) parts.push(`${summary.VALIDATION_REJECTED} REJECTED`);
+    if (summary.NO_CANDIDATES > 0) parts.push(`${summary.NO_CANDIDATES} NO_CANDIDATES`);
     if (summary.UNRESOLVED_VARS > 0) parts.push(`${summary.UNRESOLVED_VARS} UNRESOLVED`);
     console.log(`Summary: ${parts.join(", ")}`);
   }

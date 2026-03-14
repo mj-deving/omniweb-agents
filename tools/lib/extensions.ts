@@ -208,6 +208,10 @@ const EXTENSION_REGISTRY: Record<KnownExtension, LoopExtensionHooks> = {
     // beforeSense (mention polling) + afterAct (tip execution) registered at runtime
     // because they need auth token, wallet access, and session context
   },
+  lifecycle: {
+    // beforeSense registered at runtime by session-runner via registerHook()
+    // because it needs catalog path, agent config, and write access
+  },
 };
 
 // ── Dispatcher ────────────────────────────────────

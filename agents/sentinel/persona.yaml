@@ -59,3 +59,4 @@ loop:
     - sources
     - observe
     - tips
+    - lifecycle

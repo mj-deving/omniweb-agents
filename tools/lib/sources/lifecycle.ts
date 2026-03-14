@@ -65,6 +65,60 @@ const VALID_TRANSITIONS: Record<SourceStatus, SourceStatus[]> = {
   archived: ["quarantined"],
 };
 
+// ── Sampling ─────────────────────────────────────────
+
+/** Statuses excluded from sampling — cannot transition automatically */
+const EXCLUDED_STATUSES: Set<SourceStatus> = new Set(["archived", "deprecated"]);
+
+/**
+ * Sample sources for lifecycle testing, prioritized by urgency.
+ *
+ * Priority (highest first):
+ *   1. Quarantined sources near promotion (successCount close to PROMOTION_PASSES)
+ *   2. Active/degraded sources with consecutiveFailures > 0 (health regression)
+ *   3. Least-recently-tested sources (oldest lastTestedAt)
+ *
+ * Never returns archived or deprecated sources.
+ */
+export function sampleSources(
+  sources: SourceRecordV2[],
+  maxCount: number,
+): SourceRecordV2[] {
+  // Filter out non-testable statuses
+  const eligible = sources.filter((s) => !EXCLUDED_STATUSES.has(s.status));
+
+  if (eligible.length <= maxCount) return eligible;
+
+  // Score each source for sampling priority (higher = more urgent)
+  const scored = eligible.map((source) => {
+    let priority = 0;
+
+    // Near-promotion quarantined sources (successCount 2 out of 3 = highest priority)
+    if (source.status === "quarantined" && source.rating.consecutiveFailures === 0) {
+      priority += 100 + source.rating.successCount * 10; // 100-130 range
+    }
+
+    // Sources with consecutive failures (health regression)
+    if (source.rating.consecutiveFailures > 0) {
+      priority += 50 + source.rating.consecutiveFailures * 5; // 55-70 range
+    }
+
+    // Least-recently-tested (inverse of lastTestedAt)
+    if (source.rating.lastTestedAt) {
+      const hoursSinceTest = (Date.now() - new Date(source.rating.lastTestedAt).getTime()) / (60 * 60 * 1000);
+      priority += Math.min(40, hoursSinceTest / 24); // 0-40 range, caps at 40 days
+    } else {
+      priority += 40; // Never tested = max staleness bonus
+    }
+
+    return { source, priority };
+  });
+
+  // Sort by priority descending, take top N
+  scored.sort((a, b) => b.priority - a.priority);
+  return scored.slice(0, maxCount).map((s) => s.source);
+}
+
 // ── Test Result Classification ───────────────────────
 
 /** Statuses that count as a successful test */

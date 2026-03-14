@@ -544,6 +544,26 @@ function extractField(
  * Template format: "{field1|field2|(fallback literal)}"
  * Also supports simple interpolation: "prefix {field} suffix"
  */
+/**
+ * Resolve a dotted/bracketed path against an object.
+ * Supports: "field", "a.b", "a[0]", "a.b[1].c", "c[0]"
+ */
+function getNestedValue(obj: unknown, path: string): unknown {
+  // Split on dots and brackets: "a.b[0].c" → ["a", "b", "0", "c"]
+  const segments = path.split(/\.|\[(\d+)\]/).filter((s) => s !== "" && s !== undefined);
+  let current: unknown = obj;
+  for (const seg of segments) {
+    if (current == null || typeof current !== "object") return undefined;
+    if (/^\d+$/.test(seg)) {
+      // Array index
+      current = Array.isArray(current) ? current[Number(seg)] : (current as Record<string, unknown>)[seg];
+    } else {
+      current = (current as Record<string, unknown>)[seg];
+    }
+  }
+  return current;
+}
+
 function resolveTemplate(
   template: string,
   item: unknown,
@@ -568,9 +588,10 @@ function resolveTemplate(
       // Variable lookup
       if (vars[trimmed] != null) return vars[trimmed];
 
-      // Item field lookup (direct property access)
+      // Item field lookup — supports dotted paths and bracket notation
+      // e.g., {description.en}, {c[0]}, {country.value}, {v[1]}
       if (typeof item === "object" && item !== null) {
-        const val = (item as Record<string, unknown>)[trimmed];
+        const val = getNestedValue(item, trimmed);
         if (val != null) return String(val);
       }
     }
@@ -983,6 +1004,31 @@ function createAdapterFromSpec(
             ok: false,
             reason: compat.dahr?.blockedReason || "DAHR not allowed for this operation",
           };
+        }
+
+        // Enforce maxResponseKb for TLSN
+        if (candidate.attestation === "TLSN" && compat.tlsn) {
+          const maxKb = compat.tlsn.maxResponseKb ?? 16;
+          if (candidate.estimatedSizeKb && candidate.estimatedSizeKb > maxKb) {
+            return { ok: false, reason: `Estimated response ${candidate.estimatedSizeKb}KB exceeds TLSN limit ${maxKb}KB` };
+          }
+        }
+
+        // Enforce requireNormalizedJson for DAHR
+        if (candidate.attestation === "DAHR" && compat.dahr?.requireNormalizedJson) {
+          const parseFormat = operation.parse?.format;
+          if (parseFormat && parseFormat !== "json") {
+            return { ok: false, reason: `DAHR requires JSON but operation parse format is ${parseFormat}` };
+          }
+        }
+
+        // Enforce responseFormats compatibility
+        if (compat.responseFormats && compat.responseFormats.length > 0) {
+          // Check against source responseFormat if we can infer it from the operation
+          const parseFormat = operation.parse?.format;
+          if (parseFormat && !compat.responseFormats.includes(parseFormat)) {
+            return { ok: false, reason: `Parse format ${parseFormat} not in allowed responseFormats` };
+          }
         }
 
         let url = candidate.url;

@@ -37,6 +37,9 @@ const STALE_DAYS = 14;
 /** Days of stale before stale→deprecated */
 const DEPRECATED_DAYS = 30;
 
+/** Consecutive failures before quarantined→archived (chronic failure pruning) */
+const QUARANTINE_ARCHIVE_FAILURES = 5;
+
 // ── Types ────────────────────────────────────────────
 
 export interface TransitionResult {
@@ -193,6 +196,7 @@ export function evaluateTransition(
 
   switch (source.status) {
     case "quarantined": {
+      // Promotion: 3 consecutive passes
       if (
         source.rating.successCount >= PROMOTION_PASSES &&
         source.rating.consecutiveFailures === 0
@@ -201,6 +205,15 @@ export function evaluateTransition(
           ...base,
           newStatus: "active",
           reason: `Promoted: ${source.rating.successCount} consecutive passes`,
+          testResult,
+        };
+      }
+      // Pruning: chronic failures → archive
+      if (source.rating.consecutiveFailures >= QUARANTINE_ARCHIVE_FAILURES) {
+        return {
+          ...base,
+          newStatus: "archived",
+          reason: `Archived: ${source.rating.consecutiveFailures} consecutive failures (threshold: ${QUARANTINE_ARCHIVE_FAILURES})`,
           testResult,
         };
       }

@@ -106,6 +106,22 @@ describe("evaluateTransition", () => {
     expect(result.newStatus).toBeNull();
   });
 
+  it("quarantined with 5+ consecutiveFailures → recommends archived (pruning)", () => {
+    const source = makeSource({
+      status: "quarantined",
+      rating: {
+        overall: 30, uptime: 30, relevance: 30, freshness: 30,
+        sizeStability: 30, engagement: 30, trust: 30,
+        testCount: 8, successCount: 0, consecutiveFailures: 5,
+      },
+    });
+
+    const result = evaluateTransition(source);
+
+    expect(result.newStatus).toBe("archived");
+    expect(result.reason).toContain("consecutive failures");
+  });
+
   it("quarantined with consecutiveFailures > 0 → no change", () => {
     const source = makeSource({
       status: "quarantined",

@@ -1,0 +1,93 @@
+schemaVersion: 1
+
+provider:
+  name: arxiv
+  displayName: arXiv
+  matches:
+    providers: [arxiv]
+    hosts: [export.arxiv.org, arxiv.org]
+  domains: [science, ai, quantum, physics, math]
+  rateLimit:
+    bucket: arxiv
+    maxPerMinute: 180
+  auth:
+    mode: none
+  defaults:
+    responseFormat: xml
+    parseFailureMode: empty-entries
+
+operations:
+  search:
+    when:
+      sourceAdapterOperation: [search]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://export.arxiv.org/api/query"
+      query:
+        search_query: "{query}"
+        max_results: "{maxResults}"
+        sortBy: submittedDate
+        sortOrder: descending
+      estimatedSizeKb:
+        TLSN: 9
+        DAHR: 30
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      maxResults:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [xml]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 16
+        rewriteQuery:
+          max_results:
+            default: 3
+            max: 3
+      dahr:
+        # arXiv returns Atom XML — DAHR pipeline rejects non-JSON
+        allowed: false
+        blockedReason: "Atom XML response; DAHR pipeline is JSON-only"
+    parse:
+      format: xml
+      items:
+        mode: regex-blocks
+        blockPattern: "<entry>([\\s\\S]*?)</entry>"
+      fields:
+        id:
+          regex: "<id>([^<]+)</id>"
+          required: true
+        title:
+          regex: "<title>([^<]+)</title>"
+        summary:
+          regex: "<summary>([\\s\\S]*?)</summary>"
+          transforms:
+            - truncate: 500
+        bodyText:
+          regex: "<summary>([\\s\\S]*?)</summary>"
+        canonicalUrl:
+          regex: "<id>([^<]+)</id>"
+        publishedAt:
+          regex: "<published>([^<]+)</published>"
+        topics:
+          regex: "<category[^>]*term=\"([^\"]+)\"[^>]*/>"
+          default: []
+        metrics:
+          authors:
+            regex: "<author>\\s*<name>([^<]*)</name>"
+        raw:
+          mode: matched-block
+    hooks:
+      module: "../hooks/arxiv.js"
+      # Hook handles:
+      # - Canonical URL cleanup (http://arxiv.org/abs/... -> cleaned ID)
+      # - Author count extraction
+      # - Multi-author aggregation (regex only gets first match per block)

@@ -1,0 +1,308 @@
+schemaVersion: 1
+
+provider:
+  name: defillama
+  displayName: DefiLlama
+  matches:
+    providers: [defillama]
+    hosts: [api.llama.fi, yields.llama.fi, stablecoins.llama.fi]
+  domains: [defi, tvl, protocol, yield, dex]
+  rateLimit:
+    bucket: defillama
+    maxPerMinute: 60
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  tvl:
+    when:
+      sourceAdapterOperation: [tvl]
+      urlPatterns: ["/tvl/"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.llama.fi/tvl/{protocol}"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{protocol}"
+    variables:
+      protocol:
+        sources: [vars.asset, vars.protocol, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+          - slug
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      # Response is a single number, not an object/array
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "tvl-{protocol}"
+          required: true
+        title:
+          template: "{protocol} TVL"
+        bodyText:
+          template: "{protocol} total value locked"
+        topics:
+          template: "defi,tvl,{protocol}"
+        raw:
+          mode: parsed-root
+
+  protocol:
+    when:
+      sourceAdapterOperation: [protocol]
+      urlPatterns: ["/protocol/"]
+    request:
+      method: GET
+      urlTemplate: "https://api.llama.fi/protocol/{protocol}"
+      estimatedSizeKb:
+        TLSN: 50
+        DAHR: 50
+      matchHints:
+        - "{protocol}"
+    variables:
+      protocol:
+        sources: [vars.asset, vars.protocol, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+          - slug
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # protocol response is very large (100KB+)
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "{id|name}"
+          required: true
+        title:
+          jsonPath: "$.name"
+        summary:
+          template: "{name} - {chains.length} chains"
+        bodyText:
+          template: "Protocol {name} ({symbol})"
+        canonicalUrl:
+          template: "https://defillama.com/protocol/{slug|name}"
+        topics:
+          template: "defi,protocol,{symbol}"
+        metrics:
+          tvl:
+            jsonPath: "$.tvl"
+            default: 0
+          mcap:
+            jsonPath: "$.mcap"
+            default: 0
+        raw:
+          mode: item
+
+  chains:
+    when:
+      sourceAdapterOperation: [chains]
+      urlPatterns: ["/chains"]
+    request:
+      method: GET
+      urlTemplate: "https://api.llama.fi/chains"
+      estimatedSizeKb:
+        TLSN: 30
+        DAHR: 30
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # chains response is large (30KB+)
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.name"
+          required: true
+          transforms:
+            - lowercase
+        title:
+          jsonPath: "$.name"
+        bodyText:
+          template: "Chain {name}"
+        topics:
+          template: "defi,chain,{name}"
+        metrics:
+          tvl:
+            jsonPath: "$.tvl"
+            default: 0
+          tokenSymbol:
+            jsonPath: "$.tokenSymbol"
+        raw:
+          mode: item
+
+  yields:
+    when:
+      sourceAdapterOperation: [yields]
+      urlPatterns: ["yields.llama.fi", "/pools"]
+    request:
+      method: GET
+      urlTemplate: "https://yields.llama.fi/pools"
+      estimatedSizeKb:
+        TLSN: 200
+        DAHR: 200
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # yields response is very large (200KB+)
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.data[*]"
+      fields:
+        id:
+          jsonPath: "$.pool"
+          required: true
+        title:
+          template: "{project} - {symbol}"
+        bodyText:
+          template: "Yield pool {symbol} on {chain}"
+        topics:
+          template: "defi,yield,{chain}"
+        metrics:
+          apy:
+            jsonPath: "$.apy"
+            default: 0
+          tvl_usd:
+            jsonPath: "$.tvlUsd"
+            default: 0
+        raw:
+          mode: item
+
+  dexs:
+    when:
+      sourceAdapterOperation: [dexs]
+      urlPatterns: ["/overview/dexs"]
+    request:
+      method: GET
+      urlTemplate: "https://api.llama.fi/overview/dexs"
+      estimatedSizeKb:
+        TLSN: 40
+        DAHR: 40
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # dexs response is large (40KB+)
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.protocols[*]"
+      fields:
+        id:
+          jsonPath: "$.name"
+          required: true
+          transforms:
+            - lowercase
+            - slug
+        title:
+          jsonPath: "$.name"
+        bodyText:
+          template: "DEX {name}"
+        topics:
+          template: "defi,dex,{name}"
+        metrics:
+          volume_24h:
+            jsonPath: "$.totalVolume24h"
+            default: 0
+          change_24h:
+            jsonPath: "$.change_1d"
+            default: 0
+        raw:
+          mode: item
+
+  stablecoins:
+    when:
+      sourceAdapterOperation: [stablecoins]
+      urlPatterns: ["/stablecoins", "stablecoins.llama.fi"]
+    request:
+      method: GET
+      urlTemplate: "https://stablecoins.llama.fi/stablecoins"
+      query:
+        includePrices: "true"
+      estimatedSizeKb:
+        TLSN: 80
+        DAHR: 80
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # stablecoins response is large (80KB+)
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.peggedAssets[*]"
+      fields:
+        id:
+          jsonPath: "$.name"
+          required: true
+          transforms:
+            - lowercase
+            - slug
+        title:
+          template: "{name} ({symbol})"
+        bodyText:
+          template: "Stablecoin {name}"
+        topics:
+          template: "defi,stablecoin,{symbol}"
+        metrics:
+          circulating:
+            jsonPath: "$.circulating.peggedUSD"
+            default: 0
+        raw:
+          mode: item

@@ -1,0 +1,273 @@
+schemaVersion: 1
+
+provider:
+  name: kraken
+  displayName: Kraken
+  matches:
+    providers: [kraken]
+    hosts: [api.kraken.com]
+  domains: [crypto, fx, exchange]
+  rateLimit:
+    bucket: kraken
+    maxPerMinute: 900
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  ticker:
+    when:
+      sourceAdapterOperation: [ticker]
+      urlPatterns: ["/Ticker"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.kraken.com/0/public/Ticker"
+      query:
+        pair: "{pair}"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "{pair}"
+        - "{asset}"
+    variables:
+      asset:
+        sources: [vars.asset, vars.pair, tokens[0]]
+        default: "BTC"
+      pair:
+        sources: [vars.asset, vars.pair, tokens[0]]
+        default: "BTC"
+        transforms:
+          - trim
+          - lowercase
+          - map:
+              bitcoin: XXBTZUSD
+              btc: XXBTZUSD
+              xbt: XXBTZUSD
+              ethereum: XETHZUSD
+              eth: XETHZUSD
+              solana: SOLUSD
+              sol: SOLUSD
+              xrp: XXRPZUSD
+              cardano: ADAUSD
+              ada: ADAUSD
+              dogecoin: XDGZUSD
+              doge: XDGZUSD
+              polkadot: DOTUSD
+              dot: DOTUSD
+              avalanche: AVAXUSD
+              avax: AVAXUSD
+              litecoin: XLTCZUSD
+              ltc: XLTCZUSD
+          - uppercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      # Response: { error: [], result: { PAIRKEY: { a: [...], b: [...], ... } } }
+      # Dynamic keys in result require hook for proper extraction
+      envelope:
+        jsonPath: "$.result"
+      items:
+        mode: object-entries
+        jsonPath: "$.result"
+      fields:
+        id:
+          template: "{key}"
+          required: true
+        title:
+          template: "{key} Ticker"
+        summary:
+          template: "Last: {c[0]}, Bid: {b[0]}, Ask: {a[0]}"
+        bodyText:
+          template: "{key} Last:{c[0]} Bid:{b[0]} Ask:{a[0]} Vol:{v[1]} High:{h[1]} Low:{l[1]}"
+        topics:
+          template: "{key}"
+        metrics:
+          ask:
+            jsonPath: "$.a[0]"
+          bid:
+            jsonPath: "$.b[0]"
+          last:
+            jsonPath: "$.c[0]"
+          volume:
+            jsonPath: "$.v[1]"
+          high:
+            jsonPath: "$.h[1]"
+          low:
+            jsonPath: "$.l[1]"
+          open:
+            jsonPath: "$.o"
+        raw:
+          mode: item
+    hooks:
+      module: "../hooks/kraken.js"
+      # Hook handles:
+      # - Error array checking (non-empty error = fail)
+      # - Dynamic result key resolution
+      # - Pair normalization (XXBTZUSD -> standard format)
+
+  assets:
+    when:
+      sourceAdapterOperation: [assets]
+      urlPatterns: ["/Assets"]
+    request:
+      method: GET
+      urlTemplate: "https://api.kraken.com/0/public/Assets"
+      estimatedSizeKb:
+        TLSN: 14
+        DAHR: 50
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # Assets response can exceed 16KB
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      envelope:
+        jsonPath: "$.result"
+      items:
+        mode: object-entries
+        jsonPath: "$.result"
+      fields:
+        id:
+          template: "{key}"
+          required: true
+        title:
+          jsonPath: "$.altname"
+        bodyText:
+          template: "{key} ({altname}) - {aclass}"
+        topics:
+          template: "{key},{altname}"
+        metrics:
+          aclass:
+            jsonPath: "$.aclass"
+          decimals:
+            jsonPath: "$.decimals"
+          displayDecimals:
+            jsonPath: "$.display_decimals"
+        raw:
+          mode: item
+    hooks:
+      module: "../hooks/kraken.js"
+
+  ohlc:
+    when:
+      sourceAdapterOperation: [ohlc]
+      urlPatterns: ["/OHLC"]
+    request:
+      method: GET
+      urlTemplate: "https://api.kraken.com/0/public/OHLC"
+      query:
+        pair: "{pair}"
+        interval: "{interval}"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 40
+      matchHints:
+        - "{pair}"
+        - "{asset}"
+        - "{interval}"
+    variables:
+      asset:
+        sources: [vars.asset, vars.pair, tokens[0]]
+        default: "BTC"
+      pair:
+        sources: [vars.asset, vars.pair, tokens[0]]
+        default: "BTC"
+        transforms:
+          - trim
+          - lowercase
+          - map:
+              bitcoin: XXBTZUSD
+              btc: XXBTZUSD
+              xbt: XXBTZUSD
+              ethereum: XETHZUSD
+              eth: XETHZUSD
+              solana: SOLUSD
+              sol: SOLUSD
+              xrp: XXRPZUSD
+              cardano: ADAUSD
+              ada: ADAUSD
+              dogecoin: XDGZUSD
+              doge: XDGZUSD
+              polkadot: DOTUSD
+              dot: DOTUSD
+              avalanche: AVAXUSD
+              avax: AVAXUSD
+              litecoin: XLTCZUSD
+              ltc: XLTCZUSD
+          - uppercase
+      interval:
+        sources: [vars.interval]
+        default: "60"
+        # Kraken intervals are in minutes
+        enum: ["1", "5", "15", "30", "60", "240", "1440", "10080", "21600"]
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        # TLSN: need since param to limit data — handled by hook
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      # Response: { error: [], result: { PAIR: [[time, open, high, low, close, vwap, volume, count], ...], last: N } }
+      # Dynamic pair key + array candles — hook handles extraction
+      envelope:
+        jsonPath: "$.result"
+      items:
+        mode: object-entries
+        jsonPath: "$.result"
+      fields:
+        id:
+          template: "{key}-ohlc-{0}"
+          required: true
+        title:
+          template: "{key} OHLC"
+        bodyText:
+          template: "O:{1} H:{2} L:{3} C:{4} VWAP:{5} V:{6}"
+        topics:
+          template: "{key}"
+        metrics:
+          open:
+            template: "{1}"
+          high:
+            template: "{2}"
+          low:
+            template: "{3}"
+          close:
+            template: "{4}"
+          vwap:
+            template: "{5}"
+          volume:
+            template: "{6}"
+          count:
+            template: "{7}"
+            default: 0
+        raw:
+          mode: item
+    hooks:
+      module: "../hooks/kraken.js"
+      # Hook handles:
+      # - Error array checking
+      # - Dynamic result key resolution (skip "last" key)
+      # - TLSN since-param injection (now-5h) for compact response
+      # - Candle array unpacking from dynamic pair key

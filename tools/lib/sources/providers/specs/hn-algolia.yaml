@@ -1,0 +1,344 @@
+schemaVersion: 1
+
+provider:
+  name: hn-algolia
+  displayName: Hacker News Algolia
+  matches:
+    providers: [hn-algolia]
+    hosts: [hn.algolia.com]
+  domains: [tech, startup, ai, programming]
+  rateLimit:
+    bucket: hn-algolia
+    maxPerDay: 10000
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  search:
+    when:
+      sourceAdapterOperation: [search]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://hn.algolia.com/api/v1/search"
+      query:
+        query: "{query}"
+        hitsPerPage: "{hitsPerPage}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 14
+      matchHints:
+        - "{query}"
+        - "{tokens[0]}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      hitsPerPage:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 16
+        rewriteQuery:
+          hitsPerPage:
+            default: 2
+            max: 2
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.hits[*]"
+      fields:
+        id:
+          jsonPath: "$.objectID"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{story_text|title|(no content)}"
+        canonicalUrl:
+          jsonPath: "$.url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          jsonPath: "$._tags[*]"
+          default: []
+        metrics:
+          points:
+            jsonPath: "$.points"
+            default: 0
+          num_comments:
+            jsonPath: "$.num_comments"
+            default: 0
+          author:
+            jsonPath: "$.author"
+        raw:
+          mode: item
+
+  search_by_date:
+    when:
+      sourceAdapterOperation: [search_by_date]
+      urlPatterns: ["/search_by_date"]
+    request:
+      method: GET
+      urlTemplate: "https://hn.algolia.com/api/v1/search_by_date"
+      query:
+        query: "{query}"
+        hitsPerPage: "{hitsPerPage}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 14
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      hitsPerPage:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 16
+        rewriteQuery:
+          hitsPerPage:
+            default: 2
+            max: 2
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.hits[*]"
+      fields:
+        id:
+          jsonPath: "$.objectID"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{story_text|title|(no content)}"
+        canonicalUrl:
+          jsonPath: "$.url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          jsonPath: "$._tags[*]"
+          default: []
+        raw:
+          mode: item
+
+  front_page:
+    when:
+      sourceAdapterOperation: [front_page]
+      urlPatterns: ["tags=front_page"]
+    request:
+      method: GET
+      urlTemplate: "https://hn.algolia.com/api/v1/search"
+      query:
+        tags: front_page
+        hitsPerPage: "{hitsPerPage}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 14
+      matchHints:
+        - "front_page"
+    variables:
+      hitsPerPage:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 16
+        rewriteQuery:
+          hitsPerPage:
+            default: 2
+            max: 2
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.hits[*]"
+      fields:
+        id:
+          jsonPath: "$.objectID"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{story_text|title|(no content)}"
+        canonicalUrl:
+          jsonPath: "$.url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          jsonPath: "$._tags[*]"
+          default: []
+        metrics:
+          points:
+            jsonPath: "$.points"
+            default: 0
+          num_comments:
+            jsonPath: "$.num_comments"
+            default: 0
+        raw:
+          mode: item
+
+  ask_hn:
+    when:
+      sourceAdapterOperation: [ask_hn]
+      urlPatterns: ["tags=ask_hn", "ask_hn"]
+    request:
+      method: GET
+      urlTemplate: "https://hn.algolia.com/api/v1/search"
+      query:
+        query: "{query}"
+        tags: ask_hn
+        hitsPerPage: "{hitsPerPage}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 14
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      hitsPerPage:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 16
+        rewriteQuery:
+          hitsPerPage:
+            default: 2
+            max: 2
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.hits[*]"
+      fields:
+        id:
+          jsonPath: "$.objectID"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{story_text|title|(no content)}"
+        canonicalUrl:
+          jsonPath: "$.url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          jsonPath: "$._tags[*]"
+          default: []
+        metrics:
+          points:
+            jsonPath: "$.points"
+            default: 0
+          num_comments:
+            jsonPath: "$.num_comments"
+            default: 0
+        raw:
+          mode: item
+
+  show_hn:
+    when:
+      sourceAdapterOperation: [show_hn]
+      urlPatterns: ["tags=show_hn", "show_hn"]
+    request:
+      method: GET
+      urlTemplate: "https://hn.algolia.com/api/v1/search"
+      query:
+        query: "{query}"
+        tags: show_hn
+        hitsPerPage: "{hitsPerPage}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 14
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      hitsPerPage:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 16
+        rewriteQuery:
+          hitsPerPage:
+            default: 2
+            max: 2
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.hits[*]"
+      fields:
+        id:
+          jsonPath: "$.objectID"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{story_text|title|(no content)}"
+        canonicalUrl:
+          jsonPath: "$.url"
+        publishedAt:
+          jsonPath: "$.created_at"
+        topics:
+          jsonPath: "$._tags[*]"
+          default: []
+        metrics:
+          points:
+            jsonPath: "$.points"
+            default: 0
+          num_comments:
+            jsonPath: "$.num_comments"
+            default: 0
+        raw:
+          mode: item

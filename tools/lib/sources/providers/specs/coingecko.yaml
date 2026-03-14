@@ -1,0 +1,293 @@
+schemaVersion: 1
+
+provider:
+  name: coingecko
+  displayName: CoinGecko
+  matches:
+    providers: [coingecko]
+    hosts: [api.coingecko.com]
+  domains: [crypto, defi, markets, prices]
+  rateLimit:
+    bucket: coingecko
+    maxPerMinute: 30
+    maxPerDay: 500
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  simple-price:
+    when:
+      sourceAdapterOperation: [simple-price]
+      urlPatterns: ["/simple/price"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.coingecko.com/api/v3/simple/price"
+      query:
+        ids: "{assetId}"
+        vs_currencies: usd
+        include_market_cap: "true"
+        include_24hr_vol: "true"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{assetId}"
+    variables:
+      assetId:
+        sources: [vars.asset, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+          - slug
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: object-entries
+        jsonPath: "$"
+      fields:
+        id:
+          template: "{key}"
+          required: true
+        title:
+          template: "{key} price"
+        bodyText:
+          template: "{key}: ${usd}"
+        topics:
+          template: "crypto,price,{key}"
+        metrics:
+          price_usd:
+            jsonPath: "$.usd"
+            default: 0
+          market_cap:
+            jsonPath: "$.usd_market_cap"
+            default: 0
+          volume_24h:
+            jsonPath: "$.usd_24h_vol"
+            default: 0
+        raw:
+          mode: item
+
+  trending:
+    when:
+      sourceAdapterOperation: [trending]
+      urlPatterns: ["/search/trending"]
+    request:
+      method: GET
+      urlTemplate: "https://api.coingecko.com/api/v3/search/trending"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.coins[*].item"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.name"
+        summary:
+          template: "{name} ({symbol}) - rank #{market_cap_rank}"
+        bodyText:
+          template: "Trending: {name} ({symbol})"
+        topics:
+          template: "crypto,trending,{symbol}"
+        metrics:
+          market_cap_rank:
+            jsonPath: "$.market_cap_rank"
+            default: 0
+          score:
+            jsonPath: "$.score"
+            default: 0
+        raw:
+          mode: item
+
+  coin-detail:
+    when:
+      sourceAdapterOperation: [coin-detail]
+      urlPatterns: ["/coins/[^/]+$"]
+    request:
+      method: GET
+      urlTemplate: "https://api.coingecko.com/api/v3/coins/{assetId}"
+      query:
+        localization: "false"
+        tickers: "false"
+        community_data: "false"
+        developer_data: "false"
+      estimatedSizeKb:
+        TLSN: 30
+        DAHR: 12
+      matchHints:
+        - "{assetId}"
+    variables:
+      assetId:
+        sources: [vars.asset, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+          - slug
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # coin-detail response is too large for TLSN (>16KB)
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.name"
+        summary:
+          jsonPath: "$.description.en"
+          transforms:
+            - truncate: 500
+        bodyText:
+          template: "{description.en|name}"
+        canonicalUrl:
+          template: "https://www.coingecko.com/en/coins/{id}"
+        topics:
+          template: "crypto,{symbol}"
+        metrics:
+          price_usd:
+            jsonPath: "$.market_data.current_price.usd"
+            default: 0
+          market_cap_rank:
+            jsonPath: "$.market_cap_rank"
+            default: 0
+        raw:
+          mode: item
+
+  market-chart:
+    when:
+      sourceAdapterOperation: [market-chart]
+      urlPatterns: ["/market_chart"]
+    request:
+      method: GET
+      urlTemplate: "https://api.coingecko.com/api/v3/coins/{assetId}/market_chart"
+      query:
+        vs_currency: usd
+        days: "{days}"
+      estimatedSizeKb:
+        TLSN: 6
+        DAHR: 12
+      matchHints:
+        - "{assetId}"
+    variables:
+      assetId:
+        sources: [vars.asset, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+          - slug
+      days:
+        sources:
+          - literal: "7"
+        default: "7"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          days:
+            default: 1
+            max: 1
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "chart-{source.id}"
+          required: true
+        title:
+          template: "Price chart"
+        bodyText:
+          template: "Market chart for {assetId}"
+        topics:
+          template: "crypto,chart,price"
+        raw:
+          mode: parsed-root
+
+  categories:
+    when:
+      sourceAdapterOperation: [categories]
+      urlPatterns: ["/coins/categories"]
+    request:
+      method: GET
+      urlTemplate: "https://api.coingecko.com/api/v3/coins/categories"
+      estimatedSizeKb:
+        TLSN: 40
+        DAHR: 40
+      matchHints:
+        - "{topic}"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        # categories response is too large for TLSN
+        allowed: false
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.name"
+        bodyText:
+          template: "Category: {name}"
+        topics:
+          template: "crypto,category"
+        metrics:
+          market_cap:
+            jsonPath: "$.market_cap"
+            default: 0
+          market_cap_change_24h:
+            jsonPath: "$.market_cap_change_24h"
+            default: 0
+        raw:
+          mode: item

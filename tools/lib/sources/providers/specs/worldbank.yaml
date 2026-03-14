@@ -1,0 +1,175 @@
+schemaVersion: 1
+
+provider:
+  name: worldbank
+  displayName: World Bank
+  matches:
+    providers: [worldbank]
+    hosts: [api.worldbank.org]
+  domains: [economics, development, gdp, poverty]
+  rateLimit:
+    bucket: worldbank
+    maxPerMinute: 60
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  indicator:
+    when:
+      sourceAdapterOperation: [indicator]
+      urlPatterns: ["/indicator/"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.worldbank.org/v2/country/{country}/indicator/{indicator}"
+      query:
+        format: json
+        per_page: "{perPage}"
+        mrv: "1"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 10
+      matchHints:
+        - "{country}"
+        - "{indicator}"
+    variables:
+      country:
+        sources: [vars.country]
+        default: "WLD"
+        transforms:
+          - trim
+          - uppercase
+      indicator:
+        sources: [vars.indicator, vars.query, topic]
+        required: true
+        transforms:
+          - trim
+          - map:
+              gdp: "NY.GDP.MKTP.CD"
+              gdp-per-capita: "NY.GDP.PCAP.CD"
+              gdp-growth: "NY.GDP.MKTP.KD.ZG"
+              population: "SP.POP.TOTL"
+              inflation: "FP.CPI.TOTL.ZG"
+              poverty: "SI.POV.DDAY"
+              unemployment: "SL.UEM.TOTL.ZS"
+              life-expectancy: "SP.DYN.LE00.IN"
+              co2-emissions: "EN.ATM.CO2E.PC"
+              gini: "SI.POV.GINI"
+      perPage:
+        sources:
+          - literal: "50"
+        default: "50"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          per_page:
+            default: 5
+            max: 5
+        requireQuery:
+          format: json
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      # World Bank returns [meta, data[]] tuple — data is at index 1
+      items:
+        mode: json-path
+        jsonPath: "$[1][*]"
+      fields:
+        id:
+          template: "{countryiso3code}-{indicator.id}-{date}"
+          required: true
+        title:
+          template: "{country.value}: {indicator.value} ({date})"
+        summary:
+          template: "{indicator.value}: {value}"
+        bodyText:
+          template: "{country.value} {indicator.value} {date}: {value}"
+        topics:
+          template: "{indicator.value},{country.value}"
+        metrics:
+          value:
+            jsonPath: "$.value"
+          date:
+            jsonPath: "$.date"
+          countryCode:
+            jsonPath: "$.countryiso3code"
+        raw:
+          mode: item
+
+  country:
+    when:
+      sourceAdapterOperation: [country]
+    request:
+      method: GET
+      urlTemplate: "https://api.worldbank.org/v2/country/{country}"
+      query:
+        format: json
+        per_page: "{perPage}"
+      estimatedSizeKb:
+        TLSN: 3
+        DAHR: 8
+      matchHints:
+        - "{country}"
+    variables:
+      country:
+        sources: [vars.country]
+        default: "WLD"
+        transforms:
+          - trim
+          - uppercase
+      perPage:
+        sources:
+          - literal: "50"
+        default: "50"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          per_page:
+            default: 5
+            max: 5
+        requireQuery:
+          format: json
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      # World Bank returns [meta, data[]] tuple — data is at index 1
+      items:
+        mode: json-path
+        jsonPath: "$[1][*]"
+      fields:
+        id:
+          template: "{id|iso2Code}"
+          required: true
+        title:
+          jsonPath: "$.name"
+        summary:
+          template: "{name} ({region.value})"
+        bodyText:
+          template: "{name} | {region.value} | {incomeLevel.value} | {capitalCity}"
+        topics:
+          template: "{region.value},{incomeLevel.value}"
+        metrics:
+          longitude:
+            jsonPath: "$.longitude"
+          latitude:
+            jsonPath: "$.latitude"
+          capitalCity:
+            jsonPath: "$.capitalCity"
+          incomeLevel:
+            jsonPath: "$.incomeLevel.value"
+        raw:
+          mode: item

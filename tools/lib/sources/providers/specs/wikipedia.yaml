@@ -1,0 +1,140 @@
+schemaVersion: 1
+
+provider:
+  name: wikipedia
+  displayName: Wikipedia
+  matches:
+    providers: [wikipedia]
+    hosts: [en.wikipedia.org]
+  domains: [general, knowledge, encyclopedia, history]
+  rateLimit:
+    bucket: wikipedia
+    maxPerMinute: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  summary:
+    when:
+      sourceAdapterOperation: [summary]
+      urlPatterns: ["/api/rest_v1/page/summary"]
+    request:
+      method: GET
+      urlTemplate: "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "{title}"
+    variables:
+      title:
+        sources: [vars.title, vars.query, topic]
+        required: true
+        transforms:
+          - trim
+          - wiki-title
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "{pageid|title}"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          jsonPath: "$.description"
+        bodyText:
+          template: "{extract|extract_html}"
+        canonicalUrl:
+          jsonPath: "$.content_urls.desktop.page"
+        topics:
+          jsonPath: "$.categories[*]"
+          default: []
+        metrics:
+          lat:
+            jsonPath: "$.coordinates.lat"
+          lon:
+            jsonPath: "$.coordinates.lon"
+        raw:
+          mode: item
+
+  search:
+    when:
+      sourceAdapterOperation: [search]
+      urlPatterns: ["list=search"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://en.wikipedia.org/w/api.php"
+      query:
+        action: query
+        list: search
+        srsearch: "{query}"
+        srlimit: "{srlimit}"
+        format: json
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 14
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+      srlimit:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          srlimit:
+            default: 2
+            max: 2
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.query.search[*]"
+      fields:
+        id:
+          template: "{pageid|title}"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          jsonPath: "$.snippet"
+        bodyText:
+          jsonPath: "$.snippet"
+        canonicalUrl:
+          template: "https://en.wikipedia.org/wiki/{title}"
+        publishedAt:
+          jsonPath: "$.timestamp"
+        topics:
+          default: []
+        metrics:
+          wordcount:
+            jsonPath: "$.wordcount"
+            default: 0
+        raw:
+          mode: item

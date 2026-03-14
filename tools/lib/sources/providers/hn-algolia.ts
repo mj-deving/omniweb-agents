@@ -29,9 +29,9 @@ const TLSN_MAX_HITS = 2;
 /** Default hitsPerPage for DAHR */
 const DAHR_DEFAULT_HITS = 5;
 
-type HnOperation = "search" | "search_by_date" | "front_page";
+type HnOperation = "search" | "search_by_date" | "front_page" | "ask_hn" | "show_hn";
 
-const VALID_OPERATIONS: HnOperation[] = ["search", "search_by_date", "front_page"];
+const VALID_OPERATIONS: HnOperation[] = ["search", "search_by_date", "front_page", "ask_hn", "show_hn"];
 
 /**
  * Infer operation from a source record's URL or adapter config.
@@ -44,6 +44,8 @@ function inferOperation(source: SourceRecordV2): HnOperation {
   const url = source.url.toLowerCase();
   if (url.includes("search_by_date")) return "search_by_date";
   if (url.includes("tags=front_page")) return "front_page";
+  if (url.includes("tags=ask_hn") || url.includes("ask_hn")) return "ask_hn";
+  if (url.includes("tags=show_hn") || url.includes("show_hn")) return "show_hn";
   return "search";
 }
 
@@ -58,6 +60,10 @@ function buildUrl(operation: HnOperation, query: string, hitsPerPage: number): s
       return `${BASE_URL}/search_by_date?query=${encodeURIComponent(query)}&hitsPerPage=${hitsPerPage}`;
     case "front_page":
       return `${BASE_URL}/search?tags=front_page&hitsPerPage=${hitsPerPage}`;
+    case "ask_hn":
+      return `${BASE_URL}/search?query=${encodeURIComponent(query)}&tags=ask_hn&hitsPerPage=${hitsPerPage}`;
+    case "show_hn":
+      return `${BASE_URL}/search?query=${encodeURIComponent(query)}&tags=show_hn&hitsPerPage=${hitsPerPage}`;
   }
 }
 

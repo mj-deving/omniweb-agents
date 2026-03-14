@@ -82,6 +82,19 @@ export async function fetchSource(
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     attempts++;
 
+    // Acquire rate-limit token per attempt (retries count against quota)
+    if (bucket && attempt > 0) {
+      const allowed = acquireRateLimitToken(
+        bucket,
+        options.rateLimitRpm,
+        options.rateLimitRpd
+      );
+      if (!allowed) {
+        lastError = `Rate limited during retry: bucket "${bucket}"`;
+        break;
+      }
+    }
+
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);

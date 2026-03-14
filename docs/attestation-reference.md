@@ -27,9 +27,32 @@ MPC-TLS request (50-120s) → transcript → notarize/proof (30-60s) → present
 
 ## Why TLSN Mostly Fails Now
 
-**It's infrastructure, not code.** The MPC-TLS component on `node2.demos.sh` consistently exceeds the 180s timeout. Both attempts in session 15 hit exactly 180s. The code timeouts were already bumped from 120s → 180s — the notary infrastructure is the bottleneck.
+### Verified by Diagnostic (2026-03-14)
 
-Key gotchas that were learned in early sessions (DEMOS-Work diagnostic scripts):
+Systematic testing with `tools/tlsn-diagnose.ts` confirmed:
+
+| Component | Status | Timing |
+|---|---|---|
+| Notary info (`tlsnotary.getInfo`) | OK | 0.3s |
+| Notary HTTP reachability | OK (200) | 0.2s |
+| Token request + broadcast | OK | 5-10s |
+| Token poll | OK | 0.5-1.4s |
+| Proxy allocation | OK | 1.2-3.5s |
+| **MPC-TLS (Playwright bridge)** | **TIMEOUT** | **>300s (5 min not enough)** |
+| Node bridge WASM init | **HANGS** | Never completes (non-functional) |
+
+**It's infrastructure, not code.** The notary responds to HTTP and WebSocket info queries instantly. Token/proxy allocation is fast (7-14s total). The failure is specifically in the MPC-TLS protocol phase — the WASM prover connects to the notary via WebSocket proxy but the cryptographic handshake never completes, even with a 5-minute timeout.
+
+**Timeline of timeout tuning:**
+- Original: 120s → too tight (sessions ~15 took exactly 120s)
+- Bumped: 180s → still too tight (sessions ~15 took exactly 180s)
+- Bumped: 300s (5 min) → **still fails** → confirms infrastructure issue, not timeout
+
+**Node bridge:** Never functional — hangs at WASM init. Codex built it speculatively. Playwright bridge is the only production path.
+
+**Proxy ports:** Dynamically assigned (55003, 55008 observed), not limited to documented 55001/55002.
+
+### Key Gotchas
 
 1. **`hitsPerPage=2` guardrail** for HN Algolia — 5+ hits = >16KB = WASM crash
 2. **`startProxy()` IS the complete DAHR operation** — no `stopProxy()` exists
@@ -39,9 +62,9 @@ Key gotchas that were learned in early sessions (DEMOS-Work diagnostic scripts):
 
 ## What Drift Happened
 
-The diagnostic scripts (`tlsn-debug.ts`, `tlsn-diagnose.ts`, `tlsn-attest.ts`, `dahr-inspect.ts`, `test-dahr-sources.ts`) stayed in DEMOS-Work when it was archived. The implementation moved to demos-agents but the **testing/diagnostic tooling didn't follow**. So when TLSN started failing, there were no quick diagnostic tools to isolate whether it was code, infra, or config.
+The diagnostic scripts (`tlsn-debug.ts`, `tlsn-diagnose.ts`, `tlsn-attest.ts`, `dahr-inspect.ts`, `test-dahr-sources.ts`) stayed in DEMOS-Work when it was archived. The implementation moved to demos-agents but the **testing/diagnostic tooling didn't follow**. Now ported: `tools/tlsn-diagnose.ts` provides step-by-step pipeline testing with timing.
 
-The actual bridge code is correct — timeouts are appropriate, guardrails are in place. The failure is purely the Demos notary node MPC-TLS performance.
+The bridge code is correct — timeouts are generous (5 min), guardrails are in place. The failure is purely the Demos notary node MPC-TLS infrastructure.
 
 ## Performance Difference
 

@@ -1,0 +1,83 @@
+schemaVersion: 1
+
+provider:
+  name: reddit
+  displayName: Reddit
+  matches:
+    providers: [reddit]
+    hosts: [www.reddit.com]
+  domains: [social, discussion, tech, crypto]
+  rateLimit:
+    bucket: reddit
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+    headers:
+      User-Agent: "demos-agent/1.0"
+
+operations:
+  search:
+    when:
+      sourceAdapterOperation: [search]
+      urlPatterns: ["/search.json"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://www.reddit.com/search.json?q={query}&sort=relevance&limit=5"
+      headers:
+        User-Agent: "demos-agent/1.0"
+      estimatedSizeKb:
+        TLSN: 12
+        DAHR: 12
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+        transforms:
+          - trim
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.data.children[*].data"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          jsonPath: "$.selftext"
+          transforms:
+            - truncate: 300
+        canonicalUrl:
+          template: "https://reddit.com{permalink}"
+        topics:
+          template: "{subreddit_name_prefixed}"
+        metrics:
+          score:
+            jsonPath: "$.score"
+            default: 0
+          num_comments:
+            jsonPath: "$.num_comments"
+            default: 0
+          upvote_ratio:
+            jsonPath: "$.upvote_ratio"
+            default: 0
+        raw:
+          mode: item

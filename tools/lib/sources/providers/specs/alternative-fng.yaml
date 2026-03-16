@@ -1,0 +1,68 @@
+schemaVersion: 1
+
+provider:
+  name: alternative-fng
+  displayName: Alternative.me Fear & Greed
+  matches:
+    providers: [alternative-fng, alternative-fear-greed]
+    hosts: [api.alternative.me]
+  domains: [crypto, sentiment, markets]
+  rateLimit:
+    bucket: alternative-fng
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  fear-greed:
+    when:
+      sourceAdapterOperation: [fear-greed, fng]
+      urlPatterns: ["/fng"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.alternative.me/fng/?limit=1"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "fear"
+        - "greed"
+        - "sentiment"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.data[*]"
+      fields:
+        id:
+          template: "fng-latest"
+          required: true
+        title:
+          template: "Crypto Fear & Greed Index"
+        bodyText:
+          template: "Fear & Greed: {value} ({value_classification})"
+        topics:
+          template: "crypto,sentiment,fear-greed"
+        metrics:
+          value:
+            jsonPath: "$.value"
+            default: 0
+          classification:
+            jsonPath: "$.value_classification"
+            default: "unknown"
+        raw:
+          mode: item

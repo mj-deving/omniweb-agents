@@ -1,0 +1,71 @@
+schemaVersion: 1
+
+provider:
+  name: npm
+  displayName: npm Registry
+  matches:
+    providers: [npm]
+    hosts: [registry.npmjs.org]
+  domains: [development, packages, javascript]
+  rateLimit:
+    bucket: npm
+    maxPerMinute: 30
+    maxPerDay: 500
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  package:
+    when:
+      sourceAdapterOperation: [package, latest]
+      urlPatterns: ["/[^/]+/latest"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://registry.npmjs.org/{package}/latest"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "{package}"
+    variables:
+      package:
+        sources: [vars.package, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          jsonPath: "$.name"
+          required: true
+        title:
+          template: "{name} v{version}"
+        bodyText:
+          jsonPath: "$.description"
+        canonicalUrl:
+          template: "https://www.npmjs.com/package/{name}"
+        topics:
+          template: "npm,javascript,{name}"
+        metrics:
+          version:
+            jsonPath: "$.version"
+            default: "unknown"
+        raw:
+          mode: item

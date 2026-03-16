@@ -998,7 +998,7 @@
     {
       "id": "generic-0061b2cf",
       "name": "npm-package",
-      "provider": "generic",
+      "provider": "npm",
       "url": "https://registry.npmjs.org/{package}/latest",
       "urlPattern": "registry.npmjs.org/%7BVAR%7D/latest",
       "topics": [
@@ -1390,7 +1390,7 @@
     {
       "id": "generic-2bf5e287",
       "name": "openlibrary-search",
-      "provider": "generic",
+      "provider": "openlibrary",
       "url": "https://openlibrary.org/search.json?q={query}&limit=5",
       "urlPattern": "openlibrary.org/search.json?limit=5&q={VAR}",
       "topics": [
@@ -1518,7 +1518,7 @@
     {
       "id": "generic-2a15a014",
       "name": "ipinfo",
-      "provider": "generic",
+      "provider": "ipinfo",
       "url": "https://ipinfo.io/{ip}/json",
       "urlPattern": "ipinfo.io/%7BVAR%7D/json",
       "topics": [
@@ -1714,7 +1714,7 @@
     {
       "id": "generic-5daa9702",
       "name": "yahoo-finance-spark",
-      "provider": "generic",
+      "provider": "yahoo-finance",
       "url": "https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbol}&range=1d&interval=5m",
       "urlPattern": "query2.finance.yahoo.com/v8/finance/spark?interval=5m&range=1d&symbols={VAR}",
       "topics": [
@@ -2176,7 +2176,7 @@
     {
       "id": "generic-5a5566d2",
       "name": "stackexchange-search",
-      "provider": "generic",
+      "provider": "stackexchange",
       "url": "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=votes&q={query}&site=stackoverflow&pagesize=3",
       "urlPattern": "api.stackexchange.com/2.3/search/advanced?order=desc&pagesize=3&q={VAR}&site=stackoverflow&sort=votes",
       "topics": [
@@ -2242,7 +2242,7 @@
     {
       "id": "generic-007e1673",
       "name": "isup-check",
-      "provider": "generic",
+      "provider": "isup",
       "url": "https://isup.me/{domain}",
       "urlPattern": "isup.me/%7BVAR%7D",
       "topics": [
@@ -2498,7 +2498,7 @@
     {
       "id": "generic-13dad0c8",
       "name": "nasa-apod",
-      "provider": "generic",
+      "provider": "nasa",
       "url": "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY",
       "urlPattern": "api.nasa.gov/planetary/apod?api_key=DEMO_KEY",
       "topics": [
@@ -2564,7 +2564,7 @@
     {
       "id": "generic-189a077e",
       "name": "usgs-earthquakes",
-      "provider": "generic",
+      "provider": "usgs",
       "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson",
       "urlPattern": "earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson",
       "topics": [
@@ -2630,7 +2630,7 @@
     {
       "id": "generic-136e4dc4",
       "name": "usgs-earthquakes-hour",
-      "provider": "generic",
+      "provider": "usgs",
       "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
       "urlPattern": "earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson",
       "topics": [
@@ -2892,7 +2892,7 @@
     {
       "id": "generic-2eb5522f",
       "name": "blockstream-block-tip",
-      "provider": "generic",
+      "provider": "blockstream",
       "url": "https://blockstream.info/api/blocks/tip/height",
       "urlPattern": "blockstream.info/api/blocks/tip/height",
       "topics": [
@@ -3156,7 +3156,7 @@
     {
       "id": "generic-04c63b2c",
       "name": "etherscan-balance",
-      "provider": "generic",
+      "provider": "etherscan",
       "url": "https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest",
       "urlPattern": "api.etherscan.io/api?action=balance&address={VAR}&module=account&tag=latest",
       "topics": [
@@ -3222,7 +3222,7 @@
     {
       "id": "generic-04e3ad5d",
       "name": "etherscan-tokentx",
-      "provider": "generic",
+      "provider": "etherscan",
       "url": "https://api.etherscan.io/api?module=account&action=tokentx&address={address}&page=1&offset=5&sort=desc",
       "urlPattern": "api.etherscan.io/api?action=tokentx&address={VAR}&module=account&offset=5&page=1&sort=desc",
       "topics": [
@@ -3798,7 +3798,7 @@
     {
       "id": "generic-194b5832",
       "name": "dexscreener-pair",
-      "provider": "generic",
+      "provider": "dexscreener",
       "url": "https://api.dexscreener.com/latest/dex/search?q={query}",
       "urlPattern": "api.dexscreener.com/latest/dex/search?q={VAR}",
       "topics": [

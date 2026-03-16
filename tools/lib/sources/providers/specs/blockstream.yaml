@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+provider:
+  name: blockstream
+  displayName: Blockstream
+  matches:
+    providers: [blockstream]
+    hosts: [blockstream.info]
+  domains: [crypto, bitcoin, blockchain]
+  rateLimit:
+    bucket: blockstream
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  block-tip:
+    when:
+      sourceAdapterOperation: [block-tip, tip-height]
+      urlPatterns: ["/blocks/tip"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://blockstream.info/api/blocks/tip/height"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "bitcoin"
+        - "block"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "btc-block-tip"
+          required: true
+        title:
+          template: "Bitcoin Block Height"
+        bodyText:
+          template: "Current Bitcoin block height"
+        topics:
+          template: "bitcoin,blockchain,block-height"
+        raw:
+          mode: parsed-root

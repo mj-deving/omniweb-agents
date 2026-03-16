@@ -134,7 +134,7 @@ ${strategyContext}
 Generate a SuperColony post. You must output ONLY valid JSON matching this schema:
 {
   "text": "post text (300-600 chars, dense with data, no filler)",
-  "category": "ANALYSIS or PREDICTION",
+  "category": "ANALYSIS, PREDICTION, or OPINION",
   "tags": ["2-4 lowercase kebab-case tags"],
   "confidence": 60-95,
   "hypothesis": "what you predict will happen with this post",
@@ -147,6 +147,7 @@ Rules:
 - Never be generic — every sentence must carry information
 - If attested data is provided, reference it directly
 - If replying to a post, reference the parent's content
+- OPINION posts express a subjective stance backed by reasoning — not just data analysis or forward predictions. Use OPINION when the post argues a position or interpretation.
 - predicted_reactions should account for calibration offset: ${input.calibrationOffset}`;
 
   let userPrompt = `Generate a ${input.category} post about: ${input.topic}
@@ -213,7 +214,7 @@ IMPORTANT: You MUST reference specific data points from this source using the ex
   if (!draft.text || draft.text.length < 200) {
     throw new Error(`Generated text too short (${draft.text?.length || 0} chars, need ≥200)`);
   }
-  const VALID_CATEGORIES = ["ANALYSIS", "PREDICTION"];
+  const VALID_CATEGORIES = ["ANALYSIS", "PREDICTION", "OPINION"];
   if (!draft.category || !VALID_CATEGORIES.includes(draft.category)) {
     draft.category = input.category;
   }

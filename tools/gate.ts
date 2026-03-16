@@ -53,7 +53,7 @@ FLAGS:
   --agent NAME       Agent name (default: sentinel)
   --topic TEXT        Topic to check (required)
   --text TEXT         Post text to check length (optional)
-  --category TEXT     Post category (ANALYSIS/PREDICTION; pioneer also allows QUESTION)
+  --category TEXT     Post category (ANALYSIS/PREDICTION/OPINION; pioneer also allows QUESTION)
   --confidence N      Confidence value 0-100 (optional)
   --reply-to TX_HASH  Parent post txHash (checks reply target reactions)
   --scan-cache PATH   Path to session state JSON with scan rawPosts cache
@@ -434,8 +434,8 @@ function checkAgentReference(): GateItem {
  */
 function checkCategory(category: string | undefined, mode: GateMode): GateItem {
   const allowed = mode === "pioneer"
-    ? ["ANALYSIS", "PREDICTION", "QUESTION"]
-    : ["ANALYSIS", "PREDICTION"];
+    ? ["ANALYSIS", "PREDICTION", "QUESTION", "OPINION"]
+    : ["ANALYSIS", "PREDICTION", "OPINION"];
 
   if (!category) {
     return {

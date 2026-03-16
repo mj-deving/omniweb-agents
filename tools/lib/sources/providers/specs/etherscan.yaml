@@ -1,0 +1,70 @@
+schemaVersion: 1
+
+provider:
+  name: etherscan
+  displayName: Etherscan
+  matches:
+    providers: [etherscan]
+    hosts: [api.etherscan.io]
+  domains: [crypto, ethereum, gas, defi]
+  rateLimit:
+    bucket: etherscan
+    maxPerMinute: 5
+    maxPerDay: 100
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  gas-oracle:
+    when:
+      sourceAdapterOperation: [gas-oracle, gas]
+      urlPatterns: ["/api.*gastracker"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.etherscan.io/api?module=gastracker&action=gasoracle"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "ethereum"
+        - "gas"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+        jsonPath: "$.result"
+      fields:
+        id:
+          template: "etherscan-gas"
+          required: true
+        title:
+          template: "Ethereum Gas Oracle"
+        bodyText:
+          template: "ETH gas: safe={SafeGasPrice} gwei, propose={ProposeGasPrice} gwei, fast={FastGasPrice} gwei"
+        topics:
+          template: "ethereum,gas,fees"
+        metrics:
+          safe_gas:
+            jsonPath: "$.SafeGasPrice"
+            default: 0
+          propose_gas:
+            jsonPath: "$.ProposeGasPrice"
+            default: 0
+          fast_gas:
+            jsonPath: "$.FastGasPrice"
+            default: 0
+        raw:
+          mode: item

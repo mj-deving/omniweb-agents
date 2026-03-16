@@ -1,0 +1,76 @@
+schemaVersion: 1
+
+provider:
+  name: yahoo-finance
+  displayName: Yahoo Finance
+  matches:
+    providers: [yahoo-finance]
+    hosts: [query2.finance.yahoo.com, query1.finance.yahoo.com]
+  domains: [finance, stocks, markets, macro]
+  rateLimit:
+    bucket: yahoo-finance
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  quote:
+    when:
+      sourceAdapterOperation: [quote, chart]
+      urlPatterns: ["/v8/finance/chart"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://query2.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1h"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "{symbol}"
+    variables:
+      symbol:
+        sources: [vars.asset, topic]
+        required: true
+        transforms:
+          - trim
+          - uppercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.chart.result[*]"
+      fields:
+        id:
+          jsonPath: "$.meta.symbol"
+          required: true
+        title:
+          template: "{meta.symbol} quote"
+        bodyText:
+          template: "{meta.symbol}: ${meta.regularMarketPrice} ({meta.currency})"
+        topics:
+          template: "finance,stock,{meta.symbol}"
+        metrics:
+          price:
+            jsonPath: "$.meta.regularMarketPrice"
+            default: 0
+          previous_close:
+            jsonPath: "$.meta.previousClose"
+            default: 0
+          volume:
+            jsonPath: "$.meta.regularMarketVolume"
+            default: 0
+        raw:
+          mode: item

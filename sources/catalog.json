@@ -458,7 +458,7 @@
     {
       "id": "generic-524c8049",
       "name": "etherscan-gas",
-      "provider": "generic",
+      "provider": "etherscan",
       "url": "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
       "urlPattern": "api.etherscan.io/api?action=gasoracle&module=gastracker",
       "topics": [
@@ -1648,7 +1648,7 @@
     {
       "id": "generic-4ac9bb13",
       "name": "yahoo-finance-quote",
-      "provider": "generic",
+      "provider": "yahoo-finance",
       "url": "https://query2.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d",
       "urlPattern": "query2.finance.yahoo.com/v8/finance/chart/%7BVAR%7D?interval=1d&range=5d",
       "topics": [
@@ -2110,7 +2110,7 @@
     {
       "id": "generic-71e233ba",
       "name": "reddit-search",
-      "provider": "generic",
+      "provider": "reddit",
       "url": "https://www.reddit.com/search.json?q={query}&sort=relevance&limit=5",
       "urlPattern": "www.reddit.com/search.json?limit=5&q={VAR}&sort=relevance",
       "topics": [
@@ -3288,7 +3288,7 @@
     {
       "id": "generic-368c5833",
       "name": "alternative-fear-greed",
-      "provider": "generic",
+      "provider": "alternative-fng",
       "url": "https://api.alternative.me/fng/?limit=1",
       "urlPattern": "api.alternative.me/fng?limit=1",
       "topics": [

@@ -860,6 +860,11 @@ interface GatePost {
   text: string;
   confidence: number;
   gateResult: any;
+  replyTo?: {
+    txHash: string;
+    author: string;
+    text: string;
+  };
 }
 
 type GateItemStatus = "pass" | "fail" | "manual" | "warning";
@@ -1033,13 +1038,20 @@ function normalizeScanAgentIndex(raw: any): Map<string, ScanAgentStats> {
  * Standard mode: preserve previous heat+gaps behavior.
  * Pioneer mode: prefer frontier/focus-aligned topics and filter generic feed noise.
  */
+type TopicSuggestion = {
+  topic: string;
+  category: string;
+  reason: string;
+  replyTo?: { txHash: string; author: string; text: string };
+};
+
 function extractTopicsFromScan(
   state: AnySessionState,
   sessionLogPath?: string
-): Array<{ topic: string; category: string; reason: string }> {
+): TopicSuggestion[] {
   const scan = getScanResult(state) || {};
   const mode = agentConfig.gate.mode === "pioneer" ? "pioneer" : "standard";
-  const topics: Array<{ topic: string; category: string; reason: string }> = [];
+  const topics: TopicSuggestion[] = [];
   const topicIndex = normalizeScanTopicIndex(scan.topicIndex);
   const agentIndex = normalizeScanAgentIndex(scan.agentIndex);
 
@@ -1131,14 +1143,50 @@ function extractTopicsFromScan(
       });
     }
 
-    // Gap topics (unique signal opportunities)
+    // Gap topics (unique signal opportunities — OPINION for interpretive takes)
     const gaps = scan.gaps?.topics || [];
     for (const gap of gaps.slice(0, 3)) {
       if (!topics.some((t) => t.topic === gap)) {
+        // First gap with no hot topic gets OPINION (fresh perspective on uncovered area)
+        const isFirstGapWithoutHeat = topics.length === 0 && !scan.heat?.topic;
+        const category = isFirstGapWithoutHeat ? "OPINION" : "ANALYSIS";
         topics.push({
           topic: gap,
+          category,
+          reason: category === "OPINION" ? "gap — opinion opportunity" : "gap in feed coverage",
+        });
+      }
+    }
+
+    // Reply candidate discovery: find highest-reaction post from scan as reply target
+    const minReplyReactions = agentConfig.engagement.replyMinParentReactions || 8;
+    const rawPosts = Array.isArray(scan.rawPosts) ? scan.rawPosts : [];
+    if (rawPosts.length > 0 && topics.length < 3) {
+      const countRx = (p: any): number => (p.reactions?.agree || 0) + (p.reactions?.disagree || 0);
+
+      // Single-pass O(n) max scan instead of filter+sort+slice
+      let best: { post: any; rx: number } | null = null;
+      for (const p of rawPosts) {
+        if (!p.txHash || !p.author) continue;
+        const rx = countRx(p);
+        if (rx >= minReplyReactions && (!best || rx > best.rx)) {
+          best = { post: p, rx };
+        }
+      }
+
+      if (best) {
+        const candidate = best.post;
+        const text = String(candidate.payload?.text || candidate.textPreview || "").slice(0, 300);
+        const topicTag = candidate.payload?.tags?.[0] || candidate.tags?.[0] || "reply";
+        topics.push({
+          topic: String(topicTag).toLowerCase(),
           category: "ANALYSIS",
-          reason: "gap in feed coverage",
+          reason: `reply target (${best.rx}rx)`,
+          replyTo: {
+            txHash: String(candidate.txHash),
+            author: String(candidate.author),
+            text,
+          },
         });
       }
     }
@@ -1313,8 +1361,8 @@ async function runGateFull(
 
     const mode = agentConfig.gate.mode === "pioneer" ? "pioneer" : "standard";
     const categoryPrompt = mode === "pioneer"
-      ? "  Category (ANALYSIS/PREDICTION/QUESTION): "
-      : "  Category (ANALYSIS/PREDICTION): ";
+      ? "  Category (ANALYSIS/PREDICTION/QUESTION/OPINION): "
+      : "  Category (ANALYSIS/PREDICTION/OPINION): ";
     const category = await ask(rl, categoryPrompt);
     const text = await ask(rl, "  Draft text (or 'skip'): ");
     const confStr = await ask(rl, "  Confidence (60-100): ");
@@ -1452,6 +1500,7 @@ async function runGateAutonomous(
         text: "",
         confidence: 0,
         gateResult: result,
+        replyTo: suggestion.replyTo,
       });
     } else {
       info(`Gate FAIL: ${suggestion.topic} (${passed}/${total}, fail=${failCount}) — skipping`);
@@ -1733,6 +1782,7 @@ async function runPublishAutonomous(
           signalContext,
           briefingContext: (state as any).briefingContext as string | undefined,
           attestedData,
+          replyTo: gp.replyTo,
         },
         provider,
         {

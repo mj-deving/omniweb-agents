@@ -44,7 +44,7 @@ operations:
     parse:
       format: json
       items:
-        mode: single-object
+        mode: json-path
         jsonPath: "$.result"
       fields:
         id:

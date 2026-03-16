@@ -26,7 +26,7 @@ operations:
       default: true
     request:
       method: GET
-      urlTemplate: "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q={query}&site=stackoverflow&pagesize=5"
+      urlTemplate: "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=votes&q={query}&site=stackoverflow&pagesize=3"
       estimatedSizeKb:
         TLSN: 8
         DAHR: 8

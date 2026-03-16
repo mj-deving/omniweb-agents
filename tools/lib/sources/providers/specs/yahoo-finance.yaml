@@ -81,15 +81,15 @@ operations:
       urlPatterns: ["/v8/finance/spark"]
     request:
       method: GET
-      urlTemplate: "https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=1d&interval=1h"
+      urlTemplate: "https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbol}&range=1d&interval=5m"
       estimatedSizeKb:
         TLSN: 6
         DAHR: 6
       matchHints:
-        - "{symbols}"
+        - "{symbol}"
     variables:
-      symbols:
-        sources: [vars.symbols, topic]
+      symbol:
+        sources: [vars.symbol, vars.asset, topic]
         required: true
         transforms:
           - trim

@@ -39,7 +39,7 @@ interface SourceRegistry {
 
 interface PublishCandidate {
   topic: string;
-  category: "ANALYSIS" | "PREDICTION" | "QUESTION";
+  category: "ANALYSIS" | "PREDICTION" | "QUESTION" | "OPINION";
   text?: string;
   predicted_reactions?: number;
 }
@@ -158,7 +158,9 @@ function loadCandidates(flags: Record<string, string>): PublishCandidate[] {
       ? "PREDICTION"
       : flagCategoryRaw === "QUESTION"
         ? "QUESTION"
-        : "ANALYSIS";
+        : flagCategoryRaw === "OPINION"
+          ? "OPINION"
+          : "ANALYSIS";
 
   if (flags["topic"]) {
     out.push({ topic: flags["topic"], category: flagCategory });
@@ -183,7 +185,9 @@ function loadCandidates(flags: Record<string, string>): PublishCandidate[] {
           ? "PREDICTION"
           : rawCategory === "QUESTION"
             ? "QUESTION"
-            : "ANALYSIS";
+            : rawCategory === "OPINION"
+              ? "OPINION"
+              : "ANALYSIS";
 
       const text = typeof item?.text === "string" && item.text.trim()
         ? item.text.trim()

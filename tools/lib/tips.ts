@@ -140,10 +140,11 @@ function calculateFreshness(timestamp: number, now: Date): number {
   return 0;
 }
 
-function currentRecipientCount(tipState: TipState, recipient: string): number {
+function currentRecipientCount(tipState: TipState, recipient: string, now?: Date): number {
   const record = tipState.perRecipientCounts[recipient.toLowerCase()];
   if (!record) return 0;
-  if (record.date !== todayUTC()) return 0;
+  const today = now ? now.toISOString().slice(0, 10) : todayUTC();
+  if (record.date !== today) return 0;
   return record.count;
 }
 
@@ -177,7 +178,7 @@ function buildCandidate(
   const reactionsScore = Math.min(totalReactions * 2, 20);
   const topicAlignmentScore = calculateTopicAlignment(post, config);
   const freshnessScore = calculateFreshness(post.timestamp, now);
-  const repeatPenalty = currentRecipientCount(tipState, post.author) * 15;
+  const repeatPenalty = currentRecipientCount(tipState, post.author, now) * 15;
 
   return {
     ...post,
@@ -274,7 +275,7 @@ export function selectTipCandidates(
         return false;
       }
       if (
-        currentRecipientCount(options.tipState, candidate.author) >=
+        currentRecipientCount(options.tipState, candidate.author, now) >=
         tippingConfig.maxPerRecipientPerDay
       ) {
         logTipDecision("Tip candidate rejected: recipient daily cap reached", {

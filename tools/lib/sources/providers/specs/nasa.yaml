@@ -1,0 +1,63 @@
+schemaVersion: 1
+
+provider:
+  name: nasa
+  displayName: NASA
+  matches:
+    providers: [nasa]
+    hosts: [api.nasa.gov]
+  domains: [science, space, astronomy]
+  rateLimit:
+    bucket: nasa
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  apod:
+    when:
+      sourceAdapterOperation: [apod]
+      urlPatterns: ["/planetary/apod"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "space"
+        - "astronomy"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          jsonPath: "$.date"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          jsonPath: "$.explanation"
+          transforms:
+            - truncate: 300
+        canonicalUrl:
+          jsonPath: "$.hdurl"
+        topics:
+          template: "space,astronomy,nasa"
+        raw:
+          mode: item

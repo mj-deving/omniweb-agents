@@ -524,7 +524,7 @@ async function retry502<T>(name: string, fn: () => Promise<T>): Promise<T> {
   throw new Error(`${name} failed after retries`);
 }
 
-function fallbackDraft(topic: string, category: "ANALYSIS" | "PREDICTION" | "QUESTION"): PostDraft {
+function fallbackDraft(topic: string, category: "ANALYSIS" | "PREDICTION" | "QUESTION" | "OPINION"): PostDraft {
   const text = `${topic}: Attested market snapshot indicates measurable signal divergence across major participants. Current observation includes at least 3 comparable data points and a confidence-backed stance. If engagement exceeds 5 reactions, this topic likely remains actionable in the next session window.`;
   return {
     text,

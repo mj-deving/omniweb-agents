@@ -68,3 +68,100 @@ operations:
             default: 0
         raw:
           mode: item
+
+  balance:
+    when:
+      sourceAdapterOperation: [balance]
+      urlPatterns: ["/api.*action=balance"]
+    request:
+      method: GET
+      urlTemplate: "https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{address}"
+        - "ethereum"
+    variables:
+      address:
+        sources: [vars.address, topic]
+        required: true
+        transforms:
+          - trim
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.result"
+      fields:
+        id:
+          template: "etherscan-balance-{address}"
+          required: true
+        title:
+          template: "ETH Balance"
+        bodyText:
+          template: "ETH balance for {address}"
+        topics:
+          template: "ethereum,balance,account"
+        raw:
+          mode: parsed-root
+
+  tokentx:
+    when:
+      sourceAdapterOperation: [tokentx, token-transfers]
+      urlPatterns: ["/api.*action=tokentx"]
+    request:
+      method: GET
+      urlTemplate: "https://api.etherscan.io/api?module=account&action=tokentx&address={address}&sort=desc&page=1&offset=5"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "{address}"
+        - "token"
+    variables:
+      address:
+        sources: [vars.address, topic]
+        required: true
+        transforms:
+          - trim
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.result[*]"
+      fields:
+        id:
+          jsonPath: "$.hash"
+          required: true
+        title:
+          template: "Token transfer: {tokenSymbol}"
+        bodyText:
+          template: "{tokenName} ({tokenSymbol}): {value} from {from} to {to}"
+        topics:
+          template: "ethereum,token,transfer"
+        metrics:
+          value:
+            jsonPath: "$.value"
+            default: "0"
+          token_symbol:
+            jsonPath: "$.tokenSymbol"
+            default: "unknown"
+        raw:
+          mode: item

@@ -1,0 +1,114 @@
+schemaVersion: 1
+
+provider:
+  name: usgs
+  displayName: USGS Earthquake
+  matches:
+    providers: [usgs]
+    hosts: [earthquake.usgs.gov]
+  domains: [science, earthquakes, geology]
+  rateLimit:
+    bucket: usgs
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  significant:
+    when:
+      sourceAdapterOperation: [significant, earthquakes]
+      urlPatterns: ["/significant"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "earthquake"
+        - "seismic"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.features[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.properties.title"
+        bodyText:
+          jsonPath: "$.properties.title"
+        canonicalUrl:
+          jsonPath: "$.properties.url"
+        topics:
+          template: "earthquake,geology,seismic"
+        metrics:
+          magnitude:
+            jsonPath: "$.properties.mag"
+            default: 0
+          place:
+            jsonPath: "$.properties.place"
+            default: "unknown"
+          tsunami:
+            jsonPath: "$.properties.tsunami"
+            default: 0
+        raw:
+          mode: item
+
+  hourly:
+    when:
+      sourceAdapterOperation: [hourly, all-hour]
+      urlPatterns: ["/all_hour"]
+    request:
+      method: GET
+      urlTemplate: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
+      estimatedSizeKb:
+        TLSN: 6
+        DAHR: 6
+      matchHints:
+        - "earthquake"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.features[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.properties.title"
+        bodyText:
+          jsonPath: "$.properties.title"
+        topics:
+          template: "earthquake,geology"
+        metrics:
+          magnitude:
+            jsonPath: "$.properties.mag"
+            default: 0
+        raw:
+          mode: item

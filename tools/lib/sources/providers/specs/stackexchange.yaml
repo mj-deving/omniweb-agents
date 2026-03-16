@@ -1,0 +1,77 @@
+schemaVersion: 1
+
+provider:
+  name: stackexchange
+  displayName: StackExchange
+  matches:
+    providers: [stackexchange]
+    hosts: [api.stackexchange.com]
+  domains: [development, programming, q-and-a]
+  rateLimit:
+    bucket: stackexchange
+    maxPerMinute: 10
+    maxPerDay: 200
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  search:
+    when:
+      sourceAdapterOperation: [search]
+      urlPatterns: ["/search/advanced"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q={query}&site=stackoverflow&pagesize=5"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+        transforms:
+          - trim
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.items[*]"
+      fields:
+        id:
+          jsonPath: "$.question_id"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          jsonPath: "$.title"
+        canonicalUrl:
+          jsonPath: "$.link"
+        topics:
+          template: "stackoverflow,programming"
+        metrics:
+          score:
+            jsonPath: "$.score"
+            default: 0
+          answer_count:
+            jsonPath: "$.answer_count"
+            default: 0
+          view_count:
+            jsonPath: "$.view_count"
+            default: 0
+        raw:
+          mode: item

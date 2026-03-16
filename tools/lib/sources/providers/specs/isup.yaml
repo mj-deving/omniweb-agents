@@ -1,0 +1,64 @@
+schemaVersion: 1
+
+provider:
+  name: isup
+  displayName: IsUp.me
+  matches:
+    providers: [isup]
+    hosts: [isup.me]
+  domains: [network, uptime, monitoring]
+  rateLimit:
+    bucket: isup
+    maxPerMinute: 10
+    maxPerDay: 100
+  auth:
+    mode: none
+  defaults:
+    responseFormat: text
+    parseFailureMode: empty-entries
+
+operations:
+  check:
+    when:
+      sourceAdapterOperation: [check, uptime]
+      urlPatterns: ["isup.me/"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://isup.me/{domain}"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "{domain}"
+    variables:
+      domain:
+        sources: [vars.domain, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+    compatibility:
+      responseFormats: [text]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+    parse:
+      format: text
+      items:
+        mode: regex-blocks
+        blockPattern: "(It's just you|looks down)"
+      fields:
+        id:
+          template: "isup-{domain}"
+          required: true
+        title:
+          template: "Site status: {domain}"
+        bodyText:
+          template: "Uptime check for {domain}"
+        topics:
+          template: "uptime,monitoring"
+        raw:
+          mode: parsed-root

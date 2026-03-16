@@ -1,0 +1,71 @@
+schemaVersion: 1
+
+provider:
+  name: ipinfo
+  displayName: IPinfo
+  matches:
+    providers: [ipinfo]
+    hosts: [ipinfo.io]
+  domains: [network, ip, geolocation]
+  rateLimit:
+    bucket: ipinfo
+    maxPerMinute: 10
+    maxPerDay: 100
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  lookup:
+    when:
+      sourceAdapterOperation: [lookup, ip]
+      urlPatterns: ["/[^/]+/json"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://ipinfo.io/{ip}/json"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{ip}"
+    variables:
+      ip:
+        sources: [vars.ip, topic]
+        required: true
+        transforms:
+          - trim
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          jsonPath: "$.ip"
+          required: true
+        title:
+          template: "IP {ip}"
+        bodyText:
+          template: "{ip} — {city}, {region}, {country} ({org})"
+        topics:
+          template: "network,ip,geolocation"
+        metrics:
+          country:
+            jsonPath: "$.country"
+            default: "unknown"
+          org:
+            jsonPath: "$.org"
+            default: "unknown"
+        raw:
+          mode: item

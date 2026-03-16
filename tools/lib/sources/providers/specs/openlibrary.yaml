@@ -1,0 +1,72 @@
+schemaVersion: 1
+
+provider:
+  name: openlibrary
+  displayName: Open Library
+  matches:
+    providers: [openlibrary]
+    hosts: [openlibrary.org]
+  domains: [books, reference, publishing]
+  rateLimit:
+    bucket: openlibrary
+    maxPerMinute: 20
+    maxPerDay: 300
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  search:
+    when:
+      sourceAdapterOperation: [search]
+      urlPatterns: ["/search.json"]
+      default: true
+    request:
+      method: GET
+      urlTemplate: "https://openlibrary.org/search.json?q={query}&limit=5"
+      estimatedSizeKb:
+        TLSN: 10
+        DAHR: 10
+      matchHints:
+        - "{query}"
+    variables:
+      query:
+        sources: [vars.query, topic]
+        required: true
+        transforms:
+          - trim
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.docs[*]"
+      fields:
+        id:
+          jsonPath: "$.key"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{title} by {author_name[0]} ({first_publish_year})"
+        topics:
+          template: "books,literature"
+        metrics:
+          first_publish_year:
+            jsonPath: "$.first_publish_year"
+            default: 0
+          edition_count:
+            jsonPath: "$.edition_count"
+            default: 0
+        raw:
+          mode: item

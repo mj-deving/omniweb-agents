@@ -74,3 +74,48 @@ operations:
             default: 0
         raw:
           mode: item
+
+  spark:
+    when:
+      sourceAdapterOperation: [spark, multi-quote]
+      urlPatterns: ["/v8/finance/spark"]
+    request:
+      method: GET
+      urlTemplate: "https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=1d&interval=1h"
+      estimatedSizeKb:
+        TLSN: 6
+        DAHR: 6
+      matchHints:
+        - "{symbols}"
+    variables:
+      symbols:
+        sources: [vars.symbols, topic]
+        required: true
+        transforms:
+          - trim
+          - uppercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.spark.result[*]"
+      fields:
+        id:
+          jsonPath: "$.symbol"
+          required: true
+        title:
+          template: "{symbol} spark"
+        bodyText:
+          template: "Spark data for {symbol}"
+        topics:
+          template: "finance,stock,{symbol}"
+        raw:
+          mode: item

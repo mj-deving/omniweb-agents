@@ -2242,7 +2242,7 @@
     {
       "id": "generic-007e1673",
       "name": "isup-check",
-      "provider": "isup",
+      "provider": "generic",
       "url": "https://isup.me/{domain}",
       "urlPattern": "isup.me/%7BVAR%7D",
       "topics": [

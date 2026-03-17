@@ -15,8 +15,9 @@
  */
 
 // Declarative provider engine
-export { runDeclarativeAdapter } from "../tools/lib/sources/providers/declarative-engine.js";
-export type { DeclarativeSpec, ProviderAdapter, FetchedResponse } from "../tools/lib/sources/providers/types.js";
+export { loadDeclarativeProviderAdapters, loadDeclarativeProviderAdaptersSync } from "../tools/lib/sources/providers/declarative-engine.js";
+export type { DeclarativeProviderSpec } from "../tools/lib/sources/providers/declarative-engine.js";
+export type { ProviderAdapter, FetchedResponse } from "../tools/lib/sources/providers/types.js";
 
 // Source lifecycle
 export {
@@ -27,7 +28,7 @@ export {
 
 // LLM provider abstraction
 export { resolveProvider } from "../tools/lib/llm-provider.js";
-export type { LLMProvider, LLMCompleteOptions } from "../tools/lib/llm-provider.js";
+export type { LLMProvider } from "../tools/lib/llm-provider.js";
 
 // Extension hook dispatcher
 export {

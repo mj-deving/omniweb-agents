@@ -3,11 +3,24 @@
   "version": "0.1.0",
   "description": "Core framework for building autonomous agents — declarative data providers, source lifecycle, LLM abstraction, and session orchestration",
   "type": "module",
-  "main": "./index.ts",
-  "types": "./index.ts",
+  "main": "./dist/packages/core/index.js",
+  "types": "./dist/packages/core/index.d.ts",
   "exports": {
-    ".": "./index.ts",
-    "./types": "./types.ts"
+    ".": {
+      "import": "./dist/packages/core/index.js",
+      "types": "./dist/packages/core/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/packages/core/types.js",
+      "types": "./dist/packages/core/types.d.ts"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "agent",

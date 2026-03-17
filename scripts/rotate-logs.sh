@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # Remove agent session logs older than 7 days.
 # Crontab: 0 5 * * * /home/USER/projects/demos-agents/scripts/rotate-logs.sh
 

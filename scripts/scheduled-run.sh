@@ -15,6 +15,12 @@
 
 set -euo pipefail
 
+# Ensure PATH includes node/npx (nvm/fnm installs aren't in cron's minimal PATH)
+export PATH="$HOME/.local/bin:$HOME/.nvm/versions/node/v22.22.1/bin:/usr/local/bin:$PATH"
+
+# Prevent stdin hangs under cron (session-runner needs --oversight autonomous, not stdin)
+exec < /dev/null
+
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 CREDS="$HOME/.config/demos/credentials"
 LOG_DIR="$HOME/.demos-agent-logs"

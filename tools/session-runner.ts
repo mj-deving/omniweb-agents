@@ -2849,6 +2849,11 @@ async function runV2Loop(
       );
       state.engagements = engageResult.targets || [];
       completeSubstage(engageSub, engageResult);
+      // Bridge substage result to state.phases.act.result for getEngageResult()
+      if (isV2(state)) {
+        if (!state.phases.act.result) state.phases.act.result = {};
+        state.phases.act.result.engage = engageResult;
+      }
       state.substages = substages;
       saveState(state, sessionsDir);
     } catch (e: any) {
@@ -2878,6 +2883,13 @@ async function runV2Loop(
         gateResult = await runGateAutonomous(state, flags);
       }
       completeSubstage(gateSub, gateResult);
+      // Publish reads gate result via getGateResult → state.phases.act.result.gate.
+      // completeSubstage stores in substage object only — bridge to state so
+      // runPublishAutonomous/runPublishManual can find the gated posts.
+      if (isV2(state)) {
+        if (!state.phases.act.result) state.phases.act.result = {};
+        state.phases.act.result.gate = gateResult;
+      }
       state.substages = substages;
       saveState(state, sessionsDir);
     } catch (e: any) {

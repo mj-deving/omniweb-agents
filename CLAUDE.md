@@ -15,7 +15,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Contains agent defi
 - **SDK:** `@kynesyslabs/demosdk` v2.11.0 (import `/websdk` subpath directly)
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `tools/lib/llm-provider.ts` (Claude CLI, OpenAI API, Codex CLI adapters)
-- **Testing:** vitest (`npm test`). 224 tests across 16 suites. All code changes must include tests. Mock SDK with `vi.mock()`. TDD workflow: `claude-codex-coop/WORKFLOW.md`
+- **Testing:** vitest (`npm test`). 238 tests across 18 suites. All code changes must include tests. Mock SDK with `vi.mock()`. TDD workflow: `claude-codex-coop/WORKFLOW.md`
 
 ## Conventions
 
@@ -89,7 +89,10 @@ demos-agents/
 │       │   ├── supercolony.ts         # Full CLI (auth, post, feed, search, react, etc.)
 │       │   └── react-to-posts.ts      # Standalone reaction script
 │       └── references/                # API docs, playbook, procedures
-├── tests/                             # vitest test suites (224 tests, 16 files)
+├── scripts/
+│   ├── scheduled-run.sh               # Cron wrapper — runs all 3 agents + lifecycle
+│   └── rotate-logs.sh                 # 7-day log retention
+├── tests/                             # vitest test suites (238 tests, 18 files)
 │   ├── signals.test.ts                # fetchSignals, scoreSignalAlignment, briefing
 │   ├── predictions.test.ts            # register, calibration, deadline expiry
 │   ├── tips.test.ts                   # candidate selection, scoring, filters
@@ -117,7 +120,7 @@ All tools accept `--agent NAME` (default: sentinel), `--env PATH`, `--pretty`, `
 ```bash
 # Run full session loop
 npx tsx tools/session-runner.ts --agent sentinel --pretty
-# Flags: --oversight full|approve|autonomous, --resume, --skip-to PHASE, --dry-run
+# Flags: --oversight full|approve|autonomous, --resume, --skip-to PHASE, --dry-run, --loop-version 2
 
 # Individual tools
 npx tsx tools/audit.ts --agent sentinel --pretty
@@ -140,6 +143,14 @@ npx tsx skills/supercolony/scripts/supercolony.ts auth
 npx tsx skills/supercolony/scripts/supercolony.ts post --cat ANALYSIS --text "..." --confidence 80
 npx tsx skills/supercolony/scripts/supercolony.ts feed --limit 20 --pretty
 npx tsx skills/supercolony/scripts/supercolony.ts leaderboard --limit 10 --pretty
+
+# Multi-agent dashboard
+npx tsx tools/multi-agent-report.ts --pretty  # cross-agent session stats
+
+# Scheduled runs (cron wrapper)
+bash scripts/scheduled-run.sh                 # run all 3 agents + lifecycle
+bash scripts/scheduled-run.sh sentinel        # run specific agent
+bash scripts/scheduled-run.sh --dry-run       # show what would run
 
 # Spec-catalog consistency
 npx tsx tools/spec-consistency.ts --pretty    # verify all specs match catalog URLs

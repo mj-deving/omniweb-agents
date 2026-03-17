@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-03-14T20:23:18.599Z",
+  "generatedAt": "2026-03-17T03:15:11.413Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -55,9 +55,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:08.707Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -121,9 +122,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:08.884Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -185,9 +187,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:08.942Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -249,9 +252,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:09.064Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -274,7 +278,7 @@
       "tlsn_safe": false,
       "dahr_safe": true,
       "max_response_kb": 200,
-      "note": "Full protocol history. DAHR only \u2014 response far exceeds 16KB.",
+      "note": "Full protocol history. DAHR only — response far exceeds 16KB.",
       "topicAliases": [],
       "domainTags": [
         "defi",
@@ -313,9 +317,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:09.230Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -379,9 +384,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:09.336Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -443,9 +449,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
-        "successCount": 0,
-        "consecutiveFailures": 0
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-17T03:15:11.412Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -1115,10 +1122,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
+        "testCount": 6,
         "successCount": 0,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-03-14T20:22:57.327Z"
+        "lastTestedAt": "2026-03-17T03:15:08.399Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
@@ -1139,7 +1146,7 @@
       "tlsn_safe": true,
       "dahr_safe": false,
       "max_response_kb": 10,
-      "note": "Returns Atom XML, not JSON. Parse XML. DAHR expects JSON \u2014 use TLSN or convert.",
+      "note": "Returns Atom XML, not JSON. Parse XML. DAHR expects JSON — use TLSN or convert.",
       "topicAliases": [],
       "domainTags": [
         "science",
@@ -2903,7 +2910,7 @@
       "tlsn_safe": true,
       "dahr_safe": true,
       "max_response_kb": 1,
-      "note": "Returns single number \u2014 current block height.",
+      "note": "Returns single number — current block height.",
       "topicAliases": [],
       "domainTags": [
         "crypto",
@@ -4555,15 +4562,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
+        "testCount": 6,
         "successCount": 0,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-03-14T20:23:08.567Z"
+        "lastTestedAt": "2026-03-17T03:15:08.399Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
-        "failureReason": "esummary requires specific PMIDs \u2014 not available from topic vars at runtime"
+        "failureReason": "esummary requires specific PMIDs — not available from topic vars at runtime"
       },
       "adapter": {
         "operation": "esummary"
@@ -8172,7 +8179,7 @@
       "tlsn_safe": false,
       "dahr_safe": true,
       "max_response_kb": 15,
-      "note": "Latest AI papers. XML response \u2014 parse for titles/abstracts. DAHR only.",
+      "note": "Latest AI papers. XML response — parse for titles/abstracts. DAHR only.",
       "topicAliases": [],
       "domainTags": [
         "ai-policy",
@@ -8491,7 +8498,7 @@
       "tlsn_safe": true,
       "dahr_safe": true,
       "max_response_kb": 8,
-      "note": "PyPI recent updates \u2014 detect new tooling trends. RSS/XML.",
+      "note": "PyPI recent updates — detect new tooling trends. RSS/XML.",
       "topicAliases": [],
       "domainTags": [
         "emerging-tech"
@@ -8527,10 +8534,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
+        "testCount": 6,
         "successCount": 0,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-03-14T20:23:18.598Z"
+        "lastTestedAt": "2026-03-17T03:15:08.399Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",

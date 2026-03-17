@@ -63,7 +63,8 @@ for AGENT in "${AGENTS[@]}"; do
     --loop-version 2 \
     > "$AGENT_LOG" 2>&1; then
     # Count published posts from log
-    POSTS=$(grep -c "Published:" "$AGENT_LOG" 2>/dev/null || echo "0")
+    POSTS=$(grep -c "Published:" "$AGENT_LOG" 2>/dev/null || true)
+    POSTS=${POSTS:-0}
     PUBLISHED=$((PUBLISHED + POSTS))
     echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $AGENT OK ($POSTS posts)"
   else

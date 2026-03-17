@@ -1487,10 +1487,11 @@ async function suggestTopicsWithReasoning(
       return [];
     }
 
-    // Build context for the LLM
-    const feedTopics = (scan.topicIndex || [])
+    // Build context for the LLM — topicIndex is a Record<string, stats>, normalize it
+    const topicIndex = normalizeScanTopicIndex(scan.topicIndex);
+    const feedTopics = topicIndex
       .slice(0, 15)
-      .map((t: any) => `${t.topic || t[0]} (${t.stats?.totalReactions || t[1]?.totalReactions || 0}rx)`)
+      .map((t) => `${t.topic} (${t.stats.totalReactions}rx)`)
       .join(", ");
 
     const hotTopic = scan.heat?.topic
@@ -1586,9 +1587,11 @@ async function runGateAutonomous(
 
   // If heuristic extraction returned 0 topics, try LLM reasoning fallback
   let effectiveSuggestions = suggestions;
+  let reasoningAlreadyRan = false;
   if (effectiveSuggestions.length === 0) {
     info("Heuristic topic selection returned 0 — trying LLM reasoning fallback");
     effectiveSuggestions = await suggestTopicsWithReasoning(state, sourceView, flags);
+    reasoningAlreadyRan = true;
   }
 
   if (effectiveSuggestions.length === 0) {
@@ -1642,8 +1645,8 @@ async function runGateAutonomous(
     }
   }
 
-  // If all heuristic suggestions failed gate, try LLM reasoning as last resort
-  if (gatePosts.length === 0 && effectiveSuggestions.length > 0) {
+  // If all suggestions failed gate, try LLM reasoning as last resort (skip if already ran)
+  if (gatePosts.length === 0 && effectiveSuggestions.length > 0 && !reasoningAlreadyRan) {
     info("All heuristic topics failed gate — trying LLM reasoning fallback");
     const reasoningSuggestions = await suggestTopicsWithReasoning(state, sourceView, flags);
     for (const suggestion of reasoningSuggestions) {

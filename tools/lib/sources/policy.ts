@@ -147,8 +147,13 @@ export function selectSourceForTopicV2(
     if (source.tlsn_safe) score += 1;
     if (source.dahr_safe) score += 1;
 
-    // Small response bonus (TLSN-friendly)
-    if ((source.max_response_kb || 999) <= 16) score += 1;
+    // Response size scoring: TLSN needs small responses (<=16KB), DAHR benefits from richer data
+    if (method === "TLSN") {
+      if ((source.max_response_kb || 999) <= 16) score += 1;
+    } else {
+      // DAHR: prefer sources with more data for better evidence/match scores
+      if ((source.max_response_kb || 0) >= 2) score += 1;
+    }
 
     // Source health penalty — prefer reliable sources over degraded/low-quality ones
     // -5 for degraded status: unreliable responses, may fail attestation
@@ -195,11 +200,15 @@ export function selectSourceForTopicV2(
 
   if (ranked.length === 0) return null;
 
-  // Sort by score desc, then by response size asc (prefer smaller for TLSN)
+  // Sort by score desc, then by response size:
+  // TLSN: prefer smaller (fit within 16KB maxRecvData)
+  // DAHR: prefer larger (richer data → better match scores)
   ranked.sort(
     (a, b) =>
       b.score - a.score ||
-      (a.source.max_response_kb || 999) - (b.source.max_response_kb || 999)
+      (method === "TLSN"
+        ? (a.source.max_response_kb || 999) - (b.source.max_response_kb || 999)
+        : (b.source.max_response_kb || 0) - (a.source.max_response_kb || 0))
   );
 
   return ranked[0];

@@ -118,45 +118,48 @@ for (const source of catalogSources) {
   const catalogVars = extractVars(catalogUrl);
   const catalogParams = parseQueryParams(catalogUrl);
 
-  // Find matching operation in spec — prefer URL pattern match over default
+  // Find matching operation in spec — score each operation, pick best match
   const ops = spec.operations || {};
   let matchedOp: any = null;
   let matchedOpName = "";
-  let defaultOp: any = null;
-  let defaultOpName = "";
+  let bestScore = -1;
 
   const urlPath = catalogUrl.replace(/https?:\/\/[^/]+/, "").split("?")[0];
 
   for (const [opName, op] of Object.entries(ops) as [string, any][]) {
     if (!op?.request?.urlTemplate) continue;
+    let score = 0;
 
-    // Track default as fallback
-    if (op.when?.default && !defaultOp) {
-      defaultOp = op;
-      defaultOpName = opName;
-    }
-
-    // Check URL pattern match (preferred over default)
+    // URL pattern match (highest signal)
     const patterns = op.when?.urlPatterns || [];
-    if (patterns.some((p: string) => new RegExp(p).test(urlPath))) {
-      matchedOp = op;
-      matchedOpName = opName;
-      break;
+    if (patterns.some((p: string) => new RegExp(p).test(catalogUrl))) {
+      score += 10;
     }
 
-    // Check if spec urlTemplate path matches catalog path
+    // Path match (after stripping vars and query)
     const specPath = (op.request.urlTemplate || "").replace(/https?:\/\/[^/]+/, "").split("?")[0];
     if (specPath && urlPath && specPath.replace(/\{[^}]+\}/g, "") === urlPath.replace(/\{[^}]+\}/g, "")) {
+      score += 5;
+    }
+
+    // Query param overlap (helps distinguish etherscan ops sharing /api path)
+    const specParams = parseQueryParams(op.request.urlTemplate || "");
+    for (const [key, val] of catalogParams) {
+      if (val.includes("{")) continue;
+      const specVal = specParams.get(key);
+      if (specVal && !specVal.includes("{") && specVal === val) {
+        score += 3; // Exact param match
+      }
+    }
+
+    // Default operation gets a small boost
+    if (op.when?.default) score += 1;
+
+    if (score > bestScore) {
+      bestScore = score;
       matchedOp = op;
       matchedOpName = opName;
-      break;
     }
-  }
-
-  // Fall back to default operation
-  if (!matchedOp && defaultOp) {
-    matchedOp = defaultOp;
-    matchedOpName = defaultOpName;
   }
 
   if (!matchedOp) {
@@ -173,14 +176,36 @@ for (const source of catalogSources) {
   const specVars = extractVars(specUrl);
   const specParams = parseQueryParams(specUrl);
 
+  // Build set of resolved variable names from spec (includes vars.X sources)
+  const resolvedSpecVars = new Set(specVars);
+  const opVars = matchedOp.variables || {};
+  for (const [varName, varDef] of Object.entries(opVars) as [string, any][]) {
+    const sources = varDef?.sources || [];
+    for (const src of sources) {
+      if (typeof src === "string" && src.startsWith("vars.")) {
+        resolvedSpecVars.add(src.replace("vars.", "").toLowerCase());
+      }
+    }
+  }
+
   // Check variable name mismatches
   for (const catalogVar of catalogVars) {
+    // Skip if the spec resolves this var through its variable sources chain
+    if (resolvedSpecVars.has(catalogVar)) continue;
+
     if (!specVars.has(catalogVar)) {
       // Check if spec has a similar var (e.g., symbols vs symbol)
       const similar = [...specVars].find(
         (v) => v.startsWith(catalogVar) || catalogVar.startsWith(v)
       );
       if (similar) {
+        // Check if the similar var resolves the catalog var through sources
+        const similarDef = opVars[similar];
+        const similarSources = (similarDef?.sources || []).map((s: string) =>
+          typeof s === "string" ? s.replace("vars.", "").toLowerCase() : ""
+        );
+        if (similarSources.includes(catalogVar)) continue; // Resolved via variable chain
+
         issues.push({
           source: source.name || source.id,
           provider: source.provider,

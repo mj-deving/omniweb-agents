@@ -54,7 +54,7 @@ gate:
   noveltyMentionThreshold: 3
 
 calibration:
-  offset: -10
+  offset: 0
 
 loop:
   extensions:

@@ -21,6 +21,9 @@ export PATH="$HOME/.local/bin:$HOME/.nvm/versions/node/v22.22.1/bin:/usr/local/b
 # Prevent stdin hangs under cron (session-runner needs --oversight autonomous, not stdin)
 exec < /dev/null
 
+# Ensure LLM provider is set — without this, auto-detect finds codex before claude
+export LLM_CLI_COMMAND="claude --print"
+
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 CREDS="$HOME/.config/demos/credentials"
 LOG_DIR="$HOME/.demos-agent-logs"

@@ -29,8 +29,22 @@ let logAgentName = process.env.AGENT_NAME || "agent";
 
 /**
  * XDG credentials path — checked before legacy .env files.
+ * Per-agent credentials use: ~/.config/demos/credentials-{agent}
  */
 const XDG_CREDENTIALS = resolve(homedir(), ".config/demos/credentials");
+
+/**
+ * Resolve per-agent credentials path. Falls back to shared credentials.
+ * Priority: agent-specific → shared XDG → legacy envPath
+ */
+function resolveAgentCredentials(agentName?: string): string | null {
+  if (agentName) {
+    const agentPath = resolve(homedir(), `.config/demos/credentials-${agentName}`);
+    if (existsSync(agentPath)) return agentPath;
+  }
+  if (existsSync(XDG_CREDENTIALS)) return XDG_CREDENTIALS;
+  return null;
+}
 
 /**
  * Parse DEMOS_MNEMONIC from file content.
@@ -98,11 +112,11 @@ function applyConfigOverrides(content: string): void {
 
 /**
  * Load mnemonic from credentials file or .env file.
- * Resolution: explicit envPath (if non-default) → XDG → legacy envPath.
- * Explicit --env flag always wins; XDG is fallback for default paths.
+ * Resolution: explicit envPath → per-agent credentials → shared XDG → legacy envPath.
+ * Explicit --env flag always wins; per-agent credentials take priority over shared.
  * Also applies RPC_URL and SUPERCOLONY_API overrides from the file.
  */
-export function loadMnemonic(envPath: string): string {
+export function loadMnemonic(envPath: string, agentName?: string): string {
   const legacy = resolve(envPath.replace(/^~/, homedir()));
   const isExplicit = envPath !== ".env" && existsSync(legacy);
 
@@ -113,11 +127,12 @@ export function loadMnemonic(envPath: string): string {
     return parseMnemonic(content, legacy);
   }
 
-  // XDG path is preferred default
-  if (existsSync(XDG_CREDENTIALS)) {
-    const content = readFileSync(XDG_CREDENTIALS, "utf-8");
+  // Per-agent credentials → shared XDG
+  const credPath = resolveAgentCredentials(agentName);
+  if (credPath) {
+    const content = readFileSync(credPath, "utf-8");
     applyConfigOverrides(content);
-    return parseMnemonic(content, XDG_CREDENTIALS);
+    return parseMnemonic(content, credPath);
   }
 
   // Legacy fallback
@@ -132,9 +147,10 @@ export function loadMnemonic(envPath: string): string {
 /**
  * Connect wallet and return Demos instance + address.
  * Factory pattern — each call creates a fresh instance.
+ * When agentName is provided, uses per-agent credentials if available.
  */
-export async function connectWallet(envPath: string): Promise<{ demos: Demos; address: string }> {
-  const mnemonic = loadMnemonic(envPath);
+export async function connectWallet(envPath: string, agentName?: string): Promise<{ demos: Demos; address: string }> {
+  const mnemonic = loadMnemonic(envPath, agentName);
   const demos = new Demos();
   await demos.connect(RPC_URL);
   const address = await demos.connectWallet(mnemonic);

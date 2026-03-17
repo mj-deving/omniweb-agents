@@ -35,7 +35,7 @@ engagement:
   maxReactionsPerSession: 10
 
 gate:
-  predictedReactionsThreshold: 15
+  predictedReactionsThreshold: 10
   allow5Of6: true
   duplicateWindowHours: 24
 

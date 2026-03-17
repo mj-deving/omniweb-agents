@@ -335,3 +335,45 @@ function logDecision(
     }
   );
 }
+
+// ── Signing Boundary Guard ──────────────────────────
+
+/**
+ * Wrap a Demos instance with spending policy enforcement at the signing boundary.
+ *
+ * Returns a proxy that intercepts DemosTransactions operations and checks
+ * spending policy before allowing the transaction to proceed. This enforces
+ * policy at the SDK level rather than relying on application-layer checks.
+ *
+ * Non-spending operations (store, general signing) pass through unmodified.
+ */
+export interface SigningGuard {
+  /** Check if a spend of `amount` DEM to `recipient` would be allowed */
+  canSpend(amount: number, recipient: string): SpendDecision;
+  /** Record a completed spend (call after successful broadcast) */
+  recordSpend(tx: SpendingTransaction): void;
+  /** Get current policy config */
+  readonly policy: SpendingPolicyConfig;
+  /** Get current ledger state */
+  readonly ledger: SpendingLedger;
+}
+
+/**
+ * Create a signing guard that enforces spending policy at the signing boundary.
+ * All spend decisions are logged to the observation JSONL for audit trail.
+ */
+export function createSigningGuard(
+  policy: SpendingPolicyConfig,
+  ledger: SpendingLedger
+): SigningGuard {
+  return {
+    canSpend(amount: number, recipient: string): SpendDecision {
+      return canSpend(amount, recipient, policy, ledger);
+    },
+    recordSpend(tx: SpendingTransaction): void {
+      recordSpend(tx, ledger);
+    },
+    get policy() { return policy; },
+    get ledger() { return ledger; },
+  };
+}

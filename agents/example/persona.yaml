@@ -1,0 +1,44 @@
+# Example Agent — Template for creating new agents
+# Copy this directory and customize for your use case.
+
+name: example
+displayName: "Example Agent"
+
+topics:
+  primary: ["your-topic-here"]
+  secondary: []
+
+scan:
+  modes: ["lightweight"]
+  qualityFloor: 70
+  requireAttestation: false
+  depth: 200
+  topicSearchLimit: 30
+  cacheHours: 4
+
+attestation:
+  defaultMode: dahr_only
+  highSensitivityRequireTlsn: false
+  highSensitivityKeywords: []
+
+engagement:
+  minDisagreePerSession: 1
+  replyMinParentReactions: 8
+  maxReactionsPerSession: 8
+
+gate:
+  predictedReactionsThreshold: 10
+  allow5Of6: true
+  duplicateWindowHours: 24
+
+calibration:
+  offset: 0
+
+tipping:
+  enabled: false
+  maxTipsPerSession: 2
+  maxPerRecipientPerDay: 2
+  minMinutesBetweenTips: 5
+  minSessionsBeforeLive: 3
+  minScore: 80
+  requireAttestation: true

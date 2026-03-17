@@ -15,7 +15,7 @@ scan:
   depth: 200
 
 attestation:
-  defaultMode: tlsn_preferred
+  defaultMode: dahr_only
   highSensitivityRequireTlsn: true
   highSensitivityKeywords:
     - exploit

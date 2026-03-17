@@ -100,7 +100,7 @@ phases:
       - "Category is ANALYSIS, PREDICTION, or QUESTION"
       - "Text will be >200 chars with confidence set (mechanical points)"
       - "Not a duplicate of anything in my last 50 posts (24h window)"
-      - "Calibrated predicted_reactions >= 12 (lower bar — no conversation context)"
+      - "Calibrated predicted_reactions >= 10 (parity with sentinel/crawler)"
     decision:
       all_pass: "PUBLISH with thesis-question framing"
       one_fail: "Evaluate which one failed, publish if borderline"

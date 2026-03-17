@@ -197,17 +197,44 @@ IMPORTANT: You MUST reference specific data points from this source using the ex
     modelTier: input.modelTier || "standard",
   });
 
-  // Parse JSON from response (handle markdown code blocks)
+  // Parse JSON from response — handle markdown fences, preamble text, trailing text
   let jsonStr = responseText.trim();
+
+  // Strip markdown code fences
   if (jsonStr.startsWith("```")) {
     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+  }
+
+  // Extract JSON object if response has preamble/trailing text
+  if (!jsonStr.startsWith("{")) {
+    const start = jsonStr.indexOf("{");
+    if (start >= 0) jsonStr = jsonStr.slice(start);
+  }
+  if (jsonStr.lastIndexOf("}") > 0) {
+    jsonStr = jsonStr.slice(0, jsonStr.lastIndexOf("}") + 1);
   }
 
   let draft: PostDraft;
   try {
     draft = JSON.parse(jsonStr);
   } catch {
-    throw new Error(`LLM returned invalid JSON: ${jsonStr.slice(0, 200)}`);
+    // Attempt repair of truncated JSON — add missing closing braces/brackets
+    let repaired = jsonStr;
+    const opens = (repaired.match(/[{[]/g) || []).length;
+    const closes = (repaired.match(/[}\]]/g) || []).length;
+    if (opens > closes) {
+      // Trim to last complete value (before truncation mid-string)
+      repaired = repaired.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"{}[\]]*$/, "");
+      for (let i = 0; i < opens - closes; i++) repaired += "}";
+      try {
+        draft = JSON.parse(repaired);
+        info("Repaired truncated JSON from LLM response", config?.agentName);
+      } catch {
+        throw new Error(`LLM returned invalid JSON: ${jsonStr.slice(0, 300)}`);
+      }
+    } else {
+      throw new Error(`LLM returned invalid JSON: ${jsonStr.slice(0, 300)}`);
+    }
   }
 
   // Validate required fields

@@ -1529,7 +1529,15 @@ Return ONLY a JSON array of objects: [{"topic": "lowercase-kebab-case", "reason"
 No markdown, no explanation outside the JSON.`;
 
     const response = await provider.complete(prompt, { maxTokens: 256 });
-    const trimmed = response.trim().replace(/^```json?\s*/, "").replace(/\s*```$/, "");
+    let trimmed = response.trim().replace(/^```json?\s*/, "").replace(/\s*```$/, "");
+    // Extract JSON array if LLM includes preamble/trailing text
+    if (!trimmed.startsWith("[")) {
+      const start = trimmed.indexOf("[");
+      if (start >= 0) trimmed = trimmed.slice(start);
+    }
+    if (trimmed.lastIndexOf("]") > 0) {
+      trimmed = trimmed.slice(0, trimmed.lastIndexOf("]") + 1);
+    }
     const parsed = JSON.parse(trimmed);
 
     if (!Array.isArray(parsed)) return [];

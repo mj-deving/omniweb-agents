@@ -80,19 +80,21 @@ function buildAgentReport(agent: string): AgentReport {
     totalSessions = files.length;
 
     for (const f of files) {
-      const num = Number(f.match(REPORT_RE)![1]);
-      const content = readFileSync(resolve(sessionsDir, f), "utf-8");
-      const parsed = parseSessionReport(content);
-      totalPosts += parsed.posts;
-      totalReactions += parsed.reactions;
+      try {
+        const num = Number(f.match(REPORT_RE)![1]);
+        const content = readFileSync(resolve(sessionsDir, f), "utf-8");
+        const parsed = parseSessionReport(content);
+        totalPosts += parsed.posts;
+        totalReactions += parsed.reactions;
 
-      if (parsed.posts === 0) failedSessions++;
+        if (parsed.posts === 0) failedSessions++;
 
-      if (num > latestSession) {
-        latestSession = num;
-        latestSessionDate = parsed.date;
-        latestPostCount = parsed.posts;
-      }
+        if (num > latestSession) {
+          latestSession = num;
+          latestSessionDate = parsed.date;
+          latestPostCount = parsed.posts;
+        }
+      } catch { /* skip unreadable report */ }
     }
   }
 

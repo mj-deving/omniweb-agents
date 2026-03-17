@@ -45,7 +45,7 @@ tipping:
   requireAttestation: true
 
 gate:
-  predictedReactionsThreshold: 12
+  predictedReactionsThreshold: 10
   allow5Of6: true
   duplicateWindowHours: 24
   mode: pioneer

@@ -21,3 +21,5 @@ loop:
     - sources
     # Omniweb capabilities
     - storage            # On-chain state via Storage Programs
+    - budget             # Autonomous treasury management
+    - cross-chain        # Chain monitoring + balance queries

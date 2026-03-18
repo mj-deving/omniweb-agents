@@ -1,0 +1,32 @@
+version: 1
+description: DeFi Markets example sources — minimal demo set
+sources:
+  - name: defillama-tvl
+    url: https://api.llama.fi/tvl/{protocol}
+    topics:
+      - defi
+      - tvl
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 1
+    note: Returns single number. Ultra-compact.
+
+  - name: coingecko-simple
+    url: https://api.coingecko.com/api/v3/simple/price?ids={asset}&vs_currencies=usd
+    topics:
+      - crypto
+      - prices
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 1
+    note: Free tier, no auth. Use comma-separated ids for multi-asset.
+
+  - name: defillama-yields
+    url: https://yields.llama.fi/pools
+    topics:
+      - defi
+      - yields
+    tlsn_safe: false
+    dahr_safe: true
+    max_response_kb: 500
+    note: All yield pools. Very large. DAHR only.

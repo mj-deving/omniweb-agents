@@ -1,0 +1,51 @@
+# Infra Ops Strategy — Minimal framework demo
+#
+# Extends base-loop with infrastructure monitoring descriptions.
+# This is a demo config proving the FrameworkPlugin pipeline works,
+# not a production publishing strategy.
+
+extends: ../../strategies/base-loop.yaml
+
+name: infra-ops-demo
+description: "Minimal infrastructure monitoring loop for framework validation"
+
+phases:
+  - id: observe
+    basePhase: observe
+    description: "Poll infrastructure health — RPC latency, gas, chain status"
+    order: 1
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Fetch infrastructure metrics from sources-registry"
+      - "Classify events by severity (P0-P3) using infra-ops-plugin evaluator"
+
+  - id: act
+    basePhase: act
+    description: "Process classified events — log findings, escalate incidents"
+    order: 2
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Route events through handlers"
+      - "Log infrastructure state changes with severity classification"
+
+  - id: verify
+    basePhase: verify
+    description: "Confirm monitoring coverage and processing results"
+    order: 3
+    duration: "2 min"
+    automatable: true
+    actions:
+      - "Verify all monitored endpoints responded"
+      - "Confirm incident classifications are consistent"
+
+  - id: learn
+    basePhase: learn
+    description: "Review detection accuracy and update severity thresholds"
+    order: 4
+    duration: "2 min"
+    automatable: true
+    actions:
+      - "Check for missed incidents or false alarms"
+      - "Log observations for threshold calibration"

@@ -1,0 +1,51 @@
+# DeFi Markets Strategy — Minimal framework demo
+#
+# Extends base-loop with domain-specific descriptions.
+# This is a demo config proving the FrameworkPlugin pipeline works,
+# not a production publishing strategy.
+
+extends: ../../strategies/base-loop.yaml
+
+name: defi-markets-demo
+description: "Minimal DeFi monitoring loop for framework validation"
+
+phases:
+  - id: observe
+    basePhase: observe
+    description: "Poll DeFi data sources — TVL, yields, protocol metrics"
+    order: 1
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Fetch DeFi metrics from sources-registry"
+      - "Classify data by relevance using defi-markets-plugin evaluator"
+
+  - id: act
+    basePhase: act
+    description: "Process classified events — log findings, trigger alerts"
+    order: 2
+    duration: "5 min"
+    automatable: true
+    actions:
+      - "Route events through handlers"
+      - "Log relevant DeFi state changes"
+
+  - id: verify
+    basePhase: verify
+    description: "Confirm data freshness and processing results"
+    order: 3
+    duration: "2 min"
+    automatable: true
+    actions:
+      - "Verify data timestamps are within freshness window"
+      - "Confirm all sources responded"
+
+  - id: learn
+    basePhase: learn
+    description: "Review processing accuracy and update thresholds"
+    order: 4
+    duration: "2 min"
+    automatable: true
+    actions:
+      - "Check for false positives/negatives in event classification"
+      - "Log observations for future calibration"

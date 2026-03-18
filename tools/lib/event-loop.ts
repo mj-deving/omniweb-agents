@@ -23,8 +23,6 @@ import type {
 export interface EventLoopConfig {
   /** Agent name (for logging) */
   agent: string;
-  /** Max concurrent source polls (default: 3) */
-  maxConcurrentPolls?: number;
   /** Graceful shutdown period in ms (default: 5000) */
   shutdownGracePeriodMs?: number;
 }
@@ -94,12 +92,8 @@ export interface RunningEventLoop {
  * diffs snapshots against prior state, dispatches events to
  * matching handlers, and persists watermarks.
  *
- * @param config - Loop configuration
- * @param sources - Source registrations with intervals
- * @param handlers - Event handlers
- * @param store - Watermark persistence
- * @param onAction - Callback to execute actions (the side-effect boundary)
- * @param onError - Callback for handler/action errors
+ * On startup, watermarks are loaded from the store to seed
+ * snapshot state, preventing duplicate event processing on restart.
  */
 export function startEventLoop(
   config: EventLoopConfig,
@@ -110,7 +104,10 @@ export function startEventLoop(
   onError?: (event: AgentEvent, error: Error) => void,
 ): RunningEventLoop {
   let running = true;
-  const timers: ReturnType<typeof setTimeout>[] = [];
+
+  // One timer per source — replaced on each poll cycle (no unbounded growth)
+  const activeTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+
   const stats: EventLoopStats = {
     totalEvents: 0,
     totalActions: 0,
@@ -122,8 +119,10 @@ export function startEventLoop(
   // Adaptive intervals per source
   const intervals: Record<string, AdaptiveInterval> = {};
 
-  // Previous snapshots (in-memory cache)
+  // Previous snapshots (in-memory cache, seeded from store on first poll)
   const snapshots: Record<string, unknown> = {};
+  // Track whether we've seeded from the store for each source
+  const seeded: Set<string> = new Set();
 
   for (const reg of sources) {
     const min = reg.minIntervalMs ?? Math.max(10_000, reg.intervalMs * 0.5);
@@ -146,6 +145,17 @@ export function startEventLoop(
 
     const src = reg.source;
     try {
+      // Seed snapshot from watermark store on first poll (prevents duplicates on restart)
+      if (!seeded.has(src.id)) {
+        const savedWatermark = await store.load(src.id);
+        if (savedWatermark !== null) {
+          // Use watermark as a sentinel — the first poll will diff against null
+          // but we mark as seeded so the source knows we're not fresh
+          snapshots[src.id] = savedWatermark;
+        }
+        seeded.add(src.id);
+      }
+
       const curr = await src.poll();
       const prev = (snapshots[src.id] as T | undefined) ?? null;
       const events = src.diff(prev, curr);
@@ -173,9 +183,11 @@ export function startEventLoop(
         }
       }
 
-      // Save watermark
-      const watermark = src.extractWatermark(curr);
-      await store.save(src.id, watermark);
+      // Save watermark (only when events were found, to avoid unnecessary I/O)
+      if (events.length > 0) {
+        const watermark = src.extractWatermark(curr);
+        await store.save(src.id, watermark);
+      }
 
       // Update adaptive interval
       const hadEvents = events.length > 0;
@@ -196,10 +208,10 @@ export function startEventLoop(
       onError?.(dummyEvent, err instanceof Error ? err : new Error(String(err)));
     }
 
-    // Schedule next poll
+    // Schedule next poll (replaces previous timer for this source)
     if (running) {
       const timer = setTimeout(() => pollSource(reg), intervals[src.id].current);
-      timers.push(timer);
+      activeTimers.set(src.id, timer);
     }
   }
 
@@ -209,20 +221,24 @@ export function startEventLoop(
     // Jitter is at most half the interval or 2s, whichever is smaller
     const jitter = Math.random() * Math.min(reg.intervalMs * 0.5, 2000);
     const timer = setTimeout(() => pollSource(reg), jitter);
-    timers.push(timer);
+    activeTimers.set(reg.source.id, timer);
   }
 
   return {
     async stop(): Promise<void> {
       running = false;
-      for (const t of timers) clearTimeout(t);
-      timers.length = 0;
+      for (const t of activeTimers.values()) clearTimeout(t);
+      activeTimers.clear();
       // Wait for graceful shutdown period
       const grace = config.shutdownGracePeriodMs ?? 5000;
       await new Promise(resolve => setTimeout(resolve, Math.min(grace, 1000)));
     },
     stats(): EventLoopStats {
-      return { ...stats };
+      return {
+        ...stats,
+        eventsBySource: { ...stats.eventsBySource },
+        currentIntervals: { ...stats.currentIntervals },
+      };
     },
   };
 }

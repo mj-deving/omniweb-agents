@@ -53,7 +53,8 @@ export const VALID_TRANSITIONS: Record<string, string[]> = {
 export function normalizeDescription(desc: string): string {
   return desc
     .replace(/^(?:Q[1-4]|S\d+):\s*/i, "")
-    .trim();
+    .trim()
+    .toLowerCase();
 }
 
 /**

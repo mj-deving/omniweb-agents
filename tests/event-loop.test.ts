@@ -169,12 +169,47 @@ describe("startEventLoop", () => {
     await loop.stop();
   });
 
-  it("saves watermarks after polls", async () => {
+  it("saves watermarks when events are detected", async () => {
+    // Source emits one event on first poll (prev=null), then no more
     const source: EventSource<number> = {
       id: "wm-test",
       description: "Watermark test",
-      eventTypes: ["wm"],
+      eventTypes: ["wm-evt"],
       poll: async () => 42,
+      diff: (prev) => prev === null ? [{
+        id: "wm-1", sourceId: "wm-test", type: "wm-evt",
+        detectedAt: Date.now(), payload: null, watermark: 42,
+      }] : [],
+      extractWatermark: (s) => s,
+    };
+
+    const store = createMemoryWatermarkStore();
+    const handler: EventHandler = {
+      name: "wm-h", eventTypes: ["wm-evt"],
+      handle: async () => ({ type: "log_only" as const, params: {} }),
+    };
+    const actionFn = vi.fn().mockResolvedValue(undefined);
+
+    const loop = startEventLoop(
+      { agent: "test" },
+      [{ source, intervalMs: 50, minIntervalMs: 50, maxIntervalMs: 200 }],
+      [handler],
+      store,
+      actionFn,
+    );
+
+    await new Promise(r => setTimeout(r, 300));
+    const wm = await store.load("wm-test");
+    expect(wm).toBe(42);
+    await loop.stop();
+  });
+
+  it("does not save watermark when no events detected", async () => {
+    const source: EventSource<number> = {
+      id: "no-save",
+      description: "No events source",
+      eventTypes: [],
+      poll: async () => 0,
       diff: () => [],
       extractWatermark: (s) => s,
     };
@@ -191,8 +226,8 @@ describe("startEventLoop", () => {
     );
 
     await new Promise(r => setTimeout(r, 200));
-    const wm = await store.load("wm-test");
-    expect(wm).toBe(42);
+    const wm = await store.load("no-save");
+    expect(wm).toBeNull(); // No events = no watermark save
     await loop.stop();
   });
 

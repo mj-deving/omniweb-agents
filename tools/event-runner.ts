@@ -21,6 +21,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { readFileSync, existsSync } from "node:fs";
+import { loadOwnTxHashes, pruneSessionLog } from "./lib/own-tx-hashes.js";
 
 import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
 import { connectWallet, setLogAgent, apiCall, info, warn } from "./lib/sdk.js";
@@ -122,34 +123,7 @@ async function fetchFeedCached(token: string): Promise<any[]> {
 
 // ── Session Log Reader ─────────────────────────────
 
-/**
- * Load TX hashes from the session log. Each line is a JSONL entry
- * with a txHash field for published posts.
- */
-function loadOwnTxHashes(agentName: string): Set<string> {
-  const logPath = resolve(homedir(), `.${agentName}-session-log.jsonl`);
-  const hashes = new Set<string>();
-  if (!existsSync(logPath)) return hashes;
-
-  try {
-    const lines = readFileSync(logPath, "utf-8").split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      try {
-        const entry = JSON.parse(trimmed);
-        if (entry.txHash && typeof entry.txHash === "string") {
-          hashes.add(entry.txHash);
-        }
-      } catch {
-        // Skip malformed lines
-      }
-    }
-  } catch {
-    // Log file unreadable — return empty set
-  }
-  return hashes;
-}
+// loadOwnTxHashes + pruneSessionLog imported from ./lib/own-tx-hashes.ts
 
 // ── Auth Token Refresh ────────────────────────────
 
@@ -200,7 +174,9 @@ async function main(): Promise<void> {
     info(`LLM provider: ${llm.name}`);
   }
 
-  // Track agent's published TX hashes (loaded from session log)
+  // Track agent's published TX hashes (loaded from session log, capped at 500)
+  const pruned = pruneSessionLog(flags.agent);
+  if (pruned > 0) info(`Pruned ${pruned} old entries from session log`);
   const ownTxHashes = loadOwnTxHashes(flags.agent);
   info(`Loaded ${ownTxHashes.size} own TX hashes from session log`);
 

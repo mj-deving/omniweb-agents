@@ -10,6 +10,7 @@
 
 import type { AgentEvent, EventAction } from "../../core/types.js";
 import { toErrorMessage } from "./errors.js";
+import { addCapped } from "./own-tx-hashes.js";
 import type { WriteRateLedger, WriteRateCheck } from "./write-rate-limit.js";
 import type { PublishInput, PublishResult, PublishOptions } from "./publish-pipeline.js";
 import type { GeneratePostInput, PostDraft } from "./llm.js";
@@ -220,7 +221,7 @@ export function createActionExecutor(
             replyTo: parentTx,
           };
           const result = await ctx.attestAndPublish(publishInput, undefined, { feedToken: token });
-          ctx.ownTxHashes.add(result.txHash);
+          addCapped(ctx.ownTxHashes, result.txHash);
           ctx.recordPublish(ledger!, ctx.agentName, result.txHash);
           ctx.saveWriteRateLedger(ledger!);
           ctx.observe("insight", `Published reply ${result.txHash} to ${parentTx}`, {
@@ -251,7 +252,7 @@ export function createActionExecutor(
           };
           const attestUrl = action.params.attestUrl ? String(action.params.attestUrl) : undefined;
           const result = await ctx.attestAndPublish(publishInput, attestUrl, { feedToken: token });
-          ctx.ownTxHashes.add(result.txHash);
+          addCapped(ctx.ownTxHashes, result.txHash);
           ctx.recordPublish(ledger!, ctx.agentName, result.txHash);
           ctx.saveWriteRateLedger(ledger!);
           ctx.observe("insight", `Published ${result.txHash}`, {

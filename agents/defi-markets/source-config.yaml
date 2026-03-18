@@ -1,0 +1,6 @@
+agent: defi-markets
+minRating: 0
+allowStatuses:
+  - active
+  - degraded
+maxCandidatesPerTopic: 3

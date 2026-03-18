@@ -1,0 +1,23 @@
+version: 1
+description: Infra Ops example sources — minimal demo set
+sources:
+  - name: etherscan-gas
+    url: https://api.etherscan.io/api?module=gastracker&action=gasoracle
+    topics:
+      - ethereum
+      - gas
+      - infrastructure
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 1
+    note: Free tier. Returns safe/proposed/fast gas in gwei.
+
+  - name: hn-algolia-search
+    url: https://hn.algolia.com/api/v1/search?query={query}&hitsPerPage=2
+    topics:
+      - tech
+      - infrastructure
+    tlsn_safe: true
+    dahr_safe: true
+    max_response_kb: 5
+    note: "CRITICAL: hitsPerPage MUST be 2 for TLSN (5+ crashes WASM prover)."

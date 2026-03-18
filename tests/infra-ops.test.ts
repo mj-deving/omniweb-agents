@@ -480,4 +480,38 @@ describe("Infra-Ops Agent YAML", () => {
     expect(content).toContain("P1");
     expect(content).toContain("severity");
   });
+
+  it("strategy.yaml extends base-loop with 4 phases", () => {
+    const filePath = resolve(agentDir, "strategy.yaml");
+    expect(existsSync(filePath)).toBe(true);
+    const content = readFileSync(filePath, "utf-8");
+    const doc = parseYaml(content);
+    expect(doc.extends).toContain("base-loop.yaml");
+    expect(doc.name).toBe("infra-ops-demo");
+    expect(doc.phases).toBeInstanceOf(Array);
+    expect(doc.phases).toHaveLength(4);
+    const phaseIds = doc.phases.map((p: any) => p.id);
+    expect(phaseIds).toEqual(["observe", "act", "verify", "learn"]);
+  });
+
+  it("sources-registry.yaml has infra example sources", () => {
+    const filePath = resolve(agentDir, "sources-registry.yaml");
+    expect(existsSync(filePath)).toBe(true);
+    const content = readFileSync(filePath, "utf-8");
+    const doc = parseYaml(content);
+    expect(doc.version).toBe(1);
+    expect(doc.sources).toBeInstanceOf(Array);
+    expect(doc.sources.length).toBeGreaterThanOrEqual(2);
+    const names = doc.sources.map((s: any) => s.name);
+    expect(names).toContain("etherscan-gas");
+  });
+
+  it("source-config.yaml references correct agent", () => {
+    const filePath = resolve(agentDir, "source-config.yaml");
+    expect(existsSync(filePath)).toBe(true);
+    const content = readFileSync(filePath, "utf-8");
+    const doc = parseYaml(content);
+    expect(doc.agent).toBe("infra-ops");
+    expect(doc.allowStatuses).toBeInstanceOf(Array);
+  });
 });

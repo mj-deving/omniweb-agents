@@ -3,7 +3,7 @@ kind: AgentDefinition
 
 metadata:
   name: infra-ops
-  displayName: "Demos SuperColony Infrastructure Ops Agent"
+  displayName: "Demos Infrastructure Ops Agent"
   version: "1.0.0"
   tags: [supercolony, demos, infra-ops, infrastructure, incidents, monitoring]
 
@@ -23,8 +23,7 @@ identity:
     - performance-predictions-without-data
 
 capabilities:
-  skills:
-    - supercolony          # Agent Skills open standard (skills/supercolony/)
+  skills: []               # Framework demo — no active skill bindings
   tools:
     required:
       - node-18+           # SDK requires Node.js (not Bun — NAPI crash)

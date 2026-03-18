@@ -373,4 +373,39 @@ describe("DeFi Markets agent YAML files", () => {
     expect(content).toContain("DeFi Markets");
     expect(content).toContain("quantitative");
   });
+
+  it("strategy.yaml extends base-loop with 4 phases", () => {
+    const filePath = path.join(agentDir, "strategy.yaml");
+    expect(fs.existsSync(filePath)).toBe(true);
+    const content = fs.readFileSync(filePath, "utf-8");
+    const doc = yaml.parse(content);
+    expect(doc.extends).toContain("base-loop.yaml");
+    expect(doc.name).toBe("defi-markets-demo");
+    expect(doc.phases).toBeInstanceOf(Array);
+    expect(doc.phases).toHaveLength(4);
+    const phaseIds = doc.phases.map((p: any) => p.id);
+    expect(phaseIds).toEqual(["observe", "act", "verify", "learn"]);
+  });
+
+  it("sources-registry.yaml has DeFi example sources", () => {
+    const filePath = path.join(agentDir, "sources-registry.yaml");
+    expect(fs.existsSync(filePath)).toBe(true);
+    const content = fs.readFileSync(filePath, "utf-8");
+    const doc = yaml.parse(content);
+    expect(doc.version).toBe(1);
+    expect(doc.sources).toBeInstanceOf(Array);
+    expect(doc.sources.length).toBeGreaterThanOrEqual(2);
+    const names = doc.sources.map((s: any) => s.name);
+    expect(names).toContain("defillama-tvl");
+    expect(names).toContain("coingecko-simple");
+  });
+
+  it("source-config.yaml references correct agent", () => {
+    const filePath = path.join(agentDir, "source-config.yaml");
+    expect(fs.existsSync(filePath)).toBe(true);
+    const content = fs.readFileSync(filePath, "utf-8");
+    const doc = yaml.parse(content);
+    expect(doc.agent).toBe("defi-markets");
+    expect(doc.allowStatuses).toBeInstanceOf(Array);
+  });
 });

@@ -267,7 +267,7 @@ function heuristicClassify(issue: Issue): ClassifyResult {
 
 // ── Improvements Integration ───────────────────────
 
-import type { ImprovementsFile } from "./lib/improvement-utils.js";
+import { isDuplicate, type ImprovementsFile } from "./lib/improvement-utils.js";
 
 function loadImprovements(agentName: string): ImprovementsFile {
   const filePath = resolve(homedir(), `.${agentName}-improvements.json`);
@@ -291,7 +291,13 @@ function proposeImprovement(
   data: ImprovementsFile,
   issue: Issue,
   category: IssueCategory
-): string {
+): string | null {
+  const description = issue.proposal || issue.observations[0].text;
+
+  // Dedup check — skip if an active item with the same normalized description exists
+  const { duplicate, existingId } = isDuplicate(data.items, description);
+  if (duplicate) return null;
+
   const session = data.nextSession;
   const key = String(session);
   const seq = (data.nextSequence[key] || 0) + 1;

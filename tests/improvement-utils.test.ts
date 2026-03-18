@@ -39,36 +39,40 @@ function makeItem(overrides: Partial<Improvement> = {}): Improvement {
 // ── normalizeDescription ────────────────────────────
 
 describe("normalizeDescription", () => {
-  it("strips Q1: prefix", () => {
-    expect(normalizeDescription("Q1: Some finding")).toBe("Some finding");
+  it("strips Q1: prefix and lowercases", () => {
+    expect(normalizeDescription("Q1: Some finding")).toBe("some finding");
   });
 
-  it("strips Q2: prefix", () => {
-    expect(normalizeDescription("Q2: Another finding")).toBe("Another finding");
+  it("strips Q2: prefix and lowercases", () => {
+    expect(normalizeDescription("Q2: Another finding")).toBe("another finding");
   });
 
-  it("strips Q3: prefix", () => {
-    expect(normalizeDescription("Q3: Outperformed by +12rx")).toBe("Outperformed by +12rx");
+  it("strips Q3: prefix and lowercases", () => {
+    expect(normalizeDescription("Q3: Outperformed by +12rx")).toBe("outperformed by +12rx");
   });
 
-  it("strips Q4: prefix", () => {
-    expect(normalizeDescription("Q4: Stale item")).toBe("Stale item");
+  it("strips Q4: prefix and lowercases", () => {
+    expect(normalizeDescription("Q4: Stale item")).toBe("stale item");
   });
 
-  it("strips S{N}: prefix (e.g., S16:)", () => {
-    expect(normalizeDescription("S16: Reply flag is --reply-to")).toBe("Reply flag is --reply-to");
+  it("strips S{N}: prefix and lowercases", () => {
+    expect(normalizeDescription("S16: Reply flag is --reply-to")).toBe("reply flag is --reply-to");
   });
 
-  it("trims whitespace", () => {
-    expect(normalizeDescription("  Some finding  ")).toBe("Some finding");
+  it("trims whitespace and lowercases", () => {
+    expect(normalizeDescription("  Some Finding  ")).toBe("some finding");
   });
 
-  it("leaves descriptions without prefixes unchanged", () => {
-    expect(normalizeDescription("No prefix here")).toBe("No prefix here");
+  it("leaves descriptions without prefixes unchanged (lowercased)", () => {
+    expect(normalizeDescription("No prefix here")).toBe("no prefix here");
   });
 
   it("only strips first prefix (not nested)", () => {
-    expect(normalizeDescription("Q1: Q2: double prefix")).toBe("Q2: double prefix");
+    expect(normalizeDescription("Q1: Q2: double prefix")).toBe("q2: double prefix");
+  });
+
+  it("case-insensitive prefix matching", () => {
+    expect(normalizeDescription("q1: lowercase prefix")).toBe("lowercase prefix");
   });
 });
 
@@ -85,6 +89,12 @@ describe("isDuplicate", () => {
   it("detects duplicate with prefix difference (Q1: vs Q2:)", () => {
     const items = [makeItem({ description: "Q1: Calibration offset stale" })];
     const result = isDuplicate(items, "Q2: Calibration offset stale");
+    expect(result.duplicate).toBe(true);
+  });
+
+  it("detects duplicate with case difference", () => {
+    const items = [makeItem({ description: "Calibration Offset Stale" })];
+    const result = isDuplicate(items, "calibration offset stale");
     expect(result.duplicate).toBe(true);
   });
 
@@ -116,6 +126,12 @@ describe("isDuplicate", () => {
   it("matches against approved items", () => {
     const items = [makeItem({ description: "Approved finding", status: "approved" })];
     const result = isDuplicate(items, "Approved finding");
+    expect(result.duplicate).toBe(true);
+  });
+
+  it("matches against applied items", () => {
+    const items = [makeItem({ description: "Applied finding", status: "applied" })];
+    const result = isDuplicate(items, "Applied finding");
     expect(result.duplicate).toBe(true);
   });
 });

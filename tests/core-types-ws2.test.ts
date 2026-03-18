@@ -235,7 +235,7 @@ describe("EventPlugin registration", () => {
     expect(registry.getEventSources()).toHaveLength(1);
   });
 
-  it("EventPlugin eventHooks are accessible", () => {
+  it("EventPlugin eventHooks are callable and functional", async () => {
     const onEventCalled: string[] = [];
     const plugin: EventPlugin = {
       name: "hooks-test",
@@ -249,6 +249,17 @@ describe("EventPlugin registration", () => {
     };
     expect(plugin.eventHooks?.onEvent).toBeDefined();
     expect(plugin.eventHooks?.beforeAction).toBeDefined();
+
+    // Actually invoke the hook and verify side effect
+    const testEvent: AgentEvent = {
+      id: "test-evt-1", sourceId: "test", type: "test",
+      detectedAt: Date.now(), payload: null, watermark: null,
+    };
+    await plugin.eventHooks!.onEvent!(testEvent);
+    expect(onEventCalled).toEqual(["test-evt-1"]);
+
+    const shouldProceed = await plugin.eventHooks!.beforeAction!(testEvent, { type: "log_only", params: {} });
+    expect(shouldProceed).toBe(true);
   });
 });
 

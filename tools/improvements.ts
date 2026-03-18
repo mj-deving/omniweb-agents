@@ -27,45 +27,20 @@ import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { info, setLogAgent } from "./lib/sdk.js";
 import { resolveAgentName, loadAgentConfig } from "./lib/agent-config.js";
+import {
+  normalizeDescription,
+  isDuplicate,
+  ageOutStale,
+  surfaceTopItems,
+  VALID_TRANSITIONS,
+  ALL_STATUSES,
+  type Improvement,
+  type ImprovementsFile,
+} from "./lib/improvement-utils.js";
 
 // ── Constants ──────────────────────────────────────
 
 const DEFAULT_FILE = resolve(homedir(), ".sentinel-improvements.json");
-
-// ── Types ──────────────────────────────────────────
-
-interface HistoryEntry {
-  action: string;
-  timestamp: string;
-  detail?: string;
-}
-
-interface Improvement {
-  id: string;
-  session: number;
-  timestamp: string;
-  source: string;
-  description: string;
-  target: string;
-  status: "proposed" | "approved" | "applied" | "verified" | "rejected";
-  evidence: string[];
-  history: HistoryEntry[];
-}
-
-interface ImprovementsFile {
-  version: number;
-  nextSession: number;
-  nextSequence: Record<string, number>;
-  items: Improvement[];
-}
-
-// ── Valid Transitions ──────────────────────────────
-
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  proposed: ["approved", "rejected"],
-  approved: ["applied"],
-  applied: ["verified", "rejected"],
-};
 
 function assertTransition(current: string, target: string, id: string): void {
   const allowed = VALID_TRANSITIONS[current];
@@ -219,6 +194,14 @@ function cmdPropose(
     process.exit(1);
   }
 
+  // Dedup check — skip if an active item with the same normalized description exists
+  const { duplicate, existingId } = isDuplicate(data.items, description);
+  if (duplicate) {
+    info(`Skipping duplicate of ${existingId}: "${description}"`);
+    output({ skipped: true, duplicate: true, existingId, description }, flags);
+    return;
+  }
+
   const id = nextId(data, session);
   const now = new Date().toISOString();
 
@@ -346,7 +329,7 @@ function prettyPrint(data: any): void {
       groups[item.status].push(item);
     }
 
-    const statusOrder = ["proposed", "approved", "applied", "verified", "rejected"];
+    const statusOrder = ALL_STATUSES;
     for (const status of statusOrder) {
       const items = groups[status];
       if (!items || items.length === 0) continue;
@@ -400,6 +383,14 @@ function main(): void {
     case "session":
       cmdSession(data, positional, flags, filePath);
       break;
+    case "cleanup": {
+      const staleCount = ageOutStale(data.items, data.nextSession);
+      if (staleCount > 0) saveFile(data, filePath);
+      info(`Aged out ${staleCount} items`);
+      const top = surfaceTopItems(data.items);
+      output({ staledCount: staleCount, topProposed: top }, flags);
+      break;
+    }
     default:
       console.error(`[improvements] ERROR: unknown command "${command}"`);
       printHelp();

@@ -267,22 +267,7 @@ function heuristicClassify(issue: Issue): ClassifyResult {
 
 // ── Improvements Integration ───────────────────────
 
-interface ImprovementsFile {
-  version: number;
-  nextSession: number;
-  nextSequence: Record<string, number>;
-  items: Array<{
-    id: string;
-    session: number;
-    timestamp: string;
-    source: string;
-    description: string;
-    target: string;
-    status: string;
-    evidence: string[];
-    history: Array<{ action: string; timestamp: string; detail?: string }>;
-  }>;
-}
+import type { ImprovementsFile } from "./lib/improvement-utils.js";
 
 function loadImprovements(agentName: string): ImprovementsFile {
   const filePath = resolve(homedir(), `.${agentName}-improvements.json`);

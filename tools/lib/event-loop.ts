@@ -145,15 +145,28 @@ export function startEventLoop(
 
     const src = reg.source;
     try {
-      // Seed snapshot from watermark store on first poll (prevents duplicates on restart)
-      if (!seeded.has(src.id)) {
+      // On first poll after restart: if we have a saved watermark, do a warm-up poll.
+      // The warm-up establishes a baseline snapshot without emitting events,
+      // preventing re-fire of already-processed events on restart.
+      const isWarmup = !seeded.has(src.id);
+      if (isWarmup) {
         const savedWatermark = await store.load(src.id);
-        if (savedWatermark !== null) {
-          // Use watermark as a sentinel — the first poll will diff against null
-          // but we mark as seeded so the source knows we're not fresh
-          snapshots[src.id] = savedWatermark;
-        }
         seeded.add(src.id);
+
+        if (savedWatermark !== null) {
+          // Warm-up: poll to get current state, save as baseline, skip diff
+          const warmupSnapshot = await src.poll();
+          snapshots[src.id] = warmupSnapshot;
+          // Re-save watermark from fresh snapshot
+          const watermark = src.extractWatermark(warmupSnapshot);
+          if (watermark !== null) await store.save(src.id, watermark);
+          // Schedule next poll and return — no events emitted on warm-up
+          if (running) {
+            const timer = setTimeout(() => pollSource(reg), intervals[src.id].current);
+            activeTimers.set(src.id, timer);
+          }
+          return;
+        }
       }
 
       const curr = await src.poll();

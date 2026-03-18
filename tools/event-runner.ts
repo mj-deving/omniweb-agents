@@ -229,10 +229,15 @@ async function main(): Promise<void> {
       case "reply":
         info(`[event] Reply to ${action.params.parentTx}: ${String(action.params.question).slice(0, 50)}...`);
         // TODO: LLM generation + publish reply
+        // Record the publish in the rate limit ledger
+        recordPublish(ledger);
+        saveWriteRateLedger(ledger, address);
         break;
       case "publish":
         info(`[event] Publish: ${String(action.params.text).slice(0, 50)}...`);
         // TODO: publish pipeline
+        recordPublish(ledger);
+        saveWriteRateLedger(ledger, address);
         break;
       case "tip":
         info(`[event] Tip ${action.params.amount} DEM to ${action.params.address}`);

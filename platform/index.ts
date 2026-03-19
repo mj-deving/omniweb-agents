@@ -12,8 +12,8 @@ export { connectWallet, apiCall, loadMnemonic, info, setLogAgent, RPC_URL, SUPER
 export { ensureAuth, loadAuthCache } from "../src/lib/auth.js";
 
 // Publishing pipeline — DAHR/TLSN attestation + HIVE post
-export { attestDahr, attestTlsn, publishPost, attestAndPublish } from "../src/lib/publish-pipeline.js";
-export type { PublishInput, PublishResult, AttestResult } from "../src/lib/publish-pipeline.js";
+export { attestDahr, attestTlsn, publishPost, attestAndPublish } from "../src/actions/publish-pipeline.js";
+export type { PublishInput, PublishResult, AttestResult } from "../src/actions/publish-pipeline.js";
 
 // Write rate limiting — persistent publish quotas
 export { canPublish, recordPublish, loadWriteRateLedger, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
@@ -39,5 +39,5 @@ export { filterPosts, combinedTopicSearch, buildTopicIndex, buildAgentIndex } fr
 export type { FilteredPost, QualityFilter } from "../src/lib/feed-filter.js";
 
 // LLM text generation (uses persona/strategy — SuperColony-specific)
-export { generatePost } from "../src/lib/llm.js";
-export type { PostDraft, GeneratePostInput } from "../src/lib/llm.js";
+export { generatePost } from "../src/actions/llm.js";
+export type { PostDraft, GeneratePostInput } from "../src/actions/llm.js";

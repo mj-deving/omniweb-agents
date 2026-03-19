@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   createActionExecutor,
   type ActionExecutorContext,
-} from "../src/lib/action-executor.js";
+} from "../src/actions/action-executor.js";
 import type { AgentEvent, EventAction } from "../src/types.js";
 
 // ── Fixtures ────────────────────────────────────────

@@ -16,7 +16,7 @@ vi.mock("../src/lib/sdk.js", () => ({
   info: vi.fn(),
 }));
 
-import { generatePost, type GeneratePostInput, type PostDraft } from "../src/lib/llm.js";
+import { generatePost, type GeneratePostInput, type PostDraft } from "../src/actions/llm.js";
 import type { LLMProvider } from "../src/lib/llm-provider.js";
 
 // ── Helpers ──────────────────────────────────────

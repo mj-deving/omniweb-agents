@@ -49,13 +49,13 @@ describe("OPINION category — LLM VALID_CATEGORIES", () => {
     // Since it's a const inside generatePost, we test by checking the module source
     // This is a structural test — we'll verify by reading the file
     const fs = await import("node:fs");
-    const llmSource = fs.readFileSync("src/lib/llm.ts", "utf-8");
+    const llmSource = fs.readFileSync("src/actions/llm.ts", "utf-8");
     expect(llmSource).toContain('"OPINION"');
   });
 
   it("LLM system prompt mentions OPINION category", async () => {
     const fs = await import("node:fs");
-    const llmSource = fs.readFileSync("src/lib/llm.ts", "utf-8");
+    const llmSource = fs.readFileSync("src/actions/llm.ts", "utf-8");
     // The system prompt should contain guidance for OPINION
     expect(llmSource).toMatch(/OPINION/);
   });

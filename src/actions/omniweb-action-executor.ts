@@ -9,10 +9,10 @@
  */
 
 import type { AgentEvent, EventAction, OmniwebActionType, StoreParams, TransferParams, AttestParams } from "../types.js";
-import { toErrorMessage } from "./errors.js";
+import { toErrorMessage } from "../lib/errors.js";
 import type { ActionExecutorContext } from "./action-executor.js";
-import type { StorageClient } from "./storage-client.js";
-import type { BudgetTracker } from "./budget-tracker.js";
+import type { StorageClient } from "../lib/storage-client.js";
+import type { BudgetTracker } from "../lib/budget-tracker.js";
 
 // ── Extended Context ────────────────────────────────
 

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { runTool, ToolError } from "../tools/lib/subprocess.js";
+import { runTool, ToolError } from "../src/lib/subprocess.js";
 import { writeFileSync, unlinkSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

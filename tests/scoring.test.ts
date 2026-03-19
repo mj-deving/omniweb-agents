@@ -19,7 +19,7 @@ import {
   ENGAGEMENT_T2_THRESHOLD,
   LONG_TEXT_MIN_CHARS,
   calculateExpectedScore,
-} from "../tools/lib/scoring.js";
+} from "../src/lib/scoring.js";
 
 describe("scoring constants", () => {
   it("component scores sum to max", () => {

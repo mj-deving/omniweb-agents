@@ -2,7 +2,7 @@
  * Shared test fixtures for event sources and handlers.
  */
 
-import type { AgentEvent } from "../../core/types.js";
+import type { AgentEvent } from "../../src/types.js";
 
 /**
  * Create a minimal AgentEvent for testing handlers.

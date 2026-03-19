@@ -10,7 +10,7 @@ vi.mock("node:os", () => ({
   homedir: () => "/tmp/demos-agents-tests-mentions",
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: apiCallMock,
   info: vi.fn(),
 }));
@@ -19,7 +19,7 @@ import {
   fetchMentions,
   loadMentionState,
   saveMentionState,
-} from "../tools/lib/mentions.js";
+} from "../src/lib/mentions.js";
 
 describe("fetchMentions", () => {
   beforeEach(() => {

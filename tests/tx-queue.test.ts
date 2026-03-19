@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { createTxQueue, type TxResult } from "../tools/lib/tx-queue.js";
+import { createTxQueue, type TxResult } from "../src/lib/tx-queue.js";
 
 describe("createTxQueue", () => {
   // ── Basic Operations ──────────────────────────

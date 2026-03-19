@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canSpend, defaultSpendingPolicy, recordSpend, type SpendingLedger, type SpendingPolicyConfig } from "../tools/lib/spending-policy.js";
+import { canSpend, defaultSpendingPolicy, recordSpend, type SpendingLedger, type SpendingPolicyConfig } from "../src/lib/spending-policy.js";
 
 function freshLedger(address = "0xtest"): SpendingLedger {
   return {

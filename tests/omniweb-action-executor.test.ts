@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { createOmniwebExecutor, type OmniwebExecutorContext } from "../tools/lib/omniweb-action-executor.js";
-import type { AgentEvent, EventAction } from "../core/types.js";
+import { createOmniwebExecutor, type OmniwebExecutorContext } from "../src/lib/omniweb-action-executor.js";
+import type { AgentEvent, EventAction } from "../src/types.js";
 
 // ── Fixtures ────────────────────────────────────────
 

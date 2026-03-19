@@ -1,21 +1,21 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
-import type { FetchedResponse, ProviderAdapter, ParsedAdapterResponse, EvidenceEntry } from "../tools/lib/sources/providers/types.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
+import type { FetchedResponse, ProviderAdapter, ParsedAdapterResponse, EvidenceEntry } from "../src/lib/sources/providers/types.js";
 
 // ── Mocks ────────────────────────────────────────────
 
 const fetchSourceMock = vi.hoisted(() => vi.fn());
 const getProviderAdapterMock = vi.hoisted(() => vi.fn());
 
-vi.mock("../tools/lib/sources/fetch.js", () => ({
+vi.mock("../src/lib/sources/fetch.js", () => ({
   fetchSource: fetchSourceMock,
 }));
 
-vi.mock("../tools/lib/sources/providers/index.js", () => ({
+vi.mock("../src/lib/sources/providers/index.js", () => ({
   getProviderAdapter: getProviderAdapterMock,
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -28,7 +28,7 @@ import {
   type SourceTestResult,
   type SourceTestStatus,
   DEFAULT_TEST_VARS,
-} from "../tools/lib/sources/health.js";
+} from "../src/lib/sources/health.js";
 
 // ── Fixtures ─────────────────────────────────────────
 

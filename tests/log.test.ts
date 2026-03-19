@@ -9,7 +9,7 @@ import {
   rotateSessionLog,
   resolveLogPath,
   type SessionLogEntry,
-} from "../tools/lib/log.js";
+} from "../src/lib/log.js";
 
 // ── Helpers ──────────────────────────────────────
 

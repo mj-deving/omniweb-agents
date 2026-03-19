@@ -12,22 +12,22 @@ import { describe, it, expect, vi } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { loadAgentConfig, type AgentConfig } from "../tools/lib/agent-config.js";
+import { loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
 import { makeAgentEvent } from "./fixtures/event-fixtures.js";
 
 // ── Plugin ──
-import { createInfraOpsPlugin } from "../core/plugins/infra-ops-plugin.js";
-import { createPluginRegistry } from "../core/types.js";
+import { createInfraOpsPlugin } from "../src/plugins/infra-ops-plugin.js";
+import { createPluginRegistry } from "../src/types.js";
 
 // ── Event Source ──
 import {
   createStatusMonitorSource,
   type ServiceStatus,
   type StatusSnapshot,
-} from "../tools/lib/event-sources/status-monitor.js";
+} from "../src/lib/event-sources/status-monitor.js";
 
 // ── Event Handler ──
-import { createIncidentAlertHandler } from "../tools/lib/event-handlers/incident-alert-handler.js";
+import { createIncidentAlertHandler } from "../src/lib/event-handlers/incident-alert-handler.js";
 
 // ── Test Fixtures ──
 

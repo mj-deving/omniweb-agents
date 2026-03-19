@@ -22,7 +22,7 @@ import {
   type EventAction,
   type EvaluatorInput,
   type Evaluator,
-} from "../core/types.js";
+} from "../src/types.js";
 
 // ── Action Interface ────────────────────────────────
 

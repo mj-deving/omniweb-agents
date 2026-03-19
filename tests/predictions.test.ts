@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { PublishedPostRecord } from "../tools/lib/state.js";
+import type { PublishedPostRecord } from "../src/lib/state.js";
 
 const { apiCallMock } = vi.hoisted(() => ({
   apiCallMock: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock("node:os", () => ({
   homedir: () => "/tmp/demos-agents-tests-predictions",
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: apiCallMock,
   info: vi.fn(),
 }));
@@ -22,7 +22,7 @@ import {
   registerPrediction,
   resolvePendingPredictions,
   type PredictionStore,
-} from "../tools/lib/predictions.js";
+} from "../src/lib/predictions.js";
 
 function makePost(overrides: Partial<PublishedPostRecord> = {}): PublishedPostRecord {
   return {

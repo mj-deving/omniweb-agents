@@ -11,7 +11,7 @@ import {
   recordRateLimitResponse,
   isRateLimited,
   resetRateLimits,
-} from "../tools/lib/sources/rate-limit.js";
+} from "../src/lib/sources/rate-limit.js";
 
 beforeEach(() => {
   resetRateLimits();

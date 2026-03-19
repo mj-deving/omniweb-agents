@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canPublish, recordPublish, type WriteRateLedger } from "../tools/lib/write-rate-limit.js";
+import { canPublish, recordPublish, type WriteRateLedger } from "../src/lib/write-rate-limit.js";
 
 function freshLedger(address = "0xtest"): WriteRateLedger {
   return {

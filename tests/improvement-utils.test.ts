@@ -17,7 +17,7 @@ import {
   OFFSET_MAX,
   VALID_TRANSITIONS,
   type Improvement,
-} from "../tools/lib/improvement-utils.js";
+} from "../src/lib/improvement-utils.js";
 
 // ── Helper ──────────────────────────────────────────
 

@@ -20,7 +20,7 @@ import {
   setObserverPhase,
   observe,
   type ObservationType,
-} from "../tools/lib/observe.js";
+} from "../src/lib/observe.js";
 
 // ── Helpers ──────────────────────────────────────
 

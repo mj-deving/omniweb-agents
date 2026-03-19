@@ -6,20 +6,20 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
 // ── Mocks ────────────────────────────────────────────
 
-vi.mock("../tools/lib/sources/rate-limit.js", () => ({
+vi.mock("../src/lib/sources/rate-limit.js", () => ({
   acquireRateLimitToken: vi.fn(() => true),
   recordRateLimitResponse: vi.fn(),
 }));
 
-import { fetchSource } from "../tools/lib/sources/fetch.js";
+import { fetchSource } from "../src/lib/sources/fetch.js";
 import {
   acquireRateLimitToken,
   recordRateLimitResponse,
-} from "../tools/lib/sources/rate-limit.js";
+} from "../src/lib/sources/rate-limit.js";
 
 const mockAcquire = vi.mocked(acquireRateLimitToken);
 const mockRecord = vi.mocked(recordRateLimitResponse);

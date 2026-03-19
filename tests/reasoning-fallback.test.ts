@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 
 describe("suggestTopicsWithReasoning — source contract", () => {
-  const source = readFileSync("tools/session-runner.ts", "utf-8");
+  const source = readFileSync("cli/session-runner.ts", "utf-8");
 
   it("function exists and is async", () => {
     expect(source).toMatch(/async function suggestTopicsWithReasoning\(/);

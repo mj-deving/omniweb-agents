@@ -14,7 +14,7 @@ vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -25,8 +25,8 @@ vi.mock("@kynesyslabs/demosdk/websdk", () => ({
 }));
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { apiCall, info } from "../tools/lib/sdk.js";
-import { loadAuthCache, ensureAuth } from "../tools/lib/auth.js";
+import { apiCall, info } from "../src/lib/sdk.js";
+import { loadAuthCache, ensureAuth } from "../src/lib/auth.js";
 
 const AUTH_CACHE_PATH = resolve(homedir(), ".supercolony-auth.json");
 const TEST_ADDRESS = "0xTestAddress123";

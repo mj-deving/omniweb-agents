@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { writeFileSync, unlinkSync, existsSync, readFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { addCapped, loadOwnTxHashes, pruneSessionLog, sessionLogPath } from "../tools/lib/own-tx-hashes.js";
+import { addCapped, loadOwnTxHashes, pruneSessionLog, sessionLogPath } from "../src/lib/own-tx-hashes.js";
 
 // ── addCapped ──────────────────────────────────
 

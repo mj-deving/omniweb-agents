@@ -9,7 +9,7 @@ import {
   createStorageWatcher,
   type FetchStorageFn,
   type StorageSnapshot,
-} from "../tools/lib/event-sources/storage-watcher.js";
+} from "../src/lib/event-sources/storage-watcher.js";
 
 // ── Mock fetch ──────────────────────────────────────
 

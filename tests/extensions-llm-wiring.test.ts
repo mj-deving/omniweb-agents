@@ -1,23 +1,23 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { LLMProvider } from "../tools/lib/llm-provider.js";
-import type { AgentSourceView } from "../tools/lib/sources/catalog.js";
-import type { PreflightCandidate } from "../tools/lib/sources/policy.js";
-import type { MatchResult } from "../tools/lib/sources/matcher.js";
+import type { LLMProvider } from "../src/lib/llm-provider.js";
+import type { AgentSourceView } from "../src/lib/sources/catalog.js";
+import type { PreflightCandidate } from "../src/lib/sources/policy.js";
+import type { MatchResult } from "../src/lib/sources/matcher.js";
 
 // ── Mocks ────────────────────────────────────────────
 
 const matchMock = vi.hoisted(() => vi.fn());
 const preflightMock = vi.hoisted(() => vi.fn());
 
-vi.mock("../tools/lib/sources/matcher.js", () => ({
+vi.mock("../src/lib/sources/matcher.js", () => ({
   match: matchMock,
 }));
 
-vi.mock("../tools/lib/sources/policy.js", () => ({
+vi.mock("../src/lib/sources/policy.js", () => ({
   preflight: preflightMock,
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -25,7 +25,7 @@ vi.mock("../tools/lib/sdk.js", () => ({
 import {
   runAfterPublishDraft,
   type AfterPublishDraftContext,
-} from "../tools/lib/extensions.js";
+} from "../src/lib/extensions.js";
 
 // ── Fixtures ─────────────────────────────────────────
 

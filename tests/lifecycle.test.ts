@@ -1,10 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { SourceRecordV2, SourceStatus } from "../tools/lib/sources/catalog.js";
-import type { SourceTestResult, SourceTestStatus } from "../tools/lib/sources/health.js";
+import type { SourceRecordV2, SourceStatus } from "../src/lib/sources/catalog.js";
+import type { SourceTestResult, SourceTestStatus } from "../src/lib/sources/health.js";
 
 // ── Mocks ────────────────────────────────────────────
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -14,7 +14,7 @@ import {
   updateRating,
   applyTransitions,
   type TransitionResult,
-} from "../tools/lib/sources/lifecycle.js";
+} from "../src/lib/sources/lifecycle.js";
 
 // ── Fixtures ─────────────────────────────────────────
 

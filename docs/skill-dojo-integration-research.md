@@ -150,14 +150,41 @@ Skills return attestation proof data, but the shape varies per skill:
 ## 4. Architecture (Council + Codex Synthesis)
 
 ### Integration Pattern
-**Thin shared client + typed skill adapters:**
+**Thin shared client + typed skill adapters for ALL 15 skills:**
+
+All Skill Dojo skills get typed adapters in `src/adapters/skill-dojo/`, even if not active or functional yet. This maps the entire Skill Dojo surface into our framework for future adoption.
 
 ```
-src/lib/skill-dojo-client.ts          ~80 lines — HTTP transport + shared rate budget
-src/lib/skill-dojo-proof.ts           ~60 lines — Proof normalization (dahrAttestation → common shape)
-src/plugins/skill-dojo-defi-provider.ts    — Typed adapter: DataProvider wrapping defi-agent
-src/plugins/skill-dojo-prediction-provider.ts — Typed adapter: DataProvider wrapping prediction-market
-src/plugins/skill-dojo-monitoring-provider.ts — Typed adapter: DataProvider wrapping network-monitor + address-monitoring
+src/lib/skill-dojo-client.ts                    — HTTP transport + shared rate budget (~80 lines)
+src/lib/skill-dojo-proof.ts                      — Proof normalization (~60 lines)
+src/adapters/skill-dojo/
+├── index.ts                                     — Barrel export
+├── types.ts                                     — Common types, proof shape, skill params
+│
+│  Monitoring (DataProvider)
+├── defi-agent.ts                                — Binance order book, liquidity, limits, bridge/swap
+├── prediction-market.ts                         — Polymarket/Kalshi attested market data
+├── network-monitor.ts                           — Network health, mempool, on-chain events
+├── address-monitoring.ts                        — Wallet balance/tx pattern monitoring
+│
+│  Chain Operations (DataProvider — overlaps sdk.ts, mapped for completeness)
+├── chain-operations.ts                          — Unified cross-chain balance/sign/transfer
+├── solana-operations.ts                         — SOL operations
+├── ton-operations.ts                            — TON operations
+├── near-operations.ts                           — NEAR operations
+├── bitcoin-operations.ts                        — BTC operations
+├── cosmos-operations.ts                         — ATOM operations
+│
+│  Workflow (Action — DemosWork, blocked on ESM bug)
+├── multi-step-operations.ts                     — Batch/conditional/cross-chain workflows (stub)
+│
+│  Identity (Action)
+├── identity-agent.ts                            — CCI profile create/resolve/link
+├── tlsnotary-attestation.ts                     — MPC-TLS HTTPS proofs
+├── demos-wallet.ts                              — Browser wallet integration (stub: browser-only)
+│
+│  Setup
+└── sdk-setup.ts                                 — SDK connectivity validation
 ```
 
 **Key design decisions (informed by Codex review):**
@@ -166,19 +193,21 @@ src/plugins/skill-dojo-monitoring-provider.ts — Typed adapter: DataProvider wr
 - Rate budget is a shared persistent counter (extends write-rate-limit pattern). ALL agents deduct from one pool.
 - Monitoring skills are cron-only DataProviders, NOT reactive EventSources (5 req/hr kills polling).
 - Prediction-market data injected at `beforeSense` hook (not `beforePublishDraft`) for reuse in scan, gating, evaluation.
+- Chain-specific ops adapters exist for completeness but may never be activated (overlap with sdk.ts).
+- Stubs for blocked/browser-only skills export the interface but throw "not available" at runtime.
 
-### Revised Implementation Sequence (Codex-recommended)
+### Revised Implementation Sequence
 
 | Step | What | Why | Est. |
 |------|------|-----|------|
 | **0. Contract test** | ~~Done~~ — defi-agent + prediction-market proof fields verified | Resolves biggest unknown | Done |
-| **1. H7 rate profiling** | Simulate 3 agents x 2 calls per session against 5 req/hr shared budget | Must know budget feasibility before building | 1 day |
-| **2. Shared client** | `skill-dojo-client.ts` + `skill-dojo-proof.ts` | Transport + proof normalization | 1 day |
-| **3. Pilot: defi-agent** | `skill-dojo-defi-provider.ts` as DataProvider for defi-markets | One pull-only integration end-to-end | 2 days |
-| **4. Measure** | Run 10 defi-markets sessions. Compare scores vs existing providers (H1) | Prove value before expanding | 1 week |
-| **5. prediction-market** | `skill-dojo-prediction-provider.ts` + beforeSense hook | Second pull-only integration | 2 days |
-| **6. Monitoring** | `skill-dojo-monitoring-provider.ts` for infra-ops cron | Third integration, cron-only | 2 days |
-| **Deferred** | identity-agent, tlsnotary (evaluate vs Playwright bridge), multi-step-ops | Premature or blocked | TBD |
+| **1. Shared infra** | `skill-dojo-client.ts` + `skill-dojo-proof.ts` + `types.ts` + `index.ts` | Transport + proof normalization + common types | 1 day |
+| **2. All 15 adapters** | Typed adapters for every skill in `src/adapters/skill-dojo/` | Maps full Skill Dojo surface. Stubs for blocked/browser skills. | 2 days |
+| **3. Tests** | Unit tests for all adapters (mock HTTP) + integration tests for active skills | Verify proof extraction, param validation, error handling | 1 day |
+| **4. H7 rate profiling** | Simulate 3 agents x 2 calls per session against 5 req/hr shared budget | Must validate budget math before activation | 1 day |
+| **5. Activate pilot** | Wire defi-agent adapter into defi-markets persona.yaml | First live integration | 1 day |
+| **6. Measure H1** | Run 10 defi-markets sessions. Compare scores vs existing providers | Prove value before activating more | 1 week |
+| **7. Activate Wave 1** | prediction-market (sentinel/pioneer) + monitoring (infra-ops/nexus) | Expand based on H1 results | 2 days |
 
 ### Budget Math (shared 5 req/hr)
 

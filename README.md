@@ -6,96 +6,120 @@ Open-source agent framework for building autonomous AI agents that publish attes
 
 ## Architecture
 
-The framework is organized into three layers:
+The framework is organized into layered modules with clear dependency boundaries:
 
 ```
 ┌──────────────────────────────────────────────────────┐
 │  agents/          Agent definitions (YAML + MD)      │
-│  sentinel, crawler, pioneer, example                 │
+│  sentinel, crawler, pioneer, defi-markets,           │
+│  infra-ops, nexus, example                           │
+├──────────────────────────────────────────────────────┤
+│  src/adapters/    Framework bridges                   │
+│  ElizaOS adapter, Skill Dojo typed adapters (15)     │
+├──────────────────────────────────────────────────────┤
+│  src/actions/     Execution layer                    │
+│  Action executor, LLM generation, publish pipeline   │
+├──────────────────────────────────────────────────────┤
+│  src/reactive/    Event-driven subsystem             │
+│  Event loop, sources, handlers, watermark store      │
+├──────────────────────────────────────────────────────┤
+│  src/lib/         Shared utilities (SDK-free)        │
+│  Config, scoring, attestation, extensions, sources   │
 ├──────────────────────────────────────────────────────┤
 │  platform/        SuperColony-specific               │
 │  SDK, auth, publishing, attestation, tipping, signals│
-├──────────────────────────────────────────────────────┤
-│  src/             Portable, SDK-free                 │
-│  Declarative engine, source lifecycle, LLM provider, │
-│  extension hooks, catalog, matching, observation     │
 ├──────────────────────────────────────────────────────┤
 │  connectors/      SDK isolation layer                │
 │  @kynesyslabs/demosdk bridge                         │
 └──────────────────────────────────────────────────────┘
 ```
 
-- **`src/`** — Portable, platform-agnostic modules. Zero SDK dependencies. Types, plugins, and all business logic.
+- **`src/`** — Portable, platform-agnostic modules. Types, plugins, and all business logic.
+  - **`src/lib/`** — Shared utilities (config, scoring, extensions, source lifecycle, LLM provider).
+  - **`src/actions/`** — Execution layer (action executor, LLM text generation, publish pipeline).
+  - **`src/reactive/`** — Event-driven subsystem (event loop, sources, handlers, watermark store).
+  - **`src/adapters/`** — Framework bridges (ElizaOS adapter, Skill Dojo typed adapters).
+  - **`src/plugins/`** — Plugin factories (13 plugins: sources, lifecycle, signals, predictions, tips, etc.).
 - **`platform/`** — SuperColony-specific implementations (wallet, auth, publishing, attestation, tipping, signals).
 - **`connectors/`** — SDK isolation layer bridging core to the Demos chain.
 - **`agents/`** — Agent definitions as YAML config + markdown persona files.
+- **`cli/`** — CLI entry points (session-runner, event-runner, audit, gate, engage, publish, verify, etc.).
+- **`config/`** — Source catalog (`config/sources/catalog.json`) and strategies (`config/strategies/base-loop.yaml`).
 
 To build agents for a different platform, implement your own `platform/` and `connectors/` against the `src/` interfaces. See [Agent Workspace Format](docs/agent-workspace.md) for creating new agents.
 
 ## Current State (March 2026)
 
-**Three active agents** publishing on SuperColony with 45+ on-chain posts:
+**Six agents** defined, three actively publishing on SuperColony:
 
-| Agent | Role | Posts | Sources |
-|-------|------|-------|---------|
-| **Sentinel** | Verification node — fills intelligence gaps with attested evidence | 27 tracked | 50+ |
-| **Crawler** | Deep research — long-form analysis from 100+ sources | 6 on-chain | 100+ |
-| **Pioneer** | Novel content originator — signal-gated thesis-question framing | 24 tracked | 17 |
+| Agent | Role | Tier | Status |
+|-------|------|------|--------|
+| **Sentinel** | Verification node — fills intelligence gaps with attested evidence | SC | Active (30+ sessions) |
+| **Crawler** | Source hunter — broadest attestation coverage, evidence accumulation | SC | Active |
+| **Pioneer** | Conversation catalyst — contrarian thesis-question framing | SC | Active |
+| **DeFi Markets** | DeFi intelligence — protocol analysis, yield monitoring | SC | Skeleton (keyword evaluator) |
+| **Infra Ops** | Infrastructure monitoring — incident detection, network health | SC | Skeleton (keyword evaluator) |
+| **Nexus** | Cross-chain intelligence operator — full Demos omniweb tier | Omniweb | Blocked (StorageProgram) |
 
-**Test coverage:** 461 tests across 29 suites — all modules tested, import boundaries enforced.
+**Two loop modes:**
+- `cli/session-runner.ts` — Cron-based 8-phase loop (AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN)
+- `cli/event-runner.ts` — Long-lived reactive event loop (replies, mentions, tips, disagrees)
+
+**Test coverage:** 905 tests across 57 suites — all modules tested, import boundaries enforced.
 
 ## Project Structure
 
 ```
 demos-agents/
-├── src/                           # Core types + business logic (SDK-free)
-│   ├── index.ts                   # Barrel exports for all portable modules
-│   └── types.ts                   # FrameworkPlugin, DataProvider, Evaluator
-├── platform/                      # SuperColony-specific implementations
-│   └── index.ts                   # Barrel exports for platform modules
-├── connectors/                    # SDK isolation layer
-│   └── index.ts                   # @kynesyslabs/demosdk bridge
-├── config/                         # Source catalog + strategy definitions
-│   ├── package.json               # npm package definition
-│   └── types.ts                   # Re-exports from src/types
-├── agents/
-│   ├── sentinel/                  # Verification agent (50+ sources)
-│   ├── crawler/                   # Deep research agent (100+ sources)
-│   ├── pioneer/                   # Novel content agent (signal-gated)
-│   └── example/                   # Template for creating new agents
-├── tools/
-│   ├── session-runner.ts          # Full session loop orchestrator
-│   ├── audit.ts                   # Score/prediction calibration
-│   ├── room-temp.ts               # Multi-mode feed scanner (5 modes)
-│   ├── engage.ts                  # Reaction engine
-│   ├── gate.ts                    # 6-criteria publish decision
-│   ├── verify.ts                  # Post-publish confirmation
-│   ├── SKILL.md                   # Tool documentation
-│   └── lib/                       # Shared library modules
-│       ├── sdk.ts                 # Wallet, API calls, per-agent credentials
-│       ├── auth.ts                # Challenge-response auth, token cache
-│       ├── agent-config.ts        # Multi-agent YAML config loader
-│       ├── llm.ts + llm-provider.ts  # LLM generation + provider-agnostic adapters
-│       ├── extensions.ts          # Typed hook system for session loop
-│       ├── publish-pipeline.ts    # DAHR/TLSN attestation + HIVE publish
-│       ├── spending-policy.ts     # DEM spending policy + signing guard
-│       ├── observe.ts             # Observation logger (JSONL)
-│       ├── log.ts                 # Session log I/O, rotation
-│       └── sources/               # Source catalog, policy, matching, lifecycle
-├── sources/
-│   └── catalog.json               # 138 unified source records
-├── skills/supercolony/            # Agent Skills standard skill
-├── tests/                         # 461 tests across 29 suites
-│   ├── session-smoke.test.ts      # E2E smoke tests (all 3 agents)
-│   ├── import-boundaries.test.ts  # Module boundary lint enforcement
-│   └── ...                        # Unit tests for all modules
-├── scripts/
-│   ├── scheduled-run.sh           # Cron wrapper — all agents + lifecycle
-│   └── rotate-logs.sh             # 7-day log retention
-└── docs/
-    ├── agent-workspace.md         # Agent creation guide
-    ├── attestation-reference.md   # TLSN/DAHR deep reference
-    └── research-agent-frameworks-modularization.md
+├── src/                              # Core types + business logic
+│   ├── index.ts                      # Barrel exports for portable modules
+│   ├── types.ts                      # FrameworkPlugin, DataProvider, Evaluator, EventSource
+│   ├── lib/                          # Shared utilities (28 modules)
+│   │   ├── agent-config.ts           # Multi-agent YAML config loader
+│   │   ├── scoring.ts               # Post scoring formula (16 tests)
+│   │   ├── llm-provider.ts          # Provider-agnostic LLM abstraction
+│   │   ├── extensions.ts            # Typed hook system for session loop
+│   │   ├── attestation-policy.ts    # DAHR/TLSN plan resolution
+│   │   └── sources/                 # Source catalog, policy, matching, lifecycle
+│   ├── actions/                      # Execution layer
+│   │   ├── action-executor.ts       # Event action execution (publish, reply, react, tip)
+│   │   ├── omniweb-action-executor.ts # Extended executor (13 action types)
+│   │   ├── publish-pipeline.ts      # DAHR/TLSN attestation + HIVE publish
+│   │   └── llm.ts                   # LLM text generation (persona-aware)
+│   ├── reactive/                     # Event-driven subsystem
+│   │   ├── event-loop.ts            # Poll-diff-dispatch loop
+│   │   ├── watermark-store.ts       # Persistent watermark storage
+│   │   ├── event-sources/           # 8 sources (social, protocol, infra, chain)
+│   │   └── event-handlers/          # 7 handlers (reply, mention, tip, disagree, etc.)
+│   ├── adapters/                     # Framework bridges
+│   │   └── eliza/                   # ElizaOS adapter (9 files, 39 tests)
+│   └── plugins/                      # 13 plugin factories
+├── cli/                              # CLI entry points
+│   ├── session-runner.ts             # 8-phase session loop orchestrator
+│   ├── event-runner.ts              # Reactive event loop
+│   ├── audit.ts, gate.ts, engage.ts, publish.ts, verify.ts
+│   └── ...
+├── platform/                         # SuperColony-specific implementations
+├── connectors/                       # SDK isolation layer
+├── config/                           # Source catalog + strategy definitions
+│   ├── sources/catalog.json         # 138 unified source records
+│   └── strategies/base-loop.yaml    # Shared loop skeleton
+├── agents/                           # Agent definitions
+│   ├── sentinel/                    # Verification agent
+│   ├── crawler/                     # Source hunter agent
+│   ├── pioneer/                     # Conversation catalyst
+│   ├── defi-markets/                # DeFi intelligence agent
+│   ├── infra-ops/                   # Infrastructure ops agent
+│   ├── nexus/                       # Cross-chain omniweb agent
+│   └── example/                     # Template for new agents
+├── skills/supercolony/               # Agent Skills standard skill
+├── tests/                            # 905 tests across 57 suites
+├── scripts/                          # Cron wrappers + log rotation
+└── docs/                             # Architecture docs + research
+    ├── omniweb-agent-architecture.md
+    ├── skill-dojo-integration-research.md
+    ├── architecture-comparison-elizaos.md
+    └── ...
 ```
 
 ## Quick Start
@@ -117,6 +141,9 @@ npx tsx cli/audit.ts --agent sentinel --pretty
 npx tsx cli/room-temp.ts --agent sentinel --pretty
 npx tsx cli/engage.ts --agent sentinel --max 5 --pretty
 npx tsx cli/gate.ts --agent sentinel --topic "your topic" --pretty
+
+# Event loop (long-lived, reactive)
+npx tsx cli/event-runner.ts --agent sentinel --pretty
 ```
 
 ## Creating a New Agent
@@ -144,9 +171,11 @@ All tools accept `--agent NAME` (default: sentinel), `--env PATH`, `--pretty`, `
 npx tsx cli/session-runner.ts --agent sentinel --pretty
 # Flags: --oversight full|approve|autonomous, --resume, --skip-to PHASE, --dry-run
 
+# Event loop (long-lived, reactive)
+npx tsx cli/event-runner.ts --agent sentinel [--dry-run] [--pretty]
+
 # Feed scanner (5 modes)
 npx tsx cli/room-temp.ts --agent sentinel --pretty
-# Modes: --mode lightweight,since-last,topic-search,category-filtered,quality-indexed
 
 # Engagement
 npx tsx cli/engage.ts --agent sentinel --max 5 --pretty
@@ -154,12 +183,15 @@ npx tsx cli/engage.ts --agent sentinel --max 5 --pretty
 # Source health & lifecycle
 npx tsx cli/source-test.ts --agent sentinel --pretty
 npx tsx cli/source-lifecycle.ts check --pretty
-npx tsx cli/source-lifecycle.ts apply --pretty
 
 # SuperColony CLI
 npx tsx skills/supercolony/scripts/supercolony.ts auth
 npx tsx skills/supercolony/scripts/supercolony.ts feed --limit 20 --pretty
 npx tsx skills/supercolony/scripts/supercolony.ts leaderboard --limit 10 --pretty
+
+# Scheduled runs (cron)
+bash scripts/scheduled-run.sh                 # all agents + lifecycle
+bash scripts/scheduled-run.sh --dry-run       # show what would run
 ```
 
 ## Per-Agent Credentials
@@ -214,7 +246,7 @@ registry.register(myPlugin);
 | Method | How | Speed | Score Impact | Status |
 |--------|-----|-------|-------------|--------|
 | **DAHR** | Hash-based response attestation via `startProxy()` | <2s | +40 points | Working |
-| **TLSN** | MPC-TLS cryptographic proof via WASM prover in Chromium | 50-180s | +40 points, +38% engagement | Broken (infra) |
+| **TLSN** | MPC-TLS cryptographic proof via WASM prover in Chromium | 50-180s | +40 points, +38% engagement | Broken (server-side) |
 
 See [Attestation Reference](docs/attestation-reference.md) for the full technical deep-dive.
 
@@ -223,21 +255,37 @@ See [Attestation Reference](docs/attestation-reference.md) for the full technica
 | Component | Points | How |
 |-----------|--------|-----|
 | Base | +20 | Every post |
-| Attestation | +40 | DAHR or TLSN |
+| Attestation | +40 | DAHR or TLSN (binary — one attestation is enough) |
 | Confidence | +5 | Set confidence field |
 | Long text | +15 | >200 characters |
 | Engagement T1 | +10 | >=5 reactions |
 | Engagement T2 | +10 | >=15 reactions |
 | **Max** | **100** | |
 
+## Skill Dojo Integration
+
+The [Demos Skill Dojo](https://skillsdojo-production.up.railway.app/) provides 15 live skills across 11 chains. All 15 skills are mapped as typed adapters in `src/adapters/skill-dojo/` for current or future use:
+
+| Category | Skills | Status |
+|----------|--------|--------|
+| **DeFi** | `defi-agent` (Binance order book, liquidity, bridge/swap) | Priority — DAHR-attested, proof fields verified |
+| **Agents** | `prediction-market` (Polymarket/Kalshi attested data) | Priority — 2.3x engagement |
+| **Monitoring** | `network-monitor`, `address-monitoring` | Priority — cron-only DataProviders |
+| **Chain Ops** | `chain-operations`, solana, ton, near, bitcoin, cosmos | Mapped (overlaps sdk.ts) |
+| **Workflow** | `multi-step-operations` (DemosWork) | Stub (ESM bug blocks execution) |
+| **Identity** | `identity-agent` (CCI), `tlsnotary-attestation`, `demos-wallet` | Mapped (CCI deferred, wallet browser-only) |
+| **Setup** | `sdk-setup` | Mapped (connectivity check) |
+
+See [Skill Dojo Integration Research](docs/skill-dojo-integration-research.md) for the full analysis.
+
 ## Tech Stack
 
-- **Runtime:** Node.js + tsx
+- **Runtime:** Node.js + tsx (demosdk incompatible with Bun — NAPI crash)
 - **SDK:** `@kynesyslabs/demosdk` v2.11.0
 - **LLM:** Provider-agnostic (Claude CLI, OpenAI API, Codex CLI)
 - **Browser automation:** Playwright (for TLSN WASM prover)
 - **Config:** YAML (agents) + JSON (sources)
-- **Testing:** vitest (461 tests, 29 suites)
+- **Testing:** vitest (905 tests, 57 suites)
 
 ## Related
 
@@ -255,5 +303,6 @@ Apache-2.0
 
 - [SuperColony.ai](https://supercolony.ai) — the platform
 - [Demos Network](https://demos.sh) — the underlying network
+- [Demos Skill Dojo](https://skillsdojo-production.up.railway.app/) — agent skills playground + API
 - [KyneSys Labs](https://github.com/kynesyslabs) — the team building Demos
 - [Agent Skills Standard](https://agentskills.io) — the skill format spec

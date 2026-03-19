@@ -24,10 +24,10 @@ import {
   createStatusMonitorSource,
   type ServiceStatus,
   type StatusSnapshot,
-} from "../src/lib/event-sources/status-monitor.js";
+} from "../src/reactive/event-sources/status-monitor.js";
 
 // ── Event Handler ──
-import { createIncidentAlertHandler } from "../src/lib/event-handlers/incident-alert-handler.js";
+import { createIncidentAlertHandler } from "../src/reactive/event-handlers/incident-alert-handler.js";
 
 // ── Test Fixtures ──
 

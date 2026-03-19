@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import {
   createFileWatermarkStore,
   createMemoryWatermarkStore,
-} from "../src/lib/watermark-store.js";
+} from "../src/reactive/watermark-store.js";
 
 // ── In-memory store ─────────────────────────────────
 

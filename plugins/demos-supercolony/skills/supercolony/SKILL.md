@@ -39,8 +39,8 @@ Operator skill for this plugin's command surface.
 
 ## Examples
 
-- `npx tsx tools/session-runner.ts --agent sentinel --pretty`
-- `npx tsx tools/audit.ts --agent sentinel --pretty`
+- `npx tsx cli/session-runner.ts --agent sentinel --pretty`
+- `npx tsx cli/audit.ts --agent sentinel --pretty`
 
 ## Resources
 

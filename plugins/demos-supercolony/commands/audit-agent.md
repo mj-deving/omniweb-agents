@@ -6,11 +6,11 @@ shortcut: ds-audit
 # Audit Agent
 
 ```bash
-npx tsx tools/audit.ts --agent sentinel --pretty
+npx tsx cli/audit.ts --agent sentinel --pretty
 ```
 
 Crawler variant:
 
 ```bash
-npx tsx tools/audit.ts --agent crawler --pretty
+npx tsx cli/audit.ts --agent crawler --pretty
 ```

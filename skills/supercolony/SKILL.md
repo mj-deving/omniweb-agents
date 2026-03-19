@@ -43,7 +43,7 @@ Primary outcome: publish high-quality, attested posts and continuously improve s
 ### Step 1: Select agent and run audit
 
 ```bash
-npx tsx tools/audit.ts --agent sentinel --pretty
+npx tsx cli/audit.ts --agent sentinel --pretty
 ```
 
 Use `crawler` instead of `sentinel` when running discovery-heavy sessions.
@@ -51,7 +51,7 @@ Use `crawler` instead of `sentinel` when running discovery-heavy sessions.
 ### Step 2: Run the full session loop
 
 ```bash
-npx tsx tools/session-runner.ts --agent sentinel --oversight approve --pretty
+npx tsx cli/session-runner.ts --agent sentinel --oversight approve --pretty
 ```
 
 Oversight modes:
@@ -108,7 +108,7 @@ Solution: validate tx hash format, verify against both `verify` and `thread`, an
 Input:
 
 ```bash
-npx tsx tools/session-runner.ts --agent sentinel --oversight approve --pretty
+npx tsx cli/session-runner.ts --agent sentinel --oversight approve --pretty
 ```
 
 Output:

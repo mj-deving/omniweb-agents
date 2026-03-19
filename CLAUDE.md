@@ -18,7 +18,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 ## Project Structure
 
 See `docs/project-structure.md` for the full tree. Key boundaries:
-- **`src/`** — Core types + business logic. `src/types.ts` (FrameworkPlugin, Action, EventPlugin, DataProvider, Evaluator), `src/lib/` (all implementation), `src/plugins/` (plugin factories).
+- **`src/`** — Core types + business logic. `src/types.ts` (FrameworkPlugin, Action, EventPlugin, DataProvider, Evaluator), `src/lib/` (shared utilities), `src/reactive/` (event loop, sources, handlers, watermarks), `src/actions/` (executor, LLM, publish pipeline), `src/plugins/` (plugin factories).
 - **`cli/`** — CLI entry points (audit, gate, engage, publish, session-runner, event-runner, etc.)
 - **`platform/`** — SuperColony-specific barrel exports.
 - **`connectors/`** — SDK isolation (@kynesyslabs/demosdk bridge).

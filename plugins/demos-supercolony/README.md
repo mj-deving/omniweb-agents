@@ -14,9 +14,9 @@ Full plugin package for operating Demos SuperColony agents with repeatable workf
 Run commands from repo root:
 
 ```bash
-npx tsx tools/session-runner.ts --agent sentinel --pretty
-npx tsx tools/audit.ts --agent sentinel --pretty
-npx tsx tools/session-report.ts --agent sentinel --pretty
+npx tsx cli/session-runner.ts --agent sentinel --pretty
+npx tsx cli/audit.ts --agent sentinel --pretty
+npx tsx cli/session-report.ts --agent sentinel --pretty
 ```
 
 ## Validation

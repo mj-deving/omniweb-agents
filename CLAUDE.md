@@ -11,17 +11,19 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **Runtime:** Node.js + tsx (demosdk incompatible with Bun — NAPI crash)
 - **SDK:** `@kynesyslabs/demosdk` v2.11.0 (import `/websdk` subpath directly)
 - **Config:** YAML (persona, strategy, agent definitions)
-- **LLM:** Provider-agnostic via `tools/lib/llm-provider.ts` (Claude CLI, OpenAI API, Codex CLI)
-- **Testing:** vitest (`npm test`). 615 tests across 36 suites. All code changes must include tests.
+- **LLM:** Provider-agnostic via `src/lib/llm-provider.ts` (Claude CLI, OpenAI API, Codex CLI)
+- **Testing:** vitest (`npm test`). 866 tests across 51 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). Legacy `.env` fallback. `--env` flag overrides.
 
 ## Project Structure
 
 See `docs/project-structure.md` for the full tree. Key boundaries:
-- **`core/`** — Portable, SDK-free. Types: FrameworkPlugin, Action, EventPlugin, DataProvider, Evaluator.
+- **`src/`** — Core types + business logic. `src/types.ts` (FrameworkPlugin, Action, EventPlugin, DataProvider, Evaluator), `src/lib/` (all implementation), `src/plugins/` (plugin factories).
+- **`cli/`** — CLI entry points (audit, gate, engage, publish, session-runner, event-runner, etc.)
 - **`platform/`** — SuperColony-specific barrel exports.
 - **`connectors/`** — SDK isolation (@kynesyslabs/demosdk bridge).
-- **Two loop modes:** `session-runner.ts` (cron, 8-phase) and `event-runner.ts` (long-lived, reactive).
+- **`config/`** — Source catalog (`config/sources/catalog.json`) and strategies (`config/strategies/base-loop.yaml`).
+- **Two loop modes:** `cli/session-runner.ts` (cron, 8-phase) and `cli/event-runner.ts` (long-lived, reactive).
 
 ## CLI Quick Reference
 
@@ -29,20 +31,20 @@ All tools accept `--agent NAME` (default: sentinel), `--env PATH`, `--pretty`, `
 
 ```bash
 # Session loop (cron)
-npx tsx tools/session-runner.ts --agent sentinel --pretty
+npx tsx cli/session-runner.ts --agent sentinel --pretty
 # Flags: --oversight full|approve|autonomous, --resume, --skip-to PHASE, --dry-run
 
 # Event loop (long-lived, reactive)
-npx tsx tools/event-runner.ts --agent sentinel [--dry-run] [--pretty]
+npx tsx cli/event-runner.ts --agent sentinel [--dry-run] [--pretty]
 
 # Individual tools
-npx tsx tools/audit.ts --agent sentinel --pretty
-npx tsx tools/room-temp.ts --agent sentinel --pretty
-npx tsx tools/engage.ts --agent sentinel --max 5 --pretty
-npx tsx tools/gate.ts --agent sentinel --topic "topic" --pretty
-npx tsx tools/verify.ts --agent sentinel --pretty
-npx tsx tools/improvements.ts list --agent sentinel
-npx tsx tools/improvements.ts cleanup --agent sentinel --pretty  # age-out stale items
+npx tsx cli/audit.ts --agent sentinel --pretty
+npx tsx cli/room-temp.ts --agent sentinel --pretty
+npx tsx cli/engage.ts --agent sentinel --max 5 --pretty
+npx tsx cli/gate.ts --agent sentinel --topic "topic" --pretty
+npx tsx cli/verify.ts --agent sentinel --pretty
+npx tsx cli/improvements.ts list --agent sentinel
+npx tsx cli/improvements.ts cleanup --agent sentinel --pretty  # age-out stale items
 
 # SuperColony CLI
 npx tsx skills/supercolony/scripts/supercolony.ts auth
@@ -78,7 +80,7 @@ bash scripts/scheduled-run.sh --dry-run       # show what would run
 
 ### Scoring
 
-- **Formula:** `tools/lib/scoring.ts` with `calculateExpectedScore()` + 16 tests.
+- **Formula:** `src/lib/scoring.ts` with `calculateExpectedScore()` + 16 tests.
 - **Category is IRRELEVANT** — all categories score identically.
 - Reply threads outperform top-level: 13.4 vs 9.8rx. TLSN outperforms DAHR: 12.4 vs 9.0rx.
 

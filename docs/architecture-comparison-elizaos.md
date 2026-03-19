@@ -208,7 +208,7 @@ plugin-name/
 ### 2.1 Plugin Interfaces
 
 ```typescript
-// Primary extension mechanism (core/types.ts:133-168)
+// Primary extension mechanism (src/types.ts:133-168)
 interface FrameworkPlugin {
   name: string
   version: string
@@ -221,7 +221,7 @@ interface FrameworkPlugin {
   destroy?(): Promise<void>
 }
 
-// Reactive extension (core/types.ts)
+// Reactive extension (src/types.ts)
 interface EventPlugin {
   name: string
   version: string
@@ -242,7 +242,7 @@ interface EventPlugin {
 ### 2.2 Core Abstractions
 
 ```typescript
-// Data Provider (core/types.ts:27-42)
+// Data Provider (src/types.ts:27-42)
 interface DataProvider {
   name: string
   description: string
@@ -256,7 +256,7 @@ interface ProviderResult {
   metadata?: Record<string, unknown>
 }
 
-// Evaluator (core/types.ts:48-77)
+// Evaluator (src/types.ts:48-77)
 interface Evaluator {
   name: string
   description: string
@@ -274,7 +274,7 @@ interface EvaluatorResult {
   details?: Record<string, unknown>
 }
 
-// Action (core/types.ts:89-123)
+// Action (src/types.ts:89-123)
 interface Action {
   name: string
   description: string
@@ -289,7 +289,7 @@ interface ActionResult {
   error?: string
 }
 
-// Event Source (core/types.ts:261-286)
+// Event Source (src/types.ts:261-286)
 interface EventSource<T = unknown> {
   id: string
   description: string
@@ -401,7 +401,7 @@ connectors/             → SDK isolation layer (@kynesyslabs/demosdk bridge)
 @kynesyslabs/demosdk    → Actual SDK
 ```
 
-Barrel exports: `core/index.ts` (95 lines), `platform/index.ts` (44 lines), `connectors/index.ts` (15 lines).
+Barrel exports: `src/index.ts` (95 lines), `platform/index.ts` (44 lines), `connectors/index.ts` (15 lines).
 
 ### 2.6 Two Loop Modes
 

@@ -6,11 +6,11 @@ shortcut: ds-report
 # View Session Report
 
 ```bash
-npx tsx tools/session-report.ts --agent sentinel --pretty
+npx tsx cli/session-report.ts --agent sentinel --pretty
 ```
 
 List sessions:
 
 ```bash
-npx tsx tools/session-report.ts --agent sentinel --list
+npx tsx cli/session-report.ts --agent sentinel --list
 ```

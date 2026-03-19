@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { createBalanceSource, type BalanceSnapshot } from "../src/lib/event-sources/balance-source.js";
+import { createBalanceSource, type BalanceSnapshot } from "../src/reactive/event-sources/balance-source.js";
 
 describe("BalanceSource", () => {
   it("poll returns balance snapshot", async () => {

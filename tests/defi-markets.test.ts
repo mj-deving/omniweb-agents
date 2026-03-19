@@ -20,8 +20,8 @@ import {
   createProtocolEventSource,
   type ProtocolEvent,
   type ProtocolEventSnapshot,
-} from "../src/lib/event-sources/protocol-events.js";
-import { createMarketAlertHandler } from "../src/lib/event-handlers/market-alert-handler.js";
+} from "../src/reactive/event-sources/protocol-events.js";
+import { createMarketAlertHandler } from "../src/reactive/event-handlers/market-alert-handler.js";
 
 // ── Test Fixtures ──
 

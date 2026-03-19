@@ -10,7 +10,7 @@
 
 import type { AgentEvent, EventAction } from "../types.js";
 import { toErrorMessage } from "./errors.js";
-import { addCapped } from "./own-tx-hashes.js";
+import { addCapped } from "../reactive/own-tx-hashes.js";
 import type { WriteRateLedger, WriteRateCheck } from "./write-rate-limit.js";
 import type { PublishInput, PublishResult, PublishOptions } from "./publish-pipeline.js";
 import type { GeneratePostInput, PostDraft } from "./llm.js";

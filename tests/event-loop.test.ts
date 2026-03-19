@@ -10,8 +10,8 @@ import {
   startEventLoop,
   nextInterval,
   type AdaptiveInterval,
-} from "../src/lib/event-loop.js";
-import { createMemoryWatermarkStore } from "../src/lib/watermark-store.js";
+} from "../src/reactive/event-loop.js";
+import { createMemoryWatermarkStore } from "../src/reactive/watermark-store.js";
 import type { AgentEvent, EventAction, EventSource, EventHandler } from "../src/types.js";
 
 // ── Adaptive Interval (pure function) ───────────────

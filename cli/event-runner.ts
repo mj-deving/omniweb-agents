@@ -21,7 +21,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { readFileSync, existsSync } from "node:fs";
-import { loadOwnTxHashes, pruneSessionLog } from "../src/lib/own-tx-hashes.js";
+import { loadOwnTxHashes, pruneSessionLog } from "../src/reactive/own-tx-hashes.js";
 
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import { connectWallet, setLogAgent, apiCall, info, warn } from "../src/lib/sdk.js";
@@ -32,21 +32,21 @@ import { attestAndPublish, type PublishInput } from "../src/lib/publish-pipeline
 import { generatePost, type GeneratePostInput } from "../src/lib/llm.js";
 import { createActionExecutor, type ActionExecutorContext } from "../src/lib/action-executor.js";
 import { resolveProvider } from "../src/lib/llm-provider.js";
-import { createFileWatermarkStore } from "../src/lib/watermark-store.js";
-import { startEventLoop, type SourceRegistration } from "../src/lib/event-loop.js";
+import { createFileWatermarkStore } from "../src/reactive/watermark-store.js";
+import { startEventLoop, type SourceRegistration } from "../src/reactive/event-loop.js";
 
-import { createSocialReplySource, type ReplyPost } from "../src/lib/event-sources/social-replies.js";
-import { createSocialMentionSource, type MentionPost } from "../src/lib/event-sources/social-mentions.js";
-import { createTipReceivedSource, type TipRecord } from "../src/lib/event-sources/tip-received.js";
+import { createSocialReplySource, type ReplyPost } from "../src/reactive/event-sources/social-replies.js";
+import { createSocialMentionSource, type MentionPost } from "../src/reactive/event-sources/social-mentions.js";
+import { createTipReceivedSource, type TipRecord } from "../src/reactive/event-sources/tip-received.js";
 import {
   createDisagreeMonitorSource,
   type DisagreePost,
-} from "../src/lib/event-sources/disagree-monitor.js";
+} from "../src/reactive/event-sources/disagree-monitor.js";
 
-import { createReplyHandler } from "../src/lib/event-handlers/reply-handler.js";
-import { createMentionHandler } from "../src/lib/event-handlers/mention-handler.js";
-import { createTipThanksHandler } from "../src/lib/event-handlers/tip-thanks-handler.js";
-import { createDisagreeHandler } from "../src/lib/event-handlers/disagree-handler.js";
+import { createReplyHandler } from "../src/reactive/event-handlers/reply-handler.js";
+import { createMentionHandler } from "../src/reactive/event-handlers/mention-handler.js";
+import { createTipThanksHandler } from "../src/reactive/event-handlers/tip-thanks-handler.js";
+import { createDisagreeHandler } from "../src/reactive/event-handlers/disagree-handler.js";
 
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import type { AgentEvent, EventAction, EventHandler } from "../src/types.js";

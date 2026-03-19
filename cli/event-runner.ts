@@ -28,9 +28,9 @@ import { connectWallet, setLogAgent, apiCall, info, warn } from "../src/lib/sdk.
 import { ensureAuth, loadAuthCache } from "../src/lib/auth.js";
 import { initObserver, observe } from "../src/lib/observe.js";
 import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
-import { attestAndPublish, type PublishInput } from "../src/lib/publish-pipeline.js";
-import { generatePost, type GeneratePostInput } from "../src/lib/llm.js";
-import { createActionExecutor, type ActionExecutorContext } from "../src/lib/action-executor.js";
+import { attestAndPublish, type PublishInput } from "../src/actions/publish-pipeline.js";
+import { generatePost, type GeneratePostInput } from "../src/actions/llm.js";
+import { createActionExecutor, type ActionExecutorContext } from "../src/actions/action-executor.js";
 import { resolveProvider } from "../src/lib/llm-provider.js";
 import { createFileWatermarkStore } from "../src/reactive/watermark-store.js";
 import { startEventLoop, type SourceRegistration } from "../src/reactive/event-loop.js";
@@ -273,7 +273,7 @@ async function main(): Promise<void> {
     { source: disagreeSrc, intervalMs: 300_000, minIntervalMs: 120_000, maxIntervalMs: 900_000 },
   ];
 
-  // ── Action Executor (extracted to tools/lib/action-executor.ts) ────
+  // ── Action Executor (src/actions/action-executor.ts) ────
 
   const executorCtx: ActionExecutorContext = {
     agentName: flags.agent,

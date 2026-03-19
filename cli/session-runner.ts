@@ -52,11 +52,11 @@ import {
 } from "../src/lib/state.js";
 import { readSessionLog, appendSessionLog, resolveLogPath } from "../src/lib/log.js";
 import { saveReviewFindings, loadLatestFindings } from "../src/lib/review-findings.js";
-import { generatePost, type PostDraft } from "../src/lib/llm.js";
+import { generatePost, type PostDraft } from "../src/actions/llm.js";
 import { resolveProvider, type LLMProvider } from "../src/lib/llm-provider.js";
 import { apiCall, connectWallet, setLogAgent } from "../src/lib/sdk.js";
 import { ensureAuth } from "../src/lib/auth.js";
-import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "../src/lib/publish-pipeline.js";
+import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "../src/actions/publish-pipeline.js";
 import { resolveAttestationPlan, type AttestationType } from "../src/lib/attestation-policy.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
 import { initObserver, setObserverPhase, observe, type SubstageResult, type SubstageFailureCode } from "../src/lib/observe.js";

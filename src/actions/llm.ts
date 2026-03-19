@@ -9,8 +9,8 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { info } from "./sdk.js";
-import type { LLMProvider } from "./llm-provider.js";
+import { info } from "../lib/sdk.js";
+import type { LLMProvider } from "../lib/llm-provider.js";
 
 // ── Constants ──────────────────────────────────────
 

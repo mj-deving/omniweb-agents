@@ -9,12 +9,12 @@
  */
 
 import type { AgentEvent, EventAction } from "../types.js";
-import { toErrorMessage } from "./errors.js";
+import { toErrorMessage } from "../lib/errors.js";
 import { addCapped } from "../reactive/own-tx-hashes.js";
-import type { WriteRateLedger, WriteRateCheck } from "./write-rate-limit.js";
+import type { WriteRateLedger, WriteRateCheck } from "../lib/write-rate-limit.js";
 import type { PublishInput, PublishResult, PublishOptions } from "./publish-pipeline.js";
 import type { GeneratePostInput, PostDraft } from "./llm.js";
-import type { ObservationType, ObserveOptions } from "./observe.js";
+import type { ObservationType, ObserveOptions } from "../lib/observe.js";
 
 // ── Type Aliases ────────────────────────────────────
 

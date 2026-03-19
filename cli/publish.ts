@@ -15,10 +15,10 @@ import { parse as parseYaml } from "yaml";
 
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import { resolveProvider } from "../src/lib/llm-provider.js";
-import { generatePost, type PostDraft } from "../src/lib/llm.js";
+import { generatePost, type PostDraft } from "../src/actions/llm.js";
 import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
 import { ensureAuth } from "../src/lib/auth.js";
-import { attestDahr, attestTlsn, publishPost, type AttestResult, type PublishResult } from "../src/lib/publish-pipeline.js";
+import { attestDahr, attestTlsn, publishPost, type AttestResult, type PublishResult } from "../src/actions/publish-pipeline.js";
 import { readSessionLog, appendSessionLog, resolveLogPath, type SessionLogEntry } from "../src/lib/log.js";
 
 // ── Types ──────────────────────────────────────────

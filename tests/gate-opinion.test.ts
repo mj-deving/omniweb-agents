@@ -49,13 +49,13 @@ describe("OPINION category — LLM VALID_CATEGORIES", () => {
     // Since it's a const inside generatePost, we test by checking the module source
     // This is a structural test — we'll verify by reading the file
     const fs = await import("node:fs");
-    const llmSource = fs.readFileSync("tools/lib/llm.ts", "utf-8");
+    const llmSource = fs.readFileSync("src/lib/llm.ts", "utf-8");
     expect(llmSource).toContain('"OPINION"');
   });
 
   it("LLM system prompt mentions OPINION category", async () => {
     const fs = await import("node:fs");
-    const llmSource = fs.readFileSync("tools/lib/llm.ts", "utf-8");
+    const llmSource = fs.readFileSync("src/lib/llm.ts", "utf-8");
     // The system prompt should contain guidance for OPINION
     expect(llmSource).toMatch(/OPINION/);
   });
@@ -64,7 +64,7 @@ describe("OPINION category — LLM VALID_CATEGORIES", () => {
 describe("OPINION category — extractTopicsFromScan suggestions", () => {
   it("session-runner can suggest OPINION for subjective topics", async () => {
     const fs = await import("node:fs");
-    const source = fs.readFileSync("tools/session-runner.ts", "utf-8");
+    const source = fs.readFileSync("cli/session-runner.ts", "utf-8");
     // extractTopicsFromScan should be able to produce OPINION category
     expect(source).toContain('"OPINION"');
   });

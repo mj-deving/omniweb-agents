@@ -12,25 +12,25 @@ import { makeAgentEvent } from "./fixtures/event-fixtures.js";
 import {
   createSocialReplySource,
   type ReplyPost,
-} from "../tools/lib/event-sources/social-replies.js";
+} from "../src/lib/event-sources/social-replies.js";
 import {
   createSocialMentionSource,
   type MentionPost,
-} from "../tools/lib/event-sources/social-mentions.js";
+} from "../src/lib/event-sources/social-mentions.js";
 import {
   createTipReceivedSource,
   type TipRecord,
-} from "../tools/lib/event-sources/tip-received.js";
+} from "../src/lib/event-sources/tip-received.js";
 import {
   createDisagreeMonitorSource,
   type DisagreePost,
-} from "../tools/lib/event-sources/disagree-monitor.js";
+} from "../src/lib/event-sources/disagree-monitor.js";
 
 // ── Handlers ──
-import { createReplyHandler } from "../tools/lib/event-handlers/reply-handler.js";
-import { createMentionHandler } from "../tools/lib/event-handlers/mention-handler.js";
-import { createTipThanksHandler } from "../tools/lib/event-handlers/tip-thanks-handler.js";
-import { createDisagreeHandler } from "../tools/lib/event-handlers/disagree-handler.js";
+import { createReplyHandler } from "../src/lib/event-handlers/reply-handler.js";
+import { createMentionHandler } from "../src/lib/event-handlers/mention-handler.js";
+import { createTipThanksHandler } from "../src/lib/event-handlers/tip-thanks-handler.js";
+import { createDisagreeHandler } from "../src/lib/event-handlers/disagree-handler.js";
 
 // ── Test Fixtures ──
 

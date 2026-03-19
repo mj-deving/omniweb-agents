@@ -17,7 +17,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 
 // Real imports — these are what we're smoke-testing
-import { loadAgentConfig, resolveAgentName } from "../tools/lib/agent-config.js";
+import { loadAgentConfig, resolveAgentName } from "../src/lib/agent-config.js";
 import {
   getPhaseOrder,
   startSession,
@@ -26,9 +26,9 @@ import {
   completePhase,
   clearState,
   type AnySessionState,
-} from "../tools/lib/state.js";
-import { resolveLogPath } from "../tools/lib/log.js";
-import { initObserver, setObserverPhase, observe } from "../tools/lib/observe.js";
+} from "../src/lib/state.js";
+import { resolveLogPath } from "../src/lib/log.js";
+import { initObserver, setObserverPhase, observe } from "../src/lib/observe.js";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
 const AGENTS = ["sentinel", "pioneer", "crawler"] as const;

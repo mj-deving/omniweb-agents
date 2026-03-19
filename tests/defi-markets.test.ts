@@ -12,16 +12,16 @@ import { describe, it, expect, vi } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as yaml from "yaml";
-import { createPluginRegistry } from "../core/types.js";
+import { createPluginRegistry } from "../src/types.js";
 import { makeAgentEvent } from "./fixtures/event-fixtures.js";
-import { loadAgentConfig, type AgentConfig } from "../tools/lib/agent-config.js";
-import { createDefiMarketsPlugin } from "../core/plugins/defi-markets-plugin.js";
+import { loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
+import { createDefiMarketsPlugin } from "../src/plugins/defi-markets-plugin.js";
 import {
   createProtocolEventSource,
   type ProtocolEvent,
   type ProtocolEventSnapshot,
-} from "../tools/lib/event-sources/protocol-events.js";
-import { createMarketAlertHandler } from "../tools/lib/event-handlers/market-alert-handler.js";
+} from "../src/lib/event-sources/protocol-events.js";
+import { createMarketAlertHandler } from "../src/lib/event-handlers/market-alert-handler.js";
 
 // ── Test Fixtures ──
 

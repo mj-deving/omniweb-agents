@@ -2,7 +2,7 @@
  * Import boundary lint rules — enforced via vitest.
  *
  * Validates that module boundaries are respected:
- * - core/ never imports from platform/ or agents/
+ * - src/ never imports from platform/ or agents/
  * - platform/ never imports from agents/
  * - connectors/ is the only bridge to @kynesyslabs/demosdk
  *
@@ -33,10 +33,10 @@ function getImports(filePath: string): string[] {
   return imports;
 }
 
-describe("import boundaries — core/ isolation", () => {
-  const coreFile = resolve(ROOT, "core/index.ts");
+describe("import boundaries — src/ isolation", () => {
+  const coreFile = resolve(ROOT, "src/index.ts");
 
-  it("core/index.ts does not import from platform/", () => {
+  it("src/index.ts does not import from platform/", () => {
     const imports = getImports(coreFile);
     const platformImports = imports.filter(
       (imp) => imp.includes("/platform/") || imp.startsWith("../platform")
@@ -44,7 +44,7 @@ describe("import boundaries — core/ isolation", () => {
     expect(platformImports).toEqual([]);
   });
 
-  it("core/index.ts does not import from agents/", () => {
+  it("src/index.ts does not import from agents/", () => {
     const imports = getImports(coreFile);
     const agentImports = imports.filter(
       (imp) => imp.includes("/agents/") || imp.startsWith("../agents")
@@ -52,7 +52,7 @@ describe("import boundaries — core/ isolation", () => {
     expect(agentImports).toEqual([]);
   });
 
-  it("core/index.ts does not import @kynesyslabs/demosdk", () => {
+  it("src/index.ts does not import @kynesyslabs/demosdk", () => {
     const imports = getImports(coreFile);
     const sdkImports = imports.filter((imp) => imp.includes("kynesyslabs"));
     expect(sdkImports).toEqual([]);
@@ -74,17 +74,17 @@ describe("import boundaries — platform/ isolation", () => {
 describe("import boundaries — core modules have no SDK dependency", () => {
   // Check the actual source files that core re-exports
   const coreSourceFiles = [
-    "tools/lib/sources/providers/declarative-engine.ts",
-    "tools/lib/sources/lifecycle.ts",
-    "tools/lib/sources/catalog.ts",
-    "tools/lib/sources/fetch.ts",
-    "tools/lib/sources/rate-limit.ts",
-    "tools/lib/sources/health.ts",
-    "tools/lib/sources/matcher.ts",
-    "tools/lib/observe.ts",
-    "tools/lib/log.ts",
-    "tools/lib/subprocess.ts",
-    "tools/lib/agent-config.ts",
+    "src/lib/sources/providers/declarative-engine.ts",
+    "src/lib/sources/lifecycle.ts",
+    "src/lib/sources/catalog.ts",
+    "src/lib/sources/fetch.ts",
+    "src/lib/sources/rate-limit.ts",
+    "src/lib/sources/health.ts",
+    "src/lib/sources/matcher.ts",
+    "src/lib/observe.ts",
+    "src/lib/log.ts",
+    "src/lib/subprocess.ts",
+    "src/lib/agent-config.ts",
   ];
 
   for (const relPath of coreSourceFiles) {

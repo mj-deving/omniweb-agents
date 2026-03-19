@@ -6,12 +6,12 @@ const { apiCallMock } = vi.hoisted(() => ({
   apiCallMock: vi.fn(),
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: apiCallMock,
   info: vi.fn(),
 }));
 
-vi.mock("../tools/lib/observe.js", () => ({
+vi.mock("../src/lib/observe.js", () => ({
   observe: vi.fn(),
 }));
 
@@ -22,7 +22,7 @@ import {
   buildAgentIndex,
   type QualityFilter,
   type FilteredPost,
-} from "../tools/lib/feed-filter.js";
+} from "../src/lib/feed-filter.js";
 
 // ── Helpers ──────────────────────────────────────
 

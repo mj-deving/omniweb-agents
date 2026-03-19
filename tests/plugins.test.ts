@@ -10,9 +10,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { FrameworkPlugin } from "../core/types.js";
-import type { AgentConfig } from "../tools/lib/agent-config.js";
-import { createPluginRegistry } from "../core/types.js";
+import type { FrameworkPlugin } from "../src/types.js";
+import type { AgentConfig } from "../src/lib/agent-config.js";
+import { createPluginRegistry } from "../src/types.js";
 import {
   createSourcesPlugin,
   createLifecyclePlugin,
@@ -21,7 +21,7 @@ import {
   createTipsPlugin,
   createCalibratePlugin,
   createObservePlugin,
-} from "../core/plugins/index.js";
+} from "../src/plugins/index.js";
 
 /** All plugin factories for iteration */
 const factories: Array<[string, () => FrameworkPlugin]> = [

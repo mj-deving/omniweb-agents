@@ -21,14 +21,14 @@ import type {
   BuildCandidatesContext,
   CandidateRequest,
   FetchedResponse,
-} from "../tools/lib/sources/providers/types.js";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
+} from "../src/lib/sources/providers/types.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
 // ── Declarative adapters ────────────────────────────
-import { loadDeclarativeProviderAdaptersSync } from "../tools/lib/sources/providers/declarative-engine.js";
+import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const specsDir = resolve(__dirname, "../tools/lib/sources/providers/specs");
+const specsDir = resolve(__dirname, "../src/lib/sources/providers/specs");
 const declAdapters = loadDeclarativeProviderAdaptersSync({
   specDir: specsDir,
   strictValidation: false,

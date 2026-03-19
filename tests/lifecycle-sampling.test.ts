@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
-import { sampleSources } from "../tools/lib/sources/lifecycle.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
+import { sampleSources } from "../src/lib/sources/lifecycle.js";
 
 // ── Fixtures ─────────────────────────────────────────
 

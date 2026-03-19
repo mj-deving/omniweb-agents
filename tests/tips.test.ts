@@ -9,12 +9,12 @@ vi.mock("node:os", () => ({
   homedir: () => "/tmp/demos-agents-tests-tips",
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: apiCallMock,
   info: vi.fn(),
 }));
 
-import { loadTipState, selectTipCandidates } from "../tools/lib/tips.js";
+import { loadTipState, selectTipCandidates } from "../src/lib/tips.js";
 
 function baseConfig(overrides: Record<string, unknown> = {}) {
   return {

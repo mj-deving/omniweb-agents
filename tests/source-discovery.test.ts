@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
 
 // Mock catalog loading for persistSourceToCatalog
 const loadCatalogMock = vi.hoisted(() => vi.fn());
-vi.mock("../tools/lib/sources/catalog.js", async (importOriginal) => {
+vi.mock("../src/lib/sources/catalog.js", async (importOriginal) => {
   const actual = await importOriginal() as any;
   return {
     ...actual,
@@ -16,7 +16,7 @@ vi.mock("../tools/lib/sources/catalog.js", async (importOriginal) => {
   };
 });
 
-import { analyzeCoverage, persistSourceToCatalog, type DiscoveredSource, type CoverageGap } from "../tools/lib/source-discovery.js";
+import { analyzeCoverage, persistSourceToCatalog, type DiscoveredSource, type CoverageGap } from "../src/lib/source-discovery.js";
 
 // ── Fixtures ─────────────────────────────────────────
 

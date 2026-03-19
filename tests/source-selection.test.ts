@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
 const { getProviderAdapterMock } = vi.hoisted(() => ({
   getProviderAdapterMock: vi.fn(),
 }));
 
-vi.mock("../tools/lib/sources/providers/index.js", () => ({
+vi.mock("../src/lib/sources/providers/index.js", () => ({
   getProviderAdapter: getProviderAdapterMock,
 }));
 
-import { selectSourceForTopicV2 } from "../tools/lib/sources/policy.js";
-import { buildSourceIndex } from "../tools/lib/sources/catalog.js";
+import { selectSourceForTopicV2 } from "../src/lib/sources/policy.js";
+import { buildSourceIndex } from "../src/lib/sources/catalog.js";
 
 function makeSource(overrides: Partial<SourceRecordV2> = {}): SourceRecordV2 {
   return {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "node:path";
-import type { SourceRecordV2 } from "../tools/lib/sources/catalog.js";
+import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
 import {
   _extractItems,
@@ -8,7 +8,7 @@ import {
   _mapItemToEntry,
   _resolveVariable,
   loadDeclarativeProviderAdaptersSync,
-} from "../tools/lib/sources/providers/declarative-engine.js";
+} from "../src/lib/sources/providers/declarative-engine.js";
 
 function makeSource(overrides: Partial<SourceRecordV2> = {}): SourceRecordV2 {
   return {
@@ -201,7 +201,7 @@ describe("parse modes", () => {
 
 describe("loadDeclarativeProviderAdaptersSync", () => {
   it("loads adapters from the specs directory and builds candidates", () => {
-    const specDir = resolve(process.cwd(), "tools/lib/sources/providers/specs");
+    const specDir = resolve(process.cwd(), "src/lib/sources/providers/specs");
     const adapters = loadDeclarativeProviderAdaptersSync({ specDir, strictValidation: false });
 
     expect(adapters.size).toBeGreaterThan(5);

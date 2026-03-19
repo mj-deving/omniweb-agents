@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { validateResponse, type ValidationResult } from "../tools/lib/response-validator.js";
+import { validateResponse, type ValidationResult } from "../src/lib/response-validator.js";
 
 describe("validateResponse", () => {
   // ── Null/Undefined ────────────────────────────

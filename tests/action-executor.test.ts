@@ -9,8 +9,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   createActionExecutor,
   type ActionExecutorContext,
-} from "../tools/lib/action-executor.js";
-import type { AgentEvent, EventAction } from "../core/types.js";
+} from "../src/lib/action-executor.js";
+import type { AgentEvent, EventAction } from "../src/types.js";
 
 // ── Fixtures ────────────────────────────────────────
 

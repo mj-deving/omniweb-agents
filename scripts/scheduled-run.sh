@@ -65,7 +65,7 @@ for AGENT in "${AGENTS[@]}"; do
   AGENT_LOG="$LOG_DIR/${AGENT}-${TIMESTAMP}.log"
   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Starting $AGENT session..."
 
-  if npx tsx "$REPO/tools/session-runner.ts" \
+  if npx tsx "$REPO/cli/session-runner.ts" \
     --agent "$AGENT" \
     --oversight autonomous \
     --env "$CREDS" \
@@ -89,7 +89,7 @@ done
 
 # Post-session: source lifecycle transitions
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Running source lifecycle..."
-npx tsx "$REPO/tools/source-lifecycle.ts" apply \
+npx tsx "$REPO/cli/source-lifecycle.ts" apply \
   > "$LOG_DIR/lifecycle-${TIMESTAMP}.log" 2>&1 || true
 
 # Summary

@@ -12,6 +12,6 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["tools/**/*.ts"],
+  "include": ["src/**/*.ts", "cli/**/*.ts", "platform/**/*.ts", "connectors/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

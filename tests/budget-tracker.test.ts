@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createBudgetTracker } from "../tools/lib/budget-tracker.js";
+import { createBudgetTracker } from "../src/lib/budget-tracker.js";
 
 describe("BudgetTracker", () => {
   it("creates with correct total balance", () => {

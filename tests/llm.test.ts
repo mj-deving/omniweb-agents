@@ -12,12 +12,12 @@ vi.mock("node:fs", () => ({
   existsSync: existsSyncMock,
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   info: vi.fn(),
 }));
 
-import { generatePost, type GeneratePostInput, type PostDraft } from "../tools/lib/llm.js";
-import type { LLMProvider } from "../tools/lib/llm-provider.js";
+import { generatePost, type GeneratePostInput, type PostDraft } from "../src/lib/llm.js";
+import type { LLMProvider } from "../src/lib/llm-provider.js";
 
 // ── Helpers ──────────────────────────────────────
 

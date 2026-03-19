@@ -1,27 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SourceRecordV2, AgentSourceView } from "../tools/lib/sources/catalog.js";
-import type { PreflightCandidate } from "../tools/lib/sources/policy.js";
+import type { SourceRecordV2, AgentSourceView } from "../src/lib/sources/catalog.js";
+import type { PreflightCandidate } from "../src/lib/sources/policy.js";
 
 const { fetchSourceMock, getProviderAdapterMock } = vi.hoisted(() => ({
   fetchSourceMock: vi.fn(),
   getProviderAdapterMock: vi.fn(),
 }));
 
-vi.mock("../tools/lib/sdk.js", () => ({
+vi.mock("../src/lib/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
 
-vi.mock("../tools/lib/sources/fetch.js", () => ({
+vi.mock("../src/lib/sources/fetch.js", () => ({
   fetchSource: fetchSourceMock,
 }));
 
-vi.mock("../tools/lib/sources/providers/index.js", () => ({
+vi.mock("../src/lib/sources/providers/index.js", () => ({
   getProviderAdapter: getProviderAdapterMock,
 }));
 
-import { extractClaims, extractClaimsLLM, extractClaimsAsync, match, scoreMatch } from "../tools/lib/sources/matcher.js";
-import type { LLMProvider } from "../tools/lib/llm-provider.js";
+import { extractClaims, extractClaimsLLM, extractClaimsAsync, match, scoreMatch } from "../src/lib/sources/matcher.js";
+import type { LLMProvider } from "../src/lib/llm-provider.js";
 
 function makeSource(overrides: Partial<SourceRecordV2> = {}): SourceRecordV2 {
   return {

@@ -1,5 +1,5 @@
 /**
- * Plugin barrel export — all 9 FrameworkPlugin factory functions.
+ * Plugin barrel export — all 12 FrameworkPlugin factory functions.
  *
  * Each plugin wraps an existing extension or capability from the
  * tools/lib layer, exposing it through the FrameworkPlugin interface
@@ -15,3 +15,7 @@ export { createCalibratePlugin } from "./calibrate-plugin.js";
 export { createObservePlugin } from "./observe-plugin.js";
 export { createDefiMarketsPlugin } from "./defi-markets-plugin.js";
 export { createInfraOpsPlugin } from "./infra-ops-plugin.js";
+export { createSCPricesPlugin } from "./sc-prices-plugin.js";
+export type { SCDataPluginConfig } from "./sc-prices-plugin.js";
+export { createSCOraclePlugin } from "./sc-oracle-plugin.js";
+export { createSCPredictionsMarketsPlugin } from "./sc-predictions-markets-plugin.js";

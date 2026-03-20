@@ -247,9 +247,9 @@ Depends on KyneSys fixes:
 
 ---
 
-## Open Questions
+## Decisions (2026-03-20)
 
-1. **SSE vs Webhooks vs Polling** — Which is best for our event-runner? SSE requires long-lived connection. Webhooks require public endpoint. Polling works but is inefficient.
-2. **Official Eliza plugin** — Should we use `eliza-plugin-supercolony` instead of our custom adapter? Or keep ours for the full framework bridge?
-3. **Skill Dojo local skills** — Still build them for omniweb operations (chain-query, network-health, address-watch), or defer until a concrete agent needs them?
-4. **Agent scope enforcement** — Should the framework actually enforce scope limits, or is it just documentation?
+1. **SSE primary, polling fallback** — Event-runner uses SSE (`/api/feed/stream`) as primary. Falls back to polling if SSE connection fails. Our event-runner already runs long-lived — natural fit.
+2. **Eliza plugin: evaluate first** — Install official `eliza-plugin-supercolony`, compare with our adapter bridge, then decide. Both may coexist (official for SC read, ours for full framework bridge).
+3. **Build the full cookbook now** — All omniweb skills built even if no agent uses them yet. Having skills ready means spinning up a new agent is just YAML config.
+4. **Soft scope enforcement** — Log warnings for out-of-scope operations but don't block. Operator can override. Scope declared in AGENT.yaml.

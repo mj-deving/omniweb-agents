@@ -8,7 +8,7 @@
 
 import { resolve } from "node:path";
 import { homedir } from "node:os";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from "node:fs";
 import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
 import { ensureAuth } from "../src/lib/auth.js";
 import { observe, initObserver } from "../src/lib/observe.js";
@@ -352,7 +352,8 @@ function analyzeConvergence(posts: FilteredPost[]): RoomTempResult["convergence"
   };
 }
 
-function analyzeGaps(posts: FilteredPost[]): RoomTempResult["gaps"] {
+function analyzeGaps(posts: FilteredPost[], agentFocusTopics?: string[]): RoomTempResult["gaps"] {
+  // 1. Unattested numeric claims (original logic)
   const gapPosts = posts.filter((p) => NUMERIC_CLAIM_PATTERN.test(p.textPreview) && !p.hasAttestation);
   const topics = new Set<string>();
   for (const post of gapPosts) {
@@ -360,8 +361,23 @@ function analyzeGaps(posts: FilteredPost[]): RoomTempResult["gaps"] {
     for (const asset of post.assets) topics.add(asset.toLowerCase());
   }
 
+  // 2. Topic coverage gaps — agent's focus topics with 0 posts in scan window
+  if (agentFocusTopics && agentFocusTopics.length > 0) {
+    const feedTopics = new Set<string>();
+    for (const p of posts) {
+      for (const tag of p.tags) feedTopics.add(tag.toLowerCase());
+      for (const asset of p.assets) feedTopics.add(asset.toLowerCase());
+    }
+    for (const focus of agentFocusTopics) {
+      const focusLower = focus.toLowerCase();
+      if (!feedTopics.has(focusLower)) {
+        topics.add(focusLower);
+      }
+    }
+  }
+
   return {
-    found: gapPosts.length > 0,
+    found: gapPosts.length > 0 || topics.size > 0,
     unattested_claims: gapPosts.length,
     topics: [...topics].slice(0, 10),
   };
@@ -518,9 +534,9 @@ async function main(): Promise<void> {
       : (config.scan?.modes || ["lightweight"])
   );
 
-  const depthDefault = config.scan?.depth ?? 200;
+  const depthDefault = config.scan?.depth ?? 1000;
   const depth = parseInt(flags["limit"] || String(depthDefault), 10) || depthDefault;
-  if (depth < 1 || depth > 200) throw new Error("--limit/depth must be 1-200");
+  if (depth < 1 || depth > 1000) throw new Error("--limit/depth must be 1-1000");
 
   const qualityFloor = config.scan?.qualityFloor ?? 70;
   const requireAttestation = config.scan?.requireAttestation ?? false;
@@ -547,13 +563,81 @@ async function main(): Promise<void> {
   let sinceLastPosts: number | undefined;
   let categoryBreakdown: Record<string, number> | undefined;
 
+  // ── Scan Cache ─────────────────────────────────
+  const scanCacheDir = resolve(homedir(), ".demos-scan-cache");
+  const scanCachePath = resolve(scanCacheDir, `${agentName}-feed.json`);
+  const scanCacheTtlMs = (config.scan?.cacheHours ?? 1) * 60 * 60 * 1000;
+
+  interface ScanCache {
+    generatedAt: number;
+    newestTimestamp: number;
+    posts: any[];
+  }
+
+  function loadScanCache(): ScanCache | null {
+    if (!existsSync(scanCachePath)) return null;
+    try {
+      const cached: ScanCache = JSON.parse(readFileSync(scanCachePath, "utf-8"));
+      if (Date.now() - cached.generatedAt > scanCacheTtlMs) return null; // stale
+      return cached;
+    } catch { return null; }
+  }
+
+  function saveScanCache(posts: any[]): void {
+    const timestamps = posts.map(p => Number(p?.timestamp || 0)).filter(t => t > 0);
+    const newest = timestamps.length > 0 ? Math.max(...timestamps) : Date.now();
+    const cache: ScanCache = { generatedAt: Date.now(), newestTimestamp: newest, posts };
+    if (!existsSync(scanCacheDir)) mkdirSync(scanCacheDir, { recursive: true });
+    const tmpPath = scanCachePath + ".tmp";
+    writeFileSync(tmpPath, JSON.stringify(cache));
+    renameSync(tmpPath, scanCachePath);
+  }
+
   for (const mode of scanModes) {
     if (mode === "lightweight") {
-      info(`Mode lightweight: /api/feed?limit=${depth}`);
-      const raw = await budget.get(`/api/feed?limit=${depth}`, "lightweight feed");
-      allRawFetched.push(...raw);
-      const filtered = filterPosts(raw, qualityFilter);
-      updateCounters(counters, raw.length, filtered);
+      // Check cache first — if fresh, only fetch new posts since cache timestamp
+      const cached = loadScanCache();
+      if (cached) {
+        info(`Mode lightweight: cache hit (${cached.posts.length} posts, age ${Math.round((Date.now() - cached.generatedAt) / 60000)}min)`);
+        // Fetch only new posts since cache
+        const sinceMs = cached.newestTimestamp;
+        const newRaw: any[] = [];
+        const pageSize = 200;
+        for (let page = 0; page < 5; page++) {
+          const offset = page * pageSize;
+          const raw = await budget.get(`/api/feed?limit=${pageSize}&offset=${offset}`, `lightweight-incremental page ${page + 1}`);
+          if (raw.length === 0) break;
+          const fresh = raw.filter((p: any) => Number(p?.timestamp || 0) > sinceMs);
+          newRaw.push(...fresh);
+          if (fresh.length < raw.length) break; // reached cached territory
+        }
+        const merged = [...newRaw, ...cached.posts];
+        if (newRaw.length > 0) {
+          saveScanCache(merged);
+          info(`  Incremental: ${newRaw.length} new posts, ${merged.length} total`);
+        }
+        allRawFetched.push(...merged);
+        const filtered = filterPosts(merged, qualityFilter);
+        updateCounters(counters, merged.length, filtered);
+        allFiltered.push(...filtered);
+        continue;
+      }
+
+      // No cache — full fetch with pagination
+      info(`Mode lightweight: full scan up to ${depth} posts`);
+      const pageSize = 200;
+      const maxPages = Math.ceil(depth / pageSize);
+      const freshRaw: any[] = [];
+      for (let page = 0; page < maxPages; page++) {
+        const offset = page * pageSize;
+        const raw = await budget.get(`/api/feed?limit=${pageSize}&offset=${offset}`, `lightweight page ${page + 1}`);
+        freshRaw.push(...raw);
+        if (raw.length < pageSize) break;
+      }
+      saveScanCache(freshRaw);
+      allRawFetched.push(...freshRaw);
+      const filtered = filterPosts(freshRaw, qualityFilter);
+      updateCounters(counters, freshRaw.length, filtered);
       allFiltered.push(...filtered);
       continue;
     }
@@ -737,7 +821,8 @@ async function main(): Promise<void> {
 
   const activity = analyzeActivity(posts, hours, dedupedRawPosts.length > 0 ? dedupedRawPosts : posts);
   const convergence = analyzeConvergence(posts);
-  const gaps = analyzeGaps(posts);
+  const agentFocusTopics = [...(config.topics?.primary || []), ...(config.topics?.secondary || [])];
+  const gaps = analyzeGaps(posts, agentFocusTopics);
   const heat = analyzeHeat(posts);
   const metaSaturation = analyzeMetaSaturation(posts);
   const recommendation = generateRecommendation(activity, convergence, gaps, heat, metaSaturation);

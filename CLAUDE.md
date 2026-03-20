@@ -39,7 +39,7 @@ npx tsx cli/event-runner.ts --agent sentinel [--dry-run] [--pretty]
 
 # Individual tools
 npx tsx cli/audit.ts --agent sentinel --pretty
-npx tsx cli/room-temp.ts --agent sentinel --pretty
+npx tsx cli/scan-feed.ts --agent sentinel --pretty
 npx tsx cli/engage.ts --agent sentinel --max 5 --pretty
 npx tsx cli/gate.ts --agent sentinel --topic "topic" --pretty
 npx tsx cli/verify.ts --agent sentinel --pretty

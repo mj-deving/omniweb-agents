@@ -43,7 +43,7 @@ demos-agents/
 ├── cli/                               # CLI entry points
 │   ├── session-runner.ts              # Cron loop orchestrator (8-phase)
 │   ├── event-runner.ts                # Event loop — long-lived reactive process
-│   ├── audit.ts, room-temp.ts         # Observation tools
+│   ├── audit.ts, scan-feed.ts         # Observation tools
 │   ├── engage.ts, gate.ts, verify.ts  # Phase tools
 │   ├── publish.ts                     # Manual publish
 │   ├── improvements.ts, improve.ts    # Self-improvement tools

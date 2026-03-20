@@ -828,7 +828,7 @@ async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> 
 
 async function runScan(state: SessionState, flags: RunnerFlags): Promise<void> {
   const args = ["--agent", flags.agent, "--json", "--env", flags.env];
-  const result = await runToolAndParse("cli/room-temp.ts", args, "room-temp.ts");
+  const result = await runToolAndParse("cli/scan-feed.ts", args, "scan-feed.ts");
 
   const level = result.activity?.level || "unknown";
   const pph = result.activity?.posts_per_hour ?? "?";
@@ -1045,6 +1045,45 @@ type TopicSuggestion = {
   replyTo?: { txHash: string; author: string; text: string };
 };
 
+/**
+ * Static topic expansion map — splits overly generic topics into specific,
+ * attestable subtopics. Each subtopic should map to at least one source in
+ * the catalog for attestation.
+ *
+ * TODO: Evolve to dynamic expansion — during scan, look at tags/assets
+ * co-occurring with generic topics and derive subtopics from actual feed data.
+ * Static map is the starting point; dynamic expansion using feed analysis is the goal.
+ */
+const TOPIC_EXPANSIONS: Record<string, string[]> = {
+  tech: ["ai-infrastructure", "dev-tools", "open-source", "blockchain-security", "cloud-computing"],
+  crypto: ["bitcoin-markets", "ethereum-defi", "stablecoin-flows", "protocol-governance", "crypto-derivatives"],
+  defi: ["lending-protocols", "dex-volume", "yield-farming", "stablecoin-flows", "tvl-trends"],
+  macro: ["interest-rates", "commodity-prices", "forex-dynamics", "geopolitical-risk", "trade-policy"],
+  ai: ["ai-infrastructure", "llm-research", "ai-policy", "ml-ops", "ai-agents"],
+  science: ["quantum-computing", "biotech-research", "space-exploration", "climate-science", "materials-science"],
+  infrastructure: ["network-health", "node-operations", "rpc-reliability", "chain-upgrades", "validator-economics"],
+};
+
+/**
+ * Expand a generic topic into a specific subtopic that has a matching source.
+ * Returns the original topic if no expansion is needed or no subtopic passes preflight.
+ */
+function expandGenericTopic(
+  topic: string,
+  usedTopics: Set<string>
+): string {
+  const expansions = TOPIC_EXPANSIONS[topic.toLowerCase()];
+  if (!expansions) return topic;
+
+  const sv = getSourceView();
+  for (const sub of expansions) {
+    if (usedTopics.has(sub)) continue;
+    const pf = sourcesPreflight(sub, sv, agentConfig);
+    if (pf.pass) return sub;
+  }
+  return topic; // No expansion found, keep original
+}
+
 function extractTopicsFromScan(
   state: AnySessionState,
   sessionLogPath?: string
@@ -1207,6 +1246,17 @@ function extractTopicsFromScan(
       }
     }
 
+    // Expand generic topics into specific subtopics with attestation sources
+    const expandedUsed = new Set(topics.map(t => t.topic.toLowerCase()));
+    for (const t of topics) {
+      const expanded = expandGenericTopic(t.topic, expandedUsed);
+      if (expanded !== t.topic) {
+        info(`Topic expansion: "${t.topic}" → "${expanded}"`);
+        t.topic = expanded;
+        expandedUsed.add(expanded.toLowerCase());
+      }
+    }
+
     return topics.slice(0, 3); // Max 3 per strategy
   }
 
@@ -1346,6 +1396,17 @@ function extractTopicsFromScan(
       category: "QUESTION",
       reason: "pioneer hard fallback (never empty)",
     });
+  }
+
+  // Expand generic topics into specific subtopics with attestation sources
+  const expandedUsedPioneer = new Set(topics.map(t => t.topic.toLowerCase()));
+  for (const t of topics) {
+    const expanded = expandGenericTopic(t.topic, expandedUsedPioneer);
+    if (expanded !== t.topic) {
+      info(`Topic expansion: "${t.topic}" → "${expanded}"`);
+      t.topic = expanded;
+      expandedUsedPioneer.add(expanded.toLowerCase());
+    }
   }
 
   return topics.slice(0, 3); // Max 3 per strategy
@@ -1589,8 +1650,8 @@ async function runGateAutonomous(
   const gatePosts: GatePost[] = [];
   const suggestions = extractTopicsFromScan(state, flags.log);
 
-  // Load source view (cached per session — shared with publish phase)
-  const sourceView = getSourceView();
+  // Load source view (cached per session — shared with publish phase, refreshed on discovery)
+  let sourceView = getSourceView();
   info(`Gate: ${sourceView.sources.length} sources available (catalog v${sourceView.catalogVersion})`);
 
   // If heuristic extraction returned 0 topics, try LLM reasoning fallback
@@ -1614,8 +1675,28 @@ async function runGateAutonomous(
   }
 
   for (const suggestion of effectiveSuggestions) {
-    // Source-availability pre-check via preflight (v2 — uses catalog index, no discovery)
-    const preflightResult = sourcesPreflight(suggestion.topic, sourceView, agentConfig);
+    // Source-availability pre-check via preflight (v2 — uses catalog index)
+    let preflightResult = sourcesPreflight(suggestion.topic, sourceView, agentConfig);
+    if (!preflightResult.pass && preflightResult.reasonCode === "NO_MATCHING_SOURCE") {
+      // Try dynamic source discovery before giving up
+      try {
+        const { discoverSourceForTopic, persistSourceToCatalog } = await import("../src/lib/source-discovery.js");
+        const discovered = await discoverSourceForTopic(suggestion.topic, preflightResult.plan.required, 8000);
+        if (discovered) {
+          info(`Discovery: found source "${discovered.source.name}" for "${suggestion.topic}" (relevance: ${discovered.relevanceScore})`);
+          // Persist to catalog so future sessions benefit
+          if (!flags.dryRun) {
+            persistSourceToCatalog(agentConfig.paths.sourceCatalog, discovered);
+          }
+          // Retry preflight with refreshed source view
+          cachedSourceView = null;
+          sourceView = getSourceView();
+          preflightResult = sourcesPreflight(suggestion.topic, sourceView, agentConfig);
+        }
+      } catch (e: any) {
+        info(`Discovery failed for "${suggestion.topic}": ${e.message}`);
+      }
+    }
     if (!preflightResult.pass) {
       observe("insight", `Gate preflight rejected topic "${suggestion.topic}": ${preflightResult.reason}`, {
         phase: "gate", substage: "gate",
@@ -2967,7 +3048,7 @@ async function runV2Loop(
     const senseStartMs = Date.now();
     try {
       const scanArgs = ["--agent", flags.agent, "--json", "--env", flags.env];
-      const scanResult = await runToolAndParse("cli/room-temp.ts", scanArgs, "room-temp.ts (SENSE)");
+      const scanResult = await runToolAndParse("cli/scan-feed.ts", scanArgs, "scan-feed.ts (SENSE)");
 
       const level = scanResult.activity?.level || "unknown";
       const pph = scanResult.activity?.posts_per_hour ?? "?";

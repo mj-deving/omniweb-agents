@@ -242,7 +242,7 @@ async function main(): Promise<void> {
         const audit = await runJson("tools/audit.ts", ["--agent", item.agent, "--env", envPath, "--json"]);
         run.phases.audit = `ok (${audit?.stats?.total_entries ?? 0} entries)`;
 
-        const scan = await runJson("tools/room-temp.ts", ["--agent", item.agent, "--env", envPath, "--json"]);
+        const scan = await runJson("tools/scan-feed.ts", ["--agent", item.agent, "--env", envPath, "--json"]);
         run.phases.scan = `ok (${scan?.activity?.level || "unknown"})`;
 
         const engage = await runJson("tools/engage.ts", ["--agent", item.agent, "--env", envPath, "--max", String(cfg.engagement.maxReactionsPerSession), "--json"]);

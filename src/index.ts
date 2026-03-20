@@ -32,13 +32,14 @@ export type { LLMProvider } from "./lib/llm-provider.js";
 
 // Extension hook dispatcher
 export {
-  registerHook,
+  loadExtensions,
   runBeforeSense,
   runBeforePublishDraft,
   runAfterPublishDraft,
   runAfterAct,
   runAfterConfirm,
 } from "./lib/extensions.js";
+export type { ExtensionHookRegistry } from "./lib/extensions.js";
 
 // Source catalog
 export {

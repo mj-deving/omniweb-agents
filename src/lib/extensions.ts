@@ -2,14 +2,14 @@
  * Extension dispatcher — typed hook system for the v2 loop.
  *
  * Extensions hook into the core SENSE→ACT→CONFIRM loop at defined points.
- * Compile-time registry — no dynamic loading. Agents declare which extensions
- * they use in persona.yaml → loop.extensions.
+ * The registry is built once by loadExtensions() and passed to all dispatchers.
  *
  * Hook points:
  *   - beforeSense: runs before SENSE phase (e.g., calibrate)
  *   - beforePublishDraft: inside ACT/publish, before LLM generation (e.g., source preflight)
  *   - afterPublishDraft: inside ACT/publish, after draft validation (e.g., source match)
  *   - afterAct: runs after ACT completion, even if nothing was published (e.g., tips)
+ *   - afterConfirm: runs after CONFIRM phase (e.g., predictions tracking)
  */
 
 import type { KNOWN_EXTENSIONS } from "./state.js";
@@ -18,13 +18,7 @@ import type { AnySessionState, V2SessionState, PublishedPostRecord } from "./sta
 import type { AttestationType } from "./attestation-policy.js";
 import type { LLMProvider } from "./llm-provider.js";
 import type { AgentSourceView, SourceRecordV2 } from "./sources/catalog.js";
-import { preflight as sourcesPreflight, type PreflightCandidate } from "./sources/policy.js";
-import { match as sourcesMatch } from "./sources/matcher.js";
-
-// Plugin hook implementations live in src/plugins/*.ts files (Phase 0).
-// They are NOT statically imported here to avoid pulling SDK transitive
-// dependencies into the extensions.ts module graph. Instead, session-runner
-// imports them and calls registerHook() during init.
+import type { PreflightCandidate } from "./sources/policy.js";
 
 // ── Logger Interface ──────────────────────────────
 
@@ -143,108 +137,112 @@ export interface LoopExtensionHooks {
 
 export type KnownExtension = (typeof KNOWN_EXTENSIONS)[number];
 
-// ── Sources Hook Implementations ─────────────────
+// ── Extension Hook Registry ──────────────────────
 
 /**
- * beforePublishDraft hook for sources extension.
- * Runs preflight check using the catalog index.
+ * Immutable registry of extension hook implementations, built once by loadExtensions().
+ * Passed to all dispatchers — no module-level mutable state.
  */
-async function runSourcesPreflightHook(
-  ctx: BeforePublishDraftContext
-): Promise<PublishGateDecision | void> {
-  if (!ctx.sourceView) return; // no source view loaded — skip silently
+export type ExtensionHookRegistry = ReadonlyMap<string, LoopExtensionHooks>;
 
-  const result = sourcesPreflight(ctx.topic, ctx.sourceView, ctx.config);
+// ── Loader ───────────────────────────────────────
 
-  if (!result.pass) {
-    return {
-      pass: false,
-      reason: result.reason,
-      reasonCode: result.reasonCode,
-    };
+import type { RunToolFn } from "../plugins/calibrate-plugin.js";
+
+export interface LoadExtensionsDeps {
+  enabledExtensions: string[];
+  runTool?: RunToolFn;
+}
+
+/**
+ * Dynamically import hook implementations for enabled extensions and build
+ * an immutable registry. Uses switch/case over known extension names to
+ * preserve isolation — no SDK transitive deps at load time.
+ */
+export async function loadExtensions(deps: LoadExtensionsDeps): Promise<ExtensionHookRegistry> {
+  const registry = new Map<string, LoopExtensionHooks>();
+
+  for (const ext of deps.enabledExtensions) {
+    switch (ext) {
+      case "calibrate": {
+        if (!deps.runTool) {
+          throw new Error("calibrate extension requires runTool dependency");
+        }
+        const { createCalibrateBeforeSense } = await import("../plugins/calibrate-plugin.js");
+        registry.set("calibrate", {
+          beforeSense: createCalibrateBeforeSense(deps.runTool),
+        });
+        break;
+      }
+      case "sources": {
+        const { sourcesBeforePublishDraft, sourcesAfterPublishDraft } = await import("../plugins/sources-plugin.js");
+        registry.set("sources", {
+          beforePublishDraft: sourcesBeforePublishDraft,
+          afterPublishDraft: sourcesAfterPublishDraft,
+        });
+        break;
+      }
+      case "observe": {
+        // Observe is inline (appendFileSync calls), not hook-driven.
+        registry.set("observe", {});
+        break;
+      }
+      case "signals": {
+        const { signalsBeforeSense } = await import("../plugins/signals-plugin.js");
+        registry.set("signals", {
+          beforeSense: signalsBeforeSense,
+        });
+        break;
+      }
+      case "predictions": {
+        const { predictionsBeforeSense, predictionsAfterConfirm } = await import("../plugins/predictions-plugin.js");
+        registry.set("predictions", {
+          beforeSense: predictionsBeforeSense,
+          afterConfirm: predictionsAfterConfirm,
+        });
+        break;
+      }
+      case "tips": {
+        const { tipsBeforeSense, tipsAfterAct } = await import("../plugins/tips-plugin.js");
+        registry.set("tips", {
+          beforeSense: tipsBeforeSense,
+          afterAct: tipsAfterAct,
+        });
+        break;
+      }
+      case "lifecycle": {
+        const { lifecycleBeforeSense } = await import("../plugins/lifecycle-plugin.js");
+        registry.set("lifecycle", {
+          beforeSense: lifecycleBeforeSense,
+        });
+        break;
+      }
+      case "sc-oracle": {
+        const { scOracleBeforeSense } = await import("../plugins/sc-oracle-plugin.js");
+        registry.set("sc-oracle", {
+          beforeSense: scOracleBeforeSense,
+        });
+        break;
+      }
+      case "sc-prices": {
+        const { scPricesBeforeSense } = await import("../plugins/sc-prices-plugin.js");
+        registry.set("sc-prices", {
+          beforeSense: scPricesBeforeSense,
+        });
+        break;
+      }
+      // Unknown extensions are silently skipped — agent config validation
+      // catches invalid names upstream.
+    }
   }
 
-  return {
-    pass: true,
-    reason: result.reason,
-    reasonCode: result.reasonCode,
-    candidates: result.candidates,
-  };
+  return registry;
 }
-
-/**
- * afterPublishDraft hook for sources extension.
- * Runs match() to verify post-generation source alignment.
- */
-async function runSourcesMatchHook(
-  ctx: AfterPublishDraftContext
-): Promise<SourceMatchDecision | void> {
-  if (!ctx.sourceView || !ctx.preflightCandidates) return;
-
-  const result = await sourcesMatch({
-    topic: ctx.topic,
-    postText: ctx.postText,
-    postTags: ctx.postTags,
-    candidates: ctx.preflightCandidates,
-    sourceView: ctx.sourceView,
-    llm: ctx.llm,
-    prefetchedResponses: ctx.prefetchedResponses,
-  });
-
-  return {
-    pass: result.pass,
-    reason: result.reason,
-    reasonCode: result.reasonCode,
-    best: result.best,
-    considered: result.considered,
-  };
-}
-
-// ── Registry ──────────────────────────────────────
-
-/**
- * Compile-time registry of all known extensions.
- *
- * Each extension maps to its hook implementations. Extensions that operate
- * inline (like observe) have empty hook objects — they're invoked directly
- * by the code that emits observations, not through the dispatcher.
- */
-const EXTENSION_REGISTRY: Record<KnownExtension, LoopExtensionHooks> = {
-  calibrate: {
-    // beforeSense: registered at runtime from calibrate-plugin.ts
-  },
-  sources: {
-    beforePublishDraft: runSourcesPreflightHook,
-    afterPublishDraft: runSourcesMatchHook,
-  },
-  observe: {
-    // Observe is inline (appendFileSync calls), not hook-driven.
-    // Included in registry for validation only.
-  },
-  signals: {
-    // beforeSense: registered at runtime from signals-plugin.ts
-  },
-  predictions: {
-    // beforeSense + afterConfirm: registered at runtime from predictions-plugin.ts
-  },
-  tips: {
-    // beforeSense + afterAct: registered at runtime from tips-plugin.ts
-  },
-  lifecycle: {
-    // beforeSense: registered at runtime from lifecycle-plugin.ts
-  },
-  "sc-oracle": {
-    // beforeSense: registered at runtime from sc-oracle-plugin.ts
-  },
-  "sc-prices": {
-    // beforeSense: registered at runtime from sc-prices-plugin.ts
-  },
-};
 
 // ── Dispatcher ────────────────────────────────────
 
 /** Per-hook timeout budgets (ms). Lifecycle tests 10 sources sequentially, needs more time. */
-const HOOK_TIMEOUT_MS: Partial<Record<KnownExtension, number>> = {
+export const HOOK_TIMEOUT_MS: Partial<Record<KnownExtension, number>> = {
   lifecycle: 90_000,
   calibrate: 45_000,
   signals: 30_000,
@@ -256,11 +254,12 @@ const DEFAULT_HOOK_TIMEOUT_MS = 30_000;
  * Each hook is isolated: failure or timeout of one hook doesn't block others.
  */
 export async function runBeforeSense(
+  registry: ExtensionHookRegistry,
   enabledExtensions: string[],
   ctx: BeforeSenseContext
 ): Promise<void> {
   for (const ext of enabledExtensions) {
-    const hooks = EXTENSION_REGISTRY[ext as KnownExtension];
+    const hooks = registry.get(ext);
     if (!hooks?.beforeSense) continue;
 
     const timeoutMs = HOOK_TIMEOUT_MS[ext as KnownExtension] ?? DEFAULT_HOOK_TIMEOUT_MS;
@@ -291,12 +290,13 @@ export async function runBeforeSense(
  * so later extensions can observe/augment the result.
  */
 export async function runBeforePublishDraft(
+  registry: ExtensionHookRegistry,
   enabledExtensions: string[],
   ctx: BeforePublishDraftContext
 ): Promise<PublishGateDecision | void> {
   let lastDecision: PublishGateDecision | undefined;
   for (const ext of enabledExtensions) {
-    const hooks = EXTENSION_REGISTRY[ext as KnownExtension];
+    const hooks = registry.get(ext);
     if (hooks?.beforePublishDraft) {
       const decision = await hooks.beforePublishDraft(ctx);
       if (decision) {
@@ -313,12 +313,13 @@ export async function runBeforePublishDraft(
  * Short-circuits on rejection (pass=false). Accumulates last passing decision.
  */
 export async function runAfterPublishDraft(
+  registry: ExtensionHookRegistry,
   enabledExtensions: string[],
   ctx: AfterPublishDraftContext
 ): Promise<SourceMatchDecision | void> {
   let lastDecision: SourceMatchDecision | undefined;
   for (const ext of enabledExtensions) {
-    const hooks = EXTENSION_REGISTRY[ext as KnownExtension];
+    const hooks = registry.get(ext);
     if (hooks?.afterPublishDraft) {
       const decision = await hooks.afterPublishDraft(ctx);
       if (decision) {
@@ -335,11 +336,12 @@ export async function runAfterPublishDraft(
  * Hooks run sequentially. No short-circuit — all hooks execute.
  */
 export async function runAfterAct(
+  registry: ExtensionHookRegistry,
   enabledExtensions: string[],
   ctx: AfterActContext
 ): Promise<void> {
   for (const ext of enabledExtensions) {
-    const hooks = EXTENSION_REGISTRY[ext as KnownExtension];
+    const hooks = registry.get(ext);
     if (hooks?.afterAct) {
       await hooks.afterAct(ctx);
     }
@@ -351,30 +353,14 @@ export async function runAfterAct(
  * Hooks run sequentially. No short-circuit — all hooks execute.
  */
 export async function runAfterConfirm(
+  registry: ExtensionHookRegistry,
   enabledExtensions: string[],
   ctx: AfterConfirmContext
 ): Promise<void> {
   for (const ext of enabledExtensions) {
-    const hooks = EXTENSION_REGISTRY[ext as KnownExtension];
+    const hooks = registry.get(ext);
     if (hooks?.afterConfirm) {
       await hooks.afterConfirm(ctx);
     }
   }
-}
-
-/**
- * Register a hook implementation for an extension at runtime.
- *
- * Used when the hook implementation depends on functions from the caller's
- * module (e.g., calibrate's beforeSense needs runToolAndParse from session-runner).
- * This avoids circular imports while keeping the dispatcher pattern.
- *
- * Must be called before the v2 loop starts (typically in main() init).
- */
-export function registerHook<K extends keyof LoopExtensionHooks>(
-  ext: KnownExtension,
-  hookName: K,
-  fn: NonNullable<LoopExtensionHooks[K]>
-): void {
-  (EXTENSION_REGISTRY[ext] as any)[hookName] = fn;
 }

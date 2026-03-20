@@ -61,23 +61,17 @@ import { resolveAttestationPlan, type AttestationType } from "../src/lib/attesta
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
 import { initObserver, setObserverPhase, observe, type SubstageResult, type SubstageFailureCode } from "../src/lib/observe.js";
 import {
+  loadExtensions,
   runBeforeSense,
   runBeforePublishDraft,
   runAfterPublishDraft,
   runAfterAct,
   runAfterConfirm,
-  registerHook,
+  type ExtensionHookRegistry,
   type BeforeSenseContext,
   type HookLogger,
 } from "../src/lib/extensions.js";
 import type { PublishedPostRecord } from "../src/lib/state.js";
-import { createCalibrateBeforeSense } from "../src/plugins/calibrate-plugin.js";
-import { signalsBeforeSense } from "../src/plugins/signals-plugin.js";
-import { predictionsBeforeSense, predictionsAfterConfirm } from "../src/plugins/predictions-plugin.js";
-import { tipsBeforeSense, tipsAfterAct } from "../src/plugins/tips-plugin.js";
-import { lifecycleBeforeSense } from "../src/plugins/lifecycle-plugin.js";
-import { scOracleBeforeSense } from "../src/plugins/sc-oracle-plugin.js";
-import { scPricesBeforeSense } from "../src/plugins/sc-prices-plugin.js";
 import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
 import { type SignalSnapshot } from "../src/lib/signals.js";
 import {
@@ -1909,7 +1903,8 @@ async function runPublishManual(
 /** PUBLISH: autonomous oversight — LLM text gen + attestation + publish */
 async function runPublishAutonomous(
   state: AnySessionState,
-  flags: RunnerFlags
+  flags: RunnerFlags,
+  extensionRegistry: ExtensionHookRegistry
 ): Promise<{ txHashes: string[] }> {
   const gateResult = getGateResult(state) || { posts: [] };
   const gatePosts: GatePost[] = gateResult.posts || [];
@@ -1968,7 +1963,7 @@ async function runPublishAutonomous(
       }
 
       // Step 0: Preflight via extension hooks (Phase 4 — adapter-based URL generation)
-      const preflightDecision = await runBeforePublishDraft(enabledExtensions, {
+      const preflightDecision = await runBeforePublishDraft(extensionRegistry, enabledExtensions, {
         topic: gp.topic,
         category: gp.category || "ANALYSIS",
         config: agentConfig,
@@ -2128,7 +2123,7 @@ async function runPublishAutonomous(
       console.log(`    Predicted: ${draft.predicted_reactions} reactions`);
 
       // Step 2: Post-generation source matching via extension hooks (Phase 4)
-      const matchDecision = await runAfterPublishDraft(enabledExtensions, {
+      const matchDecision = await runAfterPublishDraft(extensionRegistry, enabledExtensions, {
         topic: gp.topic,
         postText: draft.text,
         postTags: draft.tags,
@@ -3023,7 +3018,8 @@ async function runV2Loop(
   state: V2SessionState,
   flags: RunnerFlags,
   sessionsDir: string,
-  rl: ReturnType<typeof createInterface> | null
+  rl: ReturnType<typeof createInterface> | null,
+  extensionRegistry: ExtensionHookRegistry
 ): Promise<void> {
   // Determine which phases to skip on resume
   const senseCompleted = state.phases.sense?.status === "completed";
@@ -3038,7 +3034,7 @@ async function runV2Loop(
       flags: { agent: flags.agent, env: flags.env, log: flags.log, dryRun: flags.dryRun, pretty: flags.pretty },
       logger: hookLogger,
     };
-    await runBeforeSense(agentConfig.loopExtensions, hookCtx);
+    await runBeforeSense(extensionRegistry, agentConfig.loopExtensions, hookCtx);
 
     // Log any hook failures/timeouts as observations
     for (const err of hookCtx.hookErrors || []) {
@@ -3209,7 +3205,7 @@ async function runV2Loop(
       v2PhaseHeader("act", "publish");
       startSubstage(publishSub);
       if (flags.oversight === "autonomous") {
-        publishResult = await runPublishAutonomous(state, flags);
+        publishResult = await runPublishAutonomous(state, flags, extensionRegistry);
       } else if (rl) {
         publishResult = await runPublishManual(state, flags, rl);
       }
@@ -3246,7 +3242,7 @@ async function runV2Loop(
   checkV2PhaseBudget("act", Date.now() - actStartMs);
 
   try {
-    await runAfterAct(agentConfig.loopExtensions, {
+    await runAfterAct(extensionRegistry, agentConfig.loopExtensions, {
       state,
       config: agentConfig,
       actResult,
@@ -3297,7 +3293,7 @@ async function runV2Loop(
   // ── AFTER CONFIRM — extension hooks (PR1: prediction tracking) ──
   if (state.publishedPosts && state.publishedPosts.length > 0) {
     try {
-      await runAfterConfirm(agentConfig.loopExtensions, {
+      await runAfterConfirm(extensionRegistry, agentConfig.loopExtensions, {
         state,
         config: agentConfig,
         publishedPosts: state.publishedPosts,
@@ -3544,19 +3540,12 @@ async function main(): Promise<void> {
   // Initialize observation logging for this session
   initObserver(flags.agent, sessionNumber);
 
-  // Register extension hooks from plugin files (Phase 0 internalization).
-  // Hook implementations live in src/plugins/*.ts — session-runner imports
-  // and registers them here to avoid pulling SDK transitive deps into
-  // extensions.ts module graph (which would break tests).
-  registerHook("calibrate", "beforeSense", createCalibrateBeforeSense(runToolAndParse));
-  registerHook("signals", "beforeSense", signalsBeforeSense);
-  registerHook("predictions", "beforeSense", predictionsBeforeSense);
-  registerHook("predictions", "afterConfirm", predictionsAfterConfirm);
-  registerHook("tips", "beforeSense", tipsBeforeSense);
-  registerHook("tips", "afterAct", tipsAfterAct);
-  registerHook("lifecycle", "beforeSense", lifecycleBeforeSense);
-  registerHook("sc-oracle", "beforeSense", scOracleBeforeSense);
-  registerHook("sc-prices", "beforeSense", scPricesBeforeSense);
+  // Build extension hook registry from plugin files (Phase 5 — skill loader).
+  // Dynamic imports keep SDK transitive deps out of the extensions.ts module graph.
+  const extensionRegistry = await loadExtensions({
+    enabledExtensions: agentConfig.loopExtensions,
+    runTool: runToolAndParse,
+  });
 
   banner(sessionNumber, flags.oversight, flags.agent);
   if (isV2(state)) {
@@ -3618,7 +3607,7 @@ async function main(): Promise<void> {
       }
 
       // ── V2 Loop ────────────────────────────────
-      await runV2Loop(state, flags, sessionsDir, rl);
+      await runV2Loop(state, flags, sessionsDir, rl, extensionRegistry);
 
       rl?.close();
 
@@ -3686,7 +3675,7 @@ async function main(): Promise<void> {
               else await runGateAutonomous(v1State, flags);
               break;
             case "publish":
-              if (flags.oversight === "autonomous") await runPublishAutonomous(v1State, flags);
+              if (flags.oversight === "autonomous") await runPublishAutonomous(v1State, flags, extensionRegistry);
               else await runPublishManual(v1State, flags, rl!);
               break;
             case "verify":

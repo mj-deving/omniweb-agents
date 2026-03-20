@@ -25,7 +25,19 @@ vi.mock("../src/lib/sdk.js", () => ({
 import {
   runAfterPublishDraft,
   type AfterPublishDraftContext,
+  type ExtensionHookRegistry,
+  type LoopExtensionHooks,
 } from "../src/lib/extensions.js";
+
+import { sourcesAfterPublishDraft } from "../src/plugins/sources-plugin.js";
+
+// ── Registry ─────────────────────────────────────────
+
+function makeRegistry(): ExtensionHookRegistry {
+  return new Map<string, LoopExtensionHooks>([
+    ["sources", { afterPublishDraft: sourcesAfterPublishDraft }],
+  ]);
+}
 
 // ── Fixtures ─────────────────────────────────────────
 
@@ -85,17 +97,20 @@ const passResult: MatchResult = {
 // ── Tests ────────────────────────────────────────────
 
 describe("extensions LLM wiring", () => {
+  let registry: ExtensionHookRegistry;
+
   beforeEach(() => {
     matchMock.mockReset();
     preflightMock.mockReset();
     matchMock.mockResolvedValue(passResult);
+    registry = makeRegistry();
   });
 
   it("passes llm from context to sourcesMatch when present", async () => {
     const llm = makeLLM();
     const ctx = makeContext({ llm });
 
-    await runAfterPublishDraft(["sources"], ctx);
+    await runAfterPublishDraft(registry, ["sources"], ctx);
 
     expect(matchMock).toHaveBeenCalledOnce();
     const callArg = matchMock.mock.calls[0][0];
@@ -105,7 +120,7 @@ describe("extensions LLM wiring", () => {
   it("passes undefined for llm when context has no llm field", async () => {
     const ctx = makeContext(); // no llm field
 
-    await runAfterPublishDraft(["sources"], ctx);
+    await runAfterPublishDraft(registry, ["sources"], ctx);
 
     expect(matchMock).toHaveBeenCalledOnce();
     const callArg = matchMock.mock.calls[0][0];
@@ -115,7 +130,7 @@ describe("extensions LLM wiring", () => {
   it("passes null for llm when context has llm=null", async () => {
     const ctx = makeContext({ llm: null });
 
-    await runAfterPublishDraft(["sources"], ctx);
+    await runAfterPublishDraft(registry, ["sources"], ctx);
 
     expect(matchMock).toHaveBeenCalledOnce();
     const callArg = matchMock.mock.calls[0][0];
@@ -126,7 +141,7 @@ describe("extensions LLM wiring", () => {
     const llm = makeLLM();
     const ctx = makeContext({ llm });
 
-    const result = await runAfterPublishDraft(["sources"], ctx);
+    const result = await runAfterPublishDraft(registry, ["sources"], ctx);
 
     expect(result).toBeDefined();
     expect(result!.pass).toBe(true);
@@ -136,7 +151,7 @@ describe("extensions LLM wiring", () => {
   it("returns valid SourceMatchDecision when llm is null", async () => {
     const ctx = makeContext({ llm: null });
 
-    const result = await runAfterPublishDraft(["sources"], ctx);
+    const result = await runAfterPublishDraft(registry, ["sources"], ctx);
 
     expect(result).toBeDefined();
     expect(result!.pass).toBe(true);
@@ -146,7 +161,7 @@ describe("extensions LLM wiring", () => {
   it("skips sources hook when no sourceView provided", async () => {
     const ctx = makeContext({ sourceView: undefined, llm: makeLLM() });
 
-    const result = await runAfterPublishDraft(["sources"], ctx);
+    const result = await runAfterPublishDraft(registry, ["sources"], ctx);
 
     // Hook returns undefined when no sourceView
     expect(result).toBeUndefined();
@@ -156,7 +171,7 @@ describe("extensions LLM wiring", () => {
   it("skips sources hook when no preflightCandidates", async () => {
     const ctx = makeContext({ preflightCandidates: undefined, llm: makeLLM() });
 
-    const result = await runAfterPublishDraft(["sources"], ctx);
+    const result = await runAfterPublishDraft(registry, ["sources"], ctx);
 
     expect(result).toBeUndefined();
     expect(matchMock).not.toHaveBeenCalled();
@@ -166,7 +181,7 @@ describe("extensions LLM wiring", () => {
     const llm = makeLLM();
     const ctx = makeContext({ llm });
 
-    await runAfterPublishDraft(["sources"], ctx);
+    await runAfterPublishDraft(registry, ["sources"], ctx);
 
     const callArg = matchMock.mock.calls[0][0];
     expect(callArg.topic).toBe("Bitcoin price analysis");
@@ -187,7 +202,7 @@ describe("extensions LLM wiring", () => {
     const prefetchedResponses = new Map([["https://api.example.com/btc", cachedResponse]]);
     const ctx = makeContext({ prefetchedResponses });
 
-    await runAfterPublishDraft(["sources"], ctx);
+    await runAfterPublishDraft(registry, ["sources"], ctx);
 
     const callArg = matchMock.mock.calls[0][0];
     expect(callArg.prefetchedResponses).toBe(prefetchedResponses);

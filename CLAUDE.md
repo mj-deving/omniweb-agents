@@ -11,8 +11,8 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **Runtime:** Node.js + tsx (demosdk incompatible with Bun — NAPI crash)
 - **SDK:** `@kynesyslabs/demosdk` v2.11.0 (import `/websdk` subpath directly)
 - **Config:** YAML (persona, strategy, agent definitions)
-- **LLM:** Provider-agnostic via `src/lib/llm-provider.ts` (Claude CLI, OpenAI API, Codex CLI)
-- **Testing:** vitest (`npm test`). 977 tests across 70 suites. All code changes must include tests.
+- **LLM:** Provider-agnostic via `src/lib/llm-provider.ts` (Claude CLI, OpenAI API, OpenAI-compatible, any CLI)
+- **Testing:** vitest (`npm test`). 1046 tests across 73 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). Legacy `.env` fallback. `--env` flag overrides.
 
 ## Project Structure
@@ -24,6 +24,7 @@ See `docs/project-structure.md` for the full tree. Key boundaries:
 - **`connectors/`** — SDK isolation (@kynesyslabs/demosdk bridge).
 - **`config/`** — Source catalog (`config/sources/catalog.json`) and strategies (`config/strategies/base-loop.yaml`).
 - **Two loop modes:** `cli/session-runner.ts` (cron, 8-phase) and `cli/event-runner.ts` (long-lived, reactive).
+- **Pipeline docs:** `docs/loop-heuristics.md` — single source of truth for scan→gate→publish, agent differentiation, constitutional rules, source discovery.
 
 ## CLI Quick Reference
 
@@ -105,7 +106,8 @@ bash scripts/scheduled-run.sh --dry-run       # show what would run
 ### LLM Provider
 
 - Provider-agnostic via `llm-provider.ts` — single `complete(prompt, options)` method
-- Resolution: `LLM_PROVIDER` env → `LLM_CLI_COMMAND` env → auto-detect from API keys
+- Resolution: `LLM_PROVIDER` env → `LLM_CLI_COMMAND` env → API keys → CLI autodetect (claude→gemini→ollama→codex)
+- `LLM_PROVIDER=openai-compatible` + `OPENAI_BASE_URL` for Gemini/Groq/Mistral/etc.
 
 ## Conventions
 

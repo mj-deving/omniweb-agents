@@ -1116,10 +1116,17 @@ function extractTopicsFromScan(
     }
 
     if (mode === "pioneer") {
-      // Pre-filter: skip topics with no matching source to avoid NO_MATCHING_SOURCE at gate
+      // Pre-filter: expand generic topics, then check source availability
       const sourceView = getSourceView();
+      const pioneerExpandUsed = new Set<string>();
       const ranked = topicIndex
         .filter((entry) => !allAuthorsLowQuality(entry.stats))
+        .map((entry) => {
+          // Expand generic topics BEFORE preflight
+          const expanded = expandGenericTopic(entry.topic, pioneerExpandUsed);
+          if (expanded !== entry.topic) pioneerExpandUsed.add(expanded.toLowerCase());
+          return { ...entry, topic: expanded, originalTopic: entry.topic };
+        })
         .filter((entry) => {
           const pf = sourcesPreflight(entry.topic, sourceView, agentConfig);
           return pf.pass;
@@ -1160,8 +1167,15 @@ function extractTopicsFromScan(
       if (topics.length > 0) return topics;
     } else {
       const sv = getSourceView();
+      const expandUsed = new Set<string>();
       const ranked = topicIndex
         .filter((entry) => !allAuthorsLowQuality(entry.stats))
+        .map((entry) => {
+          // Expand generic topics BEFORE preflight so expanded subtopics can pass
+          const expanded = expandGenericTopic(entry.topic, expandUsed);
+          if (expanded !== entry.topic) expandUsed.add(expanded.toLowerCase());
+          return { ...entry, topic: expanded, originalTopic: entry.topic };
+        })
         .filter((entry) => sourcesPreflight(entry.topic, sv, agentConfig).pass)
         .sort((a, b) =>
           b.stats.totalReactions - a.stats.totalReactions ||
@@ -1171,10 +1185,12 @@ function extractTopicsFromScan(
 
       // Bucket 1: max 1 from topicIndex (quota-based mixing)
       if (ranked.length > 0) {
+        const r = ranked[0];
+        if (r.originalTopic !== r.topic) info(`Topic expansion: "${r.originalTopic}" → "${r.topic}"`);
         topics.push({
-          topic: ranked[0].topic,
+          topic: r.topic,
           category: "ANALYSIS",
-          reason: `topic-index (${ranked[0].stats.totalReactions} reactions, ${ranked[0].stats.attestedCount} attested)`,
+          reason: `topic-index (${r.stats.totalReactions} reactions, ${r.stats.attestedCount} attested)`,
         });
       }
     }

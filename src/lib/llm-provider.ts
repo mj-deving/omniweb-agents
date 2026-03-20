@@ -158,13 +158,16 @@ export class AnthropicProvider implements LLMProvider {
  * Uses dynamic import so the SDK is optional.
  */
 export class OpenAIProvider implements LLMProvider {
-  readonly name = "openai";
+  readonly name: string;
   private apiKey: string;
   private envPath?: string;
+  private baseURL?: string;
 
-  constructor(apiKey: string, envPath?: string) {
+  constructor(apiKey: string, envPath?: string, baseURL?: string) {
     this.apiKey = apiKey;
     this.envPath = envPath;
+    this.baseURL = baseURL || loadKeyFromEnv("OPENAI_BASE_URL", envPath);
+    this.name = this.baseURL ? "openai-compatible" : "openai";
   }
 
   async complete(
@@ -180,7 +183,10 @@ export class OpenAIProvider implements LLMProvider {
     } catch {
       throw new Error("openai package not installed. Run: npm install openai");
     }
-    const client = new OpenAI({ apiKey: this.apiKey });
+    const client = new OpenAI({
+      apiKey: this.apiKey,
+      ...(this.baseURL ? { baseURL: this.baseURL } : {}),
+    });
 
     const messages: Array<{ role: string; content: string }> = [];
     if (options?.system) {

@@ -6,11 +6,11 @@ shortcut: ds-scan
 # Scan Room Temperature
 
 ```bash
-npx tsx cli/room-temp.ts --agent sentinel --pretty
+npx tsx cli/scan-feed.ts --agent sentinel --pretty
 ```
 
 Optional environment override:
 
 ```bash
-npx tsx cli/room-temp.ts --agent sentinel --env /path/to/.env --pretty
+npx tsx cli/scan-feed.ts --agent sentinel --env /path/to/.env --pretty
 ```

@@ -257,12 +257,18 @@ The session loop is self-improving. Every session audits previous work, reviews 
 
 **What it does:** Classifies REVIEW findings and routes them through the improvement lifecycle.
 
-**Classification (via Codex CLI):**
-- **INFO** — logged only, no action needed
-- **STRATEGY** — suggests a strategy change (e.g., "increase reply ratio")
-- **PLAYBOOK** — a reusable pattern from an outperforming post (e.g., "ANALYSIS on trade-sanctions outperformed by +12rx")
-- **CODE-FIX** — suggests a code change (e.g., "update calibration offset")
-- **ACTIONABLE** — requires human review before applying
+**Classification (via LLM — one batched call per session):**
+
+HARDEN sends all findings to the configured LLM provider (`resolveProvider()` — currently `claude --print` via OAuth, could be any provider) in a single prompt. The LLM classifies each finding into one of 6 types:
+
+- **INFO** — logged only, no action needed (platform stats, one-off observations)
+- **STRATEGY** — strategy change needed (topic selection, engagement model) — requires human review
+- **PLAYBOOK** — reusable pattern from outperforming posts (e.g., "ANALYSIS on trade-sanctions +12rx")
+- **CODE-FIX** — code change needed (wrong default, missing alias, broken flag)
+- **GUARDRAIL** — safe default to prevent known failure (add validation/cap)
+- **GOTCHA** — verified operational pattern to document
+
+Cost: **1 LLM call per session** (all findings batched into single classification prompt, ~256 tokens response).
 
 **Improvement Lifecycle:**
 ```

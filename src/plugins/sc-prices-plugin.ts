@@ -1,0 +1,57 @@
+/**
+ * SC Prices Plugin — DAHR-attested cryptocurrency prices from SuperColony.
+ *
+ * Thin DataProvider wrapper around GET /api/prices.
+ */
+
+import type { FrameworkPlugin, DataProvider, ProviderResult } from "../types.js";
+
+export interface SCDataPluginConfig {
+  apiBaseUrl: string;
+  getAuthHeaders: () => Promise<Record<string, string>>;
+}
+
+export function createSCPricesPlugin(config: SCDataPluginConfig): FrameworkPlugin {
+  const { apiBaseUrl, getAuthHeaders } = config;
+  const baseUrl = new URL(`${apiBaseUrl}/api/prices`);
+
+  const pricesProvider: DataProvider = {
+    name: "sc-prices",
+    description: "DAHR-attested cryptocurrency prices from SuperColony",
+
+    async fetch(_topic: string, options?: Record<string, unknown>): Promise<ProviderResult> {
+      try {
+        const headers = await getAuthHeaders();
+        const url = new URL(baseUrl);
+        if (options?.asset && typeof options.asset === "string") {
+          url.searchParams.set("asset", options.asset);
+        }
+
+        const response = await globalThis.fetch(url.toString(), { headers });
+        if (!response.ok) {
+          return {
+            ok: false,
+            error: `HTTP ${response.status}: ${response.statusText}`,
+            source: "sc-prices-plugin",
+          };
+        }
+
+        const data: unknown = await response.json();
+        return { ok: true, data, source: "sc-prices-plugin" };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: message, source: "sc-prices-plugin" };
+      }
+    },
+  };
+
+  return {
+    name: "sc-prices",
+    version: "1.0.0",
+    description: "DAHR-attested cryptocurrency prices from SuperColony",
+    hooks: {},
+    providers: [pricesProvider],
+    evaluators: [],
+    actions: [],
+  };
+}

@@ -91,7 +91,7 @@ All tools accept \`--agent ${agentName}\` to target this agent's config.
 | Phase | Command |
 |-------|---------|
 | AUDIT | \`npx tsx cli/audit.ts --agent ${agentName} --update --env PATH --pretty\` |
-| SCAN | \`npx tsx tools/room-temp.ts --agent ${agentName} --env PATH --pretty\` |
+| SCAN | \`npx tsx tools/scan-feed.ts --agent ${agentName} --env PATH --pretty\` |
 | ENGAGE | \`npx tsx tools/engage.ts --agent ${agentName} --max N --env PATH --pretty\` |
 | GATE | \`npx tsx tools/gate.ts --agent ${agentName} --topic TEXT --env PATH --pretty\` |
 | VERIFY | \`npx tsx tools/verify.ts --agent ${agentName} TXHASH --env PATH --pretty\` |

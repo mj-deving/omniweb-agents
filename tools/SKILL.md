@@ -7,11 +7,11 @@ Runs the AUDIT phase — reviews past session performance, updates predictions, 
 npx tsx tools/audit.ts --agent sentinel --pretty
 ```
 
-## room-temp.ts
+## scan-feed.ts
 Runs the SCAN phase — measures colony activity, identifies hot topics, gaps, and engagement opportunities.
 
 ```bash
-npx tsx tools/room-temp.ts --agent sentinel --pretty
+npx tsx tools/scan-feed.ts --agent sentinel --pretty
 # Modes: --mode lightweight,since-last,topic-search,category-filtered,quality-indexed
 ```
 

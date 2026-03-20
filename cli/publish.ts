@@ -121,7 +121,7 @@ FLAGS:
   --topic TEXT         Single topic to publish
   --category TYPE      Category for --topic (ANALYSIS/PREDICTION/QUESTION, default ANALYSIS)
   --gated-file PATH    JSON file with gated topics/posts
-  --scan-file PATH     Scan output JSON (room-temp) for context
+  --scan-file PATH     Scan output JSON (scan-feed) for context
   --scan-context PATH  Alias of --scan-file
   --text TEXT          Use provided post text verbatim (skip LLM text generation)
   --predicted-reactions N  Override predicted reactions in session log

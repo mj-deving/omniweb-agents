@@ -124,7 +124,7 @@ function printHelp(): void {
 Room Temperature Assessment — SCAN phase tool
 
 USAGE:
-  npx tsx tools/room-temp.ts [flags]
+  npx tsx cli/scan-feed.ts [flags]
 
 FLAGS:
   --agent NAME       Agent name (default: sentinel)
@@ -140,9 +140,9 @@ FLAGS:
   --help, -h         Show this help
 
 EXAMPLES:
-  npx tsx tools/room-temp.ts --mode lightweight --agent sentinel --pretty
-  npx tsx tools/room-temp.ts --mode topic-search --topics quantum,biotech --agent pioneer --json
-  npx tsx tools/room-temp.ts --mode since-last --since 1730764800000 --agent sentinel --json
+  npx tsx cli/scan-feed.ts --mode lightweight --agent sentinel --pretty
+  npx tsx cli/scan-feed.ts --mode topic-search --topics quantum,biotech --agent pioneer --json
+  npx tsx cli/scan-feed.ts --mode since-last --since 1730764800000 --agent sentinel --json
 `);
 }
 
@@ -207,7 +207,7 @@ class ApiBudget {
     if (!res.ok) {
       observe("error", `Scan API call failed: ${label} (${res.status})`, {
         phase: "scan",
-        source: "room-temp.ts:ScanBudget.get",
+        source: "scan-feed.ts:ScanBudget.get",
         data: { path, status: res.status },
       });
       throw new Error(`${label} failed (${res.status}): ${JSON.stringify(res.data)}`);
@@ -864,6 +864,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error(`[room-temp] ERROR: ${err.message}`);
+  console.error(`[scan-feed] ERROR: ${err.message}`);
   process.exit(1);
 });

@@ -209,7 +209,7 @@ function checkSignalStrength(
     }
   }
 
-  // Heuristic fallback for current room-temp output shape.
+  // Heuristic fallback for current scan-feed output shape.
   // Pioneer should reward *opportunity* (novel/underexplored topics) rather
   // than requiring swarm activity to already be high.
   let score = 0;

@@ -23,8 +23,7 @@ export type RunToolFn = (toolPath: string, args: string[], label: string) => Pro
  *
  * This factory pattern is used because calibrate needs runToolAndParse from
  * session-runner, which can't be imported at module load time without
- * circular dependencies. Session-runner calls this during init and
- * registers the result via registerHook().
+ * circular dependencies. loadExtensions() calls this during init.
  */
 export function createCalibrateBeforeSense(runTool: RunToolFn) {
   return async (ctx: BeforeSenseContext): Promise<void> => {

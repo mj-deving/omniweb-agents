@@ -6,7 +6,7 @@
  * for registry-based discovery and lifecycle management.
  */
 
-export { createSourcesPlugin } from "./sources-plugin.js";
+export { createSourcesPlugin, sourcesBeforePublishDraft, sourcesAfterPublishDraft } from "./sources-plugin.js";
 export { createLifecyclePlugin } from "./lifecycle-plugin.js";
 export { createSignalsPlugin } from "./signals-plugin.js";
 export { createPredictionsPlugin } from "./predictions-plugin.js";

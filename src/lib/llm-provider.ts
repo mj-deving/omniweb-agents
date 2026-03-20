@@ -11,7 +11,7 @@
  *   3. ANTHROPIC_API_KEY alone → AnthropicProvider
  *   4. OPENAI_API_KEY alone → OpenAIProvider
  *   5. Multiple keys without LLM_PROVIDER → error
- *   6. CLI autodetect (which codex/claude/ollama)
+ *   6. CLI autodetect (which claude/gemini/ollama/codex — claude preferred)
  *   7. Nothing → null
  */
 
@@ -278,8 +278,15 @@ export function resolveProvider(envPath?: string): LLMProvider | null {
         if (!cmd) throw new Error("LLM_PROVIDER=cli but LLM_CLI_COMMAND not set");
         return new CLIProvider(cmd);
       }
+      case "openai-compatible": {
+        // Any OpenAI-compatible API (Gemini, Groq, Mistral, Together, etc.)
+        // Requires: OPENAI_API_KEY + OPENAI_BASE_URL in env/credentials
+        const key = loadKeyFromEnv("OPENAI_API_KEY", envPath);
+        if (!key) throw new Error("LLM_PROVIDER=openai-compatible but OPENAI_API_KEY not found");
+        return new OpenAIProvider(key, envPath);
+      }
       default:
-        throw new Error(`Unknown LLM_PROVIDER="${explicitProvider}". Valid: anthropic, openai, cli`);
+        throw new Error(`Unknown LLM_PROVIDER="${explicitProvider}". Valid: anthropic, openai, openai-compatible, cli`);
     }
   }
 
@@ -303,15 +310,20 @@ export function resolveProvider(envPath?: string): LLMProvider | null {
   if (anthropicKey) return new AnthropicProvider(anthropicKey, envPath);
   if (openaiKey) return new OpenAIProvider(openaiKey, envPath);
 
-  // Step 6: CLI autodetect
-  if (whichSync("codex")) {
-    return new CLIProvider("codex exec --full-auto", "cli:codex");
-  }
+  // Step 6: CLI autodetect — try most common providers in preference order
+  // Note: this only fires if no explicit config is set (LLM_PROVIDER, LLM_CLI_COMMAND, API keys).
+  // Prefer claude (default agent LLM) over codex (code-focused, not general purpose).
   if (whichSync("claude")) {
     return new CLIProvider("claude --print", "cli:claude");
   }
+  if (whichSync("gemini")) {
+    return new CLIProvider("gemini", "cli:gemini");
+  }
   if (whichSync("ollama")) {
     return new CLIProvider("ollama run llama3", "cli:ollama");
+  }
+  if (whichSync("codex")) {
+    return new CLIProvider("codex exec --full-auto", "cli:codex");
   }
 
   // Step 7: Nothing

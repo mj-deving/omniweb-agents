@@ -14,7 +14,7 @@
 import { webcrypto } from "node:crypto";
 if (!globalThis.crypto) (globalThis as any).crypto = webcrypto;
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, renameSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { connectWallet, apiCall, info, warn, setLogAgent, RPC_URL } from "../src/lib/sdk.js";
@@ -87,6 +87,70 @@ function loadCatalogUrls(catalogPath: string): Set<string> {
     }
   } catch { /* ignore parse errors */ }
   return urls;
+}
+
+/**
+ * Filter out URLs that are not reusable data sources.
+ * We want APIs and feeds, not tweets, PDFs, or article pages.
+ */
+function isReusableSource(url: string): boolean {
+  const u = new URL(url);
+  const host = u.hostname.toLowerCase();
+  const path = u.pathname.toLowerCase();
+
+  // ── ALLOW LIST (always keep these) ──
+  // API endpoints
+  if (path.includes("/api/") || path.includes("/v1/") || path.includes("/v2/") || path.includes("/v3/")) return true;
+  // RSS/XML feeds
+  if (path.endsWith(".xml") || path.endsWith("/rss") || path.endsWith("/feed") || path.endsWith("/feed/")
+    || path.includes("/rss/") || path.includes("/feeds/") || path.includes("/feed/")) return true;
+  // JSON endpoints
+  if (path.endsWith(".json")) return true;
+  // Known API hosts
+  const apiHosts = ["api.coingecko.com", "api.binance.com", "fapi.binance.com", "api.llama.fi",
+    "hn.algolia.com", "api.dexscreener.com", "api.etherscan.io", "api.npmjs.org",
+    "gamma-api.polymarket.com", "api.geckoterminal.com", "api.frankfurter.dev",
+    "earthquake.usgs.gov", "api.gdeltproject.org", "fred.stlouisfed.org",
+    "hacker-news.firebaseio.com", "mempool.space", "ll.thespacedevs.com",
+    "kauai.ccmc.gsfc.nasa.gov", "moltbook.com", "api.mainnet-beta.solana.com",
+    "reference-data-directory.vercel.app", "site.api.espn.com"];
+  if (apiHosts.some(h => host === h || host.endsWith("." + h))) return true;
+
+  // ── DENY LIST (skip these) ──
+  // Social media individual posts
+  if (host.includes("x.com") || host.includes("twitter.com")) return false;
+  if (host.includes("reddit.com")) return false;
+  if (host.includes("truthsocial.com")) return false;
+  if (host.includes("instagram.com")) return false;
+  if (host.includes("t.me")) return false; // individual Telegram posts
+  if (host.includes("threadreaderapp.com")) return false;
+
+  // Archive/mirror sites (individual snapshots, not data sources)
+  if (host.includes("archive.ph") || host.includes("archive.org") || host.includes("archive.is")
+    || host.includes("archive.today") || host.includes("archive.vn")) return false;
+
+  // Individual news articles (not feeds/APIs)
+  if (host.includes("disclose.tv") && path.includes("/id/")) return false;
+  if (host.includes("daily.dev") && path.includes("/posts/")) return false;
+
+  // PDFs and documents
+  if (path.endsWith(".pdf") || path.endsWith(".doc") || path.endsWith(".docx")) return false;
+
+  // Blog/article platforms (individual posts, not feeds)
+  if (host.includes("substack.com") && !path.includes("/feed")) return false;
+  if (host.includes("medium.com") && !path.includes("/feed")) return false;
+
+  // Wikipedia (reference, not live data)
+  if (host.includes("wikipedia.org")) return false;
+
+  // Individual news article heuristics: path looks like /news/YYYY/ or /article/ or /story/
+  if (/\/(article|story|news\/\d{4}|opinion|analysis)\//i.test(path)) return false;
+
+  // File hosting
+  if (host.includes("catbox.moe") || host.includes("libgen")) return false;
+
+  // If none of the above matched, allow it (may be a feed/API we don't know about)
+  return true;
 }
 
 function normalizeUrl(url: string): string {
@@ -192,7 +256,6 @@ function persistSource(
     // Atomic write
     const tmpPath = catalogPath + ".tmp";
     writeFileSync(tmpPath, JSON.stringify({ ...raw, sources }, null, 2));
-    const { renameSync } = require("node:fs");
     renameSync(tmpPath, catalogPath);
 
     return true;
@@ -216,20 +279,39 @@ async function main(): Promise<void> {
   const { demos, address } = await connectWallet(flags.env, flags.agent);
   let token = await ensureAuth(demos, address);
 
-  // Load feed via API
+  // Load feed via API (paginated — API caps at 100/request)
   info("Fetching feed...");
-  const feedRes = await apiCall(`/api/feed?limit=${flags.limit}`, token);
-  if (!feedRes.ok) {
-    console.error("Failed to fetch feed:", feedRes.data);
-    process.exit(1);
+  const PAGE_SIZE = 100;
+  const posts: any[] = [];
+  let offset = 0;
+
+  while (posts.length < flags.limit) {
+    const feedRes = await apiCall(`/api/feed?limit=${PAGE_SIZE}&offset=${offset}`, token);
+    if (!feedRes.ok) {
+      if (posts.length === 0) {
+        console.error("Failed to fetch feed:", feedRes.data);
+        process.exit(1);
+      }
+      warn(`Feed page at offset=${offset} failed, stopping pagination`);
+      break;
+    }
+
+    const feedData = feedRes.data;
+    const page: any[] = Array.isArray(feedData) ? feedData
+      : Array.isArray(feedData?.posts) ? feedData.posts
+      : Array.isArray(feedData?.data) ? feedData.data
+      : Array.isArray(feedData?.feed) ? feedData.feed
+      : [];
+
+    if (page.length === 0) break; // no more posts
+    posts.push(...page);
+    offset += page.length;
+
+    if (page.length < PAGE_SIZE) break; // last page
+    if (posts.length % 1000 === 0) info(`  ...fetched ${posts.length} posts`);
   }
-  // Feed API returns object — extract posts with fallback chain
-  const feedData = feedRes.data;
-  const posts: any[] = Array.isArray(feedData) ? feedData
-    : Array.isArray(feedData?.posts) ? feedData.posts
-    : Array.isArray(feedData?.data) ? feedData.data
-    : Array.isArray(feedData?.feed) ? feedData.feed
-    : [];
+
+  info(`Feed: ${posts.length} posts loaded (${Math.ceil(posts.length / PAGE_SIZE)} pages)`);
   const scanned = Math.min(posts.length, flags.limit);
   info(`Feed: ${posts.length} posts (scanning ${scanned})`);
 
@@ -274,11 +356,19 @@ async function main(): Promise<void> {
   const existingUrls = loadCatalogUrls(catalogPath);
   const newSources: MinedSource[] = [];
 
+  let filteredOut = 0;
   for (const [normalized, mined] of urlMap) {
-    if (!existingUrls.has(normalized)) {
-      newSources.push(mined);
-    }
+    if (existingUrls.has(normalized)) continue;
+    try {
+      if (!isReusableSource(mined.url)) {
+        filteredOut++;
+        continue;
+      }
+    } catch { filteredOut++; continue; }
+    newSources.push(mined);
   }
+
+  if (filteredOut > 0) info(`Filtered out ${filteredOut} non-API URLs (tweets, PDFs, articles)`);
 
   info(`New URLs not in catalog: ${newSources.length}`);
 

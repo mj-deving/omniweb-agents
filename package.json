@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "room-temp": "tsx cli/room-temp.ts",
+    "scan-feed": "tsx cli/scan-feed.ts",
     "audit": "tsx cli/audit.ts",
     "improvements": "tsx cli/improvements.ts",
     "session-review": "tsx cli/session-review.ts",

@@ -57,7 +57,7 @@ if (exists(pluginJsonPath)) {
 for (const rel of [
   "commands/run-session.md",
   "commands/audit-agent.md",
-  "commands/scan-room-temp.md",
+  "commands/scan-feed.md",
   "commands/view-session-report.md",
   "agents/sentinel-operator.md",
   "skills/supercolony/SKILL.md",

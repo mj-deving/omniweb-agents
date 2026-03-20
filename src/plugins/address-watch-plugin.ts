@@ -1,7 +1,8 @@
 /**
  * Address Watch Plugin — Wallet activity monitoring for tracked addresses.
  *
- * SCAFFOLD: Returns SDK blocker until XM SDK cross-chain operations are validated.
+ * Attempts real address queries via Demos RPC for each watched address.
+ * Falls back gracefully if unavailable.
  */
 
 import type { FrameworkPlugin, DataProvider, ProviderResult } from "../types.js";
@@ -11,22 +12,68 @@ export interface AddressWatchPluginConfig {
   watchAddresses: string[];
 }
 
-const BLOCKER = "SDK blocker: XM SDK cross-chain operations untested — deferred until validated";
+export function createAddressWatchPlugin(config: AddressWatchPluginConfig): FrameworkPlugin {
+  const { rpcUrl, watchAddresses } = config;
 
-export function createAddressWatchPlugin(_config: AddressWatchPluginConfig): FrameworkPlugin {
   const watchProvider: DataProvider = {
     name: "address-watch",
-    description: "Wallet activity monitoring for tracked addresses (requires XM SDK)",
+    description: "Wallet activity monitoring for tracked addresses via Demos RPC",
 
     async fetch(_topic: string, _options?: Record<string, unknown>): Promise<ProviderResult> {
-      return { ok: false, error: BLOCKER, source: "address-watch-plugin" };
+      if (!watchAddresses.length) {
+        return { ok: false, error: "No addresses configured for watching", source: "address-watch-plugin" };
+      }
+
+      try {
+        // Query each watched address for activity
+        const results: Array<{ address: string; balance?: number; nonce?: number; error?: string }> = [];
+
+        for (const address of watchAddresses.slice(0, 10)) { // cap at 10 to avoid RPC flood
+          try {
+            const body = JSON.stringify({
+              jsonrpc: "2.0",
+              method: "getAddressInfo",
+              params: [address],
+              id: 1,
+            });
+            const response = await globalThis.fetch(rpcUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body,
+              signal: AbortSignal.timeout(5_000),
+            });
+
+            if (response.ok) {
+              const json = await response.json() as { result?: { balance?: number; nonce?: number } };
+              results.push({ address, balance: json.result?.balance, nonce: json.result?.nonce });
+            } else {
+              results.push({ address, error: `HTTP ${response.status}` });
+            }
+          } catch (err) {
+            results.push({ address, error: err instanceof Error ? err.message : String(err) });
+          }
+        }
+
+        return {
+          ok: true,
+          data: { watchedAddresses: results, queriedAt: Date.now() },
+          source: "address-watch-plugin",
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          ok: false,
+          error: `Address watch unavailable: ${message}`,
+          source: "address-watch-plugin",
+        };
+      }
     },
   };
 
   return {
     name: "address-watch",
-    version: "1.0.0",
-    description: "Wallet activity monitoring for tracked addresses (requires XM SDK)",
+    version: "1.1.0",
+    description: "Wallet activity monitoring for tracked addresses via Demos RPC",
     hooks: {},
     providers: [watchProvider],
     evaluators: [],

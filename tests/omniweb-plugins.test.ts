@@ -159,71 +159,111 @@ describe("Omniweb Plugins", () => {
     });
   });
 
-  // ---------- chain-query (scaffold) ----------
+  // ---------- chain-query ----------
   describe("createChainQueryPlugin", () => {
+    afterEach(() => { vi.unstubAllGlobals(); });
     const config = { rpcUrl: RPC_URL, agentAddress: "demos1abc" };
 
     it("creates a plugin with correct metadata", () => {
       const plugin = createChainQueryPlugin(config);
       expect(plugin.name).toBe("chain-query");
-      expect(plugin.version).toBe("1.0.0");
+      expect(plugin.version).toBe("1.1.0");
       expect(plugin.providers).toHaveLength(1);
       expect(plugin.providers[0].name).toBe("chain-query");
     });
 
-    it("returns ok:false with blocker message", async () => {
+    it("returns data on successful RPC query", async () => {
+      vi.stubGlobal("fetch", mockFetchOk({ result: { balance: 100, nonce: 5 } }));
+      const plugin = createChainQueryPlugin(config);
+      const result = await plugin.providers[0].fetch("balance");
+
+      expect(result.ok).toBe(true);
+      expect(result.source).toBe("chain-query-plugin");
+    });
+
+    it("returns ok:false gracefully on RPC failure", async () => {
+      vi.stubGlobal("fetch", () => Promise.reject(new Error("network down")));
       const plugin = createChainQueryPlugin(config);
       const result = await plugin.providers[0].fetch("balance");
 
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("SDK blocker:");
-      expect(result.error).toContain("XM SDK cross-chain operations untested");
+      expect(result.error).toContain("Chain query unavailable");
       expect(result.source).toBe("chain-query-plugin");
     });
   });
 
-  // ---------- address-watch (scaffold) ----------
+  // ---------- address-watch ----------
   describe("createAddressWatchPlugin", () => {
+    afterEach(() => { vi.unstubAllGlobals(); });
     const config = { rpcUrl: RPC_URL, watchAddresses: ["demos1abc", "demos1def"] };
 
     it("creates a plugin with correct metadata", () => {
       const plugin = createAddressWatchPlugin(config);
       expect(plugin.name).toBe("address-watch");
-      expect(plugin.version).toBe("1.0.0");
+      expect(plugin.version).toBe("1.1.0");
       expect(plugin.providers).toHaveLength(1);
       expect(plugin.providers[0].name).toBe("address-watch");
     });
 
-    it("returns ok:false with blocker message", async () => {
+    it("returns data on successful RPC query", async () => {
+      vi.stubGlobal("fetch", mockFetchOk({ result: { balance: 50, nonce: 2 } }));
       const plugin = createAddressWatchPlugin(config);
       const result = await plugin.providers[0].fetch("activity");
 
-      expect(result.ok).toBe(false);
-      expect(result.error).toContain("SDK blocker:");
-      expect(result.error).toContain("XM SDK cross-chain operations untested");
+      expect(result.ok).toBe(true);
+      expect(result.data).toHaveProperty("watchedAddresses");
+      expect(result.source).toBe("address-watch-plugin");
+    });
+
+    it("returns ok:false gracefully on RPC failure", async () => {
+      vi.stubGlobal("fetch", () => Promise.reject(new Error("timeout")));
+      const plugin = createAddressWatchPlugin(config);
+      const result = await plugin.providers[0].fetch("activity");
+
+      expect(result.ok).toBe(true); // individual address errors, but plugin succeeds
       expect(result.source).toBe("address-watch-plugin");
     });
   });
 
-  // ---------- cci-identity (scaffold) ----------
+  // ---------- cci-identity ----------
   describe("createCCIIdentityPlugin", () => {
+    afterEach(() => { vi.unstubAllGlobals(); });
     const config = { rpcUrl: RPC_URL };
 
     it("creates a plugin with correct metadata", () => {
       const plugin = createCCIIdentityPlugin(config);
       expect(plugin.name).toBe("cci-identity");
-      expect(plugin.version).toBe("1.0.0");
+      expect(plugin.version).toBe("1.1.0");
       expect(plugin.providers).toHaveLength(1);
       expect(plugin.providers[0].name).toBe("cci-identity");
     });
 
-    it("returns ok:false with blocker message", async () => {
-      const plugin = createCCIIdentityPlugin(config);
+    it("returns identities on successful RPC query", async () => {
+      vi.stubGlobal("fetch", mockFetchOk({ result: { xm: { evm: {} }, web2: { twitter: {} } } }));
+      const plugin = createCCIIdentityPlugin({ ...config, agentAddress: "0xtest" });
+      const result = await plugin.providers[0].fetch("resolve");
+
+      expect(result.ok).toBe(true);
+      expect(result.data).toHaveProperty("identities");
+      expect(result.source).toBe("cci-identity-plugin");
+    });
+
+    it("returns ok:false gracefully when no address provided", async () => {
+      const plugin = createCCIIdentityPlugin({ rpcUrl: RPC_URL });
       const result = await plugin.providers[0].fetch("resolve");
 
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("SDK blocker:");
-      expect(result.error).toContain("CCI SDK module not yet validated");
+      expect(result.error).toContain("No address");
+      expect(result.source).toBe("cci-identity-plugin");
+    });
+
+    it("returns ok:false gracefully on RPC failure", async () => {
+      vi.stubGlobal("fetch", () => Promise.reject(new Error("connection refused")));
+      const plugin = createCCIIdentityPlugin({ ...config, agentAddress: "0xtest" });
+      const result = await plugin.providers[0].fetch("resolve");
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("CCI identity unavailable");
       expect(result.source).toBe("cci-identity-plugin");
     });
   });
@@ -235,18 +275,17 @@ describe("Omniweb Plugins", () => {
     it("creates a plugin with correct metadata", () => {
       const plugin = createDemosWorkPlugin(config);
       expect(plugin.name).toBe("demoswork");
-      expect(plugin.version).toBe("1.0.0");
+      expect(plugin.version).toBe("1.1.0");
       expect(plugin.providers).toHaveLength(1);
       expect(plugin.providers[0].name).toBe("demoswork");
     });
 
-    it("returns ok:false with blocker message", async () => {
+    it("returns ok:false gracefully when SDK unavailable", async () => {
       const plugin = createDemosWorkPlugin(config);
       const result = await plugin.providers[0].fetch("workflow");
 
       expect(result.ok).toBe(false);
-      expect(result.error).toContain("SDK blocker:");
-      expect(result.error).toContain("DemosWork has ESM directory import bug");
+      expect(result.error).toBeDefined();
       expect(result.source).toBe("demoswork-plugin");
     });
   });

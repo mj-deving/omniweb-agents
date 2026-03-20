@@ -18,12 +18,17 @@ if (!globalThis.crypto) {
 }
 
 import { Demos } from "@kynesyslabs/demosdk/websdk";
+import type { SigningAlgorithm } from "@kynesyslabs/demosdk/types/cryptography";
 
 // ── Constants (defaults — overridable via credentials file) ──
 
 export let RPC_URL = "https://demosnode.discus.sh/";
 export let SUPERCOLONY_API = "https://www.supercolony.ai";
 let logAgentName = process.env.AGENT_NAME || "agent";
+
+// PQC config resolved from credentials file (set by applyConfigOverrides)
+let resolvedAlgorithm: SigningAlgorithm | undefined;
+let resolvedDualSign: boolean | undefined;
 
 // ── Wallet ─────────────────────────────────────────
 
@@ -87,6 +92,16 @@ function applyConfigOverrides(content: string): void {
   if (rpc) RPC_URL = rpc;
   const api = parseConfigVar(content, "SUPERCOLONY_API");
   if (api) SUPERCOLONY_API = api;
+
+  // PQC algorithm config
+  const algo = parseConfigVar(content, "DEMOS_ALGORITHM");
+  if (algo && (algo === "falcon" || algo === "ml-dsa" || algo === "ed25519")) {
+    resolvedAlgorithm = algo as SigningAlgorithm;
+  }
+  const dualSign = parseConfigVar(content, "DEMOS_DUAL_SIGN");
+  if (dualSign !== undefined) {
+    resolvedDualSign = dualSign === "true" || dualSign === "1";
+  }
 }
 
 /**
@@ -123,16 +138,48 @@ export function loadMnemonic(envPath: string, agentName?: string): string {
   return parseMnemonic(content, legacy);
 }
 
+/** Wallet connection options for PQC and algorithm selection. */
+export interface WalletOptions {
+  /** Signing algorithm: "ed25519" (default), "falcon", or "ml-dsa". */
+  algorithm?: SigningAlgorithm;
+  /** Include ed25519 signature alongside PQC signature (transition period). */
+  dualSign?: boolean;
+}
+
 /**
  * Connect wallet and return Demos instance + address.
  * Factory pattern — each call creates a fresh instance.
  * When agentName is provided, uses per-agent credentials if available.
+ *
+ * Supports post-quantum cryptography via Demos SDK:
+ * - Set DEMOS_ALGORITHM=falcon in credentials for quantum-proof signing
+ * - Set DEMOS_DUAL_SIGN=true during transition period (includes ed25519 + PQC)
  */
-export async function connectWallet(envPath: string, agentName?: string): Promise<{ demos: Demos; address: string }> {
+export async function connectWallet(
+  envPath: string,
+  agentName?: string,
+  walletOpts?: WalletOptions,
+): Promise<{ demos: Demos; address: string }> {
   const mnemonic = loadMnemonic(envPath, agentName);
+
+  // Resolve algorithm: explicit opts > credentials file > default (ed25519)
+  const algorithm = walletOpts?.algorithm ?? resolvedAlgorithm ?? "ed25519";
+  const dualSign = walletOpts?.dualSign ?? resolvedDualSign ?? false;
+
   const demos = new Demos();
   await demos.connect(RPC_URL);
-  const address = await demos.connectWallet(mnemonic);
+
+  const connectOpts: { algorithm?: SigningAlgorithm; dual_sign?: boolean } = {};
+  if (algorithm !== "ed25519") {
+    connectOpts.algorithm = algorithm;
+    connectOpts.dual_sign = dualSign;
+    info(`Wallet using ${algorithm} signing${dualSign ? " (dual-sign with ed25519)" : ""}`, agentName ?? logAgentName);
+  }
+
+  const address = Object.keys(connectOpts).length > 0
+    ? await demos.connectWallet(mnemonic, connectOpts)
+    : await demos.connectWallet(mnemonic);
+
   return { demos, address };
 }
 

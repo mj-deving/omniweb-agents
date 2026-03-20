@@ -812,7 +812,7 @@ async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> 
   }
 
   const args = ["--agent", flags.agent, "--update", "--log", flags.log, "--env", flags.env];
-  const result = await runToolAndParse("tools/audit.ts", args, "audit.ts");
+  const result = await runToolAndParse("cli/audit.ts", args, "audit.ts");
 
   const stats = result.stats || {};
   phaseResult(
@@ -828,7 +828,7 @@ async function runAudit(state: SessionState, flags: RunnerFlags): Promise<void> 
 
 async function runScan(state: SessionState, flags: RunnerFlags): Promise<void> {
   const args = ["--agent", flags.agent, "--json", "--env", flags.env];
-  const result = await runToolAndParse("tools/room-temp.ts", args, "room-temp.ts");
+  const result = await runToolAndParse("cli/room-temp.ts", args, "room-temp.ts");
 
   const level = result.activity?.level || "unknown";
   const pph = result.activity?.posts_per_hour ?? "?";
@@ -842,7 +842,7 @@ async function runScan(state: SessionState, flags: RunnerFlags): Promise<void> {
 
 async function runEngage(state: SessionState, flags: RunnerFlags): Promise<void> {
   const args = ["--agent", flags.agent, "--max", String(agentConfig.engagement.maxReactionsPerSession), "--json", "--env", flags.env];
-  const result = await runToolAndParse("tools/engage.ts", args, "engage.ts");
+  const result = await runToolAndParse("cli/engage.ts", args, "engage.ts");
 
   phaseResult(
     `${result.reactions_cast || 0} reactions (${result.agrees || 0} agree, ${result.disagrees || 0} disagree) | ${result.errors || 0} errors`
@@ -1388,7 +1388,7 @@ async function runGateFull(
     if (text && text.toLowerCase() !== "skip") gateArgs.push("--text", text);
     if (confStr && /^\d+$/.test(confStr)) gateArgs.push("--confidence", confStr);
 
-    const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
+    const result = await runToolAndParse("cli/gate.ts", gateArgs, "gate.ts");
 
     const gateEval = normalizeGateResult(result);
     console.log(`\n  Gate result: ${gateEval.passed}/${gateEval.total} automated checks passed`);
@@ -1443,7 +1443,7 @@ async function runGateApprove(
     if (suggestion.replyTo?.txHash) {
       gateArgs.push("--reply-to", suggestion.replyTo.txHash);
     }
-    const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
+    const result = await runToolAndParse("cli/gate.ts", gateArgs, "gate.ts");
 
     const gateEval = normalizeGateResult(result);
     console.log(`\n  Gate: ${suggestion.topic} — ${gateEval.passed}/${gateEval.total} automated checks`);
@@ -1630,7 +1630,7 @@ async function runGateAutonomous(
     if (suggestion.replyTo?.txHash) {
       gateArgs.push("--reply-to", suggestion.replyTo.txHash);
     }
-    const result = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
+    const result = await runToolAndParse("cli/gate.ts", gateArgs, "gate.ts");
 
     const gateEval = normalizeGateResult(result);
     const passed = gateEval.passed;
@@ -1664,7 +1664,7 @@ async function runGateAutonomous(
         continue;
       }
       const gateArgs = ["--agent", flags.agent, "--topic", suggestion.topic, "--category", suggestion.category, "--json", "--env", flags.env, "--scan-cache", getStateFilePath(state)];
-      const gResult = await runToolAndParse("tools/gate.ts", gateArgs, "gate.ts");
+      const gResult = await runToolAndParse("cli/gate.ts", gateArgs, "gate.ts");
       const gateEval = normalizeGateResult(gResult);
       if (shouldAutoPassGate(gResult, gateEval)) {
         info(`Reasoning PASS: ${suggestion.topic} (${gateEval.passed}/${gateEval.total})`);
@@ -2219,7 +2219,7 @@ async function runVerify(state: SessionState, flags: RunnerFlags): Promise<void>
   }
 
   const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env, "--wait", "15"];
-  const result = await runToolAndParse("tools/verify.ts", args, "verify.ts");
+  const result = await runToolAndParse("cli/verify.ts", args, "verify.ts");
 
   const summary = result.summary || {};
   phaseResult(`${summary.verified || 0}/${summary.total || 0} verified`);
@@ -2250,7 +2250,7 @@ async function autoPropose(
         "--target", "workflow",
         "--source", "Q2",
       ];
-      await runToolWithBackend("tools/improvements.ts", impArgs, {
+      await runToolWithBackend("cli/improvements.ts", impArgs, {
         cwd: REPO_ROOT,
         timeout: 30_000,
       });
@@ -2270,7 +2270,7 @@ async function runReviewFull(
   rl: ReturnType<typeof createInterface>
 ): Promise<void> {
   const args = ["--json", "--log", flags.log];
-  const result = await runToolAndParse("tools/session-review.ts", args, "session-review.ts");
+  const result = await runToolAndParse("cli/session-review.ts", args, "session-review.ts");
 
   if (result.stats) {
     const s = result.stats;
@@ -2303,7 +2303,7 @@ async function runReviewFull(
         "--evidence", evidence || "session observation",
         "--target", target || "workflow",
       ];
-      await runToolAndParse("tools/improvements.ts", impArgs, "improvements.ts propose");
+      await runToolAndParse("cli/improvements.ts", impArgs, "improvements.ts propose");
       phaseResult("Improvement proposed");
     } catch (e: any) {
       info(`Warning: could not propose improvement: ${e.message}`);
@@ -2322,7 +2322,7 @@ async function runReviewAuto(
   flags: RunnerFlags
 ): Promise<void> {
   const args = ["--json", "--log", flags.log];
-  const result = await runToolAndParse("tools/session-review.ts", args, "session-review.ts");
+  const result = await runToolAndParse("cli/session-review.ts", args, "session-review.ts");
 
   if (result.stats) {
     const s = result.stats;
@@ -2535,7 +2535,7 @@ async function proposeImprovement(
     "--target", target,
     "--source", source,
   ];
-  await runToolWithBackend("tools/improvements.ts", impArgs, {
+  await runToolWithBackend("cli/improvements.ts", impArgs, {
     cwd: REPO_ROOT,
     timeout: 30_000,
   });
@@ -2941,7 +2941,7 @@ async function runV2Loop(
     const senseStartMs = Date.now();
     try {
       const scanArgs = ["--agent", flags.agent, "--json", "--env", flags.env];
-      const scanResult = await runToolAndParse("tools/room-temp.ts", scanArgs, "room-temp.ts (SENSE)");
+      const scanResult = await runToolAndParse("cli/room-temp.ts", scanArgs, "room-temp.ts (SENSE)");
 
       const level = scanResult.activity?.level || "unknown";
       const pph = scanResult.activity?.posts_per_hour ?? "?";
@@ -3001,7 +3001,7 @@ async function runV2Loop(
       v2PhaseHeader("act", "engage");
       startSubstage(engageSub);
       const args = ["--agent", flags.agent, "--max", String(agentConfig.engagement.maxReactionsPerSession), "--json", "--env", flags.env];
-      engageResult = await runToolAndParse("tools/engage.ts", args, "engage.ts (ACT/engage)");
+      engageResult = await runToolAndParse("cli/engage.ts", args, "engage.ts (ACT/engage)");
       phaseResult(
         `${engageResult.reactions_cast || 0} reactions (${engageResult.agrees || 0} agree, ${engageResult.disagrees || 0} disagree)`
       );
@@ -3155,7 +3155,7 @@ async function runV2Loop(
         completePhase(state, "confirm" as any, { skipped: true, reason: "no posts" }, sessionsDir);
       } else {
         const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env, "--wait", "15"];
-        const verifyResult = await runToolAndParse("tools/verify.ts", args, "verify.ts (CONFIRM)");
+        const verifyResult = await runToolAndParse("cli/verify.ts", args, "verify.ts (CONFIRM)");
         const summary = verifyResult.summary || {};
         phaseResult(`${summary.verified || 0}/${summary.total || 0} verified`);
         observe("insight", `CONFIRM: ${summary.verified || 0}/${summary.total || 0} verified`, {
@@ -3427,7 +3427,7 @@ async function main(): Promise<void> {
   registerHook("calibrate", "beforeSense", async (ctx: BeforeSenseContext) => {
     info("Extension: calibrate (running audit)...");
     const auditArgs = ["--agent", ctx.flags.agent, "--update", "--log", ctx.flags.log, "--env", ctx.flags.env];
-    const auditResult = await runToolAndParse("tools/audit.ts", auditArgs, "audit.ts (calibrate)");
+    const auditResult = await runToolAndParse("cli/audit.ts", auditArgs, "audit.ts (calibrate)");
     const stats = auditResult.stats || {};
     phaseResult(
       `Calibrate: ${stats.total_entries || 0} entries | avg error: ${stats.avg_prediction_error !== undefined ? stats.avg_prediction_error.toFixed(1) : "N/A"}`

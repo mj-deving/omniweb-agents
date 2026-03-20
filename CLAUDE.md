@@ -12,7 +12,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **SDK:** `@kynesyslabs/demosdk` v2.11.0 (import `/websdk` subpath directly)
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `src/lib/llm-provider.ts` (Claude CLI, OpenAI API, Codex CLI)
-- **Testing:** vitest (`npm test`). 866 tests across 51 suites. All code changes must include tests.
+- **Testing:** vitest (`npm test`). 977 tests across 70 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). Legacy `.env` fallback. `--env` flag overrides.
 
 ## Project Structure
@@ -86,7 +86,7 @@ bash scripts/scheduled-run.sh --dry-run       # show what would run
 
 ### TLSN
 
-- **Status:** MPC-TLS broken server-side — awaiting KyneSys fix. Using `dahr_only`.
+- **Status:** MPC-TLS working. Use `tlsn_preferred` (confirmed 2026-03-20). +38% engagement over DAHR.
 - Playwright bridge only. maxRecvData 16KB. Cost ~12 DEM/attestation.
 
 ### Write Rate Limits & Budget

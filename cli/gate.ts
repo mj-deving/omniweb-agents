@@ -57,6 +57,7 @@ FLAGS:
   --confidence N      Confidence value 0-100 (optional)
   --reply-to TX_HASH  Parent post txHash (checks reply target reactions)
   --scan-cache PATH   Path to session state JSON with scan rawPosts cache
+  --scan-trusted       Skip topic activity check (topic came from scan's topic extraction)
   --env PATH          Path to .env file (default: .env in cwd)
   --pretty            Human-readable formatted output
   --json              Compact single-line JSON output
@@ -123,8 +124,14 @@ function matchTopic(posts: any[], topicLower: string): any[] {
 async function checkTopicActivity(
   topic: string,
   token: string,
-  cachedPosts?: any[]
+  cachedPosts?: any[],
+  scanTrusted?: boolean
 ): Promise<GateItem> {
+  // If topic came from scan's topic extraction, trust it — scan already validated activity
+  if (scanTrusted) {
+    return { number: 1, name: "Topic activity", status: "pass", detail: "Scan-trusted topic (activity validated during scan phase)" };
+  }
+
   const topicLower = topic.toLowerCase();
   const validCache = Array.isArray(cachedPosts) ? cachedPosts : undefined;
 
@@ -678,6 +685,7 @@ async function main(): Promise<void> {
   const confidence = flags["confidence"];
   const replyTo = flags["reply-to"];
   const scanCachePath = flags["scan-cache"];
+  const scanTrusted = flags["scan-trusted"] === "true";
   const mode: GateMode = config.gate.mode === "pioneer" ? "pioneer" : "standard";
 
   // Load cached scan payload/posts if available
@@ -713,7 +721,7 @@ async function main(): Promise<void> {
           [...config.topics.primary, ...config.topics.secondary]
         )
       )
-    : checkTopicActivity(topic, token, cachedPosts);
+    : checkTopicActivity(topic, token, cachedPosts, scanTrusted);
 
   const gate3Promise = mode === "pioneer"
     ? (config.gate.noveltyCheck === false

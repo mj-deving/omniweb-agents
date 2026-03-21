@@ -2232,7 +2232,15 @@ async function runPublishAutonomous(
         }
       } catch (err: any) {
         // Claim-driven attestation is additive — never block publish on failure
-        info(`Claim attestation error (non-fatal): ${String(err?.message || err)}`);
+        // But log as observe() so broken claim mode is detectable in session review
+        const errMsg = String(err?.message || err);
+        info(`Claim attestation error (non-fatal): ${errMsg}`);
+        observe("error", `Claim attestation failed: ${errMsg}`, {
+          phase: "publish",
+          substage: "publish",
+          source: "session-runner.ts:claimAttestation",
+          data: { topic: gp.topic, error: errMsg },
+        });
       }
 
       let attested: AttestResult;

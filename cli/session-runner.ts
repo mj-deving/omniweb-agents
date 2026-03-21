@@ -26,6 +26,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 
 import { runTool, ToolError, type ToolResult } from "../src/lib/subprocess.js";
+import { calculateQualityScore } from "../src/lib/quality-score.js";
 import {
   startSession,
   loadState,
@@ -2124,12 +2125,21 @@ async function runPublishAutonomous(
         throw new Error(`Rejected draft: QUESTION category requires at least one question mark`);
       }
 
+      // Hybrid quality score (parallel logger — data collection, not blocking yet)
+      const qualityResult = calculateQualityScore({
+        text: draft.text,
+        isReply: !!(publishInput as any).parentTxHash,
+        hasAttestation: !!(publishInput as any).attestedData,
+        agentsReferenced: (publishInput as any).agentsReferenced,
+      });
+
       console.log(`\n  LLM draft for "${gp.topic}":`);
       console.log(`    Category: ${draft.category}`);
       console.log(`    Text: ${draft.text.slice(0, 120)}...`);
       console.log(`    Tags: ${draft.tags.join(", ")}`);
       console.log(`    Confidence: ${draft.confidence}`);
       console.log(`    Predicted: ${draft.predicted_reactions} reactions`);
+      console.log(`    Quality: ${qualityResult.score}/${qualityResult.maxScore} (attest=${qualityResult.attestationGate}) [${Object.entries(qualityResult.breakdown).filter(([,v]) => v !== 0).map(([k,v]) => `${k}:${v > 0 ? '+' : ''}${v}`).join(', ')}]`);
 
       // Step 2: Post-generation source matching via extension hooks (Phase 4)
       const matchDecision = await runAfterPublishDraft(extensionRegistry, enabledExtensions, {

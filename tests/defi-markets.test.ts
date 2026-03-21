@@ -361,7 +361,7 @@ describe("DeFi Markets agent YAML files", () => {
     expect(config.topics.primary).toContain("defi");
     expect(config.scan.qualityFloor).toBe(70);
     expect(config.attestation.defaultMode).toBe("dahr_only");
-    expect(config.gate.predictedReactionsThreshold).toBe(10);
+    expect(config.gate.predictedReactionsThreshold).toBe(7);
     expect(config.calibration.offset).toBe(0);
     expect(config.loopExtensions).toBeInstanceOf(Array);
   });

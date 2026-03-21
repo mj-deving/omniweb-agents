@@ -16,8 +16,8 @@ scan:
   topicSearchLimit: 30
 
 attestation:
-  defaultMode: tlsn_preferred
-  highSensitivityRequireTlsn: true
+  defaultMode: dahr_only
+  highSensitivityRequireTlsn: false
   highSensitivityKeywords:
     - exploit
     - zero-day

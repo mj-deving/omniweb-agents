@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-03-17T17:34:30.285Z",
+  "generatedAt": "2026-03-21T04:58:31.492887Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -278,7 +278,7 @@
       "tlsn_safe": false,
       "dahr_safe": true,
       "max_response_kb": 200,
-      "note": "Full protocol history. DAHR only — response far exceeds 16KB.",
+      "note": "Full protocol history. DAHR only \u2014 response far exceeds 16KB.",
       "topicAliases": [],
       "domainTags": [
         "defi",
@@ -1120,7 +1120,7 @@
         }
       },
       "trustTier": "established",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1136,7 +1136,9 @@
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
-        "discoveredBy": "import"
+        "discoveredBy": "import",
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -1153,7 +1155,7 @@
       "tlsn_safe": true,
       "dahr_safe": false,
       "max_response_kb": 10,
-      "note": "Returns Atom XML, not JSON. Parse XML. DAHR expects JSON — use TLSN or convert.",
+      "note": "Returns Atom XML, not JSON. Parse XML. DAHR expects JSON \u2014 use TLSN or convert.",
       "topicAliases": [],
       "domainTags": [
         "science",
@@ -2923,7 +2925,7 @@
       "tlsn_safe": true,
       "dahr_safe": true,
       "max_response_kb": 1,
-      "note": "Returns single number — current block height.",
+      "note": "Returns single number \u2014 current block height.",
       "topicAliases": [],
       "domainTags": [
         "crypto",
@@ -4575,7 +4577,7 @@
         }
       },
       "trustTier": "established",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -4592,7 +4594,9 @@
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
-        "failureReason": "esummary requires specific PMIDs — not available from topic vars at runtime"
+        "failureReason": "esummary requires specific PMIDs \u2014 not available from topic vars at runtime",
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       },
       "adapter": {
         "operation": "esummary"
@@ -8206,9 +8210,9 @@
         "frontier-science"
       ],
       "tlsn_safe": false,
-      "dahr_safe": true,
+      "dahr_safe": false,
       "max_response_kb": 15,
-      "note": "Latest AI papers. XML response — parse for titles/abstracts. DAHR only.",
+      "note": "Latest AI papers. XML response \u2014 parse for titles/abstracts. DAHR only.",
       "topicAliases": [],
       "domainTags": [
         "ai-policy",
@@ -8269,7 +8273,7 @@
         "frontier-science"
       ],
       "tlsn_safe": false,
-      "dahr_safe": true,
+      "dahr_safe": false,
       "max_response_kb": 15,
       "note": "Latest quantum physics papers. DAHR only.",
       "topicAliases": [],
@@ -8532,7 +8536,7 @@
       "tlsn_safe": true,
       "dahr_safe": true,
       "max_response_kb": 8,
-      "note": "PyPI recent updates — detect new tooling trends. RSS/XML.",
+      "note": "PyPI recent updates \u2014 detect new tooling trends. RSS/XML.",
       "topicAliases": [],
       "domainTags": [
         "emerging-tech"
@@ -8559,7 +8563,7 @@
         }
       },
       "trustTier": "established",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -8575,7 +8579,9 @@
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
-        "discoveredBy": "import"
+        "discoveredBy": "import",
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -8984,7 +8990,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9000,7 +9006,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:24.277Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:24.277Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9009,7 +9016,11 @@
       "provider": "binance",
       "url": "https://api.binance.com/api/v3/ticker/24hr?symbol=USDCUSDT",
       "urlPattern": "https://api.binance.com/api/v3/ticker/24hr",
-      "topics": [],
+      "topics": [
+        "crypto",
+        "trading",
+        "stablecoins"
+      ],
       "domainTags": [],
       "tlsn_safe": true,
       "dahr_safe": true,
@@ -9033,9 +9044,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -9049,7 +9060,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:24.816Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:24.816Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -9082,7 +9094,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9098,7 +9110,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:25.450Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:25.450Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9131,7 +9144,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9147,7 +9160,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:25.940Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:25.940Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9180,7 +9194,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9196,7 +9210,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:26.959Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:26.960Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9229,7 +9244,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9245,7 +9260,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:27.454Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:27.454Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9278,7 +9294,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9294,7 +9310,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:27.653Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:27.653Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9327,7 +9344,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9343,7 +9360,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:25:27.828Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:25:27.828Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9376,7 +9394,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9392,7 +9410,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:45.321Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:45.321Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9425,7 +9444,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9441,7 +9460,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:45.497Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:45.497Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9477,7 +9497,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9493,7 +9513,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:46.154Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:46.155Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9526,7 +9547,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9542,7 +9563,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:46.330Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:46.330Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9576,7 +9598,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9592,7 +9614,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:47.151Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:47.151Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9626,7 +9649,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9642,7 +9665,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:55.449Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:55.449Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9651,7 +9675,11 @@
       "provider": "geckoterminal",
       "url": "https://api.geckoterminal.com/api/v2/networks/eth/trending_pools?page=1",
       "urlPattern": "https://api.geckoterminal.com/api/v2/networks/eth/trending_pools",
-      "topics": [],
+      "topics": [
+        "defi",
+        "trading",
+        "ethereum"
+      ],
       "domainTags": [],
       "tlsn_safe": false,
       "dahr_safe": true,
@@ -9675,9 +9703,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -9691,7 +9719,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:26:55.896Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:26:55.896Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -9724,7 +9753,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9740,7 +9769,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:04.191Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:04.191Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9773,7 +9803,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9789,7 +9819,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:06.650Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:06.650Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9825,7 +9856,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9841,7 +9872,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:07.457Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:07.457Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9850,7 +9882,11 @@
       "provider": "frankfurter",
       "url": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR,GBP,JPY,CHF,CAD,AUD",
       "urlPattern": "https://api.frankfurter.dev/v1/latest",
-      "topics": [],
+      "topics": [
+        "economics",
+        "forex",
+        "currencies"
+      ],
       "domainTags": [],
       "tlsn_safe": true,
       "dahr_safe": true,
@@ -9874,9 +9910,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -9890,7 +9926,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:11.195Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:11.195Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -9923,7 +9960,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9939,7 +9976,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:11.987Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:11.987Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9972,7 +10010,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -9988,7 +10026,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:14.534Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:14.534Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -9997,7 +10036,10 @@
       "provider": "espn",
       "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=8",
       "urlPattern": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news",
-      "topics": [],
+      "topics": [
+        "sports",
+        "nba"
+      ],
       "domainTags": [],
       "tlsn_safe": false,
       "dahr_safe": true,
@@ -10021,9 +10063,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -10037,7 +10079,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:15.500Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:15.500Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -10070,7 +10113,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10086,7 +10129,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:16.100Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:16.100Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10119,7 +10163,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10135,7 +10179,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:16.833Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:16.833Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10168,7 +10213,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10184,7 +10229,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:18.573Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:18.573Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10217,7 +10263,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10233,7 +10279,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:18.929Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:18.929Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10266,7 +10313,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10282,7 +10329,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:19.108Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:19.108Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10315,7 +10363,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10331,7 +10379,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:19.364Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:19.364Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10364,7 +10413,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10380,7 +10429,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:19.609Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:19.609Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10413,7 +10463,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10429,7 +10479,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:19.773Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:19.773Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10462,7 +10513,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10478,7 +10529,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:20.151Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:20.151Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10487,7 +10539,11 @@
       "provider": "moltbook",
       "url": "https://moltbook.com/api/v1/posts?sort=hot&limit=15",
       "urlPattern": "https://moltbook.com/api/v1/posts",
-      "topics": [],
+      "topics": [
+        "social",
+        "web3",
+        "trending"
+      ],
       "domainTags": [],
       "tlsn_safe": false,
       "dahr_safe": true,
@@ -10511,9 +10567,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -10527,7 +10583,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:21.851Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:21.851Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -10560,7 +10617,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10576,7 +10633,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:22.131Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:22.131Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10609,7 +10667,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10625,7 +10683,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:22.418Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:22.418Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10658,7 +10717,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10674,7 +10733,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:23.083Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:23.083Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10707,7 +10767,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10723,7 +10783,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:23.398Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:23.398Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10756,7 +10817,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10772,7 +10833,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:24.988Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:24.988Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10805,7 +10867,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10821,7 +10883,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:26.640Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:26.640Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10854,7 +10917,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10870,7 +10933,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:28.086Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:28.086Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10903,7 +10967,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10919,7 +10983,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:29.447Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:29.447Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -10952,7 +11017,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -10968,7 +11033,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:32.372Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:32.372Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11001,7 +11067,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11017,7 +11083,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:32.539Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:32.539Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11050,7 +11117,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11066,7 +11133,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:33.053Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:33.053Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11099,7 +11167,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11115,7 +11183,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:34.574Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:34.574Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11148,7 +11217,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11164,7 +11233,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:36.018Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:36.018Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11197,7 +11267,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11213,7 +11283,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:37.798Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:37.798Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11222,7 +11293,11 @@
       "provider": "firebaseio",
       "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
       "urlPattern": "https://hacker-news.firebaseio.com/v0/topstories.json",
-      "topics": [],
+      "topics": [
+        "tech",
+        "hacker-news",
+        "trending"
+      ],
       "domainTags": [],
       "tlsn_safe": true,
       "dahr_safe": true,
@@ -11246,9 +11321,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -11262,7 +11337,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:38.728Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:38.728Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -11295,7 +11371,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11311,7 +11387,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:38.849Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:38.849Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11344,7 +11421,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11360,7 +11437,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:41.500Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:41.500Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11393,7 +11471,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11409,7 +11487,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:41.810Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:41.810Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11442,7 +11521,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11458,7 +11537,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:42.475Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:42.475Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11491,7 +11571,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11507,7 +11587,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:43.405Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:43.405Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11540,7 +11621,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11556,7 +11637,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:43.631Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:43.631Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11589,7 +11671,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11605,7 +11687,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:44.774Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:44.774Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11638,7 +11721,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11654,7 +11737,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:46.148Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:46.148Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11663,7 +11747,10 @@
       "provider": "gdeltproject",
       "url": "https://api.gdeltproject.org/api/v2/doc/doc?query=court+ruling+supreme+court+legal+decision&mode=ToneChart&format=json",
       "urlPattern": "https://api.gdeltproject.org/api/v2/doc/doc?query=court+ruling+supreme+court+legal+decision",
-      "topics": [],
+      "topics": [
+        "geopolitics",
+        "global-events"
+      ],
       "domainTags": [],
       "tlsn_safe": false,
       "dahr_safe": true,
@@ -11687,9 +11774,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -11703,7 +11790,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:49.603Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:49.603Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -11736,7 +11824,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11752,7 +11840,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:50.178Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:50.178Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11785,7 +11874,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11801,7 +11890,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:50.568Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:50.568Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11834,7 +11924,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11850,7 +11940,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:51.408Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:51.408Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11883,7 +11974,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11899,7 +11990,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:51.587Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:51.587Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11932,7 +12024,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -11948,7 +12040,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:53.360Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:53.360Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -11957,7 +12050,11 @@
       "provider": "thespacedevs",
       "url": "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=5&format=json",
       "urlPattern": "https://ll.thespacedevs.com/2.2.0/launch/upcoming/",
-      "topics": [],
+      "topics": [
+        "space",
+        "science",
+        "launches"
+      ],
       "domainTags": [],
       "tlsn_safe": false,
       "dahr_safe": true,
@@ -11981,9 +12078,9 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "active",
       "rating": {
-        "overall": 0,
+        "overall": 50,
         "uptime": 0,
         "relevance": 0,
         "freshness": 0,
@@ -11997,7 +12094,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:54.898Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:54.898Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "promotedAt": "2026-03-21T04:58:31.492887Z"
       }
     },
     {
@@ -12030,7 +12128,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12046,7 +12144,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:27:55.144Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:27:55.144Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12079,7 +12178,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12095,7 +12194,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:33.732Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:33.733Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12128,7 +12228,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12144,7 +12244,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:34.024Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:34.024Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12177,7 +12278,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12193,7 +12294,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:34.269Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:34.269Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12226,7 +12328,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12242,7 +12344,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:34.819Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:34.819Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12275,7 +12378,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12291,7 +12394,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:34.989Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:34.989Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12324,7 +12428,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12340,7 +12444,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:35.194Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:35.194Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12373,7 +12478,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12389,7 +12494,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:35.851Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:35.852Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     },
     {
@@ -12422,7 +12528,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 0,
         "uptime": 0,
@@ -12438,7 +12544,8 @@
       "lifecycle": {
         "discoveredAt": "2026-03-20T19:39:36.529Z",
         "discoveredBy": "feed-mine",
-        "statusChangedAt": "2026-03-20T19:39:36.529Z"
+        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
+        "archivedReason": "curation-2026-03-21"
       }
     }
   ]

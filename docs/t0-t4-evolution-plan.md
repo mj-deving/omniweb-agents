@@ -91,17 +91,21 @@ Grow from 66 → 200+ active sources across 12 domains so that every agent topic
 #### Phase 1: New YAML Specs for Unrepresented Providers
 Create YAML spec files for providers that have no spec yet but will have catalog entries:
 
-| New Spec | Operations | claimTypes | Auth |
-|----------|-----------|------------|------|
-| `l2beat.yaml` | tvl, scaling-summary | [metric] | none |
-| `owlracle.yaml` | gas-price | [metric] | API key (free tier) |
-| `coinbase.yaml` | spot-price | [price] | none |
-| `opensea.yaml` | collection-stats | [metric] | API key (free) |
-| `magiceden.yaml` | collection-stats | [metric] | none |
-| `snapshot.yaml` | proposals | [event] | none (GraphQL) |
-| `tally.yaml` | dao-stats | [metric] | none (GraphQL) |
-| `solscan.yaml` | token-info | [metric] | none |
-| `deribit.yaml` | ticker | [price] | none |
+| New Spec | Operations | claimTypes | Auth | Notes |
+|----------|-----------|------------|------|-------|
+| `coinbase.yaml` | spot-price | [price] | none | ~200B, highly reliable |
+| `owlracle.yaml` | gas-price | [metric] | API key (free tier) | Multi-chain gas |
+| `deribit.yaml` | ticker | [price] | none | Derivatives/options |
+| `opensea.yaml` | collection-stats | [metric] | API key (free) | NFT floor/volume |
+| `magiceden.yaml` | collection-stats | [metric] | none | Solana NFTs |
+| `snapshot.yaml` | proposals | [event] | none (GraphQL POST) | TLSN POST needs testing |
+| `blockchair.yaml` | stats | [metric] | none | Multi-chain on-chain stats |
+| `coinalyze.yaml` | open-interest, funding-rate | [metric] | API key (free) | Derivatives analytics |
+
+**Removed from original plan:**
+- ~~`l2beat.yaml`~~ — no public REST API (use DefiLlama `/v2/chains`)
+- ~~`tally.yaml`~~ — GraphQL + key, low priority
+- ~~`solscan.yaml`~~ — Pro API only (paid)
 
 **Effort:** M (one session per 3-4 specs, ~3 sessions total)
 
@@ -533,3 +537,105 @@ T4 (feed history) ── independent, has hard blocker (spike first)
 | Domain coverage | 8 domains | 12+ domains |
 | Reputation providers | 0 | 3 |
 | Feed history access | ~20k posts | 50k+ (or documented blocker) |
+
+---
+
+## Appendix A: Verified Free API Catalog (Research Results)
+
+Research conducted via parallel Claude + Gemini agents (2026-03-21). URLs verified, response sizes measured. Organized into implementation waves.
+
+### Wave 1: No Auth, Tiny Responses (Priority — Session 2)
+
+| API | Endpoint | Auth | ~Size | TLSN | claimType |
+|-----|----------|------|-------|------|-----------|
+| Binance Spot | `GET api.binance.com/api/v3/ticker/price?symbol=BTCUSDT` | None | ~100B | YES | price |
+| Binance 24h | `GET api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT` | None | ~600B | YES | price |
+| Binance Futures | `GET fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT` | None | ~200B | YES | metric |
+| Binance OI | `GET fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT` | None | ~100B | YES | metric |
+| Binance Funding | `GET fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1` | None | ~150B | YES | metric |
+| Kraken Ticker | `GET api.kraken.com/0/public/Ticker?pair=XBTUSD` | None | ~500B | YES | price |
+| Coinbase Spot | `GET api.coinbase.com/v2/prices/BTC-USD/spot` | None | ~200B | YES | price |
+| DefiLlama TVL | `GET api.llama.fi/tvl/{protocol}` | None | ~20B | YES | metric |
+| DefiLlama Price | `GET coins.llama.fi/prices/current/{chain}:{addr}` | None | ~200B | YES | price |
+| Mempool Fees | `GET mempool.space/api/v1/fees/recommended` | None | ~100B | YES | metric |
+| Blockchain.com Stats | `GET api.blockchain.info/stats` | None | ~2KB | YES | metric |
+| Blockchain.com Ticker | `GET blockchain.info/ticker` | None | ~200B | YES | price |
+| Treasury Debt | `GET api.fiscaldata.treasury.gov/.../debt_to_penny?sort=-record_date&page[size]=1` | None | ~1KB | YES | metric |
+| Deribit Ticker | `GET www.deribit.com/api/v2/public/ticker?instrument_name=BTC-PERPETUAL` | None | ~1KB | YES | price |
+| Blockchair BTC | `GET api.blockchair.com/bitcoin/stats` | None | ~3KB | YES | metric |
+
+### Wave 2: Free API Key, Easy Signup (Session 3-5)
+
+| API | Endpoint | Auth | ~Size | TLSN | claimType |
+|-----|----------|------|-------|------|-----------|
+| Etherscan Gas | `GET api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=KEY` | Key | ~300B | YES | metric |
+| Etherscan Price | `GET api.etherscan.io/api?module=stats&action=ethprice&apikey=KEY` | Key | ~200B | YES | price |
+| Etherscan Nodes | `GET api.etherscan.io/api?module=stats&action=nodecount&apikey=KEY` | Key | ~200B | YES | metric |
+| FRED Series | `GET api.stlouisfed.org/fred/series/observations?series_id=GDP&api_key=KEY&limit=1` | Key | ~2KB | YES | metric |
+| CoinMarketCap | `GET pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC` | Key | ~1KB | YES | price |
+| Owlracle Gas | `GET api.owlracle.info/v4/eth/gas?apikey=KEY` | Key | ~500B | YES | metric |
+| OpenSea Stats | `GET api.opensea.io/api/v2/collection/{slug}/stats` | Key | ~1KB | YES | metric |
+| Coinalyze OI | `GET api.coinalyze.net/v1/open-interest?symbols=BTCUSD_PERP.A` | Key | ~500B | YES | metric |
+| Gitcoin Passport | `GET api.passport.xyz/v2/stamps/{scorer}/score/{addr}` | Key | ~2KB | YES | metric |
+
+### Wave 3: Specialized Sources (Session 5-7)
+
+| API | Endpoint | Auth | ~Size | TLSN | claimType |
+|-----|----------|------|-------|------|-----------|
+| DEXScreener Pair | `GET api.dexscreener.com/latest/dex/pairs/{chain}/{addr}` | None | ~3.5KB | YES | price |
+| GeckoTerminal | `GET api.geckoterminal.com/api/v2/networks/eth/tokens/{addr}` | None | ~1.2KB | YES | price |
+| Jupiter Quote | `GET quote-api.jup.ag/v6/quote?inputMint=...&outputMint=...&amount=...` | None | ~2KB | YES | price |
+| Magic Eden | `GET api-mainnet.magiceden.dev/v2/collections/{symbol}/stats` | None | ~500B | YES | metric |
+| DefiLlama Chains | `GET api.llama.fi/v2/chains` | None | ~15KB | BORDERLINE | metric |
+| DefiLlama Stablecoins | `GET stablecoins.llama.fi/stablecoinchains` | None | ~5KB | YES | metric |
+| CoinGecko Global | `GET api.coingecko.com/api/v3/global` | None | ~2KB | YES | metric |
+| CryptoCompare Price | `GET min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD` | None | ~50B | YES | price |
+
+### Wave 4: Macro Expansion (Session 7-9)
+
+| API | Endpoint | Auth | ~Size | TLSN | claimType |
+|-----|----------|------|-------|------|-----------|
+| BLS CPI | `GET api.bls.gov/publicAPI/v1/timeseries/data/CUUR0000SA0` | None | ~3KB | YES | metric |
+| Treasury Rates | `GET api.fiscaldata.treasury.gov/.../avg_interest_rates?page[size]=5` | None | ~2KB | YES | metric |
+| World Bank GDP | `GET api.worldbank.org/v2/country/US/indicator/NY.GDP.MKTP.CD?format=json&per_page=1` | None | ~1KB | YES | metric |
+| ECB EUR/USD | `GET data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?lastNObservations=1&format=jsondata` | None | ~4KB | YES | metric |
+| ExchangeRate | `GET open.er-api.com/v6/latest/USD` | None | ~2KB | YES | metric |
+| Solana RPC | `POST api.mainnet-beta.solana.com` (getEpochInfo) | None | ~300B | CONDITIONAL | metric |
+
+### Reputation APIs (T3)
+
+| API | Endpoint | Auth | ~Size | Notes |
+|-----|----------|------|-------|-------|
+| Ethos Network | `GET api.ethos.network/v1/score/{target}` | Header only (`X-Ethos-Client`) | ~1-3KB | Most accessible — no signup |
+| Gitcoin Passport | `GET api.passport.xyz/v2/stamps/{scorer}/score/{addr}` | Free API key | ~2KB | Requires free signup |
+| Nomis | `GET api.nomis.cc/api/v1/{chain}/wallet/{addr}/score` | Unclear (possibly paid) | ~2KB | Spike needed |
+
+### Research Corrections to Original Plan
+
+| Original Assumption | Reality | Impact |
+|---------------------|---------|--------|
+| L2Beat has public API | No public REST API | Remove from new specs; use DefiLlama `/v2/chains` |
+| DeepDAO free tier | Paid only ($25+/mo) | Remove from governance targets |
+| Blur has API | No public API | Remove; use CoinGecko NFT tickers instead |
+| Ultrasound.money API | No JSON API | Remove; use Etherscan gas oracle |
+| L2fees.info API | No JSON API | Remove; use CryptoStats L2 fees |
+| Ethernodes API | No JSON API | Remove; use Etherscan node count |
+| Solana Beach API | Undocumented/key required | Use Solana RPC directly |
+| CryptoCompare free | Heavily restricted since 2024 | Deprioritize; still usable for basic price |
+
+### New APIs Discovered (Not in Original Plan)
+
+| API | Domain | Why Valuable |
+|-----|--------|-------------|
+| Gemini | Crypto prices | No auth, ~950B response |
+| OKX | Crypto prices | No auth, ~500B response |
+| KuCoin | Crypto prices | No auth, ~400B response |
+| CoinLore | Crypto prices | No auth, ~570B response |
+| Coinpaprika | Crypto prices | Free tier, ~1.3KB, rich data |
+| GeckoTerminal | DEX/trading | No auth, ~1.2KB, DEX analytics |
+| DIA | Stablecoins | No auth, ~500B, token prices |
+| Blockchair | On-chain | No auth, multi-chain stats, ~3KB |
+| Jupiter | DEX/Solana | No auth, ~2KB, swap quotes |
+| Reservoir | NFTs | Free key, ~3KB, collection data |
+| CoinDesk BPI | Prices | No auth, ~500B, simple BTC price |
+| ExchangeRate-API | Macro | No auth, ~2KB, forex rates |

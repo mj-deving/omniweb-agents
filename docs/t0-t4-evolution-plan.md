@@ -746,16 +746,27 @@ Research conducted via parallel Claude + Gemini agents (2026-03-21). URLs verifi
 - **Codex findings:** Mempool hashrate used legacy parse format (fixed to standard). Interest-rate macro entry had wrong World Bank indicator (removed). Catalog cleaned: 238 → 176 (invalid archived entries purged by validation).
 - **Tests:** 1150 → 1168 (+18: 10 macro entity + 3 new ops + 5 macro integration)
 
-### Current State After Session 5
-| Metric | Before | After S1 | After S2 | After S3 | After S4 | After S5 |
-|--------|--------|----------|----------|----------|----------|----------|
-| Total sources | 209 | 211 | 217 | 233 | 238→167 | 176 |
-| Active sources | 66 | 78 | 80 | 80 | 80 | **98** |
-| Quarantined | 0 | 0 | 4 | 20 | 25→5 | **4** |
-| Specs total | 26 | 26 | 26 | 26 | **30** | 30 |
-| Specs with claimTypes | 8/26 | 11/26 | 11/26 | **15/26** | **19/30** | 19/30 |
-| Macro entities | 0 | 0 | 0 | 0 | 0 | **15** |
-| Tests | 1139 | 1145 | 1145 | 1146 | 1150 | **1168** |
+### Session 6 (2026-03-21) ✅
+**Commit:** `a295d6a`
+- **Auth fix:** `buildSurgicalUrl` returns null for auth-required specs (query-param-env/header-env). 3 new auth guard tests. Prevents API key leakage in on-chain attestation URLs.
+- **T1-new:** 6 new YAML specs: geckoterminal (DEX prices), bls (CPI/unemployment), exchangerate-api (forex), magiceden (NFT stats), jupiter (Solana DEX), binance-futures (fapi host, premium-index + open-interest).
+- **T1-remaining:** npm.yaml (metric, $.downloads) + ipinfo.yaml (event, $.ip) got claimTypes.
+- **T0 Batch 5:** 45 new catalog entries across 12 providers. 37 promoted quarantined→active, 9 archived (dead APIs: Jupiter USDT, some GeckoTerminal/MagicEden endpoints).
+- **T3 Ethos:** EthosPlugin shipped — FrameworkPlugin with DataProvider, 24h TTL cache (bounded to 500), timer leak fixed via finally block. 10 unit tests.
+- **/simplify fixes:** Timer leak (clearTimeout in finally), bounded cache (MAX_CACHE_SIZE=500 with LRU eviction).
+- **Tests:** 1168 → 1191 (+23: 13 surgical-url + 10 Ethos plugin)
+
+### Current State After Session 6
+| Metric | Before | After S1 | After S2 | After S3 | After S4 | After S5 | After S6 |
+|--------|--------|----------|----------|----------|----------|----------|----------|
+| Total sources | 209 | 211 | 217 | 233 | 238→167 | 176 | **221** |
+| Active sources | 66 | 78 | 80 | 80 | 80 | **98** | **135** |
+| Quarantined | 0 | 0 | 4 | 20 | 25→5 | **4** | **3** |
+| Specs total | 26 | 26 | 26 | 26 | **30** | 30 | **36** |
+| Specs with claimTypes | 8/26 | 11/26 | 11/26 | **15/26** | **19/30** | 19/30 | **25/36** |
+| Macro entities | 0 | 0 | 0 | 0 | 0 | **15** | 15 |
+| Reputation plugins | 0 | 0 | 0 | 0 | 0 | 0 | **1 (Ethos)** |
+| Tests | 1139 | 1145 | 1145 | 1146 | 1150 | **1168** | **1191** |
 
 ### E2E Attestation Test Results (post-Session 5)
 **Commit:** `12fe1d5`

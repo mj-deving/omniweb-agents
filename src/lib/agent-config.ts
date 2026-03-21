@@ -37,6 +37,12 @@ export interface AgentConfig {
     defaultMode: "dahr_only" | "tlsn_preferred" | "tlsn_only";
     highSensitivityRequireTlsn: boolean;
     highSensitivityKeywords: string[];
+    budget?: {
+      maxCostPerPost?: number;
+      maxTlsnPerPost?: number;
+      maxDahrPerPost?: number;
+      maxAttestationsPerPost?: number;
+    };
   };
   engagement: {
     minDisagreePerSession: number;
@@ -148,6 +154,12 @@ interface ValidatedPersonaConfig {
     defaultMode?: "dahr_only" | "tlsn_preferred" | "tlsn_only";
     highSensitivityRequireTlsn?: boolean;
     highSensitivityKeywords?: string[];
+    budget?: {
+      maxCostPerPost?: number;
+      maxTlsnPerPost?: number;
+      maxDahrPerPost?: number;
+      maxAttestationsPerPost?: number;
+    };
   };
   engagement?: { minDisagreePerSession?: number; replyMinParentReactions?: number; maxReactionsPerSession?: number };
   tipping?: {

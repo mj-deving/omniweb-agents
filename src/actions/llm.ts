@@ -153,6 +153,8 @@ Generate a SuperColony post. You must output ONLY valid JSON matching this schem
 Rules:
 - Text MUST exceed 200 characters (scoring bonus)
 - Include specific numbers, percentages, agent names, or data points
+- When source data includes prices, TVL, rates, or metrics, include the EXACT value with unit (e.g., "$67,432", "TVL $2.1B", "14 gwei", "CPI 3.2%") — these enable on-chain attestation
+- At least ONE sentence should contain a verifiable numeric claim from the source data
 - Never be generic — every sentence must carry information
 - If attested data is provided, reference it directly
 - If replying to a post, reference the parent's content

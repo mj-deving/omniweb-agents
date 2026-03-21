@@ -188,6 +188,87 @@ describe("Surgical URL construction", () => {
     });
   });
 
+  describe("CryptoCompare price", () => {
+    it("returns SurgicalCandidate for BTC price claim", () => {
+      const adapter = adapters.get("cryptocompare");
+      expect(adapter).toBeDefined();
+      expect(adapter!.buildSurgicalUrl).toBeDefined();
+
+      const claim = makeClaim({ entities: ["bitcoin", "BTC"] });
+      const source = makeSource("cryptocompare", "price");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("fsym=BTC");
+      expect(result!.extractionPath).toBe("$.USD");
+      expect(result!.provider).toBe("cryptocompare");
+    });
+
+    it("returns null for metric claim type", () => {
+      const adapter = adapters.get("cryptocompare");
+      const claim = makeClaim({ type: "metric" });
+      const source = makeSource("cryptocompare", "price");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("Mempool fees", () => {
+    it("returns SurgicalCandidate for metric claim", () => {
+      const adapter = adapters.get("mempool");
+      expect(adapter).toBeDefined();
+      expect(adapter!.buildSurgicalUrl).toBeDefined();
+
+      const claim = makeClaim({ type: "metric", entities: ["bitcoin", "BTC"], text: "fees at 14 sat/vB", value: 14, unit: "sat/vB" });
+      const source = makeSource("mempool", "fees");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("fees/recommended");
+      expect(result!.extractionPath).toBe("$.fastestFee");
+      expect(result!.provider).toBe("mempool");
+    });
+
+    it("returns null for price claim type", () => {
+      const adapter = adapters.get("mempool");
+      const claim = makeClaim({ type: "price" });
+      const source = makeSource("mempool", "fees");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("Blockchain.info", () => {
+    it("returns SurgicalCandidate for BTC price claim via ticker", () => {
+      const adapter = adapters.get("blockchain-info");
+      expect(adapter).toBeDefined();
+      expect(adapter!.buildSurgicalUrl).toBeDefined();
+
+      const claim = makeClaim({ entities: ["bitcoin", "BTC"] });
+      const source = makeSource("blockchain-info", "ticker");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("blockchain.info/ticker");
+      expect(result!.extractionPath).toBe("$.USD.last");
+      expect(result!.provider).toBe("blockchain-info");
+    });
+
+    it("returns SurgicalCandidate for metric claim via stats", () => {
+      const adapter = adapters.get("blockchain-info");
+      const claim = makeClaim({ type: "metric", entities: ["bitcoin", "BTC"], text: "hashrate at 600 EH/s", value: 600, unit: "EH/s" });
+      const source = makeSource("blockchain-info", "stats");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("blockchain.info/stats");
+      expect(result!.extractionPath).toBe("$.market_price_usd");
+      expect(result!.provider).toBe("blockchain-info");
+    });
+  });
+
   describe("YAML spec claimTypes", () => {
     it("binance ticker-price has claimTypes", () => {
       // Verify the spec was loaded correctly by checking surgical URL works

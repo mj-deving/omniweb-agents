@@ -23,6 +23,8 @@ operations:
       sourceAdapterOperation: [ticker]
       urlPatterns: ["/Ticker"]
       default: true
+    claimTypes: [price]
+    extractionPath: "$.result.{pair}.c[0]"
     request:
       method: GET
       urlTemplate: "https://api.kraken.com/0/public/Ticker"

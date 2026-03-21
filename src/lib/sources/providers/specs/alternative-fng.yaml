@@ -24,6 +24,8 @@ operations:
       sourceAdapterOperation: [fear-greed, fng]
       urlPatterns: ["/fng"]
       default: true
+    claimTypes: [metric]
+    extractionPath: "$.data[0].value"
     request:
       method: GET
       urlTemplate: "https://api.alternative.me/fng/?limit=1"

@@ -24,6 +24,8 @@ operations:
       sourceAdapterOperation: [search, pair]
       urlPatterns: ["/dex/search"]
       default: true
+    claimTypes: [price]
+    extractionPath: "$.pairs[0].priceUsd"
     request:
       method: GET
       urlTemplate: "https://api.dexscreener.com/latest/dex/search?q={query}"

@@ -203,6 +203,24 @@ describe("buildAttestationPlan", () => {
     expect(result!.unattested[0].type).toBe("metric");
   });
 
+  it("sets plannedMethod on selected candidates", () => {
+    const adapter: ProviderAdapter = {
+      ...makeAdapter("binance", null),
+      buildSurgicalUrl: (claim) => makeCandidate({ claim }),
+    };
+
+    const result = buildAttestationPlan(
+      [makeClaim({ type: "price" })],
+      makeSourceView([makeSource("binance")]),
+      undefined,
+      new Map([["binance", adapter]]),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.primary.plannedMethod).toBeDefined();
+    expect(["TLSN", "DAHR"]).toContain(result!.primary.plannedMethod);
+  });
+
   it("skips trend and quote claims (no priority defined)", () => {
     const result = buildAttestationPlan(
       [makeClaim({ type: "trend" }), makeClaim({ type: "quote" })],
@@ -278,6 +296,21 @@ describe("verifyAttestedValues", () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].verified).toBe(true);
+  });
+
+  it("missing data fails verification", () => {
+    const candidate = makeCandidate({
+      claim: makeClaim({ type: "price", value: 64231 }),
+    });
+
+    const results = verifyAttestedValues(
+      [{ url: candidate.url, data: undefined }],
+      [candidate],
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].verified).toBe(false);
+    expect(results[0].failureReason).toContain("no data");
   });
 
   it("missing extractionPath passes gracefully", () => {

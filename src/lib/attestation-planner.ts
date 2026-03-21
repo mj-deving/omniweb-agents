@@ -171,16 +171,23 @@ export function buildAttestationPlan(
 
     // Determine method (TLSN if small enough and under budget, else DAHR)
     const canTlsn = candidate.estimatedSizeBytes <= TLSN_MAX_SIZE_BYTES && tlsnCount < budget.maxTlsnPerPost;
-    const cost = canTlsn ? TLSN_COST : DAHR_COST;
+    let method: "TLSN" | "DAHR" = canTlsn ? "TLSN" : "DAHR";
+    let cost = canTlsn ? TLSN_COST : DAHR_COST;
+
+    // If chosen method exceeds budget, try downgrading TLSN→DAHR
+    if (totalCost + cost > budget.maxCostPerPost && method === "TLSN") {
+      method = "DAHR";
+      cost = DAHR_COST;
+    }
 
     if (totalCost + cost > budget.maxCostPerPost) continue;
-    if (!canTlsn && dahrCount >= budget.maxDahrPerPost) continue;
+    if (method === "DAHR" && dahrCount >= budget.maxDahrPerPost) continue;
 
     totalCost += cost;
-    if (canTlsn) tlsnCount++;
+    if (method === "TLSN") tlsnCount++;
     else dahrCount++;
 
-    selected.push(candidate);
+    selected.push({ ...candidate, plannedMethod: method });
   }
 
   if (selected.length === 0) return null;
@@ -232,13 +239,25 @@ export function verifyAttestedValues(
       continue;
     }
 
-    // Extract value from attested data via extractionPath
-    if (!candidate.extractionPath || !attestResult.data) {
+    // Missing data = attestation returned nothing useful → fail
+    if (!attestResult.data) {
       results.push({
         claim: candidate.claim,
         attestedValue: undefined,
         expectedValue: candidate.claim.value,
-        verified: true, // Graceful: no path = can't verify = pass
+        verified: false,
+        failureReason: "Attestation returned no data",
+      });
+      continue;
+    }
+
+    // No extractionPath = planner config gap, can't verify → pass gracefully
+    if (!candidate.extractionPath) {
+      results.push({
+        claim: candidate.claim,
+        attestedValue: undefined,
+        expectedValue: candidate.claim.value,
+        verified: true,
       });
       continue;
     }

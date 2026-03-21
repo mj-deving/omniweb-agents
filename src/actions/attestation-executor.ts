@@ -58,8 +58,10 @@ export async function executeAttestationPlan(
       }
     }
 
-    // Determine method: TLSN if small enough, else DAHR
-    const useTlsn = candidate.estimatedSizeBytes <= TLSN_MAX_SIZE_BYTES;
+    // Use planner's method choice (respects budget limits), fall back to size-based
+    const useTlsn = candidate.plannedMethod
+      ? candidate.plannedMethod === "TLSN"
+      : candidate.estimatedSizeBytes <= TLSN_MAX_SIZE_BYTES;
 
     try {
       let result: AttestResult;

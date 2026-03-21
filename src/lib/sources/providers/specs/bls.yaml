@@ -1,0 +1,85 @@
+schemaVersion: 1
+
+provider:
+  name: bls
+  displayName: BLS
+  matches:
+    providers: [bls]
+    hosts: [api.bls.gov]
+  domains: [economics, macro, labor, employment]
+  rateLimit:
+    bucket: bls
+    maxPerMinute: 10
+    maxPerDay: 25
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  timeseries:
+    when:
+      sourceAdapterOperation: [timeseries, cpi, unemployment]
+      urlPatterns: ["/publicAPI"]
+      default: true
+    claimTypes: [metric]
+    extractionPath: "$.Results.series[0].data[0].value"
+    request:
+      method: GET
+      urlTemplate: "https://api.bls.gov/publicAPI/v1/timeseries/data/{series_id}"
+      estimatedSizeKb:
+        TLSN: 3
+        DAHR: 3
+      matchHints:
+        - "{series_id}"
+        - "labor"
+        - "employment"
+        - "cpi"
+    variables:
+      series_id:
+        sources: [vars.series_id, vars.series, topic]
+        required: true
+        transforms:
+          - trim
+          - uppercase
+          - map:
+              cpi: CUUR0000SA0
+              unemployment: LNS14000000
+              employment: CES0000000001
+              wages: CES0500000003
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.Results.series[0].data[*]"
+      fields:
+        id:
+          template: "bls-{series_id}-{year}-{period}"
+          required: true
+        title:
+          template: "BLS {series_id} {year} {period}"
+        summary:
+          template: "{series_id}: {value}"
+        bodyText:
+          template: "BLS {series_id} for {year} {period}: {value}"
+        topics:
+          template: "economics,labor,{series_id}"
+        metrics:
+          value:
+            jsonPath: "$.value"
+          year:
+            jsonPath: "$.year"
+          period:
+            jsonPath: "$.period"
+        raw:
+          mode: item

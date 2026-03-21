@@ -1,0 +1,77 @@
+schemaVersion: 1
+
+provider:
+  name: geckoterminal
+  displayName: GeckoTerminal
+  matches:
+    providers: [geckoterminal]
+    hosts: [api.geckoterminal.com]
+  domains: [crypto, dex, trading]
+  rateLimit:
+    bucket: geckoterminal
+    maxPerMinute: 30
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  token-price:
+    when:
+      sourceAdapterOperation: [token-price]
+      urlPatterns: ["/networks"]
+      default: true
+    claimTypes: [price]
+    extractionPath: "$.data.attributes.price_usd"
+    request:
+      method: GET
+      urlTemplate: "https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{address}"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "{network}"
+        - "{address}"
+        - "dex"
+    variables:
+      network:
+        sources: [vars.network]
+        default: "eth"
+      address:
+        sources: [vars.address, "tokens[0]"]
+        required: true
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.data"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          template: "{id} token price"
+        summary:
+          template: "Price: ${attributes.price_usd}"
+        bodyText:
+          template: "GeckoTerminal {id} price: ${attributes.price_usd}"
+        topics:
+          template: "crypto,dex,{id}"
+        metrics:
+          price_usd:
+            jsonPath: "$.attributes.price_usd"
+          volume_usd:
+            jsonPath: "$.attributes.volume_usd.h24"
+            default: 0
+        raw:
+          mode: item

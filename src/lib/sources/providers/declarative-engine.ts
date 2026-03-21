@@ -1164,6 +1164,12 @@ function createAdapterFromSpec(
 
     buildSurgicalUrl(claim: ExtractedClaim, source: SourceRecordV2): SurgicalCandidate | null {
       try {
+        // Guard: skip specs that require auth (query-param-env or header-env).
+        // Auth credentials would leak into the attested on-chain URL.
+        if (spec.provider.auth.mode !== "none") {
+          return null;
+        }
+
         // When source has adapter.operation, ONLY use that operation.
         // This prevents catch-all ops (e.g. coingecko global) from matching
         // claims meant for other providers.

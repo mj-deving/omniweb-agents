@@ -367,13 +367,13 @@ describe("Surgical URL construction", () => {
   });
 
   describe("macro entity resolution", () => {
-    it("fred builds surgical URL for GDP claim", () => {
+    it("fred returns null (auth-key leakage guard — query-param-env)", () => {
       const adapter = adapters.get("fred");
       const claim = makeClaim({ type: "metric", text: "GDP at 3.2%", entities: ["GDP"], value: 3.2, unit: "%" });
       const source = makeSource("fred", "series");
       const result = adapter!.buildSurgicalUrl!(claim, source);
-      expect(result).not.toBeNull();
-      expect(result!.url).toContain("series_id=GDP");
+      // Fred uses query-param-env auth — surgical URLs would leak API key on-chain
+      expect(result).toBeNull();
     });
 
     it("worldbank builds surgical URL for GDP claim", () => {
@@ -410,6 +410,138 @@ describe("Surgical URL construction", () => {
       const result = adapter!.buildSurgicalUrl!(claim, source);
       expect(result).not.toBeNull();
       expect(result!.url).toContain("BTCUSDT");
+    });
+  });
+
+  describe("npm and ipinfo claimTypes (Session 6)", () => {
+    it("npm returns SurgicalCandidate for metric claim", () => {
+      const adapter = adapters.get("npm");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ type: "metric", text: "express has 50M downloads", entities: ["express"], value: 50000000, unit: "downloads" });
+      const source = makeSource("npm", "package");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.provider).toBe("npm");
+    });
+
+    it("ipinfo returns SurgicalCandidate for event claim", () => {
+      const adapter = adapters.get("ipinfo");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ type: "event", text: "IP 8.8.8.8 located in US", entities: ["8.8.8.8"], value: null as any, unit: "" });
+      const source = makeSource("ipinfo", "lookup");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.provider).toBe("ipinfo");
+    });
+  });
+
+  describe("New specs (Session 6)", () => {
+    it("geckoterminal token-price has adapter loaded", () => {
+      const adapter = adapters.get("geckoterminal");
+      expect(adapter).toBeDefined();
+      expect(adapter!.buildSurgicalUrl).toBeDefined();
+    });
+
+    it("bls timeseries returns SurgicalCandidate for CPI claim", () => {
+      const adapter = adapters.get("bls");
+      expect(adapter).toBeDefined();
+      // "CPI" → inferMacroEntity → { series: "CPIAUCSL" } → vars.series resolves
+      const claim = makeClaim({ type: "metric", text: "CPI at 3.2%", entities: ["CPI"], value: 3.2, unit: "%" });
+      const source = makeSource("bls", "timeseries");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      // MACRO_ENTITY_MAP gives series=CPIAUCSL, BLS spec resolves via vars.series
+      expect(result!.url).toContain("CPIAUCSL");
+      expect(result!.provider).toBe("bls");
+    });
+
+    it("bls timeseries returns SurgicalCandidate for unemployment claim", () => {
+      const adapter = adapters.get("bls");
+      // "unemployment" → inferMacroEntity → { series: "UNRATE" } → vars.series resolves
+      const claim = makeClaim({ type: "metric", text: "Unemployment at 4.1%", entities: ["unemployment"], value: 4.1, unit: "%" });
+      const source = makeSource("bls", "timeseries");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("UNRATE");
+    });
+
+    it("exchangerate-api latest returns SurgicalCandidate", () => {
+      const adapter = adapters.get("exchangerate-api");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ type: "metric", text: "EUR/USD at 1.08", entities: ["USD"], value: 1.08, unit: "" });
+      const source = makeSource("exchangerate-api", "latest");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("open.er-api.com");
+      expect(result!.provider).toBe("exchangerate-api");
+    });
+
+    it("magiceden collection-stats returns SurgicalCandidate", () => {
+      const adapter = adapters.get("magiceden");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ type: "metric", text: "Mad Lads floor 150 SOL", entities: ["mad_lads"], value: 150, unit: "SOL" });
+      const source = makeSource("magiceden", "collection-stats");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("magiceden.dev");
+    });
+
+    it("jupiter quote returns SurgicalCandidate", () => {
+      const adapter = adapters.get("jupiter");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ entities: ["solana", "SOL"] });
+      const source = makeSource("jupiter", "quote");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("jup.ag");
+      expect(result!.provider).toBe("jupiter");
+    });
+
+    it("binance-futures premium-index returns SurgicalCandidate for BTC", () => {
+      const adapter = adapters.get("binance-futures");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ type: "metric", text: "BTC funding rate 0.01%", entities: ["bitcoin", "BTC"], value: 0.01, unit: "%" });
+      const source = makeSource("binance-futures", "premium-index");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("fapi.binance.com");
+      expect(result!.url).toContain("BTCUSDT");
+    });
+
+    it("binance-futures open-interest returns SurgicalCandidate", () => {
+      const adapter = adapters.get("binance-futures");
+      const claim = makeClaim({ type: "metric", text: "BTC open interest $15B", entities: ["bitcoin", "BTC"], value: 15000000000, unit: "USD" });
+      const source = makeSource("binance-futures", "open-interest");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("openInterest");
+    });
+  });
+
+  describe("auth-key leakage guard", () => {
+    it("blocks surgical URL for auth-required spec (fred)", () => {
+      const adapter = adapters.get("fred");
+      expect(adapter).toBeDefined();
+      const claim = makeClaim({ type: "metric", text: "CPI at 3.2%", entities: ["CPI"], value: 3.2, unit: "%" });
+      const source = makeSource("fred", "series");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).toBeNull();
+    });
+
+    it("allows surgical URL for no-auth spec (binance)", () => {
+      const adapter = adapters.get("binance");
+      const claim = makeClaim();
+      const source = makeSource("binance", "ticker-price");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+    });
+
+    it("allows surgical URL for no-auth spec (coinbase)", () => {
+      const adapter = adapters.get("coinbase");
+      const claim = makeClaim();
+      const source = makeSource("coinbase", "spot-price");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
     });
   });
 });

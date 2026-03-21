@@ -1,0 +1,77 @@
+schemaVersion: 1
+
+provider:
+  name: exchangerate-api
+  displayName: ExchangeRate-API
+  matches:
+    providers: [exchangerate-api]
+    hosts: [open.er-api.com]
+  domains: [macro, forex, exchange-rates, currency]
+  rateLimit:
+    bucket: exchangerate-api
+    maxPerMinute: 30
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  latest:
+    when:
+      sourceAdapterOperation: [latest, forex]
+      urlPatterns: ["/v6/latest"]
+      default: true
+    claimTypes: [metric]
+    extractionPath: "$.rates.EUR"
+    request:
+      method: GET
+      urlTemplate: "https://open.er-api.com/v6/latest/{base}"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "{base}"
+        - "exchange rate"
+        - "forex"
+    variables:
+      base:
+        sources: [vars.base, vars.currency, "tokens[0]"]
+        default: "USD"
+        transforms:
+          - trim
+          - uppercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "exchangerate-{base_code}"
+          required: true
+        title:
+          template: "Exchange rates for {base_code}"
+        summary:
+          template: "Base: {base_code}, Last update: {time_last_update_utc}"
+        bodyText:
+          template: "Exchange rates for {base_code} — EUR: {rates.EUR}, GBP: {rates.GBP}, JPY: {rates.JPY}"
+        topics:
+          template: "forex,exchange-rates,{base_code}"
+        metrics:
+          eur:
+            jsonPath: "$.rates.EUR"
+          gbp:
+            jsonPath: "$.rates.GBP"
+          jpy:
+            jsonPath: "$.rates.JPY"
+        raw:
+          mode: item

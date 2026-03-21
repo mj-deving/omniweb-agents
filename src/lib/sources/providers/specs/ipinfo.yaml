@@ -38,6 +38,8 @@ operations:
         required: true
         transforms:
           - trim
+    claimTypes: [event]
+    extractionPath: "$.ip"
     compatibility:
       responseFormats: [json]
       tlsn:

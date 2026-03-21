@@ -1,0 +1,79 @@
+schemaVersion: 1
+
+provider:
+  name: magiceden
+  displayName: Magic Eden
+  matches:
+    providers: [magiceden]
+    hosts: [api-mainnet.magiceden.dev]
+  domains: [nft, solana, collectibles]
+  rateLimit:
+    bucket: magiceden
+    maxPerMinute: 20
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  collection-stats:
+    when:
+      sourceAdapterOperation: [collection-stats]
+      urlPatterns: ["/v2/collections"]
+      default: true
+    claimTypes: [metric]
+    extractionPath: "$.floorPrice"
+    request:
+      method: GET
+      urlTemplate: "https://api-mainnet.magiceden.dev/v2/collections/{symbol}/stats"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{symbol}"
+        - "nft"
+        - "floor price"
+    variables:
+      symbol:
+        sources: [vars.symbol, vars.collection, "tokens[0]"]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "magiceden-{symbol}"
+          required: true
+        title:
+          template: "{symbol} collection stats"
+        summary:
+          template: "Floor: {floorPrice}, Listed: {listedCount}"
+        bodyText:
+          template: "Magic Eden {symbol} — floor: {floorPrice}, listed: {listedCount}, volume: {volumeAll}"
+        topics:
+          template: "nft,solana,{symbol}"
+        metrics:
+          floorPrice:
+            jsonPath: "$.floorPrice"
+          listedCount:
+            jsonPath: "$.listedCount"
+            default: 0
+          volumeAll:
+            jsonPath: "$.volumeAll"
+            default: 0
+        raw:
+          mode: item

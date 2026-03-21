@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-03-21T15:42:39.860Z",
+  "generatedAt": "2026-03-21T18:55:19.780Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -9619,15 +9619,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 6,
-        "successCount": 0,
-        "consecutiveFailures": 2,
-        "lastTestedAt": "2026-03-21T15:42:33.280Z"
+        "testCount": 12,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:55:19.276Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:50:00.000Z",
         "discoveredBy": "manual",
-        "lastFailedAt": "2026-03-21T15:42:33.280Z"
+        "lastFailedAt": "2026-03-21T18:55:05.593Z"
       },
       "adapter": {
         "operation": "simple-price"
@@ -9685,15 +9685,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 6,
-        "successCount": 0,
-        "consecutiveFailures": 2,
-        "lastTestedAt": "2026-03-21T15:42:33.781Z"
+        "testCount": 12,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:55:19.536Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:50:00.000Z",
         "discoveredBy": "manual",
-        "lastFailedAt": "2026-03-21T15:42:33.781Z"
+        "lastFailedAt": "2026-03-21T18:55:05.794Z"
       },
       "adapter": {
         "operation": "simple-price"
@@ -9751,15 +9751,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 6,
-        "successCount": 0,
-        "consecutiveFailures": 2,
-        "lastTestedAt": "2026-03-21T15:42:34.282Z"
+        "testCount": 12,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:55:19.779Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:50:00.000Z",
         "discoveredBy": "manual",
-        "lastFailedAt": "2026-03-21T15:42:34.282Z"
+        "lastFailedAt": "2026-03-21T18:55:05.995Z"
       },
       "adapter": {
         "operation": "simple-price"
@@ -10996,7 +10996,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "quarantined",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -11005,15 +11005,16 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 3,
+        "testCount": 5,
         "successCount": 0,
-        "consecutiveFailures": 3,
-        "lastTestedAt": "2026-03-21T15:42:34.784Z"
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:53:49.359Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
-        "lastFailedAt": "2026-03-21T15:42:34.784Z"
+        "lastFailedAt": "2026-03-21T18:53:49.359Z",
+        "statusChangedAt": "2026-03-21T18:54:10.221Z"
       },
       "id": "coingecko-global",
       "name": "coingecko-global-data",
@@ -11598,6 +11599,3016 @@
       },
       "adapter": {
         "operation": "stats"
+      }
+    },
+    {
+      "id": "binance-ticker-sol",
+      "name": "binance-ticker-price",
+      "provider": "binance",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT",
+      "urlPattern": "api.binance.com/api/v3/ticker/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "solana"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:15.266Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker-price"
+      }
+    },
+    {
+      "id": "binance-ticker-ada",
+      "name": "binance-ticker-price",
+      "provider": "binance",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=ADAUSDT",
+      "urlPattern": "api.binance.com/api/v3/ticker/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "cardano"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:15.831Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker-price"
+      }
+    },
+    {
+      "id": "binance-ticker-dot",
+      "name": "binance-ticker-price",
+      "provider": "binance",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=DOTUSDT",
+      "urlPattern": "api.binance.com/api/v3/ticker/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "polkadot"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:16.346Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker-price"
+      }
+    },
+    {
+      "id": "binance-ticker-avax",
+      "name": "binance-ticker-price",
+      "provider": "binance",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=AVAXUSDT",
+      "urlPattern": "api.binance.com/api/v3/ticker/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "avalanche"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:16.854Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker-price"
+      }
+    },
+    {
+      "id": "binance-ticker-link",
+      "name": "binance-ticker-price",
+      "provider": "binance",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=LINKUSDT",
+      "urlPattern": "api.binance.com/api/v3/ticker/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "chainlink"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:17.364Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker-price"
+      }
+    },
+    {
+      "id": "defillama-tvl-compound",
+      "name": "defillama-tvl",
+      "provider": "defillama",
+      "url": "https://api.llama.fi/tvl/compound",
+      "urlPattern": "api.llama.fi/tvl",
+      "topics": [
+        "defi",
+        "tvl",
+        "compound",
+        "lending"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "defi"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:17.694Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "tvl"
+      }
+    },
+    {
+      "id": "defillama-tvl-makerdao",
+      "name": "defillama-tvl",
+      "provider": "defillama",
+      "url": "https://api.llama.fi/tvl/makerdao",
+      "urlPattern": "api.llama.fi/tvl",
+      "topics": [
+        "defi",
+        "tvl",
+        "makerdao",
+        "stablecoin"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "defi"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:17.930Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "tvl"
+      }
+    },
+    {
+      "id": "defillama-tvl-curve",
+      "name": "defillama-tvl",
+      "provider": "defillama",
+      "url": "https://api.llama.fi/tvl/curve-dex",
+      "urlPattern": "api.llama.fi/tvl",
+      "topics": [
+        "defi",
+        "tvl",
+        "curve",
+        "dex"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "defi"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:18.161Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "tvl"
+      }
+    },
+    {
+      "id": "coingecko-price-dot",
+      "name": "coingecko-simple-price",
+      "provider": "coingecko",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=polkadot&vs_currencies=usd",
+      "urlPattern": "api.coingecko.com/api/v3/simple/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "polkadot"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:06.196Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:06.196Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "simple-price"
+      }
+    },
+    {
+      "id": "coingecko-price-avax",
+      "name": "coingecko-simple-price",
+      "provider": "coingecko",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2&vs_currencies=usd",
+      "urlPattern": "api.coingecko.com/api/v3/simple/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "avalanche"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:06.397Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:06.397Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "simple-price"
+      }
+    },
+    {
+      "id": "coingecko-price-link",
+      "name": "coingecko-simple-price",
+      "provider": "coingecko",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=chainlink&vs_currencies=usd",
+      "urlPattern": "api.coingecko.com/api/v3/simple/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "chainlink"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:06.599Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:06.599Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "simple-price"
+      }
+    },
+    {
+      "id": "cryptocompare-price-sol",
+      "name": "cryptocompare-price",
+      "provider": "cryptocompare",
+      "url": "https://min-api.cryptocompare.com/data/price?fsym=SOL&tsyms=USD",
+      "urlPattern": "min-api.cryptocompare.com/data/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "solana"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:19.153Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "price"
+      }
+    },
+    {
+      "id": "cryptocompare-price-ada",
+      "name": "cryptocompare-price",
+      "provider": "cryptocompare",
+      "url": "https://min-api.cryptocompare.com/data/price?fsym=ADA&tsyms=USD",
+      "urlPattern": "min-api.cryptocompare.com/data/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "cardano"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:19.419Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "price"
+      }
+    },
+    {
+      "id": "cryptocompare-price-dot",
+      "name": "cryptocompare-price",
+      "provider": "cryptocompare",
+      "url": "https://min-api.cryptocompare.com/data/price?fsym=DOT&tsyms=USD",
+      "urlPattern": "min-api.cryptocompare.com/data/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "polkadot"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:19.686Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "price"
+      }
+    },
+    {
+      "id": "kraken-ticker-sol",
+      "name": "kraken-ticker",
+      "provider": "kraken",
+      "url": "https://api.kraken.com/0/public/Ticker?pair=SOLUSD",
+      "urlPattern": "api.kraken.com/0/public/Ticker",
+      "topics": [
+        "crypto",
+        "prices",
+        "solana"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:20.066Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker"
+      }
+    },
+    {
+      "id": "kraken-ticker-ada",
+      "name": "kraken-ticker",
+      "provider": "kraken",
+      "url": "https://api.kraken.com/0/public/Ticker?pair=ADAUSD",
+      "urlPattern": "api.kraken.com/0/public/Ticker",
+      "topics": [
+        "crypto",
+        "prices",
+        "cardano"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:20.305Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker"
+      }
+    },
+    {
+      "id": "kraken-ticker-dot",
+      "name": "kraken-ticker",
+      "provider": "kraken",
+      "url": "https://api.kraken.com/0/public/Ticker?pair=DOTUSD",
+      "urlPattern": "api.kraken.com/0/public/Ticker",
+      "topics": [
+        "crypto",
+        "prices",
+        "polkadot"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:20.543Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "ticker"
+      }
+    },
+    {
+      "id": "coinbase-price-link",
+      "name": "coinbase-spot-price",
+      "provider": "coinbase",
+      "url": "https://api.coinbase.com/v2/prices/LINK-USD/spot",
+      "urlPattern": "api.coinbase.com/v2/prices",
+      "topics": [
+        "crypto",
+        "prices",
+        "chainlink"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:20.879Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "spot-price"
+      }
+    },
+    {
+      "id": "coinbase-price-matic",
+      "name": "coinbase-spot-price",
+      "provider": "coinbase",
+      "url": "https://api.coinbase.com/v2/prices/MATIC-USD/spot",
+      "urlPattern": "api.coinbase.com/v2/prices",
+      "topics": [
+        "crypto",
+        "prices",
+        "polygon"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:21.153Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "spot-price"
+      }
+    },
+    {
+      "id": "coinbase-price-atom",
+      "name": "coinbase-spot-price",
+      "provider": "coinbase",
+      "url": "https://api.coinbase.com/v2/prices/ATOM-USD/spot",
+      "urlPattern": "api.coinbase.com/v2/prices",
+      "topics": [
+        "crypto",
+        "prices",
+        "cosmos"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:21.405Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "spot-price"
+      }
+    },
+    {
+      "id": "blockchair-solana",
+      "name": "blockchair-stats",
+      "provider": "blockchair",
+      "url": "https://api.blockchair.com/solana/stats",
+      "urlPattern": "api.blockchair.com/solana/stats",
+      "topics": [
+        "crypto",
+        "blockchain",
+        "solana",
+        "on-chain"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "blockchain",
+        "on-chain"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "crawler"
+        ],
+        "importedFrom": [
+          "crawler"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:21.852Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "stats"
+      }
+    },
+    {
+      "id": "blockchair-ripple",
+      "name": "blockchair-stats",
+      "provider": "blockchair",
+      "url": "https://api.blockchair.com/ripple/stats",
+      "urlPattern": "api.blockchair.com/ripple/stats",
+      "topics": [
+        "crypto",
+        "blockchain",
+        "ripple",
+        "on-chain"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "blockchain",
+        "on-chain"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "crawler"
+        ],
+        "importedFrom": [
+          "crawler"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:22.111Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "stats"
+      }
+    },
+    {
+      "id": "blockchair-bitcoin-cash",
+      "name": "blockchair-stats",
+      "provider": "blockchair",
+      "url": "https://api.blockchair.com/bitcoin-cash/stats",
+      "urlPattern": "api.blockchair.com/bitcoin-cash/stats",
+      "topics": [
+        "crypto",
+        "blockchain",
+        "bitcoin-cash",
+        "on-chain"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "blockchain",
+        "on-chain"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "crawler"
+        ],
+        "importedFrom": [
+          "crawler"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:22.367Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "stats"
+      }
+    },
+    {
+      "id": "treasury-interest-rates",
+      "name": "treasury-rates",
+      "provider": "treasury",
+      "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5",
+      "urlPattern": "api.fiscaldata.treasury.gov",
+      "topics": [
+        "macro",
+        "economics",
+        "interest-rates",
+        "treasury"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "economics",
+        "macro"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:23.577Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "debt"
+      }
+    },
+    {
+      "id": "geckoterminal-weth",
+      "name": "geckoterminal-token-price",
+      "provider": "geckoterminal",
+      "url": "https://api.geckoterminal.com/api/v2/networks/eth/tokens/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "urlPattern": "api.geckoterminal.com/api/v2/networks",
+      "topics": [
+        "crypto",
+        "dex",
+        "ethereum",
+        "weth"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "dex",
+        "trading"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:07.121Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:07.121Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "token-price"
+      }
+    },
+    {
+      "id": "geckoterminal-usdc",
+      "name": "geckoterminal-token-price",
+      "provider": "geckoterminal",
+      "url": "https://api.geckoterminal.com/api/v2/networks/eth/tokens/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "urlPattern": "api.geckoterminal.com/api/v2/networks",
+      "topics": [
+        "crypto",
+        "dex",
+        "ethereum",
+        "usdc",
+        "stablecoin"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "dex",
+        "trading"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:07.370Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:07.370Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "token-price"
+      }
+    },
+    {
+      "id": "geckoterminal-wbtc",
+      "name": "geckoterminal-token-price",
+      "provider": "geckoterminal",
+      "url": "https://api.geckoterminal.com/api/v2/networks/eth/tokens/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+      "urlPattern": "api.geckoterminal.com/api/v2/networks",
+      "topics": [
+        "crypto",
+        "dex",
+        "ethereum",
+        "wbtc"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "dex",
+        "trading"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:07.571Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:07.571Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "token-price"
+      }
+    },
+    {
+      "id": "bls-cpi",
+      "name": "bls-timeseries",
+      "provider": "bls",
+      "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/CUUR0000SA0",
+      "urlPattern": "api.bls.gov/publicAPI",
+      "topics": [
+        "macro",
+        "economics",
+        "cpi",
+        "inflation"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "economics",
+        "macro",
+        "labor"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:25.402Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "timeseries"
+      }
+    },
+    {
+      "id": "bls-unemployment",
+      "name": "bls-timeseries",
+      "provider": "bls",
+      "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/LNS14000000",
+      "urlPattern": "api.bls.gov/publicAPI",
+      "topics": [
+        "macro",
+        "economics",
+        "unemployment",
+        "labor"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "economics",
+        "macro",
+        "labor"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:25.831Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "timeseries"
+      }
+    },
+    {
+      "id": "exchangerate-usd",
+      "name": "exchangerate-latest",
+      "provider": "exchangerate-api",
+      "url": "https://open.er-api.com/v6/latest/USD",
+      "urlPattern": "open.er-api.com/v6/latest",
+      "topics": [
+        "macro",
+        "forex",
+        "usd",
+        "exchange-rates"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "macro",
+        "forex",
+        "currency"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:26.172Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "latest"
+      }
+    },
+    {
+      "id": "exchangerate-eur",
+      "name": "exchangerate-latest",
+      "provider": "exchangerate-api",
+      "url": "https://open.er-api.com/v6/latest/EUR",
+      "urlPattern": "open.er-api.com/v6/latest",
+      "topics": [
+        "macro",
+        "forex",
+        "eur",
+        "exchange-rates"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "macro",
+        "forex",
+        "currency"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:26.407Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "latest"
+      }
+    },
+    {
+      "id": "magiceden-mad-lads",
+      "name": "magiceden-collection-stats",
+      "provider": "magiceden",
+      "url": "https://api-mainnet.magiceden.dev/v2/collections/mad_lads/stats",
+      "urlPattern": "api-mainnet.magiceden.dev/v2/collections",
+      "topics": [
+        "nft",
+        "solana",
+        "mad-lads",
+        "collectibles"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "nft",
+        "solana",
+        "collectibles"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "pioneer"
+        ],
+        "importedFrom": [
+          "pioneer"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:26.846Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "collection-stats"
+      }
+    },
+    {
+      "id": "magiceden-tensorians",
+      "name": "magiceden-collection-stats",
+      "provider": "magiceden",
+      "url": "https://api-mainnet.magiceden.dev/v2/collections/tensorians/stats",
+      "urlPattern": "api-mainnet.magiceden.dev/v2/collections",
+      "topics": [
+        "nft",
+        "solana",
+        "tensorians",
+        "collectibles"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "nft",
+        "solana",
+        "collectibles"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "pioneer"
+        ],
+        "importedFrom": [
+          "pioneer"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:27.202Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "collection-stats"
+      }
+    },
+    {
+      "id": "jupiter-sol-usdc",
+      "name": "jupiter-quote",
+      "provider": "jupiter",
+      "url": "https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000",
+      "urlPattern": "quote-api.jup.ag/v6/quote",
+      "topics": [
+        "crypto",
+        "dex",
+        "solana",
+        "sol-usdc"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "dex",
+        "solana",
+        "swap"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:08.880Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:08.880Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "quote"
+      }
+    },
+    {
+      "id": "jupiter-sol-usdt",
+      "name": "jupiter-quote",
+      "provider": "jupiter",
+      "url": "https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB&amount=1000000000",
+      "urlPattern": "quote-api.jup.ag/v6/quote",
+      "topics": [
+        "crypto",
+        "dex",
+        "solana",
+        "sol-usdt"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "dex",
+        "solana",
+        "swap"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "archived",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 5,
+        "successCount": 0,
+        "consecutiveFailures": 5,
+        "lastTestedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-03-21T18:55:10.187Z",
+        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+      },
+      "adapter": {
+        "operation": "quote"
+      }
+    },
+    {
+      "id": "binance-futures-btc",
+      "name": "binance-futures-premium-index",
+      "provider": "binance-futures",
+      "url": "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT",
+      "urlPattern": "fapi.binance.com/fapi/v1/premiumIndex",
+      "topics": [
+        "crypto",
+        "derivatives",
+        "futures",
+        "bitcoin",
+        "funding-rate"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "derivatives",
+        "futures"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:30.416Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "premium-index"
+      }
+    },
+    {
+      "id": "binance-futures-eth",
+      "name": "binance-futures-premium-index",
+      "provider": "binance-futures",
+      "url": "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=ETHUSDT",
+      "urlPattern": "fapi.binance.com/fapi/v1/premiumIndex",
+      "topics": [
+        "crypto",
+        "derivatives",
+        "futures",
+        "ethereum",
+        "funding-rate"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "derivatives",
+        "futures"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:30.914Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "premium-index"
+      }
+    },
+    {
+      "id": "binance-futures-sol",
+      "name": "binance-futures-premium-index",
+      "provider": "binance-futures",
+      "url": "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=SOLUSDT",
+      "urlPattern": "fapi.binance.com/fapi/v1/premiumIndex",
+      "topics": [
+        "crypto",
+        "derivatives",
+        "futures",
+        "solana",
+        "funding-rate"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "derivatives",
+        "futures"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:31.445Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "premium-index"
+      }
+    },
+    {
+      "id": "binance-futures-oi-btc",
+      "name": "binance-futures-open-interest",
+      "provider": "binance-futures",
+      "url": "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT",
+      "urlPattern": "fapi.binance.com/fapi/v1/openInterest",
+      "topics": [
+        "crypto",
+        "derivatives",
+        "futures",
+        "bitcoin",
+        "open-interest"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "derivatives",
+        "futures"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:31.977Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "open-interest"
+      }
+    },
+    {
+      "id": "binance-futures-oi-eth",
+      "name": "binance-futures-open-interest",
+      "provider": "binance-futures",
+      "url": "https://fapi.binance.com/fapi/v1/openInterest?symbol=ETHUSDT",
+      "urlPattern": "fapi.binance.com/fapi/v1/openInterest",
+      "topics": [
+        "crypto",
+        "derivatives",
+        "futures",
+        "ethereum",
+        "open-interest"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "crypto",
+        "derivatives",
+        "futures"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:32.492Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:06.589Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "open-interest"
+      }
+    },
+    {
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "responseFormat": "json",
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:32.843Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:51.204Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "id": "defillama-tvl-uniswap",
+      "name": "defillama-tvl",
+      "provider": "defillama",
+      "url": "https://api.llama.fi/tvl/uniswap",
+      "urlPattern": "api.llama.fi/tvl",
+      "topics": [
+        "defi",
+        "tvl",
+        "uniswap",
+        "dex"
+      ],
+      "domainTags": [
+        "crypto",
+        "defi"
+      ],
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "adapter": {
+        "operation": "tvl"
+      }
+    },
+    {
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "responseFormat": "json",
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:33.081Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:51.204Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "id": "defillama-tvl-lido",
+      "name": "defillama-tvl",
+      "provider": "defillama",
+      "url": "https://api.llama.fi/tvl/lido",
+      "urlPattern": "api.llama.fi/tvl",
+      "topics": [
+        "defi",
+        "tvl",
+        "lido",
+        "staking"
+      ],
+      "domainTags": [
+        "crypto",
+        "defi"
+      ],
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "adapter": {
+        "operation": "tvl"
+      }
+    },
+    {
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "responseFormat": "json",
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:33.448Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:51.204Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "id": "coinbase-price-uni",
+      "name": "coinbase-spot-price",
+      "provider": "coinbase",
+      "url": "https://api.coinbase.com/v2/prices/UNI-USD/spot",
+      "urlPattern": "api.coinbase.com/v2/prices",
+      "topics": [
+        "crypto",
+        "prices",
+        "uniswap"
+      ],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "adapter": {
+        "operation": "spot-price"
+      }
+    },
+    {
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "responseFormat": "json",
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:33.710Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:51.204Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "id": "coinbase-price-aave",
+      "name": "coinbase-spot-price",
+      "provider": "coinbase",
+      "url": "https://api.coinbase.com/v2/prices/AAVE-USD/spot",
+      "urlPattern": "api.coinbase.com/v2/prices",
+      "topics": [
+        "crypto",
+        "prices",
+        "aave"
+      ],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "adapter": {
+        "operation": "spot-price"
+      }
+    },
+    {
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "responseFormat": "json",
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 3,
+        "successCount": 3,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-03-21T18:54:34.308Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-21T18:46:51.204Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-03-21T18:54:34.310Z",
+        "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "id": "binance-ticker-xrp",
+      "name": "binance-ticker-price",
+      "provider": "binance",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=XRPUSDT",
+      "urlPattern": "api.binance.com/api/v3/ticker/price",
+      "topics": [
+        "crypto",
+        "prices",
+        "ripple"
+      ],
+      "domainTags": [
+        "crypto",
+        "prices",
+        "exchange"
+      ],
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "adapter": {
+        "operation": "ticker-price"
       }
     }
   ]

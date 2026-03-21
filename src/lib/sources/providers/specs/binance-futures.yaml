@@ -1,0 +1,153 @@
+schemaVersion: 1
+
+provider:
+  name: binance-futures
+  displayName: Binance Futures
+  matches:
+    providers: [binance-futures]
+    hosts: [fapi.binance.com]
+  domains: [crypto, derivatives, futures]
+  rateLimit:
+    bucket: binance-futures
+    maxPerMinute: 60
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  premium-index:
+    when:
+      sourceAdapterOperation: [premium-index, funding-rate]
+      urlPatterns: ["/fapi/v1/premiumIndex"]
+      default: true
+    claimTypes: [metric]
+    extractionPath: "$.lastFundingRate"
+    request:
+      method: GET
+      urlTemplate: "https://fapi.binance.com/fapi/v1/premiumIndex"
+      query:
+        symbol: "{symbol}"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{symbol}"
+        - "futures"
+        - "funding rate"
+    variables:
+      symbol:
+        sources: [vars.symbol, vars.asset, "tokens[0]"]
+        default: "BTCUSDT"
+        transforms:
+          - trim
+          - uppercase
+          - map:
+              bitcoin: BTCUSDT
+              btc: BTCUSDT
+              ethereum: ETHUSDT
+              eth: ETHUSDT
+              solana: SOLUSDT
+              sol: SOLUSDT
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          jsonPath: "$.symbol"
+          required: true
+        title:
+          template: "{symbol} premium index"
+        summary:
+          template: "{symbol}: funding rate {lastFundingRate}"
+        bodyText:
+          template: "Binance Futures {symbol} — mark: {markPrice}, index: {indexPrice}, funding: {lastFundingRate}"
+        topics:
+          template: "crypto,futures,{symbol}"
+        metrics:
+          markPrice:
+            jsonPath: "$.markPrice"
+          indexPrice:
+            jsonPath: "$.indexPrice"
+          lastFundingRate:
+            jsonPath: "$.lastFundingRate"
+          interestRate:
+            jsonPath: "$.interestRate"
+            default: "0"
+        raw:
+          mode: item
+
+  open-interest:
+    when:
+      sourceAdapterOperation: [open-interest]
+      urlPatterns: ["/fapi/v1/openInterest"]
+    claimTypes: [metric]
+    extractionPath: "$.openInterest"
+    request:
+      method: GET
+      urlTemplate: "https://fapi.binance.com/fapi/v1/openInterest"
+      query:
+        symbol: "{symbol}"
+      estimatedSizeKb:
+        TLSN: 1
+        DAHR: 1
+      matchHints:
+        - "{symbol}"
+        - "futures"
+        - "open interest"
+    variables:
+      symbol:
+        sources: [vars.symbol, vars.asset, "tokens[0]"]
+        default: "BTCUSDT"
+        transforms:
+          - trim
+          - uppercase
+          - map:
+              bitcoin: BTCUSDT
+              btc: BTCUSDT
+              ethereum: ETHUSDT
+              eth: ETHUSDT
+              solana: SOLUSDT
+              sol: SOLUSDT
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "oi-{symbol}"
+          required: true
+        title:
+          template: "{symbol} open interest"
+        summary:
+          template: "{symbol}: OI {openInterest}"
+        bodyText:
+          template: "Binance Futures {symbol} open interest: {openInterest}"
+        topics:
+          template: "crypto,futures,{symbol}"
+        metrics:
+          openInterest:
+            jsonPath: "$.openInterest"
+          symbol:
+            jsonPath: "$.symbol"
+        raw:
+          mode: item

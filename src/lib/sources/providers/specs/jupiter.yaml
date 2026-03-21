@@ -1,0 +1,86 @@
+schemaVersion: 1
+
+provider:
+  name: jupiter
+  displayName: Jupiter
+  matches:
+    providers: [jupiter]
+    hosts: [quote-api.jup.ag]
+  domains: [crypto, dex, solana, swap]
+  rateLimit:
+    bucket: jupiter
+    maxPerMinute: 30
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  quote:
+    when:
+      sourceAdapterOperation: [quote, price]
+      urlPatterns: ["/v6/quote"]
+      default: true
+    claimTypes: [price]
+    extractionPath: "$.outAmount"
+    request:
+      method: GET
+      urlTemplate: "https://quote-api.jup.ag/v6/quote"
+      query:
+        inputMint: "{inputMint}"
+        outputMint: "{outputMint}"
+        amount: "{amount}"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "{inputMint}"
+        - "jupiter"
+        - "solana"
+        - "swap"
+    variables:
+      inputMint:
+        sources: [vars.inputMint]
+        default: "So11111111111111111111111111111111111111112"
+      outputMint:
+        sources: [vars.outputMint]
+        default: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      amount:
+        sources: [vars.amount]
+        default: "1000000000"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+      fields:
+        id:
+          template: "jupiter-{inputMint}-{outputMint}"
+          required: true
+        title:
+          template: "Jupiter quote {inputMint} -> {outputMint}"
+        summary:
+          template: "In: {inAmount}, Out: {outAmount}"
+        bodyText:
+          template: "Jupiter swap {inputMint} -> {outputMint}: in={inAmount}, out={outAmount}, price impact={priceImpactPct}"
+        topics:
+          template: "crypto,dex,solana,jupiter"
+        metrics:
+          inAmount:
+            jsonPath: "$.inAmount"
+          outAmount:
+            jsonPath: "$.outAmount"
+          priceImpactPct:
+            jsonPath: "$.priceImpactPct"
+            default: "0"
+        raw:
+          mode: item

@@ -37,6 +37,8 @@ export interface SurgicalCandidate {
   provider: string;
   /** Rate limit bucket key for acquireRateLimitToken */
   rateLimitBucket?: string;
+  /** Attestation method chosen by the planner (respects budget limits) */
+  plannedMethod?: AttestationMethod;
 }
 
 // ── Candidate Request ───────────────────────────────

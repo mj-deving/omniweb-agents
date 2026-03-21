@@ -100,19 +100,20 @@ describe("executeAttestationPlan", () => {
     });
   });
 
-  it("calls attestation sequentially for primary + secondary", async () => {
+  it("calls attestation sequentially respecting plannedMethod", async () => {
     const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
 
     const plan = makePlan({
-      primary: makeCandidate(),
-      secondary: [makeCandidate({ url: "https://other.com", rateLimitBucket: "other" })],
+      primary: makeCandidate({ plannedMethod: "TLSN" }),
+      secondary: [makeCandidate({ url: "https://other.com", rateLimitBucket: "other", plannedMethod: "DAHR" })],
     });
 
     const result = await executeAttestationPlan(plan, {} as any);
 
     expect(result.results).toHaveLength(2);
-    // Small responses → tries TLSN first
-    expect(attestTlsn).toHaveBeenCalledTimes(2);
+    // Primary uses TLSN (plannedMethod), secondary uses DAHR (plannedMethod)
+    expect(attestTlsn).toHaveBeenCalledTimes(1);
+    expect(attestDahr).toHaveBeenCalledTimes(1);
   });
 
   it("uses candidate.rateLimitBucket for rate limiting", async () => {

@@ -120,6 +120,19 @@ describe("Surgical URL construction", () => {
       expect(result!.url).toContain("ids=ethereum");
     });
 
+    it("canonicalizes ticker symbol to full name for CoinGecko", () => {
+      const adapter = adapters.get("coingecko");
+      // Pass "BTC" only (ticker) — should resolve to canonical "bitcoin" for CoinGecko
+      const claim = makeClaim({ entities: ["BTC"] });
+      const source = makeSource("coingecko", "simple-price");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+
+      expect(result).not.toBeNull();
+      // inferAssetAlias("BTC") → { asset: "bitcoin", symbol: "BTC" }
+      expect(result!.url).toContain("ids=bitcoin");
+      expect(result!.extractionPath).toBe("$.bitcoin.usd");
+    });
+
     it("carries rateLimitBucket from spec", () => {
       const adapter = adapters.get("coingecko");
       const claim = makeClaim();

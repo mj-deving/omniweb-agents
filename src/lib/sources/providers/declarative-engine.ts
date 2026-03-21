@@ -29,6 +29,7 @@ import type {
   SurgicalCandidate,
 } from "./types.js";
 import type { ExtractedClaim } from "../../claim-extraction.js";
+import { inferAssetAlias } from "../../attestation-policy.js";
 
 // ── Spec Types ──────────────────────────────────────
 
@@ -1169,12 +1170,16 @@ function createAdapterFromSpec(
           if (!operation.extractionPath) continue;
 
           // Build a synthetic context from claim entities
-          const entity = claim.entities[0] || "";
+          // Canonicalize: if entity is a ticker (e.g., "BTC"), resolve to canonical name
+          const rawEntity = claim.entities[0] || "";
+          const alias = inferAssetAlias(rawEntity);
+          const asset = alias?.asset || rawEntity;
+          const symbol = alias?.symbol || rawEntity;
           const syntheticCtx: BuildCandidatesContext = {
             source,
-            topic: entity,
+            topic: asset,
             tokens: claim.entities,
-            vars: { asset: entity, symbol: entity },
+            vars: { asset, symbol },
             attestation: "DAHR", // default; caller upgrades to TLSN if appropriate
             maxCandidates: 1,
           };

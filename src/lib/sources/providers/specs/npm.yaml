@@ -39,6 +39,8 @@ operations:
         transforms:
           - trim
           - lowercase
+    claimTypes: [metric]
+    extractionPath: "$.downloads"
     compatibility:
       responseFormats: [json]
       tlsn:

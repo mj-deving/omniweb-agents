@@ -24,6 +24,8 @@ operations:
       sourceAdapterOperation: [block-tip, tip-height]
       urlPatterns: ["/blocks/tip"]
       default: true
+    claimTypes: [metric]
+    extractionPath: "$"
     request:
       method: GET
       urlTemplate: "https://blockstream.info/api/blocks/tip/height"

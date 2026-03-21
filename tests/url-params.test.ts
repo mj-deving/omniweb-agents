@@ -116,4 +116,43 @@ describe("extractUrlParams", () => {
       expect(result.id).toBe("data");
     });
   });
+
+  describe("inline query params in urlTemplate", () => {
+    it("extracts dexscreener query from inline template placeholder", () => {
+      const result = extractUrlParams(
+        "https://api.dexscreener.com/latest/dex/search?q=solana",
+        "https://api.dexscreener.com/latest/dex/search?q={query}",
+      );
+      expect(result.query).toBe("solana");
+    });
+
+    it("extracts multiple inline template query params", () => {
+      const result = extractUrlParams(
+        "https://api.example.com/data?module=gas&action=oracle",
+        "https://api.example.com/data?module={module}&action={action}",
+      );
+      expect(result.module).toBe("gas");
+      expect(result.action).toBe("oracle");
+    });
+
+    it("does not override explicit querySpec extraction with inline", () => {
+      // If both querySpec and inline template have the same var, querySpec wins
+      const result = extractUrlParams(
+        "https://api.example.com/data?q=fromUrl",
+        "https://api.example.com/data?q={query}",
+        { q: "{query}" },
+      );
+      // querySpec extracts first, inline skips because key already exists
+      expect(result.query).toBe("fromUrl");
+    });
+
+    it("ignores literal query values in template (no placeholder)", () => {
+      const result = extractUrlParams(
+        "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
+        "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
+      );
+      // No {var} placeholders — nothing to extract
+      expect(Object.keys(result)).toHaveLength(0);
+    });
+  });
 });

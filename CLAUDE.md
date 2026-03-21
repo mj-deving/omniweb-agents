@@ -24,7 +24,7 @@ See `docs/project-structure.md` for the full tree. Key boundaries:
 - **`connectors/`** — SDK isolation (@kynesyslabs/demosdk bridge).
 - **`config/`** — Source catalog (`config/sources/catalog.json`) and strategies (`config/strategies/base-loop.yaml`).
 - **Two loop modes:** `cli/session-runner.ts` (cron, 8-phase) and `cli/event-runner.ts` (long-lived, reactive).
-- **Claim-driven attestation:** `src/lib/claim-extraction.ts` (Phase 1), `src/lib/attestation-planner.ts` (Phase 3 planner + Phase 4 verifier, portable), `src/actions/attestation-executor.ts` (Phase 3 executor, platform-bound). YAML specs declare `claimTypes` + `extractionPath` per operation.
+- **Claim-driven attestation:** `src/lib/claim-extraction.ts` (Phase 1), `src/lib/attestation-planner.ts` (Phase 3 planner + Phase 4 verifier, portable), `src/actions/attestation-executor.ts` (Phase 3 executor, platform-bound). YAML specs declare `claimTypes` + `extractionPath` per operation. Entity resolution: `ASSET_MAP` (21 crypto) + `MACRO_ENTITY_MAP` (15 macro: GDP, unemployment, inflation, debt, earthquake, etc.) in `attestation-policy.ts`. `buildSurgicalUrl` uses `adapter.operation` to filter to the correct spec operation per source.
 - **Pipeline docs:** `docs/loop-heuristics.md` — single source of truth for scan→gate→publish, agent differentiation, constitutional rules, source discovery.
 
 ## CLI Quick Reference
@@ -57,6 +57,12 @@ npx tsx skills/supercolony/scripts/supercolony.ts feed --limit 20 --pretty
 npx tsx cli/identity.ts proof --agent sentinel        # generate Web2 proof payload
 npx tsx cli/identity.ts add-twitter --agent sentinel --url <tweet-url>
 npx tsx cli/identity.ts list --agent sentinel          # list linked identities
+
+# Source lifecycle (health check + quarantine promotion)
+npx tsx cli/source-lifecycle.ts check --quarantined --pretty  # dry-run
+npx tsx cli/source-lifecycle.ts apply --quarantined --pretty  # apply transitions
+npx tsx cli/source-lifecycle.ts apply --pretty                # all active+degraded
+npx tsx cli/source-lifecycle.ts check --provider coingecko --pretty
 
 # Feed mining (source discovery from other agents' attestations)
 npx tsx cli/feed-mine.ts --agent sentinel --pretty --limit 10000

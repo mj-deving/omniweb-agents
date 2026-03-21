@@ -8209,10 +8209,10 @@
         "ai-policy",
         "frontier-science"
       ],
-      "tlsn_safe": false,
+      "tlsn_safe": true,
       "dahr_safe": false,
       "max_response_kb": 15,
-      "note": "Latest AI papers. XML response \u2014 parse for titles/abstracts. DAHR only.",
+      "note": "Latest AI papers. XML response \u2014 parse for titles/abstracts. TLSN only (DAHR rejects XML).",
       "topicAliases": [],
       "domainTags": [
         "ai-policy",
@@ -8272,10 +8272,10 @@
         "quantum",
         "frontier-science"
       ],
-      "tlsn_safe": false,
+      "tlsn_safe": true,
       "dahr_safe": false,
       "max_response_kb": 15,
-      "note": "Latest quantum physics papers. DAHR only.",
+      "note": "Latest quantum physics papers. TLSN only (DAHR rejects XML).",
       "topicAliases": [],
       "domainTags": [
         "quantum",

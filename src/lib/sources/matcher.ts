@@ -128,11 +128,7 @@ export function extractClaims(postText: string, postTags: string[]): string[] {
 
 // ── LLM-Assisted Claim Extraction (PR6) ─────────────
 
-/** Max input text length for LLM prompt (prevents token budget overflow) */
-const LLM_MAX_TEXT_LENGTH = 1500;
-
-/** Timeout for LLM claim extraction call (ms) */
-const LLM_CLAIM_TIMEOUT_MS = 10_000;
+import { LLM_CLAIM_TIMEOUT_MS, truncateForLLM, cleanLLMJson } from "../llm-claim-config.js";
 
 /**
  * Extract structured claims using an LLM provider.
@@ -144,9 +140,7 @@ export async function extractClaimsLLM(
   postTags: string[],
   llm: LLMProvider,
 ): Promise<string[]> {
-  const truncatedText = postText.length > LLM_MAX_TEXT_LENGTH
-    ? postText.slice(0, LLM_MAX_TEXT_LENGTH) + "…"
-    : postText;
+  const truncatedText = truncateForLLM(postText);
 
   // Build prompt by concatenation (not sequential .replace()) to avoid
   // placeholder collision when postText contains literal "{TAGS}"
@@ -164,17 +158,17 @@ Tags: ${tagsStr}
 
 Return ONLY the JSON array, no other text. Example: ["bitcoin", "$64000", "45% increase", "2026", "Federal Reserve"]`;
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    // Race LLM call against timeout to prevent pipeline stalls
     const response = await Promise.race([
       llm.complete(prompt, { maxTokens: 512, modelTier: "fast" }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("LLM claim extraction timeout")), LLM_CLAIM_TIMEOUT_MS),
-      ),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("LLM claim extraction timeout")), LLM_CLAIM_TIMEOUT_MS);
+      }),
     ]);
+    clearTimeout(timeoutId);
 
-    // Parse JSON array from response — handle markdown code fences (case-insensitive)
-    const cleaned = response.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const cleaned = cleanLLMJson(response);
     const parsed = JSON.parse(cleaned);
 
     if (!Array.isArray(parsed)) return [];
@@ -183,6 +177,8 @@ Return ONLY the JSON array, no other text. Example: ["bitcoin", "$64000", "45% i
       .map((s) => s.toLowerCase().trim());
   } catch {
     return [];
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 

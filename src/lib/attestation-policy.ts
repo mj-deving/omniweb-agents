@@ -27,11 +27,33 @@ export interface AttestationPlan {
   reason: string;
 }
 
+/**
+ * Known asset mapping for entity recognition in topics and post text.
+ * Used by source selection (policy.ts) and claim extraction (claim-extraction.ts).
+ * Ordered by market cap / usage frequency for early-exit optimization.
+ */
 export const ASSET_MAP: Array<[RegExp, string, string]> = [
   [/\bbitcoin|\bbtc\b/, "bitcoin", "BTC"],
   [/\bethereum|\beth\b/, "ethereum", "ETH"],
   [/\bsolana|\bsol\b/, "solana", "SOL"],
+  [/\bripple|\bxrp\b/, "ripple", "XRP"],
+  [/\bcardano|\bada\b/, "cardano", "ADA"],
+  [/\bdogecoin|\bdoge\b/, "dogecoin", "DOGE"],
+  [/\bpolkadot|\bdot\b/, "polkadot", "DOT"],
+  [/\bavalanche|\bavax\b/, "avalanche", "AVAX"],
   [/\bchainlink|\blink\b/, "chainlink", "LINK"],
+  [/\bpolygon|\bmatic\b/, "polygon", "MATIC"],
+  [/\buniswap|\buni\b/, "uniswap", "UNI"],
+  [/\blitecoin|\bltc\b/, "litecoin", "LTC"],
+  [/\bcosmos|\batom\b/, "cosmos", "ATOM"],
+  [/\bnear\sprotocol|\bnear\b/, "near", "NEAR"],
+  [/\barbitrum|\barb\b/, "arbitrum", "ARB"],
+  [/\boptimism\b|\b\bop\b/, "optimism", "OP"],
+  [/\baave\b/, "aave", "AAVE"],
+  [/\bmonero|\bxmr\b/, "monero", "XMR"],
+  [/\bfilecoin|\bfil\b/, "filecoin", "FIL"],
+  [/\bsui\b/, "sui", "SUI"],
+  [/\baptos|\bapt\b/, "aptos", "APT"],
 ];
 
 export function unresolvedPlaceholders(url: string): string[] {

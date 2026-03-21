@@ -1,6 +1,6 @@
 # T0-T4 Source & Attestation Evolution Plan
 
-> **Status:** Draft — pending Codex review
+> **Status:** In Progress — Sessions 1-2 complete
 > **Author:** PAI Algorithm session 2026-03-21
 > **Depends on:** Claim-driven attestation Phases 1-4 (shipped 2026-03-21)
 
@@ -549,8 +549,8 @@ T4 (feed history) ── independent, has hard blocker (spike first)
 
 | Session | Work | Why | Proves |
 |---------|------|-----|--------|
-| **1** | T2 (nudge) + T1 batch 1 (fred, cryptocompare, mempool, blockchain-info) | Highest leverage: enables extraction + matching | Gate 1+2 improvement |
-| **2** | T0 cleanup (invalid entries) + T0 existing batch 1 (Binance, Kraken entries) + T4 spike | Unblock catalog, add first sources, fail-fast on T4 | Gate 3 + T4 go/no-go |
+| **1** ✅ | T2 (nudge) + T1a batch 1 (cryptocompare, mempool, blockchain-info) | Commits: c11a509, 068aa75 | 3 specs got claimTypes, 2 Binance entries, LLM nudge |
+| **2** ✅ | T0 cleanup (25 adapter fixes) + T0 batch 1 (Kraken, DefiLlama) + T4 spike | Commits: 16de6b0, d56a1d5 | 25 adapters fixed, 3 active entries, T4 PARTIAL PASS (deferred) |
 | **3** | T1 batch 2 (worldbank, usgs, nasa, yahoo-finance) + T0 existing batch 2 (more DefiLlama, Etherscan) | More specs + more sources in parallel | Scaling |
 | **4** | T1-new batch 1 (l2beat, coinbase, owlracle specs) + T3 spike (API availability) | New provider specs + reputation feasibility | New providers + T3 go/no-go |
 | **5** | T0-new batch 1 (entries for new providers from S4) | Catalog entries using new specs | New domain coverage |
@@ -583,10 +583,10 @@ T4 (feed history) ── independent, has hard blocker (spike first)
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Active sources (no-auth, attestable) | 66 | 150+ (no-auth only count for attestation) |
-| Active sources (all, including scan-only) | 66 | 200+ |
+| Active sources (no-auth, attestable) | 66 → **80** (S1-S2) | 150+ (no-auth only count for attestation) |
+| Active sources (all, including scan-only) | 66 → **80** (S1-S2) | 200+ |
 | Per-agent visible attestable sources | sentinel:39, crawler:49, pioneer:20 | Each agent: 60+ visible attestable |
-| Specs with claimTypes (T1a, field-only) | 8/26 | 14+/26+ |
+| Specs with claimTypes (T1a, field-only) | 8/26 → **11/26** (S1) | 14+/26+ |
 | Specs with claimTypes (T1b, needs entity plumbing) | 0 | 4+ (fred, worldbank, usgs, nasa) |
 | Claim extraction hit rate (Gate 1) | ~10% | >50% |
 | Surgical URL built rate (Gate 2+3) | ~10% | >60% |
@@ -698,3 +698,34 @@ Research conducted via parallel Claude + Gemini agents (2026-03-21). URLs verifi
 | Reservoir | NFTs | Free key, ~3KB, collection data |
 | CoinDesk BPI | Prices | No auth, ~500B, simple BTC price |
 | ExchangeRate-API | Macro | No auth, ~2KB, forex rates |
+
+---
+
+## Session Progress Log
+
+### Session 1 (2026-03-21) ✅
+**Commits:** `c11a509`, `068aa75`
+- **T2:** LLM nudge added to `src/actions/llm.ts` — encourages exact numeric values + "at least ONE verifiable claim"
+- **T1a:** claimTypes + extractionPath added to 3 specs: `cryptocompare.yaml` (price→$.USD), `mempool.yaml` (metric→$.fastestFee), `blockchain-info.yaml` (price→$.USD.last + metric→$.market_price_usd)
+- **T0:** 2 Binance entries added (ticker-price, 24hr), CryptoCompare adapter.operation fixed
+- **Codex fixes:** Catalog truncation restored (209→211), Binance 24hr operation corrected
+- **Tests:** 1139 → 1145 (4 new surgical-url tests)
+- **Learnings:** Never use Python `json.dump` on catalog.json — it truncates. Always verify source count before/after edits.
+
+### Session 2 (2026-03-21) ✅
+**Commits:** `16de6b0`, `d56a1d5`
+- **T0 Cleanup:** 25 entries fixed with adapter.operation + correct provider name
+- **T0 Batch 1:** +3 active entries (Kraken BTC/ETH, DefiLlama chains), +3 quarantined (deribit, blockchair, treasury — need YAML specs)
+- **T4 Spike:** `cli/gcr-spike.ts` — PARTIAL PASS. `getBlocks()` works but latest blocks have 0 txs. `getAddressInfo()` returns null for GCR. T4 deferred.
+- **Codex fixes:** Quarantined specless providers, removed binance-funding (fapi host mismatch), fixed USGS operations, fixed gcr-spike flag parsing
+- **Catalog:** 211 → 217 (80 active, 81 with adapter, 4 quarantined)
+- **Learnings:** Always verify new catalog entries against YAML spec registry. `fapi.binance.com` ≠ `api.binance.com` (different spec needed).
+
+### Current State After Session 2
+| Metric | Before | After S1 | After S2 |
+|--------|--------|----------|----------|
+| Total sources | 209 | 211 | 217 |
+| Active sources | 66 | 78 | 80 |
+| With adapter | 50 | 52 | 81 |
+| Specs with claimTypes | 8/26 | 11/26 | 11/26 |
+| Tests | 1139 | 1145 | 1145 |

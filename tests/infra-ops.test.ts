@@ -466,7 +466,7 @@ describe("Infra-Ops Agent YAML", () => {
     expect(config.scan.modes).toEqual(["lightweight", "since-last"]);
     expect(config.attestation.defaultMode).toBe("dahr_only");
     expect(config.attestation.highSensitivityKeywords).toContain("outage");
-    expect(config.gate.predictedReactionsThreshold).toBe(10);
+    expect(config.gate.predictedReactionsThreshold).toBe(7);
     expect(config.calibration.offset).toBe(0);
     expect(config.loopExtensions).toBeInstanceOf(Array);
   });

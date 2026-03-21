@@ -92,7 +92,7 @@ export {
   unresolvedPlaceholders,
   isHighSensitivityTopic,
 } from "./lib/attestation-policy.js";
-export type { AttestationType, AttestationPlan } from "./lib/attestation-policy.js";
+export type { AttestationType, AttestationMethodPlan } from "./lib/attestation-policy.js";
 
 // Claim extraction (claim-driven attestation Phase 1)
 export {

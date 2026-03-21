@@ -926,7 +926,7 @@ export function extractUrlParams(
       }
     }
 
-    // Extract query parameters
+    // Extract query parameters from explicit querySpec (request.query config)
     if (querySpec) {
       for (const [key, tmplValue] of Object.entries(querySpec)) {
         const varMatch = String(tmplValue).match(/^\{(\w+)\}$/);
@@ -935,6 +935,19 @@ export function extractUrlParams(
           if (actual) {
             extracted[varMatch[1]] = actual;
           }
+        }
+      }
+    }
+
+    // Also extract from inline query params in urlTemplate (e.g., "?q={query}")
+    // This handles specs that bake query placeholders into the template itself
+    for (const [key, tmplValue] of tmplUrl.searchParams.entries()) {
+      const decoded = decodeURIComponent(tmplValue);
+      const varMatch = decoded.match(/^\{(\w+)\}$/);
+      if (varMatch && !extracted[varMatch[1]]) {
+        const actual = srcUrl.searchParams.get(key);
+        if (actual) {
+          extracted[varMatch[1]] = actual;
         }
       }
     }

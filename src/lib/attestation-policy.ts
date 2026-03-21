@@ -20,7 +20,7 @@ export interface SourceRecord {
   note?: string;
 }
 
-export interface AttestationPlan {
+export interface AttestationMethodPlan {
   required: AttestationType;
   fallback: AttestationType | null;
   sensitive: boolean;
@@ -159,7 +159,7 @@ export function isHighSensitivityTopic(topic: string, keywords: string[]): boole
 
 // ── Attestation Plan ──────────────────────────────
 
-export function resolveAttestationPlan(topic: string, config: AgentConfig): AttestationPlan {
+export function resolveAttestationPlan(topic: string, config: AgentConfig): AttestationMethodPlan {
   const sensitive = isHighSensitivityTopic(topic, config.attestation.highSensitivityKeywords);
 
   if (sensitive && config.attestation.highSensitivityRequireTlsn) {

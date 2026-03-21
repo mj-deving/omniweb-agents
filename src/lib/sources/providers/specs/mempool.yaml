@@ -24,6 +24,8 @@ operations:
       sourceAdapterOperation: [fees]
       urlPatterns: ["/api/v1/fees"]
       default: true
+    claimTypes: [metric]
+    extractionPath: "$.fastestFee"
     request:
       method: GET
       urlTemplate: "https://mempool.space/api/v1/fees/recommended"

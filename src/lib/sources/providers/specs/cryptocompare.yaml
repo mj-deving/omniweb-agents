@@ -24,6 +24,8 @@ operations:
       sourceAdapterOperation: [price]
       urlPatterns: ["/data/price"]
       default: true
+    claimTypes: [price]
+    extractionPath: "$.USD"
     request:
       method: GET
       urlTemplate: "https://min-api.cryptocompare.com/data/price?fsym={symbol}&tsyms=USD,EUR,BTC"
@@ -35,8 +37,10 @@ operations:
         - "price"
     variables:
       symbol:
-        source: topic
-        transform: uppercase
+        sources: [vars.symbol, vars.asset, topic]
+        transforms:
+          - trim
+          - uppercase
         default: BTC
     parse:
       mode: json
@@ -75,8 +79,10 @@ operations:
         - "daily"
     variables:
       symbol:
-        source: topic
-        transform: uppercase
+        sources: [vars.symbol, vars.asset, topic]
+        transforms:
+          - trim
+          - uppercase
         default: BTC
     parse:
       mode: json

@@ -24,6 +24,8 @@ operations:
       sourceAdapterOperation: [ticker]
       urlPatterns: ["/ticker"]
       default: true
+    claimTypes: [price]
+    extractionPath: "$.USD.last"
     request:
       method: GET
       urlTemplate: "https://blockchain.info/ticker"
@@ -59,6 +61,8 @@ operations:
     when:
       sourceAdapterOperation: [stats]
       urlPatterns: ["/stats"]
+    claimTypes: [metric]
+    extractionPath: "$.market_price_usd"
     request:
       method: GET
       urlTemplate: "https://api.blockchain.info/stats"

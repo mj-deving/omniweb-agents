@@ -89,6 +89,7 @@ import {
   runSourceScan,
   deriveIntentsFromTopics,
   mergeAndDedup,
+  type TopicSuggestion,
 } from "../src/lib/source-scanner.js";
 import {
   loadBaselines,
@@ -1088,13 +1089,8 @@ function normalizeScanAgentIndex(raw: any): Map<string, ScanAgentStats> {
  * Extract post topics from scan results.
  * Standard mode: preserve previous heat+gaps behavior.
  * Pioneer mode: prefer frontier/focus-aligned topics and filter generic feed noise.
+ * TopicSuggestion type imported from source-scanner.ts (shared definition).
  */
-type TopicSuggestion = {
-  topic: string;
-  category: string;
-  reason: string;
-  replyTo?: { txHash: string; author: string; text: string };
-};
 
 /**
  * Static topic expansion map — splits overly generic topics into specific,

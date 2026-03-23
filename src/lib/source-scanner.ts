@@ -20,6 +20,7 @@ import {
   type SignalRule,
   type BaselineStore,
 } from "./signal-detection.js";
+import { observe } from "./observe.js";
 
 // ── Types ─────────────────────────────────────────────
 
@@ -372,20 +373,30 @@ export async function verifyAntiSignalsWithRefetch(
       // Re-fetch the source
       const refetchResult = await fetchSource(signal.source.url, signal.source);
       if (!refetchResult.ok || !refetchResult.response) {
-        // Can't verify — suppress signal
+        observe("insight", `Anti-signal suppressed: refetch failed for ${signal.source.name}`, {
+          source: "source-scanner.ts:verifyAntiSignals",
+          data: { sourceId: signal.source.id, metric: signal.rule.metric },
+        });
         continue;
       }
 
       // Parse response
       const adapter = getProviderAdapter(signal.source.provider);
-      if (!adapter || !adapter.supports(signal.source)) continue;
+      if (!adapter || !adapter.supports(signal.source)) {
+        observe("insight", `Anti-signal suppressed: no adapter for ${signal.source.provider}`, {
+          source: "source-scanner.ts:verifyAntiSignals",
+        });
+        continue;
+      }
 
       const parsed = adapter.parseResponse(signal.source, refetchResult.response);
       const metricKey = signal.rule.metric;
 
       // Find the same metric in the re-fetched data
+      let metricFound = false;
       for (const entry of parsed.entries) {
         if (!entry.metrics || entry.metrics[metricKey] == null) continue;
+        metricFound = true;
         const refetchValue = typeof entry.metrics[metricKey] === "string"
           ? parseFloat(entry.metrics[metricKey] as string)
           : entry.metrics[metricKey] as number;
@@ -393,16 +404,35 @@ export async function verifyAntiSignalsWithRefetch(
 
         // Compare: if original and refetch values diverge by >5%, suppress
         const originalValue = signal.currentValue;
-        if (originalValue === 0) continue;
+        if (originalValue === 0) {
+          observe("insight", `Anti-signal suppressed: original value is 0 for ${metricKey}`, {
+            source: "source-scanner.ts:verifyAntiSignals",
+            data: { sourceId: signal.source.id, metric: metricKey },
+          });
+          continue;
+        }
         const drift = Math.abs((refetchValue - originalValue) / originalValue) * 100;
         if (drift <= 5) {
           verified.push(signal);
+        } else {
+          observe("insight", `Anti-signal suppressed: data unstable (${drift.toFixed(1)}% drift) for ${signal.source.name}:${metricKey}`, {
+            source: "source-scanner.ts:verifyAntiSignals",
+            data: { sourceId: signal.source.id, metric: metricKey, drift, original: originalValue, refetch: refetchValue },
+          });
         }
         // Only check first matching entry
         break;
       }
+      if (!metricFound) {
+        observe("insight", `Anti-signal suppressed: metric ${metricKey} not found in refetch for ${signal.source.name}`, {
+          source: "source-scanner.ts:verifyAntiSignals",
+          data: { sourceId: signal.source.id, metric: metricKey },
+        });
+      }
     } catch {
-      // Refetch failed — suppress signal (can't verify)
+      observe("insight", `Anti-signal suppressed: refetch error for ${signal.source?.name}`, {
+        source: "source-scanner.ts:verifyAntiSignals",
+      });
       continue;
     }
   }

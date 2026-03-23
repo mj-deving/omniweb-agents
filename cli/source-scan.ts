@@ -78,7 +78,6 @@ async function main() {
       topics: intentText.toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length >= 2),
       signals: [
         { type: "change" as const, metric: "*", threshold: 5 },
-        { type: "threshold" as const, metric: "*", above: 0 },
       ],
       maxSources,
     }];
@@ -93,7 +92,8 @@ async function main() {
     }];
   } else {
     // Derive from agent persona topics
-    intents = deriveIntentsFromTopics(config.topics);
+    const topics = config.topics ?? { primary: [], secondary: [] };
+    intents = deriveIntentsFromTopics(topics);
   }
 
   if (pretty) {

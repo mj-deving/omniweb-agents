@@ -59,7 +59,7 @@ import { apiCall, connectWallet, setLogAgent } from "../src/lib/sdk.js";
 import { ensureAuth } from "../src/lib/auth.js";
 import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "../src/actions/publish-pipeline.js";
 import { extractStructuredClaimsAuto } from "../src/lib/claim-extraction.js";
-import { buildAttestationPlan, verifyAttestedValues } from "../src/lib/attestation-planner.js";
+import { buildAttestationPlan, verifyAttestedValues, createUsageTracker, type SourceUsageTracker } from "../src/lib/attestation-planner.js";
 import { executeAttestationPlan } from "../src/actions/attestation-executor.js";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
 import { resolveAttestationPlan, type AttestationType } from "../src/lib/attestation-policy.js";
@@ -2022,6 +2022,9 @@ async function runPublishAutonomous(
   const enabledExtensions = agentConfig.loopExtensions;
   let writeRateLedger = loadWriteRateLedger(walletAddress);
 
+  // Source usage tracker — penalizes repeated source selection within a session
+  const usageTracker = createUsageTracker();
+
   for (const gp of gatePosts) {
     try {
       // Step -1: Write rate limit check (PR1 — before any work for this topic)
@@ -2297,7 +2300,7 @@ async function runPublishAutonomous(
       try {
         const claims = await extractStructuredClaimsAuto(draft.text, provider);
         if (claims.length > 0) {
-          const claimPlan = buildAttestationPlan(claims, sourceView, agentConfig, declarativeAdapters);
+          const claimPlan = buildAttestationPlan(claims, sourceView, agentConfig, declarativeAdapters, usageTracker);
           if (claimPlan) {
             info(`Claim plan: ${1 + claimPlan.secondary.length} attestations (${claimPlan.unattested.length} unattested), est ${claimPlan.estimatedCost} DEM`);
             const execution = await executeAttestationPlan(claimPlan, demos);

@@ -168,10 +168,11 @@ describe("executeAttestationPlan", () => {
     expect(attestDahr).toHaveBeenCalledTimes(1);
   });
 
-  it("tracks failed attestations", async () => {
+  it("tracks failed attestations after retry", async () => {
     const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
 
     attestTlsn.mockRejectedValue(new Error("TLSN fail"));
+    // Both initial DAHR and retry DAHR fail
     attestDahr.mockRejectedValue(new Error("DAHR fail"));
 
     const plan = makePlan();
@@ -179,5 +180,32 @@ describe("executeAttestationPlan", () => {
 
     expect(result.results).toHaveLength(0);
     expect(result.failed).toHaveLength(1);
-  });
+    // DAHR called twice: once for TLSN fallback, once for retry
+    expect(attestDahr).toHaveBeenCalledTimes(2);
+  }, 10000);
+
+  it("retries once on transient DAHR failure and succeeds", async () => {
+    const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
+
+    // First DAHR call fails, retry succeeds
+    attestDahr
+      .mockRejectedValueOnce(new Error("transient network error"))
+      .mockResolvedValueOnce({
+        type: "dahr",
+        url: "https://api.example.com/data",
+        requestedUrl: "https://api.example.com/data",
+        responseHash: "retry-hash",
+        txHash: "tx-retry-1",
+        data: {},
+      });
+
+    const plan = makePlan({
+      primary: makeCandidate({ plannedMethod: "DAHR", estimatedSizeBytes: 20 * 1024 }),
+    });
+    const result = await executeAttestationPlan(plan, {} as any);
+
+    expect(result.results).toHaveLength(1);
+    expect(result.failed).toHaveLength(0);
+    expect(attestDahr).toHaveBeenCalledTimes(2);
+  }, 10000);
 });

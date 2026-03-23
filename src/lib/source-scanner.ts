@@ -336,3 +336,76 @@ export async function runSourceScan(
     baselinesUpdated: totalBaselinesUpdated,
   };
 }
+
+// ── Double-Fetch Anti-Signal Verification ────────────
+
+/** Default gap between fetches for anti-signal verification */
+const DOUBLE_FETCH_GAP_MS = 60_000; // 60 seconds
+
+/**
+ * Verify anti-signals by re-fetching source data after a delay.
+ * If the metric value diverges >5% between fetches, the signal is suppressed
+ * (data is unstable — not safe to publish a contrarian take).
+ *
+ * Returns only the signals that remain stable across both fetches.
+ */
+export async function verifyAntiSignalsWithRefetch(
+  signals: DetectedSignal[],
+  options: { gapMs?: number } = {},
+): Promise<DetectedSignal[]> {
+  if (signals.length === 0) return [];
+
+  const gapMs = options.gapMs ?? DOUBLE_FETCH_GAP_MS;
+
+  // Wait for the gap period
+  await new Promise(resolve => setTimeout(resolve, gapMs));
+
+  const verified: DetectedSignal[] = [];
+
+  for (const signal of signals) {
+    if (signal.rule.type !== "anti-signal") {
+      verified.push(signal);
+      continue;
+    }
+
+    try {
+      // Re-fetch the source
+      const refetchResult = await fetchSource(signal.source.url, signal.source);
+      if (!refetchResult.ok || !refetchResult.response) {
+        // Can't verify — suppress signal
+        continue;
+      }
+
+      // Parse response
+      const adapter = getProviderAdapter(signal.source.provider);
+      if (!adapter || !adapter.supports(signal.source)) continue;
+
+      const parsed = adapter.parseResponse(signal.source, refetchResult.response);
+      const metricKey = signal.rule.metric;
+
+      // Find the same metric in the re-fetched data
+      for (const entry of parsed.entries) {
+        if (!entry.metrics || entry.metrics[metricKey] == null) continue;
+        const refetchValue = typeof entry.metrics[metricKey] === "string"
+          ? parseFloat(entry.metrics[metricKey] as string)
+          : entry.metrics[metricKey] as number;
+        if (isNaN(refetchValue)) continue;
+
+        // Compare: if original and refetch values diverge by >5%, suppress
+        const originalValue = signal.currentValue;
+        if (originalValue === 0) continue;
+        const drift = Math.abs((refetchValue - originalValue) / originalValue) * 100;
+        if (drift <= 5) {
+          verified.push(signal);
+        }
+        // Only check first matching entry
+        break;
+      }
+    } catch {
+      // Refetch failed — suppress signal (can't verify)
+      continue;
+    }
+  }
+
+  return verified;
+}

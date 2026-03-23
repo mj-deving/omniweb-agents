@@ -2793,8 +2793,14 @@ Respond with ONLY a JSON array of types, one per finding. Example: ["CODE-FIX","
   try {
     const response = await provider.complete(prompt, { maxTokens: 256 });
     let jsonStr = response.trim();
+    // Strip markdown code fences
     if (jsonStr.startsWith("```")) {
       jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    }
+    // Strip PAI mode headers (claude --print may wrap output in PAI format)
+    const jsonMatch = jsonStr.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
     }
     const types = JSON.parse(jsonStr) as string[];
     const validTypes = new Set<string>(["CODE-FIX", "GUARDRAIL", "GOTCHA", "PLAYBOOK", "STRATEGY", "INFO"]);

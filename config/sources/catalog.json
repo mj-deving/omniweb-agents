@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-03-21T20:08:30.305Z",
+  "generatedAt": "2026-03-23T20:57:39.167Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -14615,6 +14615,160 @@
       },
       "adapter": {
         "operation": "ticker-price"
+      }
+    },
+    {
+      "id": "hn-algolia-broad-0f177d07",
+      "name": "hn-geopolitics-broad",
+      "provider": "hn-algolia-broad",
+      "url": "https://hn.algolia.com/api/v1/search?query=geopolitics&tags=story&hitsPerPage=5",
+      "urlPattern": "hn.algolia.com/api/v1/search?hitsPerPage=5&query=geopolitics&tags=story",
+      "topics": [
+        "geopolitics"
+      ],
+      "tlsn_safe": false,
+      "dahr_safe": true,
+      "max_response_kb": 10,
+      "topicAliases": [],
+      "domainTags": [
+        "geopolitics"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "importedFrom": []
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 500,
+          "retryOn": [
+            "timeout"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 95,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-23T20:32:19.644Z",
+        "discoveredBy": "auto-discovery"
+      }
+    },
+    {
+      "id": "hn-algolia-broad-013c81b3",
+      "name": "hn-twitter-pulse-broad",
+      "provider": "hn-algolia-broad",
+      "url": "https://hn.algolia.com/api/v1/search?query=twitter%20pulse&tags=story&hitsPerPage=5",
+      "urlPattern": "hn.algolia.com/api/v1/search?hitsPerPage=5&query=twitter pulse&tags=story",
+      "topics": [
+        "twitter-pulse",
+        "twitter",
+        "pulse"
+      ],
+      "tlsn_safe": false,
+      "dahr_safe": true,
+      "max_response_kb": 10,
+      "topicAliases": [],
+      "domainTags": [
+        "twitter-pulse",
+        "twitter",
+        "pulse"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "importedFrom": []
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 500,
+          "retryOn": [
+            "timeout"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 100,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-23T20:40:43.188Z",
+        "discoveredBy": "auto-discovery"
+      }
+    },
+    {
+      "id": "hn-algolia-broad-29d8c764",
+      "name": "hn-story-broad",
+      "provider": "hn-algolia-broad",
+      "url": "https://hn.algolia.com/api/v1/search?query=story&tags=story&hitsPerPage=5",
+      "urlPattern": "hn.algolia.com/api/v1/search?hitsPerPage=5&query=story&tags=story",
+      "topics": [
+        "story"
+      ],
+      "tlsn_safe": false,
+      "dahr_safe": true,
+      "max_response_kb": 10,
+      "topicAliases": [],
+      "domainTags": [
+        "story"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "importedFrom": []
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 500,
+          "retryOn": [
+            "timeout"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 95,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-03-23T20:57:39.167Z",
+        "discoveredBy": "auto-discovery"
       }
     }
   ]

@@ -8,7 +8,7 @@
  * Council-validated: 2026-03-24 (4 perspectives × 3 rounds)
  */
 
-import { appendFileSync, readFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { appendFileSync, readFileSync, mkdirSync, readdirSync, statSync, unlinkSync, chmodSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 // ── Types ─────────────────────────────────────────────
@@ -114,7 +114,12 @@ export function emitTranscriptEvent(
     ...partial,
   };
 
+  const isNewFile = !existsSync(ctx.filePath);
   appendFileSync(ctx.filePath, JSON.stringify(event) + "\n", { mode: 0o600 });
+  // Ensure permissions even if file was created by another process
+  if (isNewFile) {
+    try { chmodSync(ctx.filePath, 0o600); } catch { /* non-fatal */ }
+  }
 }
 
 // ── Read ──────────────────────────────────────────────

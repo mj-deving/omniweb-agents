@@ -4029,6 +4029,13 @@ async function main(): Promise<void> {
           });
           failPhase(v1State, phase, e.message, sessionsDir);
           phaseError(e.message);
+          // Emit session-complete before exit so transcript is never truncated
+          emitTranscriptEvent(transcript, {
+            type: "session-complete",
+            phase: null,
+            durationMs: Date.now() - new Date(v1State.startedAt).getTime(),
+            data: { posts: v1State.posts.length, error: e.message, failedPhase: phase },
+          });
           console.error(`\n  Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
           rl?.close();
           process.exit(1);

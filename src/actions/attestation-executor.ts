@@ -81,8 +81,12 @@ export async function executeAttestationPlan(
       if (useTlsn) {
         try {
           result = await attestTlsn(demos, candidate.url);
-        } catch {
-          // TLSN failed → fall back to DAHR
+        } catch (tlsnErr) {
+          if (mode === "tlsn_only") {
+            // tlsn_only: no fallback allowed, re-throw to outer catch
+            throw tlsnErr;
+          }
+          // TLSN failed → fall back to DAHR (tlsn_preferred or size-based)
           result = await attestDahr(demos, candidate.url);
         }
       } else {

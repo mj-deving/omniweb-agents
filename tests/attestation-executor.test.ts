@@ -132,6 +132,51 @@ describe("executeAttestationPlan", () => {
     expect(attestDahr).toHaveBeenCalledTimes(2);
   });
 
+  it("forces TLSN when attestationMode is tlsn_only", async () => {
+    const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
+
+    const plan = makePlan({
+      primary: makeCandidate({ plannedMethod: "DAHR", estimatedSizeBytes: 20 * 1024 }),
+    });
+
+    const result = await executeAttestationPlan(plan, {} as any, { attestationMode: "tlsn_only" });
+
+    expect(result.results).toHaveLength(1);
+    expect(attestTlsn).toHaveBeenCalledTimes(1);
+    expect(attestDahr).not.toHaveBeenCalled();
+  });
+
+  it("does not fallback to DAHR on TLSN failure in tlsn_only mode", async () => {
+    const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
+
+    attestTlsn.mockRejectedValue(new Error("TLSN unavailable"));
+    attestDahr.mockRejectedValue(new Error("DAHR also fails"));
+
+    const plan = makePlan();
+    const result = await executeAttestationPlan(plan, {} as any, { attestationMode: "tlsn_only" });
+
+    // Should fail, not silently fallback to DAHR
+    expect(result.results).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(attestTlsn).toHaveBeenCalledTimes(1);
+    // DAHR called once for retry (outer catch), not as TLSN fallback
+    expect(attestDahr).toHaveBeenCalledTimes(1);
+  }, 10000);
+
+  it("defaults to dahr_only when no options provided", async () => {
+    const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
+
+    const plan = makePlan({
+      primary: makeCandidate({ plannedMethod: "TLSN", estimatedSizeBytes: 1024 }),
+    });
+
+    const result = await executeAttestationPlan(plan, {} as any);
+
+    expect(result.results).toHaveLength(1);
+    expect(attestTlsn).not.toHaveBeenCalled();
+    expect(attestDahr).toHaveBeenCalledTimes(1);
+  });
+
   it("uses candidate.rateLimitBucket for rate limiting", async () => {
     const { executeAttestationPlan } = await import("../src/actions/attestation-executor.js");
 

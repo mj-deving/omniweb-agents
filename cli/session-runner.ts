@@ -95,6 +95,12 @@ import {
   loadBaselines,
   saveBaselines,
 } from "../src/lib/signal-detection.js";
+import {
+  createTranscriptContext,
+  emitTranscriptEvent,
+  pruneOldTranscripts,
+  type TranscriptContext,
+} from "../src/lib/transcript.js";
 
 // ── Constants ──────────────────────────────────────
 
@@ -3831,10 +3837,16 @@ async function main(): Promise<void> {
         info(`Warning: could not write session report: ${e.message}`);
       }
     } else {
-      // ── V1 Loop (unchanged) ────────────────────
+      // ── V1 Loop ────────────────────────────────
       const v1State = state as SessionState;
       const phases = getPhaseOrder();
       const startIdx = startPhase ? phases.indexOf(startPhase) : 0;
+
+      // Session transcript — append-only JSONL event logger
+      const transcriptDir = resolve(homedir(), ".config", "demos", "transcripts", flags.agent);
+      pruneOldTranscripts(transcriptDir, 30);
+      const transcript = createTranscriptContext(flags.agent, v1State.sessionNumber, transcriptDir);
+      emitTranscriptEvent(transcript, { type: "session-start", phase: null, data: { oversight: flags.oversight, phaseCount: phases.length } });
 
       for (let i = startIdx; i < phases.length; i++) {
         const phase = phases[i] as PhaseName;
@@ -3844,6 +3856,7 @@ async function main(): Promise<void> {
         setObserverPhase(phase);
         beginPhase(v1State, phase, sessionsDir);
         const phaseStartMs = Date.now();
+        emitTranscriptEvent(transcript, { type: "phase-start", phase });
 
         try {
           switch (phase) {
@@ -3891,7 +3904,22 @@ async function main(): Promise<void> {
             });
             info(`⚠️ Phase ${phase} exceeded budget: ${Math.round(phaseDurationMs / 1000)}s (budget: ${Math.round(budgetMs / 1000)}s, +${overagePercent}%)`);
           }
+
+          // Transcript: phase-complete
+          emitTranscriptEvent(transcript, {
+            type: "phase-complete",
+            phase,
+            durationMs: Date.now() - phaseStartMs,
+          });
         } catch (e: any) {
+          // Transcript: phase-error
+          emitTranscriptEvent(transcript, {
+            type: "phase-error",
+            phase,
+            durationMs: Date.now() - phaseStartMs,
+            data: { error: e.message },
+          });
+
           // Observe phase failure before exiting
           observe("error", `Phase ${phase} failed: ${e.message}`, {
             phase,
@@ -3905,6 +3933,14 @@ async function main(): Promise<void> {
           process.exit(1);
         }
       }
+
+      // Transcript: session-complete
+      emitTranscriptEvent(transcript, {
+        type: "session-complete",
+        phase: null,
+        durationMs: Date.now() - new Date(v1State.startedAt).getTime(),
+        data: { posts: v1State.posts.length },
+      });
 
       rl?.close();
 

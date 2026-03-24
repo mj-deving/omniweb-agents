@@ -100,7 +100,105 @@ import {
   emitTranscriptEvent,
   pruneOldTranscripts,
   type TranscriptContext,
+  type TranscriptMetrics,
 } from "../src/lib/transcript.js";
+
+// ── Transcript Metric Extraction ────────────────────
+
+/** Extract phase-specific data for transcript from phase result.
+ * Paths verified against actual result shapes in session-runner.ts. */
+function extractPhaseData(phase: string, result: any, state: any): Record<string, unknown> | undefined {
+  switch (phase) {
+    case "audit": {
+      const stats = result.stats || {};
+      return {
+        entriesAudited: stats.total_entries || 0,
+        avgPredictionError: stats.avg_prediction_error,
+        scoreDistribution: stats.score_distribution,
+      };
+    }
+    case "scan":
+      return {
+        activityLevel: result.activity?.level,
+        postsPerHour: result.activity?.posts_per_hour,
+        gapCount: result.gaps?.topics?.length || 0,
+        sourceSignals: result.sourceSignals,
+      };
+    case "engage":
+      return { reactionsCast: result.reactions_cast || 0, agrees: result.agrees || 0, disagrees: result.disagrees || 0 };
+    case "gate": {
+      const posts = result.posts || [];
+      return {
+        topicCount: posts.length,
+        topics: posts.map((p: any) => p.topic),
+        passCount: posts.filter((p: any) => p.gateResult?.summary?.fail === 0).length,
+        failCount: posts.filter((p: any) => p.gateResult?.summary?.fail > 0).length,
+      };
+    }
+    case "publish":
+      return {
+        postCount: state.posts?.length || 0,
+        txHashes: state.posts?.map((p: any) => p.txHash),
+        categories: state.posts?.map((p: any) => p.category),
+      };
+    case "verify": {
+      const summary = result.summary || {};
+      return { verified: summary.verified || 0, total: summary.total || 0 };
+    }
+    case "review": {
+      const stats = result.stats || {};
+      return {
+        postsReviewed: stats.total_posts,
+        avgScore: stats.avg_score,
+        avgReactions: stats.avg_actual,
+        suggestions: result.q2_suggestions?.map((s: any) => s.text || s) || [],
+      };
+    }
+    case "harden":
+      return {
+        findingsCount: result.findings || 0,
+        actionable: result.actionable || 0,
+        proposed: result.proposed || 0,
+        skipped: result.skipped || 0,
+      };
+    default:
+      return undefined;
+  }
+}
+
+/** Extract metrics for transcript from phase result.
+ * Paths verified against actual result shapes in session-runner.ts. */
+function extractPhaseMetrics(phase: string, result: any, state: any): TranscriptMetrics | undefined {
+  switch (phase) {
+    case "scan":
+      return {
+        sourcesFetched: result.sourceSignals?.sourcesFetched,
+        signalsDetected: result.sourceSignals?.signalCount,
+      };
+    case "gate": {
+      const posts = result.posts || [];
+      const gateResults = posts.map((p: any) => p.gateResult?.summary);
+      const totalPass = gateResults.reduce((s: number, g: any) => s + (g?.pass || 0), 0);
+      const totalFail = gateResults.reduce((s: number, g: any) => s + (g?.fail || 0), 0);
+      return { gatePass: totalPass, gateFail: totalFail };
+    }
+    case "publish": {
+      const published = state.posts?.length || 0;
+      return { attestationSuccess: published };
+    }
+    case "verify": {
+      const summary = result.summary || {};
+      return {
+        reactions: {
+          agree: summary.agrees || 0,
+          disagree: summary.disagrees || 0,
+        },
+      };
+    }
+    default:
+      return undefined;
+  }
+}
 
 // ── Constants ──────────────────────────────────────
 
@@ -3905,11 +4003,14 @@ async function main(): Promise<void> {
             info(`⚠️ Phase ${phase} exceeded budget: ${Math.round(phaseDurationMs / 1000)}s (budget: ${Math.round(budgetMs / 1000)}s, +${overagePercent}%)`);
           }
 
-          // Transcript: phase-complete
+          // Transcript: phase-complete with metrics extracted from phase result
+          const phaseResult = v1State.phases[phase]?.result || {};
           emitTranscriptEvent(transcript, {
             type: "phase-complete",
             phase,
             durationMs: Date.now() - phaseStartMs,
+            data: extractPhaseData(phase, phaseResult, v1State),
+            metrics: extractPhaseMetrics(phase, phaseResult, v1State),
           });
         } catch (e: any) {
           // Transcript: phase-error

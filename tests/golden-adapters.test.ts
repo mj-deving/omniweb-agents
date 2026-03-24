@@ -320,6 +320,20 @@ describe("declarative: defillama", () => {
     expect(candidates[0].url).toContain("/tvl/");
   });
 
+  it("buildCandidates: tvl uses source URL protocol, not topic", () => {
+    // Source URL has "compound-finance" but topic is "defi" — should use source's protocol
+    const compoundSource = makeSource({
+      id: "dl-tvl-compound", provider: "defillama",
+      url: "https://api.llama.fi/tvl/compound-finance",
+      adapter: { operation: "tvl" },
+    });
+    const ctx = makeCtx(compoundSource, "defi", "DAHR");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/tvl/compound-finance");
+    expect(candidates[0].url).not.toContain("/tvl/defi");
+  });
+
   it("buildCandidates: protocol returns empty for TLSN", () => {
     const ctx = makeCtx(protocolSource, "aave", "TLSN", { asset: "aave" });
     const candidates = adapter.buildCandidates(ctx);

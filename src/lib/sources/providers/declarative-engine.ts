@@ -1017,6 +1017,37 @@ function createAdapterFromSpec(
         // Check attestation compatibility
         if (!isAttestationAllowed(operation.compatibility, ctx.attestation)) return [];
 
+        // Extract URL params from source's own URL and merge into context vars.
+        // This ensures static source URLs (e.g., /tvl/compound-finance) override
+        // topic-derived vars (e.g., protocol="defi") with the correct value.
+        // Skip template URLs with unresolved placeholders (e.g., "{owner}").
+        if (!ctx.source.url.includes("{")) {
+          const urlVars = extractUrlParams(
+            ctx.source.url,
+            operation.request.urlTemplate,
+            operation.request.query,
+          );
+          if (Object.keys(urlVars).length > 0) {
+            // Broadcast extracted values to all vars.* sources referenced by operation
+            // variables. This ensures the value takes precedence regardless of which
+            // alias the spec checks first (e.g., vars.asset before vars.protocol).
+            const merged = { ...urlVars };
+            if (operation.variables) {
+              for (const [varName, varSpec] of Object.entries(operation.variables)) {
+                const extracted = urlVars[varName];
+                if (extracted == null) continue;
+                // Set all vars.* aliases referenced in this variable's sources
+                for (const src of (varSpec as VariableSpec).sources) {
+                  if (typeof src === "string" && src.startsWith("vars.")) {
+                    merged[src.slice(5)] = extracted;
+                  }
+                }
+              }
+            }
+            ctx = { ...ctx, vars: { ...ctx.vars, ...merged } };
+          }
+        }
+
         // Resolve variables
         let resolved = resolveAllVariables(operation, ctx);
         if (resolved === null) return []; // Required variable unresolved

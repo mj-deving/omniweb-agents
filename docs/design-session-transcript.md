@@ -116,7 +116,7 @@ The `schemaVersion: 1` field enables forward-compatible evolution:
 - **Breaking change:** Bump to v2, old consumers skip v2 events
 - **Migration:** Not needed — JSONL files are per-session, retention is 30 days
 
-### 2.4a Phase Data Shapes (per Codex LOW-1)
+### 2.5 Phase Data Shapes
 
 | Phase | Expected `data` keys |
 |-------|---------------------|
@@ -127,13 +127,13 @@ The `schemaVersion: 1` field enables forward-compatible evolution:
 | publish | `txHashes[]`, `postCount`, `categories[]` |
 | verify | `verified`, `total` |
 | review | `postsReviewed`, `avgScore`, `avgReactions`, `suggestions[]` |
-| harden | `findingsCount`, `actionable`, `strategy`, `skipped` |
+| harden | `findingsCount`, `actionable`, `proposed`, `skipped` |
 
-### 2.4b V2 Loop Compatibility (per Codex HIGH-2)
+### 2.6 V2 Loop Compatibility
 
 v1 targets the V1 loop only (8 phases: audit→scan→engage→gate→publish→verify→review→harden). The V2 loop uses different phase names (`sense`, `act`, `confirm` with substages). V2 transcript support is deferred — the V2 loop is not used in production cron sessions. When added, V2 phases will emit events with their own phase names; the schema's `phase: string` field accommodates this without breaking changes.
 
-### 2.4c Implementation Notes (per Codex review)
+### 2.7 Implementation Notes
 
 - **`appendFileSync`** is a deliberate trade-off: simplicity over performance. 16 sync writes per session (~1ms each) is negligible. Switch to buffered async if event volume grows.
 - **`phase-error` events** must be emitted in the catch block alongside `failPhase()`, carrying `data: { error: message }` and partial `durationMs`.

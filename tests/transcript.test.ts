@@ -168,6 +168,14 @@ describe("readTranscript", () => {
     const events = readTranscript(filePath);
     expect(events).toHaveLength(1);
   });
+
+  it("returns empty array for empty file", () => {
+    const filePath = join(tmpDir, "empty.jsonl");
+    writeFileSync(filePath, "");
+
+    const events = readTranscript(filePath);
+    expect(events).toEqual([]);
+  });
 });
 
 // ── pruneOldTranscripts ───────────────────────────────

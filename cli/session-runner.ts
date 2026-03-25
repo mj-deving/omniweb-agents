@@ -2313,21 +2313,7 @@ async function runPublishAutonomous(
       console.log(`    Predicted: ${draft.predicted_reactions} reactions`);
       console.log(`    Quality: ${qualityResult.score}/${qualityResult.maxScore} (attest=${qualityResult.attestationGate}) [${Object.entries(qualityResult.breakdown).filter(([,v]) => v !== 0).map(([k,v]) => `${k}:${v > 0 ? '+' : ''}${v}`).join(', ')}]`);
 
-      // Persist quality data for correlation analysis
-      logQualityData({
-        timestamp: new Date().toISOString(),
-        agent: flags.agent,
-        topic: gp.topic,
-        category: draft.category,
-        quality_score: qualityResult.score,
-        quality_max: qualityResult.maxScore,
-        quality_breakdown: qualityResult.breakdown,
-        predicted_reactions: draft.predicted_reactions,
-        confidence: draft.confidence,
-        text_length: draft.text.length,
-        isReply: isReplyPost,
-        hasAttestation: false, // logged pre-attestation; actual attestation status captured in session log
-      });
+      // Quality data logged post-publish (below) with txHash for join capability
 
       // Step 2: Post-generation source matching via extension hooks (Phase 4)
       const matchDecision = await runAfterPublishDraft(extensionRegistry, enabledExtensions, {
@@ -2552,6 +2538,23 @@ async function runPublishAutonomous(
         );
         existingTxHashes.add(pubResult.txHash);
       }
+
+      // Persist quality data post-publish with txHash for correlation join
+      logQualityData({
+        timestamp: new Date().toISOString(),
+        agent: flags.agent,
+        topic: gp.topic,
+        category: draft.category,
+        quality_score: qualityResult.score,
+        quality_max: qualityResult.maxScore,
+        quality_breakdown: qualityResult.breakdown,
+        predicted_reactions: draft.predicted_reactions,
+        confidence: draft.confidence,
+        text_length: draft.text.length,
+        isReply: isReplyPost,
+        hasAttestation: !!pubResult.attestation,
+        txHash: pubResult.txHash,
+      });
 
       // Record publish in write-rate ledger (PR1 — persistent tracking)
       writeRateLedger = recordPublish(writeRateLedger, agentConfig.name, pubResult.txHash);

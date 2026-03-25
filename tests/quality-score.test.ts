@@ -198,4 +198,52 @@ describe("logQualityData", () => {
       hasAttestation: false,
     })).not.toThrow();
   });
+
+  it("includes txHash when provided", () => {
+    const entry: QualityDataEntry = {
+      timestamp: "2026-03-25T10:00:00Z",
+      agent: "test-agent",
+      topic: "eth price",
+      category: "ANALYSIS",
+      quality_score: 4,
+      quality_max: 7,
+      quality_breakdown: { hasNumericClaim: 2 },
+      predicted_reactions: 10,
+      confidence: 85,
+      text_length: 350,
+      isReply: false,
+      hasAttestation: true,
+      txHash: "0xabc123def456",
+    };
+
+    logQualityData(entry);
+
+    const content = fs.readFileSync(testFile, "utf-8");
+    const parsed = JSON.parse(content.trim());
+    expect(parsed.txHash).toBe("0xabc123def456");
+    expect(parsed.agent).toBe("test-agent");
+  });
+
+  it("omits txHash when not provided", () => {
+    const entry: QualityDataEntry = {
+      timestamp: "2026-03-25T10:00:00Z",
+      agent: "test-agent",
+      topic: "btc price",
+      category: "ANALYSIS",
+      quality_score: 3,
+      quality_max: 7,
+      quality_breakdown: {},
+      predicted_reactions: 8,
+      confidence: 70,
+      text_length: 300,
+      isReply: false,
+      hasAttestation: true,
+    };
+
+    logQualityData(entry);
+
+    const content = fs.readFileSync(testFile, "utf-8");
+    const parsed = JSON.parse(content.trim());
+    expect(parsed.txHash).toBeUndefined();
+  });
 });

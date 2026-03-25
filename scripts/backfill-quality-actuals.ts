@@ -140,7 +140,8 @@ async function main(): Promise<void> {
   const configDir = join(homedir(), ".config", "demos");
 
   const qualityPath = join(configDir, `quality-data-${agent}.jsonl`);
-  const sessionLogPath = join(configDir, `${agent}-session-log.jsonl`);
+  // Session logs live at ~/.{agent}-session-log.jsonl (see src/lib/log.ts:resolveLogPath)
+  const sessionLogPath = join(homedir(), `.${agent}-session-log.jsonl`);
 
   if (!existsSync(qualityPath)) {
     console.error(`No quality data file found: ${qualityPath}`);

@@ -69,6 +69,24 @@ export class CLIProvider implements LLMProvider {
       ? `${options.system}\n\n${prompt}`
       : prompt;
 
+    // Retry once on empty output (transient API hiccups)
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const result = await this._spawn(fullPrompt, options?.modelTier);
+        return result;
+      } catch (err: any) {
+        if (attempt === 0 && err.message?.includes("returned empty output")) {
+          // Retry after brief delay — likely transient API issue
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw new Error(`CLI provider "${this.name}" returned empty output after retry`);
+  }
+
+  private _spawn(fullPrompt: string, modelTier?: string): Promise<string> {
     // Pipe prompt directly via stdin — no shell, no temp files.
     // spawn() without shell prevents command injection from env vars.
     // Pass modelTier as LLM_MODEL_TIER env var so CLI tools can use it.
@@ -78,7 +96,7 @@ export class CLIProvider implements LLMProvider {
         timeout: 120_000,
         env: {
           ...process.env,
-          ...(options?.modelTier ? { LLM_MODEL_TIER: options.modelTier } : {}),
+          ...(modelTier ? { LLM_MODEL_TIER: modelTier } : {}),
         },
       });
 
@@ -88,7 +106,9 @@ export class CLIProvider implements LLMProvider {
       child.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
       child.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
 
-      // Write prompt to stdin and close it so the CLI knows input is complete
+      // Write prompt to stdin and close it so the CLI knows input is complete.
+      // Ignore EPIPE — child may exit before reading all stdin (e.g., echo).
+      child.stdin.on("error", () => {});
       child.stdin.write(fullPrompt);
       child.stdin.end();
 

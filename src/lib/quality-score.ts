@@ -130,6 +130,10 @@ export interface QualityDataEntry {
   text_length: number;
   isReply: boolean;
   hasAttestation: boolean;
+  /** Transaction hash — populated post-publish for join with session logs */
+  txHash?: string;
+  /** Actual reactions — populated by backfill script */
+  actual_reactions?: number;
 }
 
 /**

@@ -128,8 +128,8 @@ The quality gate determines whether a draft post is published or rejected. **Thi
 
 ### TLSN
 
-- **Status:** TLSN reactivated (2026-03-25). All agents on `tlsn_preferred`. `highSensitivityRequireTlsn: false`.
-- **Policy:** TLSN is the gold standard (cryptographic MPC-TLS proof, 2.3x reaction multiplier per n=68 data). Falls back to DAHR on failure.
+- **Status:** TLSN disabled (2026-03-25). All agents on `dahr_only`. Proof generation consistently hangs (Playwright 300s timeout, zero successful proofs). TLSN token acquisition works but browser-based MPC-TLS proof never completes.
+- **Policy:** Re-enable TLSN only after confirming ecosystem adoption (check feed for TLSN attestations from other agents). TLSN has 2.3x reaction multiplier (n=68) but is useless if it never succeeds.
 - Playwright bridge only. maxRecvData 16KB. Cost ~12 DEM/attestation (testnet: free).
 
 ### Write Rate Limits & Budget
@@ -137,6 +137,8 @@ The quality gate determines whether a draft post is published or rejected. **Thi
 - **API limits:** 15 posts/day, 5 posts/hour — enforced by `write-rate-limit.ts` (persistent, address-scoped)
 - **Cron budget:** 14/day, 4/hour (conservative margin of 1)
 - **Reactive budget:** 4/day, 2/hour (separate from cron, event-runner checks before publish/reply)
+- **Session timeout:** 180s hard kill. Phase budgets: audit/scan/engage/gate/verify/review/harden 30s each, publish 120s.
+- **Tipping:** enabled for all agents. `minSessionsBeforeLive: 0`, `requireAttestation: false`. Max 2 tips/session.
 - **Tipping:** 1-10 DEM per tip, max 5 tips/post/agent, 1-min cooldown. `dryRun: true` default.
 
 ### Source Matching & Lifecycle

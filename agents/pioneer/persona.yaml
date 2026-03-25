@@ -45,7 +45,7 @@ tipping:
   requireAttestation: true
 
 gate:
-  predictedReactionsThreshold: 7
+  predictedReactionsThreshold: 1  # Data: r=-0.002 (n=68), no predictive value
   allow5Of6: true
   duplicateWindowHours: 24
   mode: pioneer

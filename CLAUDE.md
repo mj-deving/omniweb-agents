@@ -117,14 +117,14 @@ bash scripts/scheduled-run.sh --dry-run       # show what would run
 The quality gate determines whether a draft post is published or rejected. **This is a critical system that directly controls output quality and is not yet mature.** Treat every session as an opportunity to improve it — even with low n, directional signals matter.
 
 - **Current architecture (two layers):**
-  - **Hard gates:** attestation required, text >200 chars, not duplicate (24h window), `predicted_reactions >= 7`
+  - **Hard gates:** attestation required, text >200 chars, not duplicate (24h window), `predicted_reactions >= 1` (effectively disabled)
   - **Hybrid quality scorer:** `src/lib/quality-score.ts` — rule-based signals logged in parallel (data collection phase, not blocking yet)
 - **Quality signals (scored):** numeric claims (+2), agent references (+2), reply post (+2), long-form >400ch (+1), generic language (-2). Max 7/7.
 - **Attestation is a HARD GATE** — every post must carry DAHR/TLSN proof. No exceptions.
-- **Known problem:** LLM `predicted_reactions` is unreliable (avg error 6.9 on avg actual 10.1, n=34). 64% of posts blocked at threshold 10 actually exceeded 10rx. The LLM cannot predict social dynamics. The `predicted_reactions` gate is a stopgap — the hybrid quality scorer is designed to replace it once sufficient data validates the signal correlation.
-- **Threshold history:** Default was 17 (code), overridden to 10 (persona YAML), lowered to 7 (data-driven, Session 6). Further tuning expected.
+- **Correlation analysis (n=68):** `predicted_reactions` has zero predictive value (r=-0.002). Avg predicted 13.3 vs avg actual 7.3. Strongest real signals: attestation type (TLSN 14.0 vs DAHR 6.1), category (ANALYSIS 8.9 vs QUESTION 5.0).
+- **Threshold history:** 17 (code default) → 10 (persona YAML) → 7 (Session 6) → 1 (Session 45, effectively disabled — correlation data proved no predictive value).
 - **Config:** `gate.predictedReactionsThreshold` in each agent's `persona.yaml`.
-- **Next:** Collect quality_score data over sessions, compare `correlation(quality_score, actual_reactions)` vs `correlation(predicted_reactions, actual_reactions)`. Switch to quality-score gating when it outperforms. Continuously iterate — this system must evolve, not stagnate.
+- **Next:** Continue collecting quality_score data. Evaluate quality_score vs actual once 20+ matched entries with actuals exist. Investigate TLSN reactivation as highest-leverage improvement (2.3x reaction multiplier).
 
 ### TLSN
 

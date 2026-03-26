@@ -77,9 +77,13 @@ CORE TOOLKIT (framework-agnostic, multi-vertical)
 │   ├── storage/       (future) Storage Programs: on-chain state
 │   ├── workflows/     (future) DemosWork: multi-step operations
 │   └── privacy/       (future) L2PS: encrypted transactions, ZK proofs
-├── strategies/     Session loop (8-phase), reactive loop, reply-only, custom
-├── personas/       Preset agent profiles (sentinel, crawler, pioneer, nexus, etc.)
+├── strategies/     Opt-in playbooks: session loop (8-phase), reactive loop, reply-only
 └── plugins/        25 composable plugins (calibrate, signals, tips, storage, etc.)
+
+examples/                          (NOT in core — reference/inspiration only)
+├── personas/       sentinel, crawler, pioneer — reference implementations
+├── strategies/     Example playbook configurations
+└── integrations/   Sample OpenClaw/ElizaOS/CLI setups
 
 DEMOS SDK (not ours — Demos team)
 @kynesyslabs/demosdk — wallet, signing, RPC, transactions
@@ -94,43 +98,54 @@ DEMOS SDK (not ours — Demos team)
 
 ## 5. Open Design Questions
 
-### Q1: Naming & Identity
-- [ ] Is the toolkit still called "demos-agents"?
-- [ ] Or `@demos-agents/core` + `@demos-agents/eliza-plugin` + `@demos-agents/openclaw-skill`?
-- [ ] Or entirely new name (e.g., `demos-toolkit`, `omniweb-skills`, `demos-kit`)?
-- **Decision:** _pending_
+### Q1: Naming & Identity ✅
+- [x] "demos-agents" is misleading — implies a framework/harness
+- [x] Name should signal "plug this into YOUR agent" — a skill/toolkit/plugin
+- [x] Candidates: `demos-toolkit`, `demos-skills`, `@demos/toolkit`
+- **Decision:** Name should reflect toolkit/skill/plugin identity. Not "agents." Exact name TBD but direction is clear — it's a bolt-on, plug-and-play toolkit. Any agent comes along and plugs in.
 
-### Q2: Boundary — What Do WE Own vs Demos Team?
-- [ ] How thin/thick is the wrapper over `@kynesyslabs/demosdk`?
-- [ ] Do we abstract SDK quirks (NAPI crash, ESM bugs) or just document them?
-- [ ] When blocked verticals unblock, do we build vertical tools immediately?
-- **Decision:** _pending_
+### Q2: Boundary — What Do WE Own vs Demos Team? ✅
+- [x] Wrapper should NOT be thick or obscure the SDK
+- [x] Abstract: difficulty, learning curve, errors, gotchas, repetitive config — the non-trivial stuff every agent would otherwise figure out from scratch
+- [x] Don't abstract: the SDK itself. Agents should interact with Demos natively through our tools
+- [x] Document over implement: when implementation value is unclear, document. Good docs let smart agents self-serve
+- [x] Don't be personal: design for any flavor, not our specific style
+- [x] Scaffold future verticals, don't implement: structure + docs until value is proven
+- **Decision:** Thin wrapper. Abstract non-trivial complexity (attestation pipeline, claim extraction, quality heuristics). Don't obscure the SDK. Prefer documentation over implementation when value is unclear. Scaffold verticals, implement only when proven. Design generically, not for personal style.
 
-### Q3: MVP Scope — What's the "wow" moment?
-- [ ] `openclaw skills install demos` → publish attested posts in 3 commands?
-- [ ] ElizaOS character that autonomously engages in SuperColony?
-- [ ] Standalone CLI (`npx demos-toolkit publish`)?
-- [ ] What's the minimum that saves someone weeks?
-- **Decision:** _pending_
+### Q3: MVP Scope — What's the "wow" moment? ✅
+- [x] Layered "wow": instant (3 commands) → discovery (see what's possible) → adoption (compose your own)
+- [x] `openclaw skills install demos` → 3 commands → publish attested post. Yes.
+- [x] ElizaOS autonomous character? Yes — same core, different adapter.
+- [x] Standalone CLI? Yes — third distribution surface, same core.
+- [x] All three are distribution surfaces, not three products. Same `@demos-agents/core`.
+- [x] No vendor lock-in on strategies — toolkit shows playbooks/heuristics, consumer adopts their own
+- **Decision:** Three distribution surfaces (OpenClaw skill, ElizaOS plugin, standalone CLI) backed by one core. Wow is layered: instant hook → discovery of possibilities → adopt/customize for own use case. No strategy lock-in.
+- **Open:** Wallet provisioning — is "bring your own wallet" the prerequisite, or does toolkit help with setup? Strategy discovery mechanism (CLI command? docs index?).
 
-### Q4: Persona vs Tooling
-- [ ] Do personas (sentinel/crawler/pioneer) ship as part of the toolkit?
-- [ ] Or are they example configurations consumers customize?
-- [ ] An OpenClaw agent already HAS a persona — does it need a Demos sub-persona?
-- **Emerging answer:** Personas define scoped strategies + tool selection. They're in-scope — a toolkit consumer picks a persona to scope their agent's Demos behavior.
-- **Decision:** _pending_
+### Q4: Persona vs Tooling ✅
+- [x] Personas are NOT the toolkit's core job. Tools are.
+- [x] Consumer's agent already HAS its own persona/identity
+- [x] Ship example personas (sentinel/crawler/pioneer) as reference/inspiration in `examples/`, NOT in `core/`
+- [x] Toolkit API = tools + strategies. How consumer assembles them is their business.
+- [x] On-demand assembly pattern: agent grabs tools it needs, scopes them, uses them, puts them back
+- [x] Like tool kits on a shelf, not sub-agents with persistent identities
+- **Decision:** Tools over personas. Example personas as documentation/reference only (`examples/` directory). No predefined sub-agents required. Consumer assembles tools on-demand by purpose. The toolkit is a shelf of capabilities, not a cast of characters.
 
-### Q5: Strategy Packaging
-- [ ] The 8-phase loop is a strategy, not the framework. Do strategies ship as "playbooks"?
-- [ ] Can an ElizaOS agent ignore strategies entirely and just use individual tools?
-- [ ] Is the V2 4-phase loop (observe→act→verify→learn) the minimum viable loop?
-- **Decision:** _pending_
+### Q5: Strategy Packaging ⏳
+- [x] 8-phase loop = example opt-in playbook, not mandatory
+- [x] Agents can ignore strategies entirely — just use tools directly
+- [ ] V2 4-phase (observe→act→verify→learn) might not be MVP — maybe Sense+Act is the true minimum?
+- [x] This needs deep thinking (first principles, council, creative) — **parked for dedicated session**
+- **Decision:** Strategies are opt-in playbooks. 8-phase loop is one example. Agents can use tools without any strategy. **PARKED:** What is the minimum viable strategy? Needs creative/analytical deep dive.
 
-### Q6: State & Memory Ownership
-- [ ] Source catalog (221 sources) — ships with toolkit? Or fetched from registry?
-- [ ] Session log, colony map, improvements — toolkit manages or consumer manages?
-- [ ] Two frameworks using toolkit on same machine — shared state?
-- **Decision:** _pending_
+### Q6: State & Memory Ownership ✅
+- [x] Source catalog: ships as bundled data (JSON file, doesn't hurt). Consumer ignores/extends as needed. Can add own sources, contribute back.
+- [x] Session log / colony map / improvements: consumer manages. Toolkit provides **stateless tools by default** + **optional state adapters** consumer can opt into.
+- [x] Rate limits: **toolkit enforces, mandatory** — guardrail protecting consumer from API bans. Cannot opt out.
+- [x] State scope: **per wallet address**, not per framework. Same wallet = shared rate limits regardless of which framework calls.
+- [x] Heuristics (performance tracking, calibration, self-improvement): documented as patterns. Consumer implements their own way or uses our reference implementation.
+- **Decision:** Stateless tools by default. Optional state adapters for consumers who want cross-session intelligence. Rate limits are the one mandatory guardrail (wallet-scoped). Source catalog ships as bundled data. Heuristics documented, not forced.
 
 ---
 
@@ -211,6 +226,19 @@ ElizaOS plugin system:
 
 **Participants:** Marius + Claude (Intern agent for framework research, Explore agent for codebase deep-dive)
 
+### 2026-03-25 — Session 2: Q1-Q6 Answered
+- **Q1 (Naming):** Resolved — name must signal toolkit/skill/plugin, not "agents." Exact name TBD.
+- **Q2 (Boundary):** Resolved — thin wrapper. Abstract non-trivial complexity, don't obscure SDK. Document over implement when value unclear. Scaffold verticals, don't implement.
+- **Q3 (MVP):** Resolved — three distribution surfaces (OpenClaw, ElizaOS, CLI), one core. Layered wow: instant hook → discovery → adopt/customize. No strategy lock-in.
+- **Q4 (Personas):** Resolved — tools over personas. Examples in `examples/` for reference. On-demand assembly by purpose, not predefined sub-agents.
+- **Q5 (Strategies):** Partially resolved — strategies are opt-in playbooks. PARKED: what is the minimum viable strategy? Needs creative/analytical deep dive.
+- **Q6 (State):** Resolved — stateless tools by default, optional state adapters. Rate limits mandatory (wallet-scoped). Source catalog ships as bundled data. Heuristics documented as patterns.
+
+**Status: 5 of 6 questions answered. Q5 parked for deep thinking session.**
+**Next:** R1-R4 research, then MVP spec with ISC criteria.
+
+**Participants:** Marius + Claude
+
 ---
 
 ## 10. Decision Log
@@ -228,3 +256,15 @@ ElizaOS plugin system:
 [2026-03-25] DECISION: Personas are in-scope for the toolkit. REASON: They define scoped strategies + tool selection. An OpenClaw agent importing the skill still needs persona selection.
 
 [2026-03-25] DECISION: Do not implement until design questions Q1-Q6 are answered. REASON: Premature implementation creates architectural debt.
+
+[2026-03-25] DECISION: Toolkit wrapper is thin — abstract non-trivial complexity, don't obscure SDK. REASON: Agents are smart. Abstract difficulty/gotchas/config, but let them interact with Demos natively. Prefer documentation over implementation when value is unclear.
+
+[2026-03-25] DECISION: Tools over personas. Example personas in examples/ only. REASON: Consumer's agent already has its own identity. Toolkit is a shelf of capabilities, not a cast of characters. On-demand assembly by purpose.
+
+[2026-03-25] DECISION: Strategies are opt-in playbooks, never mandatory. REASON: No vendor lock-in. 8-phase loop is one example. Agents can use individual tools without any strategy.
+
+[2026-03-25] DECISION: Stateless tools by default, optional state adapters. REASON: Consumer manages their own state. Rate limits are the one mandatory guardrail (wallet-scoped, protects from API bans).
+
+[2026-03-25] DECISION: Three distribution surfaces, one core. REASON: OpenClaw skill, ElizaOS plugin, standalone CLI all call the same @demos-agents/core. Not three products.
+
+[2026-03-25] DECISION: Scaffold future verticals, don't implement. REASON: Structure + docs until value is proven. Don't be too individual for personal use case — design generically so everyone can adopt.

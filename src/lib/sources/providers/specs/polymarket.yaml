@@ -1,0 +1,245 @@
+schemaVersion: 1
+
+provider:
+  name: polymarket
+  displayName: Polymarket
+  matches:
+    providers: [polymarket]
+    hosts: [gamma-api.polymarket.com]
+  domains: [prediction-markets, crypto, politics, world-events]
+  rateLimit:
+    bucket: polymarket
+    maxPerMinute: 30
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  markets-active:
+    when:
+      sourceAdapterOperation: [markets-active, markets]
+      urlPatterns: ["/markets"]
+      default: true
+    claimTypes: [probability, prediction]
+    extractionPath: "$[0].outcomePrices"
+    request:
+      method: GET
+      urlTemplate: "https://gamma-api.polymarket.com/markets"
+      query:
+        active: "true"
+        closed: "false"
+        limit: "{limit}"
+        order: "volume24hr"
+        ascending: "false"
+      estimatedSizeKb:
+        TLSN: 16
+        DAHR: 16
+      matchHints:
+        - "polymarket"
+        - "prediction"
+        - "{category}"
+    variables:
+      limit:
+        sources:
+          - literal: "10"
+        default: "10"
+      category:
+        sources: [vars.category, topic]
+        default: "all"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          limit:
+            default: 5
+            max: 5
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: array
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.question"
+        summary:
+          template: "Yes: {yesPrice}% | Vol 24h: ${volume24hr}"
+        bodyText:
+          template: "{question} — Yes: {yesPrice}%, No: {noPrice}% | Volume: ${volume} | Ends: {endDateIso}"
+        publishedAt:
+          jsonPath: "$.createdAt"
+        topics:
+          jsonPath: "$.slug"
+        metrics:
+          question:
+            jsonPath: "$.question"
+          slug:
+            jsonPath: "$.slug"
+          yesPrice:
+            # outcomePrices is a JSON-encoded string, extract first element
+            jsonPath: "$.bestBid"
+          noPrice:
+            jsonPath: "$.bestAsk"
+          volume:
+            jsonPath: "$.volume"
+          volume24hr:
+            jsonPath: "$.volume24hr"
+          liquidity:
+            jsonPath: "$.liquidityNum"
+          endDate:
+            jsonPath: "$.endDate"
+          endDateIso:
+            jsonPath: "$.endDateIso"
+          active:
+            jsonPath: "$.active"
+          lastTradePrice:
+            jsonPath: "$.lastTradePrice"
+          oneDayPriceChange:
+            jsonPath: "$.oneDayPriceChange"
+        raw:
+          mode: item
+
+  events-active:
+    when:
+      sourceAdapterOperation: [events-active, events]
+      urlPatterns: ["/events"]
+    claimTypes: [probability, prediction]
+    request:
+      method: GET
+      urlTemplate: "https://gamma-api.polymarket.com/events"
+      query:
+        active: "true"
+        closed: "false"
+        limit: "{limit}"
+      estimatedSizeKb:
+        TLSN: 16
+        DAHR: 16
+      matchHints:
+        - "polymarket"
+        - "prediction"
+        - "event"
+    variables:
+      limit:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          limit:
+            default: 3
+            max: 3
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: array
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          template: "Vol: ${volume24hr} | Liquidity: ${liquidity}"
+        bodyText:
+          template: "{title} — Volume: ${volume} | Open Interest: ${openInterest} | Markets: {marketsCount}"
+        publishedAt:
+          jsonPath: "$.startDate"
+        topics:
+          jsonPath: "$.slug"
+        metrics:
+          title:
+            jsonPath: "$.title"
+          slug:
+            jsonPath: "$.slug"
+          volume:
+            jsonPath: "$.volume"
+          volume24hr:
+            jsonPath: "$.volume24hr"
+          liquidity:
+            jsonPath: "$.liquidity"
+          openInterest:
+            jsonPath: "$.openInterest"
+          competitive:
+            jsonPath: "$.competitive"
+        raw:
+          mode: item
+
+  market-by-slug:
+    when:
+      sourceAdapterOperation: [market-by-slug]
+      urlPatterns: ["/markets?slug="]
+    claimTypes: [probability, prediction]
+    extractionPath: "$[0].outcomePrices"
+    request:
+      method: GET
+      urlTemplate: "https://gamma-api.polymarket.com/markets"
+      query:
+        slug: "{slug}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "{slug}"
+        - "polymarket"
+    variables:
+      slug:
+        sources: [vars.slug, vars.topic, topic]
+        required: true
+        transforms:
+          - trim
+          - lowercase
+          - slug
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: array
+        jsonPath: "$[*]"
+      fields:
+        id:
+          jsonPath: "$.id"
+          required: true
+        title:
+          jsonPath: "$.question"
+        bodyText:
+          template: "{question} — Yes: {bestBid}, No: {bestAsk} | Volume: ${volume}"
+        topics:
+          jsonPath: "$.slug"
+        metrics:
+          question:
+            jsonPath: "$.question"
+          bestBid:
+            jsonPath: "$.bestBid"
+          bestAsk:
+            jsonPath: "$.bestAsk"
+          volume:
+            jsonPath: "$.volume"
+          lastTradePrice:
+            jsonPath: "$.lastTradePrice"
+        raw:
+          mode: item

@@ -175,6 +175,17 @@ describe("colony persistence", () => {
     expect(loaded.feedSize).toBe(0);
   });
 
+  it("loadColony returns empty snapshot for corrupt JSON file", () => {
+    const corruptPath = resolve(testDir, "corrupt.json");
+    const { writeFileSync } = require("node:fs");
+    writeFileSync(corruptPath, "{ this is not valid json !!!", "utf-8");
+
+    const loaded = loadColony(corruptPath);
+    expect(loaded.agents.size).toBe(0);
+    expect(loaded.relationships).toEqual([]);
+    expect(loaded.feedSize).toBe(0);
+  });
+
   it("persistColony creates parent directories if needed", () => {
     const deepPath = resolve(testDir, "nested", "deep", "colony-state.json");
     const snapshot = analyzeColony([]);

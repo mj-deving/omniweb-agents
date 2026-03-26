@@ -6,7 +6,7 @@
  * Persistence via simple JSON files in ~/.{agent}/ directories.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 // ── Types ──────────────────────────────────────
@@ -211,7 +211,9 @@ export function persistColony(snapshot: ColonySnapshot, filePath: string): void 
     feedSize: snapshot.feedSize,
   };
 
-  writeFileSync(filePath, JSON.stringify(serialized, null, 2), "utf-8");
+  const tmpPath = filePath + ".tmp";
+  writeFileSync(tmpPath, JSON.stringify(serialized, null, 2), "utf-8");
+  renameSync(tmpPath, filePath);
 }
 
 /**
@@ -219,20 +221,17 @@ export function persistColony(snapshot: ColonySnapshot, filePath: string): void 
  * Returns an empty snapshot if the file doesn't exist.
  */
 export function loadColony(filePath: string): ColonySnapshot {
-  if (!existsSync(filePath)) {
+  const empty: ColonySnapshot = { agents: new Map(), relationships: [], timestamp: 0, feedSize: 0 };
+  if (!existsSync(filePath)) return empty;
+  try {
+    const raw = JSON.parse(readFileSync(filePath, "utf-8")) as SerializedSnapshot;
     return {
-      agents: new Map(),
-      relationships: [],
-      timestamp: 0,
-      feedSize: 0,
+      agents: new Map(raw.agents),
+      relationships: raw.relationships ?? [],
+      timestamp: raw.timestamp ?? 0,
+      feedSize: raw.feedSize ?? 0,
     };
+  } catch {
+    return empty;
   }
-
-  const raw = JSON.parse(readFileSync(filePath, "utf-8")) as SerializedSnapshot;
-  return {
-    agents: new Map(raw.agents),
-    relationships: raw.relationships,
-    timestamp: raw.timestamp,
-    feedSize: raw.feedSize,
-  };
 }

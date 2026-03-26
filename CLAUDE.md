@@ -164,6 +164,12 @@ The quality gate determines whether a draft post is published or rejected. **Thi
   - **Layer 2 (write-time warning):** PostToolUse hook `TestQualityGuard.hook.ts` fires on Write/Edit of `*.test.ts` files, warns immediately if assertion-free tests are detected.
   - Validator: `src/lib/test-quality-validator.ts` — shared analysis logic. Handles braces in strings, template literals, and comments.
 - Every session ends with a commit + push
+- **Documentation sync (mandatory):** After every planning or building iteration, update ALL documentation artifacts before considering the iteration complete:
+  - `docs/INDEX.md` — session changelog, test counts, capability map, doc freshness
+  - Relevant `docs/design-*.md` — iteration log, decision log, open questions
+  - `CLAUDE.md` — if architecture, config, or gotchas changed
+  - `~/.agent/diagrams/*.html` — regenerate VisualExplainer HTML when source markdown changes
+  - An iteration is NOT complete until docs + visuals reflect the new state
 
 ### Development Workflow (autonomous, tiered)
 

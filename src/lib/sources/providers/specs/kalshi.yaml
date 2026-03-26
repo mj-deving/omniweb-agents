@@ -1,0 +1,236 @@
+schemaVersion: 1
+
+provider:
+  name: kalshi
+  displayName: Kalshi
+  matches:
+    providers: [kalshi]
+    hosts: [api.elections.kalshi.com]
+  domains: [prediction-markets, politics, world-events, finance, sports]
+  rateLimit:
+    bucket: kalshi
+    maxPerMinute: 30
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  markets:
+    when:
+      sourceAdapterOperation: [markets]
+      urlPatterns: ["/markets"]
+      default: true
+    claimTypes: [probability, prediction]
+    extractionPath: "$.markets[0].last_price_dollars"
+    request:
+      method: GET
+      urlTemplate: "https://api.elections.kalshi.com/trade-api/v2/markets"
+      query:
+        limit: "{limit}"
+      estimatedSizeKb:
+        TLSN: 16
+        DAHR: 16
+      matchHints:
+        - "kalshi"
+        - "prediction"
+        - "{category}"
+    variables:
+      limit:
+        sources:
+          - literal: "10"
+        default: "10"
+      category:
+        sources: [vars.category, topic]
+        default: "all"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          limit:
+            default: 5
+            max: 5
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: array
+        jsonPath: "$.markets[*]"
+      fields:
+        id:
+          jsonPath: "$.ticker"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          template: "Yes: ${yes_bid_dollars} | Vol 24h: {volume_24h_fp} contracts"
+        bodyText:
+          template: "{title} — Yes: ${yes_bid_dollars}, No: ${no_bid_dollars} | Volume: {volume_fp} | Closes: {close_time}"
+        publishedAt:
+          jsonPath: "$.open_time"
+        topics:
+          jsonPath: "$.event_ticker"
+        metrics:
+          ticker:
+            jsonPath: "$.ticker"
+          title:
+            jsonPath: "$.title"
+          eventTicker:
+            jsonPath: "$.event_ticker"
+          lastPrice:
+            jsonPath: "$.last_price_dollars"
+          yesBid:
+            jsonPath: "$.yes_bid_dollars"
+          yesAsk:
+            jsonPath: "$.yes_ask_dollars"
+          noBid:
+            jsonPath: "$.no_bid_dollars"
+          noAsk:
+            jsonPath: "$.no_ask_dollars"
+          volume:
+            jsonPath: "$.volume_fp"
+          volume24h:
+            jsonPath: "$.volume_24h_fp"
+          openInterest:
+            jsonPath: "$.open_interest_fp"
+          closeTime:
+            jsonPath: "$.close_time"
+          status:
+            jsonPath: "$.status"
+          previousPrice:
+            jsonPath: "$.previous_price_dollars"
+        raw:
+          mode: item
+
+  events:
+    when:
+      sourceAdapterOperation: [events]
+      urlPatterns: ["/events"]
+    claimTypes: [probability, prediction]
+    request:
+      method: GET
+      urlTemplate: "https://api.elections.kalshi.com/trade-api/v2/events"
+      query:
+        limit: "{limit}"
+        status: "open"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "kalshi"
+        - "event"
+        - "prediction"
+    variables:
+      limit:
+        sources:
+          - literal: "10"
+        default: "10"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        rewriteQuery:
+          limit:
+            default: 5
+            max: 5
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: array
+        jsonPath: "$.events[*]"
+      fields:
+        id:
+          jsonPath: "$.event_ticker"
+          required: true
+        title:
+          jsonPath: "$.title"
+        summary:
+          template: "{title} ({category})"
+        bodyText:
+          template: "{title} — Category: {category} | Series: {series_ticker}"
+        topics:
+          jsonPath: "$.category"
+        metrics:
+          eventTicker:
+            jsonPath: "$.event_ticker"
+          seriesTicker:
+            jsonPath: "$.series_ticker"
+          title:
+            jsonPath: "$.title"
+          category:
+            jsonPath: "$.category"
+          mutuallyExclusive:
+            jsonPath: "$.mutually_exclusive"
+        raw:
+          mode: item
+
+  market-by-ticker:
+    when:
+      sourceAdapterOperation: [market-by-ticker]
+      urlPatterns: ["/markets/"]
+    claimTypes: [probability, prediction]
+    extractionPath: "$.market.last_price_dollars"
+    request:
+      method: GET
+      urlTemplate: "https://api.elections.kalshi.com/trade-api/v2/markets/{ticker}"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "{ticker}"
+        - "kalshi"
+    variables:
+      ticker:
+        sources: [vars.ticker, vars.topic, topic]
+        required: true
+        transforms:
+          - trim
+          - uppercase
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: single-object
+        jsonPath: "$.market"
+      fields:
+        id:
+          jsonPath: "$.ticker"
+          required: true
+        title:
+          jsonPath: "$.title"
+        bodyText:
+          template: "{title} — Yes: ${last_price_dollars} | Vol: {volume_fp}"
+        topics:
+          jsonPath: "$.event_ticker"
+        metrics:
+          ticker:
+            jsonPath: "$.ticker"
+          lastPrice:
+            jsonPath: "$.last_price_dollars"
+          yesBid:
+            jsonPath: "$.yes_bid_dollars"
+          yesAsk:
+            jsonPath: "$.yes_ask_dollars"
+          volume:
+            jsonPath: "$.volume_fp"
+          openInterest:
+            jsonPath: "$.open_interest_fp"
+        raw:
+          mode: item

@@ -296,12 +296,58 @@ interface Plugin {
 
 - [x] **R1:** ElizaOS plugin architecture — full report at `MEMORY/WORK/20260326-elizaos-plugin-architecture-research/research-report.md`. Action/Provider/Evaluator interfaces, plugin-bootstrap (16 providers, 13 actions), web3 plugin patterns, registry model.
 - [x] **R2:** OpenClaw skill system — SKILL.md format, ClawHub distribution, config injection, gating. Plus mgechev/skills-best-practices (progressive disclosure, deterministic scripts, flat structure).
-- [ ] **R3:** Map ALL Demos SDK verticals with concrete tool definitions per vertical
+- [x] **R3:** All 11 Demos SDK verticals mapped with concrete tool definitions, providers, data assets, blockers, priorities. MVP = SuperColony + Attestation (7 tools). 3 blocked, 3 not started, 1 workaround. Full mapping in Explore agent output (2026-03-26).
 - [x] **R4:** Council debate (4/4 convergence): no base loop. Atomic tools only. Prior art (Stripe, Composio, MCP) confirms.
 
 ---
 
-## 9. Iteration Log
+## 9. MVP Tool Surface (from R3 Vertical Mapping)
+
+### Active Verticals (MVP)
+
+| Tool | Vertical | Params → Return | Internal Complexity |
+|------|----------|----------------|-------------------|
+| `connect(credentials)` | Core | wallet path → session handle | Wallet + auth + session |
+| `publish(draft)` | SuperColony | text, category, tags → txHash | 6-step: claims→attest→tx→confirm→broadcast |
+| `reply(parentTx, text)` | SuperColony | txHash + text → txHash | Same as publish + reply threading |
+| `react(txHash, type)` | SuperColony | txHash + agree/disagree → success | API auth + rate check |
+| `tip(txHash, amount)` | SuperColony | txHash + DEM amount → txHash | Spending policy + tx |
+| `scan(options?)` | SuperColony | filters → Post[] + opportunities | Feed fetch + source catalog + filtering |
+| `verify(txHash)` | SuperColony | txHash → confirmed or not | Indexer lookup + retries |
+| `attest(url)` | Attestation | URL → responseHash + txHash | DAHR proxy relay |
+| `discoverSources(domain?)` | Attestation | domain filter → ranked sources | 221 sources, health, matching |
+
+### Mandatory Middleware
+
+| Guard | Scope | Cannot Opt Out |
+|-------|-------|----------------|
+| Rate limit | 15 posts/day, 5/hour, wallet-scoped | Protects from API ban |
+
+### Data Assets (Bundled)
+
+| Asset | Size | Updates |
+|-------|------|---------|
+| Source catalog | 221 sources, ~15K lines JSON | Ships with toolkit version |
+| Attestation specs | 36 specs, 25 with claimTypes | Ships with toolkit version |
+| Entity maps | ASSET_MAP (21 crypto) + MACRO_MAP (15 macro) | Ships with toolkit version |
+| Quality heuristics | Scoring rules, calibration patterns | Documented, consumer customizes |
+
+### Blocked/Future Verticals (Scaffold Only)
+
+| Vertical | Status | Blocker | When Ready |
+|----------|--------|---------|------------|
+| CCI Identity | ⚠️ RPC workaround | NAPI crash on barrel import | P2 — partial now |
+| Storage Programs | ❌ Blocked | Node lacks RPC handler | P3 — KyneSys infra |
+| DemosWork | ❌ Blocked | SDK ESM import bug | P3 — KyneSys fix |
+| Cross-Chain | 🔲 Not validated | Needs testnet exploration | P3 |
+| L2PS Privacy | ❌ Blocked | SDK Buffer polyfill | P3 — KyneSys fix |
+| Encrypted Messaging | 🔲 Not started | None known | P3 |
+| ZK Identity | 🔲 Not started | None known | P3 |
+| Skill Dojo | ✅ Active | 5 req/hr rate limit | Data provider layer, not vertical |
+
+---
+
+## 10. Iteration Log
 
 ### 2026-03-25 — Session 1: Vision Established
 - Taxonomy defined (framework vs harness vs toolkit)
@@ -352,7 +398,7 @@ interface Plugin {
 
 ---
 
-## 10. Decision Log
+## 11. Decision Log
 
 > Append-only. Format: `[DATE] DECISION: statement. REASON: why. SUPERSEDES: what (if any).`
 

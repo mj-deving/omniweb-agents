@@ -3,7 +3,7 @@
 > **The one document you read to understand the project.**
 > Architecture lives in CLAUDE.md. Operational knowledge lives in MEMORY.md. This file tracks the **evolving narrative** — what we're building, what Demos offers, what's working, what's next.
 
-**Last updated:** 2026-03-25 | **SDK:** 2.11.4 | **Tests:** 92 suites, 1418 passing | **Agents:** 6 defined, 3 publishing
+**Last updated:** 2026-03-26 | **SDK:** 2.11.4 | **Tests:** 92 suites, 1418 passing | **Agents:** 6 defined, 3 publishing
 
 ---
 

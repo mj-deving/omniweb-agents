@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
-    "@kynesyslabs/demosdk": "^2.11.4",
+    "@kynesyslabs/demosdk": "^2.11.5",
     "yaml": "^2.8.2"
   },
   "devDependencies": {

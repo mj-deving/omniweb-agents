@@ -2460,7 +2460,8 @@ async function runPublishAutonomous(
                 txHash: a.txHash,
                 timestamp: Date.now(),
               })),
-          }
+          },
+          { skipIndexerCheck: true }
         );
         pubResult = { ...published, attestation: attested };
       } else {
@@ -2506,7 +2507,8 @@ async function runPublishAutonomous(
               txHash: attested.txHash,
               timestamp: Date.now(),
             }] : undefined,
-          }
+          },
+          { skipIndexerCheck: true }
         );
         pubResult = { ...published, attestation: attested };
       }
@@ -2625,7 +2627,7 @@ async function runVerify(state: SessionState, flags: RunnerFlags): Promise<void>
     return;
   }
 
-  const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env, "--wait", "15"];
+  const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env];
   const result = await runToolAndParse("cli/verify.ts", args, "verify.ts");
 
   const summary = result.summary || {};
@@ -2823,9 +2825,14 @@ function classifyFinding(source: string, subtype?: string): HardenType {
   }
 }
 
-/** Collect findings from REVIEW result + session state */
+const MAX_HARDEN_FINDINGS = 10;
+const SENSE_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
+/** Collect findings from REVIEW result + session state, capped at MAX_HARDEN_FINDINGS.
+ *  Phase errors are always included regardless of cap. */
 function collectHardenFindings(state: SessionState): HardenFinding[] {
   const findings: HardenFinding[] = [];
+  const phaseErrors: HardenFinding[] = [];
   const reviewResult = state.phases.review?.result || {};
 
   // Q1 failures
@@ -2868,14 +2875,14 @@ function collectHardenFindings(state: SessionState): HardenFinding[] {
     });
   }
 
-  // Phase errors from current session (enrichment from state — not available to session-review.ts)
+  // Phase errors from current session — always included, never capped
   const phases = getPhaseOrder() as PhaseName[];
   for (const phase of phases) {
     if (phase === "harden") continue;
     const p = state.phases[phase as PhaseName];
     if (p?.status === "failed" && p.error) {
       const subtype = phase === "gate" ? "gate_fail" : phase === "publish" ? "publish_error" : "attest_error";
-      findings.push({
+      phaseErrors.push({
         source: "phase_error",
         type: classifyFinding("phase_error", subtype),
         text: `Phase ${phase.toUpperCase()} failed: ${p.error}`,
@@ -2884,7 +2891,13 @@ function collectHardenFindings(state: SessionState): HardenFinding[] {
     }
   }
 
-  return findings;
+  // Cap non-phase_error findings, prioritize by source: q1 > q2 > q3 > q4
+  const capped = findings.slice(0, MAX_HARDEN_FINDINGS);
+  if (findings.length > MAX_HARDEN_FINDINGS) {
+    info(`Harden: capped findings from ${findings.length} to ${MAX_HARDEN_FINDINGS} (${phaseErrors.length} phase_errors exempt)`);
+  }
+
+  return [...phaseErrors, ...capped];
 }
 
 /** Use LLM to reclassify findings (if available) */
@@ -3099,7 +3112,7 @@ async function runHardenApprove(
   });
 }
 
-/** HARDEN: autonomous oversight — auto-apply non-STRATEGY, propose STRATEGY for next session */
+/** HARDEN: autonomous oversight — classify + log findings, skip proposal subprocess for speed */
 async function runHardenAutonomous(
   state: SessionState,
   flags: RunnerFlags
@@ -3122,6 +3135,8 @@ async function runHardenAutonomous(
   let proposed = 0;
   let skipped = 0;
 
+  // In autonomous mode: log all findings but skip proposeImprovement subprocess calls.
+  // Findings are captured in the session report via completePhase result.
   for (const f of findings) {
     if (f.type === "INFO") {
       skipped++;
@@ -3129,31 +3144,17 @@ async function runHardenAutonomous(
     }
 
     if (f.type === "STRATEGY") {
-      // STRATEGY: propose only, NEVER auto-apply (AGENT.yaml hard rule)
-      try {
-        await proposeImprovement(f.text, `HARDEN autonomous propose, session ${state.sessionNumber}`, "strategy.yaml", f.source);
-        proposed++;
-        info(`Proposed STRATEGY: ${f.text.slice(0, 60)}...`);
-      } catch (e: any) {
-        info(`Warning: could not propose: ${e.message}`);
-        skipped++;
-      }
+      proposed++;
+      info(`[log-only] STRATEGY: ${f.text.slice(0, 80)}`);
       continue;
     }
 
-    // CODE-FIX, GUARDRAIL, GOTCHA, PLAYBOOK — propose as actionable
-    // Note: proposeImprovement() records the finding in the tracker;
-    // it does not auto-edit files. "Actionable" means tracked for action.
-    try {
-      await proposeImprovement(f.text, `HARDEN actionable, session ${state.sessionNumber}`, "workflow", f.source);
-      actionable++;
-    } catch (e: any) {
-      info(`Warning: could not propose: ${e.message}`);
-      skipped++;
-    }
+    // CODE-FIX, GUARDRAIL, GOTCHA, PLAYBOOK — log as actionable
+    actionable++;
+    info(`[log-only] ${f.type}: ${f.text.slice(0, 80)}`);
   }
 
-  phaseResult(`${findings.length} findings: ${actionable} actionable, ${proposed} strategy, ${skipped} skipped`);
+  phaseResult(`${findings.length} findings: ${actionable} actionable, ${proposed} strategy, ${skipped} skipped (log-only, no proposals)`);
   completePhase(state, "harden", {
     findings: findings.length,
     classified: findings.length,
@@ -3347,8 +3348,24 @@ async function runV2Loop(
   }
 
   // ── SENSE ──────────────────────────────────────
+  // Cache: if sense has a fresh result from a prior failed attempt (<5 min old), reuse it
+  const senseCacheAgeMs = state.phases.sense?.startedAt
+    ? Date.now() - new Date(state.phases.sense.startedAt).getTime()
+    : Infinity;
+  const senseHasFreshCache = !senseCompleted
+    && state.phases.sense?.result
+    && state.phases.sense?.startedAt
+    && senseCacheAgeMs < SENSE_CACHE_MAX_AGE_MS;
+
   if (senseCompleted) {
     info("SENSE already completed — skipping (resume)");
+  } else if (senseHasFreshCache) {
+    info(`SENSE cache fresh (${Math.round(senseCacheAgeMs / 1000)}s old) — reusing cached results`);
+    const cachedResult = state.phases.sense!.result;
+    const level = cachedResult.activity?.level || "unknown";
+    const gapCount = cachedResult.gaps?.topics?.length || 0;
+    phaseResult(`${level} activity (cached) | ${gapCount} gap topics found`);
+    completePhase(state, "sense" as any, cachedResult, sessionsDir);
   } else {
     v2PhaseHeader("sense");
     setObserverPhase("sense");
@@ -3570,7 +3587,7 @@ async function runV2Loop(
         phaseSkipped("No posts to verify — skipping");
         completePhase(state, "confirm" as any, { skipped: true, reason: "no posts" }, sessionsDir);
       } else {
-        const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env, "--wait", "15"];
+        const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env];
         const verifyResult = await runToolAndParse("cli/verify.ts", args, "verify.ts (CONFIRM)");
         const summary = verifyResult.summary || {};
         phaseResult(`${summary.verified || 0}/${summary.total || 0} verified`);

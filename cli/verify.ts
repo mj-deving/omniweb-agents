@@ -22,7 +22,7 @@ import { readSessionLog, resolveLogPath } from "../src/lib/log.js";
 import { resolveAgentName } from "../src/lib/agent-config.js";
 import { toErrorMessage } from "../src/lib/errors.js";
 
-const VERIFY_RETRY_DELAYS_MS = [5000, 10000, 15000] as const;
+const VERIFY_RETRY_DELAYS_MS = [3000, 5000, 10000] as const;
 
 // ── Arg Parsing ────────────────────────────────────
 

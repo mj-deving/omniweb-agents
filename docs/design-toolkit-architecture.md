@@ -132,12 +132,13 @@ DEMOS SDK (not ours — Demos team)
 - [x] Like tool kits on a shelf, not sub-agents with persistent identities
 - **Decision:** Tools over personas. Example personas as documentation/reference only (`examples/` directory). No predefined sub-agents required. Consumer assembles tools on-demand by purpose. The toolkit is a shelf of capabilities, not a cast of characters.
 
-### Q5: Strategy Packaging ⏳
+### Q5: Strategy Packaging ✅
 - [x] 8-phase loop = example opt-in playbook, not mandatory
-- [x] Agents can ignore strategies entirely — just use tools directly
-- [ ] V2 4-phase (observe→act→verify→learn) might not be MVP — maybe Sense+Act is the true minimum?
-- [x] This needs deep thinking (first principles, council, creative) — **parked for dedicated session**
-- **Decision:** Strategies are opt-in playbooks. 8-phase loop is one example. Agents can use tools without any strategy. **PARKED:** What is the minimum viable strategy? Needs creative/analytical deep dive.
+- [x] Agents can ignore strategies entirely — tools ARE the primary API
+- [x] MVP has NO loop — not even Sense+Act. Zero. Agent owns all orchestration.
+- [x] Council debate (4/4 convergence): Architect, Engineer, Researcher, First Principles ALL independently converged on "no loop"
+- **Decision:** The toolkit ships zero loops. MVP = atomic tools + mandatory rate-limit guard. Strategies exist as opt-in documented playbooks (recipes of tool calls consumers can adopt/ignore). A "base loop" in a toolkit is a category error — the consumer's agent already has a loop.
+- **Evidence:** Stripe = stateless tools + MCP format. Composio = JSON schemas + adapters. MCP spec: "not an agent framework" but "standardized integration layer." 4/4 council convergence is rare — the answer is unambiguous.
 
 ### Q6: State & Memory Ownership ✅
 - [x] Source catalog: ships as bundled data (JSON file, doesn't hurt). Consumer ignores/extends as needed. Can add own sources, contribute back.
@@ -239,6 +240,26 @@ ElizaOS plugin system:
 
 **Participants:** Marius + Claude
 
+### 2026-03-25 — Session 3: Q5 Council Debate + Skill Design Research
+- **Q5 resolved via Council debate (4/4 convergence):** Zero loops. MVP = atomic tools + rate-limit guard. "A base loop in a toolkit is a category error."
+- Council members: Architect (Serena), Engineer (Marcus), Researcher (Ava), First Principles
+- All independently converged on same answer from different angles:
+  - Architect: impedance mismatch with consumer's existing loop
+  - Engineer: "four functions and a constraint" ships fastest
+  - Researcher: Stripe, Composio, MCP all confirm tools-not-loops pattern
+  - First Principles: three irreducible primitives (identity, attest, transact)
+- **Skill design research completed:**
+  - AgentSkills best practices (mgechev): progressive disclosure, deterministic scripts, lean SKILL.md, JIT loading
+  - OpenClaw skill system: SKILL.md format, ClawHub distribution, config injection, requires gating
+  - ElizaOS plugin system: Action/Provider/Evaluator pattern, npm distribution (research agent)
+- **MVP tool surface defined:** connect, publish, scan, verify, react, tip, discoverSources + rate-limit middleware
+- **All 6 design questions now answered.** Ready for MVP spec.
+
+**Status: ALL questions answered. Ready for MVP spec with ISC criteria.**
+**Next:** Write the MVP spec. The Algorithm can derive ISC from it.
+
+**Participants:** Marius + Claude + Council (4 agents) + ElizaOS researcher
+
 ---
 
 ## 10. Decision Log
@@ -268,3 +289,7 @@ ElizaOS plugin system:
 [2026-03-25] DECISION: Three distribution surfaces, one core. REASON: OpenClaw skill, ElizaOS plugin, standalone CLI all call the same @demos-agents/core. Not three products.
 
 [2026-03-25] DECISION: Scaffold future verticals, don't implement. REASON: Structure + docs until value is proven. Don't be too individual for personal use case — design generically so everyone can adopt.
+
+[2026-03-25] DECISION: Zero loops in the toolkit. MVP = atomic tools + rate-limit guard. REASON: Council debate (4/4 convergence). Prior art (Stripe, Composio, MCP) confirms toolkits ship tools not loops. Consumer's agent already has a loop — imposing another creates impedance mismatch.
+
+[2026-03-25] DECISION: MVP tool surface: connect(), publish(), scan(), verify(), react(), tip(), discoverSources() + mandatory rate-limit middleware. REASON: Engineer's "four functions and a constraint" principle. publish() hides 6-step chain internally. Complexity is internal, API is clean.

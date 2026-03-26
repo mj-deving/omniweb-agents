@@ -64,6 +64,8 @@ export interface PublishOptions {
   feedToken?: string | null;
   /** Pre-attested results from claim-driven attestation (skips attestAndPublish's own attest step) */
   preAttested?: AttestResult[];
+  /** Skip per-post indexer health check (verify phase catches unindexed posts via retries) */
+  skipIndexerCheck?: boolean;
 }
 
 // ── HIVE Encoding ──────────────────────────────────
@@ -353,7 +355,7 @@ export async function publishPost(
     data: { txHash: String(txHash), category: input.category, textLength: input.text.length },
   });
 
-  if (options.feedToken) {
+  if (options.feedToken && !options.skipIndexerCheck) {
     const indexed = await checkIndexerHealth(String(txHash), options.feedToken);
     if (!indexed) {
       sessionIndexerLagDetected = true;

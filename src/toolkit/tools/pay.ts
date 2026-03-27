@@ -8,10 +8,10 @@ import { z } from "zod";
 import type { PayOptions, PayResult, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
-import { checkPaySpendCap, recordPayment } from "../guards/pay-spend-cap.js";
+import { checkPaySpendCap, recordPayment, reservePaySpend } from "../guards/pay-spend-cap.js";
 import { makeIdempotencyKey, checkPayReceipt, recordPayReceipt } from "../guards/pay-receipt-log.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
-import { validateUrl } from "../url-validator.js";
+import { validateUrl, createPinnedFetch } from "../url-validator.js";
 import { validateInput, PayOptionsSchema } from "../schemas.js";
 
 /** Validate 402 response body shape */
@@ -22,7 +22,6 @@ const D402RequirementSchema = z.object({
   description: z.string().optional(),
 });
 
-const D402_SETTLEMENT_LOCK_TTL_MS = 60_000;
 const MAX_REDIRECT_HOPS = 3;
 
 /**
@@ -77,7 +76,8 @@ export async function pay(
       );
     }
 
-    // Guard: pay spend cap
+    // Guard: pre-flight spend cap check (maxSpend against rolling cap)
+    // The actual atomic reserve happens after 402 requirement reveals the real amount.
     const capError = await checkPaySpendCap(
       session.stateStore,
       session.walletAddress,
@@ -98,10 +98,10 @@ export async function pay(
       redirect: "manual", // SSRF: prevent proof/credentials leaking via redirect
     };
 
-    // Step 1: Initial HTTP request
+    // Step 1: Initial HTTP request (pinned to validated IP — prevents DNS rebinding)
     let initialResponse: Response;
     try {
-      initialResponse = await fetchWithValidatedRedirects(session, opts.url, fetchOpts);
+      initialResponse = await fetchWithValidatedRedirects(session, opts.url, fetchOpts, urlCheck.resolvedIp);
     } catch (e) {
       if (isDemosErrorLike(e)) {
         return err(e, localProvenance(start));
@@ -166,22 +166,32 @@ export async function pay(
       );
     }
 
-    // Step 6: Settle payment via bridge
-    const settlement = await withWalletSettlementLock(session, async () =>
-      bridge.payD402(requirement),
+    // Step 6: Atomic reserve → settle → confirm/rollback
+    // Reserves spend cap BEFORE settlement (prevents race between concurrent pay() calls).
+    // If settlement fails, the reservation is rolled back.
+    const reservation = await reservePaySpend(
+      session.stateStore,
+      session.walletAddress,
+      requirement.amount,
+      opts.url,
+      session.payPolicy,
     );
+    if (reservation.error) {
+      return err(reservation.error, localProvenance(start));
+    }
+
+    const settlement = await bridge.payD402(requirement);
     if (!settlement.success) {
+      // Rollback the spend reservation — settlement failed, no funds committed
+      await reservation.rollback();
       return err(
         demosError("TX_FAILED", `D402 settlement failed: ${settlement.message ?? "unknown error"}`, true, { step: "settle" }),
         localProvenance(start),
       );
     }
+    // Spend is already recorded via reservation — no separate recordPayment needed
 
-    // Record spend immediately after settlement — funds are committed on-chain
-    // regardless of whether the retry succeeds. Receipt is deferred to 2xx retry.
-    await recordPayment(session.stateStore, session.walletAddress, requirement.amount, opts.url);
-
-    // Step 7: Retry with payment proof
+    // Step 7: Retry with payment proof (re-pin to same validated IP)
     let retryResponse: Response;
     try {
       retryResponse = await fetchWithValidatedRedirects(session, opts.url, {
@@ -190,7 +200,7 @@ export async function pay(
           ...opts.headers,
           "X-Payment-Proof": settlement.hash,
         },
-      });
+      }, urlCheck.resolvedIp);
     } catch (e) {
       if (isDemosErrorLike(e)) {
         return err(e, localProvenance(start));
@@ -249,13 +259,17 @@ async function fetchWithValidatedRedirects(
   session: DemosSession,
   url: string,
   init: RequestInit,
+  pinnedIp?: string,
 ): Promise<Response> {
   let currentUrl = url;
   let currentHeaders = new Headers(init.headers);
   let redirectsFollowed = 0;
+  let currentPinnedIp = pinnedIp;
 
   while (true) {
-    const response = await fetch(currentUrl, {
+    // Use pinned fetch if we have a resolved IP (prevents DNS rebinding)
+    const fetchFn = currentPinnedIp ? createPinnedFetch(currentPinnedIp) : fetch;
+    const response = await fetchFn(currentUrl, {
       ...init,
       headers: currentHeaders,
       redirect: "manual",
@@ -282,6 +296,8 @@ async function fetchWithValidatedRedirects(
       throw demosError("INVALID_INPUT", `Payment URL blocked: ${urlCheck.reason}`, false);
     }
 
+    // Re-pin DNS for the redirect target
+    currentPinnedIp = urlCheck.resolvedIp;
     currentHeaders = stripPaymentProofOnCrossOriginRedirect(currentUrl, nextUrl, currentHeaders);
     currentUrl = nextUrl;
     redirectsFollowed++;
@@ -314,18 +330,5 @@ function isDemosErrorLike(error: unknown): error is ReturnType<typeof demosError
   );
 }
 
-async function withWalletSettlementLock<T>(
-  session: DemosSession,
-  fn: () => Promise<T>,
-): Promise<T> {
-  const unlock = await session.stateStore.lock(
-    `pay-d402-settlement-${session.walletAddress}`,
-    D402_SETTLEMENT_LOCK_TTL_MS,
-  );
-
-  try {
-    return await fn();
-  } finally {
-    await unlock();
-  }
-}
+// withWalletSettlementLock removed — replaced by atomic reservePaySpend
+// which holds the spend cap lock during the entire check→settle→record flow.

@@ -83,6 +83,40 @@ export async function validateUrl(
 }
 
 /**
+ * Create a fetch wrapper that pins DNS to a pre-resolved IP address.
+ *
+ * Prevents DNS rebinding attacks where an attacker's DNS returns a safe IP
+ * during validateUrl() but rebinds to an internal IP (e.g., 169.254.169.254)
+ * by the time fetch() actually connects.
+ *
+ * Strategy: rewrite the URL to use the resolved IP and set the Host header
+ * to the original hostname (required for TLS SNI and virtual hosting).
+ */
+export function createPinnedFetch(resolvedIp: string): typeof fetch {
+  return async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === "string" ? new URL(input)
+      : input instanceof URL ? new URL(input.href)
+      : new URL((input as Request).url);
+
+    const originalHostname = url.hostname;
+
+    // Rewrite hostname to resolved IP
+    url.hostname = resolvedIp;
+
+    // Merge Host header — original hostname for TLS SNI / virtual hosting
+    const headers = new Headers(init?.headers);
+    if (!headers.has("host")) {
+      headers.set("host", originalHostname);
+    }
+
+    return fetch(url.toString(), {
+      ...init,
+      headers,
+    });
+  };
+}
+
+/**
  * Check if an IP address falls in a blocked range.
  * Returns the block reason or null if allowed.
  */

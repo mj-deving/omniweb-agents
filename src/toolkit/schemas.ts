@@ -130,7 +130,6 @@ export const AttestOptionsSchema = z.object({
 
 export const DiscoverSourcesOptionsSchema = z.object({
   domain: z.string().optional(),
-  matchThreshold: z.number().min(0).max(1).optional(),
 }).optional();
 
 export const PayOptionsSchema = z.object({

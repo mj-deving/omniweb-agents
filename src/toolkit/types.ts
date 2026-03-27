@@ -172,7 +172,6 @@ export interface AttestOptions {
 /** Discover sources options */
 export interface DiscoverSourcesOptions {
   domain?: string;
-  matchThreshold?: number;
 }
 
 /** Pay options */

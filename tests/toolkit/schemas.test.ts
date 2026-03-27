@@ -471,24 +471,9 @@ describe("DiscoverSourcesOptionsSchema", () => {
     expect(result).toBeNull();
   });
 
-  it("accepts valid matchThreshold between 0 and 1", () => {
-    const result = validateInput(DiscoverSourcesOptionsSchema, { matchThreshold: 0.5 });
+  it("accepts domain string", () => {
+    const result = validateInput(DiscoverSourcesOptionsSchema, { domain: "crypto" });
     expect(result).toBeNull();
-  });
-
-  it("rejects matchThreshold > 1", () => {
-    const result = validateInput(DiscoverSourcesOptionsSchema, { matchThreshold: 1.5 });
-    expect(result).not.toBeNull();
-  });
-
-  it("rejects matchThreshold < 0", () => {
-    const result = validateInput(DiscoverSourcesOptionsSchema, { matchThreshold: -0.1 });
-    expect(result).not.toBeNull();
-  });
-
-  it("accepts boundary values 0 and 1", () => {
-    expect(validateInput(DiscoverSourcesOptionsSchema, { matchThreshold: 0 })).toBeNull();
-    expect(validateInput(DiscoverSourcesOptionsSchema, { matchThreshold: 1 })).toBeNull();
   });
 
   it("rejects null (must not bypass validation)", () => {

@@ -49,17 +49,15 @@ export async function attest(
     }
 
     // SDK bridge attestation (withToolWrapper catches exceptions)
-    const result = await executeDahrAttestation(session, opts);
-    return ok<AttestResult>(result, {
-      path: "local",
-      latencyMs: Date.now() - start,
-      attestation: { txHash: result.txHash, responseHash: result.responseHash },
-    });
+    const bridge = session.getBridge();
+    const result = await bridge.attestDahr(opts.url, "GET");
+    return ok<AttestResult>(
+      { responseHash: result.responseHash, txHash: result.txHash },
+      {
+        path: "local",
+        latencyMs: Date.now() - start,
+        attestation: { txHash: result.txHash, responseHash: result.responseHash },
+      },
+    );
   });
-}
-
-async function executeDahrAttestation(session: DemosSession, opts: AttestOptions): Promise<AttestResult> {
-  const bridge = session.getBridge();
-  const result = await bridge.attestDahr(opts.url, "GET");
-  return { responseHash: result.responseHash, txHash: result.txHash };
 }

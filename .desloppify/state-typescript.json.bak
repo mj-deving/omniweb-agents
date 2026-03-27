@@ -1,0 +1,2736 @@
+{
+  "version": 3,
+  "created": "2026-03-27T16:59:25+00:00",
+  "last_scan": "2026-03-27T16:59:34+00:00",
+  "scan_count": 1,
+  "overall_score": 20.9,
+  "objective_score": 83.7,
+  "strict_score": 20.9,
+  "verified_strict_score": 83.7,
+  "stats": {
+    "total": 61,
+    "auto_resolved": 0,
+    "deferred": 0,
+    "false_positive": 0,
+    "fixed": 0,
+    "open": 61,
+    "triaged_out": 0,
+    "wontfix": 0,
+    "by_tier": {
+      "1": {
+        "auto_resolved": 0,
+        "deferred": 0,
+        "false_positive": 0,
+        "fixed": 0,
+        "open": 3,
+        "triaged_out": 0,
+        "wontfix": 0
+      },
+      "2": {
+        "auto_resolved": 0,
+        "deferred": 0,
+        "false_positive": 0,
+        "fixed": 0,
+        "open": 6,
+        "triaged_out": 0,
+        "wontfix": 0
+      },
+      "3": {
+        "auto_resolved": 0,
+        "deferred": 0,
+        "false_positive": 0,
+        "fixed": 0,
+        "open": 32,
+        "triaged_out": 0,
+        "wontfix": 0
+      },
+      "4": {
+        "auto_resolved": 0,
+        "deferred": 0,
+        "false_positive": 0,
+        "fixed": 0,
+        "open": 20,
+        "triaged_out": 0,
+        "wontfix": 0
+      }
+    }
+  },
+  "work_items": {
+    "unused::src/toolkit/tools/scan.ts::domain:64": {
+      "id": "unused::src/toolkit/tools/scan.ts::domain:64",
+      "detector": "unused",
+      "file": "src/toolkit/tools/scan.ts",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "Unused imports: domain",
+      "detail": {
+        "line": 64,
+        "category": "imports"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "unused::src/toolkit/url-validator.ts::c:124": {
+      "id": "unused::src/toolkit/url-validator.ts::c:124",
+      "detector": "unused",
+      "file": "src/toolkit/url-validator.ts",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Unused vars: c",
+      "detail": {
+        "line": 124,
+        "category": "vars"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "unused::src/toolkit/url-validator.ts::d:124": {
+      "id": "unused::src/toolkit/url-validator.ts::d:124",
+      "detector": "unused",
+      "file": "src/toolkit/url-validator.ts",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Unused vars: d",
+      "detail": {
+        "line": 124,
+        "category": "vars"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "deprecated::src/toolkit/tools/discover-sources.ts::VALID_STATUSES": {
+      "id": "deprecated::src/toolkit/tools/discover-sources.ts::VALID_STATUSES",
+      "detector": "deprecated",
+      "file": "src/toolkit/tools/discover-sources.ts",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "Deprecated: VALID_STATUSES (0 importers) \u2192 safe to delete",
+      "detail": {
+        "importers": 0,
+        "line": 100
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "deprecated::src/toolkit/tools/discover-sources.ts::normalizeStatus": {
+      "id": "deprecated::src/toolkit/tools/discover-sources.ts::normalizeStatus",
+      "detector": "deprecated",
+      "file": "src/toolkit/tools/discover-sources.ts",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "Deprecated: normalizeStatus (0 importers) \u2192 safe to delete",
+      "detail": {
+        "importers": 0,
+        "line": 102
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "deprecated::src/toolkit/tools/discover-sources.ts::active": {
+      "id": "deprecated::src/toolkit/tools/discover-sources.ts::active",
+      "detector": "deprecated",
+      "file": "src/toolkit/tools/discover-sources.ts",
+      "tier": 3,
+      "confidence": "high",
+      "summary": "Deprecated: active (1 importers)",
+      "detail": {
+        "importers": 1,
+        "line": 52
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "deprecated::src/toolkit/types.ts::Source": {
+      "id": "deprecated::src/toolkit/types.ts::Source",
+      "detector": "deprecated",
+      "file": "src/toolkit/types.ts",
+      "tier": 3,
+      "confidence": "high",
+      "summary": "Deprecated: Source (2 importers)",
+      "detail": {
+        "importers": 2,
+        "line": 237
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:33+00:00",
+      "last_seen": "2026-03-27T16:59:33+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/tools/verify.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/tools/verify.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/tools/verify.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (92 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 92,
+        "importer_count": 1,
+        "loc_weight": 9.591663046625438
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/guards/state-helpers.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/guards/state-helpers.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/guards/state-helpers.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (78 LOC, 7 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 78,
+        "importer_count": 7,
+        "loc_weight": 8.831760866327848
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/tools/tip.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/tools/tip.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/tools/tip.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (69 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 69,
+        "importer_count": 1,
+        "loc_weight": 8.306623862918075
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/tools/scan.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/tools/scan.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/tools/scan.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (99 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 99,
+        "importer_count": 1,
+        "loc_weight": 9.9498743710662
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/tools/react.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/tools/react.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/tools/react.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (37 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 37,
+        "importer_count": 1,
+        "loc_weight": 6.082762530298219
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/tools/discover-sources.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/tools/discover-sources.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/tools/discover-sources.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (109 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 109,
+        "importer_count": 1,
+        "loc_weight": 10.44030650891055
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "test_coverage::src/toolkit/tools/pay.ts::transitive_only": {
+      "id": "test_coverage::src/toolkit/tools/pay.ts::transitive_only",
+      "detector": "test_coverage",
+      "file": "src/toolkit/tools/pay.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "No direct tests (320 LOC, 1 importers) \u2014 covered only via imports from tested modules",
+      "detail": {
+        "kind": "transitive_only",
+        "loc": 320,
+        "importer_count": 1,
+        "loc_weight": 17.88854381999832
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/pay.ts::monster_function": {
+      "id": "smells::src/toolkit/tools/pay.ts::monster_function",
+      "detector": "smells",
+      "file": "src/toolkit/tools/pay.ts",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "1x Monster function (>150 LOC)",
+      "detail": {
+        "smell_id": "monster_function",
+        "severity": "high",
+        "count": 1,
+        "lines": [
+          33
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/sdk-bridge.ts::catch_return_default": {
+      "id": "smells::src/toolkit/sdk-bridge.ts::catch_return_default",
+      "detector": "smells",
+      "file": "src/toolkit/sdk-bridge.ts",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "1x Catch block returns default object (silent failure)",
+      "detail": {
+        "smell_id": "catch_return_default",
+        "severity": "high",
+        "count": 1,
+        "lines": [
+          199
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/sdk-bridge.ts::as_any_cast": {
+      "id": "smells::src/toolkit/sdk-bridge.ts::as_any_cast",
+      "detector": "smells",
+      "file": "src/toolkit/sdk-bridge.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "10x `as any` type casts",
+      "detail": {
+        "smell_id": "as_any_cast",
+        "severity": "medium",
+        "count": 10,
+        "lines": [
+          119,
+          205,
+          249,
+          250,
+          253,
+          254,
+          255,
+          256,
+          272,
+          289
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/dedup-guard.ts::async_no_await": {
+      "id": "smells::src/toolkit/guards/dedup-guard.ts::async_no_await",
+      "detector": "smells",
+      "file": "src/toolkit/guards/dedup-guard.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Async functions without await",
+      "detail": {
+        "smell_id": "async_no_await",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          55
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/state-helpers.ts::async_no_await": {
+      "id": "smells::src/toolkit/guards/state-helpers.ts::async_no_await",
+      "detector": "smells",
+      "file": "src/toolkit/guards/state-helpers.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Async functions without await",
+      "detail": {
+        "smell_id": "async_no_await",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          40
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/write-rate-limit.ts::async_no_await": {
+      "id": "smells::src/toolkit/guards/write-rate-limit.ts::async_no_await",
+      "detector": "smells",
+      "file": "src/toolkit/guards/write-rate-limit.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "2x Async functions without await",
+      "detail": {
+        "smell_id": "async_no_await",
+        "severity": "medium",
+        "count": 2,
+        "lines": [
+          55,
+          81
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/connect.ts::async_no_await": {
+      "id": "smells::src/toolkit/tools/connect.ts::async_no_await",
+      "detector": "smells",
+      "file": "src/toolkit/tools/connect.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Async functions without await",
+      "detail": {
+        "smell_id": "async_no_await",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          183
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/publish.ts::async_no_await": {
+      "id": "smells::src/toolkit/tools/publish.ts::async_no_await",
+      "detector": "smells",
+      "file": "src/toolkit/tools/publish.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Async functions without await",
+      "detail": {
+        "smell_id": "async_no_await",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          62
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/scan.ts::async_no_await": {
+      "id": "smells::src/toolkit/tools/scan.ts::async_no_await",
+      "detector": "smells",
+      "file": "src/toolkit/tools/scan.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Async functions without await",
+      "detail": {
+        "smell_id": "async_no_await",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          96
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/discover-sources.ts::high_cyclomatic_complexity": {
+      "id": "smells::src/toolkit/tools/discover-sources.ts::high_cyclomatic_complexity",
+      "detector": "smells",
+      "file": "src/toolkit/tools/discover-sources.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x High cyclomatic complexity (>15 branches)",
+      "detail": {
+        "smell_id": "high_cyclomatic_complexity",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          74
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/pay.ts::high_cyclomatic_complexity": {
+      "id": "smells::src/toolkit/tools/pay.ts::high_cyclomatic_complexity",
+      "detector": "smells",
+      "file": "src/toolkit/tools/pay.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x High cyclomatic complexity (>15 branches)",
+      "detail": {
+        "smell_id": "high_cyclomatic_complexity",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          33
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/scan.ts::high_cyclomatic_complexity": {
+      "id": "smells::src/toolkit/tools/scan.ts::high_cyclomatic_complexity",
+      "detector": "smells",
+      "file": "src/toolkit/tools/scan.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x High cyclomatic complexity (>15 branches)",
+      "detail": {
+        "smell_id": "high_cyclomatic_complexity",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          64
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/url-validator.ts::high_cyclomatic_complexity": {
+      "id": "smells::src/toolkit/url-validator.ts::high_cyclomatic_complexity",
+      "detector": "smells",
+      "file": "src/toolkit/url-validator.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x High cyclomatic complexity (>15 branches)",
+      "detail": {
+        "smell_id": "high_cyclomatic_complexity",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          118
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/sdk-bridge.ts::any_type": {
+      "id": "smells::src/toolkit/sdk-bridge.ts::any_type",
+      "detector": "smells",
+      "file": "src/toolkit/sdk-bridge.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "2x Explicit `any` types",
+      "detail": {
+        "smell_id": "any_type",
+        "severity": "medium",
+        "count": 2,
+        "lines": [
+          108,
+          109
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/connect.ts::any_type": {
+      "id": "smells::src/toolkit/tools/connect.ts::any_type",
+      "detector": "smells",
+      "file": "src/toolkit/tools/connect.ts",
+      "tier": 3,
+      "confidence": "medium",
+      "summary": "1x Explicit `any` types",
+      "detail": {
+        "smell_id": "any_type",
+        "severity": "medium",
+        "count": 1,
+        "lines": [
+          187
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/dedup-guard.ts::magic_number": {
+      "id": "smells::src/toolkit/guards/dedup-guard.ts::magic_number",
+      "detector": "smells",
+      "file": "src/toolkit/guards/dedup-guard.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x Magic numbers (>1000 in logic)",
+      "detail": {
+        "smell_id": "magic_number",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          13
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/pay-receipt-log.ts::magic_number": {
+      "id": "smells::src/toolkit/guards/pay-receipt-log.ts::magic_number",
+      "detector": "smells",
+      "file": "src/toolkit/guards/pay-receipt-log.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x Magic numbers (>1000 in logic)",
+      "detail": {
+        "smell_id": "magic_number",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          11
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/pay-spend-cap.ts::magic_number": {
+      "id": "smells::src/toolkit/guards/pay-spend-cap.ts::magic_number",
+      "detector": "smells",
+      "file": "src/toolkit/guards/pay-spend-cap.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x Magic numbers (>1000 in logic)",
+      "detail": {
+        "smell_id": "magic_number",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          12
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/tip-spend-cap.ts::magic_number": {
+      "id": "smells::src/toolkit/guards/tip-spend-cap.ts::magic_number",
+      "detector": "smells",
+      "file": "src/toolkit/guards/tip-spend-cap.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "2x Magic numbers (>1000 in logic)",
+      "detail": {
+        "smell_id": "magic_number",
+        "severity": "low",
+        "count": 2,
+        "lines": [
+          12,
+          68
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/write-rate-limit.ts::magic_number": {
+      "id": "smells::src/toolkit/guards/write-rate-limit.ts::magic_number",
+      "detector": "smells",
+      "file": "src/toolkit/guards/write-rate-limit.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "2x Magic numbers (>1000 in logic)",
+      "detail": {
+        "smell_id": "magic_number",
+        "severity": "low",
+        "count": 2,
+        "lines": [
+          14,
+          15
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/session.ts::magic_number": {
+      "id": "smells::src/toolkit/session.ts::magic_number",
+      "detector": "smells",
+      "file": "src/toolkit/session.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x Magic numbers (>1000 in logic)",
+      "detail": {
+        "smell_id": "magic_number",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          22
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/attest.ts::todo_fixme": {
+      "id": "smells::src/toolkit/tools/attest.ts::todo_fixme",
+      "detector": "smells",
+      "file": "src/toolkit/tools/attest.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x TODO/FIXME/HACK comments",
+      "detail": {
+        "smell_id": "todo_fixme",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          41
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/publish.ts::todo_fixme": {
+      "id": "smells::src/toolkit/tools/publish.ts::todo_fixme",
+      "detector": "smells",
+      "file": "src/toolkit/tools/publish.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x TODO/FIXME/HACK comments",
+      "detail": {
+        "smell_id": "todo_fixme",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          39
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/tools/scan.ts::todo_fixme": {
+      "id": "smells::src/toolkit/tools/scan.ts::todo_fixme",
+      "detector": "smells",
+      "file": "src/toolkit/tools/scan.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "1x TODO/FIXME/HACK comments",
+      "detail": {
+        "smell_id": "todo_fixme",
+        "severity": "low",
+        "count": 1,
+        "lines": [
+          97
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "smells::src/toolkit/guards/backoff.ts::non_null_assert": {
+      "id": "smells::src/toolkit/guards/backoff.ts::non_null_assert",
+      "detector": "smells",
+      "file": "src/toolkit/guards/backoff.ts",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "2x Non-null assertions (!.)",
+      "detail": {
+        "smell_id": "non_null_assert",
+        "severity": "low",
+        "count": 2,
+        "lines": [
+          50,
+          54
+        ]
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::src/toolkit/sdk-bridge.ts::security::hardcoded_secret_name::src/toolkit/sdk-bridge.ts::14": {
+      "id": "security::src/toolkit/sdk-bridge.ts::security::hardcoded_secret_name::src/toolkit/sdk-bridge.ts::14",
+      "detector": "security",
+      "file": "src/toolkit/sdk-bridge.ts",
+      "tier": 2,
+      "confidence": "high",
+      "summary": "Hardcoded secret in variable 'AUTH_PENDING_TOKEN'",
+      "detail": {
+        "kind": "hardcoded_secret_name",
+        "severity": "high",
+        "line": 14,
+        "content": "export const AUTH_PENDING_TOKEN = \"__AUTH_PENDING__\";",
+        "remediation": "Move secret to environment variable or secrets manager"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "zone": "production",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "security::src/toolkit/tools/discover-sources.ts::security::json_parse_unguarded::src/toolkit/tools/discover-sources.ts::80": {
+      "id": "security::src/toolkit/tools/discover-sources.ts::security::json_parse_unguarded::src/toolkit/tools/discover-sources.ts::80",
+      "detector": "security",
+      "file": "src/toolkit/tools/discover-sources.ts",
+      "tier": 2,
+      "confidence": "low",
+      "summary": "JSON.parse() without try/catch - may throw on malformed input",
+      "detail": {
+        "kind": "json_parse_unguarded",
+        "severity": "low",
+        "line": 80,
+        "content": "  const catalog = JSON.parse(raw);",
+        "remediation": "Wrap JSON.parse() in a try/catch block"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "mechanical_defect",
+      "issue_kind": "mechanical_defect",
+      "origin": "scan",
+      "zone": "production",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::abstraction_fitness": {
+      "id": "subjective_review::.::abstraction_fitness",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Abstraction fit \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "abstraction_fitness"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::ai_generated_debt": {
+      "id": "subjective_review::.::ai_generated_debt",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "AI generated debt \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "ai_generated_debt"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::api_surface_coherence": {
+      "id": "subjective_review::.::api_surface_coherence",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "API coherence \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "api_surface_coherence"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::authorization_consistency": {
+      "id": "subjective_review::.::authorization_consistency",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Auth consistency \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "authorization_consistency"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::contract_coherence": {
+      "id": "subjective_review::.::contract_coherence",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Contracts \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "contract_coherence"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::convention_outlier": {
+      "id": "subjective_review::.::convention_outlier",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Convention drift \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "convention_outlier"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::cross_module_architecture": {
+      "id": "subjective_review::.::cross_module_architecture",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Cross-module arch \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "cross_module_architecture"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::dependency_health": {
+      "id": "subjective_review::.::dependency_health",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Dep health \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "dependency_health"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::design_coherence": {
+      "id": "subjective_review::.::design_coherence",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Design coherence \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "design_coherence"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::error_consistency": {
+      "id": "subjective_review::.::error_consistency",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Error consistency \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "error_consistency"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::high_level_elegance": {
+      "id": "subjective_review::.::high_level_elegance",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "High elegance \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "high_level_elegance"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::incomplete_migration": {
+      "id": "subjective_review::.::incomplete_migration",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Stale migration \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "incomplete_migration"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::initialization_coupling": {
+      "id": "subjective_review::.::initialization_coupling",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Init coupling \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "initialization_coupling"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::logic_clarity": {
+      "id": "subjective_review::.::logic_clarity",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Logic clarity \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "logic_clarity"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::low_level_elegance": {
+      "id": "subjective_review::.::low_level_elegance",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Low elegance \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "low_level_elegance"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::mid_level_elegance": {
+      "id": "subjective_review::.::mid_level_elegance",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Mid elegance \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "mid_level_elegance"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::naming_quality": {
+      "id": "subjective_review::.::naming_quality",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Naming quality \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "naming_quality"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::package_organization": {
+      "id": "subjective_review::.::package_organization",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Structure nav \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "package_organization"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::test_strategy": {
+      "id": "subjective_review::.::test_strategy",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Test strategy \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "test_strategy"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "subjective_review::.::type_safety": {
+      "id": "subjective_review::.::type_safety",
+      "detector": "subjective_review",
+      "file": ".",
+      "tier": 4,
+      "confidence": "low",
+      "summary": "Type safety \u2014 no assessment on record, run `desloppify review --prepare`",
+      "detail": {
+        "reason": "unassessed",
+        "dimension": "type_safety"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T16:59:34+00:00",
+      "last_seen": "2026-03-27T16:59:34+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "assessment_request",
+      "issue_kind": "assessment_request",
+      "origin": "synthetic_task",
+      "lang": "typescript",
+      "zone": "production",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    }
+  },
+  "scan_coverage": {
+    "typescript": {
+      "status": "full",
+      "confidence": 1.0,
+      "detectors": {
+        "security": {
+          "detector": "security",
+          "status": "full",
+          "confidence": 1.0,
+          "summary": "Security coverage complete for enabled detectors.",
+          "impact": "",
+          "remediation": "",
+          "tool": "",
+          "reason": ""
+        }
+      },
+      "warnings": [],
+      "updated_at": "2026-03-27T16:59:34+00:00"
+    }
+  },
+  "score_confidence": {
+    "status": "full",
+    "confidence": 1.0,
+    "detectors": [],
+    "dimensions": []
+  },
+  "scan_metadata": {
+    "source": "scan"
+  },
+  "subjective_integrity": {
+    "status": "pass",
+    "target_score": 85.0,
+    "matched_count": 0,
+    "matched_dimensions": [],
+    "reset_dimensions": []
+  },
+  "subjective_assessments": {},
+  "scan_history": [
+    {
+      "timestamp": "2026-03-27T16:59:34+00:00",
+      "lang": "typescript",
+      "strict_score": 20.9,
+      "verified_strict_score": 83.7,
+      "objective_score": 83.7,
+      "overall_score": 20.9,
+      "open": 61,
+      "diff_new": 61,
+      "diff_resolved": 0,
+      "ignored": 0,
+      "raw_issues": 61,
+      "suppressed_pct": 0.0,
+      "ignore_patterns": 0,
+      "subjective_integrity": {
+        "status": "pass",
+        "matched_count": 0,
+        "reset_count": 0,
+        "target_score": 85.0
+      },
+      "score_confidence": {
+        "status": "full",
+        "confidence": 1.0,
+        "detector_count": 0,
+        "dimension_count": 0
+      },
+      "dimension_scores": {
+        "Code quality": {
+          "score": 87.1,
+          "strict": 87.1
+        },
+        "Security": {
+          "score": 97.3,
+          "strict": 97.3
+        },
+        "File health": {
+          "score": 100.0,
+          "strict": 100.0
+        },
+        "Duplication": {
+          "score": 100.0,
+          "strict": 100.0
+        },
+        "Test health": {
+          "score": 71.7,
+          "strict": 71.7
+        },
+        "Abstraction fit": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "AI generated debt": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "API coherence": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Auth consistency": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Contracts": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Convention drift": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Cross-module arch": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Dep health": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Design coherence": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Error consistency": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "High elegance": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Stale migration": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Init coupling": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Logic clarity": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Low elegance": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Mid elegance": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Naming quality": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Structure nav": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Test strategy": {
+          "score": 0.0,
+          "strict": 0.0
+        },
+        "Type safety": {
+          "score": 0.0,
+          "strict": 0.0
+        }
+      }
+    }
+  ],
+  "review_cache": {
+    "detectors": {
+      "boilerplate": {
+        "version": 1,
+        "fingerprint": "30597cb3e488adc69a9a41f2badbc02478bc032b",
+        "entries": [
+          {
+            "id": "b73710cd1a5c5bc7",
+            "distinct_files": 2,
+            "window_size": 13,
+            "locations": [
+              {
+                "file": "session.ts",
+                "line": 57
+              },
+              {
+                "file": "types.ts",
+                "line": 104
+              }
+            ],
+            "sample": [
+              ": StateStore;",
+              "    onToolCall?: (event: ToolCallEvent) => void;",
+              "    tipPolicy?: TipPolicy;",
+              "    payPolicy?: PayPolicy;"
+            ]
+          }
+        ]
+      },
+      "security": {
+        "version": 1,
+        "fingerprint": "fff4a7632488ad44890ecb3affbc7517f87e20fc",
+        "entries": [
+          {
+            "file": "src/toolkit/tools/discover-sources.ts",
+            "name": "security::json_parse_unguarded::src/toolkit/tools/discover-sources.ts::80",
+            "tier": 2,
+            "confidence": "low",
+            "summary": "JSON.parse() without try/catch - may throw on malformed input",
+            "detail": {
+              "kind": "json_parse_unguarded",
+              "severity": "low",
+              "line": 80,
+              "content": "  const catalog = JSON.parse(raw);",
+              "remediation": "Wrap JSON.parse() in a try/catch block"
+            }
+          }
+        ],
+        "files_scanned": 24,
+        "coverage": null
+      },
+      "dupes": {
+        "version": 1,
+        "threshold": 0.9,
+        "functions": {
+          "src/toolkit/guards/dedup-guard.ts:hashText:26:28": {
+            "body_hash": "fd721d3edcaacdc2a1cde378cfa6abb4",
+            "loc": 3
+          },
+          "src/toolkit/guards/dedup-guard.ts:isDuplicate:45:48": {
+            "body_hash": "e15360329d2620a9c8bcc9d2325f34dd",
+            "loc": 4
+          },
+          "src/toolkit/guards/pay-receipt-log.ts:makeIdempotencyKey:28:37": {
+            "body_hash": "466f8deab5dca2e5ba0fc1dfe60d72d4",
+            "loc": 10
+          },
+          "src/toolkit/guards/pay-spend-cap.ts:spent24h:53:56": {
+            "body_hash": "b2a2e0e8ce1bb211d575f2a757d39db4",
+            "loc": 4
+          },
+          "src/toolkit/guards/state-helpers.ts:stateKey:14:17": {
+            "body_hash": "b87ab60aa4859158f7d32667d7429765",
+            "loc": 4
+          },
+          "src/toolkit/guards/state-helpers.ts:sleep:76:78": {
+            "body_hash": "b1fa0b0866d3dec83e483d9bc81a4cf5",
+            "loc": 3
+          },
+          "src/toolkit/guards/tip-spend-cap.ts:tipsForPost:56:59": {
+            "body_hash": "8c77c084bf0463b1e981836d3b44eae4",
+            "loc": 4
+          },
+          "src/toolkit/guards/write-rate-limit.ts:hourlyCount:38:42": {
+            "body_hash": "0e8be08d76b1ad173f996412406d70c1",
+            "loc": 5
+          },
+          "src/toolkit/guards/write-rate-limit.ts:dailyCount:91:97": {
+            "body_hash": "722f021040fe74af8ee218c8e849d242",
+            "loc": 7
+          },
+          "src/toolkit/schemas.ts:validateInput:152:165": {
+            "body_hash": "7fdb84f03eca35c06c5976867efa15ab",
+            "loc": 14
+          },
+          "src/toolkit/sdk-bridge.ts:createSdkBridge:100:105": {
+            "body_hash": "1d6d82f20e5fa40d4334d604e67ae916",
+            "loc": 6
+          },
+          "src/toolkit/tools/connect.ts:disconnect:119:121": {
+            "body_hash": "bf6db00f0ff53fa8bff2d69278048cd0",
+            "loc": 3
+          },
+          "src/toolkit/tools/connect.ts:parseWallet:131:177": {
+            "body_hash": "377a3143a14e862a759949a003c1ab31",
+            "loc": 47
+          },
+          "src/toolkit/tools/discover-sources.ts:active:53:57": {
+            "body_hash": "a8e3860a8c276881fcb631677ddcf400",
+            "loc": 5
+          },
+          "src/toolkit/tools/discover-sources.ts:sources:83:94": {
+            "body_hash": "76f94b163631fa49457248f6ee6e6918",
+            "loc": 12
+          },
+          "src/toolkit/tools/discover-sources.ts:normalizeStatus:104:109": {
+            "body_hash": "60fdd49dc5addecbafbafd4a7e93e45a",
+            "loc": 6
+          },
+          "src/toolkit/tools/pay.ts:settlement:159:167": {
+            "body_hash": "70440d82ec724b17e7e421a35e8e6190",
+            "loc": 9
+          },
+          "src/toolkit/tools/pay.ts:isManualRedirect:280:282": {
+            "body_hash": "548451cbf862b7f1f72a28159c8e9e74",
+            "loc": 3
+          },
+          "src/toolkit/tools/pay.ts:stripPaymentProofOnCrossOriginRedirect:284:294": {
+            "body_hash": "714d23abec004277e243979adc02cd37",
+            "loc": 11
+          },
+          "src/toolkit/tools/pay.ts:isDemosErrorLike:296:304": {
+            "body_hash": "c8c027d642056e50837f769464dcd79e",
+            "loc": 9
+          },
+          "src/toolkit/tools/scan.ts:identifyOpportunities:49:62": {
+            "body_hash": "01acfa2ea62b8cd85f13908cbc744a1b",
+            "loc": 14
+          },
+          "src/toolkit/tools/tool-wrapper.ts:localProvenance:54:56": {
+            "body_hash": "aff9bf5f9ce94e44e0377f49079f30fd",
+            "loc": 3
+          },
+          "src/toolkit/tools/verify.ts:found:82:85": {
+            "body_hash": "48c2edbb647bad08e1996c3fa5ceee26",
+            "loc": 4
+          },
+          "src/toolkit/types.ts:ok:263:265": {
+            "body_hash": "f2ad80a6c1bff52ce0a1b237dbba1a19",
+            "loc": 3
+          },
+          "src/toolkit/types.ts:err:268:270": {
+            "body_hash": "64b01636f0e477c1decc41cea3fec200",
+            "loc": 3
+          },
+          "src/toolkit/types.ts:demosError:273:280": {
+            "body_hash": "df7d5c9438a4977499646eb31469f908",
+            "loc": 8
+          },
+          "src/toolkit/url-validator.ts:checkBlockedIp:89:113": {
+            "body_hash": "fe29ad0a2e465c2ffce98c9168766164",
+            "loc": 25
+          },
+          "src/toolkit/url-validator.ts:checkBlockedIpv4:118:172": {
+            "body_hash": "2464892680208f7228dd6f73d70c9ee5",
+            "loc": 55
+          }
+        },
+        "near_pairs": []
+      }
+    }
+  },
+  "lang_capabilities": {
+    "typescript": {
+      "fixers": [
+        "dead-useeffect",
+        "debug-logs",
+        "empty-if-chain",
+        "unused-imports",
+        "unused-params",
+        "unused-vars"
+      ],
+      "typecheck_cmd": "npx tsc --noEmit"
+    }
+  },
+  "zone_distribution": {
+    "production": 24
+  },
+  "tool_hash": "ab097af7227e",
+  "scan_path": "src/toolkit",
+  "scan_completeness": {
+    "typescript": "full"
+  },
+  "potentials": {
+    "typescript": {
+      "logs": 24,
+      "unused": 24,
+      "exports": 0,
+      "deprecated": 4,
+      "structural": 24,
+      "flat_dirs": 3,
+      "props": 5,
+      "single_use": 10,
+      "coupling": 0,
+      "cycles": 24,
+      "orphaned": 24,
+      "patterns": 0,
+      "naming": 3,
+      "facade": 24,
+      "test_coverage": 251,
+      "smells": 25,
+      "react": 0,
+      "security": 24,
+      "subjective_review": 20,
+      "boilerplate_duplication": 0,
+      "dupes": 28,
+      "stale_wontfix": 0
+    }
+  },
+  "codebase_metrics": {
+    "typescript": {
+      "total_files": 24,
+      "total_loc": 0,
+      "total_directories": 3
+    }
+  },
+  "dimension_scores": {
+    "Code quality": {
+      "score": 87.1,
+      "strict": 87.1,
+      "verified_strict_score": 87.1,
+      "checks": 146,
+      "failing": 32,
+      "tier": 3,
+      "detectors": {
+        "unused": {
+          "potential": 24,
+          "pass_rate": 0.875,
+          "failing": 3,
+          "weighted_failures": 3.0
+        },
+        "logs": {
+          "potential": 24,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "smells": {
+          "potential": 25,
+          "pass_rate": 0.524,
+          "failing": 25,
+          "weighted_failures": 11.9
+        },
+        "orphaned": {
+          "potential": 24,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "flat_dirs": {
+          "potential": 3,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "naming": {
+          "potential": 3,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "single_use": {
+          "potential": 10,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "facade": {
+          "potential": 24,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "props": {
+          "potential": 5,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "deprecated": {
+          "potential": 4,
+          "pass_rate": 0.0,
+          "failing": 4,
+          "weighted_failures": 4.0
+        }
+      }
+    },
+    "Security": {
+      "score": 97.3,
+      "strict": 97.3,
+      "verified_strict_score": 97.3,
+      "checks": 48,
+      "failing": 2,
+      "tier": 4,
+      "detectors": {
+        "cycles": {
+          "potential": 24,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        },
+        "security": {
+          "potential": 24,
+          "pass_rate": 0.9458333333333333,
+          "failing": 2,
+          "weighted_failures": 1.3
+        }
+      }
+    },
+    "File health": {
+      "score": 100.0,
+      "strict": 100.0,
+      "verified_strict_score": 100.0,
+      "checks": 24,
+      "failing": 0,
+      "tier": 3,
+      "detectors": {
+        "structural": {
+          "potential": 24,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        }
+      }
+    },
+    "Duplication": {
+      "score": 100.0,
+      "strict": 100.0,
+      "verified_strict_score": 100.0,
+      "checks": 28,
+      "failing": 0,
+      "tier": 3,
+      "detectors": {
+        "dupes": {
+          "potential": 28,
+          "pass_rate": 1.0,
+          "failing": 0,
+          "weighted_failures": 0.0
+        }
+      }
+    },
+    "Test health": {
+      "score": 71.7,
+      "strict": 71.7,
+      "verified_strict_score": 71.7,
+      "checks": 251,
+      "failing": 7,
+      "tier": 4,
+      "detectors": {
+        "test_coverage": {
+          "potential": 251,
+          "pass_rate": 0.7167667928042045,
+          "failing": 7,
+          "weighted_failures": 71.09153500614465
+        }
+      }
+    },
+    "Abstraction fit": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "abstraction_fitness",
+          "configured_weight": 8.0,
+          "components": []
+        }
+      }
+    },
+    "AI generated debt": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "ai_generated_debt",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "API coherence": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "api_surface_coherence",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Auth consistency": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "authorization_consistency",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Contracts": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "contract_coherence",
+          "configured_weight": 12.0,
+          "components": []
+        }
+      }
+    },
+    "Convention drift": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "convention_outlier",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Cross-module arch": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "cross_module_architecture",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Dep health": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "dependency_health",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Design coherence": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "design_coherence",
+          "configured_weight": 10.0,
+          "components": []
+        }
+      }
+    },
+    "Error consistency": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "error_consistency",
+          "configured_weight": 3.0,
+          "components": []
+        }
+      }
+    },
+    "High elegance": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "high_level_elegance",
+          "configured_weight": 22.0,
+          "components": []
+        }
+      }
+    },
+    "Stale migration": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "incomplete_migration",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Init coupling": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "initialization_coupling",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Logic clarity": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "logic_clarity",
+          "configured_weight": 6.0,
+          "components": []
+        }
+      }
+    },
+    "Low elegance": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "low_level_elegance",
+          "configured_weight": 12.0,
+          "components": []
+        }
+      }
+    },
+    "Mid elegance": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "mid_level_elegance",
+          "configured_weight": 22.0,
+          "components": []
+        }
+      }
+    },
+    "Naming quality": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "naming_quality",
+          "configured_weight": 2.0,
+          "components": []
+        }
+      }
+    },
+    "Structure nav": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "package_organization",
+          "configured_weight": 5.0,
+          "components": []
+        }
+      }
+    },
+    "Test strategy": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "test_strategy",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "Type safety": {
+      "score": 0.0,
+      "strict": 0.0,
+      "verified_strict_score": 0.0,
+      "checks": 10,
+      "failing": 0,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.0,
+          "failing": 0,
+          "weighted_failures": 10.0,
+          "assessment_score": 0.0,
+          "placeholder": true,
+          "dimension_key": "type_safety",
+          "configured_weight": 12.0,
+          "components": []
+        }
+      }
+    }
+  }
+}

@@ -22,6 +22,9 @@ const D402RequirementSchema = z.object({
   description: z.string().optional(),
 });
 
+const D402_SETTLEMENT_LOCK_TTL_MS = 60_000;
+const MAX_REDIRECT_HOPS = 3;
+
 /**
  * Make an HTTP request with automatic D402 payment on 402 responses.
  *
@@ -87,8 +90,11 @@ export async function pay(
     // Step 1: Initial HTTP request
     let initialResponse: Response;
     try {
-      initialResponse = await fetch(opts.url, fetchOpts);
+      initialResponse = await fetchWithValidatedRedirects(session, opts.url, fetchOpts);
     } catch (e) {
+      if (isDemosErrorLike(e)) {
+        return err(e, localProvenance(start));
+      }
       return err(
         demosError("NETWORK_ERROR", `Payment request failed: ${(e as Error).message}`, true),
         localProvenance(start),
@@ -150,7 +156,9 @@ export async function pay(
     }
 
     // Step 6: Settle payment via bridge
-    const settlement = await bridge.payD402(requirement);
+    const settlement = await withWalletSettlementLock(session, async () =>
+      bridge.payD402(requirement),
+    );
     if (!settlement.success) {
       return err(
         demosError("TX_FAILED", `D402 settlement failed: ${settlement.message ?? "unknown error"}`, true, { step: "settle" }),
@@ -165,7 +173,7 @@ export async function pay(
     // Step 7: Retry with payment proof
     let retryResponse: Response;
     try {
-      retryResponse = await fetch(opts.url, {
+      retryResponse = await fetchWithValidatedRedirects(session, opts.url, {
         ...fetchOpts,
         headers: {
           ...opts.headers,
@@ -173,6 +181,9 @@ export async function pay(
         },
       });
     } catch (e) {
+      if (isDemosErrorLike(e)) {
+        return err(e, localProvenance(start));
+      }
       return err(
         demosError("NETWORK_ERROR", `Payment retry failed: ${(e as Error).message}`, true, { step: "retry", txHash: settlement.hash }),
         localProvenance(start),
@@ -221,4 +232,89 @@ async function safeReadBody(response: Response): Promise<unknown> {
     const text = await response.text();
     try { return JSON.parse(text); } catch { return text; }
   } catch { return null; }
+}
+
+async function fetchWithValidatedRedirects(
+  session: DemosSession,
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  let currentUrl = url;
+  let currentHeaders = new Headers(init.headers);
+  let redirectsFollowed = 0;
+
+  while (true) {
+    const response = await fetch(currentUrl, {
+      ...init,
+      headers: currentHeaders,
+      redirect: "manual",
+    });
+
+    if (!isManualRedirect(response.status)) {
+      return response;
+    }
+
+    if (redirectsFollowed >= MAX_REDIRECT_HOPS) {
+      throw demosError("INVALID_INPUT", `Too many redirects: exceeded ${MAX_REDIRECT_HOPS} hops`, false);
+    }
+
+    const location = response.headers.get("location");
+    if (!location) {
+      throw demosError("INVALID_INPUT", "Redirect response missing Location header", false);
+    }
+
+    const nextUrl = new URL(location, currentUrl).toString();
+    const urlCheck = await validateUrl(nextUrl, {
+      allowInsecure: session.allowInsecureUrls,
+    });
+    if (!urlCheck.valid) {
+      throw demosError("INVALID_INPUT", `Payment URL blocked: ${urlCheck.reason}`, false);
+    }
+
+    currentHeaders = stripPaymentProofOnCrossOriginRedirect(currentUrl, nextUrl, currentHeaders);
+    currentUrl = nextUrl;
+    redirectsFollowed++;
+  }
+}
+
+function isManualRedirect(status: number): boolean {
+  return status === 301 || status === 302 || status === 307 || status === 308;
+}
+
+function stripPaymentProofOnCrossOriginRedirect(
+  fromUrl: string,
+  toUrl: string,
+  headers: Headers,
+): Headers {
+  const nextHeaders = new Headers(headers);
+  if (new URL(fromUrl).origin !== new URL(toUrl).origin) {
+    nextHeaders.delete("X-Payment-Proof");
+  }
+  return nextHeaders;
+}
+
+function isDemosErrorLike(error: unknown): error is ReturnType<typeof demosError> {
+  return Boolean(
+    error
+    && typeof error === "object"
+    && "code" in error
+    && "message" in error
+    && "retryable" in error,
+  );
+}
+
+async function withWalletSettlementLock<T>(
+  session: DemosSession,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const unlock = await session.stateStore.lock(
+    `pay-d402-settlement-${session.walletAddress}`,
+    D402_SETTLEMENT_LOCK_TTL_MS,
+  );
+
+  try {
+    return await fn();
+  } finally {
+    await unlock();
+  }
 }

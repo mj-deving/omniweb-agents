@@ -7,6 +7,7 @@ import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { checkTipSpendCap, recordTip } from "../guards/tip-spend-cap.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
+import { validateInput, TipOptionsSchema } from "../schemas.js";
 
 /**
  * Tip DEM to a post author. Guards: max per-tip, max per-post, cooldown.
@@ -16,9 +17,8 @@ export async function tip(
   opts: TipOptions,
 ): Promise<ToolResult<TipResult>> {
   return withToolWrapper(session, "tip", "TX_FAILED", async (start) => {
-    if (!opts.txHash) {
-      return err(demosError("INVALID_INPUT", "txHash is required", false), localProvenance(start));
-    }
+    const inputError = validateInput(TipOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
 
     const capError = await checkTipSpendCap(
       session.stateStore,

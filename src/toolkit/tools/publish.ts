@@ -11,6 +11,8 @@ import { DemosSession } from "../session.js";
 import { checkWriteRateLimit, recordWrite } from "../guards/write-rate-limit.js";
 import { checkDedup, recordPublish as recordDedupPublish } from "../guards/dedup-guard.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
+import { validateInput, PublishDraftSchema, ReplyOptionsSchema } from "../schemas.js";
+import { validateUrl } from "../url-validator.js";
 
 /**
  * Publish an attested post to SuperColony.
@@ -22,13 +24,8 @@ export async function publish(
   draft: PublishDraft,
 ): Promise<ToolResult<PublishResult>> {
   return withToolWrapper(session, "publish", "TX_FAILED", async (start) => {
-    if (!draft.text || draft.text.length < 1) {
-      return err(demosError("INVALID_INPUT", "Post text cannot be empty", false), localProvenance(start));
-    }
-
-    if (!draft.category) {
-      return err(demosError("INVALID_INPUT", "Category is required", false), localProvenance(start));
-    }
+    const inputError = validateInput(PublishDraftSchema, draft);
+    if (inputError) return err(inputError, localProvenance(start));
 
     // Check guards first (no mutation — safe to reject without side effects)
     const [rateLimitError, dedupError] = await Promise.all([
@@ -66,11 +63,9 @@ export async function reply(
   session: DemosSession,
   opts: ReplyOptions,
 ): Promise<ToolResult<PublishResult>> {
-  if (!opts.parentTxHash) {
-    return err(
-      demosError("INVALID_INPUT", "parentTxHash is required for reply", false),
-      { path: "local", latencyMs: 0 },
-    );
+  const inputError = validateInput(ReplyOptionsSchema, opts);
+  if (inputError) {
+    return err(inputError, { path: "local", latencyMs: 0 });
   }
 
   return publish(session, {
@@ -88,6 +83,15 @@ async function executePublishPipeline(session: DemosSession, draft: PublishDraft
   if (!draft.attestUrl) {
     throw new Error("PublishDraft.attestUrl is required — provide the source URL for attestation");
   }
+
+  // SSRF validation — DNS resolution + IP blocklist (matches attest.ts and pay.ts pattern)
+  const urlCheck = await validateUrl(draft.attestUrl, {
+    allowInsecure: session.allowInsecureUrls,
+  });
+  if (!urlCheck.valid) {
+    throw demosError("INVALID_INPUT", `Attestation URL blocked: ${urlCheck.reason}`, false);
+  }
+
   const attestResult = await bridge.attestDahr(draft.attestUrl);
 
   // Step 2: Publish HIVE post on-chain via store → confirm → broadcast

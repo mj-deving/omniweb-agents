@@ -16,6 +16,7 @@ import { demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { FileStateStore } from "../state-store.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "../sdk-bridge.js";
+import { validateInput, ConnectOptionsSchema } from "../schemas.js";
 
 const DEFAULT_RPC_URL = "https://demosnode.discus.sh";
 const DEFAULT_ALGORITHM = "falcon";
@@ -27,6 +28,10 @@ const DEFAULT_SUPERCOLONY_API = "https://www.supercolony.ai";
  * Flow: verify wallet file → parse credentials → connect SDK → authenticate → return session.
  */
 export async function connect(opts: ConnectOptions): Promise<DemosSession> {
+  // Zod schema validation — shape/type only (FS/HTTPS checks remain below)
+  const inputError = validateInput(ConnectOptionsSchema, opts);
+  if (inputError) throw inputError;
+
   // HTTPS enforcement on rpcUrl
   const rpcUrl = opts.rpcUrl ?? DEFAULT_RPC_URL;
   if (!opts.allowInsecureUrls && !rpcUrl.startsWith("https://")) {

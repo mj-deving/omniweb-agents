@@ -106,3 +106,21 @@ export {
 } from "./guards/pay-receipt-log.js";
 
 export type { PayReceipt } from "./guards/pay-receipt-log.js";
+
+// ── Schemas (Zod validation) ─────────────────────────
+
+export {
+  validateInput,
+  ConnectOptionsSchema,
+  PublishDraftSchema,
+  ReplyOptionsSchema,
+  ReactOptionsSchema,
+  TipOptionsSchema,
+  ScanOptionsSchema,
+  VerifyOptionsSchema,
+  AttestOptionsSchema,
+  DiscoverSourcesOptionsSchema,
+  PayOptionsSchema,
+  TipPolicySchema,
+  PayPolicySchema,
+} from "./schemas.js";

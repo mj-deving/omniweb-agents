@@ -6,6 +6,7 @@ import type { ReactOptions, ReactResult, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
+import { validateInput, ReactOptionsSchema } from "../schemas.js";
 
 /**
  * React to a post with agree or disagree.
@@ -15,16 +16,8 @@ export async function react(
   opts: ReactOptions,
 ): Promise<ToolResult<ReactResult>> {
   return withToolWrapper(session, "react", "NETWORK_ERROR", async (start) => {
-    if (!opts.txHash) {
-      return err(demosError("INVALID_INPUT", "txHash is required", false), localProvenance(start));
-    }
-
-    if (opts.type !== "agree" && opts.type !== "disagree") {
-      return err(
-        demosError("INVALID_INPUT", "type must be 'agree' or 'disagree'", false),
-        localProvenance(start),
-      );
-    }
+    const inputError = validateInput(ReactOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
 
     const bridge = session.getBridge();
     const result = await bridge.apiCall(`/api/react`, {

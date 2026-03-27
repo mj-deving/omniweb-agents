@@ -11,6 +11,7 @@ import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateUrl } from "../url-validator.js";
+import { validateInput, AttestOptionsSchema } from "../schemas.js";
 
 /**
  * Create a DAHR attestation for a URL.
@@ -22,9 +23,8 @@ export async function attest(
   opts: AttestOptions,
 ): Promise<ToolResult<AttestResult>> {
   return withToolWrapper(session, "attest", "ATTEST_FAILED", async (start) => {
-    if (!opts.url) {
-      return err(demosError("INVALID_INPUT", "URL is required for attestation", false), localProvenance(start));
-    }
+    const inputError = validateInput(AttestOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
 
     // SSRF validation — DNS resolution + IP blocklist
     const urlCheck = await validateUrl(opts.url, {

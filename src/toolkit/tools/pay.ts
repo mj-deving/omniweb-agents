@@ -11,6 +11,7 @@ import { checkPaySpendCap, recordPayment } from "../guards/pay-spend-cap.js";
 import { makeIdempotencyKey, checkPayReceipt, recordPayReceipt } from "../guards/pay-receipt-log.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateUrl } from "../url-validator.js";
+import { validateInput, PayOptionsSchema } from "../schemas.js";
 
 /**
  * Make an HTTP request with automatic D402 payment on 402 responses.
@@ -22,16 +23,8 @@ export async function pay(
   opts: PayOptions,
 ): Promise<ToolResult<PayResult>> {
   return withToolWrapper(session, "pay", "TX_FAILED", async (start) => {
-    if (!opts.url) {
-      return err(demosError("INVALID_INPUT", "URL is required", false), localProvenance(start));
-    }
-
-    if (!Number.isFinite(opts.maxSpend) || opts.maxSpend <= 0) {
-      return err(
-        demosError("INVALID_INPUT", "maxSpend must be a positive finite number", false),
-        localProvenance(start),
-      );
-    }
+    const inputError = validateInput(PayOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
 
     // Idempotency check FIRST — if we have a receipt, skip everything
     const idempotencyKey = makeIdempotencyKey(opts.url, opts.method, opts.body);

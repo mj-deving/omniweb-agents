@@ -11,6 +11,7 @@ import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { sleep } from "../guards/state-helpers.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
+import { validateInput, VerifyOptionsSchema } from "../schemas.js";
 
 const RETRY_DELAYS_MS = [3000, 5000, 10000];
 
@@ -22,9 +23,8 @@ export async function verify(
   opts: VerifyOptions,
 ): Promise<ToolResult<VerifyResult>> {
   return withToolWrapper(session, "verify", "CONFIRM_TIMEOUT", async (start) => {
-    if (!opts.txHash) {
-      return err(demosError("INVALID_INPUT", "txHash is required", false), localProvenance(start));
-    }
+    const inputError = validateInput(VerifyOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
 
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
       if (attempt > 0) {

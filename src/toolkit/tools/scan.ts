@@ -8,6 +8,7 @@ import type { ScanOptions, ScanResult, ScanPost, ScanOpportunity, ToolResult } f
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
+import { validateInput, ScanOptionsSchema } from "../schemas.js";
 
 /**
  * Scan the SuperColony feed for posts and opportunities.
@@ -17,6 +18,9 @@ export async function scan(
   opts?: ScanOptions,
 ): Promise<ToolResult<ScanResult>> {
   return withToolWrapper(session, "scan", "NETWORK_ERROR", async (start) => {
+    const inputError = validateInput(ScanOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
+
     const limit = opts?.limit ?? 50;
 
     try {

@@ -3,7 +3,7 @@
 > **The one document you read to understand the project.**
 > Architecture lives in CLAUDE.md. Operational knowledge lives in MEMORY.md. This file tracks the **evolving narrative** — what we're building, what Demos offers, what's working, what's next.
 
-**Last updated:** 2026-03-26 | **SDK:** 2.11.4 | **Tests:** 94 suites, 1437 passing | **Agents:** 6 defined, 3 publishing | **Sources:** 229 catalog, 38 specs
+**Last updated:** 2026-03-27 | **SDK:** 2.11.5 | **Tests:** 112 suites, 1684 passing | **Agents:** 6 defined, 3 publishing | **Sources:** 229 catalog, 38 specs
 
 ---
 
@@ -37,7 +37,8 @@ demos-agents is an autonomous agent toolkit built ON the Demos Network. Demos is
 
 **Where we're going:**
 - **Colony intelligence redesign:** Colony Mind 3-layer architecture (Map → Ledger → Pulse) from triple-lens analysis. 7 testable hypotheses. Blocked on colony census (supercolony.ai DNS down).
-- **Toolkit evolution (STRATEGIC):** Extract demos-agents from harness into framework-agnostic toolkit. Core domain logic + thin adapters for OpenClaw + ElizaOS. SuperColony first vertical. See `design-toolkit-architecture.md`.
+- **Toolkit shipped (2026-03-27):** Framework-agnostic toolkit in `src/toolkit/`. 10 tools (connect, publish, reply, react, tip, scan, verify, attest, discoverSources, pay), 6 guards (rate limit, dedup, tip cap, pay cap, backoff, receipt log), Zod input validation, SSRF protection, SDK bridge. 168 toolkit tests (247 total new). Design doc APPROVED. See `design-toolkit-architecture.md`.
+- **Toolkit evolution (next):** 5-PR migration `src/toolkit/` → `packages/core/` for npm packaging. Adapter packages for OpenClaw + ElizaOS.
 - Continue collecting quality_score data (17 entries, need 20+ with actuals for meaningful correlation)
 - CCI identity as root → Agent Auth Protocol as session auth layer
 - Deeper Demos SDK integration: ZK identity, encrypted messaging, L2PS privacy (when SDK unblocks)
@@ -79,7 +80,7 @@ What Demos offers vs what we use. **Updated each session.**
 
 | Document | Status | Updated | Purpose |
 |----------|--------|---------|---------|
-| [design-toolkit-architecture.md](design-toolkit-architecture.md) | `iterating` | 2026-03-25 | **Framework-agnostic toolkit design.** Living doc — taxonomy, three-layer architecture, open questions, decision log. Do not implement until APPROVED. |
+| [design-toolkit-architecture.md](design-toolkit-architecture.md) | `APPROVED` | 2026-03-27 | **Framework-agnostic toolkit design.** Taxonomy, three-layer architecture, decision log. Toolkit shipped: 10 tools, 6 guards, Zod validation, SSRF protection. |
 | [session-loop-explained.md](session-loop-explained.md) | `current` | 2026-03-25 | Comprehensive session loop reference — 8-phase V1, V2 architecture, hooks, timing, bottlenecks |
 | [loop-heuristics.md](loop-heuristics.md) | `current` | 2026-03-20 | **Single source of truth** for SCAN→GATE→PUBLISH pipeline, agent differentiation, 8 constitutional rules |
 | [project-structure.md](project-structure.md) | `stale` | 2026-03-17 | Codebase tree + file descriptions. Test counts outdated (89 suites now). Missing signal-detection, transcript, source-scanner, test-quality-validator files. |
@@ -119,6 +120,27 @@ What Demos offers vs what we use. **Updated each session.**
 ## Session Changelog
 
 Most recent first. Each entry captures what changed, what was learned, what's next.
+
+### 2026-03-27 — Toolkit Shipped + Zod Validation
+
+**Theme:** Framework-agnostic toolkit completion. Zod input validation across all 10 tools. SSRF security gap fixed.
+
+**Delivered:**
+- **Toolkit core complete:** 10 tools + 6 guards + SDK bridge + SSRF validator + state store in `src/toolkit/`. 168 toolkit tests, all with strong assertions.
+- **Zod input validation:** `src/toolkit/schemas.ts` — 11 schemas (9 tool inputs + 2 policies), `validateInput()` helper, bidirectional compile-time type sync assertions. Design-reviewed (Fabric review_design + ask_secure_by_design_questions + Codex plan review). 8 findings addressed (4 critical, 4 medium).
+- **SSRF security fix:** `publish.attestUrl` was passing directly to `bridge.attestDahr()` without SSRF validation. Now uses `validateUrl()` matching attest.ts and pay.ts pattern.
+- **Chain-level wiring:** publish, tip, verify tools wired to SDK bridge chain primitives (publishHivePost, transferDem, attestDahr).
+- **42 weak tests rewritten:** Toolkit test suite hardened — eliminated tautological/bypass tests, every test has strong assertions.
+
+**Key decisions:**
+- Zod validates shape/type only. Guards handle stateful rules (rate limits, spend caps, dedup). SSRF validator handles URL safety. No overlap.
+- `types.ts` remains source of truth for interfaces. Schemas validate against them, not replace them.
+- `.trim().min(1)` on all required strings — rejects whitespace-only inputs (Codex review finding).
+- Policy schemas use `.strict()` — typos in spending limits are dangerous.
+
+**Tests:** 112 suites, 1684 passing (up from 111/1605, +79 tests)
+
+---
 
 ### 2026-03-25 — Agent Overhaul + Toolkit Architecture Vision
 

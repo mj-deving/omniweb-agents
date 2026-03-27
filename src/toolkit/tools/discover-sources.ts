@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import type { DiscoverSourcesOptions, DiscoverSourcesResult, Source, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
+import { validateInput, DiscoverSourcesOptionsSchema } from "../schemas.js";
 
 // Module-level catalog cache (keyed by path — catalog is static per process)
 const catalogCache = new Map<string, Source[]>();
@@ -33,6 +34,11 @@ export async function discoverSources(
 ): Promise<ToolResult<DiscoverSourcesResult>> {
   const start = Date.now();
   if (session) session.touch();
+
+  const inputError = validateInput(DiscoverSourcesOptionsSchema, opts);
+  if (inputError) {
+    return err(inputError, { path: "local", latencyMs: Date.now() - start });
+  }
 
   try {
     const catalogPath = session?.sourceCatalogPath ?? BUNDLED_CATALOG_PATH;

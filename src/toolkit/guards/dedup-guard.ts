@@ -51,7 +51,7 @@ export async function checkAndRecordDedup(
   return error ? demosError("DUPLICATE", error, false) : null;
 }
 
-/** Check if text is a duplicate (backward compat) */
+/** @deprecated Use checkAndRecordDedup() instead */
 export async function checkDedup(
   store: StateStore,
   walletAddress: string,
@@ -60,7 +60,7 @@ export async function checkDedup(
   return checkAndRecordDedup(store, walletAddress, text, false);
 }
 
-/** Record a published post (backward compat) */
+/** @deprecated Use checkAndRecordDedup() with record=true, or appendEntry() for record-only */
 export async function recordPublish(
   store: StateStore,
   walletAddress: string,

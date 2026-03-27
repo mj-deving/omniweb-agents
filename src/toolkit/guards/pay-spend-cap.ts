@@ -81,6 +81,10 @@ export async function recordPayment(
 /**
  * Atomically check spend cap AND reserve the amount in one lock acquisition.
  *
+ * reservePaySpend intentionally diverges from checkAndRecord* — atomic reservation
+ * with rollback for settlement failure. D402 payments need the amount reserved during
+ * the settlement window, then rolled back if settlement fails.
+ *
  * Returns the unlock function — caller MUST call rollback on settlement failure
  * or confirm after successful settlement. This keeps the lock held during settlement
  * to prevent race conditions between concurrent pay() calls.

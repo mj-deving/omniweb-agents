@@ -32,6 +32,11 @@ export async function checkAndRecordTip(
   policy: Required<TipPolicy>,
   record: boolean = false,
 ): Promise<DemosError | null> {
+  // Validate finiteness first (NaN > X is always false — would bypass maxPerTip)
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return demosError("INVALID_INPUT", "Tip amount must be a positive finite number", false);
+  }
+
   // Per-tip max (no lock needed)
   if (amount > policy.maxPerTip) {
     return demosError(
@@ -39,10 +44,6 @@ export async function checkAndRecordTip(
       `Tip amount ${amount} exceeds max ${policy.maxPerTip} DEM per tip`,
       false,
     );
-  }
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return demosError("INVALID_INPUT", "Tip amount must be a positive finite number", false);
   }
 
   const key = stateKey("tip-spend", walletAddress);
@@ -82,7 +83,7 @@ export async function checkAndRecordTip(
   return null;
 }
 
-/** Check if a tip is allowed (backward compat) */
+/** @deprecated Use checkAndRecordTip() instead */
 export async function checkTipSpendCap(
   store: StateStore,
   walletAddress: string,
@@ -93,7 +94,7 @@ export async function checkTipSpendCap(
   return checkAndRecordTip(store, walletAddress, postTxHash, amount, policy, false);
 }
 
-/** Record a successful tip (backward compat) */
+/** @deprecated Use checkAndRecordTip() with record=true, or appendEntry() for record-only */
 export async function recordTip(
   store: StateStore,
   walletAddress: string,

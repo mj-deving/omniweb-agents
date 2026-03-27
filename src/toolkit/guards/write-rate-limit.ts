@@ -51,7 +51,7 @@ export async function checkAndRecordWrite(
   return error ? demosError("RATE_LIMITED", error, true) : null;
 }
 
-/** Check if a write is allowed (backward compat) */
+/** @deprecated Use checkAndRecordWrite() instead */
 export async function checkWriteRateLimit(
   store: StateStore,
   walletAddress: string,
@@ -59,7 +59,7 @@ export async function checkWriteRateLimit(
   return checkAndRecordWrite(store, walletAddress, false);
 }
 
-/** Record a successful write (unconditional — does not check limits) */
+/** @deprecated Use checkAndRecordWrite() with record=true, or appendEntry() for record-only */
 export async function recordWrite(
   store: StateStore,
   walletAddress: string,

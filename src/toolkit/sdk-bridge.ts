@@ -323,7 +323,7 @@ export function createSdkBridge(
         return await client.settle(payment);
       } catch (e) {
         if ((e as any)?.success === false) throw e; // already a D402SettlementResult-shaped error
-        throw new Error(`D402 settlement failed: ${sanitizeUrl((e as Error).message)}`);
+        throw new Error(`D402 settlement failed: ${(e as Error).message}`);
       }
     },
 

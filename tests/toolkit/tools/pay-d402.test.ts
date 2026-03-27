@@ -17,11 +17,14 @@ import { FileStateStore } from "../../../src/toolkit/state-store.js";
 import type { SdkBridge, D402SettlementResult } from "../../../src/toolkit/sdk-bridge.js";
 import { pay } from "../../../src/toolkit/tools/pay.js";
 import { checkPayReceipt, makeIdempotencyKey } from "../../../src/toolkit/guards/pay-receipt-log.js";
-import { validateUrl } from "../../../src/toolkit/url-validator.js";
+import { validateUrl, createPinnedFetch } from "../../../src/toolkit/url-validator.js";
 
-// Mock SSRF validator to pass all URLs in tests (DNS resolution would fail)
+// Mock SSRF validator to pass all URLs in tests (DNS resolution would fail).
+// resolvedIp is omitted so createPinnedFetch is NOT used — D402 tests focus on
+// payment protocol, not SSRF. Pinning is tested in url-validator-pinning.test.ts.
 vi.mock("../../../src/toolkit/url-validator.js", () => ({
-  validateUrl: vi.fn(async () => ({ valid: true, resolvedIp: "1.2.3.4" })),
+  validateUrl: vi.fn(async () => ({ valid: true })),
+  createPinnedFetch: vi.fn(() => globalThis.fetch),
 }));
 
 // ── Helpers ──────────────────────────────────────────
@@ -38,6 +41,7 @@ function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
       success: true,
       hash: "d402-tx-abc123",
     })),
+    queryTransaction: vi.fn(async () => null),
     ...overrides,
   };
 }
@@ -78,12 +82,15 @@ describe("pay() D402 flow", () => {
   let tempDir: string;
   let originalFetch: typeof globalThis.fetch;
   const mockValidateUrl = vi.mocked(validateUrl);
+  const mockCreatePinnedFetch = vi.mocked(createPinnedFetch);
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), "demos-d402-"));
     originalFetch = globalThis.fetch;
     mockValidateUrl.mockReset();
-    mockValidateUrl.mockResolvedValue({ valid: true, resolvedIp: "1.2.3.4" });
+    mockValidateUrl.mockResolvedValue({ valid: true });
+    mockCreatePinnedFetch.mockReset();
+    mockCreatePinnedFetch.mockImplementation(() => globalThis.fetch);
   });
 
   afterEach(() => {
@@ -473,23 +480,10 @@ describe("pay() D402 flow", () => {
     expect(seenProofHeaders).toEqual([null, "d402-tx-abc123", null]);
   });
 
-  // 19. Concurrent settlement is serialized per wallet
-  it("serializes D402 settlement for concurrent pay() calls on the same session", async () => {
-    let settleCalls = 0;
-    let releaseFirstSettlement!: () => void;
-    const firstSettlementReleased = new Promise<void>((resolve) => {
-      releaseFirstSettlement = resolve;
-    });
-
-    const bridge = mockBridge({
-      payD402: vi.fn(async (): Promise<D402SettlementResult> => {
-        settleCalls++;
-        if (settleCalls === 1) {
-          await firstSettlementReleased;
-        }
-        return { success: true, hash: `d402-tx-${settleCalls}` };
-      }),
-    });
+  // 19. Concurrent settlements are both allowed when under spend cap
+  // (Atomic reservation prevents overspend without requiring settlement serialization)
+  it("allows concurrent D402 settlements when both are under spend cap", async () => {
+    const bridge = mockBridge();
     const session = createSession(tempDir, bridge);
 
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
@@ -500,21 +494,92 @@ describe("pay() D402 flow", () => {
       return mockResponse(402, VALID_REQUIREMENT);
     }));
 
-    const firstPromise = pay(session, { url: "https://api.example.com/premium-a", maxSpend: 10 });
-    const secondPromise = pay(session, { url: "https://api.example.com/premium-b", maxSpend: 10 });
+    const [first, second] = await Promise.all([
+      pay(session, { url: "https://api.example.com/premium-a", maxSpend: 10 }),
+      pay(session, { url: "https://api.example.com/premium-b", maxSpend: 10 }),
+    ]);
 
-    await vi.waitFor(() => {
-      expect(bridge.payD402).toHaveBeenCalledTimes(1);
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 25));
-    expect(bridge.payD402).toHaveBeenCalledTimes(1);
-
-    releaseFirstSettlement();
-
-    const [first, second] = await Promise.all([firstPromise, secondPromise]);
     expect(first.ok).toBe(true);
     expect(second.ok).toBe(true);
     expect(bridge.payD402).toHaveBeenCalledTimes(2);
+  });
+
+  // ── S2: Atomic spend cap — concurrent pay() race condition ──────
+
+  // 20. Two concurrent pay() calls each requesting 60 DEM with 100 DEM cap
+  it("rejects second concurrent pay() when combined spend exceeds rolling cap", async () => {
+    const bridge = mockBridge();
+    const session = createSession(tempDir, bridge, {
+      maxPerCall: 100,
+      rolling24hCap: 100,
+      requirePayeeApproval: false,
+    });
+
+    const bigRequirement = { ...VALID_REQUIREMENT, amount: 60 };
+
+    let fetchCallCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      fetchCallCount++;
+      const proof = new Headers(init?.headers).get("X-Payment-Proof");
+      if (proof) return mockResponse(200, { data: "content" });
+      return mockResponse(402, bigRequirement);
+    }));
+
+    // Launch both concurrently — both request 60 DEM against 100 DEM cap
+    const [r1, r2] = await Promise.all([
+      pay(session, { url: "https://api.example.com/a", maxSpend: 60 }),
+      pay(session, { url: "https://api.example.com/b", maxSpend: 60 }),
+    ]);
+
+    // Exactly one should succeed, one should fail with SPEND_LIMIT
+    const successes = [r1, r2].filter((r) => r.ok);
+    const failures = [r1, r2].filter((r) => !r.ok);
+    expect(successes).toHaveLength(1);
+    expect(failures).toHaveLength(1);
+    expect(failures[0].error!.code).toBe("SPEND_LIMIT");
+  });
+
+  // 21. Settlement failure after spend reservation rolls back spend
+  it("rolls back spend reservation when settlement fails", async () => {
+    const bridge = mockBridge({
+      payD402: vi.fn(async () => ({
+        success: false,
+        hash: "",
+        message: "insufficient on-chain funds",
+      })),
+    });
+    const session = createSession(tempDir, bridge, {
+      maxPerCall: 100,
+      rolling24hCap: 100,
+      requirePayeeApproval: false,
+    });
+
+    vi.stubGlobal("fetch", vi.fn(async () => mockResponse(402, VALID_REQUIREMENT)));
+
+    // First call: settlement fails
+    const r1 = await pay(session, { url: "https://api.example.com/a", maxSpend: 10 });
+    expect(r1.ok).toBe(false);
+    expect(r1.error!.code).toBe("TX_FAILED");
+
+    // Second call: should NOT see the failed payment's 5 DEM in the rolling cap
+    // If rollback works, we still have 100 DEM available (not 95)
+    const goodBridge = mockBridge();
+    // Swap bridge for a working one
+    const session2 = createSession(tempDir, goodBridge, {
+      maxPerCall: 100,
+      rolling24hCap: 100,
+      requirePayeeApproval: false,
+    });
+
+    let callCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      callCount++;
+      if (callCount === 1) return mockResponse(402, { ...VALID_REQUIREMENT, amount: 95 });
+      return mockResponse(200, { data: "ok" });
+    }));
+
+    // This should succeed because the failed 5 DEM was rolled back, leaving 100 available
+    const r2 = await pay(session2, { url: "https://api.example.com/b", maxSpend: 95 });
+    expect(r2.ok).toBe(true);
   });
 });

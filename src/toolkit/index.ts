@@ -76,8 +76,8 @@ export { pay } from "./tools/pay.js";
 export { parseFeedPosts } from "./tools/feed-parser.js";
 
 // ── Guards (exposed for testing and advanced consumers) ──
-// @deprecated exports — will be removed in next major version.
-// Prefer importing guards directly from their modules.
+// @deprecated — check/record pairs scheduled for removal in v2.0.
+// Use checkAndRecord* unified API or checkAndAppend() from state-helpers.
 
 export {
   checkAndRecordWrite,

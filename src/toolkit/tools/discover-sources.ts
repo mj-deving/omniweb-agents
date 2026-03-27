@@ -66,7 +66,12 @@ async function loadCatalog(catalogPath: string): Promise<Source[]> {
   if (cached) return cached;
 
   const raw = await readFile(catalogPath, "utf-8");
-  const catalog = safeParse(raw) as Record<string, unknown>;
+  let catalog: Record<string, unknown>;
+  try {
+    catalog = safeParse(raw) as Record<string, unknown>;
+  } catch {
+    throw new Error(`Catalog file is not valid JSON: ${catalogPath}`);
+  }
 
   const entries = Array.isArray(catalog) ? catalog : (catalog.sources ?? []) as unknown[];
   const sources: Source[] = entries.map((raw: unknown) => {

@@ -383,7 +383,9 @@ export function createSdkBridge(
           if (result2?.sender) return { sender: String(result2.sender) };
         }
         return null;
-      } catch {
+      } catch (e) {
+        // Best-effort RPC query — callers fall back to feed API
+        console.warn(`[demos-toolkit] queryTransaction failed for ${txHash.slice(0, 16)}...: ${(e as Error).name}`);
         return null;
       }
     },

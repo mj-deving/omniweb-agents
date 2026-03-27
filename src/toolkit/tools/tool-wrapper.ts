@@ -39,8 +39,12 @@ export async function withToolWrapper<T>(
 
     return result;
   } catch (e) {
+    // Preserve DemosError code when thrown intentionally (e.g., SSRF validation in publish pipeline)
+    const isDemosError = e && typeof e === "object" && "code" in e && "message" in e && "retryable" in e;
     return err(
-      demosError(defaultErrorCode, `${toolName} failed: ${(e as Error).message}`, true),
+      isDemosError
+        ? (e as import("../types.js").DemosError)
+        : demosError(defaultErrorCode, `${toolName} failed: ${(e as Error).message}`, true),
       { path: "local", latencyMs: Date.now() - start },
     );
   }

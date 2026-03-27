@@ -6,13 +6,14 @@
 
 import { z } from "zod";
 import type { PayOptions, PayResult, ToolResult } from "../types.js";
-import { ok, err, demosError } from "../types.js";
+import { ok, err, demosError, isDemosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { checkPaySpendCap, reservePaySpend } from "../guards/pay-spend-cap.js";
 import { makeIdempotencyKey, checkPayReceipt, recordPayReceipt } from "../guards/pay-receipt-log.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateUrl, createPinnedFetch } from "../url-validator.js";
 import { validateInput, PayOptionsSchema } from "../schemas.js";
+import { safeParse } from "../guards/state-helpers.js";
 
 /** Validate 402 response body shape */
 const D402RequirementSchema = z.object({
@@ -103,7 +104,7 @@ export async function pay(
     try {
       initialResponse = await fetchWithValidatedRedirects(session, opts.url, fetchOpts, urlCheck.resolvedIp);
     } catch (e) {
-      if (isDemosErrorLike(e)) {
+      if (isDemosError(e)) {
         return err(e, localProvenance(start));
       }
       return err(
@@ -202,7 +203,7 @@ export async function pay(
         },
       }, urlCheck.resolvedIp);
     } catch (e) {
-      if (isDemosErrorLike(e)) {
+      if (isDemosError(e)) {
         return err(e, localProvenance(start));
       }
       return err(
@@ -251,10 +252,7 @@ export async function pay(
 async function safeReadBody(response: Response): Promise<unknown> {
   try {
     const text = await response.text();
-    try {
-      const { safeParse } = await import("../guards/state-helpers.js");
-      return safeParse(text);
-    } catch { return text; }
+    try { return safeParse(text); } catch { return text; }
   } catch { return null; }
 }
 
@@ -325,13 +323,4 @@ function stripPaymentProofOnCrossOriginRedirect(
   return nextHeaders;
 }
 
-function isDemosErrorLike(error: unknown): error is ReturnType<typeof demosError> {
-  return Boolean(
-    error
-    && typeof error === "object"
-    && "code" in error
-    && "message" in error
-    && "retryable" in error,
-  );
-}
 

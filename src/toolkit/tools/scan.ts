@@ -77,7 +77,7 @@ async function fetchFeed(session: DemosSession, limit: number, domain?: string):
   const rawPosts = (data?.posts ?? data?.results ?? data?.items ?? data?.data ?? data) as unknown[];
   if (!Array.isArray(rawPosts)) return [];
 
-  return rawPosts.map((p: unknown) => {
+  const posts = rawPosts.map((p: unknown) => {
     const post = p as Record<string, unknown>;
     const payload = (post.payload ?? post) as Record<string, unknown>;
     return {
@@ -93,6 +93,8 @@ async function fetchFeed(session: DemosSession, limit: number, domain?: string):
       tags: Array.isArray(payload.tags) ? payload.tags.map(String) : [],
     };
   });
+
+  return domain ? posts.filter(p => p.tags.includes(domain)) : posts;
 }
 
 async function fetchFromSkillDojo(_session: DemosSession, _limit: number, _domain?: string): Promise<ScanPost[]> {

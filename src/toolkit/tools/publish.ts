@@ -36,8 +36,7 @@ export async function publish(
     if (rateLimitError) return err(rateLimitError, localProvenance(start));
     if (dedupError) return err(dedupError, localProvenance(start));
 
-    // TODO(toolkit-mvp): integrate SDK bridge — claims → DAHR → tx → confirm → broadcast
-    const txHash = await executePublishPipeline(session, draft);
+    const { txHash, responseHash } = await executePublishPipeline(session, draft);
 
     // Record only after pipeline commits (prevents false entries on failure)
     await Promise.all([
@@ -50,7 +49,7 @@ export async function publish(
       {
         path: "local",
         latencyMs: Date.now() - start,
-        attestation: { txHash, responseHash: txHash },
+        attestation: { txHash, responseHash },
       },
     );
   });
@@ -78,7 +77,7 @@ export async function reply(
   });
 }
 
-async function executePublishPipeline(session: DemosSession, draft: PublishDraft): Promise<string> {
+async function executePublishPipeline(session: DemosSession, draft: PublishDraft): Promise<{ txHash: string; responseHash: string }> {
   const bridge = session.getBridge();
 
   // Step 1: DAHR attestation (mandatory — every post must carry proof)
@@ -116,5 +115,5 @@ async function executePublishPipeline(session: DemosSession, draft: PublishDraft
     }],
   });
 
-  return result.txHash;
+  return { txHash: result.txHash, responseHash: attestResult.responseHash };
 }

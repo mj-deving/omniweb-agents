@@ -106,13 +106,19 @@ export class DemosSession {
     this.lastActivity = Date.now();
   }
 
-  /** Get auth token (internal use only) */
+  /**
+   * Get auth token (internal use only).
+   * @throws {Error} if session is expired. Side effect: marks session as expired on first check.
+   */
   getAuthToken(): string {
     this.checkExpired();
     return (this as Record<symbol, unknown>)[AUTH_TOKEN] as string;
   }
 
-  /** Get signing handle (internal use only) */
+  /**
+   * Get signing handle (internal use only).
+   * @throws {Error} if session is expired. Side effect: marks session as expired on first check.
+   */
   getSigningHandle(): SigningHandle {
     this.checkExpired();
     return (this as Record<symbol, unknown>)[SIGNING_HANDLE] as SigningHandle;

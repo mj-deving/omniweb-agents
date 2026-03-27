@@ -9,9 +9,20 @@
  */
 
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
+import { safeParse } from "./guards/state-helpers.js";
 
 /** Sentinel token indicating auth has not completed — never sent as Bearer */
 export const AUTH_PENDING_TOKEN = "__AUTH_PENDING__";
+
+/** Strip query params from URLs to prevent API key leakage in error messages */
+export function sanitizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin + parsed.pathname;
+  } catch {
+    return "[invalid URL]";
+  }
+}
 
 // ── Types ───────────────────────────────────────────
 
@@ -103,6 +114,7 @@ export function createSdkBridge(
   authToken: string,
   fetchImpl: typeof fetch = globalThis.fetch,
   txModule?: { store: Function; confirm: Function; broadcast: Function },
+  options?: { allowRawSdk?: boolean },
 ): SdkBridge {
   // Closure-scoped lazy loaders — avoids module-level shared mutable state
   let cachedTxModule: any = txModule ?? null;
@@ -117,12 +129,21 @@ export function createSdkBridge(
   return {
     async attestDahr(url: string, method: string = "GET"): Promise<DahrResult> {
       const dahr = await (demos as any).web2.createDahr();
-      const proxyResponse = await dahr.startProxy({ url, method });
+      const safeUrl = sanitizeUrl(url);
+
+      // S13: 30s timeout on DAHR proxy (startProxy may hang indefinitely)
+      let timeoutId: ReturnType<typeof setTimeout>;
+      const proxyResponse = await Promise.race([
+        dahr.startProxy({ url, method }),
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error("DAHR proxy timeout (30s)")), 30_000);
+        }),
+      ]).finally(() => clearTimeout(timeoutId!));
 
       // HTTP status guard (same logic as publish-pipeline.ts:attestDahr)
       const httpStatus = proxyResponse.status ?? proxyResponse.statusCode ?? proxyResponse.httpStatus;
       if (typeof httpStatus === "number" && (httpStatus < 200 || httpStatus >= 300)) {
-        throw new Error(`DAHR source returned HTTP ${httpStatus} — refusing to attest. URL: ${url}`);
+        throw new Error(`DAHR source returned HTTP ${httpStatus} — refusing to attest. URL: ${safeUrl}`);
       }
 
       // Parse response data
@@ -130,12 +151,12 @@ export function createSdkBridge(
       if (typeof proxyResponse.data === "string") {
         const trimmed = proxyResponse.data.trim();
         if (trimmed.startsWith("<")) {
-          throw new Error(`DAHR returned XML/HTML instead of JSON. URL: ${url}`);
+          throw new Error(`DAHR returned XML/HTML instead of JSON. URL: ${safeUrl}`);
         }
         try {
-          data = JSON.parse(proxyResponse.data);
+          data = safeParse(proxyResponse.data);
         } catch {
-          throw new Error(`DAHR returned non-JSON response. URL: ${url}`);
+          throw new Error(`DAHR returned non-JSON response. URL: ${safeUrl}`);
         }
       } else {
         data = proxyResponse.data;
@@ -154,7 +175,7 @@ export function createSdkBridge(
             errLower.includes("api key") ||
             errLower.includes("access denied")
           ) {
-            throw new Error(`DAHR source returned error: "${errField}". URL: ${url}`);
+            throw new Error(`DAHR source returned error: "${errField}". URL: ${safeUrl}`);
           }
         }
       }
@@ -191,7 +212,7 @@ export function createSdkBridge(
         const text = await res.text();
         let data: unknown;
         try {
-          data = JSON.parse(text);
+          data = safeParse(text);
         } catch {
           data = text;
         }
@@ -292,6 +313,11 @@ export function createSdkBridge(
     },
 
     getDemos(): Demos {
+      if (!options?.allowRawSdk) {
+        throw new Error(
+          "getDemos() exposes raw SDK bypassing all guardrails. Set allowRawSdk: true to opt in.",
+        );
+      }
       return demos;
     },
   };

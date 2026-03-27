@@ -10,9 +10,9 @@ import type { StateStore } from "../types.js";
 /** Default lock TTL for guard operations */
 export const GUARD_LOCK_TTL_MS = 5000;
 
-/** Construct a wallet-scoped state key (16-char hash for collision resistance) */
+/** Construct a wallet-scoped state key (32-char hash for 128-bit collision resistance) */
 export function stateKey(prefix: string, walletAddress: string): string {
-  const hash = createHash("sha256").update(walletAddress).digest("hex").slice(0, 16);
+  const hash = createHash("sha256").update(walletAddress).digest("hex").slice(0, 32);
   return `${prefix}-${hash}`;
 }
 
@@ -25,7 +25,7 @@ export async function loadState<T>(
   const raw = await store.get(key);
   if (!raw) return structuredClone(defaultValue);
   try {
-    return JSON.parse(raw) as T;
+    return safeParse(raw) as T;
   } catch {
     return structuredClone(defaultValue);
   }
@@ -69,6 +69,29 @@ export async function checkAndAppend<TState extends { entries: TEntry[] }, TEntr
     return { error: null };
   } finally {
     await unlock();
+  }
+}
+
+/**
+ * Safe JSON parser that strips prototype pollution vectors (__proto__, constructor, prototype).
+ * Drop-in replacement for JSON.parse in security-sensitive paths.
+ */
+export function safeParse(raw: string): unknown {
+  const parsed = JSON.parse(raw);
+  if (parsed && typeof parsed === "object") {
+    sanitizeProto(parsed);
+  }
+  return parsed;
+}
+
+function sanitizeProto(obj: unknown): void {
+  if (!obj || typeof obj !== "object") return;
+  const record = obj as Record<string, unknown>;
+  delete record["__proto__"];
+  delete record["constructor"];
+  delete record["prototype"];
+  for (const val of Object.values(record)) {
+    if (val && typeof val === "object") sanitizeProto(val);
   }
 }
 

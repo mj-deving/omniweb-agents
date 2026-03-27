@@ -7,11 +7,10 @@
 
 import type { StateStore, DemosError } from "../types.js";
 import { demosError } from "../types.js";
-import { stateKey, loadState, checkAndAppend, appendEntry } from "./state-helpers.js";
+import { stateKey, loadState, checkAndAppend, appendEntry, DAY_MS } from "./state-helpers.js";
 
 const DAILY_LIMIT = 14;
 const HOURLY_LIMIT = 4;
-const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 
 interface WriteRateState {

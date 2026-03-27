@@ -8,9 +8,7 @@
 import { randomUUID } from "node:crypto";
 import type { StateStore, DemosError, PayPolicy } from "../types.js";
 import { demosError } from "../types.js";
-import { stateKey, checkAndAppend, appendEntry, loadState, GUARD_LOCK_TTL_MS } from "./state-helpers.js";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { stateKey, checkAndAppend, appendEntry, loadState, GUARD_LOCK_TTL_MS, DAY_MS } from "./state-helpers.js";
 
 interface PayEntry {
   timestamp: number;

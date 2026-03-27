@@ -8,6 +8,7 @@ import { DemosSession } from "../session.js";
 import { checkAndRecordTip } from "../guards/tip-spend-cap.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, TipOptionsSchema } from "../schemas.js";
+import { parseFeedPosts } from "./feed-parser.js";
 
 /**
  * Tip DEM to a post author. Guards: max per-tip, max per-post, cooldown.
@@ -63,17 +64,15 @@ export async function tip(
           localProvenance(start),
         );
       }
-      const posts = ((feedResult.data as Record<string, unknown>)?.posts ?? feedResult.data) as unknown[];
-      const targetPost = Array.isArray(posts)
-        ? posts.find((p: unknown) => String((p as Record<string, unknown>).txHash ?? "") === opts.txHash)
-        : undefined;
+      const posts = parseFeedPosts(feedResult.data);
+      const targetPost = posts.find((p) => p.txHash === opts.txHash);
       if (!targetPost) {
         return err(
           demosError("INVALID_INPUT", `Post ${opts.txHash.slice(0, 16)}... not found in feed — cannot resolve recipient`, false),
           localProvenance(start),
         );
       }
-      recipientAddress = String((targetPost as Record<string, unknown>).sender ?? "");
+      recipientAddress = targetPost.author;
       if (!recipientAddress) {
         return err(
           demosError("INVALID_INPUT", `Post ${opts.txHash.slice(0, 16)}... has no sender address`, false),

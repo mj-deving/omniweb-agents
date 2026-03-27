@@ -1,0 +1,89 @@
+{
+  "batch": "type_safety",
+  "batch_index": 20,
+  "assessments": {"type_safety": 76.0},
+  "dimension_notes": {
+    "type_safety": {
+      "evidence": [
+        "types.ts: all public types are explicitly typed with no any — DemosError, ToolResult<T>, StateStore, ConnectOptions all have typed fields",
+        "schemas.ts: bidirectional compile-time type assertions (lines 182-203) ensure schema output matches interface — forward and reverse checks, no drift possible",
+        "sdk-bridge.ts: DemosRpcMethods, D402ClientLike, TxModule are typed interfaces replacing bare 'unknown' or 'any' casts — single cast at factory level (line 182) is documented",
+        "sdk-bridge.ts: multiple Record<string, unknown> and unknown casts in extractTxHash and attestDahr response parsing — unavoidable due to SDK returning opaque shapes, but heavy casting density",
+        "discover-sources.ts: entry typed as Record<string, unknown> in catalog parsing, then cast with 'as string' on each field access — 8 type assertion casts in loadCatalog(). No Zod schema for catalog entries.",
+        "discover-sources.ts: excludedStatuses is Set<string> where SourceStatus would be more precise",
+        "connect.ts: WalletData interface has signingHandle: unknown — carries opaque parsed JSON",
+        "session.ts: (this as Record<symbol, unknown>)[AUTH_TOKEN] — necessary pattern for Symbol-keyed properties, TypeScript limitation",
+        "tool-wrapper.ts: isDemosErrorLike type guard uses 'code' in error && 'message' in error && 'retryable' in error — returns value typed as ReturnType<typeof demosError> which is DemosError. Fine.",
+        "ScanOptions.filters: Record<string, unknown> where filtering is not implemented — typed but dead",
+        "pay.ts: fetchWithValidatedRedirects return type is implicit Promise<Response> — not annotated",
+        "url-validator.ts: all functions have explicit return types",
+        "state-helpers.ts: generic constraints are properly typed (TState extends { entries: TEntry[] })"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "discover-sources.ts catalog parsing uses Record<string, unknown> with 8 cast expressions instead of a Zod schema or typed interface for catalog entries. sdk-bridge.ts has high cast density due to opaque SDK response shapes."
+    }
+  },
+  "dimension_judgment": {
+    "type_safety": {
+      "dimension_character": "The toolkit's public API is well-typed with bidirectional schema-interface sync assertions. The internal implementation has unavoidable any/unknown zones where the SDK returns opaque shapes — the single-cast-at-factory pattern in sdk-bridge.ts is a reasonable mitigation. The main improvable area is discover-sources.ts catalog parsing, which uses 8 inline casts on untyped entry fields instead of a typed catalog schema.",
+      "score_rationale": "Public API types are rigorous. The schema-interface compile-time assertions are exemplary. Score is held back by catalog entry parsing (8 cast expressions, no Zod schema) and the general SDK casting density in sdk-bridge.ts. These are partial not critical — the casts are isolated and the boundary is documented."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "type_safety",
+      "identifier": "catalog_entry_untyped",
+      "summary": "discover-sources.ts parses catalog entries with 8 inline Record<string,unknown> casts — no typed interface or Zod schema for catalog structure",
+      "related_files": ["src/toolkit/tools/discover-sources.ts"],
+      "evidence": [
+        "Lines 71-82: entry typed as Record<string, unknown> with casts on every field: (entry.id as string), (entry.name as string), (entry.domain as string), etc.",
+        "No CatalogEntry interface or Zod schema exists for the catalog JSON structure",
+        "Contrast with D402RequirementSchema in schemas.ts — the same team applied Zod to external API responses but not to the internal catalog file"
+      ],
+      "suggestion": "Define a CatalogEntrySchema with Zod (or a plain interface) matching the catalog.json structure. Use it in loadCatalog() to replace the 8 inline casts with a single safeParse call. This would also catch catalog corruption at load time rather than silently producing empty strings.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "fetch_redirect_missing_return_type",
+      "summary": "fetchWithValidatedRedirects in pay.ts has no explicit return type annotation",
+      "related_files": ["src/toolkit/tools/pay.ts"],
+      "evidence": [
+        "Lines 250-299: async function fetchWithValidatedRedirects(session, url, init, pinnedIp?) — return type not annotated",
+        "TypeScript infers Promise<Response> correctly but the function signature is part of a complex protocol flow",
+        "All other exported functions in the toolkit have explicit return types"
+      ],
+      "suggestion": "Add ': Promise<Response>' to the function signature.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": ["SDK opaque response shapes force cast density in sdk-bridge.ts — acceptable but worth noting as a boundary zone. Catalog parsing grew without a schema because it predates the Zod adoption in the toolkit."],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "type_safety": {
+      "add": [
+        {
+          "header": "Bidirectional schema-interface sync assertions are exemplary",
+          "description": "schemas.ts has compile-time forward + reverse assertions for all 10 option types. This eliminates schema/interface drift without runtime cost. No other part of the codebase does this — it's a strong positive signal for the toolkit's type discipline.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Catalog entry parsing lacks typed schema",
+          "description": "discover-sources.ts parses catalog.json with 8 inline casts. A CatalogEntrySchema was not added when Zod was adopted — this is the main remaining type safety gap in the toolkit.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

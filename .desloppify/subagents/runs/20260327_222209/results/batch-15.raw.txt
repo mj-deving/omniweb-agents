@@ -1,0 +1,79 @@
+{
+  "batch": "package_organization",
+  "batch_index": 15,
+  "assessments": {"package_organization": 60.0},
+  "dimension_notes": {
+    "package_organization": {
+      "evidence": [
+        "src/lib/ has 42 files in a flat layout — contains auth, scoring, signals, state, sdk, feed-filter, llm-provider, claim-extraction, attestation-planner, quality-score, predictions, spending-policy, transcript, write-rate-limit, tips, tlsn-playwright-bridge, source-scanner, source-discovery, test-quality-validator, and more",
+        "src/lib/ contains a sources/ subdirectory (9 files) — mixed model where some domain grouping exists but most files are flat",
+        "src/toolkit/ is well-organized: types.ts, session.ts, state-store.ts, schemas.ts, sdk-bridge.ts, url-validator.ts, index.ts at root; tools/ (10 files), guards/ (6 files) in subfolders — good cohesion",
+        "src/adapter-specs.ts lives at src/ root despite src/adapters/ directory containing eliza/ and skill-dojo/ subdirectories — low fan-in straggler",
+        "cli/ directory contains 15+ CLI entry points — all entry points, not mixed concerns, flat is appropriate here",
+        "src/plugins/ is flat with 15 files — plugin-per-file is the convention, reasonable for this domain",
+        "src/reactive/ contains event-handlers/ and event-sources/ subdirectories plus 4 files at root — reasonably organized",
+        "src/adapters/ has two well-defined subdirectories (eliza/, skill-dojo/) — good",
+        "The src/lib/ flat overload is the primary issue: files like test-quality-validator.ts, write-rate-limit.ts, llm-claim-config.ts, skill-dojo-client.ts, skill-dojo-proof.ts, storage-client.ts, tlsn-playwright-bridge.ts, improvement-utils.ts span wildly different concerns"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "src/lib/ has 42 flat files mixing attestation, scoring, feed, auth, LLM, storage, state, and testing concerns. src/adapter-specs.ts is misplaced at src/ root."
+    }
+  },
+  "dimension_judgment": {
+    "package_organization": {
+      "dimension_character": "The toolkit (src/toolkit/) is well-organized with clear purpose-driven subdirectories. The primary organizational problem is src/lib/ — 42 flat files spanning 8+ distinct concern domains with no grouping beyond the existing sources/ subdirectory. A developer navigating from the root cannot predict where to find auth vs. scoring vs. LLM provider vs. TLSN without scanning all 42 files.",
+      "score_rationale": "src/toolkit/ is exemplary. src/lib/ is a known, confirmed overloaded flat directory (4x threshold). The adapter-specs.ts misplacement is a secondary issue. These are both confirmed open issues. Score reflects strong toolkit organization offset by a substantial src/lib/ navigability problem."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "package_organization",
+      "identifier": "src_lib_flat_overload",
+      "summary": "src/lib/ has 42 mixed-concern files in flat layout — 4x the 10-file cohesion threshold",
+      "related_files": ["src/lib/"],
+      "evidence": [
+        "42 files in flat directory spanning: auth (auth.ts), scoring (scoring.ts, quality-score.ts, predictions.ts), attestation (attestation-planner.ts, attestation-policy.ts, claim-extraction.ts), LLM (llm-provider.ts, llm-claim-config.ts), storage (storage-client.ts, state.ts), TLSN (tlsn-playwright-bridge.ts), feed (feed-filter.ts), signals (signals.ts, signal-detection.ts), tips (tips.ts, spending-policy.ts), utilities (log.ts, subprocess.ts, errors.ts, fetch-with-timeout.ts)",
+        "A sources/ subdirectory exists with 9 files — partial organization applied inconsistently",
+        "write-rate-limit.ts (deprecated) and test-quality-validator.ts (test infrastructure) are also at this level"
+      ],
+      "suggestion": "Stage reorg plan: (1) Create src/lib/attestation/ — move attestation-planner.ts, attestation-policy.ts, claim-extraction.ts. (2) Create src/lib/scoring/ — move scoring.ts, quality-score.ts, predictions.ts. (3) Create src/lib/llm/ — move llm-provider.ts, llm-claim-config.ts. (4) Create src/lib/feed/ — move feed-filter.ts, signals.ts, signal-detection.ts. (5) Create src/lib/chain/ — move tx-queue.ts, spending-policy.ts, tips.ts, budget-tracker.ts. After moves, update all import paths with: grep -r 'from.*src/lib/' --include='*.ts' to find all callers. Validate with npm test.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "package_organization",
+      "identifier": "adapter_specs_misplaced",
+      "summary": "src/adapter-specs.ts is at src/ root despite src/adapters/ subdirectory existing",
+      "related_files": ["src/adapter-specs.ts", "src/adapters/"],
+      "evidence": [
+        "src/adapter-specs.ts exists at src/ root",
+        "src/adapters/ directory contains eliza/ and skill-dojo/ subdirectories — the natural home for adapter specs",
+        "Low fan-in file (adapter specs serve adapters) outside its domain directory"
+      ],
+      "suggestion": "Move src/adapter-specs.ts to src/adapters/specs.ts or src/adapters/adapter-specs.ts. Update any imports with: grep -r 'adapter-specs' --include='*.ts' to find callers.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": ["src/lib/ grew organically as a catch-all utility directory before the toolkit was carved out — the toolkit extraction was surgical (moved only toolkit-specific concerns) but didn't reorganize the pre-existing lib flat structure"],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "package_organization": {
+      "add": [
+        {
+          "header": "src/toolkit/ organization is exemplary",
+          "description": "The toolkit has clear purpose-driven subdirectories (tools/, guards/) with a clean barrel export at index.ts. This is the organizational model the rest of the codebase should follow.",
+          "settled": true,
+          "positive": true
+        }
+      ]
+    }
+  }
+}

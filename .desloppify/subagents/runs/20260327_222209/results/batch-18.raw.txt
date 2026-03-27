@@ -1,0 +1,67 @@
+{
+  "batch": "contract_coherence",
+  "batch_index": 18,
+  "assessments": {"contract_coherence": 82.0},
+  "dimension_notes": {
+    "contract_coherence": {
+      "evidence": [
+        "All toolkit tools return Promise<ToolResult<T>> consistently — return type annotations match all code paths including error paths (err() always returns ToolResult<T>)",
+        "connect() is documented as throwing DemosError rather than returning ToolResult — explicitly stated in JSDoc, not a hidden contract violation",
+        "disconnect() returns void — matches the implementation (session.expire())",
+        "session.touch() has no return type annotation on a void method — minor, not exported in public type",
+        "checkAndRecordWrite(store, address, record=false) — the record parameter default is documented in JSDoc as 'check only'; the dual-mode function (check vs. record) is a design choice but not a contract lie",
+        "getWriteRateRemaining() reads loadState without pruning — returns dailyRemaining based on state.entries.filter(e => e.timestamp > dayAgo), not the pruned state. Could return stale count if state hasn't been pruned recently (no lock acquisition). Minor discrepancy: the pruned count in checkAndAppend vs. the unpruned read in getWriteRateRemaining.",
+        "clearCatalogCache() — exported function that clears the module-level cache, name matches behavior",
+        "isDemosError() exported from types.ts — returns boolean, name matches",
+        "validateInput() returns DemosError | null — return type annotation matches all paths",
+        "SdkBridge.queryTransaction is declared optional (?) in interface — implementation in sdk-bridge.ts always provides it, but consumers must check for undefined per contract. Correct.",
+        "attestDahr(url, method='GET') — default method documented in signature, consistent with usage"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "getWriteRateRemaining() reads unpruned state without a lock — can return optimistically stale counts compared to the locked pruned read in checkAndAppend."
+    }
+  },
+  "dimension_judgment": {
+    "contract_coherence": {
+      "dimension_character": "The toolkit's contracts are largely honest: every tool returns ToolResult<T>, connect's throw behavior is documented, and helper functions match their names. The main gap is getWriteRateRemaining() reading state without pruning or locking — callers may receive a count that differs from what checkAndRecordWrite would compute with a fresh lock acquisition, creating a subtle contract inaccuracy for 'remaining capacity' queries.",
+      "score_rationale": "Type annotations match return paths throughout. connect()'s throw semantics are explicitly documented. One contract inaccuracy in getWriteRateRemaining (reads unclean state) and the deprecated/active dual implementations keep the score from the 85+ range."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "contract_coherence",
+      "identifier": "get_rate_remaining_stale_read",
+      "summary": "getWriteRateRemaining() reads unpruned state without a lock — may return different count than checkAndRecordWrite would compute",
+      "related_files": ["src/toolkit/guards/write-rate-limit.ts"],
+      "evidence": [
+        "Lines 74-91: getWriteRateRemaining() calls loadState() then filters by dayAgo/hourAgo",
+        "checkAndAppend() acquires a lock before reading and pruning state.entries",
+        "getWriteRateRemaining does not acquire a lock — reads potentially stale state that includes expired entries",
+        "A caller querying 'how many writes remain?' may get answer X, then checkAndRecordWrite fails because the locked view prunes to a different count"
+      ],
+      "suggestion": "Add a comment documenting that getWriteRateRemaining() is approximate and may lag behind the locked state. Alternatively, use checkAndAppend with a no-op check and no entry to get a pruned count (or add a readState helper that acquires the lock).",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "contract_coherence": {
+      "add": [
+        {
+          "header": "ToolResult return type is consistent across all tools",
+          "description": "Every public tool (publish, reply, react, tip, scan, verify, attest, pay, discoverSources) returns Promise<ToolResult<T>> with correct type parameters. Error paths use err() which correctly types as ToolResult<T>. No return type annotation lies found.",
+          "settled": true,
+          "positive": true
+        }
+      ]
+    }
+  }
+}

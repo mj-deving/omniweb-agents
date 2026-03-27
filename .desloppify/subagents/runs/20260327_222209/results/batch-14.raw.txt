@@ -1,0 +1,79 @@
+{
+  "batch": "incomplete_migration",
+  "batch_index": 14,
+  "assessments": {"incomplete_migration": 62.0},
+  "dimension_notes": {
+    "incomplete_migration": {
+      "evidence": [
+        "Two write-rate-limit implementations actively coexist: src/lib/write-rate-limit.ts (sync/file-based, marked @deprecated at line 1) and src/toolkit/guards/write-rate-limit.ts (async/StateStore-backed)",
+        "cli/session-runner.ts line 80 imports from src/lib/write-rate-limit.ts (legacy) — active production code still using the deprecated version",
+        "cli/event-runner.ts line 30 also imports from src/lib/write-rate-limit.ts — both main CLI runners use the old system",
+        "index.ts lines 79-93: @deprecated comment on guard exports — 'will be removed in next major version' — but no timeline or version number specified",
+        "Deprecated exports include checkWriteRateLimit, recordWrite (write-rate-limit), checkTipSpendCap, recordTip (tip-spend-cap), checkPaySpendCap, recordPayment (pay-spend-cap), checkDedup, recordPublish (dedup-guard) — 8 deprecated functions in public surface",
+        "src/adapter-specs.ts lives at src/ root while src/adapters/ subdirectory exists — file placement inconsistency",
+        "No mixed JS/TS files found — full TypeScript",
+        "No stale migration TODO markers found with 'migrate', 'legacy', 'remove after' patterns in toolkit source"
+      ],
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "Both CLI runners (session-runner.ts and event-runner.ts) actively import the deprecated legacy write-rate-limit implementation instead of the toolkit version. This is not an abandoned migration — it's a live split where the new system exists but the old system is still in production use."
+    }
+  },
+  "dimension_judgment": {
+    "incomplete_migration": {
+      "dimension_character": "The toolkit migration is well-advanced but incomplete in a concrete, production-impacting way: both primary CLI runners still import the synchronous legacy write-rate-limit instead of the toolkit's async/StateStore version. The deprecated guard exports in index.ts have a @deprecated marker but no concrete removal plan. This creates a genuine dual-implementation state where the same concern (rate limiting) has two implementations with different semantics operating in parallel.",
+      "score_rationale": "Two confirmed open issues both still exist: CLI runners use legacy write-rate-limit, and deprecated exports remain without removal timeline. The adapter-specs.ts misplacement is a secondary concern. Score reflects active production code still coupled to the deprecated implementation — worse than a simple stale shim because both systems are live."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "cli_runners_use_legacy_rate_limit",
+      "summary": "Both CLI runners import deprecated legacy write-rate-limit instead of toolkit version",
+      "related_files": ["cli/session-runner.ts", "cli/event-runner.ts", "src/lib/write-rate-limit.ts"],
+      "evidence": [
+        "cli/session-runner.ts line 80: import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from '../src/lib/write-rate-limit.js'",
+        "cli/event-runner.ts line 30: same import from legacy path",
+        "src/lib/write-rate-limit.ts line 1: marked @deprecated",
+        "Toolkit version uses async/await with StateStore locking; legacy version is sync file I/O — incompatible runtime semantics"
+      ],
+      "suggestion": "Migrate CLI runners to use toolkit's checkAndRecordWrite() from src/toolkit/guards/write-rate-limit.ts. Create a FileStateStore instance for the runner's session, then replace the 4 legacy calls (loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger) with checkAndRecordWrite(store, walletAddress, false/true). After migration, delete src/lib/write-rate-limit.ts.",
+      "confidence": "high",
+      "impact_scope": "subsystem",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "deprecated_guards_no_timeline",
+      "summary": "8 deprecated guard functions exported from index.ts without removal version/timeline",
+      "related_files": ["src/toolkit/index.ts"],
+      "evidence": [
+        "Lines 79-115: @deprecated exports with comment 'will be removed in next major version' but no version specified",
+        "checkWriteRateLimit, recordWrite, checkTipSpendCap, recordTip, checkPaySpendCap, recordPayment, checkDedup, recordPublish — 8 functions",
+        "No breaking-change notice or migration guide linked"
+      ],
+      "suggestion": "Specify the target removal version in the @deprecated comment (e.g., '@deprecated since 1.0 — use checkAndRecordWrite() instead. Removed in 2.0.'). Create a brief migration note in CHANGELOG or package README listing old→new mappings.",
+      "confidence": "medium",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": ["The toolkit was built alongside the existing CLI harness; the CLI runners were not updated during the initial toolkit migration, creating a live split where two implementations serve the same concern in different parts of the codebase"],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "incomplete_migration": {
+      "add": [
+        {
+          "header": "CLI runners actively use legacy rate limiter",
+          "description": "This is not a dormant shim — both session-runner.ts and event-runner.ts import from the deprecated src/lib/write-rate-limit.ts. The toolkit write-rate-limit exists but is only used by the toolkit's own publish() tool, not by the CLI orchestrators.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

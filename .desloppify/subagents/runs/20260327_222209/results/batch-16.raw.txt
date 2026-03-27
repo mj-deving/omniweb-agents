@@ -1,0 +1,71 @@
+{
+  "batch": "initialization_coupling",
+  "batch_index": 16,
+  "assessments": {"initialization_coupling": 81.0},
+  "dimension_notes": {
+    "initialization_coupling": {
+      "evidence": [
+        "state-store.ts: getDefaultStateDir() is a function (not a module-level constant) — homedir() is called at constructor time when FileStateStore is instantiated, not at import time. The previously flagged DEFAULT_STATE_DIR constant appears to no longer exist; getDefaultStateDir() is a function evaluated lazily.",
+        "sdk-bridge.ts: cachedTxModule and cachedD402Client are closure-scoped within createSdkBridge(), not module-level globals — correct pattern",
+        "discover-sources.ts: catalogCache is a module-level Map — shared across all sessions, but this is intentional (process-level cache, cleared via clearCatalogCache()). Static catalog data, not mutable state.",
+        "BUNDLED_CATALOG_PATH in discover-sources.ts uses import.meta.url at module load time — import.meta.url is a static ES module property, not a side effect",
+        "connect.ts: _isContainer is a module-level cached boolean — set once per process after first detectContainer() call. Benign: container detection is invariant and cached intentionally",
+        "session.ts: no module-level state — all state is per-instance",
+        "tool-wrapper.ts: no module-level state",
+        "DAHR_ERROR_KEYWORDS in sdk-bridge.ts is a module-level const array — frozen literal, no side effect",
+        "HIVE_PREFIX in sdk-bridge.ts is a module-level const Uint8Array — static literal, no side effect",
+        "No environment variable reads at import time in toolkit source files"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "The pre-existing open issue about DEFAULT_STATE_DIR appears resolved (now a lazy function). The _isContainer module-level singleton in connect.ts is minor but real initialization-coupling."
+    }
+  },
+  "dimension_judgment": {
+    "initialization_coupling": {
+      "dimension_character": "The toolkit is well-designed for initialization isolation: all session-specific state is per-instance, SDK imports are lazy, and module-level constants are either frozen literals or lazily-initialized functions. The main residual item is _isContainer in connect.ts — a module-level singleton that is acceptable (container detection is invariant) but technically a boot-order dependency if connect() is called before the process environment is fully initialized.",
+      "score_rationale": "The previously flagged DEFAULT_STATE_DIR issue appears resolved — homedir() is now called inside a function, not at import time. The _isContainer singleton is intentional with a clear comment. The catalogCache is a legitimate process-level cache. Score reflects good isolation with one minor acceptable singleton."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "initialization_coupling",
+      "identifier": "is_container_module_singleton",
+      "summary": "_isContainer module-level singleton in connect.ts reads FS at first call — fragile in test environments",
+      "related_files": ["src/toolkit/tools/connect.ts"],
+      "evidence": [
+        "Line 263: let _isContainer: boolean | null = null — module-level mutable state",
+        "Lines 265-291: detectContainer() reads /.dockerenv and /proc/1/cgroup on first call, caches in _isContainer",
+        "In test environments, _isContainer persists across test runs if the module is not re-imported — tests that mock FS may see stale cached value"
+      ],
+      "suggestion": "Either leave as-is with a test reset helper (export function resetContainerCache(): void { _isContainer = null; }) for test isolation, or move the cache inside a WeakRef/closure pattern. Given the intentional comment explaining the design, adding the test reset export is the minimal fix.",
+      "confidence": "low",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [],
+    "likely_symptoms": [],
+    "possible_false_positives": ["DEFAULT_STATE_DIR at import time — resolved, now a lazy function in state-store.ts"]
+  },
+  "context_updates": {
+    "initialization_coupling": {
+      "add": [
+        {
+          "header": "DEFAULT_STATE_DIR lazy function — issue resolved",
+          "description": "state-store.ts uses getDefaultStateDir() as a function called at constructor time, not a module-level constant computed at import time. The previously flagged issue is resolved.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Lazy SDK imports throughout toolkit",
+          "description": "All SDK module imports (DemosTransactions, D402Client, Demos) are lazy-imported inside async functions, preventing module-level side effects from crypto initialization and global state mutation.",
+          "settled": true,
+          "positive": true
+        }
+      ]
+    }
+  }
+}

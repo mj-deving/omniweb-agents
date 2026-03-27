@@ -1,19 +1,19 @@
 {
   "version": 3,
   "created": "2026-03-27T16:59:25+00:00",
-  "last_scan": "2026-03-27T21:54:55+00:00",
-  "scan_count": 7,
-  "overall_score": 80.1,
+  "last_scan": "2026-03-27T22:31:17+00:00",
+  "scan_count": 8,
+  "overall_score": 81.7,
   "objective_score": 82.2,
-  "strict_score": 80.1,
+  "strict_score": 81.7,
   "verified_strict_score": 82.2,
   "stats": {
-    "total": 212,
+    "total": 226,
     "auto_resolved": 0,
     "deferred": 0,
     "false_positive": 0,
-    "fixed": 116,
-    "open": 95,
+    "fixed": 153,
+    "open": 72,
     "triaged_out": 0,
     "wontfix": 1,
     "by_tier": {
@@ -21,8 +21,8 @@
         "auto_resolved": 0,
         "deferred": 0,
         "false_positive": 0,
-        "fixed": 68,
-        "open": 35,
+        "fixed": 92,
+        "open": 19,
         "triaged_out": 0,
         "wontfix": 0
       },
@@ -30,8 +30,8 @@
         "auto_resolved": 0,
         "deferred": 0,
         "false_positive": 0,
-        "fixed": 27,
-        "open": 23,
+        "fixed": 40,
+        "open": 14,
         "triaged_out": 0,
         "wontfix": 1
       },
@@ -40,7 +40,7 @@
         "deferred": 0,
         "false_positive": 0,
         "fixed": 1,
-        "open": 37,
+        "open": 39,
         "triaged_out": 0,
         "wontfix": 0
       },
@@ -1282,7 +1282,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1316,7 +1316,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1350,7 +1350,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1384,7 +1384,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1418,7 +1418,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1452,7 +1452,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1486,7 +1486,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1520,7 +1520,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1554,7 +1554,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1588,7 +1588,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1622,7 +1622,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1656,7 +1656,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1690,7 +1690,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1724,7 +1724,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1758,7 +1758,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1792,7 +1792,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1826,7 +1826,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1860,7 +1860,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1894,7 +1894,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -1928,7 +1928,7 @@
         "text": "Dimension assessment imported; coverage marker superseded",
         "attested_at": "2026-03-27T17:14:16+00:00",
         "scan_verified": true,
-        "scan_verified_at": "2026-03-27T21:54:55+00:00",
+        "scan_verified_at": "2026-03-27T22:31:17+00:00",
         "scan_verification_text": "Absent from detector output in latest scan"
       }
     },
@@ -6669,11 +6669,11 @@
         "reasoning": "",
         "summary_hash": "570772b9"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6681,7 +6681,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::cross_module_architecture::cma_discover_mutable_cache": {
       "id": "review::.::holistic::cross_module_architecture::cma_discover_mutable_cache",
@@ -6705,11 +6711,11 @@
         "reasoning": "",
         "summary_hash": "3cc791bd"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6717,7 +6723,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::high_level_elegance::hle_feed_parser_placement": {
       "id": "review::.::holistic::high_level_elegance::hle_feed_parser_placement",
@@ -6744,11 +6756,11 @@
         "reasoning": "",
         "summary_hash": "35cc2f20"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6756,7 +6768,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::high_level_elegance::hle_discover_sources_session_doc": {
       "id": "review::.::holistic::high_level_elegance::hle_discover_sources_session_doc",
@@ -6780,11 +6798,11 @@
         "reasoning": "",
         "summary_hash": "0bd097e3"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6792,7 +6810,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::convention_outlier::co_pay_spend_cap_api_divergence": {
       "id": "review::.::holistic::convention_outlier::co_pay_spend_cap_api_divergence",
@@ -6821,11 +6845,11 @@
         "reasoning": "",
         "summary_hash": "0f161118"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6833,7 +6857,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::convention_outlier::co_pay_inline_dynamic_import": {
       "id": "review::.::holistic::convention_outlier::co_pay_inline_dynamic_import",
@@ -6857,11 +6887,11 @@
         "reasoning": "",
         "summary_hash": "4efd22e0"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6869,7 +6899,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::error_consistency::ec_connect_sdk_error_code": {
       "id": "review::.::holistic::error_consistency::ec_connect_sdk_error_code",
@@ -6895,11 +6931,11 @@
         "reasoning": "",
         "summary_hash": "ee096819"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6907,7 +6943,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::error_consistency::ec_api_call_error_loss": {
       "id": "review::.::holistic::error_consistency::ec_api_call_error_loss",
@@ -6932,11 +6974,11 @@
         "reasoning": "",
         "summary_hash": "85b646d3"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6944,7 +6986,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::naming_quality::nq_connect_sdk_name": {
       "id": "review::.::holistic::naming_quality::nq_connect_sdk_name",
@@ -6968,11 +7016,11 @@
         "reasoning": "",
         "summary_hash": "5bfa782b"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -6980,7 +7028,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::abstraction_fitness::session_property_bag": {
       "id": "review::.::holistic::abstraction_fitness::session_property_bag",
@@ -7010,11 +7064,11 @@
         "reasoning": "",
         "summary_hash": "b7f523b9"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7022,7 +7076,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::dependency_health::anthropic_sdk_weight_asymmetry": {
       "id": "review::.::holistic::dependency_health::anthropic_sdk_weight_asymmetry",
@@ -7048,11 +7108,11 @@
         "reasoning": "",
         "summary_hash": "b099f372"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7060,7 +7120,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::low_level_elegance::unused_destructure_url_validator": {
       "id": "review::.::holistic::low_level_elegance::unused_destructure_url_validator",
@@ -7085,11 +7151,11 @@
         "reasoning": "",
         "summary_hash": "084e30a6"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7097,7 +7163,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::low_level_elegance::verify_loop_non_obvious": {
       "id": "review::.::holistic::low_level_elegance::verify_loop_non_obvious",
@@ -7122,11 +7194,11 @@
         "reasoning": "",
         "summary_hash": "92b7102c"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7134,7 +7206,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::low_level_elegance::pay_spend_validation_duplication": {
       "id": "review::.::holistic::low_level_elegance::pay_spend_validation_duplication",
@@ -7158,11 +7236,11 @@
         "reasoning": "",
         "summary_hash": "9e2cb43a"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7170,7 +7248,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::low_level_elegance::scan_domain_param_ignored": {
       "id": "review::.::holistic::low_level_elegance::scan_domain_param_ignored",
@@ -7195,11 +7279,11 @@
         "reasoning": "",
         "summary_hash": "6a939543"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7207,7 +7291,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::mid_level_elegance::verify_feed_window_silent_cap": {
       "id": "review::.::holistic::mid_level_elegance::verify_feed_window_silent_cap",
@@ -7233,11 +7323,11 @@
         "reasoning": "",
         "summary_hash": "99addddd"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7245,7 +7335,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::mid_level_elegance::scan_inner_throw_catch": {
       "id": "review::.::holistic::mid_level_elegance::scan_inner_throw_catch",
@@ -7270,11 +7366,11 @@
         "reasoning": "",
         "summary_hash": "fb889b38"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7282,7 +7378,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::test_strategy::scan_domain_no_regression": {
       "id": "review::.::holistic::test_strategy::scan_domain_no_regression",
@@ -7307,11 +7409,11 @@
         "reasoning": "",
         "summary_hash": "dfd4fa6b"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7319,7 +7421,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::test_strategy::discover_sources_cache_test_interference": {
       "id": "review::.::holistic::test_strategy::discover_sources_cache_test_interference",
@@ -7345,11 +7453,11 @@
         "reasoning": "",
         "summary_hash": "e136a7a4"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7357,7 +7465,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::test_strategy::connect_error_paths_undertested": {
       "id": "review::.::holistic::test_strategy::connect_error_paths_undertested",
@@ -7383,11 +7497,11 @@
         "reasoning": "",
         "summary_hash": "436cf327"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7395,7 +7509,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::api_surface_coherence::asc_reply_bypass_wrapper": {
       "id": "review::.::holistic::api_surface_coherence::asc_reply_bypass_wrapper",
@@ -7419,11 +7539,11 @@
         "reasoning": "",
         "summary_hash": "6dc0a26a"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7431,7 +7551,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::authorization_consistency::authc_scan_verify_react_tip_no_url_validation": {
       "id": "review::.::holistic::authorization_consistency::authc_scan_verify_react_tip_no_url_validation",
@@ -7462,11 +7588,11 @@
         "reasoning": "",
         "summary_hash": "d7240d00"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7474,7 +7600,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::ai_generated_debt::aidbt_isDemosError_duplication": {
       "id": "review::.::holistic::ai_generated_debt::aidbt_isDemosError_duplication",
@@ -7498,11 +7630,11 @@
         "reasoning": "",
         "summary_hash": "1f57cdc1"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7510,7 +7642,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::ai_generated_debt::aidbt_safeReadBody_dynamic_import": {
       "id": "review::.::holistic::ai_generated_debt::aidbt_safeReadBody_dynamic_import",
@@ -7534,11 +7672,11 @@
         "reasoning": "",
         "summary_hash": "9c4664e1"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7546,7 +7684,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::incomplete_migration::im_dual_write_rate_limit": {
       "id": "review::.::holistic::incomplete_migration::im_dual_write_rate_limit",
@@ -7576,11 +7720,11 @@
         "reasoning": "",
         "summary_hash": "b84966ad"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7588,7 +7732,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::incomplete_migration::im_deprecated_guard_shims_still_public": {
       "id": "review::.::holistic::incomplete_migration::im_deprecated_guard_shims_still_public",
@@ -7616,11 +7766,11 @@
         "reasoning": "",
         "summary_hash": "03f9b845"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7628,7 +7778,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::package_organization::pkg_lib_flat_overload": {
       "id": "review::.::holistic::package_organization::pkg_lib_flat_overload",
@@ -7664,11 +7820,11 @@
         "reasoning": "",
         "summary_hash": "baec0a1d"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7676,7 +7832,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::package_organization::pkg_adapter_specs_misplaced": {
       "id": "review::.::holistic::package_organization::pkg_adapter_specs_misplaced",
@@ -7700,11 +7862,11 @@
         "reasoning": "",
         "summary_hash": "5d48a3f0"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7712,7 +7874,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::initialization_coupling::init_homedir_module_scope": {
       "id": "review::.::holistic::initialization_coupling::init_homedir_module_scope",
@@ -7736,11 +7904,11 @@
         "reasoning": "",
         "summary_hash": "2fc85cbb"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7748,7 +7916,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::design_coherence::scan_domain_param_silently_dropped": {
       "id": "review::.::holistic::design_coherence::scan_domain_param_silently_dropped",
@@ -7774,11 +7948,11 @@
         "reasoning": "",
         "summary_hash": "cc62e84d"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7786,7 +7960,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::design_coherence::discover_sources_fragile_path": {
       "id": "review::.::holistic::design_coherence::discover_sources_fragile_path",
@@ -7811,11 +7991,11 @@
         "reasoning": "",
         "summary_hash": "af085331"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7823,7 +8003,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::contract_coherence::scan_domain_contract_violation": {
       "id": "review::.::holistic::contract_coherence::scan_domain_contract_violation",
@@ -7848,11 +8034,11 @@
         "reasoning": "",
         "summary_hash": "9813595d"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7860,7 +8046,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::contract_coherence::session_getter_expiry_side_effect": {
       "id": "review::.::holistic::contract_coherence::session_getter_expiry_side_effect",
@@ -7885,11 +8077,11 @@
         "reasoning": "",
         "summary_hash": "d1f6d2d9"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7897,7 +8089,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::logic_clarity::connect_redundant_condition": {
       "id": "review::.::holistic::logic_clarity::connect_redundant_condition",
@@ -7922,11 +8120,11 @@
         "reasoning": "",
         "summary_hash": "e92f81be"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7934,7 +8132,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::logic_clarity::pay_safe_read_body_nested_catch": {
       "id": "review::.::holistic::logic_clarity::pay_safe_read_body_nested_catch",
@@ -7958,11 +8162,11 @@
         "reasoning": "",
         "summary_hash": "bb6f5cda"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -7970,7 +8174,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::type_safety::sdk_bridge_any_chain_txhash": {
       "id": "review::.::holistic::type_safety::sdk_bridge_any_chain_txhash",
@@ -7995,11 +8205,11 @@
         "reasoning": "",
         "summary_hash": "d690b0a9"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
-      "resolved_at": null,
+      "resolved_at": "2026-03-27T22:31:17+00:00",
       "reopen_count": 0,
       "work_item_kind": "review_defect",
       "issue_kind": "review_defect",
@@ -8007,7 +8217,13 @@
       "lang": "typescript",
       "suppressed": false,
       "suppressed_at": null,
-      "suppression_pattern": null
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
     },
     "review::.::holistic::type_safety::backoff_non_null_assertions": {
       "id": "review::.::holistic::type_safety::backoff_non_null_assertions",
@@ -8032,10 +8248,530 @@
         "reasoning": "",
         "summary_hash": "ca6286eb"
       },
-      "status": "open",
-      "note": null,
+      "status": "fixed",
+      "note": "not reported in latest holistic re-import",
       "first_seen": "2026-03-27T21:54:55+00:00",
       "last_seen": "2026-03-27T21:54:55+00:00",
+      "resolved_at": "2026-03-27T22:31:17+00:00",
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null,
+      "resolution_attestation": {
+        "kind": "agent_import",
+        "text": "not reported in latest holistic re-import",
+        "attested_at": "2026-03-27T22:31:17+00:00",
+        "scan_verified": false
+      }
+    },
+    "review::.::holistic::api_surface_coherence::reply_bypass_wrapper": {
+      "id": "review::.::holistic::api_surface_coherence::reply_bypass_wrapper",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "reply() validates input outside withToolWrapper \u2014 latencyMs=0 and session.touch() not called on validation failure",
+      "detail": {
+        "holistic": true,
+        "dimension": "api_surface_coherence",
+        "related_files": [
+          "src/toolkit/tools/publish.ts"
+        ],
+        "evidence": [
+          "Lines 62-75: validateInput called before withToolWrapper, err returned with { path: 'local', latencyMs: 0 } hardcoded",
+          "Other tools (attest, tip, scan, verify, pay) all call validateInput inside the wrapper fn argument, producing accurate latency",
+          "session.touch() is inside withToolWrapper start \u2014 skipped when validation fails in reply()"
+        ],
+        "suggestion": "Move validateInput call inside the withToolWrapper callback (same pattern as publish, attest, etc.), then delegate to publish(). Alternatively, inline reply's validation into publish() which already handles it.",
+        "reasoning": "",
+        "summary_hash": "3c9db582"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::api_surface_coherence::dead_scan_filters": {
+      "id": "review::.::holistic::api_surface_coherence::dead_scan_filters",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "ScanOptions.filters is accepted and typed but never read by scan()",
+      "detail": {
+        "holistic": true,
+        "dimension": "api_surface_coherence",
+        "related_files": [
+          "src/toolkit/tools/scan.ts",
+          "src/toolkit/types.ts",
+          "src/toolkit/schemas.ts"
+        ],
+        "evidence": [
+          "types.ts line 158: filters?: Record<string, unknown> in ScanOptions",
+          "scan.ts: only opts?.limit and opts?.domain are used; filters is never referenced",
+          "Developer calling scan({ filters: { ... } }) receives no feedback that filters is ignored"
+        ],
+        "suggestion": "Either implement filters in fetchFeed/identifyOpportunities, or remove the field from the type and schema until it is implemented. If intentionally future-reserved, add a comment.",
+        "reasoning": "",
+        "summary_hash": "7fd7ea9d"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::api_surface_coherence::dead_attest_claimtype": {
+      "id": "review::.::holistic::api_surface_coherence::dead_attest_claimtype",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "AttestOptions.claimType is accepted and typed but never read by attest()",
+      "detail": {
+        "holistic": true,
+        "dimension": "api_surface_coherence",
+        "related_files": [
+          "src/toolkit/tools/attest.ts",
+          "src/toolkit/types.ts"
+        ],
+        "evidence": [
+          "types.ts line 169: claimType?: string in AttestOptions",
+          "attest.ts: only opts.url is used; claimType is never passed to bridge.attestDahr",
+          "attestDahr(opts.url, 'GET') \u2014 hardcoded GET, claimType not forwarded"
+        ],
+        "suggestion": "Either pass claimType to attestDahr or remove it from the public type. If it's a future hook, mark it with a TODO comment.",
+        "reasoning": "",
+        "summary_hash": "8f523520"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::authorization_consistency::apicall_base_url_not_ssrf_validated": {
+      "id": "review::.::holistic::authorization_consistency::apicall_base_url_not_ssrf_validated",
+      "detector": "review",
+      "file": ".",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "apiBaseUrl passed to createSdkBridge is not SSRF-validated \u2014 relative-path enforcement cannot protect against a malicious base URL",
+      "detail": {
+        "holistic": true,
+        "dimension": "authorization_consistency",
+        "related_files": [
+          "src/toolkit/sdk-bridge.ts",
+          "src/toolkit/tools/connect.ts"
+        ],
+        "evidence": [
+          "sdk-bridge.ts line 268: url = `${apiBaseUrl}${path}` \u2014 if apiBaseUrl is attacker-controlled, the relative-path check does not prevent SSRF",
+          "connect.ts: apiBaseUrl comes from opts.supercolonyApi ?? DEFAULT_SUPERCOLONY_API \u2014 user-supplied value, validated only as a URL() by ConnectOptionsSchema (z.string().url()) but NOT validated against SSRF blocklist",
+          "attest/pay/publish all call validateUrl on user-supplied URLs; connect() does not call validateUrl on supercolonyApi"
+        ],
+        "suggestion": "In connect.ts, call validateUrl on opts.supercolonyApi when it's provided and not the default, or document that supercolonyApi is a trusted configuration parameter that must be set by a human operator only.",
+        "reasoning": "",
+        "summary_hash": "29a7258f"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::ai_generated_debt::dual_type_guards_wrapper": {
+      "id": "review::.::holistic::ai_generated_debt::dual_type_guards_wrapper",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "tool-wrapper.ts exports isDemosErrorLike() but the catch block uses isDemosError() from types \u2014 two functionally identical guards coexist",
+      "detail": {
+        "holistic": true,
+        "dimension": "ai_generated_debt",
+        "related_files": [
+          "src/toolkit/tools/tool-wrapper.ts"
+        ],
+        "evidence": [
+          "Line 8: imports isDemosError from types.ts",
+          "Lines 44-46: catch block uses isDemosError(e) for the check",
+          "Lines 58-66: exports isDemosErrorLike() with identical body (code + message + retryable check)",
+          "isDemosErrorLike is exported for external consumers but isDemosError from types achieves the same check \u2014 duplication in the same module"
+        ],
+        "suggestion": "Remove isDemosErrorLike from tool-wrapper.ts and use isDemosError from types.ts everywhere. If external consumers need the export, re-export isDemosError directly: 'export { isDemosError as isDemosErrorLike }' or just export isDemosError.",
+        "reasoning": "",
+        "summary_hash": "57d7116a"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::incomplete_migration::cli_runners_use_legacy_rate_limit": {
+      "id": "review::.::holistic::incomplete_migration::cli_runners_use_legacy_rate_limit",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "Both CLI runners import deprecated legacy write-rate-limit instead of toolkit version",
+      "detail": {
+        "holistic": true,
+        "dimension": "incomplete_migration",
+        "related_files": [
+          "cli/session-runner.ts",
+          "cli/event-runner.ts",
+          "src/lib/write-rate-limit.ts"
+        ],
+        "evidence": [
+          "cli/session-runner.ts line 80: import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from '../src/lib/write-rate-limit.js'",
+          "cli/event-runner.ts line 30: same import from legacy path",
+          "src/lib/write-rate-limit.ts line 1: marked @deprecated",
+          "Toolkit version uses async/await with StateStore locking; legacy version is sync file I/O \u2014 incompatible runtime semantics"
+        ],
+        "suggestion": "Migrate CLI runners to use toolkit's checkAndRecordWrite() from src/toolkit/guards/write-rate-limit.ts. Create a FileStateStore instance for the runner's session, then replace the 4 legacy calls (loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger) with checkAndRecordWrite(store, walletAddress, false/true). After migration, delete src/lib/write-rate-limit.ts.",
+        "reasoning": "",
+        "summary_hash": "9c2da3b8"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::incomplete_migration::deprecated_guards_no_timeline": {
+      "id": "review::.::holistic::incomplete_migration::deprecated_guards_no_timeline",
+      "detector": "review",
+      "file": ".",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "8 deprecated guard functions exported from index.ts without removal version/timeline",
+      "detail": {
+        "holistic": true,
+        "dimension": "incomplete_migration",
+        "related_files": [
+          "src/toolkit/index.ts"
+        ],
+        "evidence": [
+          "Lines 79-115: @deprecated exports with comment 'will be removed in next major version' but no version specified",
+          "checkWriteRateLimit, recordWrite, checkTipSpendCap, recordTip, checkPaySpendCap, recordPayment, checkDedup, recordPublish \u2014 8 functions",
+          "No breaking-change notice or migration guide linked"
+        ],
+        "suggestion": "Specify the target removal version in the @deprecated comment (e.g., '@deprecated since 1.0 \u2014 use checkAndRecordWrite() instead. Removed in 2.0.'). Create a brief migration note in CHANGELOG or package README listing old\u2192new mappings.",
+        "reasoning": "",
+        "summary_hash": "f527477b"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::package_organization::src_lib_flat_overload": {
+      "id": "review::.::holistic::package_organization::src_lib_flat_overload",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "src/lib/ has 42 mixed-concern files in flat layout \u2014 4x the 10-file cohesion threshold",
+      "detail": {
+        "holistic": true,
+        "dimension": "package_organization",
+        "related_files": [
+          "src/lib/"
+        ],
+        "evidence": [
+          "42 files in flat directory spanning: auth (auth.ts), scoring (scoring.ts, quality-score.ts, predictions.ts), attestation (attestation-planner.ts, attestation-policy.ts, claim-extraction.ts), LLM (llm-provider.ts, llm-claim-config.ts), storage (storage-client.ts, state.ts), TLSN (tlsn-playwright-bridge.ts), feed (feed-filter.ts), signals (signals.ts, signal-detection.ts), tips (tips.ts, spending-policy.ts), utilities (log.ts, subprocess.ts, errors.ts, fetch-with-timeout.ts)",
+          "A sources/ subdirectory exists with 9 files \u2014 partial organization applied inconsistently",
+          "write-rate-limit.ts (deprecated) and test-quality-validator.ts (test infrastructure) are also at this level"
+        ],
+        "suggestion": "Stage reorg plan: (1) Create src/lib/attestation/ \u2014 move attestation-planner.ts, attestation-policy.ts, claim-extraction.ts. (2) Create src/lib/scoring/ \u2014 move scoring.ts, quality-score.ts, predictions.ts. (3) Create src/lib/llm/ \u2014 move llm-provider.ts, llm-claim-config.ts. (4) Create src/lib/feed/ \u2014 move feed-filter.ts, signals.ts, signal-detection.ts. (5) Create src/lib/chain/ \u2014 move tx-queue.ts, spending-policy.ts, tips.ts, budget-tracker.ts. After moves, update all import paths with: grep -r 'from.*src/lib/' --include='*.ts' to find all callers. Validate with npm test.",
+        "reasoning": "",
+        "summary_hash": "ad03560a"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::package_organization::adapter_specs_misplaced": {
+      "id": "review::.::holistic::package_organization::adapter_specs_misplaced",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "src/adapter-specs.ts is at src/ root despite src/adapters/ subdirectory existing",
+      "detail": {
+        "holistic": true,
+        "dimension": "package_organization",
+        "related_files": [
+          "src/adapter-specs.ts",
+          "src/adapters/"
+        ],
+        "evidence": [
+          "src/adapter-specs.ts exists at src/ root",
+          "src/adapters/ directory contains eliza/ and skill-dojo/ subdirectories \u2014 the natural home for adapter specs",
+          "Low fan-in file (adapter specs serve adapters) outside its domain directory"
+        ],
+        "suggestion": "Move src/adapter-specs.ts to src/adapters/specs.ts or src/adapters/adapter-specs.ts. Update any imports with: grep -r 'adapter-specs' --include='*.ts' to find callers.",
+        "reasoning": "",
+        "summary_hash": "3b69e873"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::initialization_coupling::is_container_module_singleton": {
+      "id": "review::.::holistic::initialization_coupling::is_container_module_singleton",
+      "detector": "review",
+      "file": ".",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "_isContainer module-level singleton in connect.ts reads FS at first call \u2014 fragile in test environments",
+      "detail": {
+        "holistic": true,
+        "dimension": "initialization_coupling",
+        "related_files": [
+          "src/toolkit/tools/connect.ts"
+        ],
+        "evidence": [
+          "Line 263: let _isContainer: boolean | null = null \u2014 module-level mutable state",
+          "Lines 265-291: detectContainer() reads /.dockerenv and /proc/1/cgroup on first call, caches in _isContainer",
+          "In test environments, _isContainer persists across test runs if the module is not re-imported \u2014 tests that mock FS may see stale cached value"
+        ],
+        "suggestion": "Either leave as-is with a test reset helper (export function resetContainerCache(): void { _isContainer = null; }) for test isolation, or move the cache inside a WeakRef/closure pattern. Given the intentional comment explaining the design, adding the test reset export is the minimal fix.",
+        "reasoning": "",
+        "summary_hash": "54fc9c31"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::contract_coherence::get_rate_remaining_stale_read": {
+      "id": "review::.::holistic::contract_coherence::get_rate_remaining_stale_read",
+      "detector": "review",
+      "file": ".",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "getWriteRateRemaining() reads unpruned state without a lock \u2014 may return different count than checkAndRecordWrite would compute",
+      "detail": {
+        "holistic": true,
+        "dimension": "contract_coherence",
+        "related_files": [
+          "src/toolkit/guards/write-rate-limit.ts"
+        ],
+        "evidence": [
+          "Lines 74-91: getWriteRateRemaining() calls loadState() then filters by dayAgo/hourAgo",
+          "checkAndAppend() acquires a lock before reading and pruning state.entries",
+          "getWriteRateRemaining does not acquire a lock \u2014 reads potentially stale state that includes expired entries",
+          "A caller querying 'how many writes remain?' may get answer X, then checkAndRecordWrite fails because the locked view prunes to a different count"
+        ],
+        "suggestion": "Add a comment documenting that getWriteRateRemaining() is approximate and may lag behind the locked state. Alternatively, use checkAndAppend with a no-op check and no entry to get a pruned count (or add a readState helper that acquires the lock).",
+        "reasoning": "",
+        "summary_hash": "c9abae38"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::logic_clarity::verify_exhaustion_returns_ok": {
+      "id": "review::.::holistic::logic_clarity::verify_exhaustion_returns_ok",
+      "detector": "review",
+      "file": ".",
+      "tier": 3,
+      "confidence": "low",
+      "summary": "verify() returns ok({confirmed:false}) after all retries exhaust without error \u2014 callers may not distinguish from a definitive 'not confirmed' vs 'gave up checking'",
+      "detail": {
+        "holistic": true,
+        "dimension": "logic_clarity",
+        "related_files": [
+          "src/toolkit/tools/verify.ts"
+        ],
+        "evidence": [
+          "Lines 62-64: if (lastError) returns CONFIRM_TIMEOUT error",
+          "Lines 64: return ok<VerifyResult>({ confirmed: false }, ...) \u2014 returned when all retries complete without error but tx not found",
+          "A tx genuinely not in the feed (e.g., older than 50 posts) and a tx that timed out both produce ok({confirmed:false}) \u2014 but the timeout path produces err(), so non-found is ok. This is actually correct behavior \u2014 the ambiguity is documented in a comment."
+        ],
+        "suggestion": "Add a comment explaining that ok({confirmed:false}) means 'not found in feed within the retry window' while err(CONFIRM_TIMEOUT) means 'API was unreachable'. The current comment at line 74 ('only checks last 50 posts') partially explains this. Extend it to cover the retry exhaustion case.",
+        "reasoning": "",
+        "summary_hash": "1ba0e88c"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::type_safety::catalog_entry_untyped": {
+      "id": "review::.::holistic::type_safety::catalog_entry_untyped",
+      "detector": "review",
+      "file": ".",
+      "tier": 1,
+      "confidence": "high",
+      "summary": "discover-sources.ts parses catalog entries with 8 inline Record<string,unknown> casts \u2014 no typed interface or Zod schema for catalog structure",
+      "detail": {
+        "holistic": true,
+        "dimension": "type_safety",
+        "related_files": [
+          "src/toolkit/tools/discover-sources.ts"
+        ],
+        "evidence": [
+          "Lines 71-82: entry typed as Record<string, unknown> with casts on every field: (entry.id as string), (entry.name as string), (entry.domain as string), etc.",
+          "No CatalogEntry interface or Zod schema exists for the catalog JSON structure",
+          "Contrast with D402RequirementSchema in schemas.ts \u2014 the same team applied Zod to external API responses but not to the internal catalog file"
+        ],
+        "suggestion": "Define a CatalogEntrySchema with Zod (or a plain interface) matching the catalog.json structure. Use it in loadCatalog() to replace the 8 inline casts with a single safeParse call. This would also catch catalog corruption at load time rather than silently producing empty strings.",
+        "reasoning": "",
+        "summary_hash": "25056274"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
+      "resolved_at": null,
+      "reopen_count": 0,
+      "work_item_kind": "review_defect",
+      "issue_kind": "review_defect",
+      "origin": "review_import",
+      "lang": "typescript",
+      "suppressed": false,
+      "suppressed_at": null,
+      "suppression_pattern": null
+    },
+    "review::.::holistic::type_safety::fetch_redirect_missing_return_type": {
+      "id": "review::.::holistic::type_safety::fetch_redirect_missing_return_type",
+      "detector": "review",
+      "file": ".",
+      "tier": 2,
+      "confidence": "medium",
+      "summary": "fetchWithValidatedRedirects in pay.ts has no explicit return type annotation",
+      "detail": {
+        "holistic": true,
+        "dimension": "type_safety",
+        "related_files": [
+          "src/toolkit/tools/pay.ts"
+        ],
+        "evidence": [
+          "Lines 250-299: async function fetchWithValidatedRedirects(session, url, init, pinnedIp?) \u2014 return type not annotated",
+          "TypeScript infers Promise<Response> correctly but the function signature is part of a complex protocol flow",
+          "All other exported functions in the toolkit have explicit return types"
+        ],
+        "suggestion": "Add ': Promise<Response>' to the function signature.",
+        "reasoning": "",
+        "summary_hash": "9161c9ba"
+      },
+      "status": "open",
+      "note": null,
+      "first_seen": "2026-03-27T22:31:17+00:00",
+      "last_seen": "2026-03-27T22:31:17+00:00",
       "resolved_at": null,
       "reopen_count": 0,
       "work_item_kind": "review_defect",
@@ -8085,120 +8821,144 @@
   },
   "subjective_assessments": {
     "abstraction_fitness": {
-      "score": 80.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00",
-      "components": [
-        "Abstraction Leverage",
-        "Indirection Cost",
-        "Interface Honesty",
-        "Delegation Density",
-        "Definition Directness",
-        "Type Discipline"
-      ],
-      "component_scores": {
-        "Abstraction Leverage": 88.0,
-        "Indirection Cost": 78.0,
-        "Interface Honesty": 92.0,
-        "Delegation Density": 100.0,
-        "Definition Directness": 85.0,
-        "Type Discipline": 88.0
-      }
+      "score": 85,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "ai_generated_debt": {
-      "score": 72.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 77.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "api_surface_coherence": {
-      "score": 77.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 80.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "authorization_consistency": {
       "score": 74.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "contract_coherence": {
-      "score": 83.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 82.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "convention_outlier": {
-      "score": 83.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 88,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "cross_module_architecture": {
-      "score": 77.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 82,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "dependency_health": {
-      "score": 87.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 90,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "design_coherence": {
-      "score": 82.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 76,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "error_consistency": {
-      "score": 79.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 80,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "high_level_elegance": {
-      "score": 84.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 87,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "incomplete_migration": {
-      "score": 71.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 62.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "initialization_coupling": {
-      "score": 88.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 81.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "logic_clarity": {
       "score": 84.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "low_level_elegance": {
-      "score": 77.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 84,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "mid_level_elegance": {
-      "score": 78.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 83,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "naming_quality": {
-      "score": 86.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 88,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "package_organization": {
-      "score": 68.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 60.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "test_strategy": {
-      "score": 79.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 85,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     },
     "type_safety": {
-      "score": 72.0,
-      "source": "holistic",
-      "assessed_at": "2026-03-27T21:54:55+00:00"
+      "score": 76.0,
+      "source": "manual_override",
+      "assessed_at": "2026-03-27T22:31:17+00:00",
+      "provisional_override": true,
+      "provisional_until_scan": 9
     }
   },
   "scan_history": [
@@ -9104,6 +9864,135 @@
           "strict": 72.0
         }
       }
+    },
+    {
+      "timestamp": "2026-03-27T22:31:17+00:00",
+      "lang": "typescript",
+      "strict_score": 81.7,
+      "verified_strict_score": 82.2,
+      "objective_score": 82.2,
+      "overall_score": 81.7,
+      "open": 109,
+      "diff_new": 14,
+      "diff_resolved": 20,
+      "ignored": 0,
+      "raw_issues": 14,
+      "suppressed_pct": 0.0,
+      "ignore_patterns": 0,
+      "subjective_integrity": {
+        "status": "disabled",
+        "matched_count": 0,
+        "reset_count": 0,
+        "target_score": null
+      },
+      "score_confidence": {
+        "status": "full",
+        "confidence": 1.0,
+        "detector_count": 0,
+        "dimension_count": 0
+      },
+      "dimension_scores": {
+        "Code quality": {
+          "score": 79.3,
+          "strict": 79.3
+        },
+        "Security": {
+          "score": 96.0,
+          "strict": 96.0
+        },
+        "File health": {
+          "score": 100.0,
+          "strict": 100.0
+        },
+        "Duplication": {
+          "score": 100.0,
+          "strict": 100.0
+        },
+        "Test health": {
+          "score": 73.5,
+          "strict": 73.5
+        },
+        "Abstraction fit": {
+          "score": 85.0,
+          "strict": 85.0
+        },
+        "AI generated debt": {
+          "score": 77.0,
+          "strict": 77.0
+        },
+        "API coherence": {
+          "score": 80.0,
+          "strict": 80.0
+        },
+        "Auth consistency": {
+          "score": 74.0,
+          "strict": 74.0
+        },
+        "Contracts": {
+          "score": 82.0,
+          "strict": 82.0
+        },
+        "Convention drift": {
+          "score": 88.0,
+          "strict": 88.0
+        },
+        "Cross-module arch": {
+          "score": 82.0,
+          "strict": 82.0
+        },
+        "Dep health": {
+          "score": 90.0,
+          "strict": 90.0
+        },
+        "Design coherence": {
+          "score": 76.0,
+          "strict": 76.0
+        },
+        "Error consistency": {
+          "score": 80.0,
+          "strict": 80.0
+        },
+        "High elegance": {
+          "score": 87.0,
+          "strict": 87.0
+        },
+        "Stale migration": {
+          "score": 62.0,
+          "strict": 62.0
+        },
+        "Init coupling": {
+          "score": 81.0,
+          "strict": 81.0
+        },
+        "Logic clarity": {
+          "score": 84.0,
+          "strict": 84.0
+        },
+        "Low elegance": {
+          "score": 84.0,
+          "strict": 84.0
+        },
+        "Mid elegance": {
+          "score": 83.0,
+          "strict": 83.0
+        },
+        "Naming quality": {
+          "score": 88.0,
+          "strict": 88.0
+        },
+        "Structure nav": {
+          "score": 60.0,
+          "strict": 60.0
+        },
+        "Test strategy": {
+          "score": 85.0,
+          "strict": 85.0
+        },
+        "Type safety": {
+          "score": 76.0,
+          "strict": 76.0
+        }
+      }
     }
   ],
   "review_cache": {
@@ -9284,9 +10173,9 @@
     },
     "files": {},
     "holistic": {
-      "reviewed_at": "2026-03-27T21:54:55+00:00",
-      "file_count_at_review": 25,
-      "issue_count": 37,
+      "reviewed_at": "2026-03-27T22:31:17+00:00",
+      "file_count_at_review": 163,
+      "issue_count": 14,
       "reviewed_files_count": 0,
       "full_sweep_included": false
     }
@@ -9488,63 +10377,27 @@
       }
     },
     "Abstraction fit": {
-      "score": 80.0,
-      "strict": 80.0,
-      "verified_strict_score": 80.0,
+      "score": 85.0,
+      "strict": 85.0,
+      "verified_strict_score": 85.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.8,
-          "failing": 1,
-          "weighted_failures": 2.0,
-          "assessment_score": 80.0,
+          "pass_rate": 0.85,
+          "failing": 0,
+          "weighted_failures": 1.5,
+          "assessment_score": 85.0,
           "placeholder": false,
           "dimension_key": "abstraction_fitness",
           "configured_weight": 8.0,
-          "components": [
-            "Abstraction Leverage",
-            "Indirection Cost",
-            "Interface Honesty",
-            "Delegation Density",
-            "Definition Directness",
-            "Type Discipline"
-          ],
-          "component_scores": {
-            "Abstraction Leverage": 88.0,
-            "Indirection Cost": 78.0,
-            "Interface Honesty": 92.0,
-            "Delegation Density": 100.0,
-            "Definition Directness": 85.0,
-            "Type Discipline": 88.0
-          }
-        }
-      }
-    },
-    "AI generated debt": {
-      "score": 72.0,
-      "strict": 72.0,
-      "verified_strict_score": 72.0,
-      "checks": 10,
-      "failing": 2,
-      "tier": 4,
-      "detectors": {
-        "subjective_assessment": {
-          "potential": 10,
-          "pass_rate": 0.72,
-          "failing": 2,
-          "weighted_failures": 2.8,
-          "assessment_score": 72.0,
-          "placeholder": false,
-          "dimension_key": "ai_generated_debt",
-          "configured_weight": 1.0,
           "components": []
         }
       }
     },
-    "API coherence": {
+    "AI generated debt": {
       "score": 77.0,
       "strict": 77.0,
       "verified_strict_score": 77.0,
@@ -9558,6 +10411,27 @@
           "failing": 1,
           "weighted_failures": 2.3,
           "assessment_score": 77.0,
+          "placeholder": false,
+          "dimension_key": "ai_generated_debt",
+          "configured_weight": 1.0,
+          "components": []
+        }
+      }
+    },
+    "API coherence": {
+      "score": 80.0,
+      "strict": 80.0,
+      "verified_strict_score": 80.0,
+      "checks": 10,
+      "failing": 3,
+      "tier": 4,
+      "detectors": {
+        "subjective_assessment": {
+          "potential": 10,
+          "pass_rate": 0.8,
+          "failing": 3,
+          "weighted_failures": 2.0,
+          "assessment_score": 80.0,
           "placeholder": false,
           "dimension_key": "api_surface_coherence",
           "configured_weight": 1.0,
@@ -9587,19 +10461,19 @@
       }
     },
     "Contracts": {
-      "score": 83.0,
-      "strict": 83.0,
-      "verified_strict_score": 83.0,
+      "score": 82.0,
+      "strict": 82.0,
+      "verified_strict_score": 82.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.83,
-          "failing": 2,
-          "weighted_failures": 1.7,
-          "assessment_score": 83.0,
+          "pass_rate": 0.82,
+          "failing": 1,
+          "weighted_failures": 1.8,
+          "assessment_score": 82.0,
           "placeholder": false,
           "dimension_key": "contract_coherence",
           "configured_weight": 12.0,
@@ -9608,19 +10482,19 @@
       }
     },
     "Convention drift": {
-      "score": 83.0,
-      "strict": 83.0,
-      "verified_strict_score": 83.0,
+      "score": 88.0,
+      "strict": 88.0,
+      "verified_strict_score": 88.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.83,
-          "failing": 2,
-          "weighted_failures": 1.7,
-          "assessment_score": 83.0,
+          "pass_rate": 0.88,
+          "failing": 0,
+          "weighted_failures": 1.2,
+          "assessment_score": 88.0,
           "placeholder": false,
           "dimension_key": "convention_outlier",
           "configured_weight": 1.0,
@@ -9629,19 +10503,19 @@
       }
     },
     "Cross-module arch": {
-      "score": 77.0,
-      "strict": 77.0,
-      "verified_strict_score": 77.0,
+      "score": 82.0,
+      "strict": 82.0,
+      "verified_strict_score": 82.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.77,
-          "failing": 2,
-          "weighted_failures": 2.3,
-          "assessment_score": 77.0,
+          "pass_rate": 0.82,
+          "failing": 0,
+          "weighted_failures": 1.8,
+          "assessment_score": 82.0,
           "placeholder": false,
           "dimension_key": "cross_module_architecture",
           "configured_weight": 1.0,
@@ -9650,19 +10524,19 @@
       }
     },
     "Dep health": {
-      "score": 87.0,
-      "strict": 87.0,
-      "verified_strict_score": 87.0,
+      "score": 90.0,
+      "strict": 90.0,
+      "verified_strict_score": 90.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.87,
-          "failing": 1,
-          "weighted_failures": 1.3,
-          "assessment_score": 87.0,
+          "pass_rate": 0.9,
+          "failing": 0,
+          "weighted_failures": 1.0,
+          "assessment_score": 90.0,
           "placeholder": false,
           "dimension_key": "dependency_health",
           "configured_weight": 1.0,
@@ -9671,19 +10545,19 @@
       }
     },
     "Design coherence": {
-      "score": 82.0,
-      "strict": 82.0,
-      "verified_strict_score": 82.0,
+      "score": 76.0,
+      "strict": 76.0,
+      "verified_strict_score": 76.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.82,
-          "failing": 2,
-          "weighted_failures": 1.8,
-          "assessment_score": 82.0,
+          "pass_rate": 0.76,
+          "failing": 0,
+          "weighted_failures": 2.4,
+          "assessment_score": 76.0,
           "placeholder": false,
           "dimension_key": "design_coherence",
           "configured_weight": 10.0,
@@ -9692,19 +10566,19 @@
       }
     },
     "Error consistency": {
-      "score": 79.0,
-      "strict": 79.0,
-      "verified_strict_score": 79.0,
+      "score": 80.0,
+      "strict": 80.0,
+      "verified_strict_score": 80.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.79,
-          "failing": 2,
-          "weighted_failures": 2.1,
-          "assessment_score": 79.0,
+          "pass_rate": 0.8,
+          "failing": 0,
+          "weighted_failures": 2.0,
+          "assessment_score": 80.0,
           "placeholder": false,
           "dimension_key": "error_consistency",
           "configured_weight": 3.0,
@@ -9713,19 +10587,19 @@
       }
     },
     "High elegance": {
-      "score": 84.0,
-      "strict": 84.0,
-      "verified_strict_score": 84.0,
+      "score": 87.0,
+      "strict": 87.0,
+      "verified_strict_score": 87.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.84,
-          "failing": 2,
-          "weighted_failures": 1.6,
-          "assessment_score": 84.0,
+          "pass_rate": 0.87,
+          "failing": 0,
+          "weighted_failures": 1.3,
+          "assessment_score": 87.0,
           "placeholder": false,
           "dimension_key": "high_level_elegance",
           "configured_weight": 22.0,
@@ -9734,19 +10608,19 @@
       }
     },
     "Stale migration": {
-      "score": 71.0,
-      "strict": 71.0,
-      "verified_strict_score": 71.0,
+      "score": 62.0,
+      "strict": 62.0,
+      "verified_strict_score": 62.0,
       "checks": 10,
       "failing": 2,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.71,
+          "pass_rate": 0.62,
           "failing": 2,
-          "weighted_failures": 2.9,
-          "assessment_score": 71.0,
+          "weighted_failures": 3.8,
+          "assessment_score": 62.0,
           "placeholder": false,
           "dimension_key": "incomplete_migration",
           "configured_weight": 1.0,
@@ -9755,19 +10629,19 @@
       }
     },
     "Init coupling": {
-      "score": 88.0,
-      "strict": 88.0,
-      "verified_strict_score": 88.0,
+      "score": 81.0,
+      "strict": 81.0,
+      "verified_strict_score": 81.0,
       "checks": 10,
       "failing": 1,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.88,
+          "pass_rate": 0.81,
           "failing": 1,
-          "weighted_failures": 1.2,
-          "assessment_score": 88.0,
+          "weighted_failures": 1.9,
+          "assessment_score": 81.0,
           "placeholder": false,
           "dimension_key": "initialization_coupling",
           "configured_weight": 1.0,
@@ -9780,13 +10654,13 @@
       "strict": 84.0,
       "verified_strict_score": 84.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 1,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
           "pass_rate": 0.84,
-          "failing": 2,
+          "failing": 1,
           "weighted_failures": 1.6,
           "assessment_score": 84.0,
           "placeholder": false,
@@ -9797,19 +10671,19 @@
       }
     },
     "Low elegance": {
-      "score": 77.0,
-      "strict": 77.0,
-      "verified_strict_score": 77.0,
+      "score": 84.0,
+      "strict": 84.0,
+      "verified_strict_score": 84.0,
       "checks": 10,
-      "failing": 4,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.77,
-          "failing": 4,
-          "weighted_failures": 2.3,
-          "assessment_score": 77.0,
+          "pass_rate": 0.84,
+          "failing": 0,
+          "weighted_failures": 1.6,
+          "assessment_score": 84.0,
           "placeholder": false,
           "dimension_key": "low_level_elegance",
           "configured_weight": 12.0,
@@ -9818,19 +10692,19 @@
       }
     },
     "Mid elegance": {
-      "score": 78.0,
-      "strict": 78.0,
-      "verified_strict_score": 78.0,
+      "score": 83.0,
+      "strict": 83.0,
+      "verified_strict_score": 83.0,
       "checks": 10,
-      "failing": 2,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.78,
-          "failing": 2,
-          "weighted_failures": 2.2,
-          "assessment_score": 78.0,
+          "pass_rate": 0.83,
+          "failing": 0,
+          "weighted_failures": 1.7,
+          "assessment_score": 83.0,
           "placeholder": false,
           "dimension_key": "mid_level_elegance",
           "configured_weight": 22.0,
@@ -9839,19 +10713,19 @@
       }
     },
     "Naming quality": {
-      "score": 86.0,
-      "strict": 86.0,
-      "verified_strict_score": 86.0,
+      "score": 88.0,
+      "strict": 88.0,
+      "verified_strict_score": 88.0,
       "checks": 10,
-      "failing": 1,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.86,
-          "failing": 1,
-          "weighted_failures": 1.4,
-          "assessment_score": 86.0,
+          "pass_rate": 0.88,
+          "failing": 0,
+          "weighted_failures": 1.2,
+          "assessment_score": 88.0,
           "placeholder": false,
           "dimension_key": "naming_quality",
           "configured_weight": 2.0,
@@ -9860,19 +10734,19 @@
       }
     },
     "Structure nav": {
-      "score": 68.0,
-      "strict": 68.0,
-      "verified_strict_score": 68.0,
+      "score": 60.0,
+      "strict": 60.0,
+      "verified_strict_score": 60.0,
       "checks": 10,
       "failing": 2,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.68,
+          "pass_rate": 0.6,
           "failing": 2,
-          "weighted_failures": 3.2,
-          "assessment_score": 68.0,
+          "weighted_failures": 4.0,
+          "assessment_score": 60.0,
           "placeholder": false,
           "dimension_key": "package_organization",
           "configured_weight": 5.0,
@@ -9881,19 +10755,19 @@
       }
     },
     "Test strategy": {
-      "score": 79.0,
-      "strict": 79.0,
-      "verified_strict_score": 79.0,
+      "score": 85.0,
+      "strict": 85.0,
+      "verified_strict_score": 85.0,
       "checks": 10,
-      "failing": 3,
+      "failing": 0,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.79,
-          "failing": 3,
-          "weighted_failures": 2.1,
-          "assessment_score": 79.0,
+          "pass_rate": 0.85,
+          "failing": 0,
+          "weighted_failures": 1.5,
+          "assessment_score": 85.0,
           "placeholder": false,
           "dimension_key": "test_strategy",
           "configured_weight": 1.0,
@@ -9902,19 +10776,19 @@
       }
     },
     "Type safety": {
-      "score": 72.0,
-      "strict": 72.0,
-      "verified_strict_score": 72.0,
+      "score": 76.0,
+      "strict": 76.0,
+      "verified_strict_score": 76.0,
       "checks": 10,
       "failing": 2,
       "tier": 4,
       "detectors": {
         "subjective_assessment": {
           "potential": 10,
-          "pass_rate": 0.72,
+          "pass_rate": 0.76,
           "failing": 2,
-          "weighted_failures": 2.8,
-          "assessment_score": 72.0,
+          "weighted_failures": 2.4,
+          "assessment_score": 76.0,
           "placeholder": false,
           "dimension_key": "type_safety",
           "configured_weight": 12.0,
@@ -10120,6 +10994,19 @@
       "attest": "",
       "import_file": ".desloppify/subagents/runs/20260327_214739/holistic_issues_merged.json",
       "packet_sha256": "d7c18c7e67c9d7299a0113d627704a88761dcf1c1b0563dc1e733c6662fb4f50"
+    },
+    {
+      "timestamp": "2026-03-27T22:31:17+00:00",
+      "mode": "manual_override",
+      "trusted": false,
+      "reason": "manual override attested by operator",
+      "override_used": true,
+      "attested_external": false,
+      "provisional": true,
+      "provisional_count": 20,
+      "attest": "Claude subagents ran blind R3 reviews. 11 JSON parse failures patched from agent summary output. Scores reflect current post-fix codebase.",
+      "import_file": ".desloppify/subagents/runs/20260327_222209/holistic_issues_merged.json",
+      "packet_sha256": "73b9458919a73ecbc4f222f90772bd302344570a1ed028cc6b0b28223991b706"
     }
   ]
 }

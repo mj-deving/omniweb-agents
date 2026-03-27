@@ -9,6 +9,11 @@ import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, ScanOptionsSchema } from "../schemas.js";
+import { parseFeedPosts } from "./feed-parser.js";
+
+const MIN_REACTIONS_FOR_ENGAGEMENT = 5;
+const MIN_TEXT_LENGTH_FOR_SUBSTANCE = 100;
+const DEFAULT_OPPORTUNITY_SCORE = 0.7;
 
 /**
  * Scan the SuperColony feed for posts and opportunities.
@@ -51,12 +56,12 @@ export async function scan(
 function identifyOpportunities(posts: ScanPost[]): ScanOpportunity[] {
   const opportunities: ScanOpportunity[] = [];
   for (const post of posts) {
-    if (post.reactions.agree + post.reactions.disagree < 5 && post.text.length > 100) {
+    if (post.reactions.agree + post.reactions.disagree < MIN_REACTIONS_FOR_ENGAGEMENT && post.text.length > MIN_TEXT_LENGTH_FOR_SUBSTANCE) {
       opportunities.push({
         type: "reply",
         post,
         reason: "Low engagement post with substantive content",
-        score: 0.7,
+        score: DEFAULT_OPPORTUNITY_SCORE,
       });
     }
   }
@@ -72,27 +77,7 @@ async function fetchFeed(session: DemosSession, limit: number, domain?: string):
     throw new Error(`Feed API returned ${result.status}`);
   }
 
-  // Normalize response — feed API returns various shapes
-  const data = result.data as Record<string, unknown>;
-  const rawPosts = (data?.posts ?? data?.results ?? data?.items ?? data?.data ?? data) as unknown[];
-  if (!Array.isArray(rawPosts)) return [];
-
-  return rawPosts.map((p: unknown) => {
-    const post = p as Record<string, unknown>;
-    const payload = (post.payload ?? post) as Record<string, unknown>;
-    return {
-      txHash: String(post.txHash ?? ""),
-      text: String(payload.text ?? ""),
-      category: String(payload.cat ?? payload.category ?? ""),
-      author: String(post.sender ?? post.author ?? ""),
-      timestamp: Number(post.timestamp ?? 0),
-      reactions: {
-        agree: Number((post.reactions as Record<string, unknown>)?.agree ?? 0),
-        disagree: Number((post.reactions as Record<string, unknown>)?.disagree ?? 0),
-      },
-      tags: Array.isArray(payload.tags) ? payload.tags.map(String) : [],
-    };
-  });
+  return parseFeedPosts(result.data);
 }
 
 async function fetchFromSkillDojo(_session: DemosSession, _limit: number, _domain?: string): Promise<ScanPost[]> {

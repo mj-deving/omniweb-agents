@@ -31,6 +31,9 @@ export interface TxModule {
   broadcast(validity: unknown, demos: Demos): Promise<unknown>;
 }
 
+/** Error keywords indicating auth/rate-limit failures in DAHR proxy responses */
+const DAHR_ERROR_KEYWORDS = ["unauthorized", "forbidden", "rate limit", "api key", "access denied"] as const;
+
 // ── Types ───────────────────────────────────────────
 
 export interface DahrResult {
@@ -189,13 +192,7 @@ export function createSdkBridge(
         const errField = obj.error ?? obj.Error ?? obj.message ?? obj.detail;
         if (typeof errField === "string") {
           const errLower = errField.toLowerCase();
-          if (
-            errLower.includes("unauthorized") ||
-            errLower.includes("forbidden") ||
-            errLower.includes("rate limit") ||
-            errLower.includes("api key") ||
-            errLower.includes("access denied")
-          ) {
+          if (DAHR_ERROR_KEYWORDS.some(kw => errLower.includes(kw))) {
             throw new Error(`DAHR source returned error: "${errField}". URL: ${safeUrl}`);
           }
         }

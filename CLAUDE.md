@@ -12,14 +12,14 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **SDK:** `@kynesyslabs/demosdk` v2.11.5 (import `/websdk` subpath directly; also has `/d402`, `/storage`, `/tlsnotary/service`)
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `src/lib/llm-provider.ts` (Claude CLI, OpenAI API, OpenAI-compatible, any CLI)
-- **Testing:** vitest (`npm test`). 1552 tests across 106 suites. All code changes must include tests.
+- **Testing:** vitest (`npm test`). 1611 tests across 111 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). Legacy `.env` fallback. `--env` flag overrides.
 
 ## Project Structure
 
 See `docs/project-structure.md` for the full tree. Key boundaries:
 - **`src/`** — Core types + business logic. `src/types.ts` (FrameworkPlugin, Action, EventPlugin, DataProvider, Evaluator), `src/lib/` (shared utilities), `src/reactive/` (event loop, sources, handlers, watermarks), `src/actions/` (executor, LLM, publish pipeline), `src/plugins/` (plugin factories).
-- **`src/toolkit/`** — Framework-agnostic toolkit MVP (design doc: APPROVED). 10 tools (`tools/`), 6 guards (`guards/`), typed contracts (`types.ts`), `DemosSession` (`session.ts`), `FileStateStore` (`state-store.ts`). Barrel export: `src/toolkit/index.ts`. SDK bridge integration pending.
+- **`src/toolkit/`** — Framework-agnostic toolkit (design doc: APPROVED). 10 tools (`tools/`), 6 guards (`guards/`), typed contracts (`types.ts`), `DemosSession` (`session.ts`), `FileStateStore` (`state-store.ts`). SDK bridge (`sdk-bridge.ts`) wraps Demos SDK per session. SSRF validator (`url-validator.ts`) protects `attest()`/`pay()`. Barrel export: `src/toolkit/index.ts`.
 - **`cli/`** — CLI entry points (audit, gate, engage, publish, session-runner, event-runner, etc.)
 - **`platform/`** — SuperColony-specific barrel exports.
 - **`connectors/`** — SDK isolation (@kynesyslabs/demosdk bridge).

@@ -34,30 +34,48 @@ export async function tip(
     const bridge = session.getBridge();
     const memo = `HIVE_TIP:${opts.txHash}`;
 
-    // Resolve post author address from feed — requires SuperColony API
-    const feedResult = await bridge.apiCall("/api/feed?limit=50");
-    if (!feedResult.ok) {
-      return err(
-        demosError("NETWORK_ERROR", "Cannot resolve tip recipient: SuperColony feed API unavailable", true),
-        localProvenance(start),
-      );
+    // Resolve post author address — prefer chain (RPC) over feed API
+    let recipientAddress: string | null = null;
+
+    // Try RPC resolution first (trusted — on-chain data)
+    if (bridge.queryTransaction) {
+      try {
+        const txResult = await bridge.queryTransaction(opts.txHash);
+        if (txResult?.sender) {
+          recipientAddress = txResult.sender;
+        }
+      } catch {
+        // RPC failed — will fall back to feed API below
+      }
     }
-    const posts = ((feedResult.data as Record<string, unknown>)?.posts ?? feedResult.data) as unknown[];
-    const targetPost = Array.isArray(posts)
-      ? posts.find((p: unknown) => String((p as Record<string, unknown>).txHash ?? "") === opts.txHash)
-      : undefined;
-    if (!targetPost) {
-      return err(
-        demosError("INVALID_INPUT", `Post ${opts.txHash.slice(0, 16)}... not found in feed — cannot resolve recipient`, false),
-        localProvenance(start),
-      );
-    }
-    const recipientAddress = String((targetPost as Record<string, unknown>).sender ?? "");
+
+    // Fall back to feed API if RPC resolution failed
     if (!recipientAddress) {
-      return err(
-        demosError("INVALID_INPUT", `Post ${opts.txHash.slice(0, 16)}... has no sender address`, false),
-        localProvenance(start),
-      );
+      console.warn("[demos-toolkit] WARNING: Resolving tip recipient from feed API — RPC unavailable. Feed data is untrusted.");
+      const feedResult = await bridge.apiCall("/api/feed?limit=50");
+      if (!feedResult.ok) {
+        return err(
+          demosError("NETWORK_ERROR", "Cannot resolve tip recipient: SuperColony feed API unavailable", true),
+          localProvenance(start),
+        );
+      }
+      const posts = ((feedResult.data as Record<string, unknown>)?.posts ?? feedResult.data) as unknown[];
+      const targetPost = Array.isArray(posts)
+        ? posts.find((p: unknown) => String((p as Record<string, unknown>).txHash ?? "") === opts.txHash)
+        : undefined;
+      if (!targetPost) {
+        return err(
+          demosError("INVALID_INPUT", `Post ${opts.txHash.slice(0, 16)}... not found in feed — cannot resolve recipient`, false),
+          localProvenance(start),
+        );
+      }
+      recipientAddress = String((targetPost as Record<string, unknown>).sender ?? "");
+      if (!recipientAddress) {
+        return err(
+          demosError("INVALID_INPUT", `Post ${opts.txHash.slice(0, 16)}... has no sender address`, false),
+          localProvenance(start),
+        );
+      }
     }
 
     const result = await bridge.transferDem(recipientAddress, opts.amount, memo);

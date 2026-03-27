@@ -37,7 +37,7 @@ export class FileStateStore implements StateStore {
   async set(key: string, value: string): Promise<void> {
     await this.ensureDir();
     const path = this.keyPath(key);
-    await writeFile(path, value, "utf-8");
+    await writeFile(path, value, { encoding: "utf-8", mode: 0o600 });
   }
 
   async lock(key: string, ttlMs: number): Promise<Unlock> {

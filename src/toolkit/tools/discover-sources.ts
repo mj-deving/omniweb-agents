@@ -13,6 +13,7 @@ import type { DiscoverSourcesOptions, DiscoverSourcesResult, Source, ToolResult 
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { validateInput, DiscoverSourcesOptionsSchema } from "../schemas.js";
+import { safeParse } from "../guards/state-helpers.js";
 
 // Module-level catalog cache (keyed by path — catalog is static per process)
 const catalogCache = new Map<string, Source[]>();
@@ -77,7 +78,7 @@ async function loadCatalog(catalogPath: string): Promise<Source[]> {
   if (cached) return cached;
 
   const raw = await readFile(catalogPath, "utf-8");
-  const catalog = JSON.parse(raw);
+  const catalog = safeParse(raw);
 
   const entries = Array.isArray(catalog) ? catalog : catalog.sources ?? [];
   const sources: Source[] = entries.map((entry: Record<string, unknown>) => ({

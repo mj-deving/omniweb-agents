@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import type { PayOptions, PayResult, ToolResult } from "../types.js";
-import { ok, err, demosError } from "../types.js";
+import { ok, err, demosError, isDemosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { checkPaySpendCap, reservePaySpend } from "../guards/pay-spend-cap.js";
 import { makeIdempotencyKey, checkPayReceipt, recordPayReceipt } from "../guards/pay-receipt-log.js";
@@ -103,7 +103,7 @@ export async function pay(
     try {
       initialResponse = await fetchWithValidatedRedirects(session, opts.url, fetchOpts, urlCheck.resolvedIp);
     } catch (e) {
-      if (isDemosErrorLike(e)) {
+      if (isDemosError(e)) {
         return err(e, localProvenance(start));
       }
       return err(
@@ -202,7 +202,7 @@ export async function pay(
         },
       }, urlCheck.resolvedIp);
     } catch (e) {
-      if (isDemosErrorLike(e)) {
+      if (isDemosError(e)) {
         return err(e, localProvenance(start));
       }
       return err(
@@ -325,13 +325,4 @@ function stripPaymentProofOnCrossOriginRedirect(
   return nextHeaders;
 }
 
-function isDemosErrorLike(error: unknown): error is ReturnType<typeof demosError> {
-  return Boolean(
-    error
-    && typeof error === "object"
-    && "code" in error
-    && "message" in error
-    && "retryable" in error,
-  );
-}
 

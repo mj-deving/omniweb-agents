@@ -51,7 +51,7 @@ function createSession(tempDir: string, bridge: SdkBridge, payPolicy?: any) {
     signingHandle: { demos: {}, bridge },
     stateStore: new FileStateStore(tempDir),
     allowInsecureUrls: true, // skip HTTPS check for test URLs
-    payPolicy: payPolicy ?? { maxPerCall: 100, rolling24hCap: 1000 },
+    payPolicy: payPolicy ?? { maxPerCall: 100, rolling24hCap: 1000, requirePayeeApproval: false },
   });
 }
 

@@ -27,20 +27,20 @@ describe("connect() integration", () => {
     return walletPath;
   }
 
-  it("loads JSON wallet with address field", async () => {
+  it("loads JSON wallet and fails at SDK connect (not wallet parsing)", async () => {
     const walletPath = createWalletFile(JSON.stringify({
       address: "demos1abc123test",
       mnemonic: "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12",
     }));
 
-    // connect() will succeed at wallet loading but fail at SDK auth
-    // (no real RPC connection). We catch the auth error.
+    // Should fail at SDK connect (no real RPC), NOT at wallet parsing
     try {
       await connect({ walletPath });
+      // If it succeeds (e.g., SDK returns without error), that's fine too
     } catch (e: any) {
-      // Expected: SDK connection will fail without real RPC
-      // But wallet parsing should succeed (error comes after)
-      expect(e.code || e.message).toBeDefined();
+      // Error should be AUTH_FAILED (SDK connection), not INVALID_INPUT (wallet parsing)
+      expect(e.code).toBe("AUTH_FAILED");
+      expect(e.message).toContain("SDK connection failed");
     }
   });
 

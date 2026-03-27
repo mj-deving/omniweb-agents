@@ -37,19 +37,14 @@ export async function attest(
       );
     }
 
-    // SDK bridge attestation (requires connected session with Demos instance)
+    // SDK bridge attestation (withToolWrapper catches exceptions)
     // TODO(sdk-bridge): wire to session's SDK bridge once connect() creates it
-    try {
-      const result = await executeDahrAttestation(session, opts);
-      return ok<AttestResult>(result, {
-        path: "local",
-        latencyMs: Date.now() - start,
-        attestation: { txHash: result.txHash, responseHash: result.responseHash },
-      });
-    } catch (e) {
-      // Re-throw as ATTEST_FAILED (withToolWrapper catches this)
-      throw e;
-    }
+    const result = await executeDahrAttestation(session, opts);
+    return ok<AttestResult>(result, {
+      path: "local",
+      latencyMs: Date.now() - start,
+      attestation: { txHash: result.txHash, responseHash: result.responseHash },
+    });
   });
 }
 

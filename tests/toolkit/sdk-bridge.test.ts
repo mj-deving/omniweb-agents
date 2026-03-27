@@ -71,9 +71,38 @@ describe("SDK Bridge Adapter", () => {
 
     it("passes method to DAHR proxy", async () => {
       const result = await bridge.attestDahr("https://api.example.com/data", "POST");
-      // Verify createDahr was called (bridge uses the same mock)
       expect(demos.web2.createDahr).toHaveBeenCalled();
       expect(result.txHash).toBe("mock-tx-hash");
+    });
+
+    it("throws on non-2xx HTTP status from proxy", async () => {
+      demos.web2.createDahr = vi.fn(async () => ({
+        startProxy: vi.fn(async () => ({ status: 403, data: "{}" })),
+      }));
+      bridge = createSdkBridge(demos as any, "https://www.supercolony.ai", "token");
+      await expect(bridge.attestDahr("https://example.com")).rejects.toThrow("HTTP 403");
+    });
+
+    it("throws on XML/HTML response", async () => {
+      demos.web2.createDahr = vi.fn(async () => ({
+        startProxy: vi.fn(async () => ({
+          status: 200, data: "<html>Error</html>",
+          responseHash: "h", txHash: "t",
+        })),
+      }));
+      bridge = createSdkBridge(demos as any, "https://www.supercolony.ai", "token");
+      await expect(bridge.attestDahr("https://example.com")).rejects.toThrow("XML/HTML");
+    });
+
+    it("throws on error payload with unauthorized", async () => {
+      demos.web2.createDahr = vi.fn(async () => ({
+        startProxy: vi.fn(async () => ({
+          status: 200, data: JSON.stringify({ error: "Unauthorized access" }),
+          responseHash: "h", txHash: "t",
+        })),
+      }));
+      bridge = createSdkBridge(demos as any, "https://www.supercolony.ai", "token");
+      await expect(bridge.attestDahr("https://example.com")).rejects.toThrow("Unauthorized");
     });
   });
 
@@ -101,6 +130,31 @@ describe("SDK Bridge Adapter", () => {
           }),
         }),
       );
+    });
+
+    it("rejects absolute URLs to prevent SSRF", async () => {
+      const result = await bridge.apiCall("https://evil.com/steal");
+      expect(result.ok).toBe(false);
+      expect(result.data).toContain("relative paths");
+    });
+
+    it("does not attach auth token when auth is pending", async () => {
+      const { AUTH_PENDING_TOKEN } = await import("../../src/toolkit/sdk-bridge.js");
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        text: async () => "{}",
+      }));
+      const pendingBridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        AUTH_PENDING_TOKEN,
+        fetchMock as any,
+      );
+
+      await pendingBridge.apiCall("/api/feed");
+      const headers = (fetchMock.mock.calls[0][1] as any).headers;
+      expect(headers.Authorization).toBeUndefined();
     });
 
     it("returns parsed JSON response", async () => {

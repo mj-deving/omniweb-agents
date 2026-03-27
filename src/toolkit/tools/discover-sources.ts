@@ -29,6 +29,8 @@ const BUNDLED_CATALOG_PATH = resolve(
 
 /**
  * Discover available data sources from the bundled catalog.
+ *
+ * Session required for withToolWrapper integration — only sourceCatalogPath is used for logic.
  */
 export async function discoverSources(
   session: DemosSession,

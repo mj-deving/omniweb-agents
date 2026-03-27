@@ -58,11 +58,8 @@ export async function verify(
     }
 
     // Unreachable — the for loop always returns on its final iteration.
-    // TypeScript requires a return for completeness.
-    return err(
-      demosError("CONFIRM_TIMEOUT", "Verification exhausted all retries", true),
-      localProvenance(start),
-    );
+    // TypeScript requires a return statement for type completeness.
+    throw new Error("unreachable");
   });
 }
 

@@ -17,6 +17,7 @@ import { FileStateStore } from "../../../src/toolkit/state-store.js";
 import type { SdkBridge, D402SettlementResult } from "../../../src/toolkit/sdk-bridge.js";
 import { pay } from "../../../src/toolkit/tools/pay.js";
 import { checkPayReceipt, makeIdempotencyKey } from "../../../src/toolkit/guards/pay-receipt-log.js";
+import { validateUrl } from "../../../src/toolkit/url-validator.js";
 
 // Mock SSRF validator to pass all URLs in tests (DNS resolution would fail)
 vi.mock("../../../src/toolkit/url-validator.js", () => ({
@@ -76,10 +77,13 @@ const VALID_REQUIREMENT = {
 describe("pay() D402 flow", () => {
   let tempDir: string;
   let originalFetch: typeof globalThis.fetch;
+  const mockValidateUrl = vi.mocked(validateUrl);
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), "demos-d402-"));
     originalFetch = globalThis.fetch;
+    mockValidateUrl.mockReset();
+    mockValidateUrl.mockResolvedValue({ valid: true, resolvedIp: "1.2.3.4" });
   });
 
   afterEach(() => {
@@ -353,5 +357,164 @@ describe("pay() D402 flow", () => {
       expect.any(String),
       expect.objectContaining({ redirect: "manual" }),
     );
+  });
+
+  // 15. Redirect to blocked target is rejected
+  it("rejects redirects to blocked URLs", async () => {
+    const bridge = mockBridge();
+    const session = createSession(tempDir, bridge);
+
+    mockValidateUrl.mockImplementation(async (url: string) => {
+      if (url === "https://api.example.com/start") {
+        return { valid: true, resolvedIp: "1.2.3.4" };
+      }
+      if (url === "http://127.0.0.1/private") {
+        return { valid: false, reason: "Blocked: 127.0.0.0/8 loopback range" };
+      }
+      return { valid: true, resolvedIp: "1.2.3.4" };
+    });
+
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      mockResponse(302, "", { location: "http://127.0.0.1/private" }),
+    ));
+
+    const result = await pay(session, { url: "https://api.example.com/start", maxSpend: 10 });
+
+    expect(result.ok).toBe(false);
+    expect(result.error!.code).toBe("INVALID_INPUT");
+    expect(result.error!.message).toContain("Payment URL blocked");
+    expect(bridge.payD402).not.toHaveBeenCalled();
+  });
+
+  // 16. Valid redirect is followed manually
+  it("follows a valid redirect after validation", async () => {
+    const bridge = mockBridge();
+    const session = createSession(tempDir, bridge);
+
+    const mockFetch = vi.fn(async (url: string) => {
+      if (url === "https://api.example.com/start") {
+        return mockResponse(302, "", { location: "https://api.example.com/final" });
+      }
+      return mockResponse(200, { data: "redirected ok" });
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const result = await pay(session, { url: "https://api.example.com/start", maxSpend: 10 });
+
+    expect(result.ok).toBe(true);
+    expect(result.data!.response.status).toBe(200);
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://api.example.com/final",
+      expect.objectContaining({ redirect: "manual" }),
+    );
+    expect(mockValidateUrl).toHaveBeenCalledWith(
+      "https://api.example.com/final",
+      expect.objectContaining({ allowInsecure: true }),
+    );
+  });
+
+  // 17. Redirect hop limit is enforced
+  it("rejects redirect chains longer than 3 hops", async () => {
+    const bridge = mockBridge();
+    const session = createSession(tempDir, bridge);
+
+    const redirectChain = new Map<string, string>([
+      ["https://api.example.com/hop-1", "https://api.example.com/hop-2"],
+      ["https://api.example.com/hop-2", "https://api.example.com/hop-3"],
+      ["https://api.example.com/hop-3", "https://api.example.com/hop-4"],
+      ["https://api.example.com/hop-4", "https://api.example.com/hop-5"],
+    ]);
+
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const nextUrl = redirectChain.get(url);
+      if (nextUrl) return mockResponse(302, "", { location: nextUrl });
+      return mockResponse(200, { data: "too late" });
+    }));
+
+    const result = await pay(session, { url: "https://api.example.com/hop-1", maxSpend: 10 });
+
+    expect(result.ok).toBe(false);
+    expect(result.error!.code).toBe("INVALID_INPUT");
+    expect(result.error!.message).toContain("Too many redirects");
+    expect(bridge.payD402).not.toHaveBeenCalled();
+  });
+
+  // 18. Proof is stripped on cross-origin retry redirect
+  it("strips X-Payment-Proof when retry redirect changes origin", async () => {
+    const bridge = mockBridge();
+    const session = createSession(tempDir, bridge);
+    const seenProofHeaders: Array<string | null> = [];
+
+    const mockFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      seenProofHeaders.push(headers.get("X-Payment-Proof"));
+
+      if (url === "https://api.example.com/premium") {
+        if (headers.has("X-Payment-Proof")) {
+          return mockResponse(307, "", { location: "https://cdn.example.net/protected" });
+        }
+        return mockResponse(402, VALID_REQUIREMENT);
+      }
+
+      return mockResponse(200, { data: "redirected premium" });
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const result = await pay(session, { url: "https://api.example.com/premium", maxSpend: 10 });
+
+    expect(result.ok).toBe(true);
+    expect(result.data!.response.status).toBe(200);
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      3,
+      "https://cdn.example.net/protected",
+      expect.objectContaining({ redirect: "manual" }),
+    );
+    expect(seenProofHeaders).toEqual([null, "d402-tx-abc123", null]);
+  });
+
+  // 19. Concurrent settlement is serialized per wallet
+  it("serializes D402 settlement for concurrent pay() calls on the same session", async () => {
+    let settleCalls = 0;
+    let releaseFirstSettlement!: () => void;
+    const firstSettlementReleased = new Promise<void>((resolve) => {
+      releaseFirstSettlement = resolve;
+    });
+
+    const bridge = mockBridge({
+      payD402: vi.fn(async (): Promise<D402SettlementResult> => {
+        settleCalls++;
+        if (settleCalls === 1) {
+          await firstSettlementReleased;
+        }
+        return { success: true, hash: `d402-tx-${settleCalls}` };
+      }),
+    });
+    const session = createSession(tempDir, bridge);
+
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      const proof = new Headers(init?.headers).get("X-Payment-Proof");
+      if (proof) {
+        return mockResponse(200, { data: `premium:${proof}` });
+      }
+      return mockResponse(402, VALID_REQUIREMENT);
+    }));
+
+    const firstPromise = pay(session, { url: "https://api.example.com/premium-a", maxSpend: 10 });
+    const secondPromise = pay(session, { url: "https://api.example.com/premium-b", maxSpend: 10 });
+
+    await vi.waitFor(() => {
+      expect(bridge.payD402).toHaveBeenCalledTimes(1);
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(bridge.payD402).toHaveBeenCalledTimes(1);
+
+    releaseFirstSettlement();
+
+    const [first, second] = await Promise.all([firstPromise, secondPromise]);
+    expect(first.ok).toBe(true);
+    expect(second.ok).toBe(true);
+    expect(bridge.payD402).toHaveBeenCalledTimes(2);
   });
 });

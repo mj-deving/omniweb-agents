@@ -8,6 +8,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createSdkBridge } from "../../src/toolkit/sdk-bridge.js";
 import type { SdkBridge } from "../../src/toolkit/sdk-bridge.js";
 
+// Mock DemosTransactions (static methods)
+const mockDemosTransactions = {
+  store: vi.fn(async () => ({ type: "store", data: "encoded" })),
+  confirm: vi.fn(async () => ({
+    response: { data: { transaction: { hash: "mock-confirm-hash" } } },
+  })),
+  broadcast: vi.fn(async () => ({
+    response: { results: { tx1: { hash: "mock-broadcast-hash" } } },
+  })),
+};
+
 // Mock Demos instance
 function mockDemos() {
   return {
@@ -27,6 +38,9 @@ function mockDemos() {
     },
     sendTransaction: vi.fn(async () => ({
       hash: "mock-send-tx-hash",
+    })),
+    transfer: vi.fn(async (to: string, amount: number, memo: string) => ({
+      hash: "mock-transfer-hash",
     })),
   };
 }
@@ -157,7 +171,7 @@ describe("SDK Bridge Adapter", () => {
       expect(headers.Authorization).toBeUndefined();
     });
 
-    it("returns parsed JSON response", async () => {
+    it("returns parsed JSON response (the last apiCall test)", async () => {
       const fetchMock = vi.fn(async () => ({
         ok: true,
         status: 200,
@@ -173,6 +187,94 @@ describe("SDK Bridge Adapter", () => {
       const result = await bridgeWithFetch.apiCall("/api/feed?limit=50");
       expect(result.ok).toBe(true);
       expect(result.data.posts).toHaveLength(1);
+    });
+  });
+
+  describe("publishHivePost", () => {
+    it("encodes HIVE prefix + JSON and stores on chain", async () => {
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        mockDemosTransactions as any,
+      );
+
+      const result = await bridge.publishHivePost({
+        text: "BTC at 100k",
+        category: "ANALYSIS",
+        tags: ["crypto"],
+        confidence: 80,
+        sourceAttestations: [{ url: "https://api.coingecko.com", responseHash: "abc", txHash: "def" }],
+      });
+
+      expect(result.txHash).toBe("mock-confirm-hash");
+      expect(mockDemosTransactions.store).toHaveBeenCalled();
+      expect(mockDemosTransactions.confirm).toHaveBeenCalled();
+      expect(mockDemosTransactions.broadcast).toHaveBeenCalled();
+    });
+
+    it("extracts txHash from confirm response", async () => {
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        mockDemosTransactions as any,
+      );
+
+      const result = await bridge.publishHivePost({
+        text: "Test post",
+        category: "UPDATE",
+      });
+
+      expect(typeof result.txHash).toBe("string");
+      expect(result.txHash.length).toBeGreaterThan(0);
+    });
+
+    it("includes replyTo when provided", async () => {
+      const localTxMock = {
+        store: vi.fn(async () => ({ type: "store" })),
+        confirm: vi.fn(async () => ({
+          response: { data: { transaction: { hash: "reply-hash" } } },
+        })),
+        broadcast: vi.fn(async () => ({})),
+      };
+
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        localTxMock as any,
+      );
+
+      await bridge.publishHivePost({
+        text: "Reply text",
+        category: "ANALYSIS",
+        replyTo: "parent-tx-abc",
+      });
+
+      // Verify store was called with encoded data containing replyTo
+      const storeCall = localTxMock.store.mock.calls[0];
+      const encoded = storeCall[0] as Uint8Array;
+      const decoded = new TextDecoder().decode(encoded.slice(4)); // skip HIVE prefix
+      const parsed = JSON.parse(decoded);
+      expect(parsed.replyTo).toBe("parent-tx-abc");
+    });
+  });
+
+  describe("transferDem", () => {
+    it("calls demos.transfer with recipient, amount, and memo", async () => {
+      const result = await bridge.transferDem("demos1recipient", 5, "HIVE_TIP:tx123");
+
+      expect(result.txHash).toBeDefined();
+      expect(demos.transfer).toHaveBeenCalledWith("demos1recipient", 5, "HIVE_TIP:tx123");
+    });
+
+    it("returns txHash from transfer response", async () => {
+      const result = await bridge.transferDem("demos1recipient", 3, "memo");
+      expect(result.txHash).toBe("mock-transfer-hash");
     });
   });
 });

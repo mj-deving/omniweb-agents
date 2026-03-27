@@ -123,9 +123,9 @@ function checkBlockedIpv4(ip: string): string | null {
 
   const [a, b, c, d] = parts;
 
-  // 0.0.0.0
-  if (a === 0 && b === 0 && c === 0 && d === 0) {
-    return "Blocked: 0.0.0.0 (blocked address)";
+  // 0.0.0.0/8 ("this" network, RFC 1122)
+  if (a === 0) {
+    return "Blocked: 0.0.0.0/8 ('this' network)";
   }
 
   // 127.0.0.0/8 (loopback)
@@ -151,6 +151,21 @@ function checkBlockedIpv4(ip: string): string | null {
   // 169.254.0.0/16 (link-local / cloud metadata)
   if (a === 169 && b === 254) {
     return "Blocked: 169.254.0.0/16 link-local/cloud metadata range";
+  }
+
+  // 100.64.0.0/10 (CGNAT, RFC 6598) — can reach internal services in cloud
+  if (a === 100 && b >= 64 && b <= 127) {
+    return "Blocked: 100.64.0.0/10 CGNAT range";
+  }
+
+  // 198.18.0.0/15 (benchmarking, RFC 2544)
+  if (a === 198 && (b === 18 || b === 19)) {
+    return "Blocked: 198.18.0.0/15 benchmarking range";
+  }
+
+  // 240.0.0.0/4 (reserved, RFC 1112)
+  if (a >= 240) {
+    return "Blocked: 240.0.0.0/4 reserved range";
   }
 
   return null;

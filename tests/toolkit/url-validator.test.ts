@@ -71,10 +71,16 @@ describe("URL Validator — SSRF Protection", () => {
       expect(result.reason).toContain("loopback");
     });
 
-    it("blocks 0.0.0.0", async () => {
+    it("blocks 0.0.0.0/8 ('this' network)", async () => {
       const result = await validateUrl("https://0.0.0.0/api", { resolveOverride: "0.0.0.0" });
       expect(result.valid).toBe(false);
-      expect(result.reason).toContain("blocked");
+      expect(result.reason).toContain("network");
+    });
+
+    it("blocks 0.1.2.3 (entire 0/8 range)", async () => {
+      const result = await validateUrl("https://0.1.2.3/api", { resolveOverride: "0.1.2.3" });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("network");
     });
   });
 
@@ -109,6 +115,37 @@ describe("URL Validator — SSRF Protection", () => {
       const result = await validateUrl("https://example.com/api", { resolveOverride: "::ffff:169.254.169.254" });
       expect(result.valid).toBe(false);
       expect(result.reason).toContain("metadata");
+    });
+  });
+
+  describe("CGNAT and reserved ranges", () => {
+    it("blocks 100.64.0.0/10 (CGNAT)", async () => {
+      const result = await validateUrl("https://100.64.0.1/api", { resolveOverride: "100.64.0.1" });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("CGNAT");
+    });
+
+    it("blocks 100.127.255.255 (upper CGNAT)", async () => {
+      const result = await validateUrl("https://100.127.255.255/api", { resolveOverride: "100.127.255.255" });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("CGNAT");
+    });
+
+    it("allows 100.128.0.1 (outside CGNAT)", async () => {
+      const result = await validateUrl("https://example.com/api", { resolveOverride: "100.128.0.1" });
+      expect(result.valid).toBe(true);
+    });
+
+    it("blocks 240.0.0.0/4 (reserved)", async () => {
+      const result = await validateUrl("https://240.0.0.1/api", { resolveOverride: "240.0.0.1" });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("reserved");
+    });
+
+    it("blocks 198.18.0.0/15 (benchmarking)", async () => {
+      const result = await validateUrl("https://198.18.0.1/api", { resolveOverride: "198.18.0.1" });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("benchmarking");
     });
   });
 

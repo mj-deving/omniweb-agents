@@ -10,6 +10,9 @@
 
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 
+/** Sentinel token indicating auth has not completed — never sent as Bearer */
+export const AUTH_PENDING_TOKEN = "__AUTH_PENDING__";
+
 // ── Types ───────────────────────────────────────────
 
 export interface DahrResult {
@@ -109,23 +112,22 @@ export function createSdkBridge(
     },
 
     async apiCall(path: string, options: RequestInit = {}): Promise<ApiCallResult> {
-      const url = path.startsWith("http") ? path : `${apiBaseUrl}${path}`;
+      // Restrict to relative SuperColony API paths — absolute URLs are not allowed
+      // to prevent SSRF and token leakage via attacker-controlled URLs
+      if (path.startsWith("http://") || path.startsWith("https://")) {
+        return { ok: false, status: 0, data: "apiCall only accepts relative paths (e.g., '/api/feed')" };
+      }
+
+      const url = `${apiBaseUrl}${path}`;
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         ...(options.headers as Record<string, string> || {}),
       };
 
-      // Attach auth token only to SuperColony API requests
-      if (!path.startsWith("http")) {
+      // Always attach auth token — all paths are relative to SuperColony API
+      if (authToken !== AUTH_PENDING_TOKEN) {
         headers["Authorization"] = `Bearer ${authToken}`;
-      } else {
-        try {
-          const origin = new URL(url).origin;
-          if (origin === apiBaseUrl || origin === new URL(apiBaseUrl).origin) {
-            headers["Authorization"] = `Bearer ${authToken}`;
-          }
-        } catch { /* malformed URL — don't attach token */ }
       }
 
       try {
@@ -145,7 +147,11 @@ export function createSdkBridge(
 
     async signAndBroadcast(txData: unknown): Promise<{ hash: string }> {
       const result = await (demos as any).sendTransaction(txData);
-      return { hash: result.hash ?? result.txHash ?? "" };
+      const hash = result.hash ?? result.txHash;
+      if (!hash) {
+        throw new Error("Transaction broadcast succeeded but returned no hash");
+      }
+      return { hash };
     },
 
     getDemos(): Demos {

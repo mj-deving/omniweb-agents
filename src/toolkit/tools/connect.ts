@@ -15,7 +15,7 @@ import type { ConnectOptions } from "../types.js";
 import { demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { FileStateStore } from "../state-store.js";
-import { createSdkBridge } from "../sdk-bridge.js";
+import { createSdkBridge, AUTH_PENDING_TOKEN } from "../sdk-bridge.js";
 
 const DEFAULT_RPC_URL = "https://demosnode.discus.sh";
 const DEFAULT_ALGORITHM = "falcon";
@@ -146,10 +146,19 @@ function parseWallet(content: string): WalletData {
     }
 
     // Try key=value format (DEMOS_MNEMONIC=word1 word2 ...)
-    const mnemonicMatch = content.match(/DEMOS_MNEMONIC=["']?(.+?)["']?\s*$/m);
+    const mnemonicMatch = content.match(/^DEMOS_MNEMONIC=["']?(.+?)["']?\s*$/m);
     if (mnemonicMatch) {
+      const mnemonic = mnemonicMatch[1].trim();
+      const wordCount = mnemonic.split(/\s+/).length;
+      if (wordCount < 12 || wordCount > 24) {
+        throw demosError(
+          "INVALID_INPUT",
+          `DEMOS_MNEMONIC has ${wordCount} words (expected 12-24)`,
+          false,
+        );
+      }
       return {
-        mnemonic: mnemonicMatch[1],
+        mnemonic,
         signingHandle: content,
       };
     }
@@ -209,7 +218,7 @@ async function connectSdk(
       authToken = await ensureAuth(demos, address);
     } catch {
       // Auth may fail if SuperColony API is down — return pending token
-      authToken = "auth-pending";
+      authToken = AUTH_PENDING_TOKEN;
     }
 
     return { demos, address, authToken };

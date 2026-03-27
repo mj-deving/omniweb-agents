@@ -142,6 +142,16 @@ export const PayOptionsSchema = z.object({
   asset: z.string().optional(),
 });
 
+// ── D402 Protocol Schemas ───────────────────────────
+
+/** Validate 402 response body shape */
+export const D402RequirementSchema = z.object({
+  amount: z.number().positive().finite(),
+  recipient: z.string().min(1),
+  resourceId: z.string().min(1),
+  description: z.string().optional(),
+});
+
 // ── Validation Helper ────────────────────────────────
 
 /**

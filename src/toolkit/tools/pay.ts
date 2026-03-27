@@ -4,7 +4,6 @@
  * Guards: maxSpend per-call (required), rolling 24h cap, receipt dedup.
  */
 
-import { z } from "zod";
 import type { PayOptions, PayResult, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
@@ -12,15 +11,7 @@ import { checkPaySpendCap, reservePaySpend } from "../guards/pay-spend-cap.js";
 import { makeIdempotencyKey, checkPayReceipt, recordPayReceipt } from "../guards/pay-receipt-log.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateUrl, createPinnedFetch } from "../url-validator.js";
-import { validateInput, PayOptionsSchema } from "../schemas.js";
-
-/** Validate 402 response body shape */
-const D402RequirementSchema = z.object({
-  amount: z.number().positive().finite(),
-  recipient: z.string().min(1),
-  resourceId: z.string().min(1),
-  description: z.string().optional(),
-});
+import { validateInput, PayOptionsSchema, D402RequirementSchema } from "../schemas.js";
 
 const MAX_REDIRECT_HOPS = 3;
 

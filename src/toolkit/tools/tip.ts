@@ -5,7 +5,7 @@
 import type { TipOptions, TipResult, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
-import { checkTipSpendCap, recordTip } from "../guards/tip-spend-cap.js";
+import { checkAndRecordTip } from "../guards/tip-spend-cap.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, TipOptionsSchema } from "../schemas.js";
 
@@ -20,12 +20,13 @@ export async function tip(
     const inputError = validateInput(TipOptionsSchema, opts);
     if (inputError) return err(inputError, localProvenance(start));
 
-    const capError = await checkTipSpendCap(
+    const capError = await checkAndRecordTip(
       session.stateStore,
       session.walletAddress,
       opts.txHash,
       opts.amount,
       session.tipPolicy,
+      false, // check only — record after successful transfer
     );
     if (capError) {
       return err(capError, localProvenance(start));
@@ -83,7 +84,14 @@ export async function tip(
 
     const result = await bridge.transferDem(recipientAddress, opts.amount, memo);
 
-    await recordTip(session.stateStore, session.walletAddress, opts.txHash, opts.amount);
+    await checkAndRecordTip(
+      session.stateStore,
+      session.walletAddress,
+      opts.txHash,
+      opts.amount,
+      session.tipPolicy,
+      true, // record after successful transfer
+    );
 
     return ok<TipResult>({ txHash: result.txHash }, localProvenance(start));
   });

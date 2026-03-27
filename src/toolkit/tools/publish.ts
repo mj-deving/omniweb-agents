@@ -8,8 +8,8 @@
 import type { PublishDraft, ReplyOptions, PublishResult, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
-import { checkWriteRateLimit, recordWrite } from "../guards/write-rate-limit.js";
-import { checkDedup, recordPublish as recordDedupPublish } from "../guards/dedup-guard.js";
+import { checkAndRecordWrite } from "../guards/write-rate-limit.js";
+import { checkAndRecordDedup } from "../guards/dedup-guard.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, PublishDraftSchema, ReplyOptionsSchema } from "../schemas.js";
 import { validateUrl } from "../url-validator.js";
@@ -29,8 +29,8 @@ export async function publish(
 
     // Check guards first (no mutation — safe to reject without side effects)
     const [rateLimitError, dedupError] = await Promise.all([
-      checkWriteRateLimit(session.stateStore, session.walletAddress),
-      checkDedup(session.stateStore, session.walletAddress, draft.text),
+      checkAndRecordWrite(session.stateStore, session.walletAddress, false),
+      checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, false),
     ]);
 
     if (rateLimitError) return err(rateLimitError, localProvenance(start));
@@ -41,8 +41,8 @@ export async function publish(
 
     // Record only after pipeline commits (prevents false entries on failure)
     await Promise.all([
-      recordWrite(session.stateStore, session.walletAddress),
-      recordDedupPublish(session.stateStore, session.walletAddress, draft.text),
+      checkAndRecordWrite(session.stateStore, session.walletAddress, true),
+      checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, true),
     ]);
 
     return ok<PublishResult>(

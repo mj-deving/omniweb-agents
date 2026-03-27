@@ -129,7 +129,7 @@ export function createSdkBridge(
   // Closure-scoped lazy loaders — avoids module-level shared mutable state
   let cachedTxModule: TxModule | null = txModule ?? null;
   let cachedD402Client: unknown = null;
-  async function getTxModule(): Promise<TxModule> {
+  async function loadTxModule(): Promise<TxModule> {
     if (cachedTxModule) return cachedTxModule;
     const { DemosTransactions } = await import("@kynesyslabs/demosdk/websdk");
     cachedTxModule = DemosTransactions as TxModule;
@@ -247,7 +247,7 @@ export function createSdkBridge(
 
     async publishHivePost(post: HivePost): Promise<{ txHash: string }> {
       // Lazy-import DemosTransactions or use injected mock
-      const tx = txModule ?? await getTxModule();
+      const tx = txModule ?? await loadTxModule();
 
       // Construct HIVE post object
       const hivePost: Record<string, unknown> = {

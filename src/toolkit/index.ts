@@ -77,12 +77,14 @@ export { pay } from "./tools/pay.js";
 // ── Guards (exposed for testing and advanced consumers) ──
 
 export {
+  checkAndRecordWrite,
   checkWriteRateLimit,
   recordWrite,
   getWriteRateRemaining,
 } from "./guards/write-rate-limit.js";
 
 export {
+  checkAndRecordTip,
   checkTipSpendCap,
   recordTip,
 } from "./guards/tip-spend-cap.js";
@@ -90,9 +92,11 @@ export {
 export {
   checkPaySpendCap,
   recordPayment,
+  reservePaySpend,
 } from "./guards/pay-spend-cap.js";
 
 export {
+  checkAndRecordDedup,
   checkDedup,
   recordPublish,
 } from "./guards/dedup-guard.js";

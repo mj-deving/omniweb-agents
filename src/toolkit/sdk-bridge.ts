@@ -44,6 +44,22 @@ export interface HivePost {
   }>;
 }
 
+/** D402 payment requirement from 402 response */
+export interface D402PaymentRequirement {
+  amount: number;
+  recipient: string;
+  resourceId: string;
+  description?: string;
+}
+
+/** D402 settlement result */
+export interface D402SettlementResult {
+  success: boolean;
+  hash: string;
+  blockNumber?: number;
+  message?: string;
+}
+
 export interface SdkBridge {
   /** Create a DAHR attestation for a URL */
   attestDahr(url: string, method?: string): Promise<DahrResult>;
@@ -59,6 +75,9 @@ export interface SdkBridge {
 
   /** Transfer DEM tokens to a recipient */
   transferDem(to: string, amount: number, memo: string): Promise<{ txHash: string }>;
+
+  /** Settle a D402 payment (createPayment + settle, nonce-safe) */
+  payD402(requirement: D402PaymentRequirement): Promise<D402SettlementResult>;
 
   /** Get the underlying Demos instance (for direct SDK access when needed) */
   getDemos(): Demos;
@@ -255,6 +274,18 @@ export function createSdkBridge(
         throw new Error("DEM transfer succeeded but txHash not found in response");
       }
       return { txHash: String(txHash) };
+    },
+
+    async payD402(requirement: D402PaymentRequirement): Promise<D402SettlementResult> {
+      try {
+        const { D402Client } = await import("@kynesyslabs/demosdk/d402/client");
+        const client = new D402Client(demos);
+        const payment = await client.createPayment(requirement);
+        return await client.settle(payment);
+      } catch (e) {
+        if ((e as any)?.success === false) throw e; // already a D402SettlementResult-shaped error
+        throw new Error(`D402 settlement failed: ${(e as Error).message}`);
+      }
     },
 
     getDemos(): Demos {

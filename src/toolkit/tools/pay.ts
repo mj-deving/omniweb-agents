@@ -9,12 +9,13 @@ import { ok, err, demosError, isDemosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { checkPaySpendCap, reservePaySpend } from "../guards/pay-spend-cap.js";
 import { makeIdempotencyKey, checkPayReceipt, recordPayReceipt } from "../guards/pay-receipt-log.js";
-import { withToolWrapper, localProvenance, isDemosErrorLike } from "./tool-wrapper.js";
+import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateUrl, createPinnedFetch } from "../url-validator.js";
 import { validateInput, PayOptionsSchema, D402RequirementSchema } from "../schemas.js";
 import { safeParse } from "../guards/state-helpers.js";
 
 const MAX_REDIRECT_HOPS = 3;
+const FEED_LIMIT = 50;
 
 /**
  * Make an HTTP request with automatic D402 payment on 402 responses.

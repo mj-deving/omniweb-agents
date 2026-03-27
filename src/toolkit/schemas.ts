@@ -116,7 +116,6 @@ export const TipOptionsSchema = z.object({
 export const ScanOptionsSchema = z.object({
   domain: z.string().optional(),
   limit: z.number().int().positive().optional(),
-  filters: z.record(z.string(), z.unknown()).optional(),
 }).optional();
 
 export const VerifyOptionsSchema = z.object({
@@ -125,7 +124,6 @@ export const VerifyOptionsSchema = z.object({
 
 export const AttestOptionsSchema = z.object({
   url: nonEmptyString,    // NOT .url() — SSRF validator in attest.ts owns URL parsing
-  claimType: z.string().optional(),
 });
 
 export const DiscoverSourcesOptionsSchema = z.object({

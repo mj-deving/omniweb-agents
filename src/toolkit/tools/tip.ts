@@ -10,6 +10,9 @@ import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, TipOptionsSchema } from "../schemas.js";
 import { parseFeedPosts } from "./feed-parser.js";
 
+const RPC_RESOLUTION_TIMEOUT_MS = 5_000;
+const FEED_LIMIT = 50;
+
 /**
  * Tip DEM to a post author. Guards: max per-tip, max per-post, cooldown.
  */
@@ -44,7 +47,7 @@ export async function tip(
       try {
         const txResult = await Promise.race([
           bridge.queryTransaction(opts.txHash),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5_000)),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), RPC_RESOLUTION_TIMEOUT_MS)),
         ]);
         if (txResult?.sender) {
           recipientAddress = txResult.sender;
@@ -57,7 +60,7 @@ export async function tip(
     // Fall back to feed API if RPC resolution failed
     if (!recipientAddress) {
       console.warn("[demos-toolkit] WARNING: Resolving tip recipient from feed API — RPC unavailable. Feed data is untrusted.");
-      const feedResult = await bridge.apiCall("/api/feed?limit=50");
+      const feedResult = await bridge.apiCall(`/api/feed?limit=${FEED_LIMIT}`);
       if (!feedResult.ok) {
         return err(
           demosError("NETWORK_ERROR", "Cannot resolve tip recipient: SuperColony feed API unavailable", true),

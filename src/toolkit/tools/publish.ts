@@ -29,37 +29,45 @@ export async function publish(
     const inputError = validateInput(PublishDraftSchema, draft);
     if (inputError) return err(inputError, localProvenance(start));
 
-    // Check guards first (no mutation — safe to reject without side effects)
-    const [rateLimitError, dedupError] = await Promise.all([
-      checkAndRecordWrite(session.stateStore, session.walletAddress, false),
-      checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, false),
-    ]);
-
-    if (rateLimitError) return err(rateLimitError, localProvenance(start));
-    if (dedupError) return err(dedupError, localProvenance(start));
-
-    const { txHash, responseHash } = await executePublishPipeline(session, draft);
-
-    // Record only after pipeline commits (prevents false entries on failure)
-    await Promise.all([
-      checkAndRecordWrite(session.stateStore, session.walletAddress, true),
-      checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, true),
-    ]);
-
-    return ok<PublishResult>(
-      { txHash },
-      {
-        path: "local",
-        latencyMs: Date.now() - start,
-        attestation: { txHash, responseHash },
-      },
-    );
+    return guardAndPublish(session, draft, start);
   });
 }
 
+/** Shared guard check → pipeline → guard record flow for publish and reply */
+async function guardAndPublish(
+  session: DemosSession,
+  draft: PublishDraft,
+  start: number,
+): Promise<ToolResult<PublishResult>> {
+  // Check guards first (no mutation — safe to reject without side effects)
+  const [rateLimitError, dedupError] = await Promise.all([
+    checkAndRecordWrite(session.stateStore, session.walletAddress, false),
+    checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, false),
+  ]);
+
+  if (rateLimitError) return err(rateLimitError, localProvenance(start));
+  if (dedupError) return err(dedupError, localProvenance(start));
+
+  const { txHash, responseHash } = await executePublishPipeline(session, draft);
+
+  // Record only after pipeline commits (prevents false entries on failure)
+  await Promise.all([
+    checkAndRecordWrite(session.stateStore, session.walletAddress, true),
+    checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, true),
+  ]);
+
+  return ok<PublishResult>(
+    { txHash },
+    {
+      path: "local",
+      latencyMs: Date.now() - start,
+      attestation: { txHash, responseHash },
+    },
+  );
+}
+
 /**
- * Reply to an existing post. Thin wrapper around publish() with threading.
- * Delegates entirely to publish() which handles touch/timing via withToolWrapper.
+ * Reply to an existing post. Routes through the same guard + pipeline flow as publish().
  */
 export async function reply(
   session: DemosSession,
@@ -69,7 +77,6 @@ export async function reply(
     const inputError = validateInput(ReplyOptionsSchema, opts);
     if (inputError) return err(inputError, localProvenance(start));
 
-    // Delegate to publish's internal pipeline (skip outer publish wrapper to avoid double-wrapping)
     const draft: PublishDraft = {
       text: opts.text,
       category: opts.category ?? "ANALYSIS",
@@ -77,32 +84,7 @@ export async function reply(
       attestUrl: opts.attestUrl,
     };
 
-    const draftError = validateInput(PublishDraftSchema, draft);
-    if (draftError) return err(draftError, localProvenance(start));
-
-    const [rateLimitError, dedupError] = await Promise.all([
-      checkAndRecordWrite(session.stateStore, session.walletAddress, false),
-      checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, false),
-    ]);
-
-    if (rateLimitError) return err(rateLimitError, localProvenance(start));
-    if (dedupError) return err(dedupError, localProvenance(start));
-
-    const { txHash, responseHash } = await executePublishPipeline(session, draft);
-
-    await Promise.all([
-      checkAndRecordWrite(session.stateStore, session.walletAddress, true),
-      checkAndRecordDedup(session.stateStore, session.walletAddress, draft.text, true),
-    ]);
-
-    return ok<PublishResult>(
-      { txHash },
-      {
-        path: "local",
-        latencyMs: Date.now() - start,
-        attestation: { txHash, responseHash },
-      },
-    );
+    return guardAndPublish(session, draft, start);
   });
 }
 

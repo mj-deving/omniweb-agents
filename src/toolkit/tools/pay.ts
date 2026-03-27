@@ -251,7 +251,10 @@ export async function pay(
 async function safeReadBody(response: Response): Promise<unknown> {
   try {
     const text = await response.text();
-    try { return JSON.parse(text); } catch { return text; }
+    try {
+      const { safeParse } = await import("../guards/state-helpers.js");
+      return safeParse(text);
+    } catch { return text; }
   } catch { return null; }
 }
 
@@ -265,10 +268,9 @@ async function fetchWithValidatedRedirects(
   let currentHeaders = new Headers(init.headers);
   let redirectsFollowed = 0;
   let currentPinnedIp = pinnedIp;
+  let fetchFn: typeof fetch = currentPinnedIp ? createPinnedFetch(currentPinnedIp) : fetch;
 
   while (true) {
-    // Use pinned fetch if we have a resolved IP (prevents DNS rebinding)
-    const fetchFn = currentPinnedIp ? createPinnedFetch(currentPinnedIp) : fetch;
     const response = await fetchFn(currentUrl, {
       ...init,
       headers: currentHeaders,
@@ -297,7 +299,10 @@ async function fetchWithValidatedRedirects(
     }
 
     // Re-pin DNS for the redirect target
-    currentPinnedIp = urlCheck.resolvedIp;
+    if (urlCheck.resolvedIp && urlCheck.resolvedIp !== currentPinnedIp) {
+      currentPinnedIp = urlCheck.resolvedIp;
+      fetchFn = createPinnedFetch(currentPinnedIp);
+    }
     currentHeaders = stripPaymentProofOnCrossOriginRedirect(currentUrl, nextUrl, currentHeaders);
     currentUrl = nextUrl;
     redirectsFollowed++;
@@ -330,5 +335,3 @@ function isDemosErrorLike(error: unknown): error is ReturnType<typeof demosError
   );
 }
 
-// withWalletSettlementLock removed — replaced by atomic reservePaySpend
-// which holds the spend cap lock during the entire check→settle→record flow.

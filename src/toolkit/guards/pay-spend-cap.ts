@@ -5,6 +5,7 @@
  * or process restart. File-persisted with timestamps.
  */
 
+import { randomUUID } from "node:crypto";
 import type { StateStore, DemosError, PayPolicy } from "../types.js";
 import { demosError } from "../types.js";
 import { stateKey, checkAndAppend, loadState, GUARD_LOCK_TTL_MS } from "./state-helpers.js";
@@ -15,6 +16,7 @@ interface PayEntry {
   timestamp: number;
   amount: number;
   url: string;
+  reservationId?: string;
 }
 
 interface PaySpendState {
@@ -131,21 +133,18 @@ export async function reservePaySpend(
       };
     }
 
-    // Reserve: append entry optimistically
-    const entry: PayEntry = { timestamp: now, amount, url };
+    // Reserve: append entry with unique ID for collision-free rollback
+    const resId = randomUUID();
+    const entry: PayEntry = { timestamp: now, amount, url, reservationId: resId };
     state.entries.push(entry);
     await store.set(key, JSON.stringify(state));
     await unlock();
 
-    // Return rollback function that removes this specific entry
     const rollback = async () => {
       const rollbackUnlock = await store.lock(key, GUARD_LOCK_TTL_MS);
       try {
         const current = await loadState<PaySpendState>(store, key, DEFAULT_STATE);
-        // Remove the entry we added (match by timestamp + amount + url)
-        const idx = current.entries.findIndex(
-          (e) => e.timestamp === entry.timestamp && e.amount === entry.amount && e.url === entry.url,
-        );
+        const idx = current.entries.findIndex((e) => e.reservationId === resId);
         if (idx !== -1) {
           current.entries.splice(idx, 1);
           await store.set(key, JSON.stringify(current));

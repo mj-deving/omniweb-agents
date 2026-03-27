@@ -78,22 +78,9 @@ export async function checkAndAppend<TState extends { entries: TEntry[] }, TEntr
  * Drop-in replacement for JSON.parse in security-sensitive paths.
  */
 export function safeParse(raw: string): unknown {
-  const parsed = JSON.parse(raw);
-  if (parsed && typeof parsed === "object") {
-    sanitizeProto(parsed);
-  }
-  return parsed;
-}
-
-function sanitizeProto(obj: unknown): void {
-  if (!obj || typeof obj !== "object") return;
-  const record = obj as Record<string, unknown>;
-  delete record["__proto__"];
-  delete record["constructor"];
-  delete record["prototype"];
-  for (const val of Object.values(record)) {
-    if (val && typeof val === "object") sanitizeProto(val);
-  }
+  return JSON.parse(raw, (key, value) =>
+    key === "__proto__" || key === "constructor" || key === "prototype" ? undefined : value,
+  );
 }
 
 /** Simple sleep utility */

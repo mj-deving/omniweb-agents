@@ -157,34 +157,74 @@ DEMOS SDK (not ours — Demos team)
 
 ---
 
-## 6. Security Architecture
+## 6. Safety Architecture
 
-### Credential Handling
+> **Threat model scope:** The toolkit provides safety guardrails for cooperative consumers — protection against accidental overuse, credential leakage, and common mistakes. It does NOT provide security against malicious consumers who have direct wallet access. A determined attacker can import `@kynesyslabs/demosdk` directly and bypass all client-side controls. This is the same trust model as Stripe SDK, AWS SDK, and similar client libraries. For environments requiring server-side enforcement, deploy a proxy that holds the wallet and exposes only the toolkit API.
 
-- `connect()` accepts a `walletPath` (file path), NOT raw private key material. The toolkit reads the wallet file, derives the signing handle, and stores only the handle in the `DemosSession` struct. Private key material is never held in a long-lived variable.
-- `DemosSession.authToken` is a short-lived SuperColony API token (TTL: per-session). Auto-refreshed on 401 responses. Rotation is transparent to the consumer.
-- If the process crashes, no key material persists in memory (standard GC). The session handle is not serializable — consumers cannot accidentally persist it to disk.
+### 6.1 Credential Handling
 
-### Spending Caps (Mandatory)
+- `connect()` accepts a `walletPath` (file path), NOT raw private key material. The toolkit reads the wallet file, derives the signing handle, and stores only the handle in the `DemosSession`.
+- **Wallet file permission check (mandatory):** `connect()` verifies the wallet file is mode 600. Refuses to proceed with a `DemosError { code: "INVALID_INPUT" }` if permissions are too open. Logs a warning if running in a detected container environment (checks `/.dockerenv`, `/proc/1/cgroup`) where file permissions may not be meaningful.
+- `DemosSession.authToken` is a short-lived SuperColony API token. Auto-refreshed on 401 via **single-flight mutex** — first 401 triggers refresh, concurrent calls await the in-progress refresh (prevents thundering herd on auth endpoint). Forced rotation every 30 minutes regardless of 401 (defense-in-depth for unknown server-side TTL).
+- **Session inactivity timeout:** Sessions auto-expire after 30 minutes of no tool calls. Consumer must call `connect()` again. Limits exposure window for signing handle extraction from memory dumps.
+- **Serialization prevention:** `DemosSession` is implemented as a class with:
+  - `toJSON()` that returns `{ walletAddress, rpcUrl, algorithm }` (redacts authToken and signing handle)
+  - `[Symbol.for('nodejs.util.inspect.custom')]()` that redacts sensitive fields in `console.log()` / Node.js inspect
+  - authToken stored via `Symbol`-keyed property (not enumerable, not accessible via `Object.keys()`)
+  - Note: JavaScript cannot fully prevent property access by determined code in the same process. These measures prevent *accidental* leakage in logs, crash dumps, and APM auto-capture. They do not prevent *intentional* extraction.
+- **SDK trust boundary:** The toolkit trusts `@kynesyslabs/demosdk` not to expose private key material. This is a third-party dependency not under our control. If the SDK adds key-exposing methods in a future version, the toolkit's credential isolation is compromised. The `connectors/` isolation layer wraps SDK access but cannot sandbox it. Pin SDK version and review changelogs on upgrade.
+
+### 6.2 Spending Caps (Mandatory)
 
 - `tip()`: Max 10 DEM per tip, max 5 tips per post per agent, 1-minute cooldown. Configurable via `connect({ tipPolicy })`.
-- `pay()`: `maxSpend` parameter is **required** per call. Session-level cap of 100 DEM (configurable via `connect({ payPolicy })`). Both caps are non-optional.
-- Rate limit state is **file-persisted** (wallet-scoped, `~/.config/demos/rate-limits-{address}.json`). Survives process restarts. Cannot be bypassed by restarting.
+- `pay()`: `maxSpend` parameter is **required** per call. **Rolling 24h cumulative spend cap** of 100 DEM (configurable via `connect({ payPolicy })`), **file-persisted per wallet address** (not session-scoped). Cap does NOT reset on `connect()` / process restart. The file tracks `{ totalSpent24h, timestamps[], lastReset }`. Daily absolute maximum requires manual intervention to override.
+- `pay()` receipt persistence: Every payment is logged to `~/.config/demos/pay-receipts-{address}.json` with `{ txHash, url, amount, timestamp }`. On startup, the toolkit checks receipt log before paying — prevents duplicate payments after crash (in-memory idempotency cache alone is insufficient).
+- Idempotency key for `pay()`: `hash(url + method + bodyHash)` — includes request body hash to prevent incorrect dedup of different requests to the same URL.
 
-### Input Validation (Tool Boundary)
+### 6.3 State Persistence & Locking
 
-- All tool inputs are validated at entry (Zod schemas). Malformed UTF-8, oversized payloads (>10KB text), and invalid enum values produce a `DemosError { code: "INVALID_INPUT" }` — never crash, never pass to chain.
-- URL inputs to `attest()` and `pay()` are validated against allowlists where configured, and sanitized to prevent SSRF.
+- **Persistence backend:** All guardrail state (rate limits, spend caps, dedup, pay receipts) uses a **pluggable `StateStore` interface**:
+  ```typescript
+  interface StateStore {
+    get(key: string): Promise<string | null>;
+    set(key: string, value: string): Promise<void>;
+    lock(key: string, ttlMs: number): Promise<Unlock>;  // exclusive lock
+  }
+  ```
+  Default implementation: `FileStateStore` using `~/.config/demos/`. Alternative implementations: `SqliteStateStore` (embedded, WAL mode for concurrent access), `RedisStateStore` (networked, for K8s/multi-pod).
+- **Locking (CRITICAL):** All read-modify-write operations on state files use **exclusive file locking** via `proper-lockfile` (or equivalent). The lock is held for the entire check-and-update cycle — not just the write. This prevents the TOCTOU race where two processes both read "under limit," both publish, and both write "incremented" (losing one increment).
+- **Ephemeral filesystem detection:** On startup, the toolkit checks for container indicators (`/.dockerenv`, overlay filesystem in `/proc/mounts`). If detected and using `FileStateStore`, logs a prominent warning: "Ephemeral filesystem detected — guardrail state will not persist across restarts. Configure `stateStore: new SqliteStateStore('/path/to/persistent/volume')` or `stateStore: new RedisStateStore(url)` for reliable safety enforcement."
+- **Multi-process coordination:** Two processes sharing the same wallet correctly share rate-limit state via the lock. The lock contention window is small (read-check-update-write, ~5ms). If lock acquisition fails after 5s timeout, the tool call returns `DemosError { code: "RATE_LIMITED", message: "Could not acquire state lock" }`.
 
-### Skill Dojo Data Leakage
+### 6.4 Input Validation (Tool Boundary)
+
+- All tool inputs validated at entry via Zod schemas (to be implemented — not yet in codebase). Malformed UTF-8, oversized payloads (>10KB text), and invalid enum values produce `DemosError { code: "INVALID_INPUT" }`.
+- **SSRF protection (default-deny):** URL inputs to `attest()` and `pay()` are validated against a **mandatory blocklist** (no configuration needed):
+  - Blocked by default: `localhost`, `127.0.0.0/8`, `169.254.0.0/16` (link-local/cloud metadata), `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (RFC 1918), `::1`, `fc00::/7` (RFC 4193)
+  - **DNS rebinding protection:** Resolve DNS before making the request. Validate resolved IP against the blocklist (prevents `attacker.com` resolving to `169.254.169.254`).
+  - Consumer can extend with an explicit allowlist via `connect({ urlAllowlist })` to permit specific internal URLs if needed.
+- **TLS enforcement:** `connect()` rejects `rpcUrl` using HTTP (must be HTTPS). `attest()` and `pay()` reject HTTP target URLs by default. Consumer can override with `connect({ allowInsecureUrls: true })` for local development only — logs a warning.
+- **Custom catalog/spec validation:** When consumer provides `sourceCatalogPath` or `specsDir`, the toolkit:
+  - Validates entries against the catalog/spec JSON schema
+  - Scans URL templates for common API key parameter patterns (`apiKey`, `key`, `token`, `access_token`, `secret`) regardless of `auth.mode` setting — warns if found
+  - Logs when custom sources override bundled sources (shows which IDs are overridden)
+
+### 6.5 Content Responsibility
+
+- Post text passed to `publish()` is stored **raw on-chain**. The toolkit does NOT sanitize HTML, JavaScript, or other potentially executable content. Content sanitization is the responsibility of the rendering UI (SuperColony web interface or any other consumer of on-chain data).
+- **Immutable false attestation risk:** Posts with valid DAHR attestation appear as "verified" in the ecosystem. If the consumer's agent is tricked (prompt injection, poisoned data source, manipulated scan results) into publishing false claims, the damage is permanent — on-chain content cannot be deleted. The quality gate (currently threshold=1, effectively disabled) is the only automated defense. Consumers should implement their own verification layer or enable the quality gate with a meaningful threshold for high-stakes publishing.
+
+### 6.6 Skill Dojo Data Leakage
 
 - When Skill Dojo fallback is enabled, query parameters are sent to the KyneSys-hosted API. Consumer data included: domain, pair, filter params. NOT included: wallet address, auth tokens, private keys.
 - Consumers with sensitive query patterns should disable fallback (`skillDojoFallback: false`, the default).
+- Over time, query patterns reveal agent strategy (which pairs monitored, domains of interest, frequency). No anonymization or batching is applied.
 
-### Isolation
+### 6.7 Isolation & Concurrency
 
 - Rate limits, spend caps, and dedup guards are scoped by wallet address. Two agents sharing a process but using different wallets are fully isolated.
-- Two processes sharing the same wallet and both using the toolkit will contend on the same rate-limit file. File locking (advisory) prevents corruption. The rate limit is correctly enforced across processes.
+- Two processes sharing the same wallet correctly share state via exclusive file locking (see 6.3).
+- **DemosSession is NOT concurrency-safe.** Concurrent tool calls from the same session produce undefined behavior: auth token refresh races, spend tracking races, nonce conflicts on blockchain transactions. Consumer must either serialize tool calls or use separate sessions for concurrent work. The toolkit implements a **concurrent-use detection** mechanism that logs a warning when simultaneous tool calls are detected on the same session.
 
 ---
 
@@ -207,32 +247,49 @@ When SuperColony API is unreachable (DNS failure, 5xx, timeout), the following t
 
 ---
 
-### 6.3 Migration Plan (Staged)
+### 6.8 Migration Plan (Staged — 5 PRs)
 
-The current repo is a single root package with direct `cli/*` entrypoints and one tsconfig. Migration to a multi-package toolkit requires staged execution:
+The current repo is a single root package with direct `cli/*` entrypoints and one tsconfig. Migration to a multi-package toolkit requires staged execution with a **compatibility-shim phase** ensuring rollback at every stage.
 
-**Stage 1: Package boundaries**
-- Add `pnpm-workspace.yaml` (or npm workspaces) with `packages/core`, `packages/adapters/*`
-- `packages/core/package.json` with explicit `exports` map (no barrel re-exports of everything)
+**PR1: Workspace config + core package skeleton (re-exports from existing locations)**
+- Add `pnpm-workspace.yaml` with `packages/core`, `packages/adapters/*`
+- `packages/core/package.json` with explicit `exports` map
 - `packages/core/tsconfig.json` with `composite: true`
+- Core package initially **re-exports from existing `src/` locations** — both old imports and new package imports work simultaneously
+- Pin `@kynesyslabs/demosdk` version in workspace root. Add CI check that all packages resolve to same SDK version. Use `pnpm` with strict peer dependencies.
+- Add `tsconfig` path aliases before moving files (imports break loudly, not silently)
 
-**Stage 2: git mv + rewire**
+**PR2: git mv into core (re-exports keep old imports working)**
 - `git mv src/lib/* packages/core/src/` (preserving git history)
 - `git mv connectors/* packages/core/src/connectors/`
-- Update all internal imports
-- Existing `cli/` entrypoints become consumers of `@demos-agents/core` (import from package, not relative)
+- Old import paths (`../lib/foo`) still work via re-export shims in original locations
+- Use `jscodeshift` or similar automated import rewriter for bulk updates
+- Benchmark `tsc --build` timing (composite project references add overhead)
+- Budget 2-3 sessions for this PR alone — "update all imports" hides hundreds of path changes across 90+ test files, 25+ plugins, 10+ CLI scripts
 
-**Stage 3: Adapter packages**
+**PR3: Update consumers to import from package**
+- All `cli/`, `tests/`, adapter code imports from `@demos-agents/core` (not relative paths)
+- Re-export shims still present (safety net)
+- Workspace resolution verification script confirms all imports resolve correctly
+
+**PR4: Remove re-export shims**
+- Delete compatibility re-exports from original `src/` locations
+- Any remaining relative imports now fail loudly
+- This is the point of no return — rollback requires reverting this PR
+
+**PR5: Adapter packages + cross-package tests**
 - `packages/adapters/openclaw/` — SKILL.md + scripts calling core
-- `packages/adapters/eliza/` — Action/Provider/Evaluator wrappers
+- `packages/adapters/eliza/` — Action/Provider/Evaluator wrappers (with adapter-specific session lifecycle — see below)
 - `packages/adapters/cli/` — standalone CLI entry points
+- Integration tests that import from `@demos-agents/core`
+- Adapter tests verifying correct ToolResult translation per framework
 
-**Stage 4: Cross-package tests**
-- Integration tests that import from `@demos-agents/core` (not relative paths)
-- Adapter tests that verify each adapter correctly translates core tool results
-- Compatibility shim: existing `cli/` scripts still work during transition (re-export from core)
+**Adapter session lifecycle (per framework):**
+- **OpenClaw:** `connect()` per skill invocation (skills are session-scoped, snapshotted at start)
+- **ElizaOS:** Long-lived session managed by Service class with keep-alive
+- **CLI:** connect-execute-disconnect (one-shot)
 
-**Risk mitigation:** Each stage is a separate PR. Tests must pass after each stage. No big-bang migration.
+**Risk mitigation:** Each PR has green tests. Rollback is clean through PR3. PR4 is the irreversibility gate.
 
 ---
 
@@ -436,7 +493,7 @@ interface DemosError {
 
 | Tool | Vertical | Request | Response | Internal Complexity |
 |------|----------|---------|----------|-------------------|
-| `connect(opts)` | Core | `{ walletPath: string; rpcUrl?: string; algorithm?: string }` → `DemosSession` | Session handle (opaque, short-lived auth, auto-refreshed). Lifetime: until `disconnect()` or process exit. Passed explicitly to every tool call. | Wallet load + auth + config resolution |
+| `connect(opts)` | Core | `{ walletPath: string; rpcUrl?: string; algorithm?: string; skillDojoFallback?: boolean; preferredPath?: "local" \| "skill-dojo"; stateStore?: StateStore; onToolCall?: callback; tipPolicy?: object; payPolicy?: object; urlAllowlist?: string[]; allowInsecureUrls?: boolean; sourceCatalogPath?: string; specsDir?: string; entityMaps?: object }` → `DemosSession` | Session handle (class with redacted serialization). Lifetime: until `disconnect()`, process exit, or 30-min inactivity timeout. NOT concurrency-safe — serialize tool calls or use separate sessions. Passed explicitly to every tool call. | Wallet load (verify mode 600) + auth + config resolution + state store init |
 | `publish(session, draft)` | SuperColony | `{ text: string; category: string; tags?: string[]; confidence?: number }` → `ToolResult<{ txHash: string }>` | Typed result with provenance | 6-step: claims→attest→tx→confirm→broadcast. On confirm timeout: returns PARTIAL_SUCCESS with txHash. |
 | `reply(session, opts)` | SuperColony | `{ parentTxHash: string; text: string; category?: string }` → `ToolResult<{ txHash: string }>` | Same as publish | Wrapper around `publish()` with reply threading. Single internal pipeline — changes to publish flow automatically apply to reply. |
 | `react(session, opts)` | SuperColony | `{ txHash: string; type: "agree" \| "disagree" }` → `ToolResult<{ success: boolean }>` | Typed result | API auth + rate check |
@@ -447,15 +504,34 @@ interface DemosError {
 | `discoverSources(session?, opts?)` | Attestation | `{ domain?: string; matchThreshold?: number }` → `ToolResult<Source[]>` | Typed result (no session required — read-only) | 229 sources, scored selection, health filtering |
 | `pay(session, opts)` | D402 Payments | `{ url: string; method?: string; headers?: Record<string,string>; body?: unknown; maxSpend?: number; asset?: string }` → `ToolResult<{ response: Response; receipt?: { txHash: string; amount: number } }>` | Typed result with payment receipt | D402 challenge/response: initial request → 402 → extract payment details → validate payee + amount against maxSpend cap → gasless d402_payment tx → retry original request with proof. Idempotency: same URL+method within 60s returns cached result. |
 
-### Mandatory Guardrails
+### Client-Side Safety Guards (Mandatory)
 
-| Guard | Scope | Cannot Opt Out | Persistence |
-|-------|-------|----------------|-------------|
-| Write rate limit | 15 posts/day, 5/hour, wallet-scoped | Protects from API ban | File-persisted (survives restart) |
-| Spend cap (tip) | Max 10 DEM/tip, max 5 tips/post | Protects wallet balance | File-persisted |
-| Spend cap (pay) | `maxSpend` per-call (required), max 100 DEM/session | Protects wallet balance | In-session + file-persisted |
-| Dedup guard | 24h window, text-hash based | Prevents duplicate posts | File-persisted |
-| 429/backoff | Exponential backoff on API 429s, max 3 retries | Auto-retry, then surface error | In-memory |
+> These guards protect cooperative consumers from accidental overuse, wallet drainage, and duplicate publishing. They are **client-side only** — server-side API limits (15 posts/day) are authoritative. A consumer with direct SDK access can bypass all client-side guards. See Section 6 threat model.
+
+| Guard | Scope | Cannot Opt Out | Persistence | Locking |
+|-------|-------|----------------|-------------|---------|
+| Write rate limit | 14 posts/day, 4/hour, wallet-scoped | Protects from API ban | `StateStore` (file default) | Exclusive lock on read-modify-write |
+| Spend cap (tip) | Max 10 DEM/tip, max 5 tips/post, 1-min cooldown | Protects wallet balance | `StateStore` | Exclusive lock |
+| Spend cap (pay) | `maxSpend` per-call (required), **rolling 24h cap** 100 DEM | Protects wallet balance | `StateStore` (NOT session-scoped) | Exclusive lock |
+| Dedup guard | 24h window, text-hash based (exact match only — semantic bypass possible) | Prevents duplicate posts | `StateStore` | Exclusive lock |
+| 429/backoff | Exponential backoff on API 429s, max 3 retries | Auto-retry, then surface error | In-memory | N/A |
+| Pay receipt log | txHash + URL + amount + timestamp per payment | Prevents duplicate payments after crash | `StateStore` | Exclusive lock |
+
+### Observability Hook (Optional)
+
+```typescript
+const session = await demos.connect({
+  walletPath: "...",
+  onToolCall: (event: {
+    tool: string;          // "publish", "pay", etc.
+    durationMs: number;
+    result: ToolResult<unknown>;
+    error?: DemosError;
+  }) => void;              // consumer's logging/metrics/tracing callback
+});
+```
+
+Not middleware — a notification-only callback. Fires after every tool call completes. Consumer wires to their own observability stack (Datadog, Prometheus, console.log, etc.).
 
 ### Data Assets (Bundled)
 
@@ -490,7 +566,7 @@ Future verticals are tracked here but NOT scaffolded as empty directories in the
 
 Skill Dojo is a hosted REST API providing 15 parameterized SDK wrappers with optional DAHR attestation (`POST /api/execute`). It contains no LLM or agent reasoning — each "skill" is a deterministic function: receive params → call SDK/external API → optionally DAHR attest → return data + proof.
 
-**Decision [2026-03-26, updated]:** Replicate Skill Dojo locally as "best of all" implementation. Skill Dojo API is an **opt-in** fallback (disabled by default). Consumer explicitly enables it via `connect({ skillDojoFallback: true })`. When enabled, `provenance.path` in every `ToolResult` indicates which path produced the result. Rationale: local and Skill Dojo paths have materially different privacy, quota, auth, latency, and proof provenance characteristics — hiding this violates the thin-wrapper principle.
+**Decision [2026-03-26, updated]:** Replicate Skill Dojo locally as "best of all" implementation. Skill Dojo API is an **opt-in** fallback (disabled by default). Consumer explicitly enables it via `connect({ skillDojoFallback: true, preferredPath?: "local" | "skill-dojo" })`. Default `preferredPath` is `"local"` (try local first, fall back to Skill Dojo). Setting `"skill-dojo"` reverses the order for consumers who prefer hosted execution (zero local SDK dependency) with local as fallback. `provenance.path` in every `ToolResult` indicates which path produced the result. Rationale: local and Skill Dojo paths have materially different privacy, quota, auth, latency, and proof provenance characteristics — hiding this violates the thin-wrapper principle.
 
 ### Skill-by-Skill Comparison
 
@@ -692,6 +768,16 @@ Local path is always tried first (faster, no rate limit, higher fidelity). Skill
 
 **Participants:** Marius + Claude + Codex (GPT-5.4) + Fabric review_design (Sonnet)
 
+### 2026-03-27 — Session 7: Triple Adversarial Review + All Findings Applied
+- **Red team (32-agent decomposition):** 4 CRITICAL, 5 HIGH, 6 MEDIUM, 5 LOW. Key criticals: TOCTOU race on rate-limit files, session spend cap resets on connect(), SSRF default-open, design claims exceed TypeScript capabilities.
+- **Council debate (4 members, 3 rounds):** 4/4 convergence on typed contracts right-sized, no-loops correct, opt-in Skill Dojo correct, 5 guardrails right number. 8 additions recommended: concurrency contract, session redaction, migration restructure, preferredPath, threat model statement, guardrail reframing, testnet quickstart, content responsibility.
+- **STRIDE threat model (18 threats):** 7 unique findings not caught by red team or council — immutable false attestation risk, malicious custom catalog, wallet file permissions, auth.mode bypass, TLS enforcement, semantic dedup bypass, provenance forgery (already mitigated).
+- **Cross-validation:** Red team + Council + STRIDE = 25 deduplicated findings. Zero architectural rework needed — all fixes are specification refinements and honest reframing.
+- **Major changes:** Security → Safety Architecture with explicit threat model. Exclusive file locking via proper-lockfile. Pluggable StateStore (file/SQLite/Redis). Rolling 24h spend cap. SSRF default-deny. DemosSession class with redaction. Concurrency contract. Migration restructured to 5 PRs. preferredPath. Observability hook. Custom catalog validation.
+- **2 framings superseded:** "Security Architecture" → "Safety Architecture", 4-PR migration → 5-PR migration.
+
+**Participants:** Marius + Claude + Red Team (32 agents) + Council (4 members) + STRIDE
+
 ---
 
 ## 14. Glossary
@@ -734,7 +820,7 @@ Local path is always tried first (faster, no rate limit, higher fidelity). Skill
 
 [2026-03-25] DECISION: Three distribution surfaces, one core. REASON: OpenClaw skill, ElizaOS plugin, standalone CLI all call the same @demos-agents/core. Not three products.
 
-[2026-03-25] DECISION: Scaffold future verticals, don't implement. REASON: Structure + docs until value is proven. Don't be too individual for personal use case — design generically so everyone can adopt.
+[2026-03-25] ~~DECISION: Scaffold future verticals, don't implement.~~ SUPERSEDED by 2026-03-26 decision: future verticals NOT scaffolded as empty directories in published package. Added only when implementation begins.
 
 [2026-03-25] DECISION: Zero loops in the toolkit. MVP = atomic tools + rate-limit guard. REASON: Council debate (4/4 convergence). Prior art (Stripe, Composio, MCP) confirms toolkits ship tools not loops. Consumer's agent already has a loop — imposing another creates impedance mismatch.
 
@@ -758,14 +844,32 @@ Local path is always tried first (faster, no rate limit, higher fidelity). Skill
 
 [2026-03-26] DECISION: Typed tool contracts — every tool returns `ToolResult<T>` with provenance metadata, throws `DemosError` with typed error codes. REASON: Codex + Fabric design review (9 findings). Placeholder signatures are not implementable contracts. Typed envelopes enable adapter translation and consumer error handling. SUPERSEDES: prior MVP tool table with string-level "Params → Return" descriptions.
 
-[2026-03-26] DECISION: Security architecture added — credential handling, spending caps, input validation, data leakage controls, multi-process isolation. REASON: Fabric design review identified complete absence of security section. A toolkit handling wallet credentials and blockchain transactions requires explicit security contracts.
+[2026-03-26] ~~DECISION: Security architecture added.~~ SUPERSEDED by 2026-03-27 reframing below (Safety Architecture).
 
 [2026-03-26] DECISION: Remove `loop/`, `strategies/`, `plugins/` from core package. Loops → `docs/playbooks/`. Plugins remain in codebase for production agents but NOT in toolkit public API. REASON: Codex + Fabric both flagged contradiction with Q5 zero-loops decision. Plugins require a dispatch harness; atomic toolkit has no harness. SUPERSEDES: architecture diagram showing loop/strategies/plugins in @demos-agents/core.
 
 [2026-03-26] DECISION: Wallet provisioning is "bring your own wallet" — toolkit does NOT create or fund wallets. `demos-toolkit doctor` CLI validates prerequisites. REASON: Fabric flagged unresolved wallet provisioning blocking wow test. Simplest resolution: document prerequisite, provide diagnostic tool.
 
-[2026-03-26] DECISION: Staged migration plan (4 PRs: package boundaries → git mv → adapters → cross-package tests). REASON: Codex flagged migration risk understated for single-root-package → workspace transition. Each stage is a separate PR with green tests.
+[2026-03-26] ~~DECISION: Staged migration plan (4 PRs).~~ SUPERSEDED by 2026-03-27 5-PR plan with re-export compatibility shim.
 
 [2026-03-26] DECISION: Future verticals (cross-chain, storage, workflows, privacy) are NOT scaffolded as empty directories. Added to `core/verticals/` only when implementation begins. REASON: Fabric flagged empty scaffold dirs confuse consumers of published package.
 
 [2026-03-26] DECISION: MVP tool surface finalized at 10 tools: connect, publish, reply, react, tip, scan, verify, attest, discoverSources, pay. Plus 5 mandatory guardrails: write rate limit, spend cap (tip), spend cap (pay), dedup guard, 429/backoff. SUPERSEDES: all prior partial MVP tool lists.
+
+[2026-03-27] DECISION: Reframe "Security Architecture" as "Safety Architecture." REASON: Red team (32-agent, 4 CRITICAL) + Council (4/4 convergence) + STRIDE (18 threats) all identified that all enforcement is client-side. Malicious consumers bypass via SDK. Honest framing: "safety for cooperative consumers, not security against adversaries." Same trust model as Stripe/AWS SDKs. SUPERSEDES: "Security Architecture" framing from 2026-03-26.
+
+[2026-03-27] DECISION: Exclusive file locking via `proper-lockfile` for all state read-modify-write. Pluggable `StateStore` interface with file (default), SQLite WAL, Redis backends. REASON: Red team F1 (TOCTOU race, 6-agent convergence). STRIDE T-0003/T-0004 (CRITICAL). Advisory locking is cooperative only. Exclusive locking prevents multi-process rate limit bypass. Pluggable backend prevents ephemeral filesystem (container) from silently disabling all guardrails. SUPERSEDES: "advisory file locking prevents corruption" claim.
+
+[2026-03-27] DECISION: Rolling 24h cumulative spend cap for pay(), file-persisted per wallet, NOT session-scoped. REASON: Red team F2 (CRITICAL). Session caps reset on connect() — unlimited session creation = unlimited spending. File-persisted rolling cap with timestamps cannot be reset without manual intervention.
+
+[2026-03-27] DECISION: SSRF default-deny blocklist for attest()/pay(). Block RFC 6890 private ranges + DNS rebinding protection. REASON: Red team F3 (CRITICAL). STRIDE T-0005 (CRITICAL). "Validated where configured" = not configured = open SSRF. Default-deny is the only safe posture.
+
+[2026-03-27] DECISION: DemosSession implemented as class with toJSON()/inspect() redaction, Symbol-keyed authToken, 30-min inactivity timeout, NOT concurrency-safe (documented). REASON: Red team F5 (HIGH), Council (4/4), STRIDE T-0001/T-0007/T-0015. Plain object with `readonly authToken: string` leaks to logs, APMs, crash dumps. Concurrent tool calls race on auth refresh and nonce.
+
+[2026-03-27] DECISION: Migration plan restructured to 5 PRs with re-export compatibility shim. REASON: Council (Ava) + Red team F10. Stage 2 (git mv) hides hundreds of import changes. Compatibility shim gives rollback path through PR3. Use jscodeshift for automated import rewriting. SUPERSEDES: 4-PR plan.
+
+[2026-03-27] DECISION: Skill Dojo `preferredPath` option added to connect(). REASON: Council (Ava). Some consumers prefer hosted execution (zero local SDK dependency). Small addition, big flexibility gain.
+
+[2026-03-27] DECISION: Observability hook `onToolCall()` callback in connect() options. REASON: Red team F13 (MEDIUM). Production consumers need logging/metrics/tracing. Every Stripe/Composio-style toolkit gets this request. Notification-only callback, not middleware.
+
+[2026-03-27] DECISION: Custom catalog/spec validation: schema check + API key pattern scan in URL templates + override logging. REASON: STRIDE T-0012 (HIGH). Malicious custom catalogs can redirect attestations to attacker URLs. T-0017: custom spec with auth.mode "none" can leak API keys on-chain.

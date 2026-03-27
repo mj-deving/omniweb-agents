@@ -28,6 +28,22 @@ export interface ApiCallResult {
   data: unknown;
 }
 
+/** HIVE post payload for on-chain publishing */
+export interface HivePost {
+  text: string;
+  category: string;
+  tags?: string[];
+  confidence?: number;
+  replyTo?: string;
+  assets?: string[];
+  sourceAttestations?: Array<{
+    url: string;
+    responseHash: string;
+    txHash: string;
+    timestamp?: number;
+  }>;
+}
+
 export interface SdkBridge {
   /** Create a DAHR attestation for a URL */
   attestDahr(url: string, method?: string): Promise<DahrResult>;
@@ -38,11 +54,20 @@ export interface SdkBridge {
   /** Sign and broadcast a transaction */
   signAndBroadcast(txData: unknown): Promise<{ hash: string }>;
 
+  /** Publish a HIVE-encoded post to the Demos chain */
+  publishHivePost(post: HivePost): Promise<{ txHash: string }>;
+
+  /** Transfer DEM tokens to a recipient */
+  transferDem(to: string, amount: number, memo: string): Promise<{ txHash: string }>;
+
   /** Get the underlying Demos instance (for direct SDK access when needed) */
   getDemos(): Demos;
 }
 
 // ── Factory ─────────────────────────────────────────
+
+// HIVE post prefix (4 bytes: "HIVE")
+const HIVE_PREFIX = new Uint8Array([0x48, 0x49, 0x56, 0x45]);
 
 /**
  * Create a session-scoped SDK bridge.
@@ -51,12 +76,14 @@ export interface SdkBridge {
  * @param apiBaseUrl - SuperColony API base URL
  * @param authToken - Authentication token for API calls
  * @param fetchImpl - Optional fetch implementation (for testing)
+ * @param txModule - Optional DemosTransactions override (for testing)
  */
 export function createSdkBridge(
   demos: Demos,
   apiBaseUrl: string,
   authToken: string,
   fetchImpl: typeof fetch = globalThis.fetch,
+  txModule?: { store: Function; confirm: Function; broadcast: Function },
 ): SdkBridge {
   return {
     async attestDahr(url: string, method: string = "GET"): Promise<DahrResult> {
@@ -154,8 +181,78 @@ export function createSdkBridge(
       return { hash };
     },
 
+    async publishHivePost(post: HivePost): Promise<{ txHash: string }> {
+      // Lazy-import DemosTransactions or use injected mock
+      const tx = txModule ?? await getTransactionsModule();
+
+      // Construct HIVE post object
+      const hivePost: Record<string, unknown> = {
+        v: 1,
+        cat: post.category,
+        text: post.text,
+      };
+      if (post.tags && post.tags.length > 0) hivePost.tags = post.tags;
+      if (post.confidence !== undefined) hivePost.confidence = post.confidence;
+      if (post.replyTo) hivePost.replyTo = post.replyTo;
+      if (post.assets && post.assets.length > 0) hivePost.assets = post.assets;
+      if (post.sourceAttestations && post.sourceAttestations.length > 0) {
+        hivePost.sourceAttestations = post.sourceAttestations.map((a) => ({
+          url: a.url,
+          responseHash: a.responseHash,
+          txHash: a.txHash,
+          timestamp: a.timestamp ?? Date.now(),
+        }));
+      }
+
+      // HIVE encode: 4-byte prefix + JSON
+      const json = JSON.stringify(hivePost);
+      const jsonBytes = new TextEncoder().encode(json);
+      const encoded = new Uint8Array(HIVE_PREFIX.length + jsonBytes.length);
+      encoded.set(HIVE_PREFIX, 0);
+      encoded.set(jsonBytes, HIVE_PREFIX.length);
+
+      // Store → Confirm → Broadcast
+      const storeTx = await tx.store(encoded, demos);
+      const validity = await tx.confirm(storeTx, demos);
+      const result = await tx.broadcast(validity, demos);
+
+      // Extract txHash (multiple SDK response shapes)
+      const confirmHash = (validity as any)?.response?.data?.transaction?.hash;
+      const results = (result as any)?.response?.results;
+      const txHash = confirmHash
+        || (results ? results[Object.keys(results)[0]]?.hash : undefined)
+        || (result as any)?.response?.data?.transaction?.hash
+        || (result as any)?.response?.data?.hash
+        || (result as any)?.hash
+        || (result as any)?.txHash;
+
+      if (!txHash) {
+        throw new Error("HIVE post broadcast succeeded but txHash not found in response");
+      }
+
+      return { txHash: String(txHash) };
+    },
+
+    async transferDem(to: string, amount: number, memo: string): Promise<{ txHash: string }> {
+      const result = await (demos as any).transfer(to, amount, memo);
+      const txHash = result?.hash ?? result?.txHash;
+      if (!txHash) {
+        throw new Error("DEM transfer succeeded but txHash not found in response");
+      }
+      return { txHash: String(txHash) };
+    },
+
     getDemos(): Demos {
       return demos;
     },
   };
+}
+
+// Lazy-load DemosTransactions to avoid module-level SDK import
+let _txModule: any = null;
+async function getTransactionsModule(): Promise<{ store: Function; confirm: Function; broadcast: Function }> {
+  if (_txModule) return _txModule;
+  const { DemosTransactions } = await import("@kynesyslabs/demosdk/websdk");
+  _txModule = DemosTransactions;
+  return _txModule;
 }

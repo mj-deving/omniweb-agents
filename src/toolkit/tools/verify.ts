@@ -12,6 +12,7 @@ import { DemosSession } from "../session.js";
 import { sleep } from "../guards/state-helpers.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, VerifyOptionsSchema } from "../schemas.js";
+import { parseFeedPosts } from "./feed-parser.js";
 
 const RETRY_DELAYS_MS = [3000, 5000, 10000];
 
@@ -70,21 +71,13 @@ async function checkConfirmation(session: DemosSession, txHash: string): Promise
   // When API is down, this throws and verify() retries per its retry schedule.
   try {
     const bridge = session.getBridge();
-    const result = await bridge.apiCall(`/api/feed?limit=20`);
+    const result = await bridge.apiCall(`/api/feed?limit=50`);
     if (!result.ok) {
       throw new Error(`Feed API returned ${result.status} — SuperColony API may be down`);
     }
 
-    const data = result.data as Record<string, unknown>;
-    const posts = (data?.posts ?? data?.results ?? data) as unknown[];
-    if (!Array.isArray(posts)) {
-      throw new Error("Unexpected feed response shape");
-    }
-
-    const found = posts.some((p: unknown) => {
-      const post = p as Record<string, unknown>;
-      return String(post.txHash ?? "") === txHash;
-    });
+    const posts = parseFeedPosts(result.data);
+    const found = posts.some((p) => p.txHash === txHash);
 
     return { confirmed: found };
   } catch (e) {

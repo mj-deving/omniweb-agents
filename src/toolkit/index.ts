@@ -73,6 +73,7 @@ export { verify } from "./tools/verify.js";
 export { attest } from "./tools/attest.js";
 export { discoverSources } from "./tools/discover-sources.js";
 export { pay } from "./tools/pay.js";
+export { parseFeedPosts } from "./tools/feed-parser.js";
 
 // ── Guards (exposed for testing and advanced consumers) ──
 
@@ -129,4 +130,5 @@ export {
   PayOptionsSchema,
   TipPolicySchema,
   PayPolicySchema,
+  D402RequirementSchema,
 } from "./schemas.js";

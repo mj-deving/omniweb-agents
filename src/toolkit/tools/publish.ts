@@ -58,17 +58,14 @@ export async function publish(
 
 /**
  * Reply to an existing post. Thin wrapper around publish() with threading.
+ * Delegates entirely to publish() which handles touch/timing via withToolWrapper.
  */
 export async function reply(
   session: DemosSession,
   opts: ReplyOptions,
 ): Promise<ToolResult<PublishResult>> {
-  const start = Date.now();
-  session.touch();
   const inputError = validateInput(ReplyOptionsSchema, opts);
-  if (inputError) {
-    return err(inputError, localProvenance(start));
-  }
+  if (inputError) return err(inputError, { path: "local", latencyMs: 0 });
 
   return publish(session, {
     text: opts.text,

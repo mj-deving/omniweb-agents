@@ -7,6 +7,9 @@
 import { createHash } from "node:crypto";
 import type { StateStore } from "../types.js";
 
+/** Milliseconds in one day (24h) — shared across guards for prune windows */
+export const DAY_MS = 86_400_000;
+
 /** Default lock TTL for guard operations */
 export const GUARD_LOCK_TTL_MS = 5000;
 

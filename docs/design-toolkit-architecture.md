@@ -3,9 +3,9 @@
 > Living design document. Iterated session by session until vision is nailed down.
 > **Do not implement until this doc reaches "APPROVED" status.**
 
-**Status:** ITERATING
+**Status:** APPROVED
 **Started:** 2026-03-25
-**Last updated:** 2026-03-26
+**Last updated:** 2026-03-27
 **Decision log:** Append-only at bottom. Never delete decisions, only supersede.
 
 ---

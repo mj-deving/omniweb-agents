@@ -43,9 +43,6 @@ export async function scan(
   });
 }
 
-const MIN_REACTIONS_FOR_ENGAGEMENT = 5;
-const MIN_TEXT_LENGTH_FOR_SUBSTANCE = 100;
-
 function identifyOpportunities(posts: ScanPost[]): ScanOpportunity[] {
   const opportunities: ScanOpportunity[] = [];
   for (const post of posts) {

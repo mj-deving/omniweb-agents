@@ -1,0 +1,117 @@
+{
+  "batch": "ai_generated_debt",
+  "batch_index": 13,
+  "assessments": {"ai_generated_debt": 85.5},
+  "dimension_notes": {
+    "ai_generated_debt": {
+      "evidence": [
+        "tool-wrapper.ts: docstring at lines 11-17 enumerates 5 numbered steps for a 26-line function that speaks for itself — the comment adds ceremony over insight",
+        "state-helpers.ts: comments '// Prune old entries', '// Check condition', '// Append entry if provided', '// Always persist pruned state' restate the code immediately below rather than explaining WHY",
+        "session.ts: '// Configuration' and '// Internal state' section labels above property groups add zero information — the properties are self-describing",
+        "attest.ts: executeDahrAttestation() is a 3-line pass-through that calls bridge.attestDahr() and returns a shaped result — barely avoids the pure pass-through threshold but adds minimal value",
+        "discover-sources.ts: duplicate SourceStatus type defined locally at line 100 alongside the canonical one exported from types.ts — both VALID_STATUSES and normalizeStatus have zero importers outside the file",
+        "sdk-bridge.ts: transferDem() has two null/validity checks ('if (!to || typeof to !== \"string\")' and 'if (!Number.isFinite(amount) || amount <= 0)') that duplicate the Zod validation already enforced by TipOptionsSchema before this code is called — defensive overengineering at a non-API boundary",
+        "guards (dedup-guard.ts, write-rate-limit.ts, tip-spend-cap.ts, pay-spend-cap.ts): recordX() functions each re-implement the load → prune → push → set pattern identically (4 duplications) rather than reusing checkAndAppend from state-helpers.ts — identified backward-compat wrappers but the record functions still duplicate logic",
+        "No console.log dumps, entry/exit trace logging, or nosy debug patterns found anywhere in the toolkit",
+        "No generic names (handleData, processItem) found — all identifiers use domain vocabulary"
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "Restating inline comments in state-helpers.ts, a local SourceStatus duplicate in discover-sources.ts, and 4 near-identical recordX() implementations that don't reuse checkAndAppend despite it being available are the primary gaps preventing 90+."
+    }
+  },
+  "dimension_judgment": {
+    "ai_generated_debt": {
+      "dimension_character": "The toolkit is largely free of LLM hallmark patterns — no debug dump logging, no generic names, no try-catch around pure expressions, and no nosy docstrings on trivial functions. The dominant debt pattern is restating comments that mirror the code line-by-line (state-helpers.ts section headers, tool-wrapper.ts step list) rather than explaining the why, plus a handful of defensive guards inside the SDK bridge that duplicate validation already enforced at the schema layer. Four guard recordX() functions are near-identical copies that bypass the shared checkAndAppend helper, and a local SourceStatus type in discover-sources.ts duplicates the canonical type in types.ts.",
+      "score_rationale": "At the 90 anchor a reviewer would see 'mostly clean with small pockets of boilerplate or restating patterns.' This codebase sits just below that: the restating comments appear in a high-traffic helper (state-helpers.ts, 7 importers), the record function duplication spans 4 files, and the double-validation in transferDem() is a textbook AI-generated defensive pattern. The issues are real but concentrated — the happy path is clean and the domain vocabulary is precise — placing this solidly at 85.5."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "ai_debt_restating_comments_state_helpers",
+      "summary": "Inline comments in checkAndAppend restate the code rather than explaining rationale",
+      "related_files": ["src/toolkit/guards/state-helpers.ts"],
+      "evidence": [
+        "Line 54: '// Prune old entries' above state.entries.filter()",
+        "Line 57: '// Check condition' above const errorMsg = check(state, now)",
+        "Line 61: '// Append entry if provided' above if (newEntry) { state.entries.push(newEntry) }",
+        "Line 66: '// Always persist pruned state (prevents unbounded growth on check-only paths)' — the parenthetical is the only useful part; the header restates the code"
+      ],
+      "suggestion": "Remove the header labels ('// Prune old entries', '// Check condition', '// Append entry if provided') entirely; the code is self-describing. Promote the parenthetical rationale on line 66 to a standalone comment: '// Persist on check-only paths too — prevents unbounded growth when only reading state'",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "ai_debt_record_fn_duplication",
+      "summary": "Four guard recordX() functions duplicate load→prune→push→set instead of reusing checkAndAppend",
+      "related_files": [
+        "src/toolkit/guards/dedup-guard.ts",
+        "src/toolkit/guards/write-rate-limit.ts",
+        "src/toolkit/guards/tip-spend-cap.ts",
+        "src/toolkit/guards/pay-spend-cap.ts"
+      ],
+      "evidence": [
+        "dedup-guard.ts recordPublish(): load state, filter dayAgo, push entry, store — 6 lines",
+        "write-rate-limit.ts recordWrite(): load state, filter dayAgo, push entry, store — 6 lines",
+        "tip-spend-cap.ts recordTip(): load state, filter dayAgo, push entry, store — 6 lines",
+        "pay-spend-cap.ts recordPayment(): load state, filter dayAgo, push entry, store — 6 lines",
+        "checkAndAppend in state-helpers.ts already does exactly this with pruneWindowMs, entry append, and lock"
+      ],
+      "suggestion": "Replace each recordX() with a call to checkAndAppend passing record=true-equivalent: pass newEntry and a no-op check that always returns null. This eliminates 4 separate lock+load+prune+push+store sequences. Example for recordPublish: call checkAndAppend(store, key, DEFAULT_STATE, DAY_MS, () => null, { timestamp: Date.now(), hash }).",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "ai_generated_debt",
+      "identifier": "ai_debt_source_status_local_duplicate",
+      "summary": "SourceStatus type and VALID_STATUSES set re-declared locally in discover-sources.ts despite canonical export in types.ts",
+      "related_files": ["src/toolkit/tools/discover-sources.ts", "src/toolkit/types.ts"],
+      "evidence": [
+        "discover-sources.ts line 100: 'type SourceStatus = \"active\" | \"degraded\" | ...' — zero importers",
+        "types.ts line 237: 'export type SourceStatus = \"active\" | \"degraded\" | ...' — same union, exported",
+        "VALID_STATUSES Set at line 102 duplicates the canonical SourceStatus values as a runtime set"
+      ],
+      "suggestion": "Import SourceStatus from '../types.js' and delete the local re-declaration. Replace VALID_STATUSES with a type-safe lookup: const VALID_STATUSES = new Set<SourceStatus>(['active','degraded','quarantined','stale','deprecated','archived']). This is a single-file change.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Restating comments are a consistent LLM-generation artifact across state-helpers.ts and tool-wrapper.ts — suggests those files received less editorial review than the tool implementations",
+      "recordX duplication: checkAndAppend was added to eliminate check duplication but the record path was left unconverted — likely a staged refactor that was not completed"
+    ],
+    "likely_symptoms": ["ai_debt_record_fn_duplication", "ai_debt_source_status_local_duplicate"],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "ai_generated_debt": {
+      "add": [
+        {
+          "header": "No debug logging or generic domain names",
+          "description": "The entire toolkit contains no console.log dumps, entry/exit trace logging, or generic names (handleData, processItem). Every identifier uses precise domain vocabulary — attestDahr, checkWriteRateLimit, withToolWrapper — making the signal-to-noise ratio high.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Restating comments in high-traffic helper",
+          "description": "state-helpers.ts (7 importers) uses inline section headers that restate the code directly below rather than explaining business rationale. The parenthetical on the persist comment is the only exception.",
+          "settled": true,
+          "positive": false
+        },
+        {
+          "header": "Record function duplication across 4 guards",
+          "description": "Four recordX() functions each independently implement load→prune→push→set despite checkAndAppend in state-helpers.ts providing exactly this capability. The refactor was applied to the check path but not the record path.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "batch": "high_level_elegance",
+  "batch_index": 2,
+  "assessments": {
+    "high_level_elegance": 87.0
+  },
+  "dimension_notes": {
+    "high_level_elegance": {
+      "evidence": [
+        "The toolkit directory structure maps cleanly to domain capabilities: tools/ (user-facing operations), guards/ (invariant enforcement), core files (types, session, schemas, state-store, sdk-bridge, url-validator). Each directory has a single coherent purpose.",
+        "index.ts exports exactly the public API — tools, types, session, state-store, guards, schemas. The export surface is comprehensive but organized by capability group with clear header comments. A new engineer can find any entry point without searching.",
+        "The three-layer pattern (connect → session → tools → guards) is consistent across all 10 tools. Every tool accepts DemosSession, returns ToolResult<T>, validates input via schemas, and calls guards before side effects. This pattern is reliably applied.",
+        "CLAUDE.md accurately describes the toolkit: '10 tools, 6 guards, typed contracts, DemosSession, FileStateStore, SDK bridge, SSRF validator'. The runtime matches the documentation.",
+        "discoverSources() accepts `session: DemosSession | null` — the only tool that makes session optional. This is documented ('Read-only, no session required') but creates a visible inconsistency in the public API surface. A new engineer reading the API would ask why this one is different.",
+        "The guards directory exposes both old-style (checkDedup/recordPublish) and new-style (checkAndRecordDedup) functions. The backward-compat wrappers are documented inline but double the public guard surface unnecessarily.",
+        "pay.ts contains an inline Zod schema (D402RequirementSchema) for validating 402 response bodies. All other input validation lives in schemas.ts — this is a small ownership violation: schema definitions are split between the dedicated schemas file and a tool file.",
+        "The toolkit is scoped entirely to src/toolkit/ — 24 files, 3138 LOC. The package_size_census shows 100% of tracked files under src/. This is a narrow, focused codebase with no sprawl."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "discoverSources() nullable session parameter breaks API uniformity. The backward-compat guard dual-surface adds noise to the public index.ts without clear external need. D402RequirementSchema defined inside pay.ts rather than schemas.ts is a minor ownership inconsistency."
+    }
+  },
+  "dimension_judgment": {
+    "high_level_elegance": {
+      "dimension_character": "The toolkit has strong, deliberate decomposition: directory layout maps to capability boundaries, the three-layer pattern (tools/session/guards) is applied uniformly, and the public API surface is well-organized. The main tension is that the public surface has minor inconsistencies — one nullable-session tool, backward-compat guard wrappers doubling the guard API, and an inline schema definition in pay.ts — that a new engineer would notice as 'why is this one different?'",
+      "score_rationale": "This scores at 87 — solidly above 80 but not at 90. The decomposition is coherent and a new engineer can predict ownership boundaries. The inconsistencies (nullable session in discoverSources, dual guard surface, misplaced schema) don't undermine the architecture but do create friction when reading the public API. They're the kind of 'almost uniform' issues that push a score below 90."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "discover_sources_nullable_session",
+      "summary": "discoverSources() accepts nullable session breaking the uniform tool API contract",
+      "related_files": ["src/toolkit/tools/discover-sources.ts", "src/toolkit/index.ts"],
+      "evidence": [
+        "Line 31 of discover-sources.ts: `export async function discoverSources(session: DemosSession | null, opts?: DiscoverSourcesOptions)`",
+        "All other 9 tools have signature `(session: DemosSession, ...)` — discoverSources is the only one accepting null",
+        "The docstring says 'Read-only, no session required (optional — for custom catalog path)' — this is a legitimate use case but breaks the uniform pattern"
+      ],
+      "suggestion": "Accept `session?: DemosSession` (optional, not nullable) or split into two functions: `discoverSources(session, opts)` for session-aware path and a standalone `loadSourceCatalog(catalogPath?, opts)` for session-free use. The simplest fix is `session?: DemosSession` — callers pass undefined rather than null, which is idiomatic TypeScript.",
+      "confidence": "medium",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "high_level_elegance",
+      "identifier": "pay_ts_inline_schema",
+      "summary": "D402RequirementSchema defined in pay.ts breaks schemas.ts ownership boundary",
+      "related_files": ["src/toolkit/tools/pay.ts", "src/toolkit/schemas.ts"],
+      "evidence": [
+        "pay.ts lines 17-23: `const D402RequirementSchema = z.object(...)` — Zod schema defined inside a tool file",
+        "All other Zod schemas are in schemas.ts with documentation explaining the two-layer validation design",
+        "schemas.ts is 10-imported across the codebase and is the designated home for input shape validation"
+      ],
+      "suggestion": "Move D402RequirementSchema to schemas.ts alongside the other Zod schemas. Add a brief comment noting it validates 402 response bodies (not tool input), consistent with the existing schema documentation pattern.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "The nullable session and backward-compat guard wrappers appear to be evolutionary artifacts — the API grew organically and backward compatibility was maintained without pruning the old surface."
+    ],
+    "likely_symptoms": ["discover_sources_nullable_session"],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "high_level_elegance": {
+      "add": [
+        {
+          "header": "Uniform three-layer tool pattern applied consistently",
+          "description": "All 10 tools follow: accept DemosSession, validate input via schemas, run guards before side effects, return ToolResult<T> via withToolWrapper. This pattern is reliably applied and a new engineer can trust it holds everywhere.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Index.ts public surface organized by capability group",
+          "description": "index.ts groups exports under labeled sections (Core Types, Session, State Store, Tools, Guards, Schemas) with matching header comments. The toolkit's responsibility is immediately navigable from the barrel.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "discoverSources nullable session breaks API uniformity",
+          "description": "All other tools require DemosSession; discoverSources accepts null. This is a legitimate design (read-only, no SDK needed) but creates API inconsistency visible at the index.ts export level.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

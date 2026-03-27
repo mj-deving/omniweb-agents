@@ -1,0 +1,84 @@
+{
+  "batch": "incomplete_migration",
+  "batch_index": 14,
+  "assessments": {"incomplete_migration": 78.0},
+  "dimension_notes": {
+    "incomplete_migration": {
+      "evidence": [
+        "write-rate-limit.ts: checkAndRecordWrite() is the new unified API (line 24); checkWriteRateLimit() and recordWrite() are labeled '(backward compat)' wrappers forwarding to it (lines 55-59, 62-78). The old separate-functions API is the only one exported from index.ts.",
+        "dedup-guard.ts: same pattern — checkAndRecordDedup() is the unified API; checkDedup() and recordPublish() are '(backward compat)' wrappers (lines 54-81)",
+        "tip-spend-cap.ts: same pattern — checkAndRecordTip() is unified; checkTipSpendCap() and recordTip() are '(backward compat)' wrappers (lines 85-114)",
+        "index.ts exports only checkWriteRateLimit/recordWrite, checkTipSpendCap/recordTip, checkDedup/recordPublish — none of the new checkAndRecord* API is exported",
+        "This is an in-progress migration: the new unified API exists but consumers cannot reach it without importing directly from the guard files, bypassing index.ts",
+        "discover-sources.ts: VALID_STATUSES (line 102) and normalizeStatus (line 104) have 0 importers outside the file — confirmed by scan evidence — but they ARE used internally (lines 88, 105). The scan finding 'Deprecated: VALID_STATUSES (0 importers)' and 'Deprecated: normalizeStatus (0 importers)' reflect 0 external importers, not actual dead code.",
+        "scan evidence: 'Deprecated: Source (2 importers)' in types.ts — Source interface is actively used in types.ts (DiscoverSourcesResult.sources) and discover-sources.ts. Not actually deprecated.",
+        "scan evidence: 'Deprecated: active (1 importer)' in discover-sources.ts — this is the string literal 'active' used as a default fallback in normalizeStatus(), not a deprecated symbol",
+        "No mixed JS/TS files found — codebase is 100% TypeScript",
+        "No stale migration TODO comments referencing 'migrate', 'legacy', or 'remove after' — the two TODOs (sdk-bridge, toolkit-mvp) reference future wiring, not stale migration debt",
+        "No old+new API coexistence patterns (class vs functional, axios vs fetch, moment vs dayjs)"
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "incomplete_migration": {
+      "dimension_character": "The codebase shows one genuine incomplete migration: three guard modules introduced a unified checkAndRecord* API to allow atomic check+record in a single lock acquisition, but the old separate check/record functions were retained as 'backward compat' wrappers and the new API was never exported from index.ts. This means external consumers are locked into the two-call pattern and cannot benefit from the atomic API without importing internals. The mechanical scan signals for VALID_STATUSES, normalizeStatus, Source, and 'active' are false positives — those symbols are actively used within their files, not deprecated.",
+      "score_rationale": "At 80 ('solid but uneven') a developer encounters old and new patterns coexisting without clarity on which to follow. That description fits exactly: three guard files have a new checkAndRecord* API that is unreachable via the public index.ts, forcing callers to use the old split API even though the unified one exists. This is real migration friction, but it is contained to three guards and has zero impact on correctness — the wrappers are functionally correct. The absence of any other migration debt (no mixed JS/TS, no stale TODOs, no deprecated-but-called symbols) keeps the score from falling further. 78.0 reflects one concrete coexistence issue in a small, focused subsystem."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "incomplete_migration",
+      "identifier": "incomplete_migration_checkandrecord_not_exported",
+      "summary": "Unified checkAndRecord* API exists in guards but is not exported — callers forced to use backward-compat wrappers",
+      "related_files": [
+        "src/toolkit/guards/write-rate-limit.ts",
+        "src/toolkit/guards/dedup-guard.ts",
+        "src/toolkit/guards/tip-spend-cap.ts",
+        "src/toolkit/index.ts"
+      ],
+      "evidence": [
+        "write-rate-limit.ts: checkAndRecordWrite() is the unified API (combines check+record atomically), but index.ts exports only checkWriteRateLimit (line 82) and recordWrite (line 83) — both labeled '(backward compat)'",
+        "dedup-guard.ts: checkAndRecordDedup() is the unified API; index.ts exports only checkDedup and recordPublish (lines 95-98)",
+        "tip-spend-cap.ts: checkAndRecordTip() is the unified API; index.ts exports only checkTipSpendCap and recordTip (lines 86-88)",
+        "External consumers cannot use the atomic check+record operation without importing directly from guard files, bypassing the stable public API surface"
+      ],
+      "suggestion": "Complete the migration: add checkAndRecordWrite, checkAndRecordDedup, and checkAndRecordTip to index.ts exports alongside or replacing the backward-compat wrappers. Once no internal callers reference the old API, remove the wrapper functions. The migration is already done in each guard file — only index.ts needs updating.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Atomic check+record API was introduced to fix double-lock overhead but the public surface was not updated to expose it — likely the index.ts update was deferred or forgotten"
+    ],
+    "likely_symptoms": ["incomplete_migration_checkandrecord_not_exported"],
+    "possible_false_positives": [
+      "Scan 'deprecated: VALID_STATUSES (0 importers)' — actively used within discover-sources.ts, 0 external importers is expected for a file-private helper",
+      "Scan 'deprecated: normalizeStatus (0 importers)' — same as above, internal-only function",
+      "Scan 'deprecated: Source (2 importers)' in types.ts — Source is a live, actively-imported interface; 'deprecated' label from scanner is incorrect",
+      "Scan 'deprecated: active (1 importer)' — string literal, not a deprecated symbol"
+    ]
+  },
+  "context_updates": {
+    "incomplete_migration": {
+      "add": [
+        {
+          "header": "Atomic guard API exists but is unexported",
+          "description": "Three guards (write-rate-limit, dedup-guard, tip-spend-cap) introduced unified checkAndRecord* functions for atomic check+record under a single lock, but only the legacy split-call API is exported from index.ts. The migration is half-done: implementation updated, public surface not.",
+          "settled": true,
+          "positive": false
+        },
+        {
+          "header": "No mixed JS/TS or stale migration debt",
+          "description": "The codebase is 100% TypeScript with no .js companion files. No stale 'remove after', 'legacy', or 'migrate' TODO comments exist. The mechanical scan 'deprecated' signals are false positives — those symbols are actively used.",
+          "settled": true,
+          "positive": true
+        }
+      ]
+    }
+  }
+}

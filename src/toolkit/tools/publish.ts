@@ -84,6 +84,14 @@ async function executePublishPipeline(session: DemosSession, draft: PublishDraft
     throw new Error("PublishDraft.attestUrl is required — provide the source URL for attestation");
   }
 
+  // URL allowlist enforcement (if configured)
+  if (session.urlAllowlist.length > 0) {
+    const urlObj = new URL(draft.attestUrl);
+    if (!session.urlAllowlist.some((allowed) => urlObj.origin.startsWith(allowed) || draft.attestUrl!.startsWith(allowed))) {
+      throw demosError("INVALID_INPUT", `Attestation URL not in allowlist: ${urlObj.hostname}`, false);
+    }
+  }
+
   // SSRF validation — DNS resolution + IP blocklist (matches attest.ts and pay.ts pattern)
   const urlCheck = await validateUrl(draft.attestUrl, {
     allowInsecure: session.allowInsecureUrls,

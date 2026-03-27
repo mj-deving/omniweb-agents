@@ -89,7 +89,7 @@ export class DemosSession {
       maxPerCall: opts.payPolicy?.maxPerCall ?? 100,
       rolling24hCap: opts.payPolicy?.rolling24hCap ?? 100,
       trustedPayees: opts.payPolicy?.trustedPayees ?? [],
-      requirePayeeApproval: opts.payPolicy?.requirePayeeApproval ?? false,
+      requirePayeeApproval: opts.payPolicy?.requirePayeeApproval ?? true,
     };
     this.urlAllowlist = opts.urlAllowlist ?? [];
     this.allowInsecureUrls = opts.allowInsecureUrls ?? false;

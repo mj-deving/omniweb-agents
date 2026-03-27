@@ -1,0 +1,111 @@
+{
+  "batch": "convention_outlier",
+  "batch_index": 3,
+  "assessments": {
+    "convention_outlier": 83.0
+  },
+  "dimension_notes": {
+    "convention_outlier": {
+      "evidence": [
+        "All files use camelCase for functions and variables, PascalCase for types/interfaces/classes — consistent with TypeScript conventions. 141 function names sampled, all follow the same convention.",
+        "File naming is uniformly kebab-case across all three directories (tools/, guards/, toolkit/). No outliers found.",
+        "All modules use named exports exclusively — no default exports anywhere in the toolkit. Export pattern is 100% consistent across 24 files.",
+        "Guards follow a shared behavioral protocol: type-define local state types, import stateKey/loadState/checkAndAppend/GUARD_LOCK_TTL_MS from state-helpers.ts, return DemosError | null for check functions. 5 of 7 guards follow this pattern exactly.",
+        "backoff.ts is a structural outlier in guards/: it has no local state types, does not import loadState or GUARD_LOCK_TTL_MS, and follows the withBackoff(operation) async wrapper pattern instead of the check/record pattern. This is correct — backoff is a different kind of guard — but the mechanical scanner flagged it as missing shared patterns.",
+        "state-helpers.ts is also flagged as an outlier in guards/ for not importing GUARD_LOCK_TTL_MS/loadState — but it IS the file that exports them. This is a false positive from the scanner.",
+        "The guards directory has two public API styles: old-style pair (checkX/recordX) and new unified (checkAndRecordX). dedup-guard.ts and write-rate-limit.ts expose both: checkDedup/recordPublish (old) alongside checkAndRecordDedup/checkAndRecordWrite (new). tip-spend-cap.ts exposes both checkTipSpendCap/recordTip (old) and checkAndRecordTip (new). This dual surface is documented as 'backward compat' but presents convention inconsistency — callers must choose which API to use.",
+        "Tools follow consistent verb-first naming: checkWriteRateLimit, checkDedup, checkPaySpendCap, recordWrite, recordPublish, recordTip, recordPayment. The only outlier is checkAndRecordX which merges two operations but uses a different naming style than either the check or record convention.",
+        "discover-sources.ts defines a local SourceStatus type alias (line 100) that duplicates the exported SourceStatus type from types.ts. This creates a convention outlier: one type defined in two places with the same name but different visibility.",
+        "verify.ts imports sleep from guards/state-helpers.ts — a tool importing a utility from the guards layer. The sleep utility's placement in state-helpers.ts is a mild ownership mismatch (sleep has nothing to do with guard state), but it's a shared file pattern.",
+        "The `domain` parameter in ScanOptions is imported by scan.ts but scan.ts does not use it to filter (it passes to fetchFeed, which ignores it in practice — domain filtering not yet implemented). The unused import in scan.ts is flagged by the scanner."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "Dual guard API surface (old checkX/recordX + new checkAndRecordX) creates API choice ambiguity for consumers. Local SourceStatus type in discover-sources.ts duplicates the exported type. These are visible convention inconsistencies in the public surface."
+    }
+  },
+  "dimension_judgment": {
+    "convention_outlier": {
+      "dimension_character": "The toolkit has strong naming and file organization conventions — camelCase throughout, kebab-case files, named exports only, consistent guard behavioral protocols. The main friction is the dual guard API surface: old check/record pairs coexist with unified checkAndRecord functions in the same module, exported side by side. A developer reading the public API must choose between two conventions without obvious guidance on which to use.",
+      "score_rationale": "This scores at 83 — solid but with noticeable friction. The convention foundation is clean (naming, file organization, export patterns). The dual guard API is the primary drag: it's a convention island within the guards subsystem that a new engineer would stumble over. The duplicate SourceStatus type is a minor but concrete inconsistency. These pull the score below 85 but don't reach the 80-level 'recurring friction' threshold."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "convention_outlier",
+      "identifier": "guard_dual_api_surface",
+      "summary": "Guards expose old check/record pairs alongside new unified checkAndRecord — ambiguous API for consumers",
+      "related_files": [
+        "src/toolkit/guards/dedup-guard.ts",
+        "src/toolkit/guards/write-rate-limit.ts",
+        "src/toolkit/guards/tip-spend-cap.ts",
+        "src/toolkit/index.ts"
+      ],
+      "evidence": [
+        "dedup-guard.ts exports checkDedup (old), recordPublish (old), AND checkAndRecordDedup (new) — three functions for two operations",
+        "write-rate-limit.ts exports checkWriteRateLimit (old), recordWrite (old), AND checkAndRecordWrite (new)",
+        "tip-spend-cap.ts exports checkTipSpendCap (old), recordTip (old), AND checkAndRecordTip (new)",
+        "index.ts re-exports all six old-style functions under '── Guards (exposed for testing and advanced consumers) ──' without indicating which style is preferred",
+        "The new unified checkAndRecord functions are the correct ones to use (single lock acquisition, atomic check+record) but there's no deprecation signal on the old functions"
+      ],
+      "suggestion": "Add JSDoc @deprecated tags to the old-style check/record functions (checkDedup, recordPublish, checkWriteRateLimit, recordWrite, checkTipSpendCap, recordTip) pointing to their checkAndRecord replacements. This signals convention preference without breaking existing callers. Example: `/** @deprecated Use checkAndRecordDedup() for atomic check+record. */`",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "backward_compat_surface_drift"
+    },
+    {
+      "dimension": "convention_outlier",
+      "identifier": "discover_sources_duplicate_source_status",
+      "summary": "discover-sources.ts defines a local SourceStatus type that duplicates the exported SourceStatus from types.ts",
+      "related_files": [
+        "src/toolkit/tools/discover-sources.ts",
+        "src/toolkit/types.ts"
+      ],
+      "evidence": [
+        "discover-sources.ts line 100: `type SourceStatus = 'active' | 'degraded' | 'quarantined' | 'stale' | 'deprecated' | 'archived'`",
+        "types.ts line 237: `export type SourceStatus = 'active' | 'degraded' | 'quarantined' | 'stale' | 'deprecated' | 'archived'` — identical definition",
+        "discover-sources.ts does not import SourceStatus from types.ts despite it being exported from there"
+      ],
+      "suggestion": "Remove the local SourceStatus type from discover-sources.ts and import it from types.ts: `import type { ..., SourceStatus } from '../types.js'`. The types.ts definition is already part of the public API.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "The dual guard API resulted from the checkAndAppend refactor that unified check+record into one lock acquisition, but the old API was preserved for backward compatibility without marking the old functions deprecated.",
+      "The duplicate SourceStatus type likely resulted from the file being written before SourceStatus was added to types.ts, or from copy-paste without checking the existing exports."
+    ],
+    "likely_symptoms": ["guard_dual_api_surface"],
+    "possible_false_positives": [
+      "backoff.ts and state-helpers.ts flagged as guard outliers by the scanner — both are correctly structured for their actual roles and should not be normalized to match the check/record pattern"
+    ]
+  },
+  "context_updates": {
+    "convention_outlier": {
+      "add": [
+        {
+          "header": "Uniform named exports and kebab-case file naming",
+          "description": "All 24 production files use named exports exclusively and kebab-case filenames. No default exports, no naming convention drift. A developer can apply the file-naming and export pattern from any file and trust it holds everywhere.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Guard behavioral protocol consistent across 5 of 7 files",
+          "description": "The check/record guard pattern (import stateKey/loadState/checkAndAppend, return DemosError|null) is applied consistently across dedup, write-rate, tip-spend, pay-spend, and pay-receipt guards. backoff.ts and state-helpers.ts are structural outliers by intent, not convention drift.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Dual guard API surface without deprecation signals",
+          "description": "Old checkX/recordX pairs and new unified checkAndRecordX functions coexist in three guard modules without deprecation markers. Callers cannot determine the preferred API from the public surface alone.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

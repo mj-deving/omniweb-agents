@@ -1,0 +1,70 @@
+{
+  "batch": "dependency_health",
+  "batch_index": 7,
+  "assessments": {
+    "dependency_health": 91.0
+  },
+  "dimension_notes": {
+    "dependency_health": {
+      "evidence": [
+        "5 production dependencies: @anthropic-ai/sdk, @kynesyslabs/demosdk, proper-lockfile, yaml, zod — lean set for the scope",
+        "@anthropic-ai/sdk is used in src/lib/llm-provider.ts (lazy import) — outside the toolkit scope but within the repo. It is a production dep serving the LLM provider abstraction, not a dev dep that leaked.",
+        "zod is used in schemas.ts and pay.ts — genuinely needed for runtime validation. Toolkit-wide usage justifies inclusion as a production dep.",
+        "@kynesyslabs/demosdk is the core SDK — central to all chain operations. Used via lazy import in connect.ts and sdk-bridge.ts to avoid module-level side effects. Properly scoped.",
+        "proper-lockfile used exclusively in state-store.ts for file-level locking. This is the right tool for cooperative file locks with stale TTL support — not a heavy dep pulled for light use; no native Node.js API provides equivalent semantics.",
+        "yaml dep is in production dependencies but not used anywhere in src/toolkit/. It is used in other parts of the repo (YAML config parsing for agent persona files, strategy files). The toolkit itself has no YAML dependency.",
+        "No duplicate libraries for the same purpose: no moment+dayjs, no axios+fetch, no lodash+native — fetch is used directly for HTTP in pay.ts, no wrapper lib added",
+        "No circular dependency cycles: the import graph is strictly layered (tools/ → toolkit/ → guards/, toolkit/ → tools/ for barrel only). No cycles visible in coupling_matrix.",
+        "4 dev dependencies: @auth/agent, @types/proper-lockfile, playwright, tsx, typescript, vitest — appropriately scoped. playwright is dev-only (used for TLSN browser automation, currently disabled). @auth/agent appears to be a dev/tooling dep.",
+        "Version pinning: all dependencies use ^ (caret) semver ranges. No exact pins. This is standard Node.js practice; no evidence of conflicts.",
+        "No evidence of unused production dependencies in the toolkit itself — all 5 are used somewhere in the repo's production code."
+      ],
+      "impact_scope": "codebase",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "yaml is in production dependencies but the toolkit itself does not use it — it is used only in CLI/config layers outside the toolkit scope. This is not a true defect for the repository as a whole, but represents a slightly broad production dep set from the toolkit perspective."
+    }
+  },
+  "dimension_judgment": {
+    "dependency_health": {
+      "dimension_character": "The dependency set is lean and purposeful: 5 production dependencies each serving a distinct need with no duplication or heavy-dep-for-light-use patterns. The import graph shows no cycles and all toolkit deps are accessed via lazy imports where appropriate to avoid module-level side effects. The only minor observation is that yaml appears in production deps but is not used within the toolkit boundary — it serves the broader agent infrastructure.",
+      "score_rationale": "This codebase scores near the 90 anchor ('mostly healthy with minor overlap or weight concerns'). The lean dep set, no duplication, no cycles, and appropriate use of lazy imports all point toward a well-maintained dependency graph. The yaml dep being production-scoped while only used in CLI/config layers is a minor observation that doesn't materially hinder any developer. Score of 91 reflects this — solidly healthy with one very minor note."
+    }
+  },
+  "issues": [],
+  "retrospective": {
+    "root_causes": [],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "dependency_health": {
+      "add": [
+        {
+          "header": "Lean 5-dep production set, no duplication",
+          "description": "The toolkit uses exactly 5 production deps (demosdk, zod, proper-lockfile, yaml, @anthropic-ai/sdk), each serving a distinct purpose. No duplicate HTTP clients, date libraries, or utility frameworks.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Lazy SDK imports prevent module-level side effects",
+          "description": "connect.ts and sdk-bridge.ts use dynamic import() for @kynesyslabs/demosdk to avoid module-level crypto polyfill and global state mutation. This is an intentional dependency isolation pattern.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "proper-lockfile is justified for cooperative file locking",
+          "description": "proper-lockfile provides stale TTL + exponential retry semantics for file locks that have no direct Node.js equivalent. It is not a heavy dep for light use — it is the appropriate tool for the state-store locking requirement.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "yaml in production deps, unused in toolkit layer",
+          "description": "yaml is a production dependency used in CLI/config layers (YAML persona files, strategy configs) but not within the toolkit itself. This is accurate for the monorepo scope but makes the toolkit's production dep set appear slightly broader than it needs to be.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

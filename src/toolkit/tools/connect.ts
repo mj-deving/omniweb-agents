@@ -245,7 +245,7 @@ async function authenticateFallback(address: string): Promise<string> {
     const cached = loadAuthCache(address);
     if (cached) return cached.token;
   } catch { /* auth module may not be available */ }
-  return "auth-pending";
+  return AUTH_PENDING_TOKEN;
 }
 
 // Cached — container status is invariant per process

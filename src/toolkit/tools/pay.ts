@@ -55,6 +55,17 @@ export async function pay(
       );
     }
 
+    // URL allowlist enforcement (if configured)
+    if (session.urlAllowlist.length > 0) {
+      const urlObj = new URL(opts.url);
+      if (!session.urlAllowlist.some((allowed) => urlObj.origin.startsWith(allowed) || opts.url.startsWith(allowed))) {
+        return err(
+          demosError("INVALID_INPUT", `Payment URL not in allowlist: ${urlObj.hostname}`, false),
+          localProvenance(start),
+        );
+      }
+    }
+
     // SSRF validation — DNS resolution + IP blocklist + HTTPS
     const urlCheck = await validateUrl(opts.url, {
       allowInsecure: session.allowInsecureUrls,

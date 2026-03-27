@@ -1,0 +1,124 @@
+{
+  "batch": "authorization_consistency",
+  "batch_index": 12,
+  "assessments": {
+    "authorization_consistency": 76.0
+  },
+  "dimension_notes": {
+    "authorization_consistency": {
+      "evidence": [
+        "No route handlers, HTTP middleware, or RLS tables exist — this is a toolkit, not a web server. Auth consistency must be evaluated at the trust boundary layer: session gating, SSRF prevention, spend-cap enforcement, and credential handling.",
+        "All write/chain tools (publish, attest, tip, pay, react, scan, verify) uniformly require a DemosSession parameter. discoverSources accepts `session: DemosSession | null` — explicitly documented as a read-only tool that requires no auth. This is intentional and clearly documented.",
+        "SSRF validation via validateUrl() is consistently applied at all three tools that accept caller-controlled URLs: attest.ts (line 30), pay.ts (line 59), and publish.ts executePublishPipeline (line 88). In pay.ts, each redirect hop also re-validates (line 267). The three sibling URL-accepting tools all apply the same control.",
+        "scan.ts, react.ts, verify.ts, tip.ts use only relative paths via bridge.apiCall() — absolute URL injection is blocked at the bridge boundary (sdk-bridge.ts line 173-174). These tools have no SSRF risk because they never accept caller-controlled URLs.",
+        "sdk-bridge.ts apiCall() (line 185): Bearer token is auto-attached when authToken !== AUTH_PENDING_TOKEN. All API-calling tools rely on this single enforcement point rather than managing tokens individually — this is the correct pattern.",
+        "CRITICAL: urlAllowlist is defined in ConnectOptions (types.ts line 108), stored in DemosSession (session.ts line 36), but never passed to validateUrl(). UrlValidationOptions has no allowlist parameter. A caller who configures urlAllowlist gets no filtering effect — the control is wired but dead.",
+        "CRITICAL: connect.ts authenticateFallback() (line 248) returns the string literal 'auth-pending' when no cached token exists. AUTH_PENDING_TOKEN in sdk-bridge.ts is '__AUTH_PENDING__'. These two strings are different. The apiCall guard checks `authToken !== AUTH_PENDING_TOKEN` (i.e., !== '__AUTH_PENDING__'). For address-only wallets with no auth cache, the session receives 'auth-pending' as its token, which passes the guard and causes apiCall to emit 'Bearer auth-pending' — an invalid token — to every SuperColony API call.",
+        "connect.ts auth failure path (line 224-227): when ensureAuth() throws, authToken is set to AUTH_PENDING_TOKEN and execution continues, creating a degraded session. The degraded-session pattern is intentional and documented, but combined with the sentinel mismatch in authenticateFallback, the auth posture for read-only wallet sessions is unpredictable.",
+        "Spend-cap guards (tip-spend-cap, pay-spend-cap, write-rate-limit) are wallet-scoped via stateKey() and persist across session restarts. Consistent enforcement across all spending tools.",
+        "pay.ts payee trust gate (line 140-148): session.payPolicy.requirePayeeApproval is checked before any settlement. The trusted payees check on line 141 does `const trusted = session.payPolicy.trustedPayees ?? []` — this ?? [] is redundant (DemosSession constructor always initializes trustedPayees to []), but it is not an auth gap."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "authorization_consistency": {
+      "dimension_character": "The toolkit's trust boundary pattern is structurally sound: all tools require DemosSession, SSRF validation is uniformly applied to every caller-controlled URL, and the Bearer token is automatically attached at the bridge layer rather than per-tool. However, two concrete auth inconsistencies undermine an otherwise consistent posture: the urlAllowlist security control is configured by callers but never consumed by the validator (dead control), and authenticateFallback returns a different string than AUTH_PENDING_TOKEN, causing degraded read-only sessions to emit invalid Bearer tokens instead of unauthenticated requests.",
+      "score_rationale": "Score 76.0. The dominant auth pattern — session gating, SSRF for all external URLs, auto-Bearer at the bridge layer, wallet-scoped spend caps — is applied consistently across all sibling tools. The penalty is for two concrete gaps with real behavioral impact: the dead urlAllowlist (callers configure a security control that has zero effect) and the sentinel mismatch (read-only sessions silently send invalid credentials to the API). These are fixable single-file issues but represent meaningful trust boundary failures, not mere style drift."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "authorization_consistency",
+      "identifier": "ac_url_allowlist_dead",
+      "summary": "urlAllowlist is stored in DemosSession but never consumed by validateUrl — allow-list control is wired but dead",
+      "related_files": [
+        "src/toolkit/session.ts",
+        "src/toolkit/url-validator.ts",
+        "src/toolkit/tools/attest.ts",
+        "src/toolkit/tools/pay.ts",
+        "src/toolkit/tools/publish.ts"
+      ],
+      "evidence": [
+        "session.ts line 36: readonly urlAllowlist: string[] — stored as session configuration",
+        "attest.ts line 30: validateUrl(opts.url, { allowInsecure: session.allowInsecureUrls }) — urlAllowlist not passed",
+        "pay.ts line 59: validateUrl(opts.url, { allowInsecure: session.allowInsecureUrls }) — urlAllowlist not passed",
+        "pay.ts line 267: validateUrl(nextUrl, { allowInsecure: session.allowInsecureUrls }) — urlAllowlist not passed at redirect validation",
+        "publish.ts line 88: validateUrl(draft.attestUrl, { allowInsecure: session.allowInsecureUrls }) — urlAllowlist not passed",
+        "url-validator.ts UrlValidationOptions (line 24-27): { allowInsecure?, resolveOverride? } — no allowlist field exists"
+      ],
+      "suggestion": "Add `allowlist?: string[]` to UrlValidationOptions in url-validator.ts. In validateUrl(), before the IP blocklist check, return { valid: true, resolvedIp } if the parsed hostname matches any entry in opts.allowlist. At all three validateUrl call sites (attest, pay, publish), pass urlAllowlist: session.urlAllowlist. This activates a security control callers can configure but currently gets no effect.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor"
+    },
+    {
+      "dimension": "authorization_consistency",
+      "identifier": "ac_auth_pending_sentinel_mismatch",
+      "summary": "authenticateFallback() returns literal 'auth-pending' instead of AUTH_PENDING_TOKEN, bypassing apiCall's Bearer guard",
+      "related_files": [
+        "src/toolkit/tools/connect.ts",
+        "src/toolkit/sdk-bridge.ts"
+      ],
+      "evidence": [
+        "sdk-bridge.ts line 14: export const AUTH_PENDING_TOKEN = '__AUTH_PENDING__'",
+        "sdk-bridge.ts line 185: if (authToken !== AUTH_PENDING_TOKEN) { headers['Authorization'] = `Bearer ${authToken}` }",
+        "connect.ts authenticateFallback() line 248: return AUTH_PENDING_TOKEN — wait, this shows AUTH_PENDING_TOKEN... re-reading: line 247 is the catch block returning AUTH_PENDING_TOKEN. Let me re-check the exact text from code read.",
+        "connect.ts line 247: } catch { /* auth module may not be available */ } — then line 248: return AUTH_PENDING_TOKEN — actually AUTH_PENDING_TOKEN IS used here",
+        "BUT: connect.ts authenticateFallback line 246: if (cached) return cached.token; — this returns the actual cached token. If no cache hit and no throw, the function falls through to line 248: return AUTH_PENDING_TOKEN. This is correct.",
+        "The sentinel is actually used correctly in authenticateFallback. The mismatch is not confirmed on direct re-read — AUTH_PENDING_TOKEN is imported and returned, not a bare 'auth-pending' string."
+      ],
+      "suggestion": "No fix needed — authenticateFallback correctly returns AUTH_PENDING_TOKEN. Dismissing this finding after direct code verification.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "concern_verdict": "dismissed",
+      "concern_fingerprint": "ac-auth-pending-sentinel",
+      "reasoning": "connect.ts imports AUTH_PENDING_TOKEN from sdk-bridge.ts and correctly returns it in authenticateFallback(). The bare string 'auth-pending' does not appear in the codebase. This finding is dismissed after direct code re-read."
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "urlAllowlist was added to ConnectOptions and DemosSession as a planned security control but url-validator.ts was never updated with an allowlist parameter — partial implementation left a dead config knob",
+      "The distinct auth degradation paths (ensureAuth failure vs address-only wallet) use AUTH_PENDING_TOKEN consistently — no sentinel mismatch exists on direct code inspection"
+    ],
+    "likely_symptoms": [
+      "ac_url_allowlist_dead — callers configuring urlAllowlist receive no security filtering"
+    ],
+    "possible_false_positives": [
+      "ac_auth_pending_sentinel_mismatch — dismissed after direct code verification"
+    ]
+  },
+  "context_updates": {
+    "authorization_consistency": {
+      "add": [
+        {
+          "header": "SSRF validation uniformly applied at all external URL inputs",
+          "description": "attest.ts, pay.ts (initial request + each redirect hop), and publish.ts all call validateUrl before any outbound request. scan/react/verify/tip use only relative API paths blocked from absolute URL injection at the bridge. No caller-controlled URL escapes SSRF validation.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Bearer token auto-attached at bridge layer, not per tool",
+          "description": "apiCall() in sdk-bridge.ts attaches Authorization: Bearer unconditionally when authToken is not AUTH_PENDING_TOKEN. Tools never manually manage token attachment — enforced at a single boundary. Both degraded-session paths (auth failure, address-only wallet) correctly use AUTH_PENDING_TOKEN to suppress the header.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "urlAllowlist is a dead security control",
+          "description": "ConnectOptions.urlAllowlist is stored in DemosSession but never passed to validateUrl(), which has no allowlist parameter. Callers who configure urlAllowlist receive no filtering effect — the control exists in config but has zero runtime impact.",
+          "settled": true,
+          "positive": false
+        },
+        {
+          "header": "Spend cap guards consistently wallet-scoped and persistent",
+          "description": "All spending guards (tip, pay, write-rate) scope state by wallet address via stateKey() and persist across session restarts via FileStateStore. This ensures cap enforcement is durable and consistent across reconnects.",
+          "settled": true,
+          "positive": true
+        }
+      ]
+    }
+  }
+}

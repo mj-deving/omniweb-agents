@@ -1,0 +1,127 @@
+{
+  "batch": "error_consistency",
+  "batch_index": 4,
+  "assessments": {
+    "error_consistency": 76.0
+  },
+  "dimension_notes": {
+    "error_consistency": {
+      "evidence": [
+        "The toolkit has a documented two-strategy model: tools return ToolResult<T> (ok/err envelope); internal helpers and SDK bridge throw. This layering is intentional and consistent with the 'Result in core, throw in CLI' pattern the rubric permits.",
+        "withToolWrapper catches all thrown exceptions from tool implementations and converts them to typed DemosError — this is the single error translation boundary. The pattern works correctly.",
+        "Guards uniformly return DemosError | null — no guards throw. This is consistent across all 7 guard files.",
+        "connect.ts throws DemosError directly (not wrapped in ToolResult) — intentional because connect() is a lifecycle function, not a toolkit tool. This is documented behavior but visible inconsistency.",
+        "sdk-bridge.ts throws raw Error objects (not DemosError) from attestDahr, publishHivePost, transferDem, and signAndBroadcast. withToolWrapper wraps these into DemosError on catch. However, payD402 has its own catch block at line 288 that re-throws either the original (if D402SettlementResult-shaped) or a new Error — the re-throw is NOT converted to DemosError before leaving sdk-bridge, relying on withToolWrapper in pay.ts to handle it. This is a fragile two-step conversion.",
+        "publish.ts: executePublishPipeline() throws demosError() directly (line 92: `throw demosError('INVALID_INPUT', ...)`) and also throws plain `new Error()` from bridge.attestDahr (bridged through). withToolWrapper catches both and handles them differently — isDemosError check distinguishes DemosError thrown intentionally from plain Error.",
+        "scan.ts inner catch (line 38) silently swallows the Skill Dojo fallback error with `catch { /* both failed */ }` — the original local error (localErr) is partially preserved in the outer catch message, but the Skill Dojo failure is completely discarded with no context.",
+        "verify.ts: the inner catch at line 88 in checkConfirmation wraps the error into a new Error with added context ('Verification requires SuperColony API...'). This is good — context is preserved. However the outer verify() function has a separate `return err(...)` at line 59 after the loop that's a dead code path — the loop always exits via return on the final attempt.",
+        "discover-sources.ts: loadCatalog() calls JSON.parse(raw) at line 80 without try/catch — raw is from readFile and could be malformed JSON. The outer try/catch in discoverSources() at line 43 catches this and wraps it properly. However, the JSON.parse is in the inner helper and the outer catch is in a different function scope — this is the pattern flagged by the 'security' detector ('JSON.parse without try/catch').",
+        "tip-spend-cap.ts checkAndRecordTip has a logic order issue: the per-tip max check (line 36: `if (amount > policy.maxPerTip)`) happens BEFORE the isFinite/positive check (line 44). If amount is NaN or Infinity, the first check (NaN > 10 = false) passes, and the second check catches it — but this relies on comparison-with-NaN behavior being falsy, which is correct but non-obvious. The more defensive order would be: validate first, then apply policy checks.",
+        "pay-spend-cap.ts has the same order issue: line 34 checks `amount > policy.maxPerCall` before line 42 validates `isFinite(amount)`. Same NaN-comparison dependency."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high",
+      "issues_preventing_higher_score": "The silent Skill Dojo error swallow in scan.ts is a concrete information loss. The JSON.parse without local try/catch in discover-sources.ts loadCatalog() is a confirmed vulnerability (relying on an outer catch in a different function scope). The NaN-before-isFinite validation order in tip-spend-cap and pay-spend-cap is non-obvious and order-dependent. These aren't catastrophic but create predictability gaps."
+    }
+  },
+  "dimension_judgment": {
+    "error_consistency": {
+      "dimension_character": "The toolkit has a well-defined two-layer error model: guards return DemosError|null, tools return ToolResult<T>, and withToolWrapper translates throws to typed errors at a single boundary. This architecture is sound and consistently applied across most of the codebase. The friction comes from several concrete gaps: a silent error swallow in scan.ts, JSON.parse without local error handling in discover-sources.ts, and validation-order dependency in two spend-cap guards that relies on NaN arithmetic properties being falsy.",
+      "score_rationale": "This scores at 76 — in the 'mixed' range. The structural error model is correct and coherent, which keeps it well above 60. The concrete issues — silent swallow, unguarded JSON.parse, and subtle validation-order dependencies — are not isolated outliers but spread across multiple files in a pattern suggesting the error handling discipline was applied carefully in some areas (guards, tool-wrapper) but less carefully in others (fallback paths, catalog loading). A developer can mostly predict error behavior but would encounter surprises in these specific paths."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "error_consistency",
+      "identifier": "scan_silent_skill_dojo_error",
+      "summary": "scan.ts silently swallows Skill Dojo fallback error, losing all context on dual-path failure",
+      "related_files": ["src/toolkit/tools/scan.ts"],
+      "evidence": [
+        "Lines 32-39: the skillDojoFallback path catches the Dojo error with `catch { /* both failed */ }` — zero context preserved",
+        "The outer error path (line 42) uses localErr from the first fetch failure, not the Dojo failure — if Dojo fails for a different reason (auth, format), that information is lost",
+        "A developer debugging a scan failure would see only 'Scan failed: <local error>' with no indication that Skill Dojo was tried and also failed"
+      ],
+      "suggestion": "Change the inner catch to capture the Skill Dojo error and include both failure messages in the returned error. For example: `catch (dojoErr) { return err(demosError('NETWORK_ERROR', `Scan failed (local: ${(localErr as Error).message}, skill-dojo: ${(dojoErr as Error).message})`, true), localProvenance(start)); }`",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "discover_sources_json_parse_no_local_catch",
+      "summary": "loadCatalog() calls JSON.parse without local try/catch, relying on outer function's catch in different scope",
+      "related_files": ["src/toolkit/tools/discover-sources.ts"],
+      "evidence": [
+        "discover-sources.ts line 80: `const catalog = JSON.parse(raw)` — no try/catch in loadCatalog()",
+        "The outer try/catch is in discoverSources() (line 43), a different function that calls loadCatalog(). This works but the error handling is owned by the caller, not the function that parses",
+        "If loadCatalog is called from another context in the future, the JSON.parse throw would propagate unhandled",
+        "Flagged by the security detector as 'JSON.parse() without try/catch - may throw on malformed input'"
+      ],
+      "suggestion": "Add a local try/catch inside loadCatalog() around the JSON.parse, throwing a descriptive error: `try { catalog = JSON.parse(raw); } catch { throw new Error(`Invalid JSON in catalog at ${catalogPath}`); }`. This makes the error contract explicit at the parse site.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "error_consistency",
+      "identifier": "spend_cap_validation_order",
+      "summary": "tip-spend-cap and pay-spend-cap check policy bounds before validating isFinite — relies on NaN comparison behavior",
+      "related_files": [
+        "src/toolkit/guards/tip-spend-cap.ts",
+        "src/toolkit/guards/pay-spend-cap.ts"
+      ],
+      "evidence": [
+        "tip-spend-cap.ts line 36: `if (amount > policy.maxPerTip)` checked before line 44: `if (!Number.isFinite(amount) || amount <= 0)`. NaN > 10 is false, so NaN would pass the first check and be caught by the second — but this depends on implicit NaN arithmetic.",
+        "pay-spend-cap.ts line 34: `if (amount > policy.maxPerCall)` checked before line 42: `if (!Number.isFinite(amount) || amount <= 0)`. Same pattern.",
+        "If the isFinite check is ever removed or moved, NaN amounts would pass the policy check silently"
+      ],
+      "suggestion": "Move the `isFinite(amount) && amount > 0` validation to be the FIRST check in both functions, before any policy comparison. This makes validation order self-documenting and removes the implicit NaN-comparison dependency.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "validation_order"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "The outer-catch pattern (catching in caller rather than at parse site) appears in multiple places — suggests a habit of relying on top-level error wrappers rather than handling errors close to their origin.",
+      "The validation-order issue in spend caps suggests the isFinite check was added as an afterthought after the policy checks were written."
+    ],
+    "likely_symptoms": [
+      "scan_silent_skill_dojo_error",
+      "discover_sources_json_parse_no_local_catch"
+    ],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "error_consistency": {
+      "add": [
+        {
+          "header": "Two-layer error model clearly defined and mostly consistent",
+          "description": "Guards return DemosError|null; tools return ToolResult<T>; sdk-bridge throws; withToolWrapper translates throws to typed DemosError at a single boundary. This architecture is sound and the vast majority of code follows it correctly.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "withToolWrapper is reliable single error translation point",
+          "description": "All 9 withToolWrapper-based tools converge exception handling to one place. The isDemosError duck-type check correctly preserves intentionally-thrown DemosError codes versus generic Error messages. This prevents error-code loss at the tool boundary.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Silent error swallow on Skill Dojo fallback path",
+          "description": "scan.ts swallows the Skill Dojo fallback exception with an empty catch, losing all diagnostic context on dual-path failure. This is a concrete information-loss defect, not a design tradeoff.",
+          "settled": true,
+          "positive": false
+        },
+        {
+          "header": "JSON.parse error handling delegated to outer caller scope",
+          "description": "discover-sources.ts loadCatalog() calls JSON.parse without local error handling, relying on the try/catch in discoverSources() at a different call stack level. This is a fragile pattern that breaks if loadCatalog is called from other contexts.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "batch": "logic_clarity",
+  "batch_index": 19,
+  "assessments": {"logic_clarity": 76.5},
+  "dimension_notes": {
+    "logic_clarity": {
+      "evidence": [
+        "verify.ts lines 59-62: return err(demosError('CONFIRM_TIMEOUT', 'Verification exhausted all retries', true), ...) after the for-loop is dead code. The loop iterates attempt 0..RETRY_DELAYS_MS.length (0..3 inclusive). On the final iteration (attempt=3), either the try block returns ok (confirmed or confirmed:false) or the catch block returns err. The post-loop return is never reached.",
+        "pay-spend-cap.ts lines 34-44: amount validity check order is inverted. Line 34 checks `amount > policy.maxPerCall` before line 42 validates `!Number.isFinite(amount) || amount <= 0`. If amount is negative (e.g. -5), -5 > maxPerCall is false, passes through to the spending cap check. The isFinite/positive check should guard first, then compare against policy.",
+        "scan.ts fetchFromSkillDojo(): async function that only throws synchronously — never awaits. Per the rubric this is a stub, and the skip rule covers 'framework lifecycle methods that must be async by contract'. Since the future implementation will need async, this is acceptable. Not an actionable issue.",
+        "connect.ts detectContainer(): assigns result = false, then three try blocks that may set result = true. The logic is clear and sequential. No dead branches.",
+        "publish.ts executePublishPipeline(): if (!draft.attestUrl) throw — this early return guard is clear and intentional.",
+        "sdk-bridge.ts publishHivePost(): multi-shape txHash extraction chain (lines 251-256) uses 6 fallback expressions. The chain is correct: each fallback is for a distinct SDK response shape. No identical branches.",
+        "withToolWrapper: isDemosError check uses three property presence checks (code, message, retryable). These are distinct conditions — not a simplifiable boolean.",
+        "dedup-guard.ts checkAndRecordDedup: the `record` boolean parameter controls whether newEntry is passed to checkAndAppend. The ternary `record ? { timestamp: Date.now(), hash } : undefined` is clear. Not a simplification candidate.",
+        "state-store.ts lock(): `return async () => { await release(); }` — the async wrapper is necessary because the StateStore Unlock type is () => Promise<void>, and release() may or may not be async depending on the lockfile library version. Acceptable.",
+        "pay.ts fetchWithValidatedRedirects: `while(true)` loop with early returns for non-redirect and max-hop breach. Pattern is clear and correct — no identical branches.",
+        "verify.ts checkConfirmation: the outer try/catch re-wraps the exception with additional context. This is not dead code — it's the exception-path for network failures that the caller needs to distinguish from 'post not found'."
+      ],
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "logic_clarity": {
+      "dimension_character": "The toolkit's control flow is generally direct and intention-revealing — guard chains, retry loops, and protocol steps are clearly sequenced without redundant branching. Two concrete logic defects exist: a dead code path after verify()'s for-loop (unreachable return), and an inverted validation check order in pay-spend-cap.ts that allows invalid amounts to bypass the isFinite check.",
+      "score_rationale": "Score 76.5 reflects solid overall logic clarity with no egregious branching issues, but two correctness problems: dead code after the verify retry loop (indicating the loop termination condition was not fully reasoned through) and a guard ordering issue in pay-spend-cap.ts where the maxPerCall check fires before the isFinite/positive check, which can produce misleading error codes for invalid input."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "logic_clarity",
+      "identifier": "verify_dead_code_post_loop",
+      "summary": "verify() has unreachable return err() after the retry for-loop — loop always returns on final iteration",
+      "related_files": ["src/toolkit/tools/verify.ts"],
+      "evidence": [
+        "for loop: attempt 0..RETRY_DELAYS_MS.length inclusive (0,1,2,3) — 4 iterations",
+        "On attempt=3 (last): try block returns ok({confirmed}) or ok({confirmed:false}); catch block returns err(CONFIRM_TIMEOUT). Loop always exits via return.",
+        "Lines 59-62: return err(demosError('CONFIRM_TIMEOUT', 'Verification exhausted all retries', true), ...) is never reached."
+      ],
+      "suggestion": "Remove lines 59-62. The for-loop condition `attempt <= RETRY_DELAYS_MS.length` already covers all retry attempts and the final failure case is handled inside the catch on the last iteration. If TypeScript requires a non-void return, restructure the loop to `attempt < RETRY_DELAYS_MS.length` with explicit exhausted handling after the loop.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "logic_clarity",
+      "identifier": "pay_spend_cap_guard_order",
+      "summary": "pay-spend-cap.ts checks amount > maxPerCall before isFinite/positive validation — inverted guard order",
+      "related_files": ["src/toolkit/guards/pay-spend-cap.ts"],
+      "evidence": [
+        "Line 34: if (amount > policy.maxPerCall) return SPEND_LIMIT — fires before isFinite check",
+        "Line 42: if (!Number.isFinite(amount) || amount <= 0) return INVALID_INPUT — second check",
+        "If amount = -5: -5 > maxPerCall is false → passes line 34 → line 42 catches it (INVALID_INPUT). Correct result but wrong code path — the per-call max fires first.",
+        "If amount = Infinity: Infinity > maxPerCall is true → returns SPEND_LIMIT. Correct by accident — but the real error is INVALID_INPUT (non-finite), not SPEND_LIMIT.",
+        "Callers get SPEND_LIMIT for Infinity input, which suggests they should raise their maxSpend, not that the input is invalid."
+      ],
+      "suggestion": "Move the isFinite/positive check (lines 42-44) to before the maxPerCall check (line 34). Validate that amount is a valid number before comparing it against policy limits.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "verify.ts dead code: the loop termination condition uses <= (inclusive upper bound) which means the loop handles the final retry iteration internally. The post-loop return was added defensively without accounting for the inclusive bound.",
+      "pay-spend-cap.ts guard order: the maxPerCall check was likely written first as the 'main' guard, then the isFinite check was added as a secondary defense — but the ordering was not revisited."
+    ],
+    "likely_symptoms": [],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "logic_clarity": {
+      "add": [
+        {
+          "header": "Control flow generally direct, no complex branching",
+          "description": "The toolkit tools follow clear sequential patterns (validate → guard → execute → record) with no identical if/else branches or always-true conditions found across the 10 tools and 6 guards reviewed.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "verify() for-loop has unreachable post-loop return",
+          "description": "The inclusive upper bound (attempt <= RETRY_DELAYS_MS.length) means the final retry is handled inside the loop, making the post-loop error return dead code. This indicates the loop termination logic was not fully verified.",
+          "settled": true,
+          "positive": false
+        },
+        {
+          "header": "pay-spend-cap.ts validates limits before input validity",
+          "description": "The maxPerCall check fires before the isFinite check, which means Infinity input gets SPEND_LIMIT error code instead of INVALID_INPUT. Guard ordering should validate input shape before comparing against policy.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

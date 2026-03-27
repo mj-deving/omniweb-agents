@@ -1,0 +1,152 @@
+{
+  "batch": "type_safety",
+  "batch_index": 20,
+  "assessments": {
+    "type_safety": 71.0
+  },
+  "dimension_notes": {
+    "type_safety": {
+      "evidence": [
+        "types.ts: Every public option type (ConnectOptions, PublishDraft, ReplyOptions, ReactOptions, TipOptions, ScanOptions, VerifyOptions, AttestOptions, DiscoverSourcesOptions, PayOptions, TipPolicy, PayPolicy), result type (PublishResult, ScanResult, VerifyResult, AttestResult, PayResult, TipResult, ReactResult, DiscoverSourcesResult), and error type (DemosError, DemosErrorCode) is fully annotated with no any. This is 100% of the public API surface.",
+        "schemas.ts: Compile-time sync assertions (lines 173-194) verify that Zod schema output extends TypeScript interface and vice versa. These are zero-runtime-cost type guards that prevent schema/interface drift. A strong positive pattern.",
+        "sdk-bridge.ts line 105: txModule parameter typed as `{ store: Function; confirm: Function; broadcast: Function }`. Bare Function provides no parameter or return type checking. Used at tx.store(encoded, demos), tx.confirm(storeTx, demos), tx.broadcast(validity, demos) — wrong argument types pass TypeScript validation silently.",
+        "sdk-bridge.ts lines 108-109: `let cachedTxModule: any = txModule ?? null` and `let cachedD402Client: any = null`. Both become typed after dynamic import but the cache slot is any — all downstream uses lose type information at cache-hit paths.",
+        "sdk-bridge.ts lines 119, 205, 272: `(demos as any).web2.createDahr()`, `(demos as any).sendTransaction()`, `(demos as any).transfer()` — these methods are not in the Demos SDK's declared TypeScript interface. The casts are SDK-gap-forced, not design-negligent. No comment explains why.",
+        "sdk-bridge.ts lines 249-256: Six `(validity as any)` and `(result as any)` casts for txHash extraction across multiple SDK response shapes. Each cast produces undefined silently if the SDK response changes shape — no runtime shape validation accompanies these casts.",
+        "discover-sources.ts line 100: `type SourceStatus = 'active' | 'degraded' | 'quarantined' | 'stale' | 'deprecated' | 'archived'` — a local non-exported type definition that exactly duplicates the exported SourceStatus in types.ts line 237. The file imports Source from types.ts but not SourceStatus. If types.ts adds a status (e.g., 'suspended'), discover-sources.ts will silently diverge and normalizeStatus will return 'active' for the new value instead of normalizing it correctly.",
+        "connect.ts line 187: `): Promise<{ demos: any; address: string; authToken: string }>` — the demos field typed as any. sdk-bridge.ts line 11 shows `import type { Demos } from '@kynesyslabs/demosdk/websdk'` is available — Demos IS importable as a type. The any return in connectSdk() loses type safety on the Demos instance throughout its usage in the session.",
+        "scan.ts, verify.ts, tip.ts: feed responses deserialized as `result.data as Record<string, unknown>` then progressively narrowed with runtime checks. This is the expected pattern for dynamic API responses — not a typing defect.",
+        "session.ts: signingHandle stored as unknown via Symbol and retrieved with `as { bridge?: SdkBridge }`. The cast is unsound at runtime but reasonable given the Symbol-keyed privacy pattern. The bridge? optional field means getBridge() correctly throws if the bridge is absent.",
+        "No @ts-ignore or @ts-expect-error appears in any toolkit source file. All type escapes are explicit `as` casts with visible, localized scope.",
+        "schemas.ts lines 76-77: stateStore and onToolCall are z.any() in Zod schemas with explanatory comments ('runtime object — can't validate methods', 'runtime callback — passthrough'). These are justified — Zod cannot verify interface method presence at parse time."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "multi_file_refactor",
+      "confidence": "high"
+    }
+  },
+  "dimension_judgment": {
+    "type_safety": {
+      "dimension_character": "The toolkit's public API surface is well-typed with no any escapes and schema-to-interface sync assertions that prevent drift. Type safety degrades at SDK integration boundaries in sdk-bridge.ts, where the Demos SDK lacks declared types for web2.createDahr(), sendTransaction(), and transfer() — forcing pervasive as any casts. The non-SDK-forced issues are: bare Function parameters for txModule (no call-site checking), any-typed cache variables, a duplicate SourceStatus type in discover-sources.ts, and the any-return on the demos field in connectSdk(). Together these create a codebase where the developer can trust public API types but must treat sdk-bridge.ts as a type-unsafe layer.",
+      "score_rationale": "Score 71.0. The public surface is genuinely strong (a high-confidence positive). The sdk-bridge.ts any saturation accounts for substantial type coverage loss at the most security-relevant integration point — the SDK boundary where tokens and chain operations live. Some of this is SDK-forced, but the bare Function typing for txModule and the any cache variables are not SDK-forced and could be improved. The duplicate SourceStatus type creates a silent divergence risk. This combination places the codebase in the 70-75 range: a developer can trust API types but must independently verify runtime behavior in sdk-bridge.ts."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "type_safety",
+      "identifier": "ts_bridge_function_params",
+      "summary": "txModule parameter typed with bare Function — call signatures are unchecked at every use site",
+      "related_files": ["src/toolkit/sdk-bridge.ts"],
+      "evidence": [
+        "sdk-bridge.ts line 105: txModule?: { store: Function; confirm: Function; broadcast: Function }",
+        "Actual call sites: tx.store(encoded, demos) line 244, tx.confirm(storeTx, demos) line 245, tx.broadcast(validity, demos) line 246",
+        "Function type provides no parameter or return type constraints — passing wrong argument types compiles silently"
+      ],
+      "suggestion": "Replace bare Function with explicit call signatures: `{ store: (data: Uint8Array, sdk: unknown) => Promise<unknown>; confirm: (tx: unknown, sdk: unknown) => Promise<unknown>; broadcast: (validity: unknown, sdk: unknown) => Promise<unknown> }`. Using unknown for SDK-typed parameters is still safer than Function — it forces an explicit cast at use sites rather than silently accepting any argument.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "sdk_type_gap"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "ts_bridge_any_cache_vars",
+      "summary": "cachedTxModule and cachedD402Client typed as any — type information lost on cache-hit path",
+      "related_files": ["src/toolkit/sdk-bridge.ts"],
+      "evidence": [
+        "sdk-bridge.ts line 108: let cachedTxModule: any = txModule ?? null",
+        "sdk-bridge.ts line 109: let cachedD402Client: any = null",
+        "After dynamic import: cachedTxModule = DemosTransactions (a static class object), cachedD402Client = new D402Client(demos) — both have known shapes post-import"
+      ],
+      "suggestion": "Use unknown instead of any for cache variables. `let cachedTxModule: unknown = txModule ?? null`. At the single use site `const tx = txModule ?? await getTxModule()`, the existing narrowing (checking that tx exists before calling tx.store) is already present — switching to unknown forces the existing code path through explicit narrowing rather than implicitly allowing all property access.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "sdk_type_gap"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "ts_duplicate_source_status",
+      "summary": "discover-sources.ts defines a local SourceStatus type that exactly duplicates the exported type in types.ts",
+      "related_files": [
+        "src/toolkit/tools/discover-sources.ts",
+        "src/toolkit/types.ts"
+      ],
+      "evidence": [
+        "types.ts line 237: export type SourceStatus = 'active' | 'degraded' | 'quarantined' | 'stale' | 'deprecated' | 'archived'",
+        "discover-sources.ts line 100: type SourceStatus = 'active' | 'degraded' | 'quarantined' | 'stale' | 'deprecated' | 'archived' (local, unexported)",
+        "discover-sources.ts imports Source from types.ts (line 12) but not SourceStatus — the duplicate was introduced to avoid widening the import",
+        "normalizeStatus() uses the local type for its return annotation; if types.ts adds a new status value, normalizeStatus will silently return 'active' for unrecognized values instead of passing them through"
+      ],
+      "suggestion": "Remove the local SourceStatus type definition on line 100 of discover-sources.ts and add SourceStatus to the import on line 12: `import type { DiscoverSourcesOptions, DiscoverSourcesResult, Source, SourceStatus, ToolResult } from '../types.js'`.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "type_duplication"
+    },
+    {
+      "dimension": "type_safety",
+      "identifier": "ts_connect_sdk_demos_any",
+      "summary": "connectSdk() return type has demos: any — Demos instance loses type information at connection site",
+      "related_files": ["src/toolkit/tools/connect.ts", "src/toolkit/sdk-bridge.ts"],
+      "evidence": [
+        "connect.ts line 187: ): Promise<{ demos: any; address: string; authToken: string }>",
+        "sdk-bridge.ts line 11: import type { Demos } from '@kynesyslabs/demosdk/websdk' — the Demos type IS importable",
+        "createSdkBridge() in sdk-bridge.ts accepts `demos: Demos` as its first parameter (line 100), so the type exists and is usable",
+        "The any typing on demos means all downstream uses of the Demos instance lose IDE support and compiler checking"
+      ],
+      "suggestion": "In connect.ts, add `import type { Demos } from '@kynesyslabs/demosdk/websdk'` and change the connectSdk() return type to `Promise<{ demos: Demos; address: string; authToken: string }>`. The lazy import pattern does not prevent using the type at the signature level — type imports are compile-time only.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "root_cause_cluster": "sdk_type_gap"
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "Demos SDK type incompleteness: web2.createDahr(), sendTransaction(), and transfer() are not declared in the SDK's TypeScript interface, forcing as any casts at SDK call sites in sdk-bridge.ts. This is the dominant source of any saturation.",
+      "discover-sources.ts local SourceStatus was added to avoid widening the types.ts import — a small convenience decision that creates a silently-diverging parallel definition.",
+      "connectSdk() return type used `any` for the demos field without checking whether a type import was available — it was."
+    ],
+    "likely_symptoms": [
+      "ts_bridge_any_cache_vars — downstream code using cachedTxModule accepts any shape silently"
+    ],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "type_safety": {
+      "add": [
+        {
+          "header": "Public API surface fully typed with no any escapes",
+          "description": "types.ts, index.ts, and all tool function signatures use fully typed interfaces. Every option type, result type, and error type is precise. The Zod schemas include compile-time sync assertions that prevent schema/interface drift. This is the codebase's strongest type safety layer.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "Zod compile-time sync assertions prevent schema drift",
+          "description": "schemas.ts lines 173-194 use type-level assertions to verify schema output extends interface (forward) and interface extends schema input (reverse). Zero runtime cost. This is an unusually disciplined approach to keeping Zod schemas synchronized with TypeScript interfaces.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "No @ts-ignore or @ts-expect-error in toolkit source",
+          "description": "All type escapes use explicit `as` casts with localized scope — no file-level type suppression. Casts are visible and traceable to specific SDK gaps.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "SDK boundary is the primary any sink — partially SDK-forced",
+          "description": "The Demos SDK does not declare web2.createDahr(), sendTransaction(), or transfer() in its TypeScript interface, forcing as any casts at SDK call sites. The bare Function txModule parameter and any-typed cache variables are not SDK-forced and reduce type safety unnecessarily.",
+          "settled": true,
+          "positive": false
+        },
+        {
+          "header": "SourceStatus duplicated in discover-sources.ts",
+          "description": "A local SourceStatus type definition in discover-sources.ts exactly duplicates the exported type from types.ts. This creates a silently-diverging copy that will cause incorrect normalizeStatus behavior if types.ts adds a new status value.",
+          "settled": true,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

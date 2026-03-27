@@ -153,12 +153,12 @@ describe("DemosSession", () => {
       expect(session.tipPolicy.cooldownMs).toBe(60000);
     });
 
-    it("pay policy defaults to 100/100/[]/false", () => {
+    it("pay policy defaults to 100/100/[]/true (secure by default)", () => {
       const session = createSession();
       expect(session.payPolicy.maxPerCall).toBe(100);
       expect(session.payPolicy.rolling24hCap).toBe(100);
       expect(session.payPolicy.trustedPayees).toEqual([]);
-      expect(session.payPolicy.requirePayeeApproval).toBe(false);
+      expect(session.payPolicy.requirePayeeApproval).toBe(true);
     });
 
     it("custom policies override defaults", () => {

@@ -1,0 +1,175 @@
+{
+  "batch": "design_coherence",
+  "batch_index": 17,
+  "assessments": {"design_coherence": 78.5},
+  "dimension_notes": {
+    "design_coherence": {
+      "evidence": [
+        "pay.ts is 321 LOC but has a single coherent responsibility: D402 challenge/response flow. The 9 numbered steps map clearly to the protocol. Helper extraction (fetchWithValidatedRedirects, withWalletSettlementLock, safeReadBody) is well-scoped.",
+        "sdk-bridge.ts: apiCall() catch block returns { ok: false, status: 0, data: err.message } — this is a silent failure that converts a network exception to a successful-looking ToolResult. Callers may not distinguish 'server said 500' from 'DNS failed'.",
+        "discover-sources.ts: loadCatalog() has a 3-line inline healthScore resolution that handles two shapes (entry.healthScore vs entry.rating.overall). This is a minor multi-shape mapping concern but not a design problem given catalog format variability.",
+        "url-validator.ts: checkBlockedIpv4() has high cyclomatic complexity (9 IP range checks) but each branch is a single, independent IP range check. This is data-driven enumeration, not tangled logic. No extraction would improve it.",
+        "scan.ts: fetchFromSkillDojo() is declared async but only throws synchronously. This is acceptable as a stub — the async signature is needed for the future wired implementation. Not a design problem.",
+        "dedup-guard.ts has backward-compat wrappers (checkDedup, recordPublish) that are thin delegators. The prompt says NOT to flag pass-through wrappers as design problems when they have clear semantic purpose (backward compat).",
+        "async_no_await across 6 files: scan.ts fetchFromSkillDojo throws (stub), dedup-guard.ts checkDedup/recordPublish delegate to async functions (implicitly returns promise), write-rate-limit.ts backward-compat wrappers same pattern. These are delegation wrappers, not logic errors.",
+        "connect.ts is 282 LOC handling: input validation, wallet file security (TOCTOU, symlink), credential parsing (3 formats), SDK connection, auth, session construction. This mixes 5 concerns in one function — a candidate for extraction into focused helpers.",
+        "The toolkit follows a consistent structural pattern: public tool function → withToolWrapper → guards → bridge calls → ok/err. This is data-driven via withToolWrapper and is positive design.",
+        "Parameter grouping in createSdkBridge (5 params) is appropriate — each param has independent semantic meaning (demos, apiBaseUrl, authToken, fetchImpl, txModule)."
+      ],
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "confidence": "high",
+      "issues_preventing_higher_score": "connect.ts mixes 5 distinct concerns in a single function body (file security, credential parsing, SDK connection, auth, session construction). The apiCall() silent-catch pattern in sdk-bridge.ts converts network exceptions to a response shape that callers cannot distinguish from an HTTP error response.",
+      "sub_axes": {}
+    }
+  },
+  "dimension_judgment": {
+    "design_coherence": {
+      "dimension_character": "The toolkit shows strong structural discipline: a consistent withToolWrapper pipeline pattern, well-scoped helper extraction in pay.ts and state-helpers.ts, and focused single-responsibility files throughout. The main tension points are connect.ts mixing 5 concerns in one function body and sdk-bridge.ts's apiCall() silently swallowing network errors into a response shape that callers cannot easily distinguish from HTTP errors.",
+      "score_rationale": "Score 78.5 reflects a codebase that is structurally sound with consistent patterns and good extraction discipline, but has two notable design issues: connect.ts accumulating 5 responsibilities and sdk-bridge.ts silent error conversion. The flagged 'high cyclomatic complexity' files (url-validator.ts, discover-sources.ts) are false positives — their branching is inherent to their domain. The 'monster function' in pay.ts is a sequential protocol implementation with a single clear responsibility."
+    }
+  },
+  "issues": [
+    {
+      "dimension": "design_coherence",
+      "identifier": "sdk_bridge_silent_catch",
+      "summary": "apiCall() catch block silently converts network exceptions to ok:false response — callers cannot distinguish DNS failure from HTTP 500",
+      "related_files": ["src/toolkit/sdk-bridge.ts"],
+      "evidence": [
+        "Lines 199-201: catch(err) { return { ok: false, status: 0, data: (err as Error).message }; }",
+        "status: 0 is the only signal that this was a network error vs an HTTP error; callers checking result.ok will treat both identically",
+        "The existing DemosError system has a NETWORK_ERROR code with retryable:true that is the correct carrier for this case"
+      ],
+      "suggestion": "Re-throw or surface as a DemosError(NETWORK_ERROR) so that callers can distinguish retryable network failures from non-retryable HTTP errors. If apiCall must never throw, add a third field (e.g., networkError: true) to ApiCallResult.",
+      "confidence": "high",
+      "impact_scope": "module",
+      "fix_scope": "single_edit",
+      "concern_verdict": "confirmed",
+      "concern_fingerprint": "3965224138dd1f19"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "connect_mixed_concerns",
+      "summary": "connect() mixes 5 distinct responsibilities in one function body: security checks, credential parsing, SDK connection, auth, session construction",
+      "related_files": ["src/toolkit/tools/connect.ts"],
+      "evidence": [
+        "Lines 47-55: symlink check and TOCTOU prevention",
+        "Lines 58-77: file mode enforcement with container detection branch",
+        "Lines 80-81: wallet credential parsing (3 format branches in parseWallet)",
+        "Lines 83-88: SDK connection and auth via connectSdk",
+        "Lines 90-112: session construction with 12 options mapped"
+      ],
+      "suggestion": "Extract the security + file reading into a helper (e.g., readSecureWalletFile) and the session construction into a helper (e.g., buildSession). This would leave connect() as a readable orchestration of 3-4 clearly named steps rather than 5 interleaved responsibilities.",
+      "confidence": "medium",
+      "impact_scope": "local",
+      "fix_scope": "single_edit"
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "dismiss_discover_sources_complexity",
+      "summary": "Dismiss: discover-sources.ts complexity is multi-shape catalog normalization, not tangled logic",
+      "related_files": ["src/toolkit/tools/discover-sources.ts"],
+      "evidence": ["loadCatalog handles 2 catalog shapes (array vs {sources: []}), healthScore from 2 locations. Inherent to catalog variability."],
+      "suggestion": "No action needed.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "concern_verdict": "dismissed",
+      "concern_fingerprint": "e30205a024d27497",
+      "reasoning": "High cyclomatic complexity from mechanical detector but each branch handles a distinct catalog shape or field fallback. This is inherent multi-format normalization, not design fragmentation."
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "dismiss_pay_monster_function",
+      "summary": "Dismiss: pay.ts 321 LOC is a sequential 9-step protocol with single coherent responsibility",
+      "related_files": ["src/toolkit/tools/pay.ts"],
+      "evidence": ["9 numbered steps map to D402 challenge/response protocol. Helpers fetchWithValidatedRedirects, withWalletSettlementLock, safeReadBody are properly extracted. LOC is proportional to protocol complexity."],
+      "suggestion": "No action needed.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "concern_verdict": "dismissed",
+      "concern_fingerprint": "7976518927d2eee8",
+      "reasoning": "Monster function detector fired on LOC, but the function has one responsibility (D402 payment flow) with helpers already extracted. Length is justified by the protocol's sequential steps."
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "dismiss_scan_async_no_await",
+      "summary": "Dismiss: scan.ts async_no_await in fetchFromSkillDojo is an intentional async stub",
+      "related_files": ["src/toolkit/tools/scan.ts"],
+      "evidence": ["fetchFromSkillDojo throws immediately with 'Skill Dojo integration pending'. async signature is needed for future wiring, not a logic error."],
+      "suggestion": "No action needed.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "concern_verdict": "dismissed",
+      "concern_fingerprint": "9c14840d40c65d85",
+      "reasoning": "Async stub that throws — the async signature is forward-compatible with the planned implementation. Not a design problem."
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "dismiss_url_validator_complexity",
+      "summary": "Dismiss: url-validator.ts cyclomatic complexity is inherent IP range enumeration",
+      "related_files": ["src/toolkit/url-validator.ts"],
+      "evidence": ["checkBlockedIpv4 has 9 independent range checks (0.0.0.0/8, 127/8, 10/8, 172.16/12, 192.168/16, 169.254/16, 100.64/10, 198.18/15, 240/4). Each is a single conditional with a return. No extraction would improve clarity."],
+      "suggestion": "No action needed.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "concern_verdict": "dismissed",
+      "concern_fingerprint": "85dbbc078c5d8bc7",
+      "reasoning": "IP range enumeration cannot be meaningfully refactored — each range has a distinct semantic name. A data-driven table would not reduce complexity and would obscure the named ranges."
+    },
+    {
+      "dimension": "design_coherence",
+      "identifier": "dismiss_systemic_async_no_await",
+      "summary": "Dismiss: async_no_await systemic pattern is delegation wrappers and stubs, not a shared utility gap",
+      "related_files": ["src/toolkit/guards/dedup-guard.ts", "src/toolkit/guards/state-helpers.ts", "src/toolkit/guards/write-rate-limit.ts", "src/toolkit/tools/connect.ts", "src/toolkit/tools/publish.ts", "src/toolkit/tools/scan.ts"],
+      "evidence": [
+        "dedup-guard.ts: checkDedup/recordPublish are backward-compat wrappers that return the result of an async call — they implicitly return a Promise via async.",
+        "write-rate-limit.ts: checkWriteRateLimit/recordWrite same pattern.",
+        "scan.ts: fetchFromSkillDojo is an async stub that throws.",
+        "state-helpers.ts, connect.ts, publish.ts: all functions that declare async do use await."
+      ],
+      "suggestion": "No action needed — not a shared utility gap requiring a lint rule or architecture change.",
+      "confidence": "high",
+      "impact_scope": "local",
+      "fix_scope": "single_edit",
+      "concern_verdict": "dismissed",
+      "concern_fingerprint": "181f0d8a7efbf02a",
+      "reasoning": "The 6 files do not share a common anti-pattern. The backward-compat delegation wrappers (async returning async call result) are idiomatic TypeScript. The async stub is intentional. No systemic fix warranted."
+    }
+  ],
+  "retrospective": {
+    "root_causes": [
+      "connect.ts accumulated complexity as security features were added incrementally — symlink check, TOCTOU, container detection each added a concern without refactoring the function structure.",
+      "sdk-bridge.ts apiCall() silent catch was likely chosen to match the ApiCallResult interface shape, but this conflates network-level failures with HTTP-level failures."
+    ],
+    "likely_symptoms": ["dismiss_discover_sources_complexity", "dismiss_pay_monster_function", "dismiss_scan_async_no_await", "dismiss_url_validator_complexity", "dismiss_systemic_async_no_await"],
+    "possible_false_positives": []
+  },
+  "context_updates": {
+    "design_coherence": {
+      "add": [
+        {
+          "header": "Consistent withToolWrapper pipeline pattern across all tools",
+          "description": "Every toolkit tool follows: public function → withToolWrapper → guards → bridge calls → ok/err. This is a deliberate structural pattern that makes the control flow predictable and consistent across all 10 tools.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "pay.ts sequential protocol correctly exceeds LOC threshold",
+          "description": "The D402 challenge/response protocol has 9 sequential steps with proper helper extraction (fetchWithValidatedRedirects, withWalletSettlementLock, safeReadBody). LOC is justified by protocol complexity, not mixed concerns.",
+          "settled": true,
+          "positive": true
+        },
+        {
+          "header": "sdk-bridge.ts apiCall silent catch conflates failure types",
+          "description": "Network exceptions are converted to { ok: false, status: 0 } which is indistinguishable from an HTTP 0-status response. Callers lose the ability to distinguish retryable network errors from non-retryable HTTP errors.",
+          "settled": false,
+          "positive": false
+        }
+      ]
+    }
+  }
+}

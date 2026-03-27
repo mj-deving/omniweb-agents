@@ -84,8 +84,9 @@ describe("verify() timer behavior", () => {
     const session = createTestSession(tempDir, bridge);
     const result = await verify(session, { txHash: "0xmissing" });
 
-    expect(result.ok).toBe(true);
-    expect(result.data!.confirmed).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.error!.code).toBe("CONFIRM_TIMEOUT");
+    expect(result.error!.message).toContain("not confirmed");
     // Should have retried 3 times (delays at attempts 1, 2, 3)
     expect(sleep).toHaveBeenCalledTimes(3);
   });

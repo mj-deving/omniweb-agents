@@ -155,7 +155,6 @@ export interface TipOptions {
 export interface ScanOptions {
   domain?: string;
   limit?: number;
-  filters?: Record<string, unknown>;
 }
 
 /** Verify options */
@@ -166,7 +165,6 @@ export interface VerifyOptions {
 /** Attest options */
 export interface AttestOptions {
   url: string;
-  claimType?: string;
 }
 
 /** Discover sources options */

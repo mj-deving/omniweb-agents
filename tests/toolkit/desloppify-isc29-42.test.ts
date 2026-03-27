@@ -333,8 +333,8 @@ describe("ISC-35: verify() unreachable return removed", () => {
       });
 
       const result = await verify(session, { txHash: "not-found-tx" });
-      expect(result.ok).toBe(true);
-      expect(result.data!.confirmed).toBe(false);
+      expect(result.ok).toBe(false);
+      expect(result.error!.code).toBe("CONFIRM_TIMEOUT");
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

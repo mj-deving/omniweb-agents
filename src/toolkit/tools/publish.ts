@@ -14,6 +14,8 @@ import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, PublishDraftSchema, ReplyOptionsSchema } from "../schemas.js";
 import { validateUrl } from "../url-validator.js";
 
+const DEFAULT_CONFIDENCE = 80;
+
 /**
  * Publish an attested post to SuperColony.
  *
@@ -134,7 +136,7 @@ async function executePublishPipeline(session: DemosSession, draft: PublishDraft
     text: draft.text,
     category: draft.category,
     tags: draft.tags,
-    confidence: draft.confidence ?? 80,
+    confidence: draft.confidence ?? DEFAULT_CONFIDENCE,
     replyTo: draft.parentTxHash,
     sourceAttestations: [{
       url: attestResult.url,

@@ -16,6 +16,7 @@ import { parseFeedPosts } from "./feed-parser.js";
 
 // Delays before each retry attempt (initial attempt has no delay)
 const RETRY_DELAYS_MS = [3000, 5000, 10000];
+const FEED_LIMIT = 50;
 
 /**
  * Verify on-chain confirmation of a transaction.
@@ -61,7 +62,15 @@ export async function verify(
       );
     }
 
-    return ok<VerifyResult>({ confirmed: false }, localProvenance(start));
+    return err(
+      demosError(
+        "CONFIRM_TIMEOUT",
+        `Transaction ${opts.txHash.slice(0, 16)}... not confirmed after ${RETRY_DELAYS_MS.length} retries`,
+        true,
+        { step: "confirm", txHash: opts.txHash },
+      ),
+      localProvenance(start),
+    );
   });
 }
 
@@ -71,7 +80,7 @@ async function checkConfirmation(session: DemosSession, txHash: string): Promise
   try {
     const bridge = session.getBridge();
     // Note: only checks last 50 posts — transactions older than the feed window return as unconfirmed
-    const result = await bridge.apiCall(`/api/feed?limit=50`);
+    const result = await bridge.apiCall(`/api/feed?limit=${FEED_LIMIT}`);
     if (!result.ok) {
       throw new Error(`Feed API returned ${result.status} — SuperColony API may be down`);
     }

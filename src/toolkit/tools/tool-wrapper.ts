@@ -54,13 +54,3 @@ export function localProvenance(startMs: number): Provenance {
   return { path: "local", latencyMs: Date.now() - startMs };
 }
 
-/** Type guard for DemosError-shaped objects (code + message + retryable) */
-export function isDemosErrorLike(error: unknown): error is ReturnType<typeof demosError> {
-  return Boolean(
-    error
-    && typeof error === "object"
-    && "code" in error
-    && "message" in error
-    && "retryable" in error,
-  );
-}

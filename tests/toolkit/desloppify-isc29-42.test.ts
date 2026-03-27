@@ -188,16 +188,15 @@ describe("ISC-32: apiCall() typed errors with logging", () => {
   });
 });
 
-// ── ISC-33: scan.ts Skill Dojo fallback error logged ─────────
+// ── ISC-33: scan.ts returns NETWORK_ERROR on API failure ─────────
 
-describe("ISC-33: scan Skill Dojo fallback logs error", () => {
-  it("logs warning when Skill Dojo fallback also fails", async () => {
+describe("ISC-33: scan returns NETWORK_ERROR on API failure", () => {
+  it("returns NETWORK_ERROR when feed API throws", async () => {
     const { DemosSession } = await import("../../src/toolkit/session.js");
     const { FileStateStore } = await import("../../src/toolkit/state-store.js");
     const { scan } = await import("../../src/toolkit/tools/scan.js");
 
     const tempDir = mkdtempSync(join(tmpdir(), "demos-isc33-"));
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     try {
       const bridge = {
@@ -218,18 +217,13 @@ describe("ISC-33: scan Skill Dojo fallback logs error", () => {
         authToken: "token",
         signingHandle: { demos: {}, bridge },
         stateStore: new FileStateStore(tempDir),
-        skillDojoFallback: true,
       });
 
       const result = await scan(session);
       expect(result.ok).toBe(false);
       expect(result.error!.code).toBe("NETWORK_ERROR");
-      // Should have logged the Skill Dojo fallback error
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Skill Dojo fallback also failed"),
-      );
+      expect(result.error!.message).toContain("API down");
     } finally {
-      warnSpy.mockRestore();
       rmSync(tempDir, { recursive: true, force: true });
     }
   });

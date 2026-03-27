@@ -33,18 +33,6 @@ export async function scan(
       const opportunities = identifyOpportunities(posts);
       return ok<ScanResult>({ posts, opportunities }, localProvenance(start));
     } catch (localErr) {
-      if (session.skillDojoFallback) {
-        try {
-          const posts = await fetchFromSkillDojo(session, limit, opts?.domain);
-          return ok<ScanResult>(
-            { posts, opportunities: identifyOpportunities(posts) },
-            { path: "skill-dojo", latencyMs: Date.now() - start },
-          );
-        } catch (fallbackErr) {
-          console.warn(`[demos-toolkit] Skill Dojo fallback also failed: ${(fallbackErr as Error).message}`);
-        }
-      }
-
       return err(
         demosError("NETWORK_ERROR", `Scan failed: ${(localErr as Error).message}`, true),
         localProvenance(start),
@@ -80,7 +68,3 @@ async function fetchFeed(session: DemosSession, limit: number, domain?: string):
   return parseFeedPosts(result.data);
 }
 
-async function fetchFromSkillDojo(_session: DemosSession, _limit: number, _domain?: string): Promise<ScanPost[]> {
-  // TODO(skill-dojo): wire to Skill Dojo API fallback
-  throw new Error("Skill Dojo integration pending");
-}

@@ -17,12 +17,12 @@ describe("URL Validator — SSRF Protection", () => {
     });
 
     it("allows HTTPS URLs", async () => {
-      const result = await validateUrl("https://example.com/api");
+      const result = await validateUrl("https://example.com/api", { resolveOverride: "93.184.216.34" });
       expect(result.valid).toBe(true);
     });
 
     it("allows HTTP when allowInsecure is true", async () => {
-      const result = await validateUrl("http://example.com/api", { allowInsecure: true });
+      const result = await validateUrl("http://example.com/api", { allowInsecure: true, resolveOverride: "93.184.216.34" });
       expect(result.valid).toBe(true);
     });
   });

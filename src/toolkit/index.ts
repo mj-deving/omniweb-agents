@@ -71,10 +71,12 @@ export { tip } from "./tools/tip.js";
 export { scan } from "./tools/scan.js";
 export { verify } from "./tools/verify.js";
 export { attest } from "./tools/attest.js";
-export { discoverSources } from "./tools/discover-sources.js";
+export { discoverSources, clearCatalogCache } from "./tools/discover-sources.js";
 export { pay } from "./tools/pay.js";
 
 // ── Guards (exposed for testing and advanced consumers) ──
+// @deprecated exports — will be removed in next major version.
+// Prefer importing guards directly from their modules.
 
 export {
   checkWriteRateLimit,

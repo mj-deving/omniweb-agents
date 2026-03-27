@@ -13,10 +13,14 @@ import { sleep } from "../guards/state-helpers.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, VerifyOptionsSchema } from "../schemas.js";
 
+// Delays before each retry attempt (initial attempt has no delay)
 const RETRY_DELAYS_MS = [3000, 5000, 10000];
 
 /**
  * Verify on-chain confirmation of a transaction.
+ *
+ * Attempts once immediately, then retries with the delays above.
+ * On confirmation: returns immediately. On timeout: returns the last error.
  */
 export async function verify(
   session: DemosSession,
@@ -26,42 +30,37 @@ export async function verify(
     const inputError = validateInput(VerifyOptionsSchema, opts);
     if (inputError) return err(inputError, localProvenance(start));
 
-    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-      if (attempt > 0) {
-        await sleep(RETRY_DELAYS_MS[attempt - 1]);
-      }
+    // [0, ...delays] gives one immediate attempt + N retried attempts
+    const attempts = [0, ...RETRY_DELAYS_MS];
+    let lastError: Error | undefined;
+
+    for (const delay of attempts) {
+      if (delay > 0) await sleep(delay);
 
       try {
         const result = await checkConfirmation(session, opts.txHash);
-
         if (result.confirmed) {
           return ok<VerifyResult>(result, localProvenance(start));
         }
-
-        if (attempt < RETRY_DELAYS_MS.length) continue;
-
-        return ok<VerifyResult>({ confirmed: false }, localProvenance(start));
       } catch (e) {
-        if (attempt >= RETRY_DELAYS_MS.length) {
-          return err(
-            demosError(
-              "CONFIRM_TIMEOUT",
-              `Verification failed after ${RETRY_DELAYS_MS.length} retries: ${(e as Error).message}`,
-              true,
-              { step: "confirm", txHash: opts.txHash },
-            ),
-            localProvenance(start),
-          );
-        }
+        lastError = e as Error;
       }
     }
 
-    // Unreachable — the for loop always returns on its final iteration.
-    // TypeScript requires a return for completeness.
-    return err(
-      demosError("CONFIRM_TIMEOUT", "Verification exhausted all retries", true),
-      localProvenance(start),
-    );
+    // All attempts exhausted — return timeout with last error if any
+    if (lastError) {
+      return err(
+        demosError(
+          "CONFIRM_TIMEOUT",
+          `Verification failed after ${RETRY_DELAYS_MS.length} retries: ${lastError.message}`,
+          true,
+          { step: "confirm", txHash: opts.txHash },
+        ),
+        localProvenance(start),
+      );
+    }
+
+    return ok<VerifyResult>({ confirmed: false }, localProvenance(start));
   });
 }
 

@@ -4,7 +4,7 @@
  * connect() loads wallet, verifies permissions, authenticates,
  * and returns a DemosSession handle.
  *
- * disconnect() expires the session and clears sensitive data.
+ * Uses lazy SDK imports to avoid module-level side effects.
  */
 
 import { open, lstat } from "node:fs/promises";
@@ -15,15 +15,16 @@ import type { ConnectOptions } from "../types.js";
 import { demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { FileStateStore } from "../state-store.js";
+import { createSdkBridge } from "../sdk-bridge.js";
 
 const DEFAULT_RPC_URL = "https://demosnode.discus.sh";
 const DEFAULT_ALGORITHM = "falcon";
+const DEFAULT_SUPERCOLONY_API = "https://www.supercolony.ai";
 
 /**
  * Connect to the Demos network and create a session handle.
  *
- * Verifies wallet file permissions (mode 600), loads credentials,
- * authenticates with SuperColony API, and returns an opaque DemosSession.
+ * Flow: verify wallet file → parse credentials → connect SDK → authenticate → return session.
  */
 export async function connect(opts: ConnectOptions): Promise<DemosSession> {
   // HTTPS enforcement on rpcUrl
@@ -55,7 +56,6 @@ export async function connect(opts: ConnectOptions): Promise<DemosSession> {
     const mode = fstats.mode & 0o777;
 
     if (mode !== 0o600) {
-      // Check for container/WSL2 where chmod is cosmetic
       const isContainer = await detectContainer();
       if (isContainer) {
         console.warn(
@@ -75,17 +75,24 @@ export async function connect(opts: ConnectOptions): Promise<DemosSession> {
     const walletContent = await fd.readFile({ encoding: "utf-8" });
     const wallet = parseWallet(walletContent);
 
-    // Authenticate (placeholder — actual auth uses SDK)
-    const authToken = await authenticate(wallet.address, opts.rpcUrl ?? DEFAULT_RPC_URL);
+    // Connect SDK and authenticate
+    const { demos, address, authToken } = await connectSdk(
+      wallet,
+      rpcUrl,
+      opts.algorithm ?? DEFAULT_ALGORITHM,
+    );
 
     const stateStore = opts.stateStore ?? new FileStateStore();
 
+    // Create SDK bridge (session-scoped, no module-level state)
+    const bridge = createSdkBridge(demos, DEFAULT_SUPERCOLONY_API, authToken);
+
     return new DemosSession({
-      walletAddress: wallet.address,
-      rpcUrl: opts.rpcUrl ?? DEFAULT_RPC_URL,
+      walletAddress: address,
+      rpcUrl,
       algorithm: opts.algorithm ?? DEFAULT_ALGORITHM,
       authToken,
-      signingHandle: wallet.signingHandle,
+      signingHandle: { demos, bridge }, // Store both Demos instance and bridge
       skillDojoFallback: opts.skillDojoFallback,
       preferredPath: opts.preferredPath,
       stateStore,
@@ -111,19 +118,21 @@ export function disconnect(session: DemosSession): void {
 // ── Internal helpers ────────────────────────────────
 
 interface WalletData {
-  address: string;
+  address?: string;
+  mnemonic?: string;
   signingHandle: unknown;
 }
 
 function parseWallet(content: string): WalletData {
   try {
     const parsed = JSON.parse(content);
-    if (!parsed.address) {
+    if (!parsed.address && !parsed.DEMOS_MNEMONIC) {
       throw new Error("Missing address field");
     }
     return {
       address: parsed.address,
-      signingHandle: parsed, // Full wallet object as signing handle
+      mnemonic: parsed.DEMOS_MNEMONIC ?? parsed.mnemonic,
+      signingHandle: parsed,
     };
   } catch (e) {
     // Detect mnemonic format but reject — address derivation requires SDK bridge
@@ -135,6 +144,16 @@ function parseWallet(content: string): WalletData {
         false,
       );
     }
+
+    // Try key=value format (DEMOS_MNEMONIC=word1 word2 ...)
+    const mnemonicMatch = content.match(/DEMOS_MNEMONIC=["']?(.+?)["']?\s*$/m);
+    if (mnemonicMatch) {
+      return {
+        mnemonic: mnemonicMatch[1],
+        signingHandle: content,
+      };
+    }
+
     throw demosError(
       "INVALID_INPUT",
       `Cannot parse wallet file: ${(e as Error).message}`,
@@ -143,13 +162,76 @@ function parseWallet(content: string): WalletData {
   }
 }
 
-async function authenticate(_address: string, _rpcUrl: string): Promise<string> {
-  // Placeholder — actual implementation uses existing auth.ts flow
-  // In the full integration, this calls:
-  // 1. connectWallet() from connectors/
-  // 2. SuperColony API challenge-response auth
-  // 3. Returns short-lived auth token
-  return "pending-auth-integration";
+/**
+ * Connect to SDK and authenticate. Uses lazy import to avoid
+ * module-level side effects from sdk.ts.
+ */
+async function connectSdk(
+  wallet: WalletData,
+  rpcUrl: string,
+  algorithm: string,
+): Promise<{ demos: any; address: string; authToken: string }> {
+  try {
+    // Lazy import — avoids module-level crypto polyfill and global state mutation
+    const { Demos } = await import("@kynesyslabs/demosdk/websdk");
+
+    const demos = new Demos();
+    await demos.connect(rpcUrl);
+
+    // Determine mnemonic source
+    let mnemonic: string | undefined = wallet.mnemonic;
+    if (!mnemonic && wallet.address) {
+      // JSON wallet with address but no mnemonic — we have the address but
+      // can't sign. For now, create a session with the address for read-only ops.
+      // Full signing requires mnemonic.
+      const authToken = await authenticateFallback(wallet.address);
+      return { demos, address: wallet.address, authToken };
+    }
+
+    if (!mnemonic) {
+      throw new Error("No mnemonic found in wallet file");
+    }
+
+    // Connect wallet with algorithm selection
+    const connectOpts: Record<string, unknown> = {};
+    if (algorithm !== "ed25519") {
+      connectOpts.algorithm = algorithm;
+    }
+
+    const address = Object.keys(connectOpts).length > 0
+      ? await demos.connectWallet(mnemonic, connectOpts)
+      : await demos.connectWallet(mnemonic);
+
+    // Authenticate with SuperColony API
+    let authToken: string;
+    try {
+      const { ensureAuth } = await import("../../lib/auth.js");
+      authToken = await ensureAuth(demos, address);
+    } catch {
+      // Auth may fail if SuperColony API is down — return pending token
+      authToken = "auth-pending";
+    }
+
+    return { demos, address, authToken };
+  } catch (e) {
+    throw demosError(
+      "AUTH_FAILED",
+      `SDK connection failed: ${(e as Error).message}`,
+      true,
+    );
+  }
+}
+
+/**
+ * Fallback auth for address-only wallets (no mnemonic = read-only).
+ */
+async function authenticateFallback(address: string): Promise<string> {
+  try {
+    const { loadAuthCache } = await import("../../lib/auth.js");
+    const cached = loadAuthCache(address);
+    if (cached) return cached.token;
+  } catch { /* auth module may not be available */ }
+  return "auth-pending";
 }
 
 // Cached — container status is invariant per process

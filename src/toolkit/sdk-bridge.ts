@@ -148,14 +148,15 @@ export function createSdkBridge(
       const dahr = await (demos as any).web2.createDahr();
       const safeUrl = sanitizeUrl(url);
 
-      // S13: 30s timeout on DAHR proxy (startProxy may hang indefinitely)
-      let timeoutId: ReturnType<typeof setTimeout>;
+      // startProxy can hang indefinitely (observed 300s+ in TLSN era) — bound to 30s
+      const DAHR_PROXY_TIMEOUT_MS = 30_000;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       const proxyResponse = await Promise.race([
         dahr.startProxy({ url, method }),
         new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error("DAHR proxy timeout (30s)")), 30_000);
+          timeoutId = setTimeout(() => reject(new Error(`DAHR proxy timeout (${DAHR_PROXY_TIMEOUT_MS / 1000}s)`)), DAHR_PROXY_TIMEOUT_MS);
         }),
-      ]).finally(() => clearTimeout(timeoutId!));
+      ]).finally(() => clearTimeout(timeoutId));
 
       // HTTP status guard (same logic as publish-pipeline.ts:attestDahr)
       const httpStatus = proxyResponse.status ?? proxyResponse.statusCode ?? proxyResponse.httpStatus;

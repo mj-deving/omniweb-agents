@@ -37,10 +37,13 @@ export async function tip(
     // Resolve post author address — prefer chain (RPC) over feed API
     let recipientAddress: string | null = null;
 
-    // Try RPC resolution first (trusted — on-chain data)
+    // Try RPC resolution first (trusted — on-chain data), with 5s budget
     if (bridge.queryTransaction) {
       try {
-        const txResult = await bridge.queryTransaction(opts.txHash);
+        const txResult = await Promise.race([
+          bridge.queryTransaction(opts.txHash),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5_000)),
+        ]);
         if (txResult?.sender) {
           recipientAddress = txResult.sender;
         }

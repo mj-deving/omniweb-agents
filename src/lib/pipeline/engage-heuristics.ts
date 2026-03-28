@@ -7,8 +7,6 @@
  * main reaction loop.
  */
 
-import type { ScanPost } from "../../toolkit/types.js";
-
 // Inline pattern to avoid SDK import chain from feed-filter.ts
 // Kept in sync with NUMERIC_CLAIM_PATTERN in feed-filter.ts
 const NUMERIC_CLAIM_PATTERN = /\d+(\.\d+)?%|\$\d+|\d+\.\d+\s*(bbl|usd|btc|eth)/i;
@@ -27,7 +25,7 @@ export interface DisagreeTarget {
 }
 
 export interface EnforceDisagreeInput {
-  remainingPosts: ScanPost[];
+  remainingPosts: Record<string, unknown>[];
   currentDisagrees: number;
   minDisagreePerSession: number;
   ourAddress: string;
@@ -46,7 +44,7 @@ export interface EnforceDisagreeInput {
  *   - Disagree: unattested + numeric claim at floor
  */
 export function selectReaction(
-  post: ScanPost,
+  post: Record<string, unknown>,
   ourAddress: string,
   qualityFloor: number
 ): ReactionDecision | null {

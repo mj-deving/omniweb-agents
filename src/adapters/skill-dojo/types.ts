@@ -3,8 +3,8 @@
  */
 
 import type { ProviderResult } from "../../types.js";
-import type { SkillDojoClient } from "../../lib/skill-dojo-client.js";
-import type { NormalizedProof } from "../../lib/skill-dojo-proof.js";
+import type { SkillDojoClient } from "../../lib/network/skill-dojo-client.js";
+import type { NormalizedProof } from "../../lib/network/skill-dojo-proof.js";
 
 /** Base config for all skill adapters */
 export interface SkillAdapterConfig {

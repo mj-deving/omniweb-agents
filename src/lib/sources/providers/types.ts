@@ -8,7 +8,7 @@
  */
 
 import type { SourceRecordV2 } from "../catalog.js";
-import type { ExtractedClaim } from "../../claim-extraction.js";
+import type { ExtractedClaim } from "../../attestation/claim-extraction.js";
 
 // ── Attestation Method ──────────────────────────────
 

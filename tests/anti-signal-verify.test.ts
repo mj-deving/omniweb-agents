@@ -13,12 +13,12 @@ vi.mock("../src/lib/sources/providers/index.js", () => ({
   getProviderAdapter: vi.fn(),
 }));
 
-vi.mock("../src/lib/observe.js", () => ({
+vi.mock("../src/lib/pipeline/observe.js", () => ({
   observe: vi.fn(),
 }));
 
-import { verifyAntiSignalsWithRefetch } from "../src/lib/source-scanner.js";
-import type { DetectedSignal } from "../src/lib/signal-detection.js";
+import { verifyAntiSignalsWithRefetch } from "../src/lib/pipeline/source-scanner.js";
+import type { DetectedSignal } from "../src/lib/pipeline/signal-detection.js";
 import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
 // ── Helpers ──────────────────────────────────────────

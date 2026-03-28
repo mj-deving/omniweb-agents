@@ -8,8 +8,8 @@
  */
 
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
-import { apiCall, info } from "../lib/sdk.js";
-import { observe } from "../lib/observe.js";
+import { apiCall, info } from "../lib/network/sdk.js";
+import { observe } from "../lib/pipeline/observe.js";
 import { attestTlsnViaPlaywrightBridge } from "../lib/tlsn-playwright-bridge.js";
 
 // ── Constants ──────────────────────────────────────

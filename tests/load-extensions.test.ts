@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../src/lib/sources/matcher.js", () => ({ match: vi.fn() }));
 vi.mock("../src/lib/sources/policy.js", () => ({ preflight: vi.fn() }));
-vi.mock("../src/lib/sdk.js", () => ({ apiCall: vi.fn(), info: vi.fn() }));
+vi.mock("../src/lib/network/sdk.js", () => ({ apiCall: vi.fn(), info: vi.fn() }));
 
 vi.mock("../src/plugins/calibrate-plugin.js", () => ({
   createCalibrateBeforeSense: vi.fn((runTool: any) => async () => {}),
@@ -37,7 +37,7 @@ vi.mock("../src/plugins/sc-prices-plugin.js", () => ({
   scPricesBeforeSense: vi.fn(async () => {}),
 }));
 
-import { loadExtensions } from "../src/lib/extensions.js";
+import { loadExtensions } from "../src/lib/util/extensions.js";
 
 // ── Tests ────────────────────────────────────────────
 

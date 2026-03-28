@@ -12,7 +12,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
 import type { ProviderAdapter, SurgicalCandidate } from "../src/lib/sources/providers/types.js";
-import type { ExtractedClaim } from "../src/lib/claim-extraction.js";
+import type { ExtractedClaim } from "../src/lib/attestation/claim-extraction.js";
 import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

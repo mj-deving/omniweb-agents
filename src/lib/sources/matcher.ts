@@ -18,15 +18,15 @@
  *   session-runner.ts → ./index.ts → matcher.ts
  */
 
-import type { AttestationType } from "../attestation-policy.js";
-import type { LLMProvider } from "../llm-provider.js";
+import type { AttestationType } from "../attestation/attestation-policy.js";
+import type { LLMProvider } from "../llm/llm-provider.js";
 import type { AgentSourceView, SourceRecordV2 } from "./catalog.js";
 import { tokenizeTopic, sourceTopicTokens } from "./catalog.js";
 import type { PreflightCandidate } from "./policy.js";
 import { fetchSource } from "./fetch.js";
 import { getProviderAdapter } from "./providers/index.js";
 import type { EvidenceEntry } from "./providers/types.js";
-import { toErrorMessage } from "../errors.js";
+import { toErrorMessage } from "../util/errors.js";
 
 // ── Constants ───────────────────────────────────────
 
@@ -128,7 +128,7 @@ export function extractClaims(postText: string, postTags: string[]): string[] {
 
 // ── LLM-Assisted Claim Extraction (PR6) ─────────────
 
-import { LLM_CLAIM_TIMEOUT_MS, truncateForLLM, cleanLLMJson } from "../llm-claim-config.js";
+import { LLM_CLAIM_TIMEOUT_MS, truncateForLLM, cleanLLMJson } from "../llm/llm-claim-config.js";
 
 /**
  * Extract structured claims using an LLM provider.

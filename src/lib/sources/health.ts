@@ -19,7 +19,7 @@ import { tokenizeTopic } from "./catalog.js";
 import { fetchSource } from "./fetch.js";
 import { getProviderAdapter } from "./providers/index.js";
 import type { ProviderAdapter } from "./providers/types.js";
-import { toErrorMessage } from "../errors.js";
+import { toErrorMessage } from "../util/errors.js";
 
 // ── Types ────────────────────────────────────────────
 

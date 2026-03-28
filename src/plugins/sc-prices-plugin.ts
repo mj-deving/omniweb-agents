@@ -6,7 +6,7 @@
  */
 
 import type { FrameworkPlugin, DataProvider, ProviderResult } from "../types.js";
-import type { BeforeSenseContext } from "../lib/extensions.js";
+import type { BeforeSenseContext } from "../lib/util/extensions.js";
 
 export interface SCDataPluginConfig {
   apiBaseUrl: string;
@@ -20,8 +20,8 @@ export interface SCDataPluginConfig {
 export async function scPricesBeforeSense(ctx: BeforeSenseContext): Promise<void> {
   ctx.logger?.info("Extension: sc-prices (fetching price data)...");
   try {
-    const { loadAuthCache } = await import("../lib/auth.js");
-    const { SUPERCOLONY_API } = await import("../lib/sdk.js");
+    const { loadAuthCache } = await import("../lib/auth/auth.js");
+    const { SUPERCOLONY_API } = await import("../lib/network/sdk.js");
     const cached = loadAuthCache();
     if (!cached) {
       ctx.logger?.info("SC Prices: no auth token cached — skipping");
@@ -39,7 +39,7 @@ export async function scPricesBeforeSense(ctx: BeforeSenseContext): Promise<void
       ctx.logger?.info(`SC Prices: fetch failed — ${result.error}`);
     }
   } catch (e: any) {
-    const { observe } = await import("../lib/observe.js");
+    const { observe } = await import("../lib/pipeline/observe.js");
     observe("error", `SC Prices hook failed: ${e.message}`, {
       phase: "sense", source: "sc-prices-plugin.ts:beforeSense",
     });

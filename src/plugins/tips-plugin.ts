@@ -13,7 +13,7 @@
  */
 
 import type { FrameworkPlugin } from "../types.js";
-import type { BeforeSenseContext, AfterActContext } from "../lib/extensions.js";
+import type { BeforeSenseContext, AfterActContext } from "../lib/util/extensions.js";
 
 /**
  * beforeSense hook — poll mentions and queue into state.
@@ -22,8 +22,8 @@ import type { BeforeSenseContext, AfterActContext } from "../lib/extensions.js";
 export async function tipsBeforeSense(ctx: BeforeSenseContext): Promise<void> {
   ctx.logger?.info("Extension: tips (polling mentions)...");
   const { loadMentionState, saveMentionState, fetchMentions } = await import("../lib/mentions.js");
-  const { connectWallet } = await import("../lib/sdk.js");
-  const { ensureAuth } = await import("../lib/auth.js");
+  const { connectWallet } = await import("../lib/network/sdk.js");
+  const { ensureAuth } = await import("../lib/auth/auth.js");
   const { saveState } = await import("../lib/state.js");
 
   const mentionState = loadMentionState(ctx.config.name);
@@ -50,11 +50,11 @@ export async function tipsBeforeSense(ctx: BeforeSenseContext): Promise<void> {
  */
 export async function tipsAfterAct(ctx: AfterActContext): Promise<void> {
   ctx.logger?.info("Extension: tips (evaluating tip candidates)...");
-  const { connectWallet, apiCall } = await import("../lib/sdk.js");
-  const { ensureAuth } = await import("../lib/auth.js");
+  const { connectWallet, apiCall } = await import("../lib/network/sdk.js");
+  const { ensureAuth } = await import("../lib/auth/auth.js");
   const { executeTip, incrementWarmupCounter, loadTipState, saveTipState, selectTipCandidates } = await import("../lib/tips.js");
   const { defaultSpendingPolicy, loadSpendingLedger, saveSpendingLedger } = await import("../lib/spending-policy.js");
-  const { observe } = await import("../lib/observe.js");
+  const { observe } = await import("../lib/pipeline/observe.js");
 
   const { demos, address } = await connectWallet(ctx.flags.env);
   const token = await ensureAuth(demos, address);

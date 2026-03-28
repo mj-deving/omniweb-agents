@@ -18,7 +18,7 @@ import {
   selectSourcesByIntent,
   signalsToSuggestions,
   mergeAndDedup,
-} from "../src/lib/source-scanner.js";
+} from "../src/lib/pipeline/source-scanner.js";
 
 import type { SourceRecordV2, SourceIndex, AgentSourceView, AgentName } from "../src/lib/sources/catalog.js";
 import type { EvidenceEntry } from "../src/lib/sources/providers/types.js";

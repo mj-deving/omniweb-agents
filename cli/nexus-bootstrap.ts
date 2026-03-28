@@ -17,7 +17,7 @@
 
 import { Demos } from "@kynesyslabs/demosdk/websdk";
 import { StorageProgram } from "@kynesyslabs/demosdk/storage";
-import { connectWallet, info, setLogAgent } from "../src/lib/sdk.js";
+import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
 const warn = (msg: string) => console.warn(`[nexus] WARN: ${msg}`);
 import type { Transaction } from "@kynesyslabs/demosdk/types";
 

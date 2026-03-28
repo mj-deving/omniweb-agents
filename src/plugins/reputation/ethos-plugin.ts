@@ -6,7 +6,7 @@
 
 import type { FrameworkPlugin, DataProvider, ProviderResult } from "../../types.js";
 import type { AgentConfig } from "../../lib/agent-config.js";
-import { fetchWithTimeout } from "../../lib/fetch-with-timeout.js";
+import { fetchWithTimeout } from "../../lib/network/fetch-with-timeout.js";
 
 interface CacheEntry {
   data: { score: number; vouches: number; reviews: number };

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { LLMProvider } from "../src/lib/llm-provider.js";
+import type { LLMProvider } from "../src/lib/llm/llm-provider.js";
 import type { AgentSourceView } from "../src/lib/sources/catalog.js";
 import type { PreflightCandidate } from "../src/lib/sources/policy.js";
 import type { MatchResult } from "../src/lib/sources/matcher.js";
@@ -17,7 +17,7 @@ vi.mock("../src/lib/sources/policy.js", () => ({
   preflight: preflightMock,
 }));
 
-vi.mock("../src/lib/sdk.js", () => ({
+vi.mock("../src/lib/network/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -27,7 +27,7 @@ import {
   type AfterPublishDraftContext,
   type ExtensionHookRegistry,
   type LoopExtensionHooks,
-} from "../src/lib/extensions.js";
+} from "../src/lib/util/extensions.js";
 
 import { sourcesAfterPublishDraft } from "../src/plugins/sources-plugin.js";
 

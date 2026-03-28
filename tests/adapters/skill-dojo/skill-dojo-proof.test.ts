@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractProofs } from "../../../src/lib/skill-dojo-proof.js";
+import { extractProofs } from "../../../src/lib/network/skill-dojo-proof.js";
 
 describe("extractProofs", () => {
   it("extracts defi-agent dahrAttestation shape", () => {

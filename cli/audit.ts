@@ -10,10 +10,10 @@
  *   npx tsx tools/audit.ts [--log PATH] [--env PATH] [--update] [--pretty]
  */
 
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
-import { readSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "../src/lib/log.js";
-import type { SessionLogEntry } from "../src/lib/log.js";
+import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
+import { readSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "../src/lib/util/log.js";
+import type { SessionLogEntry } from "../src/lib/util/log.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────

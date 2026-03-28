@@ -7,7 +7,7 @@
 
 import type { Action } from "../../types.js";
 import type { SkillAdapterConfig } from "./types.js";
-import { extractProofs } from "../../lib/skill-dojo-proof.js";
+import { extractProofs } from "../../lib/network/skill-dojo-proof.js";
 
 export function createTlsnotaryAction(config: SkillAdapterConfig): Action {
   return {

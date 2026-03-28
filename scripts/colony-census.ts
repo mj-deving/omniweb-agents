@@ -9,8 +9,8 @@
 import { webcrypto } from "node:crypto";
 if (!globalThis.crypto) (globalThis as any).crypto = webcrypto;
 
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
+import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
 import { analyzeColony, type ColonySnapshot, type AgentProfile } from "../src/lib/colony-intelligence.js";
 
 setLogAgent("census");

@@ -26,13 +26,13 @@ import {
   updateBaseline,
   type BaselineStore,
   type DetectedSignal,
-} from "../src/lib/signal-detection.js";
+} from "../src/lib/pipeline/signal-detection.js";
 import {
   type ScanIntent,
   deriveIntentsFromTopics,
   selectSourcesByIntent,
   signalsToSuggestions,
-} from "../src/lib/source-scanner.js";
+} from "../src/lib/pipeline/source-scanner.js";
 import type { EvidenceEntry } from "../src/lib/sources/providers/types.js";
 
 // ── Arg Parsing ──────────────────────────────────────

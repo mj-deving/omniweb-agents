@@ -6,10 +6,10 @@
  */
 
 // SDK — wallet, API calls
-export { connectWallet, apiCall, loadMnemonic, info, setLogAgent, RPC_URL, SUPERCOLONY_API } from "../src/lib/sdk.js";
+export { connectWallet, apiCall, loadMnemonic, info, setLogAgent, RPC_URL, SUPERCOLONY_API } from "../src/lib/network/sdk.js";
 
 // Auth — challenge-response, token cache
-export { ensureAuth, loadAuthCache } from "../src/lib/auth.js";
+export { ensureAuth, loadAuthCache } from "../src/lib/auth/auth.js";
 
 // Publishing pipeline — DAHR/TLSN attestation + HIVE post
 export { attestDahr, attestTlsn, publishPost, attestAndPublish } from "../src/actions/publish-pipeline.js";
@@ -23,7 +23,7 @@ export { canSpend, recordSpend, defaultSpendingPolicy, createSigningGuard, loadS
 export type { SpendingPolicyConfig, SpendDecision, SigningGuard } from "../src/lib/spending-policy.js";
 
 // Signals — consensus tracking
-export { fetchSignals, scoreSignalAlignment } from "../src/lib/signals.js";
+export { fetchSignals, scoreSignalAlignment } from "../src/lib/pipeline/signals.js";
 
 // Predictions — calibration, registration
 export { loadPredictions, savePredictions, registerPrediction, resolvePendingPredictions, getCalibrationAdjustment } from "../src/lib/predictions.js";
@@ -35,8 +35,8 @@ export { executeTip, selectTipCandidates, loadTipState, saveTipState } from "../
 export { fetchMentions, loadMentionState, saveMentionState } from "../src/lib/mentions.js";
 
 // Feed filtering
-export { filterPosts, combinedTopicSearch, buildTopicIndex, buildAgentIndex } from "../src/lib/feed-filter.js";
-export type { FilteredPost, QualityFilter } from "../src/lib/feed-filter.js";
+export { filterPosts, combinedTopicSearch, buildTopicIndex, buildAgentIndex } from "../src/lib/pipeline/feed-filter.js";
+export type { FilteredPost, QualityFilter } from "../src/lib/pipeline/feed-filter.js";
 
 // LLM text generation (uses persona/strategy — SuperColony-specific)
 export { generatePost } from "../src/actions/llm.js";

@@ -27,8 +27,8 @@ export {
 } from "./lib/sources/lifecycle.js";
 
 // LLM provider abstraction
-export { resolveProvider } from "./lib/llm-provider.js";
-export type { LLMProvider } from "./lib/llm-provider.js";
+export { resolveProvider } from "./lib/llm/llm-provider.js";
+export type { LLMProvider } from "./lib/llm/llm-provider.js";
 
 // Extension hook dispatcher
 export {
@@ -38,8 +38,8 @@ export {
   runAfterPublishDraft,
   runAfterAct,
   runAfterConfirm,
-} from "./lib/extensions.js";
-export type { ExtensionHookRegistry } from "./lib/extensions.js";
+} from "./lib/util/extensions.js";
+export type { ExtensionHookRegistry } from "./lib/util/extensions.js";
 
 // Source catalog
 export {
@@ -62,14 +62,14 @@ export { match } from "./lib/sources/matcher.js";
 export type { MatchInput, MatchResult } from "./lib/sources/matcher.js";
 
 // Observation logger
-export { observe, initObserver, setObserverPhase } from "./lib/observe.js";
-export type { ObservationType, Observation } from "./lib/observe.js";
+export { observe, initObserver, setObserverPhase } from "./lib/pipeline/observe.js";
+export type { ObservationType, Observation } from "./lib/pipeline/observe.js";
 
 // Session log
-export { readSessionLog, appendSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "./lib/log.js";
+export { readSessionLog, appendSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "./lib/util/log.js";
 
 // Subprocess runner
-export { runTool, ToolError } from "./lib/subprocess.js";
+export { runTool, ToolError } from "./lib/util/subprocess.js";
 
 // Agent config
 export { loadAgentConfig, resolveAgentName } from "./lib/agent-config.js";
@@ -81,7 +81,7 @@ export {
   SCORE_BASE, SCORE_ATTESTATION, SCORE_CONFIDENCE, SCORE_LONG_TEXT,
   SCORE_ENGAGEMENT_T1, SCORE_ENGAGEMENT_T2, SCORE_MAX,
   ENGAGEMENT_T1_THRESHOLD, ENGAGEMENT_T2_THRESHOLD, LONG_TEXT_MIN_CHARS,
-} from "./lib/scoring.js";
+} from "./lib/scoring/scoring.js";
 
 // Attestation policy (plan resolution, URL helpers)
 export {
@@ -91,16 +91,16 @@ export {
   fillUrlTemplate,
   unresolvedPlaceholders,
   isHighSensitivityTopic,
-} from "./lib/attestation-policy.js";
-export type { AttestationType, AttestationMethodPlan } from "./lib/attestation-policy.js";
+} from "./lib/attestation/attestation-policy.js";
+export type { AttestationType, AttestationMethodPlan } from "./lib/attestation/attestation-policy.js";
 
 // Claim extraction (claim-driven attestation Phase 1)
 export {
   extractStructuredClaims,
   extractStructuredClaimsWithLLM,
   extractStructuredClaimsAuto,
-} from "./lib/claim-extraction.js";
-export type { ExtractedClaim, ClaimType } from "./lib/claim-extraction.js";
+} from "./lib/attestation/claim-extraction.js";
+export type { ExtractedClaim, ClaimType } from "./lib/attestation/claim-extraction.js";
 
 // Attestation planner + verifier (claim-driven attestation Phases 3-4, portable)
 export {
@@ -110,13 +110,13 @@ export {
   createUsageTracker,
   scoreSurgicalCandidate,
   recordSourceUsage,
-} from "./lib/attestation-planner.js";
+} from "./lib/attestation/attestation-planner.js";
 export type {
   AttestationBudget,
   AttestationPlan,
   VerificationResult,
   SourceUsageTracker,
-} from "./lib/attestation-planner.js";
+} from "./lib/attestation/attestation-planner.js";
 
 // Note: executeAttestationPlan is NOT exported here — it's platform-bound
 // (src/actions/attestation-executor.ts). Import directly when needed.

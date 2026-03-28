@@ -11,7 +11,7 @@ vi.mock("node:os", () => ({
   homedir: () => "/tmp/demos-agents-tests-predictions",
 }));
 
-vi.mock("../src/lib/sdk.js", () => ({
+vi.mock("../src/lib/network/sdk.js", () => ({
   apiCall: apiCallMock,
   info: vi.fn(),
 }));

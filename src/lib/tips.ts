@@ -11,8 +11,8 @@ import { resolve } from "node:path";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 
 import type { AgentConfig } from "./agent-config.js";
-import { filterPosts, type FilteredPost } from "./feed-filter.js";
-import { observe } from "./observe.js";
+import { filterPosts, type FilteredPost } from "./pipeline/feed-filter.js";
+import { observe } from "./pipeline/observe.js";
 import {
   canSpend,
   recordSpend,
@@ -21,7 +21,7 @@ import {
   type SpendingPolicyConfig,
   type SpendingTransaction,
 } from "./spending-policy.js";
-import { apiCall } from "./sdk.js";
+import { apiCall } from "./network/sdk.js";
 
 export interface TipState {
   tippedPosts: string[];

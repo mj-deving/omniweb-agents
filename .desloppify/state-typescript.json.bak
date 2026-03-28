@@ -19077,10 +19077,7 @@
     "design_coherence": {
       "score": 74.0,
       "source": "holistic",
-      "assessed_at": "2026-03-28T07:28:11+00:00",
-      "needs_review_refresh": true,
-      "refresh_reason": "mechanical_issues_changed",
-      "stale_since": "2026-03-28T07:51:45+00:00"
+      "assessed_at": "2026-03-28T07:28:11+00:00"
     },
     "error_consistency": {
       "score": 78.5,
@@ -23313,7 +23310,7 @@
   "reminder_history": {
     "auto_fixers_available": 3,
     "dry_run_first": 3,
-    "report_scores": 5,
+    "report_scores": 6,
     "review_issues_pending": 3,
     "stagnant_nudge": 5,
     "feedback_nudge": 3,

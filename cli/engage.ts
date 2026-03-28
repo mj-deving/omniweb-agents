@@ -18,10 +18,10 @@
  */
 
 import { resolve } from "node:path";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
+import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
-import { selectReaction, enforceDisagreeMinimum } from "../src/lib/engage-heuristics.js";
+import { selectReaction, enforceDisagreeMinimum } from "../src/lib/pipeline/engage-heuristics.js";
 
 // ── Arg Parsing ────────────────────────────────────
 

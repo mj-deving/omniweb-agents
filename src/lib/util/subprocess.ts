@@ -6,7 +6,7 @@
  * for import-based composition.
  *
  * Usage:
- *   import { runTool } from "./lib/subprocess.js";
+ *   import { runTool } from "./lib/util/subprocess.js";
  *   const result = await runTool("tools/audit.ts", ["--update", "--json"]);
  *   const data = JSON.parse(result.stdout);
  */

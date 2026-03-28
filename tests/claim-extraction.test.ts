@@ -4,8 +4,8 @@ import {
   extractStructuredClaimsWithLLM,
   extractStructuredClaimsAuto,
   type ExtractedClaim,
-} from "../src/lib/claim-extraction.js";
-import type { LLMProvider } from "../src/lib/llm-provider.js";
+} from "../src/lib/attestation/claim-extraction.js";
+import type { LLMProvider } from "../src/lib/llm/llm-provider.js";
 
 // ── Helpers ──────────────────────────────────────────
 

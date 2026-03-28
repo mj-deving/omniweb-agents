@@ -6,7 +6,7 @@
  * Classification and analysis happen later in the improve skill.
  *
  * Usage:
- *   import { observe, initObserver } from "./lib/observe.js";
+ *   import { observe, initObserver } from "./lib/pipeline/observe.js";
  *   initObserver("sentinel", 16);  // call once at session start
  *   observe("error", "TLSN timeout after 180s", { phase: "publish", source: "publish-pipeline.ts:234" });
  */

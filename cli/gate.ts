@@ -12,8 +12,8 @@
 
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
+import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────

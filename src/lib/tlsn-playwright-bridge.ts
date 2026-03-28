@@ -4,7 +4,7 @@ import { readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
-import { info } from "./sdk.js";
+import { info } from "./network/sdk.js";
 
 const require = createRequire(import.meta.url);
 const TLSN_MAX_BYTES = 16_384;

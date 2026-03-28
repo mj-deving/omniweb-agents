@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 
-vi.mock("../src/lib/sdk.js", () => ({
+vi.mock("../src/lib/network/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -16,7 +16,7 @@ vi.mock("../src/lib/sources/catalog.js", async (importOriginal) => {
   };
 });
 
-import { analyzeCoverage, persistSourceToCatalog, type DiscoveredSource, type CoverageGap } from "../src/lib/source-discovery.js";
+import { analyzeCoverage, persistSourceToCatalog, type DiscoveredSource, type CoverageGap } from "../src/lib/pipeline/source-discovery.js";
 
 // ── Fixtures ─────────────────────────────────────────
 

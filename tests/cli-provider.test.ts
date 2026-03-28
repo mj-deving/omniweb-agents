@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { CLIProvider } from "../src/lib/llm-provider.js";
+import { CLIProvider } from "../src/lib/llm/llm-provider.js";
 
 describe("CLIProvider", () => {
   it("returns stdout from a simple echo command", async () => {
@@ -82,7 +82,7 @@ describe("resolveProvider — resolution order", () => {
   });
 
   it("prefers LLM_CLI_COMMAND over ANTHROPIC_API_KEY when both exist", async () => {
-    const { resolveProvider } = await import("../src/lib/llm-provider.js");
+    const { resolveProvider } = await import("../src/lib/llm/llm-provider.js");
 
     process.env.ANTHROPIC_API_KEY = "sk-test-key";
     process.env.LLM_CLI_COMMAND = "echo test";
@@ -93,7 +93,7 @@ describe("resolveProvider — resolution order", () => {
   });
 
   it("falls back to LLM_CLI_COMMAND when no API keys exist", async () => {
-    const { resolveProvider } = await import("../src/lib/llm-provider.js");
+    const { resolveProvider } = await import("../src/lib/llm/llm-provider.js");
 
     process.env.LLM_CLI_COMMAND = "echo test";
 
@@ -103,7 +103,7 @@ describe("resolveProvider — resolution order", () => {
   });
 
   it("explicit LLM_PROVIDER=cli overrides API keys", async () => {
-    const { resolveProvider } = await import("../src/lib/llm-provider.js");
+    const { resolveProvider } = await import("../src/lib/llm/llm-provider.js");
 
     process.env.LLM_PROVIDER = "cli";
     process.env.LLM_CLI_COMMAND = "echo test";

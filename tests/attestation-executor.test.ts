@@ -4,8 +4,8 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SurgicalCandidate } from "../src/lib/sources/providers/types.js";
-import type { ExtractedClaim } from "../src/lib/claim-extraction.js";
-import type { AttestationPlan, AttestationBudget } from "../src/lib/attestation-planner.js";
+import type { ExtractedClaim } from "../src/lib/attestation/claim-extraction.js";
+import type { AttestationPlan, AttestationBudget } from "../src/lib/attestation/attestation-planner.js";
 
 // Mock the dependencies
 vi.mock("../src/actions/publish-pipeline.js", () => ({
@@ -17,7 +17,7 @@ vi.mock("../src/lib/sources/rate-limit.js", () => ({
   acquireRateLimitToken: vi.fn(),
 }));
 
-vi.mock("../src/lib/observe.js", () => ({
+vi.mock("../src/lib/pipeline/observe.js", () => ({
   observe: vi.fn(),
 }));
 

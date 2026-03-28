@@ -20,7 +20,7 @@ import {
   setObserverPhase,
   observe,
   type ObservationType,
-} from "../src/lib/observe.js";
+} from "../src/lib/pipeline/observe.js";
 
 // ── Helpers ──────────────────────────────────────
 

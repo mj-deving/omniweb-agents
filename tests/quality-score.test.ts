@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { calculateQualityScore, logQualityData, type QualityDataEntry } from "../src/lib/quality-score.js";
+import { calculateQualityScore, logQualityData, type QualityDataEntry } from "../src/lib/scoring/quality-score.js";
 import * as fs from "fs";
 import * as path from "path";
 

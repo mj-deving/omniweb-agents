@@ -9,9 +9,9 @@ import { info } from "./network/sdk.js";
 /** Extended Demos surface — SDK doesn't export types for crypto, nodeCall, getAddress */
 interface DemosExtended {
   crypto: { getIdentity(algo: string): Promise<{ publicKey: Uint8Array }> };
-  nodeCall(method: string, params: Record<string, unknown>): Promise<unknown>;
-  getAddress?(): string;
-  web2: { createDahr(): Promise<{ startProxy(opts: { url: string; method: string }): Promise<unknown> }> };
+  nodeCall(method: string, params: Record<string, unknown>): Promise<Record<string, unknown>>;
+  getAddress(): string;
+  web2: { createDahr(): Promise<{ startProxy(opts: { url: string; method: string }): Promise<Record<string, unknown>> }> };
 }
 
 const require = createRequire(import.meta.url);

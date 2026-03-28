@@ -72,8 +72,8 @@ interface DemosRpcMethods {
     hash: string;
     blockNumber: number;
     status: string;
-    from: unknown;
-    to: unknown;
+    from: string;
+    to: string;
     type: string;
     content: string;
     timestamp: number;
@@ -251,16 +251,17 @@ function decodeHiveData(data: unknown): Record<string, unknown> | null {
 
   let jsonStr: string | null = null;
 
-  if (data instanceof Uint8Array || (ArrayBuffer.isView(data) && !(typeof data === "string"))) {
+  if (data instanceof Uint8Array || ArrayBuffer.isView(data)) {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array((data as ArrayBufferView).buffer);
     if (bytes.length < 4) return null;
     if (hasHivePrefix(bytes)) {
       jsonStr = new TextDecoder().decode(bytes.slice(4));
     }
   } else if (typeof data === "string") {
-    // Hex-encoded: "48495645..."
+    // Hex-encoded: "48495645..." — cap at 64KB to prevent OOM from malicious chain data
     if (data.toLowerCase().startsWith(HIVE_PREFIX_HEX)) {
       const hexPayload = data.slice(8);
+      if (hexPayload.length > 128 * 1024) return null; // 64KB decoded limit
       const bytes = new Uint8Array(hexPayload.match(/.{1,2}/g)?.map(b => parseInt(b, 16)) ?? []);
       jsonStr = new TextDecoder().decode(bytes);
     }
@@ -537,19 +538,17 @@ export function createSdkBridge(
     },
 
     async verifyTransaction(txHash: string): Promise<{ confirmed: boolean; blockNumber?: number; from?: string } | null> {
-      try {
-        if (!rpc.getTxByHash) return null;
-        const tx = await rpc.getTxByHash(txHash);
-        if (!tx) return null;
-        const confirmed = tx.blockNumber > 0 && tx.status === "confirmed";
-        return {
-          confirmed,
-          blockNumber: tx.blockNumber,
-          from: tx.content?.from,
-        };
-      } catch {
-        return null;
-      }
+      if (!rpc.getTxByHash) return null; // Unsupported — caller should not retry
+
+      // Errors propagate to caller (verify.ts retry loop handles them)
+      const tx = await rpc.getTxByHash(txHash);
+      if (!tx) return { confirmed: false };
+      const confirmed = tx.blockNumber > 0 && tx.status === "confirmed";
+      return {
+        confirmed,
+        blockNumber: tx.blockNumber,
+        from: tx.content?.from,
+      };
     },
 
     async getHivePosts(limit: number): Promise<import("./types.js").ScanPost[]> {
@@ -616,6 +615,9 @@ export function createSdkBridge(
     },
 
     async publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }> {
+      if (!targetTxHash || typeof targetTxHash !== "string" || targetTxHash.length < 8) {
+        throw new Error("publishHiveReaction: invalid targetTxHash");
+      }
       const tx = txModule ?? await loadTxModule();
       const encoded = encodeHivePayload({ v: 1, action: "react", target: targetTxHash, type: reactionType });
 

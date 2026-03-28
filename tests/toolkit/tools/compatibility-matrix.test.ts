@@ -181,11 +181,10 @@ describe("ChainTransaction bridge methods", () => {
     expect(result).toBeNull();
   });
 
-  it("verifyTransaction returns null on RPC error", async () => {
+  it("verifyTransaction throws on RPC error (errors propagate for retry)", async () => {
     const demos = mockDemos({ getTxByHash: vi.fn(async () => { throw new Error("RPC down"); }) });
     const bridge = createSdkBridge(demos as any, undefined, AUTH_PENDING_TOKEN, undefined, mockTxModule);
-    const result = await bridge.verifyTransaction("0xfail");
-    expect(result).toBeNull();
+    await expect(bridge.verifyTransaction("0xfail")).rejects.toThrow("RPC down");
   });
 
   it("verifyTransaction returns unconfirmed for blockNumber 0", async () => {

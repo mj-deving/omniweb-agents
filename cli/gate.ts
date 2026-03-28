@@ -298,9 +298,9 @@ function checkSignalStrength(
 }
 
 /**
- * Pioneer Gate 3: novelty check (topic mentions in last 50 feed posts).
- * Passes when mentions are below threshold (default: <3).
+ * Gate 2: Unique data — MANUAL check.
  */
+function checkUniqueData(): GateItem {
   return {
     number: 2,
     name: "Unique data",

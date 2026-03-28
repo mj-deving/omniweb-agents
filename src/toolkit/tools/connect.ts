@@ -242,7 +242,8 @@ async function connectAndAuthenticate(
     } else {
       try {
         const { ensureAuth } = await import("../../lib/auth/auth.js");
-        authToken = await ensureAuth(demos, address);
+        const token = await ensureAuth(demos, address);
+        authToken = token ?? AUTH_PENDING_TOKEN;
       } catch (authErr) {
         // Auth may fail if SuperColony API is down — return pending token
         console.warn("[demos-toolkit] Auth failed, using pending token:", (authErr as Error).name);

@@ -96,12 +96,15 @@ function saveAuthCache(address: string, token: string, expiresAt: string): void 
 /**
  * Ensure we have a valid auth token. Uses cache first, then does
  * challenge-response auth if needed.
+ *
+ * Returns null when the API is unreachable (e.g. DNS failure) —
+ * callers should degrade gracefully to chain-only mode.
  */
 export async function ensureAuth(
   demos: Demos,
   address: string,
   forceRefresh = false
-): Promise<string> {
+): Promise<string | null> {
   if (!forceRefresh) {
     const cached = loadAuthCache(address);
     if (cached) {
@@ -113,9 +116,17 @@ export async function ensureAuth(
   info("Authenticating...");
 
   // Get challenge
-  const challengeRes = await apiCall(`/api/auth/challenge?address=${address}`, null);
+  let challengeRes;
+  try {
+    challengeRes = await apiCall(`/api/auth/challenge?address=${address}`, null);
+  } catch (err: any) {
+    // Network-level failure (DNS, timeout, connection refused)
+    info(`API unreachable (${err.cause?.code || err.message}) — continuing in chain-only mode`);
+    return null;
+  }
   if (!challengeRes.ok) {
-    throw new Error(`Auth challenge failed (${challengeRes.status}): ${JSON.stringify(challengeRes.data)}`);
+    info(`Auth challenge failed (${challengeRes.status}) — continuing in chain-only mode`);
+    return null;
   }
 
   const { challenge, message } = challengeRes.data;
@@ -124,18 +135,25 @@ export async function ensureAuth(
   const signature = await demos.signMessage(message);
 
   // Verify
-  const verifyRes = await apiCall("/api/auth/verify", null, {
-    method: "POST",
-    body: JSON.stringify({
-      address,
-      challenge,
-      signature: signature.data,
-      algorithm: signature.type,
-    }),
-  });
+  let verifyRes;
+  try {
+    verifyRes = await apiCall("/api/auth/verify", null, {
+      method: "POST",
+      body: JSON.stringify({
+        address,
+        challenge,
+        signature: signature.data,
+        algorithm: signature.type,
+      }),
+    });
+  } catch (err: any) {
+    info(`Auth verify unreachable (${err.cause?.code || err.message}) — continuing in chain-only mode`);
+    return null;
+  }
 
   if (!verifyRes.ok || !verifyRes.data.token) {
-    throw new Error(`Auth verify failed (${verifyRes.status}): ${JSON.stringify(verifyRes.data)}`);
+    info(`Auth verify failed (${verifyRes.status}) — continuing in chain-only mode`);
+    return null;
   }
 
   const token = verifyRes.data.token;

@@ -292,7 +292,7 @@ describe("ensureAuth", () => {
     expect(apiCall).toHaveBeenCalled();
   });
 
-  it("throws on challenge failure", async () => {
+  it("returns null on challenge failure", async () => {
     vi.mocked(existsSync).mockReturnValue(false);
 
     vi.mocked(apiCall).mockResolvedValueOnce({
@@ -301,12 +301,11 @@ describe("ensureAuth", () => {
       data: { error: "Server error" },
     });
 
-    await expect(
-      ensureAuth(mockDemos(), TEST_ADDRESS)
-    ).rejects.toThrow(/Auth challenge failed/);
+    const result = await ensureAuth(mockDemos(), TEST_ADDRESS);
+    expect(result).toBeNull();
   });
 
-  it("throws on verify failure", async () => {
+  it("returns null on verify failure", async () => {
     vi.mocked(existsSync).mockReturnValue(false);
 
     vi.mocked(apiCall)
@@ -321,12 +320,11 @@ describe("ensureAuth", () => {
         data: { error: "Invalid signature" },
       });
 
-    await expect(
-      ensureAuth(mockDemos(), TEST_ADDRESS)
-    ).rejects.toThrow(/Auth verify failed/);
+    const result = await ensureAuth(mockDemos(), TEST_ADDRESS);
+    expect(result).toBeNull();
   });
 
-  it("throws when verify returns ok but no token", async () => {
+  it("returns null when verify returns ok but no token", async () => {
     vi.mocked(existsSync).mockReturnValue(false);
 
     vi.mocked(apiCall)
@@ -341,9 +339,19 @@ describe("ensureAuth", () => {
         data: { success: true }, // no token field
       });
 
-    await expect(
-      ensureAuth(mockDemos(), TEST_ADDRESS)
-    ).rejects.toThrow(/Auth verify failed/);
+    const result = await ensureAuth(mockDemos(), TEST_ADDRESS);
+    expect(result).toBeNull();
+  });
+
+  it("returns null on network-level failure (DNS, timeout)", async () => {
+    vi.mocked(existsSync).mockReturnValue(false);
+
+    vi.mocked(apiCall).mockRejectedValueOnce(
+      Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } })
+    );
+
+    const result = await ensureAuth(mockDemos(), TEST_ADDRESS);
+    expect(result).toBeNull();
   });
 
   it("generates default expiry when server omits expiresAt", async () => {

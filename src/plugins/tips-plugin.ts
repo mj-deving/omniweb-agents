@@ -31,6 +31,10 @@ export async function tipsBeforeSense(ctx: BeforeSenseContext): Promise<void> {
 
   const { demos, address } = await connectWallet(ctx.flags.env);
   const token = await ensureAuth(demos, address);
+  if (!token) {
+    ctx.logger?.result("API unavailable — skipping mention fetch (chain-only mode)");
+    return;
+  }
   const mentions = await fetchMentions(address, token, {
     cursor: mentionState.lastProcessedMention,
     limit: 100,
@@ -58,6 +62,11 @@ export async function tipsAfterAct(ctx: AfterActContext): Promise<void> {
 
   const { demos, address } = await connectWallet(ctx.flags.env);
   const token = await ensureAuth(demos, address);
+
+  if (!token) {
+    ctx.logger?.result("API unavailable — skipping tips evaluation (chain-only mode)");
+    return;
+  }
 
   const feedRes = await apiCall("/api/feed?limit=50", token);
   if (!feedRes.ok) {

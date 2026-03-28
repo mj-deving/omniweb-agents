@@ -141,7 +141,9 @@ async function refreshTokenIfNeeded(
   if (cached) return cached.token; // Still valid
 
   info("[event] Auth token expired, re-authenticating...");
-  return await ensureAuth(demos, address, true);
+  const token = await ensureAuth(demos, address, true);
+  if (!token) throw new Error("API unavailable — cannot refresh auth token");
+  return token;
 }
 
 // ── Main ───────────────────────────────────────────
@@ -157,6 +159,11 @@ async function main(): Promise<void> {
   // Connect wallet and authenticate
   const { demos, address } = await connectWallet(flags.env);
   let token = await ensureAuth(demos, address);
+
+  if (!token) {
+    console.error("API unavailable — event runner requires API access for SSE feed");
+    process.exit(1);
+  }
 
   // Initialize observer for event logging
   initObserver(flags.agent, -1); // -1 = event loop session

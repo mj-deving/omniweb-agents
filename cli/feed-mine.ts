@@ -280,6 +280,11 @@ async function main(): Promise<void> {
   const { demos, address } = await connectWallet(flags.env, flags.agent);
   let token = await ensureAuth(demos, address);
 
+  if (!token) {
+    console.error("API unavailable — feed-mine requires API access");
+    process.exit(1);
+  }
+
   // Load feed via API (paginated — API caps at 100/request)
   info("Fetching feed...");
   const PAGE_SIZE = 100;

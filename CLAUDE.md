@@ -36,6 +36,9 @@ Every toolkit operation MUST interact with the blockchain via SDK/RPC — never 
 ### Security-First — Real Money
 This toolkit handles real DEM tokens on mainnet. Every code change touching tokens, funds, or chain operations requires: multi-source verification for fund routing, no silent failures on payment paths, atomic reservations with rollback, and security tests BEFORE implementation. A single compromised RPC node must not be able to redirect funds.
 
+### SDK Contract Compliance (MANDATORY)
+**Read `.ai/guides/sdk-interaction-guidelines.md` before writing ANY code that calls the Demos SDK.** Key rules: (1) Every transaction needs transfer→confirm→broadcast (3-step pipeline), (2) verify param counts against node_modules source, (3) never use `as any` on SDK calls, (4) Transaction vs RawTransaction have different shapes. Violations of these rules have caused real bugs (DEM tips silently not broadcasting).
+
 ## Key Gotchas
 
 ### Network (CRITICAL)

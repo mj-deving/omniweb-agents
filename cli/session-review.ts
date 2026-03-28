@@ -12,9 +12,9 @@
  *   npx tsx tools/session-review.ts [--log PATH] [--session N] [--pretty] [--json]
  */
 
-import { readSessionLog, resolveLogPath } from "../src/lib/log.js";
-import type { SessionLogEntry } from "../src/lib/log.js";
-import { info, setLogAgent } from "../src/lib/sdk.js";
+import { readSessionLog, resolveLogPath } from "../src/lib/util/log.js";
+import type { SessionLogEntry } from "../src/lib/util/log.js";
+import { info, setLogAgent } from "../src/lib/network/sdk.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────

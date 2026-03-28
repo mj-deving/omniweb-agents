@@ -8,7 +8,7 @@
  * Runtime: Node.js + tsx
  */
 
-import { apiCall } from "../sdk.js";
+import { apiCall } from "../network/sdk.js";
 import { observe } from "./observe.js";
 
 // ── Types ──────────────────────────────────────────

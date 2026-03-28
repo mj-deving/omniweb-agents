@@ -20,8 +20,8 @@ import {
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 
-import { apiCall } from "./sdk.js";
-import { observe } from "./observe.js";
+import { apiCall } from "./network/sdk.js";
+import { observe } from "./pipeline/observe.js";
 import type { PublishedPostRecord } from "./state.js";
 
 // ── Types ──────────────────────────────────────────

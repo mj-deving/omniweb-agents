@@ -25,7 +25,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
-import { info, setLogAgent } from "../src/lib/sdk.js";
+import { info, setLogAgent } from "../src/lib/network/sdk.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import {
   normalizeDescription,

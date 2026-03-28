@@ -3,7 +3,7 @@
  */
 
 import { vi } from "vitest";
-import type { SkillDojoClient, SkillDojoResponse } from "../../../src/lib/skill-dojo-client.js";
+import type { SkillDojoClient, SkillDojoResponse } from "../../../src/lib/network/skill-dojo-client.js";
 
 export function createMockClient(
   overrides?: Partial<SkillDojoClient>,

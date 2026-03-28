@@ -8,13 +8,13 @@
  */
 
 import type { SourceRecordV2 } from "./catalog.js";
-import { fetchWithTimeout } from "../fetch-with-timeout.js";
+import { fetchWithTimeout } from "../network/fetch-with-timeout.js";
 import type { FetchedResponse } from "./providers/types.js";
 import {
   acquireRateLimitToken,
   recordRateLimitResponse,
 } from "./rate-limit.js";
-import { toErrorMessage } from "../errors.js";
+import { toErrorMessage } from "../util/errors.js";
 
 // ── Fetch Options ───────────────────────────────────
 

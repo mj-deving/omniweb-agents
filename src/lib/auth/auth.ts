@@ -9,7 +9,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
-import { apiCall, info } from "../sdk.js";
+import { apiCall, info } from "../network/sdk.js";
 
 // ── Constants ──────────────────────────────────────
 

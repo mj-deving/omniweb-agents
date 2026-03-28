@@ -28,8 +28,8 @@ import type {
   AttestationMethod,
   SurgicalCandidate,
 } from "./types.js";
-import type { ExtractedClaim } from "../../claim-extraction.js";
-import { inferAssetAlias, inferMacroEntity } from "../../attestation-policy.js";
+import type { ExtractedClaim } from "../../attestation/claim-extraction.js";
+import { inferAssetAlias, inferMacroEntity } from "../../attestation/attestation-policy.js";
 
 // ── Spec Types ──────────────────────────────────────
 

@@ -13,7 +13,7 @@
  */
 
 import type { FrameworkPlugin } from "../types.js";
-import type { BeforeSenseContext, AfterConfirmContext } from "../lib/extensions.js";
+import type { BeforeSenseContext, AfterConfirmContext } from "../lib/util/extensions.js";
 
 /**
  * beforeSense hook — resolve pending predictions before SENSE.
@@ -22,7 +22,7 @@ import type { BeforeSenseContext, AfterConfirmContext } from "../lib/extensions.
 export async function predictionsBeforeSense(ctx: BeforeSenseContext): Promise<void> {
   ctx.logger?.info("Extension: predictions (checking pending resolutions)...");
   try {
-    const { loadAuthCache } = await import("../lib/auth.js");
+    const { loadAuthCache } = await import("../lib/auth/auth.js");
     const cached = loadAuthCache();
     const token = cached?.token || "";
     const { loadPredictions, savePredictions, resolvePendingPredictions, getCalibrationAdjustment } = await import("../lib/predictions.js");
@@ -34,7 +34,7 @@ export async function predictionsBeforeSense(ctx: BeforeSenseContext): Promise<v
     const adj = getCalibrationAdjustment(store);
     ctx.logger?.result(`Predictions: ${pending} pending, ${resolved} resolved, calibration adj: ${adj > 0 ? "+" : ""}${adj}`);
   } catch (e: any) {
-    const { observe } = await import("../lib/observe.js");
+    const { observe } = await import("../lib/pipeline/observe.js");
     observe("error", `Predictions resolution failed: ${e.message}`, {
       phase: "sense", source: "predictions-plugin.ts:beforeSense",
     });

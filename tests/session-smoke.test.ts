@@ -27,8 +27,8 @@ import {
   clearState,
   type AnySessionState,
 } from "../src/lib/state.js";
-import { resolveLogPath } from "../src/lib/log.js";
-import { initObserver, setObserverPhase, observe } from "../src/lib/observe.js";
+import { resolveLogPath } from "../src/lib/util/log.js";
+import { initObserver, setObserverPhase, observe } from "../src/lib/pipeline/observe.js";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
 const AGENTS = ["sentinel", "pioneer", "crawler"] as const;

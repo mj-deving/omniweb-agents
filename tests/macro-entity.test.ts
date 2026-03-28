@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { inferMacroEntity, inferAssetAlias } from "../src/lib/attestation-policy.js";
+import { inferMacroEntity, inferAssetAlias } from "../src/lib/attestation/attestation-policy.js";
 
 describe("inferMacroEntity", () => {
   it("resolves GDP to FRED series + World Bank indicator", () => {

@@ -17,9 +17,9 @@ if (!globalThis.crypto) (globalThis as any).crypto = webcrypto;
 import { readFileSync, writeFileSync, existsSync, renameSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { connectWallet, apiCall, info, warn, setLogAgent, RPC_URL } from "../src/lib/sdk.js";
+import { connectWallet, apiCall, info, warn, setLogAgent, RPC_URL } from "../src/lib/network/sdk.js";
 import { loadAgentConfig } from "../src/lib/agent-config.js";
-import { ensureAuth } from "../src/lib/auth.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");

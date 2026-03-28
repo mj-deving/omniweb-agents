@@ -10,8 +10,8 @@ import {
   createUsageTracker,
   scoreSurgicalCandidate,
   recordSourceUsage,
-} from "../src/lib/attestation-planner.js";
-import type { ExtractedClaim } from "../src/lib/claim-extraction.js";
+} from "../src/lib/attestation/attestation-planner.js";
+import type { ExtractedClaim } from "../src/lib/attestation/claim-extraction.js";
 import type { ProviderAdapter, SurgicalCandidate } from "../src/lib/sources/providers/types.js";
 import type { AgentSourceView, SourceRecordV2 } from "../src/lib/sources/catalog.js";
 

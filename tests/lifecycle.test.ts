@@ -4,7 +4,7 @@ import type { SourceTestResult, SourceTestStatus } from "../src/lib/sources/heal
 
 // ── Mocks ────────────────────────────────────────────
 
-vi.mock("../src/lib/sdk.js", () => ({
+vi.mock("../src/lib/network/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));

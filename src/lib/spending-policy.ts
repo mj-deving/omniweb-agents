@@ -20,7 +20,7 @@ import {
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 
-import { observe } from "./observe.js";
+import { observe } from "./pipeline/observe.js";
 
 // ── Types ──────────────────────────────────────────
 

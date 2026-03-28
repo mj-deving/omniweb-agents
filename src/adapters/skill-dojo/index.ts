@@ -4,8 +4,8 @@ export {
   type SkillDojoClient,
   type SkillDojoClientConfig,
   type SkillDojoResponse,
-} from "../../lib/skill-dojo-client.js";
-export { extractProofs, type NormalizedProof } from "../../lib/skill-dojo-proof.js";
+} from "../../lib/network/skill-dojo-client.js";
+export { extractProofs, type NormalizedProof } from "../../lib/network/skill-dojo-proof.js";
 
 // Types
 export * from "./types.js";

@@ -7,7 +7,7 @@
 
 import type { DataProvider } from "../../types.js";
 import type { SkillAdapterConfig, SkillProviderResult } from "./types.js";
-import { extractProofs } from "../../lib/skill-dojo-proof.js";
+import { extractProofs } from "../../lib/network/skill-dojo-proof.js";
 
 export type ChainOpsMode = "balance" | "transfer" | "sign-message";
 

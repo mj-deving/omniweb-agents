@@ -4,7 +4,7 @@ const { apiCallMock } = vi.hoisted(() => ({
   apiCallMock: vi.fn(),
 }));
 
-vi.mock("../src/lib/sdk.js", () => ({
+vi.mock("../src/lib/network/sdk.js", () => ({
   apiCall: apiCallMock,
   info: vi.fn(),
 }));
@@ -15,7 +15,7 @@ import {
   scoreSignalAlignment,
   type SignalSnapshot,
   type SignalTopic,
-} from "../src/lib/signals.js";
+} from "../src/lib/pipeline/signals.js";
 
 function makeSignal(overrides: Partial<SignalTopic> = {}): SignalTopic {
   return {

@@ -34,12 +34,12 @@ import {
   CRYPTO_DEFAULTS,
   MACRO_DEFAULTS,
   DEFAULT_STALENESS,
-} from "../src/lib/signal-detection.js";
+} from "../src/lib/pipeline/signal-detection.js";
 
 import type { EvidenceEntry } from "../src/lib/sources/providers/types.js";
 import type { SourceRecordV2 } from "../src/lib/sources/catalog.js";
 import type { FetchSourceResult } from "../src/lib/sources/fetch.js";
-import type { ExtractedClaim } from "../src/lib/claim-extraction.js";
+import type { ExtractedClaim } from "../src/lib/attestation/claim-extraction.js";
 
 // ── Test Helpers ──────────────────────────────────────
 

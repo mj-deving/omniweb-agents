@@ -16,11 +16,11 @@
  */
 
 import { resolve } from "node:path";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
-import { readSessionLog, resolveLogPath } from "../src/lib/log.js";
+import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
+import { readSessionLog, resolveLogPath } from "../src/lib/util/log.js";
 import { resolveAgentName } from "../src/lib/agent-config.js";
-import { toErrorMessage } from "../src/lib/errors.js";
+import { toErrorMessage } from "../src/lib/util/errors.js";
 
 const VERIFY_RETRY_DELAYS_MS = [3000, 5000, 10000] as const;
 

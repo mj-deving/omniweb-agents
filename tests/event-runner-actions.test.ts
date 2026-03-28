@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { toErrorMessage } from "../src/lib/errors.js";
+import { toErrorMessage } from "../src/lib/util/errors.js";
 
 // ── Test: React action API shape ────────────────
 

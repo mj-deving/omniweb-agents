@@ -12,7 +12,7 @@
 
 import { parseArgs } from "node:util";
 import { Demos } from "@kynesyslabs/demosdk/websdk";
-import { info, connectWallet } from "../src/lib/sdk.js";
+import { info, connectWallet } from "../src/lib/network/sdk.js";
 import { attestTlsnViaPlaywrightBridge } from "../src/lib/tlsn-playwright-bridge.js";
 
 const { values: flags } = parseArgs({

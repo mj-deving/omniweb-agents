@@ -14,7 +14,7 @@
  */
 
 import type { FrameworkPlugin } from "../types.js";
-import type { BeforeSenseContext } from "../lib/extensions.js";
+import type { BeforeSenseContext } from "../lib/util/extensions.js";
 
 /**
  * beforeSense hook — sample sources, test health, apply transitions.
@@ -28,7 +28,7 @@ export async function lifecycleBeforeSense(ctx: BeforeSenseContext): Promise<voi
     const { loadCatalog } = await import("../lib/sources/catalog.js");
     const { testSource } = await import("../lib/sources/health.js");
     const { sampleSources, updateRating, evaluateTransition, applyTransitions } = await import("../lib/sources/lifecycle.js");
-    const { observe } = await import("../lib/observe.js");
+    const { observe } = await import("../lib/pipeline/observe.js");
     const catalogPath = resolve(import.meta.dirname || ".", "../../config/sources/catalog.json");
     const catalog = loadCatalog(catalogPath);
     if (!catalog) {
@@ -77,7 +77,7 @@ export async function lifecycleBeforeSense(ctx: BeforeSenseContext): Promise<voi
     ctx.logger?.result(`Lifecycle: ${sampled.length} tested, ${transitions.length} transition(s)${ctx.flags.dryRun ? " (dry-run)" : ""}`);
   } catch (e: any) {
     // Non-fatal: lifecycle errors must not block other beforeSense hooks
-    const { observe } = await import("../lib/observe.js");
+    const { observe } = await import("../lib/pipeline/observe.js");
     observe("error", `Lifecycle hook failed: ${e.message}`, {
       phase: "sense", source: "lifecycle-plugin.ts:beforeSense",
     });

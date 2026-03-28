@@ -9,9 +9,9 @@
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from "node:fs";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
-import { observe, initObserver } from "../src/lib/observe.js";
+import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
+import { observe, initObserver } from "../src/lib/pipeline/observe.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import {
   NUMERIC_CLAIM_PATTERN,
@@ -23,7 +23,7 @@ import {
   type FilteredPost,
   type QualityFilter,
   type TopicStats,
-} from "../src/lib/feed-filter.js";
+} from "../src/lib/pipeline/feed-filter.js";
 
 type ScanMode = "lightweight" | "since-last" | "topic-search" | "category-filtered" | "quality-indexed";
 

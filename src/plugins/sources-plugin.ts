@@ -17,7 +17,7 @@ import type {
   AfterPublishDraftContext,
   PublishGateDecision,
   SourceMatchDecision,
-} from "../lib/extensions.js";
+} from "../lib/util/extensions.js";
 import { preflight } from "../lib/sources/policy.js";
 import { match } from "../lib/sources/matcher.js";
 

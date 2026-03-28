@@ -81,9 +81,9 @@ describe("import boundaries — core modules have no SDK dependency", () => {
     "src/lib/sources/rate-limit.ts",
     "src/lib/sources/health.ts",
     "src/lib/sources/matcher.ts",
-    "src/lib/observe.ts",
-    "src/lib/log.ts",
-    "src/lib/subprocess.ts",
+    "src/lib/pipeline/observe.ts",
+    "src/lib/util/log.ts",
+    "src/lib/util/subprocess.ts",
     "src/lib/agent-config.ts",
   ];
 

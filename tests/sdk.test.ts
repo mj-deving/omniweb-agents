@@ -40,7 +40,7 @@ import {
   apiCall,
   info,
   setLogAgent,
-} from "../src/lib/sdk.js";
+} from "../src/lib/network/sdk.js";
 
 const XDG_CREDENTIALS = resolve(homedir(), ".config/demos/credentials");
 

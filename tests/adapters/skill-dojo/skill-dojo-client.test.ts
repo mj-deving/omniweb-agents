@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createSkillDojoClient } from "../../../src/lib/skill-dojo-client.js";
+import { createSkillDojoClient } from "../../../src/lib/network/skill-dojo-client.js";
 
 describe("SkillDojoClient", () => {
   const mockFetch = vi.fn();

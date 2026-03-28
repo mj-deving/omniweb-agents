@@ -10,7 +10,7 @@
 
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import { DemosTransactions } from "@kynesyslabs/demosdk/websdk";
-import { warn, info } from "../sdk.js";
+import { warn, info } from "../network/sdk.js";
 
 // ── Hex Utilities ──────────────────────────────────
 

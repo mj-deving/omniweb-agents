@@ -20,7 +20,7 @@ import {
   unresolvedPlaceholders,
   type AttestationType,
   type AttestationPlan,
-} from "../attestation-policy.js";
+} from "../attestation/attestation-policy.js";
 import type { AgentConfig } from "../agent-config.js";
 import {
   type AgentSourceView,

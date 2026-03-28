@@ -24,14 +24,14 @@ import { readFileSync, existsSync } from "node:fs";
 import { loadOwnTxHashes, pruneSessionLog } from "../src/reactive/own-tx-hashes.js";
 
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
-import { connectWallet, setLogAgent, apiCall, info, warn } from "../src/lib/sdk.js";
-import { ensureAuth, loadAuthCache } from "../src/lib/auth.js";
-import { initObserver, observe } from "../src/lib/observe.js";
+import { connectWallet, setLogAgent, apiCall, info, warn } from "../src/lib/network/sdk.js";
+import { ensureAuth, loadAuthCache } from "../src/lib/auth/auth.js";
+import { initObserver, observe } from "../src/lib/pipeline/observe.js";
 import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
 import { attestAndPublish, type PublishInput } from "../src/actions/publish-pipeline.js";
 import { generatePost, type GeneratePostInput } from "../src/actions/llm.js";
 import { createActionExecutor, type ActionExecutorContext } from "../src/actions/action-executor.js";
-import { resolveProvider } from "../src/lib/llm-provider.js";
+import { resolveProvider } from "../src/lib/llm/llm-provider.js";
 import { createFileWatermarkStore } from "../src/reactive/watermark-store.js";
 import { startEventLoop, type SourceRegistration } from "../src/reactive/event-loop.js";
 

@@ -16,7 +16,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 
-import { runTool } from "../src/lib/subprocess.js";
+import { runTool } from "../src/lib/util/subprocess.js";
 import { loadAgentConfig } from "../src/lib/agent-config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

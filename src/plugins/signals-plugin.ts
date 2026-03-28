@@ -12,7 +12,7 @@
  */
 
 import type { FrameworkPlugin } from "../types.js";
-import type { BeforeSenseContext } from "../lib/extensions.js";
+import type { BeforeSenseContext } from "../lib/util/extensions.js";
 
 /**
  * beforeSense hook — fetch consensus signals + briefing before SENSE.
@@ -21,13 +21,13 @@ import type { BeforeSenseContext } from "../lib/extensions.js";
 export async function signalsBeforeSense(ctx: BeforeSenseContext): Promise<void> {
   ctx.logger?.info("Extension: signals (fetching consensus + briefing)...");
   try {
-    const { loadAuthCache } = await import("../lib/auth.js");
+    const { loadAuthCache } = await import("../lib/auth/auth.js");
     const cached = loadAuthCache();
     if (!cached) {
       ctx.logger?.info("Signals: no auth token cached — skipping");
       return;
     }
-    const { fetchSignals, fetchLatestBriefing } = await import("../lib/signals.js");
+    const { fetchSignals, fetchLatestBriefing } = await import("../lib/pipeline/signals.js");
     const [signalResult, briefingResult] = await Promise.allSettled([
       fetchSignals(cached.token),
       fetchLatestBriefing(cached.token),
@@ -41,7 +41,7 @@ export async function signalsBeforeSense(ctx: BeforeSenseContext): Promise<void>
       ctx.logger?.info(`Briefing: ${briefingResult.value.length} chars`);
     }
   } catch (e: any) {
-    const { observe } = await import("../lib/observe.js");
+    const { observe } = await import("../lib/pipeline/observe.js");
     observe("error", `Signals/briefing fetch failed: ${e.message}`, {
       phase: "sense", source: "signals-plugin.ts:beforeSense",
     });

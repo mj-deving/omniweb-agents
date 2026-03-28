@@ -14,11 +14,11 @@ import {
   loadMnemonic as canonicalLoadMnemonic,
   connectWallet as canonicalConnectWallet,
   apiCall as canonicalApiCall,
-} from "../../../../src/lib/sdk.js";
+} from "../../../../src/lib/network/sdk.js";
 import {
   ensureAuth as canonicalEnsureAuth,
   loadAuthCache as canonicalLoadAuthCache,
-} from "../../../../src/lib/auth.js";
+} from "../../../../src/lib/auth/auth.js";
 
 const XDG_CREDENTIALS = resolve(homedir(), ".config/demos/credentials");
 

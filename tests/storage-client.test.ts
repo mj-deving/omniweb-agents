@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createStorageClient } from "../src/lib/storage-client.js";
+import { createStorageClient } from "../src/lib/network/storage-client.js";
 
 const client = createStorageClient({
   rpcUrl: "https://demosnode.discus.sh/",

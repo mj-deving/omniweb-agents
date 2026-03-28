@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectReaction, enforceDisagreeMinimum } from "../src/lib/engage-heuristics.js";
+import { selectReaction, enforceDisagreeMinimum } from "../src/lib/pipeline/engage-heuristics.js";
 
 describe("selectReaction", () => {
   const ourAddress = "0xABCD1234";

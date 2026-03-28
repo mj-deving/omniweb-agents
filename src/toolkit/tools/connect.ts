@@ -237,7 +237,7 @@ async function connectAndAuthenticate(
     // Authenticate with SuperColony API
     let authToken: string;
     try {
-      const { ensureAuth } = await import("../../lib/auth.js");
+      const { ensureAuth } = await import("../../lib/auth/auth.js");
       authToken = await ensureAuth(demos, address);
     } catch (authErr) {
       // Auth may fail if SuperColony API is down — return pending token
@@ -261,7 +261,7 @@ async function connectAndAuthenticate(
  */
 async function authenticateFallback(address: string): Promise<string> {
   try {
-    const { loadAuthCache } = await import("../../lib/auth.js");
+    const { loadAuthCache } = await import("../../lib/auth/auth.js");
     const cached = loadAuthCache(address);
     if (cached) return cached.token;
   } catch { /* auth module may not be available */ }

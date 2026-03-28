@@ -8,8 +8,8 @@ import {
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 
-import { observe } from "./observe.js";
-import { apiCall } from "./sdk.js";
+import { observe } from "./pipeline/observe.js";
+import { apiCall } from "./network/sdk.js";
 import type { PendingMentionRecord } from "./state.js";
 
 export interface MentionCursor {

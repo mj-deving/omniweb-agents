@@ -25,8 +25,8 @@ import { createInterface } from "node:readline/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 
-import { runTool, ToolError, type ToolResult } from "../src/lib/subprocess.js";
-import { calculateQualityScore, logQualityData } from "../src/lib/quality-score.js";
+import { runTool, ToolError, type ToolResult } from "../src/lib/util/subprocess.js";
+import { calculateQualityScore, logQualityData } from "../src/lib/scoring/quality-score.js";
 import {
   startSession,
   loadState,
@@ -51,20 +51,20 @@ import {
   type ActSubstageState,
   type SubstageStatus,
 } from "../src/lib/state.js";
-import { readSessionLog, appendSessionLog, resolveLogPath } from "../src/lib/log.js";
+import { readSessionLog, appendSessionLog, resolveLogPath } from "../src/lib/util/log.js";
 import { saveReviewFindings, loadLatestFindings } from "../src/lib/review-findings.js";
 import { generatePost, type PostDraft } from "../src/actions/llm.js";
-import { resolveProvider, type LLMProvider } from "../src/lib/llm-provider.js";
-import { apiCall, connectWallet, setLogAgent } from "../src/lib/sdk.js";
-import { ensureAuth } from "../src/lib/auth.js";
+import { resolveProvider, type LLMProvider } from "../src/lib/llm/llm-provider.js";
+import { apiCall, connectWallet, setLogAgent } from "../src/lib/network/sdk.js";
+import { ensureAuth } from "../src/lib/auth/auth.js";
 import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "../src/actions/publish-pipeline.js";
-import { extractStructuredClaimsAuto } from "../src/lib/claim-extraction.js";
-import { buildAttestationPlan, verifyAttestedValues, createUsageTracker, type SourceUsageTracker } from "../src/lib/attestation-planner.js";
+import { extractStructuredClaimsAuto } from "../src/lib/attestation/claim-extraction.js";
+import { buildAttestationPlan, verifyAttestedValues, createUsageTracker, type SourceUsageTracker } from "../src/lib/attestation/attestation-planner.js";
 import { executeAttestationPlan } from "../src/actions/attestation-executor.js";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
-import { resolveAttestationPlan, type AttestationType } from "../src/lib/attestation-policy.js";
+import { resolveAttestationPlan, type AttestationType } from "../src/lib/attestation/attestation-policy.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
-import { initObserver, setObserverPhase, observe, type SubstageResult, type SubstageFailureCode } from "../src/lib/observe.js";
+import { initObserver, setObserverPhase, observe, type SubstageResult, type SubstageFailureCode } from "../src/lib/pipeline/observe.js";
 import {
   loadExtensions,
   runBeforeSense,
@@ -75,10 +75,10 @@ import {
   type ExtensionHookRegistry,
   type BeforeSenseContext,
   type HookLogger,
-} from "../src/lib/extensions.js";
+} from "../src/lib/util/extensions.js";
 import type { PublishedPostRecord } from "../src/lib/state.js";
 import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
-import { type SignalSnapshot } from "../src/lib/signals.js";
+import { type SignalSnapshot } from "../src/lib/pipeline/signals.js";
 import {
   loadAgentSourceView,
   preflight as sourcesPreflight,
@@ -90,11 +90,11 @@ import {
   deriveIntentsFromTopics,
   mergeAndDedup,
   type TopicSuggestion,
-} from "../src/lib/source-scanner.js";
+} from "../src/lib/pipeline/source-scanner.js";
 import {
   loadBaselines,
   saveBaselines,
-} from "../src/lib/signal-detection.js";
+} from "../src/lib/pipeline/signal-detection.js";
 import {
   createTranscriptContext,
   emitTranscriptEvent,
@@ -1863,7 +1863,7 @@ async function runGateAutonomous(
     if (!preflightResult.pass && preflightResult.reasonCode === "NO_MATCHING_SOURCE") {
       // Try dynamic source discovery before giving up
       try {
-        const { discoverSourceForTopic, persistSourceToCatalog } = await import("../src/lib/source-discovery.js");
+        const { discoverSourceForTopic, persistSourceToCatalog } = await import("../src/lib/pipeline/source-discovery.js");
         const discovered = await discoverSourceForTopic(suggestion.topic, preflightResult.plan.required, 8000);
         if (discovered) {
           info(`Discovery: found source "${discovered.source.name}" for "${suggestion.topic}" (relevance: ${discovered.relevanceScore})`);
@@ -3898,8 +3898,8 @@ async function main(): Promise<void> {
     if (isV2(state)) {
       // PR2: Auto-register agent profile on first session (non-fatal)
       try {
-        const { loadAuthCache } = await import("../src/lib/auth.js");
-        const { apiCall } = await import("../src/lib/sdk.js");
+        const { loadAuthCache } = await import("../src/lib/auth/auth.js");
+        const { apiCall } = await import("../src/lib/network/sdk.js");
         const sessionAddress =
           (state as Partial<{ walletAddress: string; address: string }>).walletAddress ||
           (state as Partial<{ walletAddress: string; address: string }>).address;

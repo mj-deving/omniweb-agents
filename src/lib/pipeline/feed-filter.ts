@@ -5,9 +5,9 @@
  * for SuperColony feed limitations around tag search.
  */
 
-import { apiCall } from "../sdk.js";
+import { apiCall } from "../network/sdk.js";
 import { observe } from "./observe.js";
-import { toErrorMessage } from "../errors.js";
+import { toErrorMessage } from "../util/errors.js";
 
 export interface QualityFilter {
   minScore: number;

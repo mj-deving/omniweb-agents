@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { fetchWithTimeout } from "../src/lib/fetch-with-timeout.js";
+import { fetchWithTimeout } from "../src/lib/network/fetch-with-timeout.js";
 
 describe("fetchWithTimeout", () => {
   afterEach(() => {

@@ -13,14 +13,14 @@
 import { webcrypto } from "node:crypto";
 if (!globalThis.crypto) (globalThis as any).crypto = webcrypto;
 
-import { connectWallet, RPC_URL, info, warn } from "../src/lib/sdk.js";
+import { connectWallet, RPC_URL, info, warn } from "../src/lib/network/sdk.js";
 import {
   createWeb2ProofPayload,
   addTwitterIdentity,
   addGithubIdentity,
   getIdentities,
   removeWeb2Identity,
-} from "../src/lib/identity.js";
+} from "../src/lib/auth/identity.js";
 
 function parseFlags(): Record<string, string> {
   const flags: Record<string, string> = {};

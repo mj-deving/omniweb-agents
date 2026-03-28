@@ -9,7 +9,7 @@
  * (the gold standard from framework research).
  */
 
-import type { LLMProvider } from "./lib/llm-provider.js";
+import type { LLMProvider } from "./lib/llm/llm-provider.js";
 import type { AgentConfig } from "./lib/agent-config.js";
 
 // ── Core Plugin Types ───────────────────────────────

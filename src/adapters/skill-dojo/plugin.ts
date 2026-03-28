@@ -8,7 +8,7 @@
  */
 
 import type { FrameworkPlugin } from "../../types.js";
-import type { SkillDojoClient } from "../../lib/skill-dojo-client.js";
+import type { SkillDojoClient } from "../../lib/network/skill-dojo-client.js";
 import type { SkillAdapterConfig } from "./types.js";
 
 // DataProvider adapters

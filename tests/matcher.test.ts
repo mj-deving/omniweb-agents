@@ -7,7 +7,7 @@ const { fetchSourceMock, getProviderAdapterMock } = vi.hoisted(() => ({
   getProviderAdapterMock: vi.fn(),
 }));
 
-vi.mock("../src/lib/sdk.js", () => ({
+vi.mock("../src/lib/network/sdk.js", () => ({
   apiCall: vi.fn(),
   info: vi.fn(),
 }));
@@ -21,7 +21,7 @@ vi.mock("../src/lib/sources/providers/index.js", () => ({
 }));
 
 import { extractClaims, extractClaimsLLM, extractClaimsAsync, match, scoreMatch } from "../src/lib/sources/matcher.js";
-import type { LLMProvider } from "../src/lib/llm-provider.js";
+import type { LLMProvider } from "../src/lib/llm/llm-provider.js";
 
 function makeSource(overrides: Partial<SourceRecordV2> = {}): SourceRecordV2 {
   return {

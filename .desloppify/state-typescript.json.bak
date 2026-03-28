@@ -24825,7 +24825,7 @@
   "reminder_history": {
     "auto_fixers_available": 3,
     "dry_run_first": 3,
-    "report_scores": 6,
+    "report_scores": 7,
     "review_issues_pending": 3,
     "stagnant_nudge": 5,
     "feedback_nudge": 3,

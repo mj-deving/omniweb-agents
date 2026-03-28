@@ -1,6 +1,6 @@
 {
   "session_id": "ext_20260328_082047_78bccdab",
-  "status": "open",
+  "status": "submitted",
   "runner": "claude",
   "created_at": "2026-03-28T08:20:47+00:00",
   "expires_at": "2026-03-29T08:20:47+00:00",
@@ -13,5 +13,8 @@
   "template_path": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/review_result.template.json",
   "launch_prompt_path": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/claude_launch_prompt.md",
   "instructions_path": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/reviewer_instructions.md",
-  "expected_output_path": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/review_result.json"
+  "expected_output_path": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/review_result.json",
+  "submitted_at": "2026-03-28T08:32:11+00:00",
+  "submitted_input_file": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/review_result.json",
+  "submitted_canonical_file": "/home/mj/projects/demos-agents/.desloppify/external_review_sessions/ext_20260328_082047_78bccdab/canonical_import_20260328_083209.json"
 }

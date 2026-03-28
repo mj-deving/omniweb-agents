@@ -176,6 +176,9 @@ export interface SdkBridge {
   /** Resolve post author address from chain transaction */
   resolvePostAuthor(txHash: string): Promise<string | null>;
 
+  /** Count HIVE reactions for given post txHashes — single chain scan, returns map of txHash → { agree, disagree } */
+  getHiveReactions(targetTxHashes: string[]): Promise<Map<string, { agree: number; disagree: number }>>;
+
   /** Publish a HIVE reaction on-chain (agree/disagree as storage transaction) */
   publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }>;
 
@@ -598,6 +601,59 @@ export function createSdkBridge(
       }
 
       return posts.slice(0, limit);
+    },
+
+    async getHiveReactions(targetTxHashes: string[]): Promise<Map<string, { agree: number; disagree: number }>> {
+      const result = new Map<string, { agree: number; disagree: number }>();
+      if (!rpc.getTransactions || targetTxHashes.length === 0) return result;
+
+      // Initialize counters for all targets
+      const targets = new Set(targetTxHashes);
+      for (const h of targets) result.set(h, { agree: 0, disagree: 0 });
+
+      // Single pass through recent chain transactions
+      const MAX_PAGES = 10;
+      const PAGE_SIZE = 100;
+      let start: number | "latest" = "latest";
+
+      for (let page = 0; page < MAX_PAGES; page++) {
+        const txs = await rpc.getTransactions(start, PAGE_SIZE);
+        if (!txs || txs.length === 0) break;
+
+        for (const rawTx of txs) {
+          if (rawTx.type !== "storage") continue;
+          try {
+            const content = typeof rawTx.content === "string"
+              ? safeParse(rawTx.content) as Record<string, unknown>
+              : rawTx.content as Record<string, unknown>;
+            const rawData = content?.data;
+            const data = Array.isArray(rawData) && rawData[0] === "storage" ? rawData[1] : rawData;
+            const decoded = decodeHiveData(data);
+            if (!decoded || decoded.action !== "react") continue;
+
+            const target = String(decoded.target ?? "");
+            const type = String(decoded.type ?? "");
+            if (!targets.has(target)) continue;
+
+            const counts = result.get(target)!;
+            if (type === "agree") counts.agree++;
+            else if (type === "disagree") counts.disagree++;
+          } catch {
+            // Skip malformed transactions
+          }
+        }
+
+        const lastTx = txs[txs.length - 1];
+        const prevStart = start;
+        if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
+          start = lastTx.blockNumber - 1;
+        } else {
+          break;
+        }
+        if (start === prevStart) break;
+      }
+
+      return result;
     },
 
     async resolvePostAuthor(txHash: string): Promise<string | null> {

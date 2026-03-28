@@ -1,10 +1,9 @@
 {
   "version": 8,
   "created": "2026-03-27T16:59:34+00:00",
-  "updated": "2026-03-28T07:28:11+00:00",
+  "updated": "2026-03-28T07:39:25+00:00",
   "queue_order": [
     "triage::strategize",
-    "triage::observe",
     "triage::reflect",
     "triage::organize",
     "triage::enrich",
@@ -4836,295 +4835,257 @@
         "sync_status": "synced",
         "sync_message": null
       }
+    },
+    {
+      "timestamp": "2026-03-28T07:37:46+00:00",
+      "action": "triage_strategize",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "user",
+      "note": null,
+      "detail": {
+        "reuse": false,
+        "score_trend": "recovering",
+        "focus_dimensions": []
+      }
+    },
+    {
+      "timestamp": "2026-03-28T07:37:55+00:00",
+      "action": "triage_observe",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "user",
+      "note": null,
+      "detail": {
+        "issue_count": 39,
+        "cited_ids": [],
+        "reuse": false
+      }
+    },
+    {
+      "timestamp": "2026-03-28T07:38:29+00:00",
+      "action": "triage_observe",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "user",
+      "note": null,
+      "detail": {
+        "issue_count": 39,
+        "cited_ids": [
+          "review::.::holistic::design_coherence::attestation_executor_orphaned",
+          "review::.::holistic::design_coherence::colony_intelligence_orphaned",
+          "review::.::holistic::design_coherence::orphaned_files_3500loc",
+          "review::.::holistic::incomplete_migration::cli_legacy_write_rate_limit",
+          "review::.::holistic::incomplete_migration::deprecated_guard_exports",
+          "review::.::holistic::package_organization::flat_lib_directory"
+        ],
+        "reuse": false
+      }
+    },
+    {
+      "timestamp": "2026-03-28T07:38:50+00:00",
+      "action": "triage_confirm_observe",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "user",
+      "note": null,
+      "detail": {
+        "attestation": "Issues verified against blind review evidence and mechanical detectors. Focused analysis on design_coherence orphaned files, package_organization flat directory, and incomplete_migration legacy CLI rate limit. All cited issues confirmed present in code."
+      }
+    },
+    {
+      "timestamp": "2026-03-28T07:39:25+00:00",
+      "action": "triage_reflect",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "user",
+      "note": null,
+      "detail": {
+        "issue_count": 39,
+        "reuse": false,
+        "recurring_dims": [
+          "abstraction_fitness",
+          "api_surface_coherence",
+          "authorization_consistency",
+          "contract_coherence",
+          "convention_outlier",
+          "cross_module_architecture",
+          "dependency_health",
+          "design_coherence",
+          "error_consistency",
+          "high_level_elegance",
+          "incomplete_migration",
+          "initialization_coupling",
+          "logic_clarity",
+          "low_level_elegance",
+          "mid_level_elegance",
+          "package_organization",
+          "test_strategy",
+          "type_safety"
+        ]
+      }
     }
   ],
   "epic_triage_meta": {
-    "triage_stages": {},
+    "triage_stages": {
+      "strategize": {
+        "stage": "strategize",
+        "report": "{\"executive_summary\":\"Bottom 5 dimensions are the path to 85. Focus all effort on package_organization, incomplete_migration, design_coherence, test_strategy, type_safety.\",\"score_trend\":\"recovering\",\"debt_trend\":\"stable\",\"focus_dimensions\":[\"package_organization\",\"incomplete_migration\",\"design_coherence\",\"test_strategy\",\"type_safety\"],\"observe_guidance\":\"Focus observation on bottom 5 dimensions only\",\"reflect_guidance\":\"Prioritize items that move bottom 5 dimensions\",\"organize_guidance\":\"Cluster by dimension, prioritize highest-impact fixes\",\"sense_check_guidance\":\"Verify fixes address root causes not symptoms\"}",
+        "timestamp": "2026-03-28T07:37:46+00:00",
+        "score_trend": "recovering",
+        "focus_dimensions": [],
+        "anti_pattern_count": 0,
+        "confirmed_at": "2026-03-28T07:37:46+00:00",
+        "confirmed_text": "auto-confirmed"
+      },
+      "observe": {
+        "stage": "observe",
+        "report": "{\"observations\":[{\"dimension\":\"design_coherence\",\"item_count\":12,\"pattern\":\"orphaned files, import cycles, silent catches\",\"cited_issues\":[\"review::.::holistic::design_coherence::orphaned_files_3500loc\",\"review::.::holistic::design_coherence::attestation_executor_orphaned\",\"review::.::holistic::design_coherence::colony_intelligence_orphaned\"]},{\"dimension\":\"package_organization\",\"item_count\":2,\"pattern\":\"flat lib directory\",\"cited_issues\":[\"review::.::holistic::package_organization::flat_lib_directory\"]},{\"dimension\":\"incomplete_migration\",\"item_count\":3,\"pattern\":\"legacy CLI, deprecated exports\",\"cited_issues\":[\"review::.::holistic::incomplete_migration::cli_legacy_write_rate_limit\",\"review::.::holistic::incomplete_migration::deprecated_guard_exports\"]}]}",
+        "cited_ids": [
+          "review::.::holistic::design_coherence::attestation_executor_orphaned",
+          "review::.::holistic::design_coherence::colony_intelligence_orphaned",
+          "review::.::holistic::design_coherence::orphaned_files_3500loc",
+          "review::.::holistic::incomplete_migration::cli_legacy_write_rate_limit",
+          "review::.::holistic::incomplete_migration::deprecated_guard_exports",
+          "review::.::holistic::package_organization::flat_lib_directory"
+        ],
+        "timestamp": "2026-03-28T07:38:29+00:00",
+        "issue_count": 39,
+        "dimension_names": [
+          "design_coherence",
+          "incomplete_migration",
+          "type_safety",
+          "test_strategy",
+          "abstraction_fitness",
+          "ai_generated_debt",
+          "api_surface_coherence",
+          "authorization_consistency",
+          "contract_coherence",
+          "convention_outlier",
+          "cross_module_architecture",
+          "dependency_health",
+          "error_consistency",
+          "high_level_elegance",
+          "initialization_coupling",
+          "logic_clarity",
+          "low_level_elegance",
+          "mid_level_elegance",
+          "package_organization"
+        ],
+        "dimension_counts": {
+          "incomplete_migration": 3,
+          "package_organization": 1,
+          "design_coherence": 16,
+          "type_safety": 3,
+          "error_consistency": 1,
+          "low_level_elegance": 1,
+          "contract_coherence": 1,
+          "test_strategy": 2,
+          "cross_module_architecture": 1,
+          "dependency_health": 1,
+          "initialization_coupling": 1,
+          "abstraction_fitness": 1,
+          "ai_generated_debt": 1,
+          "api_surface_coherence": 1,
+          "authorization_consistency": 1,
+          "convention_outlier": 1,
+          "high_level_elegance": 1,
+          "logic_clarity": 1,
+          "mid_level_elegance": 1
+        },
+        "assessments": [],
+        "confirmed_at": "2026-03-28T07:38:50+00:00",
+        "confirmed_text": "Issues verified against blind review evidence and mechanical detectors. Focused analysis on design_coherence orphaned files, package_organization flat directory, and incomplete_migration legacy CLI rate limit. All cited issues confirmed present in code."
+      },
+      "reflect": {
+        "stage": "reflect",
+        "report": "{\n  \"reflections\": {\n    \"score_impact\": \"Bottom 5 dimensions account for 80% of gap to 85\",\n    \"priority_order\": [\"design_coherence\", \"package_organization\", \"incomplete_migration\", \"type_safety\", \"test_strategy\"]\n  },\n  \"coverage_ledger\": {\n    \"review::.::holistic::design_coherence::orphaned_files_3500loc\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::attestation_executor_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::colony_intelligence_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::mentions_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::omniweb_executor_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::transcript_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::tx_queue_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::budget_plugin_orphaned\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::design_coherence::health_silent_catch\": \"cluster \\\"error-contract\\\"\",\n    \"review::.::holistic::design_coherence::sdk_silent_catch\": \"cluster \\\"error-contract\\\"\",\n    \"review::.::holistic::design_coherence::skill_dojo_client_silent_catch\": \"cluster \\\"error-contract\\\"\",\n    \"review::.::holistic::design_coherence::state_as_any_casts\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::design_coherence::tlsn_bridge_as_any\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::design_coherence::signals_any_types\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::design_coherence::source_discovery_any_types\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::design_coherence::lifecycle_high_complexity\": \"cluster \\\"elegance-fixes\\\"\",\n    \"review::.::holistic::package_organization::flat_lib_directory\": \"cluster \\\"boundary-cleanup\\\"\",\n    \"review::.::holistic::incomplete_migration::cli_legacy_write_rate_limit\": \"cluster \\\"guard-debt\\\"\",\n    \"review::.::holistic::incomplete_migration::deprecated_guard_exports\": \"cluster \\\"guard-debt\\\"\",\n    \"review::.::holistic::incomplete_migration::reexport_shims_pending\": \"cluster \\\"guard-debt\\\"\",\n    \"review::.::holistic::type_safety::discover_sources_catalog_cast\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::type_safety::state_as_any_phase_casts\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::type_safety::tlsn_bridge_as_any_casts\": \"cluster \\\"type-safety\\\"\",\n    \"review::.::holistic::test_strategy::agent_config_untested\": \"cluster \\\"test-quality\\\"\",\n    \"review::.::holistic::test_strategy::catalog_untested\": \"cluster \\\"test-quality\\\"\",\n    \"review::.::holistic::error_consistency::silent_catch_network_clients\": \"cluster \\\"error-contract\\\"\",\n    \"review::.::holistic::high_level_elegance::orphaned_files_dead_weight\": \"cluster \\\"dead-code\\\"\",\n    \"review::.::holistic::api_surface_coherence::mixed_error_semantics_connect\": \"cluster \\\"error-contract\\\"\",\n    \"review::.::holistic::logic_clarity::async_no_await_patterns\": \"cluster \\\"elegance-fixes\\\"\",\n    \"review::.::holistic::low_level_elegance::url_allowlist_duplication\": \"cluster \\\"elegance-fixes\\\"\",\n    \"review::.::holistic::mid_level_elegance::url_allowlist_duplication\": \"cluster \\\"elegance-fixes\\\"\",\n    \"review::.::holistic::abstraction_fitness::re_export_shim_layer\": \"cluster \\\"guard-debt\\\"\",\n    \"review::.::holistic::ai_generated_debt::restating_security_comments\": \"cluster \\\"elegance-fixes\\\"\",\n    \"review::.::holistic::authorization_consistency::apibaseurl_ssrf_gap\": \"cluster \\\"boundary-cleanup\\\"\",\n    \"review::.::holistic::contract_coherence::verify_ambiguous_exhaustion\": \"cluster \\\"error-contract\\\"\",\n    \"review::.::holistic::convention_outlier::mixed_export_patterns\": \"cluster \\\"elegance-fixes\\\"\",\n    \"review::.::holistic::cross_module_architecture::extensions_import_cycle\": \"cluster \\\"boundary-cleanup\\\"\",\n    \"review::.::holistic::dependency_health::anthropic_sdk_production_dep\": \"cluster \\\"dependency-cleanup\\\"\",\n    \"review::.::holistic::initialization_coupling::is_container_test_fragility\": \"skip \\\"intentional design \u2014 process-invariant cache\\\"\"\n  }\n}",
+        "cited_ids": [
+          "review::.::holistic::abstraction_fitness::re_export_shim_layer",
+          "review::.::holistic::ai_generated_debt::restating_security_comments",
+          "review::.::holistic::api_surface_coherence::mixed_error_semantics_connect",
+          "review::.::holistic::authorization_consistency::apibaseurl_ssrf_gap",
+          "review::.::holistic::contract_coherence::verify_ambiguous_exhaustion",
+          "review::.::holistic::convention_outlier::mixed_export_patterns",
+          "review::.::holistic::cross_module_architecture::extensions_import_cycle",
+          "review::.::holistic::dependency_health::anthropic_sdk_production_dep",
+          "review::.::holistic::design_coherence::attestation_executor_orphaned",
+          "review::.::holistic::design_coherence::budget_plugin_orphaned",
+          "review::.::holistic::design_coherence::colony_intelligence_orphaned",
+          "review::.::holistic::design_coherence::health_silent_catch",
+          "review::.::holistic::design_coherence::lifecycle_high_complexity",
+          "review::.::holistic::design_coherence::mentions_orphaned",
+          "review::.::holistic::design_coherence::omniweb_executor_orphaned",
+          "review::.::holistic::design_coherence::orphaned_files_3500loc",
+          "review::.::holistic::design_coherence::sdk_silent_catch",
+          "review::.::holistic::design_coherence::signals_any_types",
+          "review::.::holistic::design_coherence::skill_dojo_client_silent_catch",
+          "review::.::holistic::design_coherence::source_discovery_any_types",
+          "review::.::holistic::design_coherence::state_as_any_casts",
+          "review::.::holistic::design_coherence::tlsn_bridge_as_any",
+          "review::.::holistic::design_coherence::transcript_orphaned",
+          "review::.::holistic::design_coherence::tx_queue_orphaned",
+          "review::.::holistic::error_consistency::silent_catch_network_clients",
+          "review::.::holistic::high_level_elegance::orphaned_files_dead_weight",
+          "review::.::holistic::incomplete_migration::cli_legacy_write_rate_limit",
+          "review::.::holistic::incomplete_migration::deprecated_guard_exports",
+          "review::.::holistic::incomplete_migration::reexport_shims_pending",
+          "review::.::holistic::initialization_coupling::is_container_test_fragility",
+          "review::.::holistic::logic_clarity::async_no_await_patterns",
+          "review::.::holistic::low_level_elegance::url_allowlist_duplication",
+          "review::.::holistic::mid_level_elegance::url_allowlist_duplication",
+          "review::.::holistic::package_organization::flat_lib_directory",
+          "review::.::holistic::test_strategy::agent_config_untested",
+          "review::.::holistic::test_strategy::catalog_untested",
+          "review::.::holistic::type_safety::discover_sources_catalog_cast",
+          "review::.::holistic::type_safety::state_as_any_phase_casts",
+          "review::.::holistic::type_safety::tlsn_bridge_as_any_casts"
+        ],
+        "timestamp": "2026-03-28T07:39:25+00:00",
+        "issue_count": 39,
+        "missing_issue_ids": [],
+        "duplicate_issue_ids": [],
+        "recurring_dims": [
+          "abstraction_fitness",
+          "api_surface_coherence",
+          "authorization_consistency",
+          "contract_coherence",
+          "convention_outlier",
+          "cross_module_architecture",
+          "dependency_health",
+          "design_coherence",
+          "error_consistency",
+          "high_level_elegance",
+          "incomplete_migration",
+          "initialization_coupling",
+          "logic_clarity",
+          "low_level_elegance",
+          "mid_level_elegance",
+          "package_organization",
+          "test_strategy",
+          "type_safety"
+        ]
+      }
+    },
     "strategist_briefing": {
+      "executive_summary": "Bottom 5 dimensions are the path to 85. Focus all effort on package_organization, incomplete_migration, design_coherence, test_strategy, type_safety.",
       "score_trend": "recovering",
       "debt_trend": "stable",
       "focus_dimensions": [
-        "error_consistency",
-        "mid_level_elegance",
-        "low_level_elegance",
-        "type_safety",
-        "test_strategy"
+        "package_organization",
+        "incomplete_migration",
+        "design_coherence",
+        "test_strategy",
+        "type_safety"
       ],
-      "executive_summary": "28 audit fixes shipped, 74 new tests. Score 76.2 with 53 review items. Focus on lowest-scoring dimensions.",
-      "observe_guidance": "Group by dimension, find cross-cutting themes like feed normalization duplication and guard API debt.",
-      "reflect_guidance": "Check for false positives from stale observations vs shipped fixes.",
-      "organize_guidance": "Cluster: guard-api-debt, feed-normalization, type-casts, error-paths, test-gaps.",
-      "sense_check_guidance": "Verify scores reflect current code state.",
-      "computed_at": "2026-03-27T21:00:22+00:00",
+      "observe_guidance": "Focus observation on bottom 5 dimensions only",
+      "reflect_guidance": "Prioritize items that move bottom 5 dimensions",
+      "organize_guidance": "Cluster by dimension, prioritize highest-impact fixes",
+      "sense_check_guidance": "Verify fixes address root causes not symptoms",
+      "computed_at": "2026-03-28T07:37:46+00:00",
       "lookback_scans": 5
     },
-    "issue_dispositions": {
-      "review::.::holistic::abstraction_fitness::af-01-execute-dahr-ceremony": {
-        "decision": "cluster",
-        "target": "abstraction-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::abstraction_fitness::af-02-discover-sources-session-overwide": {
-        "decision": "cluster",
-        "target": "abstraction-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::api_surface_coherence::asc-connect-throws": {
-        "decision": "cluster",
-        "target": "error-contract",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::api_surface_coherence::asc-match-threshold-dead": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::api_surface_coherence::asc-reply-double-touch": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::authorization_consistency::auth-allowlist-throw-vs-return": {
-        "decision": "cluster",
-        "target": "error-contract",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::contract_coherence::cc_getter_side_effect": {
-        "decision": "cluster",
-        "target": "contract-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::contract_coherence::cc_parse_wallet_address_undefined": {
-        "decision": "cluster",
-        "target": "contract-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::contract_coherence::cc_provenance_response_hash_lie": {
-        "decision": "cluster",
-        "target": "contract-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::convention_outlier::conv_guard_dual_api": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::convention_outlier::conv_pay_guard_pattern_asymmetry": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::cross_module_architecture::arch_auth_boundary_cross": {
-        "decision": "cluster",
-        "target": "boundary-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::cross_module_architecture::arch_catalog_module_state": {
-        "decision": "cluster",
-        "target": "boundary-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::dependency_health::dh-01-anthropic-sdk-prod-classification": {
-        "decision": "cluster",
-        "target": "dependency-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::design_coherence::dc_dedup_split_api_in_production": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::design_coherence::dc_magic_number_day_ms": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::design_coherence::dc_scan_stub_async": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::design_coherence::dc_sdk_bridge_silent_failure": {
-        "decision": "cluster",
-        "target": "error-contract",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::error_consistency::err_catalog_network_error_code": {
-        "decision": "cluster",
-        "target": "error-contract",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::error_consistency::err_connect_auth_silent_swallow": {
-        "decision": "cluster",
-        "target": "error-contract",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::error_consistency::err_scan_fallback_swallow": {
-        "decision": "cluster",
-        "target": "error-contract",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::error_consistency::err_tip_isfinite_ordering": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::high_level_elegance::hle_d402_schema_placement": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::high_level_elegance::hle_discover_sources_session_required": {
-        "decision": "cluster",
-        "target": "abstraction-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::incomplete_migration::im-guard-no-deprecated-annotation": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::incomplete_migration::im-skill-dojo-always-throws": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::incomplete_migration::im-stale-publish-todo": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::initialization_coupling::ic_container_singleton": {
-        "decision": "cluster",
-        "target": "boundary-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::initialization_coupling::ic_homedir_import_time": {
-        "decision": "cluster",
-        "target": "boundary-cleanup",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::logic_clarity::lc_pay_preflight_ceiling": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::logic_clarity::lc_publish_hive_dual_txmodule": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::logic_clarity::lc_tip_nan_order": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::logic_clarity::lc_verify_unreachable_return": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::low_level_elegance::lle-01-verify-dead-code-fallback": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::low_level_elegance::lle-02-scan-magic-numbers": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::low_level_elegance::lle-03-scan-stub-unused-params": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::low_level_elegance::lle-04-sdk-bridge-inline-error-keywords": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::mid_level_elegance::mle-01-feed-parse-triplication": {
-        "decision": "cluster",
-        "target": "feed-normalization",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::mid_level_elegance::mle-02-reply-double-wrapper": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::mid_level_elegance::mle-03-stale-todo-publish": {
-        "decision": "cluster",
-        "target": "dead-code",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::mid_level_elegance::mle-04-verify-feed-limit-blind-spot": {
-        "decision": "cluster",
-        "target": "elegance-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::naming_quality::name_get_tx_module_async": {
-        "decision": "cluster",
-        "target": "naming-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::naming_quality::name_guard_dual_surface": {
-        "decision": "cluster",
-        "target": "guard-debt",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::naming_quality::name_record_publish_mismatch": {
-        "decision": "cluster",
-        "target": "naming-fixes",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::package_organization::po-url-validator-placement": {
-        "decision": "skip",
-        "target": "acceptable \u2014 url-validator serves guards and tools equally",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::test_strategy::ts-01-integration-tautology-branches": {
-        "decision": "cluster",
-        "target": "test-quality",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::test_strategy::ts-02-integration-real-sleep": {
-        "decision": "cluster",
-        "target": "test-quality",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::test_strategy::ts-03-scan-opportunity-logic-uncovered": {
-        "decision": "cluster",
-        "target": "test-quality",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::type_safety::ts_d402_client_unknown_cache": {
-        "decision": "cluster",
-        "target": "type-safety",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::type_safety::ts_demos_as_any": {
-        "decision": "cluster",
-        "target": "type-safety",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::type_safety::ts_demos_error_guard_duplication": {
-        "decision": "cluster",
-        "target": "type-safety",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::type_safety::ts_feed_api_cast_chains": {
-        "decision": "cluster",
-        "target": "feed-normalization",
-        "decision_source": "reflect"
-      },
-      "review::.::holistic::type_safety::ts_tx_module_unknown_types": {
-        "decision": "cluster",
-        "target": "type-safety",
-        "decision_source": "reflect"
-      }
-    },
+    "issue_dispositions": {},
     "issue_snapshot_hash": "e832667ba3d86a68",
     "triaged_ids": [
       "review::.::holistic::abstraction_fitness::af-01-execute-dahr-ceremony",

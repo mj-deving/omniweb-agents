@@ -13,7 +13,7 @@
  */
 
 import type { FrameworkPlugin } from "../types.js";
-import type { BeforeSenseContext } from "../lib/extensions.js";
+import type { BeforeSenseContext } from "../lib/util/extensions.js";
 
 /** Function signature for running a CLI tool as subprocess. */
 export type RunToolFn = (toolPath: string, args: string[], label: string) => Promise<any>;

@@ -215,6 +215,12 @@ async function main(): Promise<void> {
   const { demos, address } = await connectWallet(envPath);
   const token = await ensureAuth(demos, address);
 
+  if (!token) {
+    info("API unavailable — skipping verification (chain-only mode)");
+    console.log(JSON.stringify({ verified: [], failed: [], summary: { verified: 0, total: 0 }, api_unavailable: true }));
+    return;
+  }
+
   const logEntries = readSessionLog(logPath);
   const logTxSet = new Set(logEntries.map((e) => e.txHash));
   const targets = txHashes.length > 0 ? txHashes : inferLatestTxHashes(logEntries);

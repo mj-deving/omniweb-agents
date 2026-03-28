@@ -76,7 +76,7 @@ interface AuditResult {
   actual_score: number | null;
   delta: number | null;
   highDisagree: boolean;
-  status: "audited" | "not_found" | "already_audited" | "error";
+  status: "audited" | "not_found" | "already_audited" | "error" | "api_unavailable";
   error?: string;
 }
 
@@ -278,7 +278,7 @@ async function main(): Promise<void> {
   }
   info(`Read ${entries.length} entries from ${logPath}`);
 
-  // Connect and auth
+  // Connect and auth (token may be null if API is unreachable)
   const { demos, address } = await connectWallet(envPath);
   const token = await ensureAuth(demos, address);
 
@@ -301,6 +301,22 @@ async function main(): Promise<void> {
         delta: entry.actual_reactions - entry.predicted_reactions,
         highDisagree: disagrees > agrees && disagrees >= 5,
         status: "already_audited",
+      });
+      continue;
+    }
+
+    // No token — can't fetch from API, mark as unavailable
+    if (!token) {
+      results.push({
+        txHash: entry.txHash,
+        category: entry.category,
+        attestation_type: entry.attestation_type,
+        predicted_reactions: entry.predicted_reactions,
+        actual_reactions: null,
+        actual_score: null,
+        delta: null,
+        highDisagree: false,
+        status: "api_unavailable",
       });
       continue;
     }

@@ -704,13 +704,18 @@ async function main(): Promise<void> {
     }
   }
 
-  // Connect and auth
+  // Connect and auth (token may be null if API is unreachable)
   const { demos, address } = await connectWallet(envPath);
   const token = await ensureAuth(demos, address);
 
   // Run gate checks
   info("Running gate checks...");
   const items: GateItem[] = [];
+
+  // API-dependent checks get "warning" status when token is unavailable
+  const apiUnavailableItem = (number: number, name: string): GateItem => ({
+    number, name, status: "warning", detail: "API unavailable — skipped (chain-only mode)",
+  });
 
   const gate1Promise = mode === "pioneer"
     ? Promise.resolve(
@@ -721,7 +726,9 @@ async function main(): Promise<void> {
           [...config.topics.primary, ...config.topics.secondary]
         )
       )
-    : checkTopicActivity(topic, token, cachedPosts, scanTrusted);
+    : token
+      ? checkTopicActivity(topic, token, cachedPosts, scanTrusted)
+      : Promise.resolve(apiUnavailableItem(1, "Topic activity"));
 
   const gate3Promise = mode === "pioneer"
     ? (config.gate.noveltyCheck === false
@@ -731,12 +738,18 @@ async function main(): Promise<void> {
           status: "manual",
           detail: "MANUAL — noveltyCheck disabled in gate config",
         })
-      : checkTopicNovelty(topic, token, cachedPosts, config.gate.noveltyMentionThreshold ?? 3))
+      : token
+        ? checkTopicNovelty(topic, token, cachedPosts, config.gate.noveltyMentionThreshold ?? 3)
+        : Promise.resolve(apiUnavailableItem(3, "Novelty")))
     : Promise.resolve(checkAgentReference());
 
-  const duplicatePromise = checkDuplicate(topic, token, address, config.gate.duplicateWindowHours);
+  const duplicatePromise = token
+    ? checkDuplicate(topic, token, address, config.gate.duplicateWindowHours)
+    : Promise.resolve(apiUnavailableItem(6, "Not duplicate"));
   const replyPromise = replyTo
-    ? checkReplyTarget(replyTo, token, config.engagement.replyMinParentReactions)
+    ? (token
+      ? checkReplyTarget(replyTo, token, config.engagement.replyMinParentReactions)
+      : Promise.resolve<GateItem | null>(apiUnavailableItem(7, "Reply target")))
     : Promise.resolve<GateItem | null>(null);
 
   const [gate1, gate3, duplicate, replyTarget] = await Promise.all([

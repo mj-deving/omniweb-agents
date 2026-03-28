@@ -132,6 +132,12 @@ async function main(): Promise<void> {
   const { demos, address } = await connectWallet(envPath);
   const token = await ensureAuth(demos, address);
 
+  if (!token) {
+    info("API unavailable — skipping engagement (chain-only mode)");
+    console.log(JSON.stringify({ reactions_cast: 0, agrees: 0, disagrees: 0, skipped: 0, errors: 0, api_unavailable: true }));
+    return;
+  }
+
   // Fetch feed
   info("Fetching feed...");
   const feedRes = await apiCall("/api/feed?limit=50", token);

@@ -552,6 +552,14 @@ async function main(): Promise<void> {
 
   const { demos, address } = await connectWallet(envPath);
   const token = await ensureAuth(demos, address);
+
+  if (!token) {
+    info("API unavailable — returning empty scan (chain-only mode)");
+    const emptyResult = { activity: { level: "unknown", posts_per_hour: 0 }, gaps: { topics: [] }, api_unavailable: true };
+    console.log(JSON.stringify(emptyResult));
+    return;
+  }
+
   const budget = new ApiBudget(token, 10, 20_000);
 
   const counters: QualityCounters = { totalFetched: 0, passedFilter: 0, totalPassedScore: 0 };

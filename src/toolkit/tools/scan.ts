@@ -1,7 +1,8 @@
 /**
- * scan() — fetch and analyze SuperColony feed posts.
+ * scan() — fetch and analyze posts from the Demos chain.
  *
- * Uses SDK bridge for local feed fetch. Optional Skill Dojo fallback.
+ * Chain-first: uses bridge.getHivePosts (paginated getTransactions + HIVE decode).
+ * Optional API enrichment: if authenticated, merge reaction counts from feed API.
  */
 
 import type { ScanOptions, ScanResult, ScanPost, ScanOpportunity, ToolResult } from "../types.js";
@@ -18,7 +19,10 @@ const TRENDING_OPPORTUNITY_SCORE = 0.5;
 const TRENDING_MULTIPLIER = 4;
 
 /**
- * Scan the SuperColony feed for posts and opportunities.
+ * Scan the feed for posts and opportunities.
+ *
+ * Primary: chain scan via bridge.getHivePosts (paginated getTransactions + HIVE decode).
+ * Enrichment: if apiAccess === "authenticated", merge reaction counts from feed API.
  */
 export async function scan(
   session: DemosSession,
@@ -29,58 +33,91 @@ export async function scan(
     if (inputError) return err(inputError, localProvenance(start));
 
     const limit = opts?.limit ?? 50;
+    const bridge = session.getBridge();
 
-    // fetchFeed throws on API failure — scan catches to attempt Skill Dojo fallback.
-    // This is intentional error propagation, not throw-then-catch anti-pattern.
     try {
-      const posts = await fetchFeed(session, limit, opts?.domain);
+      // Chain-first: get posts from on-chain transactions
+      let posts = await bridge.getHivePosts(limit);
+
+      // Domain filtering
+      if (opts?.domain) {
+        posts = posts.filter(p => p.tags?.includes(opts.domain!));
+      }
+
+      // Optional API enrichment: merge reaction counts when authenticated
+      if (bridge.apiAccess === "authenticated") {
+        try {
+          const feedResult = await bridge.apiCall(`/api/feed?limit=${limit}`);
+          if (feedResult.ok) {
+            const feedPosts = parseFeedPosts(feedResult.data);
+            const feedMap = new Map(feedPosts.map(p => [p.txHash, p]));
+            posts = posts.map(p => {
+              const feedPost = feedMap.get(p.txHash);
+              if (feedPost) {
+                return {
+                  ...p,
+                  reactions: feedPost.reactions,
+                  reactionsKnown: true,
+                };
+              }
+              return p;
+            });
+          }
+        } catch {
+          // API enrichment is optional — chain data is primary
+          session.logger?.warn?.("scan: API enrichment failed, using chain-only data");
+        }
+      }
+
       const opportunities = identifyOpportunities(posts);
       return ok<ScanResult>({ posts, opportunities }, localProvenance(start));
-    } catch (localErr) {
-      session.logger?.warn?.("scan: feed fetch failed, no fallback", { error: (localErr as Error).message });
+    } catch (scanErr) {
+      session.logger?.warn?.("scan: chain scan failed", { error: (scanErr as Error).message });
       return err(
-        demosError("NETWORK_ERROR", `Scan failed: ${(localErr as Error).message}`, true),
+        demosError("NETWORK_ERROR", `Scan failed: ${(scanErr as Error).message}`, true),
         localProvenance(start),
       );
     }
   });
 }
 
+/**
+ * Identify engagement opportunities from posts.
+ * Skips reaction-dependent heuristics when reactionsKnown is false.
+ */
 function identifyOpportunities(posts: ScanPost[]): ScanOpportunity[] {
   const opportunities: ScanOpportunity[] = [];
   for (const post of posts) {
-    if (post.reactions.agree + post.reactions.disagree < MIN_REACTIONS_FOR_ENGAGEMENT && post.text.length > MIN_TEXT_LENGTH_FOR_SUBSTANCE) {
-      opportunities.push({
-        type: "reply",
-        post,
-        reason: "Low engagement post with substantive content",
-        score: DEFAULT_OPPORTUNITY_SCORE,
-      });
-    }
+    // Reaction-dependent heuristics only when reactions are trusted
+    if (post.reactionsKnown) {
+      if (post.reactions.agree + post.reactions.disagree < MIN_REACTIONS_FOR_ENGAGEMENT && post.text.length > MIN_TEXT_LENGTH_FOR_SUBSTANCE) {
+        opportunities.push({
+          type: "reply",
+          post,
+          reason: "Low engagement post with substantive content",
+          score: DEFAULT_OPPORTUNITY_SCORE,
+        });
+      }
 
-    // High-engagement trending posts worth monitoring
-    if (post.reactions.agree + post.reactions.disagree >= MIN_REACTIONS_FOR_ENGAGEMENT * TRENDING_MULTIPLIER && post.text.length > MIN_TEXT_LENGTH_FOR_SUBSTANCE) {
-      opportunities.push({
-        type: "trending",
-        post,
-        reason: "High engagement post worth monitoring",
-        score: TRENDING_OPPORTUNITY_SCORE,
-      });
+      if (post.reactions.agree + post.reactions.disagree >= MIN_REACTIONS_FOR_ENGAGEMENT * TRENDING_MULTIPLIER && post.text.length > MIN_TEXT_LENGTH_FOR_SUBSTANCE) {
+        opportunities.push({
+          type: "trending",
+          post,
+          reason: "High engagement post worth monitoring",
+          score: TRENDING_OPPORTUNITY_SCORE,
+        });
+      }
+    } else {
+      // Chain-only mode: opportunities based on content only (no reaction data)
+      if (post.text.length > MIN_TEXT_LENGTH_FOR_SUBSTANCE) {
+        opportunities.push({
+          type: "reply",
+          post,
+          reason: "Substantive content (reaction data unavailable)",
+          score: DEFAULT_OPPORTUNITY_SCORE,
+        });
+      }
     }
   }
   return opportunities;
 }
-
-async function fetchFeed(session: DemosSession, limit: number, domain?: string): Promise<ScanPost[]> {
-  const bridge = session.getBridge();
-  const path = `/api/feed?limit=${limit}`;
-  const result = await bridge.apiCall(path);
-
-  if (!result.ok) {
-    throw new Error(`Feed API returned ${result.status}`);
-  }
-
-  const posts = parseFeedPosts(result.data);
-  return domain ? posts.filter(p => p.tags.includes(domain)) : posts;
-}
-

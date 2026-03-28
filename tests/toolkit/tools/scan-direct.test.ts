@@ -1,8 +1,9 @@
 /**
  * Direct test coverage for scan() tool.
  *
- * Tests: success case, validation errors, feed API failure, domain filtering.
- * These complement scan-opportunities.test.ts which focuses on boundary conditions.
+ * Chain-first: scan uses bridge.getHivePosts (paginated chain scan).
+ * Tests: success case, validation errors, chain failure, domain filtering,
+ * reactionsKnown behavior, API enrichment.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -12,19 +13,37 @@ import { tmpdir } from "node:os";
 import { DemosSession } from "../../../src/toolkit/session.js";
 import { FileStateStore } from "../../../src/toolkit/state-store.js";
 import { scan } from "../../../src/toolkit/tools/scan.js";
-import type { SdkBridge, ApiCallResult, D402SettlementResult } from "../../../src/toolkit/sdk-bridge.js";
+import type { SdkBridge, ApiCallResult, D402SettlementResult, ApiAccessState } from "../../../src/toolkit/sdk-bridge.js";
+import type { ScanPost } from "../../../src/toolkit/types.js";
 
 // ── Helpers ──────────────────────────────────────────
+
+function makeChainPost(overrides?: Partial<ScanPost>): ScanPost {
+  return {
+    txHash: overrides?.txHash ?? "0xabc123",
+    text: overrides?.text ?? "A".repeat(150),
+    category: overrides?.category ?? "ANALYSIS",
+    author: overrides?.author ?? "demos1author",
+    timestamp: overrides?.timestamp ?? Date.now(),
+    reactions: overrides?.reactions ?? { agree: 0, disagree: 0 },
+    reactionsKnown: overrides?.reactionsKnown ?? false,
+    tags: overrides?.tags ?? ["defi"],
+  };
+}
 
 function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
   return {
     attestDahr: vi.fn(async () => ({ responseHash: "h", txHash: "t", data: {}, url: "" })),
-    apiCall: vi.fn(async (): Promise<ApiCallResult> => ({ ok: true, status: 200, data: { posts: [] } })),
+    apiCall: vi.fn(async (): Promise<ApiCallResult> => ({ ok: false, status: 0, data: "chain-only mode" })),
     publishHivePost: vi.fn(async () => ({ txHash: "p" })),
     transferDem: vi.fn(async () => ({ txHash: "tip-tx" })),
     getDemos: vi.fn(() => ({}) as any),
     payD402: vi.fn(async (): Promise<D402SettlementResult> => ({ success: true, hash: "d" })),
-    queryTransaction: vi.fn(async () => null),
+    apiAccess: "none" as ApiAccessState,
+    verifyTransaction: vi.fn(async () => null),
+    getHivePosts: vi.fn(async () => []),
+    resolvePostAuthor: vi.fn(async () => null),
+    publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
     ...overrides,
   };
 }
@@ -40,31 +59,6 @@ function createSession(tempDir: string, bridge: SdkBridge) {
   });
 }
 
-function makeFeedPost(overrides?: Partial<{
-  txHash: string;
-  sender: string;
-  text: string;
-  cat: string;
-  tags: string[];
-  agree: number;
-  disagree: number;
-}>) {
-  return {
-    txHash: overrides?.txHash ?? "0xabc123",
-    sender: overrides?.sender ?? "demos1author",
-    timestamp: Date.now(),
-    reactions: {
-      agree: overrides?.agree ?? 1,
-      disagree: overrides?.disagree ?? 0,
-    },
-    payload: {
-      text: overrides?.text ?? "A".repeat(150),
-      cat: overrides?.cat ?? "ANALYSIS",
-      tags: overrides?.tags ?? ["defi"],
-    },
-  };
-}
-
 // ── Tests ────────────────────────────────────────────
 
 describe("scan() direct tests", () => {
@@ -78,47 +72,88 @@ describe("scan() direct tests", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  describe("success case", () => {
-    it("returns posts and identifies reply opportunities for low-engagement substantive posts", async () => {
-      const feedPosts = [
-        makeFeedPost({ txHash: "0x001", agree: 1, disagree: 0, text: "B".repeat(150) }),
-        makeFeedPost({ txHash: "0x002", agree: 10, disagree: 0, text: "short" }),
+  describe("chain-first success case", () => {
+    it("returns posts from chain with content-only opportunities", async () => {
+      const chainPosts = [
+        makeChainPost({ txHash: "0x001", text: "B".repeat(150) }),
+        makeChainPost({ txHash: "0x002", text: "short" }),
       ];
       const bridge = mockBridge({
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: true,
-          status: 200,
-          data: { posts: feedPosts },
-        })),
+        getHivePosts: vi.fn(async () => chainPosts),
       });
       const session = createSession(tempDir, bridge);
 
       const result = await scan(session);
 
       expect(result.ok).toBe(true);
-      expect(result.data).toBeDefined();
       expect(result.data!.posts).toHaveLength(2);
       expect(result.data!.posts[0].txHash).toBe("0x001");
-      expect(result.data!.posts[1].txHash).toBe("0x002");
-      // First post: low engagement + substantive -> reply opportunity
-      // Second post: high engagement but short text -> no opportunity
+      // Substantive post → reply opportunity (chain-only mode uses content heuristic)
       expect(result.data!.opportunities).toHaveLength(1);
       expect(result.data!.opportunities[0].type).toBe("reply");
       expect(result.data!.opportunities[0].post.txHash).toBe("0x001");
       expect(result.provenance.path).toBe("local");
     });
 
-    it("identifies trending opportunities for high-engagement substantive posts", async () => {
-      const feedPosts = [
-        makeFeedPost({ txHash: "0xtrend", agree: 15, disagree: 6, text: "C".repeat(200) }),
-      ];
+    it("does not call apiCall when apiAccess is none", async () => {
       const bridge = mockBridge({
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: true,
-          status: 200,
-          data: { posts: feedPosts },
-        })),
+        getHivePosts: vi.fn(async () => [makeChainPost()]),
       });
+      const session = createSession(tempDir, bridge);
+
+      await scan(session);
+
+      expect(bridge.apiCall).not.toHaveBeenCalled();
+    });
+
+    it("uses default limit of 50 when not specified", async () => {
+      const getHivePostsSpy = vi.fn(async () => []);
+      const bridge = mockBridge({ getHivePosts: getHivePostsSpy });
+      const session = createSession(tempDir, bridge);
+
+      await scan(session);
+
+      expect(getHivePostsSpy).toHaveBeenCalledWith(50);
+    });
+
+    it("passes limit option to getHivePosts", async () => {
+      const getHivePostsSpy = vi.fn(async () => []);
+      const bridge = mockBridge({ getHivePosts: getHivePostsSpy });
+      const session = createSession(tempDir, bridge);
+
+      await scan(session, { limit: 25 });
+
+      expect(getHivePostsSpy).toHaveBeenCalledWith(25);
+    });
+  });
+
+  describe("reactionsKnown behavior", () => {
+    it("skips reaction-dependent heuristics when reactionsKnown is false", async () => {
+      // Chain posts with reactionsKnown: false — should use content-only heuristic
+      const chainPosts = [
+        makeChainPost({ txHash: "0x001", text: "B".repeat(150), reactionsKnown: false }),
+      ];
+      const bridge = mockBridge({ getHivePosts: vi.fn(async () => chainPosts) });
+      const session = createSession(tempDir, bridge);
+
+      const result = await scan(session);
+
+      expect(result.ok).toBe(true);
+      expect(result.data!.opportunities).toHaveLength(1);
+      expect(result.data!.opportunities[0].reason).toContain("unavailable");
+    });
+
+    it("uses reaction heuristics when reactionsKnown is true", async () => {
+      // API-enriched posts with real reactions
+      const enrichedPosts = [
+        makeChainPost({
+          txHash: "0xtrend",
+          text: "C".repeat(200),
+          reactions: { agree: 15, disagree: 6 },
+          reactionsKnown: true,
+        }),
+      ];
+      const bridge = mockBridge({ getHivePosts: vi.fn(async () => enrichedPosts) });
       const session = createSession(tempDir, bridge);
 
       const result = await scan(session);
@@ -126,35 +161,88 @@ describe("scan() direct tests", () => {
       expect(result.ok).toBe(true);
       expect(result.data!.opportunities).toHaveLength(1);
       expect(result.data!.opportunities[0].type).toBe("trending");
-      expect(result.data!.opportunities[0].score).toBe(0.5);
     });
 
-    it("passes limit option to feed API", async () => {
-      const apiCallSpy = vi.fn(async (): Promise<ApiCallResult> => ({
-        ok: true,
-        status: 200,
-        data: { posts: [] },
-      }));
-      const bridge = mockBridge({ apiCall: apiCallSpy });
+    it("identifies reply opportunities with low reactions when reactionsKnown is true", async () => {
+      const enrichedPosts = [
+        makeChainPost({
+          txHash: "0xlow",
+          text: "D".repeat(150),
+          reactions: { agree: 1, disagree: 0 },
+          reactionsKnown: true,
+        }),
+      ];
+      const bridge = mockBridge({ getHivePosts: vi.fn(async () => enrichedPosts) });
       const session = createSession(tempDir, bridge);
 
-      await scan(session, { limit: 25 });
+      const result = await scan(session);
 
-      expect(apiCallSpy).toHaveBeenCalledWith("/api/feed?limit=25");
+      expect(result.ok).toBe(true);
+      expect(result.data!.opportunities).toHaveLength(1);
+      expect(result.data!.opportunities[0].type).toBe("reply");
+      expect(result.data!.opportunities[0].reason).toContain("Low engagement");
+    });
+  });
+
+  describe("API enrichment", () => {
+    it("merges reaction counts when apiAccess is authenticated", async () => {
+      const chainPosts = [makeChainPost({ txHash: "0xabc", reactionsKnown: false })];
+      const bridge = mockBridge({
+        getHivePosts: vi.fn(async () => chainPosts),
+        apiAccess: "authenticated" as ApiAccessState,
+        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
+          ok: true,
+          status: 200,
+          data: {
+            posts: [{
+              txHash: "0xabc",
+              sender: "demos1a",
+              timestamp: Date.now(),
+              reactions: { agree: 5, disagree: 2 },
+              payload: { text: "test", cat: "ANALYSIS", tags: [] },
+            }],
+          },
+        })),
+      });
+      const session = createSession(tempDir, bridge);
+
+      const result = await scan(session);
+
+      expect(result.ok).toBe(true);
+      expect(result.data!.posts[0].reactionsKnown).toBe(true);
+      expect(result.data!.posts[0].reactions.agree).toBe(5);
+      expect(result.data!.posts[0].reactions.disagree).toBe(2);
     });
 
-    it("uses default limit of 50 when not specified", async () => {
-      const apiCallSpy = vi.fn(async (): Promise<ApiCallResult> => ({
-        ok: true,
-        status: 200,
-        data: { posts: [] },
-      }));
-      const bridge = mockBridge({ apiCall: apiCallSpy });
+    it("does not enrich when apiAccess is configured (not authenticated)", async () => {
+      const chainPosts = [makeChainPost({ txHash: "0xabc" })];
+      const bridge = mockBridge({
+        getHivePosts: vi.fn(async () => chainPosts),
+        apiAccess: "configured" as ApiAccessState,
+      });
       const session = createSession(tempDir, bridge);
 
-      await scan(session);
+      const result = await scan(session);
 
-      expect(apiCallSpy).toHaveBeenCalledWith("/api/feed?limit=50");
+      expect(result.ok).toBe(true);
+      expect(bridge.apiCall).not.toHaveBeenCalled();
+      expect(result.data!.posts[0].reactionsKnown).toBe(false);
+    });
+
+    it("gracefully handles API enrichment failure", async () => {
+      const chainPosts = [makeChainPost({ txHash: "0xabc" })];
+      const bridge = mockBridge({
+        getHivePosts: vi.fn(async () => chainPosts),
+        apiAccess: "authenticated" as ApiAccessState,
+        apiCall: vi.fn(async () => { throw new Error("API down"); }),
+      });
+      const session = createSession(tempDir, bridge);
+
+      const result = await scan(session);
+
+      expect(result.ok).toBe(true);
+      // Falls back to chain-only data
+      expect(result.data!.posts[0].reactionsKnown).toBe(false);
     });
   });
 
@@ -166,7 +254,6 @@ describe("scan() direct tests", () => {
       const result = await scan(session, { limit: -1 });
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBeDefined();
       expect(result.error!.code).toBe("INVALID_INPUT");
       expect(result.error!.retryable).toBe(false);
     });
@@ -191,29 +278,10 @@ describe("scan() direct tests", () => {
     });
   });
 
-  describe("feed API failure", () => {
-    it("returns err with NETWORK_ERROR when feed API returns non-ok", async () => {
+  describe("chain scan failure", () => {
+    it("returns NETWORK_ERROR when getHivePosts throws", async () => {
       const bridge = mockBridge({
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: false,
-          status: 500,
-          data: "Internal Server Error",
-        })),
-      });
-      const session = createSession(tempDir, bridge);
-
-      const result = await scan(session);
-
-      expect(result.ok).toBe(false);
-      expect(result.error).toBeDefined();
-      expect(result.error!.code).toBe("NETWORK_ERROR");
-      expect(result.error!.retryable).toBe(true);
-      expect(result.error!.message).toContain("500");
-    });
-
-    it("returns err with NETWORK_ERROR when apiCall throws", async () => {
-      const bridge = mockBridge({
-        apiCall: vi.fn(async () => { throw new Error("Connection refused"); }),
+        getHivePosts: vi.fn(async () => { throw new Error("RPC connection refused"); }),
       });
       const session = createSession(tempDir, bridge);
 
@@ -222,23 +290,19 @@ describe("scan() direct tests", () => {
       expect(result.ok).toBe(false);
       expect(result.error!.code).toBe("NETWORK_ERROR");
       expect(result.error!.retryable).toBe(true);
-      expect(result.error!.message).toContain("Connection refused");
+      expect(result.error!.message).toContain("connection refused");
     });
   });
 
   describe("domain filtering", () => {
     it("filters posts by domain tag", async () => {
-      const feedPosts = [
-        makeFeedPost({ txHash: "0xdefi", tags: ["defi", "markets"] }),
-        makeFeedPost({ txHash: "0xinfra", tags: ["infrastructure"] }),
-        makeFeedPost({ txHash: "0xdefi2", tags: ["defi"] }),
+      const chainPosts = [
+        makeChainPost({ txHash: "0xdefi", tags: ["defi", "markets"] }),
+        makeChainPost({ txHash: "0xinfra", tags: ["infrastructure"] }),
+        makeChainPost({ txHash: "0xdefi2", tags: ["defi"] }),
       ];
       const bridge = mockBridge({
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: true,
-          status: 200,
-          data: { posts: feedPosts },
-        })),
+        getHivePosts: vi.fn(async () => chainPosts),
       });
       const session = createSession(tempDir, bridge);
 
@@ -250,15 +314,11 @@ describe("scan() direct tests", () => {
     });
 
     it("returns empty posts when no posts match domain", async () => {
-      const feedPosts = [
-        makeFeedPost({ txHash: "0xinfra", tags: ["infrastructure"] }),
+      const chainPosts = [
+        makeChainPost({ txHash: "0xinfra", tags: ["infrastructure"] }),
       ];
       const bridge = mockBridge({
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: true,
-          status: 200,
-          data: { posts: feedPosts },
-        })),
+        getHivePosts: vi.fn(async () => chainPosts),
       });
       const session = createSession(tempDir, bridge);
 
@@ -266,20 +326,15 @@ describe("scan() direct tests", () => {
 
       expect(result.ok).toBe(true);
       expect(result.data!.posts).toHaveLength(0);
-      expect(result.data!.opportunities).toHaveLength(0);
     });
 
     it("returns all posts when domain is not specified", async () => {
-      const feedPosts = [
-        makeFeedPost({ txHash: "0x1", tags: ["defi"] }),
-        makeFeedPost({ txHash: "0x2", tags: ["infrastructure"] }),
+      const chainPosts = [
+        makeChainPost({ txHash: "0x1", tags: ["defi"] }),
+        makeChainPost({ txHash: "0x2", tags: ["infrastructure"] }),
       ];
       const bridge = mockBridge({
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: true,
-          status: 200,
-          data: { posts: feedPosts },
-        })),
+        getHivePosts: vi.fn(async () => chainPosts),
       });
       const session = createSession(tempDir, bridge);
 

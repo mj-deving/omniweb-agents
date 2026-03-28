@@ -17,7 +17,6 @@ import {
   NUMERIC_CLAIM_PATTERN,
   buildAgentIndex,
   buildTopicIndex,
-  combinedTopicSearch,
   filterPosts,
   type AgentStats,
   type FilteredPost,
@@ -164,56 +163,6 @@ function parseModes(raw: string[] | undefined): ScanMode[] {
     if (!modes.includes(lower)) modes.push(lower);
   }
   return modes;
-}
-
-function normalizeFeedPosts(payload: any): any[] {
-  const posts =
-    payload?.posts ??
-    payload?.results ??
-    payload?.items ??
-    payload?.data?.posts ??
-    payload?.data ??
-    payload ??
-    [];
-  if (!Array.isArray(posts)) return [];
-  return posts;
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error(`${label} exceeded ${ms}ms`)), ms);
-    }),
-  ]);
-}
-
-class ApiBudget {
-  private calls = 0;
-
-  constructor(
-    private readonly token: string,
-    private readonly maxCalls: number,
-    private readonly timeoutMs: number
-  ) {}
-
-  async get(path: string, label: string): Promise<any[]> {
-    if (this.calls >= this.maxCalls) {
-      throw new Error(`SCAN call budget exceeded (${this.maxCalls} max per invocation)`);
-    }
-    this.calls += 1;
-
-    const res = await withTimeout(apiCall(path, this.token), this.timeoutMs, label);
-    if (!res.ok) {
-      observe("error", `Scan API call failed: ${label} (${res.status})`, {
-        phase: "scan",
-        source: "scan-feed.ts:ScanBudget.get",
-        data: { path, status: res.status },
-      });
-      throw new Error(`${label} failed (${res.status}): ${JSON.stringify(res.data)}`);
-    }
-    return normalizeFeedPosts(res.data);
-  }
 }
 
 function topicStatsFromPosts(posts: FilteredPost[]): TopicStatsJson {
@@ -559,15 +508,24 @@ async function main(): Promise<void> {
   info(`Chain: ${chainPosts.length} posts fetched`);
 
   // Map chain posts to API-compatible shape for filterPosts
-  const chainRawPosts = chainPosts.map(p => ({
-    txHash: p.txHash,
-    author: p.author,
-    score: 80, // Default score for chain posts (no API scoring — assume baseline+attestation)
-    timestamp: p.timestamp,
-    payload: { tags: p.tags || [], assets: [], text: p.text, cat: p.category },
-    reactions: p.reactions,
-    text: p.text,
-  }));
+  // Compute score locally — deterministic formula from strategy.yaml
+  const chainRawPosts = chainPosts.map(p => {
+    const rx = p.reactions.agree + p.reactions.disagree;
+    let score = 20; // base
+    if (p.text.length > 200) score += 40 + 10; // attestation + long_text (quality gate enforces both)
+    if (p.category) score += 10; // confidence
+    if (rx >= 5) score += 10;
+    if (rx >= 15) score += 10;
+    return {
+      txHash: p.txHash,
+      author: p.author,
+      score: Math.min(score, 100),
+      timestamp: p.timestamp,
+      payload: { tags: p.tags || [], assets: [], text: p.text, cat: p.category },
+      reactions: p.reactions,
+      text: p.text,
+    };
+  });
 
   const counters: QualityCounters = { totalFetched: 0, passedFilter: 0, totalPassedScore: 0 };
   const allFiltered: FilteredPost[] = [];

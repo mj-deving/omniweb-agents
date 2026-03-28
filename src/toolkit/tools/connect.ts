@@ -22,7 +22,6 @@ import { validateUrl } from "../url-validator.js";
 
 const DEFAULT_RPC_URL = "https://demosnode.discus.sh";
 const DEFAULT_ALGORITHM = "falcon";
-const DEFAULT_SUPERCOLONY_API = "https://www.supercolony.ai";
 
 /**
  * Connect to the Demos network and create a session handle.
@@ -48,9 +47,9 @@ export async function connect(opts: ConnectOptions): Promise<DemosSession> {
     );
   }
 
-  // SSRF validation on apiBaseUrl — only for user-provided URLs (default is trusted)
-  const apiBaseUrl = opts.supercolonyApi ?? DEFAULT_SUPERCOLONY_API;
-  if (opts.supercolonyApi) {
+  // API is optional — chain-only mode when not provided
+  const apiBaseUrl = opts.supercolonyApi ?? undefined;
+  if (apiBaseUrl) {
     const apiUrlCheck = await validateUrl(apiBaseUrl, { allowInsecure: opts.allowInsecureUrls });
     if (!apiUrlCheck.valid) {
       throw demosError("INVALID_INPUT", `SuperColony API URL blocked: ${apiUrlCheck.reason}`, false);
@@ -108,6 +107,7 @@ export async function connect(opts: ConnectOptions): Promise<DemosSession> {
       wallet,
       rpcUrl,
       opts.algorithm ?? DEFAULT_ALGORITHM,
+      !!apiBaseUrl, // skipAuth when no API configured
     );
 
     const stateStore = opts.stateStore ?? new FileStateStore();
@@ -207,6 +207,7 @@ async function connectAndAuthenticate(
   wallet: WalletData,
   rpcUrl: string,
   algorithm: string,
+  attemptAuth: boolean = true,
 ): Promise<{ demos: Demos; address: string; authToken: string }> {
   try {
     // Lazy import — avoids module-level crypto polyfill and global state mutation
@@ -234,15 +235,19 @@ async function connectAndAuthenticate(
       ? await demos.connectWallet(mnemonic, { algorithm })
       : await demos.connectWallet(mnemonic);
 
-    // Authenticate with SuperColony API
+    // Authenticate with SuperColony API (skip in chain-only mode)
     let authToken: string;
-    try {
-      const { ensureAuth } = await import("../../lib/auth/auth.js");
-      authToken = await ensureAuth(demos, address);
-    } catch (authErr) {
-      // Auth may fail if SuperColony API is down — return pending token
-      console.warn("[demos-toolkit] Auth failed, using pending token:", (authErr as Error).name);
+    if (!attemptAuth) {
       authToken = AUTH_PENDING_TOKEN;
+    } else {
+      try {
+        const { ensureAuth } = await import("../../lib/auth/auth.js");
+        authToken = await ensureAuth(demos, address);
+      } catch (authErr) {
+        // Auth may fail if SuperColony API is down — return pending token
+        console.warn("[demos-toolkit] Auth failed, using pending token:", (authErr as Error).name);
+        authToken = AUTH_PENDING_TOKEN;
+      }
     }
 
     return { demos, address, authToken };

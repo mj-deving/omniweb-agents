@@ -75,6 +75,11 @@ export { discoverSources, clearCatalogCache } from "./tools/discover-sources.js"
 export { pay } from "./tools/pay.js";
 export { parseFeedPosts } from "./tools/feed-parser.js";
 
+// ── SDK Bridge Types (chain-first) ───────────────
+
+export type { SdkBridge, ChainTransaction, ApiAccessState, ApiCallResult } from "./sdk-bridge.js";
+export { createSdkBridge, AUTH_PENDING_TOKEN } from "./sdk-bridge.js";
+
 // ── Guards (exposed for testing and advanced consumers) ──
 
 export {

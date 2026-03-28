@@ -33,6 +33,7 @@ export function parseFeedPosts(data: unknown): ScanPost[] {
         agree: Number((post.reactions as Record<string, unknown>)?.agree ?? 0),
         disagree: Number((post.reactions as Record<string, unknown>)?.disagree ?? 0),
       },
+      reactionsKnown: true,
       tags: Array.isArray(payload.tags) ? payload.tags.map(String) : [],
     };
   });

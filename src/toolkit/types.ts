@@ -208,6 +208,8 @@ export interface ScanPost {
   author: string;
   timestamp: number;
   reactions: { agree: number; disagree: number };
+  /** Whether reaction counts come from a trusted source (API). When false, reactions are zeroed placeholders. */
+  reactionsKnown: boolean;
   tags?: string[];
 }
 

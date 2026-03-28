@@ -14,6 +14,24 @@ import { safeParse } from "./guards/state-helpers.js";
 /** Sentinel token indicating auth has not completed — never sent as Bearer */
 export const AUTH_PENDING_TOKEN = "__AUTH_PENDING__";
 
+/** API access state — 3 distinct states, not boolean (Codex review finding) */
+export type ApiAccessState = "none" | "configured" | "authenticated";
+
+/**
+ * Normalized chain transaction — bridges the gap between SDK's
+ * Transaction (parsed content) and RawTransaction (stringified content).
+ */
+export interface ChainTransaction {
+  hash: string;
+  from: string;
+  to: string;
+  type: string;
+  data: unknown;
+  status: string;
+  blockNumber: number;
+  timestamp: number;
+}
+
 /** Strip query params from URLs to prevent API key leakage in error messages */
 export function sanitizeUrl(url: string): string {
   try {
@@ -43,6 +61,29 @@ interface DemosRpcMethods {
   getTx?(txHash: string): Promise<{ sender?: string } | null>;
   connect(rpcUrl: string): Promise<void>;
   connectWallet(mnemonic: string, opts?: Record<string, unknown>): Promise<string>;
+  // Chain query methods (chain-first migration)
+  getTxByHash?(txHash: string): Promise<{
+    hash: string;
+    blockNumber: number;
+    status: string;
+    content: { from: string; to: string; type: string; data: unknown; timestamp: number };
+  }>;
+  getTransactions?(start?: number | "latest", limit?: number): Promise<Array<{
+    hash: string;
+    blockNumber: number;
+    status: string;
+    from: unknown;
+    to: unknown;
+    type: string;
+    content: string;
+    timestamp: number;
+  }>>;
+  getMempool?(): Promise<Array<{
+    hash: string;
+    blockNumber: number;
+    status: string;
+    content: { from: string; to: string; type: string; data: unknown; timestamp: number };
+  }>>;
 }
 
 /** Typed D402 client surface — replaces inline structural casts */
@@ -117,6 +158,23 @@ export interface SdkBridge {
   /** Query a transaction by hash to resolve sender address (RPC-based, trusted). Optional — SDK may not expose query methods. */
   queryTransaction?(txHash: string): Promise<{ sender: string } | null>;
 
+  // ── Chain-first methods ────────────────────────────
+
+  /** API access state — none (no API URL), configured (URL set, auth pending), authenticated (full access) */
+  apiAccess: ApiAccessState;
+
+  /** Verify a transaction by hash — returns confirmation status + block info, or null if not found */
+  verifyTransaction(txHash: string): Promise<{ confirmed: boolean; blockNumber?: number; from?: string } | null>;
+
+  /** Get recent HIVE posts from chain via getTransactions — paginated, decoded */
+  getHivePosts(limit: number): Promise<import("./types.js").ScanPost[]>;
+
+  /** Resolve post author address from chain transaction */
+  resolvePostAuthor(txHash: string): Promise<string | null>;
+
+  /** Publish a HIVE reaction on-chain (agree/disagree as storage transaction) */
+  publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }>;
+
   /**
    * Get the underlying Demos instance (for direct SDK access when needed).
    * @throws {Error} Unless bridge was created with `options.allowRawSdk: true`.
@@ -160,19 +218,80 @@ function extractTxHash(confirmResult: unknown, broadcastResult: unknown): string
 
 // HIVE post prefix (4 bytes: "HIVE")
 const HIVE_PREFIX = new Uint8Array([0x48, 0x49, 0x56, 0x45]);
+const HIVE_PREFIX_HEX = "48495645";
+const HIVE_PREFIX_STR = "HIVE";
+
+/**
+ * Decode HIVE data from a chain transaction's content.data field.
+ * Handles multiple encodings: Uint8Array, hex string, base64, raw string with HIVE prefix.
+ * Returns parsed JSON payload or null if not a HIVE transaction.
+ */
+function decodeHiveData(data: unknown): Record<string, unknown> | null {
+  if (!data) return null;
+
+  let jsonStr: string | null = null;
+
+  if (data instanceof Uint8Array || (ArrayBuffer.isView(data) && !(typeof data === "string"))) {
+    const bytes = data instanceof Uint8Array ? data : new Uint8Array((data as ArrayBufferView).buffer);
+    if (bytes.length < 4) return null;
+    // Check 4-byte HIVE prefix
+    if (bytes[0] === 0x48 && bytes[1] === 0x49 && bytes[2] === 0x56 && bytes[3] === 0x45) {
+      jsonStr = new TextDecoder().decode(bytes.slice(4));
+    }
+  } else if (typeof data === "string") {
+    // Hex-encoded: "48495645..."
+    if (data.toLowerCase().startsWith(HIVE_PREFIX_HEX)) {
+      const hexPayload = data.slice(8);
+      const bytes = new Uint8Array(hexPayload.match(/.{1,2}/g)?.map(b => parseInt(b, 16)) ?? []);
+      jsonStr = new TextDecoder().decode(bytes);
+    }
+    // Raw string with "HIVE" prefix
+    else if (data.startsWith(HIVE_PREFIX_STR)) {
+      jsonStr = data.slice(4);
+    }
+    // Base64-encoded HIVE data
+    else {
+      try {
+        const decoded = Buffer.from(data, "base64");
+        if (decoded.length >= 4 && decoded[0] === 0x48 && decoded[1] === 0x49 && decoded[2] === 0x56 && decoded[3] === 0x45) {
+          jsonStr = decoded.slice(4).toString("utf-8");
+        }
+      } catch {
+        // Not base64
+      }
+    }
+  }
+  // Already-parsed object (from Transaction.content.data that was pre-decoded)
+  else if (typeof data === "object" && data !== null) {
+    const obj = data as Record<string, unknown>;
+    if (obj.v !== undefined && (obj.text !== undefined || obj.action !== undefined)) {
+      return obj;
+    }
+    return null;
+  }
+
+  if (!jsonStr) return null;
+  try {
+    const parsed = JSON.parse(jsonStr);
+    if (typeof parsed === "object" && parsed !== null) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Create a session-scoped SDK bridge.
  *
  * @param demos - Connected Demos instance (wallet already loaded)
- * @param apiBaseUrl - SuperColony API base URL
+ * @param apiBaseUrl - SuperColony API base URL (optional — omit for chain-only mode)
  * @param authToken - Authentication token for API calls
  * @param fetchImpl - Optional fetch implementation (for testing)
  * @param txModule - Optional DemosTransactions override (for testing)
  */
 export function createSdkBridge(
   demos: Demos,
-  apiBaseUrl: string,
+  apiBaseUrl: string | undefined,
   authToken: string,
   fetchImpl: typeof fetch = globalThis.fetch,
   txModule?: TxModule,
@@ -263,6 +382,11 @@ export function createSdkBridge(
       // to prevent SSRF and token leakage via attacker-controlled URLs
       if (path.startsWith("http://") || path.startsWith("https://")) {
         return { ok: false, status: 0, data: "apiCall only accepts relative paths (e.g., '/api/feed')" };
+      }
+
+      // Chain-only mode — no API configured
+      if (!apiBaseUrl) {
+        return { ok: false, status: 0, data: "API not configured — chain-only mode" };
       }
 
       const url = `${apiBaseUrl}${path}`;
@@ -388,6 +512,109 @@ export function createSdkBridge(
         console.warn(`[demos-toolkit] queryTransaction failed for ${txHash.slice(0, 16)}...: ${(e as Error).name}`);
         return null;
       }
+    },
+
+    // ── Chain-first methods ──────────────────────────
+
+    get apiAccess(): ApiAccessState {
+      if (!apiBaseUrl) return "none";
+      if (authToken === AUTH_PENDING_TOKEN) return "configured";
+      return "authenticated";
+    },
+
+    async verifyTransaction(txHash: string): Promise<{ confirmed: boolean; blockNumber?: number; from?: string } | null> {
+      try {
+        if (!rpc.getTxByHash) return null;
+        const tx = await rpc.getTxByHash(txHash);
+        if (!tx) return null;
+        const confirmed = tx.blockNumber > 0 && tx.status === "confirmed";
+        return {
+          confirmed,
+          blockNumber: tx.blockNumber,
+          from: tx.content?.from,
+        };
+      } catch {
+        return null;
+      }
+    },
+
+    async getHivePosts(limit: number): Promise<import("./types.js").ScanPost[]> {
+      if (!rpc.getTransactions) return [];
+      const MAX_PAGES = 5;
+      const PAGE_SIZE = 100;
+      const posts: import("./types.js").ScanPost[] = [];
+      let start: number | "latest" = "latest";
+
+      for (let page = 0; page < MAX_PAGES && posts.length < limit; page++) {
+        const txs = await rpc.getTransactions(start, PAGE_SIZE);
+        if (!txs || txs.length === 0) break;
+
+        for (const rawTx of txs) {
+          if (rawTx.type !== "storage") continue;
+          try {
+            // RawTransaction has content as string — parse it
+            const content = typeof rawTx.content === "string"
+              ? safeParse(rawTx.content) as Record<string, unknown>
+              : rawTx.content as Record<string, unknown>;
+            const data = content?.data;
+            // Check for HIVE prefix in data
+            const decoded = decodeHiveData(data);
+            if (!decoded) continue;
+            posts.push({
+              txHash: rawTx.hash,
+              text: String(decoded.text ?? ""),
+              category: String(decoded.cat ?? decoded.category ?? ""),
+              author: String(rawTx.from ?? content?.from ?? ""),
+              timestamp: rawTx.timestamp ?? Number(content?.timestamp ?? 0),
+              reactions: { agree: 0, disagree: 0 },
+              reactionsKnown: false,
+              tags: Array.isArray(decoded.tags) ? decoded.tags.map(String) : [],
+            });
+          } catch {
+            // Skip malformed transactions
+          }
+        }
+
+        // Advance cursor — use lowest blockNumber from page for next batch
+        const lastTx = txs[txs.length - 1];
+        if (lastTx?.blockNumber != null && lastTx.blockNumber > 0) {
+          start = lastTx.blockNumber - 1;
+        } else {
+          break; // No valid cursor — stop paginating
+        }
+      }
+
+      return posts.slice(0, limit);
+    },
+
+    async resolvePostAuthor(txHash: string): Promise<string | null> {
+      try {
+        if (!rpc.getTxByHash) return null;
+        const tx = await rpc.getTxByHash(txHash);
+        if (!tx?.content?.from) return null;
+        return String(tx.content.from);
+      } catch {
+        return null;
+      }
+    },
+
+    async publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }> {
+      const tx = txModule ?? await loadTxModule();
+      const reactionPayload = { v: 1, action: "react", target: targetTxHash, type: reactionType };
+      const json = JSON.stringify(reactionPayload);
+      const jsonBytes = new TextEncoder().encode(json);
+      const encoded = new Uint8Array(HIVE_PREFIX.length + jsonBytes.length);
+      encoded.set(HIVE_PREFIX, 0);
+      encoded.set(jsonBytes, HIVE_PREFIX.length);
+
+      const storeTx = await tx.store(encoded, demos);
+      const validity = await tx.confirm(storeTx, demos);
+      const result = await tx.broadcast(validity, demos);
+      const hash = extractTxHash(validity, result);
+      if (!hash) {
+        throw new Error("HIVE reaction broadcast succeeded but txHash not found in response");
+      }
+      return { txHash: String(hash) };
     },
 
     getDemos(): Demos {

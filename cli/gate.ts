@@ -12,8 +12,8 @@
 
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
-import { ensureAuth } from "../src/lib/auth/auth.js";
+import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
@@ -704,18 +704,73 @@ async function main(): Promise<void> {
     }
   }
 
-  // Connect and auth (token may be null if API is unreachable)
+  // Connect wallet — chain-only, no API auth needed
   const { demos, address } = await connectWallet(envPath);
-  const token = await ensureAuth(demos, address);
+  const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
+
+  // Fetch chain posts once for all gate checks
+  const chainPosts = await bridge.getHivePosts(100);
 
   // Run gate checks
   info("Running gate checks...");
   const items: GateItem[] = [];
 
-  // API-dependent checks get "warning" status when token is unavailable
-  const apiUnavailableItem = (number: number, name: string): GateItem => ({
-    number, name, status: "warning", detail: "API unavailable — skipped (chain-only mode)",
-  });
+  // Chain-based topic activity check (replaces API search)
+  function checkTopicActivityChain(topicStr: string): GateItem {
+    if (scanTrusted) {
+      return { number: 1, name: "Topic activity", status: "pass", detail: "Scan-trusted topic (activity validated during scan phase)" };
+    }
+    const topicLower = topicStr.toLowerCase();
+    const matches = chainPosts.filter(p =>
+      p.tags?.some(t => t.toLowerCase().includes(topicLower)) ||
+      p.text.toLowerCase().includes(topicLower)
+    );
+    if (matches.length >= 3) {
+      return { number: 1, name: "Topic activity", status: "pass", detail: `${matches.length} posts found on chain (threshold: 3)` };
+    }
+    return { number: 1, name: "Topic activity", status: "fail", detail: `Only ${matches.length} posts found on chain for "${topicStr}" (need ≥3)` };
+  }
+
+  // Chain-based novelty check
+  function checkTopicNoveltyChain(topicStr: string, threshold: number): GateItem {
+    const topicLower = topicStr.toLowerCase();
+    const mentions = chainPosts.filter(p =>
+      p.tags?.some(t => t.toLowerCase().includes(topicLower)) ||
+      p.text.toLowerCase().includes(topicLower)
+    );
+    if (mentions.length <= threshold) {
+      return { number: 3, name: "Novelty", status: "pass", detail: `${mentions.length} existing mentions (threshold: ${threshold})` };
+    }
+    return { number: 3, name: "Novelty", status: "warning", detail: `${mentions.length} mentions exceed novelty threshold (${threshold})` };
+  }
+
+  // Chain-based duplicate check (uses session log + chain posts)
+  function checkDuplicateChain(topicStr: string, authorAddr: string, windowHours: number): GateItem {
+    const topicLower = topicStr.toLowerCase();
+    const windowMs = windowHours * 60 * 60 * 1000;
+    const windowStart = Date.now() - windowMs;
+    const myPosts = chainPosts.filter(p => p.author === authorAddr);
+    const duplicates = myPosts.filter(p => {
+      const ts = typeof p.timestamp === "number" ? p.timestamp * (p.timestamp < 1e12 ? 1000 : 1) : 0;
+      if (ts < windowStart) return false;
+      return p.tags?.some(t => t.toLowerCase().includes(topicLower)) ?? false;
+    });
+    if (duplicates.length === 0) {
+      return { number: 6, name: "Not duplicate", status: "pass", detail: `No posts on "${topicStr}" in last ${windowHours}h` };
+    }
+    return { number: 6, name: "Not duplicate", status: "fail", detail: `${duplicates.length} post(s) on "${topicStr}" in last ${windowHours}h` };
+  }
+
+  // Chain-based reply target check
+  async function checkReplyTargetChain(replyToHash: string, minReactions: number): Promise<GateItem> {
+    const reactionMap = await bridge.getHiveReactions([replyToHash]);
+    const rx = reactionMap.get(replyToHash);
+    const reactions = rx ? rx.agree + rx.disagree : 0;
+    if (reactions >= minReactions) {
+      return { number: 7, name: "Reply target", status: "pass", detail: `Parent has ${reactions} reactions (threshold: ${minReactions})` };
+    }
+    return { number: 7, name: "Reply target", status: "fail", detail: `Parent has ${reactions} reactions (need ≥${minReactions})` };
+  }
 
   const gate1Promise = mode === "pioneer"
     ? Promise.resolve(
@@ -726,9 +781,7 @@ async function main(): Promise<void> {
           [...config.topics.primary, ...config.topics.secondary]
         )
       )
-    : token
-      ? checkTopicActivity(topic, token, cachedPosts, scanTrusted)
-      : Promise.resolve(apiUnavailableItem(1, "Topic activity"));
+    : Promise.resolve(checkTopicActivityChain(topic));
 
   const gate3Promise = mode === "pioneer"
     ? (config.gate.noveltyCheck === false
@@ -738,18 +791,12 @@ async function main(): Promise<void> {
           status: "manual",
           detail: "MANUAL — noveltyCheck disabled in gate config",
         })
-      : token
-        ? checkTopicNovelty(topic, token, cachedPosts, config.gate.noveltyMentionThreshold ?? 3)
-        : Promise.resolve(apiUnavailableItem(3, "Novelty")))
+      : Promise.resolve(checkTopicNoveltyChain(topic, config.gate.noveltyMentionThreshold ?? 3)))
     : Promise.resolve(checkAgentReference());
 
-  const duplicatePromise = token
-    ? checkDuplicate(topic, token, address, config.gate.duplicateWindowHours)
-    : Promise.resolve(apiUnavailableItem(6, "Not duplicate"));
+  const duplicatePromise = Promise.resolve(checkDuplicateChain(topic, address, config.gate.duplicateWindowHours));
   const replyPromise = replyTo
-    ? (token
-      ? checkReplyTarget(replyTo, token, config.engagement.replyMinParentReactions)
-      : Promise.resolve<GateItem | null>(apiUnavailableItem(7, "Reply target")))
+    ? checkReplyTargetChain(replyTo, config.engagement.replyMinParentReactions)
     : Promise.resolve<GateItem | null>(null);
 
   const [gate1, gate3, duplicate, replyTarget] = await Promise.all([

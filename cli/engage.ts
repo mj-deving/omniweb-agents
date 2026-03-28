@@ -18,8 +18,8 @@
  */
 
 import { resolve } from "node:path";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
-import { ensureAuth } from "../src/lib/auth/auth.js";
+import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import { selectReaction, enforceDisagreeMinimum } from "../src/lib/pipeline/engage-heuristics.js";
 
@@ -127,32 +127,28 @@ async function main(): Promise<void> {
     maxReactions = parsed;
   }
 
-  // Connect and authenticate
+  // Connect wallet — chain-only, no API auth needed
   info("Connecting wallet...");
   const { demos, address } = await connectWallet(envPath);
-  const token = await ensureAuth(demos, address);
+  const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
 
-  if (!token) {
-    info("API unavailable — skipping engagement (chain-only mode)");
-    console.log(JSON.stringify({ reactions_cast: 0, agrees: 0, disagrees: 0, skipped: 0, errors: 0, api_unavailable: true }));
-    return;
-  }
+  // Fetch feed from chain
+  info("Fetching feed from chain...");
+  const chainPosts = await bridge.getHivePosts(50);
 
-  // Fetch feed
-  info("Fetching feed...");
-  const feedRes = await apiCall("/api/feed?limit=50", token);
-  if (!feedRes.ok) {
-    console.error(`Failed to fetch feed: ${feedRes.status}`);
-    process.exit(1);
-  }
+  // Map chain posts to the shape engage heuristics expect
+  const allPosts = chainPosts.map(p => ({
+    txHash: p.txHash,
+    author: p.author,
+    score: 0, // chain doesn't have scores — heuristics use other signals
+    qualityScore: 0,
+    payload: { tags: p.tags, cat: p.category },
+    text: p.text,
+    timestamp: p.timestamp,
+    reactions: p.reactions,
+  }));
 
-  const allPosts = feedRes.data?.posts ?? feedRes.data ?? [];
-  if (!Array.isArray(allPosts)) {
-    console.error("Unexpected feed response format");
-    process.exit(1);
-  }
-
-  info(`Feed: ${allPosts.length} posts`);
+  info(`Feed: ${allPosts.length} posts from chain`);
 
   // Select and cast reactions
   const targets: ReactionTarget[] = [];
@@ -173,13 +169,10 @@ async function main(): Promise<void> {
 
     processedTxHashes.add(post.txHash);
 
-    // Cast reaction via API
-    const res = await apiCall(`/api/feed/${encodeURIComponent(post.txHash)}/react`, token, {
-      method: "POST",
-      body: JSON.stringify({ type: decision.reaction }),
-    });
+    // Cast reaction on-chain
+    try {
+      await bridge.publishHiveReaction(post.txHash, decision.reaction);
 
-    if (res.ok) {
       const topic =
         post.payload?.tags?.[0] ||
         post.payload?.topic ||
@@ -201,8 +194,8 @@ async function main(): Promise<void> {
       info(
         `${decision.reaction === "agree" ? "👍" : "👎"} ${decision.reaction.toUpperCase()} ${post.txHash.slice(0, 12)}... (${decision.reason})`
       );
-    } else {
-      info(`⚠️ Failed to react on ${post.txHash.slice(0, 12)}...: ${res.status}`);
+    } catch (err: any) {
+      info(`Failed to react on ${post.txHash.slice(0, 12)}...: ${err.message}`);
       errors++;
     }
 
@@ -226,12 +219,16 @@ async function main(): Promise<void> {
       const post = remainingPosts.find((p: any) => p.txHash === target.txHash);
       if (!post) continue;
 
-      const res = await apiCall(`/api/feed/${encodeURIComponent(target.txHash)}/react`, token, {
-        method: "POST",
-        body: JSON.stringify({ type: "disagree" }),
-      });
+      let reactOk = false;
+      try {
+        await bridge.publishHiveReaction(target.txHash, "disagree");
+        reactOk = true;
+      } catch (err: any) {
+        info(`Failed to react on ${target.txHash.slice(0, 12)}...: ${err.message}`);
+        errors++;
+      }
 
-      if (res.ok) {
+      if (reactOk) {
         const topic =
           post.payload?.tags?.[0] ||
           post.payload?.topic ||
@@ -249,9 +246,6 @@ async function main(): Promise<void> {
         disagrees++;
 
         info(`👎 DISAGREE ${target.txHash.slice(0, 12)}... (${target.reason})`);
-      } else {
-        info(`⚠️ Failed to react on ${target.txHash.slice(0, 12)}...: ${res.status}`);
-        errors++;
       }
 
       await new Promise((r) => setTimeout(r, 300));

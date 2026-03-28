@@ -2,6 +2,7 @@
  * Integration tests for toolkit tools wired to SDK bridge.
  *
  * Uses mock SDK bridge to test behavioral contracts without real RPC.
+ * Chain-first: tools use bridge chain methods, not apiCall.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -10,9 +11,10 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DemosSession } from "../../../src/toolkit/session.js";
 import { FileStateStore } from "../../../src/toolkit/state-store.js";
-import type { SdkBridge } from "../../../src/toolkit/sdk-bridge.js";
+import type { SdkBridge, ApiAccessState, D402SettlementResult, ApiCallResult } from "../../../src/toolkit/sdk-bridge.js";
+import type { ScanPost } from "../../../src/toolkit/types.js";
 
-// Mock bridge factory
+// Mock bridge factory — chain-first with all methods
 function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
   return {
     attestDahr: vi.fn(async (url: string) => ({
@@ -21,27 +23,35 @@ function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
       data: { price: 42000 },
       url,
     })),
-    apiCall: vi.fn(async (path: string) => ({
+    apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
       ok: true,
       status: 200,
-      data: {
-        posts: [
-          {
-            txHash: "post-tx-1",
-            text: "BTC analysis with attestation",
-            category: "ANALYSIS",
-            sender: "demos1agent",
-            author: "demos1agent",
-            timestamp: Date.now(),
-            reactions: { agree: 5, disagree: 1 },
-            tags: ["crypto"],
-          },
-        ],
-      },
+      data: { posts: [] },
     })),
     publishHivePost: vi.fn(async () => ({ txHash: "hive-tx-789" })),
     transferDem: vi.fn(async () => ({ txHash: "transfer-tx-101" })),
     getDemos: vi.fn(() => ({} as any)),
+    payD402: vi.fn(async (): Promise<D402SettlementResult> => ({ success: true, hash: "d" })),
+    apiAccess: "none" as ApiAccessState,
+    verifyTransaction: vi.fn(async (txHash: string) => ({
+      confirmed: true,
+      blockNumber: 42,
+      from: "demos1agent",
+    })),
+    getHivePosts: vi.fn(async (): Promise<ScanPost[]> => ([
+      {
+        txHash: "post-tx-1",
+        text: "BTC analysis with attestation",
+        category: "ANALYSIS",
+        author: "demos1agent",
+        timestamp: Date.now(),
+        reactions: { agree: 0, disagree: 0 },
+        reactionsKnown: false,
+        tags: ["crypto"],
+      },
+    ])),
+    resolvePostAuthor: vi.fn(async () => "demos1agent"),
+    publishHiveReaction: vi.fn(async () => ({ txHash: "react-chain-hash" })),
     ...overrides,
   };
 }
@@ -95,46 +105,34 @@ describe("Tool Integration with SDK Bridge", () => {
   describe("attest() with bridge", () => {
     it("calls bridge.attestDahr and returns result", async () => {
       const { attest } = await import("../../../src/toolkit/tools/attest.js");
-      // Use a public IP that passes SSRF (resolveOverride not available here,
-      // but the URL goes through DNS which may resolve or fail)
-      // We test the bridge call path by mocking at the bridge level
       const result = await attest(session, { url: "https://api.coingecko.com/api/v3/simple/price" });
 
-      // May fail at SSRF (DNS) in CI, but in connected env it should reach bridge
       if (result.ok) {
         expect(result.data!.responseHash).toBe("mock-hash-abc");
         expect(result.data!.txHash).toBe("mock-tx-123");
         expect(bridge.attestDahr).toHaveBeenCalled();
       } else {
-        // DNS failure is acceptable in test — SSRF validation working correctly
         expect(result.error!.code).toBeDefined();
       }
     });
   });
 
   describe("scan() with bridge", () => {
-    it("calls bridge.apiCall and returns posts", async () => {
+    it("uses bridge.getHivePosts for chain-first scan", async () => {
       const { scan } = await import("../../../src/toolkit/tools/scan.js");
       const result = await scan(session, { limit: 10 });
 
-      // Bridge is mocked — outcome is deterministic
       expect(result.ok).toBe(true);
       expect(result.data!.posts.length).toBeGreaterThan(0);
-      expect(bridge.apiCall).toHaveBeenCalled();
+      expect(bridge.getHivePosts).toHaveBeenCalledWith(10);
     });
 
     it("filters posts by domain tag", async () => {
       const multiBridge = mockBridge({
-        apiCall: vi.fn(async () => ({
-          ok: true,
-          status: 200,
-          data: {
-            posts: [
-              { txHash: "tx-1", text: "BTC up", category: "ANALYSIS", sender: "a1", timestamp: Date.now(), reactions: { agree: 1, disagree: 0 }, payload: { text: "BTC up", tags: ["crypto"] } },
-              { txHash: "tx-2", text: "GDP report", category: "ANALYSIS", sender: "a2", timestamp: Date.now(), reactions: { agree: 2, disagree: 0 }, payload: { text: "GDP report", tags: ["macro"] } },
-            ],
-          },
-        })),
+        getHivePosts: vi.fn(async (): Promise<ScanPost[]> => ([
+          { txHash: "tx-1", text: "BTC up", category: "ANALYSIS", author: "a1", timestamp: Date.now(), reactions: { agree: 0, disagree: 0 }, reactionsKnown: false, tags: ["crypto"] },
+          { txHash: "tx-2", text: "GDP report", category: "ANALYSIS", author: "a2", timestamp: Date.now(), reactions: { agree: 0, disagree: 0 }, reactionsKnown: false, tags: ["macro"] },
+        ])),
       });
       const domainSession = createBridgedSession(tempDir, multiBridge);
       const { scan } = await import("../../../src/toolkit/tools/scan.js");
@@ -147,16 +145,10 @@ describe("Tool Integration with SDK Bridge", () => {
 
     it("returns all posts when no domain specified", async () => {
       const multiBridge = mockBridge({
-        apiCall: vi.fn(async () => ({
-          ok: true,
-          status: 200,
-          data: {
-            posts: [
-              { txHash: "tx-1", text: "BTC up", category: "ANALYSIS", sender: "a1", timestamp: Date.now(), reactions: { agree: 1, disagree: 0 }, payload: { text: "BTC up", tags: ["crypto"] } },
-              { txHash: "tx-2", text: "GDP report", category: "ANALYSIS", sender: "a2", timestamp: Date.now(), reactions: { agree: 2, disagree: 0 }, payload: { text: "GDP report", tags: ["macro"] } },
-            ],
-          },
-        })),
+        getHivePosts: vi.fn(async (): Promise<ScanPost[]> => ([
+          { txHash: "tx-1", text: "BTC up", category: "ANALYSIS", author: "a1", timestamp: Date.now(), reactions: { agree: 0, disagree: 0 }, reactionsKnown: false, tags: ["crypto"] },
+          { txHash: "tx-2", text: "GDP report", category: "ANALYSIS", author: "a2", timestamp: Date.now(), reactions: { agree: 0, disagree: 0 }, reactionsKnown: false, tags: ["macro"] },
+        ])),
       });
       const allSession = createBridgedSession(tempDir, multiBridge);
       const { scan } = await import("../../../src/toolkit/tools/scan.js");
@@ -168,41 +160,37 @@ describe("Tool Integration with SDK Bridge", () => {
   });
 
   describe("react() with bridge", () => {
-    it("calls bridge.apiCall with react endpoint", async () => {
+    it("calls bridge.publishHiveReaction for on-chain reaction", async () => {
       const { react } = await import("../../../src/toolkit/tools/react.js");
       const result = await react(session, { txHash: "post-tx-1", type: "agree" });
 
       expect(result.ok).toBe(true);
       expect(result.data!.success).toBe(true);
-      expect(bridge.apiCall).toHaveBeenCalled();
+      expect(bridge.publishHiveReaction).toHaveBeenCalledWith("post-tx-1", "agree");
     });
   });
 
   describe("verify() with bridge", () => {
-    it(
-      "finds tx in feed and confirms",
-      async () => {
-        const { verify } = await import("../../../src/toolkit/tools/verify.js");
-        // Mock feed returns post with txHash "post-tx-1" — verify should find it
-        const result = await verify(session, { txHash: "post-tx-1" });
+    it("uses bridge.verifyTransaction for chain-first confirmation", async () => {
+      const { verify } = await import("../../../src/toolkit/tools/verify.js");
+      const result = await verify(session, { txHash: "post-tx-1" });
 
-        expect(result.ok).toBe(true);
-        expect(result.data!.confirmed).toBe(true);
-      },
-      25000,
-    );
+      expect(result.ok).toBe(true);
+      expect(result.data!.confirmed).toBe(true);
+      expect(result.data!.blockHeight).toBe(42);
+      expect(bridge.verifyTransaction).toHaveBeenCalledWith("post-tx-1");
+    });
   });
 
   describe("tip() with bridge", () => {
-    it("resolves author from feed and transfers DEM", async () => {
+    it("resolves author from chain and transfers DEM", async () => {
       const { tip } = await import("../../../src/toolkit/tools/tip.js");
-      // tip() now resolves author from feed — mock returns post with sender
       const result = await tip(session, { txHash: "post-tx-1", amount: 3 });
 
-      // tip resolves sender from apiCall, then calls transferDem
       expect(result.ok).toBe(true);
       expect(result.data!.txHash).toBeDefined();
-      expect(bridge.transferDem).toHaveBeenCalled();
+      expect(bridge.resolvePostAuthor).toHaveBeenCalledWith("post-tx-1");
+      expect(bridge.transferDem).toHaveBeenCalledWith("demos1agent", 3, "HIVE_TIP:post-tx-1");
     });
   });
 
@@ -235,7 +223,6 @@ describe("Tool Integration with SDK Bridge", () => {
       if (result.ok) {
         expect(result.data!.txHash).toBeDefined();
       } else {
-        // parentTxHash should NOT cause an INVALID_INPUT error
         expect(result.error!.code).not.toBe("INVALID_INPUT");
       }
     });

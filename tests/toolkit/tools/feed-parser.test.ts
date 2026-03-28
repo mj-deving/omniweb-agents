@@ -24,6 +24,7 @@ describe("parseFeedPosts", () => {
       author: "demos1sender",
       timestamp: 1700000000000,
       reactions: { agree: 5, disagree: 2 },
+      reactionsKnown: true,
       tags: ["crypto", "btc"],
     });
   });

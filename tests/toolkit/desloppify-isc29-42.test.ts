@@ -65,8 +65,8 @@ describe("ISC-29: PublishDraft.attestUrl required", () => {
 
 // ── ISC-30: verify() returns undefined blockHeight ───────────
 
-describe("ISC-30: verify() blockHeight not fabricated", () => {
-  it("returns blockHeight undefined (not fabricated 1) when confirmed", async () => {
+describe("ISC-30: verify() blockHeight from chain (not fabricated)", () => {
+  it("returns blockHeight from chain when confirmed", async () => {
     const { DemosSession } = await import("../../src/toolkit/session.js");
     const { FileStateStore } = await import("../../src/toolkit/state-store.js");
     const { verify } = await import("../../src/toolkit/tools/verify.js");
@@ -75,17 +75,16 @@ describe("ISC-30: verify() blockHeight not fabricated", () => {
     try {
       const bridge = {
         attestDahr: vi.fn(),
-        apiCall: vi.fn(async () => ({
-          ok: true,
-          status: 200,
-          data: {
-            posts: [{ txHash: "target-tx", text: "found", sender: "a" }],
-          },
-        })),
+        apiCall: vi.fn(async () => ({ ok: false, status: 0, data: "chain-only" })),
         publishHivePost: vi.fn(),
         transferDem: vi.fn(),
         getDemos: vi.fn(() => ({} as any)),
         payD402: vi.fn(),
+        apiAccess: "none" as const,
+        verifyTransaction: vi.fn(async () => ({ confirmed: true, blockNumber: 99, from: "demos1a" })),
+        getHivePosts: vi.fn(async () => []),
+        resolvePostAuthor: vi.fn(async () => null),
+        publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
       };
 
       const session = new DemosSession({
@@ -100,12 +99,12 @@ describe("ISC-30: verify() blockHeight not fabricated", () => {
       const result = await verify(session, { txHash: "target-tx" });
       expect(result.ok).toBe(true);
       expect(result.data!.confirmed).toBe(true);
-      // blockHeight should be undefined, not fabricated 1
-      expect(result.data!.blockHeight).toBeUndefined();
+      // blockHeight comes from chain — not fabricated
+      expect(result.data!.blockHeight).toBe(99);
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }
-  }, 25000);
+  });
 });
 
 // ── ISC-31: signAndBroadcast removed from SdkBridge ─────────
@@ -190,8 +189,8 @@ describe("ISC-32: apiCall() typed errors with logging", () => {
 
 // ── ISC-33: scan.ts returns NETWORK_ERROR on API failure ─────────
 
-describe("ISC-33: scan returns NETWORK_ERROR on API failure", () => {
-  it("returns NETWORK_ERROR when feed API throws", async () => {
+describe("ISC-33: scan returns NETWORK_ERROR on chain failure", () => {
+  it("returns NETWORK_ERROR when chain scan throws", async () => {
     const { DemosSession } = await import("../../src/toolkit/session.js");
     const { FileStateStore } = await import("../../src/toolkit/state-store.js");
     const { scan } = await import("../../src/toolkit/tools/scan.js");
@@ -201,13 +200,16 @@ describe("ISC-33: scan returns NETWORK_ERROR on API failure", () => {
     try {
       const bridge = {
         attestDahr: vi.fn(),
-        apiCall: vi.fn(async () => {
-          throw new Error("API down");
-        }),
+        apiCall: vi.fn(async () => ({ ok: false, status: 0, data: "chain-only" })),
         publishHivePost: vi.fn(),
         transferDem: vi.fn(),
         getDemos: vi.fn(() => ({} as any)),
         payD402: vi.fn(),
+        apiAccess: "none" as const,
+        verifyTransaction: vi.fn(async () => null),
+        getHivePosts: vi.fn(async () => { throw new Error("RPC down"); }),
+        resolvePostAuthor: vi.fn(async () => null),
+        publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
       };
 
       const session = new DemosSession({
@@ -222,7 +224,7 @@ describe("ISC-33: scan returns NETWORK_ERROR on API failure", () => {
       const result = await scan(session);
       expect(result.ok).toBe(false);
       expect(result.error!.code).toBe("NETWORK_ERROR");
-      expect(result.error!.message).toContain("API down");
+      expect(result.error!.message).toContain("RPC down");
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

@@ -216,10 +216,30 @@ function extractTxHash(confirmResult: unknown, broadcastResult: unknown): string
 
 // ── Factory ─────────────────────────────────────────
 
-// HIVE post prefix (4 bytes: "HIVE")
+// HIVE post prefix (4 bytes: ASCII "HIVE")
 const HIVE_PREFIX = new Uint8Array([0x48, 0x49, 0x56, 0x45]);
 const HIVE_PREFIX_HEX = "48495645";
 const HIVE_PREFIX_STR = "HIVE";
+
+/** Check if bytes start with the 4-byte HIVE prefix */
+function hasHivePrefix(bytes: Uint8Array): boolean {
+  return bytes.length >= 4 &&
+    bytes[0] === HIVE_PREFIX[0] && bytes[1] === HIVE_PREFIX[1] &&
+    bytes[2] === HIVE_PREFIX[2] && bytes[3] === HIVE_PREFIX[3];
+}
+
+/** Encode a JSON payload with HIVE 4-byte prefix for on-chain storage */
+function encodeHivePayload(payload: Record<string, unknown>): Uint8Array {
+  const json = JSON.stringify(payload);
+  const jsonBytes = new TextEncoder().encode(json);
+  const encoded = new Uint8Array(HIVE_PREFIX.length + jsonBytes.length);
+  encoded.set(HIVE_PREFIX, 0);
+  encoded.set(jsonBytes, HIVE_PREFIX.length);
+  return encoded;
+}
+
+/** Regex for base64 character set — skip Buffer.from on obvious non-base64 */
+const BASE64_RE = /^[A-Za-z0-9+/=]+$/;
 
 /**
  * Decode HIVE data from a chain transaction's content.data field.
@@ -234,8 +254,7 @@ function decodeHiveData(data: unknown): Record<string, unknown> | null {
   if (data instanceof Uint8Array || (ArrayBuffer.isView(data) && !(typeof data === "string"))) {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array((data as ArrayBufferView).buffer);
     if (bytes.length < 4) return null;
-    // Check 4-byte HIVE prefix
-    if (bytes[0] === 0x48 && bytes[1] === 0x49 && bytes[2] === 0x56 && bytes[3] === 0x45) {
+    if (hasHivePrefix(bytes)) {
       jsonStr = new TextDecoder().decode(bytes.slice(4));
     }
   } else if (typeof data === "string") {
@@ -249,15 +268,15 @@ function decodeHiveData(data: unknown): Record<string, unknown> | null {
     else if (data.startsWith(HIVE_PREFIX_STR)) {
       jsonStr = data.slice(4);
     }
-    // Base64-encoded HIVE data
-    else {
+    // Base64-encoded HIVE data — only attempt if string matches base64 charset
+    else if (BASE64_RE.test(data) && data.length >= 8) {
       try {
         const decoded = Buffer.from(data, "base64");
-        if (decoded.length >= 4 && decoded[0] === 0x48 && decoded[1] === 0x49 && decoded[2] === 0x56 && decoded[3] === 0x45) {
+        if (hasHivePrefix(decoded)) {
           jsonStr = decoded.slice(4).toString("utf-8");
         }
       } catch {
-        // Not base64
+        // Not valid base64
       }
     }
   }
@@ -442,14 +461,9 @@ export function createSdkBridge(
         }));
       }
 
-      // HIVE encode: 4-byte prefix + JSON
-      const json = JSON.stringify(hivePost);
-      const jsonBytes = new TextEncoder().encode(json);
-      const encoded = new Uint8Array(HIVE_PREFIX.length + jsonBytes.length);
-      encoded.set(HIVE_PREFIX, 0);
-      encoded.set(jsonBytes, HIVE_PREFIX.length);
+      const encoded = encodeHivePayload(hivePost);
 
-      // Store → Confirm → Broadcast
+      // Store data on-chain, confirm membership proof, broadcast to network
       const storeTx = await tx.store(encoded, demos);
       const validity = await tx.confirm(storeTx, demos);
       const result = await tx.broadcast(validity, demos);
@@ -575,13 +589,16 @@ export function createSdkBridge(
           }
         }
 
-        // Advance cursor — use lowest blockNumber from page for next batch
+        // Advance cursor — use last tx's blockNumber for next batch
         const lastTx = txs[txs.length - 1];
-        if (lastTx?.blockNumber != null && lastTx.blockNumber > 0) {
+        const prevStart = start;
+        if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
           start = lastTx.blockNumber - 1;
         } else {
           break; // No valid cursor — stop paginating
         }
+        // Safety: if cursor didn't advance, break to prevent endless loop
+        if (start === prevStart) break;
       }
 
       return posts.slice(0, limit);
@@ -600,21 +617,16 @@ export function createSdkBridge(
 
     async publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }> {
       const tx = txModule ?? await loadTxModule();
-      const reactionPayload = { v: 1, action: "react", target: targetTxHash, type: reactionType };
-      const json = JSON.stringify(reactionPayload);
-      const jsonBytes = new TextEncoder().encode(json);
-      const encoded = new Uint8Array(HIVE_PREFIX.length + jsonBytes.length);
-      encoded.set(HIVE_PREFIX, 0);
-      encoded.set(jsonBytes, HIVE_PREFIX.length);
+      const encoded = encodeHivePayload({ v: 1, action: "react", target: targetTxHash, type: reactionType });
 
       const storeTx = await tx.store(encoded, demos);
       const validity = await tx.confirm(storeTx, demos);
       const result = await tx.broadcast(validity, demos);
-      const hash = extractTxHash(validity, result);
-      if (!hash) {
+      const txHash = extractTxHash(validity, result);
+      if (!txHash) {
         throw new Error("HIVE reaction broadcast succeeded but txHash not found in response");
       }
-      return { txHash: String(hash) };
+      return { txHash: String(txHash) };
     },
 
     getDemos(): Demos {

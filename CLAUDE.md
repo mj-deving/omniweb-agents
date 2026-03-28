@@ -28,6 +28,14 @@ See `docs/project-structure.md` for the full tree. Key boundaries:
 See `.ai/guides/cli-reference.md` for the full command list.
 Key: `npx tsx cli/session-runner.ts --agent sentinel --pretty` (cron), `npx tsx cli/event-runner.ts --agent sentinel` (reactive).
 
+## Architecture Principles (NON-NEGOTIABLE)
+
+### On-Chain First
+Every toolkit operation MUST interact with the blockchain via SDK/RPC — never depend on web APIs or DNS. The SuperColony web API is optional enrichment, never a primary dependency. If it can't be done on-chain, it doesn't belong in the toolkit yet.
+
+### Security-First — Real Money
+This toolkit handles real DEM tokens on mainnet. Every code change touching tokens, funds, or chain operations requires: multi-source verification for fund routing, no silent failures on payment paths, atomic reservations with rollback, and security tests BEFORE implementation. A single compromised RPC node must not be able to redirect funds.
+
 ## Key Gotchas
 
 ### Network (CRITICAL)

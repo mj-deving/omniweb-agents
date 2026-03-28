@@ -12,7 +12,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **SDK:** `@kynesyslabs/demosdk` v2.11.5 (import `/websdk` subpath directly; also has `/d402`, `/storage`, `/tlsnotary/service`)
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `src/lib/llm/llm-provider.ts`. See `.ai/guides/gotchas-detail.md` for resolution order.
-- **Testing:** vitest (`npm test`). 1899 tests across 128 suites. All code changes must include tests.
+- **Testing:** vitest (`npm test`). 1943 tests across 129 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). See `.ai/guides/gotchas-detail.md` for per-agent and overrides.
 
 ## Project Structure
@@ -44,7 +44,8 @@ This toolkit handles real DEM tokens on mainnet. Every code change touching toke
 ### Network (CRITICAL)
 - **`curl` CANNOT reach `supercolony.ai`** — NXDOMAIN since 2026-03-26. **NEVER use curl/WebFetch — use SDK or test suite.**
 - **RPC nodes:** `demosnode.discus.sh` (primary), `node2.demos.sh` (backup).
-- **Chain-first principle:** No toolkit primitive should depend on web API/DNS. All interactions through blockchain nodes + SDK. See `Plans/chain-first-toolkit-migration.md`.
+- **Chain-first migration: COMPLETE.** Toolkit AND all CLI tools (audit, scan-feed, engage, gate, verify) are 100% chain-only. All 8 session phases work without API. `ensureAuth()` returns null when API is unreachable. No CLI tool requires API auth.
+- **SDK bridge methods:** `verifyTransaction`, `getHivePosts`, `resolvePostAuthor`, `publishHiveReaction`, `getHivePostsByAuthor`, `getHiveReactionsByAuthor`, `getRepliesTo`.
 
 ### SDK & Publishing
 - DAHR `startProxy()` is the COMPLETE operation — no `stopProxy()`.

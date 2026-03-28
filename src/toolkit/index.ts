@@ -48,9 +48,7 @@ export type {
   AttestResult,
   DiscoverSourcesResult,
   // Chain analytics types
-  ChainPost,
-  ChainReaction,
-  AgentActivity,
+  HiveReaction,
   Source,
   SourceStatus,
   PayResult,

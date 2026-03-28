@@ -452,15 +452,12 @@ describe("SDK Bridge Adapter", () => {
     });
   });
 
-  describe("queryAgentActivity", () => {
-    it("separates posts and reactions from getTransactionHistory", async () => {
-      const postPayload = JSON.stringify({ v: 1, text: "DeFi TVL analysis", cat: "ANALYSIS", tags: ["defi"] });
-      const reactionPayload = JSON.stringify({ v: 1, action: "react", target: "target-tx-1", type: "agree" });
-      const replyPayload = JSON.stringify({ v: 1, text: "Reply to your point", cat: "ANALYSIS", replyTo: "parent-tx-1" });
-      const b64Post = Buffer.from("HIVE" + postPayload).toString("base64");
-      const b64Reaction = Buffer.from("HIVE" + reactionPayload).toString("base64");
-      const b64Reply = Buffer.from("HIVE" + replyPayload).toString("base64");
+  describe("getHivePostsByAuthor", () => {
+    const b64Post = Buffer.from("HIVE" + JSON.stringify({ v: 1, text: "DeFi TVL analysis", cat: "ANALYSIS", tags: ["defi"] })).toString("base64");
+    const b64Reaction = Buffer.from("HIVE" + JSON.stringify({ v: 1, action: "react", target: "target-tx-1", type: "agree" })).toString("base64");
+    const b64Reply = Buffer.from("HIVE" + JSON.stringify({ v: 1, text: "Reply to your point", cat: "ANALYSIS", replyTo: "parent-tx-1" })).toString("base64");
 
+    it("returns posts (not reactions) via getTransactionHistory", async () => {
       const demosWithHistory = {
         ...mockDemos(),
         getTransactionHistory: vi.fn()
@@ -472,46 +469,90 @@ describe("SDK Bridge Adapter", () => {
           .mockResolvedValue([]),
       };
       const b = createSdkBridge(demosWithHistory as any, undefined, "token");
-      const activity = await b.queryAgentActivity("agent1");
+      const posts = await b.getHivePostsByAuthor("agent1");
 
-      expect(activity.address).toBe("agent1");
-      expect(activity.posts).toHaveLength(2); // post + reply (both have text)
-      expect(activity.reactionsGiven).toHaveLength(1);
-      expect(activity.posts[0].text).toBe("DeFi TVL analysis");
-      expect(activity.posts[0].tags).toEqual(["defi"]);
-      expect(activity.posts[1].replyTo).toBe("parent-tx-1");
-      expect(activity.reactionsGiven[0].targetTxHash).toBe("target-tx-1");
-      expect(activity.reactionsGiven[0].type).toBe("agree");
+      expect(posts).toHaveLength(2); // post + reply (both have text, reaction filtered)
+      expect(posts[0].text).toBe("DeFi TVL analysis");
+      expect(posts[0].tags).toEqual(["defi"]);
+      expect(posts[0].blockNumber).toBe(200);
+      expect(posts[1].replyTo).toBe("parent-tx-1");
     });
 
-    it("falls back to getTransactions when getTransactionHistory unavailable", async () => {
-      const postPayload = JSON.stringify({ v: 1, text: "Fallback post", cat: "PREDICTION" });
-      const b64 = Buffer.from("HIVE" + postPayload).toString("base64");
-
+    it("falls back to getTransactions filtered by address", async () => {
       const demosNoHistory = {
         ...mockDemos(),
-        // No getTransactionHistory — only getTransactions
         getTransactions: vi.fn()
           .mockResolvedValueOnce([
-            { hash: "tx-1", blockNumber: 100, status: "confirmed", from: "agent1", to: "chain", type: "storage", content: JSON.stringify({ from: "agent1", data: ["storage", { bytes: b64 }], timestamp: 2000 }), timestamp: 2000 },
-            { hash: "tx-2", blockNumber: 100, status: "confirmed", from: "other-agent", to: "chain", type: "storage", content: JSON.stringify({ from: "other-agent", data: ["storage", { bytes: b64 }], timestamp: 2001 }), timestamp: 2001 },
+            { hash: "tx-1", blockNumber: 100, status: "confirmed", from: "agent1", to: "chain", type: "storage", content: JSON.stringify({ from: "agent1", data: ["storage", { bytes: b64Post }], timestamp: 2000 }), timestamp: 2000 },
+            { hash: "tx-2", blockNumber: 100, status: "confirmed", from: "other-agent", to: "chain", type: "storage", content: JSON.stringify({ from: "other-agent", data: ["storage", { bytes: b64Post }], timestamp: 2001 }), timestamp: 2001 },
           ])
           .mockResolvedValue([]),
       };
       const b = createSdkBridge(demosNoHistory as any, undefined, "token");
-      const activity = await b.queryAgentActivity("agent1");
+      const posts = await b.getHivePostsByAuthor("agent1");
 
-      // Only includes posts from agent1, not other-agent
-      expect(activity.posts).toHaveLength(1);
-      expect(activity.posts[0].txHash).toBe("tx-1");
+      expect(posts).toHaveLength(1);
+      expect(posts[0].txHash).toBe("tx-1");
     });
 
-    it("returns empty activity when no methods available", async () => {
+    it("returns empty when no methods available", async () => {
       const b = createSdkBridge(demos as any, undefined, "token");
-      const activity = await b.queryAgentActivity("agent1");
+      expect(await b.getHivePostsByAuthor("agent1")).toHaveLength(0);
+    });
+  });
 
-      expect(activity.posts).toHaveLength(0);
-      expect(activity.reactionsGiven).toHaveLength(0);
+  describe("getHiveReactionsByAuthor", () => {
+    it("returns reactions (not posts) via getTransactionHistory", async () => {
+      const b64Reaction = Buffer.from("HIVE" + JSON.stringify({ v: 1, action: "react", target: "target-1", type: "disagree" })).toString("base64");
+      const b64Post = Buffer.from("HIVE" + JSON.stringify({ v: 1, text: "A post", cat: "ANALYSIS" })).toString("base64");
+
+      const demosWithHistory = {
+        ...mockDemos(),
+        getTransactionHistory: vi.fn()
+          .mockResolvedValueOnce([
+            { hash: "rx-1", blockNumber: 200, status: "confirmed", content: { from: "agent1", type: "storage", data: ["storage", { bytes: b64Reaction }], timestamp: 1000 } },
+            { hash: "post-1", blockNumber: 199, status: "confirmed", content: { from: "agent1", type: "storage", data: ["storage", { bytes: b64Post }], timestamp: 1001 } },
+          ])
+          .mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithHistory as any, undefined, "token");
+      const reactions = await b.getHiveReactionsByAuthor("agent1");
+
+      expect(reactions).toHaveLength(1);
+      expect(reactions[0].targetTxHash).toBe("target-1");
+      expect(reactions[0].type).toBe("disagree");
+    });
+  });
+
+  describe("getRepliesTo", () => {
+    it("finds replies targeting given txHashes via global scan", async () => {
+      const b64Reply = Buffer.from("HIVE" + JSON.stringify({ v: 1, text: "Great point", cat: "ANALYSIS", replyTo: "parent-1" })).toString("base64");
+      const b64Unrelated = Buffer.from("HIVE" + JSON.stringify({ v: 1, text: "Other post", cat: "ANALYSIS" })).toString("base64");
+
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn()
+          .mockResolvedValueOnce([
+            { hash: "reply-1", blockNumber: 100, status: "confirmed", from: "agent2", to: "chain", type: "storage", content: JSON.stringify({ from: "agent2", data: ["storage", { bytes: b64Reply }], timestamp: 3000 }), timestamp: 3000 },
+            { hash: "unrelated", blockNumber: 100, status: "confirmed", from: "agent3", to: "chain", type: "storage", content: JSON.stringify({ from: "agent3", data: ["storage", { bytes: b64Unrelated }], timestamp: 3001 }), timestamp: 3001 },
+          ])
+          .mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      const replies = await b.getRepliesTo(["parent-1"]);
+
+      expect(replies).toHaveLength(1);
+      expect(replies[0].replyTo).toBe("parent-1");
+      expect(replies[0].text).toBe("Great point");
+    });
+
+    it("returns empty for no matching replies", async () => {
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn().mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      expect(await b.getRepliesTo(["parent-1"])).toHaveLength(0);
     });
   });
 });

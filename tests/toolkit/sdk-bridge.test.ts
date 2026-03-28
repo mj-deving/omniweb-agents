@@ -294,4 +294,95 @@ describe("SDK Bridge Adapter", () => {
       expect(demos.transfer.mock.calls[0]).toHaveLength(2);
     });
   });
+
+  describe("getHiveReactions", () => {
+    function makeReactionTx(target: string, type: "agree" | "disagree", hash = "rx-hash") {
+      const payload = JSON.stringify({ v: 1, action: "react", target, type });
+      return {
+        hash,
+        blockNumber: 100,
+        status: "confirmed",
+        from: "reactor1",
+        to: "chain",
+        type: "storage",
+        // String form with HIVE prefix — decodeHiveData handles this
+        content: JSON.stringify({ data: ["storage", "HIVE" + payload] }),
+        timestamp: Date.now(),
+      };
+    }
+
+    function makePostTx(text: string, hash = "post-hash") {
+      const payload = JSON.stringify({ v: 1, text, cat: "ANALYSIS" });
+      return {
+        hash,
+        blockNumber: 100,
+        status: "confirmed",
+        from: "author1",
+        to: "chain",
+        type: "storage",
+        content: JSON.stringify({ data: ["storage", "HIVE" + payload] }),
+        timestamp: Date.now(),
+      };
+    }
+
+    it("counts agree and disagree reactions for target txHashes", async () => {
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn()
+          .mockResolvedValueOnce([
+            makeReactionTx("tx-abc", "agree", "rx1"),
+            makeReactionTx("tx-abc", "agree", "rx2"),
+            makeReactionTx("tx-abc", "disagree", "rx3"),
+            makeReactionTx("tx-def", "disagree", "rx4"),
+            makePostTx("some post", "post1"), // not a reaction — should be ignored
+          ])
+          .mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      const result = await b.getHiveReactions(["tx-abc", "tx-def"]);
+
+      expect(result.get("tx-abc")).toEqual({ agree: 2, disagree: 1 });
+      expect(result.get("tx-def")).toEqual({ agree: 0, disagree: 1 });
+    });
+
+    it("returns zero counts for txHashes with no reactions", async () => {
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn()
+          .mockResolvedValueOnce([
+            makePostTx("a regular post", "post1"),
+          ])
+          .mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      const result = await b.getHiveReactions(["tx-missing"]);
+
+      expect(result.get("tx-missing")).toEqual({ agree: 0, disagree: 0 });
+    });
+
+    it("returns empty map when getTransactions is not available", async () => {
+      // Default mockDemos() has no getTransactions
+      const b = createSdkBridge(demos as any, undefined, "token");
+      const result = await b.getHiveReactions(["tx-abc"]);
+
+      expect(result.size).toBe(0);
+    });
+
+    it("ignores reactions targeting txHashes not in the target set", async () => {
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn()
+          .mockResolvedValueOnce([
+            makeReactionTx("tx-other", "agree", "rx1"),
+            makeReactionTx("tx-abc", "agree", "rx2"),
+          ])
+          .mockResolvedValue([]), // empty on subsequent pages
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      const result = await b.getHiveReactions(["tx-abc"]);
+
+      expect(result.get("tx-abc")).toEqual({ agree: 1, disagree: 0 });
+      expect(result.has("tx-other")).toBe(false);
+    });
+  });
 });

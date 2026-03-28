@@ -3,15 +3,18 @@
  * Session Audit — Sentinel Phase 2 tool
  *
  * Maps to strategy.yaml AUDIT phase.
- * Reads session log, fetches current scores/reactions from API,
+ * Reads session log, fetches current reactions from chain (on-chain first),
  * compares predicted vs actual, calculates statistics.
+ *
+ * Chain-first: uses getTransactions to scan for reactions, getTxByHash to verify posts.
+ * Score is computed locally from the deterministic scoring formula.
  *
  * Usage:
  *   npx tsx tools/audit.ts [--log PATH] [--env PATH] [--update] [--pretty]
  */
 
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
-import { ensureAuth } from "../src/lib/auth/auth.js";
+import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { readSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "../src/lib/util/log.js";
 import type { SessionLogEntry } from "../src/lib/util/log.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
@@ -76,7 +79,7 @@ interface AuditResult {
   actual_score: number | null;
   delta: number | null;
   highDisagree: boolean;
-  status: "audited" | "not_found" | "already_audited" | "error" | "api_unavailable";
+  status: "audited" | "not_found" | "already_audited" | "error";
   error?: string;
 }
 
@@ -93,53 +96,24 @@ interface AuditStats {
   engagement_t2: { count: number; total: number };
 }
 
-// ── Audit Logic ────────────────────────────────────
+// ── Scoring (local, deterministic — matches strategy.yaml formula) ──
 
 /**
- * Fetch a post's current state from the API.
- * Tries feed search by txHash, then falls back to author feed scan.
+ * Compute post score locally from known data.
+ * Formula from agents/sentinel/strategy.yaml:
+ *   base(20) + attestation(40) + confidence(10) + long_text(10) + engagement_t1(10) + engagement_t2(10) = max 100
  */
-async function fetchPostState(
-  txHash: string,
-  token: string,
-  authorAddress: string
-): Promise<{ reactions: number; agrees: number; disagrees: number; score: number } | null> {
-  // Try direct thread lookup (returns post + replies)
-  const threadRes = await apiCall(`/api/feed/thread/${txHash}`, token);
-  if (threadRes.ok && threadRes.data) {
-    // Thread response may be the post itself or contain a posts array
-    const post = threadRes.data.post || threadRes.data;
-    if (post && post.txHash === txHash) {
-      const agrees = post.reactions?.agree || 0;
-      const disagrees = post.reactions?.disagree || 0;
-      return { reactions: agrees + disagrees, agrees, disagrees, score: post.score ?? 0 };
-    }
-    // Check posts array
-    const threadPosts = threadRes.data?.posts;
-    if (Array.isArray(threadPosts)) {
-      const found = threadPosts.find((p: any) => p.txHash === txHash);
-      if (found) {
-        const agrees = found.reactions?.agree || 0;
-        const disagrees = found.reactions?.disagree || 0;
-        return { reactions: agrees + disagrees, agrees, disagrees, score: found.score ?? 0 };
-      }
-    }
-  }
-
-  // Fallback: search author's posts
-  const feedRes = await apiCall(`/api/feed?author=${authorAddress}&limit=50`, token);
-  if (feedRes.ok) {
-    const rawPosts = feedRes.data?.posts ?? feedRes.data;
-    const posts = Array.isArray(rawPosts) ? rawPosts : [];
-    const found = posts.find((p: any) => p.txHash === txHash);
-    if (found) {
-      const agrees = found.reactions?.agree || 0;
-      const disagrees = found.reactions?.disagree || 0;
-      return { reactions: agrees + disagrees, agrees, disagrees, score: found.score ?? 0 };
-    }
-  }
-
-  return null;
+function computeScore(entry: SessionLogEntry, reactions: number): number {
+  let score = 20; // base
+  if (entry.attestation_type && entry.attestation_type !== "none") score += 40; // attestation
+  if (entry.confidence != null) score += 10; // confidence field set
+  // text_preview is truncated, but published posts always exceed 200 chars (enforced by quality gate)
+  // Use text_preview length as lower bound; default to true for safety
+  const textLen = entry.text_preview?.length ?? 201;
+  if (textLen > 200) score += 10; // long_text
+  if (reactions >= 5) score += 10; // engagement_t1
+  if (reactions >= 15) score += 10; // engagement_t2
+  return Math.min(score, 100);
 }
 
 /**
@@ -278,12 +252,13 @@ async function main(): Promise<void> {
   }
   info(`Read ${entries.length} entries from ${logPath}`);
 
-  // Connect and auth (token may be null if API is unreachable)
+  // Connect wallet — chain-only, no API auth needed
   const { demos, address } = await connectWallet(envPath);
-  const token = await ensureAuth(demos, address);
+  const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
 
-  // Audit each entry
+  // Separate already-audited from unaudited entries
   const results: AuditResult[] = [];
+  const unaudited: SessionLogEntry[] = [];
 
   for (const entry of entries) {
     // Already audited? (must have non-null values — 0 reactions is valid)
@@ -302,30 +277,47 @@ async function main(): Promise<void> {
         highDisagree: disagrees > agrees && disagrees >= 5,
         status: "already_audited",
       });
-      continue;
+    } else {
+      unaudited.push(entry);
     }
+  }
 
-    // No token — can't fetch from API, mark as unavailable
-    if (!token) {
-      results.push({
-        txHash: entry.txHash,
-        category: entry.category,
-        attestation_type: entry.attestation_type,
-        predicted_reactions: entry.predicted_reactions,
-        actual_reactions: null,
-        actual_score: null,
-        delta: null,
-        highDisagree: false,
-        status: "api_unavailable",
-      });
-      continue;
-    }
+  // Chain-first: single scan for all unaudited reactions
+  if (unaudited.length > 0) {
+    info(`Scanning chain for reactions on ${unaudited.length} unaudited posts...`);
+    const txHashes = unaudited.map(e => e.txHash);
 
-    // Fetch from API
-    info(`Auditing ${entry.txHash.slice(0, 8)}...`);
     try {
-      const state = await fetchPostState(entry.txHash, token, address);
-      if (!state) {
+      const reactionMap = await bridge.getHiveReactions(txHashes);
+
+      for (const entry of unaudited) {
+        const rx = reactionMap.get(entry.txHash);
+        const agrees = rx?.agree ?? 0;
+        const disagrees = rx?.disagree ?? 0;
+        const totalReactions = agrees + disagrees;
+        const score = computeScore(entry, totalReactions);
+
+        // Update entry in-memory (store agree/disagree for future cached runs)
+        entry.actual_reactions = totalReactions;
+        entry.actual_score = score;
+        entry.actual_agrees = agrees;
+        entry.actual_disagrees = disagrees;
+
+        results.push({
+          txHash: entry.txHash,
+          category: entry.category,
+          attestation_type: entry.attestation_type,
+          predicted_reactions: entry.predicted_reactions,
+          actual_reactions: totalReactions,
+          actual_score: score,
+          delta: totalReactions - entry.predicted_reactions,
+          highDisagree: disagrees > agrees && disagrees >= 5,
+          status: "audited",
+        });
+      }
+    } catch (err: any) {
+      info(`Chain scan failed: ${err.message} — marking entries as error`);
+      for (const entry of unaudited) {
         results.push({
           txHash: entry.txHash,
           category: entry.category,
@@ -335,41 +327,10 @@ async function main(): Promise<void> {
           actual_score: null,
           delta: null,
           highDisagree: false,
-          status: "not_found",
+          status: "error",
+          error: err.message,
         });
-        continue;
       }
-
-      // Update entry in-memory (store agree/disagree for future cached runs)
-      entry.actual_reactions = state.reactions;
-      entry.actual_score = state.score;
-      entry.actual_agrees = state.agrees;
-      entry.actual_disagrees = state.disagrees;
-
-      results.push({
-        txHash: entry.txHash,
-        category: entry.category,
-        attestation_type: entry.attestation_type,
-        predicted_reactions: entry.predicted_reactions,
-        actual_reactions: state.reactions,
-        actual_score: state.score,
-        delta: state.reactions - entry.predicted_reactions,
-        highDisagree: state.disagrees > state.agrees && state.disagrees >= 5,
-        status: "audited",
-      });
-    } catch (err: any) {
-      results.push({
-        txHash: entry.txHash,
-        category: entry.category,
-        attestation_type: entry.attestation_type,
-        predicted_reactions: entry.predicted_reactions,
-        actual_reactions: null,
-        actual_score: null,
-        delta: null,
-        highDisagree: false,
-        status: "error",
-        error: err.message,
-      });
     }
   }
 

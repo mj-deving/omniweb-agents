@@ -16,8 +16,8 @@
  */
 
 import { resolve } from "node:path";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
-import { ensureAuth } from "../src/lib/auth/auth.js";
+import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { readSessionLog, resolveLogPath } from "../src/lib/util/log.js";
 import { resolveAgentName } from "../src/lib/agent-config.js";
 import { toErrorMessage } from "../src/lib/util/errors.js";
@@ -119,75 +119,28 @@ function inferLatestTxHashes(logEntries: Array<{ txHash?: string }>): string[] {
   return [];
 }
 
-// ── Feed Lookup ────────────────────────────────────
+// ── Chain Verification ────────────────────────────
 
 /**
- * Look up a post by txHash in the SuperColony feed.
- * Uses /api/feed/thread/{txHash} endpoint (same pattern as audit.ts).
- * Falls back to author feed scan if available.
+ * Verify a transaction exists on-chain via getTxByHash.
+ * Retries with delays to handle block propagation.
  */
-async function lookupPost(
+async function verifyOnChain(
   txHash: string,
-  token: string,
-  authorAddress?: string
-): Promise<{ score: number; reactions: number } | null> {
-  const threadRes = await apiCall(`/api/feed/thread/${encodeURIComponent(txHash)}`, token);
-  if (threadRes.ok && threadRes.data) {
-    const post = threadRes.data.post || threadRes.data;
-    if (post && post.txHash === txHash) {
-      const reactions =
-        (post.reactions?.agree || 0) + (post.reactions?.disagree || 0);
-      return { reactions, score: post.score ?? 0 };
-    }
-
-    const threadPosts = threadRes.data?.posts;
-    if (Array.isArray(threadPosts)) {
-      const found = threadPosts.find((p: any) => p.txHash === txHash);
-      if (found) {
-        const reactions =
-          (found.reactions?.agree || 0) + (found.reactions?.disagree || 0);
-        return { reactions, score: found.score ?? 0 };
-      }
-    }
-  }
-
-  if (authorAddress) {
-    const feedRes = await apiCall(
-      `/api/feed?author=${authorAddress}&limit=50`,
-      token
-    );
-    if (feedRes.ok) {
-      const rawPosts = feedRes.data?.posts ?? feedRes.data;
-      const posts = Array.isArray(rawPosts) ? rawPosts : [];
-      const found = posts.find((p: any) => p.txHash === txHash);
-      if (found) {
-        const reactions =
-          (found.reactions?.agree || 0) + (found.reactions?.disagree || 0);
-        return { reactions, score: found.score ?? 0 };
-      }
-    }
-  }
-
-  return null;
-}
-
-async function lookupPostWithRetries(
-  txHash: string,
-  token: string,
-  authorAddress?: string,
+  bridge: import("../src/toolkit/sdk-bridge.js").SdkBridge,
   initialDelayMs: number = 0
-): Promise<{ score: number; reactions: number } | null> {
-  let found = await lookupPost(txHash, token, authorAddress);
-  if (found) return found;
+): Promise<{ confirmed: boolean; blockNumber?: number } | null> {
+  const result = await bridge.verifyTransaction(txHash);
+  if (result?.confirmed) return result;
 
   for (const delayMs of buildVerifyRetrySchedule(initialDelayMs)) {
     info(`Verifier retry in ${Math.floor(delayMs / 1000)}s for ${txHash.slice(0, 16)}...`);
     await sleep(delayMs);
-    found = await lookupPost(txHash, token, authorAddress);
-    if (found) return found;
+    const retry = await bridge.verifyTransaction(txHash);
+    if (retry?.confirmed) return retry;
   }
 
-  return null;
+  return result;
 }
 
 // ── Main ───────────────────────────────────────────
@@ -211,15 +164,10 @@ async function main(): Promise<void> {
     waitSeconds = Number(flags.wait);
   }
 
+  // Connect wallet — chain-only, no API auth needed
   info("Connecting wallet...");
   const { demos, address } = await connectWallet(envPath);
-  const token = await ensureAuth(demos, address);
-
-  if (!token) {
-    info("API unavailable — skipping verification (chain-only mode)");
-    console.log(JSON.stringify({ verified: [], failed: [], summary: { verified: 0, total: 0 }, api_unavailable: true }));
-    return;
-  }
+  const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
 
   const logEntries = readSessionLog(logPath);
   const logTxSet = new Set(logEntries.map((e) => e.txHash));
@@ -235,20 +183,25 @@ async function main(): Promise<void> {
     info(`No txHash provided — verifying latest session log entry ${targets[0].slice(0, 16)}...`);
   }
 
+  // Get reaction counts for all targets in a single chain scan
+  const reactionMap = await bridge.getHiveReactions(targets);
+
   const verified: VerifyResult[] = [];
   const failed: VerifyResult[] = [];
 
   for (const txHash of targets) {
     info(`Checking ${txHash.slice(0, 16)}...`);
-    const feedData = await lookupPostWithRetries(txHash, token, address, waitSeconds * 1000);
+    const chainResult = await verifyOnChain(txHash, bridge, waitSeconds * 1000);
+    const rx = reactionMap.get(txHash);
+    const reactions = rx ? rx.agree + rx.disagree : 0;
 
     const result: VerifyResult = {
       txHash,
-      in_feed: feedData !== null,
+      in_feed: chainResult?.confirmed ?? false,
       in_log: logTxSet.has(txHash),
-      feed_score: feedData?.score ?? null,
-      feed_reactions: feedData?.reactions ?? null,
-      status: feedData !== null ? "verified" : "not_found",
+      feed_score: null, // Score no longer from API — use local computation if needed
+      feed_reactions: reactions,
+      status: chainResult?.confirmed ? "verified" : "not_found",
     };
 
     if (result.status === "verified") {

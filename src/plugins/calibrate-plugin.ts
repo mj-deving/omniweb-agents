@@ -12,11 +12,8 @@
  * Delegates to: cli/audit.ts (via subprocess)
  */
 
-import type { FrameworkPlugin } from "../types.js";
+import type { FrameworkPlugin, RunToolFn } from "../types.js";
 import type { BeforeSenseContext } from "../lib/util/extensions.js";
-
-/** Function signature for running a CLI tool as subprocess. */
-export type RunToolFn = (toolPath: string, args: string[], label: string) => Promise<any>;
 
 /**
  * Create a beforeSense hook for calibrate with injected runTool dependency.

@@ -11,7 +11,7 @@
 import type { AgentEvent, EventAction } from "../types.js";
 import { toErrorMessage } from "../lib/util/errors.js";
 import { addCapped } from "../reactive/own-tx-hashes.js";
-import type { WriteRateLedger, WriteRateCheck } from "../lib/write-rate-limit.js";
+import type { StateStore } from "../toolkit/types.js";
 import type { PublishInput, PublishResult, PublishOptions } from "./publish-pipeline.js";
 import type { GeneratePostInput, PostDraft } from "./llm.js";
 import type { ObservationType, ObserveOptions } from "../lib/pipeline/observe.js";
@@ -38,7 +38,7 @@ export type ObserveFn = (
 /** LLM generation abstraction — wraps generatePost. */
 export type GeneratePostFn = (
   input: GeneratePostInput,
-  llm: any,
+  llm: import("../lib/llm/llm-provider.js").LLMProvider,
   config: { agentName: string; personaMdPath: string; strategyYamlPath: string },
 ) => Promise<PostDraft>;
 
@@ -81,7 +81,7 @@ export interface ActionExecutorContext {
   strategyYamlPath: string;
 
   // LLM (nullable — reply skipped if absent)
-  llm: any | null;
+  llm: import("../lib/llm/llm-provider.js").LLMProvider | null;
 
   // Mutable state (shared reference)
   ownTxHashes: Set<string>;
@@ -92,11 +92,10 @@ export interface ActionExecutorContext {
   attestAndPublish: AttestAndPublishFn;
   transfer: TransferFn;
 
-  // Rate limiting
-  loadWriteRateLedger: (address: string) => WriteRateLedger;
-  canPublish: (ledger: WriteRateLedger, limits: { dailyLimit: number; hourlyLimit: number }) => WriteRateCheck;
-  recordPublish: (ledger: WriteRateLedger, agent: string, txHash?: string) => WriteRateLedger;
-  saveWriteRateLedger: (ledger: WriteRateLedger) => void;
+  // Rate limiting (async, StateStore-backed)
+  stateStore: StateStore;
+  checkWriteRate: (store: StateStore, address: string) => Promise<{ allowed: boolean; reason: string }>;
+  recordWrite: (store: StateStore, address: string) => Promise<void>;
 
   // Telemetry
   observe: ObserveFn;
@@ -133,14 +132,9 @@ export function createActionExecutor(
     // Refresh auth token before any API action
     const token = await ctx.getToken();
 
-    // Load ledger only for publish/reply (avoids file read for react/tip)
-    let ledger: WriteRateLedger | undefined;
+    // Check write rate for publish/reply (async, StateStore-backed)
     if (action.type === "publish" || action.type === "reply") {
-      ledger = ctx.loadWriteRateLedger(ctx.address);
-      const check = ctx.canPublish(ledger, {
-        dailyLimit: ctx.dailyReactive,
-        hourlyLimit: ctx.hourlyReactive,
-      });
+      const check = await ctx.checkWriteRate(ctx.stateStore, ctx.address);
       if (!check.allowed) {
         ctx.warn(`[event] Reactive budget exhausted: ${check.reason}`);
         ctx.observe("warning", `Reactive budget exhausted: ${check.reason}`, {
@@ -222,8 +216,7 @@ export function createActionExecutor(
           };
           const result = await ctx.attestAndPublish(publishInput, undefined, { feedToken: token });
           addCapped(ctx.ownTxHashes, result.txHash);
-          ctx.recordPublish(ledger!, ctx.agentName, result.txHash);
-          ctx.saveWriteRateLedger(ledger!);
+          await ctx.recordWrite(ctx.stateStore, ctx.address);
           ctx.observe("insight", `Published reply ${result.txHash} to ${parentTx}`, {
             phase: "event-loop",
             source: "event-runner:reply",
@@ -253,8 +246,7 @@ export function createActionExecutor(
           const attestUrl = action.params.attestUrl ? String(action.params.attestUrl) : undefined;
           const result = await ctx.attestAndPublish(publishInput, attestUrl, { feedToken: token });
           addCapped(ctx.ownTxHashes, result.txHash);
-          ctx.recordPublish(ledger!, ctx.agentName, result.txHash);
-          ctx.saveWriteRateLedger(ledger!);
+          await ctx.recordWrite(ctx.stateStore, ctx.address);
           ctx.observe("insight", `Published ${result.txHash}`, {
             phase: "event-loop",
             source: "event-runner:publish",

@@ -15,8 +15,8 @@ export { ensureAuth, loadAuthCache } from "../src/lib/auth/auth.js";
 export { attestDahr, attestTlsn, publishPost, attestAndPublish } from "../src/actions/publish-pipeline.js";
 export type { PublishInput, PublishResult, AttestResult } from "../src/actions/publish-pipeline.js";
 
-// Write rate limiting — persistent publish quotas
-export { canPublish, recordPublish, loadWriteRateLedger, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
+// Write rate limiting — async, StateStore-backed
+export { checkAndRecordWrite, getWriteRateRemaining } from "../src/toolkit/guards/write-rate-limit.js";
 
 // Spending policy — DEM caps, dry-run, signing guard
 export { canSpend, recordSpend, defaultSpendingPolicy, createSigningGuard, loadSpendingLedger, saveSpendingLedger } from "../src/lib/spending-policy.js";

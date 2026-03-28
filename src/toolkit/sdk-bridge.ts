@@ -399,8 +399,8 @@ async function scanAddressStorage(
       } else break;
     }
   } else if (rpc.getTransactions) {
-    const MAX_PAGES = 10;
     const PAGE_SIZE = 100;
+    const MAX_PAGES = Math.min(Math.ceil(limit / PAGE_SIZE), 10);
     let start: number | "latest" = "latest";
     const addrLower = address.toLowerCase();
 
@@ -763,6 +763,16 @@ export function createSdkBridge(
           }
         }
 
+        // Early exit: stop scanning if all targets have at least one reaction
+        if (page >= 2) {
+          let allFound = true;
+          for (const h of targets) {
+            const c = result.get(h)!;
+            if (c.agree === 0 && c.disagree === 0) { allFound = false; break; }
+          }
+          if (allFound) break;
+        }
+
         const lastTx = txs[txs.length - 1];
         const prevStart = start;
         if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
@@ -866,6 +876,12 @@ export function createSdkBridge(
           } catch {
             // Skip malformed
           }
+        }
+
+        // Early exit: stop if we've found at least one reply per target
+        if (page >= 1 && replies.length > 0) {
+          const foundTargets = new Set(replies.map(r => r.replyTo).filter(Boolean));
+          if (targets.size <= foundTargets.size) break;
         }
 
         const lastTx = txs[txs.length - 1];

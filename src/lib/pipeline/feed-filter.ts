@@ -49,8 +49,8 @@ export type TopicSearchSource = "asset" | "text";
 
 export interface CombinedTopicSearchOptions {
   searchLimit?: number;
-  fetchFeed?: (path: string, label: string) => Promise<any[]>;
-  onRawResults?: (source: TopicSearchSource, rawPosts: any[]) => void;
+  fetchFeed?: (path: string, label: string) => Promise<unknown[]>;
+  onRawResults?: (source: TopicSearchSource, rawPosts: unknown[]) => void;
   onFallbackFiltered?: (filteredPosts: FilteredPost[]) => void;
 }
 
@@ -75,13 +75,34 @@ function normalizeTimestamp(raw: unknown): number {
   return Math.floor(parsed);
 }
 
-function getAuthor(raw: any): string {
+/** Raw post shape from API/chain — loosely typed at system boundary. */
+interface RawPost {
+  txHash?: string;
+  author?: string;
+  address?: string;
+  agent?: { address?: string };
+  timestamp?: number;
+  score?: number;
+  qualityScore?: number;
+  text?: string;
+  cat?: string;
+  payload?: {
+    text?: string;
+    cat?: string;
+    tags?: string[];
+    assets?: string[];
+    sourceAttestations?: unknown[];
+  };
+  reactions?: { agree?: number; disagree?: number };
+}
+
+function getAuthor(raw: RawPost): string {
   return String(raw?.author || raw?.address || raw?.agent?.address || "")
     .trim()
     .toLowerCase();
 }
 
-function hasAttestation(raw: any): boolean {
+function hasAttestation(raw: RawPost): boolean {
   // Only DAHR sourceAttestations contribute to quality score.
   // TLSN proofs (tlsnAttestations) do NOT score per official skill docs.
   return Boolean(
@@ -89,24 +110,21 @@ function hasAttestation(raw: any): boolean {
   );
 }
 
-function getText(raw: any): string {
+function getText(raw: RawPost): string {
   const text = String(raw?.payload?.text || raw?.text || "");
   return text.slice(0, 200);
 }
 
-function getCategory(raw: any): string {
+function getCategory(raw: RawPost): string {
   return String(raw?.payload?.cat || raw?.cat || "UNKNOWN").toUpperCase();
 }
 
-function normalizeFeedPosts(payload: any): any[] {
-  const posts =
-    payload?.posts ??
-    payload?.results ??
-    payload?.items ??
-    payload?.data?.posts ??
-    payload?.data ??
-    payload ??
-    [];
+export function normalizeFeedPosts(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+  const p = payload as Record<string, unknown>;
+  const d = (typeof p.data === "object" && p.data !== null) ? p.data as Record<string, unknown> : undefined;
+  const posts = p.posts ?? p.results ?? p.items ?? d?.posts ?? p.data ?? [];
   if (!Array.isArray(posts)) return [];
   return posts;
 }
@@ -122,14 +140,14 @@ function dedupeFilteredPosts(posts: FilteredPost[]): FilteredPost[] {
   return [...byTxHash.values()];
 }
 
-function matchesTopicTagOrAsset(raw: any, topicLower: string): boolean {
+function matchesTopicTagOrAsset(raw: RawPost, topicLower: string): boolean {
   const tags = toArray(raw?.payload?.tags).map((tag) => tag.toLowerCase());
   const assets = toArray(raw?.payload?.assets).map((asset) => asset.toLowerCase());
   return tags.some((tag) => tag.includes(topicLower) || topicLower.includes(tag)) ||
     assets.some((asset) => asset.includes(topicLower) || topicLower.includes(asset));
 }
 
-async function defaultFeedFetch(path: string, token: string): Promise<any[]> {
+async function defaultFeedFetch(path: string, token: string): Promise<unknown[]> {
   const res = await apiCall(path, token);
   if (!res.ok) {
     throw new Error(`${path} failed (${res.status}): ${JSON.stringify(res.data)}`);
@@ -140,12 +158,13 @@ async function defaultFeedFetch(path: string, token: string): Promise<any[]> {
 /**
  * Filter raw feed posts and extract lightweight fields.
  */
-export function filterPosts(rawPosts: any[], filter: QualityFilter): FilteredPost[] {
+export function filterPosts(rawPosts: unknown[], filter: QualityFilter): FilteredPost[] {
   const exclude = new Set((filter.excludeAuthors || []).map((a) => String(a).toLowerCase()));
   const minScore = Number.isFinite(filter.minScore) ? filter.minScore : 70;
 
   const out: FilteredPost[] = [];
-  for (const raw of rawPosts || []) {
+  for (const item of rawPosts || []) {
+    const raw = item as RawPost;
     const txHash = String(raw?.txHash || "").trim();
     if (!txHash) continue;
 
@@ -197,7 +216,7 @@ export async function combinedTopicSearch(
   topic: string,
   authToken: string,
   qualityFilter: QualityFilter,
-  broadPool?: any[] | (() => Promise<any[]>),
+  broadPool?: unknown[] | (() => Promise<unknown[]>),
   options: CombinedTopicSearchOptions = {}
 ): Promise<FilteredPost[]> {
   const searchLimit = Number.isFinite(options.searchLimit) ? Number(options.searchLimit) : 30;
@@ -248,7 +267,7 @@ export async function combinedTopicSearch(
   try {
     const pool = typeof broadPool === "function" ? await broadPool() : broadPool;
     const topicLower = normalizedTopic.toLowerCase();
-    const tagMatches = (pool || []).filter((post: any) => matchesTopicTagOrAsset(post, topicLower));
+    const tagMatches = (pool || []).filter((post) => matchesTopicTagOrAsset(post as RawPost, topicLower));
     const filteredFallback = filterPosts(tagMatches, qualityFilter);
     options.onFallbackFiltered?.(filteredFallback);
     return dedupeFilteredPosts(filteredFallback);

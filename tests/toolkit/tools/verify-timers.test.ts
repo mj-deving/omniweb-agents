@@ -81,8 +81,8 @@ describe("verify() timer behavior", () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 
-  it("retries and returns unconfirmed when tx not found on chain", async () => {
-    const bridge = createMockBridge(async () => null);
+  it("retries and returns unconfirmed when tx not confirmed on chain", async () => {
+    const bridge = createMockBridge(async () => ({ confirmed: false, blockNumber: 0 }));
 
     const session = createTestSession(tempDir, bridge);
     const result = await verify(session, { txHash: "0xmissing" });
@@ -113,7 +113,7 @@ describe("verify() timer behavior", () => {
     let callCount = 0;
     const bridge = createMockBridge(async () => {
       callCount++;
-      if (callCount <= 2) return null; // not found yet
+      if (callCount <= 2) return { confirmed: false, blockNumber: 0 }; // not confirmed yet
       return { confirmed: true, blockNumber: 55, from: "demos1a" };
     });
 
@@ -139,6 +139,19 @@ describe("verify() timer behavior", () => {
     expect(sleep).toHaveBeenCalledWith(3000);
     expect(sleep).toHaveBeenCalledWith(5000);
     expect(sleep).toHaveBeenCalledWith(10000);
+  });
+
+  it("short-circuits immediately when verifyTransaction returns null (method unavailable)", async () => {
+    const bridge = createMockBridge(async () => null);
+
+    const session = createTestSession(tempDir, bridge);
+    const result = await verify(session, { txHash: "0xnull" });
+
+    expect(result.ok).toBe(false);
+    expect(result.error!.code).toBe("CONFIRM_TIMEOUT");
+    expect(result.error!.message).toContain("not supported");
+    // No retries — should return immediately
+    expect(sleep).not.toHaveBeenCalled();
   });
 
   it("returns blockHeight when confirmed", async () => {

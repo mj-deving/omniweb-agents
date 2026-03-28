@@ -40,13 +40,20 @@ export async function verify(
 
       try {
         const result = await bridge.verifyTransaction(opts.txHash);
-        if (result && result.confirmed) {
+        if (result === null) {
+          // Method unavailable on this SDK — no point retrying
+          return err(
+            demosError("CONFIRM_TIMEOUT", "verifyTransaction not supported by bridge", false, { step: "confirm", txHash: opts.txHash }),
+            localProvenance(start),
+          );
+        }
+        if (result.confirmed) {
           return ok<VerifyResult>(
             { confirmed: true, blockHeight: result.blockNumber },
             localProvenance(start),
           );
         }
-        // result is null (method unavailable) or unconfirmed — keep retrying
+        // Unconfirmed — keep retrying (tx may still be propagating)
       } catch (e) {
         lastError = e as Error;
       }

@@ -28,8 +28,8 @@ interface DahrProxy {
     status?: number;
     statusCode?: number;
     httpStatus?: number;
-    responseHash?: string;
-    txHash?: string;
+    responseHash: string;
+    txHash: string;
     data?: string | unknown;
   }>;
 }

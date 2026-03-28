@@ -31,7 +31,8 @@ demos-agents/
 │   ├── types.ts                       # ToolResult, DemosError, DemosSession options, isDemosError
 │   ├── session.ts                     # DemosSession — typed SigningHandle, expiry, bridge access
 │   ├── state-store.ts                 # FileStateStore — file-persisted state with proper-lockfile
-│   ├── sdk-bridge.ts                  # SdkBridge — DemosRpcMethods, D402ClientLike, extractTxHash
+│   ├── sdk-bridge.ts                  # SdkBridge — DemosRpcMethods, D402ClientLike, extractTxHash,
+│   │                                  #   getHivePostsByAuthor, getHiveReactionsByAuthor, getRepliesTo
 │   ├── url-validator.ts               # SSRF validator + createPinnedFetch (DNS rebinding protection)
 │   ├── schemas.ts                     # Zod schemas (11 + CatalogEntrySchema + D402RequirementSchema)
 │   ├── tools/
@@ -59,6 +60,7 @@ demos-agents/
 │   ├── session-runner.ts              # Cron loop orchestrator (8-phase)
 │   ├── event-runner.ts                # Event loop — long-lived reactive process
 │   └── ... (audit, scan-feed, engage, gate, verify, publish, improvements, source-*)
+│         # All CLI tools are 100% chain-only — no API auth required
 ├── platform/                          # SuperColony-specific barrel exports
 ├── connectors/                        # SDK isolation (@kynesyslabs/demosdk bridge)
 ├── config/
@@ -73,7 +75,7 @@ demos-agents/
 │   └── infra-ops/                     # Infrastructure operations
 ├── skills/supercolony/                # SuperColony CLI skill (auth, post, feed, search, react)
 ├── scripts/                           # Cron wrapper + log rotation
-├── tests/                             # vitest — 1815 tests, 125 suites
+├── tests/                             # vitest — 1943 tests, 129 suites
 ├── .desloppify/                       # Desloppify scan state, plans, review results
 └── docs/                              # Architecture docs + this file
 ```

@@ -8,6 +8,7 @@ Extended gotchas moved from CLAUDE.md. Key gotchas remain inline.
 - **Per-agent:** `~/.config/demos/credentials-{agent}` (checked first, falls back to shared)
 - **Config overrides:** `RPC_URL`, `SUPERCOLONY_API`, `DEMOS_ALGORITHM` (falcon|ml-dsa|ed25519), `DEMOS_DUAL_SIGN` (true|false)
 - **Auth cache:** `~/.supercolony-auth.json` (mode 600, namespaced by address)
+- **Chain-first auth:** `ensureAuth()` returns null when API is unreachable — all toolkit and CLI operations continue chain-only. API auth is optional enrichment, never a hard gate.
 
 ## Scoring
 

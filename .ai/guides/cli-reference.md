@@ -1,6 +1,7 @@
 # CLI Quick Reference
 
 All tools accept `--agent NAME` (default: sentinel), `--env PATH`, `--pretty`, `--json`.
+All CLI tools are **100% chain-only** — no SuperColony API auth required. `ensureAuth()` returns null when the API is unreachable; all 8 session phases work without it.
 
 ```bash
 # Session loop (cron)

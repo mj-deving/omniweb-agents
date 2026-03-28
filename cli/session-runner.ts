@@ -77,7 +77,8 @@ import {
   type HookLogger,
 } from "../src/lib/util/extensions.js";
 import type { PublishedPostRecord } from "../src/lib/state.js";
-import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
+import { FileStateStore } from "../src/toolkit/state-store.js";
+import { checkAndRecordWrite, getWriteRateRemaining } from "../src/toolkit/guards/write-rate-limit.js";
 import { type SignalSnapshot } from "../src/lib/pipeline/signals.js";
 import {
   loadAgentSourceView,
@@ -2127,7 +2128,7 @@ async function runPublishAutonomous(
 
   // Resolve enabled extensions for hook dispatch
   const enabledExtensions = agentConfig.loopExtensions;
-  let writeRateLedger = loadWriteRateLedger(walletAddress);
+  const writeRateStore = new FileStateStore();
 
   // Source usage tracker — penalizes repeated source selection within a session
   const usageTracker = createUsageTracker();
@@ -2135,15 +2136,16 @@ async function runPublishAutonomous(
   for (const gp of gatePosts) {
     try {
       // Step -1: Write rate limit check (PR1 — before any work for this topic)
-      const rateCheck = canPublish(writeRateLedger);
-      if (!rateCheck.allowed) {
-        observe("insight", `Write rate limit reached for "${gp.topic}": ${rateCheck.reason}`, {
+      const rateError = await checkAndRecordWrite(writeRateStore, walletAddress, false);
+      if (rateError) {
+        const remaining = await getWriteRateRemaining(writeRateStore, walletAddress);
+        observe("insight", `Write rate limit reached for "${gp.topic}": ${rateError.message}`, {
           phase: "publish", substage: "publish",
           source: "session-runner.ts:runPublishAutonomous",
-          data: { topic: gp.topic, dailyRemaining: rateCheck.dailyRemaining, hourlyRemaining: rateCheck.hourlyRemaining },
+          data: { topic: gp.topic, dailyRemaining: remaining.dailyRemaining, hourlyRemaining: remaining.hourlyRemaining },
         });
-        info(`Rate limit SKIP: ${gp.topic} — ${rateCheck.reason} (daily: ${rateCheck.dailyRemaining}, hourly: ${rateCheck.hourlyRemaining})`);
-        topicLedger.push({ topic: gp.topic, category: gp.category, status: "skipped", error: rateCheck.reason });
+        info(`Rate limit SKIP: ${gp.topic} — ${rateError.message} (daily: ${remaining.dailyRemaining}, hourly: ${remaining.hourlyRemaining})`);
+        topicLedger.push({ topic: gp.topic, category: gp.category, status: "skipped", error: rateError.message });
         continue;
       }
 
@@ -2570,8 +2572,7 @@ async function runPublishAutonomous(
       });
 
       // Record publish in write-rate ledger (PR1 — persistent tracking)
-      writeRateLedger = recordPublish(writeRateLedger, agentConfig.name, pubResult.txHash);
-      saveWriteRateLedger(writeRateLedger);
+      await checkAndRecordWrite(writeRateStore, walletAddress, true);
 
       publishedHashes.push(pubResult.txHash);
       state.posts.push(pubResult.txHash);

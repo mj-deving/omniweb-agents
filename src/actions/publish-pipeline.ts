@@ -10,6 +10,7 @@
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
 import { apiCall, info } from "../lib/network/sdk.js";
 import { observe } from "../lib/pipeline/observe.js";
+import { normalizeFeedPosts } from "../lib/pipeline/feed-filter.js";
 import { attestTlsnViaPlaywrightBridge } from "../lib/tlsn-playwright-bridge.js";
 
 // ── Constants ──────────────────────────────────────
@@ -49,7 +50,7 @@ export interface AttestResult {
   requestedUrl: string;
   responseHash?: string;
   txHash: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface PublishResult {
@@ -83,19 +84,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
 }
 
-function normalizeFeedPosts(payload: any): any[] {
-  const posts =
-    payload?.posts ??
-    payload?.results ??
-    payload?.items ??
-    payload?.data?.posts ??
-    payload?.data ??
-    payload ??
-    [];
-  if (!Array.isArray(posts)) return [];
-  return posts;
-}
-
 async function checkIndexerHealth(txHash: string, feedToken: string): Promise<boolean> {
   for (const delayMs of INDEXER_CHECK_DELAYS_MS) {
     info(`Indexer check in ${Math.floor(delayMs / 1000)}s for ${txHash.slice(0, 16)}...`);
@@ -108,7 +96,7 @@ async function checkIndexerHealth(txHash: string, feedToken: string): Promise<bo
     }
 
     const posts = normalizeFeedPosts(feedRes.data);
-    if (posts.some((post: any) => String(post?.txHash || "") === txHash)) {
+    if (posts.some((post) => String((post as Record<string, unknown>)?.txHash || "") === txHash)) {
       info(`Indexer confirmed ${txHash.slice(0, 16)}... in recent feed`);
       return true;
     }
@@ -150,7 +138,7 @@ export async function attestDahr(
     );
   }
 
-  let data: any;
+  let data: unknown;
   if (typeof proxyResponse.data === "string") {
     const trimmed = proxyResponse.data.trim();
     if (trimmed.startsWith("<")) {
@@ -173,7 +161,8 @@ export async function attestDahr(
   // GUARDRAIL: Detect auth/error responses in JSON body even when SDK doesn't expose status code.
   // Some APIs return 200 with error payloads (e.g., {"error": "Unauthorized"}).
   if (data && typeof data === "object" && !Array.isArray(data)) {
-    const errField = data.error ?? data.Error ?? data.message ?? data.detail;
+    const d = data as Record<string, unknown>;
+    const errField = d.error ?? d.Error ?? d.message ?? d.detail;
     if (typeof errField === "string") {
       const errLower = errField.toLowerCase();
       if (
@@ -242,13 +231,14 @@ export async function attestTlsn(
         storageFee: result.storageFee,
       },
     };
-  } catch (err: any) {
-    observe("error", `TLSN failed: ${String(err?.message || err)}`, {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    observe("error", `TLSN failed: ${msg}`, {
       substage: "publish",
       source: "publish-pipeline.ts:attestTlsn",
       data: { url },
     });
-    throw new Error(`TLSN unavailable: ${String(err?.message || err)}`);
+    throw new Error(`TLSN unavailable: ${msg}`);
   }
 }
 
@@ -291,7 +281,7 @@ export async function publishPost(
     }
   }
 
-  const post: any = {
+  const post: Record<string, unknown> = {
     v: 1,
     cat: input.category,
     text: input.text,

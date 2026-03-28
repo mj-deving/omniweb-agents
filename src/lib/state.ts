@@ -49,7 +49,7 @@ export interface PhaseState {
   status: PhaseStatus;
   startedAt?: string;
   completedAt?: string;
-  result?: any;
+  result?: unknown;
   error?: string;
 }
 
@@ -62,7 +62,7 @@ export interface SessionState {
   /** txHashes from PUBLISH step */
   posts: string[];
   /** Engagement results from ENGAGE step */
-  engagements: any[];
+  engagements: Record<string, unknown>[];
 }
 
 const PHASE_ORDER: PhaseName[] = [
@@ -92,7 +92,7 @@ export interface ActSubstageState {
   completedAt?: string;
   durationMs?: number;
   failureCode?: string;
-  result?: any;
+  result?: unknown;
 }
 
 /** Full context for a published post — persisted in session state for afterConfirm hooks. */
@@ -400,7 +400,7 @@ export function beginPhase(state: AnySessionState, phase: PhaseName | CorePhase,
 export function completePhase(
   state: AnySessionState,
   phase: PhaseName | CorePhase,
-  result?: any,
+  result?: unknown,
   sessionsDir?: string
 ): AnySessionState {
   const phases = phasesRecord(state);

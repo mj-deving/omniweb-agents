@@ -147,7 +147,7 @@ export type ExtensionHookRegistry = ReadonlyMap<string, LoopExtensionHooks>;
 
 // ── Loader ───────────────────────────────────────
 
-import type { RunToolFn } from "../../plugins/calibrate-plugin.js";
+import type { RunToolFn } from "../../types.js";
 
 export interface LoadExtensionsDeps {
   enabledExtensions: string[];

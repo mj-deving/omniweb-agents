@@ -18,7 +18,7 @@ import type { AgentConfig } from "./lib/agent-config.js";
  * A hook function that runs at a lifecycle point.
  * Returns void or a modified context object.
  */
-export type HookFn<T = any> = (context: T) => void | Promise<void>;
+export type HookFn<T = unknown> = (context: T) => void | Promise<void>;
 
 /**
  * A data provider supplies external data to the agent loop.
@@ -344,7 +344,7 @@ export interface EventPlugin {
   };
 
   /** Event sources this plugin provides */
-  sources?: EventSource<any>[];
+  sources?: EventSource<unknown>[];
 
   /** Event handlers this plugin provides */
   handlers?: EventHandler[];
@@ -382,7 +382,7 @@ export interface PluginRegistry {
   /** Get all actions across all plugins */
   getActions(): Action[];
   /** Get all event sources across all event plugins */
-  getEventSources(): EventSource<any>[];
+  getEventSources(): EventSource<unknown>[];
   /** Get all event handlers across all event plugins */
   getEventHandlers(): EventHandler[];
 }
@@ -432,3 +432,8 @@ export function createPluginRegistry(): PluginRegistry {
     },
   };
 }
+
+// ── Shared Utility Types ─────────────────────────
+
+/** Function signature for running a CLI tool as subprocess. */
+export type RunToolFn = (toolPath: string, args: string[], label: string) => Promise<unknown>;

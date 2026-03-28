@@ -27,7 +27,9 @@ import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import { connectWallet, setLogAgent, apiCall, info, warn } from "../src/lib/network/sdk.js";
 import { ensureAuth, loadAuthCache } from "../src/lib/auth/auth.js";
 import { initObserver, observe } from "../src/lib/pipeline/observe.js";
-import { loadWriteRateLedger, canPublish, recordPublish, saveWriteRateLedger } from "../src/lib/write-rate-limit.js";
+import { FileStateStore } from "../src/toolkit/state-store.js";
+import { checkAndRecordWrite } from "../src/toolkit/guards/write-rate-limit.js";
+import type { StateStore } from "../src/toolkit/types.js";
 import { attestAndPublish, type PublishInput } from "../src/actions/publish-pipeline.js";
 import { generatePost, type GeneratePostInput } from "../src/actions/llm.js";
 import { createActionExecutor, type ActionExecutorContext } from "../src/actions/action-executor.js";
@@ -329,10 +331,14 @@ async function main(): Promise<void> {
       const validity = await demos.confirm(signedTx);
       return await demos.broadcast(validity);
     },
-    loadWriteRateLedger,
-    canPublish,
-    recordPublish,
-    saveWriteRateLedger,
+    stateStore: new FileStateStore(),
+    checkWriteRate: async (store: StateStore, addr: string) => {
+      const error = await checkAndRecordWrite(store, addr, false);
+      return error ? { allowed: false, reason: error.message } : { allowed: true, reason: "Within rate limits" };
+    },
+    recordWrite: async (store: StateStore, addr: string) => {
+      await checkAndRecordWrite(store, addr, true);
+    },
     observe,
     info,
     warn,

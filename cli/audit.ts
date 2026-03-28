@@ -289,13 +289,35 @@ async function main(): Promise<void> {
 
   // Chain-first: single scan for all unaudited reactions
   if (unaudited.length > 0) {
-    info(`Scanning chain for reactions on ${unaudited.length} unaudited posts...`);
-    const txHashes = unaudited.map(e => e.txHash);
+    // Validate txHashes before chain scan
+    const invalidEntries = unaudited.filter(e => !e.txHash || typeof e.txHash !== "string" || e.txHash.trim().length === 0);
+    if (invalidEntries.length > 0) {
+      info(`Skipping ${invalidEntries.length} entries with invalid txHash values`);
+      for (const entry of invalidEntries) {
+        results.push({
+          txHash: entry.txHash || "(missing)",
+          category: entry.category,
+          attestation_type: entry.attestation_type,
+          predicted_reactions: entry.predicted_reactions,
+          actual_reactions: null,
+          actual_score: null,
+          delta: null,
+          highDisagree: false,
+          status: "invalid_txhash",
+        });
+      }
+    }
+    const validUnaudited = unaudited.filter(e => e.txHash && typeof e.txHash === "string" && e.txHash.trim().length > 0);
+    if (validUnaudited.length === 0) {
+      info("No valid unaudited entries to scan");
+    } else {
+    info(`Scanning chain for reactions on ${validUnaudited.length} unaudited posts...`);
+    const txHashes = validUnaudited.map(e => e.txHash);
 
     try {
       const reactionMap = await bridge.getHiveReactions(txHashes);
 
-      for (const entry of unaudited) {
+      for (const entry of validUnaudited) {
         const rx = reactionMap.get(entry.txHash);
         const agrees = rx?.agree ?? 0;
         const disagrees = rx?.disagree ?? 0;
@@ -320,9 +342,10 @@ async function main(): Promise<void> {
           status: "audited",
         });
       }
-    } catch (err: any) {
-      info(`Chain scan failed: ${err.message} — marking entries as error`);
-      for (const entry of unaudited) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      info(`Chain scan failed: ${msg} — marking entries as error`);
+      for (const entry of validUnaudited) {
         results.push({
           txHash: entry.txHash,
           category: entry.category,
@@ -333,10 +356,11 @@ async function main(): Promise<void> {
           delta: null,
           highDisagree: false,
           status: "error",
-          error: err.message,
+          error: msg,
         });
       }
     }
+    } // close else block for validUnaudited.length > 0
   }
 
   // Calculate statistics

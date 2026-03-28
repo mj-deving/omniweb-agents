@@ -57,22 +57,14 @@ function createMockContext(overrides: Partial<ActionExecutorContext> = {}): Acti
       textLength: 55,
     }),
     transfer: vi.fn().mockResolvedValue({ hash: "tx-transfer" }),
-    loadWriteRateLedger: vi.fn().mockReturnValue({
-      address: "0xTestAddress",
-      dailyWindowStart: "2026-03-18",
-      hourlyWindowStart: new Date().toISOString(),
-      dailyCount: 0,
-      hourlyCount: 0,
-      entries: [],
-    }),
-    canPublish: vi.fn().mockReturnValue({
-      allowed: true,
-      reason: "ok",
-      dailyRemaining: 4,
-      hourlyRemaining: 2,
-    }),
-    recordPublish: vi.fn().mockImplementation((l) => l),
-    saveWriteRateLedger: vi.fn(),
+    stateStore: {
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      lock: vi.fn().mockResolvedValue(vi.fn().mockResolvedValue(undefined)),
+    } as any,
+    checkWriteRate: vi.fn().mockResolvedValue({ allowed: true, reason: "ok" }),
+    recordWrite: vi.fn().mockResolvedValue(undefined),
     observe: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
@@ -203,13 +195,8 @@ describe("reply action", () => {
     // ownTxHashes updated
     expect(ctx.ownTxHashes.has("tx-new-123")).toBe(true);
 
-    // ledger operations (bug fix: recordPublish gets agentName)
-    expect(ctx.recordPublish).toHaveBeenCalledWith(
-      expect.any(Object),
-      "test-agent",
-      "tx-new-123",
-    );
-    expect(ctx.saveWriteRateLedger).toHaveBeenCalledWith(expect.any(Object));
+    // write rate recorded after publish
+    expect(ctx.recordWrite).toHaveBeenCalledWith(ctx.stateStore, "0xTestAddress");
   });
 });
 
@@ -258,8 +245,7 @@ describe("publish action", () => {
       { feedToken: "mock-token" },
     );
     expect(ctx.ownTxHashes.has("tx-new-123")).toBe(true);
-    expect(ctx.recordPublish).toHaveBeenCalledWith(expect.any(Object), "test-agent", "tx-new-123");
-    expect(ctx.saveWriteRateLedger).toHaveBeenCalledWith(expect.any(Object));
+    expect(ctx.recordWrite).toHaveBeenCalledWith(ctx.stateStore, "0xTestAddress");
   });
 });
 
@@ -319,7 +305,7 @@ describe("tip validation failure", () => {
 describe("budget exhaustion", () => {
   it("blocks publish when budget exhausted", async () => {
     const ctx = createMockContext({
-      canPublish: vi.fn().mockReturnValue({ allowed: false, reason: "daily limit", dailyRemaining: 0, hourlyRemaining: 0 }),
+      checkWriteRate: vi.fn().mockResolvedValue({ allowed: false, reason: "daily limit" }),
     });
     const exec = createActionExecutor(ctx);
     await exec(makeEvent(), makeAction("publish", { text: "test" }));
@@ -330,7 +316,7 @@ describe("budget exhaustion", () => {
 
   it("blocks reply when budget exhausted", async () => {
     const ctx = createMockContext({
-      canPublish: vi.fn().mockReturnValue({ allowed: false, reason: "hourly limit", dailyRemaining: 2, hourlyRemaining: 0 }),
+      checkWriteRate: vi.fn().mockResolvedValue({ allowed: false, reason: "hourly limit" }),
     });
     const exec = createActionExecutor(ctx);
     await exec(makeEvent(), makeAction("reply", { parentTx: "tx-1", question: "test" }));
@@ -341,7 +327,7 @@ describe("budget exhaustion", () => {
 
   it("does NOT block react (no budget check)", async () => {
     const ctx = createMockContext({
-      canPublish: vi.fn().mockReturnValue({ allowed: false, reason: "limit", dailyRemaining: 0, hourlyRemaining: 0 }),
+      checkWriteRate: vi.fn().mockResolvedValue({ allowed: false, reason: "limit" }),
     });
     const exec = createActionExecutor(ctx);
     await exec(makeEvent(), makeAction("react", { txHash: "tx-1", reaction: "agree" }));
@@ -352,7 +338,7 @@ describe("budget exhaustion", () => {
   it("does NOT block tip (no budget check)", async () => {
     const ctx = createMockContext({
       apiCall: vi.fn().mockResolvedValue({ ok: true, data: { recipient: "0xR" } }),
-      canPublish: vi.fn().mockReturnValue({ allowed: false, reason: "limit", dailyRemaining: 0, hourlyRemaining: 0 }),
+      checkWriteRate: vi.fn().mockResolvedValue({ allowed: false, reason: "limit" }),
     });
     const exec = createActionExecutor(ctx);
     await exec(makeEvent(), makeAction("tip", { txHash: "tx-1", amount: 1 }));

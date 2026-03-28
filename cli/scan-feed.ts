@@ -9,8 +9,8 @@
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from "node:fs";
-import { connectWallet, apiCall, info, setLogAgent } from "../src/lib/network/sdk.js";
-import { ensureAuth } from "../src/lib/auth/auth.js";
+import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
+import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { observe, initObserver } from "../src/lib/pipeline/observe.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 import {
@@ -551,16 +551,23 @@ async function main(): Promise<void> {
   };
 
   const { demos, address } = await connectWallet(envPath);
-  const token = await ensureAuth(demos, address);
+  const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
 
-  if (!token) {
-    info("API unavailable — returning empty scan (chain-only mode)");
-    const emptyResult = { activity: { level: "unknown", posts_per_hour: 0 }, gaps: { topics: [] }, api_unavailable: true };
-    console.log(JSON.stringify(emptyResult));
-    return;
-  }
+  // Fetch feed from chain — single scan replaces multi-mode API pagination
+  info("Fetching feed from chain...");
+  const chainPosts = await bridge.getHivePosts(500);
+  info(`Chain: ${chainPosts.length} posts fetched`);
 
-  const budget = new ApiBudget(token, 10, 20_000);
+  // Map chain posts to API-compatible shape for filterPosts
+  const chainRawPosts = chainPosts.map(p => ({
+    txHash: p.txHash,
+    author: p.author,
+    score: 80, // Default score for chain posts (no API scoring — assume baseline+attestation)
+    timestamp: p.timestamp,
+    payload: { tags: p.tags || [], assets: [], text: p.text, cat: p.category },
+    reactions: p.reactions,
+    text: p.text,
+  }));
 
   const counters: QualityCounters = { totalFetched: 0, passedFilter: 0, totalPassedScore: 0 };
   const allFiltered: FilteredPost[] = [];
@@ -601,52 +608,18 @@ async function main(): Promise<void> {
     renameSync(tmpPath, scanCachePath);
   }
 
+  // Chain-first: all modes use the same chain data — no API pagination needed
+  // Save to cache for compatibility, then run analysis
+  saveScanCache(chainRawPosts);
+  allRawFetched.push(...chainRawPosts);
+  const chainFiltered = filterPosts(chainRawPosts, qualityFilter);
+  updateCounters(counters, chainRawPosts.length, chainFiltered);
+  allFiltered.push(...chainFiltered);
+
   for (const mode of scanModes) {
     if (mode === "lightweight") {
-      // Check cache first — if fresh, only fetch new posts since cache timestamp
-      const cached = loadScanCache();
-      if (cached) {
-        info(`Mode lightweight: cache hit (${cached.posts.length} posts, age ${Math.round((Date.now() - cached.generatedAt) / 60000)}min)`);
-        // Fetch only new posts since cache
-        const sinceMs = cached.newestTimestamp;
-        const newRaw: any[] = [];
-        const pageSize = 200;
-        for (let page = 0; page < 5; page++) {
-          const offset = page * pageSize;
-          const raw = await budget.get(`/api/feed?limit=${pageSize}&offset=${offset}`, `lightweight-incremental page ${page + 1}`);
-          if (raw.length === 0) break;
-          const fresh = raw.filter((p: any) => Number(p?.timestamp || 0) > sinceMs);
-          newRaw.push(...fresh);
-          if (fresh.length < raw.length) break; // reached cached territory
-        }
-        const merged = [...newRaw, ...cached.posts];
-        if (newRaw.length > 0) {
-          saveScanCache(merged);
-          info(`  Incremental: ${newRaw.length} new posts, ${merged.length} total`);
-        }
-        allRawFetched.push(...merged);
-        const filtered = filterPosts(merged, qualityFilter);
-        updateCounters(counters, merged.length, filtered);
-        allFiltered.push(...filtered);
-        continue;
-      }
-
-      // No cache — full fetch with pagination
-      info(`Mode lightweight: full scan up to ${depth} posts`);
-      const pageSize = 200;
-      const maxPages = Math.ceil(depth / pageSize);
-      const freshRaw: any[] = [];
-      for (let page = 0; page < maxPages; page++) {
-        const offset = page * pageSize;
-        const raw = await budget.get(`/api/feed?limit=${pageSize}&offset=${offset}`, `lightweight page ${page + 1}`);
-        freshRaw.push(...raw);
-        if (raw.length < pageSize) break;
-      }
-      saveScanCache(freshRaw);
-      allRawFetched.push(...freshRaw);
-      const filtered = filterPosts(freshRaw, qualityFilter);
-      updateCounters(counters, freshRaw.length, filtered);
-      allFiltered.push(...filtered);
+      // Already handled above — chain data loaded
+      info(`Mode lightweight: ${chainRawPosts.length} posts from chain`);
       continue;
     }
 
@@ -656,32 +629,12 @@ async function main(): Promise<void> {
         ? sinceArg
         : (inferSinceFromSessionLog(config.paths.logFile) ?? (Date.now() - 24 * 60 * 60 * 1000));
 
-      info(`Mode since-last: scanning posts since ${sinceMs}`);
-      const recentRaw: any[] = [];
-      for (let page = 0; page < 5; page++) {
-        const offset = page * depth;
-        const raw = await budget.get(`/api/feed?limit=${depth}&offset=${offset}`, `since-last page ${page + 1}`);
-        allRawFetched.push(...raw);
-        counters.totalFetched += raw.length;
-
-        if (raw.length === 0) break;
-
-        const timestamps = raw
-          .map((p) => Number(p?.timestamp || 0))
-          .filter((t) => Number.isFinite(t) && t > 0);
-        const oldest = timestamps.length > 0 ? Math.min(...timestamps) : 0;
-
-        for (const post of raw) {
-          const ts = Number(post?.timestamp || 0);
-          if (Number.isFinite(ts) && ts >= sinceMs) recentRaw.push(post);
-        }
-
-        if (raw.length < depth || (oldest > 0 && oldest < sinceMs)) break;
-      }
-
+      info(`Mode since-last: filtering chain posts since ${sinceMs}`);
+      const recentRaw = chainRawPosts.filter((p: any) => {
+        const ts = Number(p?.timestamp || 0);
+        return Number.isFinite(ts) && ts >= sinceMs;
+      });
       const filtered = filterPosts(recentRaw, qualityFilter);
-      updateCounters(counters, 0, filtered);
-      allFiltered.push(...filtered);
       sinceLastPosts = filtered.length;
       continue;
     }
@@ -690,46 +643,16 @@ async function main(): Promise<void> {
       const topics = parseCsv(flags["topics"]);
       const topicQueries = topics.length > 0 ? topics : config.topics.secondary.slice(0, 3);
       const out: Record<string, TopicStatsJson> = {};
-      let broadPoolPromise: Promise<any[]> | null = null;
-      const getBroadPool = async (): Promise<any[]> => {
-        if (!broadPoolPromise) {
-          info("Topic-search: fetching broad feed for tag matching");
-          broadPoolPromise = budget.get(`/api/feed?limit=${depth}`, "topic-search broad pool")
-            .then((raw) => {
-              allRawFetched.push(...raw);
-              counters.totalFetched += raw.length;
-              return raw;
-            })
-            .catch((err) => {
-              broadPoolPromise = null;
-              throw err;
-            });
-        }
-        return broadPoolPromise;
-      };
 
+      // Client-side topic search on chain data (replaces API search)
       for (const topic of topicQueries) {
-        info(`Mode topic-search: ${topic}`);
-        const deduped = await combinedTopicSearch(
-          topic,
-          token,
-          qualityFilter,
-          getBroadPool,
-          {
-            searchLimit: topicSearchLimit,
-            fetchFeed: (path, label) => budget.get(path, label),
-            onRawResults: (_source, raw) => {
-              allRawFetched.push(...raw);
-              updateCounters(counters, raw.length, filterPosts(raw, qualityFilter));
-            },
-            onFallbackFiltered: (filtered) => {
-              updateCounters(counters, 0, filtered);
-            },
-          }
+        info(`Mode topic-search: ${topic} (chain-local)`);
+        const topicLower = topic.toLowerCase();
+        const matched = chainFiltered.filter(p =>
+          p.tags.some(t => t.toLowerCase().includes(topicLower)) ||
+          p.textPreview.toLowerCase().includes(topicLower)
         );
-
-        allFiltered.push(...deduped);
-        out[topic.toLowerCase()] = topicStatsFromPosts(deduped);
+        out[topicLower] = topicStatsFromPosts(matched);
       }
 
       topicIndexOut = { ...(topicIndexOut || {}), ...out };
@@ -741,16 +664,12 @@ async function main(): Promise<void> {
       const requested = categories.length > 0 ? categories : ["QUESTION"];
       if (!categoryBreakdown) categoryBreakdown = {};
 
+      // Client-side category filter on chain data
       for (const category of requested) {
         const upper = category.toUpperCase();
-        const endpoint = `/api/feed?category=${encodeURIComponent(upper)}&limit=${depth}`;
-        info(`Mode category-filtered: ${upper}`);
-        const raw = await budget.get(endpoint, `category-filtered "${upper}"`);
-        allRawFetched.push(...raw);
-        const filtered = filterPosts(raw, qualityFilter);
-        updateCounters(counters, raw.length, filtered);
-        allFiltered.push(...filtered);
-        categoryBreakdown[upper] = filtered.length;
+        info(`Mode category-filtered: ${upper} (chain-local)`);
+        const matched = chainFiltered.filter(p => p.category.toUpperCase() === upper);
+        categoryBreakdown[upper] = matched.length;
       }
       continue;
     }
@@ -758,41 +677,12 @@ async function main(): Promise<void> {
     if (mode === "quality-indexed") {
       const cacheDir = resolve(homedir(), ".demos-scan-cache");
       const cachePath = resolve(cacheDir, `${agentName}-quality-index.json`);
-      const now = Date.now();
-      const maxAgeMs = cacheHours * 60 * 60 * 1000;
 
-      if (existsSync(cachePath)) {
-        try {
-          const cached = JSON.parse(readFileSync(cachePath, "utf-8"));
-          const generatedAt = Number(cached?.generatedAt || 0);
-          if (generatedAt > 0 && now - generatedAt <= maxAgeMs) {
-            info(`Mode quality-indexed: cache hit (${cachePath})`);
-            topicIndexOut = cached.topicIndex || topicIndexOut;
-            agentIndexOut = cached.agentIndex || agentIndexOut;
-            continue;
-          }
-        } catch {
-          // fall through to refresh
-        }
-      }
+      info("Mode quality-indexed: building index from chain data");
 
-      info("Mode quality-indexed: building fresh index");
-      const rawAll: any[] = [];
-      for (let page = 0; page < 5; page++) {
-        const offset = page * depth;
-        const raw = await budget.get(`/api/feed?limit=${depth}&offset=${offset}`, `quality-indexed page ${page + 1}`);
-        allRawFetched.push(...raw);
-        counters.totalFetched += raw.length;
-        rawAll.push(...raw);
-        if (raw.length < depth) break;
-      }
-
-      const filtered = filterPosts(rawAll, qualityFilter);
-      updateCounters(counters, 0, filtered);
-      allFiltered.push(...filtered);
-
-      const topicMap = buildTopicIndex(filtered);
-      const agentMap = buildAgentIndex(filtered);
+      // Build indices from already-filtered chain data
+      const topicMap = buildTopicIndex(chainFiltered);
+      const agentMap = buildAgentIndex(chainFiltered);
       topicIndexOut = topicMapToJson(topicMap);
       agentIndexOut = agentMapToJson(agentMap);
 

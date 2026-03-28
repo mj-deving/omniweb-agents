@@ -325,6 +325,72 @@ describe("SDK Bridge Adapter", () => {
       };
     }
 
+    // Helper: make a tx using the base64 {"bytes":"..."} envelope (real chain format)
+    function makeBase64ReactionTx(target: string, type: "agree" | "disagree", hash = "rx-b64") {
+      const payload = JSON.stringify({ v: 1, action: "react", target, type });
+      const b64 = Buffer.from("HIVE" + payload).toString("base64");
+      return {
+        hash,
+        blockNumber: 100,
+        status: "confirmed",
+        from: "reactor1",
+        to: "chain",
+        type: "storage",
+        content: JSON.stringify({ data: ["storage", { bytes: b64 }] }),
+        timestamp: Date.now(),
+      };
+    }
+
+    function makeBase64PostTx(text: string, hash = "post-b64") {
+      const payload = JSON.stringify({ v: 1, text, cat: "ANALYSIS" });
+      const b64 = Buffer.from("HIVE" + payload).toString("base64");
+      return {
+        hash,
+        blockNumber: 100,
+        status: "confirmed",
+        from: "author1",
+        to: "chain",
+        type: "storage",
+        content: JSON.stringify({ data: ["storage", { bytes: b64 }] }),
+        timestamp: Date.now(),
+      };
+    }
+
+    it("decodes base64 bytes envelope (real chain format)", async () => {
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn()
+          .mockResolvedValueOnce([
+            makeBase64ReactionTx("tx-abc", "agree", "rx1"),
+            makeBase64ReactionTx("tx-abc", "disagree", "rx2"),
+            makeBase64PostTx("test post", "post1"),
+          ])
+          .mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      const result = await b.getHiveReactions(["tx-abc"]);
+
+      expect(result.get("tx-abc")).toEqual({ agree: 1, disagree: 1 });
+    });
+
+    it("getHivePosts decodes base64 bytes envelope", async () => {
+      const demosWithTxs = {
+        ...mockDemos(),
+        getTransactions: vi.fn()
+          .mockResolvedValueOnce([
+            makeBase64PostTx("Compound TVL analysis", "post1"),
+            makeBase64ReactionTx("post1", "agree", "rx1"),
+          ])
+          .mockResolvedValue([]),
+      };
+      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
+      const posts = await b.getHivePosts(10);
+
+      expect(posts).toHaveLength(1);
+      expect(posts[0].text).toBe("Compound TVL analysis");
+      expect(posts[0].txHash).toBe("post1");
+    });
+
     it("counts agree and disagree reactions for target txHashes", async () => {
       const demosWithTxs = {
         ...mockDemos(),

@@ -89,6 +89,13 @@ interface DemosRpcMethods {
     status: string;
     content: { from: string; to: string; type: string; data: unknown; timestamp: number };
   }>>;
+  /** Per-address, type-filtered transaction history — server-side filtering */
+  getTransactionHistory?(address: string, type?: string, options?: { start?: number; limit?: number }): Promise<Array<{
+    hash: string;
+    blockNumber: number;
+    status: string;
+    content: { from: string; to: string; type: string; data: unknown; timestamp: number };
+  }>>;
 }
 
 /** Typed D402 client surface — mirrors SDK's D402Client API */
@@ -298,10 +305,22 @@ function decodeHiveData(data: unknown): Record<string, unknown> | null {
   // Already-parsed object (from Transaction.content.data that was pre-decoded)
   else if (typeof data === "object" && data !== null) {
     const obj = data as Record<string, unknown>;
-    if (obj.v !== undefined && (obj.text !== undefined || obj.action !== undefined)) {
+    // SDK storage envelope: {"bytes":"SElWRXsi..."} — base64-encoded HIVE payload
+    if (typeof obj.bytes === "string" && obj.bytes.length >= 8) {
+      try {
+        const decoded = Buffer.from(obj.bytes, "base64");
+        if (hasHivePrefix(decoded)) {
+          jsonStr = decoded.slice(4).toString("utf-8");
+        }
+      } catch {
+        // Not valid base64
+      }
+    }
+    // Direct HIVE object (pre-decoded)
+    else if (obj.v !== undefined && (obj.text !== undefined || obj.action !== undefined)) {
       return obj;
     }
-    return null;
+    if (!jsonStr) return null;
   }
 
   if (!jsonStr) return null;
@@ -573,6 +592,8 @@ export function createSdkBridge(
             const data = Array.isArray(rawData) && rawData[0] === "storage" ? rawData[1] : rawData;
             const decoded = decodeHiveData(data);
             if (!decoded) continue;
+            // Skip reactions and other action-typed entries — only include posts (have text, no action)
+            if (decoded.action) continue;
             posts.push({
               txHash: rawTx.hash,
               text: String(decoded.text ?? ""),

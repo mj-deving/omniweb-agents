@@ -213,6 +213,10 @@ export interface ScanPost {
   /** Whether reaction counts come from a trusted source (API). When false, reactions are zeroed placeholders. */
   reactionsKnown: boolean;
   tags?: string[];
+  /** Parent txHash if this post is a reply */
+  replyTo?: string;
+  /** Block number the transaction was confirmed in */
+  blockNumber?: number;
 }
 
 export interface ScanOpportunity {
@@ -229,32 +233,13 @@ export interface VerifyResult {
 
 // ── Chain Analytics Types ────────────────────────────
 
-/** Decoded HIVE post from chain — richer than ScanPost, includes reply and block info */
-export interface ChainPost {
-  txHash: string;
-  text: string;
-  category: string;
-  author: string;
-  timestamp: number;
-  tags: string[];
-  replyTo?: string;
-  blockNumber: number;
-}
-
-/** Decoded HIVE reaction from chain */
-export interface ChainReaction {
+/** Decoded HIVE reaction from chain — agree/disagree with author and target */
+export interface HiveReaction {
   txHash: string;
   targetTxHash: string;
   type: "agree" | "disagree";
   author: string;
   timestamp: number;
-}
-
-/** Activity for a single agent address — posts published + reactions cast */
-export interface AgentActivity {
-  address: string;
-  posts: ChainPost[];
-  reactionsGiven: ChainReaction[];
 }
 
 export interface AttestResult {

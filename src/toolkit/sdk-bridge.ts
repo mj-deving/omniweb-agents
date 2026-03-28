@@ -186,8 +186,14 @@ export interface SdkBridge {
   /** Count HIVE reactions for given post txHashes — single chain scan, returns map of txHash → { agree, disagree } */
   getHiveReactions(targetTxHashes: string[]): Promise<Map<string, { agree: number; disagree: number }>>;
 
-  /** Query all HIVE activity for a specific address — posts + reactions cast. Uses getTransactionHistory for server-side type filtering. */
-  queryAgentActivity(address: string, options?: { limit?: number }): Promise<import("./types.js").AgentActivity>;
+  /** Get HIVE posts by a specific author — uses getTransactionHistory for server-side type filtering */
+  getHivePostsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").ScanPost[]>;
+
+  /** Get HIVE reactions cast by a specific author — uses getTransactionHistory for server-side type filtering */
+  getHiveReactionsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").HiveReaction[]>;
+
+  /** Get replies to specific posts — global chain scan filtered by replyTo field */
+  getRepliesTo(txHashes: string[]): Promise<import("./types.js").ScanPost[]>;
 
   /** Publish a HIVE reaction on-chain (agree/disagree as storage transaction) */
   publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }>;
@@ -345,6 +351,93 @@ function decodeHiveData(data: unknown): Record<string, unknown> | null {
  * @param fetchImpl - Optional fetch implementation (for testing)
  * @param txModule - Optional DemosTransactions override (for testing)
  */
+// ── Shared Pagination Helper ─────────────────────────
+
+interface DecodedTx { tx: { hash: string; blockNumber: number; author: string; timestamp: number }; hive: Record<string, unknown> }
+
+/**
+ * Scan an address's storage transactions and decode HIVE payloads.
+ * Uses getTransactionHistory (server-side filter) when available, falls back to getTransactions + client-side filter.
+ * The `filter` predicate controls which decoded HIVE entries are included (posts vs reactions).
+ */
+async function scanAddressStorage(
+  rpc: DemosRpcMethods,
+  address: string,
+  limit: number,
+  filter: (decoded: Record<string, unknown>) => boolean,
+): Promise<DecodedTx[]> {
+  const results: DecodedTx[] = [];
+
+  if (rpc.getTransactionHistory) {
+    const PAGE_SIZE = 100;
+    const MAX_PAGES = Math.ceil(limit / PAGE_SIZE);
+    let start: number | undefined;
+
+    for (let page = 0; page < MAX_PAGES && results.length < limit; page++) {
+      const txs = await rpc.getTransactionHistory(address, "storage", { start, limit: PAGE_SIZE });
+      if (!txs || txs.length === 0) break;
+
+      for (const tx of txs) {
+        try {
+          const contentData = tx.content?.data;
+          const data = Array.isArray(contentData) && contentData[0] === "storage" ? contentData[1] : contentData;
+          const decoded = decodeHiveData(data);
+          if (!decoded || !filter(decoded)) continue;
+          results.push({
+            tx: { hash: tx.hash, blockNumber: tx.blockNumber, author: tx.content?.from ? String(tx.content.from) : address, timestamp: tx.content?.timestamp ?? 0 },
+            hive: decoded,
+          });
+        } catch { /* skip malformed */ }
+      }
+
+      const lastTx = txs[txs.length - 1];
+      if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
+        const nextStart = lastTx.blockNumber - 1;
+        if (nextStart === start) break;
+        start = nextStart;
+      } else break;
+    }
+  } else if (rpc.getTransactions) {
+    const MAX_PAGES = 10;
+    const PAGE_SIZE = 100;
+    let start: number | "latest" = "latest";
+    const addrLower = address.toLowerCase();
+
+    for (let page = 0; page < MAX_PAGES && results.length < limit; page++) {
+      const txs = await rpc.getTransactions(start, PAGE_SIZE);
+      if (!txs || txs.length === 0) break;
+
+      for (const rawTx of txs) {
+        if (rawTx.type !== "storage") continue;
+        if (String(rawTx.from ?? "").toLowerCase() !== addrLower) continue;
+
+        try {
+          const content = typeof rawTx.content === "string"
+            ? safeParse(rawTx.content) as Record<string, unknown>
+            : rawTx.content as Record<string, unknown>;
+          const rawData = content?.data;
+          const data = Array.isArray(rawData) && rawData[0] === "storage" ? rawData[1] : rawData;
+          const decoded = decodeHiveData(data);
+          if (!decoded || !filter(decoded)) continue;
+          results.push({
+            tx: { hash: rawTx.hash, blockNumber: rawTx.blockNumber, author: String(rawTx.from ?? content?.from ?? address), timestamp: rawTx.timestamp ?? Number(content?.timestamp ?? 0) },
+            hive: decoded,
+          });
+        } catch { /* skip malformed */ }
+      }
+
+      const lastTx = txs[txs.length - 1];
+      const prevStart = start;
+      if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
+        start = lastTx.blockNumber - 1;
+      } else break;
+      if (start === prevStart) break;
+    }
+  }
+
+  return results;
+}
+
 export function createSdkBridge(
   demos: Demos,
   apiBaseUrl: string | undefined,
@@ -606,6 +699,8 @@ export function createSdkBridge(
               reactions: { agree: 0, disagree: 0 },
               reactionsKnown: false,
               tags: Array.isArray(decoded.tags) ? decoded.tags.map(String) : [],
+              replyTo: decoded.replyTo ? String(decoded.replyTo) : undefined,
+              blockNumber: rawTx.blockNumber,
             });
           } catch {
             // Skip malformed transactions
@@ -691,133 +786,96 @@ export function createSdkBridge(
       }
     },
 
-    async queryAgentActivity(address: string, options?: { limit?: number }): Promise<import("./types.js").AgentActivity> {
-      const limit = options?.limit ?? 500;
-      const posts: import("./types.js").ChainPost[] = [];
-      const reactionsGiven: import("./types.js").ChainReaction[] = [];
+    async getHivePostsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").ScanPost[]> {
+      const limit = options?.limit ?? 200;
+      const posts: import("./types.js").ScanPost[] = [];
 
-      // Prefer getTransactionHistory (server-side type filter) over getTransactions (global scan)
-      if (rpc.getTransactionHistory) {
-        const PAGE_SIZE = 100;
-        const MAX_PAGES = Math.ceil(limit / PAGE_SIZE);
-        let start: number | undefined;
+      const decoded = await scanAddressStorage(rpc, address, limit, (d) => !d.action && d.text !== undefined);
+      for (const { tx, hive } of decoded) {
+        posts.push({
+          txHash: tx.hash,
+          text: String(hive.text ?? ""),
+          category: String(hive.cat ?? hive.category ?? ""),
+          author: tx.author,
+          timestamp: tx.timestamp,
+          reactions: { agree: 0, disagree: 0 },
+          reactionsKnown: false,
+          tags: Array.isArray(hive.tags) ? hive.tags.map(String) : [],
+          replyTo: hive.replyTo ? String(hive.replyTo) : undefined,
+          blockNumber: tx.blockNumber,
+        });
+      }
+      return posts;
+    },
 
-        for (let page = 0; page < MAX_PAGES && (posts.length + reactionsGiven.length) < limit; page++) {
-          const txs = await rpc.getTransactionHistory(address, "storage", {
-            start,
-            limit: PAGE_SIZE,
-          });
-          if (!txs || txs.length === 0) break;
+    async getHiveReactionsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").HiveReaction[]> {
+      const limit = options?.limit ?? 200;
+      const reactions: import("./types.js").HiveReaction[] = [];
 
-          for (const tx of txs) {
-            try {
-              // Transaction type has parsed content (unlike RawTransaction which is stringified)
-              const contentData = tx.content?.data;
-              const data = Array.isArray(contentData) && contentData[0] === "storage" ? contentData[1] : contentData;
-              const decoded = decodeHiveData(data);
-              if (!decoded) continue;
+      const decoded = await scanAddressStorage(rpc, address, limit, (d) => d.action === "react");
+      for (const { tx, hive } of decoded) {
+        reactions.push({
+          txHash: tx.hash,
+          targetTxHash: String(hive.target ?? ""),
+          type: String(hive.type ?? "agree") as "agree" | "disagree",
+          author: tx.author,
+          timestamp: tx.timestamp,
+        });
+      }
+      return reactions;
+    },
 
-              const author = tx.content?.from ? String(tx.content.from) : address;
-              const timestamp = tx.content?.timestamp ?? 0;
+    async getRepliesTo(txHashes: string[]): Promise<import("./types.js").ScanPost[]> {
+      if (!rpc.getTransactions || txHashes.length === 0) return [];
 
-              if (decoded.action === "react") {
-                reactionsGiven.push({
-                  txHash: tx.hash,
-                  targetTxHash: String(decoded.target ?? ""),
-                  type: String(decoded.type ?? "agree") as "agree" | "disagree",
-                  author,
-                  timestamp,
-                });
-              } else if (decoded.text !== undefined) {
-                posts.push({
-                  txHash: tx.hash,
-                  text: String(decoded.text ?? ""),
-                  category: String(decoded.cat ?? decoded.category ?? ""),
-                  author,
-                  timestamp,
-                  tags: Array.isArray(decoded.tags) ? decoded.tags.map(String) : [],
-                  replyTo: decoded.replyTo ? String(decoded.replyTo) : undefined,
-                  blockNumber: tx.blockNumber,
-                });
-              }
-            } catch {
-              // Skip malformed transactions
-            }
-          }
+      const targets = new Set(txHashes);
+      const replies: import("./types.js").ScanPost[] = [];
+      const MAX_PAGES = 10;
+      const PAGE_SIZE = 100;
+      let start: number | "latest" = "latest";
 
-          // Cursor: use last tx blockNumber for next page
-          const lastTx = txs[txs.length - 1];
-          if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
-            const nextStart = lastTx.blockNumber - 1;
-            if (nextStart === start) break; // cursor didn't advance
-            start = nextStart;
-          } else {
-            break;
+      for (let page = 0; page < MAX_PAGES; page++) {
+        const txs = await rpc.getTransactions(start, PAGE_SIZE);
+        if (!txs || txs.length === 0) break;
+
+        for (const rawTx of txs) {
+          if (rawTx.type !== "storage") continue;
+          try {
+            const content = typeof rawTx.content === "string"
+              ? safeParse(rawTx.content) as Record<string, unknown>
+              : rawTx.content as Record<string, unknown>;
+            const rawData = content?.data;
+            const data = Array.isArray(rawData) && rawData[0] === "storage" ? rawData[1] : rawData;
+            const hive = decodeHiveData(data);
+            if (!hive || hive.action || !hive.text) continue;
+            if (!hive.replyTo || !targets.has(String(hive.replyTo))) continue;
+
+            replies.push({
+              txHash: rawTx.hash,
+              text: String(hive.text ?? ""),
+              category: String(hive.cat ?? hive.category ?? ""),
+              author: String(rawTx.from ?? content?.from ?? ""),
+              timestamp: rawTx.timestamp ?? Number(content?.timestamp ?? 0),
+              reactions: { agree: 0, disagree: 0 },
+              reactionsKnown: false,
+              tags: Array.isArray(hive.tags) ? hive.tags.map(String) : [],
+              replyTo: String(hive.replyTo),
+              blockNumber: rawTx.blockNumber,
+            });
+          } catch {
+            // Skip malformed
           }
         }
-      } else if (rpc.getTransactions) {
-        // Fallback: global scan filtered client-side (less efficient)
-        const MAX_PAGES = 10;
-        const PAGE_SIZE = 100;
-        let start: number | "latest" = "latest";
-        const addrLower = address.toLowerCase();
 
-        for (let page = 0; page < MAX_PAGES && (posts.length + reactionsGiven.length) < limit; page++) {
-          const txs = await rpc.getTransactions(start, PAGE_SIZE);
-          if (!txs || txs.length === 0) break;
-
-          for (const rawTx of txs) {
-            if (rawTx.type !== "storage") continue;
-            const from = String(rawTx.from ?? "").toLowerCase();
-            if (from !== addrLower) continue;
-
-            try {
-              const content = typeof rawTx.content === "string"
-                ? safeParse(rawTx.content) as Record<string, unknown>
-                : rawTx.content as Record<string, unknown>;
-              const rawData = content?.data;
-              const data = Array.isArray(rawData) && rawData[0] === "storage" ? rawData[1] : rawData;
-              const decoded = decodeHiveData(data);
-              if (!decoded) continue;
-
-              const author = String(rawTx.from ?? content?.from ?? address);
-              const timestamp = rawTx.timestamp ?? Number(content?.timestamp ?? 0);
-
-              if (decoded.action === "react") {
-                reactionsGiven.push({
-                  txHash: rawTx.hash,
-                  targetTxHash: String(decoded.target ?? ""),
-                  type: String(decoded.type ?? "agree") as "agree" | "disagree",
-                  author,
-                  timestamp,
-                });
-              } else if (decoded.text !== undefined) {
-                posts.push({
-                  txHash: rawTx.hash,
-                  text: String(decoded.text ?? ""),
-                  category: String(decoded.cat ?? decoded.category ?? ""),
-                  author,
-                  timestamp,
-                  tags: Array.isArray(decoded.tags) ? decoded.tags.map(String) : [],
-                  replyTo: decoded.replyTo ? String(decoded.replyTo) : undefined,
-                  blockNumber: rawTx.blockNumber,
-                });
-              }
-            } catch {
-              // Skip malformed
-            }
-          }
-
-          const lastTx = txs[txs.length - 1];
-          const prevStart = start;
-          if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
-            start = lastTx.blockNumber - 1;
-          } else break;
-          if (start === prevStart) break;
-        }
+        const lastTx = txs[txs.length - 1];
+        const prevStart = start;
+        if (lastTx?.blockNumber != null && lastTx.blockNumber > 1) {
+          start = lastTx.blockNumber - 1;
+        } else break;
+        if (start === prevStart) break;
       }
 
-      return { address, posts, reactionsGiven };
+      return replies;
     },
 
     async publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }> {

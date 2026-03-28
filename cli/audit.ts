@@ -107,9 +107,9 @@ function computeScore(entry: SessionLogEntry, reactions: number): number {
   let score = 20; // base
   if (entry.attestation_type && entry.attestation_type !== "none") score += 40; // attestation
   if (entry.confidence != null) score += 10; // confidence field set
-  // text_preview is truncated, but published posts always exceed 200 chars (enforced by quality gate)
-  // Use text_preview length as lower bound; default to true for safety
-  const textLen = entry.text_preview?.length ?? 201;
+  // text_length is the actual published length; text_preview is truncated to 100 chars (useless for scoring)
+  // Published posts are guaranteed > 200 chars by quality gate — default true for legacy entries without text_length
+  const textLen = entry.text_length ?? 201;
   if (textLen > 200) score += 10; // long_text
   if (reactions >= 5) score += 10; // engagement_t1
   if (reactions >= 15) score += 10; // engagement_t2

@@ -137,16 +137,27 @@ async function main(): Promise<void> {
   const chainPosts = await bridge.getHivePosts(50);
 
   // Map chain posts to the shape engage heuristics expect
-  const allPosts = chainPosts.map(p => ({
-    txHash: p.txHash,
-    author: p.author,
-    score: 0, // chain doesn't have scores — heuristics use other signals
-    qualityScore: 0,
-    payload: { tags: p.tags, cat: p.category },
-    text: p.text,
-    timestamp: p.timestamp,
-    reactions: p.reactions,
-  }));
+  // Compute score locally — same deterministic formula as strategy.yaml
+  const allPosts = chainPosts.map(p => {
+    const reactions = p.reactions.agree + p.reactions.disagree;
+    let score = 20; // base
+    // Can't determine attestation from chain data alone — assume present for posts > 200 chars
+    // (quality gate enforces attestation at publish time)
+    if (p.text.length > 200) score += 40 + 10; // attestation + long_text likely
+    if (p.category) score += 10; // confidence (category present implies structured post)
+    if (reactions >= 5) score += 10;
+    if (reactions >= 15) score += 10;
+    return {
+      txHash: p.txHash,
+      author: p.author,
+      score: Math.min(score, 100),
+      qualityScore: Math.min(score, 100),
+      payload: { tags: p.tags, cat: p.category },
+      text: p.text,
+      timestamp: p.timestamp,
+      reactions: p.reactions,
+    };
+  });
 
   info(`Feed: ${allPosts.length} posts from chain`);
 

@@ -56,7 +56,7 @@ import { saveReviewFindings, loadLatestFindings } from "../src/lib/review-findin
 import { generatePost, type PostDraft } from "../src/actions/llm.js";
 import { resolveProvider, type LLMProvider } from "../src/lib/llm/llm-provider.js";
 import { apiCall, connectWallet, setLogAgent } from "../src/lib/network/sdk.js";
-import { ensureAuth } from "../src/lib/auth/auth.js";
+// ensureAuth removed — session loop is fully chain-only
 import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "../src/actions/publish-pipeline.js";
 import { extractStructuredClaimsAuto } from "../src/lib/attestation/claim-extraction.js";
 import { buildAttestationPlan, verifyAttestedValues, createUsageTracker, type SourceUsageTracker } from "../src/lib/attestation/attestation-planner.js";
@@ -2041,6 +2041,7 @@ async function runPublishManual(
         topic: gp.topic || "",
         confidence: gp.confidence || 0,
         text_preview: (gp.text || "").slice(0, 100),
+        text_length: (gp.text || "").length,
         tags: [],
       },
       flags.log
@@ -2543,6 +2544,7 @@ async function runPublishAutonomous(
             topic: gp.topic,
             confidence: draft.confidence,
             text_preview: draft.text.slice(0, 100),
+            text_length: draft.text.length,
             tags: draft.tags,
           },
           flags.log

@@ -740,11 +740,11 @@
               "count": 6,
               "total": 7
             },
-            "EventHandler": {
+            "EventAction": {
               "count": 5,
               "total": 7
             },
-            "EventAction": {
+            "EventHandler": {
               "count": 5,
               "total": 7
             }
@@ -773,11 +773,11 @@
               "count": 2,
               "total": 3
             },
-            "writeFileSync": {
+            "existsSync": {
               "count": 2,
               "total": 3
             },
-            "existsSync": {
+            "writeFileSync": {
               "count": 2,
               "total": 3
             }
@@ -825,11 +825,7 @@
               "count": 11,
               "total": 11
             },
-            "err": {
-              "count": 8,
-              "total": 11
-            },
-            "ToolResult": {
+            "localProvenance": {
               "count": 8,
               "total": 11
             },
@@ -837,7 +833,11 @@
               "count": 8,
               "total": 11
             },
-            "localProvenance": {
+            "err": {
+              "count": 8,
+              "total": 11
+            },
+            "ToolResult": {
               "count": 8,
               "total": 11
             }
@@ -1279,16 +1279,6 @@
           "cyclomatic_hotspots": 0
         },
         {
-          "file": "src/toolkit/sdk-bridge.ts",
-          "loc": 908.0,
-          "complexity_score": 0,
-          "signals": [],
-          "component_count": 0,
-          "function_count": 0,
-          "monster_functions": 0,
-          "cyclomatic_hotspots": 0
-        },
-        {
           "file": "src/lib/pipeline/signal-detection.ts",
           "loc": 838.0,
           "complexity_score": 0,
@@ -1358,11 +1348,11 @@
           "importers": 10
         },
         {
-          "file": "src/reactive/event-sources/watermark-utils.ts",
+          "file": "src/lib/agent-config.ts",
           "importers": 8
         },
         {
-          "file": "src/lib/agent-config.ts",
+          "file": "src/reactive/event-sources/watermark-utils.ts",
           "importers": 8
         },
         {
@@ -1415,12 +1405,12 @@
             "src/lib/pipeline/": 3,
             "src/lib/": 2,
             "src/lib/network/": 2,
-            "src/": 1,
-            "src/reactive/": 1,
             "src/lib/util/": 1,
+            "src/reactive/": 1,
+            "src/": 1,
             "src/lib/attestation/": 1,
-            "src/lib/sources/providers/": 1,
             "src/lib/sources/": 1,
+            "src/lib/sources/providers/": 1,
             "src/lib/llm/": 1
           }
         },
@@ -1499,10 +1489,10 @@
             "src/lib/attestation/": 3,
             "src/lib/util/": 3,
             "src/lib/sources/providers/": 2,
-            "src/lib/llm/": 2,
             "src/lib/": 2,
-            "src/lib/scoring/": 1,
-            "src/lib/pipeline/": 1
+            "src/lib/llm/": 2,
+            "src/lib/pipeline/": 1,
+            "src/lib/scoring/": 1
           },
           "imported_by_dirs": {
             "src/plugins/": 21,
@@ -1512,8 +1502,8 @@
             "src/reactive/event-handlers/": 5,
             "src/reactive/": 2,
             "src/adapters/": 1,
-            "src/plugins/reputation/": 1,
-            "src/actions/": 1
+            "src/actions/": 1,
+            "src/plugins/reputation/": 1
           }
         },
         "src/lib/": {
@@ -1548,8 +1538,8 @@
             "src/": 2,
             "src/lib/util/": 2,
             "src/actions/": 2,
-            "src/adapters/eliza/": 1,
             "src/lib/sources/": 1,
+            "src/adapters/eliza/": 1,
             "src/lib/attestation/": 1,
             "src/plugins/reputation/": 1
           }
@@ -1614,8 +1604,8 @@
             "production": 3
           },
           "imported_by_dirs": {
-            "src/lib/sources/": 2,
             "src/lib/attestation/": 2,
+            "src/lib/sources/": 2,
             "src/": 2,
             "src/lib/util/": 1,
             "src/actions/": 1
@@ -1747,8 +1737,8 @@
             "production": 4
           },
           "imports_from_dirs": {
-            "src/lib/attestation/": 3,
-            "src/lib/sources/": 3
+            "src/lib/sources/": 3,
+            "src/lib/attestation/": 3
           },
           "imported_by_dirs": {
             "src/lib/sources/": 9,
@@ -1792,18 +1782,18 @@
             "production": 5
           },
           "imports_from_dirs": {
-            "src/lib/": 2,
             "src/lib/sources/": 2,
-            "src/lib/llm/": 1,
+            "src/lib/": 2,
+            "src/lib/attestation/": 1,
             "src/plugins/": 1,
-            "src/lib/attestation/": 1
+            "src/lib/llm/": 1
           },
           "imported_by_dirs": {
             "src/plugins/": 8,
             "src/lib/sources/": 3,
             "src/": 3,
-            "src/lib/pipeline/": 1,
-            "src/actions/": 1
+            "src/actions/": 1,
+            "src/lib/pipeline/": 1
           }
         },
         "src/plugins/": {
@@ -2158,16 +2148,6 @@
           "cyclomatic_hotspots": 0
         },
         {
-          "file": "src/toolkit/sdk-bridge.ts",
-          "loc": 908.0,
-          "complexity_score": 0,
-          "signals": [],
-          "component_count": 0,
-          "function_count": 0,
-          "monster_functions": 0,
-          "cyclomatic_hotspots": 0
-        },
-        {
           "file": "src/lib/pipeline/signal-detection.ts",
           "loc": 838.0,
           "complexity_score": 0,
@@ -2202,7 +2182,7 @@
         {
           "file": "src/lib/tips.ts",
           "kind": "orphaned",
-          "loc": 442
+          "loc": 443
         },
         {
           "file": "src/lib/predictions.ts",
@@ -2316,19 +2296,11 @@
         }
       ],
       "large_file_distribution": {
-        "count": 6,
-        "median_loc": 838,
+        "count": 5,
+        "median_loc": 698,
         "p90_loc": 1534,
         "p99_loc": 1534
       },
-      "security_hotspots": [
-        {
-          "file": "src/toolkit/tools/connect.ts",
-          "high_severity": 0,
-          "medium_severity": 3,
-          "total": 3
-        }
-      ],
       "signal_density": [
         {
           "file": "src/toolkit/tools/discover-sources.ts",
@@ -2351,17 +2323,6 @@
             "smells",
             "test_coverage",
             "unused"
-          ]
-        },
-        {
-          "file": "src/toolkit/sdk-bridge.ts",
-          "detector_count": 4,
-          "issue_count": 9,
-          "detectors": [
-            "logs",
-            "security",
-            "smells",
-            "structural"
           ]
         },
         {
@@ -2430,7 +2391,7 @@
           ]
         },
         {
-          "file": "src/toolkit/tools/connect.ts",
+          "file": "src/toolkit/sdk-bridge.ts",
           "detector_count": 3,
           "issue_count": 7,
           "detectors": [
@@ -2447,6 +2408,16 @@
             "dupes",
             "smells",
             "test_coverage"
+          ]
+        },
+        {
+          "file": "src/toolkit/tools/connect.ts",
+          "detector_count": 3,
+          "issue_count": 6,
+          "detectors": [
+            "logs",
+            "security",
+            "smells"
           ]
         },
         {
@@ -2554,7 +2525,7 @@
         },
         {
           "pattern": "magic_number",
-          "file_count": 22,
+          "file_count": 21,
           "hotspots": [
             "src/toolkit/guards/dedup-guard.ts (1)",
             "src/toolkit/guards/pay-receipt-log.ts (1)",
@@ -2617,23 +2588,12 @@
             "src/lib/pipeline/source-discovery.ts (1)",
             "src/lib/tlsn-playwright-bridge.ts (1)"
           ]
-        },
-        {
-          "pattern": "monster_function",
-          "file_count": 5,
-          "hotspots": [
-            "src/toolkit/tools/pay.ts (1)",
-            "src/actions/action-executor.ts (1)",
-            "src/lib/agent-config.ts (1)",
-            "src/lib/sources/providers/declarative-engine.ts (1)",
-            "src/actions/llm.ts (1)"
-          ]
         }
       ],
       "package_size_census": [
         {
           "package": "src",
-          "loc": 5321,
+          "loc": 4414,
           "pct_of_total": 100.0,
           "disproportionate": true
         }
@@ -2764,7 +2724,7 @@
         "unused: Unused imports: domain",
         "smells: 1x Catch blocks that only log (swallowed errors)",
         "unused: Unused imports: domain",
-        "test_coverage: Untested module (123 LOC, 1 importers)"
+        "test_coverage: Untested module (86 LOC, 1 importers)"
       ],
       "src/toolkit/url-validator.ts": [
         "unused: Unused vars: c",
@@ -2785,11 +2745,11 @@
       ],
       "src/toolkit/types.ts": [
         "deprecated: Deprecated: Source (19 importers)",
-        "test_coverage: No direct tests (309 LOC, 22 importers) \u2014 covered only via imports from tested m"
+        "test_coverage: No direct tests (290 LOC, 22 importers) \u2014 covered only via imports from tested m"
       ],
       "src/toolkit/tools/verify.ts": [
         "test_coverage: No direct tests (96 LOC, 1 importers) \u2014 covered only via imports from tested mod",
-        "test_coverage: Untested module (85 LOC, 1 importers)"
+        "test_coverage: Untested module (96 LOC, 1 importers)"
       ],
       "src/toolkit/guards/state-helpers.ts": [
         "test_coverage: No direct tests (78 LOC, 7 importers) \u2014 covered only via imports from tested mod",
@@ -2800,11 +2760,10 @@
         "test_coverage: No direct tests (100 LOC, 1 importers) \u2014 covered only via imports from tested mo",
         "logs: 1 tagged logs [demos-toolkit]",
         "smells: 1x High cyclomatic complexity (>15 branches)",
-        "test_coverage: Untested module (63 LOC, 1 importers)"
+        "test_coverage: Untested module (100 LOC, 1 importers)"
       ],
       "src/toolkit/tools/react.ts": [
-        "test_coverage: No direct tests (37 LOC, 1 importers) \u2014 covered only via imports from tested mod",
-        "logs: 1 tagged logs [demos-toolkit]"
+        "test_coverage: No direct tests (37 LOC, 1 importers) \u2014 covered only via imports from tested mod"
       ],
       "src/toolkit/tools/pay.ts": [
         "test_coverage: No direct tests (316 LOC, 1 importers) \u2014 covered only via imports from tested mo",
@@ -2818,11 +2777,9 @@
         "smells: 6x `as any` type casts",
         "smells: 2x Explicit `any` types",
         "security: Hardcoded secret in variable 'AUTH_PENDING_TOKEN'",
-        "logs: 1 tagged logs [demos-toolkit]",
+        "logs: 2 tagged logs [demos-toolkit]",
         "security: Hardcoded secret in variable 'AUTH_PENDING_TOKEN'",
-        "smells: 2x High cyclomatic complexity (>15 branches)",
-        "structural: Large file: large (908 LOC)",
-        "smells: 1x Magic numbers (>1000 in logic)"
+        "smells: 1x High cyclomatic complexity (>15 branches)"
       ],
       "src/toolkit/guards/dedup-guard.ts": [
         "smells: 1x Async functions without await",
@@ -2833,14 +2790,13 @@
         "smells: 1x Async functions without await",
         "smells: 1x Magic numbers (>1000 in logic)",
         "deprecated: Deprecated: checkWriteRateLimit (0 importers) \u2192 safe to delete",
-        "test_coverage: No direct tests (76 LOC, 2 importers) \u2014 covered only via imports from tested mod"
+        "test_coverage: No direct tests (96 LOC, 2 importers) \u2014 covered only via imports from tested mod"
       ],
       "src/toolkit/tools/connect.ts": [
         "smells: 1x Async functions without await",
         "smells: 1x Explicit `any` types",
         "smells: 1x High cyclomatic complexity (>15 branches)",
         "logs: 1 tagged logs [demos-toolkit]",
-        "security: Sensitive data may be logged",
         "security: Sensitive data may be logged",
         "security: Sensitive data may be logged"
       ],
@@ -2900,7 +2856,7 @@
       "src/lib/pipeline/source-discovery.ts": [
         "unused: Unused vars: queryString",
         "deprecated: Deprecated: persistSourceToRegistry (0 importers) \u2192 safe to delete",
-        "smells: 3x Explicit `any` types",
+        "smells: 4x Explicit `any` types",
         "smells: 1x High cyclomatic complexity (>15 branches)",
         "smells: 1x Hardcoded URL in source code",
         "smells: 1x Magic numbers (>1000 in logic)",
@@ -2982,7 +2938,7 @@
         "single_use: Single-use (268 LOC): only imported by src/actions/action-executor.ts"
       ],
       "src/lib/tips.ts": [
-        "orphaned: Orphaned file (442 LOC): zero importers, not an entry point",
+        "orphaned: Orphaned file (443 LOC): zero importers, not an entry point",
         "smells: 1x `as any` type casts",
         "smells: 5x Magic numbers (>1000 in logic)"
       ],
@@ -3077,7 +3033,7 @@
         "dupes: Exact dupe: normalizeFeedPosts (src/actions/publish-pipeline.ts:86) <-> normaliz"
       ],
       "src/plugins/network-health-plugin.ts": [
-        "test_coverage: Untested module (70 LOC, 1 importers)"
+        "test_coverage: Untested module (65 LOC, 1 importers)"
       ],
       "src/plugins/sources-plugin.ts": [
         "test_coverage: Untested module (121 LOC, 1 importers)",
@@ -3134,7 +3090,7 @@
         "test_coverage: Untested module (58 LOC, 2 importers)"
       ],
       "src/plugins/demoswork-plugin.ts": [
-        "test_coverage: Untested module (96 LOC, 1 importers)"
+        "test_coverage: Untested module (91 LOC, 1 importers)"
       ],
       "src/lib/network/skill-dojo-proof.ts": [
         "test_coverage: No direct tests (82 LOC, 2 importers) \u2014 covered only via imports from tested mod",
@@ -3158,7 +3114,7 @@
         "test_coverage: No direct tests (68 LOC, 6 importers) \u2014 covered only via imports from tested mod"
       ],
       "src/plugins/tips-plugin.ts": [
-        "test_coverage: Untested module (139 LOC, 1 importers)"
+        "test_coverage: Untested module (130 LOC, 1 importers)"
       ],
       "src/reactive/event-sources/protocol-events.ts": [
         "test_coverage: Untested module (69 LOC, 1 importers)"
@@ -3194,8 +3150,7 @@
       "src/lib/auth/identity.ts": [
         "test_coverage: Untested module (219 LOC, 1 importers)",
         "smells: 2x Async functions without await",
-        "smells: 3x Hardcoded URL in source code",
-        "test_coverage: No direct tests (221 LOC, 1 importers) \u2014 covered only via imports from tested mo"
+        "smells: 3x Hardcoded URL in source code"
       ],
       "src/types.ts": [
         "test_coverage: No direct tests (434 LOC, 64 importers) \u2014 covered only via imports from tested m"
@@ -3237,7 +3192,7 @@
         "smells: 1x High cyclomatic complexity (>15 branches)"
       ],
       "src/plugins/address-watch-plugin.ts": [
-        "test_coverage: Untested module (81 LOC, 1 importers)",
+        "test_coverage: Untested module (82 LOC, 1 importers)",
         "smells: 1x High cyclomatic complexity (>15 branches)"
       ],
       "src/reactive/event-handlers/severity-handler.ts": [
@@ -3273,7 +3228,7 @@
       ],
       "src/lib/auth/auth.ts": [
         "test_coverage: No direct tests (148 LOC, 2 importers) \u2014 covered only via imports from tested mo",
-        "smells: 3x Explicit `any` types",
+        "smells: 1x Explicit `any` types",
         "smells: 3x Magic numbers (>1000 in logic)"
       ],
       "src/plugins/lifecycle-plugin.ts": [
@@ -3314,8 +3269,7 @@
         "smells: 2x High cyclomatic complexity (>15 branches)"
       ],
       "src/actions/llm.ts": [
-        "smells: 1x High cyclomatic complexity (>15 branches)",
-        "smells: 1x Monster function (>150 LOC)"
+        "smells: 1x High cyclomatic complexity (>15 branches)"
       ],
       "src/adapters/eliza/watermark-adapter.ts": [
         "smells: 1x High cyclomatic complexity (>15 branches)"
@@ -4143,10 +4097,10 @@
       ],
       "why": "error_consistency review",
       "judgment_finding_counts": {
-        "smells": 139
+        "smells": 137
       },
       "mechanical_finding_counts": {
-        "security": 7
+        "security": 6
       },
       "concern_signals": [],
       "historical_issue_focus": {
@@ -4184,7 +4138,7 @@
       ],
       "why": "abstraction_fitness review",
       "judgment_finding_counts": {
-        "structural": 6,
+        "structural": 5,
         "props": 1,
         "single_use": 1,
         "facade": 4
@@ -4257,7 +4211,7 @@
       ],
       "why": "test_strategy review",
       "mechanical_finding_counts": {
-        "test_coverage": 104
+        "test_coverage": 103
       },
       "concern_signals": [],
       "historical_issue_focus": {
@@ -4476,8 +4430,7 @@
       "why": "design_coherence review",
       "judgment_finding_counts": {
         "orphaned": 7,
-        "smells": 124,
-        "structural": 6,
+        "smells": 99,
         "dupes": 1,
         "props": 1
       },
@@ -4502,22 +4455,6 @@
             "smells::src/actions/attestation-executor.ts::any_type",
             "smells::src/actions/attestation-executor.ts::async_no_await",
             "smells::src/actions/attestation-executor.ts::high_cyclomatic_complexity"
-          ]
-        },
-        {
-          "type": "design_concern",
-          "file": "src/actions/llm.ts",
-          "summary": "Design signals from smells",
-          "question": "Review the flagged patterns \u2014 are they design problems that need addressing, or acceptable given the file's role?",
-          "evidence": [
-            "Flagged by: smells",
-            "[smells] 1x High cyclomatic complexity (>15 branches)",
-            "[smells] 1x Monster function (>150 LOC)"
-          ],
-          "fingerprint": "90d6b667214e1a11",
-          "finding_ids": [
-            "smells::src/actions/llm.ts::high_cyclomatic_complexity",
-            "smells::src/actions/llm.ts::monster_function"
           ]
         },
         {
@@ -4601,7 +4538,7 @@
           "question": "Review the flagged patterns \u2014 are they design problems that need addressing, or acceptable given the file's role?",
           "evidence": [
             "Flagged by: smells",
-            "[smells] 3x Explicit `any` types",
+            "[smells] 4x Explicit `any` types",
             "[smells] 1x High cyclomatic complexity (>15 branches)",
             "[smells] 1x Hardcoded URL in source code"
           ],
@@ -4636,7 +4573,7 @@
           "question": "Is this file truly dead, or is it used via a non-import mechanism (dynamic import, CLI entry point, plugin)?",
           "evidence": [
             "Flagged by: orphaned, smells",
-            "[orphaned] Orphaned file (442 LOC): zero importers, not an entry point",
+            "[orphaned] Orphaned file (443 LOC): zero importers, not an entry point",
             "[smells] 1x `as any` type casts",
             "[smells] 5x Magic numbers (>1000 in logic)"
           ],
@@ -4701,27 +4638,6 @@
           ]
         },
         {
-          "type": "design_concern",
-          "file": "src/toolkit/sdk-bridge.ts",
-          "summary": "Design signals from smells, structural",
-          "question": "Review the flagged patterns \u2014 are they design problems that need addressing, or acceptable given the file's role?",
-          "evidence": [
-            "Flagged by: smells, structural",
-            "File size: 908 lines",
-            "[smells] 1x Catch block returns default object (silent failure)",
-            "[smells] 6x `as any` type casts"
-          ],
-          "fingerprint": "2973c470c1119c80",
-          "finding_ids": [
-            "smells::src/toolkit/sdk-bridge.ts::any_type",
-            "smells::src/toolkit/sdk-bridge.ts::as_any_cast",
-            "smells::src/toolkit/sdk-bridge.ts::catch_return_default",
-            "smells::src/toolkit/sdk-bridge.ts::high_cyclomatic_complexity",
-            "smells::src/toolkit/sdk-bridge.ts::magic_number",
-            "structural::src/toolkit/sdk-bridge.ts"
-          ]
-        },
-        {
           "type": "duplication_design",
           "file": "src/actions/publish-pipeline.ts",
           "summary": "Duplication pattern \u2014 assess if extraction is warranted",
@@ -4761,47 +4677,9 @@
             "smells::src/actions/action-executor.ts::high_cyclomatic_complexity",
             "smells::src/actions/action-executor.ts::monster_function"
           ]
-        },
-        {
-          "type": "systemic_pattern",
-          "file": "src/lib/agent-config.ts",
-          "summary": "6 files share the same problem pattern (smells, structural)",
-          "question": "These 6 files all have the same combination of issues (smells, structural). Is this a systemic pattern that should be addressed at the architecture level (shared base class, framework change, lint rule), or are these independent issues that happen to look similar?",
-          "evidence": [
-            "Affected files: src/lib/agent-config.ts, src/lib/pipeline/signal-detection.ts, src/lib/sources/catalog.ts, src/lib/sources/matcher.ts, src/lib/sources/providers/declarative-engine.ts, src/toolkit/sdk-bridge.ts",
-            "Shared detectors: smells, structural",
-            "Total files: 6"
-          ],
-          "fingerprint": "ac32950677f7ed98",
-          "finding_ids": [
-            "smells::src/lib/agent-config.ts::any_type",
-            "smells::src/lib/agent-config.ts::as_any_cast",
-            "smells::src/lib/agent-config.ts::high_cyclomatic_complexity",
-            "smells::src/lib/agent-config.ts::magic_number",
-            "smells::src/lib/agent-config.ts::monster_function",
-            "smells::src/lib/pipeline/signal-detection.ts::magic_number",
-            "smells::src/lib/pipeline/signal-detection.ts::switch_no_default",
-            "smells::src/lib/sources/catalog.ts::high_cyclomatic_complexity",
-            "smells::src/lib/sources/matcher.ts::high_cyclomatic_complexity",
-            "smells::src/lib/sources/providers/declarative-engine.ts::high_cyclomatic_complexity",
-            "smells::src/lib/sources/providers/declarative-engine.ts::magic_number",
-            "smells::src/lib/sources/providers/declarative-engine.ts::monster_function",
-            "smells::src/lib/sources/providers/declarative-engine.ts::switch_no_default",
-            "smells::src/toolkit/sdk-bridge.ts::any_type",
-            "smells::src/toolkit/sdk-bridge.ts::as_any_cast",
-            "smells::src/toolkit/sdk-bridge.ts::catch_return_default",
-            "smells::src/toolkit/sdk-bridge.ts::high_cyclomatic_complexity",
-            "smells::src/toolkit/sdk-bridge.ts::magic_number",
-            "structural::src/lib/agent-config.ts",
-            "structural::src/lib/pipeline/signal-detection.ts",
-            "structural::src/lib/sources/catalog.ts",
-            "structural::src/lib/sources/matcher.ts",
-            "structural::src/lib/sources/providers/declarative-engine.ts",
-            "structural::src/toolkit/sdk-bridge.ts"
-          ]
         }
       ],
-      "concern_signal_count": 16,
+      "concern_signal_count": 13,
       "historical_issue_focus": {
         "dimensions": [
           "design_coherence"
@@ -5095,11 +4973,11 @@
       ],
       "why": "logic_clarity review",
       "judgment_finding_counts": {
-        "smells": 139,
-        "structural": 6
+        "smells": 137,
+        "structural": 5
       },
       "mechanical_finding_counts": {
-        "logs": 7
+        "logs": 6
       },
       "concern_signals": [],
       "historical_issue_focus": {
@@ -5181,6 +5059,488 @@
       }
     }
   ],
+  "narrative": {
+    "phase": "refinement",
+    "headline": "\u26a0 6 security issues \u2014 review before other cleanup. Crossed 80% strict! (26 review work items \u2014 run `desloppify show review --status open`)",
+    "dimensions": {
+      "lowest_dimensions": [
+        {
+          "name": "Test health",
+          "strict": 40.2,
+          "failing": 103,
+          "impact": 0.0
+        },
+        {
+          "name": "Design coherence",
+          "strict": 68.0,
+          "failing": 15,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        },
+        {
+          "name": "Type safety",
+          "strict": 72.0,
+          "failing": 4,
+          "impact": 0.0,
+          "subjective": true,
+          "impact_description": "re-review to improve"
+        }
+      ],
+      "biggest_gap_dimensions": [
+        {
+          "name": "Code quality",
+          "lenient": 86.8,
+          "strict": 83.6,
+          "gap": 3.2,
+          "wontfix_count": 0
+        },
+        {
+          "name": "Test health",
+          "lenient": 41.7,
+          "strict": 40.2,
+          "gap": 1.5,
+          "wontfix_count": 0
+        }
+      ],
+      "stagnant_dimensions": [
+        {
+          "name": "Security",
+          "strict": 98.6,
+          "stuck_scans": 5
+        },
+        {
+          "name": "File health",
+          "strict": 97.9,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Duplication",
+          "strict": 99.8,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Abstraction fit",
+          "strict": 83.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "AI generated debt",
+          "strict": 82.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "API coherence",
+          "strict": 79.5,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Auth consistency",
+          "strict": 84.5,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Contracts",
+          "strict": 80.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Convention drift",
+          "strict": 84.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Cross-module arch",
+          "strict": 82.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Dep health",
+          "strict": 81.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Error consistency",
+          "strict": 78.5,
+          "stuck_scans": 5
+        },
+        {
+          "name": "High elegance",
+          "strict": 80.5,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Init coupling",
+          "strict": 83.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Logic clarity",
+          "strict": 81.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Low elegance",
+          "strict": 80.0,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Mid elegance",
+          "strict": 81.5,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Naming quality",
+          "strict": 85.0,
+          "stuck_scans": 5
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "auto_fix",
+        "detector": "unused",
+        "count": 26,
+        "description": "26 unused issues \u2014 run `desloppify autofix unused-imports --dry-run` to preview, then apply",
+        "command": "desloppify autofix unused-imports --dry-run",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 1,
+        "lane": "cleanup"
+      },
+      {
+        "type": "auto_fix",
+        "detector": "logs",
+        "count": 6,
+        "description": "6 logs issues \u2014 run `desloppify autofix debug-logs --dry-run` to preview, then apply",
+        "command": "desloppify autofix debug-logs --dry-run",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 2,
+        "lane": "cleanup"
+      },
+      {
+        "type": "reorganize",
+        "detector": "orphaned",
+        "count": 21,
+        "description": "21 orphaned issues \u2014 delete dead files or relocate with `desloppify move`",
+        "command": "desloppify show orphaned --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 3,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "flat_dirs",
+        "count": 2,
+        "description": "2 flat_dirs issues \u2014 create subdirectories and use `desloppify move`",
+        "command": "desloppify show flat_dirs --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 4,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "naming",
+        "count": 1,
+        "description": "1 naming issues \u2014 rename files with `desloppify move` to fix conventions",
+        "command": "desloppify show naming --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 5,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "single_use",
+        "count": 1,
+        "description": "1 single_use issues \u2014 inline or relocate with `desloppify move`",
+        "command": "desloppify show single_use --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 6,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "cycles",
+        "count": 1,
+        "description": "1 cycles issues \u2014 break cycles by extracting shared code or using `desloppify move`",
+        "command": "desloppify show cycles --status open",
+        "impact": 0.0,
+        "dimension": "Security",
+        "priority": 7,
+        "lane": "restructure"
+      },
+      {
+        "type": "reorganize",
+        "detector": "facade",
+        "count": 4,
+        "description": "4 facade issues \u2014 flatten re-export facades or consolidate barrel files",
+        "command": "desloppify show facade --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 8,
+        "lane": "restructure"
+      },
+      {
+        "type": "refactor",
+        "detector": "structural",
+        "count": 5,
+        "description": "5 structural work items \u2014 review large files \u2014 split only when responsibilities are clearly separable",
+        "command": "desloppify show structural --status open",
+        "impact": 0.0,
+        "dimension": "File health",
+        "priority": 9,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "props",
+        "count": 1,
+        "description": "1 props work items \u2014 split bloated components, extract sub-components",
+        "command": "desloppify show props --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 10,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "dupes",
+        "count": 1,
+        "description": "1 dupes work items \u2014 extract shared utility or consolidate duplicates",
+        "command": "desloppify show dupes --status open",
+        "impact": 0.0,
+        "dimension": "Duplication",
+        "priority": 11,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "refactor",
+        "detector": "test_coverage",
+        "count": 103,
+        "description": "103 test_coverage work items \u2014 review test coverage gaps \u2014 focus on critical modules with many importers first; defer test writing until code quality issues are resolved",
+        "command": "desloppify show test_coverage --status open",
+        "impact": 0.0,
+        "dimension": "Test health",
+        "priority": 12,
+        "lane": "test_coverage"
+      },
+      {
+        "type": "refactor",
+        "detector": "review",
+        "count": 26,
+        "description": "26 review work items need investigation \u2014 run `desloppify show review --status open` to see them",
+        "command": "desloppify show review --status open",
+        "impact": 0.0,
+        "dimension": "Unknown",
+        "priority": 13,
+        "lane": "refactor_1"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "smells",
+        "count": 137,
+        "description": "137 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "command": "desloppify show smells --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 14,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "deprecated",
+        "count": 10,
+        "description": "10 deprecated work items \u2014 remove deprecated symbols or migrate callers",
+        "command": "desloppify show deprecated --status open",
+        "impact": 0.0,
+        "dimension": "Code quality",
+        "priority": 15,
+        "lane": "refactor_0"
+      },
+      {
+        "type": "manual_fix",
+        "detector": "security",
+        "count": 6,
+        "description": "6 security work items \u2014 review and fix security issues \u2014 prioritize by severity",
+        "command": "desloppify show security --status open",
+        "impact": 0.0,
+        "dimension": "Security",
+        "priority": 16,
+        "lane": "refactor_0"
+      }
+    ],
+    "strategy": {
+      "fixer_leverage": {
+        "auto_fixable_count": 32,
+        "total_count": 403,
+        "coverage": 0.079,
+        "impact_ratio": 0.0,
+        "recommendation": "none"
+      },
+      "lanes": {
+        "cleanup": {
+          "actions": [
+            2,
+            1
+          ],
+          "file_count": 22,
+          "total_impact": 0.0,
+          "automation": "full",
+          "run_first": true
+        },
+        "restructure": {
+          "actions": [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "file_count": 29,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_0": {
+          "actions": [
+            9,
+            10,
+            11,
+            14,
+            15,
+            16
+          ],
+          "file_count": 73,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "refactor_1": {
+          "actions": [
+            13
+          ],
+          "file_count": 1,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        },
+        "test_coverage": {
+          "actions": [
+            12
+          ],
+          "file_count": 90,
+          "total_impact": 0.0,
+          "automation": "manual",
+          "run_first": false
+        }
+      },
+      "can_parallelize": true,
+      "hint": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 26 issue(s) \u2014 `desloppify show review --status open`."
+    },
+    "tools": {
+      "fixers": [
+        {
+          "name": "unused-imports",
+          "detector": "unused",
+          "open_count": 26,
+          "command": "desloppify autofix unused-imports --dry-run"
+        },
+        {
+          "name": "unused-vars",
+          "detector": "unused",
+          "open_count": 26,
+          "command": "desloppify autofix unused-vars --dry-run"
+        },
+        {
+          "name": "unused-params",
+          "detector": "unused",
+          "open_count": 26,
+          "command": "desloppify autofix unused-params --dry-run"
+        },
+        {
+          "name": "debug-logs",
+          "detector": "logs",
+          "open_count": 6,
+          "command": "desloppify autofix debug-logs --dry-run"
+        },
+        {
+          "name": "dead-useeffect",
+          "detector": "smells",
+          "open_count": 137,
+          "command": "desloppify autofix dead-useeffect --dry-run"
+        },
+        {
+          "name": "empty-if-chain",
+          "detector": "smells",
+          "open_count": 137,
+          "command": "desloppify autofix empty-if-chain --dry-run"
+        }
+      ],
+      "move": {
+        "available": true,
+        "relevant": true,
+        "reason": "21 orphaned files + 1 single-use files + 2 flat directories + 1 naming issues",
+        "usage": "desloppify move <source> <dest> [--dry-run]"
+      },
+      "plan": {
+        "command": "desloppify plan",
+        "description": "Generate prioritized markdown cleanup plan"
+      },
+      "badge": {
+        "generated": true,
+        "in_readme": false,
+        "path": "scorecard.png",
+        "recommendation": "Add to README: <img src=\"scorecard.png\" width=\"100%\">"
+      }
+    },
+    "debt": {
+      "overall_gap": 0.2,
+      "wontfix_count": 1,
+      "worst_dimension": "Code quality",
+      "worst_gap": 3.2,
+      "trend": "stable"
+    },
+    "milestone": "Crossed 80% strict!",
+    "primary_action": {
+      "command": "desloppify autofix unused-imports --dry-run",
+      "description": "26 unused issues \u2014 run `desloppify autofix unused-imports --dry-run` to preview, then apply"
+    },
+    "why_now": "4 independent workstreams, safe to parallelize. Rescan after each phase to verify. Review: 26 issue(s) \u2014 `desloppify show review --status open`.",
+    "verification_step": {
+      "command": "desloppify scan",
+      "reason": "revalidate after changes"
+    },
+    "risk_flags": [
+      {
+        "type": "wontfix_gap",
+        "severity": "medium",
+        "message": "Strict/lenient gap is 0.2 pts with 1 wontfix issues"
+      }
+    ],
+    "strict_target": {
+      "target": 85.0,
+      "current": 80.6,
+      "gap": 4.4,
+      "state": "below",
+      "warning": null
+    },
+    "reminders": [],
+    "reminder_history": {
+      "auto_fixers_available": 3,
+      "dry_run_first": 3,
+      "report_scores": 7,
+      "review_issues_pending": 3,
+      "stagnant_nudge": 5,
+      "feedback_nudge": 3,
+      "review_not_run": 3
+    }
+  },
   "config": {
     "review_max_age_days": 30,
     "review_batch_max_files": 80,
@@ -5219,5 +5579,6 @@
     "retrospective_max_issues": 30,
     "retrospective_max_batch_items": 20,
     "config_hash": "0b16d334353f5d48c8353a9d4b32020e949e8542399d0c6105d6ba3ad12eea79"
-  }
+  },
+  "next_command": "desloppify review --run-batches --runner codex --parallel --scan-after-import"
 }

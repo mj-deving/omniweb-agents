@@ -315,7 +315,8 @@ function decodeHiveData(data: unknown): Record<string, unknown> | null {
   else if (typeof data === "object" && data !== null) {
     const obj = data as Record<string, unknown>;
     // SDK storage envelope: {"bytes":"SElWRXsi..."} — base64-encoded HIVE payload
-    if (typeof obj.bytes === "string" && obj.bytes.length >= 8) {
+    if (typeof obj.bytes === "string" && obj.bytes.length >= 8 && obj.bytes.length <= 172 * 1024) {
+      // Size guard: base64 at 172KB → ~128KB decoded. Matches hex branch 64KB limit.
       try {
         const decoded = Buffer.from(obj.bytes, "base64");
         if (hasHivePrefix(decoded)) {

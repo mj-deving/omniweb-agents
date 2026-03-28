@@ -1,54 +1,46 @@
 {
-  "command": "review",
-  "action": "import",
-  "mode": "holistic",
-  "diff": {
-    "new": 15,
-    "auto_resolved": 36,
-    "reopened": 0,
-    "total_current": 26,
-    "suspect_detectors": [
-      "cycles",
-      "deprecated",
-      "dupes",
-      "facade",
-      "flat_dirs",
-      "logs",
-      "naming",
-      "orphaned",
-      "props",
-      "review",
-      "security",
-      "single_use",
-      "smells",
-      "structural",
-      "test_coverage",
-      "unused"
-    ],
-    "chronic_reopeners": [],
-    "skipped_other_lang": 0,
-    "resolved_out_of_scope": 0,
-    "ignored": 0,
-    "ignore_patterns": 0,
-    "raw_issues": 26,
-    "suppressed_pct": 0.0
+  "command": "show",
+  "query": "cycles",
+  "status_filter": "open",
+  "total": 1,
+  "summary": {
+    "by_tier": {
+      "T3": 1
+    },
+    "by_detector": {
+      "cycles": 1
+    },
+    "files": 1
   },
-  "next_command": "desloppify show review --status open",
-  "subjective_at_target": [],
-  "assessment_import": {
-    "mode": "attested_external",
-    "trusted": true,
-    "reason": "attested external blind subagent provenance"
+  "by_file": {
+    "src/lib/util/extensions.ts": [
+      {
+        "id": "cycles::src/lib/util/extensions.ts::src/lib/util/extensions.ts::src/plugins/calibrate-plugin.ts",
+        "tier": 3,
+        "confidence": "high",
+        "summary": "Import cycle (2 files): src/lib/util/extensions.ts -> src/plugins/calibrate-plugin.ts",
+        "detail": {
+          "files": [
+            "src/lib/util/extensions.ts",
+            "src/plugins/calibrate-plugin.ts"
+          ],
+          "length": 2
+        }
+      }
+    ]
   },
+  "total_matching": 1,
+  "noise_budget": 0,
+  "noise_global_budget": 0,
   "narrative": {
     "phase": "refinement",
-    "headline": "\u26a0 6 security issues \u2014 review before other cleanup. Crossed 80% strict! (26 review work items \u2014 run `desloppify show review --status open`)",
+    "headline": "\u26a0 7 security issues \u2014 review before other cleanup.  (26 review work items \u2014 run `desloppify show review --status open`)",
     "dimensions": {
       "lowest_dimensions": [
         {
           "name": "Test health",
-          "strict": 40.2,
-          "failing": 103,
+          "strict": 40.5,
+          "failing": 104,
           "impact": 0.0
         },
         {
@@ -71,15 +63,15 @@
       "biggest_gap_dimensions": [
         {
           "name": "Code quality",
-          "lenient": 86.8,
-          "strict": 83.6,
-          "gap": 3.2,
+          "lenient": 86.6,
+          "strict": 83.5,
+          "gap": 3.1,
           "wontfix_count": 0
         },
         {
           "name": "Test health",
-          "lenient": 41.7,
-          "strict": 40.2,
+          "lenient": 42.0,
+          "strict": 40.5,
           "gap": 1.5,
           "wontfix_count": 0
         }
@@ -87,17 +79,17 @@
       "stagnant_dimensions": [
         {
           "name": "Security",
-          "strict": 98.6,
-          "stuck_scans": 5
-        },
-        {
-          "name": "File health",
-          "strict": 97.9,
+          "strict": 98.4,
           "stuck_scans": 5
         },
         {
           "name": "Duplication",
           "strict": 99.8,
+          "stuck_scans": 5
+        },
+        {
+          "name": "Test health",
+          "strict": 40.5,
           "stuck_scans": 5
         },
         {
@@ -192,8 +184,8 @@
       {
         "type": "auto_fix",
         "detector": "logs",
-        "count": 6,
-        "description": "6 logs issues \u2014 run `desloppify autofix debug-logs --dry-run` to preview, then apply",
+        "count": 7,
+        "description": "7 logs issues \u2014 run `desloppify autofix debug-logs --dry-run` to preview, then apply",
         "command": "desloppify autofix debug-logs --dry-run",
         "impact": 0.0,
         "dimension": "Code quality",
@@ -269,8 +261,8 @@
       {
         "type": "refactor",
         "detector": "structural",
-        "count": 5,
-        "description": "5 structural work items \u2014 review large files \u2014 split only when responsibilities are clearly separable",
+        "count": 6,
+        "description": "6 structural work items \u2014 review large files \u2014 split only when responsibilities are clearly separable",
         "command": "desloppify show structural --status open",
         "impact": 0.0,
         "dimension": "File health",
@@ -302,8 +294,8 @@
       {
         "type": "refactor",
         "detector": "test_coverage",
-        "count": 103,
-        "description": "103 test_coverage work items \u2014 review test coverage gaps \u2014 focus on critical modules with many importers first; defer test writing until code quality issues are resolved",
+        "count": 104,
+        "description": "104 test_coverage work items \u2014 review test coverage gaps \u2014 focus on critical modules with many importers first; defer test writing until code quality issues are resolved",
         "command": "desloppify show test_coverage --status open",
         "impact": 0.0,
         "dimension": "Test health",
@@ -324,8 +316,8 @@
       {
         "type": "manual_fix",
         "detector": "smells",
-        "count": 137,
-        "description": "137 smells issues \u2014 inspect with `desloppify next` and fix manually",
+        "count": 139,
+        "description": "139 smells issues \u2014 inspect with `desloppify next` and fix manually",
         "command": "desloppify show smells --status open",
         "impact": 0.0,
         "dimension": "Code quality",
@@ -346,8 +338,8 @@
       {
         "type": "manual_fix",
         "detector": "security",
-        "count": 6,
-        "description": "6 security work items \u2014 review and fix security issues \u2014 prioritize by severity",
+        "count": 7,
+        "description": "7 security work items \u2014 review and fix security issues \u2014 prioritize by severity",
         "command": "desloppify show security --status open",
         "impact": 0.0,
         "dimension": "Security",
@@ -357,9 +349,9 @@
     ],
     "strategy": {
       "fixer_leverage": {
-        "auto_fixable_count": 32,
-        "total_count": 403,
-        "coverage": 0.079,
+        "auto_fixable_count": 33,
+        "total_count": 409,
+        "coverage": 0.081,
         "impact_ratio": 0.0,
         "recommendation": "none"
       },
@@ -369,7 +361,7 @@
             2,
             1
           ],
-          "file_count": 22,
+          "file_count": 23,
           "total_impact": 0.0,
           "automation": "full",
           "run_first": true
@@ -447,19 +439,19 @@
         {
           "name": "debug-logs",
           "detector": "logs",
-          "open_count": 6,
+          "open_count": 7,
           "command": "desloppify autofix debug-logs --dry-run"
         },
         {
           "name": "dead-useeffect",
           "detector": "smells",
-          "open_count": 137,
+          "open_count": 139,
           "command": "desloppify autofix dead-useeffect --dry-run"
         },
         {
           "name": "empty-if-chain",
           "detector": "smells",
-          "open_count": 137,
+          "open_count": 139,
           "command": "desloppify autofix empty-if-chain --dry-run"
         }
       ],
@@ -484,10 +476,10 @@
       "overall_gap": 0.2,
       "wontfix_count": 1,
       "worst_dimension": "Code quality",
-      "worst_gap": 3.2,
+      "worst_gap": 3.1,
       "trend": "stable"
     },
-    "milestone": "Crossed 80% strict!",
+    "milestone": null,
     "primary_action": {
       "command": "desloppify autofix unused-imports --dry-run",
       "description": "26 unused issues \u2014 run `desloppify autofix unused-imports --dry-run` to preview, then apply"
@@ -506,8 +498,8 @@
     ],
     "strict_target": {
       "target": 85.0,
-      "current": 80.6,
-      "gap": 4.4,
+      "current": 80.5,
+      "gap": 4.5,
       "state": "below",
       "warning": null
     },
@@ -515,7 +507,7 @@
     "reminder_history": {
       "auto_fixers_available": 3,
       "dry_run_first": 3,
-      "report_scores": 7,
+      "report_scores": 8,
       "review_issues_pending": 3,
       "stagnant_nudge": 5,
       "feedback_nudge": 3,

@@ -567,17 +567,16 @@ async function main(): Promise<void> {
   }
 
   // Chain-first: all modes use the same chain data — no API pagination needed
-  // Save to cache for compatibility, then run analysis
+  // Save to cache for compatibility, pre-filter for reuse by modes
   saveScanCache(chainRawPosts);
-  allRawFetched.push(...chainRawPosts);
   const chainFiltered = filterPosts(chainRawPosts, qualityFilter);
-  updateCounters(counters, chainRawPosts.length, chainFiltered);
-  allFiltered.push(...chainFiltered);
 
   for (const mode of scanModes) {
     if (mode === "lightweight") {
-      // Already handled above — chain data loaded
       info(`Mode lightweight: ${chainRawPosts.length} posts from chain`);
+      allRawFetched.push(...chainRawPosts);
+      updateCounters(counters, chainRawPosts.length, chainFiltered);
+      allFiltered.push(...chainFiltered);
       continue;
     }
 

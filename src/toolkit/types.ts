@@ -190,6 +190,8 @@ export interface PublishResult {
 
 export interface ReactResult {
   success: boolean;
+  /** Transaction hash when reaction is on-chain (absent for API-only fallback) */
+  txHash?: string;
 }
 
 export interface TipResult {

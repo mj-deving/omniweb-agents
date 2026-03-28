@@ -46,7 +46,7 @@ export async function lifecycleBeforeSense(ctx: BeforeSenseContext): Promise<voi
     }
 
     ctx.logger?.info(`Lifecycle: testing ${sampled.length} sources...`);
-    const transitions: Array<{ currentStatus: string; newStatus: string | null; reason: string }> = [];
+    const transitions: ReturnType<typeof evaluateTransition>[] = [];
     const updatedMap = new Map<string, (typeof allSources)[number]>();
 
     for (const source of sampled) {

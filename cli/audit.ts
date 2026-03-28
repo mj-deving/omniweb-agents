@@ -17,6 +17,11 @@ import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { readSessionLog, writeSessionLog, rotateSessionLog, resolveLogPath } from "../src/lib/util/log.js";
 import type { SessionLogEntry } from "../src/lib/util/log.js";
+import {
+  SCORE_BASE, SCORE_ATTESTATION, SCORE_CONFIDENCE, SCORE_LONG_TEXT,
+  SCORE_ENGAGEMENT_T1, SCORE_ENGAGEMENT_T2, SCORE_MAX,
+  ENGAGEMENT_T1_THRESHOLD, ENGAGEMENT_T2_THRESHOLD, LONG_TEXT_MIN_CHARS,
+} from "../src/lib/scoring/scoring.js";
 import { resolveAgentName, loadAgentConfig } from "../src/lib/agent-config.js";
 
 // ── Arg Parsing ────────────────────────────────────
@@ -99,21 +104,21 @@ interface AuditStats {
 // ── Scoring (local, deterministic — matches strategy.yaml formula) ──
 
 /**
- * Compute post score locally from known data.
- * Formula from agents/sentinel/strategy.yaml:
- *   base(20) + attestation(40) + confidence(10) + long_text(10) + engagement_t1(10) + engagement_t2(10) = max 100
+ * Compute post score locally using the canonical on-chain formula.
+ * Verified against n=34 real posts (2026-03-14).
+ *   base(20) + attestation(40) + confidence(5) + long_text(15) + engagement_t1(10) + engagement_t2(10) = max 100
  */
 function computeScore(entry: SessionLogEntry, reactions: number): number {
-  let score = 20; // base
-  if (entry.attestation_type && entry.attestation_type !== "none") score += 40; // attestation
-  if (entry.confidence != null) score += 10; // confidence field set
-  // text_length is the actual published length; text_preview is truncated to 100 chars (useless for scoring)
-  // Published posts are guaranteed > 200 chars by quality gate — default true for legacy entries without text_length
-  const textLen = entry.text_length ?? 201;
-  if (textLen > 200) score += 10; // long_text
-  if (reactions >= 5) score += 10; // engagement_t1
-  if (reactions >= 15) score += 10; // engagement_t2
-  return Math.min(score, 100);
+  let score = SCORE_BASE;
+  if (entry.attestation_type && entry.attestation_type !== "none") score += SCORE_ATTESTATION;
+  if (entry.confidence != null) score += SCORE_CONFIDENCE;
+  // text_length is the actual published length; text_preview is truncated to 100 chars
+  // Published posts are guaranteed > 200 chars by quality gate — default true for legacy entries
+  const textLen = entry.text_length ?? (LONG_TEXT_MIN_CHARS + 1);
+  if (textLen >= LONG_TEXT_MIN_CHARS) score += SCORE_LONG_TEXT;
+  if (reactions >= ENGAGEMENT_T1_THRESHOLD) score += SCORE_ENGAGEMENT_T1;
+  if (reactions >= ENGAGEMENT_T2_THRESHOLD) score += SCORE_ENGAGEMENT_T2;
+  return Math.min(score, SCORE_MAX);
 }
 
 /**

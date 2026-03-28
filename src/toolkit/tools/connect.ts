@@ -107,7 +107,7 @@ export async function connect(opts: ConnectOptions): Promise<DemosSession> {
       wallet,
       rpcUrl,
       opts.algorithm ?? DEFAULT_ALGORITHM,
-      !!apiBaseUrl, // skipAuth when no API configured
+      !!apiBaseUrl, // attemptAuth: true when API URL is configured
     );
 
     const stateStore = opts.stateStore ?? new FileStateStore();

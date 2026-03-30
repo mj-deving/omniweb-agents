@@ -33,12 +33,12 @@ describe("Write Rate Limiter", () => {
 
   it("enforces 14 posts/day per wallet", async () => {
     // Fill up to limit, advancing time past hourly window between batches
-    // so hourly limit (4/hr) doesn't block us before reaching daily limit (14/day)
+    // so hourly limit (5/hr) doesn't block us before reaching daily limit (14/day)
     vi.useFakeTimers();
     try {
       const HOUR_MS = 60 * 60 * 1000;
-      for (let batch = 0; batch < 4; batch++) {
-        const count = batch < 2 ? 4 : 3; // 4+4+3+3 = 14
+      for (let batch = 0; batch < 3; batch++) {
+        const count = batch < 2 ? 5 : 4; // 5+5+4 = 14
         for (let i = 0; i < count; i++) {
           await checkAndRecordWrite(store, WALLET, true);
         }
@@ -54,8 +54,8 @@ describe("Write Rate Limiter", () => {
     }
   });
 
-  it("enforces 4 posts/hour per wallet", async () => {
-    for (let i = 0; i < 4; i++) {
+  it("enforces 5 posts/hour per wallet", async () => {
+    for (let i = 0; i < 5; i++) {
       await checkAndRecordWrite(store, WALLET, true);
     }
 
@@ -73,11 +73,11 @@ describe("Write Rate Limiter", () => {
     const store2 = new FileStateStore(tempDir);
     const remaining = await getWriteRateRemaining(store2, WALLET);
     expect(remaining.dailyRemaining).toBe(13);
-    expect(remaining.hourlyRemaining).toBe(3);
+    expect(remaining.hourlyRemaining).toBe(4);
   });
 
   it("different wallets have independent limits", async () => {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       await checkAndRecordWrite(store, WALLET, true);
     }
 
@@ -89,12 +89,12 @@ describe("Write Rate Limiter", () => {
   it("reports remaining capacity", async () => {
     const before = await getWriteRateRemaining(store, WALLET);
     expect(before.dailyRemaining).toBe(14);
-    expect(before.hourlyRemaining).toBe(4);
+    expect(before.hourlyRemaining).toBe(5);
 
     await checkAndRecordWrite(store, WALLET, true);
 
     const after = await getWriteRateRemaining(store, WALLET);
     expect(after.dailyRemaining).toBe(13);
-    expect(after.hourlyRemaining).toBe(3);
+    expect(after.hourlyRemaining).toBe(4);
   });
 });

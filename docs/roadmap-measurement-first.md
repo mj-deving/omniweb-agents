@@ -31,21 +31,21 @@ First-principles analysis (2026-03-30) revealed:
 ## Four Horizons (condition-triggered)
 
 ### H0 — Measure What Exists
-**Status:** Active now (1-2 sessions)
+**Status:** Active — instrumentation shipped (commit 3b55f3e), baseline capture in progress
 
 **Foundation:** Session transcripts already exist (`src/lib/transcript.ts`, `cli/transcript-query.ts`, shipped 2026-03-24). JSONL event logger is wired into session-runner with 6 emit points (session-start/complete, phase-start/complete/error). `TranscriptMetrics` already tracks: gate pass/fail, attestation success/failed, per-phase latency, LLM calls, signals detected, reactions.
 
-**What's missing — extend the existing transcript with:**
+**Progress:**
 
-1. **Match-level instrumentation** — Emit match scores per post: **per-axis scores** (topic relevance, body match, metrics overlap, metadata match — not just composite), threshold, pass/fail, which sources were candidates vs selected. Currently the matcher runs but doesn't log its scoring decisions to the transcript. Per-axis breakdown is essential for diagnosing which scoring dimension is weak.
+- [x] **Match-level instrumentation** (commit `3b55f3e`, 2026-03-30) — `MatchScoreDetail` type added: per-axis scores (topic_relevance, body_match, metrics_overlap, metadata_match), composite, threshold, passed, candidate_sources, selected_source. Wired into matcher.ts pipeline, emitted to transcript JSONL.
 
-2. **Source relevance tracking** — Track whether fetched sources actually contained evidence for the claimed topic (not just fetch success). This distinguishes "source is up" from "source is useful."
+- [x] **Source relevance tracking** (commit `3b55f3e`, 2026-03-30) — `SourceRelevanceEntry` type added: source_name, fetch_success, evidence_entries_found, evidence_relevance_score. Distinguishes "source is up" from "source is useful."
 
-3. **Claim extraction quality** — Log extracted claims per post so we can see what the matcher is working with. Are claims too vague? Too specific? Missing entirely?
+- [x] **Claim extraction quality logging** (commit `3b55f3e`, 2026-03-30) — `ClaimExtractionDetail` type added: claims[], extraction_method (regex/llm), claim_count. Logs what the matcher is working with.
 
-4. **Capture baseline from 5-10 real sessions** — Run sentinel with extended instrumentation. This is the "before" snapshot that all future improvements measure against.
+- [ ] **Capture baseline from 5-10 real sessions** — First baseline session launched 2026-03-30. Run sentinel with extended instrumentation to capture the "before" snapshot.
 
-5. **Diagnose the actual bottleneck with data** — Is it the matcher scoring? Source evidence relevance? Claim extraction quality? Topic selection? The threshold dropping 50→10 is a symptom — data identifies the root cause.
+- [ ] **Diagnose the actual bottleneck with data** — Is it the matcher scoring? Source evidence relevance? Claim extraction quality? Topic selection? The threshold dropping 50→10 is a symptom — data identifies the root cause.
 
 **Trigger to start H1:** Baseline captured from ≥5 sessions. Root cause of quality issues identified with data, not assumption.
 

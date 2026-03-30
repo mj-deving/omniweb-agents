@@ -50,6 +50,7 @@ import {
   type LoopVersion,
   type ActSubstageState,
   type SubstageStatus,
+  type SessionPostRecord,
 } from "../src/lib/state.js";
 import { readSessionLog, appendSessionLog, resolveLogPath } from "../src/lib/util/log.js";
 import { saveReviewFindings, loadLatestFindings } from "../src/lib/review-findings.js";
@@ -107,6 +108,10 @@ import {
 
 // ── Transcript Metric Extraction ────────────────────
 
+function getPostTxHash(post: string | SessionPostRecord): string {
+  return typeof post === "string" ? post : String(post?.txHash || "");
+}
+
 /** Extract phase-specific data for transcript from phase result.
  * Paths verified against actual result shapes in session-runner.ts. */
 function extractPhaseData(phase: string, result: any, state: any): Record<string, unknown> | undefined {
@@ -141,10 +146,10 @@ function extractPhaseData(phase: string, result: any, state: any): Record<string
       return {
         postCount: state.posts?.length || 0,
         posts: (state.posts || []).map((p: any) => ({
-          txHash: p.txHash || null,
+          txHash: getPostTxHash(p) || null,
           category: p.category || null,
           text: p.text || null,
-          textLength: p.text?.length || 0,
+          textLength: p.textLength || p.text?.length || 0,
           attestationType: p.attestation_type || p.attestationType || null,
           topic: p.topic || null,
         })),
@@ -2020,7 +2025,14 @@ async function runPublishManual(
     info(`Logged ${txHash.slice(0, 16)}...`);
 
     publishedHashes.push(txHash);
-    state.posts.push(txHash);
+    state.posts.push({
+      txHash,
+      category: gp.category || "ANALYSIS",
+      text: gp.text || "",
+      textLength: (gp.text || "").length,
+      attestationType: "unknown",
+      topic: gp.topic || "",
+    });
 
     // Build partial PublishedPostRecord for afterConfirm hooks (PR1)
     const v2State = state as import("../src/lib/state.js").V2SessionState;
@@ -2553,7 +2565,14 @@ async function runPublishAutonomous(
       }
 
       publishedHashes.push(pubResult.txHash);
-      state.posts.push(pubResult.txHash);
+      state.posts.push({
+        txHash: pubResult.txHash,
+        category: draft.category,
+        text: draft.text,
+        textLength: pubResult.textLength,
+        attestationType: selectedMethod,
+        topic: gp.topic,
+      });
       topicLedger.push({ topic: gp.topic, category: gp.category, status: "published", txHash: pubResult.txHash });
 
       // Build full PublishedPostRecord for afterConfirm hooks (PR1)
@@ -2615,7 +2634,7 @@ async function runVerify(state: SessionState, flags: RunnerFlags): Promise<void>
     return;
   }
 
-  const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env];
+  const args = [...state.posts.map(getPostTxHash), "--json", "--log", flags.log, "--env", flags.env];
   const result = await runToolAndParse("cli/verify.ts", args, "verify.ts");
 
   const summary = result.summary || {};
@@ -3575,7 +3594,7 @@ async function runV2Loop(
         phaseSkipped("No posts to verify — skipping");
         completePhase(state, "confirm" as any, { skipped: true, reason: "no posts" }, sessionsDir);
       } else {
-        const args = [...state.posts, "--json", "--log", flags.log, "--env", flags.env];
+        const args = [...state.posts.map(getPostTxHash), "--json", "--log", flags.log, "--env", flags.env];
         const verifyResult = await runToolAndParse("cli/verify.ts", args, "verify.ts (CONFIRM)");
         const summary = verifyResult.summary || {};
         phaseResult(`${summary.verified || 0}/${summary.total || 0} verified`);
@@ -3663,7 +3682,8 @@ function writeV2SessionReport(state: V2SessionState, oversight: OversightLevel, 
   }
 
   if (state.posts.length > 0) {
-    for (const tx of state.posts) {
+    for (const post of state.posts) {
+      const tx = getPostTxHash(post);
       lines.push(`- Published: ${tx.slice(0, 16)}...`);
     }
   }

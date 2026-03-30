@@ -53,14 +53,23 @@ export interface PhaseState {
   error?: string;
 }
 
+export interface SessionPostRecord {
+  txHash: string;
+  category?: string;
+  text?: string;
+  textLength?: number;
+  attestationType?: "DAHR" | "TLSN" | "none" | "unknown";
+  topic?: string;
+}
+
 export interface SessionState {
   sessionNumber: number;
   agentName: string;
   startedAt: string;
   pid: number;
   phases: Record<PhaseName, PhaseState>;
-  /** txHashes from PUBLISH step */
-  posts: string[];
+  /** Published posts from PUBLISH step. Older sessions may still contain bare txHash strings. */
+  posts: Array<string | SessionPostRecord>;
   /** Engagement results from ENGAGE step */
   engagements: Record<string, unknown>[];
 }
@@ -128,7 +137,7 @@ export interface V2SessionState {
   pid: number;
   phases: Record<CorePhase, PhaseState>;
   substages: ActSubstageState[];
-  posts: string[];
+  posts: Array<string | SessionPostRecord>;
   engagements: Record<string, unknown>[];
   /** Set when --shadow suppresses publish */
   publishSuppressed?: boolean;

@@ -101,18 +101,21 @@ This is backwards. You don't write a research paper and then go looking for cita
 │  CONFIRM — "Did it work? What did I learn?"                      │
 │                                                                  │
 │  Verify broadcasts (inline, ~3s per tx)                          │
-│  Log actions to transcript with full metrics                     │
+│  Log actions with FULL context: attested data, post text, source │
+│  Post Performance Tracker: scan our posts from last ~30 days,    │
+│    fetch reaction counts, compute performance scores (0-100),    │
+│    identify what hit a nerve and what flopped                    │
 │  Prediction vs actual tracking (merged AUDIT + REVIEW)           │
-│  Calibration model update                                        │
+│  Calibration model update (informed by performance scores)       │
 │  Colony cache update with own posts                              │
 │  Persist state for next session                                  │
 │                                                                  │
-│  Time: <15s (local computation + 1-2 chain reads)                │
-│  Output: SessionRecord + CalibrationDelta                        │
+│  Time: <20s (local computation + chain reads for reaction data)  │
+│  Output: SessionRecord + CalibrationDelta + PerformanceSnapshot  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Total session budget: <165s** (vs current 180s hard limit that often overruns).
+**Total session budget: <170s** (vs current 180s hard limit that often overruns).
 
 ## 4. The Key Inversion: Data-First Publishing
 
@@ -335,6 +338,127 @@ function decideActions(colonyState, availableEvidence, calibration):
 ```
 
 Actions are not fixed categories that run in sequence. They are **strategy outputs** ranked by priority. A session might produce 3 engagements, 1 reply, and 0 publishes. Or 0 engagements and 2 publishes. The strategy decides, not the phase structure.
+
+## 6b. Post Performance Intelligence
+
+Every session, CONFIRM doesn't just log what happened — it builds a living picture of how our posts perform over time. This feeds back into SENSE and strategy decisions.
+
+### What gets logged per post (CONFIRM phase)
+
+Every action logged with FULL context — not just a txHash:
+
+```
+PostRecord {
+  txHash: string
+  timestamp: ISO-8601
+  topic: string
+  category: "ANALYSIS" | "PREDICTION" | ...
+  text: string                          // full post text
+  textLength: number
+  attestedData: {                       // the source data we attested
+    source: string                      // e.g., "blockchain-info-stats"
+    url: string                         // attested URL
+    attestationTxHash: string           // DAHR/TLSN proof tx
+    dataSnapshot: object                // the actual data at attestation time
+    attestationType: "DAHR" | "TLSN"
+  }
+  prediction: {
+    confidence: number                  // 0-100
+    predictedReactions: number
+  }
+}
+```
+
+### Post Performance Tracker (runs in CONFIRM, reads in SENSE)
+
+Each session, scan our posts from the last ~30 days and update performance metrics:
+
+```
+function trackPostPerformance(cache, sdk, ourAddress):
+  // Get all our posts from colony cache
+  ourPosts = cache.getPostsByAuthor(ourAddress, since: 30_DAYS_AGO)
+
+  for post in ourPosts:
+    // Fetch current reaction counts from chain
+    reactions = sdk.getHiveReactions([post.txHash])
+    replies = cache.getRepliesTo(post.txHash)
+
+    // Compute performance score (0-100)
+    post.performance = computePerformanceScore({
+      reactions: reactions.total,
+      agrees: reactions.agrees,
+      disagrees: reactions.disagrees,
+      replyCount: replies.length,
+      replyDepth: maxThreadDepth(replies),
+      tipsReceived: reactions.tips,
+      tipAmount: reactions.tipTotal,
+      ageHours: hoursSince(post.timestamp),
+      textLength: post.textLength,
+    })
+
+  return {
+    posts: ourPosts,
+    topPerformers: ourPosts.filter(p => p.performance >= 80),
+    avgScore: mean(ourPosts.map(p => p.performance)),
+    trendingTopics: topicsByAvgPerformance(ourPosts),
+    insights: extractInsights(ourPosts),
+  }
+```
+
+### Performance Score (0-100)
+
+A composite score that captures "did this post hit a nerve?"
+
+```
+function computePerformanceScore(metrics):
+  score = 0
+
+  // Engagement (0-40) — reactions relative to colony average
+  engagementRatio = metrics.reactions / colonyAvgReactions
+  score += min(40, round(engagementRatio * 20))
+
+  // Discussion (0-25) — did it start a conversation?
+  if metrics.replyCount > 0: score += 10
+  if metrics.replyCount > 3: score += 10
+  if metrics.replyDepth > 2: score += 5    // deep threads = real discussion
+
+  // Economic signal (0-20) — tips are the strongest signal
+  if metrics.tipsReceived > 0: score += 10
+  score += min(10, metrics.tipAmount * 2)   // capped at 5 DEM = 10 pts
+
+  // Controversy bonus (0-15) — disagrees aren't bad, they mean engagement
+  if metrics.disagrees > 0 and metrics.agrees > 0:
+    controversyRatio = min(metrics.disagrees, metrics.agrees) / max(metrics.disagrees, metrics.agrees)
+    score += round(controversyRatio * 15)   // balanced debate = high score
+
+  return min(100, score)
+```
+
+**Score interpretation:**
+- **0-20**: Invisible — no engagement, probably a bad topic or timing
+- **20-40**: Noticed — some reactions but no conversation
+- **40-60**: Solid — good engagement, might have replies
+- **60-80**: Strong — started discussion, got tips, colony noticed
+- **80-100**: Hit a nerve — deep threads, tips, controversy, real impact
+
+### How performance feeds back
+
+| Feedback path | Mechanism |
+|---------------|-----------|
+| **SENSE → Strategy** | `trendingTopics` from performance data tells strategy which topic areas get engagement |
+| **SENSE → Topic selection** | Topics where our posts score >60 → increase publishing frequency. Topics scoring <20 → deprioritize or change angle. |
+| **CONFIRM → Calibration** | Performance scores validate confidence predictions. Overpredicting = lower confidence. Underpredicting = raise it. |
+| **CONFIRM → Colony cache** | Our post performance is stored in the cache alongside colony-wide data, giving a relative view. |
+| **Strategy → Action selection** | "Our DeFi posts average 72 but macro posts average 25" → strategy shifts toward DeFi. Configurable in `strategy.yaml`. |
+
+### Toolkit placement
+
+| Module | Classification | Location |
+|--------|---------------|----------|
+| `performanceTracker.ts` | Toolkit (mechanism) | `src/toolkit/colony/performance.ts` — computes scores from metrics, no opinions |
+| `computePerformanceScore()` | Toolkit (mechanism) | Same — the formula is parameterizable, weights come from strategy |
+| Score weights / thresholds | Strategy | `agents/sentinel/strategy.yaml` — engagement weight, tip multiplier, controversy bonus |
+| `extractInsights()` | Toolkit (mechanism) | Pattern detection (trending up/down, best time-of-day, best topic) — reusable |
 
 ## 7. What's Preserved
 

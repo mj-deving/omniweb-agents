@@ -53,6 +53,9 @@ interface CandidateResult {
   source?: { name: string; url: string };
   txHash?: string;
   attestation?: { type: "DAHR" | "TLSN"; txHash: string; responseHash?: string };
+  attestationType?: "DAHR" | "TLSN" | "none" | "unknown";
+  text?: string;
+  textLength?: number;
   text_preview?: string;
   confidence?: number;
   predicted_reactions?: number;
@@ -611,6 +614,7 @@ async function main(): Promise<void> {
       }
       let activeSelection = selection;
       row.source = { name: activeSelection.source.name, url: activeSelection.url };
+      row.attestationType = selectedAttestationType;
       row.warnings.push(`Attestation policy: ${plan.reason}; selected ${selectedAttestationType}`);
 
       let attested: AttestResult | undefined;
@@ -709,6 +713,8 @@ async function main(): Promise<void> {
       }
 
       row.text_preview = draft.text.slice(0, 140);
+      row.text = draft.text;
+      row.textLength = draft.text.length;
       row.confidence = draft.confidence;
       row.predicted_reactions = draft.predicted_reactions;
 
@@ -761,6 +767,8 @@ async function main(): Promise<void> {
 
       row.status = "published";
       row.txHash = publish.txHash;
+      row.textLength = publish.textLength;
+      row.attestationType = attested ? (attested.type === "tlsn" ? "TLSN" : "DAHR") : "none";
       if (publish.warnings?.length) {
         row.warnings.push(...publish.warnings);
       }
@@ -778,6 +786,7 @@ async function main(): Promise<void> {
           topic: candidate.topic,
           confidence: draft.confidence,
           text_preview: draft.text.slice(0, 100),
+          text_length: draft.text.length,
           tags: draft.tags,
           agent: agentName,
         },

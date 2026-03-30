@@ -3,7 +3,7 @@
 > **The one document you read to understand the project.**
 > Architecture lives in CLAUDE.md. Operational knowledge lives in MEMORY.md. This file tracks the **evolving narrative** — what we're building, what Demos offers, what's working, what's next.
 
-**Last updated:** 2026-03-28 | **SDK:** 2.11.5 | **Tests:** 125 suites, 1815 passing | **Agents:** 6 defined, 3 publishing | **Sources:** 229 catalog, 38 specs
+**Last updated:** 2026-03-30 | **SDK:** 2.11.5 | **Tests:** 138 suites, 2031 passing | **Toolkit:** 45 files | **Agents:** 6 defined, 1 active (sentinel) | **Sources:** 229 catalog (142 active, 81 archived) | **ADRs:** 14
 
 ---
 
@@ -41,13 +41,13 @@ demos-agents is an autonomous agent toolkit built ON the Demos Network. Demos is
 - **102 new tests** (1713→1815), 10 new suites. Boundary tests, connect error paths, domain filtering, feed parser shapes.
 - **CLAUDE.md trimmed** 296→69 lines. Detail moved to `.ai/guides/` (cli-reference, gotchas-detail, dev-workflow).
 
-**Where we're going:**
-- **Colony intelligence redesign:** Colony Mind 3-layer architecture. Blocked on colony census (supercolony.ai DNS down).
-- **Toolkit evolution:** 5-PR migration `src/toolkit/` → `packages/core/` for npm packaging. Adapter packages for OpenClaw + ElizaOS. Audit cleanup complete — PR2-5 unblocked.
-- **Desloppify target 85+:** 37 remaining review items. Need trusted review scores (--external-start path). Continue src/lib/ restructuring (33 flat files remain).
-- Continue collecting quality_score data (17 entries, need 20+ with actuals for meaningful correlation)
-- CCI identity as root → Agent Auth Protocol as session auth layer
-- Deeper Demos SDK integration: ZK identity, encrypted messaging, L2PS privacy (when SDK unblocks)
+**Where we're going (measurement-first pivot, 2026-03-30):**
+- **H0 — Measure What Exists (active):** Build session instrumentation (JSONL per phase), capture baseline from 5-10 real sessions, diagnose actual bottleneck with data. See [roadmap-measurement-first.md](roadmap-measurement-first.md).
+- **H1 — Make Posts Better (after H0):** Fix confirmed bottleneck (likely matcher, but data decides), chain-only colony census, wire colony signals into topic selection.
+- **H2 — Iterate & Expand (after H1 + measurable improvement):** Measure against baseline, auto-tune calibration, source expansion (81 archived first, then new).
+- **H3 — Scale When Needed (trigger: real second consumer):** Toolkit packaging, agent composition, reactive mode production deploy (20 files already built).
+- **Deferred indefinitely:** Architecture migration Phase 2-4, SDK-blocked verticals, multi-agent clusters, desloppify target 85.
+- **Architecture enforcement (ADR-0014):** Boundary test + placement rules + ADR auto-discovery. Runs on every `npm test`.
 
 ---
 
@@ -117,9 +117,10 @@ What Demos offers vs what we use. **Updated each session.**
 
 | Document | Status | Updated | Purpose |
 |----------|--------|---------|---------|
-| [roadmap-unified.md](roadmap-unified.md) | `stale` | 2026-03-20 | 7-phase plan: Phases 1-5 complete, Phase 6 blocked, Phase 7 systematic SDK integration. Superseded by signal detection + transcript work. |
-| [roadmap-skill-dojo-local.md](roadmap-skill-dojo-local.md) | `current` | 2026-03-20 | Course correction: extract Skill Dojo as local SDK-direct implementations |
-| [phase5-agent-composition-plan.md](phase5-agent-composition-plan.md) | `complete` | 2026-03-20 | Skill loader + manifest design. Codex-reviewed. Implemented: Phase 0 (hook internalization) + Phase 5 (loadExtensions). |
+| [roadmap-measurement-first.md](roadmap-measurement-first.md) | `active` | 2026-03-30 | **Authoritative roadmap.** Four horizons (H0-H3), measurement-first. Supersedes all prior roadmaps. Codex + Fabric reviewed. |
+| [roadmap-unified.md](roadmap-unified.md) | `superseded` | 2026-03-20 | Superseded by roadmap-measurement-first.md. Skill roadmap tiers deferred. |
+| [roadmap-skill-dojo-local.md](roadmap-skill-dojo-local.md) | `reference` | 2026-03-20 | Course correction: extract Skill Dojo as local SDK-direct implementations |
+| [phase5-agent-composition-plan.md](phase5-agent-composition-plan.md) | `deferred` | 2026-03-20 | Skill loader + manifest design. Deferred to H3 (trigger: real second agent). Phase 0 + Phase 5 already implemented. |
 
 ---
 

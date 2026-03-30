@@ -64,6 +64,24 @@ function getPath(value: unknown, path: string[]): unknown {
   return current;
 }
 
+function getBroadcastStatus(value: unknown): number | null {
+  const status = getPath(value, ["result"]);
+  return typeof status === "number" && Number.isFinite(status) ? status : null;
+}
+
+function formatBroadcastFailure(value: unknown): string {
+  const message = getPath(value, ["response", "message"]);
+  if (typeof message === "string" && message.length > 0) {
+    return message;
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 export async function executeChainTx<TPayload, TStored, TConfirmed, TBroadcast>(
   stages: ChainTxStages<TPayload, TStored, TConfirmed, TBroadcast>,
   payload: TPayload,
@@ -76,7 +94,13 @@ export async function executeChainTx<TPayload, TStored, TConfirmed, TBroadcast>(
     throw new Error("Confirmed transaction missing txHash");
   }
 
-  await stages.broadcast(confirmed);
+  const broadcastResult = await stages.broadcast(confirmed);
+  const broadcastStatus = getBroadcastStatus(broadcastResult);
+  if (broadcastStatus !== null && (broadcastStatus < 200 || broadcastStatus >= 300)) {
+    throw new Error(
+      `Broadcast failed with result ${broadcastStatus}: ${formatBroadcastFailure(broadcastResult)}`,
+    );
+  }
 
   return {
     txHash,

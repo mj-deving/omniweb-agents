@@ -499,7 +499,7 @@ interface ScoredCandidate {
  */
 export async function match(input: MatchInput): Promise<MatchResult> {
   const { postText, postTags, candidates, llm, prefetchedResponses, matchThreshold } = input;
-  const threshold = matchThreshold ?? DEFAULT_MATCH_THRESHOLD;
+  const threshold = Math.max(5, Math.min(100, matchThreshold ?? DEFAULT_MATCH_THRESHOLD));
 
   if (candidates.length === 0) {
     return {

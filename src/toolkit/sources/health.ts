@@ -9,7 +9,7 @@
  *
  * Import graph:
  *   health.ts → ./fetch.ts (fetchSource)
- *   health.ts → ./providers/index.ts (getProviderAdapter)
+ *   health.ts → dynamic import("../../lib/sources/providers/index.js") (legacy getProviderAdapter fallback)
  *   health.ts → ./providers/types.ts (ProviderAdapter, EvidenceEntry)
  *   health.ts → ./catalog.ts (SourceRecordV2, tokenizeTopic)
  */
@@ -17,7 +17,6 @@
 import type { SourceRecordV2 } from "./catalog.js";
 import { tokenizeTopic } from "./catalog.js";
 import { fetchSource } from "./fetch.js";
-import { getProviderAdapter } from "../../lib/sources/providers/index.js";
 import type { ProviderAdapter } from "../providers/types.js";
 import { toErrorMessage } from "../util/errors.js";
 
@@ -48,6 +47,15 @@ export interface FilterOptions {
   sourceId?: string;
   provider?: string;
   quarantined?: boolean;
+}
+
+export type GetProviderAdapter = (
+  provider: string,
+) => ProviderAdapter | null | Promise<ProviderAdapter | null>;
+
+async function getLegacyProviderAdapter(provider: string): Promise<ProviderAdapter | null> {
+  const { getProviderAdapter } = await import("../../lib/sources/providers/index.js");
+  return getProviderAdapter(provider);
 }
 
 // ── Default Test Variables ────────────────────────────
@@ -118,7 +126,9 @@ function unresolvedVars(url: string): string[] {
 export function filterSources(
   sources: SourceRecordV2[],
   options: FilterOptions,
+  getProviderAdapterImpl: GetProviderAdapter = getLegacyProviderAdapter,
 ): SourceRecordV2[] {
+  void getProviderAdapterImpl;
   let filtered = sources;
 
   // Status filter
@@ -162,6 +172,7 @@ export function filterSources(
 export async function testSource(
   source: SourceRecordV2,
   customVars: Record<string, string> = {},
+  getProviderAdapterImpl: GetProviderAdapter = getLegacyProviderAdapter,
 ): Promise<SourceTestResult> {
   const base: Omit<SourceTestResult, "status" | "error" | "latencyMs" | "entryCount" | "sampleTitles"> = {
     sourceId: source.id,
@@ -169,7 +180,7 @@ export async function testSource(
   };
 
   // Step 1: Get adapter
-  const adapter = getProviderAdapter(source.provider);
+  const adapter = await getProviderAdapterImpl(source.provider);
   if (!adapter) {
     return {
       ...base,

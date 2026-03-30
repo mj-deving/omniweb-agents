@@ -85,6 +85,34 @@ describe("executeChainTx", () => {
     await expect(executeChainTx(pipeline, { id: "same-input" })).rejects.toThrow(message);
   });
 
+  it("throws when broadcast resolves with a non-2xx result", async () => {
+    const pipeline = {
+      store: vi.fn(async () => ({ signed: true })),
+      confirm: vi.fn(async () => ({ txHash: "0xabc" })),
+      broadcast: vi.fn(async () => ({
+        result: 500,
+        response: { message: "timeout" },
+      })),
+    };
+
+    await expect(executeChainTx(pipeline, { id: "same-input" })).rejects.toThrow(
+      "Broadcast failed with result 500: timeout",
+    );
+  });
+
+  it("accepts a resolved 200 broadcast result", async () => {
+    const pipeline = {
+      store: vi.fn(async () => ({ signed: true })),
+      confirm: vi.fn(async () => ({ txHash: "0xabc" })),
+      broadcast: vi.fn(async () => ({ result: 200 })),
+    };
+
+    await expect(executeChainTx(pipeline, { id: "same-input" })).resolves.toEqual({
+      txHash: "0xabc",
+      blockNumber: undefined,
+    });
+  });
+
   it("is idempotent for deterministic stage implementations", async () => {
     const pipeline = {
       store: vi.fn(async (payload: { id: string }) => ({ stored: payload.id })),

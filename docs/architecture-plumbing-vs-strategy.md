@@ -215,7 +215,7 @@ Every Demos agent, regardless of strategy, performs combinations of these 10 irr
 
 ### Phase 4: Document + Cleanup
 12. Write next ADR: planned splits for matcher.ts, policy.ts, action-executor.ts
-13. Add bounded validation to `matchThreshold` (clamp [5, 100])
+13. Add bounded validation to `matchThreshold` (clamp [5, 100]) [done]
 14. Plan `skillDojoFallback` cleanup in toolkit session/connect
 15. Redesign `auth.ts` with injected `apiFetch` + parameterized cache path
 16. Split `sdk.ts`: `connectWallet` → toolkit, `apiCall` → strategy

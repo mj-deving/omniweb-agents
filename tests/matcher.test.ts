@@ -482,3 +482,57 @@ describe("prefetchedResponses cache in match()", () => {
     expect(result.reasonCode).toBeDefined();
   });
 });
+
+describe("matchThreshold clamping in match()", () => {
+  beforeEach(() => {
+    fetchSourceMock.mockReset();
+    getProviderAdapterMock.mockReset();
+  });
+
+  it("clamps matchThreshold into the 5-100 range", async () => {
+    const source = makeSource({
+      id: "src-threshold",
+      name: "Unrelated Source",
+      provider: "github",
+      topics: ["software"],
+      topicAliases: ["repo"],
+      domainTags: ["devtools"],
+    });
+    const candidate = makeCandidate(source);
+    getProviderAdapterMock.mockReturnValue(null);
+
+    const lowThreshold = await match({
+      topic: "bitcoin",
+      postText: "Bitcoin market update",
+      postTags: ["crypto"],
+      candidates: [candidate],
+      sourceView: emptySourceView,
+      matchThreshold: 0,
+    });
+
+    const highThreshold = await match({
+      topic: "bitcoin",
+      postText: "Bitcoin market update",
+      postTags: ["crypto"],
+      candidates: [candidate],
+      sourceView: emptySourceView,
+      matchThreshold: 999,
+    });
+
+    const unchangedThreshold = await match({
+      topic: "bitcoin",
+      postText: "Bitcoin market update",
+      postTags: ["crypto"],
+      candidates: [candidate],
+      sourceView: emptySourceView,
+      matchThreshold: 50,
+    });
+
+    expect(lowThreshold.pass).toBe(false);
+    expect(lowThreshold.reason).toContain("threshold: 5");
+    expect(highThreshold.pass).toBe(false);
+    expect(highThreshold.reason).toContain("threshold: 100");
+    expect(unchangedThreshold.pass).toBe(false);
+    expect(unchangedThreshold.reason).toContain("threshold: 50");
+  });
+});

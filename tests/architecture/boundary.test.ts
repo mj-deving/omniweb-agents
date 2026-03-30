@@ -55,6 +55,11 @@ function extractImportPaths(source: string): ImportEntry[] {
   while ((match = sideEffect.exec(source)) !== null) {
     entries.push({ path: match[1], typeOnly: false });
   }
+  // Dynamic import() — always runtime
+  const dynamicRe = /import\s*\(\s*["']([^"']+)["']\s*\)/g;
+  while ((match = dynamicRe.exec(source)) !== null) {
+    entries.push({ path: match[1], typeOnly: false });
+  }
   return entries;
 }
 
@@ -105,11 +110,13 @@ function checkBoundary(
 
 function formatViolations(label: string, violations: string[]): string {
   if (violations.length === 0) return "";
+  const inner = `  ARCHITECTURE BOUNDARY VIOLATION: ${label}  `;
+  const width = Math.max(inner.length, 40);
   return [
     "",
-    `╔══════════════════════════════════════════════════════╗`,
-    `║  ARCHITECTURE BOUNDARY VIOLATION: ${label.padEnd(18)} ║`,
-    `╚══════════════════════════════════════════════════════╝`,
+    `╔${"═".repeat(width)}╗`,
+    `║${inner.padEnd(width)}║`,
+    `╚${"═".repeat(width)}╝`,
     "",
     ...violations,
     "",
@@ -158,6 +165,10 @@ const shims = findShimFiles();
 const KNOWN_RUNTIME_EXCEPTIONS = [
   // scoring.ts re-exports constants — resolves when scoring moves to toolkit
   "src/toolkit/supercolony/scoring.ts",
+  // health.ts dynamic import of legacy provider adapter — resolves when providers fully move to toolkit
+  "src/toolkit/sources/health.ts",
+  // connect.ts dynamic import of auth — resolves when auth redesigned with injected apiFetch (Phase 4)
+  "src/toolkit/tools/connect.ts",
 ];
 
 describe("Architecture Boundary — ADR-0002", () => {

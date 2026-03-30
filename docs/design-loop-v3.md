@@ -961,27 +961,139 @@ The agent should NOT be limited to pre-cataloged sources. If the draft makes a c
 
 **Channel 1: Chain-native verification (the chain IS the authoritative source)**
 
-The blockchain is the ultimate proof for anything that happened on-chain. If "Compound deployed v2 contract," that's a transaction. If "Agent X was tipped 5 DEM," that's a transaction. The SDK already has the methods — we just need to use the chain as a first-class attestation source, not just for HIVE posts.
+The blockchain is the ultimate proof for anything that happened on-chain. The Demos SDK provides **cross-chain read access to 10 blockchains** via XM (cross-message) functions. This isn't limited to the Demos chain — the agent can read smart contract state on Ethereum, Solana, and more.
+
+**Supported chains via SDK `xmcore` module:**
+
+| Chain class | Read methods | What you can verify |
+|------------|-------------|---------------------|
+| `EVM` (Ethereum, Polygon, Arbitrum, Base, etc.) | `readFromContract(contract, fn, args)`, `getBalance(addr)`, `getTokenBalance(contractAddr, addr)`, `getContractInstance(addr, abi)`, `waitForReceipt(txHash)` | Smart contract state, token balances, governance proposals, protocol TVL, transaction receipts |
+| `SOLANA` | `fetchAccount(address, options)`, `getBalance(addr)`, `getProgramIdl(programId)`, `runAnchorProgram(programId, params)` | Program account data, token balances, staking state, program IDLs |
+| `BTC` | `getBalance(addr)`, `fetchUTXOs(addr)`, `getTxHex(txHash)` | Bitcoin balances, UTXO sets, raw transactions |
+| `TON` | `getBalance(addr)` | TON balances |
+| `NEAR` | `getBalance(addr)` | NEAR balances |
+| `IBC` (Cosmos) | Chain-specific methods | Cosmos ecosystem data |
+
+**Concrete verification examples using XM functions:**
+
+```
+// "Compound TVL is $1.4B" — read the actual contract on Ethereum
+const evm = new EVM("https://eth-mainnet.g.alchemy.com/v2/KEY")
+await evm.connect()
+const contract = await evm.getContractInstance(COMPOUND_COMET_ADDRESS, COMET_ABI)
+const totalSupply = await evm.readFromContract(contract, "totalSupply", [])
+// totalSupply = 1400000000000000 (in base units) → $1.4B
+// DAHR attest this RPC read → chain state IS the proof
+
+// "Aave proposal #247 passed" — read governance contract
+const govContract = await evm.getContractInstance(AAVE_GOV_V3, GOV_ABI)
+const state = await evm.readFromContract(govContract, "getProposalState", [247])
+// state = 7 (ProposalState.Executed) → proposal passed
+// DAHR attest this → the governance contract IS the authoritative source
+
+// "Marinade staking TVL on Solana"
+const sol = new SOLANA("https://api.mainnet-beta.solana.com")
+await sol.connect()
+const account = await sol.fetchAccount(MARINADE_STATE_ADDRESS, {
+  programId: MARINADE_PROGRAM_ID
+})
+// account.totalStakedSol = deserialized state → actual TVL
+// DAHR attest this → Solana program state IS the proof
+
+// "BTC whale wallet holds 10,000 BTC"
+const btc = new BTC("https://blockstream.info/api")
+await btc.connect()
+const balance = await btc.getBalance("bc1q...whaleAddress")
+// balance = "10000.12345678" → verified on-chain
+```
+
+**Why this is the strongest verification channel:**
+- **No API intermediary.** `readFromContract` talks directly to the chain node via RPC. The data comes from the smart contract itself, not from someone's interpretation of it.
+- **Provably correct.** DAHR can attest the RPC call. The attestation proves the agent read this specific contract at this specific block.
+- **10 chains covered.** Ethereum + L2s (any EVM), Solana, Bitcoin, TON, NEAR, Cosmos — covers the vast majority of DeFi, governance, and on-chain activity.
+- **No catalog entry needed.** You need a `{chain, contractAddress, abi, functionName}` tuple, not a URL. These can be discovered from known protocol registries or hardcoded for major protocols.
+
+**Contract registry (replaces API catalog for on-chain sources):**
+
+```
+CONTRACT_REGISTRY = {
+  "compound": {
+    chain: "eth.mainnet",
+    contracts: {
+      comet_usdc: { address: "0xc3d688B66703497DAA19211EEdff47f25384cdc3", abi: COMET_ABI },
+      governance: { address: "0xc0Da02939E1441F497fd74F78cE7Decb17B66529", abi: GOV_ABI },
+    },
+    metrics: {
+      tvl: { contract: "comet_usdc", function: "totalSupply", unit: "USD", decimals: 6 },
+      proposal_state: { contract: "governance", function: "getProposalState", params: ["proposalId"] },
+    }
+  },
+  "aave": {
+    chain: "eth.mainnet",
+    contracts: {
+      governance: { address: "0x9AEE0B04504CeF83A65AC3f0e838D0593BCb2BC7", abi: AAVE_GOV_ABI },
+      pool: { address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2", abi: POOL_ABI },
+    },
+    metrics: { ... }
+  },
+  "marinade": {
+    chain: "sol.mainnet",
+    program: MARINADE_PROGRAM_ID,
+    accounts: {
+      state: { address: MARINADE_STATE_ADDRESS, idl: "auto" },
+    },
+    metrics: {
+      tvl: { account: "state", field: "totalStakedSol", unit: "SOL" },
+    }
+  }
+}
+```
+
+This registry is small (10-20 major protocols), strategy-configurable, and produces **the most authoritative verification possible** — direct chain reads, not API interpretations.
 
 ```
 function discoverChainSource(claim):
-  // For on-chain events, the chain itself is the source
-  if claim.metric in ON_CHAIN_METRICS:  // deployment, transfer, governance_vote, contract_call
-    // Query the chain directly for evidence
-    // e.g., "compound v2 deployed" → search for contract creation tx at known address
-    // e.g., "proposal #247 executed" → query governance contract events
-    txs = sdk.getTransactions({ address: KNOWN_ADDRESSES[claim.subject], type: claim.metric })
-    if txs.length > 0:
-      return {
-        source: "chain-native",
-        url: "demos://${txs[0].hash}",  // the chain tx IS the proof
-        data: txs[0],
-        authoritative: true,  // chain is always authoritative
-      }
-  return null
+  // Check contract registry for this subject
+  protocol = CONTRACT_REGISTRY[claim.subject]
+  if !protocol: return null
+
+  // Find the metric mapping
+  metricDef = protocol.metrics[claim.metric]
+  if !metricDef: return null
+
+  // Connect to the target chain via XM
+  if protocol.chain.startsWith("eth") or protocol.chain includes EVM:
+    chain = new EVM(getRpcUrl(protocol.chain))
+    await chain.connect()
+    contract = await chain.getContractInstance(
+      protocol.contracts[metricDef.contract].address,
+      protocol.contracts[metricDef.contract].abi
+    )
+    params = metricDef.params?.map(p => claim[p] || claim.value) || []
+    data = await chain.readFromContract(contract, metricDef.function, params)
+  elif protocol.chain.startsWith("sol"):
+    chain = new SOLANA(getRpcUrl(protocol.chain))
+    await chain.connect()
+    data = await chain.fetchAccount(
+      protocol.accounts[metricDef.account].address,
+      { programId: protocol.program }
+    )
+  else:
+    return null  // unsupported chain type for now
+
+  return {
+    source: "chain-native",
+    chain: protocol.chain,
+    contract: metricDef.contract || metricDef.account,
+    data: data,
+    authoritative: true,  // direct chain read is always authoritative
+  }
 ```
 
-This is the strongest discovery channel. On-chain events prove themselves — no external API needed. The attestation is the chain data itself, verified by DAHR against the node.
+**Also covers Demos chain native events:**
+- "Agent X was tipped 5 DEM" → `sdk.getTransactions({ address })` on Demos chain
+- "Post got 10 reactions" → `sdk.getHiveReactions([txHash])` on Demos chain
+- HIVE posts, identity broadcasts, escrow — all queryable via existing SDK bridge methods
 
 **Channel 2: API pattern templates (predictable URL structures)**
 
@@ -1342,7 +1454,8 @@ Any agent on any chain can use these. They are mechanisms, not opinions.
 | `toolkit/sources/response-cache.ts` | Source response TTL cache in SQLite — stores last response per source | Storage primitive — no opinions on freshness thresholds (those come from catalog/strategy) |
 | `toolkit/sources/subject-metric-index.ts` | Maps `{subject, metric}` → source candidates, rebuilt from catalog | Lookup index — bridges claim schema to source catalog |
 | `toolkit/colony/reaction-cache.ts` | Cached reaction counts per post, updated incrementally (<48h live, older cached) | Storage + update primitive — no opinion on what counts as "good" engagement |
-| `toolkit/sources/discovery.ts` | On-demand source discovery: chain-native, API patterns, colony cross-ref | Discovery mechanism — pattern templates are strategy-configurable |
+| `toolkit/sources/discovery.ts` | On-demand source discovery: XM chain reads, API patterns, colony cross-ref | Discovery mechanism — contract registry + pattern templates are strategy-configurable |
+| `toolkit/sources/chain-reader-xm.ts` | Cross-chain reads via SDK XM: EVM `readFromContract`, Solana `fetchAccount`, BTC `getBalance` | Chain read primitive — connects to any supported chain, reads contract/account state |
 | `toolkit/publish/signal-first-pipeline.ts` | Accepts a prompt string → LLM draft → attestation hunt → faithfulness gate → finalize/revise/ditch loop | Publishing orchestration — prompt is an INPUT, not hardcoded. Strategy owns the prompt. |
 | `toolkit/publish/faithfulness-gate.ts` | Typed claim verification: subject binding + value match + unit + freshness | Verification primitive — checks structured claims against attested data |
 | `toolkit/publish/claim-extractor.ts` | Two-tier claim extraction: regex (numbers + ASSET_MAP) then LLM fallback | Returns `StructuredClaim[]` — reusable by any agent |
@@ -1388,8 +1501,9 @@ Build the colony mirror, source response cache, reaction cache, and subject-metr
 - Per-post error handling in scan loop (try/catch, skip bad posts, advance cursor)
 - Scan-phase claim extraction is regex-only (no LLM). LLM deferred to ACT.
 - New toolkit: `src/toolkit/publish/event-verifier.ts` (3-tier: field match → keyword → LLM semantic)
-- New toolkit: `src/toolkit/sources/discovery.ts` (chain-native, API pattern templates, colony cross-ref)
-- New strategy: API pattern templates per protocol type in strategy config
+- New toolkit: `src/toolkit/sources/discovery.ts` (XM chain reads, API patterns, colony cross-ref)
+- New toolkit: `src/toolkit/sources/chain-reader-xm.ts` (cross-chain reads: EVM readFromContract, Solana fetchAccount)
+- New strategy: contract registry (protocol → chain + address + ABI + metrics) + API pattern templates
 - Extend faithfulness gate: non-numeric primary claims now route through event verifier instead of auto-failing
 - Parallel: `Promise.all([incrementalScan(), seedSourceCache()])`
 - Parallel: attestation hunt uses `Promise.all()` on candidate sources, first healthy wins

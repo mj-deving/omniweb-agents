@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { DeclarativeProviderSpec as CoreDeclarativeProviderSpec } from "@demos-agents/core";
+import type { ProviderAdapter as CoreProviderAdapter } from "@demos-agents/core";
+import type { DeclarativeProviderSpec as ToolkitDeclarativeProviderSpec } from "../../src/toolkit/providers/declarative-engine.js";
+import type { ProviderAdapter as ToolkitProviderAdapter } from "../../src/toolkit/providers/types.js";
+import type { ProviderAdapter as LegacyProviderAdapter } from "../../src/lib/sources/providers/types.js";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
@@ -37,6 +42,10 @@ const SHIM_CASES = [
     oldPath: "../../src/lib/network/storage-client.js",
     newPath: "../../src/toolkit/network/storage-client.js",
   },
+  {
+    oldPath: "../../src/lib/sources/providers/declarative-engine.js",
+    newPath: "../../src/toolkit/providers/declarative-engine.js",
+  },
 ] as const;
 
 const TOOLKIT_FILES = [
@@ -48,15 +57,20 @@ const TOOLKIT_FILES = [
   "src/toolkit/util/errors.ts",
   "src/toolkit/network/fetch-with-timeout.ts",
   "src/toolkit/network/storage-client.ts",
+  "src/toolkit/providers/declarative-engine.ts",
+  "src/toolkit/providers/types.ts",
 ] as const;
 
 const FORBIDDEN_IMPORT_PATTERNS = [
   /\.\.\/lib\/state\.js/,
   /\.\.\/lib\/agent-config\.js/,
+  /\.\.\/lib\/attestation\/attestation-policy\.js/,
   /src\/lib\/state\.js/,
   /src\/lib\/agent-config\.js/,
+  /src\/lib\/attestation\/attestation-policy\.js/,
   /from ["'][^"']*\/state\.js["']/,
   /from ["'][^"']*\/agent-config\.js["']/,
+  /from ["'][^"']*\/attestation-policy\.js["']/,
 ] as const;
 
 describe("Phase 2 re-export shims", () => {
@@ -108,6 +122,32 @@ describe("Phase 2 re-export shims", () => {
     expect(toolkit.createStorageClient).toBe(storage.createStorageClient);
     expect(core.fetchWithTimeout).toBe(toolkit.fetchWithTimeout);
     expect(core.createStorageClient).toBe(toolkit.createStorageClient);
+  });
+
+  it("keeps providers/types working through the legacy shim", async () => {
+    const legacyModule = await import("../../src/lib/sources/providers/types.js");
+    const toolkitModule = await import("../../src/toolkit/providers/types.js");
+
+    expect(Object.keys(legacyModule).sort()).toEqual(Object.keys(toolkitModule).sort());
+    expectTypeOf<LegacyProviderAdapter>().toEqualTypeOf<ToolkitProviderAdapter>();
+  });
+
+  it("exposes the moved Step 8 surface from the toolkit barrel and core package", async () => {
+    const toolkit = await import("../../src/toolkit/index.js");
+    const core = await import("@demos-agents/core");
+    const declarativeEngine = await import("../../src/toolkit/providers/declarative-engine.js");
+
+    expect(toolkit.loadDeclarativeProviderAdapters).toBe(
+      declarativeEngine.loadDeclarativeProviderAdapters
+    );
+    expect(toolkit.loadDeclarativeProviderAdaptersSync).toBe(
+      declarativeEngine.loadDeclarativeProviderAdaptersSync
+    );
+    expect(core.loadDeclarativeProviderAdapters).toBe(toolkit.loadDeclarativeProviderAdapters);
+    expect(core.loadDeclarativeProviderAdaptersSync).toBe(toolkit.loadDeclarativeProviderAdaptersSync);
+
+    expectTypeOf<CoreProviderAdapter>().toEqualTypeOf<ToolkitProviderAdapter>();
+    expectTypeOf<CoreDeclarativeProviderSpec>().toEqualTypeOf<ToolkitDeclarativeProviderSpec>();
   });
 });
 

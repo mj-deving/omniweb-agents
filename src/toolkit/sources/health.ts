@@ -18,7 +18,7 @@ import type { SourceRecordV2 } from "./catalog.js";
 import { tokenizeTopic } from "./catalog.js";
 import { fetchSource } from "./fetch.js";
 import { getProviderAdapter } from "../../lib/sources/providers/index.js";
-import type { ProviderAdapter } from "../../lib/sources/providers/types.js";
+import type { ProviderAdapter } from "../providers/types.js";
 import { toErrorMessage } from "../util/errors.js";
 
 // ── Types ────────────────────────────────────────────

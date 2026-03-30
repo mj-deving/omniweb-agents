@@ -19,7 +19,7 @@ import type {
   FetchedResponse,
   ParsedAdapterResponse,
   EvidenceEntry,
-} from "../../lib/sources/providers/types.js";
+} from "./types.js";
 
 /**
  * Fill template variables in a URL string.

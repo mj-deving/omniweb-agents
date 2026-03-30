@@ -36,7 +36,7 @@ describe("publish()", () => {
   it("accepts DemosSession as first parameter", async () => {
     const session = createTestSession(tempDir);
     // Publish will fail (SDK not connected) but should accept session
-    const result = await publish(session, { text: "Test post", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
+    const result = await publish(session, { text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring.", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
     // Should return typed result, not throw
     expect(result).toHaveProperty("ok");
     expect(result).toHaveProperty("provenance");
@@ -44,7 +44,7 @@ describe("publish()", () => {
 
   it("returns ToolResult with provenance", async () => {
     const session = createTestSession(tempDir);
-    const result = await publish(session, { text: "Test post", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
+    const result = await publish(session, { text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring.", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
     expect(result.provenance).toBeDefined();
     expect(result.provenance.path).toBe("local");
     expect(typeof result.provenance.latencyMs).toBe("number");
@@ -71,7 +71,7 @@ describe("publish()", () => {
       await checkAndRecordWrite(session.stateStore, session.walletAddress, true);
     }
 
-    const result = await publish(session, { text: "Test post", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
+    const result = await publish(session, { text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring.", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
     expect(result.ok).toBe(false);
     expect(result.error!.code).toBe("RATE_LIMITED");
   });
@@ -81,9 +81,9 @@ describe("publish()", () => {
 
     // Manually record a publish (bypassing the pipeline that would fail)
     const { checkAndRecordDedup } = await import("../../../src/toolkit/guards/dedup-guard.js");
-    await checkAndRecordDedup(session.stateStore, session.walletAddress, "Duplicate text", true);
+    await checkAndRecordDedup(session.stateStore, session.walletAddress, "This is a detailed analysis of duplicate detection patterns and how they are handled across multiple verification rounds. The dedup guard ensures content uniqueness before publishing any posts to chain.", true);
 
-    const result = await publish(session, { text: "Duplicate text", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
+    const result = await publish(session, { text: "This is a detailed analysis of duplicate detection patterns and how they are handled across multiple verification rounds. The dedup guard ensures content uniqueness before publishing any posts to chain.", category: "ANALYSIS", attestUrl: "https://api.example.com/price" });
     expect(result.ok).toBe(false);
     expect(result.error!.code).toBe("DUPLICATE");
   });
@@ -123,7 +123,7 @@ describe("reply()", () => {
     const session = createTestSession(tempDir);
     const result = await reply(session, {
       parentTxHash: "0xparent",
-      text: "Reply text",
+      text: "This is a substantive reply with additional analysis that builds on the parent post's claims. Including attested evidence from multiple verified sources to support this response and provide value.",
       attestUrl: "https://api.example.com/data",
     });
     expect(result).toHaveProperty("ok");
@@ -134,7 +134,7 @@ describe("reply()", () => {
     const session = createTestSession(tempDir);
     const result = await reply(session, {
       parentTxHash: "0xparent",
-      text: "Reply text",
+      text: "This is a substantive reply with additional analysis that builds on the parent post's claims. Including attested evidence from multiple verified sources to support this response and provide value.",
       attestUrl: "https://api.example.com/data",
     });
     // Will fail (no SDK) but return typed result
@@ -145,7 +145,7 @@ describe("reply()", () => {
     const session = createTestSession(tempDir);
     const result = await reply(session, {
       parentTxHash: "",
-      text: "Reply text",
+      text: "This is a substantive reply with additional analysis that builds on the parent post's claims. Including attested evidence from multiple verified sources to support this response and provide value.",
       attestUrl: "https://api.example.com/data",
     });
     expect(result.ok).toBe(false);

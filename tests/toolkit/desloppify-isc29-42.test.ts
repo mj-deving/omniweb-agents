@@ -17,7 +17,7 @@ describe("ISC-29: PublishDraft.attestUrl required", () => {
       "../../src/toolkit/schemas.js"
     );
     const result = validateInput(PublishDraftSchema, {
-      text: "Some valid text",
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.",
       category: "ANALYSIS",
     });
     expect(result).not.toBeNull();
@@ -30,7 +30,7 @@ describe("ISC-29: PublishDraft.attestUrl required", () => {
       "../../src/toolkit/schemas.js"
     );
     const result = validateInput(PublishDraftSchema, {
-      text: "Some valid text",
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.",
       category: "ANALYSIS",
       attestUrl: "https://api.example.com/price",
     });
@@ -43,7 +43,7 @@ describe("ISC-29: PublishDraft.attestUrl required", () => {
     );
     const result = validateInput(ReplyOptionsSchema, {
       parentTxHash: "0xabc",
-      text: "Reply text here",
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.",
     });
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
@@ -56,7 +56,7 @@ describe("ISC-29: PublishDraft.attestUrl required", () => {
     );
     const result = validateInput(ReplyOptionsSchema, {
       parentTxHash: "0xabc",
-      text: "Reply text here",
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.",
       attestUrl: "https://api.example.com/data",
     });
     expect(result).toBeNull();
@@ -381,7 +381,7 @@ describe("ISC-39: reply() validation tracks timing", () => {
 
       const result = await reply(session, {
         parentTxHash: "",
-        text: "Reply text",
+        text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.",
         attestUrl: "https://example.com",
       });
       expect(result.ok).toBe(false);

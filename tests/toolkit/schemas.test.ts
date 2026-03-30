@@ -198,7 +198,7 @@ describe("PayPolicySchema", () => {
 
 describe("PublishDraftSchema", () => {
   it("accepts valid draft with text, category, and attestUrl", () => {
-    const result = validateInput(PublishDraftSchema, { text: "Test post", category: "ANALYSIS", attestUrl: "https://api.example.com/data" });
+    const result = validateInput(PublishDraftSchema, { text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS", attestUrl: "https://api.example.com/data" });
     expect(result).toBeNull();
   });
 
@@ -212,6 +212,19 @@ describe("PublishDraftSchema", () => {
     const result = validateInput(PublishDraftSchema, { text: "   ", category: "ANALYSIS", attestUrl: "https://api.example.com/data" });
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
+  });
+
+  it("rejects text under 200 characters (loses SCORE_LONG_TEXT bonus)", () => {
+    const shortText = "x".repeat(199);
+    const result = validateInput(PublishDraftSchema, { text: shortText, category: "ANALYSIS", attestUrl: "https://api.example.com/data" });
+    expect(result).not.toBeNull();
+    expect(result!.message).toContain("200 characters");
+  });
+
+  it("accepts text at exactly 200 characters", () => {
+    const exactText = "x".repeat(200);
+    const result = validateInput(PublishDraftSchema, { text: exactText, category: "ANALYSIS", attestUrl: "https://api.example.com/data" });
+    expect(result).toBeNull();
   });
 
   it("rejects text exceeding 10KB", () => {
@@ -228,55 +241,55 @@ describe("PublishDraftSchema", () => {
   });
 
   it("rejects missing category", () => {
-    const result = validateInput(PublishDraftSchema, { text: "Hello", attestUrl: "https://api.example.com/data" });
+    const result = validateInput(PublishDraftSchema, { text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", attestUrl: "https://api.example.com/data" });
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
   });
 
   it("rejects empty category", () => {
-    const result = validateInput(PublishDraftSchema, { text: "Hello", category: "", attestUrl: "https://api.example.com/data" });
+    const result = validateInput(PublishDraftSchema, { text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "", attestUrl: "https://api.example.com/data" });
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
   });
 
   it("accepts optional tags array", () => {
     const result = validateInput(PublishDraftSchema, {
-      text: "Hello", category: "ANALYSIS", attestUrl: "https://api.example.com/data", tags: ["crypto", "btc"],
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS", attestUrl: "https://api.example.com/data", tags: ["crypto", "btc"],
     });
     expect(result).toBeNull();
   });
 
   it("accepts confidence in 0-100 range", () => {
     const result = validateInput(PublishDraftSchema, {
-      text: "Hello", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: 80,
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: 80,
     });
     expect(result).toBeNull();
   });
 
   it("rejects confidence > 100", () => {
     const result = validateInput(PublishDraftSchema, {
-      text: "Hello", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: 101,
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: 101,
     });
     expect(result).not.toBeNull();
   });
 
   it("rejects confidence < 0", () => {
     const result = validateInput(PublishDraftSchema, {
-      text: "Hello", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: -1,
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: -1,
     });
     expect(result).not.toBeNull();
   });
 
   it("accepts confidence at boundary 0", () => {
     const result = validateInput(PublishDraftSchema, {
-      text: "Hello", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: 0,
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS", attestUrl: "https://api.example.com/data", confidence: 0,
     });
     expect(result).toBeNull();
   });
 
   it("requires attestUrl (not optional)", () => {
     const result = validateInput(PublishDraftSchema, {
-      text: "Hello", category: "ANALYSIS",
+      text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", category: "ANALYSIS",
     });
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
@@ -288,12 +301,12 @@ describe("PublishDraftSchema", () => {
 
 describe("ReplyOptionsSchema", () => {
   it("accepts valid reply", () => {
-    const result = validateInput(ReplyOptionsSchema, { parentTxHash: "abc123", text: "Great post", attestUrl: "https://api.example.com/data" });
+    const result = validateInput(ReplyOptionsSchema, { parentTxHash: "abc123", text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", attestUrl: "https://api.example.com/data" });
     expect(result).toBeNull();
   });
 
   it("rejects empty parentTxHash", () => {
-    const result = validateInput(ReplyOptionsSchema, { parentTxHash: "", text: "Great post", attestUrl: "https://api.example.com/data" });
+    const result = validateInput(ReplyOptionsSchema, { parentTxHash: "", text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources. The evidence suggests significant shifts in trading patterns that warrant careful monitoring now.", attestUrl: "https://api.example.com/data" });
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
   });

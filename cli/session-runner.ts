@@ -140,8 +140,14 @@ function extractPhaseData(phase: string, result: any, state: any): Record<string
     case "publish":
       return {
         postCount: state.posts?.length || 0,
-        txHashes: state.posts?.map((p: any) => p.txHash),
-        categories: state.posts?.map((p: any) => p.category),
+        posts: (state.posts || []).map((p: any) => ({
+          txHash: p.txHash || null,
+          category: p.category || null,
+          text: p.text || null,
+          textLength: p.text?.length || 0,
+          attestationType: p.attestation_type || p.attestationType || null,
+          topic: p.topic || null,
+        })),
       };
     case "verify": {
       const summary = result.summary || {};

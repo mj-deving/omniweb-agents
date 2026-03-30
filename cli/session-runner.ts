@@ -25,7 +25,7 @@ import { createInterface } from "node:readline/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 
-import { runTool, ToolError, type ToolResult } from "../src/lib/util/subprocess.js";
+import { runTool, ToolError, parseToolJsonOutput, type ToolResult } from "../src/lib/util/subprocess.js";
 import { calculateQualityScore, logQualityData } from "../src/lib/scoring/quality-score.js";
 import {
   startSession,
@@ -696,7 +696,7 @@ async function runToolViaTmux(
   const sessionName = `${runnerAgentName}-runner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     .replace(/[^a-zA-Z0-9_-]/g, "-");
 
-  const quotedCommand = ["npx", "tsx", resolvedTool, ...args].map(shellQuote).join(" ");
+  const quotedCommand = [process.execPath, "--import", "tsx", resolvedTool, ...args].map(shellQuote).join(" ");
   const envPrefix = Object.entries(env)
     .filter(([key, value]) => isSafeEnvKey(key) && value !== undefined)
     .map(([key, value]) => `${key}=${shellQuote(value as string)}`)
@@ -761,7 +761,7 @@ async function runToolViaTmuxCli(
   const stderrPath = resolve(tempDir, "stderr.log");
   const exitPath = resolve(tempDir, "exit.code");
 
-  const quotedCommand = ["npx", "tsx", resolvedTool, ...args].map(shellQuote).join(" ");
+  const quotedCommand = [process.execPath, "--import", "tsx", resolvedTool, ...args].map(shellQuote).join(" ");
   const envPrefix = Object.entries(env)
     .filter(([key, value]) => isSafeEnvKey(key) && value !== undefined)
     .map(([key, value]) => `${key}=${shellQuote(value as string)}`)
@@ -844,11 +844,7 @@ async function runToolAndParse(
 
   const stdout = result.stdout.trim();
   if (!stdout) return {};
-  try {
-    return JSON.parse(stdout);
-  } catch {
-    throw new Error(`${label} returned non-JSON output: ${stdout.slice(0, 200)}`);
-  }
+  return parseToolJsonOutput(stdout, label);
 }
 
 // ── AUDIT Phase ────────────────────────────────────

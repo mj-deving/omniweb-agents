@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { runTool, ToolError } from "../src/lib/util/subprocess.js";
+import { runTool, ToolError, parseToolJsonOutput } from "../src/lib/util/subprocess.js";
 import { writeFileSync, unlinkSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -100,6 +100,24 @@ describe("subprocess — runTool", () => {
 
     unlinkSync(script);
   });
+
+  it("extracts trailing JSON when stdout contains noisy preamble", async () => {
+    const script = writeTempScript("mixed.ts", `
+      process.stdout.write("response: { result: 200, response: { data: { valid: true } } }\\n");
+      process.stdout.write(JSON.stringify({ reactions_cast: 5, agrees: 5, disagrees: 0, targets: [] }));
+    `);
+
+    const result = await runTool(script, [], { timeout: 15_000 });
+
+    expect(parseToolJsonOutput(result.stdout)).toEqual({
+      reactions_cast: 5,
+      agrees: 5,
+      disagrees: 0,
+      targets: [],
+    });
+
+    unlinkSync(script);
+  });
 });
 
 describe("subprocess — ToolError", () => {
@@ -118,5 +136,17 @@ describe("subprocess — ToolError", () => {
     const err = new ToolError("tools/gate.ts", 2, "");
     expect(err.exitCode).toBe(2);
     expect(err.message).toContain("unknown error");
+  });
+});
+
+describe("subprocess — parseToolJsonOutput", () => {
+  it("returns empty object for blank stdout", () => {
+    expect(parseToolJsonOutput("   \n")).toEqual({});
+  });
+
+  it("throws when stdout contains no JSON payload", () => {
+    expect(() => parseToolJsonOutput("response: { result: 200 }", "engage.ts")).toThrow(
+      /engage\.ts returned non-JSON output/
+    );
   });
 });

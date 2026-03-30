@@ -1,7 +1,12 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, afterAll } from "vitest";
 import { calculateQualityScore, logQualityData, type QualityDataEntry } from "../src/lib/scoring/quality-score.js";
 import * as fs from "fs";
 import * as path from "path";
+import { tmpdir } from "node:os";
+
+const originalHome = process.env.HOME;
+const testHome = fs.mkdtempSync(path.join(tmpdir(), "quality-score-home-"));
+process.env.HOME = testHome;
 
 describe("calculateQualityScore", () => {
   it("scores a high-quality attested reply with numeric claims", () => {
@@ -246,4 +251,10 @@ describe("logQualityData", () => {
     const parsed = JSON.parse(content.trim());
     expect(parsed.txHash).toBeUndefined();
   });
+});
+
+afterAll(() => {
+  if (originalHome === undefined) delete process.env.HOME;
+  else process.env.HOME = originalHome;
+  try { fs.rmSync(testHome, { recursive: true, force: true }); } catch { /* ignore */ }
 });

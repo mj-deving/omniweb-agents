@@ -2,11 +2,15 @@
  * Tests for own-tx-hashes — capped Set, session log loading, and pruning.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { writeFileSync, unlinkSync, existsSync, readFileSync, mkdirSync } from "node:fs";
+import { describe, it, expect, afterEach, afterAll } from "vitest";
+import { writeFileSync, unlinkSync, readFileSync, mkdtempSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { addCapped, loadOwnTxHashes, pruneSessionLog, sessionLogPath } from "../src/reactive/own-tx-hashes.js";
+
+const originalHome = process.env.HOME;
+const testHome = mkdtempSync(resolve(tmpdir(), "own-tx-hashes-home-"));
+process.env.HOME = testHome;
 
 // ── addCapped ──────────────────────────────────
 
@@ -180,4 +184,10 @@ describe("pruneSessionLog", () => {
     const remaining = readFileSync(logPath, "utf-8").trim().split("\n");
     expect(remaining.length).toBe(2);
   });
+});
+
+afterAll(() => {
+  if (originalHome === undefined) delete process.env.HOME;
+  else process.env.HOME = originalHome;
+  try { rmSync(testHome, { recursive: true, force: true }); } catch { /* noop */ }
 });

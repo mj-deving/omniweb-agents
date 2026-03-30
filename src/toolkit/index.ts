@@ -113,6 +113,22 @@ export {
   resetRateLimits,
 } from "./sources/rate-limit.js";
 export { adapter as genericProviderAdapter } from "./providers/generic.js";
+export type {
+  AttestationMethod as ProviderAttestationMethod,
+  ProviderAdapter,
+  BuildCandidatesContext,
+  CandidateRequest,
+  CandidateValidation,
+  FetchedResponse,
+  EvidenceEntry,
+  ParsedAdapterResponse,
+  SurgicalCandidate,
+} from "./providers/types.js";
+export type { DeclarativeProviderSpec } from "./providers/declarative-engine.js";
+export {
+  loadDeclarativeProviderAdapters,
+  loadDeclarativeProviderAdaptersSync,
+} from "./providers/declarative-engine.js";
 
 // ── Utilities ──────────────────────────────────────
 

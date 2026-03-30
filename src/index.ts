@@ -15,9 +15,12 @@
  */
 
 // Declarative provider engine
-export { loadDeclarativeProviderAdapters, loadDeclarativeProviderAdaptersSync } from "./lib/sources/providers/declarative-engine.js";
-export type { DeclarativeProviderSpec } from "./lib/sources/providers/declarative-engine.js";
-export type { ProviderAdapter, FetchedResponse, SurgicalCandidate } from "./lib/sources/providers/types.js";
+export {
+  loadDeclarativeProviderAdapters,
+  loadDeclarativeProviderAdaptersSync,
+} from "./toolkit/providers/declarative-engine.js";
+export type { DeclarativeProviderSpec } from "./toolkit/providers/declarative-engine.js";
+export type { ProviderAdapter, FetchedResponse, SurgicalCandidate } from "./toolkit/providers/types.js";
 
 // Source lifecycle
 export {

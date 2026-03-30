@@ -1,7 +1,9 @@
 /**
  * Write rate limiter — enforces publish/reply limits per wallet.
  *
- * Limits: 14 posts/day, 4 posts/hour (margin of 1 from API's 15/5).
+ * Limits: 14 posts/day, 5 posts/hour. Chain has no rate limit — these are
+ * self-imposed to avoid spamming the network. Previously 4/hour as margin
+ * from the SuperColony API (15/day, 5/hour), but API is dead since 2026-03-26.
  * Wallet-scoped, StateStore-backed with exclusive locking.
  */
 
@@ -10,7 +12,7 @@ import { demosError } from "../types.js";
 import { stateKey, loadState, checkAndAppend, appendEntry, DAY_MS, GUARD_LOCK_TTL_MS } from "./state-helpers.js";
 
 const DAILY_LIMIT = 14;
-const HOURLY_LIMIT = 4;
+const HOURLY_LIMIT = 5;
 const HOUR_MS = 60 * 60 * 1000;
 
 interface WriteRateState {

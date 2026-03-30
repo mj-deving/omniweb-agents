@@ -67,7 +67,7 @@ describe("publish()", () => {
   it("enforces rate limit before publishing", async () => {
     const session = createTestSession(tempDir);
     // Fill up hourly limit
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       await checkAndRecordWrite(session.stateStore, session.walletAddress, true);
     }
 

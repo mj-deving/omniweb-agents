@@ -423,7 +423,7 @@ describe("ISC-41: record functions use checkAndAppend", () => {
       await checkAndRecordWrite(store, "demos1test", true);
       const remaining = await getWriteRateRemaining(store, "demos1test");
       expect(remaining.dailyRemaining).toBe(13);
-      expect(remaining.hourlyRemaining).toBe(3);
+      expect(remaining.hourlyRemaining).toBe(4);
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

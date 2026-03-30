@@ -41,8 +41,13 @@ const nonEmptyString = z.string().trim().min(1, "must not be empty");
 /** Transaction hash — non-empty, variable-length (no format constraint) */
 const txHashString = nonEmptyString;
 
-/** Text body — non-empty, max 10KB per design doc Section 6.4 */
-const textBody = z.string().trim().min(1, "text must not be empty").max(10240, "text exceeds 10KB limit");
+/**
+ * Text body — minimum 200 chars for long-form scoring bonus (+15 points),
+ * max 10KB per design doc Section 6.4. Posts under 200 chars are guaranteed
+ * to lose the SCORE_LONG_TEXT bonus, so we enforce it at the toolkit level
+ * as a mechanism (scoring reality), not a policy choice.
+ */
+const textBody = z.string().trim().min(200, "text must be at least 200 characters for long-form scoring bonus").max(10240, "text exceeds 10KB limit");
 
 /** Positive finite number — custom messages for backward compatibility with existing tests */
 const positiveFinite = z.number({

@@ -216,7 +216,7 @@ describe("Tool Integration with SDK Bridge", () => {
       const { reply } = await import("../../../src/toolkit/tools/publish.js");
       const result = await reply(session, {
         parentTxHash: "parent-tx-abc",
-        text: "Agreed — the on-chain data confirms accumulation. DAHR-attested verification shows consistent buying pressure across major exchanges.",
+        text: "Agreed — the on-chain data confirms accumulation. DAHR-attested verification shows consistent buying pressure across major exchanges over the past 72 hours. Multiple sources corroborate this trend with high confidence.",
         attestUrl: "https://1.1.1.1/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
       });
 

@@ -43,20 +43,46 @@ First-principles analysis (2026-03-30) revealed:
 
 - [x] **Claim extraction quality logging** (commit `3b55f3e`, 2026-03-30) — `ClaimExtractionDetail` type added: claims[], extraction_method (regex/llm), claim_count. Logs what the matcher is working with.
 
-- [ ] **Capture baseline from 5-10 real sessions** — Session 49 completed 2026-03-30 (1/5 minimum). Instrumentation confirmed working: MatchScoreDetail (per-axis), ClaimExtractionDetail (82 claims via LLM), SourceRelevanceEntry all captured. Early finding: body_match scores are 0-7 out of 25 possible — metadata carries the weight. Need 4+ more sessions.
+- [x] **Capture baseline from 5 sessions** (commits `718fe67`–`2461734`, 2026-03-30) — Sessions 49, 50, 52, 53, 54. Total: 9 posts, 9 match events with full per-axis instrumentation.
 
-- [ ] **Diagnose the actual bottleneck with data** — Is it the matcher scoring? Source evidence relevance? Claim extraction quality? Topic selection? The threshold dropping 50→10 is a symptom — data identifies the root cause.
+- [x] **Diagnose the actual bottleneck with data** — **body_match is the confirmed bottleneck.**
+
+### H0 Baseline Results (2026-03-30)
+
+**9 matches across 5 sessions, all with per-axis scoring:**
+
+| Axis | Range | Max | Pattern |
+|------|-------|-----|---------|
+| topic_relevance | 1–10 | 25 | Low-mid — topic tokens partially match |
+| **body_match** | **0–7** | **25** | **7 of 9 matches scored 0 — sources matched on metadata, not evidence content** |
+| metrics_overlap | 0–15 | 15 | Varies — some sources have numeric data, most don't |
+| metadata_match | 3–12 | 15 | Carries the weight — domain tags and provider relevance |
+| **COMPOSITE** | **14–27** | **100** | All pass threshold 10, but scores are low |
+
+**Diagnosis:** The matcher passes sources almost entirely on metadata overlap. Body match — which measures whether the fetched source content actually contains evidence for the post's claims — scores 0 in 78% of matches. This means attestation proves the source exists but not that it supports the specific claims being made.
+
+**Root cause:** `extractClaims()` produces bag-of-words tokens (capitalized phrases, numbers, 4+ char words). The body match scorer looks for these tokens in the source response body. But source responses are structured JSON (API data), not prose — the tokens don't appear as literal strings in JSON keys/values.
+
+**Additional findings:**
+- Claim extraction via LLM produces 78-88 claims per post — many are noise (usernames, generic words)
+- Post text was not being logged to transcript (fix in progress via Codex)
+- Posts under 200 chars were allowed — now enforced at toolkit level (commit `2461734`)
+- Source pipeline is healthy (98.6% fetch success) — fetch success ≠ evidence relevance confirmed
+- Hourly rate limit was self-imposed (4/hr), chain has no limit — bumped to 5/hr (commit `d388004`)
+
+**H0 trigger for H1a:** MET. Baseline captured. Bottleneck confirmed: body_match scoring on structured API responses.
 
 **Trigger to start H1:** Baseline captured from ≥5 sessions. Root cause of quality issues identified with data, not assumption.
 
-### H1a — Fix the Confirmed Bottleneck
-**Status:** Parked (trigger: H0 complete)
+### H1a — Fix Body Match Scoring
+**Status:** READY (H0 trigger met — baseline captured, bottleneck confirmed)
 **Estimated:** 1-2 sessions
 
-4. **Fix whatever H0 data identifies** — Targeted fix based on data, not assumption. Likely the matcher, but let data decide. If matcher:
-   - Calibrate scoring weights against real match data
-   - Add LLM-assisted claim extraction (requires: cost estimate per session, 30s phase budget analysis, prompt injection security review for untrusted source content)
-   - Threshold tuning with data-backed rationale
+4. **Fix body_match on structured API responses** — H0 data shows body_match=0 in 78% of matches. Root cause: claim tokens are bag-of-words but source responses are structured JSON. The scorer looks for literal string matches in JSON values, which rarely succeed. Options:
+   - Parse source JSON into flattened key-value pairs before matching
+   - Match claim entities (e.g., "compound finance") against known JSON field values (e.g., `name: "Compound"`)
+   - Weight numeric claim matches higher when source response contains matching numbers (already partially done via metrics_overlap, but body_match ignores this)
+   - LLM-assisted claim extraction (requires: cost estimate per session, 30s phase budget analysis, prompt injection security review for untrusted source content)
 
 5. **Measure improvement** — Run 5+ sessions with the fix. Compare against H0 baseline on the same metrics.
 

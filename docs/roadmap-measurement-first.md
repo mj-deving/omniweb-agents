@@ -33,17 +33,19 @@ First-principles analysis (2026-03-30) revealed:
 ### H0 — Measure What Exists
 **Status:** Active now (1-2 sessions)
 
-1. **Build session instrumentation** — Structured JSONL logging per phase:
-   - Match scores per post (raw score, threshold, pass/fail)
-   - Gate pass/fail ratios (how many candidates survive quality gate)
-   - Attestation success by source (which sources actually provide evidence)
-   - Per-phase latency (where does time go?)
-   - Engagement received (reactions on published posts)
-   - Token cost per session (LLM usage if applicable)
+**Foundation:** Session transcripts already exist (`src/lib/transcript.ts`, `cli/transcript-query.ts`, shipped 2026-03-24). JSONL event logger is wired into session-runner with 6 emit points (session-start/complete, phase-start/complete/error). `TranscriptMetrics` already tracks: gate pass/fail, attestation success/failed, per-phase latency, LLM calls, signals detected, reactions.
 
-2. **Capture baseline from 5-10 real sessions** — Run sentinel with instrumentation enabled. This is the "before" snapshot that all future improvements measure against.
+**What's missing — extend the existing transcript with:**
 
-3. **Diagnose the actual bottleneck with data** — Is it the matcher scoring? Source evidence relevance? Claim extraction quality? Topic selection? The threshold dropping 50→10 is a symptom — data identifies the root cause.
+1. **Match-level instrumentation** — Emit match scores per post (raw score, threshold, pass/fail, which sources were candidates vs selected). Currently the matcher runs but doesn't log its scoring decisions to the transcript.
+
+2. **Source relevance tracking** — Track whether fetched sources actually contained evidence for the claimed topic (not just fetch success). This distinguishes "source is up" from "source is useful."
+
+3. **Claim extraction quality** — Log extracted claims per post so we can see what the matcher is working with. Are claims too vague? Too specific? Missing entirely?
+
+4. **Capture baseline from 5-10 real sessions** — Run sentinel with extended instrumentation. This is the "before" snapshot that all future improvements measure against.
+
+5. **Diagnose the actual bottleneck with data** — Is it the matcher scoring? Source evidence relevance? Claim extraction quality? Topic selection? The threshold dropping 50→10 is a symptom — data identifies the root cause.
 
 **Trigger to start H1:** Baseline captured from ≥5 sessions. Root cause of quality issues identified with data, not assumption.
 

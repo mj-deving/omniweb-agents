@@ -315,9 +315,10 @@ async function main(): Promise<void> {
         } finally {
           rmSync(tempDir, { recursive: true, force: true });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
         run.status = "failed";
-        run.error = err.message;
+        run.error = message;
       }
     }
   }

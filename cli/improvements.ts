@@ -70,9 +70,10 @@ function loadFile(filePath: string): ImprovementsFile {
       data.nextSession = 1;
     }
     return data;
-  } catch (err: any) {
-    if (err.message.includes("Invalid improvements")) throw err;
-    throw new Error(`Failed to parse ${filePath}: ${err.message}`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("Invalid improvements")) throw err;
+    throw new Error(`Failed to parse ${filePath}: ${message}`);
   }
 }
 

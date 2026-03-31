@@ -225,10 +225,11 @@ try {
     console.log(`  This means the problem was client-side (?token= or other issue).`);
     console.log(`  Result preview: ${JSON.stringify(result).slice(0, 200)}...`);
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     const dur = ((Date.now() - startTime) / 1000).toFixed(1);
+    const message = err instanceof Error ? err.message : String(err);
     console.log();
-    console.log(`  ✗ FAILED after ${dur}s: ${err.message?.split("\n")[0]}`);
+    console.log(`  ✗ FAILED after ${dur}s: ${message.split("\n")[0]}`);
     console.log();
     console.log(`  ═══ VERDICT ═══`);
     console.log(`  The SDK's own Prover.notarize() (which handles ?token= internally) also fails.`);

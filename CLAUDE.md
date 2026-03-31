@@ -13,7 +13,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `src/lib/llm/llm-provider.ts`. See `.ai/guides/gotchas-detail.md` for resolution order.
 - **TypeScript:** 6.0.2 (target ES2025, strict, zero `tsc --noEmit` errors)
-- **Testing:** vitest (`npm test`). 2166 tests across 166 suites. All code changes must include tests.
+- **Testing:** vitest (`npm test`). 2199 tests across 169 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). See `.ai/guides/gotchas-detail.md` for per-agent and overrides.
 
 ## Project Structure
@@ -21,7 +21,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 See `docs/project-structure.md` for the full tree. Key boundaries:
 - **`src/toolkit/`** — Framework-agnostic toolkit (~80 files). Core: 10 tools, 6 guards, `DemosSession`, `FileStateStore`, SDK bridge, SSRF validator, Zod schemas. Expanded: `sources/` (catalog, fetch, health, rate-limit), `providers/` (declarative-engine, types, generic), `reactive/` (EventLoop\<TAction\>, watermark-store), `chain/` (tx-pipeline, asset-helpers), `math/` (baseline), `network/` (fetch-with-timeout, storage-client), `supercolony/` (scoring), `util/` (errors). Barrel: `src/toolkit/index.ts`. Sub-path exports: `@demos-agents/core/supercolony/scoring`. See `docs/architecture-plumbing-vs-strategy.md` for full classification.
 - **`src/`** — Core types + business logic. `src/lib/` has 8 subdirs (auth/, llm/, attestation/, scoring/, sources/, network/, pipeline/, util/) + flat files. Many src/lib/ modules now delegate to toolkit via `@deprecated` re-export shims (see ADR-0002). `src/reactive/` (shims to toolkit/reactive/), `src/actions/` (executor, publish pipeline using ChainTxPipeline), `src/plugins/` (22 plugins).
-- **`cli/`** — CLI entry points. Two loop modes: `session-runner.ts` (cron, 8-phase) and `event-runner.ts` (long-lived, reactive).
+- **`cli/`** — CLI entry points. Three loop modes: `session-runner.ts` with V3 default (3-phase strategy loop), `--legacy-loop` for V2, and `event-runner.ts` (long-lived, reactive). V3 modules: `v3-loop.ts` (orchestrator), `v3-strategy-bridge.ts` (sense/plan/perf), `publish-executor.ts` (PUBLISH/REPLY attestation pipeline), `action-executor.ts` (ENGAGE/TIP).
 - **`platform/`** — SuperColony-specific barrel. **`connectors/`** — SDK isolation. **`config/`** — Source catalog + strategies.
 
 ## CLI Quick Reference

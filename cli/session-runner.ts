@@ -84,6 +84,7 @@ import { type SignalSnapshot } from "../src/lib/pipeline/signals.js";
 import {
   initStrategyBridge,
   closeStrategyBridge,
+  updateWalletAddress as updateStrategyWallet,
   sense as strategySense,
   plan as strategyPlan,
   computePerformance as strategyPerformance,
@@ -3446,7 +3447,15 @@ async function runV2Loop(
     observe("insight", `V3 strategy: ${strategyPlanResult.actions.length} actions planned [${summaryParts.join(", ")}], ${rejectedCount} rejected`, {
       phase: "act",
       source: "session-runner.ts:runV2Loop:v3-strategy",
-      data: { actions: actionSummary, rejected: rejectedCount, rateLimits: strategyPlanResult.log.rateLimitState },
+      data: {
+        actions: actionSummary,
+        rateLimits: strategyPlanResult.log.rateLimitState,
+        decisionLog: {
+          considered: strategyPlanResult.log.considered.map(c => ({ rule: c.rule, type: c.action.type, target: c.action.target })),
+          selected: strategyPlanResult.log.selected.map(s => ({ type: s.type, priority: s.priority, target: s.target, reason: s.reason })),
+          rejected: strategyPlanResult.log.rejected.map(r => ({ rule: r.rule, type: r.action.type, reason: r.reason })),
+        },
+      },
     });
     info(`V3 strategy engine: ${strategyPlanResult.actions.length} actions [${summaryParts.join(", ")}]`);
   } catch (e: any) {
@@ -3456,6 +3465,11 @@ async function runV2Loop(
       source: "session-runner.ts:runV2Loop:v3-strategy",
     });
     phaseError(`V3 strategy bridge failed (non-critical): ${e.message}`);
+    // Close bridge on error path to prevent DB leak
+    if (strategyBridge) {
+      closeStrategyBridge(strategyBridge);
+      strategyBridge = null;
+    }
   }
 
   // ── ACT ────────────────────────────────────────
@@ -3636,6 +3650,8 @@ async function runV2Loop(
   } // end ACT else block
 
   // ── CONFIRM ────────────────────────────────────
+  // Wrap in try/finally to guarantee strategy bridge cleanup on all paths
+  try {
   const confirmCompleted = state.phases.confirm?.status === "completed";
   if (confirmCompleted) {
     info("CONFIRM already completed — skipping (resume)");
@@ -3687,10 +3703,11 @@ async function runV2Loop(
 
     checkV2PhaseBudget("confirm", Date.now() - confirmStartMs);
   }
-
-  // Close V3 strategy bridge (colony DB)
-  if (strategyBridge) {
-    closeStrategyBridge(strategyBridge);
+  } finally {
+    // Always close V3 strategy bridge (colony DB) — even on CONFIRM throw
+    if (strategyBridge) {
+      closeStrategyBridge(strategyBridge);
+    }
   }
 
   // ── AFTER CONFIRM — extension hooks (PR1: prediction tracking) ──

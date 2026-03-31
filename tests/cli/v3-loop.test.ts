@@ -382,6 +382,39 @@ describe("runV3Loop", () => {
     expect(state.phases.act.status).toBe("failed");
   });
 
+  it("resumes from act completed and only runs confirm", async () => {
+    const state = makeState();
+    state.phases.sense = { status: "completed", result: { scan: {}, strategy: {} } };
+    state.phases.act = { status: "completed", result: { executed: [], skipped: [] } };
+    state.strategyResults = { senseResult: {}, planResult: {}, executionResult: {} };
+    state.posts = [{ txHash: "0xresume", category: "tech" }] as any;
+    const deps = makeDeps();
+
+    await runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), deps);
+
+    expect(senseMock).not.toHaveBeenCalled();
+    expect(planMock).not.toHaveBeenCalled();
+    expect(executePublishActionsMock).not.toHaveBeenCalled();
+    expect(state.phases.confirm.status).toBe("completed");
+    expect(deps.runSubprocess).toHaveBeenCalledWith(
+      "cli/verify.ts",
+      expect.arrayContaining(["0xresume"]),
+      "verify",
+    );
+  });
+
+  it("throws when sense was skipped and ACT requires real sense payload", async () => {
+    const state = makeState();
+    // Simulate --skip-to act scenario: sense marked completed but with skipped result
+    state.phases.sense = { status: "completed", result: { skipped: true, reason: "--skip-to act" } };
+
+    await expect(
+      runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), makeDeps()),
+    ).rejects.toThrow("Missing V3 sense result");
+
+    expect(state.phases.act.status).toBe("failed");
+  });
+
   it("succeeds ACT when at least one action succeeds among failures", async () => {
     const state = makeState();
     planMock.mockResolvedValueOnce({

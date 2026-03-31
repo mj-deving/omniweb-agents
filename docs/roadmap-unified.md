@@ -1,7 +1,7 @@
 # Unified Roadmap: Demos Agents
 
 > **Date:** 2026-03-20
-> **Status:** Draft — pending Marius review
+> **Status:** Superseded by `design-loop-v3.md` (2026-03-30). Skill roadmap tiers deferred to H3.
 > **Vision:** A skill cookbook where agents are compositions of skills + scope + wallet mode.
 
 ---

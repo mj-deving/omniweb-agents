@@ -1,6 +1,6 @@
 # Roadmap: Measurement-First (v2, 2026-03-30)
 
-> **Status:** Active — supersedes `roadmap-unified.md` and all prior workstream plans.
+> **Status:** Superseded by `design-loop-v3.md` (2026-03-30). H0 baseline data remains valid. H1a/H1b items obsoleted by V3 signal-first publish model which eliminates the scoring pipeline entirely.
 > **Derived from:** First-principles reevaluation + Codex review + Fabric design review.
 > **Visual brief:** `~/.claude/diagrams/demos-agents-strategic-brief.html` (downstream rendering).
 

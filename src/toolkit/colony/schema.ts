@@ -172,6 +172,9 @@ export function initColonyCache(dbPath: string): ColonyDatabase {
     }
 
     applyMigrations(db, Number.parseInt(storedVersion, 10));
+    // Idempotent: ensures any new tables/indexes from BASE_SCHEMA_SQL exist.
+    // Safe because BASE_SCHEMA_SQL uses CREATE TABLE/INDEX IF NOT EXISTS.
+    // Migrations that ALTER existing tables must not conflict with BASE_SCHEMA_SQL.
     ensureBaseSchema(db);
   });
 

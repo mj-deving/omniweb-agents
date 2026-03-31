@@ -1,3 +1,5 @@
+const MAX_DEAD_LETTER_RETRIES = 5;
+
 import { safeParse } from "../guards/state-helpers.js";
 import { decodeHiveData as decodeHivePayload } from "../hive-codec.js";
 import { extractClaimsRegex } from "../publish/claim-extractor.js";
@@ -68,11 +70,12 @@ function decodeRawPayload(raw: string): Record<string, unknown> | null {
   const trimmed = raw.trim();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     const parsed = safeParse(trimmed);
-    if (Array.isArray(parsed) || (typeof parsed === "object" && parsed !== null)) {
+    if (typeof parsed === "object" && parsed !== null) {
       const decoded = decodeHivePayload(parsed);
       if (decoded) return decoded;
       if (!Array.isArray(parsed)) return parsed as Record<string, unknown>;
     }
+    return null;
   }
 
   return decodeHivePayload(raw);
@@ -364,7 +367,7 @@ export function processBatch(
 export function retryDeadLetters(db: ColonyDatabase): number {
   let recovered = 0;
 
-  for (const entry of getRetryable(db, 5)) {
+  for (const entry of getRetryable(db, MAX_DEAD_LETTER_RETRIES)) {
     let rawPost: RawHivePost | null = null;
     try {
       rawPost = parseDeadLetterPayload(entry.rawPayload, entry.txHash);

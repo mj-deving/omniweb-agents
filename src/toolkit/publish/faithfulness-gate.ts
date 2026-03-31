@@ -1,3 +1,4 @@
+import { verifyEventClaim } from "./event-verifier.js";
 import { getAliasesForSubject } from "./subject-aliases.js";
 import {
   FaithfulnessResultSchema,
@@ -117,6 +118,17 @@ export function runFaithfulnessGate(
       reason: `attested data is ${formatAgeHours(dataAgeMs)}h old, max ${formatAgeHours(maxStale)}h for ${primaryClaim.identity.metric}`,
       dataAge: dataAgeMs / HOUR_MS,
     });
+  }
+
+  if (primaryClaim.value === null) {
+    const eventVerification = verifyEventClaim(primaryClaim, supporting.attestation.data);
+    if (!eventVerification.pass || !eventVerification.promotable) {
+      return FaithfulnessResultSchema.parse({
+        pass: false,
+        reason: eventVerification.reason ?? "non-numeric claim could not be promoted to factual",
+        dataAge: dataAgeMs / HOUR_MS,
+      });
+    }
   }
 
   const allClaims = options.allClaims;
@@ -289,4 +301,3 @@ function isSameClaim(left: StructuredClaim, right: StructuredClaim): boolean {
     left.value === right.value &&
     left.unit === right.unit;
 }
-

@@ -9,6 +9,7 @@ export {
   PipelineDecisionSchema,
   PipelineResultSchema,
 } from "./types.js";
+export { EventVerificationResultSchema, POSITIVE_STATES, NEGATIVE_STATES, verifyEventClaim } from "./event-verifier.js";
 
 export type {
   ClaimIdentity,
@@ -21,6 +22,7 @@ export type {
   PipelineDecision,
   PipelineResult,
 } from "./types.js";
+export type { EventVerificationResult, EventVerifierOptions } from "./event-verifier.js";
 
 export { extractClaimsRegex } from "./claim-extractor.js";
 export {

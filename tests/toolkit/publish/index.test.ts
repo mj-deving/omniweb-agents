@@ -5,6 +5,7 @@ import * as publishToolkit from "../../../src/toolkit/publish/index.js";
 describe("toolkit publish barrel", () => {
   it("re-exports the publish pipeline primitives", () => {
     expect(typeof publishToolkit.extractClaimsRegex).toBe("function");
+    expect(typeof publishToolkit.verifyEventClaim).toBe("function");
     expect(typeof publishToolkit.runFaithfulnessGate).toBe("function");
     expect(typeof publishToolkit.runSignalFirstPipeline).toBe("function");
   });

@@ -87,13 +87,13 @@ import {
   sense as strategySense,
   plan as strategyPlan,
   computePerformance as strategyPerformance,
-  filterActions,
   summarizeActions,
   type StrategyBridge,
   type SenseResult,
   type PlanResult,
 } from "./v3-strategy-bridge.js";
 import { executeStrategyActions } from "./action-executor.js";
+import { createStrategyTextGenerator } from "./strategy-text-generator.js";
 import {
   loadAgentSourceView,
   preflight as sourcesPreflight,
@@ -3461,61 +3461,65 @@ async function runV2Loop(
     info(`V3 strategy engine: ${strategyPlanResult.actions.length} actions [${summaryParts.join(", ")}]`);
 
     if (strategyPlanResult.actions.length > 0 && !flags.shadow) {
-      const engageActions = filterActions(strategyPlanResult.actions, "ENGAGE");
+      try {
+        const { demos } = await connectWallet(flags.env);
+        // AUTH_PENDING_TOKEN: chain-only path — no API auth needed for on-chain strategy actions
+        const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
+        const provider = resolveProvider(flags.env);
+        const textGenerator = provider
+          ? createStrategyTextGenerator(provider, {
+              personaMdPath: agentConfig.paths.personaMd,
+              strategyYamlPath: agentConfig.paths.strategyYaml,
+              agentName: flags.agent,
+            })
+          : undefined;
+        const executionResult = await executeStrategyActions(strategyPlanResult.actions, {
+          bridge: {
+            publishHiveReaction: bridge.publishHiveReaction.bind(bridge),
+            publishHivePost: bridge.publishHivePost.bind(bridge),
+            transferDem: (to, amount) => bridge.transferDem(to, amount, "Strategy action tip"),
+          },
+          generateText: textGenerator,
+          // Safe default: dry-run unless explicitly disabled — new feature, opt-in to real execution
+          dryRun: flags.dryRun ?? true,
+          observe: (type, message, meta) =>
+            observe(type as ObservationType, message, meta as ObserveOptions),
+        });
 
-      if (engageActions.length > 0) {
-        try {
-          const { demos } = await connectWallet(flags.env);
-          // AUTH_PENDING_TOKEN: chain-only path — no API auth needed for on-chain reactions
-          const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
-          const executionResult = await executeStrategyActions(engageActions, {
-            bridge: {
-              publishHiveReaction: bridge.publishHiveReaction.bind(bridge),
-              publishHivePost: bridge.publishHivePost.bind(bridge),
-              // Only TIP actions use transferDem; ENGAGE actions use publishHiveReaction
-              transferDem: (to, amount) => bridge.transferDem(to, amount, "Strategy action tip"),
-            },
-            // Safe default: dry-run unless explicitly disabled — new feature, opt-in to real execution
-            dryRun: flags.dryRun ?? true,
-            observe: (type, message, meta) =>
-              observe(type as ObservationType, message, meta as ObserveOptions),
-          });
-
-          let executedCount = 0;
-          let failedCount = 0;
-          for (const item of executionResult.executed) {
-            if (item.success) executedCount++;
-            else failedCount++;
-          }
-          const skippedCount = executionResult.skipped.length;
-
-          observe("insight", `V3 ENGAGE execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`, {
-            phase: "act",
-            source: "session-runner.ts:runV2Loop:v3-strategy-execution",
-            data: {
-              requested: engageActions.length,
-              executed: executionResult.executed.map((item) => ({
-                type: item.action.type,
-                target: item.action.target,
-                success: item.success,
-                txHash: item.txHash,
-                error: item.error,
-              })),
-              skipped: executionResult.skipped.map((item) => ({
-                type: item.action.type,
-                target: item.action.target,
-                reason: item.reason,
-              })),
-            },
-          });
-          info(`V3 strategy ENGAGE execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`);
-        } catch (e: any) {
-          observe("error", `V3 strategy action execution failed: ${e.message}`, {
-            phase: "act",
-            source: "session-runner.ts:runV2Loop:v3-strategy-execution",
-          });
-          phaseError(`V3 strategy action execution failed (non-critical): ${e.message}`);
+        let executedCount = 0;
+        let failedCount = 0;
+        for (const item of executionResult.executed) {
+          if (item.success) executedCount++;
+          else failedCount++;
         }
+        const skippedCount = executionResult.skipped.length;
+
+        observe("insight", `V3 strategy execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`, {
+          phase: "act",
+          source: "session-runner.ts:runV2Loop:v3-strategy-execution",
+          data: {
+            requested: strategyPlanResult.actions.length,
+            executed: executionResult.executed.map((item) => ({
+              type: item.action.type,
+              target: item.action.target,
+              success: item.success,
+              txHash: item.txHash,
+              error: item.error,
+            })),
+            skipped: executionResult.skipped.map((item) => ({
+              type: item.action.type,
+              target: item.action.target,
+              reason: item.reason,
+            })),
+          },
+        });
+        info(`V3 strategy execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`);
+      } catch (e: any) {
+        observe("error", `V3 strategy action execution failed: ${e.message}`, {
+          phase: "act",
+          source: "session-runner.ts:runV2Loop:v3-strategy-execution",
+        });
+        phaseError(`V3 strategy action execution failed (non-critical): ${e.message}`);
       }
     }
   } catch (e: any) {

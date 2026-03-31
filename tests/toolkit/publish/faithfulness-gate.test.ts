@@ -25,12 +25,13 @@ function makeAttestation(
 
 describe("runFaithfulnessGate", () => {
   it("passes on exact value match", () => {
-    const claim = extractClaimsRegex("Bitcoin hash rate is 877.9 EH/s.").claims[0];
+    const draft = "Bitcoin hash rate is 877.9 EH/s.";
+    const extraction = extractClaimsRegex(draft);
     const result = runFaithfulnessGate(
-      "Bitcoin hash rate is 877.9 EH/s.",
-      claim,
+      draft,
+      extraction.claims[0],
       [makeAttestation()],
-      { now: new Date("2026-03-31T11:00:00.000Z") },
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
     expect(result.pass).toBe(true);
@@ -40,12 +41,13 @@ describe("runFaithfulnessGate", () => {
   });
 
   it("passes when value drift is within 1%", () => {
-    const claim = extractClaimsRegex("Bitcoin hash rate is 886.6 EH/s.").claims[0];
+    const draft = "Bitcoin hash rate is 886.6 EH/s.";
+    const extraction = extractClaimsRegex(draft);
     const result = runFaithfulnessGate(
-      "Bitcoin hash rate is 886.6 EH/s.",
-      claim,
+      draft,
+      extraction.claims[0],
       [makeAttestation()],
-      { now: new Date("2026-03-31T11:00:00.000Z") },
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
     expect(result.pass).toBe(true);
@@ -53,12 +55,13 @@ describe("runFaithfulnessGate", () => {
   });
 
   it("fails when value drift exceeds 2% and suggests a revision", () => {
-    const claim = extractClaimsRegex("Bitcoin hash rate is 904.3 EH/s.").claims[0];
+    const draft = "Bitcoin hash rate is 904.3 EH/s.";
+    const extraction = extractClaimsRegex(draft);
     const result = runFaithfulnessGate(
-      "Bitcoin hash rate is 904.3 EH/s.",
-      claim,
+      draft,
+      extraction.claims[0],
       [makeAttestation()],
-      { now: new Date("2026-03-31T11:00:00.000Z") },
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
     expect(result.pass).toBe(false);
@@ -70,12 +73,13 @@ describe("runFaithfulnessGate", () => {
   });
 
   it("fails when the attestation subject does not match the claim subject", () => {
-    const claim = extractClaimsRegex("Ethereum hash rate is 877.9 EH/s.").claims[0];
+    const draft = "Ethereum hash rate is 877.9 EH/s.";
+    const extraction = extractClaimsRegex(draft);
     const result = runFaithfulnessGate(
-      "Ethereum hash rate is 877.9 EH/s.",
-      claim,
+      draft,
+      extraction.claims[0],
       [makeAttestation({ sourceId: "bitcoin-network-stats", data: { asset: "bitcoin", hash_rate: 877.9 } })],
-      { now: new Date("2026-03-31T11:00:00.000Z") },
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
     expect(result.pass).toBe(false);
@@ -83,12 +87,13 @@ describe("runFaithfulnessGate", () => {
   });
 
   it("fails on stale data", () => {
-    const claim = extractClaimsRegex("Bitcoin hash rate is 877.9 EH/s.").claims[0];
+    const draft = "Bitcoin hash rate is 877.9 EH/s.";
+    const extraction = extractClaimsRegex(draft);
     const result = runFaithfulnessGate(
-      "Bitcoin hash rate is 877.9 EH/s.",
-      claim,
+      draft,
+      extraction.claims[0],
       [makeAttestation({ timestamp: "2026-03-31T00:00:00.000Z" })],
-      { now: new Date("2026-03-31T11:00:00.000Z") },
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
     expect(result.pass).toBe(false);
@@ -98,17 +103,31 @@ describe("runFaithfulnessGate", () => {
 
   it("fails when extra factual claims are not attested", () => {
     const draft = "Bitcoin hash rate is 877.9 EH/s and Compound TVL is $1.4B.";
-    const primaryClaim = extractClaimsRegex(draft).claims.find((claim) => claim.identity.metric === "hash_rate");
+    const extraction = extractClaimsRegex(draft);
+    const primaryClaim = extraction.claims.find((claim) => claim.identity.metric === "hash_rate");
     const result = runFaithfulnessGate(
       draft,
       primaryClaim!,
       [makeAttestation()],
-      { now: new Date("2026-03-31T11:00:00.000Z") },
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
     expect(result.pass).toBe(false);
     expect(result.reason).toContain("unattested factual claim");
     expect(result.contaminatedClaims).toHaveLength(1);
     expect(result.contaminatedClaims![0].identity.metric).toBe("tvl");
+  });
+
+  it("handles near-zero attested values correctly", () => {
+    const draft = "Bitcoin fee rate is 0.001%.";
+    const extraction = extractClaimsRegex(draft);
+    const result = runFaithfulnessGate(
+      draft,
+      extraction.claims[0],
+      [makeAttestation({ data: { asset: "bitcoin", symbol: "BTC", percentage: 0.001 } })],
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
+    );
+
+    expect(result.pass).toBe(true);
   });
 });

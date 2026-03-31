@@ -23,7 +23,6 @@ export type {
 } from "./types.js";
 
 export { extractClaimsRegex } from "./claim-extractor.js";
-export type { ClaimExtractorOptions } from "./claim-extractor.js";
 export {
   METRIC_UNITS,
   DEFAULT_STALENESS_THRESHOLDS_MS,

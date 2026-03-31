@@ -1,4 +1,3 @@
-import { extractClaimsRegex } from "./claim-extractor.js";
 import { getAliasesForSubject } from "./subject-aliases.js";
 import {
   FaithfulnessResultSchema,
@@ -42,7 +41,7 @@ export const DEFAULT_STALENESS_THRESHOLDS_MS: Record<string, number> = {
 
 export interface FaithfulnessGateOptions {
   now?: Date;
-  allClaims?: StructuredClaim[];
+  allClaims: StructuredClaim[];
   stalenessThresholdsMs?: Partial<Record<string, number>>;
 }
 
@@ -120,7 +119,7 @@ export function runFaithfulnessGate(
     });
   }
 
-  const allClaims = options.allClaims ?? extractClaimsRegex(draftText).claims;
+  const allClaims = options.allClaims;
   const contaminatedClaims = allClaims.filter((claim) =>
     claim.type === "factual" &&
     !isSameClaim(claim, primaryClaim) &&
@@ -164,8 +163,19 @@ export function findSupportingAttestation(
   return candidates[0] ?? null;
 }
 
+const aliasRegexCache = new Map<string, RegExp>();
+
+function getAliasMatcher(alias: string): RegExp {
+  let cached = aliasRegexCache.get(alias);
+  if (!cached) {
+    cached = new RegExp(`\\b${escapeRegExp(alias)}\\b`, "i");
+    aliasRegexCache.set(alias, cached);
+  }
+  return cached;
+}
+
 export function subjectPresent(subject: string, attestation: PublishAttestation): boolean {
-  const normalizedAliases = new Set<string>(getAliasesForSubject(subject));
+  const normalizedAliases = getAliasesForSubject(subject);
 
   const haystacks = [
     attestation.sourceId.toLowerCase(),
@@ -173,7 +183,7 @@ export function subjectPresent(subject: string, attestation: PublishAttestation)
   ];
 
   for (const alias of normalizedAliases) {
-    const matcher = new RegExp(`\\b${escapeRegExp(alias)}\\b`, "i");
+    const matcher = getAliasMatcher(alias);
     if (haystacks.some((haystack) => matcher.test(haystack))) return true;
   }
   return false;
@@ -232,8 +242,13 @@ function collectStringLeaves(value: unknown): string[] {
   return [];
 }
 
+const NEAR_ZERO_EPSILON = 1e-9;
+
 function calculateDrift(claimValue: number, attestedValue: number): number {
-  return Math.abs(claimValue - attestedValue) / Math.max(Math.abs(attestedValue), 1);
+  if (Math.abs(attestedValue) < NEAR_ZERO_EPSILON) {
+    return Math.abs(claimValue) < NEAR_ZERO_EPSILON ? 0 : Infinity;
+  }
+  return Math.abs(claimValue - attestedValue) / Math.abs(attestedValue);
 }
 
 function calculateAgeMs(timestamp: string, now = new Date()): number {

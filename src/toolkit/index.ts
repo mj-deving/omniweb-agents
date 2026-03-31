@@ -156,6 +156,39 @@ export { attest } from "./tools/attest.js";
 export { discoverSources, clearCatalogCache } from "./tools/discover-sources.js";
 export { pay } from "./tools/pay.js";
 export { parseFeedPosts } from "./tools/feed-parser.js";
+// ── Signal-First Publish Pipeline (V3 Phase 1) ──
+export {
+  extractClaimsRegex,
+  runFaithfulnessGate,
+  runSignalFirstPipeline,
+  findSupportingAttestation,
+  subjectPresent,
+  isClaimSupportedByAttestation,
+  METRIC_UNITS,
+  DEFAULT_STALENESS_THRESHOLDS_MS,
+  ClaimIdentitySchema,
+  StructuredClaimSchema,
+  ClaimExtractionResultSchema,
+  PublishAttestationSchema,
+  FaithfulnessResultSchema,
+  PipelineInputSchema,
+  PipelineDecisionSchema,
+  PipelineResultSchema,
+} from "./publish/index.js";
+export type {
+  ClaimIdentity,
+  StructuredClaim,
+  ClaimExtractionResult,
+  ClaimExtractionLlm,
+  PublishAttestation,
+  FaithfulnessResult,
+  PipelineInput,
+  PipelineDecision,
+  PipelineResult,
+  ClaimExtractorOptions,
+  FaithfulnessGateOptions,
+  SignalFirstPipelineOptions,
+} from "./publish/index.js";
 
 // ── SDK Bridge Types (chain-first) ───────────────
 

@@ -88,6 +88,9 @@ async function ingestChainPostsIntoColonyDb(
 
   if (chainPosts.length === 0) return;
 
+  // Temporarily disable FK checks — reply parents may not be in the DB yet.
+  // insertPost uses ON CONFLICT upsert, so re-ingesting the parent later is safe.
+  db.pragma("foreign_keys = OFF");
   const ingest = db.transaction((posts: import("../src/toolkit/types.js").ScanPost[]) => {
     for (const p of posts) {
       const post: CachedPost = {
@@ -104,6 +107,7 @@ async function ingestChainPostsIntoColonyDb(
     }
   });
   ingest(chainPosts);
+  db.pragma("foreign_keys = ON");
 
   const after = countPosts(db);
   const newCount = after - before;

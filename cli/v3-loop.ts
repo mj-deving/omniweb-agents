@@ -27,6 +27,7 @@ import { initStrategyBridge, sense, plan, computePerformance } from "./v3-strate
 import type { StrategyBridge } from "./v3-strategy-bridge.js";
 import { insertPost, countPosts } from "../src/toolkit/colony/posts.js";
 import type { CachedPost } from "../src/toolkit/colony/posts.js";
+import { setCursor } from "../src/toolkit/colony/schema.js";
 
 export interface V3LoopFlags {
   agent: string;
@@ -97,17 +98,27 @@ async function ingestChainPostsIntoColonyDb(
         txHash: p.txHash,
         author: p.author,
         blockNumber: p.blockNumber ?? 0,
-        timestamp: String(p.timestamp),
+        timestamp: new Date(p.timestamp).toISOString(),
         replyTo: p.replyTo ?? null,
         tags: p.tags ?? [],
         text: p.text,
         rawData: { category: p.category, reactions: p.reactions, reactionsKnown: p.reactionsKnown },
       };
+      if (post.blockNumber === 0) {
+        observe("warning", `Post ${p.txHash} missing blockNumber — inserted with 0`, {
+          source: "v3-loop:ingestChainPosts",
+          txHash: p.txHash,
+        });
+      }
       if (post.txHash) insertPost(db, post);
     }
   });
   ingest(chainPosts);
   db.pragma("foreign_keys = ON");
+
+  // Advance cursor to highest block so future sessions skip already-ingested posts
+  const maxBlock = chainPosts.reduce((max, p) => Math.max(max, p.blockNumber ?? 0), 0);
+  if (maxBlock > 0) setCursor(db, maxBlock);
 
   const after = countPosts(db);
   const newCount = after - before;

@@ -79,6 +79,7 @@ Features:
 - FK constraints off during bulk load
 - Progress reporting
 - Runs the colony scanner's dead-letter retry after backfill
+- Individual `insertPost` failures routed to `dead_letters` table (not batch-aborting) — early hive posts may have different encoding or missing fields
 
 ### Step 3: Smart colony layer (future)
 
@@ -96,6 +97,7 @@ CREATE TRIGGER IF NOT EXISTS posts_ai AFTER INSERT ON posts BEGIN
 END;
 
 -- sqlite-vec embeddings (requires npm install sqlite-vec)
+-- Embedding model: all-MiniLM-L6-v2 (384-dim). If switching models, recreate this table.
 CREATE VIRTUAL TABLE IF NOT EXISTS posts_vec USING vec0(
   post_rowid INTEGER PRIMARY KEY,
   embedding float[384]
@@ -118,8 +120,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS posts_vec USING vec0(
 | 1b | Fix FK constraint | `cli/v3-loop.ts` | Nothing |
 | 1c | Verify live session works | Run session | 1a + 1b |
 | 2 | Backfill tool | `cli/backfill-colony.ts` (new) | 1c |
-| 3a | FTS5 schema + triggers | `src/toolkit/colony/schema.ts` | 1c |
-| 3b | sqlite-vec integration | `package.json`, schema, embedding pipeline | Research + 3a |
+| 3a | FTS5 schema + triggers (migration v2) | `src/toolkit/colony/schema.ts` MIGRATIONS[2] | 1c |
+| 3b | sqlite-vec integration (migration v3) | `src/toolkit/colony/schema.ts` MIGRATIONS[3], `package.json` | Research + 3a |
 | 3c | Hybrid search queries | `src/toolkit/colony/` new module | 3a + 3b |
 
 Steps 1a-1c are immediate. Steps 2-3 are next session work.
@@ -137,3 +139,5 @@ B. **v3-loop replaces scan-feed entirely** — inline the activity stats calcula
 C. **Keep double-fetch** — chain reads are cheap, both serve different purposes
 
 Recommendation: Start with C (what we have), evaluate B after V3 proves stable.
+
+**Tech debt tracking:** Double-fetch is intentional technical debt. Target removal: after 2 weeks of stable V3 sessions (target: 2026-04-14). Metric: 14 consecutive sessions with >0 actions produced. Preferred consolidation path: option B (inline activity stats into v3-loop, eliminate scan-feed subprocess).

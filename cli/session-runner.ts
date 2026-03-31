@@ -43,8 +43,10 @@ import {
   isV2,
   isV3,
   CORE_PHASE_ORDER,
+  validateResumeVersion,
   type SessionState,
   type V2SessionState,
+  type V3SessionState,
   type AnySessionState,
   type PhaseName,
   type CorePhase,
@@ -95,6 +97,7 @@ import {
 } from "./v3-strategy-bridge.js";
 import { executeStrategyActions } from "./action-executor.js";
 import { createStrategyTextGenerator } from "./strategy-text-generator.js";
+import { runV3Loop } from "./v3-loop.js";
 import {
   loadAgentSourceView,
   preflight as sourcesPreflight,
@@ -259,7 +262,7 @@ interface RunnerFlags {
   env: string;
   log: string;
   resume: boolean;
-  skipTo: PhaseName | null;
+  skipTo: PhaseName | CorePhase | null;
   forceSkipAudit: boolean;
   dryRun: boolean;
   pretty: boolean;
@@ -290,16 +293,6 @@ function parseArgs(): RunnerFlags {
     }
   }
 
-  const validPhases = getPhaseOrder();
-  let skipTo: PhaseName | null = null;
-  if (flags["skip-to"]) {
-    if (!validPhases.includes(flags["skip-to"] as PhaseName)) {
-      console.error(`Error: --skip-to must be one of: ${validPhases.join(", ")}`);
-      process.exit(1);
-    }
-    skipTo = flags["skip-to"] as PhaseName;
-  }
-
   // Parse oversight level
   let oversight: OversightLevel = "autonomous";
   if (flags["oversight"]) {
@@ -322,26 +315,38 @@ function parseArgs(): RunnerFlags {
   }
 
   // Parse loop version
-  let loopVersion: LoopVersion = 1;
+  let loopVersion: LoopVersion = 3;
   if (flags["loop-version"]) {
     const val = Number(flags["loop-version"]);
-    if (val !== 1 && val !== 2) {
-      console.error(`Error: --loop-version must be 1 or 2, got "${flags["loop-version"]}"`);
+    if (val !== 1 && val !== 2 && val !== 3) {
+      console.error(`Error: --loop-version must be 1, 2, or 3, got "${flags["loop-version"]}"`);
       process.exit(1);
     }
     loopVersion = val as LoopVersion;
   }
+  if (flags["legacy-loop"] === "true") {
+    loopVersion = 2;
+  }
+
+  let skipTo: PhaseName | CorePhase | null = null;
+  if (flags["skip-to"]) {
+    if (loopVersion === 2) {
+      console.error("Error: --skip-to is not supported with --loop-version 2. Use --resume instead.");
+      process.exit(1);
+    }
+
+    const validPhases = (loopVersion === 3 ? CORE_PHASE_ORDER : getPhaseOrder()) as string[];
+    if (!validPhases.includes(flags["skip-to"])) {
+      console.error(`Error: --skip-to must be one of: ${validPhases.join(", ")}`);
+      process.exit(1);
+    }
+    skipTo = flags["skip-to"] as PhaseName | CorePhase;
+  }
 
   // Parse shadow mode
   const shadow = flags["shadow"] === "true";
-  if (shadow && loopVersion !== 2) {
-    console.error("Error: --shadow requires --loop-version 2");
-    process.exit(1);
-  }
-
-  // --skip-to is not supported in v2 (v2 has different phase names)
-  if (skipTo && loopVersion === 2) {
-    console.error("Error: --skip-to is not supported with --loop-version 2. Use --resume instead.");
+  if (shadow && loopVersion === 1) {
+    console.error("Error: --shadow requires --loop-version 2 or 3");
     process.exit(1);
   }
 
@@ -376,10 +381,11 @@ FLAGS:
   --log PATH             Session log path (default: ~/.{agent}-session-log.jsonl)
   --oversight LEVEL      Oversight level: full|approve|autonomous (default: autonomous)
   --resume               Resume interrupted session from last completed phase
-  --skip-to PHASE        Start from specific phase (audit|scan|engage|gate|publish|verify|review|harden)
+  --skip-to PHASE        Start from specific phase (v3: sense|act|confirm, v1: audit|scan|engage|gate|publish|verify|review|harden)
   --force-skip-audit     Required with --skip-to when skipping AUDIT phase
-  --loop-version 1|2     Loop version: 1 (8-phase) or 2 (3-phase SENSE/ACT/CONFIRM) (default: 1)
-  --shadow               Shadow mode: skip publish substage (requires --loop-version 2)
+  --loop-version 1|2|3   Loop version: 1 (8-phase), 2 (legacy 3-phase), 3 (default 3-phase strategy loop)
+  --legacy-loop          Sugar for --loop-version 2
+  --shadow               Shadow mode: skip action execution (requires --loop-version 2 or 3)
   --dry-run              Show what would run without executing
   --exec-backend MODE    Subprocess backend: spawn|tmux (default: spawn)
   --pretty               Human-readable output (default for interactive)
@@ -394,6 +400,10 @@ OVERSIGHT LEVELS:
   AUDIT always loads previous review findings and pending improvements.
 
 PHASE SEQUENCE:
+  Default loop (v3): SENSE → ACT → CONFIRM
+  V3 is autonomous-only. Use --legacy-loop for the older interactive/manual v2 loop.
+
+  Legacy v1 sequence:
   1. AUDIT    (auto)     — Audit previous posts, load review findings + pending improvements
   2. SCAN     (auto)     — Room temperature scan
   3. ENGAGE   (auto)     — Cast reactions (max 5)
@@ -405,7 +415,9 @@ PHASE SEQUENCE:
 
 EXAMPLES:
   npx tsx tools/session-runner.ts --pretty
-  npx tsx tools/session-runner.ts --oversight approve --pretty
+  npx tsx tools/session-runner.ts --loop-version 3 --skip-to act --pretty
+  npx tsx tools/session-runner.ts --legacy-loop --pretty
+  npx tsx tools/session-runner.ts --legacy-loop --oversight approve --pretty
   npx tsx tools/session-runner.ts --oversight autonomous --pretty
   npx tsx tools/session-runner.ts --exec-backend tmux --oversight autonomous --pretty
   SESSION_RUNNER_TMUX_ADAPTER=tmux-cli npx tsx tools/session-runner.ts --exec-backend tmux --pretty
@@ -3828,6 +3840,73 @@ async function runV2Loop(
 
 // ── V2 Session Report ─────────────────────────────
 
+function writeV3SessionReport(state: V3SessionState, oversight: OversightLevel, sessionsDir?: string): void {
+  const sessDir = sessionsDir || resolve(homedir(), `.${state.agentName}`, "sessions");
+  mkdirSync(sessDir, { recursive: true });
+  const reportPath = resolve(sessDir, `session-${state.sessionNumber}-report.md`);
+
+  const duration = ((Date.now() - new Date(state.startedAt).getTime()) / 60000).toFixed(1);
+  const date = new Date(state.startedAt).toISOString().slice(0, 10);
+  const lines: string[] = [];
+
+  const sense = (state.phases.sense?.result || {}) as any;
+  const act = (state.phases.act?.result || {}) as any;
+  const confirm = (state.phases.confirm?.result || {}) as any;
+  const plannedActions = (state.strategyResults?.planResult as any)?.actions || [];
+  const executedActions = Array.isArray(act.executed) ? act.executed : [];
+  const actionCounts = new Map<string, number>();
+
+  for (const item of executedActions) {
+    const type = item?.action?.type;
+    if (typeof type === "string") {
+      actionCounts.set(type, (actionCounts.get(type) || 0) + 1);
+    }
+  }
+
+  lines.push(`# ${state.agentName.charAt(0).toUpperCase() + state.agentName.slice(1)} Session ${state.sessionNumber} — ${date} (v3)`);
+  lines.push("");
+  lines.push(`**Duration:** ${duration} min | **Posts:** ${state.posts.length} | **Oversight:** ${oversight} | **Loop:** v3${state.publishSuppressed ? " (shadow)" : ""}`);
+  lines.push("");
+
+  lines.push("## 1. SENSE");
+  if (sense.scan?.activity) {
+    lines.push(`- ${sense.scan.activity.level || "?"} activity (${sense.scan.activity.posts_per_hour ?? "?"} posts/hr)`);
+  } else {
+    lines.push("- No scan data");
+  }
+  if (sense.strategy?.evidence) {
+    lines.push(`- ${(sense.strategy.evidence || []).length} evidence item(s) available`);
+  }
+  lines.push("");
+
+  lines.push("## 2. ACT");
+  lines.push(`- Planned actions: ${plannedActions.length}`);
+  if (act.skipped === true) {
+    lines.push(`- Skipped: ${act.reason || "unknown"}`);
+  } else if (actionCounts.size > 0) {
+    for (const [type, count] of actionCounts.entries()) {
+      lines.push(`- ${type}: ${count}`);
+    }
+  } else {
+    lines.push("- No actions executed");
+  }
+  lines.push("");
+
+  lines.push("## 3. CONFIRM");
+  if (confirm.skipped) {
+    lines.push("- Skipped (no posts)");
+  } else if (confirm.verify?.summary) {
+    lines.push(`- ${confirm.verify.summary.verified || 0}/${confirm.verify.summary.total || 0} verified in feed`);
+    lines.push(`- ${(confirm.performance || []).length} performance score(s) computed`);
+  } else {
+    lines.push("- No verification data");
+  }
+  lines.push("");
+
+  writeFileSync(reportPath, lines.join("\n"));
+  info(`V3 session report written to ${reportPath}`);
+}
+
 function writeV2SessionReport(state: V2SessionState, oversight: OversightLevel, sessionsDir?: string): void {
   const sessDir = sessionsDir || resolve(homedir(), `.${state.agentName}`, "sessions");
   mkdirSync(sessDir, { recursive: true });
@@ -3932,6 +4011,23 @@ function dryRunV2(sessionNumber: number, flags: RunnerFlags): void {
   console.log();
 }
 
+function dryRunV3(sessionNumber: number, flags: RunnerFlags, startPhase: CorePhase | null): void {
+  banner(sessionNumber, flags.oversight, flags.agent);
+  console.log(`  MODE: dry-run (v3 loop, 3 phases)${flags.shadow ? " [SHADOW]" : ""}\n`);
+
+  let started = startPhase === null;
+  for (let i = 0; i < CORE_PHASE_ORDER.length; i++) {
+    const phase = CORE_PHASE_ORDER[i];
+    if (!started && phase === startPhase) started = true;
+    if (!started) {
+      console.log(`  ${i + 1}. ${phase.toUpperCase()} — SKIPPED`);
+      continue;
+    }
+    console.log(`  ${i + 1}. ${phase.toUpperCase()}`);
+  }
+  console.log();
+}
+
 // ── Dry Run ────────────────────────────────────────
 
 function dryRun(sessionNumber: number, flags: RunnerFlags, startPhase: PhaseName | null): void {
@@ -3971,7 +4067,7 @@ async function main(): Promise<void> {
 
   let state: AnySessionState;
   let sessionNumber: number;
-  let startPhase: PhaseName | null = null;
+  let startPhase: PhaseName | CorePhase | null = null;
 
   if (flags.resume) {
     const active = findActiveSession(sessionsDir, flags.agent);
@@ -3981,13 +4077,13 @@ async function main(): Promise<void> {
     }
 
     // Resume guard: block cross-version resume (Codex #6)
-    const stateVersion = isV2(active) ? 2 : 1;
-    if (stateVersion !== flags.loopVersion) {
+    try {
+      validateResumeVersion(active, flags.loopVersion);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error(
-        `Error: saved state is loop version ${stateVersion} but --loop-version ${flags.loopVersion} was requested.\n` +
-        `Cross-version resume is not supported. Either:\n` +
-        `  - Resume with --loop-version ${stateVersion}\n` +
-        `  - Clear the session state and start fresh with --loop-version ${flags.loopVersion}`
+        `Error: ${message}\n` +
+        `Cross-version resume is not supported.`
       );
       process.exit(1);
     }
@@ -4009,7 +4105,7 @@ async function main(): Promise<void> {
     state.pid = process.pid;
     saveState(state, sessionsDir);
 
-    startPhase = getNextPhase(state) as PhaseName | null;
+    startPhase = getNextPhase(state) as PhaseName | CorePhase | null;
     if (!startPhase) {
       console.log("Session already complete — nothing to resume.");
       clearState(sessionNumber, sessionsDir, flags.agent);
@@ -4020,11 +4116,11 @@ async function main(): Promise<void> {
     sessionNumber = getNextSessionNumber();
 
     if (flags.skipTo) {
-      const phases = getPhaseOrder();
+      const phases = (flags.loopVersion === 3 ? CORE_PHASE_ORDER : getPhaseOrder()) as string[];
       const auditIdx = phases.indexOf("audit");
       const skipIdx = phases.indexOf(flags.skipTo);
 
-      if (skipIdx > auditIdx && !flags.forceSkipAudit) {
+      if (flags.loopVersion === 1 && skipIdx > auditIdx && !flags.forceSkipAudit) {
         console.error(
           `Error: --skip-to ${flags.skipTo} skips AUDIT phase.\n` +
           `AGENT.yaml hard rule: "Never skip audit phase."\n` +
@@ -4038,8 +4134,10 @@ async function main(): Promise<void> {
     if (flags.dryRun) {
       if (flags.loopVersion === 2) {
         dryRunV2(sessionNumber, flags);
+      } else if (flags.loopVersion === 3) {
+        dryRunV3(sessionNumber, flags, startPhase as CorePhase | null);
       } else {
-        dryRun(sessionNumber, flags, startPhase);
+        dryRun(sessionNumber, flags, startPhase as PhaseName | null);
       }
       process.exit(0);
     }
@@ -4048,10 +4146,10 @@ async function main(): Promise<void> {
     info(`Started session ${sessionNumber} (loop v${flags.loopVersion})`);
 
     if (startPhase && !isV2(state)) {
-      const phases = getPhaseOrder();
+      const phases = getPhaseOrder(state);
       for (const phase of phases) {
         if (phase === startPhase) break;
-        completePhase(state, phase, { skipped: true, reason: `--skip-to ${startPhase}` }, sessionsDir);
+        completePhase(state, phase as PhaseName | CorePhase, { skipped: true, reason: `--skip-to ${startPhase}` }, sessionsDir);
       }
     }
   }
@@ -4067,7 +4165,9 @@ async function main(): Promise<void> {
   });
 
   banner(sessionNumber, flags.oversight, flags.agent);
-  if (isV2(state)) {
+  if (isV3(state)) {
+    console.log(`  Loop: v3 (SENSE → ACT → CONFIRM)${flags.shadow ? " [SHADOW]" : ""}`);
+  } else if (isV2(state)) {
     console.log(`  Loop: v2 (SENSE → ACT → CONFIRM)${flags.shadow ? " [SHADOW]" : ""}`);
   }
 
@@ -4099,7 +4199,55 @@ async function main(): Promise<void> {
     : null;
 
   try {
-    if (isV2(state)) {
+    if (isV3(state)) {
+      await runV3Loop(state as V3SessionState, {
+        agent: flags.agent,
+        env: flags.env,
+        log: flags.log,
+        dryRun: flags.dryRun,
+        pretty: flags.pretty,
+        shadow: flags.shadow,
+        oversight: flags.oversight,
+      }, sessionsDir, extensionRegistry, {
+        runSubprocess: runToolAndParse,
+        connectWallet,
+        resolveProvider,
+        agentConfig,
+        getSourceView,
+        observe: (type, msg, meta) => observe(type as ObservationType, msg, meta as ObserveOptions),
+      });
+
+      rl?.close();
+
+      const duration = ((Date.now() - new Date(state.startedAt).getTime()) / 60000).toFixed(1);
+      console.log("\n" + "═".repeat(50));
+      console.log("  SESSION COMPLETE (v3)");
+      console.log("═".repeat(50));
+      console.log(`  Session: ${sessionNumber}`);
+      console.log(`  Oversight: ${flags.oversight}`);
+      console.log(`  Duration: ${duration} min`);
+      console.log(`  Posts: ${state.posts.length}`);
+
+      const actResult = (state.phases.act?.result || {}) as any;
+      if (actResult.skipped === true) {
+        console.log(`  Act: skipped (${actResult.reason || "unknown"})`);
+      } else {
+        console.log(`  Act: ${Array.isArray(actResult.executed) ? actResult.executed.length : 0} executed, ${Array.isArray(actResult.skipped) ? actResult.skipped.length : 0} skipped`);
+      }
+
+      const confirmResult = (state.phases.confirm?.result || {}) as any;
+      if (!confirmResult.skipped && confirmResult.verify?.summary) {
+        console.log(`  Verified: ${confirmResult.verify.summary.verified || 0}/${confirmResult.verify.summary.total || 0}`);
+      }
+      console.log("═".repeat(50) + "\n");
+
+      try {
+        writeV3SessionReport(state, flags.oversight, sessionsDir);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        info(`Warning: could not write session report: ${message}`);
+      }
+    } else if (isV2(state)) {
       // PR2: Auto-register agent profile on first session (non-fatal)
       try {
         const { loadAuthCache } = await import("../src/lib/auth/auth.js");
@@ -4176,8 +4324,8 @@ async function main(): Promise<void> {
     } else {
       // ── V1 Loop ────────────────────────────────
       const v1State = state as SessionState;
-      const phases = getPhaseOrder();
-      const startIdx = startPhase ? phases.indexOf(startPhase) : 0;
+      const phases = getPhaseOrder(v1State);
+      const startIdx = startPhase ? phases.indexOf(startPhase as PhaseName) : 0;
 
       // Session transcript — append-only JSONL event logger
       const transcriptDir = resolve(homedir(), ".config", "demos", "transcripts", flags.agent);

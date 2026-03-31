@@ -745,6 +745,88 @@ Renaming is preferred but touches more files. At minimum, add the doc comment du
 
 **Fix:** No extraction needed — the plan was wrong about its location. Update the plan's reference. The publish-executor imports from `src/lib/sources/index.ts` directly.
 
+### Finding 9 — HIGH: Resume semantics for `strategyResults` undefined (Codex review 2)
+
+**Problem:** `V3SessionState.strategyResults` is declared for resume/reporting, but the pseudocode writes SENSE output into `completePhase(state, "sense", { scan, strategy })` without specifying where `planResult` or `executionResult` are persisted. `extractSenseResult(state)` is called but never defined. ACT resume is ambiguous — if the phase crashes mid-execution, what state is recoverable?
+
+**Fix:** Define an explicit persisted-state contract for V3:
+```
+After SENSE:  state.phases.sense.result = { scan: scanResult, colony: { colonyState, evidence } }
+              state.strategyResults.senseResult = colonyState + evidence (serializable subset)
+
+After PLAN:   state.strategyResults.planResult = { actions: [...], log: decisionLog }
+              saveState(state, sessionsDir)  // <-- persist BEFORE execution starts
+
+After each executed action:
+              state.strategyResults.executionResult.push(actionResult)
+              saveState(state, sessionsDir)  // <-- persist incrementally
+
+ACT resume:   if strategyResults.planResult exists but executionResult is partial,
+              skip already-executed actions (by txHash dedup) and continue with remaining
+```
+
+Add `extractSenseResult()` as a helper that reads `state.phases.sense.result.colony` or falls back to re-running sense if the result is malformed.
+
+### Finding 10 — HIGH: Partial V3 sessions stranded on rollback (Codex review 2)
+
+**Problem:** If a V3 session partially executes ACT (some posts published, some pending), then rollback to V2 is requested, the V3 state file is stranded. Cross-version resume is blocked. Operators have no recovery path beyond manual JSON editing.
+
+**Fix:** Add a `--abandon-session` flag that:
+1. Marks all incomplete phases as `failed` with reason `"abandoned"`
+2. Releases the session lock
+3. Starts a fresh session with the requested loop version
+
+Also add a `--clear-session` variant (already exists in V2) that deletes the state file entirely.
+
+Document in help text:
+```
+If a V3 session is stranded after rollback to V2:
+  npx tsx cli/session-runner.ts --agent sentinel --abandon-session
+  npx tsx cli/session-runner.ts --agent sentinel --loop-version 2 --pretty
+```
+
+### Finding 11 — MEDIUM: No shared contract between light and heavy executors (Codex review 2)
+
+**Problem:** Both executors share one planning result, one wallet, one merge step, and one ACT phase result. But there's no defined contract for ordering, idempotency, observation format, or state-update responsibilities.
+
+**Fix:** Define a shared `ActionExecutionSummary` interface:
+```typescript
+export interface ActionExecutionSummary {
+  type: ActionType;
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  skipped?: boolean;
+  skipReason?: string;
+  durationMs: number;
+}
+```
+
+Both `executeStrategyActions()` and `executePublishActions()` return results that map to this interface. The `mergeExecutionResults()` function in `v3-loop.ts` normalizes both into a unified `ActionExecutionSummary[]` before persisting.
+
+**Ordering contract:** Light actions execute first (ENGAGE/TIP are faster, and their reactions may influence colony state). Heavy actions execute second. This matches the V2 substage order (engage → gate → publish).
+
+**Idempotency:** Each executed action is identified by `{ type, target }`. On resume, skip actions whose `{ type, target }` already appears in `state.strategyResults.executionResult`.
+
+### Finding 12 — MEDIUM: `PublishExecutorDeps` doesn't inject side-effecting operations for unit testing (Codex review 2)
+
+**Problem:** `generatePost`, `attestDahr`, `attestTlsn`, `executeAttestationPlan`, `publishPost` are all imported directly in the publish executor. Tests would need `vi.mock()` for every module, making them brittle.
+
+**Fix:** Add injectable function deps for the expensive operations:
+```typescript
+export interface PublishExecutorDeps {
+  // ... existing deps ...
+  // --- Added per Finding 12 ---
+  generatePost: (input: GeneratePostInput, provider: LLMProvider, config?: LLMConfig) => Promise<PostDraft>;
+  executeAttestationPlan: (plan: AttestationPlan, demos: Demos, options?: ExecutionOptions) => Promise<ExecutionResult>;
+  publishPost: (demos: Demos, input: PublishInput, options?: PublishOptions) => Promise<PublishResult>;
+  attestDahr: (demos: Demos, url: string, method?: string) => Promise<AttestResult>;
+  attestTlsn: (demos: Demos, url: string, method?: string) => Promise<AttestResult>;
+}
+```
+
+The V3 loop wires the real implementations; tests inject mocks directly without `vi.mock()`. This follows the same DI pattern as `V3LoopDeps`.
+
 ---
 
 ## Risks and Mitigations (updated with review findings)
@@ -759,6 +841,10 @@ Renaming is preferred but touches more files. At minimum, add the doc comment du
 | `using` declaration behavior with async functions | Already verified — StrategyBridge implements Disposable, `using` works with Node 22 + tsx. |
 | `selectSourceForTopicV2()` location | Already in `src/lib/sources/index.ts` (Finding 8 — plan was wrong). |
 | `AUTH_PENDING_TOKEN` naming confusion (Finding 7) | Add doc comment or rename to `CHAIN_ONLY_TOKEN`. |
+| **Partial V3 session stranded on rollback (Finding 10)** | **Add `--abandon-session` flag to mark incomplete phases as failed and release lock.** |
+| **Resume crashes mid-ACT with partial execution (Finding 9)** | **Persist plan + execution results incrementally. Resume skips by txHash dedup.** |
+| **Light/heavy executor drift (Finding 11)** | **Shared `ActionExecutionSummary` interface + `mergeExecutionResults()` normalizer.** |
+| **Publish executor hard to unit-test (Finding 12)** | **Inject `generatePost`, `attestDahr`, `publishPost` etc. via deps, not module imports.** |
 
 ---
 

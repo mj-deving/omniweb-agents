@@ -174,6 +174,10 @@ export {
   PipelineInputSchema,
   PipelineDecisionSchema,
   PipelineResultSchema,
+  EventVerificationResultSchema,
+  POSITIVE_STATES,
+  NEGATIVE_STATES,
+  verifyEventClaim,
 } from "./publish/index.js";
 export type {
   ClaimIdentity,
@@ -187,6 +191,8 @@ export type {
   PipelineResult,
   FaithfulnessGateOptions,
   SignalFirstPipelineOptions,
+  EventVerificationResult,
+  EventVerifierOptions,
 } from "./publish/index.js";
 
 // ── SDK Bridge Types (chain-first) ───────────────

@@ -63,19 +63,28 @@ export function initStrategyBridge(
   strategyYamlPath: string,
   walletAddress: string,
 ): StrategyBridgeContext {
+  // Read and validate config BEFORE opening DB to avoid leaking the handle on parse errors
+  const yamlContent = readFileSync(strategyYamlPath, "utf-8");
+  const config = loadStrategyConfig(yamlContent);
+
   const colonyDir = resolve(homedir(), `.${agentName}`, "colony");
   mkdirSync(colonyDir, { recursive: true });
   const dbPath = resolve(colonyDir, "cache.db");
   const db = initColonyCache(dbPath);
-
-  const yamlContent = readFileSync(strategyYamlPath, "utf-8");
-  const config = loadStrategyConfig(yamlContent);
 
   const stateDir = resolve(homedir(), `.${agentName}`, "state");
   mkdirSync(stateDir, { recursive: true });
   const store = new FileStateStore(stateDir);
 
   return { db, config, walletAddress, store };
+}
+
+/**
+ * Update the wallet address after connectWallet() resolves.
+ * Ensures rate-limit key consistency with the publish path.
+ */
+export function updateWalletAddress(ctx: StrategyBridgeContext, walletAddress: string): void {
+  ctx.walletAddress = walletAddress;
 }
 
 /** Close the colony database. Call at end of session. */

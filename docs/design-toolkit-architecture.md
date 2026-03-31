@@ -1,7 +1,7 @@
 # Design: Framework-Agnostic Demos Toolkit
 
+> **Status:** Superseded by `design-loop-v3.md` §9 (Code Placement) for toolkit/strategy boundary. Packaging deferred to V3 Phase 4.
 > Living design document. Iterated session by session until vision is nailed down.
-> **Do not implement until this doc reaches "APPROVED" status.**
 
 **Status:** APPROVED
 **Started:** 2026-03-25

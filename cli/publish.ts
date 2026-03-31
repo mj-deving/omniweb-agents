@@ -512,8 +512,9 @@ async function retry502<T>(name: string, fn: () => Promise<T>): Promise<T> {
   for (let i = 0; i <= delays.length; i++) {
     try {
       return await fn();
-    } catch (err: any) {
-      const msg = String(err?.message || err || "");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      const msg = String(message || "");
       const is502 = /\b502\b|bad gateway/i.test(msg);
       if (!is502 || i >= delays.length) {
         throw err;
@@ -624,9 +625,10 @@ async function main(): Promise<void> {
         if (selectedAttestationType === "TLSN") {
           try {
             attested = await retry502("TLSN attestation", () => attestTlsn(demos, activeSelection.url));
-          } catch (err: any) {
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
             if (plan.fallback === "DAHR" && fallbackSelection) {
-              row.warnings.push(`TLSN failed (${String(err?.message || err)}), falling back to DAHR`);
+              row.warnings.push(`TLSN failed (${message}), falling back to DAHR`);
               activeSelection = fallbackSelection;
               selectedAttestationType = "DAHR";
               attested = await retry502("DAHR attestation", () => attestDahr(demos, activeSelection.url));
@@ -794,9 +796,10 @@ async function main(): Promise<void> {
       );
 
       results.push(row);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       row.status = "failed";
-      row.error = err.message;
+      row.error = message;
       results.push(row);
     }
   }

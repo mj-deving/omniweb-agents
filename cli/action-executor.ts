@@ -137,7 +137,7 @@ export async function executeStrategyActions(
           });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       result.executed.push({ action, success: false, error: message });
       deps.observe("error", `Strategy action failed: ${action.type}`, {

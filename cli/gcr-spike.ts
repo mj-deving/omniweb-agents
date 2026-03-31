@@ -46,8 +46,9 @@ async function main() {
     demos = wallet.demos;
     address = wallet.address;
     console.log("✅ Wallet connected: " + address);
-  } catch (err: any) {
-    console.log("❌ FAIL: Cannot connect wallet — " + err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("❌ FAIL: Cannot connect wallet — " + message);
     process.exit(1);
   }
 
@@ -70,8 +71,9 @@ async function main() {
         }
       }
     }
-  } catch (err: any) {
-    console.log("❌ getAddressInfo failed: " + err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("❌ getAddressInfo failed: " + message);
   }
 
   // Step 3: Try getBlocks (latest 3)
@@ -93,8 +95,9 @@ async function main() {
         console.log(`    First tx: ${typeof firstTx === "string" ? firstTx.slice(0, 60) + "..." : JSON.stringify(firstTx).slice(0, 60) + "..."}`);
       }
     }
-  } catch (err: any) {
-    console.log("❌ getBlocks failed: " + err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("❌ getBlocks failed: " + message);
   }
 
   // Step 4: Try getBlockByNumber on a specific block
@@ -102,8 +105,9 @@ async function main() {
   try {
     const block = await demos.getBlockByNumber(1);
     console.log(`✅ Block #1: ${block.content.ordered_transactions?.length || 0} txs`);
-  } catch (err: any) {
-    console.log("❌ getBlockByNumber failed: " + err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("❌ getBlockByNumber failed: " + message);
   }
 
   // Step 5: Try rpcCall directly for GCR-related queries
@@ -114,8 +118,9 @@ async function main() {
       params: [],
     });
     console.log("✅ RPC status:", JSON.stringify(statusResult).slice(0, 300));
-  } catch (err: any) {
-    console.log("❌ RPC status failed: " + err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("❌ RPC status failed: " + message);
   }
 
   // Step 6: Try to get nonce (simpler test)
@@ -123,8 +128,9 @@ async function main() {
   try {
     const nonce = await demos.getAddressNonce(address);
     console.log(`✅ Nonce: ${nonce}`);
-  } catch (err: any) {
-    console.log("❌ Nonce failed: " + err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log("❌ Nonce failed: " + message);
   }
 
   // Summary

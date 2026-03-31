@@ -469,8 +469,9 @@ function incrementSessionNumber(): void {
     data.nextSession = (data.nextSession || 1) + 1;
     writeFileSync(IMPROVEMENTS_PATH, JSON.stringify(data, null, 2));
     info(`Session number incremented to ${data.nextSession}`);
-  } catch (e: any) {
-    info(`Warning: could not increment session number: ${e.message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    info(`Warning: could not increment session number: ${message}`);
   }
 }
 
@@ -974,9 +975,10 @@ async function runScan(state: SessionState, flags: RunnerFlags): Promise<void> {
 
       info(`Source scan: ${scanResult.sourcesFetched} sources fetched, ${scanResult.signals.length} signals detected`);
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     // Source scan failure is non-fatal — log and continue
-    info(`Source scan error (non-fatal): ${err.message}`);
+    info(`Source scan error (non-fatal): ${message}`);
   }
 
   completePhase(state, "scan", result);
@@ -1803,9 +1805,10 @@ No markdown, no explanation outside the JSON.`;
       info("Reasoning fallback: LLM returned 0 viable topics");
     }
     return results;
-  } catch (e: any) {
-    info(`Reasoning fallback failed (non-fatal): ${e.message}`);
-    observe("error", `Reasoning fallback failed: ${e.message}`, {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    info(`Reasoning fallback failed (non-fatal): ${message}`);
+    observe("error", `Reasoning fallback failed: ${message}`, {
       phase: "gate", substage: "gate",
       source: "session-runner.ts:suggestTopicsWithReasoning",
     });
@@ -1864,8 +1867,9 @@ async function runGateAutonomous(
           sourceView = getSourceView();
           preflightResult = sourcesPreflight(suggestion.topic, sourceView, agentConfig);
         }
-      } catch (e: any) {
-        info(`Discovery failed for "${suggestion.topic}": ${e.message}`);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        info(`Discovery failed for "${suggestion.topic}": ${message}`);
       }
     }
     if (!preflightResult.pass) {
@@ -1993,8 +1997,9 @@ async function runPublishManual(
   let existingLog: any[] = [];
   try {
     existingLog = readSessionLog(flags.log);
-  } catch (e: any) {
-    info(`Warning: could not read session log (${e.message}) — skipping dedupe`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    info(`Warning: could not read session log (${message}) — skipping dedupe`);
   }
   const existingTxHashes = new Set(existingLog.map((e) => e.txHash));
   const publishedHashes: string[] = [];
@@ -2248,10 +2253,11 @@ async function runPublishAutonomous(
           } else {
             info(`Source pre-fetch returned ok=false for "${candidate.sourceId}": ${fetchResult.error || "unknown"}${ci < candidates.length - 1 ? " — trying next candidate" : ""}`);
           }
-        } catch (e: any) {
-          info(`Source pre-fetch failed for "${candidate.sourceId}" (non-fatal): ${e.message}${ci < candidates.length - 1 ? " — trying next candidate" : ""}`);
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          info(`Source pre-fetch failed for "${candidate.sourceId}" (non-fatal): ${message}${ci < candidates.length - 1 ? " — trying next candidate" : ""}`);
           if (ci > 0) {
-            observe("insight", `Pre-fetch fallback #${ci} for "${gp.topic}": ${e.message}`, {
+            observe("insight", `Pre-fetch fallback #${ci} for "${gp.topic}": ${message}`, {
               phase: "publish", substage: "publish",
               source: "session-runner.ts:runPublishAutonomous",
               data: { topic: gp.topic, candidateIndex: ci, sourceId: candidate.sourceId },
@@ -2428,10 +2434,10 @@ async function runPublishAutonomous(
             }
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Claim-driven attestation is additive — never block publish on failure
         // But log as observe() so broken claim mode is detectable in session review
-        const errMsg = String(err?.message || err);
+        const errMsg = err instanceof Error ? err.message : String(err);
         info(`Claim attestation error (non-fatal): ${errMsg}`);
         observe("error", `Claim attestation failed: ${errMsg}`, {
           phase: "publish",
@@ -2479,14 +2485,15 @@ async function runPublishAutonomous(
         if (selectedMethod === "TLSN") {
           try {
             attested = await attestTlsn(demos, selectedUrl);
-          } catch (err: any) {
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
             // Try DAHR fallback if available
             const plan = resolveAttestationPlan(gp.topic, agentConfig);
             const fallbackCandidate = preflightDecision?.candidates?.find(
               (c: any) => c.method === "DAHR"
             );
             if (plan.fallback === "DAHR" && fallbackCandidate) {
-              info(`TLSN failed (${String(err?.message || err)}), falling back to DAHR`);
+              info(`TLSN failed (${message}), falling back to DAHR`);
               selectedUrl = fallbackCandidate.url;
               selectedMethod = "DAHR";
               attested = await attestDahr(demos, selectedUrl);
@@ -2605,9 +2612,10 @@ async function runPublishAutonomous(
         attestationType: selectedMethod,
       });
       saveState(state);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       // Classify the publish failure for observability
-      const msg = e.message || "";
+      const msg = message;
       let failureCode: SubstageFailureCode = "PUBLISH_BROADCAST_FAIL";
       if (msg.includes("TLSN") || msg.includes("timeout")) failureCode = "PUBLISH_TLSN_TIMEOUT";
       else if (msg.includes("DAHR") || msg.includes("HTTP")) failureCode = "PUBLISH_DAHR_REJECT";
@@ -2620,8 +2628,8 @@ async function runPublishAutonomous(
         source: "session-runner.ts:runPublishAutonomous",
         data: { topic: gp.topic, failureCode },
       });
-      phaseError(`Failed to auto-publish "${gp.topic}": ${e.message}`);
-      topicLedger.push({ topic: gp.topic, category: gp.category, status: "failed", error: e.message });
+      phaseError(`Failed to auto-publish "${gp.topic}": ${message}`);
+      topicLedger.push({ topic: gp.topic, category: gp.category, status: "failed", error: message });
       // Continue with next post — don't fail entire phase
     }
   }
@@ -2685,8 +2693,9 @@ async function autoPropose(
       });
       proposed++;
       info(`Auto-proposed: ${suggestion}`);
-    } catch (e: any) {
-      info(`Warning: could not auto-propose "${suggestion}": ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      info(`Warning: could not auto-propose "${suggestion}": ${message}`);
     }
   }
   return proposed;
@@ -2734,8 +2743,9 @@ async function runReviewFull(
       ];
       await runToolAndParse("cli/improvements.ts", impArgs, "improvements.ts propose");
       phaseResult("Improvement proposed");
-    } catch (e: any) {
-      info(`Warning: could not propose improvement: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      info(`Warning: could not propose improvement: ${message}`);
     }
   }
 
@@ -2798,8 +2808,9 @@ function persistReviewFindings(sessionNumber: number, result: any): void {
       })),
     }, agentConfig.paths.findingsFile);
     info("Review findings persisted for next session's AUDIT");
-  } catch (e: any) {
-    info(`Warning: could not persist review findings: ${e.message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    info(`Warning: could not persist review findings: ${message}`);
   }
 }
 
@@ -2956,8 +2967,9 @@ Respond with ONLY a JSON array of types, one per finding. Example: ["CODE-FIX","
         findings[i].type = types[i] as HardenType;
       }
     }
-  } catch (e: any) {
-    info(`LLM classification failed (using rule-based defaults): ${e.message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    info(`LLM classification failed (using rule-based defaults): ${message}`);
   }
   return findings;
 }
@@ -3028,8 +3040,9 @@ async function runHardenFull(
           await proposeImprovement(f.text, `HARDEN finding from session ${state.sessionNumber}`, "strategy.yaml", f.source);
           proposed++;
           phaseResult(`Proposed (STRATEGY): ${f.text.slice(0, 60)}...`);
-        } catch (e: any) {
-          info(`Warning: could not propose: ${e.message}`);
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          info(`Warning: could not propose: ${message}`);
           skipped++;
         }
       } else {
@@ -3045,8 +3058,9 @@ async function runHardenFull(
         await proposeImprovement(f.text, `HARDEN actionable, session ${state.sessionNumber}`, "workflow", f.source);
         actionable++;
         phaseResult(`Proposed (${f.type}): ${f.text.slice(0, 60)}...`);
-      } catch (e: any) {
-        info(`Warning: could not propose: ${e.message}`);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        info(`Warning: could not propose: ${message}`);
         skipped++;
       }
     } else {
@@ -3102,8 +3116,9 @@ async function runHardenApprove(
         try {
           await proposeImprovement(f.text, `HARDEN finding, session ${state.sessionNumber}`, "strategy.yaml", f.source);
           proposed++;
-        } catch (e: any) {
-          info(`Warning: could not propose: ${e.message}`);
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          info(`Warning: could not propose: ${message}`);
           skipped++;
         }
       } else {
@@ -3116,8 +3131,9 @@ async function runHardenApprove(
     try {
       await proposeImprovement(f.text, `HARDEN actionable, session ${state.sessionNumber}`, "workflow", f.source);
       actionable++;
-    } catch (e: any) {
-      info(`Warning: could not propose "${f.text.slice(0, 40)}": ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      info(`Warning: could not propose "${f.text.slice(0, 40)}": ${message}`);
       skipped++;
     }
   }
@@ -3406,9 +3422,10 @@ async function runV2Loop(
       });
 
       completePhase(state, "sense" as any, scanResult, sessionsDir);
-    } catch (e: any) {
-      observe("error", `SENSE failed: ${e.message}`, { phase: "sense", source: "session-runner.ts:runV2Loop" });
-      failPhase(state, "sense" as any, e.message, sessionsDir);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      observe("error", `SENSE failed: ${message}`, { phase: "sense", source: "session-runner.ts:runV2Loop" });
+      failPhase(state, "sense" as any, message, sessionsDir);
       throw e;
     }
 
@@ -3514,21 +3531,23 @@ async function runV2Loop(
           },
         });
         info(`V3 strategy execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`);
-      } catch (e: any) {
-        observe("error", `V3 strategy action execution failed: ${e.message}`, {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        observe("error", `V3 strategy action execution failed: ${message}`, {
           phase: "act",
           source: "session-runner.ts:runV2Loop:v3-strategy-execution",
         });
-        phaseError(`V3 strategy action execution failed (non-critical): ${e.message}`);
+        phaseError(`V3 strategy action execution failed (non-critical): ${message}`);
       }
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
     // Strategy bridge is advisory — don't fail the session if it errors
-    observe("error", `V3 strategy bridge failed: ${e.message}`, {
+    observe("error", `V3 strategy bridge failed: ${message}`, {
       phase: "sense",
       source: "session-runner.ts:runV2Loop:v3-strategy",
     });
-    phaseError(`V3 strategy bridge failed (non-critical): ${e.message}`);
+    phaseError(`V3 strategy bridge failed (non-critical): ${message}`);
     // Close bridge on error path to prevent DB leak
     if (strategyBridge) {
       strategyBridge.close();
@@ -3587,13 +3606,14 @@ async function runV2Loop(
       }
       state.substages = substages;
       saveState(state, sessionsDir);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       // engage fails → continue to gate (non-critical)
-      failSubstage(engageSub, e.message);
+      failSubstage(engageSub, message);
       state.substages = substages;
       saveState(state, sessionsDir);
-      observe("error", `ACT/engage failed: ${e.message}`, { phase: "act", substage: "engage", source: "session-runner.ts:runV2Loop" });
-      phaseError(`Engage failed (non-critical): ${e.message}`);
+      observe("error", `ACT/engage failed: ${message}`, { phase: "act", substage: "engage", source: "session-runner.ts:runV2Loop" });
+      phaseError(`Engage failed (non-critical): ${message}`);
     }
   }
 
@@ -3628,13 +3648,14 @@ async function runV2Loop(
       }
       state.substages = substages;
       saveState(state, sessionsDir);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       // gate fails → skip publish
-      failSubstage(gateSub, e.message);
+      failSubstage(gateSub, message);
       state.substages = substages;
       saveState(state, sessionsDir);
-      observe("error", `ACT/gate failed: ${e.message}`, { phase: "act", substage: "gate", source: "session-runner.ts:runV2Loop" });
-      phaseError(`Gate failed: ${e.message} — skipping publish`);
+      observe("error", `ACT/gate failed: ${message}`, { phase: "act", substage: "gate", source: "session-runner.ts:runV2Loop" });
+      phaseError(`Gate failed: ${message} — skipping publish`);
     }
   }
 
@@ -3668,12 +3689,13 @@ async function runV2Loop(
       completeSubstage(publishSub, publishResult);
       state.substages = substages;
       saveState(state, sessionsDir);
-    } catch (e: any) {
-      failSubstage(publishSub, e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      failSubstage(publishSub, message);
       state.substages = substages;
       saveState(state, sessionsDir);
-      observe("error", `ACT/publish failed: ${e.message}`, { phase: "act", substage: "publish", source: "session-runner.ts:runV2Loop" });
-      phaseError(`Publish failed: ${e.message}`);
+      observe("error", `ACT/publish failed: ${message}`, { phase: "act", substage: "publish", source: "session-runner.ts:runV2Loop" });
+      phaseError(`Publish failed: ${message}`);
     }
   }
 
@@ -3705,8 +3727,9 @@ async function runV2Loop(
       flags: { agent: flags.agent, env: flags.env, log: flags.log, dryRun: flags.dryRun, pretty: flags.pretty },
       logger: hookLogger,
     });
-  } catch (e: any) {
-    observe("error", `afterAct hooks failed: ${e.message}`, {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    observe("error", `afterAct hooks failed: ${message}`, {
       phase: "act",
       source: "session-runner.ts:runV2Loop",
     });
@@ -3739,9 +3762,10 @@ async function runV2Loop(
         });
         completePhase(state, "confirm" as any, verifyResult, sessionsDir);
       }
-    } catch (e: any) {
-      observe("error", `CONFIRM failed: ${e.message}`, { phase: "confirm", source: "session-runner.ts:runV2Loop" });
-      failPhase(state, "confirm" as any, e.message, sessionsDir);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      observe("error", `CONFIRM failed: ${message}`, { phase: "confirm", source: "session-runner.ts:runV2Loop" });
+      failPhase(state, "confirm" as any, message, sessionsDir);
       throw e;
     }
 
@@ -3757,8 +3781,9 @@ async function runV2Loop(
             data: { scores: perfScores.map(s => ({ txHash: s.txHash, raw: s.rawScore, decayed: s.decayedScore })) },
           });
         }
-      } catch (e: any) {
-        observe("error", `V3 performance scoring failed: ${e.message}`, {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        observe("error", `V3 performance scoring failed: ${message}`, {
           phase: "confirm",
           source: "session-runner.ts:runV2Loop:v3-strategy",
         });
@@ -3784,8 +3809,9 @@ async function runV2Loop(
         confirmResult: state.phases.confirm?.result,
         logger: hookLogger,
       });
-    } catch (e: any) {
-      observe("error", `afterConfirm hooks failed: ${e.message}`, {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      observe("error", `afterConfirm hooks failed: ${message}`, {
         phase: "confirm", source: "session-runner.ts:runV2Loop",
       });
       // Non-fatal — don't throw, just log
@@ -3964,9 +3990,10 @@ async function main(): Promise<void> {
 
     try {
       acquireLock(sessionNumber, sessionsDir, flags.agent);
-    } catch (e: any) {
-      if (e.message.includes("is locked by PID")) {
-        console.error(`Error: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (message.includes("is locked by PID")) {
+        console.error(`Error: ${message}`);
         process.exit(1);
       }
       throw e;
@@ -4135,8 +4162,9 @@ async function main(): Promise<void> {
 
       try {
         writeV2SessionReport(state, flags.oversight, sessionsDir);
-      } catch (e: any) {
-        info(`Warning: could not write session report: ${e.message}`);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        info(`Warning: could not write session report: ${message}`);
       }
     } else {
       // ── V1 Loop ────────────────────────────────
@@ -4216,29 +4244,30 @@ async function main(): Promise<void> {
             data: extractPhaseData(phase, phaseResult, v1State),
             metrics: extractTranscriptMetrics(phase, phaseResult, v1State),
           });
-        } catch (e: any) {
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
           // Transcript: phase-error
           emitTranscriptEvent(transcript, {
             type: "phase-error",
             phase,
             durationMs: Date.now() - phaseStartMs,
-            data: { error: e.message },
+            data: { error: message },
           });
 
           // Observe phase failure before exiting
-          observe("error", `Phase ${phase} failed: ${e.message}`, {
+          observe("error", `Phase ${phase} failed: ${message}`, {
             phase,
             source: "session-runner.ts:main-loop",
             data: { phase, durationMs: Date.now() - phaseStartMs },
           });
-          failPhase(v1State, phase, e.message, sessionsDir);
-          phaseError(e.message);
+          failPhase(v1State, phase, message, sessionsDir);
+          phaseError(message);
           // Emit session-complete before exit so transcript is never truncated
           emitTranscriptEvent(transcript, {
             type: "session-complete",
             phase: null,
             durationMs: Date.now() - new Date(v1State.startedAt).getTime(),
-            data: { posts: v1State.posts.length, error: e.message, failedPhase: phase },
+            data: { posts: v1State.posts.length, error: message, failedPhase: phase },
           });
           console.error(`\n  Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume --pretty`);
           rl?.close();
@@ -4277,8 +4306,9 @@ async function main(): Promise<void> {
 
       try {
         writeSessionReport(v1State, flags.oversight, sessionsDir);
-      } catch (e: any) {
-        info(`Warning: could not write session report: ${e.message}`);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        info(`Warning: could not write session report: ${message}`);
       }
     }
 
@@ -4286,10 +4316,11 @@ async function main(): Promise<void> {
     incrementSessionNumber();
     clearState(sessionNumber, sessionsDir, flags.agent);
     info("Session state cleared.");
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
     rl?.close();
     saveState(state, sessionsDir);
-    console.error(`\nFATAL: ${e.message}`);
+    console.error(`\nFATAL: ${message}`);
     console.error(`Session state saved. Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
     process.exit(1);
   }

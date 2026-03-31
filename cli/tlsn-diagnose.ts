@@ -69,11 +69,13 @@ async function main(): Promise<void> {
     try {
       const resp = await fetch(notaryHttp, { signal: AbortSignal.timeout(10000) });
       console.log(`  ✓ Notary HTTP status: ${resp.status} (${elapsed(t1b)})`);
-    } catch (err: any) {
-      console.log(`  ✗ Notary HTTP fetch failed: ${err?.message || err} (${elapsed(t1b)})`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.log(`  ✗ Notary HTTP fetch failed: ${message} (${elapsed(t1b)})`);
     }
-  } catch (err: any) {
-    console.log(`  ✗ Notary info failed: ${err?.message || err} (${elapsed(t1)})`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log(`  ✗ Notary info failed: ${message} (${elapsed(t1)})`);
     if (step === "notary") process.exit(1);
   }
 
@@ -152,8 +154,9 @@ async function main(): Promise<void> {
       console.log(`  ✗ Proxy not allocated within 30s: ${lastError} (${elapsed(t2c)})`);
     }
     console.log(`  Total token+proxy: ${elapsed(t2)}`);
-  } catch (err: any) {
-    console.log(`  ✗ Token request failed: ${err?.message || err} (${elapsed(t2)})`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log(`  ✗ Token request failed: ${message} (${elapsed(t2)})`);
   }
 
   if (step === "token") {
@@ -174,9 +177,10 @@ async function main(): Promise<void> {
     console.log(`    Storage fee:  ${result.storageFee} DEM`);
     const proofSize = JSON.stringify(result.presentation).length;
     console.log(`    Proof size:   ${(proofSize / 1024).toFixed(1)} KB`);
-  } catch (err: any) {
+  } catch (err: unknown) {
     const duration = Date.now() - t3;
-    console.log(`  ✗ Attestation failed after ${(duration / 1000).toFixed(1)}s: ${err?.message || err}`);
+    const message = err instanceof Error ? err.message : String(err);
+    console.log(`  ✗ Attestation failed after ${(duration / 1000).toFixed(1)}s: ${message}`);
   }
 
   // Step 5: Summary

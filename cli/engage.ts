@@ -210,8 +210,9 @@ async function main(): Promise<void> {
       info(
         `${decision.reaction === "agree" ? "👍" : "👎"} ${decision.reaction.toUpperCase()} ${post.txHash.slice(0, 12)}... (${decision.reason})`
       );
-    } catch (err: any) {
-      info(`Failed to react on ${post.txHash.slice(0, 12)}...: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      info(`Failed to react on ${post.txHash.slice(0, 12)}...: ${message}`);
       errors++;
     }
 
@@ -239,8 +240,9 @@ async function main(): Promise<void> {
       try {
         await bridge.publishHiveReaction(target.txHash, "disagree");
         reactOk = true;
-      } catch (err: any) {
-        info(`Failed to react on ${target.txHash.slice(0, 12)}...: ${err.message}`);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        info(`Failed to react on ${target.txHash.slice(0, 12)}...: ${message}`);
         errors++;
       }
 

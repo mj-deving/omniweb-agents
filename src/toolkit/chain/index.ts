@@ -4,6 +4,7 @@ export type {
   ChainProvenance,
   ChainAdapter,
   ChainFamily,
+  ChainEndpoint,
   MockChainAdapterOptions,
   MockChainAdapterReadCall,
 } from "./xm-types.js";

@@ -314,6 +314,7 @@ export type {
   ChainProvenance,
   ChainAdapter,
   ChainFamily,
+  ChainEndpoint,
   MockChainAdapterOptions,
   MockChainAdapterReadCall,
   ContractEntry,

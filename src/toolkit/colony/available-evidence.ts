@@ -1,6 +1,8 @@
 import { getSourceResponse } from "./source-cache.js";
 import type { ColonyDatabase } from "./schema.js";
 
+const CIRCUIT_BREAKER_THRESHOLD = 3;
+
 export interface AvailableEvidence {
   sourceId: string;
   subject: string;
@@ -20,7 +22,7 @@ export function computeAvailableEvidence(
   for (const source of catalogSources) {
     const cached = getSourceResponse(db, source.id);
     if (!cached) continue;
-    if (cached.consecutiveFailures >= 3) continue;
+    if (cached.consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) continue;
     if (cached.responseStatus < 200 || cached.responseStatus >= 300) continue;
 
     const freshness = Math.max(0, Math.floor((now.getTime() - Date.parse(cached.lastFetchedAt)) / 1000));

@@ -3,7 +3,10 @@ export type ChainFamily = "evm" | "solana" | "btc" | "ton" | "near" | "ibc";
 export interface ChainId {
   family: ChainFamily;
   network: string;
-  rpcUrl?: string;
+}
+
+export interface ChainEndpoint extends ChainId {
+  rpcUrl: string;
 }
 
 export interface ChainProvenance {

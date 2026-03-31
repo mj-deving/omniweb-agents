@@ -65,7 +65,7 @@ import { executeAttestationPlan } from "../src/actions/attestation-executor.js";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
 import { resolveAttestationPlan, type AttestationType } from "../src/lib/attestation/attestation-policy.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
-import { initObserver, setObserverPhase, observe, type SubstageResult, type SubstageFailureCode } from "../src/lib/pipeline/observe.js";
+import { initObserver, setObserverPhase, observe, type ObservationType, type ObserveOptions, type SubstageResult, type SubstageFailureCode } from "../src/lib/pipeline/observe.js";
 import {
   loadExtensions,
   runBeforeSense,
@@ -80,17 +80,20 @@ import {
 import type { PublishedPostRecord } from "../src/lib/state.js";
 import { FileStateStore } from "../src/toolkit/state-store.js";
 import { checkAndRecordWrite, getWriteRateRemaining } from "../src/toolkit/guards/write-rate-limit.js";
+import { AUTH_PENDING_TOKEN, createSdkBridge } from "../src/toolkit/sdk-bridge.js";
 import { type SignalSnapshot } from "../src/lib/pipeline/signals.js";
 import {
   initStrategyBridge,
   sense as strategySense,
   plan as strategyPlan,
   computePerformance as strategyPerformance,
+  filterActions,
   summarizeActions,
   type StrategyBridge,
   type SenseResult,
   type PlanResult,
 } from "./v3-strategy-bridge.js";
+import { executeStrategyActions } from "./action-executor.js";
 import {
   loadAgentSourceView,
   preflight as sourcesPreflight,
@@ -3456,6 +3459,65 @@ async function runV2Loop(
       },
     });
     info(`V3 strategy engine: ${strategyPlanResult.actions.length} actions [${summaryParts.join(", ")}]`);
+
+    if (strategyPlanResult.actions.length > 0 && !flags.shadow) {
+      const engageActions = filterActions(strategyPlanResult.actions, "ENGAGE");
+
+      if (engageActions.length > 0) {
+        try {
+          const { demos } = await connectWallet(flags.env);
+          // AUTH_PENDING_TOKEN: chain-only path — no API auth needed for on-chain reactions
+          const bridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
+          const executionResult = await executeStrategyActions(engageActions, {
+            bridge: {
+              publishHiveReaction: bridge.publishHiveReaction.bind(bridge),
+              publishHivePost: bridge.publishHivePost.bind(bridge),
+              // Only TIP actions use transferDem; ENGAGE actions use publishHiveReaction
+              transferDem: (to, amount) => bridge.transferDem(to, amount, "Strategy action tip"),
+            },
+            // Safe default: dry-run unless explicitly disabled — new feature, opt-in to real execution
+            dryRun: flags.dryRun ?? true,
+            observe: (type, message, meta) =>
+              observe(type as ObservationType, message, meta as ObserveOptions),
+          });
+
+          let executedCount = 0;
+          let failedCount = 0;
+          for (const item of executionResult.executed) {
+            if (item.success) executedCount++;
+            else failedCount++;
+          }
+          const skippedCount = executionResult.skipped.length;
+
+          observe("insight", `V3 ENGAGE execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`, {
+            phase: "act",
+            source: "session-runner.ts:runV2Loop:v3-strategy-execution",
+            data: {
+              requested: engageActions.length,
+              executed: executionResult.executed.map((item) => ({
+                type: item.action.type,
+                target: item.action.target,
+                success: item.success,
+                txHash: item.txHash,
+                error: item.error,
+              })),
+              skipped: executionResult.skipped.map((item) => ({
+                type: item.action.type,
+                target: item.action.target,
+                reason: item.reason,
+              })),
+            },
+          });
+          info(`V3 strategy ENGAGE execution: ${executedCount} executed, ${failedCount} failed, ${skippedCount} skipped`);
+        } catch (e: any) {
+          observe("error", `V3 strategy action execution failed: ${e.message}`, {
+            phase: "act",
+            source: "session-runner.ts:runV2Loop:v3-strategy-execution",
+          });
+          phaseError(`V3 strategy action execution failed (non-critical): ${e.message}`);
+        }
+      }
+    }
   } catch (e: any) {
     // Strategy bridge is advisory — don't fail the session if it errors
     observe("error", `V3 strategy bridge failed: ${e.message}`, {

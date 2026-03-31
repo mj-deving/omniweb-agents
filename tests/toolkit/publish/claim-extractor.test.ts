@@ -35,6 +35,18 @@ describe("extractClaimsRegex", () => {
     expect(result.needsLlmTier).toBe(true);
   });
 
+  it("extracts multiplier+unit forms like 1.4B USD and 900K BTC", () => {
+    const result = extractClaimsRegex("Compound TVL is 1.4B USD across Ethereum.");
+    expect(result.claims).toHaveLength(1);
+    expect(result.claims[0].value).toBe(1_400_000_000);
+    expect(result.claims[0].unit).toBe("USD");
+
+    const result2 = extractClaimsRegex("Bitcoin supply is 900K BTC.");
+    expect(result2.claims).toHaveLength(1);
+    expect(result2.claims[0].value).toBe(900_000);
+    expect(result2.claims[0].unit).toBe("BTC");
+  });
+
   it("extracts multiple claims from one draft", () => {
     const result = extractClaimsRegex(
       "Bitcoin hash rate hit 877.9 EH/s while Compound TVL reached $1.4B and gas dropped to 12 gwei."

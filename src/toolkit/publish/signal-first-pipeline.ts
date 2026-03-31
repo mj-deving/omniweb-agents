@@ -60,13 +60,13 @@ export function runSignalFirstPipeline(
     });
   }
 
-  if (faithfulness.suggestedRevision) {
+  if (faithfulness.suggestedRevision || faithfulness.contaminatedClaims?.length) {
     return PipelineResultSchema.parse({
       decision: "REVISE",
       primaryClaim,
       faithfulness,
       allClaims: extraction.claims,
-      reason: faithfulness.reason ?? "value drift detected",
+      reason: faithfulness.reason ?? "revision needed",
     });
   }
 

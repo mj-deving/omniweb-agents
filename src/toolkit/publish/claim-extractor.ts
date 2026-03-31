@@ -45,13 +45,15 @@ const CLAIM_PATTERNS: Array<{
     inferMetric: (_match, text, index) => inferMetricFromContext("%", text, index),
   },
   {
-    regex: /(\d+(?:,\d{3})*(?:\.\d+)?)\s*(EH\/s|TH\/s|GH\/s|gwei|TVL|blocks|USD|BTC|ETH)\b/gi,
+    regex: /(\d+(?:,\d{3})*(?:\.\d+)?)\s*([KMBTkmbt])?\s*(EH\/s|TH\/s|GH\/s|gwei|TVL|blocks|USD|BTC|ETH)\b/gi,
     parseValue: (match) => {
-      const value = parseFloat(match[1].replace(/,/g, ""));
-      return Number.isNaN(value) ? null : value;
+      const base = parseFloat(match[1].replace(/,/g, ""));
+      if (Number.isNaN(base)) return null;
+      const suffix = match[2]?.toLowerCase();
+      return suffix ? base * MULTIPLIERS[suffix] : base;
     },
-    parseUnit: (match) => normalizeUnit(match[2]),
-    inferMetric: (match, text, index) => inferMetricFromContext(normalizeUnit(match[2]), text, index),
+    parseUnit: (match) => normalizeUnit(match[3]),
+    inferMetric: (match, text, index) => inferMetricFromContext(normalizeUnit(match[3]), text, index),
   },
 ];
 

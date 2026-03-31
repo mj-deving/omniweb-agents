@@ -3,7 +3,6 @@ import { escapeRegExp } from "../util/strings.js";
 import {
   ClaimExtractionResultSchema,
   type ClaimExtractionResult,
-  type ClaimExtractionLlm,
   type ClaimIdentity,
   type StructuredClaim,
 } from "./types.js";
@@ -56,13 +55,8 @@ const CLAIM_PATTERNS: Array<{
   },
 ];
 
-export interface ClaimExtractorOptions {
-  llmTier?: ClaimExtractionLlm;
-}
-
 export function extractClaimsRegex(
   draftText: string,
-  _options: ClaimExtractorOptions = {},
 ): ClaimExtractionResult {
   const claims: StructuredClaim[] = [];
   const seen = new Set<string>();

@@ -185,7 +185,6 @@ export type {
   PipelineInput,
   PipelineDecision,
   PipelineResult,
-  ClaimExtractorOptions,
   FaithfulnessGateOptions,
   SignalFirstPipelineOptions,
 } from "./publish/index.js";

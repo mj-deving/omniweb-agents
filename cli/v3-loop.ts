@@ -94,11 +94,21 @@ async function ingestChainPostsIntoColonyDb(
   db.pragma("foreign_keys = OFF");
   const ingest = db.transaction((posts: import("../src/toolkit/types.js").ScanPost[]) => {
     for (const p of posts) {
+      const tsNum = Number(p.timestamp);
+      const tsDate = Number.isFinite(tsNum) ? new Date(tsNum) : null;
+      if (!tsDate || isNaN(tsDate.getTime())) {
+        observe("warning", `Post ${p.txHash} has invalid timestamp ${p.timestamp} — skipped`, {
+          source: "v3-loop:ingestChainPosts",
+          txHash: p.txHash,
+          rawTimestamp: p.timestamp,
+        });
+        continue;
+      }
       const post: CachedPost = {
         txHash: p.txHash,
         author: p.author,
         blockNumber: p.blockNumber ?? 0,
-        timestamp: new Date(p.timestamp).toISOString(),
+        timestamp: tsDate.toISOString(),
         replyTo: p.replyTo ?? null,
         tags: p.tags ?? [],
         text: p.text,

@@ -12,7 +12,8 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **SDK:** `@kynesyslabs/demosdk` v2.11.5 (import `/websdk` subpath directly; also has `/d402`, `/storage`, `/tlsnotary/service`)
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `src/lib/llm/llm-provider.ts`. See `.ai/guides/gotchas-detail.md` for resolution order.
-- **Testing:** vitest (`npm test`). 2108 tests across 159 suites. All code changes must include tests.
+- **TypeScript:** 6.0.2 (target ES2025, strict, zero `tsc --noEmit` errors)
+- **Testing:** vitest (`npm test`). 2166 tests across 166 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). See `.ai/guides/gotchas-detail.md` for per-agent and overrides.
 
 ## Project Structure

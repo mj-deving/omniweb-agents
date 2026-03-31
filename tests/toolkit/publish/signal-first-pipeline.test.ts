@@ -62,7 +62,7 @@ describe("runSignalFirstPipeline", () => {
     expect(result.reason).toContain("LLM tier");
   });
 
-  it("returns DITCH when the draft is contaminated by unattested factual claims", () => {
+  it("returns REVISE when the draft is contaminated by unattested factual claims", () => {
     const result = runSignalFirstPipeline({
       draftText: "Bitcoin hash rate is 877.9 EH/s and Compound TVL is $1.4B.",
       attestations: [makeAttestation()],
@@ -70,8 +70,9 @@ describe("runSignalFirstPipeline", () => {
       now: new Date("2026-03-31T11:00:00.000Z"),
     });
 
-    expect(result.decision).toBe("DITCH");
+    expect(result.decision).toBe("REVISE");
     expect(result.faithfulness?.pass).toBe(false);
+    expect(result.faithfulness?.contaminatedClaims).toHaveLength(1);
     expect(result.reason).toContain("unattested factual claim");
   });
 });

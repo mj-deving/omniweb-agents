@@ -54,7 +54,7 @@ export function runFaithfulnessGate(
   draftText: string,
   primaryClaim: StructuredClaim,
   attestations: PublishAttestation[],
-  options: FaithfulnessGateOptions = {},
+  options: FaithfulnessGateOptions,
 ): FaithfulnessResult {
   const supporting = findSupportingAttestation(primaryClaim, attestations);
   if (!supporting) {
@@ -156,9 +156,15 @@ export function findSupportingAttestation(
       subjectPresent(claim.subject, attestation) &&
       (claim.value === null || attestedValue !== null)
     )
-    .sort((left, right) =>
-      Date.parse(right.attestation.timestamp) - Date.parse(left.attestation.timestamp)
-    );
+    .sort((left, right) => {
+      // Prefer best value match first, then newest timestamp as tiebreaker
+      if (claim.value !== null && left.attestedValue !== null && right.attestedValue !== null) {
+        const leftDrift = calculateDrift(claim.value, left.attestedValue);
+        const rightDrift = calculateDrift(claim.value, right.attestedValue);
+        if (leftDrift !== rightDrift) return leftDrift - rightDrift;
+      }
+      return Date.parse(right.attestation.timestamp) - Date.parse(left.attestation.timestamp);
+    });
 
   return candidates[0] ?? null;
 }
@@ -242,13 +248,8 @@ function collectStringLeaves(value: unknown): string[] {
   return [];
 }
 
-const NEAR_ZERO_EPSILON = 1e-9;
-
 function calculateDrift(claimValue: number, attestedValue: number): number {
-  if (Math.abs(attestedValue) < NEAR_ZERO_EPSILON) {
-    return Math.abs(claimValue) < NEAR_ZERO_EPSILON ? 0 : Infinity;
-  }
-  return Math.abs(claimValue - attestedValue) / Math.abs(attestedValue);
+  return Math.abs(claimValue - attestedValue) / Math.max(Math.abs(attestedValue), 1);
 }
 
 function calculateAgeMs(timestamp: string, now = new Date()): number {

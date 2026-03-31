@@ -129,18 +129,26 @@ export const PipelineResultSchema = z.object({
   reason: z.string().min(1),
 }).strict();
 
-type _AssertClaimIdentity = z.output<typeof ClaimIdentitySchema> extends ClaimIdentity ? true : never;
-type _AssertStructuredClaim = z.output<typeof StructuredClaimSchema> extends StructuredClaim ? true : never;
-type _AssertClaimExtractionResult = z.output<typeof ClaimExtractionResultSchema> extends ClaimExtractionResult ? true : never;
-type _AssertPublishAttestation = z.output<typeof PublishAttestationSchema> extends PublishAttestation ? true : never;
-type _AssertFaithfulnessResult = z.output<typeof FaithfulnessResultSchema> extends FaithfulnessResult ? true : never;
-type _AssertPipelineInput = z.output<typeof PipelineInputSchema> extends PipelineInput ? true : never;
-type _AssertPipelineResult = z.output<typeof PipelineResultSchema> extends PipelineResult ? true : never;
+// Enforcing bidirectional type guards — these fail compilation if schema drifts from interface.
+// Using function-level type assertions: the assignment itself is the check.
+function _assertSchemaSync() {
+  // Forward: Zod output must be assignable to the interface
+  const _ci: ClaimIdentity = {} as z.output<typeof ClaimIdentitySchema>;
+  const _sc: StructuredClaim = {} as z.output<typeof StructuredClaimSchema>;
+  const _cer: ClaimExtractionResult = {} as z.output<typeof ClaimExtractionResultSchema>;
+  const _pa: PublishAttestation = {} as z.output<typeof PublishAttestationSchema>;
+  const _fr: FaithfulnessResult = {} as z.output<typeof FaithfulnessResultSchema>;
+  const _pi: PipelineInput = {} as z.output<typeof PipelineInputSchema>;
+  const _pr: PipelineResult = {} as z.output<typeof PipelineResultSchema>;
 
-type _AssertClaimIdentityRev = ClaimIdentity extends z.input<typeof ClaimIdentitySchema> ? true : never;
-type _AssertStructuredClaimRev = StructuredClaim extends z.input<typeof StructuredClaimSchema> ? true : never;
-type _AssertClaimExtractionResultRev = ClaimExtractionResult extends z.input<typeof ClaimExtractionResultSchema> ? true : never;
-type _AssertPublishAttestationRev = PublishAttestation extends z.input<typeof PublishAttestationSchema> ? true : never;
-type _AssertFaithfulnessResultRev = FaithfulnessResult extends z.input<typeof FaithfulnessResultSchema> ? true : never;
-type _AssertPipelineInputRev = PipelineInput extends z.input<typeof PipelineInputSchema> ? true : never;
-type _AssertPipelineResultRev = PipelineResult extends z.input<typeof PipelineResultSchema> ? true : never;
+  // Reverse: interface must be assignable to Zod input
+  const _ciR: z.input<typeof ClaimIdentitySchema> = {} as ClaimIdentity;
+  const _scR: z.input<typeof StructuredClaimSchema> = {} as StructuredClaim;
+  const _cerR: z.input<typeof ClaimExtractionResultSchema> = {} as ClaimExtractionResult;
+  const _paR: z.input<typeof PublishAttestationSchema> = {} as PublishAttestation;
+  const _frR: z.input<typeof FaithfulnessResultSchema> = {} as FaithfulnessResult;
+  const _piR: z.input<typeof PipelineInputSchema> = {} as PipelineInput;
+  const _prR: z.input<typeof PipelineResultSchema> = {} as PipelineResult;
+
+  void [_ci, _sc, _cer, _pa, _fr, _pi, _pr, _ciR, _scR, _cerR, _paR, _frR, _piR, _prR];
+}

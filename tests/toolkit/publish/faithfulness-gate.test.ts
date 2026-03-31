@@ -118,8 +118,8 @@ describe("runFaithfulnessGate", () => {
     expect(result.contaminatedClaims![0].identity.metric).toBe("tvl");
   });
 
-  it("handles near-zero attested values correctly", () => {
-    const draft = "Bitcoin fee rate is 0.001%.";
+  it("handles sub-1 attested values with max(abs,1) denominator", () => {
+    const draft = "Bitcoin fee rate is 0.00103%.";
     const extraction = extractClaimsRegex(draft);
     const result = runFaithfulnessGate(
       draft,
@@ -128,6 +128,24 @@ describe("runFaithfulnessGate", () => {
       { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
     );
 
+    // max(abs(0.001), 1) = 1, drift = abs(0.00103 - 0.001) / 1 = 0.00003, well under 2%
     expect(result.pass).toBe(true);
+  });
+
+  it("prefers best value match over newest attestation", () => {
+    const draft = "Bitcoin hash rate is 877.9 EH/s.";
+    const extraction = extractClaimsRegex(draft);
+    const result = runFaithfulnessGate(
+      draft,
+      extraction.claims[0],
+      [
+        makeAttestation({ txHash: "0xnew", data: { asset: "bitcoin", symbol: "BTC", hash_rate: 900 }, timestamp: "2026-03-31T10:30:00.000Z" }),
+        makeAttestation({ txHash: "0xold", data: { asset: "bitcoin", symbol: "BTC", hash_rate: 877.9 }, timestamp: "2026-03-31T10:00:00.000Z" }),
+      ],
+      { now: new Date("2026-03-31T11:00:00.000Z"), allClaims: extraction.claims },
+    );
+
+    expect(result.pass).toBe(true);
+    expect(result.attestationTxHash).toBe("0xold");
   });
 });

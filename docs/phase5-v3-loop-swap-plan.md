@@ -220,21 +220,33 @@ export interface PublishExecutorDeps {
   sessionsDir: string;
   observe: (type: string, message: string, meta?: Record<string, unknown>) => void;
   dryRun: boolean;
+  // --- Added per Codex review findings 3-4 ---
+  stateStore: FileStateStore;              // for checkAndRecordWrite() / getWriteRateRemaining()
+  colonyDb?: ColonyDatabase;               // for reply-context loading (Finding 3)
+  calibrationOffset: number;               // from calibrate plugin beforeSense result
+  scanContext: { activity_level: string; posts_per_hour: number; gaps?: string[] };
+  adapters?: Map<string, ProviderAdapter>; // for buildAttestationPlan()
+  usageTracker?: SourceUsageTracker;       // for buildAttestationPlan() cross-action dedup
+  logSession: (entry: unknown) => void;    // appendSessionLog wrapper
+  logQuality: (data: unknown) => void;     // logQualityData wrapper
 }
 
 /**
  * Execute PUBLISH and REPLY strategy actions through the full attestation pipeline.
  *
  * For each action:
- * 1. Rate limit check (write-rate-limit guard)
- * 2. Source resolution (from action.evidence or catalog lookup)
- * 3. Source data pre-fetch for LLM context
- * 4. LLM text generation (generatePost)
- * 5. Quality checks (min length, predicted reactions)
- * 6. Claim extraction + attestation plan + execution
- * 7. Fallback to single-attestation if claim path fails
- * 8. publishPost on-chain
- * 9. State persistence (posts, publishedPosts)
+ * 1.  Rate limit check (checkAndRecordWrite via stateStore)
+ * 2.  Reply context loading — if REPLY, fetch parent from colonyDb (Finding 3)
+ * 3.  Source resolution (from action.evidence or catalog lookup)
+ * 4.  Source data pre-fetch for LLM context
+ * 5.  LLM text generation (generatePost with scanContext + calibrationOffset)
+ * 6.  Quality checks (min length, predicted reactions)
+ * 7.  Substantiation gate — verify draft matches source claims (Finding 2)
+ * 8.  Claim extraction + attestation plan + execution (with adapters/tracker)
+ * 9.  Verification (verifyAttestedValues)
+ * 10. Fallback to single-attestation if claim path fails
+ * 11. publishPost on-chain
+ * 12. State persistence + logging (logSession, logQuality)
  */
 export async function executePublishActions(
   actions: StrategyAction[],
@@ -542,30 +554,34 @@ Only the `sources` plugin uses the deprecated hooks. In V3, the strategy engine'
 
 ---
 
-## Implementation Sequence
+## Implementation Sequence (revised per review findings)
 
 ```
-1. src/lib/state.ts              — V3SessionState, isV3(), LoopVersion update
-   (no deps on other changes)
+1. src/lib/state.ts + resume guard     — V3SessionState, isV3(), LoopVersion, resume guard (Finding 6)
+   + tests/cli/v3-state.test.ts        — including cross-resume rejection tests
+   (atomic commit — MUST ship before any V3 loop code)
 
-2. cli/publish-executor.ts       — new module
-   (depends on: state.ts for V3SessionState)
-   (imports from: attestation pipeline, publish pipeline, sources — all existing)
+2. src/lib/util/extensions.ts          — widen hook contexts to AnySessionState (Finding 1)
+   + src/plugins/*.ts (6 plugins)      — update loopVersion guards to >= 2 (Finding 1)
+   (must ship before V3 loop to avoid silent plugin breakage)
 
-3. cli/v3-loop.ts                — new module
+3. src/lib/sources/substantiation.ts   — extract preflight+match from sources-plugin (Finding 2)
+   + src/plugins/sources-plugin.ts     — delegate to shared module
+   (must ship before publish-executor)
+
+4. cli/publish-executor.ts             — new module, expanded deps (Findings 2-5)
+   + tests/cli/publish-executor.test.ts
+   (depends on: state.ts, substantiation.ts)
+
+5. cli/v3-loop.ts                      — new module
+   + tests/cli/v3-loop.test.ts
    (depends on: state.ts, publish-executor.ts, action-executor.ts, v3-strategy-bridge.ts)
 
-4. cli/session-runner.ts         — wiring
+6. cli/session-runner.ts               — wiring, flag defaults, V3 report
    (depends on: v3-loop.ts, state.ts)
-
-5. src/lib/util/extensions.ts    — deprecation annotations
-   (independent, can be done anytime)
-
-6. tests/*                       — all test files
-   (depend on: modules 1-4)
 ```
 
-Steps 1 and 5 can be done in parallel. Steps 2 and 3 are sequential. Step 4 depends on 3. Step 6 depends on 1-4.
+Steps 1 and 2 can be parallel. Step 3 is independent but must precede 4. Steps 4→5→6 are sequential. Each step is a separate commit with tests.
 
 ---
 
@@ -597,15 +613,152 @@ If V3 has issues:
 
 ---
 
-## Risks and Mitigations
+## Review Findings (Fabric Design Review + Codex Review, 2026-03-31)
+
+Both reviews validated Option B (two executors) as architecturally sound. Codex caught 6 findings (2 high, 4 medium). Fabric caught 2 additional (1 medium, 1 low). All 8 are addressed below with plan amendments.
+
+### Finding 1 — HIGH: V3 hooks typed against V2 state, plugins silently break
+
+**Problem:** `BeforeSenseContext` is typed against `V2SessionState`. Plugins like `signals`, `sc-prices`, `sc-oracle` branch on `loopVersion === 2` and write `signalSnapshot`, `priceSnapshot`, etc. V3 state wouldn't get populated.
+
+**Fix:** Update `BeforeSenseContext`, `AfterActContext`, `AfterConfirmContext` in `src/lib/util/extensions.ts` to accept `AnySessionState` (not just `V2SessionState`). Update plugin guards: change `loopVersion === 2` checks to `loopVersion >= 2` or remove the guard entirely (all V2+ loops use the same state fields). This is a **prerequisite** — must ship in Step 1 alongside `V3SessionState`.
+
+**Files affected:** `src/lib/util/extensions.ts`, `src/plugins/signals-plugin.ts`, `src/plugins/tips-plugin.ts`, `src/plugins/sc-prices-plugin.ts`, `src/plugins/sc-oracle-plugin.ts`, `src/plugins/predictions-plugin.ts`, `src/plugins/calibrate-plugin.ts`
+
+### Finding 2 — HIGH: Dropping publish hooks removes substantiation gate
+
+**Problem:** V2's `beforePublishDraft`/`afterPublishDraft` don't just pick sources — they preflight candidates, prefetch data, run post-generation `match()`, and **reject unsubstantiated drafts**. The plan's `action.evidence[0]` replacement is behaviorally weaker. V3 could publish drafts V2 would reject.
+
+**Fix:** Port the substantiation gate into `publish-executor.ts` as an explicit step between LLM generation and attestation:
+```
+Step 5 (revised): Substantiation gate
+  - After LLM draft generation, run source preflight on the draft text
+  - Verify at least one source candidate matches the draft's claims
+  - If no substantiation: skip action with reason "unsubstantiated draft"
+  - This replaces the `afterPublishDraft` hook with explicit inline logic
+```
+The preflight/match functions from `sources-plugin.ts` (lines 40-90) should be extracted into a shared `src/lib/sources/substantiation.ts` module that both the V2 hook path and V3 publish-executor can call.
+
+**Files affected:** New `src/lib/sources/substantiation.ts`, `cli/publish-executor.ts`, `src/plugins/sources-plugin.ts` (delegates to shared module)
+
+### Finding 3 — MEDIUM: REPLY path missing parent context
+
+**Problem:** `generatePost()` needs `replyTo: { txHash, author, text }` but `StrategyAction` only has `target` (txHash) and sparse metadata. The `reply_with_evidence` rule only emits target + evidence IDs + topics + reply count.
+
+**Fix:** Add a reply-context loading step in `publish-executor.ts` before LLM generation:
+```typescript
+// For REPLY actions: fetch parent post from colony cache
+if (action.type === "REPLY" && action.target) {
+  const parentPost = deps.colonyDb
+    ? lookupPost(deps.colonyDb, action.target)
+    : null;
+  replyContext = parentPost
+    ? { txHash: action.target, author: parentPost.author, text: parentPost.text }
+    : { txHash: action.target, author: action.metadata?.author ?? "unknown", text: action.reason };
+}
+```
+Add `colonyDb?: ColonyDatabase` to `PublishExecutorDeps`. The V3 loop already has the colony DB via the strategy bridge — pass `bridge.db` to the publish executor.
+
+**Files affected:** `cli/publish-executor.ts` (add reply-context loading), `PublishExecutorDeps` (add `colonyDb`)
+
+### Finding 4 — MEDIUM: `PublishExecutorDeps` too narrow
+
+**Problem:** Missing: calibration offset, `scanContext`, declarative adapters for `buildAttestationPlan()`, `FileStateStore` for write limits, source fetch functions, log sinks (`appendSessionLog`, `logQualityData`).
+
+**Fix:** Expand `PublishExecutorDeps`:
+```typescript
+export interface PublishExecutorDeps {
+  demos: Demos;
+  walletAddress: string;
+  provider: LLMProvider | null;
+  agentConfig: AgentConfig;
+  sourceView: AgentSourceView;
+  state: V3SessionState;
+  sessionsDir: string;
+  observe: (type: string, message: string, meta?: Record<string, unknown>) => void;
+  dryRun: boolean;
+  // --- Added per review ---
+  stateStore: FileStateStore;              // for checkAndRecordWrite()
+  colonyDb?: ColonyDatabase;               // for reply-context loading (Finding 3)
+  calibrationOffset: number;               // from calibrate plugin beforeSense
+  scanContext: { activity_level: string; posts_per_hour: number; gaps?: string[] };  // from SENSE result
+  adapters?: Map<string, ProviderAdapter>; // for buildAttestationPlan()
+  usageTracker?: SourceUsageTracker;       // for buildAttestationPlan()
+  logSession: (entry: unknown) => void;    // appendSessionLog wrapper
+  logQuality: (data: unknown) => void;     // logQualityData wrapper
+}
+```
+
+### Finding 5 — MEDIUM: "Reused as-is" count inaccurate
+
+**Problem:** Plan says 9, table lists 12. Several need extra wiring at the seam. `selectSourceForTopicV2()` location is wrong.
+
+**Fix:** Correct the inventory. Functions truly reusable as-is (no extra wiring at call site):
+- `attestDahr()`, `attestTlsn()`, `publishPost()`, `attestAndPublish()` — direct calls
+- `extractStructuredClaimsAuto()` — direct call
+- `verifyAttestedValues()` — direct call
+
+Functions reusable but need wiring (deps must provide prerequisites):
+- `generatePost()` — needs full `GeneratePostInput` (assembled from action + scanContext + calibrationOffset)
+- `buildAttestationPlan()` — needs adapter maps + usage tracker (from `PublishExecutorDeps`)
+- `executeAttestationPlan()` — needs `Demos` instance (from deps)
+- `checkAndRecordWrite()` / `getWriteRateRemaining()` — needs `FileStateStore` (from deps)
+- `selectSourceForTopicV2()` — already exported from `src/lib/sources/index.ts`, NOT from session-runner
+
+**Total: 6 direct + 5 wired = 11 reusable functions. Zero need refactoring.**
+
+### Finding 6 — MEDIUM: Rollback guard doesn't know V3 yet
+
+**Problem:** Current code computes `stateVersion = isV2(active) ? 2 : 1`. V3 state would be misidentified as V1. All state/resume code must be updated together.
+
+**Fix:** Step 1 (state.ts changes) MUST include:
+- `LoopVersion = 1 | 2 | 3`
+- `isV3()` type guard
+- `startSession()` V3 case
+- `normalizeState()` V3 branch
+- Resume guard: `stateVersion = isV3(active) ? 3 : isV2(active) ? 2 : 1`
+
+These ship as one atomic commit BEFORE any V3 loop code. Add a test in `tests/cli/v3-state.test.ts`:
+```typescript
+it("resume guard rejects V2→V3 cross-resume", () => { ... });
+it("resume guard rejects V3→V2 cross-resume", () => { ... });
+```
+
+### Finding 7 — MEDIUM: `AUTH_PENDING_TOKEN` naming misleading (Fabric)
+
+**Problem:** The constant name suggests pending auth, but it's actually the chain-only path (no API auth needed for on-chain operations).
+
+**Fix:** Rename to `CHAIN_ONLY_TOKEN` or add a doc comment:
+```typescript
+/**
+ * Token placeholder for chain-only SDK bridge operations.
+ * No API authentication needed — all operations go through on-chain TX pipeline.
+ * NOT a security placeholder — this is the intended production value for chain-only paths.
+ */
+export const AUTH_PENDING_TOKEN = "__AUTH_PENDING__";
+```
+Renaming is preferred but touches more files. At minimum, add the doc comment during Phase 5 implementation.
+
+### Finding 8 — LOW: Extract `selectSourceForTopicV2()` to shared module (Fabric)
+
+**Problem:** Plan incorrectly states this function is in session-runner.ts. It's already exported from `src/lib/sources/index.ts`.
+
+**Fix:** No extraction needed — the plan was wrong about its location. Update the plan's reference. The publish-executor imports from `src/lib/sources/index.ts` directly.
+
+---
+
+## Risks and Mitigations (updated with review findings)
 
 | Risk | Mitigation |
 |------|-----------|
-| Strategy engine produces no PUBLISH actions for a topic the V2 gate would have passed | Strategy YAML rules tunable without code changes. The 10-session `--legacy-loop` window provides comparison data. |
-| Source resolution from `action.evidence[]` is less robust than the 4-path V2 fallback | Publish executor keeps catalog-lookup fallback (Path 2). Only the extension-hook paths (`beforePublishDraft`/`afterPublishDraft`) are removed. The sources plugin's matching logic was layered on top of catalog lookup anyway. |
-| `using` declaration behavior with async functions | Already verified — StrategyBridge implements `Disposable` and `using` works with Node 22 + tsx. `using` provides synchronous disposal at block exit, sufficient for closing SQLite colony DB. |
-| V3 state files cannot be resumed as V2 | Version mismatch guard at session-runner.ts line 3952 handles this cleanly — blocks cross-version resume with clear error message. |
-| `selectSourceForTopicV2()` is defined inside session-runner.ts (not exported) | Extract to a shared module or import from session-runner. Minor refactor. |
+| Strategy engine produces no PUBLISH actions for a topic V2 gate would have passed | Strategy YAML rules tunable without code. 10-session `--legacy-loop` window for comparison. |
+| **Substantiation gate removal weakens post quality (Finding 2)** | **Port preflight+match into publish-executor as explicit substantiation step. Extract shared module from sources-plugin.** |
+| **V3 hooks break plugin data injection (Finding 1)** | **Widen hook context types to `AnySessionState`. Update plugin `loopVersion` guards to `>= 2`.** |
+| **REPLY actions lose parent context (Finding 3)** | **Load parent post from colony cache in publish-executor. Pass `colonyDb` in deps.** |
+| **Rollback guard misidentifies V3 state (Finding 6)** | **Ship all state.ts changes as atomic Step 1 with cross-resume rejection tests.** |
+| `using` declaration behavior with async functions | Already verified — StrategyBridge implements Disposable, `using` works with Node 22 + tsx. |
+| `selectSourceForTopicV2()` location | Already in `src/lib/sources/index.ts` (Finding 8 — plan was wrong). |
+| `AUTH_PENDING_TOKEN` naming confusion (Finding 7) | Add doc comment or rename to `CHAIN_ONLY_TOKEN`. |
 
 ---
 
@@ -626,16 +779,24 @@ If V3 has issues:
 - All test files for reused modules
 
 ### Modified
-- `src/lib/state.ts` — add `V3SessionState`, `isV3()`, update `LoopVersion`, `AnySessionState`, `startSession`, `normalizeState`
-- `cli/session-runner.ts` — flag parsing, entry point dispatch, V3 report writer, help text
-- `src/lib/util/extensions.ts` — deprecation JSDoc on `beforePublishDraft`/`afterPublishDraft`
+- `src/lib/state.ts` — add `V3SessionState`, `isV3()`, update `LoopVersion`, `AnySessionState`, `startSession`, `normalizeState`, resume guard (Finding 6)
+- `cli/session-runner.ts` — flag parsing, entry point dispatch, V3 report writer, help text, resume guard update
+- `src/lib/util/extensions.ts` — widen hook context types to `AnySessionState` (Finding 1), deprecation JSDoc on publish hooks
+- `src/plugins/signals-plugin.ts` — update `loopVersion` guard to `>= 2` (Finding 1)
+- `src/plugins/sc-prices-plugin.ts` — update `loopVersion` guard to `>= 2` (Finding 1)
+- `src/plugins/sc-oracle-plugin.ts` — update `loopVersion` guard to `>= 2` (Finding 1)
+- `src/plugins/tips-plugin.ts` — update `loopVersion` guard to `>= 2` (Finding 1)
+- `src/plugins/predictions-plugin.ts` — update `loopVersion` guard to `>= 2` (Finding 1)
+- `src/plugins/calibrate-plugin.ts` — update `loopVersion` guard to `>= 2` (Finding 1)
+- `src/plugins/sources-plugin.ts` — extract preflight/match into shared module (Finding 2)
 
 ### New
 - `cli/v3-loop.ts` — V3 loop function (~250 lines)
-- `cli/publish-executor.ts` — PUBLISH/REPLY action executor (~200 lines)
+- `cli/publish-executor.ts` — PUBLISH/REPLY action executor (~250 lines, expanded per Findings 2-4)
+- `src/lib/sources/substantiation.ts` — extracted substantiation gate logic (Finding 2)
 - `tests/cli/v3-loop.test.ts` (~200 lines)
-- `tests/cli/publish-executor.test.ts` (~300 lines)
-- `tests/cli/v3-state.test.ts` (~50 lines)
+- `tests/cli/publish-executor.test.ts` (~350 lines, expanded for substantiation + reply context)
+- `tests/cli/v3-state.test.ts` (~80 lines, expanded for cross-resume rejection tests)
 
 ---
 

@@ -58,6 +58,10 @@ A first-principles analysis (2026-03-29) using 3-agent codebase mapping + FirstP
 
 A module belongs in toolkit if it is a **mechanism** (how something works). It belongs in strategy if it is a **policy** (what to do, with what weights, at what thresholds). When mixed, split the mechanism into toolkit and parameterize the policy.
 
+### Composable primitives principle (merged from ADR-0003)
+
+Toolkit methods must be composable primitives, not monoliths that hide cost. Each method should be honest about its query cost (address-filtered vs global scan). Consumers compose what they need. Aggregate types (e.g., `AgentActivity`) belong in the strategy layer, not the toolkit. Example: `getHivePostsByAuthor` (cheap, filtered) + `getHiveReactions` (expensive, global scan) instead of a monolithic `queryAgentActivity` that hides the cost difference.
+
 ### Security principle
 
 The toolkit boundary is a **security boundary**. Every public function is a backward-compatibility promise. Every parameter is a trust surface. Every configurable threshold is a potential fund-loss vector. When in doubt, keep it opinionated. See [ADR-0007](0007-security-first-real-money.md).

@@ -32,10 +32,7 @@ demos-agents/
 │   ├── session.ts                     # DemosSession — typed SigningHandle, expiry, bridge access
 │   ├── state-store.ts                 # FileStateStore — file-persisted state with proper-lockfile
 │   ├── sdk-bridge.ts                  # SdkBridge — uses ChainTxPipeline for all chain writes
-│   ├── chain-reader.ts               # On-chain data reading (ADR-0011)
-│   ├── chain-scanner.ts              # Address-specific scanning (ADR-0011)
-│   ├── hive-codec.ts                 # HIVE payload encode/decode (ADR-0011)
-│   ├── url-validator.ts               # SSRF validator + createPinnedFetch (DNS rebinding protection)
+│   ├── chain-reader.ts               # On-chain data reading│   ├── chain-scanner.ts              # Address-specific scanning│   ├── hive-codec.ts                 # HIVE payload encode/decode│   ├── url-validator.ts               # SSRF validator + createPinnedFetch (DNS rebinding protection)
 │   ├── schemas.ts                     # Zod schemas (11 + CatalogEntrySchema + D402RequirementSchema)
 │   ├── tools/
 │   │   ├── connect.ts                 # Session lifecycle (connect/disconnect). Throws, not ToolResult.

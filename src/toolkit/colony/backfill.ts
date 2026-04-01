@@ -173,13 +173,15 @@ function decodeRawTransaction(rawTx: {
   // Reactions have an action field
   if (hive.action === "react") {
     const target = String(hive.target ?? "");
-    const reactionType = String(hive.type ?? "agree");
-    if (reactionType !== "agree" && reactionType !== "disagree") return "not-hive";
+    const reactionType = String(hive.type ?? "");
+    // Validate required fields — malformed reactions go to dead letters
+    if (!target) return "malformed";
+    if (reactionType !== "agree" && reactionType !== "disagree") return "malformed";
     return {
       ...envelope,
       kind: "reaction",
       targetTxHash: target,
-      reactionType: reactionType as "agree" | "disagree",
+      reactionType,
       rawData: hive,
     };
   }

@@ -1,4 +1,4 @@
-export {
+import {
   calculateExpectedScore,
   SCORE_BASE,
   SCORE_ATTESTATION,
@@ -11,6 +11,14 @@ export {
   ENGAGEMENT_T2_THRESHOLD,
   LONG_TEXT_MIN_CHARS,
 } from "../../lib/scoring/scoring.js";
+
+// Re-export for consumers that import scoring constants from this module
+export {
+  calculateExpectedScore,
+  SCORE_BASE, SCORE_ATTESTATION, SCORE_CONFIDENCE, SCORE_LONG_TEXT,
+  SCORE_ENGAGEMENT_T1, SCORE_ENGAGEMENT_T2, SCORE_MAX,
+  ENGAGEMENT_T1_THRESHOLD, ENGAGEMENT_T2_THRESHOLD, LONG_TEXT_MIN_CHARS,
+};
 
 // ── Official SuperColony Scoring Formula ────────────────
 
@@ -38,20 +46,23 @@ export interface OfficialScoreResult {
   breakdown: Record<string, number>;
 }
 
-// ── Constants ────────────────────────────────────────────
+// ── Constants (from canonical scoring, extended with short-text penalty) ──
 
-const BASE = 20;
-const ATTESTATION_BONUS = 40;
-const CONFIDENCE_BONUS = 5;
-const LONG_TEXT_BONUS = 15;
+// Aliases — actual values from imported SCORE_* / *_THRESHOLD constants
+const BASE = SCORE_BASE;
+const ATTESTATION_BONUS = SCORE_ATTESTATION;
+const CONFIDENCE_BONUS = SCORE_CONFIDENCE;
+const LONG_TEXT_BONUS = SCORE_LONG_TEXT;
+const LONG_TEXT_THRESHOLD = LONG_TEXT_MIN_CHARS;
+const ENGAGEMENT_T1_BONUS = SCORE_ENGAGEMENT_T1;
+const ENGAGEMENT_T2_BONUS = SCORE_ENGAGEMENT_T2;
+const ENGAGEMENT_T1_MIN = ENGAGEMENT_T1_THRESHOLD;
+const ENGAGEMENT_T2_MIN = ENGAGEMENT_T2_THRESHOLD;
+const MAX = SCORE_MAX;
+
+/** Short text penalty — official spec: text < 50 chars gets -15. Not in calculateExpectedScore. */
 const SHORT_TEXT_PENALTY = -15;
-const ENGAGEMENT_T1_BONUS = 10;
-const ENGAGEMENT_T2_BONUS = 10;
-const LONG_TEXT_THRESHOLD = 200;
 const SHORT_TEXT_THRESHOLD = 50;
-const ENGAGEMENT_T1_MIN = 5;
-const ENGAGEMENT_T2_MIN = 15;
-const MAX_SCORE = 100;
 
 // ── Formula ──────────────────────────────────────────────
 
@@ -83,7 +94,7 @@ export function calculateOfficialScore(input: OfficialScoreInput): OfficialScore
   };
 
   const raw = Object.values(breakdown).reduce((sum, v) => sum + v, 0);
-  const score = Math.max(0, Math.min(raw, MAX_SCORE));
+  const score = Math.max(0, Math.min(raw, MAX));
 
   return { score, breakdown };
 }

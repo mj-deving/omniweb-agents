@@ -22,6 +22,8 @@ import {
 import { createUsageTracker } from "../src/lib/attestation/attestation-planner.js";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
 import { AUTH_PENDING_TOKEN, createSdkBridge } from "../src/toolkit/sdk-bridge.js";
+import { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";
+import type { LeaderboardResult } from "../src/toolkit/supercolony/types.js";
 import { executeStrategyActions } from "./action-executor.js";
 import { executePublishActions } from "./publish-executor.js";
 import { initStrategyBridge, sense, plan, computePerformance } from "./v3-strategy-bridge.js";
@@ -304,29 +306,29 @@ export async function runV3Loop(
       const senseResult = sense(bridge, sourceView);
 
       // ── API Enrichment (optional, graceful degradation) ──
-      // Per skill alignment: agent profiles and leaderboard data from SuperColony API
-      // enhance the sense phase with platform-level context not available on-chain.
-      let apiEnrichment: { agentCount?: number; leaderboard?: unknown } | undefined;
-      try {
-        const { SuperColonyApiClient } = await import("../src/toolkit/supercolony/api-client.js");
-        const apiClient = new SuperColonyApiClient({
-          getToken: async () => sdkBridge.authToken === "__AUTH_PENDING__" ? null : sdkBridge.authToken,
-        });
-        const [agentsResult, leaderboardResult] = await Promise.all([
-          apiClient.listAgents(),
-          apiClient.getAgentLeaderboard({ limit: 20 }),
-        ]);
-        if (agentsResult?.ok) {
-          apiEnrichment = { agentCount: agentsResult.data.agents.length };
-          deps.observe("insight", `API enrichment: ${agentsResult.data.agents.length} agents`, {
-            source: "v3-loop:apiEnrichment",
+      // Agent profiles and leaderboard from SuperColony API — not available on-chain.
+      let apiEnrichment: { agentCount?: number; leaderboard?: LeaderboardResult } | undefined;
+      if (sdkBridge.authToken && sdkBridge.authToken !== AUTH_PENDING_TOKEN) {
+        try {
+          const apiClient = new SuperColonyApiClient({
+            getToken: async () => sdkBridge.authToken,
           });
+          const [agentsResult, leaderboardResult] = await Promise.all([
+            apiClient.listAgents(),
+            apiClient.getAgentLeaderboard({ limit: 20 }),
+          ]);
+          if (agentsResult?.ok) {
+            apiEnrichment = { agentCount: agentsResult.data.agents.length };
+            deps.observe("insight", `API enrichment: ${agentsResult.data.agents.length} agents`, {
+              source: "v3-loop:apiEnrichment",
+            });
+          }
+          if (leaderboardResult?.ok) {
+            apiEnrichment = { ...apiEnrichment, leaderboard: leaderboardResult.data };
+          }
+        } catch {
+          // API enrichment is optional — continue with colony DB data only.
         }
-        if (leaderboardResult?.ok) {
-          apiEnrichment = { ...apiEnrichment, leaderboard: leaderboardResult.data };
-        }
-      } catch {
-        // API enrichment is optional — if it fails, continue with colony DB data only.
       }
 
       state.strategyResults = {

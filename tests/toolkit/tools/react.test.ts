@@ -1,8 +1,8 @@
 /**
- * Tests for react() tool — on-chain HIVE reaction with API fallback.
+ * Tests for react() tool — API-only HIVE reactions.
  *
- * Chain-first: publishes HIVE reaction via publishHiveReaction.
- * Fallback: API POST when chain fails and apiAccess === "authenticated".
+ * Reactions are tracked by SuperColony's backend, not on-chain.
+ * Uses POST /api/feed/{txHash}/react with body { type }.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -11,22 +11,23 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DemosSession } from "../../../src/toolkit/session.js";
 import { FileStateStore } from "../../../src/toolkit/state-store.js";
-import { react } from "../../../src/toolkit/tools/react.js";
+import { react, getReactionCounts } from "../../../src/toolkit/tools/react.js";
 import type { SdkBridge, ApiCallResult, D402SettlementResult, ApiAccessState } from "../../../src/toolkit/sdk-bridge.js";
 
 function createMockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
   return {
     attestDahr: vi.fn(async () => ({ responseHash: "h", txHash: "t", data: {}, url: "" })),
-    apiCall: vi.fn(async (): Promise<ApiCallResult> => ({ ok: false, status: 0, data: "chain-only" })),
+    apiCall: vi.fn(async (): Promise<ApiCallResult> => ({ ok: true, status: 200, data: { success: true } })),
     publishHivePost: vi.fn(async () => ({ txHash: "p" })),
     transferDem: vi.fn(async () => ({ txHash: "t" })),
     payD402: vi.fn(async (): Promise<D402SettlementResult> => ({ success: true, hash: "d" })),
     getDemos: vi.fn() as unknown as SdkBridge["getDemos"],
-    apiAccess: "none" as ApiAccessState,
+    apiAccess: "authenticated" as ApiAccessState,
     verifyTransaction: vi.fn(async () => null),
     getHivePosts: vi.fn(async () => []),
     resolvePostAuthor: vi.fn(async () => null),
-    publishHiveReaction: vi.fn(async () => ({ txHash: "react-on-chain-hash" })),
+    getHivePostsByAuthor: vi.fn(async () => []),
+    getRepliesTo: vi.fn(async () => []),
     ...overrides,
   };
 }
@@ -53,8 +54,8 @@ describe("react()", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  describe("on-chain primary path", () => {
-    it("returns success with txHash on valid agree reaction", async () => {
+  describe("API-based reactions", () => {
+    it("sends agree reaction via API", async () => {
       const bridge = createMockBridge();
       const session = createTestSession(tempDir, bridge);
 
@@ -62,12 +63,14 @@ describe("react()", () => {
 
       expect(result.ok).toBe(true);
       expect(result.data!.success).toBe(true);
-      expect(result.data!.txHash).toBe("react-on-chain-hash");
       expect(result.provenance.path).toBe("local");
-      expect(bridge.publishHiveReaction).toHaveBeenCalledWith("0xabc123", "agree");
+      expect(bridge.apiCall).toHaveBeenCalledWith(
+        "/api/feed/0xabc123/react",
+        { method: "POST", body: JSON.stringify({ type: "agree" }) },
+      );
     });
 
-    it("returns success on valid disagree reaction", async () => {
+    it("sends disagree reaction via API", async () => {
       const bridge = createMockBridge();
       const session = createTestSession(tempDir, bridge);
 
@@ -75,76 +78,56 @@ describe("react()", () => {
 
       expect(result.ok).toBe(true);
       expect(result.data!.success).toBe(true);
-      expect(bridge.publishHiveReaction).toHaveBeenCalledWith("0xdef456", "disagree");
+      expect(bridge.apiCall).toHaveBeenCalledWith(
+        "/api/feed/0xdef456/react",
+        { method: "POST", body: JSON.stringify({ type: "disagree" }) },
+      );
     });
 
-    it("does not call apiCall when chain succeeds", async () => {
+    it("sends flag reaction via API", async () => {
       const bridge = createMockBridge();
       const session = createTestSession(tempDir, bridge);
 
-      await react(session, { txHash: "0xtest", type: "agree" });
-
-      expect(bridge.apiCall).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("API fallback", () => {
-    it("falls back to API when chain fails and apiAccess is authenticated", async () => {
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const bridge = createMockBridge({
-        publishHiveReaction: vi.fn(async () => { throw new Error("Chain broadcast failed"); }),
-        apiAccess: "authenticated" as ApiAccessState,
-        apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
-          ok: true,
-          status: 200,
-          data: { success: true },
-        })),
-      });
-      const session = createTestSession(tempDir, bridge);
-
-      const result = await react(session, { txHash: "0xfallback", type: "agree" });
+      const result = await react(session, { txHash: "0xflag123", type: "flag" });
 
       expect(result.ok).toBe(true);
       expect(result.data!.success).toBe(true);
-      expect(bridge.apiCall).toHaveBeenCalledWith("/api/react", expect.objectContaining({
-        method: "POST",
-      }));
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("API fallback"));
-      warnSpy.mockRestore();
+      expect(bridge.apiCall).toHaveBeenCalledWith(
+        "/api/feed/0xflag123/react",
+        { method: "POST", body: JSON.stringify({ type: "flag" }) },
+      );
     });
 
-    it("does NOT fall back to API when apiAccess is configured (not authenticated)", async () => {
-      const bridge = createMockBridge({
-        publishHiveReaction: vi.fn(async () => { throw new Error("Chain failed"); }),
-        apiAccess: "configured" as ApiAccessState,
-      });
+    it("sends null (remove) reaction via API", async () => {
+      const bridge = createMockBridge();
       const session = createTestSession(tempDir, bridge);
 
-      const result = await react(session, { txHash: "0xnofall", type: "agree" });
+      const result = await react(session, { txHash: "0xremove1", type: null });
 
-      expect(result.ok).toBe(false);
-      expect(result.error!.code).toBe("TX_FAILED");
-      expect(bridge.apiCall).not.toHaveBeenCalled();
+      expect(result.ok).toBe(true);
+      expect(result.data!.success).toBe(true);
+      expect(bridge.apiCall).toHaveBeenCalledWith(
+        "/api/feed/0xremove1/react",
+        { method: "POST", body: JSON.stringify({ type: null }) },
+      );
     });
 
-    it("does NOT fall back to API when apiAccess is none", async () => {
-      const bridge = createMockBridge({
-        publishHiveReaction: vi.fn(async () => { throw new Error("Chain failed"); }),
-        apiAccess: "none" as ApiAccessState,
-      });
+    it("URL-encodes txHash in API path", async () => {
+      const bridge = createMockBridge();
       const session = createTestSession(tempDir, bridge);
 
-      const result = await react(session, { txHash: "0xnoapi", type: "disagree" });
+      await react(session, { txHash: "0xhash/with/slashes", type: "agree" });
 
-      expect(result.ok).toBe(false);
-      expect(result.error!.code).toBe("TX_FAILED");
-      expect(bridge.apiCall).not.toHaveBeenCalled();
+      expect(bridge.apiCall).toHaveBeenCalledWith(
+        "/api/feed/0xhash%2Fwith%2Fslashes/react",
+        expect.objectContaining({ method: "POST" }),
+      );
     });
+  });
 
-    it("returns TX_FAILED when both chain and API fail", async () => {
+  describe("API failure handling", () => {
+    it("returns TX_FAILED when API returns error status", async () => {
       const bridge = createMockBridge({
-        publishHiveReaction: vi.fn(async () => { throw new Error("Chain failed"); }),
-        apiAccess: "authenticated" as ApiAccessState,
         apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
           ok: false,
           status: 500,
@@ -153,26 +136,47 @@ describe("react()", () => {
       });
       const session = createTestSession(tempDir, bridge);
 
-      const result = await react(session, { txHash: "0xbothfail", type: "agree" });
+      const result = await react(session, { txHash: "0xfail", type: "agree" });
 
       expect(result.ok).toBe(false);
       expect(result.error!.code).toBe("TX_FAILED");
-      expect(result.error!.message).toContain("chain");
+      expect(result.error!.message).toContain("500");
     });
 
-    it("returns TX_FAILED when both chain and API throw", async () => {
+    it("returns NETWORK_ERROR when API call throws", async () => {
       const bridge = createMockBridge({
-        publishHiveReaction: vi.fn(async () => { throw new Error("Chain down"); }),
-        apiAccess: "authenticated" as ApiAccessState,
-        apiCall: vi.fn(async () => { throw new Error("API also down"); }),
+        apiCall: vi.fn(async () => { throw new Error("Network timeout"); }),
       });
       const session = createTestSession(tempDir, bridge);
 
-      const result = await react(session, { txHash: "0xbotherr", type: "disagree" });
+      const result = await react(session, { txHash: "0xthrow", type: "disagree" });
 
       expect(result.ok).toBe(false);
-      expect(result.error!.code).toBe("TX_FAILED");
-      expect(result.error!.message).toContain("both chain and API");
+      expect(result.error!.code).toBe("NETWORK_ERROR");
+      expect(result.error!.message).toContain("Network timeout");
+    });
+
+    it("returns NETWORK_ERROR in chain-only mode (no API)", async () => {
+      const bridge = createMockBridge({ apiAccess: "none" as ApiAccessState });
+      const session = createTestSession(tempDir, bridge);
+
+      const result = await react(session, { txHash: "0xnoapi", type: "agree" });
+
+      expect(result.ok).toBe(false);
+      expect(result.error!.code).toBe("NETWORK_ERROR");
+      expect(result.error!.message).toContain("chain-only mode");
+      expect(bridge.apiCall).not.toHaveBeenCalled();
+    });
+
+    it("returns NETWORK_ERROR when apiAccess is configured but not authenticated", async () => {
+      const bridge = createMockBridge({ apiAccess: "configured" as ApiAccessState });
+      const session = createTestSession(tempDir, bridge);
+
+      const result = await react(session, { txHash: "0xpending", type: "agree" });
+
+      expect(result.ok).toBe(false);
+      expect(result.error!.code).toBe("NETWORK_ERROR");
+      expect(bridge.apiCall).not.toHaveBeenCalled();
     });
   });
 
@@ -198,5 +202,86 @@ describe("react()", () => {
       expect(result.ok).toBe(false);
       expect(result.error!.code).toBe("INVALID_INPUT");
     });
+  });
+});
+
+describe("getReactionCounts()", () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "demos-react-counts-"));
+  });
+
+  afterEach(() => {
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it("returns reaction counts from API", async () => {
+    const bridge = createMockBridge({
+      apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
+        ok: true,
+        status: 200,
+        data: { agree: 5, disagree: 2, flag: 1 },
+      })),
+    });
+    const session = createTestSession(tempDir, bridge);
+
+    const counts = await getReactionCounts(session, "0xcounts");
+
+    expect(counts).toEqual({ agree: 5, disagree: 2, flag: 1 });
+    expect(bridge.apiCall).toHaveBeenCalledWith(
+      "/api/feed/0xcounts/react",
+      { method: "GET" },
+    );
+  });
+
+  it("returns null when API is not authenticated", async () => {
+    const bridge = createMockBridge({ apiAccess: "none" as ApiAccessState });
+    const session = createTestSession(tempDir, bridge);
+
+    const counts = await getReactionCounts(session, "0xnoapi");
+
+    expect(counts).toBeNull();
+  });
+
+  it("returns null when API returns error", async () => {
+    const bridge = createMockBridge({
+      apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
+        ok: false,
+        status: 500,
+        data: "error",
+      })),
+    });
+    const session = createTestSession(tempDir, bridge);
+
+    const counts = await getReactionCounts(session, "0xerr");
+
+    expect(counts).toBeNull();
+  });
+
+  it("returns null when API call throws", async () => {
+    const bridge = createMockBridge({
+      apiCall: vi.fn(async () => { throw new Error("timeout"); }),
+    });
+    const session = createTestSession(tempDir, bridge);
+
+    const counts = await getReactionCounts(session, "0xthrow");
+
+    expect(counts).toBeNull();
+  });
+
+  it("defaults missing fields to zero", async () => {
+    const bridge = createMockBridge({
+      apiCall: vi.fn(async (): Promise<ApiCallResult> => ({
+        ok: true,
+        status: 200,
+        data: { agree: 3 },
+      })),
+    });
+    const session = createTestSession(tempDir, bridge);
+
+    const counts = await getReactionCounts(session, "0xpartial");
+
+    expect(counts).toEqual({ agree: 3, disagree: 0, flag: 0 });
   });
 });

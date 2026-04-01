@@ -40,7 +40,6 @@ function createMockBridge(verifyFn: (txHash: string) => Promise<VerifyResult>): 
     verifyTransaction: verifyFn,
     getHivePosts: vi.fn(async () => []),
     resolvePostAuthor: vi.fn(async () => null),
-    publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
   };
 }
 

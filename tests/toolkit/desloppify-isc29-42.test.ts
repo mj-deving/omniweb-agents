@@ -84,7 +84,6 @@ describe("ISC-30: verify() blockHeight from chain (not fabricated)", () => {
         verifyTransaction: vi.fn(async () => ({ confirmed: true, blockNumber: 99, from: "demos1a" })),
         getHivePosts: vi.fn(async () => []),
         resolvePostAuthor: vi.fn(async () => null),
-        publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
       };
 
       const session = new DemosSession({
@@ -211,7 +210,6 @@ describe("ISC-33: scan returns NETWORK_ERROR on chain failure", () => {
         verifyTransaction: vi.fn(async () => null),
         getHivePosts: vi.fn(async () => { throw new Error("RPC down"); }),
         resolvePostAuthor: vi.fn(async () => null),
-        publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
       };
 
       const session = new DemosSession({

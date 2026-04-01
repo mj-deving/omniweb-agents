@@ -18,7 +18,7 @@ function makeAction(overrides: Partial<StrategyAction> = {}): StrategyAction {
 function createDeps(overrides: Partial<ActionExecutorDeps> = {}): ActionExecutorDeps {
   return {
     bridge: {
-      publishHiveReaction: vi.fn().mockResolvedValue({ txHash: "0xreact" }),
+      apiCall: vi.fn().mockResolvedValue({ ok: true, status: 200, data: { success: true } }),
       publishHivePost: vi.fn().mockResolvedValue({ txHash: "0xpost" }),
       transferDem: vi.fn().mockResolvedValue({ txHash: "0xtip" }),
     },
@@ -30,15 +30,18 @@ function createDeps(overrides: Partial<ActionExecutorDeps> = {}): ActionExecutor
 }
 
 describe("executeStrategyActions", () => {
-  it("routes ENGAGE actions to publishHiveReaction", async () => {
+  it("routes ENGAGE actions to API react endpoint", async () => {
     const deps = createDeps();
     const action = makeAction({ type: "ENGAGE", target: "0xabc" });
 
     const result = await executeStrategyActions([action], deps);
 
-    expect(deps.bridge.publishHiveReaction).toHaveBeenCalledWith("0xabc", "agree");
+    expect(deps.bridge.apiCall).toHaveBeenCalledWith(
+      "/api/feed/0xabc/react",
+      { method: "POST", body: JSON.stringify({ type: "agree" }) },
+    );
     expect(result.executed).toEqual([
-      { action, success: true, txHash: "0xreact" },
+      { action, success: true },
     ]);
     expect(result.skipped).toEqual([]);
   });
@@ -104,7 +107,7 @@ describe("executeStrategyActions", () => {
     const result = await executeStrategyActions(actions, deps);
 
     expect(deps.generateText).not.toHaveBeenCalled();
-    expect(deps.bridge.publishHiveReaction).not.toHaveBeenCalled();
+    expect(deps.bridge.apiCall).not.toHaveBeenCalled();
     expect(deps.bridge.publishHivePost).not.toHaveBeenCalled();
     expect(deps.bridge.transferDem).not.toHaveBeenCalled();
     expect(result.executed).toEqual([
@@ -160,7 +163,7 @@ describe("executeStrategyActions", () => {
   it("continues after a failed action and executes subsequent actions", async () => {
     const deps = createDeps({
       bridge: {
-        publishHiveReaction: vi.fn().mockRejectedValue(new Error("boom")),
+        apiCall: vi.fn().mockResolvedValue({ ok: false, status: 500, data: "error" }),
         publishHivePost: vi.fn().mockResolvedValue({ txHash: "0xpost" }),
         transferDem: vi.fn().mockResolvedValue({ txHash: "0xtip" }),
       },
@@ -174,7 +177,7 @@ describe("executeStrategyActions", () => {
     const result = await executeStrategyActions(actions, deps);
 
     expect(result.executed).toEqual([
-      { action: actions[0], success: false, error: "boom" },
+      { action: actions[0], success: false, error: "Reaction API returned 500" },
       { action: actions[1], success: true, txHash: "0xpost" },
       { action: actions[2], success: true, txHash: "0xtip" },
     ]);
@@ -199,7 +202,7 @@ describe("executeStrategyActions", () => {
 
     const result = await executeStrategyActions([action], deps);
 
-    expect(deps.bridge.publishHiveReaction).not.toHaveBeenCalled();
+    expect(deps.bridge.apiCall).not.toHaveBeenCalled();
     expect(deps.bridge.publishHivePost).not.toHaveBeenCalled();
     expect(deps.bridge.transferDem).not.toHaveBeenCalled();
     expect(result.executed).toEqual([]);

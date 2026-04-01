@@ -295,54 +295,10 @@ describe("SDK Bridge Adapter", () => {
     });
   });
 
-  describe("getHiveReactions", () => {
-    function makeReactionTx(target: string, type: "agree" | "disagree", hash = "rx-hash") {
-      const payload = JSON.stringify({ v: 1, action: "react", target, type });
-      return {
-        hash,
-        blockNumber: 100,
-        status: "confirmed",
-        from: "reactor1",
-        to: "chain",
-        type: "storage",
-        // String form with HIVE prefix — decodeHiveData handles this
-        content: JSON.stringify({ data: ["storage", "HIVE" + payload] }),
-        timestamp: Date.now(),
-      };
-    }
+  // getHiveReactions tests removed — reactions are API-only (chain scanning removed)
 
-    function makePostTx(text: string, hash = "post-hash") {
-      const payload = JSON.stringify({ v: 1, text, cat: "ANALYSIS" });
-      return {
-        hash,
-        blockNumber: 100,
-        status: "confirmed",
-        from: "author1",
-        to: "chain",
-        type: "storage",
-        content: JSON.stringify({ data: ["storage", "HIVE" + payload] }),
-        timestamp: Date.now(),
-      };
-    }
-
-    // Helper: make a tx using the base64 {"bytes":"..."} envelope (real chain format)
+  describe("getHivePosts base64 decoding", () => {
     let nextTestTxId = 50000;
-    function makeBase64ReactionTx(target: string, type: "agree" | "disagree", hash = "rx-b64") {
-      const payload = JSON.stringify({ v: 1, action: "react", target, type });
-      const b64 = Buffer.from("HIVE" + payload).toString("base64");
-      return {
-        id: nextTestTxId++,
-        hash,
-        blockNumber: 100,
-        status: "confirmed",
-        from: "reactor1",
-        to: "chain",
-        type: "storage",
-        content: JSON.stringify({ data: ["storage", { bytes: b64 }] }),
-        timestamp: Date.now(),
-      };
-    }
-
     function makeBase64PostTx(text: string, hash = "post-b64") {
       const payload = JSON.stringify({ v: 1, text, cat: "ANALYSIS" });
       const b64 = Buffer.from("HIVE" + payload).toString("base64");
@@ -359,22 +315,21 @@ describe("SDK Bridge Adapter", () => {
       };
     }
 
-    it("decodes base64 bytes envelope (real chain format)", async () => {
-      const demosWithTxs = {
-        ...mockDemos(),
-        getTransactions: vi.fn()
-          .mockResolvedValueOnce([
-            makeBase64ReactionTx("tx-abc", "agree", "rx1"),
-            makeBase64ReactionTx("tx-abc", "disagree", "rx2"),
-            makeBase64PostTx("test post", "post1"),
-          ])
-          .mockResolvedValue([]),
+    function makeBase64ReactionTx(target: string, type: "agree" | "disagree", hash = "rx-b64") {
+      const payload = JSON.stringify({ v: 1, action: "react", target, type });
+      const b64 = Buffer.from("HIVE" + payload).toString("base64");
+      return {
+        id: nextTestTxId++,
+        hash,
+        blockNumber: 100,
+        status: "confirmed",
+        from: "reactor1",
+        to: "chain",
+        type: "storage",
+        content: JSON.stringify({ data: ["storage", { bytes: b64 }] }),
+        timestamp: Date.now(),
       };
-      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
-      const result = await b.getHiveReactions(["tx-abc"]);
-
-      expect(result.get("tx-abc")).toEqual({ agree: 1, disagree: 1 });
-    });
+    }
 
     it("getHivePosts decodes base64 bytes envelope", async () => {
       const demosWithTxs = {
@@ -392,66 +347,6 @@ describe("SDK Bridge Adapter", () => {
       expect(posts).toHaveLength(1);
       expect(posts[0].text).toBe("Compound TVL analysis");
       expect(posts[0].txHash).toBe("post1");
-    });
-
-    it("counts agree and disagree reactions for target txHashes", async () => {
-      const demosWithTxs = {
-        ...mockDemos(),
-        getTransactions: vi.fn()
-          .mockResolvedValueOnce([
-            makeReactionTx("tx-abc", "agree", "rx1"),
-            makeReactionTx("tx-abc", "agree", "rx2"),
-            makeReactionTx("tx-abc", "disagree", "rx3"),
-            makeReactionTx("tx-def", "disagree", "rx4"),
-            makePostTx("some post", "post1"), // not a reaction — should be ignored
-          ])
-          .mockResolvedValue([]),
-      };
-      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
-      const result = await b.getHiveReactions(["tx-abc", "tx-def"]);
-
-      expect(result.get("tx-abc")).toEqual({ agree: 2, disagree: 1 });
-      expect(result.get("tx-def")).toEqual({ agree: 0, disagree: 1 });
-    });
-
-    it("returns zero counts for txHashes with no reactions", async () => {
-      const demosWithTxs = {
-        ...mockDemos(),
-        getTransactions: vi.fn()
-          .mockResolvedValueOnce([
-            makePostTx("a regular post", "post1"),
-          ])
-          .mockResolvedValue([]),
-      };
-      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
-      const result = await b.getHiveReactions(["tx-missing"]);
-
-      expect(result.get("tx-missing")).toEqual({ agree: 0, disagree: 0 });
-    });
-
-    it("returns empty map when getTransactions is not available", async () => {
-      // Default mockDemos() has no getTransactions
-      const b = createSdkBridge(demos as any, undefined, "token");
-      const result = await b.getHiveReactions(["tx-abc"]);
-
-      expect(result.size).toBe(0);
-    });
-
-    it("ignores reactions targeting txHashes not in the target set", async () => {
-      const demosWithTxs = {
-        ...mockDemos(),
-        getTransactions: vi.fn()
-          .mockResolvedValueOnce([
-            makeReactionTx("tx-other", "agree", "rx1"),
-            makeReactionTx("tx-abc", "agree", "rx2"),
-          ])
-          .mockResolvedValue([]), // empty on subsequent pages
-      };
-      const b = createSdkBridge(demosWithTxs as any, undefined, "token");
-      const result = await b.getHiveReactions(["tx-abc"]);
-
-      expect(result.get("tx-abc")).toEqual({ agree: 1, disagree: 0 });
-      expect(result.has("tx-other")).toBe(false);
     });
   });
 
@@ -504,28 +399,7 @@ describe("SDK Bridge Adapter", () => {
     });
   });
 
-  describe("getHiveReactionsByAuthor", () => {
-    it("returns reactions (not posts) via getTransactionHistory", async () => {
-      const b64Reaction = Buffer.from("HIVE" + JSON.stringify({ v: 1, action: "react", target: "target-1", type: "disagree" })).toString("base64");
-      const b64Post = Buffer.from("HIVE" + JSON.stringify({ v: 1, text: "A post", cat: "ANALYSIS" })).toString("base64");
-
-      const demosWithHistory = {
-        ...mockDemos(),
-        getTransactionHistory: vi.fn()
-          .mockResolvedValueOnce([
-            { hash: "rx-1", blockNumber: 200, status: "confirmed", content: { from: "agent1", type: "storage", data: ["storage", { bytes: b64Reaction }], timestamp: 1000 } },
-            { hash: "post-1", blockNumber: 199, status: "confirmed", content: { from: "agent1", type: "storage", data: ["storage", { bytes: b64Post }], timestamp: 1001 } },
-          ])
-          .mockResolvedValue([]),
-      };
-      const b = createSdkBridge(demosWithHistory as any, undefined, "token");
-      const reactions = await b.getHiveReactionsByAuthor("agent1");
-
-      expect(reactions).toHaveLength(1);
-      expect(reactions[0].targetTxHash).toBe("target-1");
-      expect(reactions[0].type).toBe("disagree");
-    });
-  });
+  // getHiveReactionsByAuthor tests removed — reactions are API-only (chain scanning removed)
 
   describe("getRepliesTo", () => {
     it("finds replies targeting given txHashes via global scan", async () => {

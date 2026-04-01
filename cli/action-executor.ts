@@ -14,9 +14,9 @@ export interface ActionExecutionResult {
 }
 
 export interface ActionExecutorDeps {
-  /** SDK bridge for chain operations */
+  /** SDK bridge for chain + API operations */
   bridge: {
-    publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }>;
+    apiCall(path: string, options?: RequestInit): Promise<{ ok: boolean; status: number; data: unknown }>;
     publishHivePost(post: { text: string; category: string; replyTo?: string }): Promise<{ txHash: string }>;
     transferDem(to: string, amount: number): Promise<{ txHash: string }>;
   };
@@ -75,12 +75,17 @@ export async function executeStrategyActions(
     try {
       switch (action.type) {
         case "ENGAGE": {
-          const publishResult = await deps.bridge.publishHiveReaction(action.target!, "agree");
-          result.executed.push({ action, success: true, txHash: publishResult.txHash });
+          const apiResult = await deps.bridge.apiCall(
+            `/api/feed/${encodeURIComponent(action.target!)}/react`,
+            { method: "POST", body: JSON.stringify({ type: "agree" }) },
+          );
+          if (!apiResult.ok) {
+            throw new Error(`Reaction API returned ${apiResult.status}`);
+          }
+          result.executed.push({ action, success: true });
           deps.observe("insight", `Strategy ENGAGE executed for ${action.target}`, {
             actionType: action.type,
             target: action.target,
-            txHash: publishResult.txHash,
           });
           break;
         }

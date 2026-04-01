@@ -28,7 +28,6 @@ function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
     verifyTransaction: vi.fn(async () => ({ confirmed: true, blockNumber: 42, from: "demos1a" })),
     getHivePosts: vi.fn(async () => []),
     resolvePostAuthor: vi.fn(async () => "demos1author"),
-    publishHiveReaction: vi.fn(async () => ({ txHash: "r" })),
     ...overrides,
   };
 }

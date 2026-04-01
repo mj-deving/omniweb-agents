@@ -110,7 +110,7 @@ export const ReplyOptionsSchema = z.object({
 
 export const ReactOptionsSchema = z.object({
   txHash: txHashString,
-  type: z.enum(["agree", "disagree"]),
+  type: z.union([z.enum(["agree", "disagree", "flag"]), z.null()]),
 });
 
 export const TipOptionsSchema = z.object({

@@ -139,10 +139,13 @@ export interface ReplyOptions {
   attestUrl: string;
 }
 
+/** Supported reaction types — null removes an existing reaction */
+export type ReactionType = "agree" | "disagree" | "flag" | null;
+
 /** React options */
 export interface ReactOptions {
   txHash: string;
-  type: "agree" | "disagree";
+  type: ReactionType;
 }
 
 /** Tip options */
@@ -190,8 +193,13 @@ export interface PublishResult {
 
 export interface ReactResult {
   success: boolean;
-  /** Transaction hash when reaction is on-chain (absent for API-only fallback) */
-  txHash?: string;
+}
+
+/** Reaction counts for a post — returned by GET /api/feed/{txHash}/react */
+export interface ReactionCounts {
+  agree: number;
+  disagree: number;
+  flag: number;
 }
 
 export interface TipResult {

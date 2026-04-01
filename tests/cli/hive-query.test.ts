@@ -85,14 +85,11 @@ function makeReaction(overrides: Partial<HiveReaction> = {}): HiveReaction {
 function makeBridge(overrides: Partial<SdkBridge> = {}): SdkBridge {
   return {
     getHivePostsByAuthor: vi.fn().mockResolvedValue([]),
-    getHiveReactions: vi.fn().mockResolvedValue(new Map()),
     getHivePosts: vi.fn().mockResolvedValue([]),
-    getHiveReactionsByAuthor: vi.fn().mockResolvedValue([]),
     getRepliesTo: vi.fn().mockResolvedValue([]),
     verifyTransaction: vi.fn().mockResolvedValue(null),
     resolvePostAuthor: vi.fn().mockResolvedValue(null),
     publishHivePost: vi.fn(),
-    publishHiveReaction: vi.fn(),
     attestDahr: vi.fn(),
     apiCall: vi.fn(),
     transferDem: vi.fn(),
@@ -174,12 +171,10 @@ describe("hive-query CLI", () => {
       expect(result.posts[0].txHash).toBe("tx_abc123def456");
     });
 
-    it("includes reaction counts when --reactions flag is set", async () => {
-      const posts = [makeScanPost({ txHash: "tx_001" })];
-      const reactionMap = new Map([["tx_001", { agree: 10, disagree: 3 }]]);
+    it("includes reaction counts when --reactions flag is set (uses post field)", async () => {
+      const posts = [makeScanPost({ txHash: "tx_001", reactions: { agree: 10, disagree: 3 } })];
       const bridge = makeBridge({
         getHivePostsByAuthor: vi.fn().mockResolvedValue(posts),
-        getHiveReactions: vi.fn().mockResolvedValue(reactionMap),
       });
 
       const result = await handlePosts(bridge, {
@@ -189,7 +184,7 @@ describe("hive-query CLI", () => {
         json: false,
       });
 
-      expect(bridge.getHiveReactions).toHaveBeenCalledWith(["tx_001"]);
+      // Reactions come from the post's own reactions field (populated by API enrichment or colony DB)
       expect(result.posts[0].reactions).toEqual({ agree: 10, disagree: 3 });
     });
 
@@ -225,18 +220,13 @@ describe("hive-query CLI", () => {
   });
 
   describe("handlePerformance", () => {
-    it("calculates agree/disagree ratio for posts", async () => {
+    it("uses post reactions field for performance calculation", async () => {
       const posts = [
-        makeScanPost({ txHash: "tx_001" }),
-        makeScanPost({ txHash: "tx_002" }),
+        makeScanPost({ txHash: "tx_001", reactions: { agree: 8, disagree: 2 } }),
+        makeScanPost({ txHash: "tx_002", reactions: { agree: 4, disagree: 6 } }),
       ];
-      const reactionMap = new Map([
-        ["tx_001", { agree: 8, disagree: 2 }],
-        ["tx_002", { agree: 4, disagree: 6 }],
-      ]);
       const bridge = makeBridge({
         getHivePostsByAuthor: vi.fn().mockResolvedValue(posts),
-        getHiveReactions: vi.fn().mockResolvedValue(reactionMap),
       });
 
       const result = await handlePerformance(bridge, {
@@ -253,11 +243,9 @@ describe("hive-query CLI", () => {
     });
 
     it("handles posts with zero reactions", async () => {
-      const posts = [makeScanPost({ txHash: "tx_001" })];
-      const reactionMap = new Map<string, { agree: number; disagree: number }>();
+      const posts = [makeScanPost({ txHash: "tx_001", reactions: { agree: 0, disagree: 0 } })];
       const bridge = makeBridge({
         getHivePostsByAuthor: vi.fn().mockResolvedValue(posts),
-        getHiveReactions: vi.fn().mockResolvedValue(reactionMap),
       });
 
       const result = await handlePerformance(bridge, {
@@ -271,18 +259,13 @@ describe("hive-query CLI", () => {
   });
 
   describe("handleEngagement", () => {
-    it("aggregates reaction counts per post", async () => {
+    it("uses post reactions field (defaults to zero — API enrichment pending)", async () => {
       const posts = [
-        makeScanPost({ txHash: "tx_001" }),
-        makeScanPost({ txHash: "tx_002" }),
+        makeScanPost({ txHash: "tx_001", reactions: { agree: 15, disagree: 3 } }),
+        makeScanPost({ txHash: "tx_002", reactions: { agree: 2, disagree: 0 } }),
       ];
-      const reactionMap = new Map([
-        ["tx_001", { agree: 15, disagree: 3 }],
-        ["tx_002", { agree: 2, disagree: 0 }],
-      ]);
       const bridge = makeBridge({
         getHivePostsByAuthor: vi.fn().mockResolvedValue(posts),
-        getHiveReactions: vi.fn().mockResolvedValue(reactionMap),
       });
 
       const result = await handleEngagement(bridge, {
@@ -402,7 +385,6 @@ describe("hive-query CLI", () => {
     it("handlePerformance result is JSON-serializable", async () => {
       const bridge = makeBridge({
         getHivePostsByAuthor: vi.fn().mockResolvedValue([makeScanPost()]),
-        getHiveReactions: vi.fn().mockResolvedValue(new Map([["tx_abc123def456", { agree: 5, disagree: 1 }]])),
       });
 
       const result = await handlePerformance(bridge, { author: "0xA", last: 10 });

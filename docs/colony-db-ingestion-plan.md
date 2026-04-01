@@ -124,7 +124,9 @@ CREATE VIRTUAL TABLE IF NOT EXISTS posts_vec USING vec0(
 | 3b | sqlite-vec integration (migration v3) | `src/toolkit/colony/schema.ts` MIGRATIONS[3], `package.json` | Research + 3a |
 | 3c | Hybrid search queries | `src/toolkit/colony/` new module | 3a + 3b |
 
-Steps 1a-1c are immediate. Steps 2-3 are next session work.
+Steps 1a-1c are immediate and **COMPLETE** (2026-03-31). Steps 2-3 are next session work.
+
+**Next plan:** `docs/colony-tooling-plan.md` — on-chain query CLI, reaction refresh, backfill, FTS5, intelligence layer. Sits between this plan and Phase 6.
 
 ## Decision: Why not use processBatch()?
 

@@ -49,7 +49,8 @@ New code must go in the right directory. The classification rule from ADR-0002: 
 | Type definitions used by toolkit | `src/toolkit/types.ts` | ToolResult, ScanPost, PublishDraft |
 | Source pipeline infrastructure | `src/toolkit/sources/` | Catalog, fetch, health, rate-limit |
 | Sentinel-specific strategy | `src/lib/` | Scoring heuristics, engage logic, predictions |
-| CLI entry points | `cli/` | Session runner, event runner, scripts |
+| CLI entry points (thin wrappers) | `cli/` | Session runner, event runner, scripts |
+| CLI core logic (reusable algorithm) | `src/toolkit/` | Backfill pagination, query helpers |
 | Lifecycle hooks | `src/plugins/` | Plugins that observe/modify session state |
 | Agent definitions | `agents/{name}/` | AGENT.yaml, sources-registry |
 

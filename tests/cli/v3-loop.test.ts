@@ -23,6 +23,8 @@ const {
   logQualityDataMock,
   insertPostMock,
   countPostsMock,
+  getRecentPostsMock,
+  upsertReactionMock,
   upsertSourceResponseMock,
   getSourceResponseMock,
   deriveIntentsFromTopicsMock,
@@ -47,6 +49,8 @@ const {
   logQualityDataMock: vi.fn(),
   insertPostMock: vi.fn(),
   countPostsMock: vi.fn().mockReturnValue(0),
+  getRecentPostsMock: vi.fn().mockReturnValue([]),
+  upsertReactionMock: vi.fn(),
   upsertSourceResponseMock: vi.fn(),
   getSourceResponseMock: vi.fn().mockReturnValue(null),
   deriveIntentsFromTopicsMock: vi.fn().mockReturnValue([]),
@@ -101,6 +105,11 @@ vi.mock("../../src/lib/scoring/quality-score.js", () => ({
 vi.mock("../../src/toolkit/colony/posts.js", () => ({
   insertPost: insertPostMock,
   countPosts: countPostsMock,
+  getRecentPosts: getRecentPostsMock,
+}));
+
+vi.mock("../../src/toolkit/colony/reactions.js", () => ({
+  upsertReaction: upsertReactionMock,
 }));
 
 vi.mock("../../src/toolkit/colony/source-cache.js", () => ({
@@ -212,6 +221,7 @@ describe("runV3Loop", () => {
       publishHivePost: vi.fn(),
       transferDem: vi.fn(),
       getHivePosts: vi.fn().mockResolvedValue([]),
+      getHiveReactions: vi.fn().mockResolvedValue(new Map()),
     });
     executeStrategyActionsMock.mockResolvedValue({
       executed: [{ action: { type: "ENGAGE" }, success: true, txHash: "0xengage" }],
@@ -467,6 +477,7 @@ describe("runV3Loop", () => {
       publishHivePost: vi.fn(),
       transferDem: vi.fn(),
       getHivePosts: vi.fn().mockResolvedValue(chainPosts),
+      getHiveReactions: vi.fn().mockResolvedValue(new Map()),
     });
 
     // countPosts returns 0 before, 3 after to simulate 3 inserted
@@ -496,6 +507,69 @@ describe("runV3Loop", () => {
       expect.stringContaining("ingested 3 new posts"),
       expect.objectContaining({ source: "v3-loop:ingestChainPosts", newPosts: 3 }),
     );
+  });
+
+  it("refreshes reaction cache for recent posts during sense phase", async () => {
+    const recentPosts = [
+      { txHash: "0xrecent1", author: "a1", blockNumber: 200, timestamp: new Date().toISOString(), replyTo: null, tags: [], text: "recent1", rawData: {} },
+      { txHash: "0xrecent2", author: "a2", blockNumber: 201, timestamp: new Date().toISOString(), replyTo: null, tags: [], text: "recent2", rawData: {} },
+    ];
+    getRecentPostsMock.mockReturnValue(recentPosts);
+
+    const reactionsMap = new Map([
+      ["0xrecent1", { agree: 5, disagree: 1 }],
+      ["0xrecent2", { agree: 2, disagree: 0 }],
+    ]);
+    const getHiveReactionsMock = vi.fn().mockResolvedValue(reactionsMap);
+    createSdkBridgeMock.mockReturnValue({
+      publishHiveReaction: vi.fn(),
+      publishHivePost: vi.fn(),
+      transferDem: vi.fn(),
+      getHivePosts: vi.fn().mockResolvedValue([]),
+      getHiveReactions: getHiveReactionsMock,
+    });
+
+    planMock.mockResolvedValueOnce({ actions: [], log: {} });
+    const state = makeState();
+    const deps = makeDeps();
+
+    await runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), deps);
+
+    expect(getHiveReactionsMock).toHaveBeenCalledWith(["0xrecent1", "0xrecent2"]);
+    expect(upsertReactionMock).toHaveBeenCalledTimes(2);
+    expect(upsertReactionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ postTxHash: "0xrecent1", agrees: 5, disagrees: 1 }),
+    );
+    expect(upsertReactionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ postTxHash: "0xrecent2", agrees: 2, disagrees: 0 }),
+    );
+    expect(deps.observe).toHaveBeenCalledWith(
+      "insight",
+      expect.stringContaining("Reaction refresh: 2 posts updated"),
+      expect.objectContaining({ source: "v3-loop:reactionRefresh", postsRefreshed: 2 }),
+    );
+  });
+
+  it("skips reaction refresh when no recent posts exist", async () => {
+    getRecentPostsMock.mockReturnValue([]);
+    const getHiveReactionsMock = vi.fn();
+    createSdkBridgeMock.mockReturnValue({
+      publishHiveReaction: vi.fn(),
+      publishHivePost: vi.fn(),
+      transferDem: vi.fn(),
+      getHivePosts: vi.fn().mockResolvedValue([]),
+      getHiveReactions: getHiveReactionsMock,
+    });
+
+    planMock.mockResolvedValueOnce({ actions: [], log: {} });
+    const state = makeState();
+
+    await runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), makeDeps());
+
+    expect(getHiveReactionsMock).not.toHaveBeenCalled();
+    expect(upsertReactionMock).not.toHaveBeenCalled();
   });
 
   it("succeeds ACT when at least one action succeeds among failures", async () => {

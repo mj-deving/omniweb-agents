@@ -1,8 +1,9 @@
 /**
- * Hybrid quality scoring — rule-based, measurable signals.
+ * Strategy-layer quality heuristics — internal scoring for agent decision-making.
  *
- * Replaces LLM-predicted-reactions as quality gate. Every signal is
- * objectively measurable with no LLM guessing.
+ * These are our own signals for deciding what to publish, NOT the official
+ * SuperColony scoring formula. For platform compatibility scoring, use
+ * `calculateOfficialScore` from `src/toolkit/supercolony/scoring.ts`.
  *
  * Based on analysis of n=34 published posts:
  * - Replies outperform top-level 66% (13.6 vs 8.2rx)
@@ -79,7 +80,12 @@ const NUMERIC_PATTERNS = [
 
 // ── Scorer ──────────────────────────────────────
 
-export function calculateQualityScore(input: {
+/**
+ * @deprecated Use `calculateOfficialScore` from `src/toolkit/supercolony/scoring.ts`
+ * for platform compatibility scoring. This function is for internal strategy-layer
+ * quality heuristics only.
+ */
+export function calculateStrategyScore(input: {
   text: string;
   isReply?: boolean;
   hasAttestation?: boolean;

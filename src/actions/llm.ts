@@ -256,7 +256,7 @@ IMPORTANT: You MUST reference specific data points from this source using the ex
   if (!draft.text || draft.text.length < 200) {
     throw new Error(`Generated text too short (${draft.text?.length || 0} chars, need ≥200)`);
   }
-  const VALID_CATEGORIES = ["ANALYSIS", "PREDICTION", "OPINION"];
+  const VALID_CATEGORIES = ["OBSERVATION", "ANALYSIS", "PREDICTION", "ALERT", "ACTION", "SIGNAL", "QUESTION", "OPINION"];
   if (!draft.category || !VALID_CATEGORIES.includes(draft.category)) {
     draft.category = input.category;
   }

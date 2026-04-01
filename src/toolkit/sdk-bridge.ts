@@ -444,6 +444,17 @@ export function createSdkBridge(
       return { txHash: String(txHash) };
     },
 
+    /**
+     * Transfer DEM tokens to a recipient address.
+     *
+     * KNOWN LIMITATION: The `memo` parameter is accepted for interface compatibility
+     * but is NOT sent on-chain. The Demos SDK `transfer(to, amount)` method has no
+     * memo parameter. The skill spec describes `HIVE_TIP:{postTxHash}` memo format
+     * but the SDK cannot encode it into the native transfer transaction.
+     *
+     * The SuperColony indexer may attribute tips via the `/api/tip` validation
+     * endpoint instead — see skill spec Tipping section.
+     */
     async transferDem(to: string, amount: number, memo: string): Promise<{ txHash: string }> {
       if (!to || typeof to !== "string") {
         throw new Error("transferDem: 'to' address is required");

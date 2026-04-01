@@ -49,6 +49,14 @@ export type TopicSearchSource = "asset" | "text";
 
 export interface CombinedTopicSearchOptions {
   searchLimit?: number;
+  /** Filter by post category (OBSERVATION, ANALYSIS, PREDICTION, etc.) */
+  category?: string;
+  /** Filter by agent address */
+  agent?: string;
+  /** Unix timestamp in SECONDS — only posts after this time */
+  since?: number;
+  /** Cursor for pagination (txHash of last post in previous page) */
+  cursor?: string;
   fetchFeed?: (path: string, label: string) => Promise<unknown[]>;
   onRawResults?: (source: TopicSearchSource, rawPosts: unknown[]) => void;
   onFallbackFiltered?: (filteredPosts: FilteredPost[]) => void;
@@ -225,13 +233,21 @@ export async function combinedTopicSearch(
 
   if (!normalizedTopic) return [];
 
+  // Build additional query params from options (per official skill spec: category, since, agent, cursor)
+  const extraParams: string[] = [];
+  if (options.category) extraParams.push(`category=${encodeURIComponent(options.category)}`);
+  if (options.agent) extraParams.push(`agent=${encodeURIComponent(options.agent)}`);
+  if (options.since != null && Number.isFinite(options.since)) extraParams.push(`since=${options.since}`);
+  if (options.cursor) extraParams.push(`cursor=${encodeURIComponent(options.cursor)}`);
+  const extraQuery = extraParams.length > 0 ? `&${extraParams.join("&")}` : "";
+
   const searchResults = await Promise.allSettled([
     fetchFeed(
-      `/api/feed/search?asset=${encodeURIComponent(normalizedTopic)}&limit=${searchLimit}`,
+      `/api/feed/search?asset=${encodeURIComponent(normalizedTopic)}&limit=${searchLimit}${extraQuery}`,
       `topic-search asset="${normalizedTopic}"`
     ),
     fetchFeed(
-      `/api/feed/search?text=${encodeURIComponent(normalizedTopic)}&limit=${searchLimit}`,
+      `/api/feed/search?text=${encodeURIComponent(normalizedTopic)}&limit=${searchLimit}${extraQuery}`,
       `topic-search text="${normalizedTopic}"`
     ),
   ]);
@@ -281,6 +297,38 @@ export async function combinedTopicSearch(
       },
     });
     return [];
+  }
+}
+
+/**
+ * Fetch a conversation thread via SuperColony API.
+ *
+ * API fallback for chain-native `getRepliesTo` — returns the thread
+ * rooted at the given txHash including parent context and all replies.
+ * Returns null on API failure (graceful degradation).
+ *
+ * Per official skill spec: GET /api/feed/thread/{txHash}
+ */
+export async function fetchThread(
+  txHash: string,
+  authToken: string,
+  fetchFeed?: (path: string, label: string) => Promise<unknown>,
+): Promise<{ posts: FilteredPost[] } | null> {
+  const fetcher = fetchFeed || ((path: string) => defaultFeedFetch(path, authToken));
+  try {
+    const raw = await fetcher(
+      `/api/feed/thread/${encodeURIComponent(txHash)}`,
+      `thread lookup ${txHash.slice(0, 16)}`,
+    );
+    if (!raw || !Array.isArray(raw)) return null;
+    return { posts: filterPosts(raw, { minScore: 0, requireAttestation: false }) };
+  } catch (err) {
+    observe("inefficiency", `thread fetch failed for ${txHash.slice(0, 16)}...`, {
+      phase: "scan",
+      source: "feed-filter.ts:fetchThread",
+      data: { txHash, error: toErrorMessage(err) },
+    });
+    return null;
   }
 }
 

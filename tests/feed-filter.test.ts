@@ -18,6 +18,7 @@ vi.mock("../src/lib/pipeline/observe.js", () => ({
 import {
   filterPosts,
   combinedTopicSearch,
+  fetchThread,
   buildTopicIndex,
   buildAgentIndex,
   type QualityFilter,
@@ -434,5 +435,128 @@ describe("buildAgentIndex", () => {
     const index = buildAgentIndex(posts);
 
     expect(index.get("0xtest")!.address).toBe("0xtest");
+  });
+});
+
+// ── combinedTopicSearch extra params ─────────────
+
+describe("combinedTopicSearch extra params", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("passes category param to search URLs", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue([]);
+    await combinedTopicSearch("btc", "token", makeFilter(), undefined, {
+      fetchFeed,
+      category: "ANALYSIS",
+    });
+
+    expect(fetchFeed.mock.calls[0][0]).toContain("category=ANALYSIS");
+    expect(fetchFeed.mock.calls[1][0]).toContain("category=ANALYSIS");
+  });
+
+  it("passes since param as Unix seconds", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue([]);
+    await combinedTopicSearch("btc", "token", makeFilter(), undefined, {
+      fetchFeed,
+      since: 1710000000,
+    });
+
+    expect(fetchFeed.mock.calls[0][0]).toContain("since=1710000000");
+  });
+
+  it("passes agent param to search URLs", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue([]);
+    await combinedTopicSearch("btc", "token", makeFilter(), undefined, {
+      fetchFeed,
+      agent: "0xSomeAgent",
+    });
+
+    expect(fetchFeed.mock.calls[0][0]).toContain("agent=0xSomeAgent");
+  });
+
+  it("passes cursor param for pagination", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue([]);
+    await combinedTopicSearch("btc", "token", makeFilter(), undefined, {
+      fetchFeed,
+      cursor: "0xLastTxHash",
+    });
+
+    expect(fetchFeed.mock.calls[0][0]).toContain("cursor=0xLastTxHash");
+  });
+
+  it("combines multiple extra params", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue([]);
+    await combinedTopicSearch("eth", "token", makeFilter(), undefined, {
+      fetchFeed,
+      category: "PREDICTION",
+      since: 1710000000,
+      agent: "0xAgent",
+    });
+
+    const url = fetchFeed.mock.calls[0][0] as string;
+    expect(url).toContain("category=PREDICTION");
+    expect(url).toContain("since=1710000000");
+    expect(url).toContain("agent=0xAgent");
+  });
+
+  it("omits extra params when not provided", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue([]);
+    await combinedTopicSearch("btc", "token", makeFilter(), undefined, {
+      fetchFeed,
+    });
+
+    const url = fetchFeed.mock.calls[0][0] as string;
+    expect(url).not.toContain("category=");
+    expect(url).not.toContain("since=");
+    expect(url).not.toContain("agent=");
+    expect(url).not.toContain("cursor=");
+  });
+});
+
+// ── fetchThread ──────────────────────────────────
+
+describe("fetchThread", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("fetches thread from API and returns filtered posts", async () => {
+    const threadPosts = [
+      makeRawPost({ txHash: "0xRoot", score: 80 }),
+      makeRawPost({ txHash: "0xReply1", author: "0xAgent2", score: 75 }),
+    ];
+    const fetchFeed = vi.fn().mockResolvedValue(threadPosts);
+
+    const result = await fetchThread("0xRoot", "token", fetchFeed);
+
+    expect(result).not.toBeNull();
+    expect(result!.posts).toHaveLength(2);
+    expect(fetchFeed).toHaveBeenCalledWith(
+      "/api/feed/thread/0xRoot",
+      expect.stringContaining("thread lookup"),
+    );
+  });
+
+  it("returns null when API returns non-array", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue({ error: "not found" });
+    const result = await fetchThread("0xBad", "token", fetchFeed);
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null on API failure (graceful degradation)", async () => {
+    const fetchFeed = vi.fn().mockRejectedValue(new Error("502 Bad Gateway"));
+    const result = await fetchThread("0xBad", "token", fetchFeed);
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null when API returns null", async () => {
+    const fetchFeed = vi.fn().mockResolvedValue(null);
+    const result = await fetchThread("0xBad", "token", fetchFeed);
+
+    expect(result).toBeNull();
   });
 });

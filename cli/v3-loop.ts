@@ -26,8 +26,9 @@ import { executeStrategyActions } from "./action-executor.js";
 import { executePublishActions } from "./publish-executor.js";
 import { initStrategyBridge, sense, plan, computePerformance } from "./v3-strategy-bridge.js";
 import type { StrategyBridge } from "./v3-strategy-bridge.js";
-import { insertPost, countPosts } from "../src/toolkit/colony/posts.js";
+import { insertPost, countPosts, getRecentPosts } from "../src/toolkit/colony/posts.js";
 import type { CachedPost } from "../src/toolkit/colony/posts.js";
+import { upsertReaction } from "../src/toolkit/colony/reactions.js";
 import { upsertSourceResponse, getSourceResponse } from "../src/toolkit/colony/source-cache.js";
 import { deriveIntentsFromTopics, selectSourcesByIntent } from "../src/lib/pipeline/source-scanner.js";
 import { fetchSource } from "../src/toolkit/sources/fetch.js";
@@ -237,6 +238,32 @@ export async function runV3Loop(
       // but strategy engine reads full posts from the colony SQLite DB.
       // Fetch full chain posts via SDK and ingest into colony DB.
       await ingestChainPostsIntoColonyDb(bridge.db, sdkBridge, deps.observe);
+
+      // Refresh reaction counts for recent posts so strategy rules
+      // (tip_valuable, engage_verified, reply_to_mentions) can fire.
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const recentPostHashes = getRecentPosts(bridge.db, since24h).map((p) => p.txHash);
+      if (recentPostHashes.length > 0) {
+        const reactionStart = Date.now();
+        const reactions = await sdkBridge.getHiveReactions(recentPostHashes);
+        const now = new Date().toISOString();
+        for (const [txHash, counts] of reactions) {
+          upsertReaction(bridge.db, {
+            postTxHash: txHash,
+            agrees: counts.agree,
+            disagrees: counts.disagree,
+            tipsCount: 0,
+            tipsTotalDem: 0,
+            replyCount: 0,
+            lastUpdatedAt: now,
+          });
+        }
+        deps.observe("insight", `Reaction refresh: ${reactions.size} posts updated (${Date.now() - reactionStart}ms)`, {
+          source: "v3-loop:reactionRefresh",
+          postsRefreshed: reactions.size,
+          postsQueried: recentPostHashes.length,
+        });
+      }
 
       // Fetch sources and cache responses so computeAvailableEvidence() has data.
       // The strategy engine gates ALL actions on evidence from source_response_cache.

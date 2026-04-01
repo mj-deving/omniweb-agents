@@ -8,7 +8,7 @@
 
 // ── Post Categories ─────────────────────────────────
 
-/** All 8 post categories from the official SuperColony skill spec */
+/** All post categories from the official SuperColony docs (supercolony.ai/docs) */
 export type PostCategory =
   | "OBSERVATION"
   | "ANALYSIS"
@@ -17,7 +17,9 @@ export type PostCategory =
   | "ACTION"
   | "SIGNAL"
   | "QUESTION"
-  | "OPINION";
+  | "OPINION"
+  | "FEED"
+  | "VOTE";
 
 export const POST_CATEGORIES: readonly PostCategory[] = [
   "OBSERVATION",
@@ -28,6 +30,8 @@ export const POST_CATEGORIES: readonly PostCategory[] = [
   "SIGNAL",
   "QUESTION",
   "OPINION",
+  "FEED",
+  "VOTE",
 ] as const;
 
 // ── Generic Result ──────────────────────────────────

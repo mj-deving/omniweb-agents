@@ -28,8 +28,7 @@ import { initStrategyBridge, sense, plan, computePerformance } from "./v3-strate
 import type { StrategyBridge } from "./v3-strategy-bridge.js";
 import { insertPost, countPosts } from "../src/toolkit/colony/posts.js";
 import type { CachedPost } from "../src/toolkit/colony/posts.js";
-import { setCursor } from "../src/toolkit/colony/schema.js";
-import { upsertSourceResponse } from "../src/toolkit/colony/source-cache.js";
+import { upsertSourceResponse, getSourceResponse } from "../src/toolkit/colony/source-cache.js";
 import { deriveIntentsFromTopics, selectSourcesByIntent } from "../src/lib/pipeline/source-scanner.js";
 import { fetchSource } from "../src/toolkit/sources/fetch.js";
 
@@ -96,43 +95,45 @@ async function ingestChainPostsIntoColonyDb(
   // Temporarily disable FK checks — reply parents may not be in the DB yet.
   // insertPost uses ON CONFLICT upsert, so re-ingesting the parent later is safe.
   db.pragma("foreign_keys = OFF");
-  const ingest = db.transaction((posts: import("../src/toolkit/types.js").ScanPost[]) => {
-    for (const p of posts) {
-      const tsNum = Number(p.timestamp);
-      const tsDate = Number.isFinite(tsNum) ? new Date(tsNum) : null;
-      if (!tsDate || isNaN(tsDate.getTime())) {
-        observe("warning", `Post ${p.txHash} has invalid timestamp ${p.timestamp} — skipped`, {
-          source: "v3-loop:ingestChainPosts",
+  try {
+    const ingest = db.transaction((posts: import("../src/toolkit/types.js").ScanPost[]) => {
+      for (const p of posts) {
+        const tsNum = Number(p.timestamp);
+        const tsDate = Number.isFinite(tsNum) ? new Date(tsNum) : null;
+        if (!tsDate || isNaN(tsDate.getTime())) {
+          observe("warning", `Post ${p.txHash} has invalid timestamp ${p.timestamp} — skipped`, {
+            source: "v3-loop:ingestChainPosts",
+            txHash: p.txHash,
+            rawTimestamp: p.timestamp,
+          });
+          continue;
+        }
+        const post: CachedPost = {
           txHash: p.txHash,
-          rawTimestamp: p.timestamp,
-        });
-        continue;
+          author: p.author,
+          blockNumber: p.blockNumber ?? 0,
+          timestamp: tsDate.toISOString(),
+          replyTo: p.replyTo ?? null,
+          tags: p.tags ?? [],
+          text: p.text,
+          rawData: { category: p.category, reactions: p.reactions, reactionsKnown: p.reactionsKnown },
+        };
+        if (post.blockNumber === 0) {
+          observe("warning", `Post ${p.txHash} missing blockNumber — inserted with 0`, {
+            source: "v3-loop:ingestChainPosts",
+            txHash: p.txHash,
+          });
+        }
+        if (post.txHash) insertPost(db, post);
       }
-      const post: CachedPost = {
-        txHash: p.txHash,
-        author: p.author,
-        blockNumber: p.blockNumber ?? 0,
-        timestamp: tsDate.toISOString(),
-        replyTo: p.replyTo ?? null,
-        tags: p.tags ?? [],
-        text: p.text,
-        rawData: { category: p.category, reactions: p.reactions, reactionsKnown: p.reactionsKnown },
-      };
-      if (post.blockNumber === 0) {
-        observe("warning", `Post ${p.txHash} missing blockNumber — inserted with 0`, {
-          source: "v3-loop:ingestChainPosts",
-          txHash: p.txHash,
-        });
-      }
-      if (post.txHash) insertPost(db, post);
-    }
-  });
-  ingest(chainPosts);
-  db.pragma("foreign_keys = ON");
+    });
+    ingest(chainPosts);
+  } finally {
+    db.pragma("foreign_keys = ON");
+  }
 
-  // Advance cursor to highest block so future sessions skip already-ingested posts
-  const maxBlock = chainPosts.reduce((max, p) => Math.max(max, p.blockNumber ?? 0), 0);
-  if (maxBlock > 0) setCursor(db, maxBlock);
+  // TODO: Advance cursor once SDK bridge supports sinceBlock param for incremental ingestion.
+  // Currently getHivePosts(limit) fetches the latest N posts regardless of cursor position.
 
   const after = countPosts(db);
   const newCount = after - before;
@@ -188,6 +189,9 @@ export async function runV3Loop(
   // Connect wallet before bridge init so strategy performance and rate-limits use the real address.
   const { demos, address } = await deps.connectWallet(flags.env);
 
+  // Single SDK bridge instance — reused across sense (ingest) and act (execute) phases.
+  const sdkBridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
+
   const hookLogger = createHookLogger(deps);
 
   using bridge: StrategyBridge = initStrategyBridge(
@@ -232,7 +236,6 @@ export async function runV3Loop(
       // Bridge the gap: scan-feed writes JSON cache with truncated posts,
       // but strategy engine reads full posts from the colony SQLite DB.
       // Fetch full chain posts via SDK and ingest into colony DB.
-      const sdkBridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
       await ingestChainPostsIntoColonyDb(bridge.db, sdkBridge, deps.observe);
 
       // Fetch sources and cache responses so computeAvailableEvidence() has data.
@@ -242,9 +245,13 @@ export async function runV3Loop(
       const intents = topics?.primary?.length ? deriveIntentsFromTopics(topics) : [];
       let sourcesFetched = 0;
       let sourcesCached = 0;
+      const sourceFetchStart = Date.now();
+      const SOURCE_FETCH_BUDGET_MS = 15_000; // 15s max for all source fetches
       for (const intent of intents) {
+        if (Date.now() - sourceFetchStart > SOURCE_FETCH_BUDGET_MS) break;
         const sources = selectSourcesByIntent(intent, sourceView);
         for (const source of sources.slice(0, 5)) {
+          if (Date.now() - sourceFetchStart > SOURCE_FETCH_BUDGET_MS) break;
           try {
             const result = await fetchSource(source.url, source);
             sourcesFetched++;
@@ -261,8 +268,22 @@ export async function runV3Loop(
               });
               sourcesCached++;
             }
-          } catch {
-            // Non-fatal: source fetch failure doesn't block the session
+          } catch (err: unknown) {
+            deps.observe("warning", `Source fetch failed for ${source.id}`, {
+              source: "v3-loop:sourceFetch",
+              sourceId: source.id,
+              error: err instanceof Error ? err.message : String(err),
+            });
+            upsertSourceResponse(bridge.db, {
+              sourceId: source.id,
+              url: source.url,
+              lastFetchedAt: new Date().toISOString(),
+              responseStatus: 0,
+              responseSize: 0,
+              responseBody: "",
+              ttlSeconds: 900,
+              consecutiveFailures: (getSourceResponse(bridge.db, source.id)?.consecutiveFailures ?? 0) + 1,
+            });
           }
         }
       }
@@ -309,7 +330,6 @@ export async function runV3Loop(
         const light = planResult.actions.filter((action) => action.type === "ENGAGE" || action.type === "TIP");
         const heavy = planResult.actions.filter((action) => action.type === "PUBLISH" || action.type === "REPLY");
 
-        const sdkBridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
         const lightResult: LightExecutionResult =
           light.length > 0
             ? await executeStrategyActions(light, {

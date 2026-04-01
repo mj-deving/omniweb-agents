@@ -26,7 +26,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 
 import { runTool, ToolError, parseToolJsonOutput, type ToolResult } from "../src/lib/util/subprocess.js";
-import { calculateQualityScore, logQualityData } from "../src/lib/scoring/quality-score.js";
+import { calculateStrategyScore, logQualityData } from "../src/lib/scoring/quality-score.js";
 import {
   startSession,
   loadState,
@@ -2336,7 +2336,7 @@ async function runPublishAutonomous(
 
       // Hybrid quality score (parallel logger — data collection, not blocking yet)
       const isReplyPost = !!gp.replyTo?.txHash;
-      const qualityResult = calculateQualityScore({
+      const qualityResult = calculateStrategyScore({
         text: draft.text,
         isReply: isReplyPost,
         hasAttestation: false, // not yet attested at this point — updated post-attestation

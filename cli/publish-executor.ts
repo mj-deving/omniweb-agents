@@ -1,5 +1,6 @@
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 
+import type { PostCategory } from "../src/toolkit/supercolony/types.js";
 import type { StrategyAction } from "./v3-strategy-bridge.js";
 import type { V3SessionState, PublishedPostRecord } from "../src/lib/state.js";
 import { saveState } from "../src/lib/state.js";
@@ -24,7 +25,7 @@ import {
   verifyAttestedValues,
 } from "../src/lib/attestation/attestation-planner.js";
 import { resolveAttestationPlan } from "../src/lib/attestation/attestation-policy.js";
-import { calculateQualityScore } from "../src/lib/scoring/quality-score.js";
+import { calculateStrategyScore } from "../src/lib/scoring/quality-score.js";
 import { fetchSource } from "../src/lib/sources/fetch.js";
 import { preflight, selectSourceForTopicV2 } from "../src/lib/sources/policy.js";
 import { match } from "../src/lib/sources/matcher.js";
@@ -97,7 +98,7 @@ export interface PublishExecutorDeps {
 }
 
 const MIN_TEXT_LENGTH = 200;
-const VALID_CATEGORIES = new Set(["ANALYSIS", "PREDICTION", "OPINION"]);
+const VALID_CATEGORIES = new Set(["OBSERVATION", "ANALYSIS", "PREDICTION", "ALERT", "ACTION", "SIGNAL", "QUESTION", "OPINION"]);
 
 function getTopics(action: StrategyAction): string[] {
   const topics = action.metadata?.topics;
@@ -109,12 +110,12 @@ function getActionTopic(action: StrategyAction): string {
   return getTopics(action)[0] ?? action.target ?? action.reason;
 }
 
-function getRequestedCategory(action: StrategyAction): "ANALYSIS" | "PREDICTION" | "OPINION" {
+function getRequestedCategory(action: StrategyAction): PostCategory {
   const raw = action.metadata?.category;
   if (typeof raw === "string") {
     const normalized = raw.toUpperCase();
     if (VALID_CATEGORIES.has(normalized)) {
-      return normalized as "ANALYSIS" | "PREDICTION" | "OPINION";
+      return normalized as PostCategory;
     }
   }
   return "ANALYSIS";
@@ -587,7 +588,7 @@ export async function executePublishActions(
         tags: draft.tags,
       });
 
-      const quality = calculateQualityScore({
+      const quality = calculateStrategyScore({
         text: draft.text,
         isReply: !!draft.replyTo,
         hasAttestation: true,

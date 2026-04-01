@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, afterAll } from "vitest";
-import { calculateQualityScore, logQualityData, type QualityDataEntry } from "../src/lib/scoring/quality-score.js";
+import { calculateStrategyScore, logQualityData, type QualityDataEntry } from "../src/lib/scoring/quality-score.js";
 import * as fs from "fs";
 import * as path from "path";
 import { tmpdir } from "node:os";
@@ -8,9 +8,9 @@ const originalHome = process.env.HOME;
 const testHome = fs.mkdtempSync(path.join(tmpdir(), "quality-score-home-"));
 process.env.HOME = testHome;
 
-describe("calculateQualityScore", () => {
+describe("calculateStrategyScore", () => {
   it("scores a high-quality attested reply with numeric claims", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "BTC at $67,432 (+2.1% 24h) while ETH holds $2,050. Perp L/S ratio at 3.12 signals crowded longs — contrarian threshold breached. This divergence pattern preceded 3 of the last 5 corrections exceeding 8%. The risk-reward setup favors short-term caution despite spot strength. SOL showing similar dynamics with funding rates turning negative across major exchanges, suggesting smart money positioning for a pullback.",
       isReply: true,
       hasAttestation: true,
@@ -27,7 +27,7 @@ describe("calculateQualityScore", () => {
   });
 
   it("scores a generic low-quality post low", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "Crypto is interesting to see. Time will tell what happens. DYOR.",
     });
 
@@ -37,7 +37,7 @@ describe("calculateQualityScore", () => {
   });
 
   it("detects dollar amounts as numeric claims", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "Market cap reached $2.1T today, a new high for the cycle.",
     });
     expect(result.signals.hasNumericClaim).toBe(true);
@@ -45,21 +45,21 @@ describe("calculateQualityScore", () => {
   });
 
   it("detects percentages as numeric claims", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "CPI at 3.2% suggests Fed will hold rates through Q3.",
     });
     expect(result.signals.hasNumericClaim).toBe(true);
   });
 
   it("detects gwei/sats as numeric claims", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "Gas at 14 gwei makes L1 transactions viable again.",
     });
     expect(result.signals.hasNumericClaim).toBe(true);
   });
 
   it("gives +2 for reply posts", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "This analysis misses the key factor: institutional flows.",
       isReply: true,
     });
@@ -67,7 +67,7 @@ describe("calculateQualityScore", () => {
   });
 
   it("gives +2 for agent references", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "Building on the analysis above with fresh attestation data.",
       agentsReferenced: ["0xabc123"],
     });
@@ -75,8 +75,8 @@ describe("calculateQualityScore", () => {
   });
 
   it("attestation is a hard gate, not a score signal", () => {
-    const withAttest = calculateQualityScore({ text: "BTC at $50,000", hasAttestation: true });
-    const withoutAttest = calculateQualityScore({ text: "BTC at $50,000", hasAttestation: false });
+    const withAttest = calculateStrategyScore({ text: "BTC at $50,000", hasAttestation: true });
+    const withoutAttest = calculateStrategyScore({ text: "BTC at $50,000", hasAttestation: false });
     // Score should be identical — attestation doesn't affect score
     expect(withAttest.score).toBe(withoutAttest.score);
     // But attestationGate differs
@@ -86,12 +86,12 @@ describe("calculateQualityScore", () => {
 
   it("gives +1 for long-form posts over 400 chars", () => {
     const text = "A".repeat(401);
-    const result = calculateQualityScore({ text });
+    const result = calculateStrategyScore({ text });
     expect(result.breakdown.isLongForm).toBe(1);
   });
 
   it("penalizes generic language by -2", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "Watch this space for more developments. Not financial advice.",
     });
     expect(result.signals.hasGenericLanguage).toBe(true);
@@ -99,7 +99,7 @@ describe("calculateQualityScore", () => {
   });
 
   it("floors score at 0 (never negative)", () => {
-    const result = calculateQualityScore({
+    const result = calculateStrategyScore({
       text: "Stay tuned. This is huge. Let that sink in.",
     });
     expect(result.score).toBe(0);
@@ -107,12 +107,12 @@ describe("calculateQualityScore", () => {
   });
 
   it("maxScore is 7 (attestation is hard gate, not scored)", () => {
-    const result = calculateQualityScore({ text: "test" });
+    const result = calculateStrategyScore({ text: "test" });
     expect(result.maxScore).toBe(7);
   });
 
   it("returns breakdown for every scored signal (not attestation — that's a hard gate)", () => {
-    const result = calculateQualityScore({ text: "simple test post" });
+    const result = calculateStrategyScore({ text: "simple test post" });
     expect(Object.keys(result.breakdown)).toEqual(
       expect.arrayContaining([
         "hasNumericClaim",

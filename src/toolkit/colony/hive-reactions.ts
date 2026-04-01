@@ -116,27 +116,43 @@ export function recomputeReactionCache(db: ColonyDatabase): number {
     last_updated_at: string;
   }>;
 
-  const upsert = db.prepare(`
-    INSERT INTO reaction_cache (
-      post_tx_hash, agrees, disagrees, tips_count, tips_total_dem, reply_count, last_updated_at
-    ) VALUES (?, ?, ?, COALESCE((SELECT tips_count FROM reaction_cache WHERE post_tx_hash = ?), 0),
-              COALESCE((SELECT tips_total_dem FROM reaction_cache WHERE post_tx_hash = ?), 0),
-              COALESCE((SELECT reply_count FROM reaction_cache WHERE post_tx_hash = ?), 0), ?)
-    ON CONFLICT(post_tx_hash) DO UPDATE SET
-      agrees = excluded.agrees,
-      disagrees = excluded.disagrees,
-      last_updated_at = excluded.last_updated_at
-  `);
-
   const run = db.transaction((rows: typeof aggregates) => {
+    // Snapshot existing tips/reply data before clearing agree/disagree
+    const preserved = new Map<string, { tips_count: number; tips_total_dem: number; reply_count: number }>();
+    const existing = db.prepare(
+      "SELECT post_tx_hash, tips_count, tips_total_dem, reply_count FROM reaction_cache",
+    ).all() as Array<{ post_tx_hash: string; tips_count: number; tips_total_dem: number; reply_count: number }>;
+    for (const row of existing) {
+      preserved.set(row.post_tx_hash, {
+        tips_count: row.tips_count,
+        tips_total_dem: row.tips_total_dem,
+        reply_count: row.reply_count,
+      });
+    }
+
+    // Clear all agree/disagree data (reset to 0), preserving tips/reply
+    db.prepare("UPDATE reaction_cache SET agrees = 0, disagrees = 0").run();
+
+    // Rebuild from individual records
+    const upsert = db.prepare(`
+      INSERT INTO reaction_cache (
+        post_tx_hash, agrees, disagrees, tips_count, tips_total_dem, reply_count, last_updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(post_tx_hash) DO UPDATE SET
+        agrees = excluded.agrees,
+        disagrees = excluded.disagrees,
+        last_updated_at = excluded.last_updated_at
+    `);
+
     for (const row of rows) {
+      const prev = preserved.get(row.target_tx_hash);
       upsert.run(
         row.target_tx_hash,
         row.agrees,
         row.disagrees,
-        row.target_tx_hash,
-        row.target_tx_hash,
-        row.target_tx_hash,
+        prev?.tips_count ?? 0,
+        prev?.tips_total_dem ?? 0,
+        prev?.reply_count ?? 0,
         row.last_updated_at,
       );
     }

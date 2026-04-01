@@ -34,6 +34,13 @@ interface PostRow {
   tags: string;
   text: string;
   raw_data: string;
+  tx_id: number | null;
+  from_ed25519: string | null;
+  nonce: number | null;
+  amount: number | null;
+  network_fee: number | null;
+  rpc_fee: number | null;
+  additional_fee: number | null;
 }
 
 function mapPostRow(row: PostRow | undefined): CachedPost | null {
@@ -50,6 +57,13 @@ function mapPostRow(row: PostRow | undefined): CachedPost | null {
     tags: JSON.parse(row.tags) as string[],
     text: row.text,
     rawData: JSON.parse(row.raw_data) as Record<string, unknown>,
+    txId: row.tx_id ?? undefined,
+    fromEd25519: row.from_ed25519 ?? undefined,
+    nonce: row.nonce ?? undefined,
+    amount: row.amount ?? undefined,
+    networkFee: row.network_fee ?? undefined,
+    rpcFee: row.rpc_fee ?? undefined,
+    additionalFee: row.additional_fee ?? undefined,
   };
 }
 
@@ -99,7 +113,8 @@ export function insertPost(db: ColonyDatabase, post: CachedPost): void {
 
 export function getPost(db: ColonyDatabase, txHash: string): CachedPost | null {
   const row = db.prepare(`
-    SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data
+    SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data,
+             tx_id, from_ed25519, nonce, amount, network_fee, rpc_fee, additional_fee
     FROM posts
     WHERE tx_hash = ?
   `).get(txHash) as PostRow | undefined;
@@ -110,13 +125,15 @@ export function getPost(db: ColonyDatabase, txHash: string): CachedPost | null {
 export function getPostsByAuthor(db: ColonyDatabase, author: string, limit?: number): CachedPost[] {
   const query = limit === undefined
     ? `
-      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data
+      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data,
+             tx_id, from_ed25519, nonce, amount, network_fee, rpc_fee, additional_fee
       FROM posts
       WHERE author = ?
       ORDER BY block_number DESC, timestamp DESC
     `
     : `
-      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data
+      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data,
+             tx_id, from_ed25519, nonce, amount, network_fee, rpc_fee, additional_fee
       FROM posts
       WHERE author = ?
       ORDER BY block_number DESC, timestamp DESC
@@ -133,13 +150,15 @@ export function getPostsByAuthor(db: ColonyDatabase, author: string, limit?: num
 export function getRecentPosts(db: ColonyDatabase, since: string, limit?: number): CachedPost[] {
   const query = limit === undefined
     ? `
-      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data
+      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data,
+             tx_id, from_ed25519, nonce, amount, network_fee, rpc_fee, additional_fee
       FROM posts
       WHERE timestamp >= ?
       ORDER BY timestamp DESC, block_number DESC
     `
     : `
-      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data
+      SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data,
+             tx_id, from_ed25519, nonce, amount, network_fee, rpc_fee, additional_fee
       FROM posts
       WHERE timestamp >= ?
       ORDER BY timestamp DESC, block_number DESC
@@ -155,7 +174,8 @@ export function getRecentPosts(db: ColonyDatabase, since: string, limit?: number
 
 export function getRepliesTo(db: ColonyDatabase, parentTxHash: string): CachedPost[] {
   const rows = db.prepare(`
-    SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data
+    SELECT tx_hash, author, block_number, timestamp, reply_to, tags, text, raw_data,
+             tx_id, from_ed25519, nonce, amount, network_fee, rpc_fee, additional_fee
     FROM posts
     WHERE reply_to = ?
     ORDER BY block_number ASC, timestamp ASC

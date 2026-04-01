@@ -22,10 +22,10 @@ CREATE TABLE IF NOT EXISTS posts (
   tx_id INTEGER,
   from_ed25519 TEXT,
   nonce INTEGER,
-  amount REAL DEFAULT 0,
-  network_fee REAL DEFAULT 0,
-  rpc_fee REAL DEFAULT 0,
-  additional_fee REAL DEFAULT 0,
+  amount REAL,
+  network_fee REAL,
+  rpc_fee REAL,
+  additional_fee REAL,
   FOREIGN KEY (reply_to) REFERENCES posts(tx_hash)
 );
 CREATE INDEX IF NOT EXISTS idx_posts_author ON posts(author);
@@ -110,10 +110,10 @@ CREATE TABLE IF NOT EXISTS hive_reactions (
   block_number INTEGER NOT NULL,
   timestamp TEXT NOT NULL,
   nonce INTEGER,
-  amount REAL DEFAULT 0,
-  network_fee REAL DEFAULT 0,
-  rpc_fee REAL DEFAULT 0,
-  additional_fee REAL DEFAULT 0,
+  amount REAL,
+  network_fee REAL,
+  rpc_fee REAL,
+  additional_fee REAL,
   raw_data TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_hive_reactions_target ON hive_reactions(target_tx_hash);
@@ -135,10 +135,10 @@ const MIGRATIONS: Record<number, Migration> = {
       ALTER TABLE posts ADD COLUMN tx_id INTEGER;
       ALTER TABLE posts ADD COLUMN from_ed25519 TEXT;
       ALTER TABLE posts ADD COLUMN nonce INTEGER;
-      ALTER TABLE posts ADD COLUMN amount REAL DEFAULT 0;
-      ALTER TABLE posts ADD COLUMN network_fee REAL DEFAULT 0;
-      ALTER TABLE posts ADD COLUMN rpc_fee REAL DEFAULT 0;
-      ALTER TABLE posts ADD COLUMN additional_fee REAL DEFAULT 0;
+      ALTER TABLE posts ADD COLUMN amount REAL;
+      ALTER TABLE posts ADD COLUMN network_fee REAL;
+      ALTER TABLE posts ADD COLUMN rpc_fee REAL;
+      ALTER TABLE posts ADD COLUMN additional_fee REAL;
     `);
 
     // Individual HIVE reaction records (complements the aggregate reaction_cache).

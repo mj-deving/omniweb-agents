@@ -11,6 +11,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { info } from "../lib/network/sdk.js";
 import type { LLMProvider } from "../lib/llm/llm-provider.js";
+import { POST_CATEGORIES } from "../toolkit/supercolony/types.js";
 
 // ── Constants ──────────────────────────────────────
 
@@ -256,8 +257,7 @@ IMPORTANT: You MUST reference specific data points from this source using the ex
   if (!draft.text || draft.text.length < 200) {
     throw new Error(`Generated text too short (${draft.text?.length || 0} chars, need ≥200)`);
   }
-  const VALID_CATEGORIES = ["OBSERVATION", "ANALYSIS", "PREDICTION", "ALERT", "ACTION", "SIGNAL", "QUESTION", "OPINION"];
-  if (!draft.category || !VALID_CATEGORIES.includes(draft.category)) {
+  if (!draft.category || !(POST_CATEGORIES as readonly string[]).includes(draft.category)) {
     draft.category = input.category;
   }
   if (!draft.tags || draft.tags.length === 0) draft.tags = [input.topic.toLowerCase().replace(/\s+/g, "-")];

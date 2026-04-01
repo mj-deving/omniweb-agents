@@ -44,13 +44,11 @@ describe("OPINION category — gate checkCategory", () => {
 });
 
 describe("OPINION category — LLM VALID_CATEGORIES", () => {
-  it("VALID_CATEGORIES includes OPINION", async () => {
-    // Import the actual module to verify VALID_CATEGORIES
-    // Since it's a const inside generatePost, we test by checking the module source
-    // This is a structural test — we'll verify by reading the file
+  it("VALID_CATEGORIES includes OPINION via POST_CATEGORIES import", async () => {
     const fs = await import("node:fs");
     const llmSource = fs.readFileSync("src/actions/llm.ts", "utf-8");
-    expect(llmSource).toContain('"OPINION"');
+    // Categories now imported from POST_CATEGORIES (canonical source)
+    expect(llmSource).toContain("POST_CATEGORIES");
   });
 
   it("LLM system prompt mentions OPINION category", async () => {

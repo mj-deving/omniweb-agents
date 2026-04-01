@@ -81,9 +81,10 @@ const NUMERIC_PATTERNS = [
 // ── Scorer ──────────────────────────────────────
 
 /**
- * @deprecated Use `calculateOfficialScore` from `src/toolkit/supercolony/scoring.ts`
- * for platform compatibility scoring. This function is for internal strategy-layer
- * quality heuristics only.
+ * Strategy-layer quality heuristics — internal scoring for agent decision-making.
+ *
+ * For platform compatibility scoring (SuperColony's public formula), use
+ * `calculateOfficialScore` from `src/toolkit/supercolony/scoring.ts` instead.
  */
 export function calculateStrategyScore(input: {
   text: string;

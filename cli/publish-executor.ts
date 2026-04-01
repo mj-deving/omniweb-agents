@@ -1,6 +1,6 @@
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 
-import type { PostCategory } from "../src/toolkit/supercolony/types.js";
+import { POST_CATEGORIES, type PostCategory } from "../src/toolkit/supercolony/types.js";
 import type { StrategyAction } from "./v3-strategy-bridge.js";
 import type { V3SessionState, PublishedPostRecord } from "../src/lib/state.js";
 import { saveState } from "../src/lib/state.js";
@@ -99,7 +99,7 @@ export interface PublishExecutorDeps {
 }
 
 const MIN_TEXT_LENGTH = 200;
-const VALID_CATEGORIES = new Set(["OBSERVATION", "ANALYSIS", "PREDICTION", "ALERT", "ACTION", "SIGNAL", "QUESTION", "OPINION"]);
+const VALID_CATEGORIES = new Set<string>(POST_CATEGORIES);
 
 function getTopics(action: StrategyAction): string[] {
   const topics = action.metadata?.topics;

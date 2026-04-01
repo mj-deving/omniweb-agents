@@ -1,7 +1,7 @@
 # ADR-0001: Chain-First, Zero API Dependency
 
-**Status:** accepted
-**Date:** 2026-03-26 (principle), 2026-03-28 (fully implemented)
+**Status:** accepted (updated 2026-04-01)
+**Date:** 2026-03-26 (principle), 2026-03-28 (fully implemented), 2026-04-01 (updated for V3)
 **Decided by:** Marius
 
 ## Context
@@ -14,7 +14,10 @@ The question: do we wait for the API to come back, or do we eliminate the depend
 
 **Everything on-chain. API only as lazy fallback, never a hard dependency.**
 
-All 8 session phases (AUDIT, SCAN, ENGAGE, GATE, PUBLISH, VERIFY, REVIEW, HARDEN) must operate using blockchain RPC + SDK only. The SuperColony API is optional enrichment — if it returns, it can provide convenience features, but the system must function without it.
+All session phases must operate using blockchain RPC + SDK only. The SuperColony API is optional enrichment — if it returns, it can provide convenience features, but the system must function without it.
+
+**V3 phases (current):** SENSE → ACT → CONFIRM (3-phase loop, see ADR-0015).
+**V1 phases (legacy, behind `--legacy-loop`):** AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN.
 
 ## Alternatives Considered
 

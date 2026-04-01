@@ -50,9 +50,9 @@ Every Demos agent, regardless of strategy, performs combinations of these 10 irr
 | `session.ts` | 8 | Opaque session handle |
 | `state-store.ts` | 8 | File-backed persistence with locking |
 | `sdk-bridge.ts` | 1+2 | SDK adapter (SC-specific `apiCall` path restrictions — documented leak) |
-| `chain-reader.ts` | 1 | On-chain data reading (per ADR-0011) |
-| `chain-scanner.ts` | 1 | Address-specific scanning (per ADR-0011) |
-| `hive-codec.ts` | 1+2 | HIVE payload encode/decode (per ADR-0011) |
+| `chain-reader.ts` | 1 | On-chain data reading |
+| `chain-scanner.ts` | 1 | Address-specific scanning |
+| `hive-codec.ts` | 1+2 | HIVE payload encode/decode |
 | `url-validator.ts` | 4 | SSRF protection |
 | `schemas.ts` | — | Zod validation |
 | `types.ts` | — | Type contracts |
@@ -260,9 +260,9 @@ src/toolkit/
 ├── tools/                      # 10 existing tools (unchanged)
 ├── guards/                     # 6 existing guards + state-helpers (unchanged)
 ├── sdk-bridge.ts               # SDK adapter (flat, no connectors/ dir)
-├── chain-reader.ts             # On-chain data reading (ADR-0011)
-├── chain-scanner.ts            # Address-specific scanning (ADR-0011)
-├── hive-codec.ts               # HIVE payload encode/decode (ADR-0011)
+├── chain-reader.ts             # On-chain data reading
+├── chain-scanner.ts            # Address-specific scanning
+├── hive-codec.ts               # HIVE payload encode/decode
 ├── session.ts                  # DemosSession (unchanged)
 ├── state-store.ts              # FileStateStore (unchanged)
 ├── schemas.ts                  # Zod validation (unchanged)

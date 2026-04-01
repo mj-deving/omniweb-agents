@@ -13,7 +13,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 - **Config:** YAML (persona, strategy, agent definitions)
 - **LLM:** Provider-agnostic via `src/lib/llm/llm-provider.ts`. See `.ai/guides/gotchas-detail.md` for resolution order.
 - **TypeScript:** 6.0.2 (target ES2025, strict, zero `tsc --noEmit` errors)
-- **Testing:** vitest (`npm test`). 2200 tests across 169 suites. All code changes must include tests.
+- **Testing:** vitest (`npm test`). 2237 tests across 171 suites. All code changes must include tests.
 - **Credential path:** `~/.config/demos/credentials` (XDG, mode 600). See `.ai/guides/gotchas-detail.md` for per-agent and overrides.
 
 ## Project Structure
@@ -84,7 +84,7 @@ New code must go in the right directory. The classification rule from ADR-0002: 
 See `.ai/guides/gotchas-detail.md` for: credentials, scoring, quality gate, TLSN, source matching, LLM provider.
 
 ### Architecture Decision Records
-Significant architectural decisions documented in `docs/decisions/` (14 ADRs). **All ADRs with `Status: accepted` are active constraints** — check before proposing changes to established patterns. Key ADRs: ADR-0002 (toolkit vs strategy boundary), ADR-0007 (security-first), ADR-0013 (planned gray-zone splits), ADR-0014 (architecture enforcement layers). When running `/simplify`, scan `docs/decisions/*.md` for accepted ADRs and verify the diff doesn't violate them. New ADRs automatically join this scope by convention — no manual wiring needed. See `.ai/guides/sdk-rpc-reference.md` for SDK chain query methods. See `docs/architecture-plumbing-vs-strategy.md` for the full plumbing/strategy classification.
+Significant architectural decisions documented in `docs/decisions/` (13 ADRs). **All ADRs with `Status: accepted` are active constraints** — check before proposing changes to established patterns. Key ADRs: ADR-0001 (chain-first), ADR-0002 (toolkit vs strategy boundary + composable primitives), ADR-0007 (security-first), ADR-0013 (planned gray-zone splits), ADR-0014 (architecture enforcement layers), ADR-0015 (V3 loop architecture). When running `/simplify`, scan `docs/decisions/*.md` for accepted ADRs and verify the diff doesn't violate them. New ADRs automatically join this scope by convention — no manual wiring needed. See `.ai/guides/sdk-rpc-reference.md` for SDK chain query methods. See `docs/architecture-plumbing-vs-strategy.md` for the full plumbing/strategy classification.
 
 ## Conventions
 

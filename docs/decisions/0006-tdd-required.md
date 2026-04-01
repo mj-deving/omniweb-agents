@@ -21,7 +21,7 @@ Enforced by:
 
 1. **Tests optional** — rejected after regressions in SDK bridge refactoring.
 2. **Tests after implementation** — rejected. Writing tests first catches design issues.
-3. **Mandatory TDD** — accepted. Currently at 1943 tests across 129 suites.
+3. **Mandatory TDD** — accepted. Currently at 2237 tests across 171 suites.
 
 ## Consequences
 

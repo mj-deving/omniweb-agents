@@ -1,6 +1,6 @@
 # ADR-0013: Planned Gray-Zone Module Splits
 
-**Status:** partially superseded by V3 design (`design-loop-v3.md`)
+**Status:** accepted (gray-zone modules documented; no extraction triggers fired as of 2026-04-01)
 **Date:** 2026-03-30
 **Decided by:** Marius
 

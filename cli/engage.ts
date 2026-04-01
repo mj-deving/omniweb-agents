@@ -185,9 +185,15 @@ async function main(): Promise<void> {
 
     processedTxHashes.add(post.txHash);
 
-    // Cast reaction on-chain
+    // Cast reaction via API (reactions are API-only, not on-chain)
     try {
-      await bridge.publishHiveReaction(post.txHash, decision.reaction);
+      const reactResult = await bridge.apiCall(
+        `/api/feed/${encodeURIComponent(post.txHash)}/react`,
+        { method: "POST", body: JSON.stringify({ type: decision.reaction }) },
+      );
+      if (!reactResult.ok) {
+        throw new Error(`Reaction API returned ${reactResult.status}`);
+      }
 
       const topic =
         post.payload?.tags?.[0] ||
@@ -238,7 +244,13 @@ async function main(): Promise<void> {
 
       let reactOk = false;
       try {
-        await bridge.publishHiveReaction(target.txHash, "disagree");
+        const reactResult = await bridge.apiCall(
+          `/api/feed/${encodeURIComponent(target.txHash)}/react`,
+          { method: "POST", body: JSON.stringify({ type: "disagree" }) },
+        );
+        if (!reactResult.ok) {
+          throw new Error(`Reaction API returned ${reactResult.status}`);
+        }
         reactOk = true;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);

@@ -3515,7 +3515,7 @@ async function runV2Loop(
           : undefined;
         const executionResult = await executeStrategyActions(strategyPlanResult.actions, {
           bridge: {
-            publishHiveReaction: bridge.publishHiveReaction.bind(bridge),
+            apiCall: bridge.apiCall.bind(bridge),
             publishHivePost: bridge.publishHivePost.bind(bridge),
             transferDem: (to, amount) => bridge.transferDem(to, amount, "Strategy action tip"),
           },

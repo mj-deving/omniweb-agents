@@ -185,14 +185,14 @@ export async function handlePosts(
 ): Promise<PostsResult> {
   const posts = await bridge.getHivePostsByAuthor(options.author, { limit: options.limit });
 
+  // NOTE: Reaction counts are API-only (not on-chain). Chain-based reaction
+  // scanning has been removed. API enrichment will be wired in a follow-up.
+  // Until then, reactions default to { agree: 0, disagree: 0 }.
   if (options.reactions && posts.length > 0) {
-    const txHashes = posts.map((p) => p.txHash);
-    const reactionMap = await bridge.getHiveReactions(txHashes);
-
     return {
       posts: posts.map((p) => ({
         ...p,
-        reactions: reactionMap.get(p.txHash) ?? { agree: 0, disagree: 0 },
+        reactions: p.reactions ?? { agree: 0, disagree: 0 },
       })),
     };
   }
@@ -219,14 +219,12 @@ export async function handlePerformance(
     };
   }
 
-  const txHashes = posts.map((p) => p.txHash);
-  const reactionMap = await bridge.getHiveReactions(txHashes);
-
+  // Reaction counts are API-only — chain scanning removed. Defaults to zero.
   let totalAgrees = 0;
   let totalDisagrees = 0;
 
   const perfPosts: PerformancePost[] = posts.map((p) => {
-    const rx = reactionMap.get(p.txHash) ?? { agree: 0, disagree: 0 };
+    const rx = p.reactions ?? { agree: 0, disagree: 0 };
     const total = rx.agree + rx.disagree;
     totalAgrees += rx.agree;
     totalDisagrees += rx.disagree;
@@ -271,14 +269,12 @@ export async function handleEngagement(
     };
   }
 
-  const txHashes = posts.map((p) => p.txHash);
-  const reactionMap = await bridge.getHiveReactions(txHashes);
-
+  // Reaction counts are API-only — chain scanning removed. Defaults to zero.
   let totalReactions = 0;
   let topPost: { txHash: string; reactions: number } | null = null;
 
   const engPosts: EngagementPost[] = posts.map((p) => {
-    const rx = reactionMap.get(p.txHash) ?? { agree: 0, disagree: 0 };
+    const rx = p.reactions ?? { agree: 0, disagree: 0 };
     const total = rx.agree + rx.disagree;
     totalReactions += total;
 

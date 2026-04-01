@@ -220,14 +220,13 @@ describe("runV3Loop", () => {
     });
     computePerformanceMock.mockReturnValue([{ txHash: "0xpub", decayedScore: 12 }]);
     createSdkBridgeMock.mockReturnValue({
-      publishHiveReaction: vi.fn(),
+      apiCall: vi.fn().mockResolvedValue({ ok: true, status: 200, data: {} }),
       publishHivePost: vi.fn(),
       transferDem: vi.fn(),
       getHivePosts: vi.fn().mockResolvedValue([]),
-      getHiveReactions: vi.fn().mockResolvedValue(new Map()),
     });
     executeStrategyActionsMock.mockResolvedValue({
-      executed: [{ action: { type: "ENGAGE" }, success: true, txHash: "0xengage" }],
+      executed: [{ action: { type: "ENGAGE" }, success: true }],
       skipped: [],
     });
     executePublishActionsMock.mockImplementation(async (_actions: unknown, deps: any) => {
@@ -476,11 +475,10 @@ describe("runV3Loop", () => {
     ];
 
     createSdkBridgeMock.mockReturnValue({
-      publishHiveReaction: vi.fn(),
+      apiCall: vi.fn().mockResolvedValue({ ok: true, status: 200, data: {} }),
       publishHivePost: vi.fn(),
       transferDem: vi.fn(),
       getHivePosts: vi.fn().mockResolvedValue(chainPosts),
-      getHiveReactions: vi.fn().mockResolvedValue(new Map()),
     });
 
     // countPosts returns 0 before, 3 after to simulate 3 inserted
@@ -512,115 +510,9 @@ describe("runV3Loop", () => {
     );
   });
 
-  it("refreshes reaction cache for recent posts during sense phase", async () => {
-    const recentPosts = [
-      { txHash: "0xrecent1", author: "a1", blockNumber: 200, timestamp: new Date().toISOString(), replyTo: null, tags: [], text: "recent1", rawData: {} },
-      { txHash: "0xrecent2", author: "a2", blockNumber: 201, timestamp: new Date().toISOString(), replyTo: null, tags: [], text: "recent2", rawData: {} },
-    ];
-    getRecentPostsMock.mockReturnValue(recentPosts);
-
-    const reactionsMap = new Map([
-      ["0xrecent1", { agree: 5, disagree: 1 }],
-      ["0xrecent2", { agree: 2, disagree: 0 }],
-    ]);
-    const getHiveReactionsMock = vi.fn().mockResolvedValue(reactionsMap);
-    createSdkBridgeMock.mockReturnValue({
-      publishHiveReaction: vi.fn(),
-      publishHivePost: vi.fn(),
-      transferDem: vi.fn(),
-      getHivePosts: vi.fn().mockResolvedValue([]),
-      getHiveReactions: getHiveReactionsMock,
-    });
-
-    planMock.mockResolvedValueOnce({ actions: [], log: {} });
-    const state = makeState();
-    const deps = makeDeps();
-
-    await runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), deps);
-
-    expect(getHiveReactionsMock).toHaveBeenCalledWith(["0xrecent1", "0xrecent2"]);
-    expect(upsertReactionMock).toHaveBeenCalledTimes(2);
-    expect(upsertReactionMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ postTxHash: "0xrecent1", agrees: 5, disagrees: 1 }),
-    );
-    expect(upsertReactionMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ postTxHash: "0xrecent2", agrees: 2, disagrees: 0 }),
-    );
-    expect(deps.observe).toHaveBeenCalledWith(
-      "insight",
-      expect.stringContaining("Reaction refresh: 2 posts updated"),
-      expect.objectContaining({ source: "v3-loop:reactionRefresh", postsRefreshed: 2 }),
-    );
-  });
-
-  it("preserves existing tip/reply metrics when refreshing agree/disagree counts", async () => {
-    const recentPosts = [
-      { txHash: "0xwithTips", author: "a1", blockNumber: 200, timestamp: new Date().toISOString(), replyTo: null, tags: [], text: "recent1", rawData: {} },
-    ];
-    getRecentPostsMock.mockReturnValue(recentPosts);
-
-    // Existing row has tip data that must be preserved
-    getReactionMock.mockReturnValue({
-      postTxHash: "0xwithTips",
-      agrees: 1,
-      disagrees: 0,
-      tipsCount: 3,
-      tipsTotalDem: 15,
-      replyCount: 2,
-      lastUpdatedAt: "2026-03-31T00:00:00.000Z",
-    });
-
-    const reactionsMap = new Map([
-      ["0xwithTips", { agree: 8, disagree: 2 }],
-    ]);
-    createSdkBridgeMock.mockReturnValue({
-      publishHiveReaction: vi.fn(),
-      publishHivePost: vi.fn(),
-      transferDem: vi.fn(),
-      getHivePosts: vi.fn().mockResolvedValue([]),
-      getHiveReactions: vi.fn().mockResolvedValue(reactionsMap),
-    });
-
-    planMock.mockResolvedValueOnce({ actions: [], log: {} });
-    const state = makeState();
-
-    await runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), makeDeps());
-
-    // agree/disagree updated, tip/reply preserved from existing row
-    expect(upsertReactionMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        postTxHash: "0xwithTips",
-        agrees: 8,
-        disagrees: 2,
-        tipsCount: 3,
-        tipsTotalDem: 15,
-        replyCount: 2,
-      }),
-    );
-  });
-
-  it("skips reaction refresh when no recent posts exist", async () => {
-    getRecentPostsMock.mockReturnValue([]);
-    const getHiveReactionsMock = vi.fn();
-    createSdkBridgeMock.mockReturnValue({
-      publishHiveReaction: vi.fn(),
-      publishHivePost: vi.fn(),
-      transferDem: vi.fn(),
-      getHivePosts: vi.fn().mockResolvedValue([]),
-      getHiveReactions: getHiveReactionsMock,
-    });
-
-    planMock.mockResolvedValueOnce({ actions: [], log: {} });
-    const state = makeState();
-
-    await runV3Loop(state, makeFlags(), mkdtempSync(join(tmpdir(), "v3-loop-")), new Map(), makeDeps());
-
-    expect(getHiveReactionsMock).not.toHaveBeenCalled();
-    expect(upsertReactionMock).not.toHaveBeenCalled();
-  });
+  // Reaction refresh tests removed — reactions are API-only (chain scanning removed).
+  // The v3-loop no longer calls getHiveReactions during sense phase.
+  // API enrichment for reaction counts will be tested when wired in a follow-up.
 
   it("succeeds ACT when at least one action succeeds among failures", async () => {
     const state = makeState();

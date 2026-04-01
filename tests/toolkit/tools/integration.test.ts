@@ -51,7 +51,6 @@ function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
       },
     ])),
     resolvePostAuthor: vi.fn(async () => "demos1agent"),
-    publishHiveReaction: vi.fn(async () => ({ txHash: "react-chain-hash" })),
     ...overrides,
   };
 }
@@ -160,13 +159,21 @@ describe("Tool Integration with SDK Bridge", () => {
   });
 
   describe("react() with bridge", () => {
-    it("calls bridge.publishHiveReaction for on-chain reaction", async () => {
+    it("calls bridge.apiCall for API-based reaction", async () => {
+      const apiBridge = mockBridge({
+        apiAccess: "authenticated",
+        apiCall: vi.fn(async () => ({ ok: true, status: 200, data: { success: true } })),
+      });
+      const apiSession = createBridgedSession(tempDir, apiBridge);
       const { react } = await import("../../../src/toolkit/tools/react.js");
-      const result = await react(session, { txHash: "post-tx-1", type: "agree" });
+      const result = await react(apiSession, { txHash: "post-tx-1", type: "agree" });
 
       expect(result.ok).toBe(true);
       expect(result.data!.success).toBe(true);
-      expect(bridge.publishHiveReaction).toHaveBeenCalledWith("post-tx-1", "agree");
+      expect(apiBridge.apiCall).toHaveBeenCalledWith(
+        "/api/feed/post-tx-1/react",
+        { method: "POST", body: JSON.stringify({ type: "agree" }) },
+      );
     });
   });
 

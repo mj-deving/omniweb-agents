@@ -12,8 +12,6 @@ import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import {
   getHivePosts as readHivePosts,
   getHivePostsByAuthor as readHivePostsByAuthor,
-  getHiveReactions as readHiveReactions,
-  getHiveReactionsByAuthor as readHiveReactionsByAuthor,
   getRepliesTo as readRepliesTo,
   resolvePostAuthor as readPostAuthor,
   verifyTransaction as readTransaction,
@@ -196,20 +194,11 @@ export interface SdkBridge {
   /** Resolve post author address from chain transaction */
   resolvePostAuthor(txHash: string): Promise<string | null>;
 
-  /** Count HIVE reactions for given post txHashes — single chain scan, returns map of txHash → { agree, disagree } */
-  getHiveReactions(targetTxHashes: string[]): Promise<Map<string, { agree: number; disagree: number }>>;
-
   /** Get HIVE posts by a specific author — uses getTransactionHistory for server-side type filtering */
   getHivePostsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").ScanPost[]>;
 
-  /** Get HIVE reactions cast by a specific author — uses getTransactionHistory for server-side type filtering */
-  getHiveReactionsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").HiveReaction[]>;
-
   /** Get replies to specific posts — global chain scan filtered by replyTo field */
   getRepliesTo(txHashes: string[]): Promise<import("./types.js").ScanPost[]>;
-
-  /** Publish a HIVE reaction on-chain (agree/disagree as storage transaction) */
-  publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }>;
 
   /**
    * Get the underlying Demos instance (for direct SDK access when needed).
@@ -515,10 +504,6 @@ export function createSdkBridge(
       return readHivePosts(rpc, limit);
     },
 
-    async getHiveReactions(targetTxHashes: string[]): Promise<Map<string, { agree: number; disagree: number }>> {
-      return readHiveReactions(rpc, targetTxHashes);
-    },
-
     async resolvePostAuthor(txHash: string): Promise<string | null> {
       return readPostAuthor(rpc, txHash);
     },
@@ -527,37 +512,8 @@ export function createSdkBridge(
       return readHivePostsByAuthor(rpc, address, options);
     },
 
-    async getHiveReactionsByAuthor(address: string, options?: { limit?: number }): Promise<import("./types.js").HiveReaction[]> {
-      return readHiveReactionsByAuthor(rpc, address, options);
-    },
-
     async getRepliesTo(txHashes: string[]): Promise<import("./types.js").ScanPost[]> {
       return readRepliesTo(rpc, txHashes);
-    },
-
-    async publishHiveReaction(targetTxHash: string, reactionType: "agree" | "disagree"): Promise<{ txHash: string }> {
-      if (!targetTxHash || typeof targetTxHash !== "string" || targetTxHash.length < 8) {
-        throw new Error("publishHiveReaction: invalid targetTxHash");
-      }
-      const tx = txModule ?? await loadTxModule();
-      const encoded = encodeHivePayload({ v: 1, action: "react", target: targetTxHash, type: reactionType });
-      const stages = {
-        store: (payload: Uint8Array) => tx.store(payload, demos),
-        confirm: (storeTx: unknown) => tx.confirm(storeTx, demos),
-        broadcast: (validity: unknown) => tx.broadcast(validity, demos),
-      };
-
-      const chainTx = await executeChainTx(stages, encoded).catch((error: unknown) => {
-        if (isMissingConfirmedTxHashError(error)) {
-          throw new Error("HIVE reaction broadcast succeeded but txHash not found in response");
-        }
-        throw error;
-      });
-      const txHash = extractTxHash({ txHash: chainTx.txHash });
-      if (!txHash) {
-        throw new Error("HIVE reaction broadcast succeeded but txHash not found in response");
-      }
-      return { txHash: String(txHash) };
     },
 
     getDemos(): Demos {

@@ -50,7 +50,7 @@ describe("react() validation", () => {
     const result = await react(session, { txHash: "0x1", type: "like" as "agree" });
     expect(result.ok).toBe(false);
     expect(result.error!.code).toBe("INVALID_INPUT");
-    expect(result.error!.message).toContain("agree");
+    expect(result.error!.message).toContain("Invalid input");
   });
 
   it("fails with bridge error when no bridge configured", async () => {

@@ -75,11 +75,6 @@ describe("Compatibility matrix — 3 API access states", () => {
       expect(author).toBe("demos1author");
     });
 
-    it("publishHiveReaction works via chain", async () => {
-      const result = await bridge.publishHiveReaction("0xtarget", "agree");
-      expect(result.txHash).toBe("mock-hash");
-      expect(mockTxModule.store).toHaveBeenCalled();
-    });
   });
 
   describe("API configured, auth pending", () => {
@@ -319,21 +314,5 @@ describe("ChainTransaction bridge methods", () => {
     expect(posts).toHaveLength(5);
   });
 
-  it("publishHiveReaction encodes reaction as HIVE storage transaction", async () => {
-    const localTxModule: TxModule = {
-      store: vi.fn(async () => ({ type: "store" })),
-      confirm: vi.fn(async () => ({ response: { data: { transaction: { hash: "react-hash" } } } })),
-      broadcast: vi.fn(async () => ({})),
-    };
-    const bridge = createSdkBridge(mockDemos() as any, undefined, AUTH_PENDING_TOKEN, undefined, localTxModule);
-    const result = await bridge.publishHiveReaction("0xtarget", "disagree");
-    expect(result.txHash).toBe("react-hash");
-
-    // Verify the stored payload
-    const storeCall = (localTxModule.store as ReturnType<typeof vi.fn>).mock.calls[0];
-    const encoded = storeCall[0] as Uint8Array;
-    const decoded = new TextDecoder().decode(encoded.slice(4)); // skip HIVE prefix
-    const parsed = JSON.parse(decoded);
-    expect(parsed).toEqual({ v: 1, action: "react", target: "0xtarget", type: "disagree" });
-  });
+  // publishHiveReaction tests removed — reactions are API-only (not on-chain)
 });

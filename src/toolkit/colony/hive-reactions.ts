@@ -1,5 +1,8 @@
 /**
- * Individual HIVE reaction records — one row per on-chain agree/disagree transaction.
+ * Individual HIVE reaction records — one row per agree/disagree reaction.
+ *
+ * Reactions are API-only (SuperColony backend, not on-chain). Data is fetched
+ * from the API and stored locally for offline access and scoring.
  *
  * Complements reaction_cache (aggregates) with granular per-reaction data.
  * The reaction_cache can be rebuilt from this table at any time via recomputeReactionCache().

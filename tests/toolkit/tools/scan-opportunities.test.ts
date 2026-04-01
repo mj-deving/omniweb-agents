@@ -41,7 +41,6 @@ function createMockBridge(posts: ScanPost[]): SdkBridge {
     verifyTransaction: vi.fn(async () => null),
     getHivePosts: vi.fn(async () => posts),
     resolvePostAuthor: vi.fn(async () => null),
-    publishHiveReaction: vi.fn(async () => ({ txHash: "" })),
   };
 }
 

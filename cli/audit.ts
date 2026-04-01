@@ -311,16 +311,14 @@ async function main(): Promise<void> {
     if (validUnaudited.length === 0) {
       info("No valid unaudited entries to scan");
     } else {
-    info(`Scanning chain for reactions on ${validUnaudited.length} unaudited posts...`);
-    const txHashes = validUnaudited.map(e => e.txHash);
+    // NOTE: Reaction counts are API-only (not on-chain). Chain-based reaction
+    // scanning has been removed. Until API enrichment is wired, reactions default to 0.
+    info(`Scoring ${validUnaudited.length} unaudited posts (reactions unavailable — API enrichment pending)...`);
 
     try {
-      const reactionMap = await bridge.getHiveReactions(txHashes);
-
       for (const entry of validUnaudited) {
-        const rx = reactionMap.get(entry.txHash);
-        const agrees = rx?.agree ?? 0;
-        const disagrees = rx?.disagree ?? 0;
+        const agrees = 0;
+        const disagrees = 0;
         const totalReactions = agrees + disagrees;
         const score = computeScore(entry, totalReactions);
 

@@ -31,6 +31,7 @@ export type {
   PublishDraft,
   ReplyOptions,
   ReactOptions,
+  ReactionType,
   TipOptions,
   ScanOptions,
   VerifyOptions,
@@ -40,6 +41,7 @@ export type {
   // Result types
   PublishResult,
   ReactResult,
+  ReactionCounts,
   TipResult,
   ScanResult,
   ScanPost,
@@ -148,7 +150,7 @@ export { createStorageClient } from "./network/storage-client.js";
 
 export { connect, disconnect } from "./tools/connect.js";
 export { publish, reply } from "./tools/publish.js";
-export { react } from "./tools/react.js";
+export { react, getReactionCounts } from "./tools/react.js";
 export { tip } from "./tools/tip.js";
 export { scan } from "./tools/scan.js";
 export { verify } from "./tools/verify.js";

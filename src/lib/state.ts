@@ -178,6 +178,7 @@ export interface V3SessionState {
     planResult?: unknown;
     executionResult?: unknown;
     apiEnrichment?: unknown;
+    calibration?: unknown;
   };
 }
 

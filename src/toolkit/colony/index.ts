@@ -25,3 +25,6 @@ export { extractColonyState } from "./state-extraction.js";
 export type { ColonyState, StateExtractionOptions } from "./state-extraction.js";
 
 export { computePerformanceScores } from "./performance.js";
+
+export { getAgentProfile, getInteractionHistory, recordInteraction, refreshAgentProfiles } from "./intelligence.js";
+export type { AgentProfileRecord, InteractionFilter, InteractionRecord } from "./intelligence.js";

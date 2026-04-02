@@ -332,7 +332,7 @@ async function main(): Promise<void> {
           actual_reactions: totalReactions,
           actual_score: score,
           delta: totalReactions - entry.predicted_reactions,
-          highDisagree: disagrees > agrees && disagrees >= 5,
+          highDisagree: entry.actual_disagrees > entry.actual_agrees && entry.actual_disagrees >= 5,
           status: "audited",
         });
       }

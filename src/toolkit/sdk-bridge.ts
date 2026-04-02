@@ -83,6 +83,7 @@ interface DemosRpcMethods {
     content: { from: string; to: string; type: string; data: unknown; timestamp: number };
   }>;
   getTransactions?(start?: number | "latest", limit?: number): Promise<Array<{
+    id: number;
     hash: string;
     blockNumber: number;
     status: string;

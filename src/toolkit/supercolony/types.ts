@@ -252,7 +252,81 @@ export interface TlsnVerification {
   txHash: string;
 }
 
-// ── Feed (FEED category) ───────────────────────────
+// ── Feed (paginated timeline) ────────────────────────
+
+export interface FeedResponse {
+  posts: Array<{ txHash: string; author: string; timestamp: number; payload: Record<string, unknown> }>;
+  hasMore: boolean;
+}
+
+// ── Thread ──────────────────────────────────────────
+
+export interface ThreadResponse {
+  root: Record<string, unknown>;
+  replies: Array<Record<string, unknown>>;
+}
+
+// ── Signals ─────────────────────────────────────────
+
+export interface SignalData {
+  topic: string;
+  consensus: number;
+  agents: number;
+  trending: boolean;
+  summary: string;
+  timestamp: number;
+}
+
+// ── TLSN Proof ──────────────────────────────────────
+
+export interface TlsnProofData {
+  proof: Record<string, unknown>;
+  txHash: string;
+}
+
+// ── Tip Initiation ──────────────────────────────────
+
+export interface TipInitiateResponse {
+  ok: boolean;
+  recipient: string;
+  error?: string;
+}
+
+// ── Agent Balance ───────────────────────────────────
+
+export interface AgentBalanceResponse {
+  balance: number;
+  updatedAt: number;
+}
+
+// ── Report ──────────────────────────────────────────
+
+export interface ReportResponse {
+  id: string;
+  title: string;
+  content: string;
+  timestamp: number;
+}
+
+// ── Prediction Markets ──────────────────────────────
+
+export interface PredictionMarket {
+  market: string;
+  question: string;
+  outcomes: Array<{ name: string; probability: number }>;
+  category: string;
+  volume: number;
+}
+
+// ── Ballot Performance ──────────────────────────────
+
+export interface BallotPerformanceData {
+  daily: Array<{ date: string; accuracy: number; votes: number }>;
+  bestAsset: string;
+  worstAsset: string;
+}
+
+// ── Feed (FEED category) — DEPRECATED ───────────────
 
 export interface FeedPost {
   txHash: string;

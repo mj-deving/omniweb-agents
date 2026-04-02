@@ -34,6 +34,15 @@ import type {
   HealthStatus,
   TlsnVerification,
   FeedResult,
+  FeedResponse,
+  ThreadResponse,
+  SignalData,
+  TlsnProofData,
+  TipInitiateResponse,
+  AgentBalanceResponse,
+  ReportResponse,
+  PredictionMarket,
+  BallotPerformanceData,
 } from "./types.js";
 
 // ── Config ──────────────────────────────────────────
@@ -112,9 +121,9 @@ export class SuperColonyApiClient {
   // ── Predictions ─────────────────────────────────
 
   async queryPredictions(
-    opts?: { status?: string; asset?: string },
+    opts?: { status?: string; asset?: string; agent?: string },
   ): Promise<ApiResult<Prediction[]>> {
-    return this.get(`/api/predictions${this.buildQs({ status: opts?.status, asset: opts?.asset })}`);
+    return this.get(`/api/predictions${this.buildQs({ status: opts?.status, asset: opts?.asset, agent: opts?.agent })}`);
   }
 
   async resolvePrediction(
@@ -205,8 +214,9 @@ export class SuperColonyApiClient {
 
   async getOracle(opts?: {
     assets?: string[];
+    window?: string;
   }): Promise<ApiResult<OracleResult>> {
-    return this.get(`/api/oracle${this.buildQs({ assets: opts?.assets?.join(",") })}`);
+    return this.get(`/api/oracle${this.buildQs({ assets: opts?.assets?.join(","), window: opts?.window })}`);
   }
 
   // ── Prices ───────────────────────────────────
@@ -217,9 +227,9 @@ export class SuperColonyApiClient {
 
   async getPriceHistory(
     asset: string,
-    minutes: number,
+    history: number,
   ): Promise<ApiResult<PriceHistoryEntry[]>> {
-    return this.get(`/api/prices${this.buildQs({ asset, minutes })}`);
+    return this.get(`/api/prices${this.buildQs({ asset, history })}`);
   }
 
   // ── Ballot ───────────────────────────────────
@@ -228,12 +238,16 @@ export class SuperColonyApiClient {
     return this.get(`/api/ballot${this.buildQs({ assets: assets?.join(",") })}`);
   }
 
-  async getBallotAccuracy(address: string): Promise<ApiResult<BallotAccuracy>> {
-    return this.get(`/api/ballot/accuracy${this.buildQs({ address })}`);
+  async getBallotAccuracy(address: string, asset?: string): Promise<ApiResult<BallotAccuracy>> {
+    return this.get(`/api/ballot/accuracy${this.buildQs({ address, asset })}`);
   }
 
-  async getBallotLeaderboard(): Promise<ApiResult<BallotLeaderboard>> {
-    return this.get("/api/ballot/leaderboard");
+  async getBallotLeaderboard(opts?: {
+    limit?: number;
+    asset?: string;
+    minVotes?: number;
+  }): Promise<ApiResult<BallotLeaderboard>> {
+    return this.get(`/api/ballot/leaderboard${this.buildQs({ limit: opts?.limit, asset: opts?.asset, minVotes: opts?.minVotes })}`);
   }
 
   // ── Network ──────────────────────────────────
@@ -252,8 +266,107 @@ export class SuperColonyApiClient {
     return this.get(`/api/verify-tlsn/${encodeURIComponent(txHash)}`);
   }
 
-  // ── Feed (FEED category) ────────────────────
+  // ── Feed (paginated timeline) ───────────────
 
+  async getFeed(opts?: {
+    category?: string;
+    author?: string;
+    asset?: string;
+    cursor?: string;
+    limit?: number;
+    replies?: boolean;
+  }): Promise<ApiResult<FeedResponse>> {
+    return this.get(`/api/feed${this.buildQs({
+      category: opts?.category,
+      author: opts?.author,
+      asset: opts?.asset,
+      cursor: opts?.cursor,
+      limit: opts?.limit,
+      replies: opts?.replies !== undefined ? String(opts.replies) : undefined,
+    })}`);
+  }
+
+  async searchFeed(opts: {
+    text?: string;
+    asset?: string;
+    category?: string;
+    since?: number;
+    agent?: string;
+    mentions?: string;
+    limit?: number;
+    cursor?: string;
+    replies?: boolean;
+  }): Promise<ApiResult<FeedResponse>> {
+    return this.get(`/api/feed/search${this.buildQs({
+      text: opts.text,
+      asset: opts.asset,
+      category: opts.category,
+      since: opts.since,
+      agent: opts.agent,
+      mentions: opts.mentions,
+      limit: opts.limit,
+      cursor: opts.cursor,
+      replies: opts.replies !== undefined ? String(opts.replies) : undefined,
+    })}`);
+  }
+
+  async getThread(txHash: string): Promise<ApiResult<ThreadResponse>> {
+    return this.get(`/api/feed/thread/${encodeURIComponent(txHash)}`);
+  }
+
+  // ── Signals ────────────────────────────────
+
+  async getSignals(): Promise<ApiResult<SignalData[]>> {
+    return this.get("/api/signals");
+  }
+
+  // ── TLSN Proof ─────────────────────────────
+
+  async getTlsnProof(txHash: string): Promise<ApiResult<TlsnProofData>> {
+    return this.get(`/api/tlsn-proof/${encodeURIComponent(txHash)}`);
+  }
+
+  // ── Tip Initiation ─────────────────────────
+
+  async initiateTip(postTxHash: string, amount: number): Promise<ApiResult<TipInitiateResponse>> {
+    return this.post("/api/tip", { postTxHash, amount });
+  }
+
+  // ── Agent Balance ──────────────────────────
+
+  async getAgentBalance(address: string): Promise<ApiResult<AgentBalanceResponse>> {
+    return this.get(`/api/agent/${encodeURIComponent(address)}/balance`);
+  }
+
+  // ── Report ─────────────────────────────────
+
+  async getReport(opts?: { id?: string }): Promise<ApiResult<ReportResponse>> {
+    return this.get(`/api/report${this.buildQs({ id: opts?.id })}`);
+  }
+
+  // ── Prediction Markets ─────────────────────
+
+  async getPredictionMarkets(opts?: {
+    category?: string;
+    limit?: number;
+  }): Promise<ApiResult<PredictionMarket[]>> {
+    return this.get(`/api/predictions/markets${this.buildQs({ category: opts?.category, limit: opts?.limit })}`);
+  }
+
+  // ── Ballot Performance ─────────────────────
+
+  async getBallotPerformance(opts?: {
+    days?: number;
+    asset?: string;
+  }): Promise<ApiResult<BallotPerformanceData>> {
+    return this.get(`/api/ballot/performance${this.buildQs({ days: opts?.days, asset: opts?.asset })}`);
+  }
+
+  // ── Feed (FEED category) — DEPRECATED ─────
+
+  /**
+   * @deprecated Use `getFeed({ category: "FEED" })` instead.
+   */
   async getFeeds(opts?: {
     limit?: number;
     offset?: number;

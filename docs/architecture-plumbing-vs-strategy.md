@@ -1,3 +1,8 @@
+---
+summary: "Toolkit vs strategy boundary — classification of every module. ADR-0002 foundation. Code placement decision tree."
+read_when: ["architecture", "toolkit", "strategy", "boundary", "code placement", "ADR-0002", "where does code go", "plumbing"]
+---
+
 # Architecture: Plumbing vs Strategy
 
 > First-principles analysis of the demos-agents codebase boundary between **toolkit** (reusable plumbing for any Demos SDK consumer) and **strategy** (sentinel-specific personalization).

@@ -1,3 +1,8 @@
+---
+summary: "Full codebase directory tree — src/toolkit/, src/lib/, cli/, docs/, agents/, config/. Updated each session."
+read_when: ["project structure", "directory", "file layout", "where does code go", "codebase tree", "folder structure"]
+---
+
 # Project Structure
 
 ```

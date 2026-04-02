@@ -147,6 +147,77 @@ describe("colony FTS5 search", () => {
     expect(results[0].tags).toContain("cryptocurrency");
   });
 
+  it("searchPosts supports boolean AND/OR queries", () => {
+    insertPost(db, {
+      txHash: "0xbool1",
+      author: "ivan",
+      blockNumber: 700,
+      timestamp: "2026-07-01T00:00:00Z",
+      replyTo: null,
+      tags: [],
+      text: "Bitcoin and Ethereum are both rising",
+      rawData: {},
+    });
+    insertPost(db, {
+      txHash: "0xbool2",
+      author: "jane",
+      blockNumber: 701,
+      timestamp: "2026-07-01T01:00:00Z",
+      replyTo: null,
+      tags: [],
+      text: "Bitcoin dominance is increasing",
+      rawData: {},
+    });
+    insertPost(db, {
+      txHash: "0xbool3",
+      author: "karl",
+      blockNumber: 702,
+      timestamp: "2026-07-01T02:00:00Z",
+      replyTo: null,
+      tags: [],
+      text: "Ethereum gas fees are dropping",
+      rawData: {},
+    });
+
+    const andResults = searchPosts(db, "Bitcoin AND Ethereum");
+    expect(andResults).toHaveLength(1);
+    expect(andResults[0].txHash).toBe("0xbool1");
+
+    const orResults = searchPosts(db, "Bitcoin OR Ethereum");
+    expect(orResults).toHaveLength(3);
+  });
+
+  it("searchPosts supports offset for pagination", () => {
+    for (let i = 0; i < 5; i++) {
+      insertPost(db, {
+        txHash: `0xpage${i}`,
+        author: "pager",
+        blockNumber: 800 + i,
+        timestamp: `2026-08-01T0${i}:00:00Z`,
+        replyTo: null,
+        tags: [],
+        text: `Pagination test entry number ${i}`,
+        rawData: {},
+      });
+    }
+
+    const page1 = searchPosts(db, "Pagination", { limit: 2, offset: 0 });
+    expect(page1).toHaveLength(2);
+
+    const page2 = searchPosts(db, "Pagination", { limit: 2, offset: 2 });
+    expect(page2).toHaveLength(2);
+
+    const page3 = searchPosts(db, "Pagination", { limit: 2, offset: 4 });
+    expect(page3).toHaveLength(1);
+
+    // No overlap between pages
+    const page1Hashes = page1.map((p) => p.txHash);
+    const page2Hashes = page2.map((p) => p.txHash);
+    for (const hash of page1Hashes) {
+      expect(page2Hashes).not.toContain(hash);
+    }
+  });
+
   it("FTS5 triggers sync correctly on insert", () => {
     // Insert a post and immediately verify FTS finds it (trigger fired)
     insertPost(db, {

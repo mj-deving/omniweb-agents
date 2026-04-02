@@ -23,7 +23,7 @@ import { homedir } from "node:os";
 import { initColonyCache, type ColonyDatabase } from "../src/toolkit/colony/schema.js";
 import { extractColonyState, type ColonyState } from "../src/toolkit/colony/state-extraction.js";
 import { computeAvailableEvidence, type AvailableEvidence } from "../src/toolkit/colony/available-evidence.js";
-import { computePerformanceScores } from "../src/toolkit/colony/performance.js";
+import { computePerformanceScores, computeCalibration } from "../src/toolkit/colony/performance.js";
 import { decideActions } from "../src/toolkit/strategy/engine.js";
 import { loadStrategyConfig } from "../src/toolkit/strategy/config-loader.js";
 import { FileStateStore } from "../src/toolkit/state-store.js";
@@ -36,10 +36,11 @@ import type {
   DecisionLog,
   PostPerformance,
   ApiEnrichmentData,
+  CalibrationState,
 } from "../src/toolkit/strategy/types.js";
 
 // Re-export for session runner convenience
-export type { StrategyAction, StrategyConfig, DecisionContext, DecisionLog, PostPerformance, ApiEnrichmentData };
+export type { StrategyAction, StrategyConfig, DecisionContext, DecisionLog, PostPerformance, ApiEnrichmentData, CalibrationState };
 
 const DAILY_LIMIT = 14;
 const HOURLY_LIMIT = 5;
@@ -239,6 +240,18 @@ export function computePerformance(
     ctx.walletAddress,
     ctx.config.performance,
   );
+}
+
+// ── Auto-Calibration (Phase 6d) ──────────────────
+
+/**
+ * Compute rolling calibration offset from our performance vs colony median.
+ * Replaces the static readCalibrationOffset(JSON) function in v3-loop.ts.
+ */
+export function computeAutoCalibration(
+  ctx: StrategyBridge,
+): CalibrationState {
+  return computeCalibration(ctx.db, ctx.walletAddress, ctx.config.performance);
 }
 
 // ── Action Filtering Helpers ────────────────────────

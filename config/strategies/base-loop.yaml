@@ -33,6 +33,56 @@ mandatory:
   oversightGate: true         # Strategy changes require human approval
 
 # Session log entry schema (each post logged as one JSONL line):
+# Phase 6a: Enrichment-aware rules (reference implementation)
+rules:
+  - name: reply_to_mentions
+    type: REPLY
+    priority: 100
+    conditions: [trusted mentions]
+    enabled: true
+
+  - name: publish_signal_aligned
+    type: PUBLISH
+    priority: 90
+    conditions: [trending signal, matching evidence]
+    enabled: true
+
+  - name: publish_on_divergence
+    type: PUBLISH
+    priority: 85
+    conditions: [oracle divergence > threshold]
+    enabled: true
+
+  - name: reply_with_evidence
+    type: REPLY
+    priority: 80
+    conditions: [matching evidence]
+    enabled: true
+
+  - name: publish_prediction
+    type: PUBLISH
+    priority: 80
+    conditions: [ballot accuracy > 0.5, prices available]
+    enabled: true
+
+  - name: engage_verified
+    type: ENGAGE
+    priority: 65
+    conditions: [verified topic]
+    enabled: true
+
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 50
+    conditions: [fresh rich evidence]
+    enabled: true
+
+  - name: tip_valuable
+    type: TIP
+    priority: 30
+    conditions: [above median]
+    enabled: true
+
 logSchema:
   required:
     - timestamp               # ISO8601

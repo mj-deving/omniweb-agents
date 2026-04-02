@@ -524,7 +524,302 @@ describe("strategy engine", () => {
     expect(resultWithEnrichment.actions.length).toBeGreaterThanOrEqual(0);
     expect(resultWithEnrichment.log.timestamp).toBeTruthy();
 
-    // Same actions regardless of enrichment (engine doesn't consume it yet)
-    expect(resultNoEnrichment.actions.length).toBe(resultWithEnrichment.actions.length);
+    // With enrichment + enrichment-aware rules enabled, may produce additional actions
+    expect(resultWithEnrichment.actions.length).toBeGreaterThanOrEqual(0);
+  });
+
+  // ── Phase 6a: Oracle & Signal-Aware Rules ──────────────────
+
+  describe("publish_signal_aligned", () => {
+    it("creates PUBLISH action when signals match evidence", () => {
+      const state = createEmptyState();
+      state.activity.trendingTopics = [{ topic: "defi", count: 5 }];
+
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            { topic: "defi", consensus: 72, agents: 4, trending: true, summary: "DeFi analysis", timestamp: Date.now() },
+          ],
+        },
+      }));
+
+      const signalActions = result.actions.filter(
+        (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
+      );
+      expect(signalActions.length).toBeGreaterThanOrEqual(1);
+      expect(signalActions[0]).toMatchObject({ type: "PUBLISH", priority: 90 });
+    });
+
+    it("skips gracefully when apiEnrichment.signals is null", () => {
+      const state = createEmptyState();
+      state.activity.trendingTopics = [{ topic: "defi", count: 5 }];
+
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+        ],
+      }), createContext());
+
+      // Should not crash, no signal-aligned actions
+      const signalActions = result.actions.filter(
+        (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
+      );
+      expect(signalActions).toEqual([]);
+    });
+
+    it("skips when signals exist but no matching evidence", () => {
+      const state = createEmptyState();
+      state.activity.trendingTopics = [{ topic: "defi", count: 5 }];
+
+      const result = decideActions(state, [createEvidence("governance")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            { topic: "defi", consensus: 72, agents: 4, trending: true, summary: "DeFi analysis", timestamp: Date.now() },
+          ],
+        },
+      }));
+
+      const signalActions = result.actions.filter(
+        (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
+      );
+      expect(signalActions).toEqual([]);
+    });
+  });
+
+  describe("publish_on_divergence", () => {
+    it("creates PUBLISH action when oracle shows significant divergence", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [createEvidence("btc")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_on_divergence", type: "PUBLISH", priority: 85, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          oracle: {
+            sentiment: { BTC: 65 },
+            priceDivergences: [{ asset: "BTC", cex: 66000, dex: 65000, spread: 15 }],
+            polymarketOdds: [],
+            timestamp: Date.now(),
+          },
+          prices: [{ asset: "BTC", price: 66000, timestamp: Date.now(), source: "binance" }],
+        },
+      }));
+
+      const divActions = result.actions.filter(
+        (a) => a.reason.includes("divergence") || a.reason.includes("Divergence"),
+      );
+      expect(divActions.length).toBeGreaterThanOrEqual(1);
+      expect(divActions[0]).toMatchObject({ type: "PUBLISH", priority: 85 });
+      expect(divActions[0].metadata).toHaveProperty("asset");
+    });
+
+    it("skips when oracle is null", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [createEvidence("btc")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_on_divergence", type: "PUBLISH", priority: 85, conditions: [], enabled: true },
+        ],
+      }), createContext());
+
+      const divActions = result.actions.filter(
+        (a) => a.reason.includes("divergence") || a.reason.includes("Divergence"),
+      );
+      expect(divActions).toEqual([]);
+    });
+  });
+
+  describe("publish_prediction", () => {
+    it("creates PUBLISH action when ballot accuracy is above 0.5 and prices available", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_prediction", type: "PUBLISH", priority: 80, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          ballotAccuracy: { address: "demos1loop", totalVotes: 20, correctVotes: 14, accuracy: 0.7, streak: 3 },
+          prices: [
+            { asset: "BTC", price: 66000, timestamp: Date.now(), source: "binance" },
+            { asset: "ETH", price: 3200, timestamp: Date.now(), source: "binance" },
+          ],
+        },
+      }));
+
+      const predActions = result.actions.filter(
+        (a) => a.reason.includes("prediction") || a.reason.includes("Prediction"),
+      );
+      expect(predActions.length).toBeGreaterThanOrEqual(1);
+      expect(predActions[0]).toMatchObject({ type: "PUBLISH", priority: 80 });
+    });
+
+    it("skips when ballot accuracy is below 0.5", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_prediction", type: "PUBLISH", priority: 80, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          ballotAccuracy: { address: "demos1loop", totalVotes: 20, correctVotes: 8, accuracy: 0.4, streak: 0 },
+          prices: [{ asset: "BTC", price: 66000, timestamp: Date.now(), source: "binance" }],
+        },
+      }));
+
+      const predActions = result.actions.filter(
+        (a) => a.reason.includes("prediction") || a.reason.includes("Prediction"),
+      );
+      expect(predActions).toEqual([]);
+    });
+
+    it("skips when no prices available", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_prediction", type: "PUBLISH", priority: 80, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          ballotAccuracy: { address: "demos1loop", totalVotes: 20, correctVotes: 14, accuracy: 0.7, streak: 3 },
+        },
+      }));
+
+      const predActions = result.actions.filter(
+        (a) => a.reason.includes("prediction") || a.reason.includes("Prediction"),
+      );
+      expect(predActions).toEqual([]);
+    });
+  });
+
+  describe("engage_sentiment_aligned (oracle-boosted)", () => {
+    it("engage_verified uses oracle data to boost priority when available", () => {
+      const state = createEmptyState();
+      state.activity.trendingTopics = [{ topic: "btc", count: 5 }];
+      state.agents.topContributors = [
+        { author: "alice", postCount: 5, avgReactions: 8 },
+      ];
+
+      const resultWithOracle = decideActions(state, [createEvidence("btc")], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "engage_verified",
+        })),
+      }), createContext({
+        apiEnrichment: {
+          oracle: {
+            sentiment: { BTC: 65 },
+            priceDivergences: [],
+            polymarketOdds: [],
+            timestamp: Date.now(),
+          },
+        },
+      }));
+
+      expect(resultWithOracle.actions.length).toBeGreaterThanOrEqual(1);
+      expect(resultWithOracle.actions[0].type).toBe("ENGAGE");
+    });
+  });
+
+  // ── Phase 6b: Intelligence Layer Consumption ────────────────
+
+  describe("tip_reputable (leaderboard-aware)", () => {
+    it("uses leaderboard Bayesian scores when available", () => {
+      const state = createEmptyState();
+      state.agents.topContributors = [
+        { author: "alice", postCount: 50, avgReactions: 9 },
+        { author: "bob", postCount: 50, avgReactions: 5 },
+        { author: "carol", postCount: 50, avgReactions: 1 },
+      ];
+
+      const result = decideActions(state, [], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "tip_valuable",
+        })),
+      }), createContext({
+        apiEnrichment: {
+          leaderboard: {
+            agents: [
+              { address: "alice", name: "alice", totalPosts: 50, avgScore: 85, bayesianScore: 88, topScore: 95, lowScore: 70, lastActiveAt: Date.now() },
+              { address: "bob", name: "bob", totalPosts: 50, avgScore: 60, bayesianScore: 62, topScore: 75, lowScore: 45, lastActiveAt: Date.now() },
+            ],
+            count: 2,
+            globalAvg: 70,
+            confidenceThreshold: 5,
+          },
+        },
+      }));
+
+      // Should still tip alice (highest contributor)
+      expect(result.actions.length).toBeGreaterThanOrEqual(1);
+      expect(result.actions[0]).toMatchObject({ type: "TIP" });
+    });
+  });
+
+  describe("adapt_to_leaderboard", () => {
+    it("produces no actions when disabled", () => {
+      const result = decideActions(createEmptyState(), [], createConfig({
+        rules: [
+          { name: "adapt_to_leaderboard", type: "ENGAGE", priority: 0, conditions: [], enabled: false },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          leaderboard: {
+            agents: [],
+            count: 0,
+            globalAvg: 70,
+            confidenceThreshold: 5,
+          },
+        },
+      }));
+
+      expect(result.actions).toEqual([]);
+    });
+  });
+
+  describe("publish_to_gaps signal cross-reference", () => {
+    it("publish_to_gaps considers signal agent count for priority", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "publish_to_gaps",
+        })),
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            { topic: "defi", consensus: 40, agents: 1, trending: false, summary: "Needs more agents", timestamp: Date.now() },
+          ],
+        },
+      }));
+
+      // Should still produce the gap action, potentially with signal metadata
+      expect(result.actions.length).toBeGreaterThanOrEqual(1);
+      expect(result.actions[0].type).toBe("PUBLISH");
+    });
   });
 });

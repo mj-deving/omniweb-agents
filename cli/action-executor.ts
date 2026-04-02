@@ -35,6 +35,26 @@ export interface ActionExecutorDeps {
   ourAddress?: string;
 }
 
+/**
+ * Infer post category from strategy action metadata and rule name.
+ *
+ * Phase 6e: replaces hardcoded "analysis" with content-driven selection.
+ * Falls back to "analysis" if no clear category signal.
+ */
+function inferCategory(action: StrategyAction): string {
+  const ruleName = action.reason.toLowerCase();
+
+  if (ruleName.includes("prediction") || ruleName.includes("ballot")) return "prediction";
+  if (ruleName.includes("divergence") || ruleName.includes("signal")) return "signal";
+  if (ruleName.includes("alert") || ruleName.includes("urgent")) return "alert";
+  if (ruleName.includes("observation") || ruleName.includes("observed")) return "observation";
+
+  // Check metadata for explicit category override
+  if (typeof action.metadata?.category === "string") return action.metadata.category;
+
+  return "analysis";
+}
+
 function clampTipAmount(amount: unknown): number {
   if (typeof amount !== "number" || !Number.isFinite(amount)) return 1;
   return Math.min(10, Math.max(1, amount));
@@ -133,7 +153,7 @@ export async function executeStrategyActions(
           const text = await deps.generateText!(action);
           const publishResult = await deps.bridge.publishHivePost({
             text,
-            category: "analysis",
+            category: inferCategory(action),
           });
           result.executed.push({ action, success: true, txHash: publishResult.txHash });
           deps.observe("insight", "Strategy PUBLISH executed", {

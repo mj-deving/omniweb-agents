@@ -26,7 +26,7 @@ import type { LeaderboardResult, OracleResult, PriceData, BallotAccuracy, Signal
 import type { ApiEnrichmentData } from "../src/toolkit/strategy/types.js";
 import { executeStrategyActions } from "./action-executor.js";
 import { executePublishActions } from "./publish-executor.js";
-import { initStrategyBridge, sense, plan, computePerformance } from "./v3-strategy-bridge.js";
+import { initStrategyBridge, sense, plan, computePerformance, computeAutoCalibration } from "./v3-strategy-bridge.js";
 import type { StrategyBridge } from "./v3-strategy-bridge.js";
 import { insertPost, countPosts } from "../src/toolkit/colony/posts.js";
 import type { CachedPost } from "../src/toolkit/colony/posts.js";
@@ -439,7 +439,7 @@ export async function runV3Loop(
                 dryRun: flags.dryRun,
                 stateStore: bridge.store,
                 colonyDb: bridge.db,
-                calibrationOffset: readCalibrationOffset(deps.agentConfig.paths.improvementsFile),
+                calibrationOffset: computeAutoCalibration(bridge).offset,
                 scanContext: getScanContext(sensePayload.scan),
                 adapters: loadDeclarativeProviderAdaptersSync({ specDir: getStrategySpecDir() }),
                 usageTracker: createUsageTracker(),

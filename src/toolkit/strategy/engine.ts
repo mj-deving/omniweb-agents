@@ -1,7 +1,7 @@
 import type { AvailableEvidence } from "../colony/available-evidence.js";
 import type { ColonyState } from "../colony/state-extraction.js";
 import { computeMedian } from "../math/baseline.js";
-import type { DecisionContext, DecisionLog, StrategyAction, StrategyConfig, StrategyRule } from "./types.js";
+import type { ApiEnrichmentData, DecisionContext, DecisionLog, StrategyAction, StrategyConfig, StrategyRule } from "./types.js";
 
 const MIN_TRUST_POSTS = 3;
 const MAX_PUBLISH_EVIDENCE_FRESHNESS_SECONDS = 3600;
@@ -293,6 +293,90 @@ export function decideActions(
       candidates.push({ action, rule: tipRule.name });
       considered.push({ action, rule: tipRule.name });
     }
+  }
+
+  // ── Phase 6a: Enrichment-Aware Rules ────────────────────────
+  const enrichment = context.apiEnrichment;
+
+  const signalAlignedRule = getRule(config, "publish_signal_aligned");
+  if (signalAlignedRule && enrichment?.signals) {
+    for (const signal of enrichment.signals) {
+      if (!signal.trending || signal.agents < 2) continue;
+
+      const matchingEvidence = (evidenceIndex.get(normalize(signal.topic)) ?? [])
+        .filter((item) => !item.stale);
+
+      if (matchingEvidence.length === 0) continue;
+
+      const action = createAction(
+        signalAlignedRule,
+        `Publish signal-aligned content on trending topic ${signal.topic} (${signal.agents} agents)`,
+        {
+          target: signal.topic,
+          evidence: matchingEvidence.map((item) => item.sourceId),
+          metadata: {
+            signalConsensus: signal.consensus,
+            signalAgents: signal.agents,
+            signalSummary: signal.summary,
+          },
+        },
+      );
+
+      candidates.push({ action, rule: signalAlignedRule.name });
+      considered.push({ action, rule: signalAlignedRule.name });
+    }
+  }
+
+  const divergenceRule = getRule(config, "publish_on_divergence");
+  if (divergenceRule && enrichment?.oracle?.priceDivergences) {
+    const DIVERGENCE_THRESHOLD = 10;
+
+    for (const div of enrichment.oracle.priceDivergences) {
+      if (Math.abs(div.spread) < DIVERGENCE_THRESHOLD) continue;
+
+      const action = createAction(
+        divergenceRule,
+        `Publish divergence analysis: ${div.asset} spread ${div.spread > 0 ? "+" : ""}${div.spread}%`,
+        {
+          target: div.asset.toLowerCase(),
+          metadata: {
+            asset: div.asset,
+            cexPrice: div.cex,
+            dexPrice: div.dex,
+            spread: div.spread,
+            sentiment: enrichment.oracle.sentiment?.[div.asset],
+          },
+        },
+      );
+
+      candidates.push({ action, rule: divergenceRule.name });
+      considered.push({ action, rule: divergenceRule.name });
+    }
+  }
+
+  const predictionRule = getRule(config, "publish_prediction");
+  if (
+    predictionRule
+    && enrichment?.ballotAccuracy
+    && enrichment.ballotAccuracy.accuracy > 0.5
+    && enrichment.prices
+    && enrichment.prices.length > 0
+  ) {
+    const action = createAction(
+      predictionRule,
+      `Publish prediction — ballot accuracy ${(enrichment.ballotAccuracy.accuracy * 100).toFixed(0)}%, streak ${enrichment.ballotAccuracy.streak}`,
+      {
+        metadata: {
+          accuracy: enrichment.ballotAccuracy.accuracy,
+          streak: enrichment.ballotAccuracy.streak,
+          totalVotes: enrichment.ballotAccuracy.totalVotes,
+          availableAssets: enrichment.prices.map((p) => p.asset),
+        },
+      },
+    );
+
+    candidates.push({ action, rule: predictionRule.name });
+    considered.push({ action, rule: predictionRule.name });
   }
 
   candidates.sort((left, right) =>

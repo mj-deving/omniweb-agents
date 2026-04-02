@@ -65,6 +65,7 @@ vi.mock("../../cli/v3-strategy-bridge.js", () => ({
   sense: senseMock,
   plan: planMock,
   computePerformance: computePerformanceMock,
+  computeAutoCalibration: vi.fn(() => ({ ourAvgScore: 0, colonyMedianScore: 0, offset: 0, postCount: 0, computedAt: new Date().toISOString() })),
 }));
 
 vi.mock("../../cli/action-executor.js", () => ({

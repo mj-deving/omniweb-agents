@@ -9,4 +9,6 @@ export type {
   DecisionContext,
   DecisionLog,
   PostPerformance,
+  CalibrationState,
+  ApiEnrichmentData,
 } from "./types.js";

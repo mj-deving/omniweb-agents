@@ -76,6 +76,20 @@ export interface DecisionLog {
   };
 }
 
+/** Rolling calibration state — replaces static calibrationOffset JSON file. */
+export interface CalibrationState {
+  /** Average raw score of our posts */
+  ourAvgScore: number;
+  /** Median raw score across colony */
+  colonyMedianScore: number;
+  /** Calibration offset (our - colony). Positive = outperforming. */
+  offset: number;
+  /** Number of our posts used for computation */
+  postCount: number;
+  /** ISO timestamp of computation */
+  computedAt: string;
+}
+
 export interface PostPerformance {
   txHash: string;
   timestamp: string;

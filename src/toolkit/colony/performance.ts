@@ -1,6 +1,6 @@
 import type { ColonyDatabase } from "./schema.js";
 import { computeMedian } from "../math/baseline.js";
-import type { PostPerformance, StrategyConfig } from "../strategy/types.js";
+import type { CalibrationState, PostPerformance, StrategyConfig } from "../strategy/types.js";
 
 interface PerformanceRow {
   tx_hash: string;
@@ -66,6 +66,44 @@ function getThreadStats(db: ColonyDatabase, txHash: string): ThreadStatsRow {
   return {
     total_replies: Number(row?.total_replies ?? 0),
     max_depth: Number(row?.max_depth ?? 0),
+  };
+}
+
+const MIN_POSTS_FOR_CALIBRATION = 5;
+
+/**
+ * Compute rolling calibration state from our performance vs colony median.
+ *
+ * Replaces static calibrationOffset JSON file (Phase 6d).
+ * Returns offset = 0 when post count < MIN_POSTS_FOR_CALIBRATION (cold-start guard).
+ */
+export function computeCalibration(
+  db: ColonyDatabase,
+  ourAddress: string,
+  config: StrategyConfig["performance"],
+): CalibrationState {
+  const scores = computePerformanceScores(db, ourAddress, config);
+  const colonyReactions = getColonyReactionTotals(db);
+  const colonyMedian = computeMedian(colonyReactions);
+
+  if (scores.length < MIN_POSTS_FOR_CALIBRATION) {
+    return {
+      ourAvgScore: 0,
+      colonyMedianScore: colonyMedian,
+      offset: 0,
+      postCount: scores.length,
+      computedAt: new Date().toISOString(),
+    };
+  }
+
+  const ourAvg = scores.reduce((sum, s) => sum + s.rawScore, 0) / scores.length;
+
+  return {
+    ourAvgScore: Number(ourAvg.toFixed(2)),
+    colonyMedianScore: colonyMedian,
+    offset: Number((ourAvg - colonyMedian).toFixed(2)),
+    postCount: scores.length,
+    computedAt: new Date().toISOString(),
   };
 }
 

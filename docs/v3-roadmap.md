@@ -150,7 +150,8 @@ tags: [v3, colony, strategy]
 ### Phase 6 Deferred Items (valid work, not done this session)
 
 > These are from the 72-criteria PRD. Common blocker: engine takes pure data, these need DB access.
-> Path forward: pre-compute in bridge and pass as data fields on DecisionContext.
+> **Decision (2026-04-02):** Pre-compute in bridge, pass as optional fields on `DecisionContext`.
+> Engine stays pure-function. See decision log entry.
 
 - [ ] 6-defer-a — Wire dedup guards into publish-executor (checkClaimDedup + checkSelfDedup)
 - [ ] 6-defer-b — Pre-compute interaction set in bridge, pass to engine for re-tip avoidance
@@ -170,6 +171,9 @@ tags: [v3, colony, strategy]
 - [ ] 6-disc-d — Colony report consumption (/api/report briefings as planning context)
 - [ ] 6-disc-e — Identity lookup enrichment (/api/identity for social handles)
 - [ ] 6-disc-f — XMCore cross-chain reads for on-chain data verification (Phase 8)
+- [ ] 6-disc-g — SSE/webhook consumption for real-time reactive events (event-runner exists)
+- [ ] 6-disc-h — Escrow to social identity: tip by Twitter/GitHub handle without wallet
+- [ ] 6-disc-i — ZK identity proofs for privacy-preserving attestation
 
 **Spec:** `docs/research/supercolony-api-reference.md` + `docs/research/demos-sdk-capabilities.md`
 
@@ -215,6 +219,7 @@ Phase 1-4 (DONE) → Phase 5 (DONE) → Phase 6 (DONE)
 | 2026-04-02 | Category selection is content-driven | inferCategory() replaces hardcoded "analysis" based on action reason |
 | 2026-04-02 | Dedup module exists but not yet wired | checkClaimDedup/checkSelfDedup ready, needs publish-executor integration |
 | 2026-04-02 | SDK capabilities doc is informational only | XMCore/StoragePrograms/ZK are Phase 8+ — no Phase 6 rules use them |
+| 2026-04-02 | Engine stays pure-function: pre-compute in bridge, not DB handle | Engine's testability + agent-agnosticism is its strongest property. Bridge extracts intelligence data into DecisionContext fields. |
 
 ## Spec Documents
 

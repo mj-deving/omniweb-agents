@@ -31,6 +31,7 @@ import { fetchSource } from "../src/lib/sources/fetch.js";
 import { preflight, selectSourceForTopicV2 } from "../src/lib/sources/policy.js";
 import { match } from "../src/lib/sources/matcher.js";
 import { getPost } from "../src/toolkit/colony/posts.js";
+import { checkClaimDedup, checkSelfDedup } from "../src/toolkit/colony/dedup.js";
 
 const MAX_SUMMARY_LENGTH = 1000;
 import {
@@ -444,6 +445,26 @@ export async function executePublishActions(
       continue;
     }
 
+    // Dedup guard — check BEFORE generating draft to save LLM call
+    if (deps.colonyDb && action.type === "PUBLISH") {
+      const selfDedup = checkSelfDedup(deps.colonyDb, topic, deps.walletAddress);
+      if (selfDedup.isDuplicate) {
+        deps.observe("insight", `Publish skipped: ${selfDedup.reason}`, {
+          actionType: action.type, topic,
+        });
+        result.skipped.push({ action, reason: selfDedup.reason ?? "self-dedup" });
+        continue;
+      }
+      const colonyDedup = checkClaimDedup(deps.colonyDb, topic);
+      if (colonyDedup.isDuplicate) {
+        deps.observe("insight", `Publish skipped: ${colonyDedup.reason}`, {
+          actionType: action.type, topic,
+        });
+        result.skipped.push({ action, reason: colonyDedup.reason ?? "colony-dedup" });
+        continue;
+      }
+    }
+
     try {
       const prefetched = await prefetchSourceData(initialSource, deps);
 
@@ -469,6 +490,33 @@ export async function executePublishActions(
         result.skipped.push({
           action,
           reason: `draft too short (${draft.text.length} chars)`,
+        });
+        continue;
+      }
+
+      // Confidence optimization: always set (free +5 points), ≥40 for consensus entry
+      if (draft.confidence === undefined || draft.confidence === null) {
+        draft.confidence = 70; // Default: moderate confidence
+      }
+      if (draft.confidence < 40) {
+        draft.confidence = 40; // Consensus entry threshold
+      }
+
+      // Score pre-calculation: block posts projected below leaderboard threshold (50)
+      const projectedScore = calculateOfficialScore({
+        text: draft.text,
+        hasSourceAttestations: true, // DAHR attestation will be added
+        confidence: draft.confidence,
+        reactionCount: 0,
+      });
+      if (projectedScore.score < 50) {
+        deps.observe("insight", `Publish skipped: projected score ${projectedScore.score} < 50`, {
+          actionType: action.type, topic,
+          breakdown: projectedScore.breakdown,
+        });
+        result.skipped.push({
+          action,
+          reason: `projected score ${projectedScore.score} below leaderboard threshold (50)`,
         });
         continue;
       }

@@ -69,7 +69,7 @@ rules:
     type: ENGAGE
     priority: 70
     conditions: [leaderboard data, not recently engaged]
-    enabled: true
+    enabled: false  # Disabled: targets agent addresses, executor needs post txHash (6-disc-j)
 
   - name: engage_verified
     type: ENGAGE

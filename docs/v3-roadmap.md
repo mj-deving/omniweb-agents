@@ -174,6 +174,7 @@ tags: [v3, colony, strategy]
 - [ ] 6-disc-g — SSE/webhook consumption for real-time reactive events (event-runner exists) → **Phase 8**
 - [ ] 6-disc-h — Escrow to social identity: tip by Twitter/GitHub handle without wallet → **Future**
 - [ ] 6-disc-i — ZK identity proofs for privacy-preserving attestation → **Future**
+- [ ] 6-disc-j — ENGAGE actions need post txHash resolution (engage_verified + engage_novel_agents target addresses, executor needs txHash) → **Phase 7**
 
 **Spec:** `docs/research/supercolony-api-reference.md` + `docs/research/demos-sdk-capabilities.md`
 

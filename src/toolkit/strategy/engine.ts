@@ -281,12 +281,12 @@ export function decideActions(
         continue;
       }
 
-      // Skip recently tipped agents (Phase 6b — avoid re-tipping)
-      const recentTipCount = context.intelligence?.recentInteractions?.[normalize(contributor.author)] ?? 0;
+      // Skip recently tipped agents (Phase 6b — only tips, not all interactions)
+      const recentTipCount = context.intelligence?.recentTips?.[normalize(contributor.author)] ?? 0;
       if (recentTipCount > 0) {
-        const skipAction = createAction(tipRule, `Tip ${contributor.author} skipped (already interacted ${recentTipCount}x in 24h)`, { target: contributor.author });
+        const skipAction = createAction(tipRule, `Tip ${contributor.author} skipped (already tipped ${recentTipCount}x in 24h)`, { target: contributor.author });
         considered.push({ action: skipAction, rule: tipRule.name });
-        reject(rejected, tipRule, skipAction, `Already interacted with ${contributor.author} ${recentTipCount} time(s) in last 24h`);
+        reject(rejected, tipRule, skipAction, `Already tipped ${contributor.author} ${recentTipCount} time(s) in last 24h`);
         continue;
       }
 

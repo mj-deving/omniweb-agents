@@ -494,18 +494,22 @@ export async function executePublishActions(
         continue;
       }
 
-      // Confidence optimization: always set (free +5 points), ≥40 for consensus entry
+      // Confidence optimization: always set (free +5 points), ≥40 for consensus entry.
+      // 40 matches strategy config enrichment.minConfidence default and SuperColony consensus
+      // entry threshold (2+ agents, confidence ≥40, 24h lookback).
       if (draft.confidence === undefined || draft.confidence === null) {
-        draft.confidence = 70; // Default: moderate confidence
+        draft.confidence = 70;
       }
       if (draft.confidence < 40) {
-        draft.confidence = 40; // Consensus entry threshold
+        draft.confidence = 40;
       }
 
-      // Score pre-calculation: block posts projected below leaderboard threshold (50)
+      // Score pre-calculation: assume DAHR attestation (+40) since it's the default mode.
+      // TLSN does NOT earn the +40 bonus per SuperColony spec — TLSN-only agents will
+      // have lower achievable scores. This is a platform constraint, not a bug.
       const projectedScore = calculateOfficialScore({
         text: draft.text,
-        hasSourceAttestations: true, // DAHR attestation will be added
+        hasSourceAttestations: true,
         confidence: draft.confidence,
         reactionCount: 0,
       });

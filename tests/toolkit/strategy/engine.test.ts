@@ -853,13 +853,13 @@ describe("strategy engine", () => {
         })),
       }), createContext({
         intelligence: {
-          recentInteractions: { alice: 2 },
+          recentTips: { alice: 2 },
         },
       }));
 
-      // Alice should be skipped (already interacted), no other above-median candidates
+      // Alice should be skipped (already tipped), no other above-median candidates
       expect(result.actions).toEqual([]);
-      expect(result.log.rejected.some((r) => r.reason.includes("Already interacted"))).toBe(true);
+      expect(result.log.rejected.some((r) => r.reason.includes("Already tipped"))).toBe(true);
     });
 
     it("tips agents we have NOT interacted with", () => {
@@ -877,7 +877,7 @@ describe("strategy engine", () => {
         })),
       }), createContext({
         intelligence: {
-          recentInteractions: {}, // No recent interactions
+          recentTips: {}, // No recent tips
         },
       }));
 

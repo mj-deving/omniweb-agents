@@ -359,10 +359,14 @@ export async function runV3Loop(
         }
       }
 
+      // Compute calibration once in sense phase — avoids hot-path DB query during act
+      const calibration = computeAutoCalibration(bridge);
+
       state.strategyResults = {
         ...state.strategyResults,
         senseResult,
         apiEnrichment,
+        calibration,
       };
 
       completePhase(state, "sense", { scan: scanResult, strategy: senseResult, apiEnrichment }, sessionsDir);
@@ -428,7 +432,7 @@ export async function runV3Loop(
                 dryRun: flags.dryRun,
                 stateStore: bridge.store,
                 colonyDb: bridge.db,
-                calibrationOffset: computeAutoCalibration(bridge).offset,
+                calibrationOffset: (state.strategyResults?.calibration as { offset?: number } | undefined)?.offset ?? 0,
                 scanContext: getScanContext(sensePayload.scan),
                 adapters: loadDeclarativeProviderAdaptersSync({ specDir: getStrategySpecDir() }),
                 usageTracker: createUsageTracker(),

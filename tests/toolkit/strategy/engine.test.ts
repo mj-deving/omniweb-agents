@@ -500,4 +500,31 @@ describe("strategy engine", () => {
     expect(result5.log.rejected).toHaveLength(1);
     expect(result5.log.rejected[0].reason).toMatch(/hourly/i);
   });
+
+  it("decideActions works with apiEnrichment undefined (graceful degradation)", () => {
+    const state = createEmptyState();
+    state.activity.trendingTopics = [{ topic: "bitcoin", count: 5 }];
+    state.gaps.underservedTopics = [{ topic: "bitcoin", lastPostAt: "2026-03-30T00:00:00Z" }];
+
+    const evidence = [createEvidence("bitcoin")];
+
+    // No apiEnrichment — should produce actions without error
+    const resultNoEnrichment = decideActions(state, evidence, createConfig(), createContext());
+    expect(resultNoEnrichment.actions.length).toBeGreaterThanOrEqual(0);
+    expect(resultNoEnrichment.log.timestamp).toBeTruthy();
+
+    // With apiEnrichment — should also work without consuming it (Phase 6)
+    const resultWithEnrichment = decideActions(state, evidence, createConfig(), createContext({
+      apiEnrichment: {
+        agentCount: 200,
+        oracle: { sentiment: { BTC: 0.8 }, priceDivergences: [], polymarketOdds: [], timestamp: Date.now() },
+        prices: [{ asset: "BTC", price: 95000, timestamp: Date.now(), source: "binance" }],
+      },
+    }));
+    expect(resultWithEnrichment.actions.length).toBeGreaterThanOrEqual(0);
+    expect(resultWithEnrichment.log.timestamp).toBeTruthy();
+
+    // Same actions regardless of enrichment (engine doesn't consume it yet)
+    expect(resultNoEnrichment.actions.length).toBe(resultWithEnrichment.actions.length);
+  });
 });

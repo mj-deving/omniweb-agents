@@ -1,11 +1,11 @@
 ---
 type: roadmap
 status: active
-phase: 5.1-5.6
-progress: 23/29
-updated: 2026-04-01
-open_items: 6
-next_action: "Phase 5.6 semantic search or Phase 6 strategy refactor"
+phase: 5.1-5.7
+progress: 28/33
+updated: 2026-04-02
+open_items: 5
+next_action: "Phase 6 strategy refactor — consume enrichment in decision rules"
 tags: [v3, colony, strategy]
 ---
 
@@ -16,11 +16,12 @@ tags: [v3, colony, strategy]
 
 ## Status
 
-- **V3 loop:** LIVE (session 59 — 1 post, 4 DAHR attestations, verified on-chain)
-- **Tests:** 2349 passing, 177 suites, 8 pre-existing tsc errors
-- **Colony DB:** 188K posts, schema v4 (FTS5 + intelligence), reaction cache populated
-- **API Client:** 38/38 endpoints covered (35 in client, 3 in dedicated modules)
-- **Next:** Wire signals + feed search into strategy, fix tipping 2-step flow, then Phase 6
+- **V3 loop:** LIVE. Signals, oracle, prices, ballot, intelligence all wired into sense phase.
+- **Tests:** 2372 passing, 177 suites, **0 tsc errors**
+- **Colony DB:** 188K posts, schema v4 (FTS5 + agent_profiles + interactions)
+- **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
+- **Phase 5.7:** ✅ COMPLETE. Signals, 2-step tipping, agent profiles, interactions all wired.
+- **Next:** Phase 6 — strategy rules consume enrichment data in decision logic
 
 ## Checklist
 

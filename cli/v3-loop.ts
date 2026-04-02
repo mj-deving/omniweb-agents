@@ -241,10 +241,11 @@ export async function runV3Loop(
       // Fetch full chain posts via SDK and ingest into colony DB.
       await ingestChainPostsIntoColonyDb(bridge.db, sdkBridge, deps.observe);
 
-      // Refresh agent profiles from colony DB (incremental — only new posts since last refresh)
+      // Full recompute of agent profiles from colony DB.
+      // Incremental (since param) double-counts overlapping windows — full recompute is correct.
+      // 188K posts GROUP BY author takes <1s on SQLite WAL.
       try {
-        const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const profilesRefreshed = refreshAgentProfiles(bridge.db, since24h);
+        const profilesRefreshed = refreshAgentProfiles(bridge.db);
         if (profilesRefreshed > 0) {
           deps.observe("insight", `Agent profiles refreshed: ${profilesRefreshed} updated`, {
             source: "v3-loop:intelligence",

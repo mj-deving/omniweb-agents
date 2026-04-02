@@ -95,6 +95,75 @@ describe("executeStrategyActions", () => {
     ]);
   });
 
+  it("TIP aborts when API returns non-ok status (4xx/5xx hard denial)", async () => {
+    const deps = createDeps({
+      bridge: {
+        apiCall: vi.fn().mockResolvedValue({ ok: false, status: 429, data: "rate limited" }),
+        publishHivePost: vi.fn().mockResolvedValue({ txHash: "0xpost" }),
+        transferDem: vi.fn().mockResolvedValue({ txHash: "0xtip" }),
+      },
+    });
+    const action = makeAction({
+      type: "TIP",
+      target: "demos1tippee",
+      metadata: { amount: 3 },
+    });
+
+    const result = await executeStrategyActions([action], deps);
+
+    // Must NOT call transferDem when API explicitly denies
+    expect(deps.bridge.transferDem).not.toHaveBeenCalled();
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].reason).toMatch(/429/);
+  });
+
+  it("TIP falls back to direct transfer on network error (catch path)", async () => {
+    const deps = createDeps({
+      bridge: {
+        apiCall: vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),
+        publishHivePost: vi.fn().mockResolvedValue({ txHash: "0xpost" }),
+        transferDem: vi.fn().mockResolvedValue({ txHash: "0xtip" }),
+      },
+    });
+    const action = makeAction({
+      type: "TIP",
+      target: "demos1tippee",
+      metadata: { amount: 5 },
+    });
+
+    const result = await executeStrategyActions([action], deps);
+
+    // Network failure = transport error, falls back to direct transfer
+    expect(deps.bridge.transferDem).toHaveBeenCalledWith("demos1tippee", 5);
+    expect(result.executed).toHaveLength(1);
+    expect(result.executed[0].success).toBe(true);
+  });
+
+  it("TIP uses recipient from API validation response", async () => {
+    const deps = createDeps({
+      bridge: {
+        apiCall: vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          data: { ok: true, recipient: "demos1validated_recipient" },
+        }),
+        publishHivePost: vi.fn().mockResolvedValue({ txHash: "0xpost" }),
+        transferDem: vi.fn().mockResolvedValue({ txHash: "0xtip" }),
+      },
+    });
+    const action = makeAction({
+      type: "TIP",
+      target: "demos1original_target",
+      metadata: { amount: 2 },
+    });
+
+    const result = await executeStrategyActions([action], deps);
+
+    // Should use the validated recipient, not the original target
+    expect(deps.bridge.transferDem).toHaveBeenCalledWith("demos1validated_recipient", 2);
+    expect(result.executed[0].success).toBe(true);
+  });
+
   it("does not call bridge methods in dryRun mode", async () => {
     const deps = createDeps({ dryRun: true });
     const actions = [
@@ -176,13 +245,16 @@ describe("executeStrategyActions", () => {
 
     const result = await executeStrategyActions(actions, deps);
 
+    // ENGAGE fails (reaction API error), PUBLISH succeeds, TIP skipped (API returns 500 = hard denial)
     expect(result.executed).toEqual([
       { action: actions[0], success: false, error: "Reaction API returned 500" },
       { action: actions[1], success: true, txHash: "0xpost" },
-      { action: actions[2], success: true, txHash: "0xtip" },
+    ]);
+    expect(result.skipped).toEqual([
+      { action: actions[2], reason: "Tip API rejected: status 500" },
     ]);
     expect(deps.bridge.publishHivePost).toHaveBeenCalledTimes(1);
-    expect(deps.bridge.transferDem).toHaveBeenCalledTimes(1);
+    expect(deps.bridge.transferDem).not.toHaveBeenCalled();
   });
 
   it("returns empty results for an empty action list", async () => {

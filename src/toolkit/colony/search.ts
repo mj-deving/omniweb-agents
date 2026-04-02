@@ -4,11 +4,13 @@ import { mapPostRows, type PostRow } from "./posts.js";
 
 export interface SearchOptions {
   limit?: number;
+  offset?: number;
   author?: string;
 }
 
 export function searchPosts(db: ColonyDatabase, query: string, opts?: SearchOptions): CachedPost[] {
   const limit = opts?.limit ?? 50;
+  const offset = opts?.offset ?? 0;
 
   if (opts?.author) {
     const rows = db.prepare(`
@@ -19,8 +21,8 @@ export function searchPosts(db: ColonyDatabase, query: string, opts?: SearchOpti
       WHERE posts_fts MATCH ?
         AND p.author = ?
       ORDER BY fts.rank
-      LIMIT ?
-    `).all(query, opts.author, limit) as PostRow[];
+      LIMIT ? OFFSET ?
+    `).all(query, opts.author, limit, offset) as PostRow[];
     return mapPostRows(rows);
   }
 
@@ -31,7 +33,7 @@ export function searchPosts(db: ColonyDatabase, query: string, opts?: SearchOpti
     JOIN posts p ON p.rowid = fts.rowid
     WHERE posts_fts MATCH ?
     ORDER BY fts.rank
-    LIMIT ?
-  `).all(query, limit) as PostRow[];
+    LIMIT ? OFFSET ?
+  `).all(query, limit, offset) as PostRow[];
   return mapPostRows(rows);
 }

@@ -19,7 +19,7 @@ Agent toolkit for the Demos Network / SuperColony ecosystem. Agent definitions, 
 ## Project Structure
 
 See `docs/project-structure.md` for the full tree. Key boundaries:
-- **`src/toolkit/`** — Framework-agnostic toolkit (~80 files). Core: 10 tools, 6 guards, `DemosSession`, `FileStateStore`, SDK bridge, SSRF validator, Zod schemas. Expanded: `sources/` (catalog, fetch, health, rate-limit), `providers/` (declarative-engine, types, generic), `reactive/` (EventLoop\<TAction\>, watermark-store), `chain/` (tx-pipeline, asset-helpers), `math/` (baseline), `network/` (fetch-with-timeout, storage-client), `supercolony/` (scoring), `util/` (errors). Barrel: `src/toolkit/index.ts`. Sub-path exports: `@demos-agents/core/supercolony/scoring`. See `docs/architecture-plumbing-vs-strategy.md` for full classification.
+- **`src/toolkit/`** — Framework-agnostic toolkit (~80 files). Core: 10 tools, 6 guards, `DemosSession`, `FileStateStore`, SDK bridge, SSRF validator, Zod schemas. Expanded: `sources/` (catalog, fetch, health, rate-limit), `providers/` (declarative-engine, types, generic), `reactive/` (EventLoop\<TAction\>, watermark-store), `chain/` (tx-pipeline, asset-helpers), `math/` (baseline), `network/` (fetch-with-timeout, storage-client), `supercolony/` (api-client, chain-identity, chain-utils, scoring, types), `util/` (errors). Barrel: `src/toolkit/index.ts`. Sub-path exports: `@demos-agents/core/supercolony/scoring`. See `docs/architecture-plumbing-vs-strategy.md` for full classification.
 - **`src/`** — Core types + business logic. `src/lib/` has 8 subdirs (auth/, llm/, attestation/, scoring/, sources/, network/, pipeline/, util/) + flat files. Many src/lib/ modules now delegate to toolkit via `@deprecated` re-export shims (see ADR-0002). `src/reactive/` (shims to toolkit/reactive/), `src/actions/` (executor, publish pipeline using ChainTxPipeline), `src/plugins/` (22 plugins).
 - **`cli/`** — CLI entry points. Three loop modes: `session-runner.ts` with V3 default (3-phase strategy loop), `--legacy-loop` for V2, and `event-runner.ts` (long-lived, reactive). V3 modules: `v3-loop.ts` (orchestrator), `v3-strategy-bridge.ts` (sense/plan/perf), `publish-executor.ts` (PUBLISH/REPLY attestation pipeline), `action-executor.ts` (ENGAGE/TIP).
 - **`platform/`** — SuperColony-specific barrel. **`connectors/`** — SDK isolation. **`config/`** — Source catalog + strategies.
@@ -75,10 +75,10 @@ New code must go in the right directory. The classification rule from ADR-0002: 
 ## Key Gotchas
 
 ### Network (CRITICAL)
-- **`curl` CANNOT reach `supercolony.ai`** — NXDOMAIN since 2026-03-26. **NEVER use curl/WebFetch — use SDK or test suite.**
+- **`curl` CANNOT reach `supercolony.ai`** — was NXDOMAIN Mar 26 – Apr 1, now back but flaky (502s). **Prefer SDK or test suite over curl/WebFetch.**
 - **RPC nodes:** `demosnode.discus.sh` (primary), `node2.demos.sh` (backup).
 - **Chain-first migration: COMPLETE.** Toolkit AND all CLI tools (audit, scan-feed, engage, gate, verify) are 100% chain-only. All 8 session phases work without API. `ensureAuth()` returns null when API is unreachable. No CLI tool requires API auth.
-- **SDK bridge methods:** `verifyTransaction`, `getHivePosts`, `resolvePostAuthor`, `publishHiveReaction`, `getHivePostsByAuthor`, `getHiveReactionsByAuthor`, `getRepliesTo`.
+- **SDK bridge methods:** `verifyTransaction`, `getHivePosts`, `resolvePostAuthor`, `getHivePostsByAuthor`, `getRepliesTo`, `apiCall`, `transferDem`. Reactions via `reactToPost()` helper (API-only, not on-chain).
 
 ### SDK & Publishing
 - DAHR `startProxy()` is the COMPLETE operation — no `stopProxy()`.

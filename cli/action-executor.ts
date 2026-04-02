@@ -147,7 +147,9 @@ export async function executeStrategyActions(
           const amount = clampTipAmount(action.metadata?.amount);
           const postTxHash = (action.metadata?.postTxHash as string) ?? action.target!;
 
-          // 2-step tipping: API validates spam limits → SDK transfer with HIVE_TIP memo
+          // 2-step tipping: API validates spam limits → SDK transfer.
+          // NOTE: SDK transfer() has no memo param — HIVE_TIP:{postTxHash} attribution
+          // is not possible until SDK adds memo support. Tips are validated but unattributed.
           let recipient = action.target!;
           try {
             const tipValidation = await deps.bridge.apiCall("/api/tip", {
@@ -155,7 +157,15 @@ export async function executeStrategyActions(
               body: JSON.stringify({ postTxHash, amount }),
               headers: { "Content-Type": "application/json" },
             });
-            if (tipValidation.ok && tipValidation.data && typeof tipValidation.data === "object") {
+            // Abort on any non-ok API response (4xx/5xx = hard denial, not fallback)
+            if (!tipValidation.ok) {
+              result.skipped.push({ action, reason: `Tip API rejected: status ${tipValidation.status}` });
+              deps.observe("insight", `TIP rejected by API: status ${tipValidation.status}`, {
+                actionType: action.type, target: action.target, postTxHash,
+              });
+              continue;
+            }
+            if (tipValidation.data && typeof tipValidation.data === "object") {
               const tipData = tipValidation.data as { ok?: boolean; recipient?: string; error?: string };
               if (tipData.ok === false) {
                 result.skipped.push({ action, reason: `Tip validation failed: ${tipData.error ?? "unknown"}` });
@@ -167,8 +177,8 @@ export async function executeStrategyActions(
               if (tipData.recipient) recipient = tipData.recipient;
             }
           } catch {
-            // API validation failed — fall back to direct transfer (best effort)
-            deps.observe("warning", "Tip API validation unavailable, using direct transfer", {
+            // Transport failure only (network timeout, DNS) — fall back to direct transfer
+            deps.observe("warning", "Tip API unreachable, using direct transfer fallback", {
               source: "action-executor:tip", target: action.target,
             });
           }

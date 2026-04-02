@@ -949,6 +949,59 @@ describe("strategy engine", () => {
     });
   });
 
+  describe("calibration-adjusted thresholds", () => {
+    it("positive calibration raises evidence richness threshold for publish_to_gaps", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      // Evidence with richness 150 — above default 100 but below adjusted 150 (offset=10 → threshold=150)
+      const resultHighCal = decideActions(state, [createEvidence("security", { richness: 140 })], createConfig({
+        rules: createConfig().rules.map((r) => ({ ...r, enabled: r.name === "publish_to_gaps" })),
+      }), createContext({
+        calibration: { ourAvgScore: 50, colonyMedianScore: 40, offset: 10, postCount: 20, computedAt: new Date().toISOString() },
+      }));
+
+      // High offset (10) → threshold = max(50, 100 + 10*5) = 150. Richness 140 < 150 → no publish
+      expect(resultHighCal.actions).toEqual([]);
+    });
+
+    it("negative calibration lowers threshold (clamped at 50)", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      // Evidence with richness 60 — below default 100 but above adjusted 50 (offset=-20 → threshold=max(50, 0)=50)
+      const resultLowCal = decideActions(state, [createEvidence("security", { richness: 60 })], createConfig({
+        rules: createConfig().rules.map((r) => ({ ...r, enabled: r.name === "publish_to_gaps" })),
+      }), createContext({
+        calibration: { ourAvgScore: 10, colonyMedianScore: 30, offset: -20, postCount: 20, computedAt: new Date().toISOString() },
+      }));
+
+      // Negative offset → threshold clamped at 50. Richness 60 > 50 → publishes
+      expect(resultLowCal.actions).toHaveLength(1);
+      expect(resultLowCal.actions[0].type).toBe("PUBLISH");
+    });
+
+    it("zero calibration uses default threshold", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const result = decideActions(state, [createEvidence("security", { richness: 150 })], createConfig({
+        rules: createConfig().rules.map((r) => ({ ...r, enabled: r.name === "publish_to_gaps" })),
+      }), createContext({
+        calibration: { ourAvgScore: 30, colonyMedianScore: 30, offset: 0, postCount: 20, computedAt: new Date().toISOString() },
+      }));
+
+      // offset=0 → threshold = max(50, 100) = 100. Richness 150 > 100 → publishes
+      expect(result.actions).toHaveLength(1);
+    });
+  });
+
   describe("publish_to_gaps signal cross-reference", () => {
     it("publish_to_gaps considers signal agent count for priority", () => {
       const state = createEmptyState();

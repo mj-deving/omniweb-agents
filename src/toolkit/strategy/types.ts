@@ -40,6 +40,17 @@ export interface StrategyConfig {
   };
   // TODO(phase-3b): Wire topicWeights into publish/engage priority scoring
   topicWeights: Record<string, number>;
+  /** Phase 6: Enrichment thresholds — all optional with defaults */
+  enrichment: {
+    /** Oracle divergence threshold percentage to trigger publish_on_divergence (default: 10) */
+    divergenceThreshold: number;
+    /** Minimum ballot accuracy to enable publish_prediction (default: 0.5) */
+    minBallotAccuracy: number;
+    /** Minimum agents on a signal for publish_signal_aligned (default: 2) */
+    minSignalAgents: number;
+    /** Minimum confidence for consensus participation (default: 40) */
+    minConfidence: number;
+  };
 }
 
 /** API enrichment data — optional, populated from SuperColony API during sense phase. */

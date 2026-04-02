@@ -30,7 +30,9 @@ function sinceTimestamp(windowHours: number): string {
   return new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
 }
 
-const EMPTY_RESULT: DedupResult = { isDuplicate: false, matches: [] };
+function emptyResult(): DedupResult {
+  return { isDuplicate: false, matches: [] };
+}
 
 const POST_COLUMNS = `p.tx_hash, p.author, p.block_number, p.timestamp, p.reply_to, p.tags, p.text, p.raw_data,
        p.tx_id, p.from_ed25519, p.nonce, p.amount, p.network_fee, p.rpc_fee, p.additional_fee`;
@@ -44,10 +46,10 @@ export function checkClaimDedup(
   claim: string,
   opts?: DedupOptions,
 ): DedupResult {
-  if (!claim.trim()) return EMPTY_RESULT;
+  if (!claim.trim()) return emptyResult();
 
   const searchTerms = extractSearchTerms(claim);
-  if (!searchTerms) return EMPTY_RESULT;
+  if (!searchTerms) return emptyResult();
 
   const windowHours = opts?.windowHours ?? DEFAULT_WINDOW_HOURS;
   const limit = opts?.limit ?? 5;
@@ -72,7 +74,7 @@ export function checkClaimDedup(
         : undefined,
     };
   } catch {
-    return EMPTY_RESULT;
+    return emptyResult();
   }
 }
 
@@ -86,10 +88,10 @@ export function checkSelfDedup(
   ourAddress: string,
   windowHours = SELF_DEDUP_WINDOW_HOURS,
 ): DedupResult {
-  if (!claim.trim() || !ourAddress) return EMPTY_RESULT;
+  if (!claim.trim() || !ourAddress) return emptyResult();
 
   const searchTerms = extractSearchTerms(claim);
-  if (!searchTerms) return EMPTY_RESULT;
+  if (!searchTerms) return emptyResult();
 
   try {
     const rows = db.prepare(`
@@ -112,6 +114,6 @@ export function checkSelfDedup(
         : undefined,
     };
   } catch {
-    return EMPTY_RESULT;
+    return emptyResult();
   }
 }

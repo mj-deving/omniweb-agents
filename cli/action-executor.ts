@@ -35,15 +35,15 @@ export interface ActionExecutorDeps {
   ourAddress?: string;
 }
 
-/** Infer post category from strategy action metadata and rule name. */
+/** Infer post category from strategy action metadata and rule name. Explicit metadata wins. */
 function inferCategory(action: StrategyAction): string {
-  const reason = action.reason.toLowerCase();
+  if (typeof action.metadata?.category === "string") return action.metadata.category;
 
+  const reason = action.reason.toLowerCase();
   if (reason.includes("prediction") || reason.includes("ballot")) return "prediction";
   if (reason.includes("divergence") || reason.includes("signal")) return "signal";
   if (reason.includes("alert") || reason.includes("urgent")) return "alert";
   if (reason.includes("observation") || reason.includes("observed")) return "observation";
-  if (typeof action.metadata?.category === "string") return action.metadata.category;
 
   return "analysis";
 }

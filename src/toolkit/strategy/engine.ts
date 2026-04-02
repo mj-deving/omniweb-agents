@@ -330,7 +330,7 @@ export function decideActions(
         .map((c) => normalize(c.action.target ?? "")),
     );
 
-    for (const agent of enrichment.leaderboard.agents) {
+    for (const agent of enrichment.leaderboard.agents.slice(0, 10)) {
       if (recentTargets.has(normalize(agent.address))) continue;
       if (agent.bayesianScore < (enrichment.leaderboard.globalAvg ?? 0)) continue;
       // Skip agents we've already interacted with recently

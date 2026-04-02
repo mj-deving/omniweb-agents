@@ -217,7 +217,7 @@ Phase 1-4 (DONE) → Phase 5 (DONE) → Phase 6 (DONE)
 | 2026-04-02 | All enrichment is optional (graceful degradation) | Rules skip when apiEnrichment is null — agent works without API |
 | 2026-04-02 | Auto-calibration replaces static JSON | computeCalibration() in sense phase, cached in strategyResults |
 | 2026-04-02 | Category selection is content-driven | inferCategory() replaces hardcoded "analysis" based on action reason |
-| 2026-04-02 | Dedup module exists but not yet wired | checkClaimDedup/checkSelfDedup ready, needs publish-executor integration |
+| 2026-04-02 | Dedup module wired into publish-executor | checkClaimDedup + checkSelfDedup guard PUBLISH actions before LLM call |
 | 2026-04-02 | SDK capabilities doc is informational only | XMCore/StoragePrograms/ZK are Phase 8+ — no Phase 6 rules use them |
 | 2026-04-02 | Engine stays pure-function: pre-compute in bridge, not DB handle | Engine's testability + agent-agnosticism is its strongest property. Bridge extracts intelligence data into DecisionContext fields. |
 

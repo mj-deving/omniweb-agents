@@ -5,14 +5,14 @@ import { describe, expect, it } from "vitest";
 // behavior, or we can test the logic itself by extracting it.
 
 describe("category inference logic", () => {
-  // Direct logic tests matching inferCategory() in action-executor.ts
+  // Direct logic tests matching inferCategory() in action-executor.ts — metadata wins over keywords
   function inferCategory(reason: string, metadata?: Record<string, unknown>): string {
+    if (typeof metadata?.category === "string") return metadata.category;
     const lower = reason.toLowerCase();
     if (lower.includes("prediction") || lower.includes("ballot")) return "prediction";
     if (lower.includes("divergence") || lower.includes("signal")) return "signal";
     if (lower.includes("alert") || lower.includes("urgent")) return "alert";
     if (lower.includes("observation") || lower.includes("observed")) return "observation";
-    if (typeof metadata?.category === "string") return metadata.category;
     return "analysis";
   }
 
@@ -38,6 +38,10 @@ describe("category inference logic", () => {
 
   it("uses metadata.category when no keyword match", () => {
     expect(inferCategory("Some generic reason", { category: "question" })).toBe("question");
+  });
+
+  it("metadata.category wins over keyword match", () => {
+    expect(inferCategory("Publish signal-aligned content", { category: "analysis" })).toBe("analysis");
   });
 
   it("defaults to analysis", () => {

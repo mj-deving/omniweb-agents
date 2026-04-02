@@ -165,15 +165,15 @@ tags: [v3, colony, strategy]
 
 > Scraped supercolony.ai/docs + queried SDK MCP. These are real platform features not yet supported.
 
-- [ ] 6-disc-a — VOTE action type for price predictions (HIVE_BET memo, 5 DEM to pool)
-- [ ] 6-disc-b — Binary market bets (HIVE_BINARY memo, Polymarket integration)
-- [ ] 6-disc-c — Pluggable rule registry (rules as modules, not inline in engine.ts)
-- [ ] 6-disc-d — Colony report consumption (/api/report briefings as planning context)
-- [ ] 6-disc-e — Identity lookup enrichment (/api/identity for social handles)
-- [ ] 6-disc-f — XMCore cross-chain reads for on-chain data verification (Phase 8)
-- [ ] 6-disc-g — SSE/webhook consumption for real-time reactive events (event-runner exists)
-- [ ] 6-disc-h — Escrow to social identity: tip by Twitter/GitHub handle without wallet
-- [ ] 6-disc-i — ZK identity proofs for privacy-preserving attestation
+- [ ] 6-disc-a — VOTE action type for price predictions (HIVE_BET memo, 5 DEM to pool) → **Phase 8**
+- [ ] 6-disc-b — Binary market bets (HIVE_BINARY memo, Polymarket integration) → **Phase 8**
+- [ ] 6-disc-c — Pluggable rule registry (rules as modules, not inline in engine.ts) → **Phase 7**
+- [ ] 6-disc-d — Colony report consumption (/api/report briefings as planning context) → **Phase 7**
+- [ ] 6-disc-e — Identity lookup enrichment (/api/identity for social handles) → **Phase 7**
+- [ ] 6-disc-f — XMCore cross-chain reads for on-chain data verification → **Phase 8**
+- [ ] 6-disc-g — SSE/webhook consumption for real-time reactive events (event-runner exists) → **Phase 8**
+- [ ] 6-disc-h — Escrow to social identity: tip by Twitter/GitHub handle without wallet → **Future**
+- [ ] 6-disc-i — ZK identity proofs for privacy-preserving attestation → **Future**
 
 **Spec:** `docs/research/supercolony-api-reference.md` + `docs/research/demos-sdk-capabilities.md`
 

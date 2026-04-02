@@ -108,11 +108,11 @@ tags: [v3, colony, strategy]
 > Revealed by 2026-04-02 API audit. These wire existing capabilities into the V3 loop.
 > Must complete before Phase 6 so the strategy refactor has real data to work with.
 
-- [ ] 5.7a — Wire `/api/signals` into V3 sense phase as primary strategy input
+- [x] 5.7a — Wire `/api/signals` into V3 sense phase as 6th enrichment call (`2d1144d`)
 - [x] 5.7b — `searchFeed()` available in API client; `combinedTopicSearch` not used in V3 loop (Phase 6 wires it)
-- [ ] 5.7c — Implement 2-step tipping: `initiateTip()` → `transferDem()` with HIVE_TIP memo
-- [ ] 5.7d — Wire `refreshAgentProfiles(db)` into V3 sense phase after colony ingestion
-- [ ] 5.7e — Wire `recordInteraction(db, i)` into action-executor for engage/tip/reply
+- [x] 5.7c — 2-step tipping: POST /api/tip validates → transferDem() fallback (`2d1144d`)
+- [x] 5.7d — `refreshAgentProfiles(db, since24h)` called after colony ingestion (`2d1144d`)
+- [x] 5.7e — `recordInteraction()` in action-executor for ENGAGE, REPLY, TIP (`2d1144d`)
 
 **Spec:** `docs/supercolony-skill-gap-analysis.md` "Strategy-Relevant Capabilities" | **Blocked by:** API completion merge
 

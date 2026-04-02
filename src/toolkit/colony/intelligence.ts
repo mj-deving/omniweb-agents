@@ -53,6 +53,15 @@ interface InteractionRow {
   timestamp: string;
 }
 
+function safeParseTopics(json: string): string[] {
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function mapProfileRow(row: AgentProfileRow | undefined): AgentProfileRecord | null {
   if (!row) {
     return null;
@@ -64,7 +73,7 @@ function mapProfileRow(row: AgentProfileRow | undefined): AgentProfileRecord | n
     postCount: row.post_count,
     avgAgrees: row.avg_agrees,
     avgDisagrees: row.avg_disagrees,
-    topics: JSON.parse(row.topics_json) as string[],
+    topics: safeParseTopics(row.topics_json),
     trustScore: row.trust_score,
   };
 }

@@ -91,13 +91,13 @@ export async function executeStrategyActions(
           if (deps.colonyDb && deps.ourAddress) {
             try {
               recordInteraction(deps.colonyDb, {
-                ourTxHash: deps.ourAddress,
+                ourTxHash: `agree:${action.target!}`,
                 theirTxHash: action.target!,
                 theirAddress: (action.metadata?.author as string) ?? action.target!,
                 interactionType: "agreed",
                 timestamp: new Date().toISOString(),
               });
-            } catch { /* interaction tracking is best-effort */ }
+            } catch (err: unknown) { deps.observe("warning", `Interaction tracking failed: ${err instanceof Error ? err.message : String(err)}`, { source: "action-executor:interaction" }); }
           }
           break;
         }
@@ -124,7 +124,7 @@ export async function executeStrategyActions(
                 interactionType: "we_replied",
                 timestamp: new Date().toISOString(),
               });
-            } catch { /* interaction tracking is best-effort */ }
+            } catch (err: unknown) { deps.observe("warning", `Interaction tracking failed: ${err instanceof Error ? err.message : String(err)}`, { source: "action-executor:interaction" }); }
           }
           break;
         }
@@ -200,7 +200,7 @@ export async function executeStrategyActions(
                 interactionType: "we_tipped",
                 timestamp: new Date().toISOString(),
               });
-            } catch { /* interaction tracking is best-effort */ }
+            } catch (err: unknown) { deps.observe("warning", `Interaction tracking failed: ${err instanceof Error ? err.message : String(err)}`, { source: "action-executor:interaction" }); }
           }
           break;
         }

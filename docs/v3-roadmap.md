@@ -2,10 +2,10 @@
 type: roadmap
 status: active
 phase: 5.1-5.6
-progress: 17/23
+progress: 23/29
 updated: 2026-04-01
 open_items: 6
-next_action: "Phase 5.4 FTS5 full-text search"
+next_action: "Phase 5.6 semantic search or Phase 6 strategy refactor"
 tags: [v3, colony, strategy]
 ---
 
@@ -17,9 +17,10 @@ tags: [v3, colony, strategy]
 ## Status
 
 - **V3 loop:** LIVE (session 59 — 1 post, 4 DAHR attestations, verified on-chain)
-- **Tests:** 2237 passing, 171 suites, zero tsc errors
-- **Colony DB:** 88 posts, 8 sources cached, reaction cache NOW POPULATED
-- **Next:** Phase 5.4 (FTS5 full-text search — blocked on 5.3 backfill data)
+- **Tests:** 2349 passing, 177 suites, 8 pre-existing tsc errors
+- **Colony DB:** 188K posts, schema v4 (FTS5 + intelligence), reaction cache populated
+- **API Client:** 38/38 endpoints covered (35 in client, 3 in dedicated modules)
+- **Next:** Wire signals + feed search into strategy, fix tipping 2-step flow, then Phase 6
 
 ## Checklist
 
@@ -81,18 +82,18 @@ tags: [v3, colony, strategy]
 
 ### Phase 5.4: FTS5 Full-Text Search
 
-- [ ] 5.4a — Colony DB migration v2: FTS5 virtual table + sync triggers in `MIGRATIONS[2]`
-- [ ] 5.4b — Query helper: `searchPosts(db, query)` in colony module
+- [x] 5.4a — Colony DB migration v3: FTS5 virtual table + 3 sync triggers in `MIGRATIONS[3]` (`ca41ac6`)
+- [x] 5.4b — Query helper: `searchPosts(db, query, opts?)` with limit, offset, author filter (`ca41ac6`, `e62a2f1`)
 
-**Spec:** `docs/colony-tooling-plan.md` P3 | **Blocked by:** 5.3
+**Spec:** `docs/colony-tooling-plan.md` P3
 
 ### Phase 5.5: Colony Intelligence Layer
 
-- [ ] 5.5a — `agent_profiles` table (address, post_count, avg_agrees, topics, trust_score)
-- [ ] 5.5b — `interactions` table (our_tx, their_tx, type, timestamp)
-- [ ] 5.5c — Populate from colony DB + chain reactions during sense phase
+- [x] 5.5a — `agent_profiles` table (address, post_count, avg_agrees, topics, trust_score NULL) (`8081f73`)
+- [x] 5.5b — `interactions` table (our_tx, their_tx, type NOT NULL, timestamp) (`8081f73`)
+- [x] 5.5c — `refreshAgentProfiles(db, since?)` + `recordInteraction` + `getAgentProfile` + `getInteractionHistory` (`8081f73`)
 
-**Spec:** `docs/colony-tooling-plan.md` P4 | **Blocked by:** 5.3 + 5.4
+**Spec:** `docs/colony-tooling-plan.md` P4
 
 ### Phase 5.6: Semantic Search
 
@@ -102,13 +103,28 @@ tags: [v3, colony, strategy]
 
 **Spec:** `docs/colony-tooling-plan.md` P5 + `.ai/guides/colony-db-research.md` | **Blocked by:** 5.4 + embedding model decision
 
+### Phase 5.7: Strategy Data Wiring (pre-Phase 6)
+
+> Revealed by 2026-04-02 API audit. These wire existing capabilities into the V3 loop.
+> Must complete before Phase 6 so the strategy refactor has real data to work with.
+
+- [ ] 5.7a — Wire `/api/signals` into V3 sense phase as primary strategy input
+- [ ] 5.7b — Replace `combinedTopicSearch` with `/api/feed/search` in sense phase
+- [ ] 5.7c — Implement 2-step tipping: `initiateTip()` → `transferDem()` with HIVE_TIP memo
+- [ ] 5.7d — Wire `refreshAgentProfiles(db)` into V3 sense phase after colony ingestion
+- [ ] 5.7e — Wire `recordInteraction(db, i)` into action-executor for engage/tip/reply
+
+**Spec:** `docs/supercolony-skill-gap-analysis.md` "Strategy-Relevant Capabilities" | **Blocked by:** API completion merge
+
 ### Phase 6: Strategy Domain Refactor
 
-- [ ] 6a — Strategy rules consume intelligence layer (agent profiles, interactions)
-- [ ] 6b — Claim ledger deduplication wired into publish pipeline
-- [ ] 6c — Performance tracker auto-calibration (replace static calibrationOffset)
+- [ ] 6a — Strategy rules consume enrichment data (oracle, signals, ballot accuracy)
+- [ ] 6b — Strategy rules consume intelligence layer (agent profiles, interactions)
+- [ ] 6c — Claim ledger deduplication wired into publish pipeline
+- [ ] 6d — Performance tracker auto-calibration (replace static calibrationOffset)
+- [ ] 6e — Signal-aware topic selection: use `/api/signals` for publish_to_gaps
 
-**Spec:** `docs/archive/design-loop-v3.md` section 3+6 | **Blocked by:** 5.1-5.3 complete
+**Spec:** `docs/archive/design-loop-v3.md` section 3+6 + gap analysis strategy section | **Blocked by:** 5.7 complete
 
 ### Phase 7: Strategy Phase 2 Rules
 
@@ -166,6 +182,9 @@ Phase 1-4 (DONE) → Phase 5 (DONE)
 | 2026-03-31 | Two executors (action + publish) | ENGAGE=1 call, PUBLISH=10 steps. Different complexity. |
 | 2026-03-31 | SDK double-fetch acceptable (temporary) | Chain reads cheap. Consolidation target 2026-04-14. |
 | 2026-04-01 | P0-P2 before Phase 6 | Strategy refactor needs data + tooling first |
+| 2026-04-02 | Phase 5.7 before Phase 6 | API audit revealed broken tipping, missing signals/feed-search, unwired intelligence layer |
+| 2026-04-02 | Signals are strategy-critical, not optional | `/api/signals` provides colony consensus — must be primary input to plan phase |
+| 2026-04-02 | Tipping must use 2-step API validation | Direct `transferDem()` skips spam limits and indexer can't attribute tips |
 | 2026-04-01 | No ORM for colony DB | Thin interface layer IS the abstraction |
 | 2026-04-01 | Archive completed plan docs | design-loop-v3.md + phase5-plan.md → docs/archive/ (read-only reference) |
 

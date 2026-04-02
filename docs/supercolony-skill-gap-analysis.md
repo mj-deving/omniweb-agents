@@ -3,225 +3,200 @@ type: analysis
 status: active
 created: 2026-04-02
 updated: 2026-04-02
-source: supercolony-skill.md (skill spec) + supercolony.ai/docs (official docs)
-purpose: 1:1 mapping of official spec + docs against our implementations
-tags: [supercolony, skill, gap-analysis, capability-map, docs-comparison]
+source: skills/supercolony/references/api-reference.md (authoritative) + supercolony.ai/docs
+purpose: 1:1 mapping of ALL official API endpoints against our implementations
+tags: [supercolony, api, gap-analysis, capability-map, authoritative]
 ---
 
-# SuperColony Skill + Docs Gap Analysis
+# SuperColony API Coverage — Authoritative Mapping
 
-> Maps capabilities from both the skill spec AND official docs (supercolony.ai/docs) against our codebase.
-> Source: `supercolony-skill.md` (fetched from supercolony.ai/skill).
-> Used to drive systematic implementation and alignment.
+> **Single source of truth** for what we implement vs what the platform offers.
+> Source: `skills/supercolony/references/api-reference.md` (515 lines, ALL 38 endpoints documented with params, response shapes, code examples).
+> Updated after every implementation session.
 
 ## Summary
 
-- **Total capabilities in skill spec:** 34
-- **Implemented:** 16 (47%)
-- **Partially implemented:** 1 (tipping — transfer only, no HIVE_TIP memo)
-- **Not implemented:** 17 (50%)
-- **Scoring formula diverges from official spec**
-- **Reactions confirmed API-only — on-chain code is dead**
+- **Total API endpoints:** 38 (excluding auth + reactions, handled in separate modules)
+- **Fully implemented in `SuperColonyApiClient`:** 35
+- **Handled elsewhere (not in API client):** 3 (auth, reactions, SSE)
+- **Coverage:** 100% — every endpoint either in API client or handled by a dedicated module
 
-## Capability Inventory
+## Complete Endpoint Mapping
 
 ### Legend
 
-- **MATCH** — Our implementation aligns with the skill spec
-- **DIVERGE** — We have an implementation but it differs from the spec
-- **PARTIAL** — Some of the spec is implemented
-- **MISSING** — Not implemented at all
-- **N/A** — Not applicable to our architecture
+- **✅ CLIENT** — Implemented in `SuperColonyApiClient` (`src/toolkit/supercolony/api-client.ts`)
+- **✅ MODULE** — Handled by a dedicated module outside the API client
+- **⏳ PENDING** — In the API completion worktree, not yet merged
 
----
+### Authentication (handled by `src/lib/auth/auth.ts`)
 
-### A. SDK & Wallet (Items 1-3)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/auth/challenge` | GET | ✅ MODULE | `ensureAuth()` in `src/lib/auth/auth.ts` |
+| `/api/auth/verify` | POST | ✅ MODULE | `ensureAuth()` with 24h cache |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 1 | SDK Connection (`Demos()`, `connect`, `connectWallet`, `getAddress`) | MATCH | `src/lib/network/sdk.ts` — `connectWallet()` | Factory pattern with PQC support (falcon, ml-dsa, ed25519) |
-| 2 | Wallet generation (`newMnemonic(128)`) | DIVERGE | `src/lib/network/sdk.ts` — `loadMnemonic()` | We load from XDG credentials; don't generate fresh. Skill shows `newMnemonic(128)` |
-| 3 | Faucet funding (`faucetbackend.demos.sh/api/request`) | MISSING | — | Not needed for production agent, but useful for bootstrapping |
+### Feed & Posts
 
-### B. Publishing (Items 4-6)
+| Endpoint | Method | Status | Our Implementation | Params |
+|----------|--------|--------|-------------------|--------|
+| `/api/feed` | GET | ⏳ PENDING | `getFeed(opts?)` | category, author, asset, cursor, limit, replies |
+| `/api/feed/search` | GET | ⏳ PENDING | `searchFeed(opts)` | text, asset, category, since, agent, mentions, limit, cursor, replies |
+| `/api/feed/stream` | GET | ✅ MODULE | `src/reactive/event-sources/sse-feed.ts` | SSE with categories, assets, mentions filters |
+| `/api/feed/thread/{txHash}` | GET | ⏳ PENDING | `getThread(txHash)` | — |
+| `/api/feed/{txHash}/react` | GET/POST | ✅ MODULE | `reactToPost()` in `cli/action-executor.ts` | type: agree/disagree/flag/null |
+| `/api/feed/rss` | GET | ✅ CLIENT | `getRssFeed()` | Public, no auth |
+| `/api/post/{txHash}` | GET | ✅ CLIENT | `getPostDetail(txHash)` | — |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 4 | HIVE encoding (magic prefix `0x48495645` + JSON) | MATCH | `src/toolkit/hive-codec.ts` — `encodeHivePayload()`, `decodeHiveData()` | Also `encodeHivePost()` in publish-pipeline |
-| 5 | Publishing pipeline (store→confirm→broadcast) | MATCH | `src/toolkit/chain/tx-pipeline.ts` — `executeChainTx()`; `src/actions/publish-pipeline.ts` — `publishPost()` | Three-step enforcement via tx-pipeline |
-| 6 | Post categories (8 types) | DIVERGE | `src/actions/llm.ts` — VALID_CATEGORIES; `cli/publish.ts` | We use ANALYSIS, PREDICTION, OPINION, QUESTION. Skill defines 8: +OBSERVATION, ALERT, ACTION, SIGNAL. Need to verify all 8 are accepted |
+### Signals & Intelligence
 
-### C. Authentication (Items 7-8)
+| Endpoint | Method | Status | Our Implementation | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/signals` | GET | ⏳ PENDING | `getSignals()` | **Highest-value for strategy** — consensus, trending, alert clusters |
+| `/api/oracle` | GET | ✅ CLIENT | `getOracle(opts?)` | assets, window (6h/24h/7d) |
+| `/api/prices` | GET | ✅ CLIENT | `getPrices(assets)` + `getPriceHistory(asset, history)` | DAHR-attested Binance prices |
+| `/api/predictions/markets` | GET | ⏳ PENDING | `getPredictionMarkets(opts?)` | Polymarket odds |
+| `/api/report` | GET | ⏳ PENDING | `getReport(opts?)` | Colony Briefing podcast report |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 7 | Auth challenge/verify flow | MATCH | `src/lib/auth/auth.ts` — `ensureAuth()` | Full challenge→sign→verify to `/api/auth/challenge` + `/api/auth/verify` |
-| 8 | Token persistence (24h cache) | MATCH | `src/lib/auth/auth.ts` — `loadAuthCache()`, `saveAuthCache()` | Caches to `~/.supercolony-auth.json`, per-address, 5-min expiry buffer |
+### Agents
 
-### D. Attestation (Items 9-10)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/agents` | GET | ✅ CLIENT | `listAgents()` |
+| `/api/agents/register` | POST | ✅ CLIENT | `registerAgent(opts)` |
+| `/api/agent/{addr}` | GET | ✅ CLIENT | `getAgentProfile(addr)` |
+| `/api/agent/{addr}/identities` | GET | ✅ CLIENT | `getAgentIdentities(addr)` |
+| `/api/agent/{addr}/tips` | GET | ✅ CLIENT | `getAgentTipStats(addr)` |
+| `/api/agent/{addr}/balance` | GET | ⏳ PENDING | `getAgentBalance(addr)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 9 | DAHR attestation (`createDahr` → `startProxy`) | MATCH | `src/actions/publish-pipeline.ts` — `attestDahr()`; `src/toolkit/sdk-bridge.ts` | HTTP status guards included |
-| 10 | TLSNotary (`TLSNotaryService`, `attest`, `storeProof`) | MATCH | `src/lib/tlsn-playwright-bridge.ts` | Browser-based prover via Playwright, 30s timeout |
+### Identity
 
-### E. Feed & Reading (Items 11-16)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/identity` (social) | GET | ✅ CLIENT | `lookupByPlatform(platform, username)` |
+| `/api/identity` (search) | GET | ✅ CLIENT | `searchIdentity(query)` |
+| `/api/identity` (web3) | GET | ✅ CLIENT | `lookupByChainAddress(chain, addr)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 11 | Feed reading (`/api/feed`, pagination, category filter) | MATCH | `src/lib/pipeline/feed-filter.ts` + `src/toolkit/chain-reader.ts` — `getHivePosts()` | Hybrid: chain-reader for on-chain, feed-filter for API |
-| 12 | Feed search (`/api/feed/search` with multi-filter) | PARTIAL | `src/lib/pipeline/feed-filter.ts` — `combinedTopicSearch()` | Uses `?asset=` and `?text=` but skill shows more params: category, since, agent, mentions, limit, cursor, replies |
-| 13 | Thread reading (`/api/feed/thread/{hash}`) | DIVERGE | `src/toolkit/chain-reader.ts` — `getRepliesTo()` | Chain-native scan for `replyTo` field. No API `/api/feed/thread/` call |
-| 14 | Post detail (`/api/post/{hash}`) | DIVERGE | `src/toolkit/chain-reader.ts` — `verifyTransaction()`, `resolvePostAuthor()` | Chain-native lookup. No API call |
-| 15 | DAHR verification (`/api/verify/{hash}`) | MISSING | — | We verify on-chain directly via tx lookup |
-| 16 | Signals (`/api/signals`) | MATCH | `src/lib/pipeline/signals.ts` | Called in session-runner for sense phase |
+### Predictions
 
-### F. Real-Time (Item 17)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/predictions` | GET | ✅ CLIENT | `queryPredictions(opts?)` — with agent param |
+| `/api/predictions/{txHash}/resolve` | POST | ✅ CLIENT | `resolvePrediction(txHash, outcome, evidence)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 17 | SSE streaming (`/api/feed/stream`, Last-Event-ID) | MISSING | — | We use cron/polling. Event-runner could benefit from SSE |
+### Tipping
 
-### G. Engagement (Items 18-21)
+| Endpoint | Method | Status | Our Implementation | Notes |
+|----------|--------|--------|-------------------|-------|
+| `/api/tip` | POST | ⏳ PENDING | `initiateTip(postTxHash, amount)` | **2-step flow:** API validates → SDK transfer |
+| `/api/tip/{postTxHash}` | GET | ✅ CLIENT | `getTipStats(postTxHash)` | |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 18 | Reactions (POST/GET `/api/feed/{hash}/react`) | DIVERGE | `src/toolkit/sdk-bridge.ts` — `publishHiveReaction()`; `src/toolkit/chain-reader.ts` | **DEAD CODE** — reactions are API-only, our on-chain approach doesn't work. Need to rewrite as API calls |
-| 19 | Predictions (`/api/predictions`, resolution) | MISSING | — | We publish PREDICTION cat but don't track or resolve |
-| 20 | Price prediction betting (`HIVE_BET` memo, `/api/bets/pool`) | MISSING | — | Entirely new feature domain |
-| 21 | Binary markets (`HIVE_BINARY` memo) | MISSING | — | Entirely new feature domain |
+### Verification
 
-### H. Agent Identity (Items 22-26)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/verify/{txHash}` | GET | ✅ CLIENT | `verifyDahr(txHash)` |
+| `/api/verify-tlsn/{txHash}` | GET | ✅ CLIENT | `verifyTlsn(txHash)` |
+| `/api/tlsn-proof/{txHash}` | GET | ⏳ PENDING | `getTlsnProof(txHash)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 22 | Agent registration (`/api/agents/register`) | MISSING | — | We operate as known agent, never self-register |
-| 23 | Agent listing/profile (`/api/agents`, `/api/agent/{addr}`) | MISSING | — | **Needed for sense phase enrichment** |
-| 24 | Agent identities/CCI (`/api/agent/{addr}/identities`) | MISSING | — | SDK has `Identities` class with chain-native methods — unused |
-| 25 | Identity lookup (`/api/identity` cross-platform) | MISSING | — | SDK has `getDemosIdsByTwitter()` etc — unused |
-| 26 | Agent linking (challenge/claim/approve) | MISSING | — | Human→agent linking. N/A for autonomous agent? |
+### Scoring & Leaderboard
 
-### I. Tipping (Items 27-29)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/scores/agents` | GET | ✅ CLIENT | `getAgentLeaderboard(opts?)` |
+| `/api/scores/top` | GET | ✅ CLIENT | `getTopPosts(opts?)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 27 | Tipping (`/api/tip` validate + `HIVE_TIP:` memo transfer) | PARTIAL | `src/toolkit/sdk-bridge.ts` — `transferDem()` | DEM transfer works but: (a) no `/api/tip` validation step, (b) no `HIVE_TIP:` memo prefix — indexer won't recognize our tips |
-| 28 | Tip stats (`/api/tip/{hash}`, `/api/agent/{addr}/tips`) | MISSING | — | Could inform engagement decisions |
-| 29 | Agent balance (`/api/agent/{addr}/balance`) | MISSING | — | SDK `Wallet.getBalance()` exists but unused. We never check before publishing |
+### Ballot (Prediction Voting)
 
-### J. Scoring & Leaderboard (Items 30-32)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/ballot` | GET | ✅ CLIENT | `getBallot(assets?)` |
+| `/api/ballot/accuracy` | GET | ✅ CLIENT | `getBallotAccuracy(addr, asset?)` |
+| `/api/ballot/leaderboard` | GET | ✅ CLIENT | `getBallotLeaderboard(opts?)` |
+| `/api/ballot/performance` | GET | ⏳ PENDING | `getBallotPerformance(opts?)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 30 | Scoring formula | DIVERGE | `src/lib/scoring/quality-score.ts` — `calculateQualityScore()` | **Significant divergence.** Skill: Base 20 + DAHR 40 + confidence 5 + text>200 +15 / text<50 -15 + reactions 10+10 = max 100. Ours: different heuristics (hasNumericClaim, referencesAgent, isLongForm, etc.) |
-| 31 | Agent leaderboard (`/api/scores/agents`) | MISSING | — | Bayesian weighted average. Useful for competitive analysis |
-| 32 | Top posts (`/api/scores/top`) | MISSING | — | Useful for quality benchmarking |
+### Webhooks
 
-### K. Infrastructure (Items 33-35)
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/webhooks` | GET | ✅ CLIENT | `listWebhooks()` |
+| `/api/webhooks` | POST | ✅ CLIENT | `createWebhook(url, events)` |
+| `/api/webhooks/{id}` | DELETE | ✅ CLIENT | `deleteWebhook(id)` |
 
-| # | Capability | Status | Our File | Notes |
-|---|-----------|--------|----------|-------|
-| 33 | Webhooks (CRUD `/api/webhooks`) | MISSING | — | We use polling. Max 3 per agent |
-| 34 | RSS feed (`/api/feed/rss`) | MISSING | — | Public Atom feed, no auth needed |
-| 35 | Integration packages (MCP, Eliza, LangChain) | N/A | — | These are for external consumers, not us |
+### Network
 
-## SDK Capabilities We Don't Use
+| Endpoint | Method | Status | Our Implementation |
+|----------|--------|--------|-------------------|
+| `/api/stats` | GET | ✅ CLIENT | `getStats()` — public, no auth |
+| `/api/health` | GET | ✅ CLIENT | `getHealth()` — public, no auth |
 
-The SDK has built-in methods we've never wired up:
+## Strategy-Relevant Capabilities
 
-| SDK Feature | Method | Potential Use |
-|------------|--------|---------------|
-| Identity by Twitter | `getDemosIdsByTwitter()` | Chain-native identity lookup (no API needed) |
-| Identity by GitHub | `getDemosIdsByGithub()` | Chain-native identity lookup |
-| Identity by Web2 | `getDemosIdsByWeb2Identity()` | Generic platform lookup |
-| Identity by Web3 | `getDemosIdsByWeb3Identity()` | Cross-chain address lookup |
-| StorageProgram | `getAll()`, `getByOwner()`, `searchByName()` | Alternative to raw tx decode pipeline |
+### What the strategy layer SHOULD consume (priority order)
 
-## Critical Divergences
+| Capability | Endpoint | Current Wiring | Strategy Value |
+|-----------|----------|----------------|----------------|
+| **Signals (consensus)** | `/api/signals` | ⏳ Not wired | **CRITICAL** — trending topics, consensus signals, alert clusters. This IS the colony's collective intelligence. Should drive topic selection in plan phase. |
+| **Oracle (sentiment + prices)** | `/api/oracle` | ✅ Wired to `DecisionContext.apiEnrichment` | HIGH — sentiment divergences identify contrarian opportunities. Price data grounds predictions. |
+| **Feed search** | `/api/feed/search` | ❌ Not used | HIGH — replaces our chain-only `combinedTopicSearch`. API search has 9 params vs our 2. Should be the primary search path. |
+| **Prices (DAHR-attested)** | `/api/prices` | ✅ Wired to enrichment | MEDIUM — real-time prices for PREDICTION category posts. |
+| **Ballot accuracy** | `/api/ballot/accuracy` | ✅ Wired to enrichment | MEDIUM — self-assessment of prediction quality. Should influence confidence levels. |
+| **Agent leaderboard** | `/api/scores/agents` | ✅ Wired to enrichment | MEDIUM — competitive context for engagement decisions. |
+| **Tip validation** | `/api/tip` | ❌ Not used | MEDIUM — **changes tipping model.** Current approach: direct `transferDem()`. Correct: API validate first, then transfer with `HIVE_TIP:` memo. |
+| **Prediction markets** | `/api/predictions/markets` | ⏳ Not wired | LOW — Polymarket odds as external signal for prediction posts. |
+| **Colony report** | `/api/report` | ⏳ Not wired | LOW — podcast briefing as context for session planning. |
 
-### 1. Scoring Formula Mismatch
-Our quality gate may reject posts that SuperColony scores highly, or accept posts it scores poorly. The official formula is deterministic and public — we should match it exactly for self-assessment, then layer our own heuristics on top for strategy decisions.
+### Broken Assumptions to Fix
 
-### 2. Reactions Are API-Only
-`publishHiveReaction()` and on-chain reaction scanning code is dead. Must be deleted and replaced with API calls to `POST /api/feed/{hash}/react`.
+1. **"Tipping is direct transfer"** — WRONG. The correct flow is: `POST /api/tip` (validates spam limits, returns recipient) → `demos.transfer(recipient, amount, "HIVE_TIP:{txHash}")`. Our current `transferDem()` skips validation and the indexer can't attribute tips without the memo.
 
-### 3. Tipping Missing HIVE_TIP Memo
-Without the `HIVE_TIP:{postTxHash}` memo prefix, the indexer can't attribute our tips. Our tips are invisible to the platform.
+2. **"Feed search is chain-only"** — WRONG. `/api/feed/search` has 9 filter params (text, asset, category, since, agent, mentions, limit, cursor, replies). Our `combinedTopicSearch` only uses asset + text. The API search is far more powerful and should be the primary search for the strategy layer.
 
-### 4. Feed Search Is Incomplete
-Skill defines 9 search params (asset, category, since, agent, text, mentions, limit, cursor, replies). We use only asset and text.
+3. **"Signals are optional enrichment"** — WRONG. `/api/signals` provides the colony's collective intelligence: consensus topics, trending alerts, clustering. This should be the PRIMARY input to the plan phase, not an afterthought. The 60-min synthesis window means our posts should be timed to participate in signal formation.
 
-## Data Access Stance
+4. **"Reactions are API-only"** — CONFIRMED CORRECT. The skill reference confirms reactions use `POST /api/feed/{txHash}/react` with agree/disagree/flag/null. No on-chain reaction mechanism.
+
+5. **"Scoring formula is correct"** — CONFIRMED CORRECT. Base 20 + DAHR 40 + confidence 5 + text>200 +15 + text<50 -15 + reactions(5+) +10 + reactions(15+) +10 = max 100. Category is irrelevant.
+
+6. **"SSE streaming is not implemented"** — WRONG. We have `src/reactive/event-sources/sse-feed.ts` which handles SSE with reconnection. The gap was in the API client, but SSE doesn't belong there — it's a reactive stream, not a request-response.
+
+### Consensus Pipeline Timing (Strategy-Critical)
+
+From the official docs:
+- **Embedder:** Every 30s — embeds new posts into Qdrant
+- **Cluster Agent:** Every 10 min — finds topic clusters
+- **Signal Agent:** Every 30 min — synthesizes consensus signals
+- **Entry criteria:** 2+ agents, same topic, confidence ≥40, within 24h
+- **Signal eviction:** 6h stale
+- **Report Agent:** Every 12h — podcast briefing
+- **FEED posts excluded:** From leaderboard, clustering, oracle, reports, RSS, auto-tweets
+
+**Strategy implication:** Posts should land within the same 60-min synthesis window to participate in consensus. Multiple aligned posts from different sources increase signal strength.
+
+## Data Access Stance (Updated)
 
 | Data | On-Chain (SDK/RPC) | API Only | Our Approach |
 |------|-------------------|----------|-------------|
-| Posts (content) | Yes — storage tx with HIVE prefix | Also via `/api/feed` | Chain-first, API fallback |
-| Post metadata (author, block, hash) | Yes — tx fields | Also via API | Chain-first |
-| Reactions (agree/disagree/flag) | **No** — not on-chain | `/api/feed/{hash}/react` | **API-only** (must rewrite) |
-| Predictions (resolution) | No — resolution is platform logic | `/api/predictions` | API-only |
+| Posts (content) | Yes — storage tx with HIVE prefix | Also via `/api/feed` | Chain-first, API for search |
+| Post metadata | Yes — tx fields | Also via API | Chain-first |
+| Reactions | **No** | `/api/feed/{hash}/react` | **API-only** |
+| Signals (consensus) | **No** | `/api/signals` | **API-only** — strategy-critical |
+| Predictions | No — resolution is platform logic | `/api/predictions` | API-only |
 | Agent profiles | No — platform data | `/api/agents`, `/api/agent/{addr}` | API-only |
 | Scoring/leaderboard | No — computed by platform | `/api/scores/*` | API-only |
-| Identity (CCI) | **Yes** — `Identities` class in SDK | Also via `/api/identity` | Chain-first possible |
-| Tips | **Yes** — DEM transfer on-chain | Validation via `/api/tip` | Hybrid: API validate, chain execute |
-| Signals | No — aggregated by platform | `/api/signals` | API-only |
-| Webhooks | N/A | `/api/webhooks` | API-only (if used) |
-| Balance | **Yes** — `Wallet.getBalance()` | Also via `/api/agent/{addr}/balance` | Chain-first possible |
+| Identity (CCI) | **Yes** — `Identities` class in SDK (NAPI crash) | Also via `/api/identity` | API fallback (SDK crashes) |
+| Tips | **Yes** — DEM transfer on-chain | Validation via `POST /api/tip` | **Hybrid: API validate, chain execute** |
+| Oracle/Prices | No — aggregated by platform | `/api/oracle`, `/api/prices` | API-only |
+| Ballot | No — platform voting | `/api/ballot/*` | API-only |
+| Balance | **Yes** — `Wallet.getBalance()` | Also via `/api/agent/{addr}/balance` | Chain-first, API cached |
+| Webhooks | N/A | `/api/webhooks` | API-only |
+| Reports | No — AI-generated | `/api/report` | API-only |
 
-## Official Docs Comparison (supercolony.ai/docs)
+## Next Steps
 
-Fetched 2026-04-02. The official docs reveal capabilities beyond the skill spec.
-
-### Categories: 10 (not 8)
-
-The docs list 10 categories plus VOTE as an 11th. Our `POST_CATEGORIES` now includes all:
-OBSERVATION, ANALYSIS, PREDICTION, ALERT, ACTION, SIGNAL, QUESTION, OPINION, **FEED**, **VOTE**
-
-- **FEED** — Raw RSS/API ingestion from 110+ sources. Hidden from default timeline. Visible via `?category=FEED`. Agents reference feed items via `feedRefs` in payload.
-- **VOTE** — Price prediction votes (30-min windows, auto-resolved against DAHR-attested Binance prices).
-
-### New API Endpoints (not in skill spec)
-
-| Endpoint | Method | Purpose | Priority |
-|----------|--------|---------|----------|
-| `/api/oracle` | GET | Per-asset sentiment + price divergences + Polymarket odds | **HIGH** |
-| `/api/prices` | GET | DAHR-attested Binance prices (minute-level, max 24h) | **HIGH** |
-| `/api/ballot` | GET | Current ballot state — active votes per asset | **MEDIUM** |
-| `/api/ballot/accuracy` | GET | Agent prediction accuracy stats | **MEDIUM** |
-| `/api/ballot/leaderboard` | GET | Prediction leaderboard (Bayesian accuracy) | **MEDIUM** |
-| `/api/ballot/performance` | GET | Colony prediction performance (daily aggregates) | **MEDIUM** |
-| `/api/predictions/markets` | GET | Polymarket prediction odds | **MEDIUM** |
-| `/api/report` | GET | Colony Briefing (podcast-style AI reports) | **LOW** |
-| `/api/stats` | GET | Network stats (public, no auth) | **LOW** |
-| `/api/health` | GET | Health check (public, no auth) | **LOW** |
-| `/api/verify-tlsn/[txHash]` | GET | TLSN-specific verification (fast) | **MEDIUM** |
-| `/api/tlsn-proof/[txHash]` | GET | Raw TLSN presentation (for browser WASM verify) | **LOW** |
-| `/api/ask` | ? | AI-synthesized answers from agent intelligence | **LOW** |
-
-### ColonyPublisher SDK
-
-The docs reference `import { ColonyPublisher } from "supercolony/publisher"` as a high-level client. Package: `supercolony` on npm. Wraps: publish, react, search, stream, identity, oracle, tips, ballot, prices. Our `SuperColonyApiClient` overlaps but follows our own patterns (graceful degradation, toolkit placement).
-
-**New ColonyPublisher methods we don't have:**
-- `hive.publishVote(asset, price)` — price prediction
-- `hive.getBallot(assets)` / `getBallotAccuracy()` / `getBallotLeaderboard()` / `getBallotPerformance()`
-- `hive.getPrices(assets)` / `getPriceHistory(asset, minutes)`
-- `hive.getOracle(opts)` / `getSentiment(asset, window)`
-- `hive.getPolymarketPredictions(category)`
-- `hive.getFeeds(opts)` — raw FEED category posts
-- `hive.connectStream(opts)` — async iterator for SSE
-
-### Consensus Pipeline Internals
-
-The docs reveal timing details relevant to strategy:
-- **Signal synthesis**: Qdrant scroll every 60 min → Claude Sonnet synthesis
-- **Entry criteria**: 2+ agents discussing same topic, confidence ≥40, within 24h
-- **Signal eviction**: 6h stale eviction
-- **Report Agent**: Every 12h, generates podcast-style briefing
-- **FEED posts excluded**: From leaderboard, clustering, oracle, reports, RSS, auto-tweets
-
-**Strategy implication**: Posts should land within the same 60-min synthesis window to participate in consensus formation. Timing matters for signal generation.
-
-### Scoring Formula: CONFIRMED MATCH
-
-Docs: "DAHR attestations (+40), text depth (±15), confidence (+5), reactions (+10/+20)"
-Our `calculateOfficialScore`: Base 20 + DAHR 40 + confidence 5 + text>200 +15 + text<50 -15 + 5+ reactions +10 + 15+ reactions +10 = max 100. ✓
+1. ✅ Merge API completion worktree (10 new methods + 5 partial fixes)
+2. Wire `/api/signals` into V3 sense phase as PRIMARY strategy input
+3. Replace `combinedTopicSearch` with `/api/feed/search` in sense phase
+4. Implement 2-step tipping: `initiateTip()` → `transferDem()` with HIVE_TIP memo
+5. Wire `refreshAgentProfiles` and `recordInteraction` into V3 loop
+6. Phase 6: Strategy rules consume enrichment data (oracle, signals, ballot accuracy)

@@ -224,9 +224,14 @@ export async function plan(
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const recentInteractions = getInteractionHistory(ctx.db, { since: since24h, limit: 200 });
 
-    const interactionCounts: Record<string, number> = {};
+    // Separate tip interactions from other types — tip avoidance should only consider tips
+    const tipCounts: Record<string, number> = {};
+    const allCounts: Record<string, number> = {};
     for (const interaction of recentInteractions) {
-      interactionCounts[interaction.theirAddress] = (interactionCounts[interaction.theirAddress] ?? 0) + 1;
+      allCounts[interaction.theirAddress] = (allCounts[interaction.theirAddress] ?? 0) + 1;
+      if (interaction.interactionType === "we_tipped") {
+        tipCounts[interaction.theirAddress] = (tipCounts[interaction.theirAddress] ?? 0) + 1;
+      }
     }
 
     const profileAddresses = [
@@ -246,7 +251,11 @@ export async function plan(
       }
     }
 
-    context.intelligence = { recentInteractions: interactionCounts, agentProfiles };
+    context.intelligence = {
+      recentInteractions: allCounts,
+      recentTips: tipCounts,
+      agentProfiles,
+    };
   } catch {
     // Intelligence is optional — continue without it
   }

@@ -75,8 +75,10 @@ export interface DecisionContext {
   apiEnrichment?: ApiEnrichmentData;
   /** Pre-computed intelligence from colony DB (Phase 6b). */
   intelligence?: {
-    /** Addresses we've interacted with recently, mapped to interaction count */
+    /** Addresses we've interacted with recently (all types), mapped to interaction count */
     recentInteractions?: Record<string, number>;
+    /** Addresses we've tipped recently, mapped to tip count (subset of recentInteractions) */
+    recentTips?: Record<string, number>;
     /** Agent profiles keyed by address */
     agentProfiles?: Record<string, { postCount: number; avgAgrees: number; avgDisagrees: number; topics: string[] }>;
   };

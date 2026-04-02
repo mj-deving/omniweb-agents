@@ -55,6 +55,12 @@ const StrategyConfigSchema = z.object({
     ageHalfLife: z.number().positive().optional(),
   }).default({}),
   topicWeights: z.record(z.string(), z.number()).default({}),
+  enrichment: z.object({
+    divergenceThreshold: z.number().nonnegative().optional(),
+    minBallotAccuracy: z.number().min(0).max(1).optional(),
+    minSignalAgents: z.number().int().nonnegative().optional(),
+    minConfidence: z.number().int().min(0).max(100).optional(),
+  }).default({}),
 });
 
 export function loadStrategyConfig(yamlContent: string): StrategyConfig {
@@ -96,5 +102,11 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
       ageHalfLife: config.performance.ageHalfLife ?? DEFAULT_PERFORMANCE.ageHalfLife,
     },
     topicWeights: config.topicWeights,
+    enrichment: {
+      divergenceThreshold: config.enrichment.divergenceThreshold ?? 10,
+      minBallotAccuracy: config.enrichment.minBallotAccuracy ?? 0.5,
+      minSignalAgents: config.enrichment.minSignalAgents ?? 2,
+      minConfidence: config.enrichment.minConfidence ?? 40,
+    },
   };
 }

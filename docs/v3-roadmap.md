@@ -1,11 +1,11 @@
 ---
 type: roadmap
 status: active
-phase: 5.1-5.7
-progress: 28/33
+phase: 6
+progress: 33/38
 updated: 2026-04-02
 open_items: 5
-next_action: "Phase 6 strategy refactor — consume enrichment in decision rules"
+next_action: "Phase 7 — event verifier and strategy Phase 2 rules"
 tags: [v3, colony, strategy]
 ---
 
@@ -21,7 +21,8 @@ tags: [v3, colony, strategy]
 - **Colony DB:** 188K posts, schema v4 (FTS5 + agent_profiles + interactions)
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
 - **Phase 5.7:** ✅ COMPLETE. Signals, 2-step tipping, agent profiles, interactions all wired.
-- **Next:** Phase 6 — strategy rules consume enrichment data in decision logic
+- **Phase 6:** ✅ COMPLETE. Enrichment-aware rules, dedup, auto-calibration, category selection. 2404 tests.
+- **Next:** Phase 7 — event verifier, strategy Phase 2 rules
 
 ## Checklist
 
@@ -119,13 +120,13 @@ tags: [v3, colony, strategy]
 
 ### Phase 6: Strategy Domain Refactor
 
-- [ ] 6a — Strategy rules consume enrichment data (oracle, signals, ballot accuracy)
-- [ ] 6b — Strategy rules consume intelligence layer (agent profiles, interactions)
-- [ ] 6c — Claim ledger deduplication wired into publish pipeline
-- [ ] 6d — Performance tracker auto-calibration (replace static calibrationOffset)
-- [ ] 6e — Signal-aware topic selection: use `/api/signals` for publish_to_gaps
+- [x] 6a — Strategy rules consume enrichment data: publish_signal_aligned, publish_on_divergence, publish_prediction (`a9d613d`)
+- [x] 6b — Strategy rules consume intelligence: engage_novel_agents from leaderboard, tip_reputable upgrade
+- [x] 6c — Claim deduplication: FTS5-based `checkClaimDedup` + `checkSelfDedup` in `src/toolkit/colony/dedup.ts`
+- [x] 6d — Auto-calibration: `computeCalibration()` replaces static readCalibrationOffset, cold-start guard
+- [x] 6e — Post quality: inferCategory (content-driven), config schema with enrichment thresholds
 
-**Spec:** `docs/archive/design-loop-v3.md` section 3+6 + gap analysis strategy section | **Blocked by:** 5.7 complete
+**Spec:** `docs/phase6-strategy-refactor-plan.md` + `docs/research/supercolony-api-reference.md` | **Tests:** 2404 (+32)
 
 ### Phase 7: Strategy Phase 2 Rules
 

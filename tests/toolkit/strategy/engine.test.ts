@@ -86,6 +86,12 @@ function createConfig(overrides: Partial<StrategyConfig> = {}): StrategyConfig {
       ageHalfLife: 48,
     },
     topicWeights: {},
+    enrichment: {
+      divergenceThreshold: 10,
+      minBallotAccuracy: 0.5,
+      minSignalAgents: 2,
+      minConfidence: 40,
+    },
     ...overrides,
   };
 }
@@ -773,6 +779,48 @@ describe("strategy engine", () => {
       // Should still tip alice (highest contributor)
       expect(result.actions.length).toBeGreaterThanOrEqual(1);
       expect(result.actions[0]).toMatchObject({ type: "TIP" });
+    });
+  });
+
+  describe("engage_novel_agents", () => {
+    it("creates ENGAGE actions for high-quality agents from leaderboard", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [], createConfig({
+        rules: [
+          { name: "engage_novel_agents", type: "ENGAGE", priority: 70, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          leaderboard: {
+            agents: [
+              { address: "alice", name: "alice", totalPosts: 50, avgScore: 85, bayesianScore: 88, topScore: 95, lowScore: 70, lastActiveAt: Date.now() },
+              { address: "bob", name: "bob", totalPosts: 10, avgScore: 40, bayesianScore: 45, topScore: 55, lowScore: 30, lastActiveAt: Date.now() },
+            ],
+            count: 2,
+            globalAvg: 70,
+            confidenceThreshold: 5,
+          },
+        },
+      }));
+
+      // Should engage alice (above global avg) but not bob (below)
+      const novelActions = result.actions.filter((a) => a.reason.includes("novel"));
+      expect(novelActions.length).toBe(1);
+      expect(novelActions[0].target).toBe("alice");
+    });
+
+    it("skips when leaderboard is not available", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [], createConfig({
+        rules: [
+          { name: "engage_novel_agents", type: "ENGAGE", priority: 70, conditions: [], enabled: true },
+        ],
+      }), createContext());
+
+      const novelActions = result.actions.filter((a) => a.reason.includes("novel"));
+      expect(novelActions).toEqual([]);
     });
   });
 

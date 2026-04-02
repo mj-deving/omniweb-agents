@@ -295,13 +295,44 @@ export function decideActions(
     }
   }
 
-  // ── Phase 6a: Enrichment-Aware Rules ────────────────────────
+  // ── Phase 6b: Intelligence-Aware Rules ─────────────────────
   const enrichment = context.apiEnrichment;
+
+  const engageNovelRule = getRule(config, "engage_novel_agents");
+  if (engageNovelRule && enrichment?.leaderboard) {
+    const recentTargets = new Set(
+      candidates
+        .filter((c) => c.action.type === "ENGAGE")
+        .map((c) => normalize(c.action.target ?? "")),
+    );
+
+    for (const agent of enrichment.leaderboard.agents) {
+      if (recentTargets.has(normalize(agent.address))) continue;
+      if (agent.bayesianScore < (enrichment.leaderboard.globalAvg ?? 0)) continue;
+
+      const action = createAction(
+        engageNovelRule,
+        `Engage novel high-quality agent ${agent.name ?? agent.address} (score ${agent.bayesianScore.toFixed(1)})`,
+        {
+          target: agent.address,
+          metadata: {
+            bayesianScore: agent.bayesianScore,
+            totalPosts: agent.totalPosts,
+          },
+        },
+      );
+
+      candidates.push({ action, rule: engageNovelRule.name });
+      considered.push({ action, rule: engageNovelRule.name });
+    }
+  }
+
+  // ── Phase 6a: Enrichment-Aware Rules ────────────────────────
 
   const signalAlignedRule = getRule(config, "publish_signal_aligned");
   if (signalAlignedRule && enrichment?.signals) {
     for (const signal of enrichment.signals) {
-      if (!signal.trending || signal.agents < 2) continue;
+      if (!signal.trending || signal.agents < (config.enrichment?.minSignalAgents ?? 2)) continue;
 
       const matchingEvidence = (evidenceIndex.get(normalize(signal.topic)) ?? [])
         .filter((item) => !item.stale);
@@ -329,10 +360,10 @@ export function decideActions(
 
   const divergenceRule = getRule(config, "publish_on_divergence");
   if (divergenceRule && enrichment?.oracle?.priceDivergences) {
-    const DIVERGENCE_THRESHOLD = 10;
+    const divergenceThreshold = config.enrichment?.divergenceThreshold ?? 10;
 
     for (const div of enrichment.oracle.priceDivergences) {
-      if (Math.abs(div.spread) < DIVERGENCE_THRESHOLD) continue;
+      if (Math.abs(div.spread) < divergenceThreshold) continue;
 
       const action = createAction(
         divergenceRule,
@@ -358,7 +389,7 @@ export function decideActions(
   if (
     predictionRule
     && enrichment?.ballotAccuracy
-    && enrichment.ballotAccuracy.accuracy > 0.5
+    && enrichment.ballotAccuracy.accuracy > (config.enrichment?.minBallotAccuracy ?? 0.5)
     && enrichment.prices
     && enrichment.prices.length > 0
   ) {

@@ -65,6 +65,12 @@ rules:
     conditions: [ballot accuracy > 0.5, prices available]
     enabled: true
 
+  - name: engage_novel_agents
+    type: ENGAGE
+    priority: 70
+    conditions: [leaderboard data, not recently engaged]
+    enabled: true
+
   - name: engage_verified
     type: ENGAGE
     priority: 65

@@ -605,7 +605,7 @@ describe("SuperColonyApiClient", () => {
       expect(fetchUrl).toContain("assets=BTC%2CETH");
     });
 
-    it("getPriceHistory builds asset and minutes params", async () => {
+    it("getPriceHistory builds asset and history params", async () => {
       const payload = [
         { price: 99000, timestamp: Date.now() - 3600000 },
         { price: 100000, timestamp: Date.now() },
@@ -621,7 +621,7 @@ describe("SuperColonyApiClient", () => {
 
       const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
       expect(fetchUrl).toContain("asset=BTC");
-      expect(fetchUrl).toContain("minutes=60");
+      expect(fetchUrl).toContain("history=60");
     });
   });
 
@@ -778,9 +778,335 @@ describe("SuperColonyApiClient", () => {
     });
   });
 
-  // ── Feed (FEED category) ────────────────────
+  // ── Feed (paginated timeline) ───────────────
 
-  describe("feed category endpoints", () => {
+  describe("feed paginated timeline", () => {
+    it("getFeed fetches /api/feed with no params", async () => {
+      const payload = { posts: [], hasMore: false };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getFeed();
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.posts).toEqual([]);
+        expect(result.data.hasMore).toBe(false);
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toBe("https://www.supercolony.ai/api/feed");
+    });
+
+    it("getFeed includes category, author, and limit params", async () => {
+      const payload = { posts: [{ txHash: "0x1", author: "0xa", timestamp: 1000, payload: {} }], hasMore: true };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getFeed({ category: "ANALYSIS", author: "0xa", limit: 5 });
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.posts).toHaveLength(1);
+        expect(result.data.hasMore).toBe(true);
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("category=ANALYSIS");
+      expect(fetchUrl).toContain("author=0xa");
+      expect(fetchUrl).toContain("limit=5");
+    });
+
+    it("getFeed passes replies as string", async () => {
+      const payload = { posts: [], hasMore: false };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.getFeed({ replies: true });
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("replies=true");
+    });
+  });
+
+  // ── Search Feed ─────────────────────────────
+
+  describe("search feed", () => {
+    it("searchFeed sends text and since params", async () => {
+      const payload = { posts: [], hasMore: false };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.searchFeed({ text: "bitcoin", since: 1700000000 });
+      expect(result?.ok).toBe(true);
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("/api/feed/search");
+      expect(fetchUrl).toContain("text=bitcoin");
+      expect(fetchUrl).toContain("since=1700000000");
+    });
+
+    it("searchFeed includes agent and mentions params", async () => {
+      const payload = { posts: [], hasMore: false };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.searchFeed({ agent: "sentinel", mentions: "0xabc" });
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("agent=sentinel");
+      expect(fetchUrl).toContain("mentions=0xabc");
+    });
+  });
+
+  // ── Thread ──────────────────────────────────
+
+  describe("thread", () => {
+    it("getThread URL-encodes txHash", async () => {
+      const payload = { root: { txHash: "0xabc/def" }, replies: [] };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getThread("0xabc/def");
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.root).toHaveProperty("txHash");
+        expect(result.data.replies).toEqual([]);
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("/api/feed/thread/0xabc%2Fdef");
+    });
+  });
+
+  // ── Signals ─────────────────────────────────
+
+  describe("signals", () => {
+    it("getSignals fetches from /api/signals", async () => {
+      const payload = [{
+        topic: "BTC bullish",
+        consensus: 0.85,
+        agents: 12,
+        trending: true,
+        summary: "Strong bullish consensus",
+        timestamp: Date.now(),
+      }];
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getSignals();
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data).toHaveLength(1);
+        expect(result.data[0].topic).toBe("BTC bullish");
+        expect(result.data[0].trending).toBe(true);
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toBe("https://www.supercolony.ai/api/signals");
+    });
+  });
+
+  // ── TLSN Proof ──────────────────────────────
+
+  describe("tlsn proof", () => {
+    it("getTlsnProof URL-encodes txHash", async () => {
+      const payload = { proof: { notary: "example" }, txHash: "0xabc/def" };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getTlsnProof("0xabc/def");
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.txHash).toBe("0xabc/def");
+        expect(result.data.proof).toHaveProperty("notary");
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("/api/tlsn-proof/0xabc%2Fdef");
+    });
+  });
+
+  // ── Tip Initiation ──────────────────────────
+
+  describe("tip initiation", () => {
+    it("initiateTip sends POST with body", async () => {
+      const payload = { ok: true, recipient: "0xrecipient" };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.initiateTip("0xpost", 5);
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.ok).toBe(true);
+        expect(result.data.recipient).toBe("0xrecipient");
+      }
+
+      const fetchCall = vi.mocked(globalThis.fetch).mock.calls[0];
+      expect(fetchCall[1]?.method).toBe("POST");
+      const body = JSON.parse(fetchCall[1]?.body as string);
+      expect(body.postTxHash).toBe("0xpost");
+      expect(body.amount).toBe(5);
+    });
+  });
+
+  // ── Agent Balance ───────────────────────────
+
+  describe("agent balance", () => {
+    it("getAgentBalance constructs correct URL", async () => {
+      const payload = { balance: 1500, updatedAt: Date.now() };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getAgentBalance("0xwallet");
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.balance).toBe(1500);
+        expect(result.data.updatedAt).toBeTypeOf("number");
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toBe("https://www.supercolony.ai/api/agent/0xwallet/balance");
+    });
+
+    it("getAgentBalance URL-encodes address", async () => {
+      const payload = { balance: 0, updatedAt: 0 };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.getAgentBalance("0xabc/def");
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("/api/agent/0xabc%2Fdef/balance");
+    });
+  });
+
+  // ── Report ──────────────────────────────────
+
+  describe("report", () => {
+    it("getReport fetches without id param", async () => {
+      const payload = { id: "r1", title: "Daily", content: "Summary", timestamp: Date.now() };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getReport();
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.title).toBe("Daily");
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toBe("https://www.supercolony.ai/api/report");
+    });
+
+    it("getReport passes id param", async () => {
+      const payload = { id: "r42", title: "Specific", content: "Detail", timestamp: Date.now() };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.getReport({ id: "r42" });
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("id=r42");
+    });
+  });
+
+  // ── Prediction Markets ──────────────────────
+
+  describe("prediction markets", () => {
+    it("getPredictionMarkets includes category param", async () => {
+      const payload = [{
+        market: "m1",
+        question: "Will BTC hit 100k?",
+        outcomes: [{ name: "Yes", probability: 0.7 }, { name: "No", probability: 0.3 }],
+        category: "crypto",
+        volume: 5000,
+      }];
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getPredictionMarkets({ category: "crypto" });
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data).toHaveLength(1);
+        expect(result.data[0].market).toBe("m1");
+        expect(result.data[0].outcomes).toHaveLength(2);
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("/api/predictions/markets");
+      expect(fetchUrl).toContain("category=crypto");
+    });
+  });
+
+  // ── Ballot Performance ──────────────────────
+
+  describe("ballot performance", () => {
+    it("getBallotPerformance includes days param", async () => {
+      const payload = {
+        daily: [{ date: "2026-04-01", accuracy: 0.9, votes: 10 }],
+        bestAsset: "BTC",
+        worstAsset: "DOGE",
+      };
+      mockFetchResponse(payload);
+      const client = createClient();
+      const result = await client.getBallotPerformance({ days: 7 });
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        expect(result.data.daily).toHaveLength(1);
+        expect(result.data.bestAsset).toBe("BTC");
+        expect(result.data.worstAsset).toBe("DOGE");
+      }
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("/api/ballot/performance");
+      expect(fetchUrl).toContain("days=7");
+    });
+  });
+
+  // ── Partial Fixes — param additions ─────────
+
+  describe("partial fixes for existing methods", () => {
+    it("queryPredictions includes agent param", async () => {
+      mockFetchResponse([]);
+      const client = createClient();
+      await client.queryPredictions({ agent: "sentinel" });
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("agent=sentinel");
+    });
+
+    it("getOracle includes window param", async () => {
+      const payload = { sentiment: {}, priceDivergences: [], polymarketOdds: [], timestamp: Date.now() };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.getOracle({ window: "24h" });
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("window=24h");
+    });
+
+    it("getPriceHistory uses history not minutes param name", async () => {
+      mockFetchResponse([]);
+      const client = createClient();
+      await client.getPriceHistory("ETH", 120);
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("history=120");
+      expect(fetchUrl).not.toContain("minutes=");
+    });
+
+    it("getBallotAccuracy includes asset param", async () => {
+      const payload = { address: "0xabc", totalVotes: 10, correctVotes: 8, accuracy: 0.8, streak: 3 };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.getBallotAccuracy("0xabc", "BTC");
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("address=0xabc");
+      expect(fetchUrl).toContain("asset=BTC");
+    });
+
+    it("getBallotLeaderboard includes limit, asset, and minVotes params", async () => {
+      const payload = { entries: [], count: 0 };
+      mockFetchResponse(payload);
+      const client = createClient();
+      await client.getBallotLeaderboard({ limit: 20, asset: "ETH", minVotes: 5 });
+
+      const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
+      expect(fetchUrl).toContain("limit=20");
+      expect(fetchUrl).toContain("asset=ETH");
+      expect(fetchUrl).toContain("minVotes=5");
+    });
+  });
+
+  // ── Feed (FEED category) — DEPRECATED ──────
+
+  describe("feed category endpoints (deprecated)", () => {
     it("getFeeds includes category=FEED in query", async () => {
       const payload = {
         posts: [{

@@ -302,18 +302,19 @@ export async function runV3Loop(
       const senseResult = sense(bridge, sourceView);
 
       // ── API Enrichment (optional, graceful degradation) ──
-      // Agent profiles, leaderboard, oracle, prices, and ballot from SuperColony API.
-      // All calls are parallelized with individual 5s AbortSignal timeouts.
       let apiEnrichment: ApiEnrichmentData | undefined;
       if (sdkBridge.apiAccess === "authenticated") {
         try {
           const enrichmentTimeout = 5_000;
+          const safeCall = (path: string) =>
+            sdkBridge.apiCall(path, { signal: AbortSignal.timeout(enrichmentTimeout) }).catch(() => null);
+
           const [agentsRaw, leaderboardRaw, oracleRaw, pricesRaw, ballotAccRaw] = await Promise.all([
-            sdkBridge.apiCall("/api/agents", { signal: AbortSignal.timeout(enrichmentTimeout) }),
-            sdkBridge.apiCall("/api/scores/agents?limit=20", { signal: AbortSignal.timeout(enrichmentTimeout) }),
-            sdkBridge.apiCall("/api/oracle", { signal: AbortSignal.timeout(enrichmentTimeout) }).catch(() => null),
-            sdkBridge.apiCall(`/api/prices?assets=BTC,ETH,DEM`, { signal: AbortSignal.timeout(enrichmentTimeout) }).catch(() => null),
-            sdkBridge.apiCall(`/api/ballot/accuracy?address=${encodeURIComponent(bridge.walletAddress)}`, { signal: AbortSignal.timeout(enrichmentTimeout) }).catch(() => null),
+            safeCall("/api/agents"),
+            safeCall("/api/scores/agents?limit=20"),
+            safeCall("/api/oracle"),
+            safeCall("/api/prices?assets=BTC,ETH,DEM"),
+            safeCall(`/api/ballot/accuracy?address=${encodeURIComponent(bridge.walletAddress)}`),
           ]);
 
           apiEnrichment = {};
@@ -337,7 +338,7 @@ export async function runV3Loop(
             apiEnrichment.ballotAccuracy = ballotAccRaw.data as BallotAccuracy;
           }
 
-          const signals = Object.keys(apiEnrichment).filter((k) => apiEnrichment![k as keyof ApiEnrichmentData] !== undefined);
+          const signals = Object.keys(apiEnrichment);
           if (signals.length > 0) {
             deps.observe("insight", `API enrichment: ${signals.length} signals (${signals.join(", ")})`, {
               source: "v3-loop:apiEnrichment",

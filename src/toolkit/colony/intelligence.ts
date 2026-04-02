@@ -88,15 +88,13 @@ function mapInteractionRow(row: InteractionRow): InteractionRecord {
 export function refreshAgentProfiles(db: ColonyDatabase, since?: string): number {
   const run = db.transaction(() => {
     if (since) {
+      // Incremental: merge new window counts with existing profile data
       const stmt = db.prepare(`
-        INSERT OR REPLACE INTO agent_profiles
+        INSERT INTO agent_profiles
           (address, first_seen_at, last_seen_at, post_count, avg_agrees, avg_disagrees, topics_json, trust_score)
         SELECT
           p.author,
-          COALESCE(
-            (SELECT ap.first_seen_at FROM agent_profiles ap WHERE ap.address = p.author),
-            MIN(p.timestamp)
-          ),
+          MIN(p.timestamp),
           MAX(p.timestamp),
           COUNT(*),
           COALESCE(AVG(rc.agrees), 0),
@@ -107,6 +105,11 @@ export function refreshAgentProfiles(db: ColonyDatabase, since?: string): number
         LEFT JOIN reaction_cache rc ON rc.post_tx_hash = p.tx_hash
         WHERE p.timestamp >= ?
         GROUP BY p.author
+        ON CONFLICT(address) DO UPDATE SET
+          last_seen_at = MAX(agent_profiles.last_seen_at, excluded.last_seen_at),
+          post_count = agent_profiles.post_count + excluded.post_count,
+          avg_agrees = (agent_profiles.avg_agrees * agent_profiles.post_count + excluded.avg_agrees * excluded.post_count) / (agent_profiles.post_count + excluded.post_count),
+          avg_disagrees = (agent_profiles.avg_disagrees * agent_profiles.post_count + excluded.avg_disagrees * excluded.post_count) / (agent_profiles.post_count + excluded.post_count)
       `);
       const result = stmt.run(since);
       return result.changes;

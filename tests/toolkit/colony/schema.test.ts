@@ -63,6 +63,18 @@ describe("colony schema", () => {
     expect(getCursor(db)).toBe(1980084);
   });
 
+  it("schema v4 creates agent_profiles and interactions tables", () => {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
+    const names = (tables as Array<{ name: string }>).map(r => r.name);
+    expect(names).toContain("agent_profiles");
+    expect(names).toContain("interactions");
+
+    const indexes = db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'interactions'").all();
+    const idxNames = (indexes as Array<{ name: string }>).map(i => i.name);
+    expect(idxNames).toContain("idx_interactions_address");
+    expect(idxNames).toContain("idx_interactions_type");
+  });
+
   it("requests WAL mode and leaves in-memory sqlite in its supported journal mode", () => {
     const journalMode = String(db.pragma("journal_mode", { simple: true })).toLowerCase();
 

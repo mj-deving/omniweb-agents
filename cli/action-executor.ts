@@ -2,6 +2,7 @@ import type { StrategyAction } from "../src/toolkit/strategy/types.js";
 import { reactToPost } from "../src/toolkit/tools/react.js";
 import type { ColonyDatabase } from "../src/toolkit/colony/schema.js";
 import { recordInteraction } from "../src/toolkit/colony/intelligence.js";
+import { getPostVerificationGate } from "../src/toolkit/colony/attestation-status.js";
 
 export interface ActionExecutionResult {
   executed: Array<{
@@ -152,6 +153,17 @@ export async function executeStrategyActions(
             }
             engageTxHash = resolved;
           }
+          // Phase 8c: Verification gate — skip ENGAGE if attestation failed
+          if (deps.colonyDb) {
+            const gate = getPostVerificationGate(deps.colonyDb, engageTxHash);
+            if (gate === "failed" || gate === "no_attestation") {
+              result.skipped.push({ action, reason: `Attestation ${gate} for ${engageTxHash}` });
+              deps.observe("insight", `ENGAGE skipped: attestation ${gate}`, {
+                actionType: action.type, target: engageTxHash, gate,
+              });
+              break;
+            }
+          }
           await reactToPost(deps.bridge, engageTxHash, "agree");
           result.executed.push({ action, success: true });
           deps.observe("insight", `Strategy ENGAGE executed for ${engageTxHash}`, {
@@ -217,6 +229,18 @@ export async function executeStrategyActions(
         case "TIP": {
           const amount = clampTipAmount(action.metadata?.amount);
           const postTxHash = (action.metadata?.postTxHash as string) ?? action.target!;
+
+          // Phase 8c: Verification gate — TIP requires positive verification (stricter than ENGAGE)
+          if (deps.colonyDb) {
+            const gate = getPostVerificationGate(deps.colonyDb, postTxHash);
+            if (gate !== "verified") {
+              result.skipped.push({ action, reason: `TIP requires verified attestation, got ${gate}` });
+              deps.observe("insight", `TIP skipped: attestation ${gate} (requires verified)`, {
+                actionType: action.type, target: action.target, postTxHash, gate,
+              });
+              break;
+            }
+          }
 
           // 2-step tipping: API validates spam limits → SDK transfer.
           // NOTE: SDK transfer() has no memo param — HIVE_TIP:{postTxHash} attribution

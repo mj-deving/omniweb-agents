@@ -185,6 +185,18 @@ export async function runV3Loop(
   // Single SDK bridge instance — reused across sense (ingest) and act (execute) phases.
   const sdkBridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
 
+  // Phase 8 Feature 6: Test xmcore NAPI capability at startup (non-fatal)
+  try {
+    const { testNapiCapability } = await import("../src/toolkit/chain/napi-guard.js");
+    const napi = await testNapiCapability();
+    deps.observe(napi.available ? "insight" : "warning",
+      `XMCore NAPI: ${napi.available ? "available" : `unavailable (${napi.error})`}`,
+      { source: "v3-loop:napiGuard", ...napi },
+    );
+  } catch {
+    // NAPI guard itself failed — not critical
+  }
+
   const hookLogger = createHookLogger(deps);
 
   using bridge: StrategyBridge = initStrategyBridge(

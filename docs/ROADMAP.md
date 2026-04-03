@@ -166,6 +166,20 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 | Secrets audit: prototype pollution protected via safeParse on chain data | No issue — active protection in place | Continuous |
 | Error handling: no stack traces leaked, no secrets in observe() calls | No issue — consistent err.message pattern | Continuous |
 | Error handling: state-helpers parse error may leak partial content | Minor — key name already omitted | If state format becomes sensitive |
+| Sequential proof ingestion + agent profile refresh in SENSE phase | Independent ops run serially; ~5-10s parallelizable | Next SENSE phase performance pass |
+| Sequential source fetches in SENSE phase (serial HTTP in 15s budget) | Could parallelize with concurrency limiter for more coverage | Next SENSE phase performance pass |
+| Dynamic imports per v3-loop iteration (proof-ingestion, SSE adapter) | Node caches after first load; async import() is cheap | If profiling shows import overhead |
+| SQL placeholder interpolation in `getVerifiedPostCountsByAuthor` | Safe (only `?` chars) but prevents SQLite prepare caching across author counts | If called frequently with varying author counts |
+| `Promise<any>` at SDK boundary in proof-ingestion-rpc-adapter | SDK type genuinely unknown; downstream validates structure | If SDK adds TypeScript types for RPC |
+| 3 unwired modules (intelligence-summary, vote-bet-codec, napi-guard) | Toolkit-first: primitives exist and are tested, wiring in Phase 8d | Phase 8d wiring session |
+| VOTE/BET heavy path but no publish-executor handler yet | No strategy rule can produce VOTE/BET actions yet — safe dead path | Phase 8d VOTE/BET executor wiring |
+| `hasColumn()` in schema.ts uses string interpolation in `db.pragma()` | Always hardcoded literal "attestations" from migration functions | If hasColumn is generalized |
+| N+1 `findContradictions` per (subject,metric) pair in contradiction scanner | Capped by maxResults:3 early-break; ~3 queries max per cycle | If claim_ledger grows beyond 500K rows |
+| SSE adapter named "SSE" but uses poll-based `/api/feed` fetch | Reflects intended future SSE integration; poll is interim | When SSE endpoint is production-ready |
+| `blockNumber: 0` sentinel for SSE-ingested posts | tx_hash PK handles dedup; blockNumber not used for ordering | If blockNumber becomes ordering-critical |
+| `createLimiter()` concurrency semaphore buried in proof-ingestion-rpc-adapter | Generic reusable primitive; only one consumer currently | When a 2nd adapter needs concurrency limiting |
+| `createTestDb()` and `addPost()` duplicated across 4 test files | Test helper code, not production; extract to shared fixture if 6+ files | Next test cleanup pass |
+| WHAT comments in contradiction-scanner and sse-sense-adapter | Borderline — aid scannability but restate obvious code | Next code cleanup pass |
 
 ---
 

@@ -46,7 +46,7 @@ export interface SpendingTransaction {
   amount: number;
   recipient: string;
   postTxHash: string;
-  type: "tip";
+  type: "tip" | "bet" | "attestation" | "publish";
   dryRun: boolean;
   agent: string;
 }
@@ -192,6 +192,39 @@ export function canSpend(
   };
   logDecision(amount, recipient, decision);
   return decision;
+}
+
+/**
+ * Check whether a spend is allowed under daily+session caps only (no per-tip bounds).
+ * Use for non-tip spends (bets, attestation gas, publish fees) that have their own
+ * amount validation but should still respect the session-level DEM budget.
+ */
+export function checkSessionBudget(
+  amount: number,
+  config: SpendingPolicyConfig,
+  ledger: SpendingLedger,
+): SpendDecision {
+  const today = todayUTC();
+  if (ledger.date !== today) {
+    ledger.date = today;
+    ledger.dailySpent = 0;
+  }
+
+  if (config.dryRun) {
+    return { allowed: true, reason: "Dry run — spend simulated", dryRun: true };
+  }
+
+  if (ledger.dailySpent + amount > config.dailyCapDem) {
+    const remaining = Math.max(0, config.dailyCapDem - ledger.dailySpent);
+    return { allowed: false, reason: `Daily DEM cap exceeded (remaining: ${remaining})`, dryRun: false };
+  }
+
+  if (ledger.sessionSpent + amount > config.sessionCapDem) {
+    const remaining = Math.max(0, config.sessionCapDem - ledger.sessionSpent);
+    return { allowed: false, reason: `Session DEM cap exceeded (remaining: ${remaining})`, dryRun: false };
+  }
+
+  return { allowed: true, reason: "Within session budget", dryRun: false };
 }
 
 /**

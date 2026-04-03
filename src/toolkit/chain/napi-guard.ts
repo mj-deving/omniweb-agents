@@ -1,15 +1,13 @@
+import { fork } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import { toErrorMessage } from "../util/errors.js";
 
 /**
  * NAPI Guard — tests whether xmcore native bindings load without crashing.
  *
- * Phase 8 Feature 6: XMCore cross-chain reads. NAPI crash in xmcore takes
- * down the entire Node.js process (ADR-0004). This guard tests capability
- * once at startup; if it fails, xmcore is disabled for the session.
- *
- * Review fix: Child process isolation is REQUIRED for production xmcore use.
- * This guard is the first line of defense — it prevents even attempting to
- * load xmcore if the native module is known to crash.
+ * Uses child_process.fork() so a NAPI SIGSEGV crash kills the child, not the agent.
+ * Result is cached for the session — only tested once.
  */
 
 export interface NapiCapability {
@@ -20,8 +18,11 @@ export interface NapiCapability {
 
 let cachedCapability: NapiCapability | null = null;
 
+const PROBE_TIMEOUT_MS = 10_000;
+
 /**
  * Test whether xmcore NAPI bindings load without crashing.
+ * Runs the import in an isolated child process — NAPI crash kills the child, not the agent.
  * Result is cached for the session — only tested once.
  */
 export async function testNapiCapability(): Promise<NapiCapability> {
@@ -30,23 +31,56 @@ export async function testNapiCapability(): Promise<NapiCapability> {
   const testedAt = new Date().toISOString();
 
   try {
-    // Lazy import — if this crashes, the entire process dies (which is why
-    // production should use child process isolation, not just this guard).
-    const xmcore = await import("@kynesyslabs/demosdk/xmcore");
-
-    // Smoke test: verify EVM class exists and can be instantiated
-    if (typeof xmcore.EVM !== "function") {
-      cachedCapability = { available: false, error: "EVM class not found in xmcore", testedAt };
-      return cachedCapability;
-    }
-
-    cachedCapability = { available: true, testedAt };
+    const result = await probeInChildProcess();
+    cachedCapability = { ...result, testedAt };
     return cachedCapability;
   } catch (err: unknown) {
-    const error = toErrorMessage(err);
-    cachedCapability = { available: false, error, testedAt };
+    cachedCapability = { available: false, error: toErrorMessage(err), testedAt };
     return cachedCapability;
   }
+}
+
+/**
+ * Fork a child process that attempts to import xmcore.
+ * If xmcore crashes (SIGSEGV), the child dies and we get exit code !== 0.
+ */
+function probeInChildProcess(): Promise<{ available: boolean; error?: string }> {
+  return new Promise((resolve, reject) => {
+    // The probe script is an inline eval — no separate file needed
+    const child = fork("-e", [
+      `try { require("@kynesyslabs/demosdk/xmcore"); process.send({ available: typeof require("@kynesyslabs/demosdk/xmcore").EVM === "function" }); } catch(e) { process.send({ available: false, error: e.message }); }`,
+    ], {
+      stdio: ["ignore", "ignore", "ignore", "ipc"],
+      timeout: PROBE_TIMEOUT_MS,
+    });
+
+    const timer = setTimeout(() => {
+      child.kill();
+      resolve({ available: false, error: "probe timed out" });
+    }, PROBE_TIMEOUT_MS);
+
+    child.on("message", (msg: unknown) => {
+      clearTimeout(timer);
+      child.kill();
+      const result = msg as { available: boolean; error?: string };
+      resolve({ available: result.available, error: result.error });
+    });
+
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      resolve({ available: false, error: toErrorMessage(err) });
+    });
+
+    child.on("exit", (code, signal) => {
+      clearTimeout(timer);
+      if (signal === "SIGSEGV" || signal === "SIGABRT") {
+        resolve({ available: false, error: `NAPI crash: ${signal}` });
+      } else if (code !== 0 && code !== null) {
+        resolve({ available: false, error: `probe exited with code ${code}` });
+      }
+      // If we already resolved via message, this is a no-op
+    });
+  });
 }
 
 /**

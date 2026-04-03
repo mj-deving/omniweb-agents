@@ -200,7 +200,10 @@ export async function buildDecisionContext(
  * existing engage/gate/publish substage code or V3 executors.
  *
  * @param apiEnrichment - Optional API enrichment data from the sense phase.
- *   Threaded into DecisionContext for future Phase 6 consumption by engine rules.
+ *   Threaded into DecisionContext for Phase 6+ consumption by engine rules.
+ * @param calibration - Optional rolling calibration state (Phase 6d).
+ * @param briefingContext - Optional colony report summary from /api/report (Phase 7).
+ * @param identityLookup - Optional function to enrich agent profiles with social handles (Phase 7).
  */
 export async function plan(
   ctx: StrategyBridge,
@@ -208,6 +211,8 @@ export async function plan(
   sessionReactionsUsed: number,
   apiEnrichment?: ApiEnrichmentData,
   calibration?: import("../src/toolkit/strategy/types.js").CalibrationState,
+  briefingContext?: string,
+  identityLookup?: (address: string) => Promise<Array<{ platform: string; username: string }> | null>,
 ): Promise<PlanResult> {
   const context = await buildDecisionContext(ctx, sessionReactionsUsed);
 
@@ -217,6 +222,11 @@ export async function plan(
 
   if (calibration) {
     context.calibration = calibration;
+  }
+
+  // Phase 7: Colony briefing context
+  if (briefingContext) {
+    context.briefingContext = briefingContext;
   }
 
   // Pre-compute intelligence from colony DB (pure data extraction)
@@ -238,7 +248,13 @@ export async function plan(
       ...senseResult.colonyState.agents.topContributors.map((c) => c.author),
       ...senseResult.colonyState.threads.mentionsOfUs.map((m) => m.author),
     ];
-    const agentProfiles: Record<string, { postCount: number; avgAgrees: number; avgDisagrees: number; topics: string[] }> = {};
+    const agentProfiles: Record<string, {
+      postCount: number;
+      avgAgrees: number;
+      avgDisagrees: number;
+      topics: string[];
+      socialHandles?: Array<{ platform: string; username: string }>;
+    }> = {};
     for (const address of new Set(profileAddresses)) {
       const profile = getAgentProfile(ctx.db, address);
       if (profile) {
@@ -248,6 +264,20 @@ export async function plan(
           avgDisagrees: profile.avgDisagrees,
           topics: profile.topics,
         };
+      }
+    }
+
+    // Phase 7: Enrich agent profiles with social handles via identity lookup
+    if (identityLookup) {
+      for (const address of Object.keys(agentProfiles)) {
+        try {
+          const handles = await identityLookup(address);
+          if (handles) {
+            agentProfiles[address].socialHandles = handles;
+          }
+        } catch {
+          // Identity enrichment is non-blocking
+        }
       }
     }
 

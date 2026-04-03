@@ -1,9 +1,13 @@
 export type ActionType = "ENGAGE" | "REPLY" | "PUBLISH" | "TIP";
 
+export type TargetType = "post" | "agent";
+
 export interface StrategyAction {
   type: ActionType;
   priority: number;
   target?: string;
+  /** Discriminates target semantics: "post" = txHash, "agent" = wallet address. */
+  targetType?: TargetType;
   evidence?: string[];
   reason: string;
   metadata?: Record<string, unknown>;
@@ -51,6 +55,21 @@ export interface StrategyConfig {
     /** Minimum confidence for consensus participation (default: 40) */
     minConfidence: number;
   };
+  /** Phase 7: Leaderboard-based priority adjustment (optional). */
+  leaderboardAdjustment?: LeaderboardAdjustmentConfig;
+}
+
+/** Phase 7: Dynamic priority adjustment based on leaderboard rank. */
+export interface LeaderboardAdjustmentConfig {
+  enabled: boolean;
+  /** Priority boost for ENGAGE/TIP when in top quartile (default: 15) */
+  topBoostEngagement: number;
+  /** Priority adjustment for PUBLISH when in top quartile (default: -5) */
+  topAdjustPublish: number;
+  /** Priority boost for PUBLISH when in bottom quartile (default: 15) */
+  bottomBoostPublish: number;
+  /** Priority adjustment for ENGAGE/TIP when in bottom quartile (default: -5) */
+  bottomAdjustEngagement: number;
 }
 
 /** API enrichment data — optional, populated from SuperColony API during sense phase. */
@@ -80,10 +99,19 @@ export interface DecisionContext {
     /** Addresses we've tipped recently, mapped to tip count (subset of recentInteractions) */
     recentTips?: Record<string, number>;
     /** Agent profiles keyed by address */
-    agentProfiles?: Record<string, { postCount: number; avgAgrees: number; avgDisagrees: number; topics: string[] }>;
+    agentProfiles?: Record<string, {
+      postCount: number;
+      avgAgrees: number;
+      avgDisagrees: number;
+      topics: string[];
+      /** Phase 7: Social handles from /api/identity enrichment. */
+      socialHandles?: Array<{ platform: string; username: string }>;
+    }>;
   };
   /** Rolling calibration state (Phase 6d). */
   calibration?: CalibrationState;
+  /** Phase 7: Colony briefing from /api/report — informs topic prioritization. */
+  briefingContext?: string;
 }
 
 export interface DecisionLog {

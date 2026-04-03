@@ -1,7 +1,7 @@
 import type { AvailableEvidence } from "../colony/available-evidence.js";
 import type { ColonyState } from "../colony/state-extraction.js";
 import { computeMedian } from "../math/baseline.js";
-import type { ApiEnrichmentData, DecisionContext, DecisionLog, StrategyAction, StrategyConfig, StrategyRule } from "./types.js";
+import type { ApiEnrichmentData, DecisionContext, DecisionLog, LeaderboardAdjustmentConfig, StrategyAction, StrategyConfig, StrategyRule } from "./types.js";
 
 const MIN_TRUST_POSTS = 3;
 const MAX_PUBLISH_EVIDENCE_FRESHNESS_SECONDS = 3600;
@@ -117,6 +117,49 @@ function findRule(config: StrategyConfig, ruleName: string): StrategyRule {
   };
 }
 
+/**
+ * Phase 7: Adjust action priorities based on leaderboard rank.
+ *
+ * Top quartile: boost engagement/tip (maintain community presence).
+ * Bottom quartile: boost publish (build reputation through content).
+ * Middle: no adjustment (baseline priorities).
+ */
+export function applyLeaderboardAdjustment(
+  actions: StrategyAction[],
+  leaderboard: ApiEnrichmentData["leaderboard"],
+  ourAddress: string,
+  config: LeaderboardAdjustmentConfig,
+): void {
+  if (!leaderboard?.agents?.length) return;
+
+  const totalAgents = leaderboard.agents.length;
+  const ourIndex = leaderboard.agents.findIndex(
+    (entry) => entry.address.toLowerCase() === ourAddress.toLowerCase(),
+  );
+  if (ourIndex === -1) return;
+
+  // Rank as percentile: 0 = top, 1 = bottom
+  const percentile = ourIndex / totalAgents;
+
+  for (const action of actions) {
+    if (percentile <= 0.25) {
+      if (action.type === "ENGAGE" || action.type === "TIP") {
+        action.priority += config.topBoostEngagement;
+      }
+      if (action.type === "PUBLISH") {
+        action.priority += config.topAdjustPublish;
+      }
+    } else if (percentile >= 0.75) {
+      if (action.type === "PUBLISH") {
+        action.priority += config.bottomBoostPublish;
+      }
+      if (action.type === "ENGAGE" || action.type === "TIP") {
+        action.priority += config.bottomAdjustEngagement;
+      }
+    }
+  }
+}
+
 export function decideActions(
   colonyState: ColonyState,
   availableEvidence: AvailableEvidence[],
@@ -196,6 +239,7 @@ export function decideActions(
           `Engage contributor ${contributor.author} on verified topic coverage`,
           {
             target: contributor.author,
+            targetType: "agent",
             evidence: evidenceIds,
             metadata: {
               topics: verifiedTopics.map(({ topic }) => topic),
@@ -266,6 +310,12 @@ export function decideActions(
           },
         },
       );
+
+      // Phase 7: Briefing-aligned boost — topics mentioned in colony report get priority
+      if (context.briefingContext && context.briefingContext.toLowerCase().includes(normalize(gap.topic))) {
+        action.priority += 10;
+        action.reason += " (briefing-aligned)";
+      }
 
       candidates.push({ action, rule: publishRule.name });
       considered.push({ action, rule: publishRule.name });
@@ -341,6 +391,7 @@ export function decideActions(
         `Engage novel high-quality agent ${agent.name ?? agent.address} (score ${agent.bayesianScore.toFixed(1)})`,
         {
           target: agent.address,
+          targetType: "agent",
           metadata: {
             bayesianScore: agent.bayesianScore,
             totalPosts: agent.totalPosts,
@@ -434,6 +485,16 @@ export function decideActions(
 
     candidates.push({ action, rule: predictionRule.name });
     considered.push({ action, rule: predictionRule.name });
+  }
+
+  // Phase 7: Apply leaderboard-based priority adjustment before sorting
+  if (config.leaderboardAdjustment?.enabled) {
+    applyLeaderboardAdjustment(
+      candidates.map((c) => c.action),
+      context.apiEnrichment?.leaderboard,
+      context.ourAddress,
+      config.leaderboardAdjustment,
+    );
   }
 
   candidates.sort((left, right) =>

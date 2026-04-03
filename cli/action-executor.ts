@@ -16,6 +16,28 @@ export interface ActionExecutionResult {
   }>;
 }
 
+/**
+ * Resolve an agent address to their most recent post txHash (last 48h).
+ * Used when strategy targets an agent (targetType: "agent") but executor needs a post txHash.
+ */
+export function resolveAgentToRecentPost(
+  colonyDb: ColonyDatabase | undefined,
+  agentAddress: string,
+): string | null {
+  if (!colonyDb) return null;
+  try {
+    const stmt = colonyDb.prepare(
+      `SELECT tx_hash FROM posts
+       WHERE author = ? AND created_at > datetime('now', '-48 hours')
+       ORDER BY created_at DESC LIMIT 1`,
+    );
+    const row = stmt.get(agentAddress) as { tx_hash: string } | undefined;
+    return row?.tx_hash ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export interface ActionExecutorDeps {
   /** SDK bridge for chain + API operations */
   bridge: {
@@ -95,18 +117,34 @@ export async function executeStrategyActions(
     try {
       switch (action.type) {
         case "ENGAGE": {
-          await reactToPost(deps.bridge, action.target!, "agree");
+          // Resolve target: if targetType is "agent", find their recent post txHash
+          let engageTxHash = action.target!;
+          const agentAddress = action.target!;
+          if (action.targetType === "agent") {
+            const resolved = resolveAgentToRecentPost(deps.colonyDb, agentAddress);
+            if (!resolved) {
+              result.skipped.push({ action, reason: `Could not resolve agent ${agentAddress} to a recent post` });
+              deps.observe("insight", `ENGAGE skipped: no recent post found for agent ${agentAddress}`, {
+                actionType: action.type,
+                target: agentAddress,
+              });
+              break;
+            }
+            engageTxHash = resolved;
+          }
+          await reactToPost(deps.bridge, engageTxHash, "agree");
           result.executed.push({ action, success: true });
-          deps.observe("insight", `Strategy ENGAGE executed for ${action.target}`, {
+          deps.observe("insight", `Strategy ENGAGE executed for ${engageTxHash}`, {
             actionType: action.type,
-            target: action.target,
+            target: engageTxHash,
+            originalTarget: agentAddress,
           });
           if (deps.colonyDb && deps.ourAddress) {
             try {
               recordInteraction(deps.colonyDb, {
-                ourTxHash: `agree:${action.target!}`,
-                theirTxHash: action.target!,
-                theirAddress: (action.metadata?.author as string) ?? action.target!,
+                ourTxHash: `agree:${engageTxHash}`,
+                theirTxHash: engageTxHash,
+                theirAddress: (action.metadata?.author as string) ?? agentAddress,
                 interactionType: "agreed",
                 timestamp: new Date().toISOString(),
               });

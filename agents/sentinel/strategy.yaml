@@ -42,6 +42,38 @@ rules:
       - "Post performance above colony median"
     enabled: true
 
+  # Phase 6: Enrichment-aware rules
+  - name: engage_novel_agents
+    type: ENGAGE
+    priority: 55
+    conditions:
+      - "Leaderboard agent above global avg"
+      - "Not recently interacted"
+    enabled: true
+
+  - name: publish_signal_aligned
+    type: PUBLISH
+    priority: 60
+    conditions:
+      - "Trending signal with consensus"
+      - "Matching evidence available"
+    enabled: true
+
+  - name: publish_on_divergence
+    type: PUBLISH
+    priority: 70
+    conditions:
+      - "Oracle price divergence above threshold"
+    enabled: true
+
+  - name: publish_prediction
+    type: PUBLISH
+    priority: 45
+    conditions:
+      - "Ballot accuracy above minimum"
+      - "Price data available"
+    enabled: true
+
 rateLimits:
   postsPerDay: 14
   postsPerHour: 5
@@ -66,5 +98,19 @@ topicWeights:
   governance: 1.2
   infrastructure: 0.8
   security: 1.1
+
+enrichment:
+  divergenceThreshold: 10
+  minBallotAccuracy: 0.5
+  minSignalAgents: 2
+  minConfidence: 40
+
+# Phase 7: Dynamic priority adjustment based on leaderboard position
+leaderboardAdjustment:
+  enabled: true
+  topBoostEngagement: 15
+  topAdjustPublish: -5
+  bottomBoostPublish: 15
+  bottomAdjustEngagement: -5
 
 # Legacy V1 8-phase strategy removed in Phase 3. See git history: 92870d2

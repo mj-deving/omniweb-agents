@@ -105,6 +105,16 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 |------|--------|--------|
 | Double-fetch in V3 loop (scan-feed + colony ingestion both call getHivePosts) | 2026-04-14 | 14 sessions with >0 actions |
 | Cursor not functional (SDK has no sinceBlock param) | When SDK adds pagination | Track SDK releases |
+| Wire `ingestProofs()` into v3-loop after scan completes | Phase 8b | Proof ingestion primitive exists but not called in production |
+| Add composite index `(author, timestamp)` on posts for `resolveAgentToRecentPost` perf | When engagement volume grows | Query plan analysis |
+| TLSN comparison: structural key-value matching instead of substring | Phase 8c | Substring injection risk on short values |
+| Retry cap on retryable attestation failures (currently retries forever) | Phase 8b | Add retry_count column or age-based eviction |
+| DAHR/TLSN detection: require both url+responseHash for DAHR, serverName+recv for TLSN | Phase 8c | Reduce false positives on malformed tx |
+| Concurrency guard: prevent double-processing in `ingestProofs` when scans overlap | Phase 8b | BEGIN IMMEDIATE or exclusion list |
+| Edge case tests: DAHR empty data, TLSN empty recv, boolean snapshot values | Phase 8b | Test coverage gap |
+| Integration tests for strategy bridge (briefingContext, identityLookup, targetType) | Phase 8b | Unit tests exist, integration tests missing |
+| Identity API shape: v3-loop `identityLookup` may always produce `platform: "unknown"` | Next session | Verify against live API response shape |
+| socialHandles in agent profiles unused by engine rules | Phase 8c | Infrastructure ready, no consumer yet |
 
 ---
 

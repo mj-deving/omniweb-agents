@@ -62,11 +62,8 @@ export function planThreadFanOut(
     };
   }
 
-  // Sort by attestability descending — most verifiable claim becomes root
   const sorted = [...claims].sort((a, b) => scoreAttestability(b) - scoreAttestability(a));
-
   const rootClaim = sorted[0];
-  // Cap replies at maxClaims - 1 (root counts toward the limit)
   const replyClaims = sorted.slice(1, maxClaims);
 
   return {

@@ -61,6 +61,7 @@ const StrategyConfigSchema = z.object({
     minSignalAgents: z.number().int().nonnegative().optional(),
     minConfidence: z.number().int().min(0).max(100).optional(),
   }).default({}),
+  briefingBoost: z.number().int().nonnegative().default(10).optional(),
   leaderboardAdjustment: z.object({
     enabled: z.boolean().default(false),
     topBoostEngagement: z.number().default(15),
@@ -115,6 +116,7 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
       minSignalAgents: config.enrichment.minSignalAgents ?? 2,
       minConfidence: config.enrichment.minConfidence ?? 40,
     },
+    briefingBoost: config.briefingBoost ?? 10,
     leaderboardAdjustment: config.leaderboardAdjustment ? {
       enabled: config.leaderboardAdjustment.enabled,
       topBoostEngagement: config.leaderboardAdjustment.topBoostEngagement,

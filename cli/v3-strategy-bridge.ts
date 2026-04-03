@@ -199,34 +199,37 @@ export async function buildDecisionContext(
  * Does NOT execute actions — the session runner routes actions to
  * existing engage/gate/publish substage code or V3 executors.
  *
- * @param apiEnrichment - Optional API enrichment data from the sense phase.
- *   Threaded into DecisionContext for Phase 6+ consumption by engine rules.
- * @param calibration - Optional rolling calibration state (Phase 6d).
- * @param briefingContext - Optional colony report summary from /api/report (Phase 7).
- * @param identityLookup - Optional function to enrich agent profiles with social handles (Phase 7).
+ * @param options - Optional enrichment and configuration for the plan phase.
  */
+export interface PlanOptions {
+  /** API enrichment data from the sense phase (Phase 6+). */
+  apiEnrichment?: ApiEnrichmentData;
+  /** Rolling calibration state (Phase 6d). */
+  calibration?: import("../src/toolkit/strategy/types.js").CalibrationState;
+  /** Colony report summary from /api/report (Phase 7). */
+  briefingContext?: string;
+  /** Function to enrich agent profiles with social handles (Phase 7). */
+  identityLookup?: (address: string) => Promise<Array<{ platform: string; username: string }> | null>;
+}
+
 export async function plan(
   ctx: StrategyBridge,
   senseResult: SenseResult,
   sessionReactionsUsed: number,
-  apiEnrichment?: ApiEnrichmentData,
-  calibration?: import("../src/toolkit/strategy/types.js").CalibrationState,
-  briefingContext?: string,
-  identityLookup?: (address: string) => Promise<Array<{ platform: string; username: string }> | null>,
+  options?: PlanOptions,
 ): Promise<PlanResult> {
   const context = await buildDecisionContext(ctx, sessionReactionsUsed);
 
-  if (apiEnrichment) {
-    context.apiEnrichment = apiEnrichment;
+  if (options?.apiEnrichment) {
+    context.apiEnrichment = options.apiEnrichment;
   }
 
-  if (calibration) {
-    context.calibration = calibration;
+  if (options?.calibration) {
+    context.calibration = options.calibration;
   }
 
-  // Phase 7: Colony briefing context
-  if (briefingContext) {
-    context.briefingContext = briefingContext;
+  if (options?.briefingContext) {
+    context.briefingContext = options.briefingContext;
   }
 
   // Pre-compute intelligence from colony DB (pure data extraction)
@@ -267,16 +270,14 @@ export async function plan(
       }
     }
 
-    // Phase 7: Enrich agent profiles with social handles via identity lookup
-    if (identityLookup) {
-      for (const address of Object.keys(agentProfiles)) {
-        try {
-          const handles = await identityLookup(address);
-          if (handles) {
-            agentProfiles[address].socialHandles = handles;
-          }
-        } catch {
-          // Identity enrichment is non-blocking
+    // Phase 7: Enrich agent profiles with social handles via identity lookup (parallel)
+    if (options?.identityLookup) {
+      const addresses = Object.keys(agentProfiles);
+      const results = await Promise.allSettled(addresses.map((addr) => options.identityLookup!(addr)));
+      for (let i = 0; i < addresses.length; i++) {
+        const result = results[i];
+        if (result.status === "fulfilled" && result.value) {
+          agentProfiles[addresses[i]].socialHandles = result.value;
         }
       }
     }

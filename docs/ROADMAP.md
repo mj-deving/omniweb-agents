@@ -127,6 +127,10 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 | Raw error `.toString()` coercion in `eliza/event-service.ts:55` | Phase 8c | Use `.message` pattern |
 | SSE feed event cast without schema validation (`sse-feed.ts:135`) | Phase 8c | Add Zod schema for SSEPost |
 | Faithfulness gate has no chain verification dependency (by design, pre-publish) | N/A | Document that gate output is NOT chain-verified |
+| Cache contradiction scan results with TTL (avoid recomputing 188K posts each iteration) | Phase 8d | Review finding 2026-04-03 — Fabric design review |
+| SSE endpoint configuration (URL, auth, reconnect backoff) — endpoint not yet stable | Phase 8d | Review finding 2026-04-03 — Fabric design review |
+| Bet outcome tracking: reserve schema field for settlement status | Phase 8d | Review finding 2026-04-03 — Fabric threat model |
+| Colony DB periodic pruning at scale (293MB and growing) | Future | Review finding 2026-04-03 — Fabric threat model |
 
 ### Deferred Evaluation (assessed as acceptable — revisit periodically)
 

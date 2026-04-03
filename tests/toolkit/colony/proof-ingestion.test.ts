@@ -278,4 +278,91 @@ describe("ingestProofs", () => {
 
     expect(result.failed).toBe(1);
   });
+
+  it("increments retry_count on retryable failure", async () => {
+    insertTestAttestation(db, { attestation_tx_hash: "0xretry" });
+
+    const rpc: ChainReaderRpc = {
+      getTxByHash: async () => { throw new Error("network timeout"); },
+    };
+
+    // resolveAttestation catches throws and returns rpc_error (retryable)
+    await ingestProofs(db, rpc);
+
+    const row = db.prepare("SELECT retry_count FROM attestations WHERE attestation_tx_hash = ?")
+      .get("0xretry") as { retry_count: number };
+    expect(row.retry_count).toBe(1);
+  });
+
+  it("marks attestation as CHAIN_FAILED when retry_count reaches maxRetries", async () => {
+    // Pre-set retry_count to 4 (one below default max of 5)
+    insertTestAttestation(db, { attestation_tx_hash: "0xexhausted" });
+    db.prepare("UPDATE attestations SET retry_count = 4 WHERE attestation_tx_hash = ?").run("0xexhausted");
+
+    const rpc: ChainReaderRpc = {
+      getTxByHash: async () => { throw new Error("network timeout"); },
+    };
+
+    const result = await ingestProofs(db, rpc);
+
+    expect(result.failed).toBe(1);
+    expect(result.skipped).toBe(0);
+
+    const row = db.prepare("SELECT chain_verified, retry_count, chain_data FROM attestations WHERE attestation_tx_hash = ?")
+      .get("0xexhausted") as { chain_verified: number; retry_count: number; chain_data: string };
+    expect(row.chain_verified).toBe(-1);
+    expect(row.retry_count).toBe(5);
+    expect(JSON.parse(row.chain_data)).toHaveProperty("reason", "retries_exhausted");
+  });
+
+  it("skips rows with retry_count >= maxRetries", async () => {
+    insertTestAttestation(db, { attestation_tx_hash: "0xskipped" });
+    db.prepare("UPDATE attestations SET retry_count = 5 WHERE attestation_tx_hash = ?").run("0xskipped");
+
+    let called = false;
+    const rpc: ChainReaderRpc = {
+      getTxByHash: async () => { called = true; throw new Error("should not be called"); },
+    };
+
+    const result = await ingestProofs(db, rpc);
+
+    expect(called).toBe(false);
+    expect(result).toEqual({ resolved: 0, verified: 0, failed: 0, skipped: 0 });
+  });
+
+  it("respects custom maxRetries option", async () => {
+    insertTestAttestation(db, { attestation_tx_hash: "0xcustom" });
+    db.prepare("UPDATE attestations SET retry_count = 2 WHERE attestation_tx_hash = ?").run("0xcustom");
+
+    const rpc: ChainReaderRpc = {
+      getTxByHash: async () => { throw new Error("timeout"); },
+    };
+
+    const result = await ingestProofs(db, rpc, { maxRetries: 3 });
+
+    expect(result.failed).toBe(1);
+
+    const row = db.prepare("SELECT chain_verified FROM attestations WHERE attestation_tx_hash = ?")
+      .get("0xcustom") as { chain_verified: number };
+    expect(row.chain_verified).toBe(-1);
+  });
+
+  it("marks retryable resolution failure as CHAIN_FAILED when retries exhausted", async () => {
+    insertTestAttestation(db, { attestation_tx_hash: "0xrpc-exhaust" });
+    db.prepare("UPDATE attestations SET retry_count = 4 WHERE attestation_tx_hash = ?").run("0xrpc-exhaust");
+
+    // RPC unavailable is retryable
+    const rpc: ChainReaderRpc = {};
+
+    const result = await ingestProofs(db, rpc);
+
+    expect(result.failed).toBe(1);
+
+    const row = db.prepare("SELECT chain_verified, chain_data FROM attestations WHERE attestation_tx_hash = ?")
+      .get("0xrpc-exhaust") as { chain_verified: number; chain_data: string };
+    expect(row.chain_verified).toBe(-1);
+    const data = JSON.parse(row.chain_data);
+    expect(data.reason).toBe("retries_exhausted");
+    expect(data.lastReason).toBe("rpc_unavailable");
+  });
 });

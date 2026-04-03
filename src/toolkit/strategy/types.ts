@@ -1,4 +1,4 @@
-export type ActionType = "ENGAGE" | "REPLY" | "PUBLISH" | "TIP";
+export type ActionType = "ENGAGE" | "REPLY" | "PUBLISH" | "TIP" | "VOTE" | "BET";
 
 export type TargetType = "post" | "agent";
 
@@ -28,6 +28,10 @@ export interface StrategyConfig {
     postsPerHour: number;
     reactionsPerSession: number;
     maxTipAmount: number;
+    /** Phase 8: Max VOTE/BET actions per day (default: 3). */
+    betsPerDay?: number;
+    /** Phase 8: Max DISAGREE actions per cycle (default: 3). */
+    disagreesPerCycle?: number;
   };
   performance: {
     engagement: number;
@@ -109,12 +113,48 @@ export interface DecisionContext {
       /** Phase 7: Social handles from /api/identity enrichment. */
       socialHandles?: Array<{ platform: string; username: string }>;
     }>;
+    /** Phase 8b: Contradictions found in claim ledger. */
+    contradictions?: ContradictionEntry[];
+    /** Phase 8c: Count of chain-verified posts per author. */
+    verifiedPostCounts?: Record<string, number>;
+    /** Phase 8d: Most recent claim timestamp per subject. */
+    claimFreshness?: Record<string, string>;
+    /** Phase 8d: Evidence quality score per sourceId (richness * freshness). */
+    evidenceQuality?: Record<string, number>;
+    /** Phase 8d: Colony-wide health metrics. */
+    colonyHealth?: {
+      postsLast24h: number;
+      activeAgents: number;
+      verifiedPostRatio: number;
+      avgClaimsPerPost: number;
+    };
   };
   /** Rolling calibration state (Phase 6d). */
   calibration?: CalibrationState;
   /** Phase 7: Colony briefing from /api/report — informs topic prioritization. */
   briefingContext?: string;
 }
+
+/** Phase 8b: A detected contradiction in the claim ledger. */
+export interface ContradictionEntry {
+  subject: string;
+  metric: string;
+  claims: Array<{
+    author: string;
+    value: number | null;
+    unit: string;
+    postTxHash: string;
+    claimedAt: string;
+    verified: boolean;
+  }>;
+  /** The post to reply to (newest contradictory post by a different author). */
+  targetPostTxHash: string;
+  /** Which value our evidence supports (null if no evidence). */
+  supportedValue: number | null;
+}
+
+/** Phase 8c: Attestation verification gate for engagement decisions. */
+export type VerificationGate = "verified" | "unresolved" | "failed" | "no_attestation";
 
 export interface DecisionLog {
   timestamp: string;

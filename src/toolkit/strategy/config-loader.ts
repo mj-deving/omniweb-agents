@@ -26,7 +26,7 @@ const DEFAULT_PERFORMANCE: StrategyConfig["performance"] = {
 
 const StrategyRuleSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(["ENGAGE", "REPLY", "PUBLISH", "TIP"]),
+  type: z.enum(["ENGAGE", "REPLY", "PUBLISH", "TIP", "VOTE", "BET"]),
   priority: z.number(),
   conditions: z.array(z.string()).default([]),
   enabled: z.boolean().default(true),
@@ -40,6 +40,8 @@ const StrategyConfigSchema = z.object({
     postsPerHour: z.number().int().positive().optional(),
     reactionsPerSession: z.number().int().positive().optional(),
     maxTipAmount: z.number().positive().optional(),
+    betsPerDay: z.number().int().nonnegative().optional(),
+    disagreesPerCycle: z.number().int().nonnegative().optional(),
   }).default({}),
   performance: z.object({
     engagement: z.number().nonnegative().optional(),
@@ -95,6 +97,8 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
       postsPerHour: Math.min(config.rateLimits.postsPerHour ?? DEFAULT_RATE_LIMITS.postsPerHour, 5),
       reactionsPerSession: config.rateLimits.reactionsPerSession ?? DEFAULT_RATE_LIMITS.reactionsPerSession,
       maxTipAmount: Math.min(config.rateLimits.maxTipAmount ?? DEFAULT_RATE_LIMITS.maxTipAmount, 10),
+      betsPerDay: Math.min(config.rateLimits.betsPerDay ?? 3, 5),
+      disagreesPerCycle: Math.min(config.rateLimits.disagreesPerCycle ?? 3, 10),
     },
     performance: {
       engagement: config.performance.engagement ?? DEFAULT_PERFORMANCE.engagement,

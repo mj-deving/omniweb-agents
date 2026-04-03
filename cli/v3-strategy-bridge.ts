@@ -290,6 +290,32 @@ export async function plan(
       recentTips: tipCounts,
       agentProfiles,
     };
+
+    // Phase 8b: Contradiction detection
+    try {
+      const { scanForContradictions } = await import("../src/toolkit/colony/contradiction-scanner.js");
+      const contradictions = scanForContradictions(ctx.db, {
+        since: since24h,
+        ourAddress: ctx.walletAddress,
+        maxResults: ctx.config.rateLimits.disagreesPerCycle ?? 3,
+      });
+      if (contradictions.length > 0) {
+        context.intelligence.contradictions = contradictions;
+      }
+    } catch {
+      // Contradiction detection is optional
+    }
+
+    // Phase 8c: Verified post counts for engagement decisions
+    try {
+      const { getVerifiedPostCountsByAuthor } = await import("../src/toolkit/colony/attestation-status.js");
+      const uniqueAuthors = [...new Set(profileAddresses)];
+      if (uniqueAuthors.length > 0) {
+        context.intelligence.verifiedPostCounts = getVerifiedPostCountsByAuthor(ctx.db, uniqueAuthors);
+      }
+    } catch {
+      // Verified counts are optional
+    }
   } catch {
     // Intelligence is optional — continue without it
   }

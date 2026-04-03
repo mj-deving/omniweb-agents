@@ -1,16 +1,16 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-03
+updated: 2026-04-04
 open_items: 6
 completed_phases: 8
-tests: 2542
+tests: 2548
 suites: 191
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
 colony_posts: 188000
-summary: "Phases 1-8 complete. Open: 3 semantic search items, 3 future items, engine.ts split. 46 deferred evaluations."
+summary: "Phases 1-8 + engine split + budget wire complete. Open: 3 semantic search items, 3 future items. 49 deferred evaluations."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -23,11 +23,11 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 - **V3 loop:** LIVE with full data + intelligence pipeline + proof ingestion + SSE feed
 - **Phase 8:** COMPLETE (proof ingestion, contradiction detection, verified engagement, colony intelligence, VOTE/BET codec, XMCore napi-guard, SSE adapter)
-- **Tests:** 2542 passing, 191 suites, **0 tsc errors**
+- **Tests:** 2548 passing, 191 suites, **0 tsc errors**
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
-- **Strategy Engine:** 10 rules (4 enrichment-aware + disagree_contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting.
+- **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard.
 - **Colony DB:** 188K posts. Schema v6 (retry_count + composite indexes). 293MB.
-- **Next:** Phase 5.6 semantic search (blocked on embedding model), Wire `checkSessionBudget()` into VOTE/BET (DONE), engine.ts split (DONE)
+- **Next:** Phase 5.6 semantic search (blocked on embedding model)
 
 ---
 
@@ -144,6 +144,8 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Ph
 | SSE endpoint configuration (URL, auth, reconnect backoff) — endpoint not yet stable | Phase 8d | Review finding 2026-04-03 — Fabric design review |
 | Bet outcome tracking: reserve schema field for settlement status | Phase 8d | Review finding 2026-04-03 — Fabric threat model |
 | Colony DB periodic pruning at scale (293MB and growing) | Future | Review finding 2026-04-03 — Fabric threat model |
+| publish-executor.ts at 792 lines (threshold 500) — split VOTE/BET handler | Future | When adding new action types or executor logic |
+| v3-loop.ts at 618 lines (threshold 500) — extract ACT phase orchestration | Future | When adding new phase logic or execution modes |
 
 ### Deferred Evaluation (assessed as acceptable — revisit periodically)
 
@@ -152,7 +154,7 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Ph
 | `normalize()` not shared across codebase — each module has local trim+lowercase | Pre-existing, large blast radius to consolidate | When adding new modules that need normalization |
 | `scoreAttestability` in thread-fan-out parallels `scoreClaim` in signal-first-pipeline | Intentionally different heuristics (attestability vs signal strength) | If scoring logic drifts or a unified scorer is needed |
 | Two priority mutation patterns (briefing boost + leaderboard adjustment) | Info — no abstraction needed for 2 sites | If a 3rd priority modifier is added |
-| `getRule` vs `findRule` near-duplicate in engine.ts | Pre-existing, `findRule` fabricates default for rejection logging | Next engine refactor |
+| `getRule` vs `findRule` near-duplicate in engine-helpers.ts | Pre-existing, `findRule` fabricates default for rejection logging | If a 3rd lookup pattern is added |
 | Stringly-typed targetType ("post"\|"agent") acceptable for 2 values | TypeScript union enforces compile-time | If a 3rd target type is added |
 | Swallowed error in `resolveAgentToRecentPost` — no observer access | Function is a standalone helper, can't thread observer | If debugging engagement failures |
 | N+1 DB queries for agent profiles via `getAgentProfile` (uncached prepare per call) | Pre-existing pattern across colony modules | When profile count exceeds 50 per batch |

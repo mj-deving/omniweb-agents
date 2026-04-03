@@ -115,6 +115,12 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 | Integration tests for strategy bridge (briefingContext, identityLookup, targetType) | Phase 8b | Unit tests exist, integration tests missing |
 | Identity API shape: v3-loop `identityLookup` may always produce `platform: "unknown"` | Next session | Verify against live API response shape |
 | socialHandles in agent profiles unused by engine rules | Phase 8c | Infrastructure ready, no consumer yet |
+| TLSN storage fee uncapped — large proof = unbounded DEM cost (`tlsn-playwright-bridge.ts:298`) | Phase 8b | Add Math.min(storageFee, 15) cap |
+| claim_ledger.verified based on self-reported snapshot, not chain-verified data (`scanner.ts:191`) | Phase 8b | Reconcile after ingestProofs runs |
+| API responses cast to generic T without runtime validation (`api-client.ts:458`) | Phase 8c | Add Zod schemas for critical endpoints |
+| External JSON.parse without safeParse in provider files (`generic.ts:93`, `declarative-engine.ts:1215`, `source-discovery.ts:80`, `sse-feed.ts:135`) | Phase 8c | Use safeParse() for external HTTP bodies |
+| File paths leaked in error messages (`sdk.ts:83,167`, `agent-config.ts:405`) | Phase 8c | Redact absolute paths |
+| No unified daily spending cap across tips + attestations + D402 + gas | Future | Theoretical daily max is unbounded due to TLSN + D402 |
 
 ---
 

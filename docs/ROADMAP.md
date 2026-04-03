@@ -1,16 +1,16 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-02
-open_items: 12
-completed_phases: 7
-tests: 2460
-suites: 183
+updated: 2026-04-03
+open_items: 6
+completed_phases: 8
+tests: 2542
+suites: 191
 tsc_errors: 0
 api_endpoints: 38
-strategy_rules: 9
+strategy_rules: 10
 colony_posts: 188000
-summary: "All open work: 13 items across Phase 5.6, 8, Future. Dependency graph, decision log, tech debt. Phases 1-7 complete."
+summary: "Phases 1-8 complete. Open: 3 semantic search items, 3 future items, engine.ts split. 46 deferred evaluations."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -21,13 +21,13 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 ## Current Status
 
-- **V3 loop:** LIVE with full data + intelligence pipeline
-- **Phase 7:** COMPLETE (thread fan-out, ENGAGE txHash fix, leaderboard meta-rule, colony report + identity enrichment)
-- **Tests:** 2435 passing, 181 suites, **0 tsc errors**
+- **V3 loop:** LIVE with full data + intelligence pipeline + proof ingestion + SSE feed
+- **Phase 8:** COMPLETE (proof ingestion, contradiction detection, verified engagement, colony intelligence, VOTE/BET codec, XMCore napi-guard, SSE adapter)
+- **Tests:** 2542 passing, 191 suites, **0 tsc errors**
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
-- **Strategy Engine:** 9 rules (4 enrichment-aware). Auto-calibration. Leaderboard meta-rule. FTS5 dedup.
-- **Colony DB:** 188K posts. Schema v4 (FTS5 + agent_profiles + interactions). 293MB.
-- **Next:** Phase 8 -- proof ingestion, contradiction detection, verified engagement
+- **Strategy Engine:** 10 rules (4 enrichment-aware + disagree_contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting.
+- **Colony DB:** 188K posts. Schema v6 (retry_count + composite indexes). 293MB.
+- **Next:** engine.ts split (603 lines → threshold 500), Phase 5.6 semantic search (blocked on embedding model)
 
 ---
 
@@ -61,19 +61,31 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 ---
 
-### Phase 8: Advanced
+### Phase 8: Advanced — COMPLETE
 
 - [x] 8a -- Proof ingestion: `resolveAttestation()` + `ingestProofs()` + schema v5 (chain_verified)
-- [ ] 8b -- Contradiction detection in claim ledger
-- [ ] 8c -- Verified engagement: agree/tip only after verifying target's attestation
-- [ ] 8d -- Colony intelligence algorithm: smart scanning per `design-loop-v3.md` section 5
-- [ ] 6-disc-a -- VOTE action type for price predictions (HIVE_BET memo, 5 DEM to pool)
-- [ ] 6-disc-b -- Binary market bets (HIVE_BINARY memo, Polymarket integration)
-- [ ] 6-disc-f -- XMCore cross-chain reads for on-chain data verification
-- [ ] 6-disc-g -- SSE/webhook consumption for real-time reactive events (event-runner exists)
+- [x] 8b -- Contradiction detection: `contradiction-scanner.ts`, metric windows, self-exclusion, `disagree_contradiction` rule
+- [x] 8c -- Verified engagement: `VerificationGate` enum, ENGAGE allows verified+unresolved, TIP requires verified
+- [x] 8d -- Colony intelligence: `buildColonyIntelligence()`, claim freshness, evidence quality, colony health
+- [x] 6-disc-a -- VOTE action type: `vote-bet-codec.ts` (Zod-validated HIVE_BET, 0.1-5 DEM, 7-day expiry)
+- [x] 6-disc-b -- Binary market bets: HIVE_BINARY codec, publish-executor handler, heavy path routing
+- [x] 6-disc-f -- XMCore cross-chain reads: `napi-guard.ts` with child_process.fork() SIGSEGV isolation
+- [x] 6-disc-g -- SSE/webhook consumption: `sse-sense-adapter.ts`, time-bounded, wired into v3-loop SENSE
 
-**Spec:** `docs/archive/design-loop-v3.md` sections 5+6b
-**Blocked by:** Phase 7 (DONE)
+**Spec:** `docs/archive/design-loop-v3.md` sections 5+6b + `Plans/phase8-all-features-design-reviewed.md`
+**Completed:** 2026-04-03. Triple-reviewed (Fabric design + threat model + Codex). 15 new files, +2300 lines, +82 tests.
+
+---
+
+### Refactor: engine.ts split
+
+- [ ] Split `src/toolkit/strategy/engine.ts` (603 lines, threshold 500) into focused modules
+  - Core rules (reply_to_mentions, engage_verified, publish_to_gaps, tip_valuable) → `engine.ts`
+  - Enrichment-aware rules (engage_novel, signal_aligned, divergence, prediction) → `engine-enrichment.ts`
+  - Contradiction rule (disagree_contradiction) → `engine-contradiction.ts`
+  - Rate limiting + candidate selection → stays in `engine.ts`
+
+**Target:** Each module under 300 lines. Re-export from `engine.ts` for backward compat.
 
 ---
 
@@ -88,11 +100,9 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 ## Dependency Graph
 
 ```
-Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
-                       |                    |
-                       +-> 5.6 semantic     +-> Phase 7 (unblocked)
-                       |   (blocked on          |
-                       |    embedding model)     +-> Phase 8 (after 7)
+Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Phase 8 (DONE)
+                       |
+                       +-> 5.6 semantic search (blocked on embedding model decision)
                        |
                        +-> Future (independent, no blockers)
 ```
@@ -105,10 +115,10 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 |------|--------|--------|
 | Double-fetch in V3 loop (scan-feed + colony ingestion both call getHivePosts) | 2026-04-14 | 14 sessions with >0 actions |
 | Cursor not functional (SDK has no sinceBlock param) | When SDK adds pagination | Track SDK releases |
-| Wire `ingestProofs()` into v3-loop after scan completes | Phase 8b | Proof ingestion primitive exists but not called in production |
+| ~~Wire `ingestProofs()` into v3-loop after scan completes~~ | ~~Phase 8b~~ | **DONE 2026-04-03** — wired in v3-loop SENSE phase |
 | Add composite index `(author, timestamp)` on posts for `resolveAgentToRecentPost` perf | When engagement volume grows | Query plan analysis |
 | TLSN comparison: structural key-value matching instead of substring | Phase 8c | Substring injection risk on short values |
-| Retry cap on retryable attestation failures (currently retries forever) | Phase 8b | Add retry_count column or age-based eviction |
+| ~~Retry cap on retryable attestation failures (currently retries forever)~~ | ~~Phase 8b~~ | **DONE 2026-04-03** — retry_count column in schema v6, 5-retry cap |
 | DAHR/TLSN detection: require both url+responseHash for DAHR, serverName+recv for TLSN | Phase 8c | Reduce false positives on malformed tx |
 | Concurrency guard: prevent double-processing in `ingestProofs` when scans overlap | Phase 8b | BEGIN IMMEDIATE or exclusion list |
 | Edge case tests: DAHR empty data, TLSN empty recv, boolean snapshot values | Phase 8b | Test coverage gap |
@@ -120,10 +130,10 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 | API responses cast to generic T without runtime validation (`api-client.ts:458`) | Phase 8c | Add Zod schemas for critical endpoints |
 | External JSON.parse without safeParse in provider files (`generic.ts:93`, `declarative-engine.ts:1215`, `source-discovery.ts:80`, `sse-feed.ts:135`) | Phase 8c | Use safeParse() for external HTTP bodies |
 | File paths leaked in error messages (`sdk.ts:83,167`, `agent-config.ts:405`) | Phase 8c | Redact absolute paths |
-| No unified daily spending cap across tips + attestations + D402 + gas | Future | Theoretical daily max is unbounded due to TLSN + D402 |
+| ~~No unified daily spending cap across tips + attestations + D402 + gas~~ | ~~Future~~ | **DONE 2026-04-03** — checkSessionBudget() in spending-policy.ts with NaN/negative guard |
 | Runtime guard for unrecognized targetType values in action-executor ENGAGE case | Phase 8b | TypeScript enforces at compile time, no runtime check |
 | LLM prompt injection via briefingContext (`.slice(500)` truncated but unsanitized) | Phase 8c | Consider delimiter/system instruction boundary |
-| Parallel RPC concurrency unbounded in ingestProofs beyond limit param | Phase 8b | Add p-limit or document safe threshold |
+| ~~Parallel RPC concurrency unbounded in ingestProofs beyond limit param~~ | ~~Phase 8b~~ | **DONE 2026-04-03** — p-limit(5) in proof-ingestion-rpc-adapter |
 | Raw error `.toString()` coercion in `eliza/event-service.ts:55` | Phase 8c | Use `.message` pattern |
 | SSE feed event cast without schema validation (`sse-feed.ts:135`) | Phase 8c | Add Zod schema for SSEPost |
 | Faithfulness gate has no chain verification dependency (by design, pre-publish) | N/A | Document that gate output is NOT chain-verified |
@@ -171,8 +181,8 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 | Dynamic imports per v3-loop iteration (proof-ingestion, SSE adapter) | Node caches after first load; async import() is cheap | If profiling shows import overhead |
 | SQL placeholder interpolation in `getVerifiedPostCountsByAuthor` | Safe (only `?` chars) but prevents SQLite prepare caching across author counts | If called frequently with varying author counts |
 | `Promise<any>` at SDK boundary in proof-ingestion-rpc-adapter | SDK type genuinely unknown; downstream validates structure | If SDK adds TypeScript types for RPC |
-| 3 unwired modules (intelligence-summary, vote-bet-codec, napi-guard) | Toolkit-first: primitives exist and are tested, wiring in Phase 8d | Phase 8d wiring session |
-| VOTE/BET heavy path but no publish-executor handler yet | No strategy rule can produce VOTE/BET actions yet — safe dead path | Phase 8d VOTE/BET executor wiring |
+| ~~3 unwired modules (intelligence-summary, vote-bet-codec, napi-guard)~~ | **DONE 2026-04-03** — all wired in Phase 8d | ~~Phase 8d wiring session~~ |
+| ~~VOTE/BET heavy path but no publish-executor handler yet~~ | **DONE 2026-04-03** — executor handler added | ~~Phase 8d VOTE/BET executor wiring~~ |
 | `hasColumn()` in schema.ts uses string interpolation in `db.pragma()` | Always hardcoded literal "attestations" from migration functions | If hasColumn is generalized |
 | N+1 `findContradictions` per (subject,metric) pair in contradiction scanner | Capped by maxResults:3 early-break; ~3 queries max per cycle | If claim_ledger grows beyond 500K rows |
 | SSE adapter named "SSE" but uses poll-based `/api/feed` fetch | Reflects intended future SSE integration; poll is interim | When SSE endpoint is production-ready |

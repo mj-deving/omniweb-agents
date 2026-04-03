@@ -2,15 +2,15 @@
 type: roadmap
 status: active
 updated: 2026-04-02
-open_items: 22
-completed_phases: 6
-tests: 2412
-suites: 180
+open_items: 13
+completed_phases: 7
+tests: 2435
+suites: 181
 tsc_errors: 0
 api_endpoints: 38
-strategy_rules: 8
+strategy_rules: 9
 colony_posts: 188000
-summary: "All open work: 23 items across Phase 5.6, 7, 8, Future. Dependency graph, decision log, tech debt. Phases 1-6 complete."
+summary: "All open work: 13 items across Phase 5.6, 8, Future. Dependency graph, decision log, tech debt. Phases 1-7 complete."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -22,12 +22,12 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 ## Current Status
 
 - **V3 loop:** LIVE with full data + intelligence pipeline
-- **Phase 6:** COMPLETE (strategy domain refactor, enrichment-aware rules, dedup, auto-calibration)
-- **Tests:** 2412 passing, 180 suites, **0 tsc errors**
+- **Phase 7:** COMPLETE (thread fan-out, ENGAGE txHash fix, leaderboard meta-rule, colony report + identity enrichment)
+- **Tests:** 2435 passing, 181 suites, **0 tsc errors**
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
-- **Strategy Engine:** 8 rules (3 enrichment-aware). Auto-calibration. FTS5 dedup.
+- **Strategy Engine:** 9 rules (4 enrichment-aware). Auto-calibration. Leaderboard meta-rule. FTS5 dedup.
 - **Colony DB:** 188K posts. Schema v4 (FTS5 + agent_profiles + interactions). 293MB.
-- **Next:** Phase 7 -- event verifier, strategy Phase 2 rules
+- **Next:** Phase 8 -- proof ingestion, contradiction detection, verified engagement
 
 ---
 
@@ -44,20 +44,20 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 ---
 
-### Phase 7: Strategy Phase 2 Rules
+### Phase 7: Strategy Phase 2 Rules — COMPLETE
 
-- [ ] 7a -- Event verifier for non-numeric claims (`design-loop-v3.md` section 4a-ii)
-- [ ] 7b -- Strategy Phase 2 rules (from `design-loop-v3.md` section 6)
-- [ ] 7c -- Contamination check in faithfulness gate (unattested factual claims)
-- [ ] 7d -- Thread fan-out: 1 post = 1 claim, multi-claim to reply thread
-- [ ] 6-defer-d -- adapt_to_leaderboard meta-rule: design + implement priority adjustment
-- [ ] 6-disc-c -- Pluggable rule registry (rules as modules, not inline in engine.ts)
-- [ ] 6-disc-d -- Colony report consumption (/api/report briefings as planning context)
-- [ ] 6-disc-e -- Identity lookup enrichment (/api/identity for social handles)
-- [ ] 6-disc-j -- ENGAGE txHash resolution (engage_verified + engage_novel_agents target addresses, executor needs txHash)
+- [x] 7a -- Event verifier for non-numeric claims (3-tier: field match, keyword, LLM semantic)
+- [x] 7b -- Strategy Phase 2 rules (9 rules: 5 core + 4 enrichment-aware, all from design-loop-v3.md §6)
+- [x] 7c -- Contamination check in faithfulness gate (unattested factual claims detected)
+- [x] 7d -- Thread fan-out: `planThreadFanOut()` in `src/toolkit/publish/thread-fan-out.ts`
+- [x] 6-defer-d -- adapt_to_leaderboard meta-rule: `applyLeaderboardAdjustment()` with YAML config
+- [x] 6-disc-c -- Pluggable rule registry (YAML-based via `config-loader.ts`)
+- [x] 6-disc-d -- Colony report consumption: `briefingContext` in DecisionContext, priority boost
+- [x] 6-disc-e -- Identity lookup enrichment: `socialHandles` in agent profiles, `identityLookup` param
+- [x] 6-disc-j -- ENGAGE txHash resolution: `targetType` discriminant + `resolveAgentToRecentPost()`
 
-**Spec:** `docs/archive/design-loop-v3.md` sections 4-6
-**Blocked by:** Phase 6 (DONE)
+**Spec:** `docs/archive/design-loop-v3.md` sections 4-6 + `docs/archive/phase7-design.md`
+**Completed:** 2026-04-03
 
 ---
 
@@ -73,7 +73,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 - [ ] 6-disc-g -- SSE/webhook consumption for real-time reactive events (event-runner exists)
 
 **Spec:** `docs/archive/design-loop-v3.md` sections 5+6b
-**Blocked by:** Phase 7
+**Blocked by:** Phase 7 (DONE)
 
 ---
 

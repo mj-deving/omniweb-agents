@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { AvailableEvidence } from "../../../src/toolkit/colony/available-evidence.js";
 import type { ColonyState } from "../../../src/toolkit/colony/state-extraction.js";
-import { decideActions } from "../../../src/toolkit/strategy/engine.js";
+import { applyLeaderboardAdjustment, decideActions } from "../../../src/toolkit/strategy/engine.js";
 import type { DecisionContext, StrategyConfig } from "../../../src/toolkit/strategy/types.js";
 
 function createEmptyState(): ColonyState {
@@ -1025,6 +1025,303 @@ describe("strategy engine", () => {
       // Should still produce the gap action, potentially with signal metadata
       expect(result.actions.length).toBeGreaterThanOrEqual(1);
       expect(result.actions[0].type).toBe("PUBLISH");
+    });
+  });
+
+  // ── Phase 7: ENGAGE targetType ──────────────────────────
+
+  describe("engage targetType", () => {
+    it("sets targetType 'agent' on engage_verified actions", () => {
+      const state = createEmptyState();
+      state.activity.trendingTopics = [{ topic: "defi", count: 3 }];
+      state.agents.topContributors = [
+        { author: "alice", postCount: 5, avgReactions: 8 },
+      ];
+
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: createConfig().rules.map((rule) => ({
+          ...rule,
+          enabled: rule.name === "engage_verified",
+        })),
+      }), createContext());
+
+      expect(result.actions).toHaveLength(1);
+      expect(result.actions[0].targetType).toBe("agent");
+      expect(result.actions[0].target).toBe("alice");
+    });
+
+    it("does not set targetType on reply_to_mentions (target is already txHash)", () => {
+      const state = createEmptyState();
+      state.threads.mentionsOfUs = [
+        { txHash: "0xmention-hash", author: "alice", text: "@loop data" },
+      ];
+      state.agents.topContributors = [
+        { author: "alice", postCount: 5, avgReactions: 8 },
+      ];
+
+      const result = decideActions(state, [], createConfig({
+        rules: createConfig().rules.map((rule) => ({
+          ...rule,
+          enabled: rule.name === "reply_to_mentions",
+        })),
+      }), createContext());
+
+      expect(result.actions).toHaveLength(1);
+      expect(result.actions[0].targetType).toBeUndefined();
+      expect(result.actions[0].target).toBe("0xmention-hash");
+    });
+  });
+
+  // ── Phase 7: Briefing-aligned boost ──────────────────────
+
+  describe("briefingContext boost", () => {
+    it("boosts publish_to_gaps priority when topic appears in briefing", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const resultWithBriefing = decideActions(state, [createEvidence("security")], createConfig({
+        rules: createConfig().rules.map((rule) => ({
+          ...rule,
+          enabled: rule.name === "publish_to_gaps",
+        })),
+      }), createContext({ briefingContext: "Colony report highlights security concerns and governance proposals." }));
+
+      const resultWithout = decideActions(state, [createEvidence("security")], createConfig({
+        rules: createConfig().rules.map((rule) => ({
+          ...rule,
+          enabled: rule.name === "publish_to_gaps",
+        })),
+      }), createContext());
+
+      expect(resultWithBriefing.actions[0].priority).toBe(60); // 50 + 10 briefing boost
+      expect(resultWithout.actions[0].priority).toBe(50);
+      expect(resultWithBriefing.actions[0].reason).toContain("briefing-aligned");
+    });
+
+    it("does not boost when briefing does not mention topic", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const result = decideActions(state, [createEvidence("security")], createConfig({
+        rules: createConfig().rules.map((rule) => ({
+          ...rule,
+          enabled: rule.name === "publish_to_gaps",
+        })),
+      }), createContext({ briefingContext: "Colony report focuses on DeFi yield farming trends." }));
+
+      expect(result.actions[0].priority).toBe(50); // No boost
+    });
+
+    it("handles undefined briefingContext gracefully", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const result = decideActions(state, [createEvidence("security")], createConfig({
+        rules: createConfig().rules.map((rule) => ({
+          ...rule,
+          enabled: rule.name === "publish_to_gaps",
+        })),
+      }), createContext());
+
+      expect(result.actions).toHaveLength(1);
+      expect(result.actions[0].priority).toBe(50);
+    });
+  });
+
+  // ── Phase 7: Leaderboard meta-rule ──────────────────────
+
+  describe("applyLeaderboardAdjustment", () => {
+    const defaultConfig = {
+      enabled: true,
+      topBoostEngagement: 15,
+      topAdjustPublish: -5,
+      bottomBoostPublish: 15,
+      bottomAdjustEngagement: -5,
+    };
+
+    it("boosts ENGAGE/TIP and reduces PUBLISH for top quartile agents", () => {
+      const actions = [
+        { type: "ENGAGE" as const, priority: 65, reason: "test", target: "alice" },
+        { type: "PUBLISH" as const, priority: 50, reason: "test" },
+        { type: "TIP" as const, priority: 30, reason: "test", target: "bob" },
+      ];
+
+      const leaderboard = {
+        agents: [
+          { address: "OUR_ADDR", bayesianScore: 90, totalPosts: 100, name: "us" },
+          { address: "agent2", bayesianScore: 80, totalPosts: 50, name: "two" },
+          { address: "agent3", bayesianScore: 70, totalPosts: 30, name: "three" },
+          { address: "agent4", bayesianScore: 60, totalPosts: 20, name: "four" },
+          { address: "agent5", bayesianScore: 50, totalPosts: 10, name: "five" },
+          { address: "agent6", bayesianScore: 40, totalPosts: 5, name: "six" },
+          { address: "agent7", bayesianScore: 30, totalPosts: 3, name: "seven" },
+          { address: "agent8", bayesianScore: 20, totalPosts: 1, name: "eight" },
+        ],
+        globalAvg: 55,
+      };
+
+      applyLeaderboardAdjustment(actions, leaderboard, "OUR_ADDR", defaultConfig);
+
+      expect(actions[0].priority).toBe(80); // 65 + 15 (ENGAGE boost)
+      expect(actions[1].priority).toBe(45); // 50 - 5 (PUBLISH reduction)
+      expect(actions[2].priority).toBe(45); // 30 + 15 (TIP boost)
+    });
+
+    it("boosts PUBLISH and reduces ENGAGE/TIP for bottom quartile agents", () => {
+      const actions = [
+        { type: "ENGAGE" as const, priority: 65, reason: "test", target: "alice" },
+        { type: "PUBLISH" as const, priority: 50, reason: "test" },
+        { type: "TIP" as const, priority: 30, reason: "test", target: "bob" },
+      ];
+
+      const leaderboard = {
+        agents: [
+          { address: "top1", bayesianScore: 90, totalPosts: 100, name: "top" },
+          { address: "top2", bayesianScore: 80, totalPosts: 50, name: "two" },
+          { address: "mid1", bayesianScore: 70, totalPosts: 30, name: "three" },
+          { address: "mid2", bayesianScore: 60, totalPosts: 20, name: "four" },
+          { address: "mid3", bayesianScore: 50, totalPosts: 10, name: "five" },
+          { address: "mid4", bayesianScore: 40, totalPosts: 5, name: "six" },
+          { address: "OUR_ADDR", bayesianScore: 30, totalPosts: 3, name: "us" },
+          { address: "bottom", bayesianScore: 20, totalPosts: 1, name: "eight" },
+        ],
+        globalAvg: 55,
+      };
+
+      applyLeaderboardAdjustment(actions, leaderboard, "OUR_ADDR", defaultConfig);
+
+      expect(actions[0].priority).toBe(60); // 65 - 5 (ENGAGE reduction)
+      expect(actions[1].priority).toBe(65); // 50 + 15 (PUBLISH boost)
+      expect(actions[2].priority).toBe(25); // 30 - 5 (TIP reduction)
+    });
+
+    it("applies no adjustment for middle-ranked agents", () => {
+      const actions = [
+        { type: "ENGAGE" as const, priority: 65, reason: "test", target: "alice" },
+        { type: "PUBLISH" as const, priority: 50, reason: "test" },
+      ];
+
+      // 8 agents, our rank at index 3 → percentile 3/8 = 0.375 (middle)
+      const leaderboard = {
+        agents: [
+          { address: "top1", bayesianScore: 95, totalPosts: 200, name: "top1" },
+          { address: "top2", bayesianScore: 90, totalPosts: 150, name: "top2" },
+          { address: "mid1", bayesianScore: 80, totalPosts: 100, name: "mid1" },
+          { address: "OUR_ADDR", bayesianScore: 70, totalPosts: 50, name: "us" },
+          { address: "mid2", bayesianScore: 60, totalPosts: 30, name: "mid2" },
+          { address: "mid3", bayesianScore: 50, totalPosts: 20, name: "mid3" },
+          { address: "low1", bayesianScore: 40, totalPosts: 10, name: "low1" },
+          { address: "low2", bayesianScore: 30, totalPosts: 5, name: "low2" },
+        ],
+        globalAvg: 64,
+      };
+
+      applyLeaderboardAdjustment(actions, leaderboard, "OUR_ADDR", defaultConfig);
+
+      expect(actions[0].priority).toBe(65); // No change
+      expect(actions[1].priority).toBe(50); // No change
+    });
+
+    it("handles missing leaderboard data gracefully", () => {
+      const actions = [
+        { type: "PUBLISH" as const, priority: 50, reason: "test" },
+      ];
+
+      applyLeaderboardAdjustment(actions, undefined, "OUR_ADDR", defaultConfig);
+      expect(actions[0].priority).toBe(50); // No change
+
+      applyLeaderboardAdjustment(actions, { agents: [], globalAvg: 0 }, "OUR_ADDR", defaultConfig);
+      expect(actions[0].priority).toBe(50); // No change
+    });
+
+    it("handles agent not found on leaderboard", () => {
+      const actions = [
+        { type: "PUBLISH" as const, priority: 50, reason: "test" },
+      ];
+
+      const leaderboard = {
+        agents: [
+          { address: "other", bayesianScore: 90, totalPosts: 100, name: "other" },
+        ],
+        globalAvg: 90,
+      };
+
+      applyLeaderboardAdjustment(actions, leaderboard, "NOT_ON_BOARD", defaultConfig);
+      expect(actions[0].priority).toBe(50); // No change
+    });
+
+    it("is case-insensitive for address matching", () => {
+      const actions = [
+        { type: "ENGAGE" as const, priority: 65, reason: "test", target: "x" },
+      ];
+
+      const leaderboard = {
+        agents: [
+          { address: "0xOUR_addr", bayesianScore: 90, totalPosts: 100, name: "us" },
+          { address: "other1", bayesianScore: 80, totalPosts: 50, name: "a" },
+          { address: "other2", bayesianScore: 70, totalPosts: 30, name: "b" },
+          { address: "other3", bayesianScore: 60, totalPosts: 20, name: "c" },
+        ],
+        globalAvg: 75,
+      };
+
+      applyLeaderboardAdjustment(actions, leaderboard, "0xour_ADDR", defaultConfig);
+      expect(actions[0].priority).toBe(80); // Top quartile boost applied
+    });
+  });
+
+  // ── Phase 7: Leaderboard adjustment integration ──────────
+
+  describe("leaderboard adjustment in decideActions", () => {
+    it("adjusts priorities when leaderboardAdjustment is enabled in config", () => {
+      const state = createEmptyState();
+      state.activity.trendingTopics = [{ topic: "defi", count: 3 }];
+      state.gaps.underservedTopics = [
+        { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+      state.agents.topContributors = [
+        { author: "alice", postCount: 5, avgReactions: 8 },
+      ];
+
+      const config = createConfig({
+        leaderboardAdjustment: {
+          enabled: true,
+          topBoostEngagement: 20,
+          topAdjustPublish: -10,
+          bottomBoostPublish: 20,
+          bottomAdjustEngagement: -10,
+        },
+      });
+
+      const leaderboard = {
+        agents: [
+          { address: "demos1loop", bayesianScore: 95, totalPosts: 200, name: "us" },
+          { address: "a2", bayesianScore: 80, totalPosts: 50, name: "a2" },
+          { address: "a3", bayesianScore: 70, totalPosts: 30, name: "a3" },
+          { address: "a4", bayesianScore: 60, totalPosts: 20, name: "a4" },
+        ],
+        globalAvg: 76,
+      };
+
+      const result = decideActions(state, [createEvidence("defi")], config, createContext({
+        apiEnrichment: { leaderboard },
+      }));
+
+      // engage_verified should get boosted (+20)
+      const engage = result.actions.find((a) => a.type === "ENGAGE");
+      expect(engage).toBeDefined();
+      expect(engage!.priority).toBe(85); // 65 + 20
+
+      // publish_to_gaps should get reduced (-10)
+      const publish = result.actions.find((a) => a.type === "PUBLISH");
+      expect(publish).toBeDefined();
+      expect(publish!.priority).toBe(40); // 50 - 10
     });
   });
 });

@@ -61,6 +61,13 @@ const StrategyConfigSchema = z.object({
     minSignalAgents: z.number().int().nonnegative().optional(),
     minConfidence: z.number().int().min(0).max(100).optional(),
   }).default({}),
+  leaderboardAdjustment: z.object({
+    enabled: z.boolean().default(false),
+    topBoostEngagement: z.number().default(15),
+    topAdjustPublish: z.number().default(-5),
+    bottomBoostPublish: z.number().default(15),
+    bottomAdjustEngagement: z.number().default(-5),
+  }).optional(),
 });
 
 export function loadStrategyConfig(yamlContent: string): StrategyConfig {
@@ -108,5 +115,12 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
       minSignalAgents: config.enrichment.minSignalAgents ?? 2,
       minConfidence: config.enrichment.minConfidence ?? 40,
     },
+    leaderboardAdjustment: config.leaderboardAdjustment ? {
+      enabled: config.leaderboardAdjustment.enabled,
+      topBoostEngagement: config.leaderboardAdjustment.topBoostEngagement,
+      topAdjustPublish: config.leaderboardAdjustment.topAdjustPublish,
+      bottomBoostPublish: config.leaderboardAdjustment.bottomBoostPublish,
+      bottomAdjustEngagement: config.leaderboardAdjustment.bottomAdjustEngagement,
+    } : undefined,
   };
 }

@@ -238,12 +238,14 @@ export async function plan(
     const recentInteractions = getInteractionHistory(ctx.db, { since: since24h, limit: 200 });
 
     // Separate tip interactions from other types — tip avoidance should only consider tips
+    // Normalize addresses to match engine's normalize() (trim+lowercase) lookups
     const tipCounts: Record<string, number> = {};
     const allCounts: Record<string, number> = {};
     for (const interaction of recentInteractions) {
-      allCounts[interaction.theirAddress] = (allCounts[interaction.theirAddress] ?? 0) + 1;
+      const addr = interaction.theirAddress.trim().toLowerCase();
+      allCounts[addr] = (allCounts[addr] ?? 0) + 1;
       if (interaction.interactionType === "we_tipped") {
-        tipCounts[interaction.theirAddress] = (tipCounts[interaction.theirAddress] ?? 0) + 1;
+        tipCounts[addr] = (tipCounts[addr] ?? 0) + 1;
       }
     }
 

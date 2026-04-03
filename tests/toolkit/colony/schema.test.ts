@@ -89,6 +89,45 @@ describe("colony schema", () => {
     expect(idxNames).toContain("idx_interactions_type");
   });
 
+  it("schema v5 adds proof ingestion columns to attestations", () => {
+    const cols = db.prepare("PRAGMA table_info(attestations)").all() as Array<{ name: string; dflt_value: string | null }>;
+    const colNames = cols.map((c) => c.name);
+    expect(colNames).toContain("chain_verified");
+    expect(colNames).toContain("chain_method");
+    expect(colNames).toContain("chain_data");
+    expect(colNames).toContain("resolved_at");
+
+    // chain_verified defaults to 0
+    const chainVerifiedCol = cols.find((c) => c.name === "chain_verified");
+    expect(chainVerifiedCol?.dflt_value).toBe("0");
+
+    // Partial index exists for efficient unresolved queries
+    const indexes = db.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'attestations'",
+    ).all() as Array<{ name: string }>;
+    const idxNames = indexes.map((i) => i.name);
+    expect(idxNames).toContain("idx_attestations_unresolved");
+  });
+
+  it("schema v5 preserves existing attestation rows with chain_verified=0", () => {
+    // Insert a post and attestation before checking defaults
+    db.prepare(`
+      INSERT INTO posts (tx_hash, author, block_number, timestamp, text, raw_data)
+      VALUES ('0xpost', 'agent1', 1, '2026-01-01T00:00:00Z', 'test', '{}')
+    `).run();
+    db.prepare(`
+      INSERT INTO attestations (post_tx_hash, attestation_tx_hash, source_url, method, data_snapshot, attested_at)
+      VALUES ('0xpost', '0xattest', 'https://api.example.com', 'DAHR', '{}', '2026-01-01T00:00:00Z')
+    `).run();
+
+    const row = db.prepare("SELECT chain_verified, chain_method, chain_data, resolved_at FROM attestations WHERE attestation_tx_hash = '0xattest'")
+      .get() as { chain_verified: number; chain_method: string | null; chain_data: string | null; resolved_at: string | null };
+    expect(row.chain_verified).toBe(0);
+    expect(row.chain_method).toBeNull();
+    expect(row.chain_data).toBeNull();
+    expect(row.resolved_at).toBeNull();
+  });
+
   it("requests WAL mode and leaves in-memory sqlite in its supported journal mode", () => {
     const journalMode = String(db.pragma("journal_mode", { simple: true })).toLowerCase();
 

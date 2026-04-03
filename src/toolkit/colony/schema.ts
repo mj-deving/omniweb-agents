@@ -2,7 +2,7 @@ import DatabaseConstructor from "better-sqlite3";
 
 export type ColonyDatabase = InstanceType<typeof DatabaseConstructor>;
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 const BASE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS _meta (
@@ -225,6 +225,21 @@ const MIGRATIONS: Record<number, Migration> = {
       );
       CREATE INDEX IF NOT EXISTS idx_interactions_address ON interactions(their_address);
       CREATE INDEX IF NOT EXISTS idx_interactions_type ON interactions(interaction_type);
+    `);
+  },
+  5: (db) => {
+    // Phase 8a: Proof ingestion — on-chain verification of other agents' attestations.
+    // chain_verified tri-state: 0=unresolved, 1=verified on chain, -1=permanent failure
+    db.exec(`
+      ALTER TABLE attestations ADD COLUMN chain_verified INTEGER DEFAULT 0;
+      ALTER TABLE attestations ADD COLUMN chain_method TEXT;
+      ALTER TABLE attestations ADD COLUMN chain_data TEXT;
+      ALTER TABLE attestations ADD COLUMN resolved_at TEXT;
+    `);
+    // Partial index for efficient batch queries on unresolved attestations
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_attestations_unresolved
+        ON attestations(chain_verified) WHERE chain_verified = 0;
     `);
   },
 };

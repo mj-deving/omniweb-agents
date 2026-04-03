@@ -25,6 +25,7 @@ import { extractColonyState, type ColonyState } from "../src/toolkit/colony/stat
 import { computeAvailableEvidence, type AvailableEvidence } from "../src/toolkit/colony/available-evidence.js";
 import { computePerformanceScores, computeCalibration } from "../src/toolkit/colony/performance.js";
 import { getAgentProfile, getInteractionHistory } from "../src/toolkit/colony/intelligence.js";
+import { buildColonyIntelligence } from "../src/toolkit/colony/intelligence-summary.js";
 import { decideActions } from "../src/toolkit/strategy/engine.js";
 import { loadStrategyConfig } from "../src/toolkit/strategy/config-loader.js";
 import { FileStateStore } from "../src/toolkit/state-store.js";
@@ -232,63 +233,40 @@ export async function plan(
     context.briefingContext = options.briefingContext;
   }
 
-  // Pre-compute intelligence from colony DB (pure data extraction)
+  // Pre-compute intelligence from colony DB via consolidated summary (Phase 8d)
   try {
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const recentInteractions = getInteractionHistory(ctx.db, { since: since24h, limit: 200 });
-
-    // Separate tip interactions from other types — tip avoidance should only consider tips
-    // Normalize addresses to match engine's normalize() (trim+lowercase) lookups
-    const tipCounts: Record<string, number> = {};
-    const allCounts: Record<string, number> = {};
-    for (const interaction of recentInteractions) {
-      const addr = interaction.theirAddress.trim().toLowerCase();
-      allCounts[addr] = (allCounts[addr] ?? 0) + 1;
-      if (interaction.interactionType === "we_tipped") {
-        tipCounts[addr] = (tipCounts[addr] ?? 0) + 1;
-      }
-    }
-
     const profileAddresses = [
       ...senseResult.colonyState.agents.topContributors.map((c) => c.author),
       ...senseResult.colonyState.threads.mentionsOfUs.map((m) => m.author),
     ];
-    const agentProfiles: Record<string, {
-      postCount: number;
-      avgAgrees: number;
-      avgDisagrees: number;
-      topics: string[];
-      socialHandles?: Array<{ platform: string; username: string }>;
-    }> = {};
-    for (const address of new Set(profileAddresses)) {
-      const profile = getAgentProfile(ctx.db, address);
-      if (profile) {
-        // Key by lowercased address — engine reads with normalize() (trim+lowercase)
-        agentProfiles[address.trim().toLowerCase()] = {
-          postCount: profile.postCount,
-          avgAgrees: profile.avgAgrees,
-          avgDisagrees: profile.avgDisagrees,
-          topics: profile.topics,
-        };
-      }
-    }
+
+    const summary = buildColonyIntelligence(ctx.db, {
+      ourAddress: ctx.walletAddress,
+      topContributorAddresses: senseResult.colonyState.agents.topContributors.map((c) => c.author),
+      mentionAuthors: senseResult.colonyState.threads.mentionsOfUs.map((m) => m.author),
+      since24h,
+    });
 
     // Phase 7: Enrich agent profiles with social handles via identity lookup (parallel)
     if (options?.identityLookup) {
-      const addresses = Object.keys(agentProfiles);
+      const addresses = Object.keys(summary.agentProfiles);
       const results = await Promise.allSettled(addresses.map((addr) => options.identityLookup!(addr)));
       for (let i = 0; i < addresses.length; i++) {
         const result = results[i];
         if (result.status === "fulfilled" && result.value) {
-          agentProfiles[addresses[i]].socialHandles = result.value;
+          summary.agentProfiles[addresses[i]].socialHandles = result.value;
         }
       }
     }
 
     context.intelligence = {
-      recentInteractions: allCounts,
-      recentTips: tipCounts,
-      agentProfiles,
+      recentInteractions: summary.recentInteractions,
+      recentTips: summary.recentTips,
+      agentProfiles: summary.agentProfiles,
+      claimFreshness: summary.claimFreshness,
+      evidenceQuality: summary.evidenceQuality,
+      colonyHealth: summary.colonyHealth,
     };
 
     // Phase 8b: Contradiction detection

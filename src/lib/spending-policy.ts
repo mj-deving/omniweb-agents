@@ -204,6 +204,17 @@ export function checkSessionBudget(
   config: SpendingPolicyConfig,
   ledger: SpendingLedger,
 ): SpendDecision {
+  // Hard guard: reject invalid amounts at the policy layer (Codex review fix H1)
+  if (!Number.isFinite(amount) || amount <= 0) {
+    const decision: SpendDecision = {
+      allowed: false,
+      reason: `Invalid amount: ${amount} (must be finite and positive)`,
+      dryRun: false,
+    };
+    logDecision(amount, "session-budget", decision);
+    return decision;
+  }
+
   const today = todayUTC();
   if (ledger.date !== today) {
     ledger.date = today;
@@ -211,20 +222,28 @@ export function checkSessionBudget(
   }
 
   if (config.dryRun) {
-    return { allowed: true, reason: "Dry run — spend simulated", dryRun: true };
+    const decision: SpendDecision = { allowed: true, reason: "Dry run — spend simulated", dryRun: true };
+    logDecision(amount, "session-budget", decision);
+    return decision;
   }
 
   if (ledger.dailySpent + amount > config.dailyCapDem) {
     const remaining = Math.max(0, config.dailyCapDem - ledger.dailySpent);
-    return { allowed: false, reason: `Daily DEM cap exceeded (remaining: ${remaining})`, dryRun: false };
+    const decision: SpendDecision = { allowed: false, reason: `Daily DEM cap exceeded (remaining: ${remaining})`, dryRun: false };
+    logDecision(amount, "session-budget", decision);
+    return decision;
   }
 
   if (ledger.sessionSpent + amount > config.sessionCapDem) {
     const remaining = Math.max(0, config.sessionCapDem - ledger.sessionSpent);
-    return { allowed: false, reason: `Session DEM cap exceeded (remaining: ${remaining})`, dryRun: false };
+    const decision: SpendDecision = { allowed: false, reason: `Session DEM cap exceeded (remaining: ${remaining})`, dryRun: false };
+    logDecision(amount, "session-budget", decision);
+    return decision;
   }
 
-  return { allowed: true, reason: "Within session budget", dryRun: false };
+  const decision: SpendDecision = { allowed: true, reason: "Within session budget", dryRun: false };
+  logDecision(amount, "session-budget", decision);
+  return decision;
 }
 
 /**

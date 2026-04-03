@@ -387,6 +387,26 @@ export async function runV3Loop(
         throw new Error("Missing V3 sense result");
       }
 
+      // Phase 7: Build identity lookup from SDK bridge (graceful — returns null on failure)
+      const identityLookup = sdkBridge.apiAccess === "authenticated"
+        ? async (address: string): Promise<Array<{ platform: string; username: string }> | null> => {
+            try {
+              const result = await sdkBridge.apiCall(
+                `/api/identity?chain=demos&address=${encodeURIComponent(address)}`,
+                { signal: AbortSignal.timeout(3_000) },
+              );
+              if (!result.ok || !result.data) return null;
+              const data = result.data as { found?: boolean; platform?: string; username?: string };
+              if (!data.found) return null;
+              return data.platform && data.username
+                ? [{ platform: data.platform, username: data.username }]
+                : null;
+            } catch {
+              return null;
+            }
+          }
+        : undefined;
+
       const planResult = await plan(
         bridge,
         sensePayload.strategy,
@@ -395,6 +415,7 @@ export async function runV3Loop(
           apiEnrichment: state.strategyResults?.apiEnrichment as ApiEnrichmentData | undefined,
           calibration: state.strategyResults?.calibration as import("./v3-strategy-bridge.js").CalibrationState | undefined,
           briefingContext: state.briefingContext,
+          identityLookup,
         },
       );
       state.strategyResults = {

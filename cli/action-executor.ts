@@ -19,19 +19,36 @@ export interface ActionExecutionResult {
 /**
  * Resolve an agent address to their most recent post txHash (last 48h).
  * Used when strategy targets an agent (targetType: "agent") but executor needs a post txHash.
+ * Optional topicHint narrows to posts matching the topic that triggered the action.
  */
 export function resolveAgentToRecentPost(
   colonyDb: ColonyDatabase | undefined,
   agentAddress: string,
+  topicHint?: string,
 ): string | null {
   if (!colonyDb) return null;
   try {
+    // Compute threshold in JS to avoid ISO vs SQLite datetime format mismatch
+    const threshold = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+    if (topicHint) {
+      // Prefer a post matching the topic that triggered the action
+      const topicStmt = colonyDb.prepare(
+        `SELECT tx_hash FROM posts
+         WHERE author = ? AND timestamp > ? AND text LIKE ?
+         ORDER BY timestamp DESC LIMIT 1`,
+      );
+      const topicRow = topicStmt.get(agentAddress, threshold, `%${topicHint}%`) as { tx_hash: string } | undefined;
+      if (topicRow?.tx_hash) return topicRow.tx_hash;
+    }
+
+    // Fallback: most recent post by this agent
     const stmt = colonyDb.prepare(
       `SELECT tx_hash FROM posts
-       WHERE author = ? AND timestamp > datetime('now', '-48 hours')
+       WHERE author = ? AND timestamp > ?
        ORDER BY timestamp DESC LIMIT 1`,
     );
-    const row = stmt.get(agentAddress) as { tx_hash: string } | undefined;
+    const row = stmt.get(agentAddress, threshold) as { tx_hash: string } | undefined;
     return row?.tx_hash ?? null;
   } catch {
     return null;
@@ -121,7 +138,10 @@ export async function executeStrategyActions(
           let engageTxHash = action.target!;
           const agentAddress = action.target!;
           if (action.targetType === "agent") {
-            const resolved = resolveAgentToRecentPost(deps.colonyDb, agentAddress);
+            // Use topic hint from metadata to prefer a post matching the verified topic
+            const topics = action.metadata?.topics as string[] | undefined;
+            const topicHint = topics?.[0];
+            const resolved = resolveAgentToRecentPost(deps.colonyDb, agentAddress, topicHint);
             if (!resolved) {
               result.skipped.push({ action, reason: `Could not resolve agent ${agentAddress} to a recent post` });
               deps.observe("insight", `ENGAGE skipped: no recent post found for agent ${agentAddress}`, {

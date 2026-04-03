@@ -58,6 +58,15 @@ describe("encodeVotePost", () => {
     expect(() => encodeVotePost({ ...validBet(), amount: 10 })).toThrow();
   });
 
+  it("rejects amount with too many decimal places", () => {
+    expect(() => encodeVotePost({ ...validBet(), amount: 1.111 })).toThrow();
+  });
+
+  it("accepts amount with 2 decimal places", () => {
+    const result = encodeVotePost({ ...validBet(), amount: 2.55 });
+    expect(result.category).toBe("VOTE");
+  });
+
   it("rejects past expiry", () => {
     const past = new Date(Date.now() - 60000).toISOString();
     expect(() => encodeVotePost({ ...validBet(), expiry: past })).toThrow();

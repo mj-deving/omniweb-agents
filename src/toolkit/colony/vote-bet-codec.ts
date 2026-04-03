@@ -11,14 +11,29 @@
 
 import { z } from "zod";
 
+// ── Constants (single source of truth for validation) ───────────
+
+export const MAX_BET_AMOUNT = 5;
+export const MIN_BET_AMOUNT = 0.1;
+
 // ── Schemas ───────────────────────────────────────
+
+/** Validate amount has at most 2 decimal places (handles IEEE 754 precision) */
+function hasValidPrecision(n: number): boolean {
+  return Math.abs(Math.round(n * 100) - n * 100) < 0.01;
+}
+
+const betAmountSchema = z.number()
+  .min(MIN_BET_AMOUNT)
+  .max(MAX_BET_AMOUNT)
+  .refine(hasValidPrecision, "Amount must have at most 2 decimal places");
 
 const HiveBetSchema = z.object({
   action: z.literal("HIVE_BET"),
   asset: z.string().min(1).max(20),
   direction: z.enum(["up", "down"]),
   confidence: z.number().int().min(0).max(100),
-  amount: z.number().min(0.1).max(5),
+  amount: betAmountSchema,
   expiry: z.string().refine((val) => {
     const date = new Date(val);
     if (isNaN(date.getTime())) return false;
@@ -32,15 +47,11 @@ const HiveBinarySchema = z.object({
   action: z.literal("HIVE_BINARY"),
   market: z.string().min(1).max(100),
   position: z.enum(["yes", "no"]),
-  amount: z.number().min(0.1).max(5),
+  amount: betAmountSchema,
 });
 
 export type HiveBetPayload = z.infer<typeof HiveBetSchema>;
 export type HiveBinaryPayload = z.infer<typeof HiveBinarySchema>;
-
-// ── Max bet constant (defense-in-depth) ───────────
-
-export const MAX_BET_AMOUNT = 5;
 
 // ── Encode ────────────────────────────────────────
 

@@ -1,0 +1,168 @@
+/**
+ * Shared helpers for the strategy engine modules.
+ *
+ * Extracted to avoid circular imports between engine.ts, engine-enrichment.ts,
+ * and engine-contradiction.ts. All functions are pure.
+ */
+
+import type { AvailableEvidence } from "../colony/available-evidence.js";
+import type { ColonyState } from "../colony/state-extraction.js";
+import type { ApiEnrichmentData, DecisionLog, LeaderboardAdjustmentConfig, StrategyAction, StrategyConfig, StrategyRule } from "./types.js";
+
+export const MIN_TRUST_POSTS = 3;
+export const MAX_PUBLISH_EVIDENCE_FRESHNESS_SECONDS = 3600;
+export const MIN_PUBLISH_EVIDENCE_RICHNESS = 100;
+/** Absolute toolkit ceiling — cannot be exceeded regardless of config. */
+export const ABSOLUTE_TIP_CEILING_DEM = 10;
+export const BAIT_PATTERNS = [
+  /\bscam\b/i,
+  /\bfraud(?:ulent)?\b/i,
+  /\bpathetic\b/i,
+  /\bidiot\b/i,
+  /\bstupid\b/i,
+  /\btrash\b/i,
+  /\bponzi\b/i,
+  /\bliar\b/i,
+  /\bbagholder\b/i,
+];
+
+export type RejectedAction = DecisionLog["rejected"][number];
+export type EngineCandidate = { action: StrategyAction; rule: string };
+
+export function normalize(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function buildEvidenceIndex(availableEvidence: AvailableEvidence[]): Map<string, AvailableEvidence[]> {
+  const index = new Map<string, AvailableEvidence[]>();
+
+  for (const item of availableEvidence) {
+    const key = normalize(item.subject);
+    const existing = index.get(key);
+    if (existing) {
+      existing.push(item);
+      continue;
+    }
+    index.set(key, [item]);
+  }
+
+  return index;
+}
+
+export function getRule(config: StrategyConfig, name: string): StrategyRule | null {
+  const rule = config.rules.find((candidate) => candidate.name === name);
+  if (!rule || !rule.enabled) {
+    return null;
+  }
+  return rule;
+}
+
+export function createAction(
+  rule: StrategyRule,
+  reason: string,
+  extras: Omit<StrategyAction, "type" | "priority" | "reason"> = {},
+): StrategyAction {
+  return {
+    type: rule.type,
+    priority: rule.priority,
+    reason,
+    ...extras,
+  };
+}
+
+export function reject(
+  rejected: RejectedAction[],
+  rule: StrategyRule,
+  action: StrategyAction,
+  reason: string,
+): void {
+  rejected.push({ action, rule: rule.name, reason });
+}
+
+export function hasAttestationSignal(text: string, evidenceIndex: Map<string, AvailableEvidence[]>): boolean {
+  const normalizedText = normalize(text);
+
+  for (const [subject, evidence] of evidenceIndex.entries()) {
+    if (normalizedText.includes(subject) && evidence.some((item) => !item.stale)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function getVerifiedTopics(
+  state: ColonyState,
+  evidenceIndex: Map<string, AvailableEvidence[]>,
+): Array<{ topic: string; evidence: AvailableEvidence[] }> {
+  return state.activity.trendingTopics
+    .map(({ topic }) => ({
+      topic,
+      evidence: evidenceIndex.get(normalize(topic)) ?? [],
+    }))
+    .filter(({ evidence }) => evidence.some((item) => !item.stale));
+}
+
+export function getRateLimitState(
+  config: StrategyConfig,
+  context: { postsToday: number; postsThisHour: number; sessionReactionsUsed: number },
+): DecisionLog["rateLimitState"] {
+  return {
+    dailyRemaining: Math.max(0, config.rateLimits.postsPerDay - context.postsToday),
+    hourlyRemaining: Math.max(0, config.rateLimits.postsPerHour - context.postsThisHour),
+    reactionsRemaining: Math.max(0, config.rateLimits.reactionsPerSession - context.sessionReactionsUsed),
+  };
+}
+
+export function findRule(config: StrategyConfig, ruleName: string): StrategyRule {
+  return config.rules.find((rule) => rule.name === ruleName) ?? {
+    name: ruleName,
+    type: "ENGAGE",
+    priority: 0,
+    conditions: [],
+    enabled: true,
+  };
+}
+
+/**
+ * Phase 7: Adjust action priorities based on leaderboard rank.
+ *
+ * Top quartile: boost engagement/tip (maintain community presence).
+ * Bottom quartile: boost publish (build reputation through content).
+ * Middle: no adjustment (baseline priorities).
+ */
+export function applyLeaderboardAdjustment(
+  actions: StrategyAction[],
+  leaderboard: ApiEnrichmentData["leaderboard"],
+  ourAddress: string,
+  config: LeaderboardAdjustmentConfig,
+): void {
+  if (!leaderboard?.agents?.length) return;
+
+  const totalAgents = leaderboard.agents.length;
+  const normalizedOurAddress = normalize(ourAddress);
+  const ourIndex = leaderboard.agents.findIndex(
+    (entry) => normalize(entry.address) === normalizedOurAddress,
+  );
+  if (ourIndex === -1) return;
+
+  const percentile = ourIndex / totalAgents;
+
+  for (const action of actions) {
+    if (percentile <= 0.25) {
+      if (action.type === "ENGAGE" || action.type === "TIP") {
+        action.priority += config.topBoostEngagement;
+      }
+      if (action.type === "PUBLISH") {
+        action.priority += config.topAdjustPublish;
+      }
+    } else if (percentile >= 0.75) {
+      if (action.type === "PUBLISH") {
+        action.priority += config.bottomBoostPublish;
+      }
+      if (action.type === "ENGAGE" || action.type === "TIP") {
+        action.priority += config.bottomAdjustEngagement;
+      }
+    }
+  }
+}

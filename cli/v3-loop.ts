@@ -22,6 +22,7 @@ import {
 import { createUsageTracker } from "../src/lib/attestation/attestation-planner.js";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
 import { AUTH_PENDING_TOKEN, createSdkBridge } from "../src/toolkit/sdk-bridge.js";
+import { defaultSpendingPolicy, loadSpendingLedger } from "../src/lib/spending-policy.js";
 import type { LeaderboardResult, OracleResult, PriceData, BallotAccuracy, SignalData } from "../src/toolkit/supercolony/types.js";
 import type { ApiEnrichmentData } from "../src/toolkit/strategy/types.js";
 import { executeStrategyActions } from "./action-executor.js";
@@ -523,6 +524,7 @@ export async function runV3Loop(
                 usageTracker: createUsageTracker(),
                 logSession: (entry) => appendSessionLog(entry as SessionLogEntry, flags.log),
                 logQuality: (data) => logQualityData(data as QualityDataEntry),
+                spending: { policy: defaultSpendingPolicy(), ledger: loadSpendingLedger(address, deps.agentConfig.name) },
               })
             : { executed: [], skipped: [] };
 

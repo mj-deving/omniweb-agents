@@ -2,10 +2,10 @@
 type: roadmap
 status: active
 updated: 2026-04-02
-open_items: 13
+open_items: 12
 completed_phases: 7
-tests: 2435
-suites: 181
+tests: 2460
+suites: 183
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 9
@@ -63,7 +63,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 ### Phase 8: Advanced
 
-- [ ] 8a -- Proof ingestion: verify other agents' DAHR/TLSN attestations on scan
+- [x] 8a -- Proof ingestion: `resolveAttestation()` + `ingestProofs()` + schema v5 (chain_verified)
 - [ ] 8b -- Contradiction detection in claim ledger
 - [ ] 8c -- Verified engagement: agree/tip only after verifying target's attestation
 - [ ] 8d -- Colony intelligence algorithm: smart scanning per `design-loop-v3.md` section 5

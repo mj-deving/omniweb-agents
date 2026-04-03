@@ -128,6 +128,41 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE)
 | SSE feed event cast without schema validation (`sse-feed.ts:135`) | Phase 8c | Add Zod schema for SSEPost |
 | Faithfulness gate has no chain verification dependency (by design, pre-publish) | N/A | Document that gate output is NOT chain-verified |
 
+### Deferred Evaluation (assessed as acceptable — revisit periodically)
+
+| Item | Original Assessment | Revisit When |
+|------|-------------------|--------------|
+| `normalize()` not shared across codebase — each module has local trim+lowercase | Pre-existing, large blast radius to consolidate | When adding new modules that need normalization |
+| `scoreAttestability` in thread-fan-out parallels `scoreClaim` in signal-first-pipeline | Intentionally different heuristics (attestability vs signal strength) | If scoring logic drifts or a unified scorer is needed |
+| Two priority mutation patterns (briefing boost + leaderboard adjustment) | Info — no abstraction needed for 2 sites | If a 3rd priority modifier is added |
+| `getRule` vs `findRule` near-duplicate in engine.ts | Pre-existing, `findRule` fabricates default for rejection logging | Next engine refactor |
+| Stringly-typed targetType ("post"\|"agent") acceptable for 2 values | TypeScript union enforces compile-time | If a 3rd target type is added |
+| Swallowed error in `resolveAgentToRecentPost` — no observer access | Function is a standalone helper, can't thread observer | If debugging engagement failures |
+| N+1 DB queries for agent profiles via `getAgentProfile` (uncached prepare per call) | Pre-existing pattern across colony modules | When profile count exceeds 50 per batch |
+| `db.prepare()` not cached across repeated `ingestProofs` calls | better-sqlite3 caches internally, LOW severity | If profiling shows prepare() as bottleneck |
+| Array copy in `planThreadFanOut` sort — necessary to avoid mutating input | Correct behavior, confirmed by reviewer | Never — this is right |
+| `applyLeaderboardAdjustment` toLowerCase per entry — negligible at <100 entries | O(N) on small N | If leaderboard exceeds 1000 agents |
+| Magic number '-48 hours' in `resolveAgentToRecentPost` | Acceptable hardcode for recency window | If window needs tuning per agent/config |
+| Inline `import(...)` type syntax in v3-loop.ts | Readability preference, not a bug | Next v3-loop refactor |
+| `Promise.allSettled` type annotation in v3-strategy-bridge | Trivial readability suggestion | Never — not blocking |
+| WHAT comments in proof-resolver.ts (2 inline comments restate code) | Cosmetic, function docstring already covers | Next code cleanup pass |
+| `resolveAttestation` swallows exception details in catch blocks | Acceptable — returns typed failure reason | If debugging chain resolution issues |
+| DAHR `compareProofToSnapshot` always returns "match" without URL check | Design choice: DAHR = hash-level trust, data not on-chain | If DAHR trust model changes |
+| Quartile math on small leaderboards (index 0 in 4 agents = top quartile) | Mathematically correct: rank 1 of 4 IS top quartile | Never — this is right |
+| Fabric design: no documented API auth/authorization | False positive — wallet-signed requests, documented in SDK reference | Never |
+| Fabric design: no encryption-at-rest for ColonyDatabase | Colony DB is disposable local cache per ADR-0017, not secrets | Never |
+| Fabric design: no multi-tenant data segregation | Single-agent system, no multi-tenancy requirement | If multi-agent support is added |
+| Fabric design: rate limiting undefined | False positive — fully implemented with hard clamping | Never |
+| Fabric design: document inconsistencies in phase7-design.md | Design doc shows iterative thought process, not blocking | Next doc cleanup |
+| Fabric 8a design: decouple verification from scanner as independent worker | Intentional: incremental in caller, not a separate service | If attestation volume exceeds scan budget |
+| Fabric 8a design: harden RPC client (mTLS, rate limiting, circuit breaker) | Generic infrastructure concern, SDK abstracts the chain | If running own RPC node |
+| Fabric 8a design: encrypt ColonyDB at rest | Same as above — disposable cache per ADR-0017 | Never |
+| SQL injection audit: all 63 queries clean | No issue — all parameterized | Continuous — check on every new query |
+| Secrets audit: no hardcoded keys, mnemonics, or API secrets | No issue — wallet loaded from file, never logged | Continuous |
+| Secrets audit: prototype pollution protected via safeParse on chain data | No issue — active protection in place | Continuous |
+| Error handling: no stack traces leaked, no secrets in observe() calls | No issue — consistent err.message pattern | Continuous |
+| Error handling: state-helpers parse error may leak partial content | Minor — key name already omitted | If state format becomes sensitive |
+
 ---
 
 ## Decision Log

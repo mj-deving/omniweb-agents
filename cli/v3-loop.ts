@@ -394,6 +394,7 @@ export async function runV3Loop(
         {
           apiEnrichment: state.strategyResults?.apiEnrichment as ApiEnrichmentData | undefined,
           calibration: state.strategyResults?.calibration as import("./v3-strategy-bridge.js").CalibrationState | undefined,
+          briefingContext: state.briefingContext,
         },
       );
       state.strategyResults = {

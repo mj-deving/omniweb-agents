@@ -32,6 +32,7 @@ import { preflight, selectSourceForTopicV2 } from "../src/lib/sources/policy.js"
 import { match } from "../src/lib/sources/matcher.js";
 import { getPost } from "../src/toolkit/colony/posts.js";
 import { checkClaimDedup, checkSelfDedup } from "../src/toolkit/colony/dedup.js";
+import { encodeVotePost, encodeBinaryPost, validateBetPayload, validateBinaryPayload, MAX_BET_AMOUNT } from "../src/toolkit/colony/vote-bet-codec.js";
 
 const MAX_SUMMARY_LENGTH = 1000;
 import {
@@ -405,6 +406,46 @@ export async function executePublishActions(
   };
 
   for (const action of actions) {
+    // Phase 8: VOTE/BET — lightweight publish via codec, no LLM needed
+    if (action.type === "VOTE" || action.type === "BET") {
+      if (deps.dryRun) {
+        deps.observe("insight", `${action.type} dry-run: ${action.reason}`, { actionType: action.type });
+        result.executed.push({ action, success: true });
+        continue;
+      }
+      try {
+        const metadata = action.metadata ?? {};
+        let encoded: { text: string; category: string; tags: string[] } | null = null;
+
+        if (action.type === "VOTE") {
+          const payload = validateBetPayload({ action: "HIVE_BET", ...metadata });
+          if (!payload) { result.skipped.push({ action, reason: "invalid VOTE payload" }); continue; }
+          encoded = encodeVotePost(payload);
+        } else {
+          const payload = validateBinaryPayload({ action: "HIVE_BINARY", ...metadata });
+          if (!payload) { result.skipped.push({ action, reason: "invalid BET payload" }); continue; }
+          encoded = encodeBinaryPost(payload);
+        }
+
+        const publishResult = await publishPost(deps.demos, {
+          text: encoded.text,
+          category: encoded.category,
+          tags: encoded.tags,
+          confidence: 50,
+        });
+        const amount = Math.min(Number(metadata.amount) || 0, MAX_BET_AMOUNT);
+        deps.observe("insight", `${action.type} published: ${publishResult.txHash} (${amount} DEM)`, {
+          actionType: action.type, txHash: publishResult.txHash,
+        });
+        result.executed.push({ action, success: true, txHash: publishResult.txHash });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        deps.observe("warning", `${action.type} failed: ${msg}`, { actionType: action.type });
+        result.executed.push({ action, success: false, error: msg });
+      }
+      continue;
+    }
+
     if (action.type !== "PUBLISH" && action.type !== "REPLY") {
       result.skipped.push({ action, reason: "unsupported action type" });
       continue;

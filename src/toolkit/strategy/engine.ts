@@ -489,6 +489,32 @@ export function decideActions(
     considered.push({ action, rule: predictionRule.name });
   }
 
+  // ── Phase 8b: Contradiction-Driven Disagree ───────────────────
+  const contradictionRule = getRule(config, "disagree_contradiction");
+  if (contradictionRule && context.intelligence?.contradictions) {
+    for (const contradiction of context.intelligence.contradictions) {
+      // Only generate REPLY if we have a supported value (evidence to back the disagreement)
+      if (contradiction.supportedValue === null) continue;
+
+      const action = createAction(
+        contradictionRule,
+        `Contradiction on ${contradiction.subject}/${contradiction.metric}: ${contradiction.claims.length} conflicting claims`,
+        {
+          target: contradiction.targetPostTxHash,
+          metadata: {
+            subject: contradiction.subject,
+            metric: contradiction.metric,
+            supportedValue: contradiction.supportedValue,
+            claimCount: contradiction.claims.length,
+          },
+        },
+      );
+
+      candidates.push({ action, rule: contradictionRule.name });
+      considered.push({ action, rule: contradictionRule.name });
+    }
+  }
+
   // Phase 7: Apply leaderboard-based priority adjustment before sorting
   if (config.leaderboardAdjustment?.enabled) {
     applyLeaderboardAdjustment(
@@ -529,6 +555,24 @@ export function decideActions(
         continue;
       }
 
+      remaining.dailyRemaining -= 1;
+      remaining.hourlyRemaining -= 1;
+      selected.push(candidate.action);
+      continue;
+    }
+
+    // Phase 8: VOTE/BET rate limiting — shares daily post budget + dedicated bet cap
+    if (candidate.action.type === "VOTE" || candidate.action.type === "BET") {
+      if (remaining.dailyRemaining <= 0) {
+        reject(rejected, findRule(config, candidate.rule), candidate.action, "Daily post limit exhausted");
+        continue;
+      }
+      const betsPerDay = config.rateLimits.betsPerDay ?? 3;
+      const betsUsed = selected.filter((s) => s.type === "VOTE" || s.type === "BET").length;
+      if (betsUsed >= betsPerDay) {
+        reject(rejected, findRule(config, candidate.rule), candidate.action, `Bet daily limit exhausted (${betsPerDay})`);
+        continue;
+      }
       remaining.dailyRemaining -= 1;
       remaining.hourlyRemaining -= 1;
       selected.push(candidate.action);

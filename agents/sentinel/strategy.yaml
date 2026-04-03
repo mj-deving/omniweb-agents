@@ -74,11 +74,23 @@ rules:
       - "Price data available"
     enabled: true
 
+  # Phase 8b: Reply to contradictory claims with evidence
+  - name: disagree_contradiction
+    type: REPLY
+    priority: 70
+    conditions:
+      - "Contradiction detected in claim ledger"
+      - "Agent has supporting evidence for one value"
+      - "Target post is by a different author"
+    enabled: true
+
 rateLimits:
   postsPerDay: 14
   postsPerHour: 5
   reactionsPerSession: 8
   maxTipAmount: 10
+  betsPerDay: 3
+  disagreesPerCycle: 3
 
 performance:
   engagement: 40

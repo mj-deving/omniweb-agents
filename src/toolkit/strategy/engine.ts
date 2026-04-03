@@ -133,8 +133,9 @@ export function applyLeaderboardAdjustment(
   if (!leaderboard?.agents?.length) return;
 
   const totalAgents = leaderboard.agents.length;
+  const normalizedOurAddress = normalize(ourAddress);
   const ourIndex = leaderboard.agents.findIndex(
-    (entry) => entry.address.toLowerCase() === ourAddress.toLowerCase(),
+    (entry) => normalize(entry.address) === normalizedOurAddress,
   );
   if (ourIndex === -1) return;
 
@@ -177,6 +178,9 @@ export function decideActions(
 
   // Compute verified topics once — used by engage_verified and reply_with_evidence
   const verifiedTopics = getVerifiedTopics(colonyState, evidenceIndex);
+
+  // Compute contributor median once — used by engage_verified and tip_valuable
+  const contributorMedian = computeMedian(colonyState.agents.topContributors.map((contributor) => contributor.avgReactions));
 
   const mentionsRule = getRule(config, "reply_to_mentions");
   if (mentionsRule) {
@@ -225,8 +229,6 @@ export function decideActions(
 
   const engageRule = getRule(config, "engage_verified");
   if (engageRule) {
-    const contributorMedian = computeMedian(colonyState.agents.topContributors.map((contributor) => contributor.avgReactions));
-
     if (verifiedTopics.length > 0) {
       for (const contributor of colonyState.agents.topContributors) {
         if (contributor.avgReactions < contributorMedian) {
@@ -286,6 +288,8 @@ export function decideActions(
     // Underperforming (offset < 0) → lower bar (publish more to build volume)
     const calibrationOffset = context.calibration?.offset ?? 0;
     const adjustedRichnessThreshold = Math.max(50, MIN_PUBLISH_EVIDENCE_RICHNESS + calibrationOffset * 5);
+    const briefingLower = context.briefingContext?.toLowerCase();
+    const briefingBoost = config.briefingBoost ?? 10;
 
     for (const gap of colonyState.gaps.underservedTopics) {
       const matchingEvidence = (evidenceIndex.get(normalize(gap.topic)) ?? [])
@@ -312,8 +316,8 @@ export function decideActions(
       );
 
       // Phase 7: Briefing-aligned boost — topics mentioned in colony report get priority
-      if (context.briefingContext && context.briefingContext.toLowerCase().includes(normalize(gap.topic))) {
-        action.priority += 10;
+      if (briefingLower?.includes(normalize(gap.topic))) {
+        action.priority += briefingBoost;
         action.reason += " (briefing-aligned)";
       }
 
@@ -324,8 +328,6 @@ export function decideActions(
 
   const tipRule = getRule(config, "tip_valuable");
   if (tipRule) {
-    const contributorMedian = computeMedian(colonyState.agents.topContributors.map((contributor) => contributor.avgReactions));
-
     for (const contributor of colonyState.agents.topContributors) {
       if (contributor.avgReactions <= contributorMedian) {
         continue;

@@ -55,6 +55,8 @@ export interface StrategyConfig {
     /** Minimum confidence for consensus participation (default: 40) */
     minConfidence: number;
   };
+  /** Phase 7: Priority boost for topics mentioned in colony briefing (default: 10). */
+  briefingBoost?: number;
   /** Phase 7: Leaderboard-based priority adjustment (optional). */
   leaderboardAdjustment?: LeaderboardAdjustmentConfig;
 }

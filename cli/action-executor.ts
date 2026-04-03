@@ -28,8 +28,8 @@ export function resolveAgentToRecentPost(
   try {
     const stmt = colonyDb.prepare(
       `SELECT tx_hash FROM posts
-       WHERE author = ? AND created_at > datetime('now', '-48 hours')
-       ORDER BY created_at DESC LIMIT 1`,
+       WHERE author = ? AND timestamp > datetime('now', '-48 hours')
+       ORDER BY timestamp DESC LIMIT 1`,
     );
     const row = stmt.get(agentAddress) as { tx_hash: string } | undefined;
     return row?.tx_hash ?? null;

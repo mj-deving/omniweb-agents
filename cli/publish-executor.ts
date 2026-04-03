@@ -34,6 +34,7 @@ import { getPost } from "../src/toolkit/colony/posts.js";
 import { checkClaimDedup, checkSelfDedup } from "../src/toolkit/colony/dedup.js";
 import { encodeVotePost, encodeBinaryPost, validateBetPayload, validateBinaryPayload, MAX_BET_AMOUNT } from "../src/toolkit/colony/vote-bet-codec.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
+import { checkSessionBudget, recordSpend, saveSpendingLedger, type SpendingLedger, type SpendingPolicyConfig } from "../src/lib/spending-policy.js";
 
 const MAX_SUMMARY_LENGTH = 1000;
 import {
@@ -99,6 +100,8 @@ export interface PublishExecutorDeps {
   usageTracker?: SourceUsageTracker;
   logSession: (entry: unknown) => void;
   logQuality: (data: unknown) => void;
+  /** Optional spending guard for VOTE/BET session budget enforcement */
+  spending?: { policy: SpendingPolicyConfig; ledger: SpendingLedger };
 }
 
 const MIN_TEXT_LENGTH = 200;
@@ -420,6 +423,24 @@ export async function executePublishActions(
         result.skipped.push({ action, reason: betRateError.message });
         continue;
       }
+      // Session budget guard — reject if DEM spend would exceed daily/session cap
+      const betAmount = Math.min(Number(action.metadata?.amount) || 0, MAX_BET_AMOUNT);
+      if (!Number.isFinite(betAmount) || betAmount <= 0) {
+        result.skipped.push({ action, reason: `Invalid bet amount: ${action.metadata?.amount}` });
+        continue;
+      }
+      if (!deps.spending) {
+        result.skipped.push({ action, reason: "No spending policy configured — cannot execute bet" });
+        continue;
+      }
+      const budgetDecision = checkSessionBudget(betAmount, deps.spending.policy, deps.spending.ledger);
+      if (!budgetDecision.allowed) {
+        result.skipped.push({ action, reason: `Budget rejected: ${budgetDecision.reason}` });
+        deps.observe("insight", `${action.type} skipped: ${budgetDecision.reason}`, {
+          actionType: action.type, amount: betAmount,
+        });
+        continue;
+      }
       try {
         const metadata = action.metadata ?? {};
         let encoded: { text: string; category: string; tags: string[] } | null = null;
@@ -442,10 +463,22 @@ export async function executePublishActions(
           tags: encoded.tags,
           confidence: 50,
         });
-        const amount = Math.min(Number(metadata.amount) || 0, MAX_BET_AMOUNT);
-        deps.observe("insight", `${action.type} published: ${publishResult.txHash} (${amount} DEM)`, {
+        deps.observe("insight", `${action.type} published: ${publishResult.txHash} (${betAmount} DEM)`, {
           actionType: action.type, txHash: publishResult.txHash,
         });
+        // Record spend in ledger after successful publish
+        if (deps.spending?.ledger && betAmount > 0) {
+          recordSpend({
+            timestamp: new Date().toISOString(),
+            amount: betAmount,
+            recipient: "bet-pool",
+            postTxHash: publishResult.txHash,
+            type: "bet",
+            dryRun: false,
+            agent: deps.agentConfig.name,
+          }, deps.spending.ledger);
+          saveSpendingLedger(deps.spending.ledger, deps.agentConfig.name);
+        }
         result.executed.push({ action, success: true, txHash: publishResult.txHash });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

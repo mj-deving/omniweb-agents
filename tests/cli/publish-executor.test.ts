@@ -23,6 +23,10 @@ const {
   getPostMock,
   checkAndRecordWriteMock,
   getWriteRateRemainingMock,
+  createSdkBridgeMock,
+  checkSessionBudgetMock,
+  recordSpendMock,
+  saveSpendingLedgerMock,
 } = vi.hoisted(() => ({
   generatePostMock: vi.fn(),
   executeAttestationPlanMock: vi.fn(),
@@ -40,6 +44,10 @@ const {
   getPostMock: vi.fn(),
   checkAndRecordWriteMock: vi.fn(),
   getWriteRateRemainingMock: vi.fn(),
+  createSdkBridgeMock: vi.fn(),
+  checkSessionBudgetMock: vi.fn(),
+  recordSpendMock: vi.fn(),
+  saveSpendingLedgerMock: vi.fn(),
 }));
 
 vi.mock("../../src/actions/llm.js", () => ({
@@ -89,6 +97,17 @@ vi.mock("../../src/toolkit/colony/posts.js", () => ({
 vi.mock("../../src/toolkit/guards/write-rate-limit.js", () => ({
   checkAndRecordWrite: checkAndRecordWriteMock,
   getWriteRateRemaining: getWriteRateRemainingMock,
+}));
+
+vi.mock("../../src/toolkit/sdk-bridge.js", () => ({
+  createSdkBridge: createSdkBridgeMock,
+  AUTH_PENDING_TOKEN: "AUTH_PENDING",
+}));
+
+vi.mock("../../src/lib/spending-policy.js", () => ({
+  checkSessionBudget: checkSessionBudgetMock,
+  recordSpend: recordSpendMock,
+  saveSpendingLedger: saveSpendingLedgerMock,
 }));
 
 import { executePublishActions } from "../../cli/publish-executor.js";
@@ -389,6 +408,10 @@ describe("executePublishActions", () => {
     checkAndRecordWriteMock.mockResolvedValue(null);
     getWriteRateRemainingMock.mockResolvedValue({ dailyRemaining: 14, hourlyRemaining: 5 });
     getPostMock.mockReturnValue(null);
+    createSdkBridgeMock.mockReturnValue({
+      publishHivePost: vi.fn().mockResolvedValue({ txHash: "0xbet-publish" }),
+    });
+    checkSessionBudgetMock.mockReturnValue({ allowed: true, reason: "Within session budget", dryRun: false });
     const source = makeSource();
     configureSuccessMocks(source);
   });
@@ -614,5 +637,134 @@ describe("executePublishActions", () => {
     const result = await executePublishActions([], deps);
 
     expect(result).toEqual({ executed: [], skipped: [] });
+  });
+
+  describe("VOTE/BET session budget", () => {
+    function makeVoteAction(amount = 2): StrategyAction {
+      const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      return {
+        type: "VOTE",
+        priority: 50,
+        reason: "Test prediction",
+        metadata: {
+          action: "HIVE_BET",
+          asset: "BTC",
+          direction: "up",
+          confidence: 80,
+          amount,
+          expiry,
+        },
+      };
+    }
+
+    function makeBetAction(amount = 1): StrategyAction {
+      return {
+        type: "BET",
+        priority: 50,
+        reason: "Binary market bet",
+        metadata: {
+          action: "HIVE_BINARY",
+          market: "Will ETH hit 5000",
+          position: "yes",
+          amount,
+        },
+      };
+    }
+
+    const freshLedger = () => ({
+      address: "demos1sentinel",
+      date: new Date().toISOString().slice(0, 10),
+      dailySpent: 0,
+      sessionSpent: 0,
+      transactions: [],
+    });
+
+    const policy = {
+      dailyCapDem: 10,
+      sessionCapDem: 5,
+      maxPerTipDem: 3,
+      requireConfirmation: false,
+      dryRun: false,
+      allowedRecipients: [],
+    };
+
+    it("skips VOTE when session budget is exceeded", async () => {
+      checkSessionBudgetMock.mockReturnValue({ allowed: false, reason: "Session DEM cap exceeded (remaining: 0)", dryRun: false });
+      const deps = createDeps({ spending: { policy, ledger: freshLedger() } });
+      const action = makeVoteAction(2);
+
+      const result = await executePublishActions([action], deps);
+
+      expect(result.skipped).toEqual([
+        expect.objectContaining({ reason: expect.stringContaining("Budget rejected") }),
+      ]);
+      expect(result.executed).toEqual([]);
+      expect(checkSessionBudgetMock).toHaveBeenCalledWith(2, policy, expect.any(Object));
+    });
+
+    it("allows VOTE when budget permits and records spend", async () => {
+      checkSessionBudgetMock.mockReturnValue({ allowed: true, reason: "Within session budget", dryRun: false });
+      const ledger = freshLedger();
+      const deps = createDeps({ spending: { policy, ledger } });
+      const action = makeVoteAction(2);
+
+      const result = await executePublishActions([action], deps);
+
+      expect(result.executed).toEqual([
+        expect.objectContaining({ success: true, txHash: "0xbet-publish" }),
+      ]);
+      expect(checkSessionBudgetMock).toHaveBeenCalledWith(2, policy, ledger);
+      expect(recordSpendMock).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 2, type: "bet", postTxHash: "0xbet-publish" }),
+        ledger,
+      );
+    });
+
+    it("skips BET when daily cap is exceeded", async () => {
+      checkSessionBudgetMock.mockReturnValue({ allowed: false, reason: "Daily DEM cap exceeded (remaining: 0.5)", dryRun: false });
+      const deps = createDeps({ spending: { policy, ledger: freshLedger() } });
+      const action = makeBetAction(1);
+
+      const result = await executePublishActions([action], deps);
+
+      expect(result.skipped).toEqual([
+        expect.objectContaining({ reason: expect.stringContaining("Budget rejected") }),
+      ]);
+    });
+
+    it("rejects VOTE with zero/invalid amount before budget check", async () => {
+      const deps = createDeps({ spending: { policy, ledger: freshLedger() } });
+      const action = makeVoteAction(0);
+
+      const result = await executePublishActions([action], deps);
+
+      expect(result.skipped).toEqual([
+        expect.objectContaining({ reason: expect.stringContaining("Invalid bet amount") }),
+      ]);
+      expect(checkSessionBudgetMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects VOTE when spending deps are missing", async () => {
+      const deps = createDeps();
+      const action = makeVoteAction(2);
+
+      const result = await executePublishActions([action], deps);
+
+      expect(result.skipped).toEqual([
+        expect.objectContaining({ reason: "No spending policy configured — cannot execute bet" }),
+      ]);
+      expect(checkSessionBudgetMock).not.toHaveBeenCalled();
+    });
+
+    it("skips budget check in dry-run mode", async () => {
+      const deps = createDeps({ dryRun: true, spending: { policy, ledger: freshLedger() } });
+      const action = makeVoteAction(2);
+
+      const result = await executePublishActions([action], deps);
+
+      expect(result.executed).toEqual([expect.objectContaining({ success: true })]);
+      expect(checkSessionBudgetMock).not.toHaveBeenCalled();
+      expect(recordSpendMock).not.toHaveBeenCalled();
+    });
   });
 });

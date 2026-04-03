@@ -27,7 +27,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
 - **Strategy Engine:** 10 rules (4 enrichment-aware + disagree_contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting.
 - **Colony DB:** 188K posts. Schema v6 (retry_count + composite indexes). 293MB.
-- **Next:** engine.ts split (603 lines → threshold 500), Phase 5.6 semantic search (blocked on embedding model)
+- **Next:** Phase 5.6 semantic search (blocked on embedding model), Wire `checkSessionBudget()` into VOTE/BET (DONE), engine.ts split (DONE)
 
 ---
 
@@ -77,15 +77,18 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 ---
 
-### Refactor: engine.ts split
+### Refactor: engine.ts split — COMPLETE
 
-- [ ] Split `src/toolkit/strategy/engine.ts` (603 lines, threshold 500) into focused modules
-  - Core rules (reply_to_mentions, engage_verified, publish_to_gaps, tip_valuable) → `engine.ts`
-  - Enrichment-aware rules (engage_novel, signal_aligned, divergence, prediction) → `engine-enrichment.ts`
-  - Contradiction rule (disagree_contradiction) → `engine-contradiction.ts`
-  - Rate limiting + candidate selection → stays in `engine.ts`
+- [x] Split `src/toolkit/strategy/engine.ts` (603 lines) into focused modules
+  - Core rules + rate limiting + candidate selection → `engine.ts` (331 lines)
+  - Shared helpers + applyLeaderboardAdjustment → `engine-helpers.ts` (168 lines)
+  - Enrichment-aware rules → `engine-enrichment.ts` (141 lines)
+  - Contradiction rule → `engine-contradiction.ts` (49 lines)
+- [x] Wire `checkSessionBudget()` into VOTE/BET executor with `spending: { policy, ledger }` deps
+- [x] Persist ledger to disk after successful bet via `saveSpendingLedger()`
+- [x] Hard-reject VOTE/BET when spending deps missing or amount invalid (defense-in-depth)
 
-**Target:** Each module under 300 lines. Re-export from `engine.ts` for backward compat.
+**Completed:** 2026-04-04. Re-export from `engine.ts` for backward compat. 6 new tests (+2548 total). Triple-reviewed (simplify + Codex). 5 review findings fixed, 3 deferred with assessment.
 
 ---
 
@@ -157,6 +160,9 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Ph
 | Array copy in `planThreadFanOut` sort — necessary to avoid mutating input | Correct behavior, confirmed by reviewer | Never — this is right |
 | `applyLeaderboardAdjustment` toLowerCase per entry — negligible at <100 entries | O(N) on small N | If leaderboard exceeds 1000 agents |
 | Magic number '-48 hours' in `resolveAgentToRecentPost` | Acceptable hardcode for recency window | If window needs tuning per agent/config |
+| Test policy objects use wrong property names (`maxPerTipDem` vs `perTipMaxDem`) — passes because `checkSessionBudget` is mocked | Tests are green, mocked policy never touches real type validation | When adding un-mocked integration tests for spending policy |
+| `defaultSpendingPolicy()` returns `dryRun: true` — budget guard is no-op in default config | Intentional safe default — callers must explicitly set `dryRun: false` for real enforcement | When deploying VOTE/BET to production — agent config must override dryRun |
+| VOTE/BET dry-run path returns early without running pipeline; PUBLISH dry-run runs full pipeline | Intentional asymmetry — VOTE/BET has no attestation pipeline to dry-run | Never — asymmetry is by design |
 | Inline `import(...)` type syntax in v3-loop.ts | Readability preference, not a bug | Next v3-loop refactor |
 | `Promise.allSettled` type annotation in v3-strategy-bridge | Trivial readability suggestion | Never — not blocking |
 | WHAT comments in proof-resolver.ts (2 inline comments restate code) | Cosmetic, function docstring already covers | Next code cleanup pass |

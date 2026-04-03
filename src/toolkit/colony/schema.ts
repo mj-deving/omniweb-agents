@@ -2,7 +2,7 @@ import DatabaseConstructor from "better-sqlite3";
 
 export type ColonyDatabase = InstanceType<typeof DatabaseConstructor>;
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 const BASE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS _meta (
@@ -40,9 +40,16 @@ CREATE TABLE IF NOT EXISTS attestations (
   method TEXT NOT NULL CHECK(method IN ('DAHR', 'TLSN')),
   data_snapshot TEXT,
   attested_at TEXT,
+  chain_verified INTEGER DEFAULT 0,
+  chain_method TEXT,
+  chain_data TEXT,
+  resolved_at TEXT,
+  retry_count INTEGER DEFAULT 0,
   FOREIGN KEY (post_tx_hash) REFERENCES posts(tx_hash)
 );
 CREATE INDEX IF NOT EXISTS idx_attestations_post ON attestations(post_tx_hash);
+CREATE INDEX IF NOT EXISTS idx_attestations_unresolved ON attestations(chain_verified) WHERE chain_verified = 0;
+CREATE INDEX IF NOT EXISTS idx_attestations_post_verified ON attestations(post_tx_hash, chain_verified);
 
 CREATE TABLE IF NOT EXISTS claim_ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,6 +129,12 @@ CREATE INDEX IF NOT EXISTS idx_hive_reactions_block ON hive_reactions(block_numb
 `;
 
 type Migration = (db: ColonyDatabase) => void;
+
+/** Check whether a column exists on a table (for idempotent ALTER TABLE migrations). */
+function hasColumn(db: ColonyDatabase, table: string, column: string): boolean {
+  const cols = db.pragma(`table_info(${table})`) as Array<{ name: string }>;
+  return cols.some((c) => c.name === column);
+}
 
 const MIGRATIONS: Record<number, Migration> = {
   1: (db) => {
@@ -230,16 +243,33 @@ const MIGRATIONS: Record<number, Migration> = {
   5: (db) => {
     // Phase 8a: Proof ingestion — on-chain verification of other agents' attestations.
     // chain_verified tri-state: 0=unresolved, 1=verified on chain, -1=permanent failure
-    db.exec(`
-      ALTER TABLE attestations ADD COLUMN chain_verified INTEGER DEFAULT 0;
-      ALTER TABLE attestations ADD COLUMN chain_method TEXT;
-      ALTER TABLE attestations ADD COLUMN chain_data TEXT;
-      ALTER TABLE attestations ADD COLUMN resolved_at TEXT;
-    `);
+    // Idempotent: columns may already exist from BASE_SCHEMA_SQL on fresh DBs.
+    for (const col of [
+      ["chain_verified", "INTEGER DEFAULT 0"],
+      ["chain_method", "TEXT"],
+      ["chain_data", "TEXT"],
+      ["resolved_at", "TEXT"],
+    ]) {
+      if (!hasColumn(db, "attestations", col[0])) {
+        db.exec(`ALTER TABLE attestations ADD COLUMN ${col[0]} ${col[1]};`);
+      }
+    }
     // Partial index for efficient batch queries on unresolved attestations
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_attestations_unresolved
         ON attestations(chain_verified) WHERE chain_verified = 0;
+    `);
+  },
+  6: (db) => {
+    // Phase 8b: Retry tracking for proof ingestion + composite indexes for verified engagement.
+    // Idempotent: column may already exist from BASE_SCHEMA_SQL on fresh DBs.
+    if (!hasColumn(db, "attestations", "retry_count")) {
+      db.exec(`ALTER TABLE attestations ADD COLUMN retry_count INTEGER DEFAULT 0;`);
+    }
+    // Composite index for efficient verified-count-by-author queries (Feature 3/4)
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_attestations_post_verified
+        ON attestations(post_tx_hash, chain_verified);
     `);
   },
 };

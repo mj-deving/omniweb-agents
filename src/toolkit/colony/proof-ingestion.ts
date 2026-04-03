@@ -26,6 +26,8 @@ export interface IngestionResult {
 export interface IngestionOptions {
   /** Max attestations to resolve per batch (default: 20). */
   limit?: number;
+  /** Max retries before marking as CHAIN_FAILED (default: 5). */
+  maxRetries?: number;
 }
 
 interface UnresolvedRow {
@@ -35,9 +37,11 @@ interface UnresolvedRow {
   method: string;
   data_snapshot: string | null;
   post_author: string;
+  retry_count: number;
 }
 
 const DEFAULT_LIMIT = 20;
+const DEFAULT_MAX_RETRIES = 5;
 
 /**
  * Compare chain-resolved URL against self-reported URL by hostname.
@@ -82,16 +86,17 @@ export async function ingestProofs(
   options?: IngestionOptions,
 ): Promise<IngestionResult> {
   const limit = options?.limit ?? DEFAULT_LIMIT;
+  const maxRetries = options?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const result: IngestionResult = { resolved: 0, verified: 0, failed: 0, skipped: 0 };
 
   const rows = db.prepare(
-    `SELECT a.id, a.attestation_tx_hash, a.source_url, a.method, a.data_snapshot, p.author as post_author
+    `SELECT a.id, a.attestation_tx_hash, a.source_url, a.method, a.data_snapshot, a.retry_count, p.author as post_author
      FROM attestations a
      JOIN posts p ON a.post_tx_hash = p.tx_hash
-     WHERE a.chain_verified = 0
+     WHERE a.chain_verified = 0 AND a.retry_count < ?
      ORDER BY a.id DESC
      LIMIT ?`,
-  ).all(limit) as UnresolvedRow[];
+  ).all(maxRetries, limit) as UnresolvedRow[];
 
   if (rows.length === 0) {
     return result;
@@ -115,6 +120,16 @@ export async function ingestProofs(
      WHERE id = ?`,
   );
 
+  const retryStmt = db.prepare(
+    `UPDATE attestations SET retry_count = retry_count + 1 WHERE id = ?`,
+  );
+
+  const retryExhaustStmt = db.prepare(
+    `UPDATE attestations
+     SET chain_verified = ?, chain_data = ?, retry_count = retry_count + 1, resolved_at = ?
+     WHERE id = ?`,
+  );
+
   const now = new Date().toISOString();
 
   for (let i = 0; i < rows.length; i++) {
@@ -122,9 +137,15 @@ export async function ingestProofs(
     const settledResult = settled[i];
 
     // Promise rejected = unexpected bug in resolveAttestation (it has its own try/catch for RPC).
-    // Leave as retryable (0) so the row gets another chance after a bugfix deployment.
+    // Increment retry_count so it eventually stops; mark CHAIN_FAILED if retries exhausted.
     if (settledResult.status === "rejected") {
-      result.skipped += 1;
+      if (row.retry_count + 1 >= maxRetries) {
+        retryExhaustStmt.run(CHAIN_FAILED, JSON.stringify({ reason: "retries_exhausted" }), now, row.id);
+        result.failed += 1;
+      } else {
+        retryStmt.run(row.id);
+        result.skipped += 1;
+      }
       continue;
     }
 
@@ -135,8 +156,14 @@ export async function ingestProofs(
         updateStmt.run(CHAIN_FAILED, null, JSON.stringify({ reason: resolution.reason }), now, row.id);
         result.failed += 1;
       } else {
-        // Retryable (rpc_error, rpc_unavailable, tx_not_confirmed) — leave as 0 for next batch
-        result.skipped += 1;
+        // Retryable (rpc_error, rpc_unavailable, tx_not_confirmed) — increment retry_count
+        if (row.retry_count + 1 >= maxRetries) {
+          retryExhaustStmt.run(CHAIN_FAILED, JSON.stringify({ reason: "retries_exhausted", lastReason: resolution.reason }), now, row.id);
+          result.failed += 1;
+        } else {
+          retryStmt.run(row.id);
+          result.skipped += 1;
+        }
       }
       continue;
     }

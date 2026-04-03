@@ -87,6 +87,8 @@ performance:
       postsPerHour: 5,
       reactionsPerSession: 8,
       maxTipAmount: 10,
+      betsPerDay: 3,
+      disagreesPerCycle: 3,
     });
   });
 

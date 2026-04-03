@@ -230,6 +230,24 @@ export async function runV3Loop(
       // Fetch full chain posts via SDK and ingest into colony DB.
       await ingestChainPostsIntoColonyDb(bridge.db, sdkBridge, deps.observe);
 
+      // Proof ingestion: resolve unverified attestations against the chain
+      try {
+        const { createChainReaderFromSdk } = await import("../src/toolkit/colony/proof-ingestion-rpc-adapter.js");
+        const { ingestProofs } = await import("../src/toolkit/colony/proof-ingestion.js");
+        const chainReader = createChainReaderFromSdk(demos, { concurrency: 5 });
+        const ingestionResult = await ingestProofs(bridge.db, chainReader, { limit: 20 });
+        if (ingestionResult.resolved > 0 || ingestionResult.failed > 0) {
+          deps.observe("insight", `Proof ingestion: ${ingestionResult.verified} verified, ${ingestionResult.failed} failed, ${ingestionResult.skipped} skipped`, {
+            source: "v3-loop:proofIngestion",
+            ...ingestionResult,
+          });
+        }
+      } catch (err: unknown) {
+        deps.observe("warning", `Proof ingestion failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`, {
+          source: "v3-loop:proofIngestion",
+        });
+      }
+
       // Full recompute of agent profiles from colony DB.
       // Incremental (since param) double-counts overlapping windows — full recompute is correct.
       // 188K posts GROUP BY author takes <1s on SQLite WAL.
@@ -302,6 +320,32 @@ export async function runV3Loop(
           sourcesFetched,
           sourcesCached,
         });
+      }
+
+      // ── SSE Feed (optional, time-bounded) ── Feature 7
+      if (sdkBridge.apiAccess === "authenticated") {
+        try {
+          const { readSSESense } = await import("./sse-sense-adapter.js");
+          const sseResult = await readSSESense(
+            bridge.db,
+            sdkBridge.apiCall.bind(sdkBridge),
+            deps.observe,
+            { timeoutMs: 5_000, maxEvents: 100 },
+          );
+          if (sseResult.postsIngested > 0) {
+            deps.observe("insight", `SSE sense: ${sseResult.postsIngested} new posts ingested (${sseResult.source})`, {
+              source: "v3-loop:sseSense",
+              sseSource: sseResult.source,
+              postsReceived: sseResult.postsReceived,
+              postsIngested: sseResult.postsIngested,
+              elapsedMs: sseResult.elapsedMs,
+            });
+          }
+        } catch (err: unknown) {
+          deps.observe("warning", `SSE sense failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`, {
+            source: "v3-loop:sseSense",
+          });
+        }
       }
 
       const senseResult = sense(bridge, sourceView);
@@ -425,7 +469,10 @@ export async function runV3Loop(
 
       if (planResult.actions.length > 0 && !flags.shadow) {
         const light = planResult.actions.filter((action) => action.type === "ENGAGE" || action.type === "TIP");
-        const heavy = planResult.actions.filter((action) => action.type === "PUBLISH" || action.type === "REPLY");
+        // VOTE/BET route through heavy path (publish-executor) — Codex review fix H1
+        const heavy = planResult.actions.filter((action) =>
+          action.type === "PUBLISH" || action.type === "REPLY" || action.type === "VOTE" || action.type === "BET",
+        );
 
         const lightResult: LightExecutionResult =
           light.length > 0

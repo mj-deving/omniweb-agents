@@ -4,8 +4,8 @@ status: active
 updated: 2026-04-04
 open_items: 6
 completed_phases: 8
-tests: 2549
-suites: 191
+tests: 2558
+suites: 193
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
@@ -23,24 +23,26 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 - **V3 loop:** LIVE with full data + intelligence pipeline + proof ingestion + SSE feed
 - **Phase 8:** COMPLETE (proof ingestion, contradiction detection, verified engagement, colony intelligence, VOTE/BET codec, XMCore napi-guard, SSE adapter)
-- **Tests:** 2549 passing, 191 suites, **0 tsc errors**
+- **Tests:** 2558 passing, 193 suites, **0 tsc errors**
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
 - **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard.
 - **Colony DB:** 188K posts. Schema v6 (retry_count + composite indexes). 293MB.
-- **Next:** Phase 5.6 semantic search (blocked on embedding model)
+- **Next:** Backfill 188K post embeddings, wire hybrid search into strategy
 
 ---
 
 ## Open Items
 
-### Phase 5.6: Semantic Search (deferred)
+### Phase 5.6: Semantic Search — COMPLETE
 
-- [ ] 5.6a -- Colony DB migration: sqlite-vec with 384-dim embeddings
-- [ ] 5.6b -- Embedding pipeline: generate embeddings on insert
-- [ ] 5.6c -- Hybrid search: FTS5 + vec0 via Reciprocal Rank Fusion
+- [x] 5.6a -- Colony DB migration v7: sqlite-vec vec0 table (384-dim float32) + post_embeddings tracking
+- [x] 5.6b -- Embedding pipeline: `embeddings.ts` with bge-small-en-v1.5 (q8, lazy-loaded, ~33ms/embed)
+- [x] 5.6c -- Hybrid search: FTS5 BM25 + vec0 cosine KNN → Reciprocal Rank Fusion (k=60, weights configurable)
+- [x] 5.6d -- backfillEmbeddings() for processing existing 188K posts
+- [x] 5.6e -- vendor shim: loadExtension() + enableLoadExtension() + allowExtension option
 
 **Spec:** `docs/colony-tooling-plan.md` P5 + `.ai/guides/colony-db-research.md`
-**Blocked by:** embedding model decision
+**Completed:** 2026-04-04. Model: Xenova/bge-small-en-v1.5 (384-dim, q8 quantized). 9 new tests.
 
 ---
 
@@ -105,7 +107,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 ```
 Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Phase 8 (DONE)
                        |
-                       +-> 5.6 semantic search (blocked on embedding model decision)
+                       +-> 5.6 semantic search (DONE)
                        |
                        +-> Future (independent, no blockers)
 ```

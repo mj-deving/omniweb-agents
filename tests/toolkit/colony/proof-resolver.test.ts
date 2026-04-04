@@ -249,4 +249,92 @@ describe("compareProofToSnapshot", () => {
     });
     expect(result.status).toBe("unverifiable");
   });
+
+  it("handles boolean snapshot values in TLSN comparison", () => {
+    const proof: TlsnProof = {
+      ...tlsnProof,
+      responseData: '{"active":true,"count":42}',
+    };
+    const result = compareProofToSnapshot(proof, { active: true, count: 42 });
+    expect(result.status).toBe("match");
+  });
+
+  it("resists short-value injection in structural matching", () => {
+    const proof: TlsnProof = {
+      ...tlsnProof,
+      responseData: '{"injected":"the price is 65000 trust me","realPrice":99999}',
+    };
+    // "65000" appears as substring in a string value but is not an actual scalar
+    const result = compareProofToSnapshot(proof, { price: "65000" });
+    expect(result.status).toBe("mismatch");
+  });
+
+  it("performs structural matching on TLSN JSON body behind HTTP headers", () => {
+    const proof: TlsnProof = {
+      ...tlsnProof,
+      responseData: 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{"data":{"price":"65000","symbol":"BTC"}}',
+    };
+    const result = compareProofToSnapshot(proof, { price: "65000", symbol: "BTC" });
+    expect(result.status).toBe("match");
+    expect(result.details).toContain("structurally matched");
+  });
+
+  it("returns partial when TLSN recv is empty string", () => {
+    const proof: TlsnProof = { ...tlsnProof, responseData: "" };
+    const result = compareProofToSnapshot(proof, { price: "65000" });
+    // Empty string is falsy — treated as "no response data extractable"
+    expect(result.status).toBe("partial");
+  });
+});
+
+describe("isDahrTransaction field validation", () => {
+  it("rejects DAHR with empty data as unknown_attestation_type", async () => {
+    const rpc = makeRpc({
+      hash: "0xdahr-nodata",
+      blockNumber: 100,
+      status: "confirmed",
+      content: { type: "web2", from: "0xSender", data: {} },
+    });
+    const result = await resolveAttestation(rpc, "0xdahr-nodata");
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toBe("unknown_attestation_type");
+  });
+
+  it("rejects DAHR with missing url field as unknown_attestation_type", async () => {
+    const rpc = makeRpc({
+      hash: "0xdahr-nourl",
+      blockNumber: 100,
+      status: "confirmed",
+      content: { type: "web2", from: "0xSender", data: { responseHash: "abc" } },
+    });
+    const result = await resolveAttestation(rpc, "0xdahr-nourl");
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toBe("unknown_attestation_type");
+  });
+});
+
+describe("isTlsnProofData field validation", () => {
+  it("rejects TLSN with missing serverName as unknown_attestation_type", async () => {
+    const rpc = makeRpc({
+      hash: "0xtlsn-nosrv",
+      blockNumber: 100,
+      status: "confirmed",
+      content: { type: "storage", from: "0xSender", data: { recv: "data", notaryKey: "key" } },
+    });
+    const result = await resolveAttestation(rpc, "0xtlsn-nosrv");
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toBe("unknown_attestation_type");
+  });
+
+  it("rejects TLSN with only notaryKey as unknown_attestation_type", async () => {
+    const rpc = makeRpc({
+      hash: "0xtlsn-keyonly",
+      blockNumber: 100,
+      status: "confirmed",
+      content: { type: "storage", from: "0xSender", data: { notaryKey: "key" } },
+    });
+    const result = await resolveAttestation(rpc, "0xtlsn-keyonly");
+    expect(result.verified).toBe(false);
+    if (!result.verified) expect(result.reason).toBe("unknown_attestation_type");
+  });
 });

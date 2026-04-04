@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { findContradictions, findDuplicateClaims, getClaimsByAuthor, getClaimsByPost, insertClaim } from "../../../src/toolkit/colony/claims.js";
+import { findContradictions, findDuplicateClaims, getClaimsByAuthor, getClaimsByPost, insertClaim, reconcileClaimVerification } from "../../../src/toolkit/colony/claims.js";
 import { insertPost } from "../../../src/toolkit/colony/posts.js";
 import { initColonyCache } from "../../../src/toolkit/colony/schema.js";
 
@@ -180,5 +180,104 @@ describe("colony claims", () => {
       "0xpost-2",
       "0xpost-1",
     ]);
+  });
+});
+
+describe("reconcileClaimVerification", () => {
+  let db: ReturnType<typeof initColonyCache>;
+
+  beforeEach(() => {
+    db = initColonyCache(":memory:");
+    insertPost(db, {
+      txHash: "0xpost-r1",
+      author: "demos1alice",
+      blockNumber: 100,
+      timestamp: "2026-03-31T10:00:00.000Z",
+      replyTo: null,
+      tags: [],
+      text: "Reconcile test",
+      rawData: {},
+    });
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it("downgrades verified claims when attestation chain_verified is -1", () => {
+    insertClaim(db, {
+      subject: "bitcoin",
+      metric: "price",
+      value: 100,
+      unit: "USD",
+      direction: null,
+      chain: "eth:1",
+      address: null,
+      market: null,
+      entityId: null,
+      dataTimestamp: null,
+      postTxHash: "0xpost-r1",
+      author: "demos1alice",
+      claimedAt: "2026-03-31T10:00:00.000Z",
+      attestationTxHash: "0xatt-fail",
+      verified: true,
+      verificationResult: "matched",
+      stale: false,
+    });
+
+    // Insert a failed attestation
+    db.prepare(`
+      INSERT INTO attestations (post_tx_hash, attestation_tx_hash, method, chain_verified)
+      VALUES (?, ?, 'DAHR', -1)
+    `).run("0xpost-r1", "0xatt-fail");
+
+    const count = reconcileClaimVerification(db);
+    expect(count).toBe(1);
+
+    // Verify the claim was downgraded
+    const rows = db.prepare(
+      "SELECT verified FROM claim_ledger WHERE attestation_tx_hash = ?",
+    ).all("0xatt-fail") as Array<{ verified: number }>;
+    expect(rows[0].verified).toBe(0);
+  });
+
+  it("does not touch claims with successful attestations", () => {
+    insertClaim(db, {
+      subject: "bitcoin",
+      metric: "price",
+      value: 100,
+      unit: "USD",
+      direction: null,
+      chain: "eth:1",
+      address: null,
+      market: null,
+      entityId: null,
+      dataTimestamp: null,
+      postTxHash: "0xpost-r1",
+      author: "demos1alice",
+      claimedAt: "2026-03-31T10:00:00.000Z",
+      attestationTxHash: "0xatt-ok",
+      verified: true,
+      verificationResult: "matched",
+      stale: false,
+    });
+
+    db.prepare(`
+      INSERT INTO attestations (post_tx_hash, attestation_tx_hash, method, chain_verified)
+      VALUES (?, ?, 'DAHR', 1)
+    `).run("0xpost-r1", "0xatt-ok");
+
+    const count = reconcileClaimVerification(db);
+    expect(count).toBe(0);
+
+    const rows = db.prepare(
+      "SELECT verified FROM claim_ledger WHERE attestation_tx_hash = ?",
+    ).all("0xatt-ok") as Array<{ verified: number }>;
+    expect(rows[0].verified).toBe(1);
+  });
+
+  it("returns 0 when no claims need reconciliation", () => {
+    const count = reconcileClaimVerification(db);
+    expect(count).toBe(0);
   });
 });

@@ -1,13 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readSSESense, type SSESenseResult } from "../../cli/sse-sense-adapter.js";
-import { initColonyCache, type ColonyDatabase } from "../../src/toolkit/colony/schema.js";
+import { type ColonyDatabase } from "../../src/toolkit/colony/schema.js";
 import { getPost } from "../../src/toolkit/colony/posts.js";
+import { createTestDb } from "../helpers/colony-test-utils.js";
 
 // ── Test helpers ──────────────────────────────────
-
-function createTestDb(): ColonyDatabase {
-  return initColonyCache(":memory:");
-}
 
 function mockApiCall(response: { ok: boolean; data?: unknown }) {
   return vi.fn().mockResolvedValue(response);

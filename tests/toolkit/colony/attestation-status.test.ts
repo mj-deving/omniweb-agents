@@ -1,24 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { getPostVerificationGate, getVerifiedPostCountsByAuthor } from "../../../src/toolkit/colony/attestation-status.js";
-import { initColonyCache, type ColonyDatabase } from "../../../src/toolkit/colony/schema.js";
-import { insertPost } from "../../../src/toolkit/colony/posts.js";
-
-function createTestDb(): ColonyDatabase {
-  return initColonyCache(":memory:");
-}
-
-function addPost(db: ColonyDatabase, txHash: string, author: string) {
-  insertPost(db, {
-    txHash,
-    author,
-    blockNumber: 1,
-    timestamp: new Date().toISOString(),
-    replyTo: null,
-    tags: [],
-    text: "Test post",
-    rawData: {},
-  });
-}
+import { type ColonyDatabase } from "../../../src/toolkit/colony/schema.js";
+import { createTestDb, addPost } from "../../helpers/colony-test-utils.js";
 
 function addAttestation(db: ColonyDatabase, postTxHash: string, attTxHash: string, chainVerified: number) {
   db.prepare(`

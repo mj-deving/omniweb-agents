@@ -42,6 +42,7 @@ interface UnresolvedRow {
 
 const DEFAULT_LIMIT = 20;
 const DEFAULT_MAX_RETRIES = 5;
+const CLAIM_EXPIRY_MINUTES = 5;
 
 /**
  * Compare chain-resolved URL against self-reported URL by hostname.
@@ -89,11 +90,14 @@ export async function ingestProofs(
   const maxRetries = options?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const result: IngestionResult = { resolved: 0, verified: 0, failed: 0, skipped: 0 };
 
+  // Concurrency guard: exclude rows claimed within the last N minutes.
+  // Claims auto-expire so crashes don't permanently lock rows.
   const rows = db.prepare(
     `SELECT a.id, a.attestation_tx_hash, a.source_url, a.method, a.data_snapshot, a.retry_count, p.author as post_author
      FROM attestations a
      JOIN posts p ON a.post_tx_hash = p.tx_hash
      WHERE a.chain_verified = 0 AND a.retry_count < ?
+       AND (a.claimed_at IS NULL OR a.claimed_at < datetime('now', '-${CLAIM_EXPIRY_MINUTES} minutes'))
      ORDER BY a.id DESC
      LIMIT ?`,
   ).all(maxRetries, limit) as UnresolvedRow[];
@@ -101,6 +105,11 @@ export async function ingestProofs(
   if (rows.length === 0) {
     return result;
   }
+
+  // Claim rows atomically before async RPC work to prevent double-processing
+  const claimStmt = db.prepare(`UPDATE attestations SET claimed_at = datetime('now') WHERE id = ?`);
+  const claimAll = db.transaction((ids: number[]) => { for (const id of ids) claimStmt.run(id); });
+  claimAll(rows.map((r) => r.id));
 
   // Resolve all attestations in parallel — each RPC call is independent
   const settled = await Promise.allSettled(
@@ -116,7 +125,7 @@ export async function ingestProofs(
 
   const updateStmt = db.prepare(
     `UPDATE attestations
-     SET chain_verified = ?, chain_method = ?, chain_data = ?, resolved_at = ?
+     SET chain_verified = ?, chain_method = ?, chain_data = ?, resolved_at = ?, claimed_at = NULL
      WHERE id = ?`,
   );
 
@@ -198,4 +207,12 @@ export async function ingestProofs(
   }
 
   return result;
+}
+
+/** Release claims older than CLAIM_EXPIRY_MINUTES that were never resolved (crash recovery). */
+export function releaseExpiredClaims(db: ColonyDatabase): number {
+  const info = db.prepare(
+    `UPDATE attestations SET claimed_at = NULL WHERE claimed_at IS NOT NULL AND claimed_at < datetime('now', '-${CLAIM_EXPIRY_MINUTES} minutes') AND chain_verified = 0`,
+  ).run();
+  return info.changes;
 }

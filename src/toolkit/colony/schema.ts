@@ -2,7 +2,7 @@ import DatabaseConstructor from "better-sqlite3";
 
 export type ColonyDatabase = InstanceType<typeof DatabaseConstructor>;
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;
 
 const BASE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS _meta (
@@ -289,6 +289,33 @@ const MIGRATIONS: Record<number, Migration> = {
     } catch {
       // sqlite-vec not loaded — vec_posts will be created when extension becomes available
     }
+  },
+  8: (db) => {
+    // Tech debt sweep: composite index, concurrency guard, bet tracking, pruning support.
+    // Composite index for resolveAgentToRecentPost performance
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_posts_author_timestamp ON posts(author, timestamp);`);
+
+    // Concurrency guard for proof ingestion — claimed_at with 5-min expiry
+    if (!hasColumn(db, "attestations", "claimed_at")) {
+      db.exec(`ALTER TABLE attestations ADD COLUMN claimed_at TEXT DEFAULT NULL;`);
+    }
+
+    // Bet settlement tracking — separate domain from attestations
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS bet_tracking (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_tx_hash TEXT NOT NULL,
+        bet_type TEXT NOT NULL CHECK(bet_type IN ('binary', 'range')),
+        amount_dem REAL NOT NULL,
+        expiry_at TEXT NOT NULL,
+        settlement_status TEXT DEFAULT 'pending'
+          CHECK(settlement_status IN ('pending', 'settled_win', 'settled_loss', 'expired')),
+        settled_at TEXT,
+        FOREIGN KEY (post_tx_hash) REFERENCES posts(tx_hash)
+      );
+      CREATE INDEX IF NOT EXISTS idx_bet_tracking_status ON bet_tracking(settlement_status);
+      CREATE INDEX IF NOT EXISTS idx_bet_tracking_post ON bet_tracking(post_tx_hash);
+    `);
   },
 };
 

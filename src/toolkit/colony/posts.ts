@@ -1,5 +1,6 @@
 import type { ColonyDatabase } from "./schema.js";
 
+
 export interface CachedPost {
   txHash: string;
   author: string;
@@ -186,4 +187,71 @@ export function getRepliesTo(db: ColonyDatabase, parentTxHash: string): CachedPo
 
 export function countPosts(db: ColonyDatabase): number {
   return Number(db.prepare("SELECT COUNT(*) FROM posts").pluck().get());
+}
+
+/**
+ * Prune old posts that are not referenced by any other table.
+ * Preserves posts referenced by claim_ledger, attestations, interactions,
+ * hive_reactions (target_tx_hash), bet_tracking, or other posts (as parent).
+ */
+export function prunePosts(
+  db: ColonyDatabase,
+  options: { retentionDays: number; dryRun?: boolean },
+): { pruned: number; preserved: number } {
+  const cutoff = new Date(Date.now() - options.retentionDays * 86_400_000).toISOString();
+
+  // Find old posts not referenced anywhere (includes our_tx_hash from interactions)
+  const orphanRows = db.prepare(`
+    SELECT p.rowid AS rid, p.tx_hash
+    FROM posts p
+    WHERE p.timestamp < ?
+      AND p.tx_hash NOT IN (SELECT post_tx_hash FROM claim_ledger)
+      AND p.tx_hash NOT IN (SELECT post_tx_hash FROM attestations)
+      AND p.tx_hash NOT IN (SELECT our_tx_hash FROM interactions)
+      AND p.tx_hash NOT IN (SELECT COALESCE(their_tx_hash, '') FROM interactions)
+      AND p.tx_hash NOT IN (SELECT target_tx_hash FROM hive_reactions)
+      AND p.tx_hash NOT IN (SELECT post_tx_hash FROM bet_tracking)
+      AND p.tx_hash NOT IN (SELECT reply_to FROM posts WHERE reply_to IS NOT NULL)
+  `).all(cutoff) as Array<{ rid: number; tx_hash: string }>;
+
+  const total = Number(
+    db.prepare("SELECT COUNT(*) FROM posts WHERE timestamp < ?").pluck().get(cutoff),
+  );
+
+  if (options.dryRun) {
+    return { pruned: orphanRows.length, preserved: total - orphanRows.length };
+  }
+
+  if (orphanRows.length === 0) {
+    return { pruned: 0, preserved: total };
+  }
+
+  // Use a temp table to avoid SQLite parameter limit (SQLITE_MAX_VARIABLE_NUMBER)
+  const doPrune = db.transaction(() => {
+    db.exec(`CREATE TEMP TABLE IF NOT EXISTS _prune_targets (rid INTEGER, tx_hash TEXT)`);
+    db.exec(`DELETE FROM _prune_targets`);
+    const ins = db.prepare(`INSERT INTO _prune_targets VALUES (?, ?)`);
+    for (const r of orphanRows) ins.run(r.rid, r.tx_hash);
+
+    // Delete embeddings for pruned posts
+    db.exec(`DELETE FROM post_embeddings WHERE post_rowid IN (SELECT rid FROM _prune_targets)`);
+
+    // Try to delete from vec_posts (may not be loaded)
+    try {
+      db.exec(`DELETE FROM vec_posts WHERE rowid IN (SELECT rid FROM _prune_targets)`);
+    } catch {
+      // vec0 extension not loaded — skip
+    }
+
+    // Delete orphaned reaction_cache entries
+    db.exec(`DELETE FROM reaction_cache WHERE post_tx_hash IN (SELECT tx_hash FROM _prune_targets)`);
+
+    // Delete the posts (FTS5 triggers auto-clean)
+    db.exec(`DELETE FROM posts WHERE tx_hash IN (SELECT tx_hash FROM _prune_targets)`);
+
+    db.exec(`DROP TABLE _prune_targets`);
+  });
+  doPrune();
+
+  return { pruned: orphanRows.length, preserved: total - orphanRows.length };
 }

@@ -71,13 +71,16 @@ export interface ResolutionFailure {
 export type ResolutionResult = DahrProof | TlsnProof | ResolutionFailure;
 
 function isDahrTransaction(content: Record<string, unknown>): boolean {
-  return content.type === "web2";
+  if (content.type !== "web2") return false;
+  const data = content.data as Record<string, unknown> | undefined;
+  if (!data || typeof data !== "object") return false;
+  return !!data.url && !!(data.responseHash || data.hash);
 }
 
 function isTlsnProofData(data: unknown): data is Record<string, unknown> {
   if (!data || typeof data !== "object") return false;
   const obj = data as Record<string, unknown>;
-  return "serverName" in obj || "recv" in obj || "notaryKey" in obj;
+  return "serverName" in obj && "recv" in obj;
 }
 
 function extractTlsnData(rawData: unknown, depth = 0): Record<string, unknown> | null {
@@ -180,11 +183,67 @@ export async function resolveAttestation(
 
 export type MatchStatus = "match" | "mismatch" | "partial" | "unverifiable";
 
+/** Strip HTTP headers from TLSN recv data (split on \r\n\r\n, take body). */
+function extractJsonBody(raw: string): string {
+  const headerEnd = raw.indexOf("\r\n\r\n");
+  return headerEnd >= 0 ? raw.slice(headerEnd + 4) : raw;
+}
+
+/** Collect all scalar values from a nested JSON object (depth-limited). */
+function collectJsonScalars(obj: unknown, depth = 0, out?: Set<string>): Set<string> {
+  const values = out ?? new Set<string>();
+  if (depth > 4 || obj == null) return values;
+  if (typeof obj !== "object") {
+    const s = String(obj).toLowerCase();
+    if (s.length >= MIN_VALUE_LENGTH) values.add(s);
+    return values;
+  }
+  if (Array.isArray(obj)) {
+    for (const item of obj) collectJsonScalars(item, depth + 1, values);
+  } else {
+    for (const val of Object.values(obj as Record<string, unknown>)) {
+      collectJsonScalars(val, depth + 1, values);
+    }
+  }
+  return values;
+}
+
+/** Structural key-value matching for JSON TLSN responses. Two phases:
+ *  1. Key-based: checks parsed[key], parsed.data?.[key], parsed.result?.[key]
+ *  2. Deep value: matches snapshot values against all JSON scalars (resists injection) */
+function structuralMatch(
+  parsed: Record<string, unknown>,
+  snapshot: Record<string, unknown>,
+): { matchCount: number; total: number } {
+  const entries = Object.entries(snapshot).filter(([, v]) => v != null && typeof v !== "object");
+  if (entries.length === 0) return { matchCount: 0, total: 0 };
+
+  let matchCount = 0;
+  for (const [key, value] of entries) {
+    const target = String(value).toLowerCase();
+    const candidates = [
+      parsed[key],
+      (parsed.data as Record<string, unknown> | undefined)?.[key],
+      (parsed.result as Record<string, unknown> | undefined)?.[key],
+    ];
+    if (candidates.some((c) => c != null && String(c).toLowerCase() === target)) matchCount++;
+  }
+  if (matchCount > 0) return { matchCount, total: entries.length };
+
+  // Deep value matching: snapshot keys may not align with JSON keys
+  const jsonScalars = collectJsonScalars(parsed);
+  for (const [, value] of entries) {
+    const target = String(value).toLowerCase();
+    if (target.length >= MIN_VALUE_LENGTH && jsonScalars.has(target)) matchCount++;
+  }
+  return { matchCount, total: entries.length };
+}
+
 /**
  * Compare chain-resolved proof data against self-reported snapshot from the post.
  *
- * DAHR: existence on chain is sufficient (hash-level trust — data not stored on-chain).
- * TLSN: compare responseData against snapshot values if both present.
+ * DAHR: existence on chain is sufficient (hash-level trust).
+ * TLSN: structural JSON matching with substring fallback for non-JSON bodies.
  */
 export function compareProofToSnapshot(
   resolved: DahrProof | TlsnProof,
@@ -202,6 +261,28 @@ export function compareProofToSnapshot(
     return { status: "partial", details: "TLSN proof on chain but no response data extractable" };
   }
 
+  // Try structural JSON matching first (injection-resistant)
+  const body = extractJsonBody(resolved.responseData);
+  try {
+    let parsed = JSON.parse(body) as unknown;
+    if (Array.isArray(parsed) && parsed.length > 0) parsed = parsed[0];
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const { matchCount, total } = structuralMatch(parsed as Record<string, unknown>, snapshot);
+      if (total === 0) return { status: "unverifiable", details: "snapshot has no comparable scalar values" };
+      const matchRatio = matchCount / total;
+      if (matchRatio >= SNAPSHOT_MATCH_THRESHOLD) {
+        return { status: "match", details: `${matchCount}/${total} snapshot values structurally matched in TLSN response` };
+      }
+      if (matchRatio > 0) {
+        return { status: "partial", details: `${matchCount}/${total} snapshot values structurally matched (below ${SNAPSHOT_MATCH_THRESHOLD * 100}% threshold)` };
+      }
+      return { status: "mismatch", details: "no snapshot values structurally matched in TLSN response" };
+    }
+  } catch {
+    // Not valid JSON — fall through to substring matching
+  }
+
+  // Fallback: substring matching with MIN_VALUE_LENGTH guard (for non-JSON bodies)
   const responseStr = resolved.responseData.toLowerCase();
   const snapshotValues = Object.values(snapshot)
     .filter((v) => v != null && typeof v !== "object")

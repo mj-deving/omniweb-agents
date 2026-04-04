@@ -33,13 +33,15 @@ export function resolveAgentToRecentPost(
     const threshold = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
     if (topicHint) {
+      // Escape LIKE wildcards to prevent injection
+      const escapedHint = topicHint.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
       // Prefer a post matching the topic that triggered the action
       const topicStmt = colonyDb.prepare(
         `SELECT tx_hash FROM posts
-         WHERE author = ? AND timestamp > ? AND text LIKE ?
+         WHERE author = ? AND timestamp > ? AND text LIKE ? ESCAPE '\\'
          ORDER BY timestamp DESC LIMIT 1`,
       );
-      const topicRow = topicStmt.get(agentAddress, threshold, `%${topicHint}%`) as { tx_hash: string } | undefined;
+      const topicRow = topicStmt.get(agentAddress, threshold, `%${escapedHint}%`) as { tx_hash: string } | undefined;
       if (topicRow?.tx_hash) return topicRow.tx_hash;
     }
 

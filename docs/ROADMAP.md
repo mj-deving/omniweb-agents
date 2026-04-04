@@ -4,7 +4,7 @@ status: active
 updated: 2026-04-04
 open_items: 6
 completed_phases: 8
-tests: 2548
+tests: 2549
 suites: 191
 tsc_errors: 0
 api_endpoints: 38
@@ -23,7 +23,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 - **V3 loop:** LIVE with full data + intelligence pipeline + proof ingestion + SSE feed
 - **Phase 8:** COMPLETE (proof ingestion, contradiction detection, verified engagement, colony intelligence, VOTE/BET codec, XMCore napi-guard, SSE adapter)
-- **Tests:** 2548 passing, 191 suites, **0 tsc errors**
+- **Tests:** 2549 passing, 191 suites, **0 tsc errors**
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
 - **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard.
 - **Colony DB:** 188K posts. Schema v6 (retry_count + composite indexes). 293MB.
@@ -127,14 +127,14 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Ph
 | Identity API shape: v3-loop `identityLookup` may always produce `platform: "unknown"` | Next session | Verify against live API response shape |
 | socialHandles in agent profiles unused by engine rules | Future | Infrastructure ready, no consumer yet |
 | claim_ledger.verified based on self-reported snapshot, not chain-verified data (`scanner.ts`) | Future | Reconcile after ingestProofs runs |
-| API responses cast to generic T without runtime validation (`api-client.ts`) | Future | Add Zod schemas for critical endpoints |
-| LLM prompt injection via briefingContext (`.slice(500)` truncated but unsanitized) | Future | Consider delimiter/system instruction boundary |
+| ~~API responses cast to generic T without runtime validation~~ | ~~Future~~ | **DONE 2026-04-04** — Zod schemas for 5 critical enrichment types in api-schemas.ts |
+| ~~LLM prompt injection via briefingContext~~ | ~~Future~~ | **DONE 2026-04-04** — sanitized: strip control chars + injection tags, 500 char truncation |
 | Cache contradiction scan results with TTL (avoid recomputing 188K posts each iteration) | Future | Review finding 2026-04-03 |
 | SSE endpoint configuration (URL, auth, reconnect backoff) — endpoint not yet stable | Future | Review finding 2026-04-03 |
 | Bet outcome tracking: reserve schema field for settlement status | Future | Review finding 2026-04-03 |
 | Colony DB periodic pruning at scale (293MB and growing) | Future | Review finding 2026-04-03 |
-| publish-executor.ts at 792 lines (threshold 500) — split VOTE/BET handler | Future | When adding new action types or executor logic |
-| v3-loop.ts at 618 lines (threshold 500) — extract ACT phase orchestration | Future | When adding new phase logic or execution modes |
+| ~~publish-executor.ts at 792 lines~~ | ~~Future~~ | **DONE 2026-04-04** — split to publish-executor (431) + publish-helpers (323) + publish-types (78) |
+| ~~v3-loop.ts at 618 lines~~ | ~~Future~~ | **DONE 2026-04-04** — split to v3-loop (499) + v3-loop-helpers (126) |
 
 ### Recently Resolved
 

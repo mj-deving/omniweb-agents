@@ -1,20 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { buildColonyIntelligence } from "../../../src/toolkit/colony/intelligence-summary.js";
-import { initColonyCache, type ColonyDatabase } from "../../../src/toolkit/colony/schema.js";
-import { insertPost } from "../../../src/toolkit/colony/posts.js";
+import { type ColonyDatabase } from "../../../src/toolkit/colony/schema.js";
 import { insertClaim } from "../../../src/toolkit/colony/claims.js";
-
-function createTestDb(): ColonyDatabase {
-  return initColonyCache(":memory:");
-}
-
-function addPost(db: ColonyDatabase, txHash: string, author: string, timestamp?: string) {
-  insertPost(db, {
-    txHash, author, blockNumber: 1,
-    timestamp: timestamp ?? new Date().toISOString(),
-    replyTo: null, tags: [], text: "Test post", rawData: {},
-  });
-}
+import { createTestDb, addPost } from "../../helpers/colony-test-utils.js";
 
 const SINCE = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 

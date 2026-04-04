@@ -16,6 +16,21 @@ import type { ColonyDatabase } from "./schema.js";
 import type { ContradictionEntry } from "../strategy/types.js";
 import { findContradictions } from "./claims.js";
 
+/** In-memory TTL cache for contradiction scan results. */
+interface CacheEntry {
+  results: ContradictionEntry[];
+  cachedAt: number;
+}
+
+const contradictionCache = new Map<string, CacheEntry>();
+const MAX_CACHE_SIZE = 100;
+const DEFAULT_CACHE_TTL_MS = 60_000;
+
+/** Clear the contradiction cache. Called when new posts are inserted. */
+export function invalidateContradictionCache(): void {
+  contradictionCache.clear();
+}
+
 /** Default time windows per metric type (milliseconds). */
 export const METRIC_WINDOWS: Record<string, number> = {
   price: 3_600_000,
@@ -39,6 +54,8 @@ export interface ContradictionScanOptions {
   metricWindows?: Record<string, number>;
   /** Max contradictions to return (default 3). */
   maxResults?: number;
+  /** Cache TTL in milliseconds (default 60_000). Set to 0 to disable caching. */
+  cacheTtlMs?: number;
 }
 
 /**
@@ -49,8 +66,22 @@ export function scanForContradictions(
   db: ColonyDatabase,
   options: ContradictionScanOptions,
 ): ContradictionEntry[] {
-  const windows = { ...METRIC_WINDOWS, ...options.metricWindows };
+  const cacheTtl = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
   const maxResults = options.maxResults ?? 3;
+
+  // Cache key includes metricWindows to avoid stale results from different window configs
+  const windowsHash = options.metricWindows ? JSON.stringify(options.metricWindows) : "";
+  const cacheKey = `${options.since}|${options.ourAddress}|${maxResults}|${windowsHash}`;
+
+  // Check cache
+  if (cacheTtl > 0) {
+    const cached = contradictionCache.get(cacheKey);
+    if (cached && Date.now() - cached.cachedAt < cacheTtl) {
+      return cached.results;
+    }
+  }
+
+  const windows = { ...METRIC_WINDOWS, ...options.metricWindows };
   const ourAddr = options.ourAddress.trim().toLowerCase();
 
   // Get distinct (subject, metric) pairs with claims since the cutoff
@@ -106,6 +137,12 @@ export function scanForContradictions(
       // Only set supportedValue if our claim was verified — don't rebut with unverified data
       supportedValue: ourClaim?.verified ? ourClaim.value : null,
     });
+  }
+
+  // Store in cache
+  if (cacheTtl > 0) {
+    if (contradictionCache.size > MAX_CACHE_SIZE) contradictionCache.clear();
+    contradictionCache.set(cacheKey, { results, cachedAt: Date.now() });
   }
 
   return results;

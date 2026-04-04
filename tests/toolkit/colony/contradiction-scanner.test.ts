@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { scanForContradictions, METRIC_WINDOWS } from "../../../src/toolkit/colony/contradiction-scanner.js";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { scanForContradictions, METRIC_WINDOWS, invalidateContradictionCache } from "../../../src/toolkit/colony/contradiction-scanner.js";
 import { initColonyCache, type ColonyDatabase } from "../../../src/toolkit/colony/schema.js";
 import { insertPost } from "../../../src/toolkit/colony/posts.js";
 import { insertClaim } from "../../../src/toolkit/colony/claims.js";
@@ -46,7 +46,10 @@ const SINCE = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
 describe("scanForContradictions", () => {
   let db: ColonyDatabase;
-  beforeEach(() => { db = createTestDb(); });
+  beforeEach(() => {
+    invalidateContradictionCache();
+    db = createTestDb();
+  });
   afterEach(() => { db.close(); });
 
   it("returns empty for no claims", () => {
@@ -149,5 +152,71 @@ describe("scanForContradictions", () => {
     expect(METRIC_WINDOWS.tvl).toBe(86_400_000);  // 24h
     expect(METRIC_WINDOWS.hash_rate).toBe(21_600_000); // 6h
     expect(METRIC_WINDOWS.default).toBe(3_600_000);
+  });
+});
+
+describe("contradiction cache", () => {
+  let db: ColonyDatabase;
+  beforeEach(() => {
+    invalidateContradictionCache();
+    db = createTestDb();
+  });
+  afterEach(() => { db.close(); });
+
+  it("returns cached results on second call within TTL", () => {
+    addPost(db, "0xC1", "0xAgent1");
+    addPost(db, "0xC2", "0xAgent2");
+    addClaim(db, { subject: "eth", metric: "price", value: 100, author: "0xAgent1", postTxHash: "0xC1" });
+    addClaim(db, { subject: "eth", metric: "price", value: 200, author: "0xAgent2", postTxHash: "0xC2" });
+
+    const opts = { since: SINCE, ourAddress: OUR_ADDRESS, cacheTtlMs: 60_000 };
+    const first = scanForContradictions(db, opts);
+    expect(first).toHaveLength(1);
+
+    // Delete the claims -- cached result should still return 1
+    db.prepare("DELETE FROM claim_ledger").run();
+    const second = scanForContradictions(db, opts);
+    expect(second).toHaveLength(1);
+    expect(second).toEqual(first);
+  });
+
+  it("cache expires after TTL", () => {
+    addPost(db, "0xC1", "0xAgent1");
+    addPost(db, "0xC2", "0xAgent2");
+    addClaim(db, { subject: "eth", metric: "price", value: 100, author: "0xAgent1", postTxHash: "0xC1" });
+    addClaim(db, { subject: "eth", metric: "price", value: 200, author: "0xAgent2", postTxHash: "0xC2" });
+
+    const opts = { since: SINCE, ourAddress: OUR_ADDRESS, cacheTtlMs: 50 };
+    const first = scanForContradictions(db, opts);
+    expect(first).toHaveLength(1);
+
+    // Advance time past TTL
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(100);
+
+    // Delete claims -- expired cache means fresh query
+    db.prepare("DELETE FROM claim_ledger").run();
+    const second = scanForContradictions(db, opts);
+    expect(second).toHaveLength(0);
+
+    vi.useRealTimers();
+  });
+
+  it("invalidateContradictionCache clears cached results", () => {
+    addPost(db, "0xC1", "0xAgent1");
+    addPost(db, "0xC2", "0xAgent2");
+    addClaim(db, { subject: "eth", metric: "price", value: 100, author: "0xAgent1", postTxHash: "0xC1" });
+    addClaim(db, { subject: "eth", metric: "price", value: 200, author: "0xAgent2", postTxHash: "0xC2" });
+
+    const opts = { since: SINCE, ourAddress: OUR_ADDRESS, cacheTtlMs: 60_000 };
+    scanForContradictions(db, opts);
+
+    // Delete claims, then explicitly invalidate cache (batch callers do this)
+    db.prepare("DELETE FROM claim_ledger").run();
+    invalidateContradictionCache();
+
+    // Cache was invalidated, so fresh query returns 0
+    const result = scanForContradictions(db, opts);
+    expect(result).toHaveLength(0);
   });
 });

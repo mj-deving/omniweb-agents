@@ -6,6 +6,7 @@ import {
   getScanContext,
   createHookLogger,
   getStrategySpecDir,
+  fetchSourcesParallel,
   type LightExecutionResult,
   type HeavyExecutionResult,
 } from "./v3-loop-helpers.js";
@@ -32,9 +33,7 @@ import { executeStrategyActions } from "./action-executor.js";
 import { executePublishActions } from "./publish-executor.js";
 import { initStrategyBridge, sense, plan, computePerformance, computeAutoCalibration, type StrategyBridge } from "./v3-strategy-bridge.js";
 import { refreshAgentProfiles } from "../src/toolkit/colony/intelligence.js";
-import { upsertSourceResponse, getSourceResponse } from "../src/toolkit/colony/source-cache.js";
 import { deriveIntentsFromTopics, selectSourcesByIntent } from "../src/lib/pipeline/source-scanner.js";
-import { fetchSource } from "../src/toolkit/sources/fetch.js";
 
 export interface V3LoopFlags {
   agent: string;
@@ -127,93 +126,60 @@ export async function runV3Loop(
 
       // Bridge the gap: scan-feed writes JSON cache with truncated posts,
       // but strategy engine reads full posts from the colony SQLite DB.
-      // Fetch full chain posts via SDK and ingest into colony DB.
-      await ingestChainPostsIntoColonyDb(bridge.db, sdkBridge, deps.observe);
+      // Fetch full chain posts via SDK once, then pass to ingestion.
+      const chainPosts = await sdkBridge.getHivePosts(500);
+      await ingestChainPostsIntoColonyDb(bridge.db, chainPosts, deps.observe);
 
-      // Proof ingestion: resolve unverified attestations against the chain
-      try {
-        const { createChainReaderFromSdk } = await import("../src/toolkit/colony/proof-ingestion-rpc-adapter.js");
-        const { ingestProofs } = await import("../src/toolkit/colony/proof-ingestion.js");
-        const chainReader = createChainReaderFromSdk(demos, { concurrency: 5 });
-        const ingestionResult = await ingestProofs(bridge.db, chainReader, { limit: 20 });
-        if (ingestionResult.resolved > 0 || ingestionResult.failed > 0) {
-          deps.observe("insight", `Proof ingestion: ${ingestionResult.verified} verified, ${ingestionResult.failed} failed, ${ingestionResult.skipped} skipped`, {
-            source: "v3-loop:proofIngestion",
-            ...ingestionResult,
-          });
-        }
-      } catch (err: unknown) {
-        deps.observe("warning", `Proof ingestion failed (non-fatal): ${toErrorMessage(err)}`, {
-          source: "v3-loop:proofIngestion",
-        });
-      }
+      // Proof ingestion + agent profile refresh run in parallel (both read from ingested posts).
+      await Promise.allSettled([
+        // Proof ingestion: resolve unverified attestations against the chain
+        (async () => {
+          try {
+            const { createChainReaderFromSdk } = await import("../src/toolkit/colony/proof-ingestion-rpc-adapter.js");
+            const { ingestProofs } = await import("../src/toolkit/colony/proof-ingestion.js");
+            const chainReader = createChainReaderFromSdk(demos, { concurrency: 5 });
+            const ingestionResult = await ingestProofs(bridge.db, chainReader, { limit: 20 });
+            if (ingestionResult.resolved > 0 || ingestionResult.failed > 0) {
+              deps.observe("insight", `Proof ingestion: ${ingestionResult.verified} verified, ${ingestionResult.failed} failed, ${ingestionResult.skipped} skipped`, {
+                source: "v3-loop:proofIngestion",
+                ...ingestionResult,
+              });
+            }
+          } catch (err: unknown) {
+            deps.observe("warning", `Proof ingestion failed (non-fatal): ${toErrorMessage(err)}`, {
+              source: "v3-loop:proofIngestion",
+            });
+          }
+        })(),
+        // Full recompute of agent profiles from colony DB.
+        // Incremental (since param) double-counts overlapping windows — full recompute is correct.
+        // 188K posts GROUP BY author takes <1s on SQLite WAL.
+        (async () => {
+          try {
+            const profilesRefreshed = refreshAgentProfiles(bridge.db);
+            if (profilesRefreshed > 0) {
+              deps.observe("insight", `Agent profiles refreshed: ${profilesRefreshed} updated`, {
+                source: "v3-loop:intelligence",
+                profilesRefreshed,
+              });
+            }
+          } catch (err: unknown) {
+            deps.observe("warning", `Agent profile refresh failed: ${toErrorMessage(err)}`, {
+              source: "v3-loop:intelligence",
+            });
+          }
+        })(),
+      ]);
 
-      // Full recompute of agent profiles from colony DB.
-      // Incremental (since param) double-counts overlapping windows — full recompute is correct.
-      // 188K posts GROUP BY author takes <1s on SQLite WAL.
-      try {
-        const profilesRefreshed = refreshAgentProfiles(bridge.db);
-        if (profilesRefreshed > 0) {
-          deps.observe("insight", `Agent profiles refreshed: ${profilesRefreshed} updated`, {
-            source: "v3-loop:intelligence",
-            profilesRefreshed,
-          });
-        }
-      } catch (err: unknown) {
-        deps.observe("warning", `Agent profile refresh failed: ${err instanceof Error ? err.message : String(err)}`, {
-          source: "v3-loop:intelligence",
-        });
-      }
-
-      // Fetch sources and cache responses so computeAvailableEvidence() has data.
-      // The strategy engine gates ALL actions on evidence from source_response_cache.
+      // Fetch sources in parallel (concurrency 3) with wall-clock budget.
       const sourceView = deps.getSourceView();
       const topics = deps.agentConfig.topics;
       const intents = topics?.primary?.length ? deriveIntentsFromTopics(topics) : [];
-      let sourcesFetched = 0;
-      let sourcesCached = 0;
-      const sourceFetchStart = Date.now();
-      const SOURCE_FETCH_BUDGET_MS = 15_000; // 15s max for all source fetches
-      for (const intent of intents) {
-        if (Date.now() - sourceFetchStart > SOURCE_FETCH_BUDGET_MS) break;
-        const sources = selectSourcesByIntent(intent, sourceView);
-        for (const source of sources.slice(0, 5)) {
-          if (Date.now() - sourceFetchStart > SOURCE_FETCH_BUDGET_MS) break;
-          try {
-            const result = await fetchSource(source.url, source);
-            sourcesFetched++;
-            if (result.ok && result.response) {
-              upsertSourceResponse(bridge.db, {
-                sourceId: source.id,
-                url: result.response.url,
-                lastFetchedAt: new Date().toISOString(),
-                responseStatus: result.response.status,
-                responseSize: result.response.bodyText.length,
-                responseBody: result.response.bodyText.slice(0, 10000),
-                ttlSeconds: 900,
-                consecutiveFailures: 0,
-              });
-              sourcesCached++;
-            }
-          } catch (err: unknown) {
-            deps.observe("warning", `Source fetch failed for ${source.id}`, {
-              source: "v3-loop:sourceFetch",
-              sourceId: source.id,
-              error: err instanceof Error ? err.message : String(err),
-            });
-            upsertSourceResponse(bridge.db, {
-              sourceId: source.id,
-              url: source.url,
-              lastFetchedAt: new Date().toISOString(),
-              responseStatus: 0,
-              responseSize: 0,
-              responseBody: "",
-              ttlSeconds: 900,
-              consecutiveFailures: (getSourceResponse(bridge.db, source.id)?.consecutiveFailures ?? 0) + 1,
-            });
-          }
-        }
-      }
+      const allSources = intents.flatMap((intent) =>
+        selectSourcesByIntent(intent, sourceView).slice(0, 5),
+      );
+      const { fetched: sourcesFetched, cached: sourcesCached } =
+        await fetchSourcesParallel(allSources, bridge.db, deps.observe);
       if (sourcesFetched > 0) {
         deps.observe("insight", `Source fetch: ${sourcesCached}/${sourcesFetched} cached in colony DB`, {
           source: "v3-loop:sourceFetch",

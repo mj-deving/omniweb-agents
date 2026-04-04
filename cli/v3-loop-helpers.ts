@@ -7,6 +7,11 @@ import { insertPost, countPosts } from "../src/toolkit/colony/posts.js";
 import { insertEmbedding } from "../src/toolkit/colony/search.js";
 import { embedBatch } from "../src/toolkit/colony/embeddings.js";
 import type { CachedPost } from "../src/toolkit/colony/posts.js";
+import type { ColonyDatabase } from "../src/toolkit/colony/schema.js";
+import { createLimiter } from "../src/toolkit/util/limiter.js";
+import { upsertSourceResponse, getSourceResponse } from "../src/toolkit/colony/source-cache.js";
+import { fetchSource } from "../src/toolkit/sources/fetch.js";
+import type { SourceRecordV2 } from "../src/toolkit/sources/catalog.js";
 
 import type { V3LoopDeps } from "./v3-loop.js";
 import type { executeStrategyActions } from "./action-executor.js";
@@ -35,11 +40,10 @@ export function getSensePayload(state: V3SessionState): { scan: any; strategy: a
  */
 export async function ingestChainPostsIntoColonyDb(
   db: import("../src/toolkit/colony/schema.js").ColonyDatabase,
-  sdkBridge: { getHivePosts: (limit: number) => Promise<import("../src/toolkit/types.js").ScanPost[]> },
+  chainPosts: import("../src/toolkit/types.js").ScanPost[],
   observe: (type: string, msg: string, meta?: Record<string, unknown>) => void,
 ): Promise<void> {
   const before = countPosts(db);
-  const chainPosts = await sdkBridge.getHivePosts(500);
 
   if (chainPosts.length === 0) return;
 
@@ -82,6 +86,10 @@ export async function ingestChainPostsIntoColonyDb(
   } finally {
     db.pragma("foreign_keys = ON");
   }
+
+  // Invalidate contradiction cache once after batch (not per-insert)
+  const { invalidateContradictionCache } = await import("../src/toolkit/colony/contradiction-scanner.js");
+  invalidateContradictionCache();
 
   // TODO: Advance cursor once SDK bridge supports sinceBlock param for incremental ingestion.
   // Currently getHivePosts(limit) fetches the latest N posts regardless of cursor position.
@@ -155,4 +163,66 @@ export function createHookLogger(deps: V3LoopDeps): HookLogger {
 
 export function getStrategySpecDir(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), "../src/lib/sources/providers/specs");
+}
+
+/**
+ * Fetch sources in parallel (concurrency 3) with a wall-clock budget.
+ * Results are cached to the colony DB source_response_cache.
+ */
+export async function fetchSourcesParallel(
+  sources: SourceRecordV2[],
+  db: ColonyDatabase,
+  observe: (type: string, msg: string, meta?: Record<string, unknown>) => void,
+  budgetMs = 15_000,
+): Promise<{ fetched: number; cached: number }> {
+  let fetched = 0;
+  let cached = 0;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), budgetMs);
+  try {
+    const limit = createLimiter(3);
+    const results = await Promise.allSettled(
+      sources.map((source) =>
+        limit(async () => {
+          if (ctrl.signal.aborted) return;
+          try {
+            const result = await fetchSource(source.url, source);
+            fetched++;
+            if (result.ok && result.response) {
+              upsertSourceResponse(db, {
+                sourceId: source.id,
+                url: result.response.url,
+                lastFetchedAt: new Date().toISOString(),
+                responseStatus: result.response.status,
+                responseSize: result.response.bodyText.length,
+                responseBody: result.response.bodyText.slice(0, 10000),
+                ttlSeconds: 900,
+                consecutiveFailures: 0,
+              });
+              cached++;
+            }
+          } catch (err: unknown) {
+            observe("warning", `Source fetch failed for ${source.id}`, {
+              source: "v3-loop:sourceFetch",
+              sourceId: source.id,
+              error: err instanceof Error ? err.message : String(err),
+            });
+            upsertSourceResponse(db, {
+              sourceId: source.id,
+              url: source.url,
+              lastFetchedAt: new Date().toISOString(),
+              responseStatus: 0,
+              responseSize: 0,
+              responseBody: "",
+              ttlSeconds: 900,
+              consecutiveFailures: (getSourceResponse(db, source.id)?.consecutiveFailures ?? 0) + 1,
+            });
+          }
+        }),
+      ),
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+  return { fetched, cached };
 }

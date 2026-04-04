@@ -7,44 +7,11 @@
  */
 
 import type { ChainReaderRpc } from "../chain-reader.js";
+import { createLimiter } from "../util/limiter.js";
 
 export interface RpcAdapterOptions {
   /** Max concurrent RPC calls (default: 5). */
   concurrency?: number;
-}
-
-/**
- * Simple concurrency limiter (no external dependency).
- * Returns a function that wraps async work with a concurrency cap.
- */
-function createLimiter(concurrency: number) {
-  let active = 0;
-  const queue: Array<() => void> = [];
-
-  function next() {
-    if (queue.length > 0 && active < concurrency) {
-      active++;
-      const resolve = queue.shift()!;
-      resolve();
-    }
-  }
-
-  return async function limit<T>(fn: () => Promise<T>): Promise<T> {
-    if (active >= concurrency) {
-      await new Promise<void>((resolve) => {
-        queue.push(resolve);
-      });
-    } else {
-      active++;
-    }
-
-    try {
-      return await fn();
-    } finally {
-      active--;
-      next();
-    }
-  };
 }
 
 /**

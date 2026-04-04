@@ -188,6 +188,24 @@ export function getClaimsByAuthor(db: ColonyDatabase, author: string, limit?: nu
   return mapClaimRows(rows);
 }
 
+/**
+ * Reconcile claim_ledger entries where verified=1 (self-reported) but the
+ * corresponding attestation has chain_verified=-1 (CHAIN_FAILED).
+ * Downgrades those claims to verified=0. Returns count of reconciled entries.
+ */
+export function reconcileClaimVerification(db: ColonyDatabase): number {
+  const result = db.prepare(`
+    UPDATE claim_ledger
+    SET verified = 0
+    WHERE verified = 1
+      AND attestation_tx_hash IN (
+        SELECT attestation_tx_hash FROM attestations WHERE chain_verified = -1
+      )
+  `).run();
+
+  return result.changes;
+}
+
 export function findContradictions(
   db: ColonyDatabase,
   subject: string,

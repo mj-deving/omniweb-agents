@@ -109,8 +109,8 @@ interface BrowserTlsnWindow extends Window {
 
 const require = createRequire(import.meta.url);
 const TLSN_MAX_BYTES = 16_384;
-/** Maximum DEM fee for storing a TLSN proof on-chain (caps unbounded proof sizes). */
-const TLSN_MAX_STORAGE_FEE_DEM = 15;
+/** Maximum DEM fee for storing a TLSN proof on-chain. Derived from TLSN_MAX_BYTES: 1 + ceil(16384/1024) = 17. */
+const TLSN_MAX_STORAGE_FEE_DEM = 1 + Math.ceil(TLSN_MAX_BYTES / 1024);
 const TLSN_TOKEN_POLL_ATTEMPTS = 30;
 const TLSN_TOKEN_POLL_INTERVAL_MS = 1000;
 

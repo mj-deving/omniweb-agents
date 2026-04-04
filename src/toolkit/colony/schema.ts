@@ -274,12 +274,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   7: (db) => {
     // Phase 5.6: Vector embeddings for semantic search via sqlite-vec.
-    // vec0 virtual table stores 384-dim float32 embeddings keyed by post rowid.
-    // Requires sqlite-vec extension to be loaded before this migration runs.
-    db.exec(`
-      CREATE VIRTUAL TABLE IF NOT EXISTS vec_posts USING vec0(embedding float[384]);
-    `);
-    // Tracking table: maps post rowid to vec_posts rowid and records embedding state.
+    // Tracking table is always created. vec0 virtual table requires the extension.
     db.exec(`
       CREATE TABLE IF NOT EXISTS post_embeddings (
         post_rowid INTEGER PRIMARY KEY,
@@ -288,6 +283,12 @@ const MIGRATIONS: Record<number, Migration> = {
       );
       CREATE INDEX IF NOT EXISTS idx_post_embeddings_vec ON post_embeddings(vec_rowid);
     `);
+    // vec0 virtual table — only if sqlite-vec extension is loaded
+    try {
+      db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS vec_posts USING vec0(embedding float[384]);`);
+    } catch {
+      // sqlite-vec not loaded — vec_posts will be created when extension becomes available
+    }
   },
 };
 
@@ -342,6 +343,25 @@ function applyMigrations(db: ColonyDatabase, currentVersion: number): void {
   }
 }
 
+import { createRequire } from "node:module";
+
+/** Try to load sqlite-vec into the DB. Returns true if loaded. */
+function loadSqliteVec(db: ColonyDatabase): boolean {
+  try {
+    db.enableLoadExtension(true);
+    // sqlite-vec ships pre-built binaries and exports a load() helper.
+    // Use createRequire since this module runs in ESM context via tsx.
+    const esmRequire = createRequire(import.meta.url);
+    const sqliteVec = esmRequire("sqlite-vec") as { load: (db: ColonyDatabase) => void };
+    sqliteVec.load(db);
+    db.enableLoadExtension(false);
+    return true;
+  } catch {
+    try { db.enableLoadExtension(false); } catch { /* ignore */ }
+    return false;
+  }
+}
+
 export function initColonyCache(dbPath: string): ColonyDatabase {
   const db = new DatabaseConstructor(dbPath, { allowExtension: true });
 
@@ -349,16 +369,8 @@ export function initColonyCache(dbPath: string): ColonyDatabase {
   db.pragma("journal_mode = WAL");
   runIntegrityCheck(db);
 
-  // Load sqlite-vec extension for vector search (Phase 5.6)
-  try {
-    db.enableLoadExtension(true);
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const sqliteVec = require("sqlite-vec");
-    sqliteVec.load(db);
-    db.enableLoadExtension(false);
-  } catch {
-    // sqlite-vec not available — vector search will be disabled
-  }
+  // Load sqlite-vec extension before migrations (vec0 table needs it)
+  const vecLoaded = loadSqliteVec(db);
 
   const initialize = db.transaction(() => {
     db.exec("CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)");

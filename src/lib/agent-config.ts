@@ -9,7 +9,7 @@
  */
 
 import { readFileSync, existsSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { parse as parseYaml } from "yaml";
@@ -190,7 +190,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function validatePersonaConfig(rawYaml: unknown, filePath: string): ValidatedPersonaConfig {
   if (!isPlainObject(rawYaml)) {
-    throw new Error(`Invalid persona.yaml at ${filePath}: expected a plain object, got ${Array.isArray(rawYaml) ? "array" : typeof rawYaml}`);
+    throw new Error(`Invalid persona.yaml (${basename(filePath)}): expected a plain object, got ${Array.isArray(rawYaml) ? "array" : typeof rawYaml}`);
   }
   const yaml = rawYaml as ValidatedPersonaConfig;
 
@@ -388,7 +388,7 @@ function validatePersonaConfig(rawYaml: unknown, filePath: string): ValidatedPer
   }
 
   if (errors.length > 0) {
-    throw new Error(`Invalid persona.yaml at ${filePath}:\n  - ${errors.join("\n  - ")}`);
+    throw new Error(`Invalid persona.yaml (${basename(filePath)}):\n  - ${errors.join("\n  - ")}`);
   }
 
   return yaml;
@@ -563,7 +563,7 @@ export function loadAgentConfig(name?: string): AgentConfig {
       const mode = (yaml as Record<string, unknown>).sourceRegistryMode as string | undefined;
       if (mode === "catalog-only" || mode === "yaml-only") return mode;
       if (mode && mode !== "catalog-preferred") {
-        console.warn(`[agent-config] Unknown sourceRegistryMode "${mode}" in ${personaYamlPath}, defaulting to catalog-preferred`);
+        console.warn(`[agent-config] Unknown sourceRegistryMode "${mode}", defaulting to catalog-preferred`);
       }
       return "catalog-preferred";
     })(),

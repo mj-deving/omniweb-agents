@@ -1,6 +1,7 @@
 import type { ColonyDatabase } from "./schema.js";
 import type { CachedPost } from "./posts.js";
 import { mapPostRows, type PostRow } from "./posts.js";
+import { findSimilarPosts } from "./search.js";
 
 export interface DedupResult {
   isDuplicate: boolean;
@@ -112,6 +113,48 @@ export function checkSelfDedup(
       reason: matches.length > 0
         ? `We already posted on this topic ${matches.length} time(s) within ${windowHours}h`
         : undefined,
+    };
+  } catch {
+    return emptyResult();
+  }
+}
+
+/**
+ * Semantic dedup: check if semantically similar content exists in the colony.
+ * Uses vector similarity (cosine distance) instead of keyword matching.
+ * Catches posts that keyword dedup would miss (paraphrases, synonyms).
+ *
+ * Async because it generates an embedding for the query text.
+ * Falls back to not-duplicate when embeddings are unavailable.
+ */
+export async function checkSemanticDedup(
+  db: ColonyDatabase,
+  claim: string,
+  opts?: { windowHours?: number; maxDistance?: number; ourAddress?: string },
+): Promise<DedupResult> {
+  if (!claim.trim()) return emptyResult();
+
+  const windowHours = opts?.windowHours ?? DEFAULT_WINDOW_HOURS;
+  const maxDistance = opts?.maxDistance ?? 0.3;
+  const since = sinceTimestamp(windowHours);
+
+  try {
+    const similar = await findSimilarPosts(db, claim, {
+      limit: 5,
+      maxDistance,
+      sinceTimestamp: since,
+    });
+
+    const matches = opts?.ourAddress
+      ? similar.filter((p) => p.author === opts.ourAddress)
+      : similar;
+
+    if (matches.length === 0) return emptyResult();
+
+    return {
+      isDuplicate: true,
+      matches,
+      reason: `Semantically similar content found (${matches.length} post(s), closest distance: ${matches[0].distance.toFixed(3)})`,
     };
   } catch {
     return emptyResult();

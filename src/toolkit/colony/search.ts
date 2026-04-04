@@ -179,6 +179,51 @@ export async function hybridSearch(
 }
 
 /**
+ * Find semantically similar posts using vector KNN search.
+ * Returns posts sorted by similarity (closest first) with distance scores.
+ * Returns empty array when embeddings are unavailable.
+ */
+export async function findSimilarPosts(
+  db: ColonyDatabase,
+  text: string,
+  opts?: { limit?: number; maxDistance?: number; sinceTimestamp?: string },
+): Promise<Array<CachedPost & { distance: number }>> {
+  if (!hasVecTable(db)) return [];
+
+  const queryEmbedding = await embed(text);
+  if (!queryEmbedding) return [];
+
+  const limit = opts?.limit ?? 10;
+  const maxDist = opts?.maxDistance ?? 0.5;
+  const buf = Buffer.from(queryEmbedding.buffer);
+
+  try {
+    let query = `
+      SELECT pe.post_rowid, vp.distance, ${POST_COLUMNS}
+      FROM vec_posts vp
+      JOIN post_embeddings pe ON pe.vec_rowid = vp.rowid
+      JOIN posts p ON p.rowid = pe.post_rowid
+      WHERE vp.embedding MATCH ?
+        AND vp.distance < ?`;
+
+    const params: unknown[] = [buf, maxDist];
+
+    if (opts?.sinceTimestamp) {
+      query += ` AND p.timestamp >= ?`;
+      params.push(opts.sinceTimestamp);
+    }
+
+    query += ` ORDER BY vp.distance LIMIT ?`;
+    params.push(limit);
+
+    const rows = db.prepare(query).all(...params) as (PostRow & { distance: number })[];
+    return rows.map((row) => ({ ...mapPostRows([row])[0], distance: row.distance }));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Insert a vector embedding for a post.
  * Returns the vec_rowid or null if insertion failed.
  */

@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import type { V3SessionState } from "../src/lib/state.js";
 import type { HookLogger } from "../src/lib/util/extensions.js";
 import { insertPost, countPosts } from "../src/toolkit/colony/posts.js";
+import { insertEmbedding } from "../src/toolkit/colony/search.js";
+import { embedBatch } from "../src/toolkit/colony/embeddings.js";
 import type { CachedPost } from "../src/toolkit/colony/posts.js";
 
 import type { V3LoopDeps } from "./v3-loop.js";
@@ -92,6 +94,36 @@ export async function ingestChainPostsIntoColonyDb(
     totalPosts: after,
     chainFetched: chainPosts.length,
   });
+
+  // Embed newly inserted posts for semantic search (non-blocking on failure)
+  if (newCount > 0) {
+    try {
+      const unembedded = db.prepare(`
+        SELECT p.rowid as rid, p.text FROM posts p
+        LEFT JOIN post_embeddings pe ON pe.post_rowid = p.rowid
+        WHERE pe.post_rowid IS NULL
+        ORDER BY p.rowid DESC LIMIT ?
+      `).all(Math.min(newCount, 500)) as Array<{ rid: number; text: string }>;
+
+      if (unembedded.length > 0) {
+        const embeddings = await embedBatch(unembedded.map((r) => r.text));
+        let embedded = 0;
+        for (let i = 0; i < unembedded.length; i++) {
+          if (embeddings[i]) {
+            insertEmbedding(db, unembedded[i].rid, embeddings[i]!);
+            embedded++;
+          }
+        }
+        if (embedded > 0) {
+          observe("insight", `Embedded ${embedded} new posts for semantic search`, {
+            source: "v3-loop:embedPosts", embedded,
+          });
+        }
+      }
+    } catch {
+      // Embedding failure is non-critical — search falls back to FTS5
+    }
+  }
 }
 
 export function mergeExecutionResults(lightResult: LightExecutionResult, heavyResult: HeavyExecutionResult) {

@@ -12,7 +12,7 @@ import { calculateStrategyScore } from "../src/lib/scoring/quality-score.js";
 import { calculateOfficialScore } from "../src/toolkit/supercolony/scoring.js";
 import { preflight } from "../src/lib/sources/policy.js";
 import { match } from "../src/lib/sources/matcher.js";
-import { checkClaimDedup, checkSelfDedup } from "../src/toolkit/colony/dedup.js";
+import { checkClaimDedup, checkSelfDedup, checkSemanticDedup } from "../src/toolkit/colony/dedup.js";
 import { encodeVotePost, encodeBinaryPost, validateBetPayload, validateBinaryPayload, MAX_BET_AMOUNT } from "../src/toolkit/colony/vote-bet-codec.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "../src/toolkit/sdk-bridge.js";
 import { checkSessionBudget, recordSpend, saveSpendingLedger } from "../src/lib/spending-policy.js";
@@ -183,6 +183,17 @@ export async function executePublishActions(
           actionType: action.type, topic,
         });
         result.skipped.push({ action, reason: colonyDedup.reason ?? "colony-dedup" });
+        continue;
+      }
+      // Semantic dedup — catches paraphrases that keyword dedup misses
+      const semanticDedup = await checkSemanticDedup(deps.colonyDb, topic, {
+        ourAddress: deps.walletAddress,
+      });
+      if (semanticDedup.isDuplicate) {
+        deps.observe("insight", `Publish skipped: ${semanticDedup.reason}`, {
+          actionType: action.type, topic,
+        });
+        result.skipped.push({ action, reason: semanticDedup.reason ?? "semantic-dedup" });
         continue;
       }
     }

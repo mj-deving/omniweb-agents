@@ -24,8 +24,10 @@ export type { DecodedHivePost, RawHivePost, ScanResult } from "./scanner.js";
 export { extractColonyState } from "./state-extraction.js";
 export type { ColonyState, StateExtractionOptions } from "./state-extraction.js";
 
-export { searchPosts } from "./search.js";
-export type { SearchOptions } from "./search.js";
+export { searchPosts, hybridSearch, findSimilarPosts, insertEmbedding, backfillEmbeddings } from "./search.js";
+export type { SearchOptions, HybridSearchOptions, ScoredPost } from "./search.js";
+export { checkSemanticDedup } from "./dedup.js";
+export { embed, embedBatch, isAvailable as isEmbeddingAvailable } from "./embeddings.js";
 
 export { computePerformanceScores } from "./performance.js";
 

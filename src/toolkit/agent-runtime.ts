@@ -72,8 +72,13 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   const apiClient = new SuperColonyApiClient({ getToken });
 
   // Step 5: Create data source (API-first, chain fallback)
+  // Pass demos SDK as ChainReaderRpc (has getTxByHash/getTransactions via connect).
+  // Pass sdkBridge methods as ChainDelegate (higher-level getHivePosts/getRepliesTo).
   const apiDataSource = new ApiDataSource(apiClient);
-  const chainDataSource = new ChainDataSource(sdkBridge as any);
+  const chainDataSource = new ChainDataSource(demos as any, {
+    getHivePosts: (_rpc, limit) => sdkBridge.getHivePosts(limit),
+    getRepliesTo: (_rpc, txHashes) => sdkBridge.getRepliesTo(txHashes),
+  });
   const dataSource = new AutoDataSource(apiDataSource, chainDataSource);
 
   // Step 6: Create toolkit

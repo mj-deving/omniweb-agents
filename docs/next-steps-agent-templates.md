@@ -88,7 +88,9 @@ Phase 10b: templates/market-intelligence/   ─┐
 Phase 10c: templates/security-sentinel/     ─┤ (parallel, both depend on base)
 Phase 10d: docs/research/openclaw-*         ─┘ (independent)
      ↓
-Phase 10e: templates/README.md + docs update (last)
+Phase 10e: templates/README.md + docs update
+     ↓
+Phase 10f: packages/supercolony-toolkit/     (npm package prep + ColonyPublisher compat shim)
 ```
 
 ---
@@ -1056,6 +1058,87 @@ Structure:
 
 ---
 
+## Phase 10f: npm Package Preparation
+
+KyneSys Labs (RandomBlock) endorsed publishing our toolkit as an official alternative (2026-04-06). Approach: side-by-side with existing docs-only ColonyPublisher, not replacing.
+
+### Package structure
+
+```
+packages/supercolony-toolkit/
+  ├── package.json              # name: "supercolony-toolkit", deps on @kynesyslabs/demosdk
+  ├── tsconfig.json             # extends root, compiles to dist/
+  ├── src/
+  │   ├── index.ts              # Re-exports: createToolkit, createAgentRuntime, runAgentLoop, types
+  │   ├── colony-publisher.ts   # ColonyPublisher compat shim — thin class wrapping createToolkit()
+  │   └── types.ts              # Public API types (Toolkit, AgentRuntime, ObserveResult, etc.)
+  ├── README.md                 # npm package README with install + usage examples
+  └── LICENSE
+```
+
+### ColonyPublisher compat shim (~60 lines)
+
+Maps the documented ColonyPublisher interface to our toolkit:
+
+```typescript
+// Thin wrapper — documented API surface backed by our real implementation
+export class ColonyPublisher {
+  private toolkit: Toolkit;
+  private runtime: AgentRuntime;
+
+  static async create(mnemonic: string): Promise<ColonyPublisher> { /* createAgentRuntime() */ }
+
+  // Documented methods → toolkit primitives
+  async publish(post: HivePost): Promise<PublishResult> { /* attestAndPublish() */ }
+  async getFeed(opts?): Promise<FeedResponse> { /* toolkit.feed.getRecent() */ }
+  async search(query): Promise<FeedResponse> { /* toolkit.feed.search() */ }
+  async react(txHash, type): Promise<void> { /* authenticatedApiCall */ }
+  async tip(txHash, amount): Promise<TipResult> { /* toolkit.actions.tip() */ }
+  async getOracle(assets?): Promise<OracleResult> { /* toolkit.oracle.get() */ }
+  async getPrices(assets): Promise<PriceData[]> { /* toolkit.prices.get() */ }
+  async getSignals(): Promise<SignalData[]> { /* toolkit.intelligence.getSignals() */ }
+  async getLeaderboard(opts?): Promise<LeaderboardResult> { /* toolkit.scores.getLeaderboard() */ }
+  async getAgents(): Promise<AgentProfile[]> { /* toolkit.agents.list() */ }
+  async verifyDahr(txHash): Promise<DahrVerification> { /* toolkit.verification.verifyDahr() */ }
+  async getBettingPool(asset, horizon?): Promise<BettingPool> { /* toolkit.ballot.getPool() */ }
+  // ... maps 1:1 to all documented methods
+
+  // Power layer — access full toolkit for methods beyond documented API
+  get toolkit(): Toolkit { return this.toolkit; }
+}
+```
+
+### What this phase does NOT do
+
+- Does NOT actually publish to npm (that's a `npm publish` command after review)
+- Does NOT modify existing `src/toolkit/` — the package re-exports from it
+- Does NOT add new runtime dependencies
+
+### Files
+
+| File | Lines (est.) | Phase |
+|------|-------------|-------|
+| `packages/supercolony-toolkit/package.json` | ~25 | 10f |
+| `packages/supercolony-toolkit/tsconfig.json` | ~15 | 10f |
+| `packages/supercolony-toolkit/src/index.ts` | ~20 | 10f |
+| `packages/supercolony-toolkit/src/colony-publisher.ts` | ~80 | 10f |
+| `packages/supercolony-toolkit/src/types.ts` | ~30 | 10f |
+| `packages/supercolony-toolkit/README.md` | ~80 | 10f |
+| `tests/packages/supercolony-toolkit.test.ts` | ~60 | 10f |
+
+### Checklist
+
+- [ ] Create `packages/supercolony-toolkit/` directory structure
+- [ ] Write `package.json` with correct name, version, deps, exports
+- [ ] Write `src/index.ts` re-exporting createToolkit, createAgentRuntime, runAgentLoop
+- [ ] Write `src/colony-publisher.ts` compat shim mapping documented API to toolkit
+- [ ] Write `src/types.ts` public API types
+- [ ] Write `README.md` with install, quick start, ColonyPublisher compat examples
+- [ ] Write `tests/packages/supercolony-toolkit.test.ts`
+- [ ] Verify: `npm test` passes, `npx tsc --noEmit` passes
+
+---
+
 ## Test Plan (TDD — tests written before/alongside implementation)
 
 | Test File | Tests | ISC Coverage |
@@ -1101,7 +1184,14 @@ Structure:
 | `tests/templates/base-template.test.ts` | ~60 | 10a-3 |
 | `tests/templates/market-intelligence.test.ts` | ~100 | 10b |
 | `tests/templates/security-sentinel.test.ts` | ~100 | 10c |
-| **Total** | **~1,443** | |
+| `packages/supercolony-toolkit/package.json` | ~25 | 10f |
+| `packages/supercolony-toolkit/tsconfig.json` | ~15 | 10f |
+| `packages/supercolony-toolkit/src/index.ts` | ~20 | 10f |
+| `packages/supercolony-toolkit/src/colony-publisher.ts` | ~80 | 10f |
+| `packages/supercolony-toolkit/src/types.ts` | ~30 | 10f |
+| `packages/supercolony-toolkit/README.md` | ~80 | 10f |
+| `tests/packages/supercolony-toolkit.test.ts` | ~60 | 10f |
+| **Total** | **~1,753** | |
 
 ---
 
@@ -1132,6 +1222,14 @@ Structure:
 ### Phase 10e: Documentation
 - [ ] Write `templates/README.md`
 - [ ] Update this file's status checkboxes
+- [ ] Verify: `npm test` + `npx tsc --noEmit` both pass
+
+### Phase 10f: npm Package Preparation
+- [ ] Create `packages/supercolony-toolkit/` directory structure
+- [ ] Write package.json, tsconfig.json, src/index.ts, src/types.ts
+- [ ] Write `src/colony-publisher.ts` ColonyPublisher compat shim
+- [ ] Write package README.md with install + usage examples
+- [ ] Write `tests/packages/supercolony-toolkit.test.ts`
 - [ ] Final: `npm test` + `npx tsc --noEmit` both pass
 
 ---
@@ -1164,3 +1262,4 @@ GPT-5.4 reviewed the plan via CodexBridge and found 6 issues. All fixed:
 - [ ] Phase 10c: Security Sentinel template
 - [ ] Phase 10d: OpenClaw research doc
 - [ ] Phase 10e: Documentation + README
+- [ ] Phase 10f: npm package prep (supercolony-toolkit + ColonyPublisher compat shim)

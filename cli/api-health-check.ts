@@ -40,7 +40,7 @@ async function main(): Promise<void> {
     { path: "/api/signals", fn: () => apiClient.getSignals() },
     { path: "/api/health", fn: () => apiClient.getHealth() },
     { path: "/api/stats", fn: () => apiClient.getStats() },
-    { path: "/api/ballot", fn: () => apiClient.getBallot() },
+    { path: "/api/bets/pool", fn: () => apiClient.getBettingPool("BTC", "24h") },
     { path: "/api/predictions", fn: () => apiClient.queryPredictions() },
     { path: "/api/predictions/markets", fn: () => apiClient.getPredictionMarkets() },
     { path: "/api/report", fn: () => apiClient.getReport() },

@@ -31,7 +31,9 @@ const {
   deriveIntentsFromTopicsMock,
   selectSourcesByIntentMock,
   fetchSourceMock,
+  dataSourceGetRecentPostsMock,
 } = vi.hoisted(() => ({
+  dataSourceGetRecentPostsMock: vi.fn().mockResolvedValue([]),
   initStrategyBridgeMock: vi.fn(),
   senseMock: vi.fn(),
   planMock: vi.fn(),
@@ -128,6 +130,63 @@ vi.mock("../../src/lib/pipeline/source-scanner.js", () => ({
 
 vi.mock("../../src/toolkit/sources/fetch.js", () => ({
   fetchSource: fetchSourceMock,
+}));
+
+vi.mock("../../src/lib/auth/auth.js", () => ({
+  ensureAuth: vi.fn().mockResolvedValue(null),
+  loadAuthCache: vi.fn().mockReturnValue(null),
+}));
+
+vi.mock("../../src/toolkit/supercolony/api-client.js", () => {
+  class MockApiClient {
+    getFeed = vi.fn().mockResolvedValue(null);
+    searchFeed = vi.fn().mockResolvedValue(null);
+    getPostDetail = vi.fn().mockResolvedValue(null);
+    getThread = vi.fn().mockResolvedValue(null);
+    getSignals = vi.fn().mockResolvedValue(null);
+    getReport = vi.fn().mockResolvedValue(null);
+    listAgents = vi.fn().mockResolvedValue(null);
+    getAgentProfile = vi.fn().mockResolvedValue(null);
+    getAgentLeaderboard = vi.fn().mockResolvedValue(null);
+    getOracle = vi.fn().mockResolvedValue(null);
+    getPrices = vi.fn().mockResolvedValue(null);
+    getBallotAccuracy = vi.fn().mockResolvedValue(null);
+    getAgentBalance = vi.fn().mockResolvedValue(null);
+    lookupByChainAddress = vi.fn().mockResolvedValue(null);
+    initiateTip = vi.fn().mockResolvedValue(null);
+  }
+  return { SuperColonyApiClient: MockApiClient };
+});
+
+vi.mock("../../src/toolkit/data-source.js", () => {
+  const makeMockDS = (name: string, getRecent?: any) => class {
+    name = name;
+    getRecentPosts = getRecent ?? vi.fn().mockResolvedValue([]);
+    getPostByHash = vi.fn().mockResolvedValue(null);
+    getThread = vi.fn().mockResolvedValue(null);
+    getRepliesTo = vi.fn().mockResolvedValue([]);
+  };
+  return { ApiDataSource: makeMockDS("api"), ChainDataSource: makeMockDS("chain"), AutoDataSource: makeMockDS("auto", dataSourceGetRecentPostsMock) };
+});
+
+vi.mock("../../src/toolkit/primitives/index.js", () => ({
+  createToolkit: vi.fn().mockReturnValue({
+    feed: { getRecent: vi.fn().mockResolvedValue(null), search: vi.fn().mockResolvedValue(null), getPost: vi.fn().mockResolvedValue(null), getThread: vi.fn().mockResolvedValue(null) },
+    intelligence: { getSignals: vi.fn().mockResolvedValue(null), getReport: vi.fn().mockResolvedValue(null) },
+    scores: { getLeaderboard: vi.fn().mockResolvedValue(null) },
+    agents: { list: vi.fn().mockResolvedValue(null), getProfile: vi.fn().mockResolvedValue(null), getIdentities: vi.fn().mockResolvedValue(null) },
+    actions: { tip: vi.fn().mockResolvedValue(null) },
+    oracle: { get: vi.fn().mockResolvedValue(null) },
+    prices: { get: vi.fn().mockResolvedValue(null) },
+    verification: { verifyDahr: vi.fn().mockResolvedValue(null), verifyTlsn: vi.fn().mockResolvedValue(null) },
+    predictions: { query: vi.fn().mockResolvedValue(null), resolve: vi.fn().mockResolvedValue(null), markets: vi.fn().mockResolvedValue(null) },
+    ballot: { getState: vi.fn().mockResolvedValue(null), getAccuracy: vi.fn().mockResolvedValue(null), getLeaderboard: vi.fn().mockResolvedValue(null), getPerformance: vi.fn().mockResolvedValue(null) },
+    webhooks: { list: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue(null), delete: vi.fn().mockResolvedValue(null) },
+    identity: { lookup: vi.fn().mockResolvedValue(null) },
+    balance: { get: vi.fn().mockResolvedValue(null) },
+    health: { check: vi.fn().mockResolvedValue(null) },
+    stats: { get: vi.fn().mockResolvedValue(null) },
+  }),
 }));
 
 import { runV3Loop, type V3LoopDeps, type V3LoopFlags } from "../../cli/v3-loop.js";
@@ -481,6 +540,9 @@ describe("runV3Loop", () => {
       transferDem: vi.fn(),
       getHivePosts: vi.fn().mockResolvedValue(chainPosts),
     });
+
+    // Phase 9: DataSource now provides posts instead of sdkBridge.getHivePosts
+    dataSourceGetRecentPostsMock.mockResolvedValueOnce(chainPosts);
 
     // countPosts returns 0 before, 3 after to simulate 3 inserted
     countPostsMock.mockReturnValueOnce(0).mockReturnValueOnce(3);

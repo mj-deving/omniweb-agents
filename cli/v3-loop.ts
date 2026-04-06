@@ -29,6 +29,10 @@ import {
   BallotAccuracySchema,
   SignalDataSchema,
 } from "../src/toolkit/supercolony/api-schemas.js";
+import { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";
+import { ApiDataSource, ChainDataSource, AutoDataSource } from "../src/toolkit/data-source.js";
+import { createToolkit } from "../src/toolkit/primitives/index.js";
+import { ensureAuth, loadAuthCache } from "../src/lib/auth/auth.js";
 import { executeStrategyActions } from "./action-executor.js";
 import { executePublishActions } from "./publish-executor.js";
 import { initStrategyBridge, sense, plan, computePerformance, computeAutoCalibration, type StrategyBridge } from "./v3-strategy-bridge.js";
@@ -70,6 +74,26 @@ export async function runV3Loop(
 
   // Single SDK bridge instance — reused across sense (ingest) and act (execute) phases.
   const sdkBridge = createSdkBridge(demos, undefined, AUTH_PENDING_TOKEN);
+
+  // Phase 9: API-first toolkit — authenticate, create typed primitives
+  let authToken: string | null = null;
+  try {
+    authToken = await ensureAuth(demos, address);
+  } catch {
+    deps.observe("warning", "Auth failed — continuing in chain-only mode", { source: "v3-loop:auth" });
+  }
+
+  const apiClient = new SuperColonyApiClient({
+    getToken: async () => authToken ?? loadAuthCache(address)?.token ?? null,
+  });
+  const apiDataSource = new ApiDataSource(apiClient);
+  const chainDataSource = new ChainDataSource(sdkBridge as any);
+  const dataSource = new AutoDataSource(apiDataSource, chainDataSource);
+  const toolkit = createToolkit({
+    apiClient,
+    dataSource,
+    transferDem: (to, amount, memo) => sdkBridge.transferDem(to, amount, memo),
+  });
 
   // Phase 8 Feature 6: Test xmcore NAPI capability at startup (non-fatal)
   try {
@@ -127,7 +151,8 @@ export async function runV3Loop(
       // Bridge the gap: scan-feed writes JSON cache with truncated posts,
       // but strategy engine reads full posts from the colony SQLite DB.
       // Fetch full chain posts via SDK once, then pass to ingestion.
-      const chainPosts = await sdkBridge.getHivePosts(500);
+      // Phase 9: API-first feed read with chain fallback
+      const chainPosts = await dataSource.getRecentPosts(500);
       await ingestChainPostsIntoColonyDb(bridge.db, chainPosts, deps.observe);
 
       // Proof ingestion + agent profile refresh run in parallel (both read from ingested posts).
@@ -216,53 +241,45 @@ export async function runV3Loop(
 
       const senseResult = sense(bridge, sourceView);
 
-      // ── API Enrichment (optional, graceful degradation) ──
+      // ── API Enrichment via Toolkit Primitives (optional, graceful degradation) ──
       let apiEnrichment: ApiEnrichmentData | undefined;
-      if (sdkBridge.apiAccess === "authenticated") {
-        try {
-          const enrichmentTimeout = 5_000;
-          const safeCall = (path: string) =>
-            sdkBridge.apiCall(path, { signal: AbortSignal.timeout(enrichmentTimeout) }).catch(() => null);
+      try {
+        const [agentsResult, leaderboardResult, oracleResult, pricesResult, ballotAccResult, signalsResult] = await Promise.all([
+          toolkit.agents.list(),
+          toolkit.scores.getLeaderboard({ limit: 20 }),
+          toolkit.oracle.get(),
+          toolkit.prices.get(["BTC", "ETH", "DEM"]),
+          toolkit.ballot.getAccuracy(bridge.walletAddress),
+          toolkit.intelligence.getSignals(),
+        ]);
 
-          const [agentsRaw, leaderboardRaw, oracleRaw, pricesRaw, ballotAccRaw, signalsRaw] = await Promise.all([
-            safeCall("/api/agents"),
-            safeCall("/api/scores/agents?limit=20"),
-            safeCall("/api/oracle"),
-            safeCall("/api/prices?assets=BTC,ETH,DEM"),
-            safeCall(`/api/ballot/accuracy?address=${encodeURIComponent(bridge.walletAddress)}`),
-            safeCall("/api/signals"),
-          ]);
+        apiEnrichment = {};
 
-          apiEnrichment = {};
-
-          if (agentsRaw?.ok && agentsRaw.data && typeof agentsRaw.data === "object") {
-            const agents = (agentsRaw.data as { agents?: unknown[] }).agents;
-            if (Array.isArray(agents)) {
-              apiEnrichment.agentCount = agents.length;
-            }
-          }
-          const validate = <T>(name: string, raw: { ok: boolean; data: unknown } | null, schema: { safeParse: (d: unknown) => { success: boolean; data?: T; error?: { message: string } } }): T | undefined => {
-            if (!raw?.ok) return undefined;
-            const r = schema.safeParse(raw.data);
-            if (r.success) return r.data as T;
-            deps.observe("warning", `API schema validation failed: ${name}`, { source: "v3-loop:enrichment", error: r.error?.message }); return undefined;
-          };
-          apiEnrichment.leaderboard = validate("leaderboard", leaderboardRaw, LeaderboardResultSchema);
-          apiEnrichment.oracle = validate("oracle", oracleRaw, OracleResultSchema);
-          apiEnrichment.prices = validate("prices", pricesRaw, PriceDataSchema.array());
-          apiEnrichment.ballotAccuracy = validate("ballot", ballotAccRaw, BallotAccuracySchema);
-          apiEnrichment.signals = validate("signals", signalsRaw, SignalDataSchema.array());
-
-          const enrichmentKeys = Object.keys(apiEnrichment);
-          if (enrichmentKeys.length > 0) {
-            deps.observe("insight", `API enrichment: ${enrichmentKeys.length} feeds (${enrichmentKeys.join(", ")})`, {
-              source: "v3-loop:apiEnrichment",
-              feeds: enrichmentKeys,
-            });
-          }
-        } catch {
-          // API enrichment is optional — continue with colony DB data only.
+        if (agentsResult?.ok) {
+          apiEnrichment.agentCount = agentsResult.data.agents.length;
         }
+
+        const validate = <T>(name: string, raw: { ok: true; data: unknown } | { ok: false; [k: string]: unknown } | null, schema: { safeParse: (d: unknown) => { success: boolean; data?: T; error?: { message: string } } }): T | undefined => {
+          if (!raw || !raw.ok) return undefined;
+          const r = schema.safeParse(raw.data);
+          if (r.success) return r.data as T;
+          deps.observe("warning", `API schema validation failed: ${name}`, { source: "v3-loop:enrichment", error: r.error?.message }); return undefined;
+        };
+        apiEnrichment.leaderboard = validate("leaderboard", leaderboardResult, LeaderboardResultSchema);
+        apiEnrichment.oracle = validate("oracle", oracleResult, OracleResultSchema);
+        apiEnrichment.prices = validate("prices", pricesResult, PriceDataSchema.array());
+        apiEnrichment.ballotAccuracy = validate("ballot", ballotAccResult, BallotAccuracySchema);
+        apiEnrichment.signals = validate("signals", signalsResult, SignalDataSchema.array());
+
+        const enrichmentKeys = Object.keys(apiEnrichment);
+        if (enrichmentKeys.length > 0) {
+          deps.observe("insight", `API enrichment: ${enrichmentKeys.length} feeds (${enrichmentKeys.join(", ")})`, {
+            source: "v3-loop:apiEnrichment",
+            feeds: enrichmentKeys,
+          });
+        }
+      } catch {
+        // API enrichment is optional — continue with colony DB data only.
       }
 
       // Compute calibration once in sense phase — avoids hot-path DB query during act
@@ -293,25 +310,20 @@ export async function runV3Loop(
         throw new Error("Missing V3 sense result");
       }
 
-      // Phase 7: Build identity lookup from SDK bridge (graceful — returns null on failure)
-      const identityLookup = sdkBridge.apiAccess === "authenticated"
-        ? async (address: string): Promise<Array<{ platform: string; username: string }> | null> => {
-            try {
-              const result = await sdkBridge.apiCall(
-                `/api/identity?chain=demos&address=${encodeURIComponent(address)}`,
-                { signal: AbortSignal.timeout(3_000) },
-              );
-              if (!result.ok || !result.data) return null;
-              const data = result.data as { found?: boolean; platform?: string; username?: string };
-              if (!data.found) return null;
-              return data.platform && data.username
-                ? [{ platform: data.platform, username: data.username }]
-                : null;
-            } catch {
-              return null;
-            }
-          }
-        : undefined;
+      // Phase 9: Build identity lookup via toolkit primitive (graceful — returns null on failure)
+      const identityLookup = async (lookupAddress: string): Promise<Array<{ platform: string; username: string }> | null> => {
+        try {
+          const result = await toolkit.identity.lookup({ chain: "demos", address: lookupAddress });
+          if (!result?.ok || !result.data) return null;
+          const data = result.data as { found?: boolean; platform?: string; username?: string };
+          if (!data.found) return null;
+          return data.platform && data.username
+            ? [{ platform: data.platform, username: data.username }]
+            : null;
+        } catch {
+          return null;
+        }
+      };
 
       const planResult = await plan(
         bridge,

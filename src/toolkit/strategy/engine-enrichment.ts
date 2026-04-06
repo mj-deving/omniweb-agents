@@ -7,6 +7,7 @@
  */
 
 import type { DecisionContext, DecisionLog, StrategyConfig } from "./types.js";
+import type { AvailableEvidence } from "../colony/available-evidence.js";
 import { normalize, getRule, createAction, type EngineCandidate, buildEvidenceIndex } from "./engine-helpers.js";
 
 /**
@@ -64,8 +65,18 @@ export function evaluateEnrichmentRules(
     for (const signal of enrichment.signals) {
       if (signal.trending === false || signal.agentCount < (config.enrichment?.minSignalAgents ?? 2)) continue;
 
-      const matchingEvidence = (evidenceIndex.get(normalize(signal.topic)) ?? [])
-        .filter((item) => !item.stale);
+      // Signal topics are long phrases ("DXY USD Liquidity Tightening and Crypto Capital Flows")
+      // but evidence index uses short keys ("bitcoin", "defi", "macro").
+      // Tokenize the signal topic and find any matching evidence entries.
+      const signalTokens = normalize(signal.topic).split(/\s+/).filter((t) => t.length >= 3);
+      const matchingEvidence: AvailableEvidence[] = [];
+      for (const token of signalTokens) {
+        const entries = evidenceIndex.get(token);
+        if (entries) matchingEvidence.push(...entries.filter((item) => !item.stale));
+      }
+      // Also try the full normalized topic as a single key (backward compat)
+      const fullMatch = evidenceIndex.get(normalize(signal.topic));
+      if (fullMatch) matchingEvidence.push(...fullMatch.filter((item) => !item.stale));
 
       if (matchingEvidence.length === 0) continue;
 

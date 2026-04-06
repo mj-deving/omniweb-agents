@@ -1,16 +1,16 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-04
-open_items: 26
-completed_phases: 8
-tests: 2558
-suites: 193
+updated: 2026-04-06
+open_items: 3
+completed_phases: 9
+tests: 2650
+suites: 210
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
 colony_posts: 188000
-summary: "Phases 1-8 complete. Tech debt sweep done (12 items). Phase 9 planned: API-first architecture (ADR-0018). Open: 5 Phase 9 items, 3 future items. 7 active tech debt, 23 resolved."
+summary: "Phases 1-9 complete. Phase 9: API-first toolkit primitives (23 items, 36 new files, 73 new tests). createToolkit() facade with 15 domain namespaces. Open: 3 future items."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -21,14 +21,15 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 ## Current Status
 
-- **V3 loop:** LIVE with full data + intelligence pipeline + proof ingestion + SSE feed
-- **Phase 8:** COMPLETE (proof ingestion, contradiction detection, verified engagement, colony intelligence, VOTE/BET codec, XMCore napi-guard, SSE adapter)
-- **Tests:** 2581 passing, 194 suites, **0 tsc errors**
+- **V3 loop:** LIVE with toolkit primitives replacing raw apiCall enrichment
+- **Phase 9:** COMPLETE (DataSource abstraction, 15 domain primitives, v3-loop wiring, API backfill, drift detection)
+- **Tests:** 2650 passing, 210 suites, **0 tsc errors**
+- **Toolkit:** `createToolkit()` facade with 15 namespaces (feed, intelligence, scores, agents, actions, oracle, prices, verification, predictions, ballot, webhooks, identity, balance, health, stats)
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
 - **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard.
 - **Colony DB:** 188K posts. Schema v8. 605MB. Semantic search wired. Pruning available.
 - **ADRs:** 18 (ADR-0018 supersedes ADR-0001 for reads — API-first, chain fallback)
-- **Next:** Phase 9 — DataSource abstraction, API backfill, drift detection
+- **Next:** Future items (escrow-to-social, ZK identity, StorageProgram exploration)
 
 ---
 
@@ -99,41 +100,42 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 > The toolkit's value proposition: agent builders call one typed method, we handle API/chain routing, fallback, auth, caching, error handling. All 38 API endpoints + SDK methods wrapped as clean primitives.
 
-**9.1 — Foundation**
-- [ ] 9a -- DataSource abstraction: `ApiDataSource` + `ChainDataSource` implementing shared interface, config flag `"api" | "chain" | "auto"`, automatic fallback on failure
-- [ ] 9b -- API-based colony backfill: paginate `/api/feed?limit=100&offset=N` to fill sync gaps
-- [ ] 9c -- API drift detection tool: `cli/api-health-check.ts` — call each documented endpoint, compare response shape, report MATCH/DRIFT/GONE/NEW
-- [ ] 9d -- Wire ApiDataSource into v3-loop SENSE phase as primary read path
-- [x] 9e -- Remove dead `publishHiveReaction` on-chain code (already removed from src/; only doc refs remain)
+**9.1 — Foundation** — COMPLETE
+- [x] 9a -- DataSource abstraction: `ApiDataSource` + `ChainDataSource` + `AutoDataSource` in `src/toolkit/data-source.ts`
+- [x] 9b -- API-based colony backfill: `src/toolkit/colony/api-backfill.ts` with cursor pagination
+- [x] 9c -- API drift detection tool: `cli/api-health-check.ts` — validates 13 endpoints, reports MATCH/DRIFT/GONE/ERROR
+- [x] 9d -- Wire toolkit primitives into v3-loop SENSE phase: `createToolkit()` replaces raw `apiCall()` enrichment
+- [x] 9e -- Remove dead `publishHiveReaction` on-chain code (already removed from src/)
 
-**9.2 — P0 Toolkit Primitives (core SENSE + strategy)**
-- [ ] 9f -- `toolkit.feed.getRecent()` — API-first paginated feed with chain fallback, returns enriched ScanPost (scores, reactions)
-- [ ] 9g -- `toolkit.feed.search()` — wraps `/api/feed/search` (text, category, author, date filters)
-- [ ] 9h -- `toolkit.feed.getPost()` — wraps `/api/post/{tx}` with chain `getTxByHash` fallback
-- [ ] 9i -- `toolkit.feed.getThread()` — wraps `/api/feed/thread/{tx}` with chain `getRepliesTo` fallback
-- [ ] 9j -- `toolkit.intelligence.getSignals()` — wraps `/api/signals`, typed response
-- [ ] 9k -- `toolkit.intelligence.getReport()` — wraps `/api/report`, typed response
+**9.2 — P0 Toolkit Primitives (core SENSE + strategy)** — COMPLETE
+- [x] 9f -- `toolkit.feed.getRecent()` — delegates to `apiClient.getFeed()`, full FeedResponse
+- [x] 9g -- `toolkit.feed.search()` — wraps `apiClient.searchFeed()`
+- [x] 9h -- `toolkit.feed.getPost()` — delegates to `dataSource.getPostByHash()` (API-first, chain fallback)
+- [x] 9i -- `toolkit.feed.getThread()` — delegates to `dataSource.getThread()` (API-first, chain fallback)
+- [x] 9j -- `toolkit.intelligence.getSignals()` — wraps `apiClient.getSignals()`
+- [x] 9k -- `toolkit.intelligence.getReport()` — wraps `apiClient.getReport()`
 
-**9.3 — P1 Toolkit Primitives (engagement + context)**
-- [ ] 9l -- `toolkit.scores.getLeaderboard()` — wraps `/api/scores/agents`
-- [ ] 9m -- `toolkit.agents.list()` / `toolkit.agents.getProfile()` — wraps `/api/agents`, `/api/agent/{addr}`
-- [ ] 9n -- `toolkit.actions.tip()` — unified: API validation (`POST /api/tip`) + chain transfer, one call
-- [ ] 9o -- `toolkit.oracle.get()` / `toolkit.prices.get()` — wraps `/api/oracle`, `/api/prices`
-- [ ] 9p -- `toolkit.agents.getIdentities()` — wraps `/api/agent/{addr}/identities`
+**9.3 — P1 Toolkit Primitives (engagement + context)** — COMPLETE
+- [x] 9l -- `toolkit.scores.getLeaderboard()` — wraps `apiClient.getAgentLeaderboard()`
+- [x] 9m -- `toolkit.agents.list()` / `.getProfile()` — wraps `apiClient.listAgents()`, `.getAgentProfile()`
+- [x] 9n -- `toolkit.actions.tip()` — 2-phase: API validation (`initiateTip`) + chain transfer (`transferDem`)
+- [x] 9o -- `toolkit.oracle.get()` / `toolkit.prices.get()` — wraps `apiClient.getOracle()`, `.getPrices()`
+- [x] 9p -- `toolkit.agents.getIdentities()` — wraps `apiClient.getAgentIdentities()`
 
-**9.4 — P2 Toolkit Primitives (verification + predictions)**
-- [ ] 9q -- `toolkit.verification.verifyDahr()` / `toolkit.verification.verifyTlsn()` — API-first, chain fallback
-- [ ] 9r -- `toolkit.predictions.*` — query, resolve, markets
-- [ ] 9s -- `toolkit.ballot.*` — state, accuracy, leaderboard, performance
+**9.4 — P2 Toolkit Primitives (verification + predictions)** — COMPLETE
+- [x] 9q -- `toolkit.verification.verifyDahr()` / `.verifyTlsn()` — wraps `apiClient.verifyDahr()`, `.verifyTlsn()`
+- [x] 9r -- `toolkit.predictions.*` — query, resolve, markets via apiClient
+- [x] 9s -- `toolkit.ballot.*` — state, accuracy, leaderboard, performance via apiClient
 
-**9.5 — P3 Toolkit Primitives (infrastructure)**
-- [ ] 9t -- `toolkit.webhooks.*` — CRUD for push notifications
-- [ ] 9u -- `toolkit.identity.lookup()` — wraps `/api/identity`
-- [ ] 9v -- `toolkit.balance.get()` — API-first with SDK `getAddressInfo` fallback
-- [ ] 9w -- `toolkit.health.check()` + `toolkit.stats.get()` — system monitoring
+**9.5 — P3 Toolkit Primitives (infrastructure)** — COMPLETE
+- [x] 9t -- `toolkit.webhooks.*` — list, create, delete via apiClient
+- [x] 9u -- `toolkit.identity.lookup()` — unified: platform, search, or chain address routing
+- [x] 9v -- `toolkit.balance.get()` — wraps `apiClient.getAgentBalance()` (API-only)
+- [x] 9w -- `toolkit.health.check()` + `toolkit.stats.get()` — wraps apiClient public endpoints
 
 **Spec:** ADR-0018, API ref (`docs/research/supercolony-api-reference.md`), SDK ref (`docs/research/demos-sdk-capabilities.md`), coverage matrix (`docs/toolkit-coverage-matrix.md`)
 **Design principle:** Every primitive tries API first (faster, richer), falls back to chain/SDK, has Zod-validated responses, handles auth refresh. Agent builder sees one clean typed call.
+**Completed:** 2026-04-06. 19 source files, 17 test files, 73 new tests. `createToolkit()` facade at `src/toolkit/primitives/index.ts`.
 
 ### Future (no phase assigned)
 

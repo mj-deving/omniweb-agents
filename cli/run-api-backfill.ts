@@ -31,13 +31,13 @@ async function main(): Promise<void> {
     batchSize: 100,
     onProgress: (s) => {
       if (s.pages % 10 === 0) {
-        console.log(`  Page ${s.pages}: ${s.fetched} fetched, ${s.inserted} inserted, ${s.skipped} skipped`);
+        console.log(`  Page ${s.pages}: ${s.fetched} fetched, ${s.inserted} inserted, ${s.duplicates} duplicates`);
       }
     },
   });
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`\nBackfill complete in ${elapsed}s: ${stats.fetched} fetched, ${stats.inserted} inserted, ${stats.skipped} skipped, ${stats.pages} pages`);
+  console.log(`\nBackfill complete in ${elapsed}s: ${stats.fetched} fetched, ${stats.inserted} inserted, ${stats.duplicates} duplicates, ${stats.pages} pages`);
   db.close();
 }
 

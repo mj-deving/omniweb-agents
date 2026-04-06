@@ -55,9 +55,14 @@ export interface AgentLoopOptions {
   onError?: (error: unknown) => void;
 }
 
+// ── Constants ───────────────────────────────────
+
+const MS_PER_HOUR = 3_600_000;
+const MS_PER_DAY = 86_400_000;
+
 // ── Feed post shape for buildColonyStateFromFeed ─
 
-interface FeedPost {
+export interface FeedPost {
   author: string;
   /** Timestamp in MILLISECONDS (not seconds). */
   timestamp: number;
@@ -66,6 +71,23 @@ interface FeedPost {
   txHash: string;
   reactions?: { agree: number; disagree: number };
   tags?: string[];
+}
+
+/**
+ * Map an ApiResult<FeedResponse> to normalized FeedPost[].
+ * Shared across defaultObserve and all template observe functions.
+ */
+export function mapFeedPosts(feedResult: { ok: true; data: { posts: any[] } } | { ok: false } | null): FeedPost[] {
+  if (!feedResult?.ok) return [];
+  return (feedResult.data as any).posts.map((p: any) => ({
+    txHash: p.txHash,
+    author: p.author,
+    timestamp: p.timestamp,
+    text: String(p.payload?.text ?? p.text ?? ""),
+    category: String(p.payload?.cat ?? p.payload?.category ?? ""),
+    tags: p.tags ?? [],
+    reactions: p.reactions,
+  }));
 }
 
 // ── buildColonyStateFromFeed ─────────────────────
@@ -82,7 +104,7 @@ export function buildColonyStateFromFeed(
   ourAddress: string,
 ): ColonyState {
   const now = Date.now();
-  const hourAgo = now - 3_600_000;
+  const hourAgo = now - MS_PER_HOUR;
   const recentPosts = posts.filter(p => p.timestamp > hourAgo);
 
   // Build topic frequency map from TAGS (not category)
@@ -145,18 +167,7 @@ export function buildColonyStateFromFeed(
  */
 export async function defaultObserve(toolkit: Toolkit, ourAddress: string): Promise<ObserveResult> {
   const feedResult = await toolkit.feed.getRecent({ limit: 100 });
-  // NULL SAFETY: ApiResult can be null — use optional chaining
-  const posts = feedResult?.ok
-    ? (feedResult.data as any).posts.map((p: any) => ({
-        txHash: p.txHash,
-        author: p.author,
-        timestamp: p.timestamp,
-        text: String(p.payload?.text ?? p.text ?? ""),
-        category: String(p.payload?.cat ?? p.payload?.category ?? ""),
-        tags: p.tags ?? [],
-        reactions: p.reactions,
-      }))
-    : [];
+  const posts = mapFeedPosts(feedResult as any);
 
   return {
     colonyState: buildColonyStateFromFeed(posts, ourAddress),
@@ -177,8 +188,8 @@ interface LoopState {
 
 function resetIfBoundary(state: LoopState): void {
   const now = Date.now();
-  const currentDay = Math.floor(now / 86_400_000);
-  const currentHour = Math.floor(now / 3_600_000);
+  const currentDay = Math.floor(now / MS_PER_DAY);
+  const currentHour = Math.floor(now / MS_PER_HOUR);
   if (currentDay > state.lastDayBoundary) {
     state.postsToday = 0;
     state.lastDayBoundary = currentDay;

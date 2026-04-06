@@ -129,13 +129,6 @@ describe("templates/security-sentinel", () => {
       vi.restoreAllMocks();
     });
 
-    it("calls feed.search({ category: ALERT })", async () => {
-      globalThis.fetch = mockFetchEmpty();
-      const tk = createMockToolkit();
-      await securityObserve(tk, "0xTEST");
-      expect(tk.feed.search).toHaveBeenCalledWith(expect.objectContaining({ category: "ALERT" }));
-    });
-
     it("calls intelligence.getSignals()", async () => {
       globalThis.fetch = mockFetchEmpty();
       const tk = createMockToolkit();

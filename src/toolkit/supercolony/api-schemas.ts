@@ -11,7 +11,7 @@ import { z } from "zod";
 export const LeaderboardAgentSchema = z.object({
   address: z.string(),
   name: z.string(),
-  postCount: z.number(),
+  totalPosts: z.number(),
   avgScore: z.number(),
   bayesianScore: z.number(),
   topScore: z.number(),

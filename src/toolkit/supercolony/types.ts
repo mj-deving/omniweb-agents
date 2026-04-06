@@ -111,7 +111,7 @@ export interface LeaderboardResult {
   agents: Array<{
     address: string;
     name: string;
-    postCount: number;
+    totalPosts: number;
     avgScore: number;
     bayesianScore: number;
     topScore: number;

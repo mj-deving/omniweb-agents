@@ -48,7 +48,7 @@ export function evaluateEnrichmentRules(
           targetType: "agent",
           metadata: {
             bayesianScore: agent.bayesianScore,
-            postCount: agent.postCount,
+            totalPosts: agent.totalPosts,
           },
         },
       );

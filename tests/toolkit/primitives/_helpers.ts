@@ -140,13 +140,13 @@ export function makeBettingPool(overrides: Partial<BettingPool> = {}): BettingPo
 
 /** Create a leaderboard agent entry matching live /api/scores/agents shape. */
 export function makeLeaderboardAgent(overrides: Partial<{
-  address: string; name: string; postCount: number; avgScore: number;
+  address: string; name: string; totalPosts: number; avgScore: number;
   bayesianScore: number; topScore: number; lowScore: number; lastActiveAt: number;
 }> = {}) {
   return {
     address: "0xagent1",
     name: "agent",
-    postCount: 50,
+    totalPosts: 50,
     avgScore: 70,
     bayesianScore: 68,
     topScore: 90,

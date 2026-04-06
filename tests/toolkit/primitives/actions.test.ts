@@ -152,6 +152,72 @@ describe("actions.placeBet", () => {
 
     expect(result).not.toBeNull();
     expect(result!.ok).toBe(false);
+    if (!result!.ok) expect(result!.error).toContain("No pool");
+    expect(transferDem).not.toHaveBeenCalled();
+  });
+
+  it("returns null when API unreachable (preserves null contract)", async () => {
+    const client = createMockApiClient({ getBettingPool: vi.fn().mockResolvedValue(null) });
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: client, transferDem });
+    const result = await actions.placeBet("BTC", 70000);
+
+    expect(result).toBeNull();
+    expect(transferDem).not.toHaveBeenCalled();
+  });
+
+  it("rejects asset containing colons", async () => {
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: createMockApiClient(), transferDem });
+    const result = await actions.placeBet("BTC:USD", 70000);
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    if (!result!.ok) expect(result!.error).toContain("colons");
+  });
+
+  it("rejects NaN price", async () => {
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: createMockApiClient(), transferDem });
+    const result = await actions.placeBet("BTC", NaN);
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    if (!result!.ok) expect(result!.error).toContain("positive finite");
+  });
+
+  it("rejects negative price", async () => {
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: createMockApiClient(), transferDem });
+    const result = await actions.placeBet("BTC", -100);
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+  });
+
+  it("rejects pool with mismatched asset (echo-check)", async () => {
+    const pool = { asset: "ETH", horizon: "1h", totalBets: 0, totalDem: 0, poolAddress: "0xpool", roundEnd: 0, bets: [] };
+    const client = createMockApiClient({ getBettingPool: vi.fn().mockResolvedValue(mockOk(pool)) });
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: client, transferDem });
+    const result = await actions.placeBet("BTC", 70000);
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    if (!result!.ok) expect(result!.error).toContain("mismatch");
+    expect(transferDem).not.toHaveBeenCalled();
+  });
+
+  it("rejects pool with empty address", async () => {
+    const pool = { asset: "BTC", horizon: "1h", totalBets: 0, totalDem: 0, poolAddress: "", roundEnd: 0, bets: [] };
+    const client = createMockApiClient({ getBettingPool: vi.fn().mockResolvedValue(mockOk(pool)) });
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: client, transferDem });
+    const result = await actions.placeBet("BTC", 70000);
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    if (!result!.ok) expect(result!.error).toContain("invalid address");
     expect(transferDem).not.toHaveBeenCalled();
   });
 });

@@ -53,6 +53,10 @@ export interface AgentLoopOptions {
   executeHeavyActions: HeavyExecutor;
   onAction?: (action: StrategyAction, result: unknown) => void;
   onError?: (error: unknown) => void;
+  /** Agent config — required by heavy executor for publish decisions. */
+  agentConfig?: unknown;
+  /** Source view — required by heavy executor for attestation source resolution. */
+  sourceView?: unknown;
 }
 
 // ── Constants ───────────────────────────────────
@@ -85,7 +89,7 @@ export function mapFeedPosts(feedResult: { ok: true; data: { posts: any[] } } | 
     timestamp: p.timestamp,
     text: String(p.payload?.text ?? p.text ?? ""),
     category: String(p.payload?.cat ?? p.payload?.category ?? ""),
-    tags: p.tags ?? [],
+    tags: p.payload?.tags ?? p.tags ?? [],
     reactions: p.reactions,
   }));
 }

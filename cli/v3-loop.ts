@@ -244,14 +244,15 @@ export async function runV3Loop(
       // ── API Enrichment via Toolkit Primitives (optional, graceful degradation) ──
       let apiEnrichment: ApiEnrichmentData | undefined;
       try {
-        const [agentsResult, leaderboardResult, oracleResult, pricesResult, ballotAccResult, signalsResult] = await Promise.all([
+        // Note: ballot.getAccuracy removed — /api/ballot returned 410 (ballot system replaced by /api/bets/pool)
+        const [agentsResult, leaderboardResult, oracleResult, pricesResult, signalsResult] = await Promise.all([
           toolkit.agents.list(),
           toolkit.scores.getLeaderboard({ limit: 20 }),
           toolkit.oracle.get(),
           toolkit.prices.get(["BTC", "ETH", "DEM"]),
-          toolkit.ballot.getAccuracy(bridge.walletAddress),
           toolkit.intelligence.getSignals(),
         ]);
+        const ballotAccResult = null; // Ballot system deprecated — enrichment gracefully skips
 
         apiEnrichment = {};
 

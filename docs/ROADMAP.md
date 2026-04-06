@@ -104,7 +104,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 - [ ] 9b -- API-based colony backfill: paginate `/api/feed?limit=100&offset=N` to fill sync gaps
 - [ ] 9c -- API drift detection tool: `cli/api-health-check.ts` — call each documented endpoint, compare response shape, report MATCH/DRIFT/GONE/NEW
 - [ ] 9d -- Wire ApiDataSource into v3-loop SENSE phase as primary read path
-- [ ] 9e -- Remove dead `publishHiveReaction` on-chain code
+- [x] 9e -- Remove dead `publishHiveReaction` on-chain code (already removed from src/; only doc refs remain)
 
 **9.2 — P0 Toolkit Primitives (core SENSE + strategy)**
 - [ ] 9f -- `toolkit.feed.getRecent()` — API-first paginated feed with chain fallback, returns enriched ScanPost (scores, reactions)

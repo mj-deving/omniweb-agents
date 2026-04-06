@@ -4,7 +4,7 @@
  * Verifies:
  * - oracle.get() called with correct assets
  * - prices.get() called
- * - priceDivergences detection from OracleResult
+ * - divergences detection from OracleResult (real API shape)
  * - Betting pool evidence when pool has 3+ bets
  * - NULL SAFETY: all ApiResult checks use ?.ok
  * - Evidence uses real AvailableEvidence shape
@@ -85,13 +85,10 @@ function createMockToolkit(overrides: Record<string, unknown> = {}): Toolkit {
 // ── Test data ─────────────────────────────────────
 
 const MOCK_ORACLE: OracleResult = {
-  sentiment: { BTC: 0.7, ETH: 0.5 },
-  priceDivergences: [
-    { asset: "BTC", cex: 60000, dex: 59000, spread: 1.67 },
-    { asset: "ETH", cex: 3000, dex: 2600, spread: 13.33 },
+  divergences: [
+    { type: "agents_vs_market", asset: "BTC", description: "Low divergence", severity: "low" as const },
+    { type: "agents_vs_market", asset: "ETH", description: "High divergence — agents bullish, market down", severity: "high" as const, details: { agentConfidence: 85 } },
   ],
-  polymarketOdds: [],
-  timestamp: Date.now(),
 };
 
 const MOCK_PRICES: PriceData[] = [
@@ -181,7 +178,7 @@ describe("templates/market-intelligence", () => {
       expect(toolkit.ballot.getPool).toHaveBeenCalled();
     });
 
-    it("detects price divergences above threshold from priceDivergences array", async () => {
+    it("creates evidence from oracle divergences", async () => {
       const toolkit = createMockToolkit({
         oracle: { get: vi.fn().mockResolvedValue(mockOk(MOCK_ORACLE)) },
         prices: { get: vi.fn().mockResolvedValue(mockOk(MOCK_PRICES)) },
@@ -189,11 +186,11 @@ describe("templates/market-intelligence", () => {
 
       const result = await marketObserve(toolkit, OUR_ADDRESS);
 
-      // ETH has 13.33% spread > default 10% threshold => evidence
+      // Both divergences should produce evidence (all severities included now)
       const divergenceEvidence = result.evidence.filter(e =>
-        e.sourceId === "oracle-divergence",
+        e.sourceId.startsWith("oracle-divergence"),
       );
-      expect(divergenceEvidence.length).toBeGreaterThanOrEqual(1);
+      expect(divergenceEvidence.length).toBe(2);
       // Verify evidence shape matches AvailableEvidence
       const ev = divergenceEvidence[0];
       expect(ev).toHaveProperty("sourceId");
@@ -203,23 +200,22 @@ describe("templates/market-intelligence", () => {
       expect(ev).toHaveProperty("freshness");
       expect(ev).toHaveProperty("stale");
       expect(Array.isArray(ev.metrics)).toBe(true);
+      // High severity should have richness 1.0
+      const highDiv = divergenceEvidence.find(e => e.sourceId.includes("ETH"));
+      expect(highDiv?.richness).toBe(1.0);
     });
 
-    it("does NOT add divergence evidence when all spreads below threshold", async () => {
-      const lowDivOracle: OracleResult = {
-        ...MOCK_ORACLE,
-        priceDivergences: [
-          { asset: "BTC", cex: 60000, dex: 59700, spread: 0.5 },
-          { asset: "ETH", cex: 3000, dex: 2980, spread: 0.67 },
-        ],
+    it("maps severity to richness correctly", async () => {
+      const noDivOracle: OracleResult = {
+        divergences: [],
       };
       const toolkit = createMockToolkit({
-        oracle: { get: vi.fn().mockResolvedValue(mockOk(lowDivOracle)) },
+        oracle: { get: vi.fn().mockResolvedValue(mockOk(noDivOracle)) },
         prices: { get: vi.fn().mockResolvedValue(mockOk(MOCK_PRICES)) },
       });
 
       const result = await marketObserve(toolkit, OUR_ADDRESS);
-      const divergenceEvidence = result.evidence.filter(e => e.sourceId === "oracle-divergence");
+      const divergenceEvidence = result.evidence.filter(e => e.sourceId.startsWith("oracle-divergence"));
       expect(divergenceEvidence).toHaveLength(0);
     });
 

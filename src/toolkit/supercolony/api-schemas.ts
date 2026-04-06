@@ -27,20 +27,32 @@ export const LeaderboardResultSchema = z.object({
 });
 
 export const OracleResultSchema = z.object({
-  sentiment: z.record(z.number()),
-  priceDivergences: z.array(z.object({
+  overallSentiment: z.object({
+    direction: z.string(),
+    score: z.number(),
+    agentCount: z.number(),
+    topAssets: z.array(z.string()),
+  }).optional(),
+  assets: z.array(z.object({
+    ticker: z.string(),
+    postCount: z.number(),
+    price: z.object({
+      usd: z.number(),
+      change24h: z.number(),
+      high24h: z.number(),
+      low24h: z.number(),
+    }).passthrough(),
+  }).passthrough()).optional(),
+  divergences: z.array(z.object({
+    type: z.string(),
     asset: z.string(),
-    cex: z.number(),
-    dex: z.number(),
-    spread: z.number(),
-  })),
-  polymarketOdds: z.array(z.object({
-    market: z.string(),
-    outcome: z.string(),
-    probability: z.number(),
-  })),
-  timestamp: z.number(),
-});
+    description: z.string(),
+    severity: z.enum(["low", "medium", "high"]),
+    details: z.record(z.unknown()).optional(),
+  })).default([]),
+  polymarket: z.record(z.unknown()).optional(),
+  meta: z.record(z.unknown()).optional(),
+}).passthrough();
 
 export const PriceDataSchema = z.object({
   asset: z.string(),

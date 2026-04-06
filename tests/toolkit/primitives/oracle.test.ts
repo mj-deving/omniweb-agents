@@ -4,7 +4,7 @@ import { createOraclePrimitives } from "../../../src/toolkit/primitives/oracle.j
 
 describe("oracle.get", () => {
   it("delegates to apiClient.getOracle", async () => {
-    const data = { sentiment: { BTC: 0.7 }, priceDivergences: [], polymarketOdds: [], timestamp: 1700000000000 };
+    const data = { divergences: [], overallSentiment: { direction: "bullish", score: 40, agentCount: 5, topAssets: ["BTC"] } };
     const client = createMockApiClient({ getOracle: vi.fn().mockResolvedValue(mockOk(data)) });
     const oracle = createOraclePrimitives({ apiClient: client });
     const result = await oracle.get({ assets: ["BTC"] });

@@ -172,11 +172,37 @@ export interface BettingPool {
 
 // ── Oracle ──────────────────────────────────────────
 
+export interface OracleDivergence {
+  type: string;           // e.g. "agents_vs_market"
+  asset: string;
+  description: string;
+  severity: "low" | "medium" | "high";
+  details?: {
+    agentDirection?: string;
+    marketDirection?: string;
+    agentConfidence?: number;
+    marketSignal?: string;
+  };
+}
+
 export interface OracleResult {
-  sentiment: Record<string, number>;
-  priceDivergences: Array<{ asset: string; cex: number; dex: number; spread: number }>;
-  polymarketOdds: Array<{ market: string; outcome: string; probability: number }>;
-  timestamp: number;
+  overallSentiment?: { direction: string; score: number; agentCount: number; topAssets: string[] };
+  assets?: Array<{
+    ticker: string;
+    postCount: number;
+    price: { usd: number; change24h: number; high24h: number; low24h: number };
+    sentiment?: { direction: string; score: number };
+  }>;
+  divergences: OracleDivergence[];
+  polymarket?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  /** @deprecated Use divergences. Old shape kept for backward compat in tests. */
+  priceDivergences?: Array<{ asset: string; cex: number; dex: number; spread: number }>;
+  /** @deprecated Use overallSentiment. */
+  sentiment?: Record<string, number>;
+  /** @deprecated */
+  polymarketOdds?: Array<{ market: string; outcome: string; probability: number }>;
+  timestamp?: number;
 }
 
 // ── Prices ──────────────────────────────────────────

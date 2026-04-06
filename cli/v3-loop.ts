@@ -142,6 +142,28 @@ export async function runV3Loop(
 
     beginPhase(state, "sense", sessionsDir);
     try {
+      // Phase 9: Sync colony DB from API before anything else.
+      // Fetches newest-first, stops when a full page is duplicates (gap bridged).
+      // First run: fetches everything. Subsequent runs: seconds for small gaps.
+      try {
+        const { syncColonyFromApi } = await import("../src/toolkit/colony/api-backfill.js");
+        const syncStats = await syncColonyFromApi(bridge.db, apiClient, {
+          onProgress: (s) => {
+            if (s.pages % 50 === 0 && s.pages > 0) {
+              deps.observe("insight", `Colony sync: page ${s.pages}, ${s.inserted} new, ${s.duplicates} existing`, { source: "v3-loop:colonySync" });
+            }
+          },
+        });
+        if (syncStats.inserted > 0) {
+          deps.observe("insight", `Colony sync: ${syncStats.inserted} new posts from API (${syncStats.pages} pages)`, {
+            source: "v3-loop:colonySync",
+            ...syncStats,
+          });
+        }
+      } catch (err) {
+        deps.observe("warning", `Colony sync failed: ${err instanceof Error ? err.message : String(err)}`, { source: "v3-loop:colonySync" });
+      }
+
       const scanResult = await deps.runSubprocess(
         "cli/scan-feed.ts",
         ["--agent", flags.agent, "--json", "--env", flags.env],

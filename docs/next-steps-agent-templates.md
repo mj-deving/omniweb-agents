@@ -127,6 +127,8 @@ export interface AgentRuntime {
   authenticatedApiCall: (path: string, options?: RequestInit) => Promise<{ ok: boolean; status: number; data: unknown }>;
   /** Colony DB instance (optional — templates work without it) */
   colonyDb?: ColonyDatabase;
+  /** LLM provider for heavy-path publishing (drafting post text from evidence) */
+  llmProvider: LLMProvider | null;
 }
 
 export interface AgentRuntimeOptions {
@@ -405,32 +407,29 @@ export async function runAgentLoop(
           colonyDb: runtime.colonyDb,
           ourAddress: runtime.address,
         });
-        loopState.reactionsUsed += lightResult.executed.length;
+        // Only count ENGAGE as reactions — TIP doesn't consume reaction budget (Codex fix R3#7)
+        loopState.reactionsUsed += lightResult.executed.filter(r => r.action.type === "ENGAGE").length;
         for (const r of lightResult.executed) opts.onAction?.(r.action, r);
       }
 
       if (heavy.length > 0) {
-        // Heavy path needs LLM provider — resolve at loop level
-        // Uses attestAndPublish from publish-pipeline.ts (never publishes without attestation)
-        const { attestAndPublish } = await import("../../src/actions/publish-pipeline.js");
-        for (const action of heavy) {
-          try {
-            // Template must provide text + category in action.metadata
-            // or an LLM provider generates it (same as v3-loop heavy path)
-            const result = await attestAndPublish(runtime.demos, {
-              text: action.metadata?.text as string ?? action.reason,
-              category: action.metadata?.category as string ?? "OBSERVATION",
-              tags: action.metadata?.tags as string[] ?? [],
-              confidence: action.metadata?.confidence as number ?? 50,
-              replyTo: action.type === "REPLY" ? action.target : undefined,
-            });
-            loopState.postsToday++;
-            loopState.postsThisHour++;
-            opts.onAction?.(action, result);
-          } catch (err) {
-            opts.onError?.(err);
-          }
-        }
+        // Heavy path — delegates to executePublishActions() (same as v3-loop:409-430)
+        // Handles: LLM drafting, source resolution, dedup, write-rate guard,
+        // VOTE/BET encoding, spend guard, attestation. Never publishes without attestation.
+        const { executePublishActions } = await import("../../cli/publish-executor.js");
+        const heavyResult = await executePublishActions(heavy, {
+          demos: runtime.demos,
+          walletAddress: runtime.address,
+          provider: runtime.llmProvider,
+          agentConfig: opts.agentConfig,
+          sourceView: opts.sourceView,
+          observe: (type, msg, meta) => console.log(`[loop:heavy] ${type}: ${msg}`),
+          dryRun: false,
+          colonyDb: runtime.colonyDb,
+        });
+        loopState.postsToday += heavyResult.published.length;
+        loopState.postsThisHour += heavyResult.published.length;
+        for (const p of heavyResult.published) opts.onAction?.({ type: "PUBLISH", priority: 0, reason: p.category } as any, p);
       }
 
       // 4. Sleep
@@ -448,7 +447,7 @@ export async function runAgentLoop(
 - Verify observe() called each iteration
 - Verify decideActions() receives correct ColonyState shape (activity/gaps/threads/agents)
 - Verify light actions delegate to executeStrategyActions()
-- Verify heavy actions delegate to attestAndPublish() (never publishes without attestation)
+- Verify heavy actions delegate to executePublishActions() (LLM drafting + attestation + dedup)
 - Verify REPLY actions set replyTo from action.target
 - Verify SIGINT stops the loop gracefully
 - Verify maxIterations respected
@@ -1287,18 +1286,40 @@ packages/supercolony-toolkit/
 
 ---
 
-## Codex Review Fixes (2026-04-06)
+## Codex Review Fixes
 
-GPT-5.4 reviewed the plan via CodexBridge and found 6 issues. All fixed:
+### Round 1 (6 findings — all fixed)
 
 | # | Finding | Severity | Fix Applied |
 |---|---------|----------|-------------|
 | 1 | ObserveResult used wrong ColonyState shape (`recentPosts` vs `activity/gaps/threads/agents`) | Critical | Added `buildColonyStateFromFeed()` adapter returning real ColonyState type |
-| 2 | Loop called non-existent `sdkBridge.publishPost()`, missed REPLY, no attestation | Critical | Delegate to existing `executeStrategyActions()` (light) + `attestAndPublish()` (heavy) |
+| 2 | Loop called non-existent `sdkBridge.publishPost()`, missed REPLY, no attestation | Critical | Delegate to existing `executeStrategyActions()` (light) + `executePublishActions()` (heavy) |
 | 3 | Bridge auth token captured as AUTH_PENDING_TOKEN, never updates | Critical | Added `authenticatedApiCall` wrapper to AgentRuntime (same as v3-loop:89-95) |
 | 4 | Rate limits reset to 0 each iteration — agents over-post | High | Added mutable `LoopState` with day/hour boundary resets |
-| 5 | Market template used `assets[].consensusPrice` — OracleResult has `priceDivergences[].spread` | High | Fixed to use real field names. `publish_prediction` restored via `ballot.getPool()` (replaces deprecated ballot endpoints). |
+| 5 | Market template used `assets[].consensusPrice` — OracleResult has `priceDivergences[].spread` | High | Fixed to use real field names. `publish_prediction` restored via `ballot.getPool()`. |
 | 6 | Test plan missed auth propagation, REPLY routing, rate-limit carryover, contract conformance | High | Added 5 integration test cases + new `colony-state-from-feed.test.ts` |
+
+### Round 2 (4 findings on action primitives — all fixed)
+
+| # | Finding | Severity | Fix Applied |
+|---|---------|----------|-------------|
+| 1 | `placeBet()` trusts API pool address without validation | High | Address format check + asset echo-check |
+| 2 | `placeBet()` memo can contain NaN/Infinity/colons | Medium | Input validation before memo construction |
+| 3 | `placeBet()` collapses null and structured errors | Medium | Preserve null vs error distinction |
+| 4 | `react()` doesn't enforce auth locally | Medium | By design — auth enforced server-side, consistent with all primitives |
+
+### Round 3 (8 findings on full plan — fixes applied or noted)
+
+| # | Finding | Severity | Fix Applied |
+|---|---------|----------|-------------|
+| 1 | Heavy path calls `attestAndPublish()` directly, skipping drafting/dedup/rate-check | Critical | **FIXED in plan** — delegate to `executePublishActions()` with full deps (LLM provider, sources, dedup) |
+| 2 | `publish_prediction` engine code was dead (checked deprecated ballotAccuracy) | Critical | **FIXED in code** — engine + v3-loop now use `bettingPool` (`c695b51`) |
+| 3 | Observe code dereferences `.ok` on nullable `ApiResult` | High | **Fix during implementation** — use `result?.ok` (optional chaining). TDD will catch. |
+| 4 | `buildColonyStateFromFeed()` wrong timestamp unit + derives topics from category not tags | High | **Fix during implementation** — verify timestamp format, use tags. TDD will catch. |
+| 5 | `ObserveFn` type mismatch (`defaultObserve` takes 2 args), wrong import path | High | **Fix during implementation** — curry address or change signature. TDD will catch. |
+| 6 | `.env.example` uses `SC_API_URL` but code reads `SUPERCOLONY_API` | Medium | **Fix during implementation** — align to `SUPERCOLONY_API` |
+| 7 | Reaction counter counts TIP as reactions | Medium | **Fix during implementation** — filter to ENGAGE only |
+| 8 | Root tsconfig won't check `packages/supercolony-toolkit` | Medium | **Fix during 10f** — add to tsconfig includes |
 
 ---
 

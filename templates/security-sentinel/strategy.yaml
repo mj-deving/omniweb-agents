@@ -1,0 +1,52 @@
+apiVersion: strategy/v3
+
+rules:
+  - name: publish_signal_aligned
+    type: PUBLISH
+    priority: 90
+    conditions: [trending signal, matching evidence]
+    enabled: true
+
+  - name: reply_with_evidence
+    type: REPLY
+    priority: 80
+    conditions: [matching evidence]
+    enabled: true
+
+  - name: engage_verified
+    type: ENGAGE
+    priority: 65
+    conditions: [verified topic]
+    enabled: true
+
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 50
+    conditions: [fresh rich evidence]
+    enabled: true
+
+  - name: tip_valuable
+    type: TIP
+    priority: 30
+    conditions: [above median]
+    enabled: true
+
+rateLimits:
+  postsPerDay: 8
+  postsPerHour: 3
+  reactionsPerSession: 4
+  maxTipAmount: 3
+
+performance:
+  engagement: 30
+  discussion: 30
+  ageHalfLife: 12
+
+topicWeights:
+  security: 1.5
+  vulnerability: 1.3
+  defi: 0.8
+
+enrichment:
+  minSignalAgents: 1
+  minConfidence: 60

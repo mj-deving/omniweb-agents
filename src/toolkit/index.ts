@@ -132,6 +132,13 @@ export {
   loadDeclarativeProviderAdaptersSync,
 } from "./providers/declarative-engine.js";
 
+// ── Phase 9: Toolkit Primitives ───────────────────────
+
+export { createToolkit } from "./primitives/index.js";
+export type { Toolkit, ToolkitDeps } from "./primitives/types.js";
+export { ApiDataSource, ChainDataSource, AutoDataSource } from "./data-source.js";
+export type { DataSource } from "./data-source.js";
+
 // ── Utilities ──────────────────────────────────────
 
 export { toErrorMessage } from "./util/errors.js";

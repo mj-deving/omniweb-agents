@@ -595,10 +595,10 @@ const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
   // { sourceId, subject, metrics[], richness, freshness, stale }
   const evidence: AvailableEvidence[] = [];
 
-  // OracleResult exposes priceDivergences (Codex fix #5 — NOT assets[].consensusPrice)
+  // OracleResult exposes divergences (Codex fix #5 — NOT assets[].consensusPrice)
   // Shape: { asset: string; cex: number; dex: number; spread: number }
   if (oracleResult?.ok) {
-    for (const div of oracleResult.data.priceDivergences ?? []) {
+    for (const div of oracleResult.data.divergences ?? []) {
       if (Math.abs(div.spread) > DIVERGENCE_THRESHOLD) {
         evidence.push({
           sourceId: `oracle-divergence-${div.asset}`,
@@ -1193,7 +1193,7 @@ packages/supercolony-toolkit/
 | `tests/toolkit/agent-loop.test.ts` | observe called, decide called, **light→executeStrategyActions, heavy→attestAndPublish**, REPLY sets replyTo, shutdown, maxIterations, **rate-limit carryover across iterations**, **day/hour boundary reset** | ISC-7-11, ISC-17-18 |
 | `tests/toolkit/colony-state-from-feed.test.ts` | **buildColonyStateFromFeed returns correct shape** (activity/gaps/threads/agents), **mentionsOfUs detected**, **trendingTopics computed** | New (Codex fix #1) |
 | `tests/templates/base-template.test.ts` | strategy.yaml valid, base observe returns ColonyState with correct shape | ISC-12-13, ISC-17 |
-| `tests/templates/market-intelligence.test.ts` | **priceDivergences (not assets[])** detection, oracle/prices called, evidence has subject/metrics/richness/freshness/stale | ISC-21-24, ISC-28-29 |
+| `tests/templates/market-intelligence.test.ts` | **divergences (not assets[])** detection, oracle/prices called, evidence has subject/metrics/richness/freshness/stale | ISC-21-24, ISC-28-29 |
 | `tests/templates/security-sentinel.test.ts` | CVE fetch, advisory fetch, signals in both evidence AND apiEnrichment context, **REPLY enabled** | ISC-32-34, ISC-37 |
 
 **Integration tests added per Codex finding #6:**
@@ -1296,7 +1296,7 @@ packages/supercolony-toolkit/
 | 2 | Loop called non-existent `sdkBridge.publishPost()`, missed REPLY, no attestation | Critical | Delegate to existing `executeStrategyActions()` (light) + `executePublishActions()` (heavy) |
 | 3 | Bridge auth token captured as AUTH_PENDING_TOKEN, never updates | Critical | Added `authenticatedApiCall` wrapper to AgentRuntime (same as v3-loop:89-95) |
 | 4 | Rate limits reset to 0 each iteration — agents over-post | High | Added mutable `LoopState` with day/hour boundary resets |
-| 5 | Market template used `assets[].consensusPrice` — OracleResult has `priceDivergences[].spread` | High | Fixed to use real field names. `publish_prediction` restored via `ballot.getPool()`. |
+| 5 | Market template used `assets[].consensusPrice` — OracleResult has `divergences[].spread` | High | Fixed to use real field names. `publish_prediction` restored via `ballot.getPool()`. |
 | 6 | Test plan missed auth propagation, REPLY routing, rate-limit carryover, contract conformance | High | Added 5 integration test cases + new `colony-state-from-feed.test.ts` |
 
 ### Round 2 (4 findings on action primitives — all fixed)

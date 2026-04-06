@@ -89,24 +89,24 @@ export function evaluateEnrichmentRules(
   }
 
   // ── publish_on_divergence ───────────────────────
+  // Real API: oracle.divergences[] with { type, asset, description, severity, details }
   const divergenceRule = getRule(config, "publish_on_divergence");
-  if (divergenceRule && enrichment?.oracle?.priceDivergences) {
-    const divergenceThreshold = config.enrichment?.divergenceThreshold ?? 10;
-
-    for (const div of enrichment.oracle.priceDivergences) {
-      if (Math.abs(div.spread) < divergenceThreshold) continue;
+  if (divergenceRule && enrichment?.oracle?.divergences) {
+    for (const div of enrichment.oracle.divergences) {
+      // Only fire on medium+ severity (low is noise)
+      if (div.severity === "low") continue;
 
       const action = createAction(
         divergenceRule,
-        `Publish divergence analysis: ${div.asset} spread ${div.spread > 0 ? "+" : ""}${div.spread}%`,
+        `Publish divergence analysis: ${div.asset} — ${div.description}`,
         {
           target: div.asset.toLowerCase(),
           metadata: {
             asset: div.asset,
-            cexPrice: div.cex,
-            dexPrice: div.dex,
-            spread: div.spread,
-            sentiment: enrichment.oracle.sentiment?.[div.asset],
+            type: div.type,
+            severity: div.severity,
+            description: div.description,
+            agentConfidence: div.details?.agentConfidence,
           },
         },
       );

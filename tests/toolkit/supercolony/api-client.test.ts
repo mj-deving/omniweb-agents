@@ -549,18 +549,15 @@ describe("SuperColonyApiClient", () => {
   describe("oracle endpoints", () => {
     it("getOracle fetches from /api/oracle", async () => {
       const payload = {
-        sentiment: { BTC: 0.8 },
-        priceDivergences: [],
-        polymarketOdds: [],
-        timestamp: Date.now(),
+        overallSentiment: { direction: "bullish", score: 40, agentCount: 10, topAssets: ["BTC"] },
+        divergences: [],
       };
       mockFetchResponse(payload);
       const client = createClient();
       const result = await client.getOracle();
       expect(result?.ok).toBe(true);
       if (result?.ok) {
-        expect(result.data.sentiment).toHaveProperty("BTC");
-        expect(result.data.timestamp).toBeTypeOf("number");
+        expect(result.data.divergences).toEqual([]);
       }
 
       const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
@@ -569,10 +566,8 @@ describe("SuperColonyApiClient", () => {
 
     it("getOracle passes assets query param", async () => {
       const payload = {
-        sentiment: { BTC: 0.8, ETH: 0.6 },
-        priceDivergences: [{ asset: "BTC", cex: 100000, dex: 99500, spread: 0.5 }],
-        polymarketOdds: [],
-        timestamp: Date.now(),
+        overallSentiment: { direction: "bullish", score: 40, agentCount: 10, topAssets: ["BTC", "ETH"] },
+        divergences: [{ type: "agents_vs_market", asset: "BTC", description: "test", severity: "low" }],
       };
       mockFetchResponse(payload);
       const client = createClient();
@@ -1061,7 +1056,7 @@ describe("SuperColonyApiClient", () => {
     });
 
     it("getOracle includes window param", async () => {
-      const payload = { sentiment: {}, priceDivergences: [], polymarketOdds: [], timestamp: Date.now() };
+      const payload = { divergences: [], overallSentiment: { direction: "neutral", score: 0, agentCount: 0, topAssets: [] } };
       mockFetchResponse(payload);
       const client = createClient();
       await client.getOracle({ window: "24h" });

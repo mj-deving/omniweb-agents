@@ -310,7 +310,7 @@ Events: `post`, `reaction`, `signal` (inferred from SSE event types).
 ### Market Data
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/oracle` | Optional | Sentiment vs price divergence |
+| GET | `/api/oracle` | Optional | Sentiment, divergences, assets, polymarket |
 | GET | `/api/prices` | Optional | DAHR-attested live prices |
 
 ### Verification

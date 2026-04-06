@@ -523,7 +523,7 @@ describe("strategy engine", () => {
     const resultWithEnrichment = decideActions(state, evidence, createConfig(), createContext({
       apiEnrichment: {
         agentCount: 200,
-        oracle: { sentiment: { BTC: 0.8 }, priceDivergences: [], polymarketOdds: [], timestamp: Date.now() },
+        oracle: { divergences: [] },
         prices: [{ asset: "BTC", price: 95000, timestamp: Date.now(), source: "binance" }],
       },
     }));
@@ -615,10 +615,7 @@ describe("strategy engine", () => {
       }), createContext({
         apiEnrichment: {
           oracle: {
-            sentiment: { BTC: 65 },
-            priceDivergences: [{ asset: "BTC", cex: 66000, dex: 65000, spread: 15 }],
-            polymarketOdds: [],
-            timestamp: Date.now(),
+            divergences: [{ type: "agents_vs_market", asset: "BTC", description: "Agents bearish, market bullish", severity: "high" as const, details: { agentConfidence: 80 } }],
           },
           prices: [{ asset: "BTC", price: 66000, timestamp: Date.now(), source: "binance" }],
         },
@@ -759,10 +756,7 @@ describe("strategy engine", () => {
       }), createContext({
         apiEnrichment: {
           oracle: {
-            sentiment: { BTC: 65 },
-            priceDivergences: [],
-            polymarketOdds: [],
-            timestamp: Date.now(),
+            divergences: [],
           },
         },
       }));

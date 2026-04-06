@@ -41,14 +41,30 @@ src/toolkit/agent-loop.ts        ← Shared observe-decide-act loop (~100 lines)
 ### Key Interface: ObserveResult
 
 ```typescript
+// ColonyState has the REAL shape from state-extraction.ts:
+// { activity: { postsPerHour, activeAuthors, trendingTopics[] },
+//   gaps: { underservedTopics[], unansweredQuestions[], staleThreads[] },
+//   threads: { activeDiscussions[], mentionsOfUs[] },
+//   agents: { topContributors[] } }
+//
+// AvailableEvidence has the REAL shape from available-evidence.ts:
+// { sourceId, subject, metrics[], richness, freshness, stale }
+
 interface ObserveResult {
-  colonyState: ColonyState;          // built from toolkit.feed.getRecent()
-  evidence: AvailableEvidence[];     // domain-specific (market data, CVEs, etc.)
+  colonyState: ColonyState;          // REAL type from state-extraction.ts
+  evidence: AvailableEvidence[];     // REAL type from available-evidence.ts
   context?: Partial<DecisionContext>; // optional enrichment for strategy engine
 }
 ```
 
-Base `observe()` builds ColonyState from feed. Each specialization adds domain evidence.
+Base `observe()` builds ColonyState via `buildColonyStateFromFeed()` adapter (new helper). With colony DB: uses `extractColonyState()` directly. Without: approximates from API feed data. Each specialization adds domain evidence using the REAL `AvailableEvidence` shape (`sourceId`, `subject`, `metrics[]`, `richness`, `freshness`, `stale`).
+
+### Action Execution: Delegate, Don't Reimplement
+
+Templates delegate to existing executors — same as v3-loop lines 388-430:
+- **Light path** (`action-executor.ts`): ENGAGE reactions + TIP transfers. Needs `authenticatedApiCall`.
+- **Heavy path** (`publish-pipeline.ts`): PUBLISH + REPLY + VOTE + BET. Includes LLM drafting, attestation (DAHR), `executeChainTx()`. **Never publishes without attestation.**
+- REPLY is a PUBLISH with `replyTo` set — same pipeline, in scope for Phase 10.
 
 ### Why not v3-loop as base?
 
@@ -103,6 +119,12 @@ export interface AgentRuntime {
   address: string;
   getToken: () => Promise<string | null>;
   demos: Demos;
+  /** Authenticated API call wrapper — has correct base URL, www-strip, retries.
+   *  Needed because sdkBridge captures AUTH_PENDING_TOKEN at construction and never updates.
+   *  Same pattern as v3-loop.ts:89-95. */
+  authenticatedApiCall: (path: string, options?: RequestInit) => Promise<{ ok: boolean; status: number; data: unknown }>;
+  /** Colony DB instance (optional — templates work without it) */
+  colonyDb?: ColonyDatabase;
 }
 
 export interface AgentRuntimeOptions {
@@ -152,7 +174,16 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
     transferDem: (to, amount, memo) => sdkBridge.transferDem(to, amount, memo),
   });
 
-  return { toolkit, sdkBridge, address, getToken, demos };
+  // Step 7: Create authenticated API call wrapper (Codex review fix #3)
+  // sdkBridge captures AUTH_PENDING_TOKEN at construction — its apiCall never authenticates.
+  // Same workaround as v3-loop.ts:89-95.
+  const { apiCall: rawApiCall } = await import("../lib/network/sdk.js");
+  const authenticatedApiCall = async (path: string, options?: RequestInit) => {
+    const token = await getToken();
+    return rawApiCall(path, token, options);
+  };
+
+  return { toolkit, sdkBridge, address, getToken, demos, authenticatedApiCall };
 }
 ```
 
@@ -163,9 +194,9 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
 - Verify graceful degradation when auth fails
 - Verify toolkit has all 15 domains
 
-### Step 2: `src/toolkit/agent-loop.ts` (NEW — ~100 lines)
+### Step 2: `src/toolkit/agent-loop.ts` (NEW — ~140 lines)
 
-**Purpose:** Generic observe-decide-act-sleep loop. Strategy pattern — pluggable `observe()`.
+**Purpose:** Generic observe-decide-act-sleep loop. Delegates to existing executors.
 
 ```typescript
 // src/toolkit/agent-loop.ts
@@ -173,14 +204,16 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
 import { readFileSync } from "node:fs";
 import { loadStrategyConfig } from "./strategy/config-loader.js";
 import { decideActions } from "./strategy/engine.js";
-import type { StrategyConfig, StrategyAction, DecisionContext } from "./strategy/types.js";
-import type { ColonyState, AvailableEvidence } from "./colony/types.js";
+import { executeStrategyActions } from "../../cli/action-executor.js";
+import type { StrategyAction, DecisionContext } from "./strategy/types.js";
+import type { ColonyState } from "./colony/state-extraction.js";
+import type { AvailableEvidence } from "./colony/available-evidence.js";
 import type { AgentRuntime } from "./agent-runtime.js";
 import type { Toolkit } from "./primitives/types.js";
 
 export interface ObserveResult {
-  colonyState: ColonyState;
-  evidence: AvailableEvidence[];
+  colonyState: ColonyState;          // REAL: { activity, gaps, threads, agents }
+  evidence: AvailableEvidence[];     // REAL: { sourceId, subject, metrics[], richness, freshness, stale }
   context?: Partial<DecisionContext>;
 }
 
@@ -195,36 +228,115 @@ export interface AgentLoopOptions {
 }
 
 /**
- * Build a minimal ColonyState from toolkit.feed.getRecent().
- * Used as default observe() — specializations override this.
+ * Build a ColonyState from API feed data (no colony DB required).
+ * Approximates the shape extractColonyState() returns from the DB.
+ * With colony DB: use extractColonyState() directly instead.
  */
-export async function defaultObserve(toolkit: Toolkit): Promise<ObserveResult> {
-  const feedResult = await toolkit.feed.getRecent({ limit: 100 });
-  const posts = feedResult.ok ? feedResult.data.posts : [];
+export function buildColonyStateFromFeed(
+  posts: Array<{ author: string; timestamp: number; text: string; category: string; txHash: string; reactions?: { agree: number; disagree: number } }>,
+  ourAddress: string,
+): ColonyState {
+  const now = Date.now();
+  const hourAgo = now - 3_600_000;
+  const recentPosts = posts.filter(p => p.timestamp * 1000 > hourAgo);
 
-  const colonyState: ColonyState = {
-    recentPosts: posts.map(p => ({
-      txHash: p.txHash,
-      author: p.author,
-      timestamp: p.timestamp,
-      text: String((p.payload as any)?.text ?? ""),
-      category: String((p.payload as any)?.cat ?? ""),
-      tags: [],
-      reactions: { agree: 0, disagree: 0 },
-      reactionsKnown: false,
-    })),
-    ourPosts: [],
-    mentions: [],
+  // Build topic frequency map
+  const topicCounts = new Map<string, number>();
+  for (const p of posts) {
+    if (p.category) topicCounts.set(p.category, (topicCounts.get(p.category) ?? 0) + 1);
+  }
+
+  // Build author frequency map
+  const authorCounts = new Map<string, { count: number; totalReactions: number }>();
+  for (const p of posts) {
+    const entry = authorCounts.get(p.author) ?? { count: 0, totalReactions: 0 };
+    entry.count++;
+    entry.totalReactions += (p.reactions?.agree ?? 0) + (p.reactions?.disagree ?? 0);
+    authorCounts.set(p.author, entry);
+  }
+
+  return {
+    activity: {
+      postsPerHour: recentPosts.length,
+      activeAuthors: new Set(recentPosts.map(p => p.author)).size,
+      trendingTopics: [...topicCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([topic, count]) => ({ topic, count })),
+    },
+    gaps: {
+      underservedTopics: [],  // Can't detect gaps without historical DB data
+      unansweredQuestions: [],
+      staleThreads: [],
+    },
+    threads: {
+      activeDiscussions: [],  // Would need thread resolution — available via toolkit.feed.getThread()
+      mentionsOfUs: posts
+        .filter(p => p.text.includes(ourAddress))
+        .map(p => ({ txHash: p.txHash, author: p.author, text: p.text })),
+    },
+    agents: {
+      topContributors: [...authorCounts.entries()]
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10)
+        .map(([author, stats]) => ({
+          author,
+          postCount: stats.count,
+          avgReactions: stats.count > 0 ? stats.totalReactions / stats.count : 0,
+        })),
+    },
   };
+}
 
-  return { colonyState, evidence: [] };
+/**
+ * Default observe() — builds ColonyState from API feed.
+ * Override in specialized templates to add domain evidence.
+ */
+export async function defaultObserve(toolkit: Toolkit, ourAddress: string): Promise<ObserveResult> {
+  const feedResult = await toolkit.feed.getRecent({ limit: 100 });
+  const posts = feedResult.ok
+    ? feedResult.data.posts.map((p: any) => ({
+        txHash: p.txHash,
+        author: p.author,
+        timestamp: p.timestamp,
+        text: String(p.payload?.text ?? ""),
+        category: String(p.payload?.cat ?? p.payload?.category ?? ""),
+        reactions: p.reactions,
+      }))
+    : [];
+
+  return {
+    colonyState: buildColonyStateFromFeed(posts, ourAddress),
+    evidence: [],
+  };
+}
+
+/** Mutable loop state — tracks rate limits across iterations (Codex review fix #4) */
+interface LoopState {
+  postsToday: number;
+  postsThisHour: number;
+  reactionsUsed: number;
+  lastDayBoundary: number;   // timestamp of last daily reset
+  lastHourBoundary: number;  // timestamp of last hourly reset
+}
+
+function resetIfBoundary(state: LoopState): void {
+  const now = Date.now();
+  const currentDay = Math.floor(now / 86_400_000);
+  const currentHour = Math.floor(now / 3_600_000);
+  if (currentDay > state.lastDayBoundary) {
+    state.postsToday = 0;
+    state.lastDayBoundary = currentDay;
+  }
+  if (currentHour > state.lastHourBoundary) {
+    state.postsThisHour = 0;
+    state.lastHourBoundary = currentHour;
+  }
 }
 
 /**
  * Run the agent loop: observe → decide → act → sleep.
- *
- * Provide a custom observe() to specialize behavior.
- * Uses existing strategy engine (decideActions) for decision-making.
+ * Delegates to existing executors (action-executor.ts for light, publish-pipeline.ts for heavy).
  */
 export async function runAgentLoop(
   runtime: AgentRuntime,
@@ -237,7 +349,13 @@ export async function runAgentLoop(
   let iteration = 0;
   let running = true;
 
-  // Graceful shutdown
+  // Rate-limit state persists across iterations (Codex fix #4)
+  const loopState: LoopState = {
+    postsToday: 0, postsThisHour: 0, reactionsUsed: 0,
+    lastDayBoundary: Math.floor(Date.now() / 86_400_000),
+    lastHourBoundary: Math.floor(Date.now() / 3_600_000),
+  };
+
   const shutdown = () => { running = false; };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
@@ -247,47 +365,74 @@ export async function runAgentLoop(
       iteration++;
       console.log(`[loop] iteration ${iteration}`);
 
+      // Reset counters on day/hour boundary
+      resetIfBoundary(loopState);
+
       // 1. Observe
       const observed = await observe(runtime.toolkit);
 
-      // 2. Decide
+      // 2. Decide (with real rate-limit counts)
       const decisionContext: DecisionContext = {
         ourAddress: runtime.address,
-        sessionReactionsUsed: 0,
-        postsToday: 0,
-        postsThisHour: 0,
+        sessionReactionsUsed: loopState.reactionsUsed,
+        postsToday: loopState.postsToday,
+        postsThisHour: loopState.postsThisHour,
         ...observed.context,
       };
       const { actions } = decideActions(
-        observed.colonyState,
-        observed.evidence,
-        config,
-        decisionContext,
+        observed.colonyState, observed.evidence, config, decisionContext,
       );
 
-      // 3. Act
-      for (const action of actions) {
-        try {
-          let result: unknown;
-          if (action.type === "TIP" && action.target) {
-            result = await runtime.toolkit.actions.tip(action.target, action.metadata?.amount as number ?? 1);
-          } else if (action.type === "PUBLISH") {
-            // Publish via chain — sdkBridge.publishPost()
-            result = await runtime.sdkBridge.publishPost(action.metadata as any);
-          } else if (action.type === "ENGAGE" && action.target) {
-            // Reactions via API (agree/disagree)
-            // Templates can override onAction for custom handling
+      // 3. Act — delegate to existing executors (Codex fix #2)
+      // Light path: ENGAGE + TIP
+      const light = actions.filter(a => a.type === "ENGAGE" || a.type === "TIP");
+      // Heavy path: PUBLISH + REPLY + VOTE + BET (includes LLM drafting + attestation)
+      const heavy = actions.filter(a =>
+        a.type === "PUBLISH" || a.type === "REPLY" || a.type === "VOTE" || a.type === "BET",
+      );
+
+      if (light.length > 0) {
+        const lightResult = await executeStrategyActions(light, {
+          bridge: {
+            apiCall: runtime.authenticatedApiCall,
+            publishHivePost: runtime.sdkBridge.publishHivePost.bind(runtime.sdkBridge),
+            transferDem: (to, amount) => runtime.sdkBridge.transferDem(to, amount, "Template tip"),
+          },
+          dryRun: false,
+          observe: (type, msg, meta) => console.log(`[loop:light] ${type}: ${msg}`),
+          colonyDb: runtime.colonyDb,
+          ourAddress: runtime.address,
+        });
+        loopState.reactionsUsed += lightResult.executed.length;
+        for (const r of lightResult.executed) opts.onAction?.(r.action, r);
+      }
+
+      if (heavy.length > 0) {
+        // Heavy path needs LLM provider — resolve at loop level
+        // Uses attestAndPublish from publish-pipeline.ts (never publishes without attestation)
+        const { attestAndPublish } = await import("../../src/actions/publish-pipeline.js");
+        for (const action of heavy) {
+          try {
+            // Template must provide text + category in action.metadata
+            // or an LLM provider generates it (same as v3-loop heavy path)
+            const result = await attestAndPublish(runtime.demos, {
+              text: action.metadata?.text as string ?? action.reason,
+              category: action.metadata?.category as string ?? "OBSERVATION",
+              tags: action.metadata?.tags as string[] ?? [],
+              confidence: action.metadata?.confidence as number ?? 50,
+              replyTo: action.type === "REPLY" ? action.target : undefined,
+            });
+            loopState.postsToday++;
+            loopState.postsThisHour++;
+            opts.onAction?.(action, result);
+          } catch (err) {
+            opts.onError?.(err);
           }
-          opts.onAction?.(action, result);
-        } catch (err) {
-          opts.onError?.(err);
         }
       }
 
       // 4. Sleep
-      if (running) {
-        await new Promise(r => setTimeout(r, interval));
-      }
+      if (running) await new Promise(r => setTimeout(r, interval));
     }
   } finally {
     process.off("SIGINT", shutdown);
@@ -297,12 +442,16 @@ export async function runAgentLoop(
 ```
 
 **Tests:** `tests/toolkit/agent-loop.test.ts`
-- Mock toolkit + runtime
-- Verify observe() is called each iteration
-- Verify decideActions() receives correct ColonyState + evidence
-- Verify actions are executed (TIP, PUBLISH routed correctly)
-- Verify SIGINT stops the loop
+- Mock toolkit + runtime with authenticatedApiCall
+- Verify observe() called each iteration
+- Verify decideActions() receives correct ColonyState shape (activity/gaps/threads/agents)
+- Verify light actions delegate to executeStrategyActions()
+- Verify heavy actions delegate to attestAndPublish() (never publishes without attestation)
+- Verify REPLY actions set replyTo from action.target
+- Verify SIGINT stops the loop gracefully
 - Verify maxIterations respected
+- **Verify rate-limit carryover**: postsToday increments across iterations, resets on day boundary
+- **Verify auth token propagation**: authenticatedApiCall receives token from getToken()
 
 ### Step 3: `templates/base/` directory
 
@@ -429,54 +578,61 @@ const STRATEGY_PATH = resolve(import.meta.dirname, "strategy.yaml");
 const DIVERGENCE_THRESHOLD = Number(process.env.DIVERGENCE_THRESHOLD ?? 10); // %
 
 const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
-  // Get base colony state
-  const base = await defaultObserve(toolkit);
+  // Get base colony state (pass address from closure — set in main())
+  const base = await defaultObserve(toolkit, address);
 
   // Fetch market data in parallel
-  const [oracleResult, pricesResult, predictionsResult, feedResult] = await Promise.all([
+  const [oracleResult, pricesResult, predictionsResult, signalsResult] = await Promise.all([
     toolkit.oracle.get({ assets: ["BTC", "ETH", "DEM"], window: "1h" }),
     toolkit.prices.get(["BTC", "ETH", "DEM"]),
     toolkit.feed.search({ category: "PREDICTION", limit: 20 }),
-    toolkit.feed.search({ category: "ANALYSIS", limit: 20 }),
+    toolkit.intelligence.getSignals(),
   ]);
 
-  // Build evidence from market data
+  // Build evidence using REAL AvailableEvidence shape:
+  // { sourceId, subject, metrics[], richness, freshness, stale }
   const evidence: AvailableEvidence[] = [];
 
-  // Detect price divergence between oracle consensus and latest prices
-  if (oracleResult.ok && pricesResult.ok) {
-    for (const oracleAsset of oracleResult.data.assets ?? []) {
-      const priceEntry = pricesResult.data.find(p => p.asset === oracleAsset.asset);
-      if (priceEntry && oracleAsset.consensusPrice) {
-        const divergence = Math.abs(
-          (priceEntry.price - oracleAsset.consensusPrice) / oracleAsset.consensusPrice * 100
-        );
-        if (divergence > DIVERGENCE_THRESHOLD) {
-          evidence.push({
-            sourceId: `oracle-divergence-${oracleAsset.asset}`,
-            topic: `${oracleAsset.asset.toLowerCase()}-divergence`,
-            data: {
-              asset: oracleAsset.asset,
-              oraclePrice: oracleAsset.consensusPrice,
-              marketPrice: priceEntry.price,
-              divergencePct: divergence,
-            },
-            freshness: Date.now(),
-            richness: divergence > 20 ? 1.0 : 0.7,
-          });
-        }
+  // OracleResult exposes priceDivergences (Codex fix #5 — NOT assets[].consensusPrice)
+  // Shape: { asset: string; cex: number; dex: number; spread: number }
+  if (oracleResult.ok) {
+    for (const div of oracleResult.data.priceDivergences ?? []) {
+      if (Math.abs(div.spread) > DIVERGENCE_THRESHOLD) {
+        evidence.push({
+          sourceId: `oracle-divergence-${div.asset}`,
+          subject: `${div.asset.toLowerCase()}-price-divergence`,
+          metrics: [`spread=${div.spread.toFixed(2)}%`, `cex=${div.cex}`, `dex=${div.dex}`],
+          richness: Math.abs(div.spread) > 20 ? 1.0 : 0.7,
+          freshness: Date.now(),
+          stale: false,
+        });
       }
     }
   }
 
-  // Add prediction market context
+  // Price data as evidence
+  if (pricesResult.ok) {
+    for (const price of pricesResult.data) {
+      evidence.push({
+        sourceId: `price-${price.asset}`,
+        subject: `${price.asset.toLowerCase()}-price`,
+        metrics: [`price=${price.price}`],
+        richness: 0.5,
+        freshness: Date.now(),
+        stale: false,
+      });
+    }
+  }
+
+  // Prediction feed context
   if (predictionsResult.ok) {
     evidence.push({
       sourceId: "prediction-feed",
-      topic: "predictions",
-      data: { count: predictionsResult.data.posts?.length ?? 0 },
+      subject: "prediction-activity",
+      metrics: [`count=${predictionsResult.data.posts?.length ?? 0}`],
+      richness: 0.4,
       freshness: Date.now(),
-      richness: 0.5,
+      stale: false,
     });
   }
 
@@ -487,6 +643,7 @@ const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
       apiEnrichment: {
         oracle: oracleResult.ok ? oracleResult.data : undefined,
         prices: pricesResult.ok ? pricesResult.data : undefined,
+        signals: signalsResult.ok ? signalsResult.data : undefined,
       },
     },
   };
@@ -527,10 +684,10 @@ rules:
     conditions: [oracle divergence > threshold]
     enabled: true
 
-  - name: publish_prediction
-    type: PUBLISH
+  - name: reply_with_evidence
+    type: REPLY
     priority: 80
-    conditions: [prices available]
+    conditions: [matching evidence]
     enabled: true
 
   - name: publish_to_gaps
@@ -550,6 +707,9 @@ rules:
     priority: 30
     conditions: [above median]
     enabled: true
+
+  # NOTE: publish_prediction omitted — requires ballotAccuracy enrichment
+  # which needs a separate fetch not yet wired. Add when ballot is un-deprecated.
 
 rateLimits:
   postsPerDay: 12
@@ -660,7 +820,7 @@ async function fetchGitHubAdvisories(): Promise<Array<{ id: string; summary: str
 }
 
 const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
-  const base = await defaultObserve(toolkit);
+  const base = await defaultObserve(toolkit, address);
 
   // Parallel: colony signals + external sources
   const [signalsResult, alertsResult, cves, advisories] = await Promise.all([
@@ -670,16 +830,19 @@ const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
     fetchGitHubAdvisories(),
   ]);
 
+  // Build evidence using REAL AvailableEvidence shape (Codex fix #5):
+  // { sourceId, subject, metrics[], richness, freshness, stale }
   const evidence: AvailableEvidence[] = [];
 
   // CVE evidence
   for (const cve of cves) {
     evidence.push({
       sourceId: `nvd-${cve.id}`,
-      topic: "security-vulnerability",
-      data: cve,
-      freshness: Date.now(),
+      subject: "security-vulnerability",
+      metrics: [`severity=${cve.severity}`, `id=${cve.id}`],
       richness: cve.severity === "CRITICAL" ? 1.0 : 0.7,
+      freshness: Date.now(),
+      stale: false,
     });
   }
 
@@ -687,22 +850,25 @@ const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
   for (const advisory of advisories) {
     evidence.push({
       sourceId: `ghsa-${advisory.id}`,
-      topic: "security-advisory",
-      data: advisory,
-      freshness: Date.now(),
+      subject: "security-advisory",
+      metrics: [`severity=${advisory.severity}`, `id=${advisory.id}`],
       richness: advisory.severity === "critical" ? 1.0 : 0.7,
+      freshness: Date.now(),
+      stale: false,
     });
   }
 
-  // Colony threat signals
+  // Colony threat signals — passed BOTH as evidence AND in apiEnrichment context
+  // (publish_signal_aligned reads from context.apiEnrichment.signals)
   if (signalsResult.ok) {
     for (const signal of signalsResult.data) {
       evidence.push({
         sourceId: `signal-${(signal as any).id ?? "unknown"}`,
-        topic: "colony-threat",
-        data: signal,
-        freshness: Date.now(),
+        subject: "colony-threat-signal",
+        metrics: [`agents=${(signal as any).agentCount ?? 0}`],
         richness: 0.6,
+        freshness: Date.now(),
+        stale: false,
       });
     }
   }
@@ -710,6 +876,11 @@ const observe: ObserveFn = async (toolkit: Toolkit): Promise<ObserveResult> => {
   return {
     ...base,
     evidence: [...base.evidence, ...evidence],
+    context: {
+      apiEnrichment: {
+        signals: signalsResult.ok ? signalsResult.data : undefined,
+      },
+    },
   };
 };
 
@@ -868,11 +1039,19 @@ Structure:
 
 | Test File | Tests | ISC Coverage |
 |-----------|-------|-------------|
-| `tests/toolkit/agent-runtime.test.ts` | init, auth failure, all 15 domains present | ISC-2, ISC-3, ISC-16 |
-| `tests/toolkit/agent-loop.test.ts` | observe called, decide called, actions routed, shutdown, maxIterations | ISC-7-11, ISC-17-18 |
-| `tests/templates/base-template.test.ts` | strategy.yaml valid, base observe returns ColonyState | ISC-12-13, ISC-17 |
-| `tests/templates/market-intelligence.test.ts` | divergence detection, oracle/prices called, evidence shape | ISC-21-24, ISC-28-29 |
-| `tests/templates/security-sentinel.test.ts` | CVE fetch, advisory fetch, signals called, evidence shape | ISC-32-34, ISC-37 |
+| `tests/toolkit/agent-runtime.test.ts` | init, auth failure, all 15 domains, **authenticatedApiCall gets token** | ISC-2, ISC-3, ISC-16 |
+| `tests/toolkit/agent-loop.test.ts` | observe called, decide called, **light→executeStrategyActions, heavy→attestAndPublish**, REPLY sets replyTo, shutdown, maxIterations, **rate-limit carryover across iterations**, **day/hour boundary reset** | ISC-7-11, ISC-17-18 |
+| `tests/toolkit/colony-state-from-feed.test.ts` | **buildColonyStateFromFeed returns correct shape** (activity/gaps/threads/agents), **mentionsOfUs detected**, **trendingTopics computed** | New (Codex fix #1) |
+| `tests/templates/base-template.test.ts` | strategy.yaml valid, base observe returns ColonyState with correct shape | ISC-12-13, ISC-17 |
+| `tests/templates/market-intelligence.test.ts` | **priceDivergences (not assets[])** detection, oracle/prices called, evidence has subject/metrics/richness/freshness/stale | ISC-21-24, ISC-28-29 |
+| `tests/templates/security-sentinel.test.ts` | CVE fetch, advisory fetch, signals in both evidence AND apiEnrichment context, **REPLY enabled** | ISC-32-34, ISC-37 |
+
+**Integration tests added per Codex finding #6:**
+- `agent-runtime.test.ts`: authenticatedApiCall receives token after ensureAuth (not AUTH_PENDING_TOKEN)
+- `agent-loop.test.ts`: REPLY routes to heavy path with replyTo set
+- `agent-loop.test.ts`: postsToday=3 after 3 publishes, resets to 0 after day boundary
+- `colony-state-from-feed.test.ts`: output satisfies ColonyState interface (activity.trendingTopics is Array<{topic, count}>)
+- `market-intelligence.test.ts`: evidence uses `subject`/`metrics[]` fields (not `topic`/`data`)
 
 **Mocking strategy:** Mock at the SDK/network boundary. `connectWallet` → fake Demos + address. `fetch` → intercepted for NVD/GitHub. `SuperColonyApiClient` methods → return typed fixtures. Same patterns as existing toolkit tests.
 
@@ -882,25 +1061,26 @@ Structure:
 
 | File | Lines (est.) | Phase |
 |------|-------------|-------|
-| `src/toolkit/agent-runtime.ts` | ~60 | 10a-1 |
-| `src/toolkit/agent-loop.ts` | ~100 | 10a-2 |
+| `src/toolkit/agent-runtime.ts` | ~75 | 10a-1 |
+| `src/toolkit/agent-loop.ts` | ~200 | 10a-2 |
 | `templates/base/agent.ts` | ~40 | 10a-3 |
 | `templates/base/strategy.yaml` | ~30 | 10a-3 |
 | `templates/base/.env.example` | ~8 | 10a-3 |
-| `templates/market-intelligence/agent.ts` | ~100 | 10b |
-| `templates/market-intelligence/strategy.yaml` | ~40 | 10b |
+| `templates/market-intelligence/agent.ts` | ~110 | 10b |
+| `templates/market-intelligence/strategy.yaml` | ~45 | 10b |
 | `templates/market-intelligence/sources.yaml` | ~20 | 10b |
-| `templates/security-sentinel/agent.ts` | ~110 | 10c |
+| `templates/security-sentinel/agent.ts` | ~120 | 10c |
 | `templates/security-sentinel/strategy.yaml` | ~40 | 10c |
 | `templates/security-sentinel/sources.yaml` | ~15 | 10c |
 | `templates/README.md` | ~60 | 10e |
 | `docs/research/openclaw-skill-format.md` | ~80 | 10d |
-| `tests/toolkit/agent-runtime.test.ts` | ~80 | 10a-1 |
-| `tests/toolkit/agent-loop.test.ts` | ~120 | 10a-2 |
+| `tests/toolkit/agent-runtime.test.ts` | ~100 | 10a-1 |
+| `tests/toolkit/agent-loop.test.ts` | ~160 | 10a-2 |
+| `tests/toolkit/colony-state-from-feed.test.ts` | ~80 | 10a-2 |
 | `tests/templates/base-template.test.ts` | ~60 | 10a-3 |
-| `tests/templates/market-intelligence.test.ts` | ~80 | 10b |
-| `tests/templates/security-sentinel.test.ts` | ~80 | 10c |
-| **Total** | **~1,123** | |
+| `tests/templates/market-intelligence.test.ts` | ~100 | 10b |
+| `tests/templates/security-sentinel.test.ts` | ~100 | 10c |
+| **Total** | **~1,443** | |
 
 ---
 
@@ -932,6 +1112,21 @@ Structure:
 - [ ] Write `templates/README.md`
 - [ ] Update this file's status checkboxes
 - [ ] Final: `npm test` + `npx tsc --noEmit` both pass
+
+---
+
+## Codex Review Fixes (2026-04-06)
+
+GPT-5.4 reviewed the plan via CodexBridge and found 6 issues. All fixed:
+
+| # | Finding | Severity | Fix Applied |
+|---|---------|----------|-------------|
+| 1 | ObserveResult used wrong ColonyState shape (`recentPosts` vs `activity/gaps/threads/agents`) | Critical | Added `buildColonyStateFromFeed()` adapter returning real ColonyState type |
+| 2 | Loop called non-existent `sdkBridge.publishPost()`, missed REPLY, no attestation | Critical | Delegate to existing `executeStrategyActions()` (light) + `attestAndPublish()` (heavy) |
+| 3 | Bridge auth token captured as AUTH_PENDING_TOKEN, never updates | Critical | Added `authenticatedApiCall` wrapper to AgentRuntime (same as v3-loop:89-95) |
+| 4 | Rate limits reset to 0 each iteration — agents over-post | High | Added mutable `LoopState` with day/hour boundary resets |
+| 5 | Market template used `assets[].consensusPrice` — OracleResult has `priceDivergences[].spread` | High | Fixed to use real field names. Dropped `publish_prediction` (no ballot). |
+| 6 | Test plan missed auth propagation, REPLY routing, rate-limit carryover, contract conformance | High | Added 5 integration test cases + new `colony-state-from-feed.test.ts` |
 
 ---
 

@@ -3885,6 +3885,12 @@ function writeV3SessionReport(state: V3SessionState, oversight: OversightLevel, 
 
   lines.push("## 2. ACT");
   lines.push(`- Planned actions: ${plannedActions.length}`);
+  if (plannedActions.length > 0) {
+    for (const a of plannedActions) {
+      const target = a.target ? ` → ${String(a.target).slice(0, 16)}...` : "";
+      lines.push(`  - **${a.type}** p=${a.priority}${target} — ${String(a.reason || "").slice(0, 100)}`);
+    }
+  }
   if (act.skipped === true) {
     lines.push(`- Skipped: ${act.reason || "unknown"}`);
   } else if (actionCounts.size > 0) {

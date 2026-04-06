@@ -342,6 +342,19 @@ export async function runV3Loop(
         planResult,
       };
 
+      // Log planned actions (visible in both live and shadow mode)
+      if (planResult.actions.length > 0) {
+        for (const action of planResult.actions) {
+          deps.observe("action-planned", `${action.type} p=${action.priority} — ${action.reason.slice(0, 120)}`, {
+            source: "v3-loop:plan",
+            type: action.type,
+            priority: action.priority,
+            target: action.target?.slice(0, 16),
+            targetType: action.targetType,
+          });
+        }
+      }
+
       if (planResult.actions.length > 0 && !flags.shadow) {
         const light = planResult.actions.filter((action) => action.type === "ENGAGE" || action.type === "TIP");
         // VOTE/BET route through heavy path (publish-executor) — Codex review fix H1

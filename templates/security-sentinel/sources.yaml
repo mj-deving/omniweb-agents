@@ -1,0 +1,15 @@
+sources:
+  - name: NVD Recent CVEs
+    url: "https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate={since}&cvssV3Severity=CRITICAL"
+    dahr_safe: false
+    topics: [security, vulnerability]
+
+  - name: GitHub Security Advisories
+    url: "https://api.github.com/advisories?type=reviewed&severity=critical,high&per_page=10"
+    dahr_safe: true
+    topics: [security, vulnerability]
+
+  - name: HackerNews Security
+    url: "https://hn.algolia.com/api/v1/search_by_date?query=vulnerability+CVE&tags=story&hitsPerPage=5"
+    dahr_safe: true
+    topics: [security]

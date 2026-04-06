@@ -58,7 +58,7 @@ describe("LeaderboardResultSchema", () => {
   it("validates real /api/scores/agents shape", () => {
     const live = {
       agents: [{
-        address: "0xabc", name: "Sentinel", postCount: 1292,
+        address: "0xabc", name: "Sentinel", totalPosts: 1292,
         avgScore: 72.5, bayesianScore: 68.3, topScore: 95, lowScore: 30,
         lastActiveAt: 1775502680806,
       }],
@@ -67,13 +67,13 @@ describe("LeaderboardResultSchema", () => {
     expect(LeaderboardResultSchema.safeParse(live).success).toBe(true);
   });
 
-  it("agent uses postCount not totalPosts", () => {
+  it("agent uses totalPosts (leaderboard endpoint), not postCount", () => {
     const agent = {
       address: "0x1", name: "test", totalPosts: 10,
       avgScore: 50, bayesianScore: 50, topScore: 50, lowScore: 50,
       lastActiveAt: 0,
     };
-    expect(LeaderboardAgentSchema.safeParse(agent).success).toBe(false);
+    expect(LeaderboardAgentSchema.safeParse(agent).success).toBe(true);
   });
 });
 

@@ -279,6 +279,16 @@ describe("SuperColonyApiClient", () => {
       }
     });
 
+    it("queryPredictions returns error when wrapper field is missing", async () => {
+      mockFetchResponse({ data: [] }); // wrong key — should be predictions
+      const client = createClient();
+      const result = await client.queryPredictions();
+      expect(result?.ok).toBe(false);
+      if (result && !result.ok) {
+        expect(result.error).toContain("missing expected field");
+      }
+    });
+
     it("resolvePrediction sends POST with outcome and evidence", async () => {
       mockFetchResponse({ success: true });
       const client = createClient();
@@ -336,7 +346,7 @@ describe("SuperColonyApiClient", () => {
         agents: [{
           address: "0xabc",
           name: "sentinel",
-          postCount: 100,
+          totalPosts: 100,
           avgScore: 72.5,
           bayesianScore: 68.3,
           topScore: 95,
@@ -911,6 +921,16 @@ describe("SuperColonyApiClient", () => {
       const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
       expect(fetchUrl).toBe("https://www.supercolony.ai/api/signals");
     });
+
+    it("getSignals returns error when wrapper field is missing", async () => {
+      mockFetchResponse({ signals: [] }); // wrong key — should be consensusAnalysis
+      const client = createClient();
+      const result = await client.getSignals();
+      expect(result?.ok).toBe(false);
+      if (result && !result.ok) {
+        expect(result.error).toContain("missing expected field");
+      }
+    });
   });
 
   // ── TLSN Proof ──────────────────────────────
@@ -987,7 +1007,7 @@ describe("SuperColonyApiClient", () => {
 
   describe("report", () => {
     it("getReport fetches without id param", async () => {
-      const payload = { id: "r1", title: "Daily", content: "Summary", timestamp: Date.now() };
+      const payload = { id: "r1", title: "Daily", summary: "Summary", script: "Full text", status: "published", createdAt: "2026-04-06T00:00:00Z" };
       mockFetchResponse(payload);
       const client = createClient();
       const result = await client.getReport();
@@ -1001,7 +1021,7 @@ describe("SuperColonyApiClient", () => {
     });
 
     it("getReport passes id param", async () => {
-      const payload = { id: "r42", title: "Specific", content: "Detail", timestamp: Date.now() };
+      const payload = { id: "r42", title: "Specific", summary: "Detail", script: "Full", status: "published", createdAt: "2026-04-06T00:00:00Z" };
       mockFetchResponse(payload);
       const client = createClient();
       await client.getReport({ id: "r42" });
@@ -1036,6 +1056,16 @@ describe("SuperColonyApiClient", () => {
       const fetchUrl = vi.mocked(globalThis.fetch).mock.calls[0][0] as string;
       expect(fetchUrl).toContain("/api/predictions/markets");
       expect(fetchUrl).toContain("category=crypto");
+    });
+
+    it("getPredictionMarkets returns error when wrapper field is missing", async () => {
+      mockFetchResponse({ markets: [] }); // wrong key — should be predictions
+      const client = createClient();
+      const result = await client.getPredictionMarkets();
+      expect(result?.ok).toBe(false);
+      if (result && !result.ok) {
+        expect(result.error).toContain("missing expected field");
+      }
     });
   });
 

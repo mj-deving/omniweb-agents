@@ -6,7 +6,7 @@
  *
  * Separated from agent.ts to enable isolated testing without SDK dependencies.
  */
-import { buildColonyStateFromFeed } from "../../src/toolkit/agent-loop.js";
+import { buildColonyStateFromFeed, mapFeedPosts } from "../../src/toolkit/agent-loop.js";
 import type { ObserveResult } from "../../src/toolkit/agent-loop.js";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 import type { AvailableEvidence } from "../../src/toolkit/colony/available-evidence.js";
@@ -31,19 +31,8 @@ export async function marketObserve(toolkit: Toolkit, ourAddress: string): Promi
     toolkit.ballot.getPool(),
   ]);
 
-  // Build colony state from feed (null-safe)
-  const posts = feedResult?.ok
-    ? ((feedResult.data as any).posts ?? []).map((p: any) => ({
-        txHash: p.txHash,
-        author: p.author,
-        timestamp: p.timestamp,
-        text: String(p.payload?.text ?? p.text ?? ""),
-        category: String(p.payload?.cat ?? p.payload?.category ?? ""),
-        tags: p.tags ?? [],
-        reactions: p.reactions,
-      }))
-    : [];
-
+  // Build colony state from feed using shared mapper
+  const posts = mapFeedPosts(feedResult as any);
   const colonyState = buildColonyStateFromFeed(posts, ourAddress);
 
   // Build evidence array

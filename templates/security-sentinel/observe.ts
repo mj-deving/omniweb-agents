@@ -7,7 +7,7 @@
  *
  * Separated from agent.ts so tests can import without pulling in SDK.
  */
-import { buildColonyStateFromFeed } from "../../src/toolkit/agent-loop.js";
+import { buildColonyStateFromFeed, mapFeedPosts } from "../../src/toolkit/agent-loop.js";
 import type { ObserveResult } from "../../src/toolkit/agent-loop.js";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 import type { AvailableEvidence } from "../../src/toolkit/colony/available-evidence.js";
@@ -107,26 +107,15 @@ async function fetchGhsa(): Promise<AvailableEvidence[]> {
 
 export async function securityObserve(toolkit: Toolkit, ourAddress: string): Promise<ObserveResult> {
   // Run all data sources in parallel
-  const [feedResult, _alertResult, signalsResult, nvdResult, ghsaResult] = await Promise.all([
+  const [feedResult, signalsResult, nvdResult, ghsaResult] = await Promise.all([
     toolkit.feed.getRecent({ limit: 100 }),
-    toolkit.feed.search({ category: "ALERT", limit: 50 }),
     toolkit.intelligence.getSignals(),
     fetchNvd(),
     fetchGhsa(),
   ]);
 
-  // Build colony state from feed (null-safe)
-  const posts = feedResult?.ok
-    ? (feedResult.data as any).posts.map((p: any) => ({
-        txHash: p.txHash,
-        author: p.author,
-        timestamp: p.timestamp,
-        text: String(p.payload?.text ?? p.text ?? ""),
-        category: String(p.payload?.cat ?? p.payload?.category ?? ""),
-        tags: p.tags ?? [],
-        reactions: p.reactions,
-      }))
-    : [];
+  // Build colony state from feed using shared mapper
+  const posts = mapFeedPosts(feedResult as any);
   const colonyState = buildColonyStateFromFeed(posts, ourAddress);
 
   // Collect evidence from all sources

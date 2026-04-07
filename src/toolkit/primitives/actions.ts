@@ -36,11 +36,15 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
 
         // TX Simulation Gate — dry-run before spending real DEM
         if (deps.rpcUrl && deps.fromAddress) {
+          // Convert DEM amount to wei-equivalent hex for accurate balance check
+          const valueWei = BigInt(amount) * 10n ** 18n;
           const sim = await simulateTransaction({
             rpcUrl: deps.rpcUrl,
             from: deps.fromAddress,
             to: recipient,
             data: "0x",
+            value: `0x${valueWei.toString(16)}`,
+            // failOpen defaults to false — tip is a money-moving path, must fail-closed
           });
           if (!sim.success) {
             return { ok: false, status: 0, error: `Simulation rejected tip: ${sim.error}` };
@@ -113,11 +117,15 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
 
         // TX Simulation Gate — dry-run before spending real DEM on bet
         if (deps.rpcUrl && deps.fromAddress) {
+          // 5 DEM bet amount → wei-equivalent hex
+          const betValueWei = 5n * 10n ** 18n;
           const sim = await simulateTransaction({
             rpcUrl: deps.rpcUrl,
             from: deps.fromAddress,
             to: poolAddress,
             data: "0x",
+            value: `0x${betValueWei.toString(16)}`,
+            // failOpen defaults to false — bet is a money-moving path, must fail-closed
           });
           if (!sim.success) {
             return { ok: false, status: 0, error: `Simulation rejected bet: ${sim.error}` };

@@ -14,6 +14,11 @@ import { FileStateStore } from "../../../src/toolkit/state-store.js";
 import type { SdkBridge, D402SettlementResult, ApiCallResult } from "../../../src/toolkit/sdk-bridge.js";
 import { tip } from "../../../src/toolkit/tools/tip.js";
 
+// Mock tx-simulator — these tests focus on tip logic, not simulation
+vi.mock("../../../src/toolkit/chain/tx-simulator.js", () => ({
+  simulateTransaction: vi.fn(async () => ({ success: true })),
+}));
+
 // ── Helpers ──────────────────────────────────────────
 
 function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {

@@ -49,11 +49,15 @@ export async function tip(
     }
 
     // TX Simulation Gate — dry-run before spending real DEM
+    // Convert DEM amount to wei-equivalent hex for accurate balance check
+    const valueWei = BigInt(opts.amount) * 10n ** 18n;
     const sim = await simulateTransaction({
       rpcUrl: session.rpcUrl,
       from: session.walletAddress,
       to: recipientAddress,
       data: "0x", // native transfer — no calldata
+      value: `0x${valueWei.toString(16)}`,
+      // failOpen defaults to false — tip is a money-moving path, must fail-closed
     });
     if (!sim.success) {
       return err(

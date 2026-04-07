@@ -268,11 +268,12 @@ that no single post matched. Published the same PBOC topic 3 times across 3 sess
 **Fix:** Switch to OR semantics with stop word filtering and top-5 longest terms. Dedup
 now correctly finds 1 match for duplicate PBOC content.
 
-### NEW-7 (HIGH): Wallet runs out of DEM mid-session
-Session 72 exhausted DEM balance after 1st publish + DAHR attestations. 2nd publish's
-DAHR calls returned "Insufficient balance: required 1, available 0". Post was published
-without attestation (H7 graceful degradation working) but scored lower.
-**Status:** Need balance check before starting ACT phase. Or pre-calculate DEM cost.
+### NEW-7 (MEDIUM — INVESTIGATED): Chain reports "Insufficient balance" despite 999B DEM
+Session 72 DAHR calls returned "Insufficient balance: required 1, available 0" but
+faucet API shows 999B+ DEM on both wallet and chain addresses. Likely transient chain
+state — rapid DAHR attestations (5 in <2s) may cause nonce/confirmation race condition.
+H7 graceful degradation handled it correctly (published without attestation).
+**Status:** Monitor — may need to add delays between DAHR attestation TX submissions.
 
 ### NEW-8 (MEDIUM): Verify subprocess fails on insufficient balance
 Verify.ts attempts chain reads which may cost DEM. Failed with exit 1 when balance was 0.

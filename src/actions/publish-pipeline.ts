@@ -88,6 +88,8 @@ export interface PublishOptions {
   preAttested?: AttestResult[];
   /** Skip per-post indexer health check (verify phase catches unindexed posts via retries) */
   skipIndexerCheck?: boolean;
+  /** Allow publishing without attestation (lower score, used when attestation fails gracefully) */
+  allowUnattested?: boolean;
 }
 
 // ── HIVE Encoding ──────────────────────────────────
@@ -283,7 +285,7 @@ export async function publishPost(
 
   const hasDahr = Array.isArray(input.sourceAttestations) && input.sourceAttestations.length > 0;
   const hasTlsn = Array.isArray(input.tlsnAttestations) && input.tlsnAttestations.length > 0;
-  if (!hasDahr && !hasTlsn) {
+  if (!hasDahr && !hasTlsn && !options.allowUnattested) {
     throw new Error("Refusing unattested publish: sourceAttestations or tlsnAttestations is required");
   }
 

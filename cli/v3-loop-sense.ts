@@ -87,7 +87,7 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
       const dbSizeMB = Math.round(statSync(dbPath).size / (1024 * 1024));
       if (dbSizeMB > 500) {
         observe("warning", `Colony DB size: ${dbSizeMB}MB exceeds 500MB threshold`, {
-          source: "v3-loop:dbGrowth", dbSizeMB, dbPath,
+          source: "v3-loop:dbGrowth", dbSizeMB,
         });
       }
     }
@@ -104,7 +104,7 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
   await ingestChainPostsIntoColonyDb(bridge.db, chainPosts, observe);
 
   // Proof ingestion + agent profile refresh in parallel
-  await Promise.allSettled([
+  const parallelResults = await Promise.allSettled([
     (async () => {
       try {
         const { createChainReaderFromSdk } = await import("../src/toolkit/colony/proof-ingestion-rpc-adapter.js");
@@ -139,6 +139,12 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
       }
     })(),
   ]);
+  // Log any unexpected rejections from parallel operations
+  for (const r of parallelResults) {
+    if (r.status === "rejected") {
+      observe("warning", `Parallel sense operation rejected: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`, { source: "v3-loop:parallelSense" });
+    }
+  }
 
   // Fetch sources in parallel with wall-clock budget
   const sourceView = deps.getSourceView();

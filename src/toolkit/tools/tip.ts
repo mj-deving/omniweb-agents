@@ -11,6 +11,7 @@ import { DemosSession } from "../session.js";
 import { checkAndRecordTip } from "../guards/tip-spend-cap.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 import { validateInput, TipOptionsSchema } from "../schemas.js";
+import { simulateTransaction } from "../chain/tx-simulator.js";
 
 /**
  * Tip DEM to a post author. Guards: max per-tip, max per-post, cooldown.
@@ -45,6 +46,23 @@ export async function tip(
         demosError("INVALID_INPUT", `Transaction ${opts.txHash.slice(0, 16)}... not found on chain — cannot resolve recipient`, false),
         localProvenance(start),
       );
+    }
+
+    // TX Simulation Gate — dry-run before spending real DEM
+    const sim = await simulateTransaction({
+      rpcUrl: session.rpcUrl,
+      from: session.walletAddress,
+      to: recipientAddress,
+      data: "0x", // native transfer — no calldata
+    });
+    if (!sim.success) {
+      return err(
+        demosError("TX_FAILED", `Simulation rejected transfer: ${sim.error}`, false),
+        localProvenance(start),
+      );
+    }
+    if (sim.warning) {
+      console.warn(`[tip] Simulation warning: ${sim.warning}`);
     }
 
     const result = await bridge.transferDem(recipientAddress, opts.amount, memo);

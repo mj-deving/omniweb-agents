@@ -37,3 +37,6 @@ export {
   inferAssetAlias,
   inferMacroEntity,
 } from "./asset-helpers.js";
+
+export type { SimulationResult, SimulationOptions } from "./tx-simulator.js";
+export { simulateTransaction } from "./tx-simulator.js";

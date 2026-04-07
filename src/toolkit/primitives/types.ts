@@ -46,6 +46,10 @@ export interface ToolkitDeps {
   dataSource: DataSource;
   /** Required for chain operations (tip transfer, verification fallback). */
   transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
+  /** RPC URL for transaction simulation gate (optional — skips simulation when absent). */
+  rpcUrl?: string;
+  /** Sender address for transaction simulation gate. */
+  fromAddress?: string;
 }
 
 // ── Domain interfaces ──────────────────────────

@@ -5,10 +5,15 @@
 import type { SuperColonyApiClient } from "../supercolony/api-client.js";
 import type { ApiResult } from "../supercolony/types.js";
 import type { ActionsPrimitives } from "./types.js";
+import { simulateTransaction } from "../chain/tx-simulator.js";
 
 interface ActionsDeps {
   apiClient: SuperColonyApiClient;
   transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
+  /** RPC URL for transaction simulation (optional — skips simulation when absent) */
+  rpcUrl?: string;
+  /** Sender address for transaction simulation */
+  fromAddress?: string;
 }
 
 export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
@@ -28,6 +33,23 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
 
       try {
         const { recipient } = validation.data;
+
+        // TX Simulation Gate — dry-run before spending real DEM
+        if (deps.rpcUrl && deps.fromAddress) {
+          const sim = await simulateTransaction({
+            rpcUrl: deps.rpcUrl,
+            from: deps.fromAddress,
+            to: recipient,
+            data: "0x",
+          });
+          if (!sim.success) {
+            return { ok: false, status: 0, error: `Simulation rejected tip: ${sim.error}` };
+          }
+          if (sim.warning) {
+            console.warn(`[actions:tip] Simulation warning: ${sim.warning}`);
+          }
+        }
+
         const result = await deps.transferDem(recipient, amount, `tip:${postTxHash}`);
         return { ok: true, data: { txHash: result.txHash, validated: true } };
       } catch (err) {
@@ -87,6 +109,22 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
         }
         if (poolResult.data.asset !== asset) {
           return { ok: false, status: 0, error: `Pool asset mismatch: requested ${asset}, got ${poolResult.data.asset}` };
+        }
+
+        // TX Simulation Gate — dry-run before spending real DEM on bet
+        if (deps.rpcUrl && deps.fromAddress) {
+          const sim = await simulateTransaction({
+            rpcUrl: deps.rpcUrl,
+            from: deps.fromAddress,
+            to: poolAddress,
+            data: "0x",
+          });
+          if (!sim.success) {
+            return { ok: false, status: 0, error: `Simulation rejected bet: ${sim.error}` };
+          }
+          if (sim.warning) {
+            console.warn(`[actions:placeBet] Simulation warning: ${sim.warning}`);
+          }
         }
 
         const memo = `HIVE_BET:${asset}:${price}:${horizon}`;

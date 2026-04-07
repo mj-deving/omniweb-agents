@@ -1,11 +1,11 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-06
+updated: 2026-04-07
 open_items: 3
-completed_phases: 9
-tests: 2815
-suites: 219
+completed_phases: 10
+tests: 2861
+suites: 221
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
@@ -23,10 +23,10 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 - **V3 loop:** LIVE with toolkit primitives replacing raw apiCall enrichment
 - **Phase 9:** COMPLETE (DataSource abstraction, 15 domain primitives, v3-loop wiring, API backfill, drift detection)
-- **Tests:** 2815 passing, 219 suites, **0 tsc errors**
+- **Tests:** 2861 passing, 221 suites, **0 tsc errors**
 - **Toolkit:** `createToolkit()` facade with 15 namespaces (feed, intelligence, scores, agents, actions, oracle, prices, verification, predictions, ballot, webhooks, identity, balance, health, stats)
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
-- **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard.
+- **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard. Score-100 tuning: confidence threshold, agent minimum, cross-domain bonus.
 - **Colony DB:** 188K posts. Schema v8. 605MB. Semantic search wired. Pruning available.
 - **ADRs:** 18 (ADR-0018 supersedes ADR-0001 for reads — API-first, chain fallback)
 - **Next:** Future items (escrow-to-social, ZK identity, StorageProgram exploration)

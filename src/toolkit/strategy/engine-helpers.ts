@@ -7,6 +7,7 @@
 
 import type { AvailableEvidence } from "../colony/available-evidence.js";
 import type { ColonyState } from "../colony/state-extraction.js";
+import type { SignalData } from "../supercolony/types.js";
 import type { ApiEnrichmentData, DecisionLog, LeaderboardAdjustmentConfig, StrategyAction, StrategyConfig, StrategyRule } from "./types.js";
 
 export const MIN_TRUST_POSTS = 3;
@@ -122,6 +123,27 @@ export function findRule(config: StrategyConfig, ruleName: string): StrategyRule
     conditions: [],
     enabled: true,
   };
+}
+
+/**
+ * M3: Check whether a signal qualifies for publish_signal_aligned.
+ * Uses the same criteria as the enrichment rule filter:
+ * trending !== false AND agentCount >= minSignalAgents.
+ */
+export function signalQualifies(signal: SignalData, config: StrategyConfig): boolean {
+  if (signal.trending === false) return false;
+  if (signal.agentCount < (config.enrichment?.minSignalAgents ?? 2)) return false;
+  return true;
+}
+
+/**
+ * M3: Check whether any signal in the enrichment data qualifies.
+ * Returns true if there are no signals at all (no suppression needed).
+ * Returns false only when signals exist but none qualify.
+ */
+export function hasQualifyingSignals(config: StrategyConfig, signals: SignalData[] | undefined): boolean {
+  if (!signals || signals.length === 0) return true; // No signals = no suppression
+  return signals.some((signal) => signalQualifies(signal, config));
 }
 
 /**

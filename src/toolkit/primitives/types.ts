@@ -46,9 +46,9 @@ export interface ToolkitDeps {
   dataSource: DataSource;
   /** Required for chain operations (tip transfer, verification fallback). */
   transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
-  /** RPC URL for transaction simulation gate (optional — skips simulation when absent). */
+  /** RPC URL for TX simulation (eth_call). Required for simulation gate. */
   rpcUrl?: string;
-  /** Sender address for transaction simulation gate. */
+  /** Sender address for TX simulation. */
   fromAddress?: string;
 }
 
@@ -129,8 +129,8 @@ export interface IdentityPrimitives {
 
 export interface BalancePrimitives {
   get(address: string): Promise<ApiResult<AgentBalanceResponse>>;
-  requestFaucet(chainAddress: string): Promise<ApiResult<{ success: boolean; amount?: number }>>;
-  ensureMinimum(chainAddress: string, threshold: number): Promise<ApiResult<{ topped: boolean; balance: bigint }>>;
+  requestFaucet(address: string): Promise<{ ok: true } | { ok: false; error: string }>;
+  ensureMinimum(address: string, threshold: bigint): Promise<{ ok: true; topped: boolean; balance: bigint } | { ok: false; error: string }>;
 }
 
 export interface HealthPrimitives {

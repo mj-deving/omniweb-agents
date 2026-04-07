@@ -17,19 +17,104 @@ export interface DedupOptions {
 const DEFAULT_WINDOW_HOURS = 24;
 const SELF_DEDUP_WINDOW_HOURS = 12;
 
-/** Extract meaningful search terms from a claim string for FTS5 matching.
- * Uses OR semantics — posts matching ANY terms are candidates.
- * Filters common stop words and takes top 5 longest terms for relevance. */
-const STOP_WORDS = new Set(["the", "and", "for", "with", "from", "that", "this", "are", "was", "has", "have", "been", "will", "can", "not"]);
-function extractSearchTerms(claim: string): string {
-  const words = claim
+/** Similarity threshold for self-dedup (did we post this already?) */
+const SELF_SIMILARITY_THRESHOLD = 0.4;
+
+/** Similarity threshold for colony-wide claim dedup */
+const CLAIM_SIMILARITY_THRESHOLD = 0.3;
+
+const STOP_WORDS = new Set([
+  "the", "and", "for", "with", "from", "that", "this", "are", "was",
+  "has", "have", "been", "will", "can", "not", "its", "but", "our",
+  "also", "any", "all", "how", "may", "into",
+]);
+
+/**
+ * Normalize text for similarity comparison: lowercase, strip punctuation, remove stop words.
+ */
+function normalizeText(text: string): string[] {
+  return text
+    .toLowerCase()
     .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
-    .filter((word) => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()))
-    .sort((a, b) => b.length - a.length)
-    .slice(0, 5);
-  if (words.length === 0) return "";
-  return words.join(" OR ");
+    .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+}
+
+/**
+ * Extract bigrams (consecutive word pairs) from a word list.
+ */
+function extractBigrams(words: string[]): Set<string> {
+  const bigrams = new Set<string>();
+  for (let i = 0; i < words.length - 1; i++) {
+    bigrams.add(`${words[i]} ${words[i + 1]}`);
+  }
+  return bigrams;
+}
+
+/**
+ * Compute topic similarity using weighted unigram + bigram overlap coefficient.
+ * Returns 0.0 (no overlap) to 1.0 (identical/fully contained).
+ *
+ * Uses overlap coefficient: intersection / min(|A|, |B|)
+ * This handles asymmetric cases well — a short topic contained within
+ * a long post text scores high, unlike symmetric Jaccard which dilutes
+ * the score when one text is much longer.
+ *
+ * Combines unigram overlap (40% weight) with bigram overlap (60% weight)
+ * so topics sharing key terms like "Aave" + "Smart Contract" still match
+ * even when intervening words differ.
+ *
+ * Pure function — no DB required. Suitable for templates and in-memory dedup.
+ */
+export function computeTopicSimilarity(topicA: string, topicB: string): number {
+  const wordsA = normalizeText(topicA);
+  const wordsB = normalizeText(topicB);
+
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
+
+  // Unigram overlap coefficient
+  const setA = new Set(wordsA);
+  const setB = new Set(wordsB);
+  let uniIntersection = 0;
+  for (const w of setA) {
+    if (setB.has(w)) uniIntersection++;
+  }
+  const uniMinSize = Math.min(setA.size, setB.size);
+  const uniScore = uniMinSize === 0 ? 0 : uniIntersection / uniMinSize;
+
+  // For very short texts (< 2 words), use unigram only
+  if (wordsA.length < 2 || wordsB.length < 2) return uniScore;
+
+  // Bigram overlap coefficient
+  const bigramsA = extractBigrams(wordsA);
+  const bigramsB = extractBigrams(wordsB);
+  let biIntersection = 0;
+  for (const bg of bigramsA) {
+    if (bigramsB.has(bg)) biIntersection++;
+  }
+  const biMinSize = Math.min(bigramsA.size, bigramsB.size);
+  const biScore = biMinSize === 0 ? 0 : biIntersection / biMinSize;
+
+  // Weighted combination: bigrams prevent false positives from single shared words,
+  // unigrams catch topics that share key terms but differ in word order
+  return 0.45 * uniScore + 0.55 * biScore;
+}
+
+/**
+ * Extract FTS5 phrase queries from a topic string.
+ * Instead of OR-matching individual words (which over-matches),
+ * this creates phrase queries requiring 2+ adjacent word matches.
+ */
+function extractPhraseQueries(claim: string): string[] {
+  const words = normalizeText(claim);
+  if (words.length < 2) return words.length === 1 ? [words[0]] : [];
+
+  // Create 2-word phrase queries from consecutive words
+  const phrases: string[] = [];
+  for (let i = 0; i < words.length - 1; i++) {
+    phrases.push(`"${words[i]} ${words[i + 1]}"`);
+  }
+  return phrases;
 }
 
 function sinceTimestamp(windowHours: number): string {
@@ -45,7 +130,10 @@ const POST_COLUMNS = `p.tx_hash, p.author, p.block_number, p.timestamp, p.reply_
 
 /**
  * Check if a claim/topic has been recently covered in the colony.
- * Uses FTS5 full-text search within a time window. Fails open on query errors.
+ *
+ * Two-phase approach:
+ * 1. FTS5 phrase-based candidate retrieval (fast narrowing of 200K+ posts)
+ * 2. Bigram Jaccard post-filter (eliminates false positives from keyword overlap)
  */
 export function checkClaimDedup(
   db: ColonyDatabase,
@@ -54,14 +142,19 @@ export function checkClaimDedup(
 ): DedupResult {
   if (!claim.trim()) return emptyResult();
 
-  const searchTerms = extractSearchTerms(claim);
-  if (!searchTerms) return emptyResult();
+  const phraseQueries = extractPhraseQueries(claim);
+  if (phraseQueries.length === 0) return emptyResult();
 
   const windowHours = opts?.windowHours ?? DEFAULT_WINDOW_HOURS;
   const limit = opts?.limit ?? 5;
+  const since = sinceTimestamp(windowHours);
 
+  // Phase 1: FTS5 candidate retrieval using phrase queries joined with OR
+  const ftsQuery = phraseQueries.join(" OR ");
+
+  let candidates: PostRow[];
   try {
-    const rows = db.prepare(`
+    candidates = db.prepare(`
       SELECT ${POST_COLUMNS}
       FROM posts_fts fts
       JOIN posts p ON p.rowid = fts.rowid
@@ -69,23 +162,36 @@ export function checkClaimDedup(
         AND p.timestamp >= ?
       ORDER BY fts.rank
       LIMIT ?
-    `).all(searchTerms, sinceTimestamp(windowHours), limit) as PostRow[];
-
-    const matches = mapPostRows(rows);
-    return {
-      isDuplicate: matches.length > 0,
-      matches,
-      reason: matches.length > 0
-        ? `Similar content found in ${matches.length} post(s) within ${windowHours}h`
-        : undefined,
-    };
+    `).all(ftsQuery, since, limit * 3) as PostRow[];
   } catch {
     return emptyResult();
   }
+
+  if (candidates.length === 0) return emptyResult();
+
+  // Phase 2: Post-filter using bigram Jaccard similarity
+  const matches: CachedPost[] = [];
+  for (const row of candidates) {
+    const postText = `${row.text} ${tryParseTags(row.tags)}`;
+    const similarity = computeTopicSimilarity(claim, postText);
+    if (similarity >= CLAIM_SIMILARITY_THRESHOLD) {
+      matches.push(...mapPostRows([row]));
+    }
+    if (matches.length >= limit) break;
+  }
+
+  return {
+    isDuplicate: matches.length > 0,
+    matches,
+    reason: matches.length > 0
+      ? `Similar content found in ${matches.length} post(s) within ${windowHours}h`
+      : undefined,
+  };
 }
 
 /**
  * Check if WE already posted on a similar topic recently.
+ * Uses direct DB query + bigram similarity instead of brittle FTS5 keyword matching.
  * Shorter window than colony-wide dedup to avoid self-spam perception.
  */
 export function checkSelfDedup(
@@ -96,25 +202,32 @@ export function checkSelfDedup(
 ): DedupResult {
   if (!claim.trim() || !ourAddress) return emptyResult();
 
-  const searchTerms = extractSearchTerms(claim);
-  if (!searchTerms) return emptyResult();
+  const since = sinceTimestamp(windowHours);
 
   try {
+    // Get our recent posts directly — no FTS5 needed for self-dedup
     const rows = db.prepare(`
       SELECT ${POST_COLUMNS}
-      FROM posts_fts fts
-      JOIN posts p ON p.rowid = fts.rowid
-      WHERE posts_fts MATCH ?
-        AND p.author = ?
+      FROM posts p
+      WHERE p.author = ?
         AND p.timestamp >= ?
-      ORDER BY fts.rank
-      LIMIT 3
-    `).all(searchTerms, ourAddress, sinceTimestamp(windowHours)) as PostRow[];
+      ORDER BY p.timestamp DESC
+      LIMIT 50
+    `).all(ourAddress, since) as PostRow[];
 
-    const matches = mapPostRows(rows);
+    // Compare each of our posts against the new claim using bigram similarity
+    const matches: CachedPost[] = [];
+    for (const row of rows) {
+      const postText = `${row.text} ${tryParseTags(row.tags)}`;
+      const similarity = computeTopicSimilarity(claim, postText);
+      if (similarity >= SELF_SIMILARITY_THRESHOLD) {
+        matches.push(...mapPostRows([row]));
+      }
+    }
+
     return {
       isDuplicate: matches.length > 0,
-      matches,
+      matches: matches.slice(0, 3),
       reason: matches.length > 0
         ? `We already posted on this topic ${matches.length} time(s) within ${windowHours}h`
         : undefined,
@@ -163,5 +276,15 @@ export async function checkSemanticDedup(
     };
   } catch {
     return emptyResult();
+  }
+}
+
+/** Safely parse tags JSON to a space-separated string for similarity matching. */
+function tryParseTags(tagsJson: string): string {
+  try {
+    const tags = JSON.parse(tagsJson) as string[];
+    return tags.join(" ");
+  } catch {
+    return "";
   }
 }

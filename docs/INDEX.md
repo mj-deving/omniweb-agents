@@ -1,7 +1,7 @@
 ---
 type: index
 status: current
-updated: 2026-04-06
+updated: 2026-04-07
 summary: "Project history and narrative — 8 eras from harness to API-first toolkit. SDK capability map. Documentation index with archive inventory."
 read_when: ["project history", "evolution", "what happened", "session changelog", "SDK capability map", "documentation map", "archive"]
 ---
@@ -11,7 +11,7 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 > **The one document you read to understand the project's story.**
 > Architecture: CLAUDE.md. Operations: MEMORY.md. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** V3 loop LIVE | Phases 1–9 COMPLETE | 211 suites, 2671 tests | 0 tsc errors | 18 ADRs | 38+ API methods | 10 strategy rules | 201K colony posts | Schema v8 | SDK 2.11.5
+**Current state:** V3 loop LIVE | Phases 1–10 COMPLETE | 222 suites, 2886 tests | 0 tsc errors | 19 ADRs | 38+ API methods | 10 strategy rules | 202K colony posts | Schema v8 | SDK 2.11.5
 
 ---
 
@@ -147,6 +147,48 @@ ADR-0018 established the principle: API-first for reads, chain-first for writes.
 
 **Tests at era end:** 211 suites, 2671 passing. 0 tsc errors. 18 ADRs. Schema v8.
 
+### Era 10: Production Hardening + Pattern Adoption (April 7)
+
+**The fifth pivot: "Extract battle-tested patterns into reusable toolkit primitives."**
+
+Comprehensive sweep of all open items from the V3 production audit, followed by Codex security review and legacy session-runner pattern extraction. 12 commits in one session.
+
+**Phase A: Full sweep (8 workstreams, 48 ISC criteria)**
+- Doc health: 23 stale file references fixed across 6 docs via `doc-health-check.ts --counts`
+- Phase C configurability: 12 hardcoded v3-loop limits extracted to `LoopLimitsConfig` in strategy YAML
+- v3-loop refactor: 539→295 lines. SENSE phase extracted to `v3-loop-sense.ts` (231 lines)
+- Strategy tuning from score-100 insights: confidence threshold 70%, 5+ agents minimum, cross-domain +10 bonus, no random fallback
+- Faucet/balance primitives: `requestFaucet()` + `ensureMinimum()` with chain address safety
+- TX simulation gate: `simulateTransaction()` via eth_call, fail-closed by default (ADR-0018 security)
+- Codex atomicity fixes: optimistic rate-limit recording with rollback, double-publish guard
+- 6 medium audit items: auth token refresh, DB growth monitoring, checkpoint logging, attestation cross-fallback
+
+**Phase B: Codex security review cycle**
+- Initial review: NO-GO (3 HIGH — reservation leak on 8 exit paths, pop()-based rollback race, fail-open simulation)
+- All 8 findings fixed (3 HIGH, 3 MEDIUM, 2 LOW)
+- Re-review: **GO** with line-level evidence per finding
+- Post-fix audit: 2 additional findings fixed (dbPath leak, unchecked Promise.allSettled)
+
+**Phase C: Legacy pattern extraction (session-runner.ts → toolkit primitives)**
+- 13 patterns extracted from 4528-line legacy session-runner.ts (see `docs/archive/session-runner-patterns.md`)
+- Classified: 4 ADOPT, 5 PRESERVE, 4 DEAD (negative knowledge)
+- 7 patterns being implemented as toolkit-layer primitives for auto-flow to agent templates:
+  - `toolkit/util/subprocess.ts` — SIGTERM→SIGKILL kill escalation
+  - `toolkit/util/timed-phase.ts` — budget-aware async wrapper with overage observation
+  - `toolkit/sources/prefetch-cascade.ts` — try N source candidates with fallback logging
+  - `toolkit/publish/quality-gate.ts` — text length, predicted reactions, category markers
+  - `toolkit/util/hook-dispatch.ts` — isolated hook runner with timeout + isTimeout distinction
+  - `toolkit/strategy/topic-expansion.ts` — generic→specific topic mapping
+  - `toolkit/colony/agent-index.ts` — agent quality index + convergence detection
+
+**Template alignment verified:** 6/10 improvements auto-flow to agent templates via `createToolkit()` / `createAgentRuntime()`. 3 are V3-only by design. 1 (strategy tuning) needs per-template strategy.yaml customization.
+
+- 19 ADRs (ADR-0019: template architectural patterns)
+- `docs/archive/session-runner-patterns.md`: legacy wisdom preservation
+- Production audit: ALL items closed (was 6 remaining + 2 deferred → 0)
+
+**Tests at era end:** 222 suites, 2886 passing. 0 tsc errors. 19 ADRs. Schema v8.
+
 ---
 
 ## Demos SDK Capability Map
@@ -192,13 +234,13 @@ What Demos offers vs what we use. SDK v2.11.5. See [demos-sdk-capabilities.md](r
 
 ### Architecture Decisions (docs/decisions/)
 
-18 ADRs. All with `Status: accepted`. Key: ADR-0001 (chain-first, superseded for reads by ADR-0018), ADR-0002 (toolkit/strategy boundary), ADR-0007 (security-first), ADR-0014 (enforcement layers), ADR-0015 (V3 loop), ADR-0017 (colony DB), ADR-0018 (API-first reads).
+19 ADRs. All with `Status: accepted`. Key: ADR-0001 (chain-first, superseded for reads by ADR-0018), ADR-0002 (toolkit/strategy boundary), ADR-0007 (security-first), ADR-0014 (enforcement layers), ADR-0015 (V3 loop), ADR-0017 (colony DB), ADR-0018 (API-first reads), ADR-0019 (template architectural patterns).
 
 ### Archive (docs/archive/)
 
 | Directory | Contents |
 |-----------|----------|
-| `archive/` | Completed design docs: V3 design, Phase 5/6 plans, loop heuristics, toolkit audit, TLSN report, claim/attestation specs, colony plans, scanning design, session transcript |
+| `archive/` | Completed design docs: V3 design, Phase 5/6 plans, loop heuristics, toolkit audit, TLSN report, claim/attestation specs, colony plans, scanning design, session transcript, **session-runner-patterns.md** (legacy extraction) |
 | `archive/reference/` | Agent workspace format, attestation reference, ElizaOS comparison, SDK exploration, Skill Dojo research |
 | `archive/plans/` | 27 Claude Code session plan artifacts |
 | `archive/designs/` | Completed Phase 5.1/5.3 designs (hive-query, backfill) |

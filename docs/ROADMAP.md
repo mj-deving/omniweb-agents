@@ -2,7 +2,7 @@
 type: roadmap
 status: active
 updated: 2026-04-07
-open_items: 3
+open_items: 10
 completed_phases: 10
 tests: 2861
 suites: 221
@@ -10,7 +10,7 @@ tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
 colony_posts: 188000
-summary: "Phases 1-9 complete. Phase 9: API-first toolkit primitives (23 items, 36 new files, 73 new tests). createToolkit() facade with 15 domain namespaces. Open: 3 future items."
+summary: "Phases 1-10 complete. Phase 11: Pattern adoption — 7 legacy session-runner patterns as toolkit primitives. Open: 7 Phase 11 items + 3 future items."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -29,6 +29,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 - **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard. Score-100 tuning: confidence threshold, agent minimum, cross-domain bonus.
 - **Colony DB:** 188K posts. Schema v8. 605MB. Semantic search wired. Pruning available.
 - **ADRs:** 18 (ADR-0018 supersedes ADR-0001 for reads — API-first, chain fallback)
+- **Phase 11:** Pattern adoption — 7 legacy session-runner patterns as toolkit primitives (in progress)
 - **Next:** Future items (escrow-to-social, ZK identity, StorageProgram exploration)
 
 ---
@@ -160,6 +161,27 @@ Live API audit (2026-04-06) found 8 TypeScript type mismatches vs real API respo
 - [x] Fix HealthStatus type
 - [x] Fix BettingPool bet item fields
 - [x] Fix AgentProfile `totalPosts` → `postCount`
+
+### Phase 11: Pattern Adoption — Legacy Session-Runner → Toolkit Primitives
+
+> 7 battle-tested patterns extracted from cli/session-runner.ts (4528 lines, legacy 8-phase loop)
+> and implemented as toolkit-layer primitives for auto-flow to agent templates.
+> Source: `docs/archive/session-runner-patterns.md` (extracted 2026-04-07).
+
+- [ ] 11a -- `src/toolkit/util/subprocess.ts` — SIGTERM→SIGKILL kill escalation (from session-runner.ts:702-710)
+- [ ] 11b -- `src/toolkit/util/timed-phase.ts` — Budget-aware async wrapper with overage observation (from session-runner.ts:625-635)
+- [ ] 11c -- `src/toolkit/sources/prefetch-cascade.ts` — Try N source candidates with fallback logging (from session-runner.ts:2229-2290)
+- [ ] 11d -- `src/toolkit/publish/quality-gate.ts` — Pre-publish validation: text length, reactions, category (from session-runner.ts:2325-2335)
+- [ ] 11e -- `src/toolkit/util/hook-dispatch.ts` — Isolated hook runner with timeout + isTimeout distinction (from session-runner.ts:3386-3406)
+- [ ] 11f -- `src/toolkit/strategy/topic-expansion.ts` — Generic→specific topic mapping with source coverage check (from session-runner.ts:1221-1249)
+- [ ] 11g -- `src/toolkit/colony/agent-index.ts` — Agent quality index + convergence detection (from session-runner.ts:1261-1271)
+
+**Design principle:** All primitives in `src/toolkit/` — no `cli/` dependencies. Templates get them for free via `createToolkit()` / `createAgentRuntime()`.
+**Provenance:** Each item traces to specific session-runner.ts line ranges. See archive doc for full analysis (ADOPT/PRESERVE/DEAD classification).
+
+**Deferred patterns (PRESERVE — implement when triggered):**
+- Version-gated resume: enforce when V3 resume is added (session-runner.ts:4109-4119)
+- Fresh-cache TTL: SENSE result caching for 5 min on restart (session-runner.ts:3410-3427)
 
 ### Future (no phase assigned)
 

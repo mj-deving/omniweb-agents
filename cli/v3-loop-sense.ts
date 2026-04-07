@@ -1,0 +1,231 @@
+/**
+ * v3-loop-sense.ts — SENSE phase data-gathering logic.
+ *
+ * Extracted from v3-loop.ts to keep the orchestrator lean.
+ * Handles: colony sync, chain ingestion, proof ingestion, source fetch,
+ * SSE feed, strategy sense, API enrichment, and calibration.
+ */
+
+import { toErrorMessage } from "../src/toolkit/util/errors.js";
+import {
+  ingestChainPostsIntoColonyDb,
+  fetchSourcesParallel,
+} from "./v3-loop-helpers.js";
+import type { AgentConfig } from "../src/lib/agent-config.js";
+import type { AgentSourceView } from "../src/lib/sources/catalog.js";
+import type { ApiEnrichmentData, LoopLimitsConfig } from "../src/toolkit/strategy/types.js";
+import {
+  LeaderboardResultSchema,
+  OracleResultSchema,
+  PriceDataSchema,
+  SignalDataSchema,
+  BettingPoolSchema,
+  AgentListSchema,
+} from "../src/toolkit/supercolony/api-schemas.js";
+import type { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";
+import type { AutoDataSource } from "../src/toolkit/data-source.js";
+import type { Toolkit } from "../src/toolkit/primitives/index.js";
+import { sense, computeAutoCalibration, type StrategyBridge } from "./v3-strategy-bridge.js";
+import { refreshAgentProfiles } from "../src/toolkit/colony/intelligence.js";
+import { deriveIntentsFromTopics, selectSourcesByIntent } from "../src/lib/pipeline/source-scanner.js";
+
+export interface SenseWorkDeps {
+  demos: any;
+  bridge: StrategyBridge;
+  dataSource: AutoDataSource;
+  toolkit: Toolkit;
+  apiClient: SuperColonyApiClient;
+  authToken: string | null;
+  authenticatedApiCall: (path: string, options?: RequestInit) => Promise<{ ok: boolean; data?: unknown }>;
+  limits: LoopLimitsConfig | undefined;
+  agentConfig: AgentConfig;
+  getSourceView: () => AgentSourceView;
+  observe: (type: string, message: string, meta?: Record<string, unknown>) => void;
+  runSubprocess: (script: string, args: string[], label: string) => Promise<unknown>;
+  flags: { agent: string; env: string };
+}
+
+export interface SenseWorkResult {
+  scanResult: unknown;
+  senseResult: ReturnType<typeof sense>;
+  apiEnrichment: ApiEnrichmentData | undefined;
+  calibration: ReturnType<typeof computeAutoCalibration>;
+}
+
+/**
+ * Executes the SENSE phase data-gathering work.
+ * Colony sync → scan-feed → chain ingestion → proofs → sources → SSE → strategy sense → enrichment → calibration.
+ */
+export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult> {
+  const { bridge, dataSource, toolkit, limits, observe } = deps;
+
+  // Colony sync from API
+  try {
+    const { syncColonyFromApi } = await import("../src/toolkit/colony/api-backfill.js");
+    const syncStats = await syncColonyFromApi(bridge.db, deps.apiClient, {
+      onProgress: (s) => {
+        if (s.pages % 50 === 0 && s.pages > 0) {
+          observe("insight", `Colony sync: page ${s.pages}, ${s.inserted} new, ${s.duplicates} existing`, { source: "v3-loop:colonySync" });
+        }
+      },
+    });
+    if (syncStats.inserted > 0) {
+      observe("insight", `Colony sync: ${syncStats.inserted} new posts from API (${syncStats.pages} pages)`, {
+        source: "v3-loop:colonySync",
+        ...syncStats,
+      });
+    }
+  } catch (err) {
+    observe("warning", `Colony sync failed: ${err instanceof Error ? err.message : String(err)}`, { source: "v3-loop:colonySync" });
+  }
+
+  const scanResult = await deps.runSubprocess(
+    "cli/scan-feed.ts",
+    ["--agent", deps.flags.agent, "--json", "--env", deps.flags.env],
+    "scan-feed",
+  );
+
+  // Fetch full chain posts via API-first data source, ingest into colony DB
+  const chainPosts = await dataSource.getRecentPosts(limits?.recentPostsFetchLimit ?? 500);
+  await ingestChainPostsIntoColonyDb(bridge.db, chainPosts, observe);
+
+  // Proof ingestion + agent profile refresh in parallel
+  await Promise.allSettled([
+    (async () => {
+      try {
+        const { createChainReaderFromSdk } = await import("../src/toolkit/colony/proof-ingestion-rpc-adapter.js");
+        const { ingestProofs } = await import("../src/toolkit/colony/proof-ingestion.js");
+        const chainReader = createChainReaderFromSdk(deps.demos, { concurrency: limits?.proofIngestionConcurrency ?? 5 });
+        const ingestionResult = await ingestProofs(bridge.db, chainReader, { limit: limits?.proofIngestionLimit ?? 20 });
+        if (ingestionResult.resolved > 0 || ingestionResult.failed > 0) {
+          observe("insight", `Proof ingestion: ${ingestionResult.verified} verified, ${ingestionResult.failed} failed, ${ingestionResult.skipped} skipped`, {
+            source: "v3-loop:proofIngestion",
+            ...ingestionResult,
+          });
+        }
+      } catch (err: unknown) {
+        observe("warning", `Proof ingestion failed (non-fatal): ${toErrorMessage(err)}`, {
+          source: "v3-loop:proofIngestion",
+        });
+      }
+    })(),
+    (async () => {
+      try {
+        const profilesRefreshed = refreshAgentProfiles(bridge.db);
+        if (profilesRefreshed > 0) {
+          observe("insight", `Agent profiles refreshed: ${profilesRefreshed} updated`, {
+            source: "v3-loop:intelligence",
+            profilesRefreshed,
+          });
+        }
+      } catch (err: unknown) {
+        observe("warning", `Agent profile refresh failed: ${toErrorMessage(err)}`, {
+          source: "v3-loop:intelligence",
+        });
+      }
+    })(),
+  ]);
+
+  // Fetch sources in parallel with wall-clock budget
+  const sourceView = deps.getSourceView();
+  const topics = deps.agentConfig.topics;
+  const intents = topics?.primary?.length ? deriveIntentsFromTopics(topics) : [];
+  const allSources = intents.flatMap((intent) =>
+    selectSourcesByIntent(intent, sourceView).slice(0, limits?.sourcesPerIntent ?? 5),
+  );
+  const { fetched: sourcesFetched, cached: sourcesCached } =
+    await fetchSourcesParallel(allSources, bridge.db, observe, limits?.sourceFetchBudgetMs ?? 15_000, limits?.sourceFetchConcurrency ?? 3);
+  if (sourcesFetched > 0) {
+    observe("insight", `Source fetch: ${sourcesCached}/${sourcesFetched} cached in colony DB`, {
+      source: "v3-loop:sourceFetch",
+      sourcesFetched,
+      sourcesCached,
+    });
+  }
+
+  // SSE Feed (optional, time-bounded)
+  if (deps.authToken) {
+    try {
+      const { readSSESense } = await import("./sse-sense-adapter.js");
+      const sseResult = await readSSESense(
+        bridge.db,
+        deps.authenticatedApiCall,
+        observe,
+        { timeoutMs: limits?.sseTimeoutMs ?? 5_000, maxEvents: limits?.sseMaxEvents ?? 100 },
+      );
+      if (sseResult.postsIngested > 0) {
+        observe("insight", `SSE sense: ${sseResult.postsIngested} new posts ingested (${sseResult.source})`, {
+          source: "v3-loop:sseSense",
+          sseSource: sseResult.source,
+          postsReceived: sseResult.postsReceived,
+          postsIngested: sseResult.postsIngested,
+          elapsedMs: sseResult.elapsedMs,
+        });
+      }
+    } catch (err: unknown) {
+      observe("warning", `SSE sense failed (non-fatal): ${toErrorMessage(err)}`, {
+        source: "v3-loop:sseSense",
+      });
+    }
+  }
+
+  const senseResult = sense(bridge, sourceView);
+
+  // API Enrichment via Toolkit Primitives (optional, graceful degradation)
+  const apiEnrichment = await fetchApiEnrichment(toolkit, limits, observe);
+
+  // Calibration
+  const calibration = computeAutoCalibration(bridge);
+
+  return { scanResult, senseResult, apiEnrichment, calibration };
+}
+
+/** Fetch API enrichment data from all toolkit endpoints. Returns undefined on total failure. */
+async function fetchApiEnrichment(
+  toolkit: Toolkit,
+  limits: LoopLimitsConfig | undefined,
+  observe: (type: string, msg: string, meta?: Record<string, unknown>) => void,
+): Promise<ApiEnrichmentData | undefined> {
+  try {
+    const [agentsResult, leaderboardResult, oracleResult, pricesResult, signalsResult, bettingPoolResult] = await Promise.all([
+      toolkit.agents.list(),
+      toolkit.scores.getLeaderboard({ limit: limits?.leaderboardLimit ?? 20 }),
+      toolkit.oracle.get(),
+      toolkit.prices.get(["BTC", "ETH", "DEM"]),
+      toolkit.intelligence.getSignals(),
+      toolkit.ballot.getPool({ asset: "BTC" }),
+    ]);
+
+    const apiEnrichment: ApiEnrichmentData = {};
+
+    const validate = <T>(name: string, raw: { ok: true; data: unknown } | { ok: false; [k: string]: unknown } | null, schema: { safeParse: (d: unknown) => { success: boolean; data?: T; error?: { message: string } } }): T | undefined => {
+      if (!raw || !raw.ok) return undefined;
+      const r = schema.safeParse(raw.data);
+      if (r.success) return r.data as T;
+      observe("warning", `API schema validation failed: ${name}`, { source: "v3-loop:enrichment", error: r.error?.message }); return undefined;
+    };
+
+    const agentList = validate("agents", agentsResult, AgentListSchema);
+    if (agentList) apiEnrichment.agentCount = agentList.agents.length;
+
+    apiEnrichment.leaderboard = validate("leaderboard", leaderboardResult, LeaderboardResultSchema);
+    apiEnrichment.oracle = validate("oracle", oracleResult, OracleResultSchema);
+    apiEnrichment.prices = validate("prices", pricesResult, PriceDataSchema.array());
+    apiEnrichment.bettingPool = validate("bettingPool", bettingPoolResult, BettingPoolSchema);
+    apiEnrichment.signals = validate("signals", signalsResult, SignalDataSchema.array());
+
+    const enrichmentKeys = Object.keys(apiEnrichment);
+    if (enrichmentKeys.length > 0) {
+      observe("insight", `API enrichment: ${enrichmentKeys.length} feeds (${enrichmentKeys.join(", ")})`, {
+        source: "v3-loop:apiEnrichment",
+        feeds: enrichmentKeys,
+      });
+    }
+
+    return apiEnrichment;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    observe("warning", `API enrichment batch failed (non-fatal): ${msg}`, { source: "v3-loop:apiEnrichment" });
+    return undefined;
+  }
+}

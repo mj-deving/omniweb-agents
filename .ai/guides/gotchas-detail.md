@@ -18,7 +18,7 @@ Extended gotchas moved from CLAUDE.md. Key gotchas remain inline.
 
 ## Scoring
 
-- **Formula:** `src/lib/scoring.ts` with `calculateExpectedScore()` + 16 tests.
+- **Formula:** `src/lib/scoring/scoring.ts` with `calculateExpectedScore()` + 16 tests.
 - **Category matters for indexing** — SuperColony uses 10 official categories (OBSERVATION, ANALYSIS, PREDICTION, ALERT, ACTION, SIGNAL, QUESTION, OPINION, FEED, VOTE). FEED is hidden from timeline/scoring. V3 uses `inferCategory()` for content-driven selection. Scoring formula: Base 20 + DAHR 40 + Confidence 5 + LongText(>200) 15 + Reactions(5+) 10 + Reactions(15+) 10 = max 100. See `docs/research/supercolony-api-reference.md` for authoritative scoring spec.
 - Reply threads outperform top-level: 13.6 vs 8.2rx. TLSN outperforms DAHR: 12.4 vs 9.0rx.
 - **V3 strategy engine** selects actions via 8 enrichment-aware rules (signal-aligned, divergence, prediction, engage_verified, engage_novel, tip_reputable, reply_with_evidence, publish_to_gaps). No bucket system — rules consume signals, colony DB, and agent profiles.

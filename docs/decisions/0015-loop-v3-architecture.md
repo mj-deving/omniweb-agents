@@ -73,4 +73,4 @@ Strategy rules in `agents/{name}/strategy.yaml`. Toolkit executes rules (mechani
 - Colony cache introduces SQLite as a new native dependency (better-sqlite3)
 - XM cross-chain reads expand the agent's verification surface to 10 blockchains
 - Migration in 4 phases: signal-first pipeline → colony cache → strategy engine → cleanup
-- Authoritative design document: `docs/design-loop-v3.md` (1,791 lines, 5 review cycles)
+- Authoritative design document: `docs/archive/design-loop-v3.md` (1,791 lines, 5 review cycles)

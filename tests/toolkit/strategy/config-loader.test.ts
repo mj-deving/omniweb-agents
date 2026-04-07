@@ -104,6 +104,74 @@ rateLimits:
 `)).toThrow(/rules/i);
   });
 
+  it("applies defaults for missing limits section", () => {
+    const config = loadStrategyConfig(`
+apiVersion: strategy/v3
+rules:
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 50
+    conditions:
+      - fresh evidence
+    enabled: true
+rateLimits:
+  postsPerDay: 14
+performance:
+  engagement: 40
+`);
+
+    expect(config.limits).toBeDefined();
+    expect(config.limits!.recentPostsFetchLimit).toBe(500);
+    expect(config.limits!.proofIngestionConcurrency).toBe(5);
+    expect(config.limits!.proofIngestionLimit).toBe(20);
+    expect(config.limits!.sourcesPerIntent).toBe(5);
+    expect(config.limits!.sourceFetchConcurrency).toBe(3);
+    expect(config.limits!.sourceFetchBudgetMs).toBe(15_000);
+    expect(config.limits!.sseTimeoutMs).toBe(5_000);
+    expect(config.limits!.sseMaxEvents).toBe(100);
+    expect(config.limits!.leaderboardLimit).toBe(20);
+    expect(config.limits!.subprocessTimeoutMs).toBe(180_000);
+    expect(config.limits!.phaseBudgets).toEqual({
+      senseMs: 120_000,
+      actMs: 120_000,
+      confirmMs: 60_000,
+    });
+  });
+
+  it("accepts custom limits from YAML", () => {
+    const config = loadStrategyConfig(`
+apiVersion: strategy/v3
+rules:
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 50
+    conditions:
+      - fresh evidence
+    enabled: true
+rateLimits:
+  postsPerDay: 14
+performance:
+  engagement: 40
+limits:
+  recentPostsFetchLimit: 1000
+  proofIngestionConcurrency: 3
+  sseTimeoutMs: 10000
+  phaseBudgets:
+    senseMs: 180000
+    actMs: 90000
+    confirmMs: 30000
+`);
+
+    expect(config.limits!.recentPostsFetchLimit).toBe(1000);
+    expect(config.limits!.proofIngestionConcurrency).toBe(3);
+    expect(config.limits!.sseTimeoutMs).toBe(10_000);
+    // Non-specified limits keep defaults
+    expect(config.limits!.proofIngestionLimit).toBe(20);
+    expect(config.limits!.sourcesPerIntent).toBe(5);
+    expect(config.limits!.phaseBudgets.senseMs).toBe(180_000);
+    expect(config.limits!.phaseBudgets.actMs).toBe(90_000);
+  });
+
   it("defaults topicWeights to an empty object", () => {
     const config = loadStrategyConfig(`
 apiVersion: strategy/v3

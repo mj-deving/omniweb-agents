@@ -142,6 +142,10 @@ export type { DataSource } from "./data-source.js";
 // ── Utilities ──────────────────────────────────────
 
 export { toErrorMessage } from "./util/errors.js";
+export { runSubprocessSafe } from "./util/subprocess.js";
+export type { SubprocessOptions, SubprocessResult } from "./util/subprocess.js";
+export { withBudget } from "./util/timed-phase.js";
+export type { TimedResult } from "./util/timed-phase.js";
 
 // ── Network ────────────────────────────────────────
 

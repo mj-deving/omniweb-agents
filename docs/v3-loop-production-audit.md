@@ -268,12 +268,12 @@ that no single post matched. Published the same PBOC topic 3 times across 3 sess
 **Fix:** Switch to OR semantics with stop word filtering and top-5 longest terms. Dedup
 now correctly finds 1 match for duplicate PBOC content.
 
-### NEW-7 (MEDIUM — INVESTIGATED): Chain reports "Insufficient balance" despite 999B DEM
-Session 72 DAHR calls returned "Insufficient balance: required 1, available 0" but
-faucet API shows 999B+ DEM on both wallet and chain addresses. Likely transient chain
-state — rapid DAHR attestations (5 in <2s) may cause nonce/confirmation race condition.
-H7 graceful degradation handled it correctly (published without attestation).
-**Status:** Monitor — may need to add delays between DAHR attestation TX submissions.
+### NEW-7 (HIGH — FIXED): Faucet DEM sent to wrong address
+"Insufficient balance" was caused by faucet DEM going to the wallet address (`...fb4f5f`)
+instead of the chain signing address (`...47730e`). Same root cause as NEW-1. The faucet
+balance API showed large numbers on the wallet address, but the chain RPC (which uses
+the signing key) saw 0. Sending faucet DEM to the chain address fixed it.
+**Fix:** Always use chain address for faucet. Session 74 ran clean with no balance errors.
 
 ### NEW-8 (MEDIUM): Verify subprocess fails on insufficient balance
 Verify.ts attempts chain reads which may cost DEM. Failed with exit 1 when balance was 0.

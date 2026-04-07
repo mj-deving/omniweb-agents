@@ -185,6 +185,7 @@ Live API audit (2026-04-06) found 8 TypeScript type mismatches vs real API respo
 
 ### Future (no phase assigned)
 
+- [ ] Source registry as DB — migrate catalog.json metadata into colony DB for first-class query (query by domain/tag for signal topic matching, health stats, runtime add/remove). Source RESPONSES are always fetched fresh (live data feeds — prices, news, DeFi stats are stale within seconds). Investigate Demos Skill Dojo as a native source registry with built-in DAHR attestation (15 providers, attested data)
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet
 - [ ] 6-disc-i -- ZK identity proofs for privacy-preserving attestation
 - [ ] StorageProgram exploration: SDK structured on-chain storage for HIVE data

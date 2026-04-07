@@ -6,6 +6,9 @@
  * in what the broader network is seeing.
  *
  * Runtime: Node.js + tsx
+ *
+ * @deprecated Legacy v2 signals helpers. The v3 loop uses
+ * `toolkit.intelligence.getSignals()` instead of this module.
  */
 
 import { apiCall } from "../network/sdk.js";
@@ -50,6 +53,8 @@ function asRecord(value: unknown): Record<string, unknown> | null {
  *
  * Returns null on any failure (network, parse, unexpected shape).
  * Never throws — callers should treat null as "signals unavailable".
+ *
+ * @deprecated Legacy v2 helper retained for the deprecated signals plugin.
  */
 export async function fetchSignals(token: string): Promise<SignalSnapshot | null> {
   try {
@@ -107,6 +112,8 @@ export async function fetchSignals(token: string): Promise<SignalSnapshot | null
  * Fetch the latest colony briefing/report summary.
  * Returns the summary text on success, null on any failure.
  * Never throws.
+ *
+ * @deprecated Legacy v2 helper retained for the deprecated signals plugin.
  */
 export async function fetchLatestBriefing(token: string): Promise<string | null> {
   try {
@@ -145,20 +152,15 @@ export async function fetchLatestBriefing(token: string): Promise<string | null>
 
 // ── Scoring ────────────────────────────────────────
 
+/** Default: pioneer rewards topics with <= this many agents covering them */
+const DEFAULT_LOW_COVERAGE_THRESHOLD = 2;
+
 /**
  * Score how well a topic aligns with current network signals.
  *
- * Returns a ranking modifier between -10 and +10:
- * - sentinel: rewards convergent strong signals (consensus validator)
- * - pioneer: rewards divergence and low-coverage topics (contrarian seeder)
- * - crawler: neutral (deep research, signal-agnostic)
- *
- * Topic matching uses case-insensitive token overlap between the
- * query topic and signal topic strings.
+ * @deprecated Legacy v2 scoring helper retained because `platform/index.ts`
+ * still re-exports it.
  */
-/** Default: pioneer rewards topics with ≤ this many agents covering them */
-const DEFAULT_LOW_COVERAGE_THRESHOLD = 2;
-
 export function scoreSignalAlignment(
   topic: string,
   snapshot: SignalSnapshot,
@@ -171,7 +173,6 @@ export function scoreSignalAlignment(
   const queryTokens = tokenize(topic);
   if (!queryTokens.length) return 0;
 
-  // Find best-matching signal topic
   let bestMatch: SignalTopic | null = null;
   let bestOverlap = 0;
 
@@ -184,18 +185,15 @@ export function scoreSignalAlignment(
     }
   }
 
-  // Need at least one token overlap to consider it a match
   if (!bestMatch || bestOverlap === 0) return 0;
 
   if (agentMode === "sentinel") {
-    // Sentinel rewards convergent, high-quality signals
     if (bestMatch.evidenceQuality === "strong") return 5;
     if (bestMatch.evidenceQuality === "moderate") return 3;
     return 1;
   }
 
   if (agentMode === "pioneer") {
-    // Pioneer rewards divergence (contrarian signal) and low-coverage topics
     if (bestMatch.divergence) return 5;
     if (bestMatch.agentCount <= (options?.lowCoverageThreshold ?? DEFAULT_LOW_COVERAGE_THRESHOLD)) return 3;
     return 0;
@@ -206,10 +204,6 @@ export function scoreSignalAlignment(
 
 // ── Helpers ────────────────────────────────────────
 
-/**
- * Tokenize a topic string into lowercase words for fuzzy matching.
- * Strips common noise words and punctuation.
- */
 function tokenize(text: string): string[] {
   const STOP_WORDS = new Set(["the", "a", "an", "is", "are", "of", "in", "on", "to", "for", "and", "or", "with"]);
   return text
@@ -219,9 +213,6 @@ function tokenize(text: string): string[] {
     .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
 }
 
-/**
- * Count overlapping tokens between two token arrays.
- */
 function countOverlap(a: string[], b: string[]): number {
   const setB = new Set(b);
   let count = 0;

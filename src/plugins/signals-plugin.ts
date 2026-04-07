@@ -9,6 +9,9 @@
  * injects snapshots into V2 session state.
  *
  * Delegates to: src/lib/signals.ts, src/lib/auth.ts
+ *
+ * @deprecated Legacy v2 extension path. The v3 loop uses
+ * `toolkit.intelligence.getSignals()` instead of this plugin.
  */
 
 import type { FrameworkPlugin } from "../types.js";
@@ -17,6 +20,8 @@ import type { BeforeSenseContext } from "../lib/util/extensions.js";
 /**
  * beforeSense hook — fetch consensus signals + briefing before SENSE.
  * Uses dynamic imports to avoid pulling SDK deps into the module graph.
+ *
+ * @deprecated Legacy v2 extension hook.
  */
 export async function signalsBeforeSense(ctx: BeforeSenseContext): Promise<void> {
   ctx.logger?.info("Extension: signals (fetching consensus + briefing)...");
@@ -49,6 +54,9 @@ export async function signalsBeforeSense(ctx: BeforeSenseContext): Promise<void>
   }
 }
 
+/**
+ * @deprecated Legacy v2 plugin factory retained for compatibility.
+ */
 export function createSignalsPlugin(): FrameworkPlugin {
   return {
     name: "signals",

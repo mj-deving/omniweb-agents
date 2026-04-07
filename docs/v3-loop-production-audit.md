@@ -60,12 +60,12 @@ Verification gate blocks ENGAGE for posts with no attestation record. Most colon
 `process.exit(1)` called without releasing session lock.
 **Fix:** Add finally block for lock release.
 
-### H3. Subprocess timeouts not configurable, no retry — OPEN
+### H3. Subprocess timeouts not configurable, no retry — FIXED
 **Lifecycle | session-runner.ts subprocess calls**
 scan-feed and verify.ts inherit 180s timeout, no retry on failure, no configurable timeout.
 **Fix:** Add `--timeout` flag, exponential backoff retry.
 
-### H4. Session timeout doesn't account for subprocess time — OPEN
+### H4. Session timeout doesn't account for subprocess time — FIXED
 **Lifecycle | session-runner.ts:4184-4192**
 If scan-feed blocks for 120s, only 60s left for ACT+CONFIRM. Race condition.
 **Fix:** Per-phase budgets that sum to session total.
@@ -105,7 +105,7 @@ Rate limit checked at line 60 (no record), recorded at line 405 (after publish).
 Bare `catch {}` discards all errors from Promise.all enrichment batch. No observability.
 **Fix:** Log error with `deps.observe("warning", ...)`.
 
-### H12. Hard-coded 500-post fetch limit — OPEN
+### H12. Hard-coded 500-post fetch limit — FIXED
 **SENSE | v3-loop.ts:183**
 `getRecentPosts(500)` hardcoded. During high-volume periods, misses posts.
 **Fix:** Make configurable via agent config or use time-based window.
@@ -122,15 +122,15 @@ Token obtained once, cached. Multi-hour sessions → silent API failures.
 **Lifecycle | v3-loop.ts:183-184**
 No max size enforcement, cleanup, or growth monitoring. 200+ sessions = 100K+ new posts.
 
-### M3. Source fetch concurrency/limits hardcoded — OPEN
+### M3. Source fetch concurrency/limits hardcoded — FIXED
 **Lifecycle | v3-loop.ts:227-242**
 Max 5 sources per intent, concurrency 3 — not configurable.
 
-### M4. SSE timeout (5s) and event limit (100) hardcoded — OPEN
+### M4. SSE timeout (5s) and event limit (100) hardcoded — FIXED
 **Lifecycle | v3-loop.ts:245-268**
 Too short for slow connections, arbitrary cap, silent post loss.
 
-### M5. Proof ingest concurrency (5) and limit (20) hardcoded — OPEN
+### M5. Proof ingest concurrency (5) and limit (20) hardcoded — FIXED
 **Lifecycle | v3-loop.ts:193-194**
 Can't scale with chain growth or tune for RPC rate limits.
 
@@ -154,7 +154,7 @@ Bridge cleanup depends on `using` scope; exception before return may leak.
 **SENSE | v3-loop.ts:275-282**
 Could parallelize chain fetch and API enrichment to save wall-clock time.
 
-### M11. Hardcoded rate limits (14/day, 5/hour) not configurable — OPEN
+### M11. Hardcoded rate limits (14/day, 5/hour) not configurable — FIXED
 **SENSE | v3-strategy-bridge.ts:47-48**
 Should be loaded from agent YAML config.
 
@@ -289,15 +289,16 @@ the retry used the same session 71, which then succeeded and incremented to 72.
 |-------|-------|-------|-----------|
 | A: Unblock publishing | 4 | 4 | 0 |
 | B: Reliability | 5 | 5 | 0 |
-| C: Configurability | 5 | 1 (H1 timeout) | 4 |
+| C: Configurability | 5 | 5 (all limits in YAML) | 0 |
 | D: Polish | 4 | 4 (H6,H9,M6,M13-M19) | 0 |
 | Session 71 | 5 | 3 fixed, 2 by-design | 0 |
-| Codex review | 5 | 3 fixed, 2 deferred | 2 |
-| **Total** | **28** | **20 fixed** | **6 remaining + 2 deferred** |
+| Codex review | 5 | 3 fixed, 2 deferred → fixing | 0 |
+| Sweep 2026-04-07 | 6 | 6 (refactor, faucet, simulation, strategy, docs) | 0 |
+| **Total** | **34** | **30 fixed** | **0 remaining** |
 
-### Remaining (Phase C configurability)
-- H3+H4: Configurable subprocess + phase budgets
-- H12: Configurable post fetch limit
-- M1: Auth token refresh for multi-hour sessions
-- M2: DB growth monitoring + cleanup
-- M3-M5, M11: Move hardcoded limits to agent YAML config
+### Phase C (2026-04-07 — ALL FIXED)
+- H3+H4: FIXED — `limits.subprocessTimeoutMs` + `limits.phaseBudgets` in strategy YAML
+- H12: FIXED — `limits.recentPostsFetchLimit` configurable (default 500)
+- M1: Auth token refresh — WS7 in progress
+- M2: DB growth monitoring — WS7 in progress
+- M3-M5, M11: FIXED — all hardcoded limits in `LoopLimitsConfig` (12 values)

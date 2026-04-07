@@ -23,17 +23,18 @@ demos-agents/
 │   ├── schemas.ts                    # Zod schemas (11 + CatalogEntry + D402Requirement)
 │   ├── tools/                        # 10 atomic tools (connect, publish, scan, verify, attest, tip, pay, discover-sources, feed-parser, tool-wrapper)
 │   ├── guards/                       # 6 guards (write-rate-limit, dedup, tip-spend-cap, pay-spend-cap, pay-receipt-log, backoff)
-│   ├── sources/                      # Source catalog, fetch, health, rate-limit
+│   ├── sources/                      # Source catalog, fetch, health, rate-limit, prefetch-cascade
 │   ├── providers/                    # Declarative engine, generic adapter, types
 │   ├── reactive/                     # EventLoop<TAction>, watermark-store
-│   ├── chain/                        # tx-pipeline (executeChainTx), asset-helpers
+│   ├── chain/                        # tx-pipeline (executeChainTx), asset-helpers, tx-simulator
 │   ├── math/                         # Ring buffer, MAD, z-score, winsorize
 │   ├── network/                      # fetch-with-timeout, storage-client
 │   ├── supercolony/                  # api-client, chain-identity, chain-utils, scoring, types
-│   ├── colony/                       # Colony DB: schema, posts, reactions, claims, scanner, dedup, intelligence, embeddings, search
+│   ├── colony/                       # Colony DB: schema, posts, reactions, claims, scanner, dedup, intelligence, embeddings, search, agent-index
 │   ├── supercolony/                  # api-client, api-schemas (Zod), chain-identity, chain-utils, scoring, types
-│   ├── strategy/                     # Strategy engine: decideActions(), config-loader, types (split: engine, engine-helpers, engine-enrichment, engine-contradiction)
-│   └── util/                         # errors.ts
+│   ├── strategy/                     # Strategy engine: decideActions(), config-loader, types, topic-expansion (split: engine, engine-helpers, engine-enrichment, engine-contradiction)
+│   ├── publish/                      # quality-gate (pre-publish validation)
+│   └── util/                         # errors, subprocess (kill escalation), timed-phase (budget observer), hook-dispatch (isolated timeout runner)
 │
 ├── src/                              # Core types + business logic
 │   ├── types.ts                      # FrameworkPlugin, Action, EventPlugin, DataProvider

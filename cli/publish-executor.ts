@@ -297,13 +297,15 @@ export async function executePublishActions(
     }
 
     // --- Post-LLM safety net: verify draft actually uses the evidence ---
+    // Use regex-only claim extraction (llm: null) — a second LLM call here
+    // wastes 5-10s and the binary pass/fail decision doesn't need LLM precision
     const matchResult = await match({
       topic,
       postText: draft.text,
       postTags: draft.tags,
       candidates: preflightResult.candidates,
       sourceView: deps.sourceView,
-      llm: deps.provider,
+      llm: null,
       prefetchedResponses: prefetched.prefetchedResponses,
     });
 

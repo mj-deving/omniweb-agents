@@ -94,18 +94,18 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
     }
   } catch { /* non-fatal — skip size check if path unavailable */ }
 
-  const scanResult = await deps.runSubprocess(
-    "cli/scan-feed.ts",
-    ["--agent", deps.flags.agent, "--json", "--env", deps.flags.env],
-    "scan-feed",
-  );
-
-  // Fetch full chain posts via API-first data source, ingest into colony DB
-  const chainPosts = await dataSource.getRecentPosts(limits?.recentPostsFetchLimit ?? 500);
-  await ingestChainPostsIntoColonyDb(bridge.db, chainPosts, observe);
-
-  // Proof ingestion + agent profile refresh in parallel
-  const parallelResults = await Promise.allSettled([
+  // Run scan-feed, chain ingestion, proof ingestion, and agent profiles in parallel
+  // Colony API sync above already provides reads (ADR-0018); chain fetch is backup
+  const [scanSettled, chainSettled, ...parallelResults] = await Promise.allSettled([
+    deps.runSubprocess(
+      "cli/scan-feed.ts",
+      ["--agent", deps.flags.agent, "--json", "--env", deps.flags.env],
+      "scan-feed",
+    ),
+    (async () => {
+      const chainPosts = await dataSource.getRecentPosts(limits?.recentPostsFetchLimit ?? 500);
+      await ingestChainPostsIntoColonyDb(bridge.db, chainPosts, observe);
+    })(),
     (async () => {
       try {
         const { createChainReaderFromSdk } = await import("../src/toolkit/colony/proof-ingestion-rpc-adapter.js");
@@ -140,8 +140,9 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
       }
     })(),
   ]);
-  // Log any unexpected rejections from parallel operations
-  for (const r of parallelResults) {
+  // Extract scan result; log rejections from all parallel operations
+  const scanResult = scanSettled.status === "fulfilled" ? scanSettled.value : undefined;
+  for (const r of [scanSettled, chainSettled, ...parallelResults]) {
     if (r.status === "rejected") {
       observe("warning", `Parallel sense operation rejected: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`, { source: "v3-loop:parallelSense" });
     }
@@ -188,7 +189,15 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
   });
 
   // Skip unhealthy sources — degraded/stale get auto-demoted by lifecycle after enough failures
-  const healthySources = filterHealthySources(dedupedSources);
+  const healthyBeforeUrlDedup = filterHealthySources(dedupedSources);
+
+  // URL-level dedup — multiple signal topics may resolve to the same endpoint
+  const seenUrls = new Set<string>();
+  const healthySources = healthyBeforeUrlDedup.filter(s => {
+    if (seenUrls.has(s.url)) return false;
+    seenUrls.add(s.url);
+    return true;
+  });
   const skippedCount = dedupedSources.length - healthySources.length;
   if (skippedCount > 0) {
     observe("insight", `Source health filter: skipped ${skippedCount} unhealthy source(s)`, {

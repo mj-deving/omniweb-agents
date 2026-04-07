@@ -138,6 +138,8 @@ export interface DecisionContext {
   calibration?: CalibrationState;
   /** Phase 7: Colony briefing from /api/report — informs topic prioritization. */
   briefingContext?: string;
+  /** Max publish actions to generate — prevents wasteful candidate generation beyond session cap. */
+  maxPublishPerSession?: number;
 }
 
 /** Phase 8b: A detected contradiction in the claim ledger. */

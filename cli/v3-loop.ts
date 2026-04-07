@@ -125,6 +125,9 @@ export async function runV3Loop(
 
   const limits = bridge.config?.limits;
 
+  // Session-scoped blacklist: topics whose drafts failed match gate — don't re-draft
+  const rejectedPublishTopics = new Set<string>();
+
   // Resolve chain author address — wallet address may differ from chain pubkey
   let chainAddress = address;
   try {
@@ -213,6 +216,7 @@ export async function runV3Loop(
               calibration: state.strategyResults?.calibration as import("./v3-strategy-bridge.js").CalibrationState | undefined,
               briefingContext: state.briefingContext,
               identityLookup,
+              maxPublishPerSession: limits?.maxPublishPerSession ?? 2,
             },
           );
           state.strategyResults = { ...state.strategyResults, planResult };
@@ -246,7 +250,17 @@ export async function runV3Loop(
 
             // Limit publish drafts per session — LLM drafting is slow (~60-90s each)
             const maxPublishPerSession = limits?.maxPublishPerSession ?? 2;
-            const publishActions = allHeavy.filter(a => a.type === "PUBLISH");
+            const publishActions = allHeavy
+              .filter(a => a.type === "PUBLISH")
+              .filter(a => {
+                if (a.target && rejectedPublishTopics.has(a.target)) {
+                  deps.observe("insight", `Publish skip: "${a.target}" rejected in earlier iteration`, {
+                    source: "v3-loop:topicBlacklist",
+                  });
+                  return false;
+                }
+                return true;
+              });
             const nonPublishHeavy = allHeavy.filter(a => a.type !== "PUBLISH");
             const cappedPublish = publishActions.slice(0, maxPublishPerSession);
             if (publishActions.length > maxPublishPerSession) {
@@ -282,6 +296,13 @@ export async function runV3Loop(
                   spending: { policy: defaultSpendingPolicy({ autonomous: flags.oversight === "autonomous" }), ledger: loadSpendingLedger(address, deps.agentConfig.name) },
                 })
               : { executed: [], skipped: [] };
+
+            // Record rejected publish topics so they're not re-drafted in next iteration
+            for (const skip of heavyResult.skipped || []) {
+              if (skip.action?.type === "PUBLISH" && skip.action?.target) {
+                rejectedPublishTopics.add(skip.action.target);
+              }
+            }
 
             return mergeExecutionResults(lightResult, heavyResult);
           } else {

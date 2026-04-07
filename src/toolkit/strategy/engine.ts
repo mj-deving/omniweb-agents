@@ -263,7 +263,9 @@ export function decideActions(
   }
 
   // ── Enrichment Rules (engine-enrichment.ts) ─────
-  evaluateEnrichmentRules(config, context, evidenceIndex, candidates, considered);
+  evaluateEnrichmentRules(config, context, evidenceIndex, candidates, considered, {
+    maxPublish: context.maxPublishPerSession,
+  });
 
   // ── Contradiction Rule (engine-contradiction.ts) ─
   evaluateContradictionRule(config, context, evidenceIndex, candidates, considered);

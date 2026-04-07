@@ -28,7 +28,6 @@ import type { PublishExecutionResult, PublishExecutorDeps } from "./publish-type
 import type { ResolvedActionSource } from "./publish-types.js";
 
 import {
-  MIN_TEXT_LENGTH,
   getActionTopic,
   getRequestedCategory,
   buildReplyContext,
@@ -39,6 +38,7 @@ import {
   appendState,
   runSingleAttestationFallback,
 } from "./publish-helpers.js";
+import { checkPublishQuality } from "../src/toolkit/publish/quality-gate.js";
 
 const MAX_PUBLISH_PER_SESSION = 3;
 const ACT_PHASE_TIMEOUT_MS = 120_000;
@@ -250,8 +250,16 @@ export async function executePublishActions(
       continue;
     }
 
-    if (draft.text.length < MIN_TEXT_LENGTH) {
-      result.skipped.push({ action, reason: `draft too short (${draft.text.length} chars)` });
+    // Quality gate: check text length + predicted reactions via toolkit primitive
+    const qualityResult = checkPublishQuality(
+      { text: draft.text, category: draft.category, predicted_reactions: draft.predicted_reactions },
+      {
+        minTextLength: 200,
+        minPredictedReactions: deps.agentConfig.gate.predictedReactionsThreshold || 0,
+      },
+    );
+    if (!qualityResult.pass) {
+      result.skipped.push({ action, reason: qualityResult.reason ?? "quality gate failed" });
       continue;
     }
 
@@ -274,14 +282,6 @@ export async function executePublishActions(
       result.skipped.push({
         action,
         reason: `projected score ${projectedScore.score} below leaderboard threshold (50)`,
-      });
-      continue;
-    }
-
-    if (draft.predicted_reactions < (deps.agentConfig.gate.predictedReactionsThreshold || 0)) {
-      result.skipped.push({
-        action,
-        reason: `predicted reactions below threshold (${draft.predicted_reactions} < ${deps.agentConfig.gate.predictedReactionsThreshold})`,
       });
       continue;
     }

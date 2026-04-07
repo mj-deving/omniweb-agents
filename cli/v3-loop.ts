@@ -27,6 +27,7 @@ import { ensureAuth, loadAuthCache } from "../src/lib/auth/auth.js";
 import { executeStrategyActions } from "./action-executor.js";
 import { executePublishActions } from "./publish-executor.js";
 import { initStrategyBridge, plan, computePerformance, type StrategyBridge } from "./v3-strategy-bridge.js";
+import { withBudget } from "../src/toolkit/util/timed-phase.js";
 
 export interface V3LoopFlags {
   agent: string;
@@ -151,15 +152,20 @@ export async function runV3Loop(
       });
     }
 
-    const senseStart = Date.now();
     beginPhase(state, "sense", sessionsDir);
     try {
-      const senseWork = await runSenseWork({
-        demos, bridge, dataSource, toolkit, apiClient, authToken, authenticatedApiCall, limits,
-        agentConfig: deps.agentConfig, getSourceView: deps.getSourceView,
-        observe: deps.observe, runSubprocess: deps.runSubprocess,
-        flags: { agent: flags.agent, env: flags.env },
-      });
+      const senseTimed = await withBudget(
+        limits?.phaseBudgets?.senseMs ?? 120_000,
+        "SENSE",
+        () => runSenseWork({
+          demos, bridge, dataSource, toolkit, apiClient, authToken, authenticatedApiCall, limits,
+          agentConfig: deps.agentConfig, getSourceView: deps.getSourceView,
+          observe: deps.observe, runSubprocess: deps.runSubprocess,
+          flags: { agent: flags.agent, env: flags.env },
+        }),
+        deps.observe,
+      );
+      const senseWork = senseTimed.result;
 
       state.strategyResults = {
         ...state.strategyResults,
@@ -169,7 +175,7 @@ export async function runV3Loop(
       };
 
       completePhase(state, "sense", { scan: senseWork.scanResult, strategy: senseWork.senseResult, apiEnrichment: senseWork.apiEnrichment }, sessionsDir);
-      deps.observe("checkpoint", "SENSE phase complete", { source: "v3-loop:sense", elapsedMs: Date.now() - senseStart });
+      deps.observe("checkpoint", "SENSE phase complete", { source: "v3-loop:sense", elapsedMs: senseTimed.elapsedMs });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       failPhase(state, "sense", message, sessionsDir);
@@ -181,7 +187,6 @@ export async function runV3Loop(
   let actResult: unknown = undefined;
 
   if (state.phases.act.status !== "completed") {
-    const actStart = Date.now();
     beginPhase(state, "act", sessionsDir);
     try {
       const sensePayload = getSensePayload(state);
@@ -197,74 +202,85 @@ export async function runV3Loop(
         } catch { return null; }
       };
 
-      const planResult = await plan(
-        bridge, sensePayload.strategy, (state.engagements || []).length,
-        {
-          apiEnrichment: state.strategyResults?.apiEnrichment as ApiEnrichmentData | undefined,
-          calibration: state.strategyResults?.calibration as import("./v3-strategy-bridge.js").CalibrationState | undefined,
-          briefingContext: state.briefingContext,
-          identityLookup,
+      const actTimed = await withBudget(
+        limits?.phaseBudgets?.actMs ?? 180_000,
+        "ACT",
+        async () => {
+          const planResult = await plan(
+            bridge, sensePayload.strategy, (state.engagements || []).length,
+            {
+              apiEnrichment: state.strategyResults?.apiEnrichment as ApiEnrichmentData | undefined,
+              calibration: state.strategyResults?.calibration as import("./v3-strategy-bridge.js").CalibrationState | undefined,
+              briefingContext: state.briefingContext,
+              identityLookup,
+            },
+          );
+          state.strategyResults = { ...state.strategyResults, planResult };
+
+          if (planResult.actions.length > 0) {
+            for (const action of planResult.actions) {
+              deps.observe("action-planned", `${action.type} p=${action.priority} — ${action.reason.slice(0, 120)}`, {
+                source: "v3-loop:plan", type: action.type, priority: action.priority,
+                target: action.target?.slice(0, 16), targetType: action.targetType,
+              });
+            }
+          }
+
+          if (planResult.actions.length > 0 && !flags.shadow) {
+            const light = planResult.actions.filter((a) => a.type === "ENGAGE" || a.type === "TIP");
+            const heavy = planResult.actions.filter((a) =>
+              a.type === "PUBLISH" || a.type === "REPLY" || a.type === "VOTE" || a.type === "BET",
+            );
+
+            const lightResult: LightExecutionResult = light.length > 0
+              ? await executeStrategyActions(light, {
+                  bridge: {
+                    apiCall: authenticatedApiCall,
+                    publishHivePost: sdkBridge.publishHivePost.bind(sdkBridge),
+                    transferDem: (to, amount) => sdkBridge.transferDem(to, amount, "Strategy action tip"),
+                  },
+                  dryRun: flags.dryRun, observe: deps.observe, colonyDb: bridge.db, ourAddress: chainAddress,
+                })
+              : { executed: [], skipped: [] };
+
+            const provider = deps.resolveProvider(flags.env);
+            const heavyResult: HeavyExecutionResult = heavy.length > 0
+              ? await executePublishActions(heavy, {
+                  demos, walletAddress: chainAddress, provider, agentConfig: deps.agentConfig,
+                  sourceView: deps.getSourceView(), state, sessionsDir, observe: deps.observe,
+                  dryRun: flags.dryRun, stateStore: bridge.store, colonyDb: bridge.db,
+                  calibrationOffset: (state.strategyResults?.calibration as { offset?: number } | undefined)?.offset ?? 0,
+                  scanContext: getScanContext(sensePayload.scan),
+                  adapters: loadDeclarativeProviderAdaptersSync({ specDir: getStrategySpecDir() }),
+                  usageTracker: createUsageTracker(),
+                  logSession: (entry) => appendSessionLog(entry as SessionLogEntry, flags.log),
+                  logQuality: (data) => logQualityData(data as QualityDataEntry),
+                  spending: { policy: defaultSpendingPolicy({ autonomous: flags.oversight === "autonomous" }), ledger: loadSpendingLedger(address, deps.agentConfig.name) },
+                })
+              : { executed: [], skipped: [] };
+
+            return mergeExecutionResults(lightResult, heavyResult);
+          } else {
+            state.publishSuppressed = flags.shadow ? true : state.publishSuppressed;
+            return { skipped: true, reason: flags.shadow ? "shadow" : "no actions" } as unknown;
+          }
         },
+        deps.observe,
       );
-      state.strategyResults = { ...state.strategyResults, planResult };
 
-      if (planResult.actions.length > 0) {
-        for (const action of planResult.actions) {
-          deps.observe("action-planned", `${action.type} p=${action.priority} — ${action.reason.slice(0, 120)}`, {
-            source: "v3-loop:plan", type: action.type, priority: action.priority,
-            target: action.target?.slice(0, 16), targetType: action.targetType,
-          });
-        }
-      }
+      actResult = actTimed.result;
 
-      if (planResult.actions.length > 0 && !flags.shadow) {
-        const light = planResult.actions.filter((a) => a.type === "ENGAGE" || a.type === "TIP");
-        const heavy = planResult.actions.filter((a) =>
-          a.type === "PUBLISH" || a.type === "REPLY" || a.type === "VOTE" || a.type === "BET",
-        );
-
-        const lightResult: LightExecutionResult = light.length > 0
-          ? await executeStrategyActions(light, {
-              bridge: {
-                apiCall: authenticatedApiCall,
-                publishHivePost: sdkBridge.publishHivePost.bind(sdkBridge),
-                transferDem: (to, amount) => sdkBridge.transferDem(to, amount, "Strategy action tip"),
-              },
-              dryRun: flags.dryRun, observe: deps.observe, colonyDb: bridge.db, ourAddress: chainAddress,
-            })
-          : { executed: [], skipped: [] };
-
-        const provider = deps.resolveProvider(flags.env);
-        const heavyResult: HeavyExecutionResult = heavy.length > 0
-          ? await executePublishActions(heavy, {
-              demos, walletAddress: chainAddress, provider, agentConfig: deps.agentConfig,
-              sourceView: deps.getSourceView(), state, sessionsDir, observe: deps.observe,
-              dryRun: flags.dryRun, stateStore: bridge.store, colonyDb: bridge.db,
-              calibrationOffset: (state.strategyResults?.calibration as { offset?: number } | undefined)?.offset ?? 0,
-              scanContext: getScanContext(sensePayload.scan),
-              adapters: loadDeclarativeProviderAdaptersSync({ specDir: getStrategySpecDir() }),
-              usageTracker: createUsageTracker(),
-              logSession: (entry) => appendSessionLog(entry as SessionLogEntry, flags.log),
-              logQuality: (data) => logQualityData(data as QualityDataEntry),
-              spending: { policy: defaultSpendingPolicy({ autonomous: flags.oversight === "autonomous" }), ledger: loadSpendingLedger(address, deps.agentConfig.name) },
-            })
-          : { executed: [], skipped: [] };
-
-        actResult = mergeExecutionResults(lightResult, heavyResult);
-
-        const merged = actResult as { executed: Array<{ success: boolean }>; skipped: unknown[] };
+      const merged = actResult as { executed?: Array<{ success: boolean }>; skipped?: unknown[] };
+      if (merged.executed) {
         const successCount = merged.executed.filter((e) => e.success).length;
         if (merged.executed.length > 0 && successCount === 0) {
-          throw new Error(`All ${merged.executed.length} action(s) failed. Skipped: ${merged.skipped.length}. See session log for details.`);
+          throw new Error(`All ${merged.executed.length} action(s) failed. Skipped: ${(merged.skipped || []).length}. See session log for details.`);
         }
-      } else {
-        state.publishSuppressed = flags.shadow ? true : state.publishSuppressed;
-        actResult = { skipped: true, reason: flags.shadow ? "shadow" : "no actions" };
       }
 
       state.strategyResults = { ...state.strategyResults, executionResult: actResult };
       completePhase(state, "act", actResult, sessionsDir);
-      deps.observe("checkpoint", "ACT phase complete", { source: "v3-loop:act", elapsedMs: Date.now() - actStart });
+      deps.observe("checkpoint", "ACT phase complete", { source: "v3-loop:act", elapsedMs: actTimed.elapsedMs });
 
       try {
         await runAfterAct(extensionRegistry, deps.agentConfig.loopExtensions, {
@@ -285,26 +301,31 @@ export async function runV3Loop(
 
   // ── CONFIRM PHASE ──
   if (state.phases.confirm.status !== "completed") {
-    const confirmStart = Date.now();
     beginPhase(state, "confirm", sessionsDir);
     try {
-      if (state.posts.length > 0) {
-        const txHashes = state.posts.map((post) => typeof post === "string" ? post : post.txHash);
-        const verifyResult = await deps.runSubprocess(
-          "cli/verify.ts", [...txHashes, "--json", "--log", flags.log, "--env", flags.env], "verify",
-        );
-        const perfScores = computePerformance(bridge);
-        completePhase(state, "confirm", { verify: verifyResult, performance: perfScores }, sessionsDir);
-      } else {
-        completePhase(state, "confirm", { skipped: true, reason: "no posts" }, sessionsDir);
-      }
+      const confirmTimed = await withBudget(
+        limits?.phaseBudgets?.confirmMs ?? 60_000,
+        "CONFIRM",
+        async () => {
+          if (state.posts.length > 0) {
+            const txHashes = state.posts.map((post) => typeof post === "string" ? post : post.txHash);
+            const verifyResult = await deps.runSubprocess(
+              "cli/verify.ts", [...txHashes, "--json", "--log", flags.log, "--env", flags.env], "verify",
+            );
+            const perfScores = computePerformance(bridge);
+            return { verify: verifyResult, performance: perfScores };
+          }
+          return { skipped: true, reason: "no posts" } as const;
+        },
+        deps.observe,
+      );
+      completePhase(state, "confirm", confirmTimed.result, sessionsDir);
+      deps.observe("checkpoint", "CONFIRM phase complete", { source: "v3-loop:confirm", elapsedMs: confirmTimed.elapsedMs });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       failPhase(state, "confirm", message, sessionsDir);
       throw error;
     }
-
-    deps.observe("checkpoint", "CONFIRM phase complete", { source: "v3-loop:confirm", elapsedMs: Date.now() - confirmStart });
 
     if (state.publishedPosts && state.publishedPosts.length > 0) {
       try {

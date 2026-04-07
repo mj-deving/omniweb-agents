@@ -62,8 +62,12 @@ export function evaluateEnrichmentRules(
   // ── publish_signal_aligned ──────────────────────
   const signalAlignedRule = getRule(config, "publish_signal_aligned");
   if (signalAlignedRule && enrichment?.signals) {
+    const minConfidence = config.enrichment?.minConfidence ?? 70;
+
     for (const signal of enrichment.signals) {
-      if (signal.trending === false || signal.agentCount < (config.enrichment?.minSignalAgents ?? 2)) continue;
+      if (signal.trending === false || signal.agentCount < (config.enrichment?.minSignalAgents ?? 5)) continue;
+      // WS4: Skip low-confidence signals — score-100 posts come from high-confidence consensus
+      if (signal.confidence < minConfidence) continue;
 
       // Signal topics are long phrases ("DXY USD Liquidity Tightening and Crypto Capital Flows")
       // but evidence index uses short keys ("bitcoin", "defi", "macro").
@@ -93,6 +97,13 @@ export function evaluateEnrichmentRules(
           },
         },
       );
+
+      // WS4: Cross-domain bonus — topics spanning multiple domains get +10 priority
+      // Score-100 posts often bridge domains (macro+crypto, security+defi)
+      if (detectCrossDomain(signal.topic)) {
+        action.priority += 10;
+        action.reason += " (cross-domain bonus)";
+      }
 
       candidates.push({ action, rule: signalAlignedRule.name });
       considered.push({ action, rule: signalAlignedRule.name });
@@ -156,4 +167,36 @@ export function evaluateEnrichmentRules(
     candidates.push({ action, rule: predictionRule.name });
     considered.push({ action, rule: predictionRule.name });
   }
+}
+
+// ── Cross-domain detection ──────────────────────────
+// Domain clusters for detecting cross-domain signal topics.
+// Score-100 posts often bridge multiple domains (macro+crypto, security+defi).
+const DOMAIN_CLUSTERS: Record<string, readonly string[]> = {
+  macro: ["macro", "gdp", "inflation", "rates", "fed", "treasury", "fiscal", "monetary", "dollar", "dxy", "yuan", "pboc", "boj"],
+  crypto: ["crypto", "bitcoin", "btc", "ethereum", "eth", "defi", "nft", "token", "blockchain", "web3"],
+  security: ["security", "hack", "exploit", "vulnerability", "audit", "attack", "breach", "phishing"],
+  markets: ["equity", "stock", "nasdaq", "s&p", "bond", "yield", "commodity", "gold", "oil"],
+  regulation: ["regulation", "sec", "compliance", "legal", "enforcement", "ban", "policy"],
+};
+
+/**
+ * Detect whether a signal topic spans multiple domain clusters.
+ * Returns true if tokens from 2+ distinct clusters appear in the topic.
+ */
+export function detectCrossDomain(topic: string): boolean {
+  const lower = topic.toLowerCase();
+  const matchedDomains = new Set<string>();
+
+  for (const [domain, terms] of Object.entries(DOMAIN_CLUSTERS)) {
+    for (const term of terms) {
+      if (lower.includes(term)) {
+        matchedDomains.add(domain);
+        break; // One match per domain is enough
+      }
+    }
+    if (matchedDomains.size >= 2) return true;
+  }
+
+  return false;
 }

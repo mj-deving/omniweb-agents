@@ -152,8 +152,8 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
     enrichment: {
       divergenceThreshold: config.enrichment.divergenceThreshold ?? 10,
       minBallotAccuracy: config.enrichment.minBallotAccuracy ?? 0.5,
-      minSignalAgents: config.enrichment.minSignalAgents ?? 2,
-      minConfidence: config.enrichment.minConfidence ?? 40,
+      minSignalAgents: config.enrichment.minSignalAgents ?? 5,
+      minConfidence: config.enrichment.minConfidence ?? 70,
     },
     limits: {
       recentPostsFetchLimit: config.limits.recentPostsFetchLimit ?? DEFAULT_LIMITS.recentPostsFetchLimit,

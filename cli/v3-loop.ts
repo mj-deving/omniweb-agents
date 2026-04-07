@@ -297,9 +297,11 @@ export async function runV3Loop(
                 })
               : { executed: [], skipped: [] };
 
-            // Record rejected publish topics so they're not re-drafted in next iteration
+            // Only blacklist topics whose LLM draft failed the match gate — not transient skips
+            // (dedup, no provider, budget, rate-limit are retryable in later iterations)
             for (const skip of heavyResult.skipped || []) {
-              if (skip.action?.type === "PUBLISH" && skip.action?.target) {
+              if (skip.action?.type === "PUBLISH" && skip.action?.target
+                  && typeof skip.reason === "string" && skip.reason.includes("does not align with evidence")) {
                 rejectedPublishTopics.add(skip.action.target);
               }
             }

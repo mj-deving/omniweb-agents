@@ -49,13 +49,12 @@ export async function lifecycleBeforeSense(ctx: BeforeSenseContext): Promise<voi
     const transitions: ReturnType<typeof evaluateTransition>[] = [];
     const updatedMap = new Map<string, (typeof allSources)[number]>();
 
-    // Parallel testing with concurrency limit — was sequential (40-48s), now ~10-15s
-    const CONCURRENCY = 5;
-    const results = await Promise.allSettled(
-      sampled.map((source, i) =>
-        new Promise<void>(async (resolve) => {
-          // Stagger starts to avoid burst
-          if (i >= CONCURRENCY) await new Promise(r => setTimeout(r, (i % CONCURRENCY) * 200));
+    // Parallel testing with concurrency limiter — was sequential (40-48s), now ~10-15s
+    const { createLimiter } = await import("../toolkit/util/limiter.js");
+    const limit = createLimiter(5);
+    await Promise.allSettled(
+      sampled.map((source) =>
+        limit(async () => {
           try {
             const testResult = await testSource(source);
             const withRating = updateRating(source, testResult);
@@ -65,7 +64,6 @@ export async function lifecycleBeforeSense(ctx: BeforeSenseContext): Promise<voi
               transitions.push(transition);
             }
           } catch { /* non-fatal per source */ }
-          resolve();
         })
       )
     );

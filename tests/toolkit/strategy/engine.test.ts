@@ -89,8 +89,8 @@ function createConfig(overrides: Partial<StrategyConfig> = {}): StrategyConfig {
     enrichment: {
       divergenceThreshold: 10,
       minBallotAccuracy: 0.5,
-      minSignalAgents: 5,
-      minConfidence: 70,
+      minSignalAgents: 2,
+      minConfidence: 40,
     },
     ...overrides,
   };
@@ -549,7 +549,7 @@ describe("strategy engine", () => {
       }), createContext({
         apiEnrichment: {
           signals: [
-            { topic: "defi", consensus: true, direction: "bullish", agentCount: 6, totalAgents: 10, confidence: 72, text: "DeFi analysis", trending: true },
+            { topic: "defi", consensus: true, direction: "bullish", agentCount: 4, totalAgents: 10, confidence: 72, text: "DeFi analysis", trending: true },
           ],
         },
       }));
@@ -591,7 +591,7 @@ describe("strategy engine", () => {
       }), createContext({
         apiEnrichment: {
           signals: [
-            { topic: "defi", consensus: true, direction: "bullish", agentCount: 6, totalAgents: 10, confidence: 72, text: "DeFi analysis", trending: true },
+            { topic: "defi", consensus: true, direction: "bullish", agentCount: 4, totalAgents: 10, confidence: 72, text: "DeFi analysis", trending: true },
           ],
         },
       }));
@@ -1052,7 +1052,7 @@ describe("strategy engine", () => {
   });
 
   describe("publish_to_gaps signal cross-reference", () => {
-    it("publish_to_gaps considers signal agent count for priority", () => {
+    it("suppresses publish_to_gaps when signals exist but none qualify (M3 fix)", () => {
       const state = createEmptyState();
       state.gaps.underservedTopics = [
         { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
@@ -1066,14 +1066,14 @@ describe("strategy engine", () => {
       }), createContext({
         apiEnrichment: {
           signals: [
+            // agentCount=1 < minSignalAgents=2, trending=false — does not qualify
             { topic: "defi", consensus: false, direction: "neutral", agentCount: 1, totalAgents: 10, confidence: 40, text: "Needs more agents", trending: false },
           ],
         },
       }));
 
-      // Should still produce the gap action, potentially with signal metadata
-      expect(result.actions.length).toBeGreaterThanOrEqual(1);
-      expect(result.actions[0].type).toBe("PUBLISH");
+      // M3: signals exist but none qualify — publish_to_gaps is suppressed
+      expect(result.actions).toEqual([]);
     });
   });
 
@@ -1374,177 +1374,163 @@ describe("strategy engine", () => {
     });
   });
 
-  // ── WS4: Score-100 Insights ──────────────────────────────
+  // ── M3: publish_to_gaps suppression when signals exist but none qualify ──
 
-  describe("score-100 strategy tuning", () => {
-    describe("confidence threshold filter", () => {
-      it("skips signals with confidence below minConfidence (default 70)", () => {
-        const state = createEmptyState();
-        const result = decideActions(state, [createEvidence("defi")], createConfig({
-          rules: [
-            ...createConfig().rules,
-            { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+  describe("publish_to_gaps signal suppression", () => {
+    it("suppresses publish_to_gaps when all signals are filtered by low agentCount", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "publish_to_gaps",
+        })),
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            // agentCount=1 < minSignalAgents=2 — filtered out
+            { topic: "defi", consensus: true, direction: "bullish", agentCount: 1, totalAgents: 10, confidence: 72, text: "DeFi", trending: true },
           ],
-        }), createContext({
-          apiEnrichment: {
-            signals: [
-              { topic: "defi", consensus: true, direction: "bullish", agentCount: 6, totalAgents: 10, confidence: 50, text: "Low confidence signal", trending: true },
-            ],
-          },
-        }));
+        },
+      }));
 
-        const signalActions = result.actions.filter(
-          (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
-        );
-        expect(signalActions).toEqual([]);
-      });
-
-      it("includes signals with confidence at or above minConfidence", () => {
-        const state = createEmptyState();
-        const result = decideActions(state, [createEvidence("defi")], createConfig({
-          rules: [
-            ...createConfig().rules,
-            { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
-          ],
-        }), createContext({
-          apiEnrichment: {
-            signals: [
-              { topic: "defi", consensus: true, direction: "bullish", agentCount: 6, totalAgents: 10, confidence: 70, text: "High confidence signal", trending: true },
-            ],
-          },
-        }));
-
-        const signalActions = result.actions.filter(
-          (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
-        );
-        expect(signalActions.length).toBeGreaterThanOrEqual(1);
-      });
+      // All signals exist but none qualify — publish_to_gaps should be suppressed
+      const gapActions = result.actions.filter((a) => a.reason.includes("underserved"));
+      expect(gapActions).toEqual([]);
     });
 
-    describe("minSignalAgents default = 5", () => {
-      it("skips signals with fewer than 5 agents (default)", () => {
-        const state = createEmptyState();
-        const result = decideActions(state, [createEvidence("defi")], createConfig({
-          rules: [
-            ...createConfig().rules,
-            { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+    it("suppresses publish_to_gaps when all signals are non-trending", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
+
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "publish_to_gaps",
+        })),
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            // trending=false — filtered out
+            { topic: "defi", consensus: true, direction: "bullish", agentCount: 5, totalAgents: 10, confidence: 72, text: "DeFi", trending: false },
           ],
-        }), createContext({
-          apiEnrichment: {
-            signals: [
-              { topic: "defi", consensus: true, direction: "bullish", agentCount: 3, totalAgents: 10, confidence: 80, text: "Too few agents", trending: true },
-            ],
-          },
-        }));
+        },
+      }));
 
-        const signalActions = result.actions.filter(
-          (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
-        );
-        expect(signalActions).toEqual([]);
-      });
-
-      it("includes signals with 5+ agents", () => {
-        const state = createEmptyState();
-        const result = decideActions(state, [createEvidence("defi")], createConfig({
-          rules: [
-            ...createConfig().rules,
-            { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
-          ],
-        }), createContext({
-          apiEnrichment: {
-            signals: [
-              { topic: "defi", consensus: true, direction: "bullish", agentCount: 5, totalAgents: 10, confidence: 80, text: "Enough agents", trending: true },
-            ],
-          },
-        }));
-
-        const signalActions = result.actions.filter(
-          (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
-        );
-        expect(signalActions.length).toBeGreaterThanOrEqual(1);
-      });
+      const gapActions = result.actions.filter((a) => a.reason.includes("underserved"));
+      expect(gapActions).toEqual([]);
     });
 
-    describe("cross-domain bonus", () => {
-      it("boosts priority by +10 for cross-domain signal topics", () => {
-        const state = createEmptyState();
-        // Topic spans macro + crypto domains
-        const result = decideActions(state, [createEvidence("macro"), createEvidence("crypto")], createConfig({
-          rules: [
-            ...createConfig().rules,
-            { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
-          ],
-        }), createContext({
-          apiEnrichment: {
-            signals: [
-              { topic: "macro crypto liquidity analysis", consensus: true, direction: "bullish", agentCount: 6, totalAgents: 10, confidence: 80, text: "Cross-domain topic", trending: true },
-            ],
-          },
-        }));
+    it("allows publish_to_gaps when no signals are provided at all", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
 
-        const signalActions = result.actions.filter(
-          (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
-        );
-        expect(signalActions.length).toBeGreaterThanOrEqual(1);
-        expect(signalActions[0].priority).toBe(100); // 90 base + 10 cross-domain bonus
-      });
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "publish_to_gaps",
+        })),
+      }), createContext());
 
-      it("does not boost priority for single-domain signal topics", () => {
-        const state = createEmptyState();
-        const result = decideActions(state, [createEvidence("defi")], createConfig({
-          rules: [
-            ...createConfig().rules,
-            { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
-          ],
-        }), createContext({
-          apiEnrichment: {
-            signals: [
-              { topic: "defi protocol analysis", consensus: true, direction: "bullish", agentCount: 6, totalAgents: 10, confidence: 80, text: "Single domain", trending: true },
-            ],
-          },
-        }));
-
-        const signalActions = result.actions.filter(
-          (a) => a.reason.includes("signal") || a.reason.includes("Signal"),
-        );
-        expect(signalActions.length).toBeGreaterThanOrEqual(1);
-        expect(signalActions[0].priority).toBe(90); // No bonus
-      });
+      // No signals at all — gaps should still work
+      expect(result.actions.length).toBeGreaterThanOrEqual(1);
+      expect(result.actions[0].type).toBe("PUBLISH");
     });
 
-    describe("publish_to_gaps skips without signals", () => {
-      it("skips publish_to_gaps when no qualifying signals exist in apiEnrichment", () => {
-        const state = createEmptyState();
-        state.gaps.underservedTopics = [
-          { topic: "defi", lastPostAt: Date.now() - 3600_000 },
-        ];
+    it("allows publish_to_gaps when at least one signal qualifies", () => {
+      const state = createEmptyState();
+      state.gaps.underservedTopics = [
+        { topic: "defi", lastPostAt: "2026-03-31T09:00:00.000Z" },
+      ];
 
-        const result = decideActions(state, [createEvidence("defi")], createConfig(), createContext({
-          apiEnrichment: {
-            signals: [], // No signals at all
-          },
-        }));
+      const result = decideActions(state, [createEvidence("defi")], createConfig({
+        rules: createConfig().rules.map((r) => ({
+          ...r,
+          enabled: r.name === "publish_to_gaps",
+        })),
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            // This one qualifies: trending=true, agentCount=3 >= minSignalAgents=2
+            { topic: "defi", consensus: true, direction: "bullish", agentCount: 3, totalAgents: 10, confidence: 72, text: "DeFi", trending: true },
+          ],
+        },
+      }));
 
-        const gapActions = result.actions.filter(
-          (a) => a.reason.includes("gap") || a.reason.includes("underserved"),
-        );
-        expect(gapActions).toEqual([]);
-      });
+      expect(result.actions.length).toBeGreaterThanOrEqual(1);
+      expect(result.actions[0].type).toBe("PUBLISH");
+    });
+  });
 
-      it("allows publish_to_gaps when apiEnrichment is absent (no enrichment available)", () => {
-        const state = createEmptyState();
-        state.gaps.underservedTopics = [
-          { topic: "defi", lastPostAt: Date.now() - 3600_000 },
-        ];
+  // ── L1: Word-boundary domain matching in signal tokenization ──
 
-        const result = decideActions(state, [createEvidence("defi")], createConfig(), createContext());
+  describe("signal token word-boundary matching", () => {
+    it("does not match 'eth' as substring of 'method'", () => {
+      const state = createEmptyState();
 
-        // Without apiEnrichment, publish_to_gaps should still work (backward compat)
-        const gapActions = result.actions.filter(
-          (a) => a.reason.includes("gap") || a.reason.includes("underserved"),
-        );
-        expect(gapActions.length).toBeGreaterThanOrEqual(1);
-      });
+      const result = decideActions(state, [createEvidence("eth")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            // Topic has "method" — should NOT match evidence key "eth"
+            { topic: "A new method for analysis", consensus: true, direction: "bullish", agentCount: 4, totalAgents: 10, confidence: 72, text: "Analysis method", trending: true },
+          ],
+        },
+      }));
+
+      const signalActions = result.actions.filter((a) => a.reason.includes("signal"));
+      expect(signalActions).toEqual([]);
+    });
+
+    it("matches 'eth' as a standalone word in signal topic", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [createEvidence("eth")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            { topic: "ETH price movement analysis", consensus: true, direction: "bullish", agentCount: 4, totalAgents: 10, confidence: 72, text: "ETH analysis", trending: true },
+          ],
+        },
+      }));
+
+      const signalActions = result.actions.filter((a) => a.reason.includes("signal"));
+      expect(signalActions.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("does not match 'oil' in 'toil'", () => {
+      const state = createEmptyState();
+
+      const result = decideActions(state, [createEvidence("oil")], createConfig({
+        rules: [
+          ...createConfig().rules,
+          { name: "publish_signal_aligned", type: "PUBLISH", priority: 90, conditions: [], enabled: true },
+        ],
+      }), createContext({
+        apiEnrichment: {
+          signals: [
+            { topic: "The toil of economic restructuring", consensus: true, direction: "bearish", agentCount: 4, totalAgents: 10, confidence: 72, text: "Economic toil", trending: true },
+          ],
+        },
+      }));
+
+      const signalActions = result.actions.filter((a) => a.reason.includes("signal"));
+      expect(signalActions).toEqual([]);
     });
   });
 });

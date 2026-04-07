@@ -27,6 +27,7 @@ import {
   getRateLimitState,
   getVerifiedTopics,
   hasAttestationSignal,
+  hasQualifyingSignals,
   normalize,
   reject,
 } from "./engine-helpers.js";
@@ -156,14 +157,8 @@ export function decideActions(
   }
 
   // ── Core Rule: publish_to_gaps ──────────────────
-  // WS4: Skip random-topic fallback when API enrichment is available but has no qualifying signals.
-  // Score-100 posts never come from random topics — only from signal-aligned content.
   const publishRule = getRule(config, "publish_to_gaps");
-  // Only skip when signals were explicitly fetched and came back empty (empty array).
-  // undefined signals means signal data wasn't fetched — allow fallback in that case.
-  const enrichmentHasNoSignals = Array.isArray(context.apiEnrichment?.signals)
-    && context.apiEnrichment!.signals.length === 0;
-  if (publishRule && !enrichmentHasNoSignals) {
+  if (publishRule && hasQualifyingSignals(config, context.apiEnrichment?.signals)) {
     const calibrationOffset = context.calibration?.offset ?? 0;
     const adjustedRichnessThreshold = Math.max(50, MIN_PUBLISH_EVIDENCE_RICHNESS + calibrationOffset * 5);
     const briefingLower = context.briefingContext?.toLowerCase();

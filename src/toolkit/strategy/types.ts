@@ -222,6 +222,8 @@ export interface LoopLimitsConfig {
   leaderboardLimit: number;
   /** Subprocess timeout in ms (default: 180000) */
   subprocessTimeoutMs: number;
+  /** Max publish drafts per session — LLM drafting is ~60-90s each (default: 2) */
+  maxPublishPerSession: number;
   /** Per-phase time budgets in ms */
   phaseBudgets: {
     senseMs: number;

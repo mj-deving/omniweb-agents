@@ -14,6 +14,7 @@ const DEFAULT_LIMITS: LoopLimitsConfig = {
   sseMaxEvents: 100,
   leaderboardLimit: 20,
   subprocessTimeoutMs: 180_000,
+  maxPublishPerSession: 2,
   phaseBudgets: {
     senseMs: 120_000,
     actMs: 120_000,
@@ -92,6 +93,7 @@ const StrategyConfigSchema = z.object({
     sseMaxEvents: z.number().int().positive().optional(),
     leaderboardLimit: z.number().int().positive().optional(),
     subprocessTimeoutMs: z.number().int().positive().optional(),
+    maxPublishPerSession: z.number().int().positive().optional(),
     phaseBudgets: z.object({
       senseMs: z.number().int().positive().optional(),
       actMs: z.number().int().positive().optional(),
@@ -166,6 +168,7 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
       sseMaxEvents: config.limits.sseMaxEvents ?? DEFAULT_LIMITS.sseMaxEvents,
       leaderboardLimit: config.limits.leaderboardLimit ?? DEFAULT_LIMITS.leaderboardLimit,
       subprocessTimeoutMs: config.limits.subprocessTimeoutMs ?? DEFAULT_LIMITS.subprocessTimeoutMs,
+      maxPublishPerSession: config.limits.maxPublishPerSession ?? DEFAULT_LIMITS.maxPublishPerSession,
       phaseBudgets: {
         senseMs: config.limits.phaseBudgets.senseMs ?? DEFAULT_LIMITS.phaseBudgets.senseMs,
         actMs: config.limits.phaseBudgets.actMs ?? DEFAULT_LIMITS.phaseBudgets.actMs,

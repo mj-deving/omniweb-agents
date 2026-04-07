@@ -163,9 +163,14 @@ export function decideActions(
     const adjustedRichnessThreshold = Math.max(50, MIN_PUBLISH_EVIDENCE_RICHNESS + calibrationOffset * 5);
     const briefingLower = context.briefingContext?.toLowerCase();
     const briefingBoost = config.briefingBoost ?? 10;
+    let publishGapsChecked = 0;
+    let publishNoEvidence = 0;
+    let publishStaleEvidence = 0;
 
     for (const gap of colonyState.gaps.underservedTopics) {
-      const matchingEvidence = (evidenceIndex.get(normalize(gap.topic)) ?? [])
+      publishGapsChecked++;
+      const allEvidence = evidenceIndex.get(normalize(gap.topic)) ?? [];
+      const matchingEvidence = allEvidence
         .filter((item) =>
           !item.stale
           && item.freshness < MAX_PUBLISH_EVIDENCE_FRESHNESS_SECONDS
@@ -173,6 +178,11 @@ export function decideActions(
         );
 
       if (matchingEvidence.length === 0) {
+        if (allEvidence.length === 0) {
+          publishNoEvidence++;
+        } else {
+          publishStaleEvidence++;
+        }
         continue;
       }
 
@@ -195,6 +205,15 @@ export function decideActions(
 
       candidates.push({ action, rule: publishRule.name });
       considered.push({ action, rule: publishRule.name });
+    }
+
+    // Log publish decision summary for observability — only when gaps exist but none qualified
+    if (publishGapsChecked > 0 && candidates.filter(c => c.rule === publishRule.name).length === 0) {
+      rejected.push({
+        rule: publishRule.name,
+        action: createAction(publishRule, "publish_to_gaps summary", { target: "summary" }),
+        reason: `0/${publishGapsChecked} gap topic(s) had qualifying evidence (${publishNoEvidence} no evidence, ${publishStaleEvidence} stale/low richness, threshold=${adjustedRichnessThreshold})`,
+      });
     }
   }
 

@@ -218,6 +218,9 @@ Live API audit (2026-04-06) found 8 TypeScript type mismatches vs real API respo
 - [ ] Prefetch-cascade redesign: source resolution currently produces single candidate, needs ranked list for multi-candidate fallback. Deferred from Phase 12b.
 - [ ] Macro source coverage: FRED (requires API key signup), VIX/CBOE (auth required), ECB (non-JSON XML format needs adapter). Blocked on credentials/adapters.
 - [ ] Source registry as DB: catalog.json metadata into colony DB for first-class query (domain/tag search, runtime health stats, add/remove). Deferred from Phase 12c.
+- [ ] ElizaOS adapter: deprecate or remove. 0 production consumers, 7 files, only test imports. Codex audit confirmed experimental-only.
+- [ ] Remove deprecated signals.ts/signals-plugin.ts: fetchSignals() has broken API shape (expects 'topics', API returns 'consensusAnalysis'). v3-loop uses toolkit.intelligence.getSignals(). Currently @deprecated, can delete when session-runner retires.
+- [ ] publish_to_gaps evidence mapping: rule evaluates 48-52 gap topics per session but finds 0 evidence matches. Evidence index uses short keys (bitcoin, defi) but gap topics are long phrases. Needs vocabulary bridging or evidence index expansion.
 
 ---
 

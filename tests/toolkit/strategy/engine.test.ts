@@ -999,21 +999,31 @@ describe("strategy engine", () => {
   });
 
   describe("calibration-adjusted thresholds", () => {
-    it("positive calibration raises evidence richness threshold for publish_to_gaps", () => {
+    it("positive calibration raises threshold but cap at 95 prevents total blockage", () => {
       const state = createEmptyState();
       state.gaps.underservedTopics = [
         { topic: "security", lastPostAt: "2026-03-31T09:00:00.000Z" },
       ];
 
-      // Evidence with richness 150 — above default 100 but below adjusted 150 (offset=10 → threshold=150)
-      const resultHighCal = decideActions(state, [createEvidence("security", { richness: 140 })], createConfig({
+      // Evidence with richness 96 — above capped threshold of 95
+      const resultAboveCap = decideActions(state, [createEvidence("security", { richness: 96 })], createConfig({
         rules: createConfig().rules.map((r) => ({ ...r, enabled: r.name === "publish_to_gaps" })),
       }), createContext({
         calibration: { ourAvgScore: 50, colonyMedianScore: 40, offset: 10, postCount: 20, computedAt: new Date().toISOString() },
       }));
 
-      // High offset (10) → threshold = max(50, 100 + 10*5) = 150. Richness 140 < 150 → no publish
-      expect(resultHighCal.actions).toEqual([]);
+      // High offset (10) → min(95, max(50, 100 + 50)) = 95. Richness 96 > 95 → publishes
+      expect(resultAboveCap.actions).toHaveLength(1);
+      expect(resultAboveCap.actions[0].type).toBe("PUBLISH");
+
+      // Evidence with richness 90 — below capped threshold of 95 → blocked
+      const resultBelowCap = decideActions(state, [createEvidence("security", { richness: 90 })], createConfig({
+        rules: createConfig().rules.map((r) => ({ ...r, enabled: r.name === "publish_to_gaps" })),
+      }), createContext({
+        calibration: { ourAvgScore: 50, colonyMedianScore: 40, offset: 10, postCount: 20, computedAt: new Date().toISOString() },
+      }));
+
+      expect(resultBelowCap.actions).toEqual([]);
     });
 
     it("negative calibration lowers threshold (clamped at 50)", () => {

@@ -240,9 +240,21 @@ export async function runV3Loop(
 
           if (planResult.actions.length > 0 && !flags.shadow) {
             const light = planResult.actions.filter((a) => a.type === "ENGAGE" || a.type === "TIP");
-            const heavy = planResult.actions.filter((a) =>
+            const allHeavy = planResult.actions.filter((a) =>
               a.type === "PUBLISH" || a.type === "REPLY" || a.type === "VOTE" || a.type === "BET",
             );
+
+            // Limit publish drafts per session — LLM drafting is slow (~60-90s each)
+            const maxPublishPerSession = limits?.maxPublishPerSession ?? 2;
+            const publishActions = allHeavy.filter(a => a.type === "PUBLISH");
+            const nonPublishHeavy = allHeavy.filter(a => a.type !== "PUBLISH");
+            const cappedPublish = publishActions.slice(0, maxPublishPerSession);
+            if (publishActions.length > maxPublishPerSession) {
+              deps.observe("insight", `Publish cap: ${cappedPublish.length}/${publishActions.length} publish actions (limit ${maxPublishPerSession}/session)`, {
+                source: "v3-loop:publishCap", planned: publishActions.length, capped: cappedPublish.length,
+              });
+            }
+            const heavy = [...cappedPublish, ...nonPublishHeavy];
 
             const lightResult: LightExecutionResult = light.length > 0
               ? await executeStrategyActions(light, {

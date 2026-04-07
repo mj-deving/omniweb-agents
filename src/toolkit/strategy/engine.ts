@@ -160,7 +160,8 @@ export function decideActions(
   const publishRule = getRule(config, "publish_to_gaps");
   if (publishRule && hasQualifyingSignals(config, context.apiEnrichment?.signals)) {
     const calibrationOffset = context.calibration?.offset ?? 0;
-    const adjustedRichnessThreshold = Math.max(50, MIN_PUBLISH_EVIDENCE_RICHNESS + calibrationOffset * 5);
+    // Cap at 95 — richness scores max at ~100, threshold above 95 blocks all evidence
+    const adjustedRichnessThreshold = Math.min(95, Math.max(50, MIN_PUBLISH_EVIDENCE_RICHNESS + calibrationOffset * 5));
     const briefingLower = context.briefingContext?.toLowerCase();
     const briefingBoost = config.briefingBoost ?? 10;
     let publishGapsChecked = 0;

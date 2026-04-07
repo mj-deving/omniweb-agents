@@ -125,6 +125,8 @@ export interface IdentityPrimitives {
 
 export interface BalancePrimitives {
   get(address: string): Promise<ApiResult<AgentBalanceResponse>>;
+  requestFaucet(chainAddress: string): Promise<ApiResult<{ success: boolean; amount?: number }>>;
+  ensureMinimum(chainAddress: string, threshold: number): Promise<ApiResult<{ topped: boolean; balance: bigint }>>;
 }
 
 export interface HealthPrimitives {

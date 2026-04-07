@@ -46,9 +46,10 @@ demos-agents/
 │       ├── llm/                      # Provider-agnostic LLM adapter
 │       ├── attestation/              # Claim extraction, attestation planner/policy
 │       ├── scoring/                  # Expected score, quality signals
-│       ├── sources/                  # Catalog, policy, matcher, health, lifecycle
+│       ├── sources/                  # Shims → toolkit/sources/ (catalog, policy, matcher, health, lifecycle)
 │       ├── network/                  # SDK wrapper
-│       ├── pipeline/                 # Publish pipeline
+│       ├── pipeline/                 # Source scanning (split: intents, selection, merge) + observe
+│       ├── state-v2.ts               # DEPRECATED V2 state types (isolated from state.ts)
 │       └── util/                     # Shared utilities
 │
 ├── cli/                              # 34 CLI entry points (all 100% chain-only)
@@ -63,7 +64,8 @@ demos-agents/
 │   ├── backfill-embeddings.ts        # Vector embedding backfill for semantic search
 │   ├── publish-helpers.ts            # Source resolution + attestation helpers (extracted)
 │   ├── publish-types.ts              # Shared types for publish executor
-│   ├── v3-loop-helpers.ts            # V3 loop helper functions (extracted)
+│   ├── v3-loop-sense.ts              # SENSE phase: colony sync, source fetch, enrichment
+│   ├── v3-loop-helpers.ts            # V3 loop helper functions (fetchSourcesParallel, etc.)
 │   └── ...                           # audit, scan-feed, engage, gate, verify, identity, etc.
 │
 ├── agents/                           # Agent definitions (YAML persona + strategy)

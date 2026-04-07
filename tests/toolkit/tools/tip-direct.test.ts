@@ -14,6 +14,11 @@ import { FileStateStore } from "../../../src/toolkit/state-store.js";
 import { tip } from "../../../src/toolkit/tools/tip.js";
 import type { SdkBridge, ApiCallResult, D402SettlementResult } from "../../../src/toolkit/sdk-bridge.js";
 
+// Mock tx-simulator — these tests focus on tip logic, not simulation
+vi.mock("../../../src/toolkit/chain/tx-simulator.js", () => ({
+  simulateTransaction: vi.fn(async () => ({ success: true })),
+}));
+
 // ── Helpers ──────────────────────────────────────────
 
 const TARGET_TX = "AABBCCDD11223344DEADBEEF";

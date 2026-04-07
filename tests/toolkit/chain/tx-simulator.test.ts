@@ -108,18 +108,18 @@ describe("simulateTransaction", () => {
     expect(result.error).toContain("execution reverted");
   });
 
-  // ── Graceful degradation: network errors ─────────────
+  // ── Fail-closed (default): network/HTTP/parse errors → success: false ──
 
-  it("returns success with warning on network error (fetch throws)", async () => {
+  it("returns failure on network error when failOpen is false (default)", async () => {
     mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
 
     const result = await simulateTransaction(baseOpts, mockFetch);
 
-    expect(result.success).toBe(true);
-    expect(result.warning).toContain("ECONNREFUSED");
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
   });
 
-  it("returns success with warning on HTTP error response", async () => {
+  it("returns failure on HTTP error when failOpen is false (default)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 502,
@@ -129,13 +129,11 @@ describe("simulateTransaction", () => {
 
     const result = await simulateTransaction(baseOpts, mockFetch);
 
-    expect(result.success).toBe(true);
-    expect(result.warning).toContain("502");
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
   });
 
-  // ── Graceful degradation: malformed responses ────────
-
-  it("returns success with warning on malformed JSON response", async () => {
+  it("returns failure on malformed JSON when failOpen is false (default)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => { throw new SyntaxError("Unexpected token"); },
@@ -143,11 +141,11 @@ describe("simulateTransaction", () => {
 
     const result = await simulateTransaction(baseOpts, mockFetch);
 
-    expect(result.success).toBe(true);
-    expect(result.warning).toContain("malformed");
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
   });
 
-  it("returns success with warning when result field is missing", async () => {
+  it("returns failure when result field is missing and failOpen is false", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ jsonrpc: "2.0", id: 1 }),
@@ -155,7 +153,144 @@ describe("simulateTransaction", () => {
 
     const result = await simulateTransaction(baseOpts, mockFetch);
 
-    // No result AND no error — ambiguous, treat as degraded success
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
+  });
+
+  it("returns failure on timeout when failOpen is false (default)", async () => {
+    const abortError = new DOMException("The operation was aborted", "AbortError");
+    mockFetch.mockRejectedValueOnce(abortError);
+
+    const result = await simulateTransaction(baseOpts, mockFetch);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
+  });
+
+  // ── Fail-open (explicit opt-in): keeps old behavior ────────────
+
+  it("returns success with warning on network error when failOpen is true", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+
+    const result = await simulateTransaction({ ...baseOpts, failOpen: true }, mockFetch);
+
+    expect(result.success).toBe(true);
+    expect(result.warning).toContain("ECONNREFUSED");
+  });
+
+  it("returns success with warning on HTTP error when failOpen is true", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      statusText: "Bad Gateway",
+      json: async () => { throw new Error("not json"); },
+    });
+
+    const result = await simulateTransaction({ ...baseOpts, failOpen: true }, mockFetch);
+
+    expect(result.success).toBe(true);
+    expect(result.warning).toContain("502");
+  });
+
+  it("returns success with warning on malformed JSON when failOpen is true", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => { throw new SyntaxError("Unexpected token"); },
+    });
+
+    const result = await simulateTransaction({ ...baseOpts, failOpen: true }, mockFetch);
+
+    expect(result.success).toBe(true);
+    expect(result.warning).toContain("malformed");
+  });
+
+  it("returns success with warning on missing result when failOpen is true", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jsonrpc: "2.0", id: 1 }),
+    });
+
+    const result = await simulateTransaction({ ...baseOpts, failOpen: true }, mockFetch);
+
+    expect(result.success).toBe(true);
+    expect(result.warning).toBeDefined();
+  });
+
+  // ── RPC response shape validation ──────────────────────
+
+  it("rejects response missing jsonrpc field", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 1, result: "0x" }),
+    });
+
+    const result = await simulateTransaction(baseOpts, mockFetch);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
+  });
+
+  it("rejects response with wrong jsonrpc version", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jsonrpc: "1.0", id: 1, result: "0x" }),
+    });
+
+    const result = await simulateTransaction(baseOpts, mockFetch);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
+  });
+
+  it("rejects response with non-numeric id", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jsonrpc: "2.0", id: "abc", result: "0x" }),
+    });
+
+    const result = await simulateTransaction(baseOpts, mockFetch);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
+  });
+
+  it("rejects response with result that is not a hex string", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jsonrpc: "2.0", id: 1, result: "not-hex" }),
+    });
+
+    const result = await simulateTransaction(baseOpts, mockFetch);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("simulation unavailable");
+  });
+
+  it("accepts valid hex result with data", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        jsonrpc: "2.0",
+        id: 1,
+        result: "0x0000000000000000000000000000000000000001",
+      }),
+    });
+
+    const result = await simulateTransaction(baseOpts, mockFetch);
+
+    expect(result.success).toBe(true);
+  });
+
+  // ── RPC shape validation + failOpen interaction ──────────
+
+  it("allows invalid shape through when failOpen is true", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 1, result: "0x" }), // missing jsonrpc
+    });
+
+    const result = await simulateTransaction({ ...baseOpts, failOpen: true }, mockFetch);
+
     expect(result.success).toBe(true);
     expect(result.warning).toBeDefined();
   });
@@ -190,15 +325,5 @@ describe("simulateTransaction", () => {
 
     const [, init] = mockFetch.mock.calls[0];
     expect(init.signal).toBeDefined();
-  });
-
-  it("degrades gracefully on timeout (AbortError)", async () => {
-    const abortError = new DOMException("The operation was aborted", "AbortError");
-    mockFetch.mockRejectedValueOnce(abortError);
-
-    const result = await simulateTransaction(baseOpts, mockFetch);
-
-    expect(result.success).toBe(true);
-    expect(result.warning).toContain("aborted");
   });
 });

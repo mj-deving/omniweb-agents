@@ -14,6 +14,11 @@ import { FileStateStore } from "../../../src/toolkit/state-store.js";
 import type { SdkBridge, ApiAccessState, D402SettlementResult, ApiCallResult } from "../../../src/toolkit/sdk-bridge.js";
 import type { ScanPost } from "../../../src/toolkit/types.js";
 
+// Mock tx-simulator — these tests focus on tool integration, not simulation
+vi.mock("../../../src/toolkit/chain/tx-simulator.js", () => ({
+  simulateTransaction: vi.fn(async () => ({ success: true })),
+}));
+
 // Mock bridge factory — chain-first with all methods
 function mockBridge(overrides?: Partial<SdkBridge>): SdkBridge {
   return {

@@ -17,14 +17,19 @@ export interface DedupOptions {
 const DEFAULT_WINDOW_HOURS = 24;
 const SELF_DEDUP_WINDOW_HOURS = 12;
 
-/** Extract meaningful search terms from a claim string for FTS5 matching. */
+/** Extract meaningful search terms from a claim string for FTS5 matching.
+ * Uses OR semantics — posts matching ANY terms are candidates.
+ * Filters common stop words and takes top 5 longest terms for relevance. */
+const STOP_WORDS = new Set(["the", "and", "for", "with", "from", "that", "this", "are", "was", "has", "have", "been", "will", "can", "not"]);
 function extractSearchTerms(claim: string): string {
-  return claim
+  const words = claim
     .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
-    .filter((word) => word.length > 2)
-    .slice(0, 8)
-    .join(" ");
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()))
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 5);
+  if (words.length === 0) return "";
+  return words.join(" OR ");
 }
 
 function sinceTimestamp(windowHours: number): string {

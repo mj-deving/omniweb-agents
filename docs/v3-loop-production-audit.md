@@ -261,6 +261,23 @@ Session report showed "5 skipped" with no visibility into why.
 because the 2nd/3rd actions target different topics. The cap (`MAX_PUBLISH_PER_SESSION=3`)
 is checked at loop top. Generating extras is intentional — each might fail attestation.
 
+### NEW-6 (CRITICAL — FIXED): FTS5 dedup uses AND semantics, never matches long topics
+Self-dedup `extractSearchTerms` joined 8 terms with implicit AND. Signal topics like
+"China PBOC Yuan Defense and Crypto Capital Inflow Trigger" produced 8-term AND queries
+that no single post matched. Published the same PBOC topic 3 times across 3 sessions.
+**Fix:** Switch to OR semantics with stop word filtering and top-5 longest terms. Dedup
+now correctly finds 1 match for duplicate PBOC content.
+
+### NEW-7 (HIGH): Wallet runs out of DEM mid-session
+Session 72 exhausted DEM balance after 1st publish + DAHR attestations. 2nd publish's
+DAHR calls returned "Insufficient balance: required 1, available 0". Post was published
+without attestation (H7 graceful degradation working) but scored lower.
+**Status:** Need balance check before starting ACT phase. Or pre-calculate DEM cost.
+
+### NEW-8 (MEDIUM): Verify subprocess fails on insufficient balance
+Verify.ts attempts chain reads which may cost DEM. Failed with exit 1 when balance was 0.
+Should degrade gracefully — verification is a read operation, shouldn't require balance.
+
 ### NEW-5 (BY DESIGN): Session number not incrementing after failure
 Failed sessions keep their number for `--resume` support. This is the intended design —
 the retry used the same session 71, which then succeeded and incremented to 72.

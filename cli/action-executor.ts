@@ -159,12 +159,13 @@ export async function executeStrategyActions(
             }
             engageTxHash = resolved;
           }
-          // Phase 8c: Verification gate — skip ENGAGE only if attestation explicitly failed.
-          // "no_attestation" is allowed (treated like "unresolved") — many valid posts
-          // simply haven't been attested yet. Only "failed" is a hard block.
+          // Phase 8c: Verification gate — skip ENGAGE if attestation explicitly failed.
+          // "no_attestation" is allowed for topic-matched posts. For fallback (non-topic)
+          // posts, require at least "unresolved" to avoid engaging unrelated content.
           if (deps.colonyDb) {
             const gate = getPostVerificationGate(deps.colonyDb, engageTxHash);
-            if (gate === "failed") {
+            const isFallbackPost = action.targetType === "agent" && !(action.metadata?.topics as string[] | undefined)?.[0];
+            if (gate === "failed" || (gate === "no_attestation" && isFallbackPost)) {
               result.skipped.push({ action, reason: `Attestation ${gate} for ${engageTxHash}` });
               deps.observe("insight", `ENGAGE skipped: attestation ${gate}`, {
                 actionType: action.type, target: engageTxHash, gate,

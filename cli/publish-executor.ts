@@ -159,15 +159,6 @@ export async function executePublishActions(
       continue;
     }
 
-    // H10: Record write slot immediately after check passes (before LLM call).
-    // If publish fails later the slot is "wasted" — safer than ledger desync.
-    const earlyRecordError = await checkAndRecordWrite(deps.stateStore, deps.walletAddress, true);
-    if (earlyRecordError) {
-      deps.observe("warning", `Failed to eagerly record write slot: ${earlyRecordError.message}`, {
-        actionType: action.type,
-      });
-    }
-
     if (!deps.provider) {
       deps.observe("insight", `Publish action skipped: ${action.type} has no LLM provider`, {
         actionType: action.type,
@@ -404,7 +395,7 @@ export async function executePublishActions(
       const publishResult = await publishPost(
         deps.demos,
         buildPublishInput(draft, attestationResults),
-        { skipIndexerCheck: true },
+        { skipIndexerCheck: true, allowUnattested: attestationResults.length === 0 },
       );
 
       const attestationType = toPublishAttestationType(primaryAttestation);

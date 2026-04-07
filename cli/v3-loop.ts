@@ -226,6 +226,18 @@ export async function runV3Loop(
             }
           }
 
+          // Log strategy rejections — critical for diagnosing why 0 posts were published
+          if (planResult.log?.rejected?.length > 0) {
+            const publishRejects = planResult.log.rejected.filter(r => r.rule === "publish_to_gaps");
+            if (publishRejects.length > 0) {
+              for (const r of publishRejects) {
+                deps.observe("strategy-rejected", `${r.rule}: ${r.reason.slice(0, 150)}`, {
+                  source: "v3-loop:plan", rule: r.rule, actionType: r.action?.type,
+                });
+              }
+            }
+          }
+
           if (planResult.actions.length > 0 && !flags.shadow) {
             const light = planResult.actions.filter((a) => a.type === "ENGAGE" || a.type === "TIP");
             const heavy = planResult.actions.filter((a) =>

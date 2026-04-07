@@ -212,6 +212,7 @@ Live API audit (2026-04-06) found 8 TypeScript type mismatches vs real API respo
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet
 - [ ] 6-disc-i -- ZK identity proofs for privacy-preserving attestation
 - [ ] StorageProgram exploration: SDK structured on-chain storage for HIVE data
+- [ ] Lifecycle transition persistence: updateRating() and evaluateTransition() return new objects but results are NOT written back to catalog.json. Transitions are fire-and-forget (logged via observe, not persisted). Needs source registry DB for rating persistence across sessions.
 - [ ] Prefetch-cascade redesign: source resolution currently produces single candidate, needs ranked list for multi-candidate fallback. Deferred from Phase 12b.
 - [ ] Macro source coverage: FRED (requires API key signup), VIX/CBOE (auth required), ECB (non-JSON XML format needs adapter). Blocked on credentials/adapters.
 - [ ] Source registry as DB: catalog.json metadata into colony DB for first-class query (domain/tag search, runtime health stats, add/remove). Deferred from Phase 12c.

@@ -26,7 +26,8 @@ export type { ColonyState, StateExtractionOptions } from "./state-extraction.js"
 
 export { searchPosts, hybridSearch, findSimilarPosts, insertEmbedding, backfillEmbeddings } from "./search.js";
 export type { SearchOptions, HybridSearchOptions, ScoredPost } from "./search.js";
-export { checkSemanticDedup } from "./dedup.js";
+export { checkClaimDedup, checkSelfDedup, checkSemanticDedup, computeTopicSimilarity } from "./dedup.js";
+export type { DedupResult, DedupOptions } from "./dedup.js";
 export { embed, embedBatch, isAvailable as isEmbeddingAvailable } from "./embeddings.js";
 
 export { computePerformanceScores } from "./performance.js";

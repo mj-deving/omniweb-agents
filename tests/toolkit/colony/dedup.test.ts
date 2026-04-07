@@ -1,7 +1,10 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { DatabaseSync } from "node:sqlite";
 
-import { checkClaimDedup, checkSelfDedup } from "../../../src/toolkit/colony/dedup.js";
+import {
+  checkClaimDedup,
+  checkSelfDedup,
+  computeTopicSimilarity,
+} from "../../../src/toolkit/colony/dedup.js";
 import { initColonyCache, type ColonyDatabase } from "../../../src/toolkit/colony/schema.js";
 import { insertPost, type CachedPost } from "../../../src/toolkit/colony/posts.js";
 
@@ -18,6 +21,78 @@ function createTestPost(overrides: Partial<CachedPost> = {}): CachedPost {
     ...overrides,
   };
 }
+
+describe("computeTopicSimilarity", () => {
+  it("returns 0 for completely different topics", () => {
+    const score = computeTopicSimilarity(
+      "Quantum computing breakthroughs in Europe",
+      "Tropical fish breeding techniques underwater",
+    );
+    expect(score).toBeLessThan(0.1);
+  });
+
+  it("returns 1 for identical topics", () => {
+    const score = computeTopicSimilarity(
+      "Bitcoin mining economics",
+      "Bitcoin mining economics",
+    );
+    expect(score).toBe(1.0);
+  });
+
+  it("BTC Macro vs PBOC Yuan are NOT duplicates (< 0.4)", () => {
+    const score = computeTopicSimilarity(
+      "BTC Macro Pressure from Geopolitics PBOC",
+      "China PBOC Yuan Defense and Crypto Capital Inflow",
+    );
+    expect(score).toBeLessThan(0.4);
+  });
+
+  it("DXY USD vs BTC Macro are NOT duplicates (< 0.4)", () => {
+    const score = computeTopicSimilarity(
+      "DXY USD Liquidity Tightening",
+      "BTC Macro Pressure",
+    );
+    expect(score).toBeLessThan(0.4);
+  });
+
+  it("PBOC Yuan Defense vs PBOC Yuan Defense Mechanisms ARE duplicates (>= 0.4)", () => {
+    const score = computeTopicSimilarity(
+      "China PBOC Yuan Defense",
+      "PBOC Yuan Defense Mechanisms and Capital Controls",
+    );
+    expect(score).toBeGreaterThanOrEqual(0.4);
+  });
+
+  it("Aave DeFi vs Aave Vulnerability ARE duplicates (>= 0.4)", () => {
+    const score = computeTopicSimilarity(
+      "Aave DeFi Smart Contract Risk",
+      "Aave Smart Contract Vulnerability Assessment",
+    );
+    expect(score).toBeGreaterThanOrEqual(0.4);
+  });
+
+  it("Bitcoin mining economics vs analysis ARE duplicates (>= 0.4)", () => {
+    const score = computeTopicSimilarity(
+      "Bitcoin mining economics",
+      "Bitcoin mining economics analysis",
+    );
+    expect(score).toBeGreaterThanOrEqual(0.4);
+  });
+
+  it("handles empty strings", () => {
+    expect(computeTopicSimilarity("", "")).toBe(0);
+    expect(computeTopicSimilarity("hello world", "")).toBe(0);
+    expect(computeTopicSimilarity("", "hello world")).toBe(0);
+  });
+
+  it("is case-insensitive", () => {
+    const score = computeTopicSimilarity(
+      "Bitcoin Mining Economics",
+      "bitcoin mining economics",
+    );
+    expect(score).toBe(1.0);
+  });
+});
 
 describe("dedup", () => {
   let db: ColonyDatabase;
@@ -38,7 +113,7 @@ describe("dedup", () => {
       expect(result.matches).toEqual([]);
     });
 
-    it("returns duplicate when similar post exists within window", () => {
+    it("returns duplicate when very similar post exists within window", () => {
       insertPost(db, createTestPost({
         text: "DeFi protocol shows strong growth in total value locked",
         timestamp: new Date().toISOString(),
@@ -77,6 +152,33 @@ describe("dedup", () => {
 
       expect(result.isDuplicate).toBe(false);
     });
+
+    it("does NOT false-positive on single shared keyword (PBOC fix)", () => {
+      // This was the core bug: sharing just "Macro" caused false positive
+      insertPost(db, createTestPost({
+        text: "China PBOC Yuan Defense and Crypto Capital Inflow analysis with detailed macro perspective",
+        timestamp: new Date().toISOString(),
+      }));
+
+      const result = checkClaimDedup(
+        db,
+        "BTC Macro Pressure from Geopolitics PBOC",
+      );
+
+      // These are different topics — should NOT be flagged as duplicate
+      expect(result.isDuplicate).toBe(false);
+    });
+
+    it("catches true duplicates with phrase overlap", () => {
+      insertPost(db, createTestPost({
+        text: "PBOC Yuan Defense Mechanisms and Capital Controls detailed analysis",
+        timestamp: new Date().toISOString(),
+      }));
+
+      const result = checkClaimDedup(db, "China PBOC Yuan Defense");
+
+      expect(result.isDuplicate).toBe(true);
+    });
   });
 
   describe("checkSelfDedup", () => {
@@ -108,6 +210,23 @@ describe("dedup", () => {
     it("handles empty address gracefully", () => {
       const result = checkSelfDedup(db, "some topic", "");
 
+      expect(result.isDuplicate).toBe(false);
+    });
+
+    it("does NOT false-positive on single shared keyword (self dedup)", () => {
+      insertPost(db, createTestPost({
+        author: "0xour-wallet",
+        text: "DXY USD Liquidity Tightening impact on global markets",
+        timestamp: new Date().toISOString(),
+      }));
+
+      const result = checkSelfDedup(
+        db,
+        "BTC Macro Pressure from Geopolitics",
+        "0xour-wallet",
+      );
+
+      // Completely different topics — should NOT match
       expect(result.isDuplicate).toBe(false);
     });
   });

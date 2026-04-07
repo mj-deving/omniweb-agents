@@ -41,16 +41,16 @@ Every Demos agent, regardless of strategy, performs combinations of these 10 irr
 
 | Module | Atomic Op | Notes |
 |--------|-----------|-------|
-| `tools/connect.ts` | 1 | Session lifecycle (minor leak: `skillDojoFallback` — Phase 4 cleanup) |
-| `tools/publish.ts` (publish + reply) | 2 | HIVE post + guards |
-| `tools/react.ts` | 2 | Chain-first with API fallback |
-| `tools/tip.ts` | 2 | DEM transfer with policy guards |
-| `tools/scan.ts` | 1 | Chain feed + optional API enrichment |
-| `tools/verify.ts` | 3 | Confirmation polling |
-| `tools/attest.ts` | 5 | DAHR attestation (TLSN via bridge) |
-| `tools/discover-sources.ts` | 4 | Catalog browsing |
-| `tools/pay.ts` | 4+7 | D402 micropayments with atomic spend cap |
-| `tools/feed-parser.ts` | 1 | Feed API normalization |
+| `src/toolkit/tools/connect.ts` | 1 | Session lifecycle (minor leak: `skillDojoFallback` — Phase 4 cleanup) |
+| `src/toolkit/tools/publish.ts` (publish + reply) | 2 | HIVE post + guards |
+| `src/toolkit/tools/react.ts` | 2 | Chain-first with API fallback |
+| `src/toolkit/tools/tip.ts` | 2 | DEM transfer with policy guards |
+| `src/toolkit/tools/scan.ts` | 1 | Chain feed + optional API enrichment |
+| `src/toolkit/tools/verify.ts` | 3 | Confirmation polling |
+| `src/toolkit/tools/attest.ts` | 5 | DAHR attestation (TLSN via bridge) |
+| `src/toolkit/tools/discover-sources.ts` | 4 | Catalog browsing |
+| `src/toolkit/tools/pay.ts` | 4+7 | D402 micropayments with atomic spend cap |
+| `src/toolkit/tools/feed-parser.ts` | 1 | Feed API normalization |
 | `guards/*` (6 guards + state-helpers) | 7 | Rate limit, spend cap, dedup, backoff, receipts |
 | `session.ts` | 8 | Opaque session handle |
 | `state-store.ts` | 8 | File-backed persistence with locking |
@@ -88,7 +88,7 @@ Every Demos agent, regardless of strategy, performs combinations of these 10 irr
 | `src/reactive/event-loop.ts` | `EventAction.type` is hardcoded to `OmniwebActionType` (sentinel-specific). Must make `EventLoop<TAction>` generic over action type. Per [design-toolkit-architecture.md decision 2026-03-30](design-toolkit-architecture.md): reactive infra primitives are allowed under Q5 "zero loops" if generic, sub-path exported, and opinion-free. | **REDESIGN then SHIP** (est. 4 hrs) |
 | `src/lib/auth/auth.ts` | Hardcodes `~/.supercolony-auth.json` cache path. Imports `apiCall` from `sdk.ts` which has SC-specific `getApiUrl()`. | **REDESIGN** (inject `apiFetch` callback, parameterize cache path) |
 | `src/lib/network/sdk.ts` | Contains SC-specific `apiCall()` and `getApiUrl()`. Mixed: `connectWallet` is generic, `apiCall` is strategy. | **SPLIT**: `connectWallet` → toolkit, `apiCall` → stays in strategy |
-| `src/lib/sources/providers/declarative-engine.ts` | Runtime imports `inferAssetAlias`/`inferMacroEntity` from `attestation-policy.ts` (strategy). Creates toolkit→strategy circular dep. | **Extract** ~50 LOC pure functions to `toolkit/chain/asset-helpers.ts` OR inject as callbacks. Must resolve BEFORE move. |
+| `src/lib/sources/providers/declarative-engine.ts` | Runtime imports `inferAssetAlias`/`inferMacroEntity` from `attestation-policy.ts` (strategy). Creates toolkit→strategy circular dep. | **Extract** ~50 LOC pure functions to `src/toolkit/chain/asset-helpers.ts` OR inject as callbacks. Must resolve BEFORE move. (**DONE** — extracted 2026-04-04) |
 
 ### NOT Plumbing (incorrectly proposed in v1, corrected)
 
@@ -157,7 +157,7 @@ Every Demos agent, regardless of strategy, performs combinations of these 10 irr
 |-----------|--------|-------------|-----|--------|
 | **LLMProvider interface** | `src/lib/llm/llm-provider.ts` | `complete(prompt, opts?) → string` (interface only, ~10 lines) | Zero deps. Resolution logic stays in lib/. Unblocks adapter workstream. | Ready |
 | **ChainTxPipeline** | Pattern across 5 files | sign → confirm → broadcast enforced sequence | Prevents the bug class that already shipped (DEM tips silently not broadcasting). Security primitive. | Complete - wired across all 5 call sites |
-| **AtomicStateTransaction** | `guards/state-helpers.ts` | Lock → read → validate → conditionally write → unlock | Already exported from barrel (`checkAndAppend`). Needs documentation promotion only. | **ALREADY DONE** |
+| **AtomicStateTransaction** | `src/toolkit/guards/state-helpers.ts` | Lock → read → validate → conditionally write → unlock | Already exported from barrel (`checkAndAppend`). Needs documentation promotion only. | **ALREADY DONE** |
 
 ### REDESIGN then SHIP
 

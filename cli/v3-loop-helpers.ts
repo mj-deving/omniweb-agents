@@ -174,13 +174,14 @@ export async function fetchSourcesParallel(
   db: ColonyDatabase,
   observe: (type: string, msg: string, meta?: Record<string, unknown>) => void,
   budgetMs = 15_000,
+  concurrency = 3,
 ): Promise<{ fetched: number; cached: number }> {
   let fetched = 0;
   let cached = 0;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), budgetMs);
   try {
-    const limit = createLimiter(3);
+    const limit = createLimiter(concurrency);
     const results = await Promise.allSettled(
       sources.map((source) =>
         limit(async () => {

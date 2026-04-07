@@ -43,7 +43,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 - [x] 5.6d -- backfillEmbeddings() for processing existing 188K posts
 - [x] 5.6e -- vendor shim: loadExtension() + enableLoadExtension() + allowExtension option
 
-**Spec:** `docs/colony-tooling-plan.md` P5 + `.ai/guides/colony-db-research.md`
+**Spec:** `docs/archive/colony-tooling-plan.md` P5 + `.ai/guides/colony-db-research.md`
 **Completed:** 2026-04-04. Model: Xenova/bge-small-en-v1.5 (384-dim, q8 quantized). 9 new tests.
 
 ---
@@ -326,7 +326,7 @@ Phase 1-4 (DONE) --> Phase 5 (DONE) --> Phase 6 (DONE) --> Phase 7 (DONE) --> Ph
 | `docs/archive/design-loop-v3.md` | Architectural vision: first principles, phase contracts, signal-first, claim schema | Archive (reference) |
 | `docs/archive/phase5-v3-loop-swap-plan.md` | Phase 5 implementation plan + Codex review findings | Archive (complete) |
 | `docs/archive/phase6-strategy-refactor-plan.md` | Phase 6 plan: 5 sub-phases, 72 criteria, design philosophy | Archive (complete) |
-| `docs/colony-db-ingestion-plan.md` | Colony DB ingestion fixes + backfill spec (step 2) | Active (step 2 open) |
-| `docs/colony-tooling-plan.md` | P0-P5 detail specs: query CLI, reactions, backfill, FTS5, intelligence, semantic | Active (roadmap) |
+| `docs/archive/colony-db-ingestion-plan.md` | Colony DB ingestion fixes + backfill spec (step 2) | Archive (complete) |
+| `docs/archive/colony-tooling-plan.md` | P0-P5 detail specs: query CLI, reactions, backfill, FTS5, intelligence, semantic | Archive (complete) |
 | `docs/research/supercolony-api-reference.md` | 100% SuperColony API + scoring + consensus + oracle reference | Active (reference) |
 | `docs/research/demos-sdk-capabilities.md` | Full SDK module inventory from MCP queries | Active (reference) |

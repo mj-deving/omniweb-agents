@@ -1,7 +1,25 @@
 import { z } from "zod";
 import { parse as parseYaml } from "yaml";
 
-import type { StrategyConfig } from "./types.js";
+import type { StrategyConfig, LoopLimitsConfig } from "./types.js";
+
+const DEFAULT_LIMITS: LoopLimitsConfig = {
+  recentPostsFetchLimit: 500,
+  proofIngestionConcurrency: 5,
+  proofIngestionLimit: 20,
+  sourcesPerIntent: 5,
+  sourceFetchConcurrency: 3,
+  sourceFetchBudgetMs: 15_000,
+  sseTimeoutMs: 5_000,
+  sseMaxEvents: 100,
+  leaderboardLimit: 20,
+  subprocessTimeoutMs: 180_000,
+  phaseBudgets: {
+    senseMs: 120_000,
+    actMs: 120_000,
+    confirmMs: 60_000,
+  },
+};
 
 const DEFAULT_RATE_LIMITS: StrategyConfig["rateLimits"] = {
   postsPerDay: 14,
@@ -63,6 +81,23 @@ const StrategyConfigSchema = z.object({
     minSignalAgents: z.number().int().nonnegative().optional(),
     minConfidence: z.number().int().min(0).max(100).optional(),
   }).default({}),
+  limits: z.object({
+    recentPostsFetchLimit: z.number().int().positive().optional(),
+    proofIngestionConcurrency: z.number().int().positive().optional(),
+    proofIngestionLimit: z.number().int().positive().optional(),
+    sourcesPerIntent: z.number().int().positive().optional(),
+    sourceFetchConcurrency: z.number().int().positive().optional(),
+    sourceFetchBudgetMs: z.number().int().positive().optional(),
+    sseTimeoutMs: z.number().int().positive().optional(),
+    sseMaxEvents: z.number().int().positive().optional(),
+    leaderboardLimit: z.number().int().positive().optional(),
+    subprocessTimeoutMs: z.number().int().positive().optional(),
+    phaseBudgets: z.object({
+      senseMs: z.number().int().positive().optional(),
+      actMs: z.number().int().positive().optional(),
+      confirmMs: z.number().int().positive().optional(),
+    }).default({}),
+  }).default({}),
   briefingBoost: z.number().int().nonnegative().default(10).optional(),
   leaderboardAdjustment: z.object({
     enabled: z.boolean().default(false),
@@ -119,6 +154,23 @@ export function loadStrategyConfig(yamlContent: string): StrategyConfig {
       minBallotAccuracy: config.enrichment.minBallotAccuracy ?? 0.5,
       minSignalAgents: config.enrichment.minSignalAgents ?? 2,
       minConfidence: config.enrichment.minConfidence ?? 40,
+    },
+    limits: {
+      recentPostsFetchLimit: config.limits.recentPostsFetchLimit ?? DEFAULT_LIMITS.recentPostsFetchLimit,
+      proofIngestionConcurrency: config.limits.proofIngestionConcurrency ?? DEFAULT_LIMITS.proofIngestionConcurrency,
+      proofIngestionLimit: config.limits.proofIngestionLimit ?? DEFAULT_LIMITS.proofIngestionLimit,
+      sourcesPerIntent: config.limits.sourcesPerIntent ?? DEFAULT_LIMITS.sourcesPerIntent,
+      sourceFetchConcurrency: config.limits.sourceFetchConcurrency ?? DEFAULT_LIMITS.sourceFetchConcurrency,
+      sourceFetchBudgetMs: config.limits.sourceFetchBudgetMs ?? DEFAULT_LIMITS.sourceFetchBudgetMs,
+      sseTimeoutMs: config.limits.sseTimeoutMs ?? DEFAULT_LIMITS.sseTimeoutMs,
+      sseMaxEvents: config.limits.sseMaxEvents ?? DEFAULT_LIMITS.sseMaxEvents,
+      leaderboardLimit: config.limits.leaderboardLimit ?? DEFAULT_LIMITS.leaderboardLimit,
+      subprocessTimeoutMs: config.limits.subprocessTimeoutMs ?? DEFAULT_LIMITS.subprocessTimeoutMs,
+      phaseBudgets: {
+        senseMs: config.limits.phaseBudgets.senseMs ?? DEFAULT_LIMITS.phaseBudgets.senseMs,
+        actMs: config.limits.phaseBudgets.actMs ?? DEFAULT_LIMITS.phaseBudgets.actMs,
+        confirmMs: config.limits.phaseBudgets.confirmMs ?? DEFAULT_LIMITS.phaseBudgets.confirmMs,
+      },
     },
     briefingBoost: config.briefingBoost ?? 10,
     leaderboardAdjustment: config.leaderboardAdjustment ? {

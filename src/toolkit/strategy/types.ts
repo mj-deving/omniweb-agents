@@ -59,6 +59,8 @@ export interface StrategyConfig {
     /** Minimum confidence for consensus participation (default: 40) */
     minConfidence: number;
   };
+  /** Phase C: V3 loop operational limits — all optional with defaults matching current hardcoded values. */
+  limits?: LoopLimitsConfig;
   /** Phase 7: Priority boost for topics mentioned in colony briefing (default: 10). */
   briefingBoost?: number;
   /** Phase 7: Leaderboard-based priority adjustment (optional). */
@@ -195,5 +197,35 @@ export interface PostPerformance {
     discussion: number;
     economic: number;
     controversy: number;
+  };
+}
+
+/** Phase C: Operational limits for the V3 loop — all configurable via agent YAML. */
+export interface LoopLimitsConfig {
+  /** Max recent posts to fetch per loop iteration (default: 500) */
+  recentPostsFetchLimit: number;
+  /** Concurrent proof ingestion workers (default: 5) */
+  proofIngestionConcurrency: number;
+  /** Max proofs to ingest per iteration (default: 20) */
+  proofIngestionLimit: number;
+  /** Max sources per intent (default: 5) */
+  sourcesPerIntent: number;
+  /** Concurrent source fetch workers (default: 3) */
+  sourceFetchConcurrency: number;
+  /** Wall-clock budget for source fetches in ms (default: 15000) */
+  sourceFetchBudgetMs: number;
+  /** SSE feed timeout in ms (default: 5000) */
+  sseTimeoutMs: number;
+  /** SSE max events per iteration (default: 100) */
+  sseMaxEvents: number;
+  /** Leaderboard fetch limit (default: 20) */
+  leaderboardLimit: number;
+  /** Subprocess timeout in ms (default: 180000) */
+  subprocessTimeoutMs: number;
+  /** Per-phase time budgets in ms */
+  phaseBudgets: {
+    senseMs: number;
+    actMs: number;
+    confirmMs: number;
   };
 }

@@ -1174,10 +1174,10 @@ packages/supercolony-toolkit/
 
 - [ ] Create `packages/supercolony-toolkit/` directory structure
 - [ ] Write `package.json` with correct name, version, peer deps, exports map
-- [ ] Write `src/colony.ts` — Colony class holding runtime + hive + toolkit
-- [ ] Write `src/hive.ts` — all `hive.*` methods wrapping toolkit primitives
-- [ ] Write `src/index.ts` — `connect()` factory + re-exports
-- [ ] Write `src/agent.ts` — re-export runAgentLoop, defaultObserve
+- [x] Write `packages/supercolony-toolkit/src/colony.ts` — Colony class holding runtime + hive + toolkit
+- [x] Write `packages/supercolony-toolkit/src/hive.ts` — all `hive.*` methods wrapping toolkit primitives
+- [x] Write `packages/supercolony-toolkit/src/index.ts` — `connect()` factory + re-exports
+- [x] Write `packages/supercolony-toolkit/src/agent.ts` — re-export runAgentLoop, defaultObserve
 - [ ] Write `src/types.ts` — public API types
 - [ ] Write `README.md` with install, connect(), hive.* examples, toolkit.* examples, agent loop
 - [ ] Write `tests/packages/supercolony-toolkit.test.ts`
@@ -1275,10 +1275,10 @@ packages/supercolony-toolkit/
 ### Phase 10f: npm Package (`supercolony-toolkit`)
 - [ ] Create `packages/supercolony-toolkit/` directory structure
 - [ ] Write package.json with exports map, peer dep on @kynesyslabs/demosdk
-- [ ] Write `src/colony.ts` — Colony class (runtime + hive + toolkit)
-- [ ] Write `src/hive.ts` — `hive.*` methods wrapping toolkit primitives
-- [ ] Write `src/index.ts` — `connect()` factory + re-exports
-- [ ] Write `src/agent.ts` — re-export runAgentLoop, defaultObserve
+- [x] Write `packages/supercolony-toolkit/src/colony.ts` — Colony class (runtime + hive + toolkit)
+- [x] Write `packages/supercolony-toolkit/src/hive.ts` — `hive.*` methods wrapping toolkit primitives
+- [x] Write `packages/supercolony-toolkit/src/index.ts` — `connect()` factory + re-exports
+- [x] Write `packages/supercolony-toolkit/src/agent.ts` — re-export runAgentLoop, defaultObserve
 - [ ] Write `src/types.ts` — public API types
 - [ ] Write README.md with connect(), hive.*, toolkit.*, agent loop examples
 - [ ] Write `tests/packages/supercolony-toolkit.test.ts`

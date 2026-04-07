@@ -26,7 +26,7 @@ The project has 13 ADRs and a well-defined toolkit-vs-strategy boundary (ADR-000
 
 **Relationship to existing boundary tests:**
 - `tests/import-boundaries.test.ts` — checks `src/` vs `platform/` vs `agents/` boundaries (different scope, complementary)
-- `tests/toolkit/chain/re-export-shims.test.ts` — validates specific toolkit re-export behavior
+- `tests/toolkit/re-export-shims.test.ts` — validates specific toolkit re-export behavior
 - `tests/architecture/boundary.test.ts` (this ADR) — focuses specifically on the toolkit-vs-strategy boundary from ADR-0002
 
 These tests are complementary, not overlapping. If boundary testing grows further, consider consolidating into `tests/architecture/`.

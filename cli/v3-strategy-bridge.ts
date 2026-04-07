@@ -211,6 +211,8 @@ export interface PlanOptions {
   briefingContext?: string;
   /** Function to enrich agent profiles with social handles (Phase 7). */
   identityLookup?: (address: string) => Promise<Array<{ platform: string; username: string }> | null>;
+  /** Max publish actions to generate — prevents wasteful candidate generation. */
+  maxPublishPerSession?: number;
 }
 
 export async function plan(
@@ -231,6 +233,10 @@ export async function plan(
 
   if (options?.briefingContext) {
     context.briefingContext = options.briefingContext;
+  }
+
+  if (options?.maxPublishPerSession != null) {
+    context.maxPublishPerSession = options.maxPublishPerSession;
   }
 
   // Pre-compute intelligence from colony DB via consolidated summary (Phase 8d)

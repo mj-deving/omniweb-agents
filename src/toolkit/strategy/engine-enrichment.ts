@@ -20,6 +20,7 @@ export function evaluateEnrichmentRules(
   evidenceIndex: ReturnType<typeof buildEvidenceIndex>,
   candidates: EngineCandidate[],
   considered: DecisionLog["considered"],
+  opts?: { maxPublish?: number },
 ): void {
   const enrichment = context.apiEnrichment;
 
@@ -63,8 +64,11 @@ export function evaluateEnrichmentRules(
   const signalAlignedRule = getRule(config, "publish_signal_aligned");
   if (signalAlignedRule && enrichment?.signals) {
     const minConfidence = config.enrichment?.minConfidence ?? 70;
+    let signalPublishCount = 0;
+    const maxSignalPublish = opts?.maxPublish ?? Infinity;
 
     for (const signal of enrichment.signals) {
+      if (signalPublishCount >= maxSignalPublish) break;
       if (signal.trending === false || signal.agentCount < (config.enrichment?.minSignalAgents ?? 5)) continue;
       // WS4: Skip low-confidence signals — score-100 posts come from high-confidence consensus
       if (signal.confidence < minConfidence) continue;
@@ -107,6 +111,7 @@ export function evaluateEnrichmentRules(
 
       candidates.push({ action, rule: signalAlignedRule.name });
       considered.push({ action, rule: signalAlignedRule.name });
+      signalPublishCount++;
     }
   }
 

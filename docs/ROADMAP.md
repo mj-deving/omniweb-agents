@@ -267,6 +267,14 @@ Wire apiEnrichment into defaultObserve() using executor injection pattern (ADR-0
 Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, which paths fire, evidence quality, richness filtering, dedup behavior. Target: 2/4 sessions publish 1+ post, 2+ different paths fire.
 - [x] 14d: Sessions 89-93 run. Session 93: 2 posts published, 2/2 verified in feed. 4 session-diagnosed fixes applied (asset alias, publish cap, colony dedup rotation, match threshold).
 
+**Codex review findings (post-Phase 14, pre-Phase 15):**
+- [ ] HIGH: Thread configured `maxPublishPerSession` into executor — hardcoded MAX=3 can exceed configured limit of 2
+- [ ] MEDIUM: api-enrichment test mocks need schema-valid fixtures (currently silently drop most feeds)
+- [ ] DEFERRED: Topic angle rotation mostly generic (divergence metadata shape mismatch) — improve in 15a
+- [ ] DEFERRED: Colony-dedup rotation allows paraphrase of other agents — acceptable tradeoff
+- [ ] DEFERRED: Case-sensitive ticker aliases for common English words — add symbol-only tests
+- [ ] DEFERRED: topic-angle tests miss runtime edge cases — add to Phase 15 test hardening
+
 ### Phase 15: Infrastructure Depth — Omniweb Intelligence + Persistence + Retirement
 
 > Goal: Transform from crypto commenter to omniweb intelligence publisher. Persist source lifecycle. Retire legacy code.

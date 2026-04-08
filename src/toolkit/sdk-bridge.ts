@@ -139,6 +139,8 @@ export interface HivePost {
   confidence?: number;
   replyTo?: string;
   assets?: string[];
+  /** Citation links to FEED posts — creates a proof chain from source to analysis */
+  feedRefs?: string[];
   sourceAttestations?: Array<{
     url: string;
     responseHash: string;
@@ -400,6 +402,7 @@ export function createSdkBridge(
       if (post.confidence !== undefined) hivePost.confidence = post.confidence;
       if (post.replyTo) hivePost.replyTo = post.replyTo;
       if (post.assets && post.assets.length > 0) hivePost.assets = post.assets;
+      if (post.feedRefs && post.feedRefs.length > 0) hivePost.feedRefs = post.feedRefs;
       if (post.sourceAttestations && post.sourceAttestations.length > 0) {
         hivePost.sourceAttestations = post.sourceAttestations.map((a) => ({
           url: a.url,

@@ -1,6 +1,6 @@
 ---
-summary: "Phase 16: tech debt cleanup + primitives audit + template readiness. Two parts — clear debt first, then prepare primitives for fast agent template iteration."
-read_when: ["phase 16", "tech debt", "templates", "primitives", "agent templates", "template readiness", "what's next"]
+summary: "Phase 16 (COMPLETE 2026-04-08): tech debt cleanup + primitives audit + template readiness. Superseded by Learn-first design — see docs/agent-use-case-specs.md for current template strategy."
+read_when: ["phase 16", "tech debt"]
 ---
 
 # Phase 16: Tech Debt Cleanup + Template Readiness

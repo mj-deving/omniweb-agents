@@ -53,20 +53,12 @@ export interface SourceSelectionResult {
   adapterCandidates?: CandidateRequest[];
 }
 
-/**
- * Select the best source for a topic from a V2 source view.
- * Uses the inverted index for fast candidate lookup, then scores by
- * topic overlap, name match, method compatibility, and response size.
- *
- * Phase 4: Uses adapter.buildCandidates for URL generation when available.
- * Falls back to fillUrlTemplate for sources without adapters (quarantined).
- */
-export function selectSourceForTopicV2(
+function rankSourceSelections(
   topic: string,
   sourceView: AgentSourceView,
   method: AttestationType,
   maxCandidatesPerTopic: number = 5
-): SourceSelectionResult | null {
+): SourceSelectionResult[] {
   const vars = extractTopicVars(topic);
   const topicWords = tokenizeTopic(topic);
   const alias = inferAssetAlias(topic);
@@ -93,7 +85,7 @@ export function selectSourceForTopicV2(
     }
   }
 
-  if (candidateIds.size === 0) return null;
+  if (candidateIds.size === 0) return [];
 
   // Score candidates
   const ranked: SourceSelectionResult[] = [];
@@ -190,7 +182,7 @@ export function selectSourceForTopicV2(
     ranked.push({ source, url: resolvedUrl, score, adapterCandidates });
   }
 
-  if (ranked.length === 0) return null;
+  if (ranked.length === 0) return [];
 
   // Sort by score desc, then by response size:
   // TLSN: prefer smaller (fit within 16KB maxRecvData)
@@ -203,7 +195,48 @@ export function selectSourceForTopicV2(
         : (b.source.max_response_kb || 0) - (a.source.max_response_kb || 0))
   );
 
-  return ranked[0];
+  return ranked.slice(0, Math.min(maxCandidatesPerTopic, 5));
+}
+
+/**
+ * Select ranked source candidates for a topic from a V2 source view.
+ * Uses the inverted index for fast candidate lookup, then scores by
+ * topic overlap, name match, method compatibility, and response size.
+ *
+ * When called with `maxCandidatesPerTopic`, returns a ranked array.
+ * Legacy 3-argument callers receive the previous single-result shape.
+ */
+export function selectSourceForTopicV2(
+  topic: string,
+  sourceView: AgentSourceView,
+  method: AttestationType
+): SourceSelectionResult | null;
+export function selectSourceForTopicV2(
+  topic: string,
+  sourceView: AgentSourceView,
+  method: AttestationType,
+  maxCandidatesPerTopic: number
+): SourceSelectionResult[];
+export function selectSourceForTopicV2(
+  topic: string,
+  sourceView: AgentSourceView,
+  method: AttestationType,
+  maxCandidatesPerTopic?: number
+): SourceSelectionResult[] | SourceSelectionResult | null {
+  const ranked = rankSourceSelections(topic, sourceView, method, maxCandidatesPerTopic ?? 5);
+  if (maxCandidatesPerTopic === undefined) {
+    return ranked[0] ?? null;
+  }
+  return ranked;
+}
+
+export function selectSourceForTopic(
+  topic: string,
+  sourceView: AgentSourceView,
+  method: AttestationType,
+  maxCandidatesPerTopic: number = 5
+): SourceSelectionResult | null {
+  return rankSourceSelections(topic, sourceView, method, maxCandidatesPerTopic)[0] ?? null;
 }
 
 // ── Preflight ──────────────────────────────────────
@@ -245,8 +278,8 @@ export function preflight(
   const candidates: PreflightCandidate[] = [];
 
   // Try required method first
-  const requiredSelection = selectSourceForTopicV2(topic, sourceView, plan.required, maxCandidates);
-  if (requiredSelection) {
+  const requiredSelections = selectSourceForTopicV2(topic, sourceView, plan.required, maxCandidates);
+  for (const requiredSelection of requiredSelections) {
     candidates.push({
       sourceId: requiredSelection.source.id,
       source: requiredSelection.source,
@@ -259,8 +292,8 @@ export function preflight(
 
   // Try fallback method if available
   if (plan.fallback) {
-    const fallbackSelection = selectSourceForTopicV2(topic, sourceView, plan.fallback, maxCandidates);
-    if (fallbackSelection) {
+    const fallbackSelections = selectSourceForTopicV2(topic, sourceView, plan.fallback, maxCandidates);
+    for (const fallbackSelection of fallbackSelections) {
       // Only add if it's a different source+method combo
       if (!candidates.some((c) => c.sourceId === fallbackSelection.source.id && c.method === plan.fallback)) {
         candidates.push({

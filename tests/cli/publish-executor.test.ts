@@ -162,18 +162,22 @@ function makeSource(overrides: Partial<SourceRecordV2> = {}): SourceRecordV2 {
   };
 }
 
-function makeSourceView(source: SourceRecordV2): AgentSourceView {
+function makeSourceView(input: SourceRecordV2 | SourceRecordV2[]): AgentSourceView {
+  const sources = Array.isArray(input) ? input : [input];
   return {
     agent: "sentinel",
     catalogVersion: 2,
-    sources: [source],
+    sources,
     index: {
-      byId: new Map([[source.id, source]]),
+      byId: new Map(sources.map((source) => [source.id, source])),
       byTopicToken: new Map(),
       byDomainTag: new Map(),
       byProvider: new Map(),
       byAgent: new Map(),
-      byMethod: { TLSN: new Set([source.id]), DAHR: new Set([source.id]) },
+      byMethod: {
+        TLSN: new Set(sources.map((source) => source.id)),
+        DAHR: new Set(sources.map((source) => source.id)),
+      },
     },
   };
 }
@@ -258,11 +262,13 @@ function configureSuccessMocks(source: SourceRecordV2, url: string = source.url)
     sensitive: false,
     reason: "test policy",
   });
-  selectSourceForTopicV2Mock.mockReturnValue({
-    source,
-    url,
-    score: 88,
-  });
+  selectSourceForTopicV2Mock.mockReturnValue([
+    {
+      source,
+      url,
+      score: 88,
+    },
+  ]);
   fetchSourceMock.mockResolvedValue({
     ok: true,
     response: {
@@ -552,6 +558,161 @@ describe("executePublishActions", () => {
 
     expect(selectSourceForTopicV2Mock).toHaveBeenCalled();
     expect(fetchSourceMock).toHaveBeenCalledWith(catalogUrl, source, expect.any(Object));
+  });
+
+  it("falls back to the next resolved source when the top prefetch fails", async () => {
+    const primary = makeSource({
+      id: "primary-source",
+      name: "Primary Source",
+      url: "https://source.test/primary",
+      urlPattern: "https://source.test/primary",
+    });
+    const fallback = makeSource({
+      id: "fallback-source",
+      name: "Fallback Source",
+      provider: "market-fallback",
+      url: "https://source.test/fallback",
+      urlPattern: "https://source.test/fallback",
+    });
+    const deps = createDeps({
+      sourceView: makeSourceView([primary, fallback]),
+      adapters: new Map([
+        [primary.provider, makeAdapter(primary)],
+        [fallback.provider, makeAdapter(fallback)],
+      ]),
+    });
+    const action = makeAction({ metadata: { topics: ["bitcoin"] } });
+
+    resolveAttestationPlanMock.mockReturnValue({
+      required: "DAHR",
+      fallback: null,
+      sensitive: false,
+      reason: "test policy",
+    });
+    selectSourceForTopicV2Mock.mockReturnValue([
+      { source: primary, url: primary.url, score: 92 },
+      { source: fallback, url: fallback.url, score: 88 },
+    ]);
+    fetchSourceMock
+      .mockResolvedValueOnce({ ok: false, error: "upstream 500", attempts: 1, totalMs: 5 })
+      .mockResolvedValueOnce({
+        ok: true,
+        response: {
+          url: fallback.url,
+          status: 200,
+          headers: {},
+          bodyText: '{"price":64231}',
+        },
+        attempts: 1,
+        totalMs: 5,
+      });
+    generatePostMock.mockResolvedValue(makeDraft());
+    preflightMock.mockReturnValue({
+      pass: true,
+      reason: "DAHR source available",
+      reasonCode: "PASS",
+      candidates: [
+        { sourceId: primary.id, source: primary, method: "DAHR", url: primary.url, score: 92 },
+        { sourceId: fallback.id, source: fallback, method: "DAHR", url: fallback.url, score: 88 },
+      ],
+      plan: { required: "DAHR", fallback: null, sensitive: false, reason: "test policy" },
+    });
+    matchMock.mockResolvedValue({
+      pass: true,
+      reason: "matched",
+      reasonCode: "PASS",
+      best: {
+        sourceId: fallback.id,
+        method: "DAHR",
+        url: fallback.url,
+        score: 91,
+        matchedClaims: ["bitcoin", "$64,231"],
+        evidence: ["1 title match"],
+      },
+      considered: [{ sourceId: fallback.id, score: 91 }],
+    });
+    extractStructuredClaimsAutoMock.mockResolvedValue([
+      { text: "Bitcoin at $64,231", type: "price", entities: ["bitcoin", "BTC"], value: 64231, unit: "USD" },
+    ]);
+    buildAttestationPlanMock.mockReturnValue({
+      primary: {
+        claim: { text: "Bitcoin at $64,231", type: "price", entities: ["bitcoin", "BTC"], value: 64231, unit: "USD" },
+        url: fallback.url,
+        estimatedSizeBytes: 512,
+        method: "GET",
+        extractionPath: "$.price",
+        provider: fallback.provider,
+        rateLimitBucket: fallback.provider,
+        plannedMethod: "DAHR",
+      },
+      secondary: [],
+      fallbacks: [],
+      unattested: [],
+      estimatedCost: 1,
+      budget: {
+        maxCostPerPost: 15,
+        maxTlsnPerPost: 1,
+        maxDahrPerPost: 3,
+        maxAttestationsPerPost: 4,
+      },
+    });
+    executeAttestationPlanMock.mockResolvedValue({
+      results: [
+        {
+          type: "dahr",
+          url: fallback.url,
+          requestedUrl: fallback.url,
+          responseHash: "0xclaim-hash",
+          txHash: "0xclaim-attestation",
+          data: { price: 64231 },
+        },
+      ],
+      skipped: [],
+      failed: [],
+    });
+    verifyAttestedValuesMock.mockReturnValue([
+      {
+        claim: { text: "Bitcoin at $64,231", type: "price", entities: ["bitcoin", "BTC"], value: 64231, unit: "USD" },
+        attestedValue: 64231,
+        expectedValue: 64231,
+        verified: true,
+      },
+    ]);
+    publishPostMock.mockResolvedValue({
+      txHash: "0xpublish",
+      category: "ANALYSIS",
+      textLength: 285,
+    });
+
+    const result = await executePublishActions([action], deps);
+
+    expect(fetchSourceMock).toHaveBeenNthCalledWith(1, primary.url, primary, expect.any(Object));
+    expect(fetchSourceMock).toHaveBeenNthCalledWith(2, fallback.url, fallback, expect.any(Object));
+    expect(deps.observe).toHaveBeenCalledWith(
+      "warning",
+      "Source fallback: Primary Source failed, trying Fallback Source",
+      expect.objectContaining({
+        failedSource: primary.id,
+        nextSource: fallback.id,
+      }),
+    );
+    expect(generatePostMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attestedData: expect.objectContaining({
+          source: fallback.name,
+          url: fallback.url,
+        }),
+      }),
+      deps.provider,
+      expect.any(Object),
+    );
+    expect(result.executed).toEqual([
+      expect.objectContaining({
+        action,
+        success: true,
+        txHash: "0xpublish",
+      }),
+    ]);
   });
 
   it("falls back to single attestation when claim verification fails", async () => {

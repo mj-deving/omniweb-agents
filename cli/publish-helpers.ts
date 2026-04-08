@@ -11,7 +11,7 @@ import type { ColonyDatabase } from "../src/toolkit/colony/schema.js";
 import type { AttestResult } from "../src/actions/publish-pipeline.js";
 import { attestDahr, attestTlsn } from "../src/actions/publish-pipeline.js";
 import { resolveAttestationPlan } from "../src/lib/attestation/attestation-policy.js";
-import { selectSourceForTopicV2 } from "../src/lib/sources/policy.js";
+import { selectSourceForTopicV2, type SourceSelectionResult } from "../src/lib/sources/policy.js";
 import { preflight } from "../src/lib/sources/policy.js";
 import { inferAssetAlias } from "../src/toolkit/chain/asset-helpers.js";
 import { fetchSource } from "../src/lib/sources/fetch.js";
@@ -87,16 +87,20 @@ export function resolveUrlForSource(
   sourceView: AgentSourceView,
   agentConfig: AgentConfig,
 ): { url: string; adapterCandidates?: import("../src/lib/sources/providers/types.js").CandidateRequest[] } | null {
-  const selected = selectSourceForTopicV2(topic, sourceView, method);
-  if (selected && selected.source.id === source.id) {
+  const selected = normalizeSelections(selectSourceForTopicV2(topic, sourceView, method, 5)).find(
+    (candidate) => candidate.source.id === source.id,
+  );
+  if (selected) {
     return { url: selected.url, adapterCandidates: selected.adapterCandidates };
   }
 
   const fallbackPlan = resolveAttestationPlan(topic, agentConfig);
   const fallbackMethod = fallbackPlan.fallback;
   if (fallbackMethod) {
-    const fallbackSelection = selectSourceForTopicV2(topic, sourceView, fallbackMethod);
-    if (fallbackSelection && fallbackSelection.source.id === source.id) {
+    const fallbackSelection = normalizeSelections(selectSourceForTopicV2(topic, sourceView, fallbackMethod, 5)).find(
+      (candidate) => candidate.source.id === source.id,
+    );
+    if (fallbackSelection) {
       return { url: fallbackSelection.url, adapterCandidates: fallbackSelection.adapterCandidates };
     }
   }
@@ -134,24 +138,36 @@ export function resolveSourceForAction(
   action: StrategyAction,
   sourceView: AgentSourceView,
   agentConfig: AgentConfig,
-): ResolvedActionSource | null {
+): ResolvedActionSource[] {
   const topic = getActionTopic(action);
+  const resolvedSources: ResolvedActionSource[] = [];
+  const seen = new Set<string>();
+
+  const pushResolved = (resolved: ResolvedActionSource | null) => {
+    if (!resolved) return;
+    const key = `${resolved.source.id}:${resolved.method}:${resolved.url}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    resolvedSources.push(resolved);
+  };
 
   if (action.evidence?.length) {
     const source = findSourceByEvidence(action.evidence[0], topic, sourceView, agentConfig);
-    if (source) return source;
+    pushResolved(source);
   }
 
   const plan = resolveAttestationPlan(topic, agentConfig);
-  const selection = selectSourceForTopicV2(topic, sourceView, plan.required);
-  if (selection) {
-    return {
+  for (const selection of normalizeSelections(selectSourceForTopicV2(topic, sourceView, plan.required, 5))) {
+    pushResolved({
       source: selection.source,
       url: selection.url,
       method: plan.required,
       sourceName: selection.source.name,
       adapterCandidates: selection.adapterCandidates,
-    };
+    });
+    if (resolvedSources.length >= 3) {
+      return resolvedSources;
+    }
   }
 
   // Fallback: if topic is a crypto asset, use coingecko-simple as a generic price source
@@ -160,11 +176,18 @@ export function resolveSourceForAction(
     const cgSource = sourceView.index.byId.get("coingecko-2a7ea372");
     if (cgSource) {
       const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(alias.asset)}&vs_currencies=usd`;
-      return { source: cgSource, url, method: "DAHR", sourceName: cgSource.name };
+      pushResolved({ source: cgSource, url, method: "DAHR", sourceName: cgSource.name });
     }
   }
 
-  return null;
+  return resolvedSources.slice(0, 3);
+}
+
+function normalizeSelections(
+  selections: SourceSelectionResult[] | SourceSelectionResult | null | undefined,
+): SourceSelectionResult[] {
+  if (!selections) return [];
+  return Array.isArray(selections) ? selections : [selections];
 }
 
 export function summarizePrefetchedResponse(response: FetchedResponse, adapter?: ProviderAdapter, source?: SourceRecordV2): string {
@@ -196,26 +219,38 @@ export function summarizePrefetchedResponse(response: FetchedResponse, adapter?:
   return response.bodyText.slice(0, MAX_SUMMARY_LENGTH);
 }
 
+type PrefetchAttemptResult = PrefetchedSourceData & {
+  fetchAttempted: boolean;
+  fetchSucceeded: boolean;
+};
+
 export async function prefetchSourceData(
   resolvedSource: ResolvedActionSource,
   deps: PublishExecutorDeps,
-): Promise<PrefetchedSourceData> {
+): Promise<PrefetchAttemptResult> {
   const adapter = deps.adapters?.get(resolvedSource.source.provider);
   if (!adapter || !adapter.supports(resolvedSource.source)) {
-    return {};
+    return { fetchAttempted: false, fetchSucceeded: true };
   }
 
-  const fetchResult = await fetchSource(resolvedSource.url, resolvedSource.source, {
-    rateLimitBucket: adapter.rateLimit.bucket,
-    rateLimitRpm: adapter.rateLimit.maxPerMinute,
-    rateLimitRpd: adapter.rateLimit.maxPerDay,
-  });
+  let fetchResult: Awaited<ReturnType<typeof fetchSource>>;
+  try {
+    fetchResult = await fetchSource(resolvedSource.url, resolvedSource.source, {
+      rateLimitBucket: adapter.rateLimit.bucket,
+      rateLimitRpm: adapter.rateLimit.maxPerMinute,
+      rateLimitRpd: adapter.rateLimit.maxPerDay,
+    });
+  } catch {
+    return { fetchAttempted: true, fetchSucceeded: false };
+  }
 
   if (!fetchResult.ok || !fetchResult.response) {
-    return {};
+    return { fetchAttempted: true, fetchSucceeded: false };
   }
 
   return {
+    fetchAttempted: true,
+    fetchSucceeded: true,
     llmContext: {
       source: resolvedSource.sourceName,
       url: resolvedSource.url,

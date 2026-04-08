@@ -2,16 +2,16 @@
 type: roadmap
 status: active
 updated: 2026-04-08
-open_items: 12
-completed_phases: 14
-tests: 3087
-suites: 253
+open_items: 9
+completed_phases: 15
+tests: 3077
+suites: 252
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
 colony_posts: 202000
 catalog_sources: 247
-summary: "Phases 1-14 complete. Session 93: 2 posts published on-chain (verified). 0-post problem solved via 6 surgical fixes across sessions 89-93. Agent publishes 1-2 posts/session reliably. 33 ASSET_MAP entries. Match threshold 9. Topic angle rotation on self+colony dedup."
+summary: "Phases 1-15 complete. Sessions 93-97: 3 posts published (novel signals), 0-post problem solved. Phase 16 next: tech debt cleanup + primitives audit + template readiness. Strategic shift from sentinel optimization to template iteration."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -24,7 +24,7 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 
 - **V3 loop:** LIVE with toolkit primitives replacing raw apiCall enrichment
 - **Phase 9:** COMPLETE (DataSource abstraction, 15 domain primitives, v3-loop wiring, API backfill, drift detection)
-- **Tests:** 3087 passing, 253 suites, **0 tsc errors**
+- **Tests:** 3077 passing, 252 suites, **0 tsc errors**
 - **Toolkit:** `createToolkit()` facade with 15 namespaces (feed, intelligence, scores, agents, actions, oracle, prices, verification, predictions, ballot, webhooks, identity, balance, health, stats)
 - **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
 - **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard. Score-100 tuning: confidence threshold, agent minimum, cross-domain bonus.
@@ -32,10 +32,11 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 - **ADRs:** 18 (ADR-0018 supersedes ADR-0001 for reads — API-first, chain fallback)
 - **Phase 11:** COMPLETE — 7 legacy session-runner patterns adopted as toolkit primitives (76 new tests)
 - **Phase 12:** COMPLETE — boundary moves (matcher/policy/lifecycle to toolkit), SENSE health filtering + rate limiting + lifecycle, 3 new macro sources, getSourceHealthSummary primitive
-- **Phase 13:** COMPLETE — all 8 tasks. Evidence matching, richness normalization, asset sources, dead config cleanup, E2E test, coverage matrix, strategy audit.
-- **Phase 14:** COMPLETE — topic angle rotation, 15 more asset sources, enrichment bridge, endurance sessions 89-93 (2 posts in session 93).
-- **Session fixes (89-93):** asset alias case, publish cap, colony dedup rotation, match threshold 9.
-- **Next:** See Future items below. npm publish supercolony-toolkit ready.
+- **Phase 13:** COMPLETE — 8 tasks. Evidence matching, richness normalization, asset sources, strategy audit.
+- **Phase 14:** COMPLETE — topic angle rotation, enrichment bridge, endurance sessions (2 posts session 93).
+- **Phase 15:** COMPLETE — dynamic pools, macro adapters (FRED/VIX/ECB), 31 sources promoted, lifecycle DB, session-runner retired.
+- **Sessions 93-97:** 3 posts published. Pipeline healthy. Publishes on novel signals, correctly deduplicates stale topics.
+- **Next:** Phase 16 — tech debt cleanup + primitives audit + template readiness. See `docs/phase16-techdebt-and-templates.md`.
 
 ---
 
@@ -272,29 +273,45 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 - [x] MEDIUM: api-enrichment tests rewritten with schema-valid fixtures — all 6 feeds validated, plus Zod failure test
 - Carried to Phase 15: angle rotation divergence metadata shape, colony-dedup paraphrase risk, ticker alias tests, topic-angle edge cases
 
-### Phase 15: Infrastructure Depth — Omniweb Intelligence + Persistence + Retirement
+### Phase 15: Infrastructure Depth — COMPLETE
 
-> Goal: Transform from crypto commenter to omniweb intelligence publisher. Persist source lifecycle. Retire legacy code.
-> Spec: `docs/phase15-infrastructure-depth.md`
+> Dynamic pool discovery, 3 macro adapters (FRED/VIX/ECB), 31 sources promoted, lifecycle DB, prefetch cascade, session-runner retired (-3273 lines). Codex review: 1 HIGH fixed (API key sanitization), 28 dead imports cleaned.
+> Sessions 93-97: 3 posts published. Agent publishes on novel market signals, correctly deduplicates stale topics.
 
-- [ ] 15a -- Dynamic pool + prediction market discovery: fetch pools for ALL oracle-tracked assets + wire Polymarket prediction markets. No hardcoded asset lists.
-- [ ] 15b -- Source activation sweep + macro adapters: (1) audit + batch-promote quarantined sources that already work, (2) build FRED/VIX/ECB adapters, (3) broaden strategy topic weights beyond crypto.
-- [ ] 15c -- Source registry as DB: colony DB migration v9, source_lifecycle table, persist ratings/transitions across sessions.
-- [ ] 15d -- Prefetch cascade: selectSourceForTopicV2 returns ranked list, fallback on fetch failure.
-- [ ] 15e -- Session-runner retirement: audit→port→slim→deprecate. 17 shared imports. Low priority.
+- [x] 15a — Dynamic pool discovery from oracle assets + bettingPools[]
+- [x] 15b — 31 sources promoted + FRED/VIX/ECB adapters + broadened strategy weights
+- [x] 15c — Colony DB v9 + source-lifecycle-store + persist functions
+- [x] 15d — Prefetch cascade with ranked source fallback
+- [x] 15e — Session-runner retired (4528→1243 lines, V1/V2 deleted)
 
-**Batch 1** (parallel): 15a-1/2 (pool discovery) + 15b-1 (catalog audit) + 15c-1/2 (DB schema+store)
-**Batch 2** (parallel): 15b-2 (batch promote) + 15b-3 (FRED) + 15a-3/4 (prediction markets) + 15c-3/4 (lifecycle wiring)
-**Batch 3**: 15b-4/5/6 (VIX + ECB + strategy weights) + 15d (prefetch cascade)
-**Batch 4** (large): 15e (session-runner retirement)
+### Phase 16: Tech Debt Cleanup + Template Readiness
+
+> Goal: Clear debt, audit primitives, prepare for fast agent template iteration.
+> Strategic shift: stop optimizing sentinel strategy, focus on making primitives template-ready.
+> Spec: `docs/phase16-techdebt-and-templates.md`
+
+**Part A — Tech Debt:**
+- [ ] 16a-1: npm publish supercolony-toolkit
+- [ ] 16a-2: Wire lifecycle persistence into SENSE runtime
+- [ ] 16a-3: Remove deprecated signals.ts + signals-plugin.ts
+- [ ] 16a-4: ElizaOS adapter deprecation
+- [ ] 16a-5: Carried Codex findings (angle metadata, ticker tests, topic-angle edge cases)
+
+**Part B — Template Readiness:**
+- [ ] 16b-1: Primitives API audit (15 domains, enrichedObserve, runAgentLoop)
+- [ ] 16b-2: Update 3 existing templates to use current primitives
+- [ ] 16b-3: Template developer guide (`.ai/guides/agent-template-guide.md`)
+- [ ] 16b-4: Define next 2 agent use cases (prediction tracker, engagement optimizer, or research synthesizer)
+
+**Batch 1** (Codex): 16a-2 + 16a-3 + 16a-5. Manual: 16a-1 + 16a-4.
+**Batch 2**: 16b-1 (audit) + 16b-4 (use cases).
+**Batch 3**: 16b-2 (update templates) + 16b-3 (guide).
 
 ### Future (no phase assigned)
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet
 - [ ] 6-disc-i -- ZK identity proofs for privacy-preserving attestation
 - [ ] StorageProgram exploration: SDK structured on-chain storage for HIVE data
-- [ ] HARDEN standalone tool: resurrect V1 HARDEN phase concept (auto-classify findings, propose improvements, LLM-assisted triage) as standalone post-session analysis tool. Code preserved in git history before 15e commit.
-- [ ] ElizaOS adapter: deprecate or remove (0 production consumers)
-- [ ] Remove deprecated signals.ts/signals-plugin.ts (V1/V2 code removed in 15e, these may now be fully dead)
+- [ ] HARDEN standalone tool: resurrect V1 HARDEN phase concept as standalone post-session analysis tool. Code in git history before 15e.
 
 ---
 

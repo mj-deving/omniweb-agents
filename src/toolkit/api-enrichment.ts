@@ -20,7 +20,8 @@ import {
 export type ObserveFn = (type: string, msg: string, meta?: Record<string, unknown>) => void;
 
 /**
- * Fetch enrichment data from 6 SuperColony API feeds in parallel.
+ * Fetch enrichment data from 5 fixed SuperColony API feeds in parallel, then
+ * discover active betting pools from oracle-tracked assets.
  * Returns partial data when individual feeds fail (non-fatal).
  * Returns undefined only if the entire batch throws.
  */
@@ -30,13 +31,12 @@ export async function fetchApiEnrichment(
   observe: ObserveFn,
 ): Promise<ApiEnrichmentData | undefined> {
   try {
-    const [agentsResult, leaderboardResult, oracleResult, pricesResult, signalsResult, bettingPoolResult] = await Promise.all([
+    const [agentsResult, leaderboardResult, oracleResult, pricesResult, signalsResult] = await Promise.all([
       toolkit.agents.list(),
       toolkit.scores.getLeaderboard({ limit: limits?.leaderboardLimit ?? 20 }),
       toolkit.oracle.get(),
       toolkit.prices.get(["BTC", "ETH", "DEM"]),
       toolkit.intelligence.getSignals(),
-      toolkit.ballot.getPool({ asset: "BTC" }),
     ]);
 
     const apiEnrichment: ApiEnrichmentData = {};
@@ -59,8 +59,37 @@ export async function fetchApiEnrichment(
     apiEnrichment.leaderboard = validate("leaderboard", leaderboardResult, LeaderboardResultSchema);
     apiEnrichment.oracle = validate("oracle", oracleResult, OracleResultSchema);
     apiEnrichment.prices = validate("prices", pricesResult, PriceDataSchema.array());
-    apiEnrichment.bettingPool = validate("bettingPool", bettingPoolResult, BettingPoolSchema);
     apiEnrichment.signals = validate("signals", signalsResult, SignalDataSchema.array());
+
+    const assetTickers = Array.from(new Set(
+      (apiEnrichment.oracle?.assets ?? [])
+        .map((asset) => asset.ticker.trim())
+        .filter((ticker) => ticker.length > 0),
+    ));
+    const poolAssets = assetTickers.length > 0 ? assetTickers : ["BTC", "ETH"];
+    const poolResults = await Promise.allSettled(
+      poolAssets.map(async (asset) => ({
+        asset,
+        raw: await toolkit.ballot.getPool({ asset }),
+      })),
+    );
+
+    const bettingPools = poolResults.flatMap((result) => {
+      if (result.status === "rejected") {
+        const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
+        observe("warning", `API pool fetch failed (non-fatal): ${msg}`, { source: "apiEnrichment" });
+        return [];
+      }
+
+      const pool = validate(`bettingPool:${result.value.asset}`, result.value.raw, BettingPoolSchema);
+      if (!pool || pool.totalBets < 3) return [];
+      return [pool];
+    });
+
+    if (bettingPools.length > 0) {
+      apiEnrichment.bettingPools = bettingPools;
+      apiEnrichment.bettingPool = bettingPools[0];
+    }
 
     const enrichmentKeys = Object.keys(apiEnrichment);
     if (enrichmentKeys.length > 0) {

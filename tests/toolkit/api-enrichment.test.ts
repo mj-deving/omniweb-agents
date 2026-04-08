@@ -15,6 +15,23 @@ const VALID_LEADERBOARD = {
 
 const VALID_ORACLE = {
   overallSentiment: { direction: "neutral", score: 50, agentCount: 5, topAssets: ["BTC", "ETH"] },
+  assets: [
+    {
+      ticker: "BTC",
+      postCount: 12,
+      price: { usd: 68000, change24h: 2.1, high24h: 69000, low24h: 67000 },
+    },
+    {
+      ticker: "ETH",
+      postCount: 8,
+      price: { usd: 3400, change24h: 1.4, high24h: 3500, low24h: 3300 },
+    },
+    {
+      ticker: "SOL",
+      postCount: 6,
+      price: { usd: 150, change24h: -0.8, high24h: 155, low24h: 145 },
+    },
+  ],
   divergences: [{ type: "agents_vs_market", asset: "BTC", description: "test", severity: "low" as const, details: {} }],
 };
 
@@ -27,13 +44,33 @@ const VALID_SIGNALS = [
   { topic: "BTC", agentCount: 3, totalAgents: 10, confidence: 75, text: "bullish", trending: true, direction: "bullish", consensus: true },
 ];
 
-const VALID_POOL = {
-  asset: "BTC", horizon: "1h", totalBets: 4, totalDem: 20,
-  poolAddress: "0xpool", roundEnd: Date.now() + 3600000,
-  bets: [{ txHash: "0xtx1", bettor: "0xbet1", predictedPrice: 70000, amount: 5, roundEnd: Date.now() + 3600000, horizon: "1h" }],
+function makeValidPool(asset = "BTC", overrides: Partial<{
+  totalBets: number;
+  totalDem: number;
+  poolAddress: string;
+}> = {}) {
+  return {
+    asset,
+    horizon: "1h",
+    totalBets: 4,
+    totalDem: 20,
+    poolAddress: `0xpool-${asset.toLowerCase()}`,
+    roundEnd: Date.now() + 3600000,
+    bets: [{ txHash: `0xtx-${asset.toLowerCase()}`, bettor: "0xbet1", predictedPrice: 70000, amount: 5, roundEnd: Date.now() + 3600000, horizon: "1h" }],
+    ...overrides,
+  };
+}
+
+type ToolkitOverrides = {
+  agents?: Toolkit["agents"]["list"];
+  leaderboard?: Toolkit["scores"]["getLeaderboard"];
+  oracle?: Toolkit["oracle"]["get"];
+  prices?: Toolkit["prices"]["get"];
+  signals?: Toolkit["intelligence"]["getSignals"];
+  pool?: Toolkit["ballot"]["getPool"];
 };
 
-function createMockToolkit(overrides: Partial<Record<string, (() => Promise<unknown>)>> = {}): Toolkit {
+function createMockToolkit(overrides: ToolkitOverrides = {}): Toolkit {
   const ok = <T>(data: T) => Promise.resolve({ ok: true as const, data });
   return {
     agents: { list: overrides.agents ?? (() => ok(VALID_AGENTS)) },
@@ -41,14 +78,26 @@ function createMockToolkit(overrides: Partial<Record<string, (() => Promise<unkn
     oracle: { get: overrides.oracle ?? (() => ok(VALID_ORACLE)) },
     prices: { get: overrides.prices ?? (() => ok(VALID_PRICES)) },
     intelligence: { getSignals: overrides.signals ?? (() => ok(VALID_SIGNALS)) },
-    ballot: { getPool: overrides.pool ?? (() => ok(VALID_POOL)) },
+    ballot: {
+      getPool: overrides.pool ?? ((opts) => {
+        const asset = opts?.asset ?? "BTC";
+        return ok(makeValidPool(asset, asset === "SOL" ? { totalBets: 2, totalDem: 8 } : {}));
+      }),
+    },
   } as unknown as Toolkit;
 }
 
 describe("fetchApiEnrichment", () => {
-  it("returns enrichment data from all 6 API feeds with schema-valid payloads", async () => {
+  it("discovers qualifying betting pools from oracle assets and keeps the first pool alias", async () => {
     const observe = vi.fn();
-    const result = await fetchApiEnrichment(createMockToolkit(), undefined, observe);
+    const getPool = vi.fn((opts?: { asset?: string }) => {
+      const asset = opts?.asset ?? "BTC";
+      return Promise.resolve({
+        ok: true as const,
+        data: makeValidPool(asset, asset === "SOL" ? { totalBets: 2, totalDem: 8 } : {}),
+      });
+    });
+    const result = await fetchApiEnrichment(createMockToolkit({ pool: getPool }), undefined, observe);
 
     expect(result).toBeDefined();
     expect(result!.agentCount).toBe(2);
@@ -58,14 +107,23 @@ describe("fetchApiEnrichment", () => {
     expect(result!.prices![0]).toMatchObject({ ticker: "BTC", priceUsd: 68000 });
     expect(result!.signals).toHaveLength(1);
     expect(result!.signals![0]).toMatchObject({ topic: "BTC", consensus: true });
+    expect(getPool).toHaveBeenNthCalledWith(1, { asset: "BTC" });
+    expect(getPool).toHaveBeenNthCalledWith(2, { asset: "ETH" });
+    expect(getPool).toHaveBeenNthCalledWith(3, { asset: "SOL" });
+    expect(result!.bettingPools).toHaveLength(2);
+    expect(result!.bettingPools).toEqual([
+      expect.objectContaining({ asset: "BTC", totalBets: 4 }),
+      expect.objectContaining({ asset: "ETH", totalBets: 4 }),
+    ]);
     expect(result!.bettingPool).toMatchObject({ asset: "BTC", totalBets: 4 });
   });
 
   it("returns partial enrichment when some feeds return ok:false", async () => {
     const observe = vi.fn();
+    const getPool = vi.fn().mockResolvedValue({ ok: false, error: "not found" });
     const toolkit = createMockToolkit({
       oracle: () => Promise.resolve({ ok: false, error: "timeout" }),
-      pool: () => Promise.resolve({ ok: false, error: "not found" }),
+      pool: getPool,
     });
     const result = await fetchApiEnrichment(toolkit, undefined, observe);
 
@@ -76,6 +134,9 @@ describe("fetchApiEnrichment", () => {
     expect(result!.signals).toHaveLength(1);
     expect(result!.oracle).toBeUndefined();
     expect(result!.bettingPool).toBeUndefined();
+    expect(result!.bettingPools).toBeUndefined();
+    expect(getPool).toHaveBeenNthCalledWith(1, { asset: "BTC" });
+    expect(getPool).toHaveBeenNthCalledWith(2, { asset: "ETH" });
   });
 
   it("drops feeds that fail Zod validation and logs a warning", async () => {

@@ -26,7 +26,6 @@ import { spawn, spawnSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 
 import { runTool, ToolError, parseToolJsonOutput, type ToolResult } from "../src/lib/util/subprocess.js";
-import { calculateStrategyScore, logQualityData } from "../src/lib/scoring/quality-score.js";
 import {
   startSession,
   loadState,
@@ -56,19 +55,12 @@ import {
   type SessionPostRecord,
 } from "../src/lib/state.js";
 import { readSessionLog, appendSessionLog, resolveLogPath } from "../src/lib/util/log.js";
-import { saveReviewFindings, loadLatestFindings } from "../src/lib/review-findings.js";
-import { generatePost, type PostDraft } from "../src/actions/llm.js";
-import { resolveProvider, type LLMProvider } from "../src/lib/llm/llm-provider.js";
+import { resolveProvider } from "../src/lib/llm/llm-provider.js";
 import { apiCall, connectWallet, setLogAgent } from "../src/lib/network/sdk.js";
 // ensureAuth removed — session loop is fully chain-only
-import { attestDahr, attestTlsn, publishPost, type PublishResult, type AttestResult } from "../src/actions/publish-pipeline.js";
-import { extractStructuredClaimsAuto } from "../src/lib/attestation/claim-extraction.js";
-import { buildAttestationPlan, verifyAttestedValues, createUsageTracker, type SourceUsageTracker } from "../src/lib/attestation/attestation-planner.js";
-import { executeAttestationPlan } from "../src/actions/attestation-executor.js";
 import { loadDeclarativeProviderAdaptersSync } from "../src/lib/sources/providers/declarative-engine.js";
-import { resolveAttestationPlan, type AttestationType } from "../src/lib/attestation/attestation-policy.js";
 import { resolveAgentName, loadAgentConfig, type AgentConfig } from "../src/lib/agent-config.js";
-import { initObserver, setObserverPhase, observe, type ObservationType, type ObserveOptions, type SubstageResult, type SubstageFailureCode } from "../src/lib/pipeline/observe.js";
+import { initObserver, observe, type ObservationType, type ObserveOptions } from "../src/lib/pipeline/observe.js";
 import {
   loadExtensions,
   runBeforeSense,
@@ -82,9 +74,6 @@ import {
 } from "../src/lib/util/extensions.js";
 import type { PublishedPostRecord } from "../src/lib/state.js";
 import { FileStateStore } from "../src/toolkit/state-store.js";
-import { checkAndRecordWrite, getWriteRateRemaining } from "../src/toolkit/guards/write-rate-limit.js";
-import { AUTH_PENDING_TOKEN, createSdkBridge } from "../src/toolkit/sdk-bridge.js";
-import { type SignalSnapshot } from "../src/lib/pipeline/signals.js";
 import {
   initStrategyBridge,
   sense as strategySense,
@@ -96,7 +85,6 @@ import {
   type PlanResult,
 } from "./v3-strategy-bridge.js";
 import { executeStrategyActions } from "./action-executor.js";
-import { createStrategyTextGenerator } from "./strategy-text-generator.js";
 import { runV3Loop } from "./v3-loop.js";
 import {
   loadAgentSourceView,

@@ -39,6 +39,7 @@ import {
   buildPublishInput,
   appendState,
   runSingleAttestationFallback,
+  sanitizeUrlForLog,
 } from "./publish-helpers.js";
 import { checkPublishQuality } from "../src/toolkit/publish/quality-gate.js";
 
@@ -474,7 +475,7 @@ export async function executePublishActions(
         category: draft.category,
         attestation_type: attestationType,
         attestation_url: primaryAttestation?.url,
-        attestation_requested_url: primaryAttestation?.requestedUrl,
+        attestation_requested_url: sanitizeUrlForLog(primaryAttestation?.requestedUrl),
         hypothesis: draft.hypothesis || "",
         predicted_reactions: draft.predicted_reactions,
         agents_referenced: [],

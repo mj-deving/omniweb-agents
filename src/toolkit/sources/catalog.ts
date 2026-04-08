@@ -60,7 +60,7 @@ export interface SourceRecordV2 {
   // Lookup metadata
   topicAliases?: string[];
   domainTags: string[];
-  responseFormat: "json" | "xml" | "rss" | "html";
+  responseFormat: "json" | "xml" | "rss" | "html" | "csv";
 
   // Agent scoping
   scope: {
@@ -164,7 +164,7 @@ const SOURCE_STATUSES: SourceStatus[] = [
   "archived",
 ];
 
-const RESPONSE_FORMATS: SourceRecordV2["responseFormat"][] = ["json", "xml", "rss", "html"];
+const RESPONSE_FORMATS: SourceRecordV2["responseFormat"][] = ["json", "xml", "rss", "html", "csv"];
 const SOURCE_VISIBILITIES: Array<SourceRecordV2["scope"]["visibility"]> = ["global", "scoped"];
 const TRUST_TIERS: SourceRecordV2["trustTier"][] = [
   "official",

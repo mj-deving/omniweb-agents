@@ -6,7 +6,7 @@ read_when: ["v3 loop", "capabilities", "lifecycle", "what can the agent do", "pu
 # V3 Loop Capability Map
 
 > Visual lifecycle map of the agent's decision pipeline.
-> Updated: 2026-04-08. Source of truth for what works, what's broken, and what's missing.
+> Updated: 2026-04-08 (post-session 93). Source of truth for what works, what's broken, and what's missing.
 
 ## Loop Lifecycle
 
@@ -122,7 +122,7 @@ read_when: ["v3 loop", "capabilities", "lifecycle", "what can the agent do", "pu
 | Path | Rule | How it works | Status | Blocker |
 |------|------|-------------|--------|---------|
 | **Gap-fill** | publish_to_gaps | Colony gaps + evidence index match | ✅ Fixed (Phase 13) | Phrase-key tokenizer + 2-token overlap + richness normalization |
-| **Signal-aligned** | publish_signal_aligned | Colony consensus signals + evidence | ⚠️ Dedup blocks | Same signals repeat; needs topic angle rotation (Phase 14a) |
+| **Signal-aligned** | publish_signal_aligned | Colony consensus signals + evidence | ✅ Fixed (Phase 14a) | Topic angle rotation on self+colony dedup. Session 93: published. |
 | **Divergence** | publish_on_divergence | Oracle price vs agent sentiment mismatch | ✅ Fixed (Phase 13) | 7 CoinGecko asset sources added; 15 more in Phase 14b |
 | **Prediction** | publish_prediction | Betting pool opportunities | ⚠️ Data availability | BTC-only pool fetch; needs multi-asset (Future) |
 | **Reply** | reply_to_mentions, reply_with_evidence | Respond to mentions/discussions | ✅ Working | — |
@@ -131,7 +131,7 @@ read_when: ["v3 loop", "capabilities", "lifecycle", "what can the agent do", "pu
 
 | Component | File | Status |
 |-----------|------|--------|
-| Catalog (225 sources) | toolkit/sources/catalog.ts | ✅ |
+| Catalog (247 sources) | toolkit/sources/catalog.ts | ✅ |
 | Source fetch + retry | toolkit/sources/fetch.ts | ✅ |
 | Health testing | toolkit/sources/health.ts | ✅ |
 | Health filtering (SENSE) | toolkit/sources/lifecycle.ts → filterHealthySources | ✅ Phase 12 |

@@ -174,9 +174,9 @@ Run npx tsc --noEmit and npm test to verify nothing breaks.
 | 13b add asset sources | Yes | --auto (scoped) | **COMPLETE** | 160K |
 | 13c test publish_prediction | Yes | safe | **COMPLETE** | 190K |
 | 13g strategy config audit | Yes | safe | **COMPLETE** | 283K |
-| 13d richness semantics | Yes | --auto (scoped) | Open | est 40K |
-| 13e catalog coverage audit | Yes | safe | Open | est 50K |
-| 13f e2e publish test | Yes | --auto (scoped) | Open | est 60K |
-| 13h clean dead config | Yes | --auto (scoped) | Open | est 30K |
+| 13d richness semantics | Yes | --auto (scoped) | **COMPLETE** | 184K |
+| 13e catalog coverage audit | Yes | safe | **COMPLETE** | 336K |
+| 13f e2e publish test | Yes | --auto (scoped) | **COMPLETE** | 72K |
+| 13h clean dead config | Yes | --auto (scoped) | **COMPLETE** | 47K |
 
-**Batch 1 COMPLETE (4/8).** Batch 2: 13d + 13e + 13f + 13h. All Codex-delegatable. 13d is highest priority (richness semantics blocks evidence quality). 13h is lowest risk (dead code removal).
+**ALL 8 TASKS COMPLETE.** Codex review: 2 medium findings (richness rounding bias, single-token false positive) — both fixed post-review.

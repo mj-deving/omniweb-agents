@@ -254,10 +254,10 @@ Add CoinGecko simple/price sources for: BNB, ADA, DOGE, TRX, SHIB, TON, SUI, NEA
 
 **14c — Agent-loop enrichment bridge (medium-large):**
 Wire apiEnrichment into defaultObserve() using executor injection pattern (ADR-0019). Extract fetchApiEnrichment() to shared toolkit location (ADR-0002 boundary compliance). Templates opt-in to enrichment at startup. Unblocks 8/10 rules for template-based agents.
-- [ ] 14c-1: Extract fetchApiEnrichment to toolkit/
-- [ ] 14c-2: Add enrichment to ObserveResult type
-- [ ] 14c-3: Create enrichedObserve() with injected enrichment function
-- [ ] 14c-4: Tests for enriched observe path
+- [x] 14c-1: Extract fetchApiEnrichment to src/toolkit/api-enrichment.ts (ADR-0002 compliant)
+- [x] 14c-2: ObserveResult.context already supports Partial<DecisionContext> — no type change needed
+- [x] 14c-3: enrichedObserve() in agent-loop.ts — defaultObserve + apiEnrichment via dynamic import
+- [x] 14c-4: 5 tests for extracted module (partial failure, total failure, logging, config)
 
 **14d — Live endurance sessions 89-92 (automated + manual review):**
 Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, which paths fire, evidence quality, richness filtering, dedup behavior. Target: 2/4 sessions publish 1+ post, 2+ different paths fire.

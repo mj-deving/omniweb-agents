@@ -1,7 +1,7 @@
 ---
 type: index
 status: current
-updated: 2026-04-07
+updated: 2026-04-08
 summary: "Project history and narrative — 8 eras from harness to API-first toolkit. SDK capability map. Documentation index with archive inventory."
 read_when: ["project history", "evolution", "what happened", "session changelog", "SDK capability map", "documentation map", "archive"]
 ---
@@ -11,7 +11,7 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 > **The one document you read to understand the project's story.**
 > Architecture: CLAUDE.md. Operations: MEMORY.md. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** V3 loop LIVE | Phases 1–11 COMPLETE | 230 suites, 2996 tests | 0 tsc errors | 19 ADRs | 38+ API methods | 10 strategy rules | 202K colony posts | Schema v8 | SDK 2.11.5
+**Current state:** V3 loop LIVE | Phases 1–16 COMPLETE | 252 suites, 3088 tests | 0 tsc errors | 19 ADRs | 38+ API methods | 10 strategy rules | 15 toolkit domains | 4 Learn-first primitives | Schema v9 | SDK 2.11.5
 
 ---
 

@@ -11,7 +11,7 @@ api_endpoints: 38
 strategy_rules: 10
 colony_posts: 202000
 catalog_sources: 247
-summary: "Phases 1-15 complete. Sessions 93-97: 3 posts published (novel signals), 0-post problem solved. Phase 16 next: tech debt cleanup + primitives audit + template readiness. Strategic shift from sentinel optimization to template iteration."
+summary: "Phases 1-16 complete. Learn-first design decision: templates embody Share/Index/Learn, colony is the source. Phase 17 next: rebuild all 6 templates around Learn-first. 4 new primitives (feedRefs, oracle window, polymarket, sentiment)."
 read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
 ---
 
@@ -289,23 +289,42 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 > Goal: Clear debt, audit primitives, prepare for fast agent template iteration.
 > Strategic shift: stop optimizing sentinel strategy, focus on making primitives template-ready.
 > Spec: `docs/phase16-techdebt-and-templates.md`
+> **Design decision (2026-04-08):** Learn-first template design — colony is the source, not just the target. See `docs/agent-use-case-specs.md`.
 
 **Part A — Tech Debt:**
-- [ ] 16a-1: npm publish supercolony-toolkit
-- [ ] 16a-2: Wire lifecycle persistence into SENSE runtime
-- [ ] 16a-3: Remove deprecated signals.ts + signals-plugin.ts
-- [ ] 16a-4: ElizaOS adapter deprecation
-- [ ] 16a-5: Carried Codex findings (angle metadata, ticker tests, topic-angle edge cases)
+- [ ] 16a-1: npm publish supercolony-toolkit (deferred — still iterating)
+- [x] 16a-2: Wire lifecycle persistence into SENSE runtime
+- [x] 16a-3: Remove deprecated signals.ts + signals-plugin.ts
+- [ ] 16a-4: ElizaOS adapter deprecation (deferred — low priority)
+- [x] 16a-5: Carried Codex findings (angle metadata, ticker tests, topic-angle edge cases)
 
 **Part B — Template Readiness:**
-- [ ] 16b-1: Primitives API audit (15 domains, enrichedObserve, runAgentLoop)
-- [ ] 16b-2: Update 3 existing templates to use current primitives
-- [ ] 16b-3: Template developer guide (`.ai/guides/agent-template-guide.md`)
-- [ ] 16b-4: Define next 2 agent use cases (prediction tracker, engagement optimizer, or research synthesizer)
+- [x] 16b-1: Primitives API audit → `docs/primitives-readiness-report.md`
+- [x] 16b-2: Update 3 existing templates to use enrichedObserve + DRY_RUN gate
+- [x] 16b-3: Template developer guide → `.ai/guides/agent-template-guide.md`
+- [x] 16b-4: Define 3 agent use cases → `docs/agent-use-case-specs.md` (prediction tracker, engagement optimizer, research synthesizer)
 
-**Batch 1** (Codex): 16a-2 + 16a-3 + 16a-5. Manual: 16a-1 + 16a-4.
-**Batch 2**: 16b-1 (audit) + 16b-4 (use cases).
-**Batch 3**: 16b-2 (update templates) + 16b-3 (guide).
+**Learn-first primitives (2026-04-08):**
+- [x] feedRefs support in HivePost (cite FEED posts in published posts)
+- [x] Oracle time window parameter (6h/24h/7d)
+- [x] Polymarket extraction from oracle response
+- [x] Per-asset sentiment + DAHR price attestation extraction
+
+**Phase 16 completed:** 2026-04-08. 252 suites, 3088 tests. 8 commits.
+**Remaining:** 16a-1 (npm publish) + 16a-4 (ElizaOS) deferred.
+
+### Phase 17: Learn-First Template Rebuild
+
+> Goal: Rebuild all 6 templates around Learn-first design (Share/Index/Learn from supercolony.ai/docs).
+> Colony is the source. "Build on shared reasoning" is the moat.
+> Specs: `docs/agent-use-case-specs.md`
+
+- [ ] 17a: Rebuild base template as Learn-first reference impl (colony FEED → signals → observe)
+- [ ] 17b: Build Engagement Optimizer template (purest Learn-first — minimal external data)
+- [ ] 17c: Build Prediction Tracker template (ballot, predictions, VOTE category)
+- [ ] 17d: Rebuild Market Intelligence with Learn-first observe
+- [ ] 17e: Rebuild Security Sentinel with Learn-first observe
+- [ ] 17f: Build Research Synthesizer template (macro adapters, cross-domain)
 
 ### Future (no phase assigned)
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet

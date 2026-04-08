@@ -196,9 +196,10 @@ describe("v3-strategy-bridge", () => {
       expect(result.colonyState).toBeDefined();
       expect(result.colonyState.activity.postsPerHour).toBeGreaterThan(0);
       expect(result.colonyState.agents.topContributors.length).toBeGreaterThan(0);
-      expect(result.evidence).toHaveLength(1);
-      expect(result.evidence[0].sourceId).toBe("coingecko-defi");
-      expect(result.evidence[0].subject).toBe("defi");
+      // Evidence now indexed by all topics + domain tags (Phase 12 fix)
+      expect(result.evidence).toHaveLength(3); // defi, tvl, market-cap
+      expect(result.evidence.every(e => e.sourceId === "coingecko-defi")).toBe(true);
+      expect(result.evidence.map(e => e.subject).sort()).toEqual(["defi", "market-cap", "tvl"]);
     });
 
     it("returns empty evidence when no source responses are cached", () => {

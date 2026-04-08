@@ -28,14 +28,23 @@ export function computeAvailableEvidence(
     const freshness = Math.max(0, Math.floor((now.getTime() - Date.parse(cached.lastFetchedAt)) / 1000));
     if (freshness > cached.ttlSeconds) continue;
 
-    evidence.push({
-      sourceId: source.id,
-      subject: source.topics[0] ?? source.id,
-      metrics: [...source.domainTags],
-      richness: cached.responseSize,
-      freshness,
-      stale: false,
-    });
+    // Index by all topics and domain tags — not just topics[0]
+    // so gap topic tokens like "bitcoin" match source topics ["crypto", "bitcoin"]
+    const subjects = new Set<string>();
+    for (const t of source.topics) subjects.add(t.toLowerCase());
+    for (const t of source.domainTags) subjects.add(t.toLowerCase());
+    if (subjects.size === 0) subjects.add(source.id);
+
+    for (const subject of subjects) {
+      evidence.push({
+        sourceId: source.id,
+        subject,
+        metrics: [...source.domainTags],
+        richness: cached.responseSize,
+        freshness,
+        stale: false,
+      });
+    }
   }
 
   return evidence.sort((left, right) =>

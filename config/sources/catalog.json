@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-04-07T20:41:14.506Z",
+  "generatedAt": "2026-04-08T05:09:40.034Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -1595,17 +1595,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 52,
+        "testCount": 53,
         "successCount": 0,
-        "consecutiveFailures": 49,
-        "lastTestedAt": "2026-04-07T20:40:57.833Z"
+        "consecutiveFailures": 50,
+        "lastTestedAt": "2026-04-08T05:09:23.378Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "statusChangedAt": "2026-03-31T18:38:15.887Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-07T20:40:57.833Z"
+        "lastFailedAt": "2026-04-08T05:09:23.378Z"
       },
       "adapter": {
         "operation": "lookup"
@@ -1731,17 +1731,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 51,
+        "testCount": 52,
         "successCount": 0,
-        "consecutiveFailures": 48,
-        "lastTestedAt": "2026-04-07T20:40:57.840Z"
+        "consecutiveFailures": 49,
+        "lastTestedAt": "2026-04-08T05:09:23.329Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "statusChangedAt": "2026-03-31T18:38:15.887Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-07T20:40:57.840Z"
+        "lastFailedAt": "2026-04-08T05:09:23.329Z"
       },
       "adapter": {
         "operation": "chart"
@@ -3139,17 +3139,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 38,
+        "testCount": 39,
         "successCount": 0,
-        "consecutiveFailures": 32,
-        "lastTestedAt": "2026-04-07T20:41:14.504Z"
+        "consecutiveFailures": 33,
+        "lastTestedAt": "2026-04-08T05:09:40.033Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "statusChangedAt": "2026-04-06T12:06:52.528Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-07T20:41:14.504Z"
+        "lastFailedAt": "2026-04-08T05:09:40.033Z"
       },
       "adapter": {
         "operation": "fees"
@@ -11086,17 +11086,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 21,
+        "testCount": 22,
         "successCount": 0,
-        "consecutiveFailures": 18,
-        "lastTestedAt": "2026-04-07T20:41:14.506Z"
+        "consecutiveFailures": 19,
+        "lastTestedAt": "2026-04-08T05:09:40.033Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
         "statusChangedAt": "2026-04-07T06:59:58.404Z",
         "promotedAt": "2026-03-21T15:42:39.860Z",
-        "lastFailedAt": "2026-04-07T20:41:14.506Z"
+        "lastFailedAt": "2026-04-08T05:09:40.033Z"
       },
       "id": "mempool-hashrate",
       "name": "mempool-hashrate-3d",
@@ -11430,17 +11430,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 20,
+        "testCount": 21,
         "successCount": 0,
-        "consecutiveFailures": 17,
-        "lastTestedAt": "2026-04-07T20:40:57.832Z"
+        "consecutiveFailures": 18,
+        "lastTestedAt": "2026-04-08T05:09:23.362Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
         "statusChangedAt": "2026-04-07T07:04:34.183Z",
         "promotedAt": "2026-03-21T15:42:39.860Z",
-        "lastFailedAt": "2026-04-07T20:40:57.832Z"
+        "lastFailedAt": "2026-04-08T05:09:23.362Z"
       },
       "id": "deribit-perp-sol",
       "name": "deribit-sol-perpetual",
@@ -12989,17 +12989,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 10,
+        "testCount": 11,
         "successCount": 0,
-        "consecutiveFailures": 7,
-        "lastTestedAt": "2026-04-07T20:40:58.511Z"
+        "consecutiveFailures": 8,
+        "lastTestedAt": "2026-04-08T05:09:23.748Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
         "discoveredBy": "manual",
         "statusChangedAt": "2026-04-07T16:51:22.311Z",
         "promotedAt": "2026-03-21T18:54:34.310Z",
-        "lastFailedAt": "2026-04-07T20:40:58.511Z"
+        "lastFailedAt": "2026-04-08T05:09:23.748Z"
       },
       "adapter": {
         "operation": "stats"
@@ -13730,10 +13730,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 3,
-        "successCount": 3,
+        "testCount": 4,
+        "successCount": 4,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-03-21T18:54:26.846Z"
+        "lastTestedAt": "2026-04-08T05:09:24.142Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
@@ -14667,10 +14667,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 40,
+        "testCount": 41,
         "successCount": 1,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-04-07T20:40:57.507Z"
+        "lastTestedAt": "2026-04-08T05:09:23.330Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-23T20:32:19.644Z",
@@ -14722,10 +14722,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 40,
+        "testCount": 41,
         "successCount": 1,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-04-07T20:40:57.699Z"
+        "lastTestedAt": "2026-04-08T05:09:23.330Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-23T20:40:43.188Z",
@@ -14773,10 +14773,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 40,
+        "testCount": 41,
         "successCount": 1,
         "consecutiveFailures": 0,
-        "lastTestedAt": "2026-04-07T20:40:57.899Z"
+        "lastTestedAt": "2026-04-08T05:09:23.330Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-23T20:57:39.167Z",

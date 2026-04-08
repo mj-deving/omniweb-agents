@@ -64,14 +64,11 @@ describe("available evidence", () => {
       { id: "bad-status", topics: ["macro"], domainTags: ["rates"] },
       { id: "never-fetched", topics: ["solana"], domainTags: ["tps"] },
     ], new Date("2026-03-31T12:00:00.000Z"))).toEqual([
-      {
-        sourceId: "fresh-btc",
-        subject: "bitcoin",
-        metrics: ["hash_rate", "difficulty"],
-        richness: 256,
-        freshness: 300,
-        stale: false,
-      },
+      // Evidence now indexed by all topics + domain tags (Phase 12 fix)
+      // Insertion order: topics first (bitcoin), then domainTags (hash_rate, difficulty)
+      { sourceId: "fresh-btc", subject: "bitcoin", metrics: ["hash_rate", "difficulty"], richness: 256, freshness: 300, stale: false },
+      { sourceId: "fresh-btc", subject: "hash_rate", metrics: ["hash_rate", "difficulty"], richness: 256, freshness: 300, stale: false },
+      { sourceId: "fresh-btc", subject: "difficulty", metrics: ["hash_rate", "difficulty"], richness: 256, freshness: 300, stale: false },
     ]);
   });
 });

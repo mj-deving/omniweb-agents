@@ -2,6 +2,11 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { createTestDb, addPost, type ColonyDatabase } from "../../helpers/colony-test-utils.js";
 import { buildAgentIndex, detectConvergence, type AgentIndexEntry } from "../../../src/toolkit/colony/agent-index.js";
 
+/** Generate a timestamp N hours ago — avoids 24h window flakiness */
+function hoursAgo(h: number): string {
+  return new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
+}
+
 describe("buildAgentIndex", () => {
   let db: ColonyDatabase;
 
@@ -15,9 +20,9 @@ describe("buildAgentIndex", () => {
   });
 
   it("groups posts by author with correct counts", () => {
-    addPost(db, "tx1", "alice", "2026-04-07T01:00:00Z");
-    addPost(db, "tx2", "alice", "2026-04-07T02:00:00Z");
-    addPost(db, "tx3", "bob", "2026-04-07T03:00:00Z");
+    addPost(db, "tx1", "alice", hoursAgo(3));
+    addPost(db, "tx2", "alice", hoursAgo(2));
+    addPost(db, "tx3", "bob", hoursAgo(1));
 
     const index = buildAgentIndex(db);
     expect(index).toHaveLength(2);
@@ -29,18 +34,18 @@ describe("buildAgentIndex", () => {
   });
 
   it("computes avgScore from reaction_cache agrees", () => {
-    addPost(db, "tx1", "alice", "2026-04-07T01:00:00Z");
-    addPost(db, "tx2", "alice", "2026-04-07T02:00:00Z");
+    addPost(db, "tx1", "alice", hoursAgo(3));
+    addPost(db, "tx2", "alice", hoursAgo(2));
 
     // Seed reaction cache
     db.prepare(`
       INSERT INTO reaction_cache (post_tx_hash, agrees, disagrees, tips_count, tips_total_dem, reply_count, last_updated_at)
       VALUES (?, ?, ?, 0, 0, 0, ?)
-    `).run("tx1", 10, 2, "2026-04-07T01:00:00Z");
+    `).run("tx1", 10, 2, hoursAgo(3));
     db.prepare(`
       INSERT INTO reaction_cache (post_tx_hash, agrees, disagrees, tips_count, tips_total_dem, reply_count, last_updated_at)
       VALUES (?, ?, ?, 0, 0, 0, ?)
-    `).run("tx2", 20, 4, "2026-04-07T02:00:00Z");
+    `).run("tx2", 20, 4, hoursAgo(2));
 
     const index = buildAgentIndex(db);
     const alice = index.find((e) => e.address === "alice");
@@ -49,7 +54,7 @@ describe("buildAgentIndex", () => {
   });
 
   it("defaults avgScore to 0 when no reactions", () => {
-    addPost(db, "tx1", "alice", "2026-04-07T01:00:00Z");
+    addPost(db, "tx1", "alice", hoursAgo(3));
     const index = buildAgentIndex(db);
     expect(index[0].avgScore).toBe(0);
   });
@@ -59,7 +64,7 @@ describe("buildAgentIndex", () => {
     db.prepare(`
       INSERT INTO posts (tx_hash, author, block_number, timestamp, tags, text, raw_data)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run("tx1", "alice", 1, "2026-04-07T01:00:00Z", '["defi","ethereum"]', "Test", "{}");
+    `).run("tx1", "alice", 1, hoursAgo(3), '["defi","ethereum"]', "Test", "{}");
 
     const index = buildAgentIndex(db);
     const alice = index.find((e) => e.address === "alice");
@@ -80,9 +85,9 @@ describe("buildAgentIndex", () => {
 describe("detectConvergence", () => {
   it("detects convergence when threshold agents share a topic", () => {
     const agentIndex: AgentIndexEntry[] = [
-      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi", "ai"], lastActiveAt: "2026-04-07T01:00:00Z" },
-      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: "2026-04-07T02:00:00Z" },
-      { address: "a3", postCount: 7, avgScore: 12, recentTopics: ["defi", "macro"], lastActiveAt: "2026-04-07T03:00:00Z" },
+      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi", "ai"], lastActiveAt: hoursAgo(3) },
+      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: hoursAgo(2) },
+      { address: "a3", postCount: 7, avgScore: 12, recentTopics: ["defi", "macro"], lastActiveAt: hoursAgo(1) },
     ];
 
     const result = detectConvergence("defi", agentIndex);
@@ -93,8 +98,8 @@ describe("detectConvergence", () => {
 
   it("returns false when below threshold", () => {
     const agentIndex: AgentIndexEntry[] = [
-      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi"], lastActiveAt: "2026-04-07T01:00:00Z" },
-      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["ai"], lastActiveAt: "2026-04-07T02:00:00Z" },
+      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi"], lastActiveAt: hoursAgo(3) },
+      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["ai"], lastActiveAt: hoursAgo(2) },
     ];
 
     const result = detectConvergence("defi", agentIndex);
@@ -105,8 +110,8 @@ describe("detectConvergence", () => {
 
   it("uses default threshold of 3", () => {
     const agentIndex: AgentIndexEntry[] = [
-      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi"], lastActiveAt: "2026-04-07T01:00:00Z" },
-      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: "2026-04-07T02:00:00Z" },
+      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi"], lastActiveAt: hoursAgo(3) },
+      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: hoursAgo(2) },
     ];
 
     // 2 agents on defi < default threshold 3
@@ -115,8 +120,8 @@ describe("detectConvergence", () => {
 
   it("supports custom threshold", () => {
     const agentIndex: AgentIndexEntry[] = [
-      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi"], lastActiveAt: "2026-04-07T01:00:00Z" },
-      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: "2026-04-07T02:00:00Z" },
+      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["defi"], lastActiveAt: hoursAgo(3) },
+      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: hoursAgo(2) },
     ];
 
     expect(detectConvergence("defi", agentIndex, 2).isConvergent).toBe(true);
@@ -124,9 +129,9 @@ describe("detectConvergence", () => {
 
   it("matches topic case-insensitively", () => {
     const agentIndex: AgentIndexEntry[] = [
-      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["DeFi"], lastActiveAt: "2026-04-07T01:00:00Z" },
-      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: "2026-04-07T02:00:00Z" },
-      { address: "a3", postCount: 7, avgScore: 12, recentTopics: ["DEFI"], lastActiveAt: "2026-04-07T03:00:00Z" },
+      { address: "a1", postCount: 5, avgScore: 10, recentTopics: ["DeFi"], lastActiveAt: hoursAgo(3) },
+      { address: "a2", postCount: 3, avgScore: 8, recentTopics: ["defi"], lastActiveAt: hoursAgo(2) },
+      { address: "a3", postCount: 7, avgScore: 12, recentTopics: ["DEFI"], lastActiveAt: hoursAgo(1) },
     ];
 
     const result = detectConvergence("defi", agentIndex);

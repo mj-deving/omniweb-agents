@@ -144,33 +144,37 @@ export function evaluateEnrichmentRules(
   }
 
   // ── publish_prediction ──────────────────────────
-  // Fires when a betting pool is active with sufficient participation AND price data is available.
+  // Fires when betting pools are active with sufficient participation AND price data is available.
   // Replaces the deprecated ballotAccuracy check (/api/ballot returns 410 — now /api/bets/pool).
   const predictionRule = getRule(config, "publish_prediction");
   const minPoolBets = 3; // Minimum bets in pool to indicate meaningful market signal
-  if (
-    predictionRule
-    && enrichment?.bettingPool
-    && enrichment.bettingPool.totalBets >= minPoolBets
-    && enrichment.prices
-    && enrichment.prices.length > 0
-  ) {
-    const action = createAction(
-      predictionRule,
-      `Publish prediction — ${enrichment.bettingPool.asset} pool active (${enrichment.bettingPool.totalBets} bets, ${enrichment.bettingPool.totalDem} DEM)`,
-      {
-        metadata: {
-          poolAsset: enrichment.bettingPool.asset,
-          totalBets: enrichment.bettingPool.totalBets,
-          totalDem: enrichment.bettingPool.totalDem,
-          roundEnd: enrichment.bettingPool.roundEnd,
-          availableAssets: enrichment.prices.map((p) => p.ticker),
-        },
-      },
-    );
+  const bettingPools = enrichment?.bettingPools?.length
+    ? enrichment.bettingPools
+    : enrichment?.bettingPool
+      ? [enrichment.bettingPool]
+      : [];
 
-    candidates.push({ action, rule: predictionRule.name });
-    considered.push({ action, rule: predictionRule.name });
+  if (predictionRule && enrichment?.prices && enrichment.prices.length > 0) {
+    for (const bettingPool of bettingPools) {
+      if (bettingPool.totalBets < minPoolBets) continue;
+
+      const action = createAction(
+        predictionRule,
+        `Publish prediction — ${bettingPool.asset} pool active (${bettingPool.totalBets} bets, ${bettingPool.totalDem} DEM)`,
+        {
+          metadata: {
+            poolAsset: bettingPool.asset,
+            totalBets: bettingPool.totalBets,
+            totalDem: bettingPool.totalDem,
+            roundEnd: bettingPool.roundEnd,
+            availableAssets: enrichment.prices.map((p) => p.ticker),
+          },
+        },
+      );
+
+      candidates.push({ action, rule: predictionRule.name });
+      considered.push({ action, rule: predictionRule.name });
+    }
   }
 }
 

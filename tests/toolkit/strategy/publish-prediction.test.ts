@@ -82,34 +82,52 @@ function evaluatePredictionRule(
 
 describe("publish_prediction rule", () => {
   const roundEnd = 1_775_648_400_000;
+  const btcPool = makeBettingPool({
+    asset: "BTC",
+    totalBets: 3,
+    totalDem: 15,
+    roundEnd,
+    bets: [
+      {
+        txHash: "0xtx1",
+        bettor: "0xagent-a",
+        predictedPrice: 70_000,
+        amount: 5,
+        roundEnd,
+        horizon: "1h",
+      },
+    ],
+  });
+  const ethPool = makeBettingPool({
+    asset: "ETH",
+    totalBets: 5,
+    totalDem: 22,
+    roundEnd: roundEnd + 60_000,
+    bets: [
+      {
+        txHash: "0xtx2",
+        bettor: "0xagent-b",
+        predictedPrice: 3_400,
+        amount: 8,
+        roundEnd: roundEnd + 60_000,
+        horizon: "1h",
+      },
+    ],
+  });
   const validEnrichment = {
-    bettingPool: makeBettingPool({
-      asset: "BTC",
-      totalBets: 3,
-      totalDem: 15,
-      roundEnd,
-      bets: [
-        {
-          txHash: "0xtx1",
-          bettor: "0xagent-a",
-          predictedPrice: 70_000,
-          amount: 5,
-          roundEnd,
-          horizon: "1h",
-        },
-      ],
-    }),
+    bettingPools: [btcPool, ethPool],
+    bettingPool: btcPool,
     prices: [
       makePriceData({ ticker: "BTC", priceUsd: 66_000, fetchedAt: roundEnd - 60_000 }),
       makePriceData({ ticker: "ETH", priceUsd: 3_200, fetchedAt: roundEnd - 60_000 }),
     ],
   } satisfies NonNullable<DecisionContext["apiEnrichment"]>;
 
-  it("fires when the rule is enabled, the pool has at least 3 bets, and prices are present", () => {
+  it("fires once per qualifying pool when bettingPools are present", () => {
     const { candidates, considered } = evaluatePredictionRule(validEnrichment);
 
-    expect(candidates).toHaveLength(1);
-    expect(considered).toHaveLength(1);
+    expect(candidates).toHaveLength(2);
+    expect(considered).toHaveLength(2);
     expect(candidates[0]).toMatchObject({
       rule: "publish_prediction",
       action: {
@@ -125,14 +143,29 @@ describe("publish_prediction rule", () => {
         },
       },
     });
+    expect(candidates[1]).toMatchObject({
+      rule: "publish_prediction",
+      action: {
+        type: "PUBLISH",
+        priority: 45,
+        reason: "Publish prediction — ETH pool active (5 bets, 22 DEM)",
+        metadata: {
+          poolAsset: "ETH",
+          totalBets: 5,
+          totalDem: 22,
+          roundEnd: roundEnd + 60_000,
+          availableAssets: ["BTC", "ETH"],
+        },
+      },
+    });
   });
 
   it.each([
     ["the rule is disabled", validEnrichment, createConfig(false)],
-    ["bettingPool is missing", { prices: validEnrichment.prices }, createConfig()],
-    ["the pool has fewer than 3 bets", { ...validEnrichment, bettingPool: makeBettingPool({ totalBets: 2, roundEnd }) }, createConfig()],
-    ["prices is missing", { bettingPool: validEnrichment.bettingPool }, createConfig()],
-    ["prices is empty", { bettingPool: validEnrichment.bettingPool, prices: [] }, createConfig()],
+    ["betting pools are missing", { prices: validEnrichment.prices }, createConfig()],
+    ["all pools have fewer than 3 bets", { ...validEnrichment, bettingPools: [makeBettingPool({ totalBets: 2, roundEnd })], bettingPool: undefined }, createConfig()],
+    ["prices is missing", { bettingPools: validEnrichment.bettingPools }, createConfig()],
+    ["prices is empty", { bettingPools: validEnrichment.bettingPools, prices: [] }, createConfig()],
   ])("does not fire when %s", (_label, apiEnrichment, config) => {
     const { candidates, considered } = evaluatePredictionRule(apiEnrichment, config);
 
@@ -140,9 +173,9 @@ describe("publish_prediction rule", () => {
     expect(considered).toEqual([]);
   });
 
-  it("documents the minimal apiEnrichment shape and shows deprecated ballotAccuracy is ignored", () => {
-    const minimalRequiredShape = {
-      bettingPool: validEnrichment.bettingPool,
+  it("falls back to the deprecated bettingPool alias and still ignores ballotAccuracy", () => {
+    const aliasOnlyShape = {
+      bettingPool: btcPool,
       prices: [validEnrichment.prices[0]],
     } satisfies Required<Pick<NonNullable<DecisionContext["apiEnrichment"]>, "bettingPool" | "prices">>;
 
@@ -156,7 +189,7 @@ describe("publish_prediction rule", () => {
       },
     } satisfies NonNullable<DecisionContext["apiEnrichment"]>;
 
-    expect(evaluatePredictionRule(minimalRequiredShape).candidates).toHaveLength(1);
+    expect(evaluatePredictionRule(aliasOnlyShape).candidates).toHaveLength(1);
     expect(evaluatePredictionRule(deprecatedBallotOnly).candidates).toEqual([]);
   });
 });

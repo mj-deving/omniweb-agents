@@ -82,7 +82,9 @@ export interface ApiEnrichmentData {
   prices?: import("../supercolony/types.js").PriceData[];
   /** @deprecated Ballot endpoints return 410. Use bettingPool instead. */
   ballotAccuracy?: import("../supercolony/types.js").BallotAccuracy;
-  /** Active betting pool — replaces deprecated ballotAccuracy for publish_prediction rule. */
+  /** Active betting pools discovered from tracked oracle assets. */
+  bettingPools?: import("../supercolony/types.js").BettingPool[];
+  /** @deprecated Use bettingPools. Retained as the first bettingPools entry for backward compatibility. */
   bettingPool?: import("../supercolony/types.js").BettingPool;
   signals?: import("../supercolony/types.js").SignalData[];
 }

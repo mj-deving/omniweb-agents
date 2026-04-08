@@ -2,7 +2,7 @@ import DatabaseConstructor from "better-sqlite3";
 
 export type ColonyDatabase = InstanceType<typeof DatabaseConstructor>;
 
-export const CURRENT_SCHEMA_VERSION = 8;
+export const CURRENT_SCHEMA_VERSION = 9;
 
 const BASE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS _meta (
@@ -315,6 +315,22 @@ const MIGRATIONS: Record<number, Migration> = {
       );
       CREATE INDEX IF NOT EXISTS idx_bet_tracking_status ON bet_tracking(settlement_status);
       CREATE INDEX IF NOT EXISTS idx_bet_tracking_post ON bet_tracking(post_tx_hash);
+    `);
+  },
+  9: (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS source_lifecycle (
+        source_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL DEFAULT 'quarantined',
+        rating_json TEXT NOT NULL DEFAULT '{}',
+        last_test_at TEXT,
+        test_count INTEGER NOT NULL DEFAULT 0,
+        success_count INTEGER NOT NULL DEFAULT 0,
+        consecutive_failures INTEGER NOT NULL DEFAULT 0,
+        last_transition_at TEXT,
+        transition_history_json TEXT NOT NULL DEFAULT '[]',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `);
   },
 };

@@ -195,9 +195,18 @@ export async function executePublishActions(
     // Dedup guard — check BEFORE generating draft to save LLM call
     // On dedup block (self or colony), attempt topic angle rotation once before skipping
     if (deps.colonyDb && action.type === "PUBLISH") {
+      // Map engine-enrichment divergence metadata to AngleContext shape.
+      // Engine propagates { asset, type, severity, agentDirection, marketDirection } from oracle details.
+      const rawDiv = action.metadata as Record<string, unknown> | undefined;
+      const hasDivergence = rawDiv?.asset && rawDiv?.type;
       const angleCtx: AngleContext = {
-        originalRule: action.metadata?.rule as string ?? "unknown",
-        divergence: action.metadata?.divergence as AngleContext["divergence"],
+        originalRule: action.metadata?.rule as string ?? rawDiv?.type as string ?? "unknown",
+        divergence: hasDivergence ? {
+          asset: rawDiv.asset as string,
+          severity: (rawDiv.severity as string) ?? "unknown",
+          agentDirection: (rawDiv.agentDirection as string) ?? "unknown",
+          marketDirection: (rawDiv.marketDirection as string) ?? "unknown",
+        } : undefined,
       };
 
       const selfDedup = checkSelfDedup(deps.colonyDb, topic, deps.walletAddress);

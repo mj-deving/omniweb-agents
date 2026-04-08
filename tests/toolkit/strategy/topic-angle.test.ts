@@ -63,6 +63,47 @@ describe("generateTopicAngle", () => {
     expect(angle).toBeNull();
   });
 
+  it("handles long topics (50+ words) without error", () => {
+    const longTopic = Array.from({ length: 60 }, (_, i) => `word${i}`).join(" ");
+    const angle = generateTopicAngle(longTopic, {
+      originalRule: "publish_to_gaps",
+    });
+    expect(angle).toBeTruthy();
+    expect(angle).not.toBe(longTopic);
+  });
+
+  it("handles punctuation and special characters gracefully", () => {
+    const angle = generateTopicAngle("Bitcoin's $50K resistance — can it break?", {
+      originalRule: "publish_signal_aligned",
+    });
+    expect(angle).toBeTruthy();
+  });
+
+  it("handles partial divergence object (missing fields)", () => {
+    const angle = generateTopicAngle("Ethereum gas fees", {
+      originalRule: "publish_on_divergence",
+      divergence: {
+        asset: "ETH",
+        severity: "high",
+        agentDirection: "",  // empty string
+        marketDirection: "", // empty string
+      },
+    });
+    // Should still produce output (divergence branch triggers on truthy divergence object)
+    expect(angle).toBeTruthy();
+    expect(angle!.toLowerCase()).toContain("eth");
+  });
+
+  it("produces deterministic output (same input → same output)", () => {
+    const ctx = { originalRule: "publish_signal_aligned" };
+    const results = new Set<string | null>();
+    for (let i = 0; i < 20; i++) {
+      results.add(generateTopicAngle("DeFi lending protocol rates", ctx));
+    }
+    // All 20 calls should produce the same result
+    expect(results.size).toBe(1);
+  });
+
   it("does not repeat the original topic verbatim", () => {
     for (let i = 0; i < 10; i++) {
       const angle = generateTopicAngle("Ethereum staking yields", {

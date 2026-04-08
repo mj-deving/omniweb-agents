@@ -179,6 +179,31 @@ export async function defaultObserve(toolkit: Toolkit, ourAddress: string): Prom
   };
 }
 
+// ── enrichedObserve ─────────────────────────────
+
+/**
+ * Enriched observe() — defaultObserve + API enrichment.
+ * Gives templates access to all 10 strategy rules by populating
+ * apiEnrichment in the DecisionContext. Opt-in via this function.
+ */
+export async function enrichedObserve(toolkit: Toolkit, ourAddress: string): Promise<ObserveResult> {
+  const { fetchApiEnrichment } = await import("./api-enrichment.js");
+
+  const base = await defaultObserve(toolkit, ourAddress);
+  const apiEnrichment = await fetchApiEnrichment(toolkit, undefined, (type, msg, meta) => {
+    // Route enrichment logs to console (templates don't have a structured observer)
+    if (type === "warning") console.warn(`[enrichment] ${msg}`, meta);
+  });
+
+  return {
+    ...base,
+    context: {
+      ...base.context,
+      apiEnrichment,
+    },
+  };
+}
+
 // ── Loop state (rate-limit tracking) ─────────────
 
 /** Mutable loop state — tracks rate limits across iterations. */

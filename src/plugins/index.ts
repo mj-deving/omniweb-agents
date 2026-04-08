@@ -8,7 +8,6 @@
 
 export { createSourcesPlugin, sourcesBeforePublishDraft, sourcesAfterPublishDraft } from "./sources-plugin.js";
 export { createLifecyclePlugin } from "./lifecycle-plugin.js";
-export { createSignalsPlugin } from "./signals-plugin.js";
 export { createPredictionsPlugin } from "./predictions-plugin.js";
 export { createTipsPlugin } from "./tips-plugin.js";
 export { createCalibratePlugin } from "./calibrate-plugin.js";

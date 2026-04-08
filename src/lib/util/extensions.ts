@@ -193,13 +193,7 @@ export async function loadExtensions(deps: LoadExtensionsDeps): Promise<Extensio
         registry.set("observe", {});
         break;
       }
-      case "signals": {
-        const { signalsBeforeSense } = await import("../../plugins/signals-plugin.js");
-        registry.set("signals", {
-          beforeSense: signalsBeforeSense,
-        });
-        break;
-      }
+      case "signals": registry.set("signals", {}); break; // no-op: v3 uses toolkit.intelligence.getSignals()
       case "predictions": {
         const { predictionsBeforeSense, predictionsAfterConfirm } = await import("../../plugins/predictions-plugin.js");
         registry.set("predictions", {

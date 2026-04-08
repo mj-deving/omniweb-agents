@@ -198,7 +198,7 @@ export interface OracleResult {
   assets?: Array<{
     ticker: string;
     postCount: number;
-    price: { usd: number; change24h: number; high24h: number; low24h: number };
+    price: { usd: number; change24h: number; high24h: number; low24h: number; dahrTxHash?: string };
     sentiment?: { direction: string; score: number };
   }>;
   divergences: OracleDivergence[];

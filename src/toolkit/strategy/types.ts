@@ -87,6 +87,12 @@ export interface ApiEnrichmentData {
   /** @deprecated Use bettingPools. Retained as the first bettingPools entry for backward compatibility. */
   bettingPool?: import("../supercolony/types.js").BettingPool;
   signals?: import("../supercolony/types.js").SignalData[];
+  /** Polymarket prediction odds from oracle response */
+  polymarket?: Record<string, unknown>;
+  /** Per-asset sentiment from oracle (colony consensus per ticker) */
+  assetSentiments?: Array<{ ticker: string; direction: string; score: number; posts: number }>;
+  /** DAHR-attested price tx hashes (proof chain for price data) */
+  priceAttestations?: Array<{ ticker: string; dahrTxHash: string }>;
 }
 
 export interface DecisionContext {
@@ -218,6 +224,8 @@ export interface LoopLimitsConfig {
   sseMaxEvents: number;
   /** Leaderboard fetch limit (default: 20) */
   leaderboardLimit: number;
+  /** Oracle time window — "6h", "24h" (default), "7d" */
+  oracleWindow?: string;
   /** Subprocess timeout in ms (default: 180000) */
   subprocessTimeoutMs: number;
   /** Max publish drafts per session — LLM drafting is ~60-90s each (default: 2) */

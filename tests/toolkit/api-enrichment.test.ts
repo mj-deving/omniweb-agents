@@ -196,4 +196,71 @@ describe("fetchApiEnrichment", () => {
 
     expect(getLeaderboard).toHaveBeenCalledWith({ limit: 50 });
   });
+
+  it("passes oracle window parameter from limits config", async () => {
+    const observe = vi.fn();
+    const getOracle = vi.fn().mockResolvedValue({ ok: true, data: VALID_ORACLE });
+    const toolkit = createMockToolkit({ oracle: getOracle });
+
+    await fetchApiEnrichment(toolkit, { oracleWindow: "7d" } as any, observe);
+
+    expect(getOracle).toHaveBeenCalledWith({ window: "7d" });
+  });
+
+  it("extracts polymarket data from oracle response", async () => {
+    const observe = vi.fn();
+    const oracleWithPolymarket = {
+      ...VALID_ORACLE,
+      polymarket: { "btc-100k": { yes: 0.65, no: 0.35 } },
+    };
+    const toolkit = createMockToolkit({
+      oracle: vi.fn().mockResolvedValue({ ok: true, data: oracleWithPolymarket }),
+    });
+
+    const result = await fetchApiEnrichment(toolkit, undefined, observe);
+
+    expect(result?.polymarket).toEqual({ "btc-100k": { yes: 0.65, no: 0.35 } });
+  });
+
+  it("extracts per-asset sentiment from oracle", async () => {
+    const observe = vi.fn();
+    const oracleWithSentiment = {
+      ...VALID_ORACLE,
+      assets: [
+        { ticker: "BTC", postCount: 12, price: { usd: 68000, change24h: 2.1, high24h: 69000, low24h: 67000 }, sentiment: { direction: "bullish", score: 75 } },
+        { ticker: "ETH", postCount: 8, price: { usd: 3400, change24h: 1.4, high24h: 3500, low24h: 3300 } },
+      ],
+      divergences: [],
+    };
+    const toolkit = createMockToolkit({
+      oracle: vi.fn().mockResolvedValue({ ok: true, data: oracleWithSentiment }),
+    });
+
+    const result = await fetchApiEnrichment(toolkit, undefined, observe);
+
+    expect(result?.assetSentiments).toHaveLength(1);
+    expect(result?.assetSentiments?.[0]).toEqual({
+      ticker: "BTC", direction: "bullish", score: 75, posts: 12,
+    });
+  });
+
+  it("extracts price attestation hashes from oracle", async () => {
+    const observe = vi.fn();
+    const oracleWithDahr = {
+      ...VALID_ORACLE,
+      assets: [
+        { ticker: "BTC", postCount: 12, price: { usd: 68000, change24h: 2.1, high24h: 69000, low24h: 67000, dahrTxHash: "0xproof1" } },
+        { ticker: "ETH", postCount: 8, price: { usd: 3400, change24h: 1.4, high24h: 3500, low24h: 3300 } },
+      ],
+      divergences: [],
+    };
+    const toolkit = createMockToolkit({
+      oracle: vi.fn().mockResolvedValue({ ok: true, data: oracleWithDahr }),
+    });
+
+    const result = await fetchApiEnrichment(toolkit, undefined, observe);
+
+    expect(result?.priceAttestations).toHaveLength(1);
+    expect(result?.priceAttestations?.[0]).toEqual({ ticker: "BTC", dahrTxHash: "0xproof1" });
+  });
 });

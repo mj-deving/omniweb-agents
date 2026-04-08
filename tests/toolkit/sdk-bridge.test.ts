@@ -266,6 +266,66 @@ describe("SDK Bridge Adapter", () => {
       const parsed = JSON.parse(decoded);
       expect(parsed.replyTo).toBe("parent-tx-abc");
     });
+
+    it("includes feedRefs when provided (FEED post citations)", async () => {
+      const localTxMock = {
+        store: vi.fn(async () => ({ type: "store" })),
+        confirm: vi.fn(async () => ({
+          response: { data: { transaction: { hash: "feedref-hash" } } },
+        })),
+        broadcast: vi.fn(async () => ({})),
+      };
+
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        localTxMock as any,
+      );
+
+      await bridge.publishHivePost({
+        text: "Based on recent CoinDesk report",
+        category: "ANALYSIS",
+        feedRefs: ["0xfeed1", "0xfeed2"],
+      });
+
+      const storeCall = localTxMock.store.mock.calls[0];
+      const encoded = storeCall[0] as Uint8Array;
+      const decoded = new TextDecoder().decode(encoded.slice(4));
+      const parsed = JSON.parse(decoded);
+      expect(parsed.feedRefs).toEqual(["0xfeed1", "0xfeed2"]);
+    });
+
+    it("omits feedRefs when empty array", async () => {
+      const localTxMock = {
+        store: vi.fn(async () => ({ type: "store" })),
+        confirm: vi.fn(async () => ({
+          response: { data: { transaction: { hash: "no-feedref-hash" } } },
+        })),
+        broadcast: vi.fn(async () => ({})),
+      };
+
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        localTxMock as any,
+      );
+
+      await bridge.publishHivePost({
+        text: "No citations",
+        category: "OBSERVATION",
+        feedRefs: [],
+      });
+
+      const storeCall = localTxMock.store.mock.calls[0];
+      const encoded = storeCall[0] as Uint8Array;
+      const decoded = new TextDecoder().decode(encoded.slice(4));
+      const parsed = JSON.parse(decoded);
+      expect(parsed.feedRefs).toBeUndefined();
+    });
   });
 
   describe("transferDem", () => {

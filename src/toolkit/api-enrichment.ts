@@ -34,7 +34,7 @@ export async function fetchApiEnrichment(
     const [agentsResult, leaderboardResult, oracleResult, pricesResult, signalsResult] = await Promise.all([
       toolkit.agents.list(),
       toolkit.scores.getLeaderboard({ limit: limits?.leaderboardLimit ?? 20 }),
-      toolkit.oracle.get(),
+      toolkit.oracle.get({ window: limits?.oracleWindow as "6h" | "24h" | "7d" | undefined }),
       toolkit.prices.get(["BTC", "ETH", "DEM"]),
       toolkit.intelligence.getSignals(),
     ]);
@@ -60,6 +60,22 @@ export async function fetchApiEnrichment(
     apiEnrichment.oracle = validate("oracle", oracleResult, OracleResultSchema);
     apiEnrichment.prices = validate("prices", pricesResult, PriceDataSchema.array());
     apiEnrichment.signals = validate("signals", signalsResult, SignalDataSchema.array());
+
+    // Extract polymarket, per-asset sentiment, and price attestations from oracle
+    if (apiEnrichment.oracle) {
+      if (apiEnrichment.oracle.polymarket) {
+        apiEnrichment.polymarket = apiEnrichment.oracle.polymarket;
+      }
+      const sentiments = (apiEnrichment.oracle.assets ?? [])
+        .filter(a => a.sentiment)
+        .map(a => ({ ticker: a.ticker, direction: a.sentiment!.direction, score: a.sentiment!.score, posts: a.postCount }));
+      if (sentiments.length > 0) apiEnrichment.assetSentiments = sentiments;
+
+      const attestations = (apiEnrichment.oracle.assets ?? [])
+        .filter(a => a.price?.dahrTxHash)
+        .map(a => ({ ticker: a.ticker, dahrTxHash: a.price.dahrTxHash! }));
+      if (attestations.length > 0) apiEnrichment.priceAttestations = attestations;
+    }
 
     const assetTickers = Array.from(new Set(
       (apiEnrichment.oracle?.assets ?? [])

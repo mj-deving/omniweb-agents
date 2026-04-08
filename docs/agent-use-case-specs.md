@@ -1,20 +1,21 @@
 ---
-summary: "Two new agent use case specs — prediction tracker and research synthesizer. Phase 16b-4."
-read_when: ["use cases", "new agents", "prediction tracker", "research synthesizer", "agent templates"]
+summary: "Three new agent use case specs — prediction tracker, research synthesizer, engagement optimizer. Phase 16b-4."
+read_when: ["use cases", "new agents", "prediction tracker", "research synthesizer", "engagement optimizer", "agent templates"]
 ---
 
 # New Agent Use Cases (Phase 16b-4)
 
-> Selected: **Prediction Tracker** and **Research Synthesizer**
-> Rejected: Engagement Optimizer (too similar to sentinel's engage rules)
+> Three templates selected: **Prediction Tracker**, **Research Synthesizer**, **Engagement Optimizer**
 
 ## Selection Rationale
 
-| Candidate | Untested Primitives | Verdict |
-|-----------|-------------------|---------|
-| Prediction Tracker | ballot.getPool, predictions.markets, prices.get, actions.placeBet | **Selected** — exercises prediction/betting primitives unused by sentinel |
-| Research Synthesizer | External macro sources (FRED, VIX, ECB), cross-domain evidence | **Selected** — exercises macro adapters and non-crypto sources from Phase 15 |
-| Engagement Optimizer | scores.getLeaderboard, actions.tip, actions.react | Rejected — sentinel already exercises engage/tip rules; too much overlap |
+Each template exercises distinct primitives and maps to a different agent type from the SuperColony ecosystem (supercolony.ai/docs). Templates are standalone agents — they are not extensions of the v3-loop sentinel (which is a production testing ground for primitives, not a template).
+
+| Candidate | Primitives Exercised | Verdict |
+|-----------|---------------------|---------|
+| Prediction Tracker | ballot.getPool, predictions.markets, prices.get, actions.placeBet | **Selected** — prediction/betting primitives with zero template coverage |
+| Research Synthesizer | External macro sources (FRED, VIX, ECB), feed.search, cross-domain correlation | **Selected** — macro adapters built in Phase 15 with zero template coverage |
+| Engagement Optimizer | scores.getLeaderboard, actions.tip, actions.react, feed.search, agents.getProfile | **Selected** — engagement-first agent focusing on strategic tipping, quality replies, and community building |
 
 ---
 
@@ -106,9 +107,65 @@ topicWeights:
 
 ---
 
+## Use Case 3: Engagement Optimizer
+
+**Purpose:** Community-building agent that focuses on high-quality engagement — strategic tipping, thoughtful replies, and discovering valuable contributors. Optimizes for score and reputation rather than publishing volume.
+
+**Primitives exercised:**
+- `scores.getLeaderboard()` — identify top contributors and track leaderboard position
+- `agents.list()` + `agents.getProfile()` — discover new agents and assess quality
+- `actions.tip()` — strategic tipping of above-median contributors
+- `actions.react()` — agree/disagree reactions on quality posts
+- `actions.getReactions()` — track reaction patterns across the colony
+- `actions.getTipStats()` + `actions.getAgentTipStats()` — monitor tipping economy
+- `feed.search()` — find high-quality posts to engage with
+- `intelligence.getSignals()` — identify trending discussions worth joining
+
+**Observe function:**
+```
+enrichedObserve (base)
+  + leaderboard position tracking (our rank, movement, distance to next tier)
+  + contributor quality scoring (Bayesian score, post frequency, reaction ratio)
+  + tip economy analysis (who tips whom, ROI on past tips)
+  + engagement opportunity detection (high-quality posts with low reaction count)
+  + reply thread monitoring (active discussions where evidence-backed reply adds value)
+```
+
+**Strategy rules (subset):**
+- `engage_novel_agent` (priority 90): Discover and engage new high-quality agents early
+- `engage_verified` (priority 80): Engage contributors on verified topics
+- `tip_valuable` (priority 75): Strategic tipping — above-median contributors, diminishing returns per agent
+- `reply_with_evidence` (priority 70): Reply in discussions with matching evidence
+- `publish_to_gaps` (priority 40): Occasional publishing (low priority — engagement is the focus)
+
+**Rate limits:**
+- 4 posts/day, 2/hour (publishing is secondary)
+- reactionsPerSession: 10 (higher than other templates — engagement is primary)
+- maxTipAmount: 5 DEM
+
+**Topic weights:**
+```yaml
+topicWeights:
+  community: 1.5
+  quality: 1.3
+  reputation: 1.2
+  defi: 0.8
+  crypto: 0.8
+```
+
+**Key design decisions:**
+- Engagement-first: 70% of actions should be ENGAGE/TIP/REPLY, only 30% PUBLISH
+- Track tip ROI: did tipped agents produce better content afterward? (colony DB metric)
+- Diminishing tip returns: reduce tip amount for agents already tipped recently
+- Leaderboard awareness: adjust strategy based on current position (aggressive if climbing, conservative if at top)
+- Score optimization: target reactions on our posts, not just volume
+
+---
+
 ## Implementation Priority
 
 1. **Prediction Tracker first** — simpler observe function, exercises well-defined API primitives
-2. **Research Synthesizer second** — requires macro adapter integration, more complex evidence building
+2. **Engagement Optimizer second** — straightforward primitives, engagement-focused strategy config
+3. **Research Synthesizer third** — requires macro adapter integration, more complex evidence building
 
-Both templates follow the three-layer stack documented in `.ai/guides/agent-template-guide.md`.
+All templates follow the three-layer stack documented in `.ai/guides/agent-template-guide.md`.

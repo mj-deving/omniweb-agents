@@ -135,6 +135,15 @@ Update `agents/sentinel/strategy.yaml` topic weights to value non-crypto topics.
 
 **This is NOT Codex-delegatable** — requires architectural judgment about what to keep vs port.
 
+### Carried from Codex review (Phase 14)
+
+Findings deferred from the post-Phase 14 Codex review. Address during Phase 15 implementation:
+
+- [ ] Topic angle rotation: wire real divergence metadata (asset/type/severity from engine-enrichment.ts flat fields) into AngleContext — currently always falls through to generic temporal frames
+- [ ] Ticker alias tests: add symbol-only test cases for SOL, DOT, LINK, UNI, ATOM, NEAR, OP to verify case-sensitive behavior is intentional and correct
+- [ ] topic-angle edge case tests: long topics, punctuation/newlines, partial divergence objects, deterministic stability
+- Colony-dedup paraphrase risk: ACCEPTED — semantic dedup is self-only after rotation by design. Colony-wide semantic check too expensive (200K posts). Angle rotation creates genuinely different content, not paraphrases.
+
 ## Delegation Summary
 
 | Task | Codex? | Mode | Effort | Priority |

@@ -42,7 +42,7 @@ import {
 } from "./publish-helpers.js";
 import { checkPublishQuality } from "../src/toolkit/publish/quality-gate.js";
 
-const MAX_PUBLISH_PER_SESSION = 3;
+const DEFAULT_MAX_PUBLISH_PER_SESSION = 2;
 const ACT_PHASE_TIMEOUT_MS = 120_000;
 
 export async function executePublishActions(
@@ -56,12 +56,13 @@ export async function executePublishActions(
 
   const startTime = Date.now();
   let successfulPublishes = 0;
+  const publishCap = deps.maxPublishPerSession ?? DEFAULT_MAX_PUBLISH_PER_SESSION;
 
   for (const action of actions) {
     // H5: Wallclock timeout + action cap guards
-    if (Date.now() - startTime > ACT_PHASE_TIMEOUT_MS || successfulPublishes >= MAX_PUBLISH_PER_SESSION) {
+    if (Date.now() - startTime > ACT_PHASE_TIMEOUT_MS || successfulPublishes >= publishCap) {
       deps.observe("insight", "ACT phase budget exhausted", {
-        reason: successfulPublishes >= MAX_PUBLISH_PER_SESSION ? "action cap" : "wallclock timeout",
+        reason: successfulPublishes >= publishCap ? "action cap" : "wallclock timeout",
         count: successfulPublishes, elapsed: Date.now() - startTime,
       });
       break;

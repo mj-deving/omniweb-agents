@@ -2,35 +2,63 @@ import { describe, it, expect, vi } from "vitest";
 import { fetchApiEnrichment } from "../../src/toolkit/api-enrichment.js";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 
-/** Build a mock toolkit with schema-compliant responses. */
+/** Schema-valid mock data matching Zod schemas in api-schemas.ts */
+const VALID_AGENTS = { agents: [
+  { address: "0x1", name: "alice", postCount: 5 },
+  { address: "0x2", name: "bob", postCount: 3 },
+] };
+
+const VALID_LEADERBOARD = {
+  agents: [{ address: "0x1", name: "alice", bayesianScore: 80, totalPosts: 5, avgScore: 72, topScore: 95, lowScore: 40, lastActiveAt: Date.now() }],
+  count: 1, globalAvg: 60, confidenceThreshold: 40,
+};
+
+const VALID_ORACLE = {
+  overallSentiment: { direction: "neutral", score: 50, agentCount: 5, topAssets: ["BTC", "ETH"] },
+  divergences: [{ type: "agents_vs_market", asset: "BTC", description: "test", severity: "low" as const, details: {} }],
+};
+
+const VALID_PRICES = [
+  { ticker: "BTC", priceUsd: 68000, fetchedAt: Date.now(), source: "coingecko" },
+  { ticker: "ETH", priceUsd: 3400, fetchedAt: Date.now(), source: "coingecko" },
+];
+
+const VALID_SIGNALS = [
+  { topic: "BTC", agentCount: 3, totalAgents: 10, confidence: 75, text: "bullish", trending: true, direction: "bullish", consensus: true },
+];
+
+const VALID_POOL = {
+  asset: "BTC", horizon: "1h", totalBets: 4, totalDem: 20,
+  poolAddress: "0xpool", roundEnd: Date.now() + 3600000,
+  bets: [{ txHash: "0xtx1", bettor: "0xbet1", predictedPrice: 70000, amount: 5, roundEnd: Date.now() + 3600000, horizon: "1h" }],
+};
+
 function createMockToolkit(overrides: Partial<Record<string, (() => Promise<unknown>)>> = {}): Toolkit {
   const ok = <T>(data: T) => Promise.resolve({ ok: true as const, data });
-
   return {
-    agents: { list: overrides.agents ?? (() => ok({ agents: [
-      { address: "0x1", name: "alice", postCount: 5 },
-      { address: "0x2", name: "bob", postCount: 3 },
-    ] })) },
-    scores: { getLeaderboard: overrides.leaderboard ?? (() => ok({
-      agents: [{ address: "0x1", bayesianScore: 80, postCount: 5, avgReactions: 4, avgAgrees: 3, avgDisagrees: 1, name: "alice" }],
-      count: 1, globalAvg: 60, confidenceThreshold: 40,
-    })) },
-    oracle: { get: overrides.oracle ?? (() => ok({ divergences: [], overallSentiment: { direction: "neutral", score: 50, agents: 5 } })) },
-    prices: { get: overrides.prices ?? (() => ok([{ ticker: "BTC", priceUsd: 68000, fetchedAt: Date.now() }])) },
-    intelligence: { getSignals: overrides.signals ?? (() => ok([{ topic: "BTC", agentCount: 3, totalAgents: 10, confidence: 75, text: "bullish", trending: true, direction: "bullish" }])) },
-    ballot: { getPool: overrides.pool ?? (() => ok({ asset: "BTC", totalBets: 4, totalDem: 20, roundEnd: Date.now() + 3600000, bets: [] })) },
+    agents: { list: overrides.agents ?? (() => ok(VALID_AGENTS)) },
+    scores: { getLeaderboard: overrides.leaderboard ?? (() => ok(VALID_LEADERBOARD)) },
+    oracle: { get: overrides.oracle ?? (() => ok(VALID_ORACLE)) },
+    prices: { get: overrides.prices ?? (() => ok(VALID_PRICES)) },
+    intelligence: { getSignals: overrides.signals ?? (() => ok(VALID_SIGNALS)) },
+    ballot: { getPool: overrides.pool ?? (() => ok(VALID_POOL)) },
   } as unknown as Toolkit;
 }
 
 describe("fetchApiEnrichment", () => {
-  it("returns enrichment data with agentCount from API feeds", async () => {
+  it("returns enrichment data from all 6 API feeds with schema-valid payloads", async () => {
     const observe = vi.fn();
     const result = await fetchApiEnrichment(createMockToolkit(), undefined, observe);
 
     expect(result).toBeDefined();
     expect(result!.agentCount).toBe(2);
-    // At minimum, agentCount should always be set if agents.list succeeds
-    // Other fields depend on schema compliance of mock data
+    expect(result!.leaderboard).toMatchObject({ agents: expect.any(Array), count: 1, globalAvg: 60 });
+    expect(result!.oracle).toMatchObject({ divergences: expect.any(Array) });
+    expect(result!.prices).toHaveLength(2);
+    expect(result!.prices![0]).toMatchObject({ ticker: "BTC", priceUsd: 68000 });
+    expect(result!.signals).toHaveLength(1);
+    expect(result!.signals![0]).toMatchObject({ topic: "BTC", consensus: true });
+    expect(result!.bettingPool).toMatchObject({ asset: "BTC", totalBets: 4 });
   });
 
   it("returns partial enrichment when some feeds return ok:false", async () => {
@@ -43,8 +71,28 @@ describe("fetchApiEnrichment", () => {
 
     expect(result).toBeDefined();
     expect(result!.agentCount).toBe(2);
+    expect(result!.leaderboard).toBeDefined();
+    expect(result!.prices).toHaveLength(2);
+    expect(result!.signals).toHaveLength(1);
     expect(result!.oracle).toBeUndefined();
     expect(result!.bettingPool).toBeUndefined();
+  });
+
+  it("drops feeds that fail Zod validation and logs a warning", async () => {
+    const observe = vi.fn();
+    const toolkit = createMockToolkit({
+      // Missing required 'source' field — should fail PriceDataSchema validation
+      prices: () => Promise.resolve({ ok: true, data: [{ ticker: "BTC", priceUsd: 68000 }] }),
+    });
+    const result = await fetchApiEnrichment(toolkit, undefined, observe);
+
+    expect(result).toBeDefined();
+    expect(result!.prices).toBeUndefined();
+    expect(observe).toHaveBeenCalledWith(
+      "warning",
+      expect.stringContaining("prices"),
+      expect.objectContaining({ source: "apiEnrichment" }),
+    );
   });
 
   it("returns undefined when the entire batch throws", async () => {
@@ -80,7 +128,7 @@ describe("fetchApiEnrichment", () => {
 
   it("respects leaderboard limit from config", async () => {
     const observe = vi.fn();
-    const getLeaderboard = vi.fn().mockResolvedValue({ ok: true, data: { agents: [], count: 0, globalAvg: 0, confidenceThreshold: 0 } });
+    const getLeaderboard = vi.fn().mockResolvedValue({ ok: true, data: VALID_LEADERBOARD });
     const toolkit = createMockToolkit({ leaderboard: getLeaderboard });
 
     await fetchApiEnrichment(toolkit, { leaderboardLimit: 50 }, observe);

@@ -392,3 +392,20 @@ export async function runSingleAttestationFallback(
     throw dahrError;
   }
 }
+
+/** Strip API keys and tokens from URLs before writing to logs. */
+export function sanitizeUrlForLog(url: string | undefined): string | undefined {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    for (const key of [...parsed.searchParams.keys()]) {
+      if (/api.?key|token|secret|auth/i.test(key)) {
+        parsed.searchParams.set(key, "[REDACTED]");
+      }
+    }
+    return parsed.toString();
+  } catch {
+    // Not a valid URL — redact the whole thing if it contains key-like patterns
+    return /api.?key|token|secret/i.test(url) ? "[URL redacted — contains sensitive params]" : url;
+  }
+}

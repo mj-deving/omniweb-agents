@@ -2394,6 +2394,72 @@
       }
     },
     {
+      "id": "cboe-vix-daily",
+      "name": "cboe-vix-history",
+      "provider": "cboe",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+      "urlPattern": "cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+      "topics": [
+        "markets",
+        "volatility",
+        "vix"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 512,
+      "note": "Public CBOE VIX daily history CSV. No auth required.",
+      "topicAliases": [],
+      "domainTags": [
+        "markets",
+        "sentiment",
+        "risk"
+      ],
+      "responseFormat": "csv",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel",
+          "crawler"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-08T00:00:00.000Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "vix-csv"
+      }
+    },
+    {
       "id": "generic-3edb7706",
       "name": "reddit-subreddit-top",
       "provider": "generic",
@@ -16412,6 +16478,120 @@
         "discoveredBy": "auto-discovery",
         "statusChangedAt": "2026-03-31T18:39:31.492Z",
         "promotedAt": "2026-03-31T18:39:31.492Z"
+      }
+    },
+    {
+      "id": "ecb-eurusd",
+      "name": "ecb-eurusd",
+      "provider": "ecb",
+      "url": "https://data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?format=jsondata&lastNObservations=1",
+      "urlPattern": "data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?format=jsondata&lastNObservations=1",
+      "topics": [
+        "forex",
+        "economics",
+        "eur-usd"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 64,
+      "topicAliases": [],
+      "domainTags": [
+        "forex",
+        "economics"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "importedFrom": []
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-08T00:00:00.000Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "ecb-jsondata"
+      }
+    },
+    {
+      "id": "ecb-policy-rate",
+      "name": "ecb-policy-rate",
+      "provider": "ecb",
+      "url": "https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.MRR_FR.LEV?format=jsondata&lastNObservations=1",
+      "urlPattern": "data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.MRR_FR.LEV?format=jsondata&lastNObservations=1",
+      "topics": [
+        "economics",
+        "macro",
+        "ecb-rate"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 64,
+      "topicAliases": [],
+      "domainTags": [
+        "economics",
+        "monetary-policy"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "importedFrom": []
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-08T00:00:00.000Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "ecb-jsondata"
       }
     }
   ]

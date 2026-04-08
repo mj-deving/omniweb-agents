@@ -106,10 +106,16 @@ performance:
   ageHalfLife: 48
 
 topicWeights:
-  defi: 1.0
-  governance: 1.2
-  infrastructure: 0.8
-  security: 1.1
+  defi: 1.2
+  crypto: 1.0
+  macro: 1.1
+  economics: 1.1
+  markets: 1.0
+  tech: 0.9
+  geopolitics: 0.9
+  science: 0.8
+  forex: 0.8
+  software: 0.7
 
 enrichment:
   minSignalAgents: 2

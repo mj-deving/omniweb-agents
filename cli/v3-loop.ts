@@ -248,8 +248,11 @@ export async function runV3Loop(
               a.type === "PUBLISH" || a.type === "REPLY" || a.type === "VOTE" || a.type === "BET",
             );
 
-            // Limit publish drafts per session — LLM drafting is slow (~60-90s each)
+            // Pass more candidates than the publish cap to the executor — dedup/source
+            // skips are instant (no LLM cost), so only successful drafts count against
+            // the executor's own MAX_PUBLISH_PER_SESSION limit.
             const maxPublishPerSession = limits?.maxPublishPerSession ?? 2;
+            const maxPublishCandidates = Math.max(maxPublishPerSession * 2, 5);
             const publishActions = allHeavy
               .filter(a => a.type === "PUBLISH")
               .filter(a => {
@@ -262,9 +265,9 @@ export async function runV3Loop(
                 return true;
               });
             const nonPublishHeavy = allHeavy.filter(a => a.type !== "PUBLISH");
-            const cappedPublish = publishActions.slice(0, maxPublishPerSession);
-            if (publishActions.length > maxPublishPerSession) {
-              deps.observe("insight", `Publish cap: ${cappedPublish.length}/${publishActions.length} publish actions (limit ${maxPublishPerSession}/session)`, {
+            const cappedPublish = publishActions.slice(0, maxPublishCandidates);
+            if (publishActions.length > maxPublishCandidates) {
+              deps.observe("insight", `Publish candidates: ${cappedPublish.length}/${publishActions.length} (limit ${maxPublishCandidates}, max publish ${maxPublishPerSession})`, {
                 source: "v3-loop:publishCap", planned: publishActions.length, capped: cappedPublish.length,
               });
             }

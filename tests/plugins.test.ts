@@ -1,5 +1,5 @@
 /**
- * Plugin system tests — validates all 7 FrameworkPlugin implementations.
+ * Plugin system tests — validates all 6 FrameworkPlugin implementations.
  *
  * Covers:
  * - Interface compliance (name, version present on all plugins)
@@ -7,6 +7,8 @@
  * - Sources plugin hook existence and type
  * - Plugin name uniqueness
  * - init() lifecycle
+ *
+ * Note: signals plugin removed (v3 uses toolkit.intelligence.getSignals())
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,7 +18,6 @@ import { createPluginRegistry } from "../src/types.js";
 import {
   createSourcesPlugin,
   createLifecyclePlugin,
-  createSignalsPlugin,
   createPredictionsPlugin,
   createTipsPlugin,
   createCalibratePlugin,
@@ -27,7 +28,6 @@ import {
 const factories: Array<[string, () => FrameworkPlugin]> = [
   ["sources", createSourcesPlugin],
   ["lifecycle", createLifecyclePlugin],
-  ["signals", createSignalsPlugin],
   ["predictions", createPredictionsPlugin],
   ["tips", createTipsPlugin],
   ["calibrate", createCalibratePlugin],
@@ -35,7 +35,7 @@ const factories: Array<[string, () => FrameworkPlugin]> = [
 ];
 
 describe("FrameworkPlugin implementations", () => {
-  // Test 1: All 7 plugins implement FrameworkPlugin interface
+  // Test 1: All 6 plugins implement FrameworkPlugin interface
   it.each(factories)(
     "%s plugin has name and version",
     (_label, factory) => {
@@ -47,27 +47,26 @@ describe("FrameworkPlugin implementations", () => {
     },
   );
 
-  // Test 2: createPluginRegistry registers all 7 plugins successfully
-  it("registers all 7 plugins without error", () => {
+  // Test 2: createPluginRegistry registers all 6 plugins successfully
+  it("registers all 6 plugins without error", () => {
     const registry = createPluginRegistry();
     for (const [, factory] of factories) {
       expect(() => registry.register(factory())).not.toThrow();
     }
-    expect(registry.getAll()).toHaveLength(7);
+    expect(registry.getAll()).toHaveLength(6);
   });
 
-  // Test 3: getAll() returns all 7 plugins
-  it("getAll() returns all 7 plugins", () => {
+  // Test 3: getAll() returns all 6 plugins
+  it("getAll() returns all 6 plugins", () => {
     const registry = createPluginRegistry();
     for (const [, factory] of factories) {
       registry.register(factory());
     }
     const all = registry.getAll();
-    expect(all).toHaveLength(7);
+    expect(all).toHaveLength(6);
     const names = all.map((p) => p.name);
     expect(names).toContain("sources");
     expect(names).toContain("lifecycle");
-    expect(names).toContain("signals");
     expect(names).toContain("predictions");
     expect(names).toContain("tips");
     expect(names).toContain("calibrate");
@@ -135,6 +134,6 @@ describe("FrameworkPlugin implementations", () => {
     const names = factories.map(([, factory]) => factory().name);
     const unique = new Set(names);
     expect(unique.size).toBe(names.length);
-    expect(unique.size).toBe(7);
+    expect(unique.size).toBe(6);
   });
 });

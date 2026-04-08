@@ -22,9 +22,6 @@ export { checkAndRecordWrite, getWriteRateRemaining } from "../src/toolkit/guard
 export { canSpend, recordSpend, defaultSpendingPolicy, createSigningGuard, loadSpendingLedger, saveSpendingLedger } from "../src/lib/spending-policy.js";
 export type { SpendingPolicyConfig, SpendDecision, SigningGuard } from "../src/lib/spending-policy.js";
 
-// Signals — consensus tracking
-export { fetchSignals, scoreSignalAlignment } from "../src/lib/pipeline/signals.js";
-
 // Predictions — calibration, registration
 export { loadPredictions, savePredictions, registerPrediction, resolvePendingPredictions, getCalibrationAdjustment } from "../src/lib/predictions.js";
 

@@ -11,10 +11,6 @@ vi.mock("../src/plugins/calibrate-plugin.js", () => ({
   createCalibrateBeforeSense: vi.fn((runTool: any) => async () => {}),
 }));
 
-vi.mock("../src/plugins/signals-plugin.js", () => ({
-  signalsBeforeSense: vi.fn(async () => {}),
-}));
-
 vi.mock("../src/plugins/predictions-plugin.js", () => ({
   predictionsBeforeSense: vi.fn(async () => {}),
   predictionsAfterConfirm: vi.fn(async () => {}),
@@ -87,11 +83,11 @@ describe("loadExtensions", () => {
     expect(hooks.afterPublishDraft).toBeDefined();
   });
 
-  it("loads signals with beforeSense hook", async () => {
+  it("loads signals with empty hooks (deprecated plugin removed)", async () => {
     const registry = await loadExtensions({ enabledExtensions: ["signals"] });
     expect(registry.size).toBe(1);
     const hooks = registry.get("signals")!;
-    expect(hooks.beforeSense).toBeDefined();
+    expect(hooks.beforeSense).toBeUndefined();
   });
 
   it("loads predictions with beforeSense and afterConfirm hooks", async () => {

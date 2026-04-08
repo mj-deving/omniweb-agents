@@ -16,6 +16,13 @@
 
 import type { SourceRecordV2, SourceStatus } from "./catalog.js";
 import type { SourceTestResult, SourceTestStatus } from "./health.js";
+import type { ColonyDatabase } from "../colony/schema.js";
+import {
+  getLifecycle,
+  recordTestResult,
+  recordTransition,
+  upsertLifecycle,
+} from "../colony/source-lifecycle-store.js";
 
 // ── Constants ────────────────────────────────────────
 
@@ -182,6 +189,41 @@ export function updateRating(
   return { ...source, rating, lifecycle };
 }
 
+export function persistRatingUpdate(
+  db: ColonyDatabase,
+  source: SourceRecordV2,
+  testResult: SourceTestResult,
+): SourceRecordV2 {
+  const updatedSource = updateRating(source, testResult);
+  const current = getLifecycle(db, source.id);
+
+  // recordTestResult only distinguishes pass/fail; the final upsert below
+  // writes the authoritative rating state from updateRating(), including
+  // inconclusive test semantics.
+  recordTestResult(
+    db,
+    source.id,
+    SUCCESS_STATUSES.has(testResult.status),
+    testResult.latencyMs,
+  );
+
+  upsertLifecycle(db, source.id, {
+    status: updatedSource.status,
+    rating: {
+      ...updatedSource.rating,
+      lastResponseMs: testResult.latencyMs,
+    },
+    lastTestAt: updatedSource.rating.lastTestedAt ?? current?.lastTestAt ?? null,
+    testCount: updatedSource.rating.testCount,
+    successCount: updatedSource.rating.successCount,
+    consecutiveFailures: updatedSource.rating.consecutiveFailures,
+    lastTransitionAt: current?.lastTransitionAt ?? null,
+    transitionHistory: current?.transitionHistory ?? [],
+  });
+
+  return updatedSource;
+}
+
 // ── evaluateTransition ───────────────────────────────
 
 /**
@@ -311,6 +353,57 @@ export function evaluateTransition(
     default:
       return noChange(`Unknown status: ${source.status}`);
   }
+}
+
+export function persistTransition(
+  db: ColonyDatabase,
+  source: SourceRecordV2,
+  testResult?: SourceTestResult,
+): TransitionResult {
+  const transition = evaluateTransition(source, testResult);
+
+  if (transition.newStatus !== null) {
+    recordTransition(
+      db,
+      source.id,
+      transition.currentStatus,
+      transition.newStatus,
+      transition.reason,
+    );
+  }
+
+  return transition;
+}
+
+export function loadPersistedLifecycle(
+  db: ColonyDatabase,
+  sourceId: string,
+): Partial<SourceRecordV2> | null {
+  const persisted = getLifecycle(db, sourceId);
+  if (!persisted) {
+    return null;
+  }
+
+  return {
+    id: sourceId,
+    status: persisted.status,
+    rating: {
+      overall: persisted.rating.overall ?? 0,
+      uptime: persisted.rating.uptime ?? 0,
+      relevance: persisted.rating.relevance ?? 0,
+      freshness: persisted.rating.freshness ?? 0,
+      sizeStability: persisted.rating.sizeStability ?? 0,
+      engagement: persisted.rating.engagement ?? 0,
+      trust: persisted.rating.trust ?? 0,
+      lastTestedAt: persisted.rating.lastTestedAt ?? persisted.lastTestAt ?? undefined,
+      testCount: persisted.testCount,
+      successCount: persisted.successCount,
+      consecutiveFailures: persisted.consecutiveFailures,
+    },
+    lifecycle: {
+      statusChangedAt: persisted.lastTransitionAt ?? undefined,
+    } as SourceRecordV2["lifecycle"],
+  } as Partial<SourceRecordV2>;
 }
 
 // ── applyTransitions ─────────────────────────────────

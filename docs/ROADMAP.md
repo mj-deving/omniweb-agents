@@ -292,8 +292,9 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet
 - [ ] 6-disc-i -- ZK identity proofs for privacy-preserving attestation
 - [ ] StorageProgram exploration: SDK structured on-chain storage for HIVE data
+- [ ] HARDEN standalone tool: resurrect V1 HARDEN phase concept (auto-classify findings, propose improvements, LLM-assisted triage) as standalone post-session analysis tool. Code preserved in git history before 15e commit.
 - [ ] ElizaOS adapter: deprecate or remove (0 production consumers)
-- [ ] Remove deprecated signals.ts/signals-plugin.ts (delete when session-runner retires)
+- [ ] Remove deprecated signals.ts/signals-plugin.ts (V1/V2 code removed in 15e, these may now be fully dead)
 
 ---
 

@@ -297,6 +297,7 @@ export async function runV3Loop(
                   logSession: (entry) => appendSessionLog(entry as SessionLogEntry, flags.log),
                   logQuality: (data) => logQualityData(data as QualityDataEntry),
                   spending: { policy: defaultSpendingPolicy({ autonomous: flags.oversight === "autonomous" }), ledger: loadSpendingLedger(address, deps.agentConfig.name) },
+                  maxPublishPerSession,
                 })
               : { executed: [], skipped: [] };
 

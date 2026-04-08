@@ -75,4 +75,6 @@ export interface PublishExecutorDeps {
   logQuality: (data: unknown) => void;
   /** Optional spending guard for VOTE/BET session budget enforcement */
   spending?: { policy: SpendingPolicyConfig; ledger: SpendingLedger };
+  /** Max successful publishes per session (default: 2). Threads configured limit into executor. */
+  maxPublishPerSession?: number;
 }

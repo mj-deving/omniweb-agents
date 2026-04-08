@@ -121,10 +121,10 @@ read_when: ["v3 loop", "capabilities", "lifecycle", "what can the agent do", "pu
 
 | Path | Rule | How it works | Status | Blocker |
 |------|------|-------------|--------|---------|
-| **Gap-fill** | publish_to_gaps | Colony gaps + evidence index match | ⚠️ 0/63 matches | Evidence subjects don't overlap gap topic tokens despite fixes |
-| **Signal-aligned** | publish_signal_aligned | Colony consensus signals + evidence | ⚠️ Dedup blocks | Same signals repeat; all published within 24h |
-| **Divergence** | publish_on_divergence | Oracle price vs agent sentiment mismatch | ⚠️ No source | ARB/XRP sources missing from catalog |
-| **Prediction** | publish_prediction | Betting pool opportunities | ❓ Untested | Never triggered in sessions 84-88 |
+| **Gap-fill** | publish_to_gaps | Colony gaps + evidence index match | ✅ Fixed (Phase 13) | Phrase-key tokenizer + 2-token overlap + richness normalization |
+| **Signal-aligned** | publish_signal_aligned | Colony consensus signals + evidence | ⚠️ Dedup blocks | Same signals repeat; needs topic angle rotation (Phase 14a) |
+| **Divergence** | publish_on_divergence | Oracle price vs agent sentiment mismatch | ✅ Fixed (Phase 13) | 7 CoinGecko asset sources added; 15 more in Phase 14b |
+| **Prediction** | publish_prediction | Betting pool opportunities | ⚠️ Data availability | BTC-only pool fetch; needs multi-asset (Future) |
 | **Reply** | reply_to_mentions, reply_with_evidence | Respond to mentions/discussions | ✅ Working | — |
 
 ## Source System
@@ -167,16 +167,14 @@ read_when: ["v3 loop", "capabilities", "lifecycle", "what can the agent do", "pu
 
 | Gap | Impact | Fix complexity | Codex-delegatable? |
 |-----|--------|---------------|-------------------|
-| publish_to_gaps evidence mismatch | 0 gap-based publishes ever | Medium — evidence index subjects vs gap topic vocabulary | Yes |
-| Signal stagnation → dedup | 0 signal-aligned publishes after first cycle | Medium — topic angle rotation | No (strategy design) |
-| ARB/XRP/SOL sources missing | Divergence publishes fail preflight | Low — add catalog entries | Yes |
-| publish_prediction never triggers | Unknown capability gap | Low — check rule config + test | Yes |
+| ~~publish_to_gaps evidence mismatch~~ | ~~0 gap-based publishes~~ | Fixed (Phase 13a) — phrase-key tokenizer + 2-token overlap | ✅ |
+| Signal stagnation → dedup | 0 signal-aligned publishes after first cycle | Phase 14a — topic angle rotation in publish-executor.ts | No (strategy design) |
+| ~~ARB/XRP/SOL sources missing~~ | ~~Divergence fails preflight~~ | Fixed (Phase 13b) — 7 CoinGecko sources, 15 more in 14b | ✅ |
+| ~~publish_prediction never triggers~~ | ~~Unknown capability gap~~ | Diagnosed (Phase 13c) — BTC-only pool fetch, needs multi-asset | Partial |
 | Lifecycle persistence fire-and-forget | Ratings reset each session | Medium — needs source registry DB | Partially |
-| Legacy signals.ts broken API shape | Noise in logs | Done — deprecated |
-| publish_to_gaps threshold=95 vs richness=responseSize | Richness is byte count, not 0-100 | **Critical** — see below |
+| ~~Legacy signals.ts broken API shape~~ | ~~Noise in logs~~ | Done — deprecated | ✅ |
+| ~~Richness byte/score mismatch~~ | ~~Filter was no-op~~ | Fixed (Phase 13d) — log-scale normalization, Math.round | ✅ |
 
-## CRITICAL: Richness Mismatch
+## FIXED: Richness Normalization (Phase 13d)
 
-In `available-evidence.ts` line 36: `richness: cached.responseSize` — richness is the **response byte count** (e.g., 256, 1024, 5000). But in `engine.ts` the filter is `item.richness > adjustedRichnessThreshold` where threshold is capped at 95. A 96-byte response passes but a topic with rich 5000-byte evidence also passes. This means richness filtering is effectively disabled since almost all responses are >95 bytes. The threshold was designed for a 0-100 scale but receives byte counts.
-
-This may actually HELP publish_to_gaps work — the threshold doesn't block. But the "0/63 no evidence" means the evidence index has no entries whose subjects match gap topic tokens at all.
+Richness now uses log-scale normalization (bytes → 0-95 score) with `Math.round` (neutral rounding). `MIN_PUBLISH_EVIDENCE_RICHNESS=50` (~350+ bytes). The filter uses `>=` (inclusive). Evidence below the threshold is properly rejected.

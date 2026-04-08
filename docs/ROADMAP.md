@@ -227,16 +227,43 @@ The strategy engine has 10 rules, but the agent-loop path (`defaultObserve()`) r
 **Dead config values (loaded but never used):** `enrichment.divergenceThreshold`, `enrichment.minBallotAccuracy`, `rateLimits.disagreesPerCycle`. `limits.maxPublishPerSession` is loaded but v3-loop already injects it separately at `v3-loop.ts:219`.
 
 **Batch 2 (fixes — v3-loop focus, informed by Batch 1 diagnostics):**
-- [ ] 13d -- Fix richness semantics: `richness = cached.responseSize` (bytes) but threshold designed for 0-100. Normalize or adjust constants. Affects evidence filtering in v3-loop SENSE path.
-- [ ] 13e -- Catalog coverage matrix: cross-reference 232 sources against top 50 crypto assets + colony gap topics. Map coverage holes. Unblocks divergence + gap publish paths.
-- [ ] 13f -- E2E publish path integration test: exercise v3-loop pipeline (strategy → LLM draft → match → attest → publish). Mock LLM/SDK, real engine/dedup/evidence.
-- [ ] 13h -- Clean dead config: remove unused `divergenceThreshold`, `minBallotAccuracy`, `disagreesPerCycle` from config-loader + strategy.yaml. Reduces config confusion.
+- [x] 13d -- Richness normalization: log-scale (bytes → 0-95 score). Math.round (neutral rounding, Codex review fix). MIN_PUBLISH_EVIDENCE_RICHNESS=50. Filter now functional.
+- [x] 13e -- Catalog coverage matrix: `docs/catalog-coverage-matrix.md`. 10/50 top assets have multi-provider coverage, 36/50 have 0 sources.
+- [x] 13f -- E2E publish path integration test: all 4 publish paths verified in single test (`tests/cli/publish-path-e2e.test.ts`).
+- [x] 13h -- Dead config cleanup: removed divergenceThreshold, minBallotAccuracy, disagreesPerCycle from types/loader/yaml/bridge/template.
 
-**Critical finding:** richness = byte count (256, 5000) but threshold = 50-95 (designed for 0-100). Filtering effectively disabled.
+**Codex review fixes (post-Phase 13):**
+- [x] Richness: Math.ceil → Math.round (neutral rounding, no upward bias)
+- [x] Evidence matching: single-token overlap → 2+ token overlap (prevents false-positive matches via generic terms)
+
+### Phase 14: Publish Reliability — Topic Rotation + Coverage
+
+> Goal: Sessions 89-92 consistently publish 1-2 posts across multiple paths.
+> Builds on Phase 13 fixes (evidence matching, richness normalization, source coverage).
+
+**14a — Topic angle rotation (strategy design + implementation):**
+Post-dedup rotation in publish-executor.ts. When self-dedup blocks a signal-aligned publish, generate an alternative angle using existing vocabulary (expandTopic, expandTopicToDomains, oracle divergences, temporal framing). No LLM needed for angle generation — only for the draft step which already receives topic as input. Retry once with angled topic.
+- [ ] 14a-1: Angle generation function in toolkit/strategy/ (pure, no side effects)
+- [ ] 14a-2: Post-dedup retry logic in publish-executor.ts
+- [ ] 14a-3: Tests for angle generation + dedup retry flow
+- [ ] 14a-4: Integration with existing expandTopic() vocabulary
+
+**14b — Expand catalog: 15 more top-50 assets (Codex-delegatable):**
+Add CoinGecko simple/price sources for: BNB, ADA, DOGE, TRX, SHIB, TON, SUI, NEAR, APT, HBAR, BCH, ICP, FIL, RENDER, UNI. Same format as existing entries. Status: quarantined. Unblocks divergence publishes for more assets.
+- [ ] 14b: Add 15 CoinGecko asset sources to catalog.json
+
+**14c — Agent-loop enrichment bridge (medium-large):**
+Wire apiEnrichment into defaultObserve() using executor injection pattern (ADR-0019). Extract fetchApiEnrichment() to shared toolkit location (ADR-0002 boundary compliance). Templates opt-in to enrichment at startup. Unblocks 8/10 rules for template-based agents.
+- [ ] 14c-1: Extract fetchApiEnrichment to toolkit/
+- [ ] 14c-2: Add enrichment to ObserveResult type
+- [ ] 14c-3: Create enrichedObserve() with injected enrichment function
+- [ ] 14c-4: Tests for enriched observe path
+
+**14d — Live endurance sessions 89-92 (automated + manual review):**
+Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, which paths fire, evidence quality, richness filtering, dedup behavior. Target: 2/4 sessions publish 1+ post, 2+ different paths fire.
+- [ ] 14d: Run sessions 89-92, document results
 
 ### Future (no phase assigned)
-
-- [ ] Topic angle rotation: when signal topics are dedup-blocked, generate sub-topics or alternative angles. Prevents 0-post sessions when signals stagnate. Needs strategy design (not Codex-delegatable).
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet
 - [ ] 6-disc-i -- ZK identity proofs for privacy-preserving attestation
 - [ ] StorageProgram exploration: SDK structured on-chain storage for HIVE data
@@ -246,7 +273,7 @@ The strategy engine has 10 rules, but the agent-loop path (`defaultObserve()`) r
 - [ ] Multi-asset pool fetch: SENSE hardcodes `getPool({ asset: "BTC" })` — fetch pools for top assets to unblock publish_prediction for non-BTC pools
 - [ ] Macro source coverage: FRED (API key), VIX (auth), ECB (non-JSON adapter)
 - [ ] Source registry as DB: catalog.json → colony DB for runtime query
-- [ ] Agent-loop enrichment bridge: defaultObserve() returns empty evidence/apiEnrichment — templates limited to 2/10 rules. Wire toolkit.intelligence + toolkit.oracle into observe path so agent-loop templates can reach all strategy rules.
+
 - [ ] ElizaOS adapter: deprecate or remove (0 production consumers)
 - [ ] Remove deprecated signals.ts/signals-plugin.ts (delete when session-runner retires)
 

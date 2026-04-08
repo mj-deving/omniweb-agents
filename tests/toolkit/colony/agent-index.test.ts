@@ -73,12 +73,14 @@ describe("buildAgentIndex", () => {
   });
 
   it("includes lastActiveAt as the latest timestamp", () => {
-    addPost(db, "tx1", "alice", "2026-04-06T01:00:00Z");
-    addPost(db, "tx2", "alice", "2026-04-07T12:00:00Z");
+    const earlier = hoursAgo(6);
+    const later = hoursAgo(2);
+    addPost(db, "tx1", "alice", earlier);
+    addPost(db, "tx2", "alice", later);
 
     const index = buildAgentIndex(db);
     const alice = index.find((e) => e.address === "alice");
-    expect(alice?.lastActiveAt).toBe("2026-04-07T12:00:00Z");
+    expect(alice?.lastActiveAt).toBe(later);
   });
 });
 

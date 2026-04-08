@@ -134,6 +134,8 @@ export function evaluateEnrichmentRules(
             severity: div.severity,
             description: div.description,
             agentConfidence: div.details?.agentConfidence,
+            agentDirection: div.details?.agentDirection,
+            marketDirection: div.details?.marketDirection,
           },
         },
       );

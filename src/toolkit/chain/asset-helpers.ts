@@ -68,9 +68,11 @@ export function inferMacroEntity(text: string): Record<string, string> | null {
 }
 
 export function inferAssetAlias(topic: string): { asset: string; symbol: string } | null {
-  const normalized = topic.toLowerCase();
+  const lower = topic.toLowerCase();
   for (const [rx, asset, symbol] of ASSET_MAP) {
-    if (rx.test(normalized)) return { asset, symbol };
+    // Test against original text first (preserves case for case-sensitive tickers like SOL, DOT, LINK),
+    // then against lowercase for case-insensitive patterns (bitcoin, ethereum, etc.)
+    if (rx.test(topic) || rx.test(lower)) return { asset, symbol };
   }
   return null;
 }

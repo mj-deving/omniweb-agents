@@ -14,14 +14,7 @@ import {
 import type { AgentConfig } from "../src/lib/agent-config.js";
 import type { AgentSourceView } from "../src/lib/sources/catalog.js";
 import type { ApiEnrichmentData, LoopLimitsConfig } from "../src/toolkit/strategy/types.js";
-import {
-  LeaderboardResultSchema,
-  OracleResultSchema,
-  PriceDataSchema,
-  SignalDataSchema,
-  BettingPoolSchema,
-  AgentListSchema,
-} from "../src/toolkit/supercolony/api-schemas.js";
+import { fetchApiEnrichment as fetchApiEnrichmentShared } from "../src/toolkit/api-enrichment.js";
 import type { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";
 import type { AutoDataSource } from "../src/toolkit/data-source.js";
 import type { Toolkit } from "../src/toolkit/primitives/index.js";
@@ -267,51 +260,11 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
 }
 
 /** Fetch API enrichment data from all toolkit endpoints. Returns undefined on total failure. */
+/** Delegate to shared toolkit module — thin wrapper preserving the v3-loop observe source tag. */
 async function fetchApiEnrichment(
   toolkit: Toolkit,
   limits: LoopLimitsConfig | undefined,
   observe: (type: string, msg: string, meta?: Record<string, unknown>) => void,
 ): Promise<ApiEnrichmentData | undefined> {
-  try {
-    const [agentsResult, leaderboardResult, oracleResult, pricesResult, signalsResult, bettingPoolResult] = await Promise.all([
-      toolkit.agents.list(),
-      toolkit.scores.getLeaderboard({ limit: limits?.leaderboardLimit ?? 20 }),
-      toolkit.oracle.get(),
-      toolkit.prices.get(["BTC", "ETH", "DEM"]),
-      toolkit.intelligence.getSignals(),
-      toolkit.ballot.getPool({ asset: "BTC" }),
-    ]);
-
-    const apiEnrichment: ApiEnrichmentData = {};
-
-    const validate = <T>(name: string, raw: { ok: true; data: unknown } | { ok: false; [k: string]: unknown } | null, schema: { safeParse: (d: unknown) => { success: boolean; data?: T; error?: { message: string } } }): T | undefined => {
-      if (!raw || !raw.ok) return undefined;
-      const r = schema.safeParse(raw.data);
-      if (r.success) return r.data as T;
-      observe("warning", `API schema validation failed: ${name}`, { source: "v3-loop:enrichment", error: r.error?.message }); return undefined;
-    };
-
-    const agentList = validate("agents", agentsResult, AgentListSchema);
-    if (agentList) apiEnrichment.agentCount = agentList.agents.length;
-
-    apiEnrichment.leaderboard = validate("leaderboard", leaderboardResult, LeaderboardResultSchema);
-    apiEnrichment.oracle = validate("oracle", oracleResult, OracleResultSchema);
-    apiEnrichment.prices = validate("prices", pricesResult, PriceDataSchema.array());
-    apiEnrichment.bettingPool = validate("bettingPool", bettingPoolResult, BettingPoolSchema);
-    apiEnrichment.signals = validate("signals", signalsResult, SignalDataSchema.array());
-
-    const enrichmentKeys = Object.keys(apiEnrichment);
-    if (enrichmentKeys.length > 0) {
-      observe("insight", `API enrichment: ${enrichmentKeys.length} feeds (${enrichmentKeys.join(", ")})`, {
-        source: "v3-loop:apiEnrichment",
-        feeds: enrichmentKeys,
-      });
-    }
-
-    return apiEnrichment;
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    observe("warning", `API enrichment batch failed (non-fatal): ${msg}`, { source: "v3-loop:apiEnrichment" });
-    return undefined;
-  }
+  return fetchApiEnrichmentShared(toolkit, limits, observe);
 }

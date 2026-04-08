@@ -74,10 +74,11 @@ describe("selectSourceForTopicV2", () => {
     });
 
     const view = makeView([thin, rich]);
-    const result = selectSourceForTopicV2("bitcoin", view, "DAHR");
+    const result = selectSourceForTopicV2("bitcoin", view, "DAHR", 5);
 
-    expect(result).not.toBeNull();
-    expect(result!.source.id).toBe("rich-2kb");
+    expect(result).toHaveLength(2);
+    expect(result[0].source.id).toBe("rich-2kb");
+    expect(result[1].source.id).toBe("thin-1kb");
   });
 
   it("prefers smaller response sources for TLSN when scores tie", () => {
@@ -95,10 +96,11 @@ describe("selectSourceForTopicV2", () => {
     });
 
     const view = makeView([thin, rich]);
-    const result = selectSourceForTopicV2("bitcoin", view, "TLSN");
+    const result = selectSourceForTopicV2("bitcoin", view, "TLSN", 5);
 
-    expect(result).not.toBeNull();
-    expect(result!.source.id).toBe("thin-1kb");
+    expect(result).toHaveLength(2);
+    expect(result[0].source.id).toBe("thin-1kb");
+    expect(result[1].source.id).toBe("rich-2kb");
   });
 
   it("DAHR tiebreak prefers larger response (richer evidence) without changing scores", () => {
@@ -116,11 +118,11 @@ describe("selectSourceForTopicV2", () => {
     });
 
     const view = makeView([tiny, medium]);
-    const result = selectSourceForTopicV2("bitcoin", view, "DAHR");
+    const result = selectSourceForTopicV2("bitcoin", view, "DAHR", 5);
 
     // Same base score, DAHR tiebreak prefers larger
-    expect(result).not.toBeNull();
-    expect(result!.source.id).toBe("medium");
+    expect(result[0].source.id).toBe("medium");
+    expect(result[1].source.id).toBe("tiny");
   });
 
   it("TLSN gives small response bonus that DAHR does not", () => {
@@ -140,13 +142,39 @@ describe("selectSourceForTopicV2", () => {
     });
 
     const viewTlsn = makeView([small, large]);
-    const resultTlsn = selectSourceForTopicV2("bitcoin", viewTlsn, "TLSN");
+    const resultTlsn = selectSourceForTopicV2("bitcoin", viewTlsn, "TLSN", 5);
     // TLSN: small gets +1 bonus → wins on score
-    expect(resultTlsn!.source.id).toBe("small");
+    expect(resultTlsn[0].source.id).toBe("small");
 
     const viewDahr = makeView([small, large]);
-    const resultDahr = selectSourceForTopicV2("bitcoin", viewDahr, "DAHR");
+    const resultDahr = selectSourceForTopicV2("bitcoin", viewDahr, "DAHR", 5);
     // DAHR: no bonus, tiebreak prefers larger
-    expect(resultDahr!.source.id).toBe("large");
+    expect(resultDahr[0].source.id).toBe("large");
+  });
+
+  it("returns a ranked array capped to the requested size", () => {
+    const top = makeSource({
+      id: "top",
+      name: "bitcoin top market feed",
+      topics: ["bitcoin", "market", "price"],
+      domainTags: ["market"],
+    });
+    const middle = makeSource({
+      id: "middle",
+      name: "bitcoin market feed",
+      topics: ["bitcoin", "market"],
+    });
+    const lower = makeSource({
+      id: "lower",
+      name: "bitcoin feed",
+      topics: ["bitcoin"],
+    });
+
+    const view = makeView([lower, middle, top]);
+    const result = selectSourceForTopicV2("bitcoin market price", view, "DAHR", 2);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((entry) => entry.source.id)).toEqual(["top", "middle"]);
+    expect(result[0].score).toBeGreaterThan(result[1].score);
   });
 });

@@ -180,9 +180,9 @@ export async function executePublishActions(
     const originalTopic = getActionTopic(action);
     let topic = originalTopic;
     const replyContext = buildReplyContext(action, deps.colonyDb);
-    const initialSource = resolveSourceForAction(action, deps.sourceView, deps.agentConfig);
+    const initialSources = resolveSourceForAction(action, deps.sourceView, deps.agentConfig);
 
-    if (!initialSource) {
+    if (initialSources.length === 0) {
       deps.observe("insight", `Publish action skipped: no source for "${topic}"`, {
         actionType: action.type,
         topic,
@@ -251,9 +251,38 @@ export async function executePublishActions(
 
     // --- Step 1: LLM generation (H8: per-step error recovery) ---
     let prefetched: Awaited<ReturnType<typeof prefetchSourceData>>;
+    let selectedPrefetchSource: ResolvedActionSource | null = null;
     let draft: Awaited<ReturnType<typeof generatePost>>;
     try {
-      prefetched = await prefetchSourceData(initialSource, deps);
+      prefetched = { fetchAttempted: false, fetchSucceeded: true };
+      for (const [index, candidateSource] of initialSources.entries()) {
+        const candidatePrefetch = await prefetchSourceData(candidateSource, deps);
+        if (candidatePrefetch.fetchAttempted && !candidatePrefetch.fetchSucceeded) {
+          const nextSource = initialSources[index + 1];
+          if (nextSource) {
+            deps.observe("warning", `Source fallback: ${candidateSource.sourceName} failed, trying ${nextSource.sourceName}`, {
+              actionType: action.type,
+              topic,
+              failedSource: candidateSource.source.id,
+              nextSource: nextSource.source.id,
+            });
+          }
+          continue;
+        }
+        prefetched = candidatePrefetch;
+        selectedPrefetchSource = candidateSource;
+        break;
+      }
+
+      if (!selectedPrefetchSource) {
+        deps.observe("insight", `Publish skipped: all resolved sources failed for "${topic}"`, {
+          actionType: action.type,
+          topic,
+          sourcesTried: initialSources.map((source) => source.source.id),
+        });
+        result.skipped.push({ action, reason: "all resolved sources failed during prefetch" });
+        continue;
+      }
 
       draft = await generatePost(
         {
@@ -342,7 +371,7 @@ export async function executePublishActions(
 
     const resolvedSource: ResolvedActionSource = {
       source: preflightResult.candidates.find((candidate) => candidate.sourceId === matchResult.best!.sourceId)?.source
-        ?? initialSource.source,
+        ?? selectedPrefetchSource.source,
       url: matchResult.best.url,
       method: matchResult.best.method,
       sourceName: matchResult.best.sourceId,

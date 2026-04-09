@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-04-08T08:08:32.403Z",
+  "generatedAt": "2026-04-08T13:16:52.281Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -1391,7 +1391,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "degraded",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1400,16 +1400,16 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
+        "testCount": 8,
         "successCount": 0,
         "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-14T20:22:58.326Z"
+        "lastTestedAt": "2026-04-08T13:16:35.716Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "lastFailedAt": "2026-03-14T20:22:58.326Z",
-        "statusChangedAt": "2026-03-14T20:23:18.598Z"
+        "statusChangedAt": "2026-04-08T13:13:42.738Z"
       }
     },
     {
@@ -1522,7 +1522,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "degraded",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1531,16 +1531,16 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
+        "testCount": 8,
         "successCount": 0,
         "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-14T20:22:59.307Z"
+        "lastTestedAt": "2026-04-08T13:16:35.717Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "lastFailedAt": "2026-03-14T20:22:59.307Z",
-        "statusChangedAt": "2026-03-14T20:23:18.598Z"
+        "statusChangedAt": "2026-04-08T13:13:42.738Z"
       }
     },
     {
@@ -1595,17 +1595,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 59,
+        "testCount": 64,
         "successCount": 0,
-        "consecutiveFailures": 56,
-        "lastTestedAt": "2026-04-08T08:08:15.726Z"
+        "consecutiveFailures": 61,
+        "lastTestedAt": "2026-04-08T13:16:35.660Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "statusChangedAt": "2026-03-31T18:38:15.887Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-08T08:08:15.726Z"
+        "lastFailedAt": "2026-04-08T13:16:35.660Z"
       },
       "adapter": {
         "operation": "lookup"
@@ -1731,17 +1731,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 58,
+        "testCount": 63,
         "successCount": 0,
-        "consecutiveFailures": 55,
-        "lastTestedAt": "2026-04-08T08:08:15.655Z"
+        "consecutiveFailures": 60,
+        "lastTestedAt": "2026-04-08T13:16:35.715Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "statusChangedAt": "2026-03-31T18:38:15.887Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-08T08:08:15.655Z"
+        "lastFailedAt": "2026-04-08T13:16:35.715Z"
       },
       "adapter": {
         "operation": "chart"
@@ -2066,13 +2066,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
+        "testCount": 1,
         "successCount": 0,
-        "consecutiveFailures": 0
+        "consecutiveFailures": 1,
+        "lastTestedAt": "2026-04-08T13:00:30.626Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T00:00:00.000Z",
-        "discoveredBy": "manual"
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-04-08T13:00:30.626Z"
       },
       "adapter": {
         "operation": "fred-observation"
@@ -2129,13 +2131,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
+        "testCount": 1,
         "successCount": 0,
-        "consecutiveFailures": 0
+        "consecutiveFailures": 1,
+        "lastTestedAt": "2026-04-08T13:00:30.628Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T00:00:00.000Z",
-        "discoveredBy": "manual"
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-04-08T13:00:30.628Z"
       },
       "adapter": {
         "operation": "fred-observation"
@@ -2192,13 +2196,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
+        "testCount": 1,
         "successCount": 0,
-        "consecutiveFailures": 0
+        "consecutiveFailures": 1,
+        "lastTestedAt": "2026-04-08T13:00:30.693Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T00:00:00.000Z",
-        "discoveredBy": "manual"
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-04-08T13:00:30.693Z"
       },
       "adapter": {
         "operation": "fred-observation"
@@ -2255,13 +2261,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
+        "testCount": 1,
         "successCount": 0,
-        "consecutiveFailures": 0
+        "consecutiveFailures": 1,
+        "lastTestedAt": "2026-04-08T13:00:35.252Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T00:00:00.000Z",
-        "discoveredBy": "manual"
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-04-08T13:00:35.252Z"
       },
       "adapter": {
         "operation": "fred-observation"
@@ -2318,13 +2326,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
+        "testCount": 1,
         "successCount": 0,
-        "consecutiveFailures": 0
+        "consecutiveFailures": 1,
+        "lastTestedAt": "2026-04-08T13:00:34.693Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T00:00:00.000Z",
-        "discoveredBy": "manual"
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-04-08T13:00:34.693Z"
       },
       "adapter": {
         "operation": "fred-observation"
@@ -2381,13 +2391,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 0,
+        "testCount": 1,
         "successCount": 0,
-        "consecutiveFailures": 0
+        "consecutiveFailures": 1,
+        "lastTestedAt": "2026-04-08T13:13:27.798Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T00:00:00.000Z",
-        "discoveredBy": "manual"
+        "discoveredBy": "manual",
+        "lastFailedAt": "2026-04-08T13:13:27.798Z"
       },
       "adapter": {
         "operation": "fred-observation"
@@ -3583,17 +3595,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 45,
+        "testCount": 50,
         "successCount": 0,
-        "consecutiveFailures": 39,
-        "lastTestedAt": "2026-04-08T08:08:32.400Z"
+        "consecutiveFailures": 44,
+        "lastTestedAt": "2026-04-08T13:16:52.281Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "statusChangedAt": "2026-04-06T12:06:52.528Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-08T08:08:32.400Z"
+        "lastFailedAt": "2026-04-08T13:16:52.281Z"
       },
       "adapter": {
         "operation": "fees"
@@ -10273,10 +10285,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
-        "successCount": 0,
-        "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-21T15:42:21.550Z"
+        "testCount": 6,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:13:28.327Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:50:00.000Z",
@@ -10340,10 +10352,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
-        "successCount": 0,
-        "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-21T15:42:22.051Z"
+        "testCount": 6,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:14:33.756Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:50:00.000Z",
@@ -11461,10 +11473,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
-        "successCount": 0,
-        "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-21T18:53:49.359Z"
+        "testCount": 6,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:14:33.758Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
@@ -11530,17 +11542,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 28,
+        "testCount": 33,
         "successCount": 0,
-        "consecutiveFailures": 25,
-        "lastTestedAt": "2026-04-08T08:08:32.402Z"
+        "consecutiveFailures": 30,
+        "lastTestedAt": "2026-04-08T13:16:52.281Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
         "statusChangedAt": "2026-04-07T06:59:58.404Z",
         "promotedAt": "2026-03-21T15:42:39.860Z",
-        "lastFailedAt": "2026-04-08T08:08:32.402Z"
+        "lastFailedAt": "2026-04-08T13:16:52.281Z"
       },
       "id": "mempool-hashrate",
       "name": "mempool-hashrate-3d",
@@ -11874,17 +11886,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 27,
+        "testCount": 32,
         "successCount": 0,
-        "consecutiveFailures": 24,
-        "lastTestedAt": "2026-04-08T08:08:15.670Z"
+        "consecutiveFailures": 29,
+        "lastTestedAt": "2026-04-08T13:16:35.568Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
         "statusChangedAt": "2026-04-07T07:04:34.183Z",
         "promotedAt": "2026-03-21T15:42:39.860Z",
-        "lastFailedAt": "2026-04-08T08:08:15.670Z"
+        "lastFailedAt": "2026-04-08T13:16:35.568Z"
       },
       "id": "deribit-perp-sol",
       "name": "deribit-sol-perpetual",
@@ -12642,10 +12654,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
-        "successCount": 0,
-        "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-21T18:55:06.196Z"
+        "testCount": 6,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:14:34.154Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
@@ -12707,10 +12719,10 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
-        "successCount": 0,
-        "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-21T18:55:06.397Z"
+        "testCount": 6,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:14:33.996Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
@@ -12763,7 +12775,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "active",
+      "status": "degraded",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -12772,16 +12784,16 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 5,
-        "successCount": 0,
-        "consecutiveFailures": 5,
-        "lastTestedAt": "2026-03-21T18:55:06.599Z"
+        "testCount": 7,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:16:36.064Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
         "discoveredBy": "manual",
-        "lastFailedAt": "2026-03-21T18:55:06.599Z",
-        "statusChangedAt": "2026-03-21T18:55:10.187Z"
+        "lastFailedAt": "2026-04-08T13:15:38.474Z",
+        "statusChangedAt": "2026-04-08T13:15:54.329Z"
       },
       "adapter": {
         "operation": "simple-price"
@@ -13404,15 +13416,15 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 1,
-        "successCount": 0,
-        "consecutiveFailures": 1,
-        "lastTestedAt": "2026-04-08T07:58:40.594Z"
+        "testCount": 3,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-08T13:16:36.169Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-04-08T05:32:11.174Z",
         "discoveredBy": "manual",
-        "lastFailedAt": "2026-04-08T07:58:40.594Z"
+        "lastFailedAt": "2026-04-08T13:15:38.702Z"
       },
       "adapter": {
         "operation": "simple-price"
@@ -14633,17 +14645,17 @@
         "sizeStability": 50,
         "engagement": 50,
         "trust": 50,
-        "testCount": 12,
+        "testCount": 16,
         "successCount": 0,
-        "consecutiveFailures": 9,
-        "lastTestedAt": "2026-04-08T05:31:54.903Z"
+        "consecutiveFailures": 13,
+        "lastTestedAt": "2026-04-08T13:16:36.079Z"
       },
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
         "discoveredBy": "manual",
         "statusChangedAt": "2026-04-07T16:51:22.311Z",
         "promotedAt": "2026-03-21T18:54:34.310Z",
-        "lastFailedAt": "2026-04-08T05:31:54.903Z"
+        "lastFailedAt": "2026-04-08T13:16:36.079Z"
       },
       "adapter": {
         "operation": "stats"

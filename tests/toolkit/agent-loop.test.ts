@@ -62,6 +62,7 @@ function makeColonyState(overrides?: Partial<ColonyState>): ColonyState {
     gaps: { underservedTopics: [], unansweredQuestions: [], staleThreads: [] },
     threads: { activeDiscussions: [], mentionsOfUs: [] },
     agents: { topContributors: [{ author: "0xA", postCount: 5, avgReactions: 3 }] },
+    valuablePosts: [],
     ...overrides,
   };
 }

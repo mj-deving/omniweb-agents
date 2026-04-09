@@ -29,7 +29,8 @@ rules:
     type: TIP
     priority: 30
     conditions:
-      - above median
+      - high-value post
+      - community validated or attested
     enabled: true
 rateLimits:
   postsPerDay: 8

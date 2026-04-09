@@ -238,8 +238,9 @@ export interface SourceDeps {
 /**
  * Fetch source evidence from the catalog pipeline.
  * Returns AvailableEvidence[] from external URLs — attestation-grade data.
+ * Exported for direct use by v3-loop (signal-driven source selection after prefetch).
  */
-async function fetchSourceEvidence(deps: SourceDeps): Promise<AvailableEvidence[]> {
+export async function fetchSourceEvidence(deps: SourceDeps): Promise<AvailableEvidence[]> {
   const observe = deps.observe ?? (() => {});
   const activeSources = deps.sourceView.sources ?? [];
 

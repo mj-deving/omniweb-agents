@@ -17,7 +17,8 @@ rules:
     type: TIP
     priority: 75
     conditions:
-      - above median
+      - high-value post
+      - community validated or attested
     enabled: true
   - name: reply_with_evidence
     type: REPLY

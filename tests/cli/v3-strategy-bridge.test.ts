@@ -44,7 +44,7 @@ rules:
   - name: tip_valuable
     type: TIP
     priority: 30
-    conditions: ["above median"]
+    conditions: ["high-value post", "community validated or attested"]
     enabled: true
 rateLimits:
   postsPerDay: 14

@@ -25,6 +25,7 @@ function createEmptyState(): ColonyState {
     agents: {
       topContributors: [],
     },
+    valuablePosts: [],
   };
 }
 
@@ -243,12 +244,10 @@ describe("strategy engine", () => {
     ]));
   });
 
-  it("creates tip actions for contributors above the colony median", () => {
+  it("creates tip actions for high-value posts with strong reactions", () => {
     const state = createEmptyState();
-    state.agents.topContributors = [
-      { author: "alice", postCount: 4, avgReactions: 9 },
-      { author: "bob", postCount: 4, avgReactions: 5 },
-      { author: "carol", postCount: 4, avgReactions: 1 },
+    state.valuablePosts = [
+      { txHash: "0xpost1", author: "alice", text: "Great analysis", agreeReactions: 9, hasAttestation: false, tags: ["defi"] },
     ];
 
     const result = decideActions(state, [], createConfig({
@@ -261,17 +260,37 @@ describe("strategy engine", () => {
     expect(result.actions).toHaveLength(1);
     expect(result.actions[0]).toMatchObject({
       type: "TIP",
-      target: "alice",
+      target: "0xpost1",
+      targetType: "post",
       priority: 30,
     });
     expect(Number(result.actions[0].metadata?.amount)).toBeLessThanOrEqual(10);
+    expect(result.actions[0].metadata?.postTxHash).toBe("0xpost1");
+  });
+
+  it("tips attested posts with bonus amount", () => {
+    const state = createEmptyState();
+    state.valuablePosts = [
+      { txHash: "0xattested", author: "alice", text: "Verified claim", agreeReactions: 3, hasAttestation: true, tags: ["oracle"] },
+    ];
+
+    const result = decideActions(state, [], createConfig({
+      rules: createConfig().rules.map((rule) => ({
+        ...rule,
+        enabled: rule.name === "tip_valuable",
+      })),
+    }), createContext());
+
+    expect(result.actions).toHaveLength(1);
+    // Base 1 + reactions bonus (3/3=1) + attestation bonus 2 = 4
+    expect(Number(result.actions[0].metadata?.amount)).toBe(4);
+    expect(result.actions[0].metadata?.hasAttestation).toBe(true);
   });
 
   it("enforces absolute 10 DEM tip ceiling even with unclamped config", () => {
     const state = createEmptyState();
-    state.agents.topContributors = [
-      { author: "alice", postCount: 4, avgReactions: 100 },
-      { author: "bob", postCount: 4, avgReactions: 1 },
+    state.valuablePosts = [
+      { txHash: "0xhuge", author: "alice", text: "Massive post", agreeReactions: 100, hasAttestation: true, tags: [] },
     ];
 
     const result = decideActions(state, [], createConfig({
@@ -284,6 +303,22 @@ describe("strategy engine", () => {
 
     expect(result.actions).toHaveLength(1);
     expect(Number(result.actions[0].metadata?.amount)).toBeLessThanOrEqual(10);
+  });
+
+  it("skips tipping our own posts", () => {
+    const state = createEmptyState();
+    state.valuablePosts = [
+      { txHash: "0xown", author: "demos1loop", text: "Our post", agreeReactions: 10, hasAttestation: true, tags: [] },
+    ];
+
+    const result = decideActions(state, [], createConfig({
+      rules: createConfig().rules.map((rule) => ({
+        ...rule,
+        enabled: rule.name === "tip_valuable",
+      })),
+    }), createContext());
+
+    expect(result.actions).toEqual([]);
   });
 
   it("sorts actions by priority descending", () => {
@@ -300,6 +335,9 @@ describe("strategy engine", () => {
       { author: "alice", postCount: 4, avgReactions: 9 },
       { author: "bob", postCount: 4, avgReactions: 2 },
       { author: "carol", postCount: 4, avgReactions: 1 },
+    ];
+    state.valuablePosts = [
+      { txHash: "0xtip", author: "alice", text: "Good post", agreeReactions: 5, hasAttestation: false, tags: [] },
     ];
 
     const result = decideActions(state, [
@@ -791,13 +829,11 @@ describe("strategy engine", () => {
 
   // ── Phase 6b: Intelligence Layer Consumption ────────────────
 
-  describe("tip_reputable (leaderboard-aware)", () => {
-    it("uses leaderboard Bayesian scores when available", () => {
+  describe("tip_valuable (post-specific)", () => {
+    it("tips high-value posts regardless of leaderboard", () => {
       const state = createEmptyState();
-      state.agents.topContributors = [
-        { author: "alice", postCount: 50, avgReactions: 9 },
-        { author: "bob", postCount: 50, avgReactions: 5 },
-        { author: "carol", postCount: 50, avgReactions: 1 },
+      state.valuablePosts = [
+        { txHash: "0xgood", author: "alice", text: "Quality post", agreeReactions: 6, hasAttestation: true, tags: ["defi"] },
       ];
 
       const result = decideActions(state, [], createConfig({
@@ -805,23 +841,10 @@ describe("strategy engine", () => {
           ...r,
           enabled: r.name === "tip_valuable",
         })),
-      }), createContext({
-        apiEnrichment: {
-          leaderboard: {
-            agents: [
-              { address: "alice", name: "alice", totalPosts: 50, avgScore: 85, bayesianScore: 88, topScore: 95, lowScore: 70, lastActiveAt: Date.now() },
-              { address: "bob", name: "bob", totalPosts: 50, avgScore: 60, bayesianScore: 62, topScore: 75, lowScore: 45, lastActiveAt: Date.now() },
-            ],
-            count: 2,
-            globalAvg: 70,
-            confidenceThreshold: 5,
-          },
-        },
-      }));
+      }), createContext());
 
-      // Should still tip alice (highest contributor)
-      expect(result.actions.length).toBeGreaterThanOrEqual(1);
-      expect(result.actions[0]).toMatchObject({ type: "TIP" });
+      expect(result.actions).toHaveLength(1);
+      expect(result.actions[0]).toMatchObject({ type: "TIP", target: "0xgood", targetType: "post" });
     });
   });
 
@@ -880,13 +903,11 @@ describe("strategy engine", () => {
     });
   });
 
-  describe("tip_valuable with re-tip avoidance (Phase 6b)", () => {
-    it("skips tipping agents we already interacted with", () => {
+  describe("tip_valuable re-tip avoidance (txHash-based)", () => {
+    it("skips posts we already tipped", () => {
       const state = createEmptyState();
-      state.agents.topContributors = [
-        { author: "alice", postCount: 10, avgReactions: 9 },
-        { author: "bob", postCount: 10, avgReactions: 5 },
-        { author: "carol", postCount: 10, avgReactions: 1 },
+      state.valuablePosts = [
+        { txHash: "0xpost1", author: "alice", text: "Good post", agreeReactions: 9, hasAttestation: false, tags: [] },
       ];
 
       const result = decideActions(state, [], createConfig({
@@ -896,21 +917,18 @@ describe("strategy engine", () => {
         })),
       }), createContext({
         intelligence: {
-          recentTips: { alice: 2 },
+          recentTips: { "0xpost1": 1 },
         },
       }));
 
-      // Alice should be skipped (already tipped), no other above-median candidates
       expect(result.actions).toEqual([]);
       expect(result.log.rejected.some((r) => r.reason.includes("Already tipped"))).toBe(true);
     });
 
-    it("tips agents we have NOT interacted with", () => {
+    it("tips posts we have NOT tipped before", () => {
       const state = createEmptyState();
-      state.agents.topContributors = [
-        { author: "alice", postCount: 10, avgReactions: 9 },
-        { author: "bob", postCount: 10, avgReactions: 5 },
-        { author: "carol", postCount: 10, avgReactions: 1 },
+      state.valuablePosts = [
+        { txHash: "0xfresh", author: "alice", text: "Fresh post", agreeReactions: 6, hasAttestation: false, tags: [] },
       ];
 
       const result = decideActions(state, [], createConfig({
@@ -920,12 +938,13 @@ describe("strategy engine", () => {
         })),
       }), createContext({
         intelligence: {
-          recentTips: {}, // No recent tips
+          recentTips: {},
         },
       }));
 
-      expect(result.actions.length).toBeGreaterThanOrEqual(1);
+      expect(result.actions).toHaveLength(1);
       expect(result.actions[0].type).toBe("TIP");
+      expect(result.actions[0].target).toBe("0xfresh");
     });
   });
 

@@ -39,7 +39,7 @@ rules:
     type: TIP
     priority: 30
     conditions:
-      - "Post performance above colony median"
+      - "High-value post (community validated or attested)"
     enabled: true
 
   # Phase 6: Enrichment-aware rules

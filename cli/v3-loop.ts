@@ -170,9 +170,14 @@ export async function runV3Loop(
       );
       const senseWork = senseTimed.result;
 
+      // Merge source evidence from fetchSourceEvidence into sense result
+      const mergedSenseResult = senseWork.sourceEvidence.length > 0
+        ? { ...senseWork.senseResult, evidence: [...senseWork.senseResult.evidence, ...senseWork.sourceEvidence] }
+        : senseWork.senseResult;
+
       state.strategyResults = {
         ...state.strategyResults,
-        senseResult: senseWork.senseResult,
+        senseResult: mergedSenseResult,
         apiEnrichment: senseWork.apiEnrichment,
         calibration: senseWork.calibration,
       };

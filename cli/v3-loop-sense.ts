@@ -9,12 +9,12 @@
 import { toErrorMessage } from "../src/toolkit/util/errors.js";
 import {
   ingestChainPostsIntoColonyDb,
-  fetchSourcesParallel,
 } from "./v3-loop-helpers.js";
 import type { AgentConfig } from "../src/lib/agent-config.js";
 import type { AgentSourceView } from "../src/lib/sources/catalog.js";
+import type { AvailableEvidence } from "../src/toolkit/colony/available-evidence.js";
 import type { ApiEnrichmentData, LoopLimitsConfig } from "../src/toolkit/strategy/types.js";
-import { strategyObserve } from "../src/toolkit/observe/observe-router.js";
+import { strategyObserve, fetchSourceEvidence } from "../src/toolkit/observe/observe-router.js";
 import { loadStrategyConfig } from "../src/toolkit/strategy/config-loader.js";
 import { readFileSync } from "node:fs";
 import type { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";
@@ -46,6 +46,8 @@ export interface SenseWorkResult {
   senseResult: ReturnType<typeof sense>;
   apiEnrichment: ApiEnrichmentData | undefined;
   calibration: ReturnType<typeof computeAutoCalibration>;
+  /** Source evidence from signal-driven fetch via fetchSourceEvidence. */
+  sourceEvidence: AvailableEvidence[];
 }
 
 /**
@@ -156,84 +158,90 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
     observe("warning", `Strategy observe failed (non-fatal): ${toErrorMessage(err)}`, { source: "v3-loop:apiEnrichment" });
   }
 
-  // Fetch sources in parallel with wall-clock budget.
-  // Intents derived from BOTH agent config topics AND colony signal topics.
+  // Fetch sources via fetchSourceEvidence — signal-driven source selection.
+  // Intents derived from BOTH agent config topics AND colony signal topics
+  // (signal topics come from the strategyObserve enrichment above).
   const sourceView = deps.getSourceView();
-  const configIntents = deps.agentConfig.topics?.primary?.length
-    ? deriveIntentsFromTopics(deps.agentConfig.topics)
-    : [];
+  let sourceEvidence: AvailableEvidence[] = [];
+  try {
+    const configIntents = deps.agentConfig.topics?.primary?.length
+      ? deriveIntentsFromTopics(deps.agentConfig.topics)
+      : [];
 
-  // Extract signal topics from API enrichment and derive additional intents
-  const signalTopics = apiEnrichment?.signals
-    ?.filter(s => s.topic)
-    .map(s => s.topic) ?? [];
-  const knownDomainTags = sourceView?.index?.byDomainTag
-    ? new Set(sourceView.index.byDomainTag.keys())
-    : undefined;
-  const signalIntents = deriveIntentsFromSignalTopics(signalTopics, knownDomainTags);
+    // Extract signal topics from API enrichment and derive additional intents
+    const signalTopics = apiEnrichment?.signals
+      ?.filter(s => s.topic)
+      .map(s => s.topic) ?? [];
+    const knownDomainTags = sourceView?.index?.byDomainTag
+      ? new Set(sourceView.index.byDomainTag.keys())
+      : undefined;
+    const signalIntents = deriveIntentsFromSignalTopics(signalTopics, knownDomainTags);
 
-  if (signalIntents.length > 0) {
-    observe("insight", `Signal-driven sources: ${signalIntents.length} signal topics added to source selection`, {
-      source: "v3-loop:sourceFetch",
-      signalTopics,
+    if (signalIntents.length > 0) {
+      observe("insight", `Signal-driven sources: ${signalIntents.length} signal topics added to source selection`, {
+        source: "v3-loop:sourceFetch",
+        signalTopics,
+      });
+    }
+
+    const allIntents = [...configIntents, ...signalIntents];
+    const selectedSources = allIntents.flatMap((intent) =>
+      selectSourcesByIntent(intent, sourceView).slice(0, limits?.sourcesPerIntent ?? 5),
+    );
+
+    // Deduplicate sources (config and signal intents may select overlapping sources)
+    const seenSourceIds = new Set<string>();
+    const dedupedSources = selectedSources.filter(s => {
+      if (seenSourceIds.has(s.id)) return false;
+      seenSourceIds.add(s.id);
+      return true;
     });
-  }
 
-  const allIntents = [...configIntents, ...signalIntents];
-  const selectedSources = allIntents.flatMap((intent) =>
-    selectSourcesByIntent(intent, sourceView).slice(0, limits?.sourcesPerIntent ?? 5),
-  );
+    // Skip unhealthy sources — degraded/stale get auto-demoted by lifecycle after enough failures
+    const healthyBeforeUrlDedup = filterHealthySources(dedupedSources);
 
-  // Deduplicate sources (config and signal intents may select overlapping sources)
-  const seenSourceIds = new Set<string>();
-  const dedupedSources = selectedSources.filter(s => {
-    if (seenSourceIds.has(s.id)) return false;
-    seenSourceIds.add(s.id);
-    return true;
-  });
-
-  // Skip unhealthy sources — degraded/stale get auto-demoted by lifecycle after enough failures
-  const healthyBeforeUrlDedup = filterHealthySources(dedupedSources);
-
-  // URL-level dedup — multiple signal topics may resolve to the same endpoint
-  const seenUrls = new Set<string>();
-  const healthySources = healthyBeforeUrlDedup.filter(s => {
-    if (seenUrls.has(s.url)) return false;
-    seenUrls.add(s.url);
-    return true;
-  });
-  const skippedCount = dedupedSources.length - healthySources.length;
-  if (skippedCount > 0) {
-    observe("insight", `Source health filter: skipped ${skippedCount} unhealthy source(s)`, {
-      source: "v3-loop:sourceHealth",
-      skipped: skippedCount,
-      total: dedupedSources.length,
-      healthy: healthySources.length,
+    // URL-level dedup — multiple signal topics may resolve to the same endpoint
+    const seenUrls = new Set<string>();
+    const healthySources = healthyBeforeUrlDedup.filter(s => {
+      if (seenUrls.has(s.url)) return false;
+      seenUrls.add(s.url);
+      return true;
     });
-  }
+    const skippedCount = dedupedSources.length - healthySources.length;
+    if (skippedCount > 0) {
+      observe("insight", `Source health filter: skipped ${skippedCount} unhealthy source(s)`, {
+        source: "v3-loop:sourceHealth",
+        skipped: skippedCount,
+        total: dedupedSources.length,
+        healthy: healthySources.length,
+      });
+    }
 
-  // Bump concurrency to 10 when signal-driven sources are included — sources are
-  // live data feeds (prices, news) that must be fetched fresh every cycle.
-  // The 15s wall-clock budget already caps total time.
-  const effectiveConcurrency = signalIntents.length > 0
-    ? Math.max(limits?.sourceFetchConcurrency ?? 3, 10)
-    : limits?.sourceFetchConcurrency ?? 3;
+    // Bump concurrency to 10 when signal-driven sources are included
+    const effectiveConcurrency = signalIntents.length > 0
+      ? Math.max(limits?.sourceFetchConcurrency ?? 3, 10)
+      : limits?.sourceFetchConcurrency ?? 3;
 
-  const { fetched: sourcesFetched, cached: sourcesCached, lifecycleTransitions } =
-    await fetchSourcesParallel(healthySources, bridge.db, observe, limits?.sourceFetchBudgetMs ?? 15_000, effectiveConcurrency);
-  if (sourcesFetched > 0) {
-    observe("insight", `Source fetch: ${sourcesFetched} fetched, ${sourcesCached} stored (${healthySources.length} selected)`, {
-      source: "v3-loop:sourceFetch",
-      sourcesFetched,
-      sourcesCached,
-      totalSelected: healthySources.length,
-    });
-  }
-  if (lifecycleTransitions > 0) {
-    observe("insight", `Source lifecycle: ${lifecycleTransitions} status transition(s) applied`, {
-      source: "v3-loop:sourceLifecycle",
-      transitions: lifecycleTransitions,
-    });
+    // Use fetchSourceEvidence: fetches sources into DB cache + computes AvailableEvidence
+    if (healthySources.length > 0) {
+      sourceEvidence = await fetchSourceEvidence({
+        db: bridge.db,
+        sourceView: { ...sourceView, sources: healthySources },
+        observe,
+        budgetMs: limits?.sourceFetchBudgetMs ?? 15_000,
+        concurrency: effectiveConcurrency,
+      });
+
+      if (sourceEvidence.length > 0) {
+        observe("insight", `Source evidence: ${sourceEvidence.length} items from ${healthySources.length} sources`, {
+          source: "v3-loop:sourceFetch",
+          evidenceCount: sourceEvidence.length,
+          sourcesSelected: healthySources.length,
+        });
+      }
+    }
+  } catch (err) {
+    observe("warning", `Source fetch failed (non-fatal): ${toErrorMessage(err)}`, { source: "v3-loop:sourceFetch" });
   }
 
   // SSE Feed (optional, time-bounded)
@@ -267,6 +275,6 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
   // Calibration
   const calibration = computeAutoCalibration(bridge);
 
-  return { scanResult, senseResult, apiEnrichment, calibration };
+  return { scanResult, senseResult, apiEnrichment, calibration, sourceEvidence };
 }
 

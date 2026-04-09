@@ -107,6 +107,7 @@ describe("publish path e2e", () => {
             { author: "bob", postCount: 4, avgReactions: 6 },
           ],
         },
+        valuablePosts: [],
       };
 
       const config = loadStrategyConfig(

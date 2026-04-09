@@ -19,6 +19,16 @@ export interface ColonyState {
   agents: {
     topContributors: Array<{ author: string; postCount: number; avgReactions: number }>;
   };
+  /** High-value posts worth tipping — posts with strong reactions or attestation signals. */
+  valuablePosts: Array<{
+    txHash: string;
+    author: string;
+    text: string;
+    agreeReactions: number;
+    hasAttestation: boolean;
+    /** Tags from the post, used for quality filtering. */
+    tags: string[];
+  }>;
 }
 
 export interface StateExtractionOptions {
@@ -173,6 +183,31 @@ interface ContributorRow {
   avg_reactions: number | null;
 }
 
+interface ValuablePostRow {
+  tx_hash: string;
+  author: string;
+  text: string;
+  agrees: number;
+  chain_verified: number;
+  tags: string;
+}
+
+function getValuablePosts(db: ColonyDatabase): ValuablePostRow[] {
+  return db.prepare(`
+    SELECT
+      p.tx_hash, p.author, p.text, p.tags,
+      COALESCE(r.agrees, 0) AS agrees,
+      COALESCE(MAX(a.chain_verified), 0) AS chain_verified
+    FROM posts p
+    LEFT JOIN reaction_cache r ON r.post_tx_hash = p.tx_hash
+    LEFT JOIN attestations a ON a.post_tx_hash = p.tx_hash
+    WHERE COALESCE(r.agrees, 0) >= 3
+    GROUP BY p.tx_hash
+    ORDER BY agrees DESC, p.timestamp DESC
+    LIMIT 20
+  `).all() as ValuablePostRow[];
+}
+
 function getTopContributors(db: ColonyDatabase): ContributorRow[] {
   return db.prepare(`
     SELECT
@@ -237,5 +272,13 @@ export function extractColonyState(
         avgReactions: Number((row.avg_reactions ?? 0).toFixed(2)),
       })),
     },
+    valuablePosts: getValuablePosts(db).map((row) => ({
+      txHash: row.tx_hash,
+      author: row.author,
+      text: row.text,
+      agreeReactions: Number(row.agrees),
+      hasAttestation: row.chain_verified === 1,
+      tags: JSON.parse(row.tags) as string[],
+    })),
   };
 }

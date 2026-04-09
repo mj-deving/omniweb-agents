@@ -27,6 +27,7 @@ function createEmptyState(): ColonyState {
     agents: {
       topContributors: [],
     },
+    valuablePosts: [],
   };
 }
 

@@ -247,40 +247,50 @@ export function decideActions(
   }
 
   // ── Core Rule: tip_valuable ─────────────────────
+  // Post-specific economic exchange: tip posts that delivered concrete value.
+  // Triggers: high agree reactions (community validated), attestation (chain verified).
+  // Target is txHash (not agent address) — the API validates and routes DEM to the author.
   const tipRule = getRule(config, "tip_valuable");
   if (tipRule) {
-    for (const contributor of colonyState.agents.topContributors) {
-      if (contributor.avgReactions <= contributorMedian) {
-        continue;
-      }
+    const ourAddr = normalize(context.ourAddress);
+    for (const post of colonyState.valuablePosts) {
+      // Don't tip our own posts
+      if (normalize(post.author) === ourAddr) continue;
 
-      const recentTipCount = context.intelligence?.recentTips?.[normalize(contributor.author)] ?? 0;
+      // Skip posts we already tipped (keyed by txHash)
+      const recentTipCount = context.intelligence?.recentTips?.[normalize(post.txHash)] ?? 0;
       if (recentTipCount > 0) {
-        const skipAction = createAction(tipRule, `Tip ${contributor.author} skipped (already tipped ${recentTipCount}x in 24h)`, { target: contributor.author });
+        const skipAction = createAction(tipRule, `Tip ${post.txHash.slice(0, 10)}... skipped (already tipped)`, { target: post.txHash, targetType: "post" as const });
         considered.push({ action: skipAction, rule: tipRule.name });
-        reject(rejected, tipRule, skipAction, `Already tipped ${contributor.author} ${recentTipCount} time(s) in last 24h`);
+        reject(rejected, tipRule, skipAction, `Already tipped post ${post.txHash.slice(0, 10)}... ${recentTipCount} time(s)`);
         continue;
       }
 
+      // Amount based on post quality: base 1 + reactions bonus + attestation bonus
+      const reactionBonus = Math.min(3, Math.floor(post.agreeReactions / 3));
+      const attestationBonus = post.hasAttestation ? 2 : 0;
       const tipCalibration = (context.calibration?.offset ?? 0) > 0 ? 1 : 0;
       const amount = Math.max(
         1,
         Math.min(
           ABSOLUTE_TIP_CEILING_DEM,
           config.rateLimits.maxTipAmount,
-          Math.round(contributor.avgReactions - contributorMedian) + tipCalibration,
+          1 + reactionBonus + attestationBonus + tipCalibration,
         ),
       );
 
       const action = createAction(
         tipRule,
-        `Tip contributor ${contributor.author} for above-median performance`,
+        `Tip post ${post.txHash.slice(0, 10)}... (${post.agreeReactions} agrees${post.hasAttestation ? ", attested" : ""})`,
         {
-          target: contributor.author,
+          target: post.txHash,
+          targetType: "post" as const,
           metadata: {
             amount,
-            avgReactions: contributor.avgReactions,
-            medianAvgReactions: contributorMedian,
+            postTxHash: post.txHash,
+            postAuthor: post.author,
+            agreeReactions: post.agreeReactions,
+            hasAttestation: post.hasAttestation,
           },
         },
       );

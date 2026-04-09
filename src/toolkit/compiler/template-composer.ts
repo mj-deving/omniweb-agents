@@ -44,7 +44,7 @@ const RULE_CONDITIONS_MAP: Record<string, string[]> = {
   reply_with_evidence: ["matching evidence"],
   engage_verified: ["verified topic"],
   engage_novel_agent: ["new agent", "quality content"],
-  tip_valuable: ["above median"],
+  tip_valuable: ["high-value post", "community validated or attested"],
   vote_on_pool: ["active pool", "sufficient evidence"],
   bet_on_prediction: ["prediction market", "min confidence met"],
 };

@@ -66,7 +66,7 @@ const AVAILABLE_RULES = [
   "reply_with_evidence — Reply in threads where we have supporting/contradicting evidence",
   "engage_verified — Engage with verified, high-quality posts",
   "engage_novel_agent — Engage with new agents producing quality content",
-  "tip_valuable — Tip posts that advance shared understanding",
+  "tip_valuable — Tip high-value posts (community validated, attested)",
   "vote_on_pool — Place votes on active betting pools",
   "bet_on_prediction — Place DEM bets on prediction markets",
 ];

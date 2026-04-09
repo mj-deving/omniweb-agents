@@ -160,6 +160,18 @@ export function buildColonyStateFromFeed(
           avgReactions: stats.count > 0 ? stats.totalReactions / stats.count : 0,
         })),
     },
+    valuablePosts: posts
+      .filter(p => (p.reactions?.agree ?? 0) >= 3)
+      .sort((a, b) => (b.reactions?.agree ?? 0) - (a.reactions?.agree ?? 0))
+      .slice(0, 20)
+      .map(p => ({
+        txHash: p.txHash,
+        author: p.author,
+        text: p.text,
+        agreeReactions: p.reactions?.agree ?? 0,
+        hasAttestation: false, // API feed doesn't include attestation status
+        tags: p.tags ?? [],
+      })),
   };
 }
 
@@ -176,31 +188,6 @@ export async function defaultObserve(toolkit: Toolkit, ourAddress: string): Prom
   return {
     colonyState: buildColonyStateFromFeed(posts, ourAddress),
     evidence: [],
-  };
-}
-
-// ── enrichedObserve ─────────────────────────────
-
-/**
- * Enriched observe() — defaultObserve + API enrichment.
- * Gives templates access to all 10 strategy rules by populating
- * apiEnrichment in the DecisionContext. Opt-in via this function.
- */
-export async function enrichedObserve(toolkit: Toolkit, ourAddress: string): Promise<ObserveResult> {
-  const { fetchApiEnrichment } = await import("./api-enrichment.js");
-
-  const base = await defaultObserve(toolkit, ourAddress);
-  const apiEnrichment = await fetchApiEnrichment(toolkit, undefined, (type, msg, meta) => {
-    // Route enrichment logs to console (templates don't have a structured observer)
-    if (type === "warning") console.warn(`[enrichment] ${msg}`, meta);
-  });
-
-  return {
-    ...base,
-    context: {
-      ...base.context,
-      apiEnrichment,
-    },
   };
 }
 

@@ -11,7 +11,7 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 > **The one document you read to understand the project's story.**
 > Architecture: CLAUDE.md. Operations: MEMORY.md. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** V3 loop LIVE | Phases 1–16 COMPLETE | 252 suites, 3088 tests | 0 tsc errors | 19 ADRs | 38+ API methods | 10 strategy rules | 15 toolkit domains | 4 Learn-first primitives | Schema v9 | SDK 2.11.5
+**Current state:** V3 loop LIVE | Phases 1–17 COMPLETE | 258 suites, 3199 tests | 0 tsc errors | 20 ADRs | 38+ API methods | 10 strategy rules | 15 toolkit domains + 10 extractors | Agent Compiler | Schema v9 | SDK 2.11.5
 
 ---
 
@@ -188,6 +188,32 @@ Comprehensive sweep of all open items from the V3 production audit, followed by 
 - Production audit: ALL items closed (was 6 remaining + 2 deferred → 0)
 
 **Tests at era end:** 230 suites, 2996 passing. 0 tsc errors. 19 ADRs. Schema v8.
+
+### Era 11: Learn-First + Agent Compiler (April 8–9)
+
+**The sixth pivot: "Colony is the source, not just the target."**
+
+Phase 16 established the Learn-first design principle — agents read the colony, discover shared reasoning, then contribute what the collective doesn't have yet. Phase 17 delivered the infrastructure and the Agent Compiler.
+
+**Phase 16: Tech debt + template readiness**
+- signals.ts removed (-477 lines). lifecycle persistence wired
+- Primitives audit: all 32 API methods wrapped, 4 new Learn-first primitives (feedRefs, oracle window, polymarket, per-asset sentiment)
+- ADR-0020: strategy-driven observe with 10 evidence categories + DEM economics
+- Evidence matrix: 89 types from 32 primitives across 10 categories
+- Learn-first design decision: templates embody Share/Index/Learn from supercolony.ai/docs
+
+**Phase 17: Observe infrastructure + Agent Compiler**
+- ObservationLog: file-based rolling history with batch flush, 72h retention
+- 10 evidence extractors (one per ADR-0020 category) with PrefetchedData support
+- Single-fetch observe router: one parallel API batch → extractors + enrichment from same data
+- Strategy.yaml `evidence.categories` section (backward-compatible)
+- Agent Compiler: intent parser (LLM prompt → AgentIntentConfig), template composer (deterministic generation), validator
+- 3 example agents generated: prediction-tracker, engagement-optimizer, research-synthesizer
+- Codex review: 6 HIGH + 6 MEDIUM + 4 LOW findings — all fixed
+
+Key architectural achievement: `strategyObserve()` is the single entry point for observe. It prefetches all needed API data once (based on category dependencies), runs extractors with prefetched results (zero duplicate calls), and builds `ApiEnrichmentData` from the same fetch. Templates no longer need separate `enrichedObserve()`.
+
+**Tests at era end:** 258 suites, 3199 passing. 0 tsc errors. 20 ADRs. Schema v9.
 
 ---
 

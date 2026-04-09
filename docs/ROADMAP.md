@@ -1,18 +1,18 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-08
-open_items: 9
-completed_phases: 15
-tests: 3077
-suites: 252
+updated: 2026-04-09
+open_items: 8
+completed_phases: 17
+tests: 3199
+suites: 258
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
 colony_posts: 202000
 catalog_sources: 247
-summary: "Phases 1-16 complete. Learn-first design decision: templates embody Share/Index/Learn, colony is the source. Phase 17 next: rebuild all 6 templates around Learn-first. 4 new primitives (feedRefs, oracle window, polymarket, sentiment)."
-read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work"]
+summary: "Phases 1-17 complete. Phase 17: observe infrastructure (10 extractors, single-fetch router, ObservationLog) + Agent Compiler (intent→template generation). 3 generated templates. Phase 18 next: live testing + template rebuild via compiler."
+read_when: ["roadmap", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work", "phase 17", "phase 18", "agent compiler", "observe router"]
 ---
 
 # Roadmap
@@ -23,20 +23,16 @@ read_when: ["roadmap", "phase 7", "phase 8", "open items", "deferred", "tech deb
 ## Current Status
 
 - **V3 loop:** LIVE with toolkit primitives replacing raw apiCall enrichment
-- **Phase 9:** COMPLETE (DataSource abstraction, 15 domain primitives, v3-loop wiring, API backfill, drift detection)
-- **Tests:** 3077 passing, 252 suites, **0 tsc errors**
-- **Toolkit:** `createToolkit()` facade with 15 namespaces (feed, intelligence, scores, agents, actions, oracle, prices, verification, predictions, ballot, webhooks, identity, balance, health, stats)
-- **API Client:** 38/38 endpoints (35 in client, 3 in dedicated modules). 100% coverage.
-- **Strategy Engine:** 10 rules in 3 modules (5 core + 4 enrichment + 1 contradiction). Auto-calibration. Leaderboard meta-rule. FTS5 dedup. VOTE/BET rate limiting + session budget guard. Score-100 tuning: confidence threshold, agent minimum, cross-domain bonus.
-- **Colony DB:** 188K posts. Schema v8. 605MB. Semantic search wired. Pruning available.
-- **ADRs:** 18 (ADR-0018 supersedes ADR-0001 for reads — API-first, chain fallback)
-- **Phase 11:** COMPLETE — 7 legacy session-runner patterns adopted as toolkit primitives (76 new tests)
-- **Phase 12:** COMPLETE — boundary moves (matcher/policy/lifecycle to toolkit), SENSE health filtering + rate limiting + lifecycle, 3 new macro sources, getSourceHealthSummary primitive
-- **Phase 13:** COMPLETE — 8 tasks. Evidence matching, richness normalization, asset sources, strategy audit.
-- **Phase 14:** COMPLETE — topic angle rotation, enrichment bridge, endurance sessions (2 posts session 93).
-- **Phase 15:** COMPLETE — dynamic pools, macro adapters (FRED/VIX/ECB), 31 sources promoted, lifecycle DB, session-runner retired.
-- **Sessions 93-97:** 3 posts published. Pipeline healthy. Publishes on novel signals, correctly deduplicates stale topics.
-- **Next:** Phase 16 — tech debt cleanup + primitives audit + template readiness. See `docs/phase16-techdebt-and-templates.md`.
+- **Tests:** 3199 passing, 258 suites, **0 tsc errors**
+- **Toolkit:** `createToolkit()` facade with 15 namespaces + 10 evidence extractors + single-fetch observe router
+- **API Client:** 38/38 endpoints. 100% coverage.
+- **Strategy Engine:** 10 rules. Auto-calibration. Single-fetch enrichment via `strategyObserve()`.
+- **Agent Compiler:** Intent → template generation. 3 generated examples (prediction-tracker, engagement-optimizer, research-synthesizer).
+- **Colony DB:** 202K+ posts. Schema v9. Semantic search wired.
+- **ADRs:** 20 (ADR-0020: strategy-driven observe with DEM economics)
+- **Phase 16:** COMPLETE — tech debt + Learn-first design decision + 4 new primitives
+- **Phase 17:** COMPLETE — observe infrastructure + Agent Compiler
+- **Next:** Phase 18 — live testing + template rebuild via compiler
 
 ---
 
@@ -313,35 +309,56 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 **Phase 16 completed:** 2026-04-08. 252 suites, 3088 tests. 8 commits.
 **Remaining:** 16a-1 (npm publish) + 16a-4 (ElizaOS) deferred.
 
-### Phase 17: Learn-First Template Rebuild
+### Phase 17: Observe Infrastructure + Agent Compiler — COMPLETE
 
-> Goal: Rebuild all 6 templates around Learn-first design (Share/Index/Learn from supercolony.ai/docs).
-> Colony is the source. "Build on shared reasoning" is the moat.
-> Specs: `docs/agent-use-case-specs.md`
+> 2 atomic commits (2026-04-09). Codex-reviewed, all findings fixed.
+> Spec: `docs/agent-compiler-spec.md`, `docs/agent-use-case-specs.md`
 > Architecture: ADR-0020 (strategy-driven observe, 10 categories, DEM economics)
-> Evidence matrix: `docs/evidence-matrix.md` (89 types from 32 primitives)
 
-**17a — Base template + infrastructure (partial DONE 2026-04-09):**
+**17a — Observe infrastructure:**
 - [x] 17a-1: Base template rebuilt with learnFirstObserve() — 3-layer colony intelligence
 - [x] 17a-1b: Close all 13 stale primitive gaps (full API surface: 32 primitives)
 - [x] 17a-1c: Evidence matrix — 89 types across 10 categories
 - [x] 17a-1d: ADR-0020 — strategy-driven observe + DEM economics
 - [x] 17a-1e: Mandatory attestation enforcement (H7 fallback removed)
-- [ ] 17a-2: ObservationLog — file-based rolling history (72h default, configurable)
-- [ ] 17a-3: Strategy-driven observe router (reads strategy.yaml categories → routes to primitives)
-- [ ] 17a-4: 10 evidence extractors (colony-feeds, colony-signals, threads, engagement, oracle, leaderboard, prices, predictions, verification, network)
-- [ ] 17a-5: Rewire base template to use router + ObservationLog + extractors
+- [x] 17a-2: ObservationLog — file-based rolling history, batch flush, 72h default, timestamp-sorted query
+- [x] 17a-3: Strategy-driven observe router — single-fetch prefetch, category-based dispatch, enrichment from same data
+- [x] 17a-4: 10 evidence extractors with PrefetchedData support + null guards
+- [x] 17a-5: Base template rewired — strategyObserve() is single entry point, no enrichedObserve needed
 
-**17b — Agent Compiler (strategic pivot 2026-04-09):**
-> Instead of building 6 templates manually, build the template factory.
-> User describes agent loosely → compiler generates template.
-> Spec: `docs/agent-compiler-spec.md`
+**17b — Agent Compiler:**
+- [x] 17b-1: AgentIntentConfig type + Zod schema (kebab-case, priority 0-100, ADR-0012 caps, rule name enum)
+- [x] 17b-2: Intent parser (prompt builder + response parser, case-insensitive fence stripping)
+- [x] 17b-3: Template composer (strategy.yaml + observe.ts + agent.ts + .env.example, correct import depths)
+- [x] 17b-4: Validator (file presence + YAML parse + content checks for learnFirstObserve/runAgentLoop)
+- [x] 17b-5: 3 example agents generated (prediction-tracker, engagement-optimizer, research-synthesizer)
 
-- [ ] 17b-1: Strategy.yaml schema + validator (Zod schema for all config fields)
-- [ ] 17b-2: Intent parser (LLM prompt — haiku tier, extracts AgentIntentConfig from loose description)
-- [ ] 17b-3: Template composer (deterministic file generator — strategy.yaml + observe.ts + agent.ts)
-- [ ] 17b-4: Validation step (tsc compilation check + schema validation)
-- [ ] 17b-5: Generate example agents via compiler (prediction tracker, engagement optimizer, research synthesizer)
+**Phase 17 completed:** 2026-04-09. 258 suites, 3199 tests. Codex review: 3 HIGH + 3 MEDIUM + 2 LOW (17a) + 3 HIGH + 3 MEDIUM + 2 LOW (17b) — all fixed.
+
+### Phase 18: Live Testing + Template Rebuild via Compiler
+
+> Goal: Run compiler-generated agents in live sessions. Rebuild market-intelligence + security-sentinel via compiler.
+> Consolidate v3-loop onto strategyObserve. Validate the compiler end-to-end.
+
+**18a — Live testing of compiler-generated agents:**
+- [ ] 18a-1: Run prediction-tracker in DRY_RUN mode — verify observe + strategy engine + evidence flow
+- [ ] 18a-2: Run engagement-optimizer in DRY_RUN mode — verify engagement-first strategy
+- [ ] 18a-3: Run research-synthesizer in DRY_RUN mode — verify cross-domain evidence
+- [ ] 18a-4: First live session (DRY_RUN=false) with one generated agent
+
+**18b — Rebuild existing templates via compiler:**
+- [ ] 18b-1: Market Intelligence template — generate via compiler with market-specific strategy
+- [ ] 18b-2: Security Sentinel template — generate via compiler with security-specific strategy
+- [ ] 18b-3: Retire hand-written observe.ts in market-intelligence + security-sentinel (use generated)
+
+**18c — v3-loop consolidation (optional):**
+- [ ] 18c-1: Replace v3-loop's fetchApiEnrichment() with strategyObserve() single-fetch router
+- [ ] 18c-2: Remove api-enrichment.ts if v3-loop fully migrated
+
+**18d — Deferred /simplify findings (cleanup):**
+- [ ] 18d-1: Extract shared `STALE_THRESHOLD_MS` constant (86_400_000 used in 4 extractors)
+- [ ] 18d-2: Extract `capRichness(value)` helper (Math.min(95, ...) repeated 12x)
+- [ ] 18d-3: Extract `truncateSubject(text, maxLen)` helper (.slice(0, 80) repeated 4x)
 
 ### Future (no phase assigned)
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet

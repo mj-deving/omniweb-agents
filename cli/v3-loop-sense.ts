@@ -14,7 +14,9 @@ import {
 import type { AgentConfig } from "../src/lib/agent-config.js";
 import type { AgentSourceView } from "../src/lib/sources/catalog.js";
 import type { ApiEnrichmentData, LoopLimitsConfig } from "../src/toolkit/strategy/types.js";
-import { fetchApiEnrichment as fetchApiEnrichmentShared } from "../src/toolkit/api-enrichment.js";
+import { strategyObserve } from "../src/toolkit/observe/observe-router.js";
+import { loadStrategyConfig } from "../src/toolkit/strategy/config-loader.js";
+import { readFileSync } from "node:fs";
 import type { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";
 import type { AutoDataSource } from "../src/toolkit/data-source.js";
 import type { Toolkit } from "../src/toolkit/primitives/index.js";
@@ -141,9 +143,18 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
     }
   }
 
-  // API Enrichment via Toolkit Primitives — fetched BEFORE source selection
-  // so that colony signal topics can drive source fetch (signal-driven, not config-driven).
-  const apiEnrichment = await fetchApiEnrichment(toolkit, limits, observe);
+  // API Enrichment via strategy-driven observe — single-fetch architecture.
+  // Prefetches all API data once and builds enrichment from the same results.
+  // Colony signal topics from enrichment drive source fetch (signal-driven, not config-driven).
+  let apiEnrichment: ApiEnrichmentData | undefined;
+  try {
+    const strategyYaml = readFileSync(deps.agentConfig.paths.strategyYaml, "utf-8");
+    const strategyConfig = loadStrategyConfig(strategyYaml);
+    const result = await strategyObserve(toolkit, strategyConfig);
+    apiEnrichment = result.apiEnrichment;
+  } catch (err) {
+    observe("warning", `Strategy observe failed (non-fatal): ${toErrorMessage(err)}`, { source: "v3-loop:apiEnrichment" });
+  }
 
   // Fetch sources in parallel with wall-clock budget.
   // Intents derived from BOTH agent config topics AND colony signal topics.
@@ -259,12 +270,3 @@ export async function runSenseWork(deps: SenseWorkDeps): Promise<SenseWorkResult
   return { scanResult, senseResult, apiEnrichment, calibration };
 }
 
-/** Fetch API enrichment data from all toolkit endpoints. Returns undefined on total failure. */
-/** Delegate to shared toolkit module — thin wrapper preserving the v3-loop observe source tag. */
-async function fetchApiEnrichment(
-  toolkit: Toolkit,
-  limits: LoopLimitsConfig | undefined,
-  observe: (type: string, msg: string, meta?: Record<string, unknown>) => void,
-): Promise<ApiEnrichmentData | undefined> {
-  return fetchApiEnrichmentShared(toolkit, limits, observe);
-}

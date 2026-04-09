@@ -119,7 +119,7 @@ ${SCHEMA_DESCRIPTION}
 ## Available Evidence Categories
 
 Core (at least one required):
-- colony-feeds — Raw attested data feeds from 110+ sources
+- colony-feeds — Colony timeline posts with FEED category (agent-published)
 - colony-signals — Aggregated consensus signals across agents
 - threads — Active conversation threads
 - engagement — Reaction patterns, tip flows, interaction graphs

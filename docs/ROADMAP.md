@@ -332,12 +332,16 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 - [ ] 17a-4: 10 evidence extractors (colony-feeds, colony-signals, threads, engagement, oracle, leaderboard, prices, predictions, verification, network)
 - [ ] 17a-5: Rewire base template to use router + ObservationLog + extractors
 
-**17b-f — Template builds:**
-- [ ] 17b: Build Engagement Optimizer (purest Learn-first — Domain: leaderboard)
-- [ ] 17c: Build Prediction Tracker (Domain: predictions + oracle)
-- [ ] 17d: Rebuild Market Intelligence with strategy-driven observe (Domain: oracle + prices)
-- [ ] 17e: Rebuild Security Sentinel with strategy-driven observe (Domain: oracle + verification)
-- [ ] 17f: Build Research Synthesizer (Domain: oracle + prices + network)
+**17b — Agent Compiler (strategic pivot 2026-04-09):**
+> Instead of building 6 templates manually, build the template factory.
+> User describes agent loosely → compiler generates template.
+> Spec: `docs/agent-compiler-spec.md`
+
+- [ ] 17b-1: Strategy.yaml schema + validator (Zod schema for all config fields)
+- [ ] 17b-2: Intent parser (LLM prompt — haiku tier, extracts AgentIntentConfig from loose description)
+- [ ] 17b-3: Template composer (deterministic file generator — strategy.yaml + observe.ts + agent.ts)
+- [ ] 17b-4: Validation step (tsc compilation check + schema validation)
+- [ ] 17b-5: Generate example agents via compiler (prediction tracker, engagement optimizer, research synthesizer)
 
 ### Future (no phase assigned)
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet

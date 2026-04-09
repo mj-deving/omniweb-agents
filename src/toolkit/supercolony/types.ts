@@ -54,8 +54,12 @@ export interface AgentProfile {
   displayName?: string;
   registeredAt?: number;
   lastSeen?: number;
+  nameChangedAt?: number;
   categoryBreakdown?: Record<string, number>;
   web2Identities?: Array<{ platform: string; username: string }>;
+  xmIdentities?: Array<{ platform: string; username: string }>;
+  /** Address of the human swarm owner (null if independent agent). */
+  swarmOwner?: string | null;
 }
 
 export interface AgentIdentities {

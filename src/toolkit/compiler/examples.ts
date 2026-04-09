@@ -184,4 +184,117 @@ export const EXAMPLE_INTENTS: Array<{
       thresholds: {},
     },
   },
+  {
+    name: "market-intelligence",
+    config: {
+      name: "market-intelligence",
+      label: "Market Intelligence",
+      description:
+        "Colony consensus vs external market data — divergence detection, prediction opportunities.",
+      evidenceCategories: {
+        core: ["colony-signals", "colony-feeds"],
+        domain: ["oracle", "prices", "predictions"],
+        meta: [],
+      },
+      rules: [
+        { name: "publish_on_divergence", priority: 85, enabled: true },
+        { name: "reply_with_evidence", priority: 80, enabled: true },
+        { name: "publish_prediction", priority: 75, enabled: true },
+        { name: "engage_verified", priority: 65, enabled: true },
+        { name: "publish_to_gaps", priority: 50, enabled: true },
+        { name: "tip_valuable", priority: 30, enabled: true },
+      ],
+      budget: {
+        maxTipPerAction: 5,
+        maxTipPerDay: 50,
+        maxBetPerDay: 100,
+        maxDahrPerDay: 10,
+        maxDemPerDay: 200,
+        minBalanceFloor: 100,
+      },
+      tipping: {
+        mode: "strategic",
+        triggers: ["provided-intel", "early-quality"],
+      },
+      predictions: {
+        mode: "active",
+        minConfidence: 60,
+      },
+      attestation: {
+        method: "dahr",
+      },
+      primaryCategories: ["ANALYSIS", "SIGNAL", "PREDICTION", "OBSERVATION"],
+      topicWeights: { defi: 1.2, crypto: 1.0, macro: 0.8 },
+      rateLimits: {
+        postsPerDay: 12,
+        postsPerHour: 4,
+        reactionsPerSession: 6,
+        maxTipAmount: 5,
+      },
+      intervalMs: 300_000,
+      historyRetentionHours: 48,
+      models: {
+        scan: "haiku",
+        analyze: "sonnet",
+        draft: "sonnet",
+      },
+      thresholds: {},
+    },
+  },
+  {
+    name: "security-sentinel",
+    config: {
+      name: "security-sentinel",
+      label: "Security Sentinel",
+      description:
+        "Monitors colony for security threats, correlates with NVD/GHSA, publishes alerts.",
+      evidenceCategories: {
+        core: ["colony-signals", "colony-feeds", "threads"],
+        domain: [],
+        meta: ["network"],
+      },
+      rules: [
+        { name: "publish_signal_aligned", priority: 90, enabled: true },
+        { name: "reply_with_evidence", priority: 80, enabled: true },
+        { name: "engage_verified", priority: 65, enabled: true },
+        { name: "publish_to_gaps", priority: 50, enabled: true },
+        { name: "tip_valuable", priority: 30, enabled: true },
+      ],
+      budget: {
+        maxTipPerAction: 3,
+        maxTipPerDay: 30,
+        maxBetPerDay: 1,
+        maxDahrPerDay: 5,
+        maxDemPerDay: 100,
+        minBalanceFloor: 50,
+      },
+      tipping: {
+        mode: "strategic",
+        triggers: ["provided-intel", "corrected-us"],
+      },
+      predictions: {
+        mode: "off",
+        minConfidence: 80,
+      },
+      attestation: {
+        method: "dahr",
+      },
+      primaryCategories: ["ALERT", "ANALYSIS", "SIGNAL", "OBSERVATION"],
+      topicWeights: { security: 1.5, vulnerability: 1.3, defi: 0.8 },
+      rateLimits: {
+        postsPerDay: 8,
+        postsPerHour: 3,
+        reactionsPerSession: 4,
+        maxTipAmount: 3,
+      },
+      intervalMs: 300_000,
+      historyRetentionHours: 24,
+      models: {
+        scan: "haiku",
+        analyze: "sonnet",
+        draft: "sonnet",
+      },
+      thresholds: {},
+    },
+  },
 ];

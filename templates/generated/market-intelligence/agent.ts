@@ -11,28 +11,27 @@
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
-import { createAgentRuntime } from "../../src/toolkit/agent-runtime.js";
-import { runAgentLoop } from "../../src/toolkit/agent-loop.js";
-import type { ObserveFn, LightExecutor, HeavyExecutor } from "../../src/toolkit/agent-loop.js";
+import { createAgentRuntime } from "../../../src/toolkit/agent-runtime.js";
+import { runAgentLoop } from "../../../src/toolkit/agent-loop.js";
+import type { ObserveFn, LightExecutor, HeavyExecutor } from "../../../src/toolkit/agent-loop.js";
 import { learnFirstObserve } from "./observe.js";
-import { executeStrategyActions } from "../../cli/action-executor.js";
-import { executePublishActions } from "../../cli/publish-executor.js";
-import { loadAgentConfig } from "../../src/lib/agent-config.js";
-import { loadAgentSourceView } from "../../src/toolkit/sources/catalog.js";
-import { FileStateStore } from "../../src/toolkit/state-store.js";
+import { executeStrategyActions } from "../../../cli/action-executor.js";
+import { executePublishActions } from "../../../cli/publish-executor.js";
+import { loadAgentConfig } from "../../../src/lib/agent-config.js";
+import { loadAgentSourceView } from "../../../src/toolkit/sources/catalog.js";
+import { FileStateStore } from "../../../src/toolkit/state-store.js";
 
 // Re-export for external consumers
 export { learnFirstObserve } from "./observe.js";
 
 // ── Configuration ──────────────────────────────
 const STRATEGY_PATH = resolve(import.meta.dirname, "strategy.yaml");
-const INTERVAL_MS = Number(process.env.LOOP_INTERVAL_MS ?? 300_000);
+const INTERVAL_MS = Number(process.env.LOOP_INTERVAL_MS ?? 300000);
 const AGENT_LABEL = "market-intelligence";
 const DRY_RUN = process.env.DRY_RUN !== "false"; // Default dry-run=true for safety (real DEM on mainnet)
 
 // ── Observe ──────────────────────────────────
-const observe: ObserveFn = (toolkit, address) =>
-  learnFirstObserve(toolkit, address, STRATEGY_PATH);
+const observe: ObserveFn = learnFirstObserve;
 
 // ── Executor wiring (bridges toolkit boundary per ADR-0019) ──
 function createExecutors(label: string, agentConfig: any, sourceView: any) {
@@ -41,7 +40,7 @@ function createExecutors(label: string, agentConfig: any, sourceView: any) {
       bridge: {
         apiCall: runtime.authenticatedApiCall,
         publishHivePost: runtime.sdkBridge.publishHivePost.bind(runtime.sdkBridge),
-        transferDem: (to: string, amount: number) => runtime.sdkBridge.transferDem(to, amount, "Market intel tip"),
+        transferDem: (to: string, amount: number) => runtime.sdkBridge.transferDem(to, amount, "Template tip"),
       },
       dryRun: DRY_RUN,
       observe: (type, msg) => console.log(`[${label}:light] ${type}: ${msg}`),
@@ -83,8 +82,8 @@ async function main() {
   const runtime = await createAgentRuntime();
   console.log(`[${AGENT_LABEL}] Connected as ${runtime.address}`);
 
-  const agentConfig = loadAgentConfig();
-  const sourceView = loadAgentSourceView(agentConfig.name);
+  const agentConfig = loadAgentConfig(AGENT_LABEL);
+  const sourceView = loadAgentSourceView(agentConfig.name, agentConfig.paths.sourceCatalog, agentConfig.paths.sourcesRegistry);
   const { executeLightActions, executeHeavyActions } = createExecutors(AGENT_LABEL, agentConfig, sourceView);
 
   await runAgentLoop(runtime, observe, {

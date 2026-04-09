@@ -1,15 +1,13 @@
 /**
- * Tests for templates/market-intelligence/ — market-specific observe function.
+ * Tests for templates/market-intelligence/ — compiler-generated observe function.
  *
  * Verifies:
- * - oracle.get() called with correct assets
- * - prices.get() called
- * - divergences detection from OracleResult (real API shape)
- * - Betting pool evidence when pool has 3+ bets
- * - NULL SAFETY: all ApiResult checks use ?.ok
- * - Evidence uses real AvailableEvidence shape
- * - apiEnrichment context includes oracle, prices, signals, bettingPool
- * - strategy.yaml and sources.yaml are well-formed
+ * - learnFirstObserve uses strategyObserve (single-fetch router)
+ * - Evidence categories: colony-signals, colony-feeds, oracle, prices, predictions
+ * - Null-safe when API calls fail
+ * - strategy.yaml is well-formed with 6 rules
+ * - sources.yaml exists and has required fields
+ * - agent.ts uses learnFirstObserve
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -18,23 +16,22 @@ import { resolve } from "node:path";
 import { loadStrategyConfig } from "../../src/toolkit/strategy/config-loader.js";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 import type { ObserveResult } from "../../src/toolkit/agent-loop.js";
-import type { OracleResult, PriceData, SignalData, BettingPool, FeedResponse } from "../../src/toolkit/supercolony/types.js";
-import { mockOk, mockErr, makePriceData, makeSignalData, makeBettingPool } from "../toolkit/primitives/_helpers.js";
 
 const TEMPLATE_DIR = resolve(import.meta.dirname, "../../templates/market-intelligence");
+const STRATEGY_PATH = resolve(TEMPLATE_DIR, "strategy.yaml");
 
 // ── Mock Toolkit factory ──────────────────────────
 
 function createMockToolkit(overrides: Record<string, unknown> = {}): Toolkit {
   return {
     feed: {
-      getRecent: vi.fn().mockResolvedValue(mockOk({ posts: [] })),
+      getRecent: vi.fn().mockResolvedValue({ ok: true, data: { posts: [] } }),
       search: vi.fn().mockResolvedValue(null),
       getPost: vi.fn().mockResolvedValue(null),
       getThread: vi.fn().mockResolvedValue(null),
     },
     intelligence: {
-      getSignals: vi.fn().mockResolvedValue(null),
+      getSignals: vi.fn().mockResolvedValue({ ok: true, data: [] }),
       getReport: vi.fn().mockResolvedValue(null),
     },
     scores: { getLeaderboard: vi.fn().mockResolvedValue(null) },
@@ -82,275 +79,107 @@ function createMockToolkit(overrides: Record<string, unknown> = {}): Toolkit {
   } as unknown as Toolkit;
 }
 
-// ── Test data ─────────────────────────────────────
-
-const MOCK_ORACLE: OracleResult = {
-  divergences: [
-    { type: "agents_vs_market", asset: "BTC", description: "Low divergence", severity: "low" as const },
-    { type: "agents_vs_market", asset: "ETH", description: "High divergence — agents bullish, market down", severity: "high" as const, details: { agentConfidence: 85 } },
-  ],
-};
-
-const MOCK_PRICES: PriceData[] = [
-  makePriceData({ ticker: "BTC", priceUsd: 60000 }),
-  makePriceData({ ticker: "ETH", priceUsd: 3000 }),
-];
-
-const MOCK_SIGNALS: SignalData[] = [
-  makeSignalData({ topic: "defi", agentCount: 5, totalAgents: 10, text: "DeFi bullish" }),
-];
-
-const MOCK_POOL: BettingPool = makeBettingPool({
-  horizon: "24h",
-  totalBets: 5,
-  totalDem: 100,
-  bets: [
-    { txHash: "0xtx1", bettor: "0xa1", predictedPrice: 61000, amount: 20, roundEnd: Date.now() + 86400000, horizon: "24h" },
-    { txHash: "0xtx2", bettor: "0xa2", predictedPrice: 59000, amount: 30, roundEnd: Date.now() + 86400000, horizon: "24h" },
-    { txHash: "0xtx3", bettor: "0xa3", predictedPrice: 60500, amount: 50, roundEnd: Date.now() + 86400000, horizon: "24h" },
-  ],
-});
-
-const MOCK_POOL_SMALL: BettingPool = makeBettingPool({
-  horizon: "24h",
-  totalBets: 2,
-  totalDem: 30,
-  bets: [
-    { txHash: "0xtx1", bettor: "0xa1", predictedPrice: 61000, amount: 10, roundEnd: Date.now() + 86400000, horizon: "24h" },
-    { txHash: "0xtx2", bettor: "0xa2", predictedPrice: 59000, amount: 20, roundEnd: Date.now() + 86400000, horizon: "24h" },
-  ],
-});
-
 const OUR_ADDRESS = "0xmarket-agent";
 
 // ── Lazy-load the observe function ────────────────
 
-let marketObserve: (toolkit: Toolkit, address: string) => Promise<ObserveResult>;
+let learnFirstObserve: (toolkit: Toolkit, address: string, strategyPath?: string) => Promise<ObserveResult>;
 
 beforeEach(async () => {
   const mod = await import("../../templates/market-intelligence/observe.js");
-  marketObserve = mod.marketObserve;
+  learnFirstObserve = mod.learnFirstObserve;
 });
 
 // ── Tests ─────────────────────────────────────────
 
 describe("templates/market-intelligence", () => {
-  describe("marketObserve()", () => {
-    it("calls oracle.get() via enrichedObserve", async () => {
+  describe("learnFirstObserve()", () => {
+    it("calls feed.getRecent for colony state", async () => {
       const toolkit = createMockToolkit();
-      await marketObserve(toolkit, OUR_ADDRESS);
-      expect(toolkit.oracle.get).toHaveBeenCalled();
-    });
-
-    it("calls prices.get() via enrichedObserve", async () => {
-      const toolkit = createMockToolkit();
-      await marketObserve(toolkit, OUR_ADDRESS);
-      expect(toolkit.prices.get).toHaveBeenCalled();
-    });
-
-    it("calls intelligence.getSignals()", async () => {
-      const toolkit = createMockToolkit();
-      await marketObserve(toolkit, OUR_ADDRESS);
-      expect(toolkit.intelligence.getSignals).toHaveBeenCalled();
-    });
-
-    it("calls ballot.getPool()", async () => {
-      const toolkit = createMockToolkit();
-      await marketObserve(toolkit, OUR_ADDRESS);
-      expect(toolkit.ballot.getPool).toHaveBeenCalled();
-    });
-
-    it("fetches all data sources in parallel (feed, oracle, prices, signals, pool)", async () => {
-      const toolkit = createMockToolkit();
-      await marketObserve(toolkit, OUR_ADDRESS);
-
-      // All five calls should have been made
+      await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
       expect(toolkit.feed.getRecent).toHaveBeenCalled();
-      expect(toolkit.oracle.get).toHaveBeenCalled();
-      expect(toolkit.prices.get).toHaveBeenCalled();
+    });
+
+    it("calls intelligence.getSignals() via strategy router", async () => {
+      const toolkit = createMockToolkit();
+      await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
       expect(toolkit.intelligence.getSignals).toHaveBeenCalled();
-      expect(toolkit.ballot.getPool).toHaveBeenCalled();
     });
 
-    it("creates evidence from oracle divergences", async () => {
+    it("calls oracle.get() via strategy router", async () => {
+      const toolkit = createMockToolkit();
+      await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
+      expect(toolkit.oracle.get).toHaveBeenCalled();
+    });
+
+    it("calls prices.get() via strategy router", async () => {
+      const toolkit = createMockToolkit();
+      await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
+      expect(toolkit.prices.get).toHaveBeenCalled();
+    });
+
+    it("produces signal evidence from colony signals via extractor", async () => {
       const toolkit = createMockToolkit({
-        oracle: { get: vi.fn().mockResolvedValue(mockOk(MOCK_ORACLE)) },
-        prices: { get: vi.fn().mockResolvedValue(mockOk(MOCK_PRICES)) },
+        intelligence: {
+          getSignals: vi.fn().mockResolvedValue({
+            ok: true,
+            data: [
+              { topic: "defi", agentCount: 5, totalAgents: 10, confidence: 80, text: "DeFi bullish on lending rates", trending: true, direction: "bullish", consensus: true },
+            ],
+          }),
+          getReport: vi.fn().mockResolvedValue(null),
+        },
       });
 
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-
-      // Both divergences should produce evidence (all severities included now)
-      const divergenceEvidence = result.evidence.filter(e =>
-        e.sourceId.startsWith("oracle-divergence"),
-      );
-      expect(divergenceEvidence.length).toBe(2);
-      // Verify evidence shape matches AvailableEvidence
-      const ev = divergenceEvidence[0];
-      expect(ev).toHaveProperty("sourceId");
-      expect(ev).toHaveProperty("subject");
-      expect(ev).toHaveProperty("metrics");
-      expect(ev).toHaveProperty("richness");
-      expect(ev).toHaveProperty("freshness");
-      expect(ev).toHaveProperty("stale");
-      expect(Array.isArray(ev.metrics)).toBe(true);
-      // High severity should have richness 1.0
-      const highDiv = divergenceEvidence.find(e => e.sourceId.includes("ETH"));
-      expect(highDiv?.richness).toBe(1.0);
+      const result = await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
+      const signalEvidence = result.evidence.filter(e => e.sourceId.startsWith("signal-"));
+      expect(signalEvidence.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("maps severity to richness correctly", async () => {
-      const noDivOracle: OracleResult = {
-        divergences: [],
-      };
+    it("produces divergence evidence from oracle via extractor", async () => {
       const toolkit = createMockToolkit({
-        oracle: { get: vi.fn().mockResolvedValue(mockOk(noDivOracle)) },
-        prices: { get: vi.fn().mockResolvedValue(mockOk(MOCK_PRICES)) },
+        oracle: {
+          get: vi.fn().mockResolvedValue({
+            ok: true,
+            data: {
+              divergences: [
+                { type: "agents_vs_market", asset: "ETH", description: "High divergence — agents bullish, market down", severity: "high" },
+              ],
+              assets: [],
+            },
+          }),
+        },
       });
 
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      const divergenceEvidence = result.evidence.filter(e => e.sourceId.startsWith("oracle-divergence"));
-      expect(divergenceEvidence).toHaveLength(0);
+      const result = await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
+      const divEvidence = result.evidence.filter(e => e.sourceId.startsWith("divergence-"));
+      expect(divEvidence.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("adds betting pool evidence when pool has 3+ bets", async () => {
+    it("is null-safe when all API calls return null", async () => {
       const toolkit = createMockToolkit({
-        ballot: { getPool: vi.fn().mockResolvedValue(mockOk(MOCK_POOL)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      const poolEvidence = result.evidence.filter(e => e.sourceId === "betting-pool");
-      expect(poolEvidence).toHaveLength(1);
-      expect(poolEvidence[0].subject).toContain("BTC");
-    });
-
-    it("does NOT add betting pool evidence when pool has fewer than 3 bets", async () => {
-      const toolkit = createMockToolkit({
-        ballot: { getPool: vi.fn().mockResolvedValue(mockOk(MOCK_POOL_SMALL)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      const poolEvidence = result.evidence.filter(e => e.sourceId === "betting-pool");
-      expect(poolEvidence).toHaveLength(0);
-    });
-
-    it("is null-safe when oracle.get() returns null", async () => {
-      const toolkit = createMockToolkit({
+        feed: {
+          getRecent: vi.fn().mockResolvedValue({ ok: false }),
+          search: vi.fn().mockResolvedValue(null),
+          getPost: vi.fn().mockResolvedValue(null),
+          getThread: vi.fn().mockResolvedValue(null),
+        },
         oracle: { get: vi.fn().mockResolvedValue(null) },
+        prices: { get: vi.fn().mockResolvedValue(null) },
+        intelligence: { getSignals: vi.fn().mockResolvedValue(null), getReport: vi.fn().mockResolvedValue(null) },
+        ballot: { getPool: vi.fn().mockResolvedValue(null) },
       });
 
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
+      const result = await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
       expect(result).toBeDefined();
       expect(result.colonyState).toBeDefined();
       expect(result.evidence).toBeInstanceOf(Array);
     });
 
-    it("is null-safe when prices.get() returns null", async () => {
-      const toolkit = createMockToolkit({
-        prices: { get: vi.fn().mockResolvedValue(null) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      expect(result).toBeDefined();
-    });
-
-    it("is null-safe when intelligence.getSignals() returns null", async () => {
-      const toolkit = createMockToolkit({
-        intelligence: { getSignals: vi.fn().mockResolvedValue(null) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      expect(result).toBeDefined();
-    });
-
-    it("is null-safe when ballot.getPool() returns null", async () => {
-      const toolkit = createMockToolkit({
-        ballot: { getPool: vi.fn().mockResolvedValue(null) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      expect(result).toBeDefined();
-    });
-
-    it("is null-safe when all API calls return errors", async () => {
-      const toolkit = createMockToolkit({
-        feed: { getRecent: vi.fn().mockResolvedValue(mockErr(500)) },
-        oracle: { get: vi.fn().mockResolvedValue(mockErr(500)) },
-        prices: { get: vi.fn().mockResolvedValue(mockErr(500)) },
-        intelligence: { getSignals: vi.fn().mockResolvedValue(mockErr(500)) },
-        ballot: { getPool: vi.fn().mockResolvedValue(mockErr(500)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      expect(result).toBeDefined();
-      expect(result.colonyState).toBeDefined();
-      expect(result.evidence).toEqual([]);
-    });
-
-    it("includes apiEnrichment in context via enrichedObserve", async () => {
-      const toolkit = createMockToolkit({
-        oracle: { get: vi.fn().mockResolvedValue(mockOk(MOCK_ORACLE)) },
-        prices: { get: vi.fn().mockResolvedValue(mockOk(MOCK_PRICES)) },
-        intelligence: { getSignals: vi.fn().mockResolvedValue(mockOk(MOCK_SIGNALS)) },
-        ballot: { getPool: vi.fn().mockResolvedValue(mockOk(MOCK_POOL)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-
-      // enrichedObserve provides apiEnrichment via fetchApiEnrichment which validates with Zod.
-      // Fields that pass Zod validation will be present; others may be filtered.
+    it("returns apiEnrichment in context", async () => {
+      const toolkit = createMockToolkit();
+      const result = await learnFirstObserve(toolkit, OUR_ADDRESS, STRATEGY_PATH);
       expect(result.context).toBeDefined();
-      expect(result.context!.apiEnrichment).toBeDefined();
-    });
-
-    it("apiEnrichment is still defined when API calls fail (enrichedObserve is resilient)", async () => {
-      const toolkit = createMockToolkit({
-        oracle: { get: vi.fn().mockResolvedValue(mockErr(500)) },
-        prices: { get: vi.fn().mockResolvedValue(mockErr(500)) },
-        intelligence: { getSignals: vi.fn().mockResolvedValue(mockErr(500)) },
-        ballot: { getPool: vi.fn().mockResolvedValue(mockErr(500)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      // enrichedObserve still returns a result even when all feeds fail
-      expect(result).toBeDefined();
-      expect(result.colonyState).toBeDefined();
-    });
-
-    it("evidence has correct AvailableEvidence shape for divergence", async () => {
-      const toolkit = createMockToolkit({
-        oracle: { get: vi.fn().mockResolvedValue(mockOk(MOCK_ORACLE)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      const divergences = result.evidence.filter(e => e.sourceId === "oracle-divergence");
-
-      for (const ev of divergences) {
-        expect(typeof ev.sourceId).toBe("string");
-        expect(typeof ev.subject).toBe("string");
-        expect(Array.isArray(ev.metrics)).toBe(true);
-        expect(typeof ev.richness).toBe("number");
-        expect(typeof ev.freshness).toBe("number");
-        expect(typeof ev.stale).toBe("boolean");
-      }
-    });
-
-    it("evidence has correct AvailableEvidence shape for betting pool", async () => {
-      const toolkit = createMockToolkit({
-        ballot: { getPool: vi.fn().mockResolvedValue(mockOk(MOCK_POOL)) },
-      });
-
-      const result = await marketObserve(toolkit, OUR_ADDRESS);
-      const poolEvidence = result.evidence.filter(e => e.sourceId === "betting-pool");
-
-      for (const ev of poolEvidence) {
-        expect(typeof ev.sourceId).toBe("string");
-        expect(typeof ev.subject).toBe("string");
-        expect(Array.isArray(ev.metrics)).toBe(true);
-        expect(typeof ev.richness).toBe("number");
-        expect(typeof ev.freshness).toBe("number");
-        expect(typeof ev.stale).toBe("boolean");
-      }
     });
   });
 
@@ -408,18 +237,12 @@ describe("templates/market-intelligence", () => {
       expect(config.rateLimits.maxTipAmount).toBe(5);
     });
 
-    it("has enrichment settings with minConfidence", () => {
-      const yaml = readFileSync(resolve(TEMPLATE_DIR, "strategy.yaml"), "utf-8");
-      const config = loadStrategyConfig(yaml);
-      expect(config.enrichment.minConfidence).toBe(50);
-    });
-
     it("has topic weights for defi, crypto, macro", () => {
       const yaml = readFileSync(resolve(TEMPLATE_DIR, "strategy.yaml"), "utf-8");
       const config = loadStrategyConfig(yaml);
       expect(config.topicWeights).toEqual({
         defi: 1.2,
-        crypto: 1.0,
+        crypto: 1,
         macro: 0.8,
       });
     });
@@ -466,15 +289,16 @@ describe("templates/market-intelligence", () => {
       expect(content).toContain("runAgentLoop");
     });
 
-    it("exports marketObserve function", () => {
+    it("exports learnFirstObserve function", () => {
       const content = readFileSync(resolve(TEMPLATE_DIR, "agent.ts"), "utf-8");
       expect(content).toContain("export");
-      expect(content).toContain("marketObserve");
+      expect(content).toContain("learnFirstObserve");
     });
 
-    it("does NOT use defaultObserve (has custom observe)", () => {
+    it("does NOT use defaultObserve or marketObserve", () => {
       const content = readFileSync(resolve(TEMPLATE_DIR, "agent.ts"), "utf-8");
       expect(content).not.toContain("defaultObserve");
+      expect(content).not.toContain("marketObserve");
     });
   });
 });

@@ -2,16 +2,16 @@
 type: roadmap
 status: active
 updated: 2026-04-09
-open_items: 8
-completed_phases: 17
-tests: 3199
-suites: 258
+open_items: 6
+completed_phases: 18
+tests: 3198
+suites: 259
 tsc_errors: 0
 api_endpoints: 38
 strategy_rules: 10
 colony_posts: 202000
 catalog_sources: 247
-summary: "Phases 1-17 complete. Phase 17: observe infrastructure (10 extractors, single-fetch router, ObservationLog) + Agent Compiler (intent→template generation). 3 generated templates. Phase 18 next: live testing + template rebuild via compiler."
+summary: "Phases 1-18 complete. Phase 18: all 5 templates live-tested (DRY_RUN), market-intelligence + security-sentinel rebuilt via compiler, v3-loop consolidated onto strategyObserve, shared helpers extracted."
 read_when: ["roadmap", "open items", "deferred", "tech debt", "next steps", "what's next", "backlog", "future work", "phase 17", "phase 18", "agent compiler", "observe router"]
 ---
 
@@ -335,30 +335,31 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 
 **Phase 17 completed:** 2026-04-09. 258 suites, 3199 tests. Codex review: 3 HIGH + 3 MEDIUM + 2 LOW (17a) + 3 HIGH + 3 MEDIUM + 2 LOW (17b) — all fixed.
 
-### Phase 18: Live Testing + Template Rebuild via Compiler
+### Phase 18: Live Testing + Template Rebuild via Compiler — COMPLETE
 
-> Goal: Run compiler-generated agents in live sessions. Rebuild market-intelligence + security-sentinel via compiler.
-> Consolidate v3-loop onto strategyObserve. Validate the compiler end-to-end.
+> 4 atomic commits (2026-04-09). All generated agents verified via live DRY_RUN.
 
-**18a — Live testing of compiler-generated agents:**
-- [ ] 18a-1: Run prediction-tracker in DRY_RUN mode — verify observe + strategy engine + evidence flow
-- [ ] 18a-2: Run engagement-optimizer in DRY_RUN mode — verify engagement-first strategy
-- [ ] 18a-3: Run research-synthesizer in DRY_RUN mode — verify cross-domain evidence
-- [ ] 18a-4: First live session (DRY_RUN=false) with one generated agent
+**18a — Live testing (DRY_RUN):**
+- [x] 18a-1: prediction-tracker — 5092 evidence, 0 actions (needs pool conditions)
+- [x] 18a-2: engagement-optimizer — 120 evidence, 4 actions decided
+- [x] 18a-3: research-synthesizer — 95 evidence, 5 actions decided
+- [ ] 18a-4: First live session (DRY_RUN=false) — deferred to operational phase
 
 **18b — Rebuild existing templates via compiler:**
-- [ ] 18b-1: Market Intelligence template — generate via compiler with market-specific strategy
-- [ ] 18b-2: Security Sentinel template — generate via compiler with security-specific strategy
-- [ ] 18b-3: Retire hand-written observe.ts in market-intelligence + security-sentinel (use generated)
+- [x] 18b-1: Market Intelligence — compiler-generated, 6 rules, active predictions
+- [x] 18b-2: Security Sentinel — hybrid (compiler + custom NVD/GHSA in security-sources.ts)
+- [x] 18b-3: Hand-written observe.ts replaced in both templates
 
-**18c — v3-loop consolidation (optional):**
-- [ ] 18c-1: Replace v3-loop's fetchApiEnrichment() with strategyObserve() single-fetch router
-- [ ] 18c-2: Remove api-enrichment.ts if v3-loop fully migrated
+**18c — v3-loop consolidation:**
+- [x] 18c-1: v3-loop-sense.ts uses strategyObserve instead of fetchApiEnrichment
+- [ ] 18c-2: api-enrichment.ts retained (still used by agent-loop.ts enrichedObserve)
 
-**18d — Deferred /simplify findings (cleanup):**
-- [ ] 18d-1: Extract shared `STALE_THRESHOLD_MS` constant (86_400_000 used in 4 extractors)
-- [ ] 18d-2: Extract `capRichness(value)` helper (Math.min(95, ...) repeated 12x)
-- [ ] 18d-3: Extract `truncateSubject(text, maxLen)` helper (.slice(0, 80) repeated 4x)
+**18d — Deferred /simplify cleanup:**
+- [x] 18d-1: STALE_THRESHOLD_MS extracted to extractors/helpers.ts
+- [x] 18d-2: capRichness() extracted and used across all 10 extractors
+- [x] 18d-3: truncateSubject() extracted and used across 4 extractors
+
+**Phase 18 completed:** 2026-04-09. 259 suites, 3198 tests. normalize() null-safety fix. 5 compiler templates total.
 
 ### Future (no phase assigned)
 - [ ] 6-disc-h -- Escrow to social identity: tip by Twitter/GitHub handle without wallet

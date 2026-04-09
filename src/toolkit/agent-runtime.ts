@@ -8,6 +8,9 @@
  * SuperColonyApiClient → AutoDataSource → createToolkit
  */
 
+import { resolve } from "node:path";
+import { homedir } from "node:os";
+import { mkdirSync } from "node:fs";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import { connectWallet } from "../lib/network/sdk.js";
 import { ensureAuth, loadAuthCache } from "../lib/auth/auth.js";
@@ -105,9 +108,8 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   let colonyDb: ColonyDatabase | undefined;
   if (opts?.enableColonyDb !== false) {
     try {
-      const { resolve } = await import("node:path");
-      const { homedir } = await import("node:os");
-      const { mkdirSync } = await import("node:fs");
+      // Dynamic import: initColonyCache loads better-sqlite3 (NAPI addon),
+      // which is slow at import time and should only load when needed.
       const { initColonyCache } = await import("./colony/schema.js");
       const agentDir = resolve(homedir(), `.${opts?.agentName ?? "agent"}`);
       const colonyDir = resolve(agentDir, "colony");

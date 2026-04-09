@@ -14,7 +14,6 @@ import type { SourceTestResult } from "./health.js";
  * Phase 12b: Integrates rate limiting (per-source throttle) and lifecycle
  * management (update ratings + evaluate transitions after each fetch).
  *
- * Moved from cli/v3-loop-helpers.ts to toolkit in Phase 18 — source pipeline wiring.
  * All dependencies are toolkit-internal (ADR-0002 compliant).
  */
 export async function fetchSourcesParallel(

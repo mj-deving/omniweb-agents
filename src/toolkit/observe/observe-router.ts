@@ -17,6 +17,8 @@ import type { AvailableEvidence } from "../colony/available-evidence.js";
 import type { ColonyDatabase } from "../colony/schema.js";
 import type { AgentSourceView } from "../sources/catalog.js";
 import { EXTRACTOR_REGISTRY, type EvidenceExtractor } from "./extractors/index.js";
+import { fetchSourcesParallel } from "../sources/fetch-parallel.js";
+import { computeAvailableEvidence } from "../colony/available-evidence.js";
 
 /** All ADR-0020 evidence categories (colony intelligence). */
 const ALL_CATEGORIES = Object.keys(EXTRACTOR_REGISTRY);
@@ -224,7 +226,7 @@ export interface SourceDeps {
   db: ColonyDatabase;
   /** Agent's filtered source view from catalog. */
   sourceView: AgentSourceView;
-  /** Observer for logging. */
+  /** Observer for logging. Common types: "insight" (informational), "warning" (non-fatal error). */
   observe?: (type: string, msg: string, meta?: Record<string, unknown>) => void;
   /** Source fetch budget in ms (default: 15_000). */
   budgetMs?: number;
@@ -237,9 +239,6 @@ export interface SourceDeps {
  * Returns AvailableEvidence[] from external URLs — attestation-grade data.
  */
 async function fetchSourceEvidence(deps: SourceDeps): Promise<AvailableEvidence[]> {
-  const { fetchSourcesParallel } = await import("../sources/fetch-parallel.js");
-  const { computeAvailableEvidence } = await import("../colony/available-evidence.js");
-
   const observe = deps.observe ?? (() => {});
   const activeSources = deps.sourceView.sources ?? [];
 

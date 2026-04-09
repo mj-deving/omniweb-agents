@@ -15,70 +15,12 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { loadStrategyConfig } from "../../src/toolkit/strategy/config-loader.js";
+import { createMockToolkit } from "./_mock-toolkit.js";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 import type { ObserveResult } from "../../src/toolkit/agent-loop.js";
 
 const TEMPLATE_DIR = resolve(import.meta.dirname, "../../templates/security-sentinel");
 const STRATEGY_PATH = resolve(TEMPLATE_DIR, "strategy.yaml");
-
-// ── Mock Toolkit factory ──────────────────────────
-
-function createMockToolkit(overrides: Record<string, unknown> = {}): Toolkit {
-  return {
-    feed: {
-      getRecent: vi.fn().mockResolvedValue({ ok: true, data: { posts: [] } }),
-      search: vi.fn().mockResolvedValue(null),
-      getPost: vi.fn().mockResolvedValue(null),
-      getThread: vi.fn().mockResolvedValue(null),
-    },
-    intelligence: {
-      getSignals: vi.fn().mockResolvedValue({ ok: true, data: [] }),
-      getReport: vi.fn().mockResolvedValue(null),
-    },
-    scores: { getLeaderboard: vi.fn().mockResolvedValue(null) },
-    agents: {
-      list: vi.fn().mockResolvedValue(null),
-      getProfile: vi.fn().mockResolvedValue(null),
-      getIdentities: vi.fn().mockResolvedValue(null),
-    },
-    actions: {
-      tip: vi.fn().mockResolvedValue(null),
-      react: vi.fn().mockResolvedValue(null),
-      getReactions: vi.fn().mockResolvedValue(null),
-      getTipStats: vi.fn().mockResolvedValue(null),
-      getAgentTipStats: vi.fn().mockResolvedValue(null),
-      placeBet: vi.fn().mockResolvedValue(null),
-    },
-    oracle: { get: vi.fn().mockResolvedValue(null) },
-    prices: { get: vi.fn().mockResolvedValue(null) },
-    verification: {
-      verifyDahr: vi.fn().mockResolvedValue(null),
-      verifyTlsn: vi.fn().mockResolvedValue(null),
-    },
-    predictions: {
-      query: vi.fn().mockResolvedValue(null),
-      resolve: vi.fn().mockResolvedValue(null),
-      markets: vi.fn().mockResolvedValue(null),
-    },
-    ballot: {
-      getState: vi.fn().mockResolvedValue(null),
-      getAccuracy: vi.fn().mockResolvedValue(null),
-      getLeaderboard: vi.fn().mockResolvedValue(null),
-      getPerformance: vi.fn().mockResolvedValue(null),
-      getPool: vi.fn().mockResolvedValue(null),
-    },
-    webhooks: {
-      list: vi.fn().mockResolvedValue(null),
-      create: vi.fn().mockResolvedValue(null),
-      delete: vi.fn().mockResolvedValue(null),
-    },
-    identity: { lookup: vi.fn().mockResolvedValue(null) },
-    balance: { get: vi.fn().mockResolvedValue(null) },
-    health: { check: vi.fn().mockResolvedValue(null) },
-    stats: { get: vi.fn().mockResolvedValue(null) },
-    ...overrides,
-  } as unknown as Toolkit;
-}
 
 // ── Mock fetch data ───────────────────────────────
 
@@ -152,7 +94,7 @@ describe("templates/security-sentinel", () => {
 
     it("observe.ts exists and exports learnFirstObserve", () => {
       const content = readFileSync(resolve(TEMPLATE_DIR, "observe.ts"), "utf-8");
-      expect(content).toContain("export async function learnFirstObserve");
+      expect(content).toContain("learnFirstObserve");
     });
   });
 

@@ -32,11 +32,11 @@ console.log("[test] Running strategyObserve...");
 const { evidence, apiEnrichment, prefetched } = await strategyObserve(runtime.toolkit, config);
 console.log(`[test] Evidence: ${evidence.length} items`);
 console.log(`[test] Enrichment keys: ${Object.keys(apiEnrichment).join(", ")}`);
-console.log(`[test] Prefetched keys: ${Object.keys(prefetched).filter(k => (prefetched as any)[k] != null).join(", ")}`);
+console.log(`[test] Prefetched keys: ${Object.keys(prefetched).filter(k => prefetched[k as keyof typeof prefetched] != null).join(", ")}`);
 
 // Build colony state
 const recentResult = prefetched.recentPosts ?? await runtime.toolkit.feed.getRecent({ limit: 100 });
-const recentPosts = mapFeedPosts(recentResult as any);
+const recentPosts = mapFeedPosts(recentResult as { ok: true; data: { posts: unknown[] } });
 const colonyState = buildColonyStateFromFeed(recentPosts, runtime.address);
 console.log(`[test] Colony: ${colonyState.activity.postsPerHour} posts/hr, ${colonyState.activity.activeAuthors} authors`);
 

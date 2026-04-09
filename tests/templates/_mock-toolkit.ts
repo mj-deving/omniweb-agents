@@ -11,16 +11,26 @@ export interface MockToolkitOverrides {
   signalsResult?: unknown;
 }
 
-export function createMockToolkit(overrides?: MockToolkitOverrides): Toolkit {
-  return {
+/**
+ * Create a mock toolkit for template tests.
+ * Supports two override styles:
+ * 1. MockToolkitOverrides — typed fields for common overrides
+ * 2. Record<string, unknown> — arbitrary domain-level overrides (spread on top)
+ */
+export function createMockToolkit(overrides?: MockToolkitOverrides | Record<string, unknown>): Toolkit {
+  // Detect typed vs arbitrary overrides
+  const typed = overrides as MockToolkitOverrides | undefined;
+  const isTyped = typed && ("feedSearchResult" in typed || "feedRecentResult" in typed || "signalsResult" in typed);
+
+  const base: Toolkit = {
     feed: {
-      getRecent: vi.fn().mockResolvedValue(overrides?.feedRecentResult ?? { ok: true, data: { posts: [] } }),
-      search: vi.fn().mockResolvedValue(overrides?.feedSearchResult ?? { ok: true, data: { posts: [] } }),
+      getRecent: vi.fn().mockResolvedValue(isTyped && typed?.feedRecentResult ? typed.feedRecentResult : { ok: true, data: { posts: [] } }),
+      search: vi.fn().mockResolvedValue(isTyped && typed?.feedSearchResult ? typed.feedSearchResult : { ok: true, data: { posts: [] } }),
       getPost: vi.fn().mockResolvedValue(null),
       getThread: vi.fn().mockResolvedValue(null),
     },
     intelligence: {
-      getSignals: vi.fn().mockResolvedValue(overrides?.signalsResult ?? { ok: true, data: [] }),
+      getSignals: vi.fn().mockResolvedValue(isTyped && typed?.signalsResult ? typed.signalsResult : { ok: true, data: [] }),
       getReport: vi.fn().mockResolvedValue({ ok: true, data: {} }),
     },
     scores: { getLeaderboard: vi.fn().mockResolvedValue({ ok: true, data: {} }) },
@@ -62,7 +72,14 @@ export function createMockToolkit(overrides?: MockToolkitOverrides): Toolkit {
     },
     identity: { lookup: vi.fn().mockResolvedValue({ ok: true, data: {} }) },
     balance: { get: vi.fn().mockResolvedValue({ ok: true, data: {} }) },
-    health: { check: vi.fn().mockResolvedValue({ ok: true, data: {} }) },
-    stats: { get: vi.fn().mockResolvedValue({ ok: true, data: {} }) },
+    health: { check: vi.fn().mockResolvedValue({ ok: true, data: { status: "ok", uptime: 99.9, timestamp: Date.now() } }) },
+    stats: { get: vi.fn().mockResolvedValue({ ok: true, data: { activity: { postsLast24h: 100, activeAgentsLast24h: 10 }, network: { totalAgents: 50, totalPosts: 5000 }, computedAt: new Date().toISOString() } }) },
   };
+
+  // Apply arbitrary domain-level overrides (e.g., { intelligence: {...} })
+  if (overrides && !isTyped) {
+    return { ...base, ...overrides } as unknown as Toolkit;
+  }
+
+  return base;
 }

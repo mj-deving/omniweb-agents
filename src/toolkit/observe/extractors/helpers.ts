@@ -1,9 +1,12 @@
 /** 24 hours in milliseconds — default staleness threshold for evidence. */
 export const STALE_THRESHOLD_MS = 86_400_000;
 
-/** Cap richness at 95 (evidence scoring ceiling). */
+/** Maximum evidence richness score (scoring ceiling). */
+export const MAX_RICHNESS = 95;
+
+/** Cap richness at MAX_RICHNESS (evidence scoring ceiling). */
 export function capRichness(value: number): number {
-  return Math.min(95, value);
+  return Math.min(MAX_RICHNESS, value);
 }
 
 /** Truncate evidence subject to max length. */

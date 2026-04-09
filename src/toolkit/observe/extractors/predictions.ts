@@ -26,7 +26,7 @@ export async function extractPredictions(toolkit: Toolkit, prefetched?: Prefetch
 
     return {
       sourceId: `prediction-${pred.txHash}`,
-      subject: pred.asset,
+      subject: pred.asset ?? "unknown",
       metrics,
       richness: capRichness(pred.accuracy !== undefined ? 70 : 40),
       freshness: pred.resolvedAt ? Math.floor((Date.now() - pred.resolvedAt) / 1000) : 0,

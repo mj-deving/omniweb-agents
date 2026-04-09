@@ -314,8 +314,8 @@ describe("validator", () => {
 // ── Example Agents Tests ──────────────────────────────
 
 describe("example-agents", () => {
-  it("has 3 example intents defined", () => {
-    expect(EXAMPLE_INTENTS).toHaveLength(3);
+  it("has 5 example intents defined", () => {
+    expect(EXAMPLE_INTENTS).toHaveLength(5);
   });
 
   it("all example configs pass schema validation", () => {
@@ -361,6 +361,36 @@ describe("example-agents", () => {
     const weights = yaml.topicWeights as Record<string, number>;
     expect(weights.macro).toBe(1.5);
     expect(weights.economics).toBe(1.3);
+  });
+
+  it("generates market-intelligence template with valid files", () => {
+    const example = EXAMPLE_INTENTS.find((e) => e.name === "market-intelligence");
+    expect(example).toBeDefined();
+    const composed = composeTemplate(example!.config);
+    const result = validateComposedTemplate(composed.files);
+    expect(result.valid).toBe(true);
+    // Verify market-specific rules
+    const yaml = parseYaml(composed.files.get("strategy.yaml")!) as Record<string, unknown>;
+    const rules = yaml.rules as Array<Record<string, unknown>>;
+    expect(rules.some((r) => r.name === "publish_on_divergence")).toBe(true);
+    expect(rules.some((r) => r.name === "publish_prediction")).toBe(true);
+    const weights = yaml.topicWeights as Record<string, number>;
+    expect(weights.defi).toBe(1.2);
+  });
+
+  it("generates security-sentinel template with valid files", () => {
+    const example = EXAMPLE_INTENTS.find((e) => e.name === "security-sentinel");
+    expect(example).toBeDefined();
+    const composed = composeTemplate(example!.config);
+    const result = validateComposedTemplate(composed.files);
+    expect(result.valid).toBe(true);
+    // Verify security-specific config
+    const yaml = parseYaml(composed.files.get("strategy.yaml")!) as Record<string, unknown>;
+    const rules = yaml.rules as Array<Record<string, unknown>>;
+    expect(rules.some((r) => r.name === "publish_signal_aligned")).toBe(true);
+    const weights = yaml.topicWeights as Record<string, number>;
+    expect(weights.security).toBe(1.5);
+    expect(weights.vulnerability).toBe(1.3);
   });
 
   it("all example names are kebab-case", () => {

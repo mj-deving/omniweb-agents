@@ -1,13 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
- * Security Sentinel Agent — monitors CVEs, advisories, and colony threat signals.
+ * Security Sentinel — Learn-first SuperColony agent.
  *
- * Custom observe() is in observe.ts (testable without SDK — ADR-0019).
- * This file wires runtime, executors, and the agent loop.
+ * Monitors colony for security threats, correlates with NVD/GHSA, publishes alerts.
  *
  * Usage:
  *   cp .env.example .env    # Add your DEMOS_MNEMONIC
- *   npx tsx agent.ts         # Run the agent
+ *   DRY_RUN=false npx tsx agent.ts  # Run live (default: dry-run)
  */
 import { resolve } from "node:path";
 import { homedir } from "node:os";
@@ -15,19 +14,25 @@ import { mkdirSync } from "node:fs";
 import { createAgentRuntime } from "../../src/toolkit/agent-runtime.js";
 import { runAgentLoop } from "../../src/toolkit/agent-loop.js";
 import type { ObserveFn, LightExecutor, HeavyExecutor } from "../../src/toolkit/agent-loop.js";
-import { securityObserve } from "./observe.js";
+import { learnFirstObserve } from "./observe.js";
 import { executeStrategyActions } from "../../cli/action-executor.js";
 import { executePublishActions } from "../../cli/publish-executor.js";
 import { loadAgentConfig } from "../../src/lib/agent-config.js";
 import { loadAgentSourceView } from "../../src/toolkit/sources/catalog.js";
 import { FileStateStore } from "../../src/toolkit/state-store.js";
 
+// Re-export for external consumers
+export { learnFirstObserve } from "./observe.js";
+
 // ── Configuration ──────────────────────────────
 const STRATEGY_PATH = resolve(import.meta.dirname, "strategy.yaml");
 const INTERVAL_MS = Number(process.env.LOOP_INTERVAL_MS ?? 300_000);
 const AGENT_LABEL = "security-sentinel";
+const DRY_RUN = process.env.DRY_RUN !== "false"; // Default dry-run=true for safety (real DEM on mainnet)
 
-const observe: ObserveFn = securityObserve;
+// ── Observe ──────────────────────────────────
+const observe: ObserveFn = (toolkit, address) =>
+  learnFirstObserve(toolkit, address, STRATEGY_PATH);
 
 // ── Executor wiring (bridges toolkit boundary per ADR-0019) ──
 function createExecutors(label: string, agentConfig: any, sourceView: any) {
@@ -38,7 +43,7 @@ function createExecutors(label: string, agentConfig: any, sourceView: any) {
         publishHivePost: runtime.sdkBridge.publishHivePost.bind(runtime.sdkBridge),
         transferDem: (to: string, amount: number) => runtime.sdkBridge.transferDem(to, amount, "Security tip"),
       },
-      dryRun: false,
+      dryRun: DRY_RUN,
       observe: (type, msg) => console.log(`[${label}:light] ${type}: ${msg}`),
       colonyDb: runtime.colonyDb,
       ourAddress: runtime.address,
@@ -59,7 +64,7 @@ function createExecutors(label: string, agentConfig: any, sourceView: any) {
       state: { loopVersion: 3, sessionNumber: 0, agentName: agentConfig.name, startedAt: new Date().toISOString(), pid: process.pid, phases: {}, posts: [], engagements: [] } as any,
       sessionsDir,
       observe: (type, msg) => console.log(`[${label}:heavy] ${type}: ${msg}`),
-      dryRun: false,
+      dryRun: DRY_RUN,
       stateStore,
       colonyDb: runtime.colonyDb,
       calibrationOffset: 0,

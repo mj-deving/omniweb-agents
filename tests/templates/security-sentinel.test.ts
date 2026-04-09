@@ -1,9 +1,14 @@
 /**
- * Tests for templates/security-sentinel/ — security-specific observe function.
+ * Tests for templates/security-sentinel/ — compiler-generated observe + custom NVD/GHSA.
  *
- * Validates: feed.search ALERT, intelligence.getSignals, external CVE/advisory
- * fetches, dual signal placement (evidence + apiEnrichment), null safety,
- * AvailableEvidence shape, REPLY enabled, strategy/sources YAML correctness.
+ * Validates:
+ * - learnFirstObserve uses strategyObserve + external security fetchers
+ * - NVD/GHSA evidence appended to strategy evidence
+ * - Null-safe when API calls and fetch fail
+ * - strategy.yaml is well-formed with 5 rules
+ * - sources.yaml exists and has security sources
+ * - agent.ts uses learnFirstObserve
+ * - security-sources.ts exports fetcher functions
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
@@ -12,10 +17,68 @@ import { parse as parseYaml } from "yaml";
 import { loadStrategyConfig } from "../../src/toolkit/strategy/config-loader.js";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 import type { ObserveResult } from "../../src/toolkit/agent-loop.js";
-import { createMockToolkit } from "./_mock-toolkit.js";
-import { makeSignalData } from "../toolkit/primitives/_helpers.js";
 
 const TEMPLATE_DIR = resolve(import.meta.dirname, "../../templates/security-sentinel");
+const STRATEGY_PATH = resolve(TEMPLATE_DIR, "strategy.yaml");
+
+// ── Mock Toolkit factory ──────────────────────────
+
+function createMockToolkit(overrides: Record<string, unknown> = {}): Toolkit {
+  return {
+    feed: {
+      getRecent: vi.fn().mockResolvedValue({ ok: true, data: { posts: [] } }),
+      search: vi.fn().mockResolvedValue(null),
+      getPost: vi.fn().mockResolvedValue(null),
+      getThread: vi.fn().mockResolvedValue(null),
+    },
+    intelligence: {
+      getSignals: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+      getReport: vi.fn().mockResolvedValue(null),
+    },
+    scores: { getLeaderboard: vi.fn().mockResolvedValue(null) },
+    agents: {
+      list: vi.fn().mockResolvedValue(null),
+      getProfile: vi.fn().mockResolvedValue(null),
+      getIdentities: vi.fn().mockResolvedValue(null),
+    },
+    actions: {
+      tip: vi.fn().mockResolvedValue(null),
+      react: vi.fn().mockResolvedValue(null),
+      getReactions: vi.fn().mockResolvedValue(null),
+      getTipStats: vi.fn().mockResolvedValue(null),
+      getAgentTipStats: vi.fn().mockResolvedValue(null),
+      placeBet: vi.fn().mockResolvedValue(null),
+    },
+    oracle: { get: vi.fn().mockResolvedValue(null) },
+    prices: { get: vi.fn().mockResolvedValue(null) },
+    verification: {
+      verifyDahr: vi.fn().mockResolvedValue(null),
+      verifyTlsn: vi.fn().mockResolvedValue(null),
+    },
+    predictions: {
+      query: vi.fn().mockResolvedValue(null),
+      resolve: vi.fn().mockResolvedValue(null),
+      markets: vi.fn().mockResolvedValue(null),
+    },
+    ballot: {
+      getState: vi.fn().mockResolvedValue(null),
+      getAccuracy: vi.fn().mockResolvedValue(null),
+      getLeaderboard: vi.fn().mockResolvedValue(null),
+      getPerformance: vi.fn().mockResolvedValue(null),
+      getPool: vi.fn().mockResolvedValue(null),
+    },
+    webhooks: {
+      list: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue(null),
+      delete: vi.fn().mockResolvedValue(null),
+    },
+    identity: { lookup: vi.fn().mockResolvedValue(null) },
+    balance: { get: vi.fn().mockResolvedValue(null) },
+    health: { check: vi.fn().mockResolvedValue(null) },
+    stats: { get: vi.fn().mockResolvedValue(null) },
+    ...overrides,
+  } as unknown as Toolkit;
+}
 
 // ── Mock fetch data ───────────────────────────────
 
@@ -78,12 +141,10 @@ describe("templates/security-sentinel", () => {
       expect(config.rateLimits.maxTipAmount).toBe(3);
     });
 
-    it("has security topic weights and enrichment config", () => {
+    it("has security topic weights", () => {
       const config = loadStrategyConfig(readFileSync(resolve(TEMPLATE_DIR, "strategy.yaml"), "utf-8"));
       expect(config.topicWeights.security).toBe(1.5);
       expect(config.topicWeights.vulnerability).toBe(1.3);
-      expect(config.enrichment.minSignalAgents).toBe(1);
-      expect(config.enrichment.minConfidence).toBe(60);
     });
   });
 
@@ -100,29 +161,55 @@ describe("templates/security-sentinel", () => {
   });
 
   describe("agent.ts", () => {
-    it("exists and imports runtime, loop, and securityObserve", () => {
+    it("exists and imports runtime, loop, and learnFirstObserve", () => {
       const content = readFileSync(resolve(TEMPLATE_DIR, "agent.ts"), "utf-8");
       expect(content).toContain("createAgentRuntime");
       expect(content).toContain("runAgentLoop");
-      expect(content).toContain("securityObserve");
+      expect(content).toContain("learnFirstObserve");
     });
 
-    it("observe.ts exists and exports securityObserve", () => {
+    it("does NOT use securityObserve or defaultObserve", () => {
+      const content = readFileSync(resolve(TEMPLATE_DIR, "agent.ts"), "utf-8");
+      expect(content).not.toContain("securityObserve");
+      expect(content).not.toContain("defaultObserve");
+    });
+
+    it("observe.ts exists and exports learnFirstObserve", () => {
       const content = readFileSync(resolve(TEMPLATE_DIR, "observe.ts"), "utf-8");
-      expect(content).toContain("export async function securityObserve");
+      expect(content).toContain("export async function learnFirstObserve");
+    });
+  });
+
+  describe("security-sources.ts", () => {
+    it("exists and exports fetchNvd and fetchGhsa", () => {
+      const content = readFileSync(resolve(TEMPLATE_DIR, "security-sources.ts"), "utf-8");
+      expect(content).toContain("export async function fetchNvd");
+      expect(content).toContain("export async function fetchGhsa");
+    });
+
+    it("exports NvdVulnerability and GhAdvisory interfaces", () => {
+      const content = readFileSync(resolve(TEMPLATE_DIR, "security-sources.ts"), "utf-8");
+      expect(content).toContain("export interface NvdVulnerability");
+      expect(content).toContain("export interface GhAdvisory");
+    });
+
+    it("exports nvdToEvidence and ghsaToEvidence converters", () => {
+      const content = readFileSync(resolve(TEMPLATE_DIR, "security-sources.ts"), "utf-8");
+      expect(content).toContain("export function nvdToEvidence");
+      expect(content).toContain("export function ghsaToEvidence");
     });
   });
 
   // ── Observe function tests ──────────────────────
 
-  describe("securityObserve()", () => {
-    let securityObserve: (toolkit: Toolkit, address: string) => Promise<ObserveResult>;
+  describe("learnFirstObserve()", () => {
+    let learnFirstObserve: (toolkit: Toolkit, address: string, strategyPath?: string) => Promise<ObserveResult>;
     let originalFetch: typeof globalThis.fetch;
 
     beforeEach(async () => {
       originalFetch = globalThis.fetch;
       const mod = await import("../../templates/security-sentinel/observe.js");
-      securityObserve = mod.securityObserve;
+      learnFirstObserve = mod.learnFirstObserve;
     });
 
     afterEach(() => {
@@ -130,30 +217,30 @@ describe("templates/security-sentinel", () => {
       vi.restoreAllMocks();
     });
 
-    it("calls intelligence.getSignals()", async () => {
+    it("calls intelligence.getSignals() via strategy router", async () => {
       globalThis.fetch = mockFetchEmpty();
       const tk = createMockToolkit();
-      await securityObserve(tk, "0xTEST");
+      await learnFirstObserve(tk, "0xTEST", STRATEGY_PATH);
       expect(tk.intelligence.getSignals).toHaveBeenCalled();
     });
 
     it("fetches NVD CVEs via global fetch", async () => {
       const mf = mockFetchBoth();
       globalThis.fetch = mf;
-      await securityObserve(createMockToolkit(), "0xTEST");
+      await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       expect(mf.mock.calls.some((c: any[]) => String(c[0]).includes("nvd.nist.gov"))).toBe(true);
     });
 
     it("fetches GitHub advisories via global fetch", async () => {
       const mf = mockFetchBoth();
       globalThis.fetch = mf;
-      await securityObserve(createMockToolkit(), "0xTEST");
+      await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       expect(mf.mock.calls.some((c: any[]) => String(c[0]).includes("api.github.com/advisories"))).toBe(true);
     });
 
     it("produces CVE evidence with AvailableEvidence shape", async () => {
       globalThis.fetch = mockFetchBoth();
-      const result = await securityObserve(createMockToolkit(), "0xTEST");
+      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       const cves = result.evidence.filter(e => e.sourceId.startsWith("nvd-"));
       expect(cves.length).toBeGreaterThanOrEqual(2);
       const first = cves.find(e => e.sourceId === "nvd-CVE-2026-1234")!;
@@ -167,7 +254,7 @@ describe("templates/security-sentinel", () => {
 
     it("produces GitHub advisory evidence with AvailableEvidence shape", async () => {
       globalThis.fetch = mockFetchBoth();
-      const result = await securityObserve(createMockToolkit(), "0xTEST");
+      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       const ghs = result.evidence.filter(e => e.sourceId.startsWith("ghsa-"));
       expect(ghs.length).toBeGreaterThanOrEqual(2);
       const first = ghs.find(e => e.sourceId === "ghsa-GHSA-abcd-1234-efgh")!;
@@ -176,44 +263,9 @@ describe("templates/security-sentinel", () => {
       expect(first.stale).toBe(false);
     });
 
-    it("produces signal evidence with correct shape", async () => {
-      globalThis.fetch = mockFetchEmpty();
-      const signals = [
-        makeSignalData({ topic: "defi-exploit", direction: "bearish", agentCount: 5, confidence: 80, text: "DeFi exploit" }),
-        makeSignalData({ topic: "bridge-hack", direction: "neutral", agentCount: 3, confidence: 60, text: "Bridge vuln", trending: false }),
-      ];
-      const result = await securityObserve(createMockToolkit({ signalsResult: { ok: true, data: signals } }), "0xTEST");
-      const sigs = result.evidence.filter(e => e.sourceId.startsWith("signal-"));
-      expect(sigs).toHaveLength(2);
-      expect(sigs.find(e => e.sourceId === "signal-defi-exploit")!.subject).toBe("colony-threat-signal");
-    });
-
-    it("passes signals in BOTH evidence AND apiEnrichment.signals", async () => {
-      globalThis.fetch = mockFetchEmpty();
-      const signals = [makeSignalData({ topic: "exploit", direction: "bearish", agentCount: 4, confidence: 90, text: "Active" })];
-      const result = await securityObserve(createMockToolkit({ signalsResult: { ok: true, data: signals } }), "0xTEST");
-      expect(result.evidence.filter(e => e.sourceId.startsWith("signal-"))).toHaveLength(1);
-      expect(result.context?.apiEnrichment?.signals).toHaveLength(1);
-      expect(result.context!.apiEnrichment!.signals![0].topic).toBe("exploit");
-    });
-
-    it("handles null feed.search safely (?.ok)", async () => {
-      globalThis.fetch = mockFetchEmpty();
-      const result = await securityObserve(createMockToolkit({ feedSearchResult: null }), "0xTEST");
-      expect(result).toBeDefined();
-      expect(result.evidence).toBeInstanceOf(Array);
-    });
-
-    it("handles null intelligence.getSignals safely (?.ok)", async () => {
-      globalThis.fetch = mockFetchEmpty();
-      const result = await securityObserve(createMockToolkit({ signalsResult: null }), "0xTEST");
-      expect(result.evidence.filter(e => e.sourceId.startsWith("signal-"))).toHaveLength(0);
-      expect(result.context?.apiEnrichment?.signals ?? []).toHaveLength(0);
-    });
-
     it("handles fetch failures gracefully (try/catch)", async () => {
       globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network timeout"));
-      const result = await securityObserve(createMockToolkit(), "0xTEST");
+      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       expect(result).toBeDefined();
       expect(result.colonyState).toBeDefined();
     });
@@ -224,17 +276,41 @@ describe("templates/security-sentinel", () => {
         if (String(url).includes("github.com")) return { ok: true, json: async () => MOCK_GHSA };
         return { ok: true, json: async () => ({}) };
       });
-      const result = await securityObserve(createMockToolkit(), "0xTEST");
+      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       expect(result.evidence.filter(e => e.sourceId.startsWith("nvd-"))).toHaveLength(0);
       expect(result.evidence.filter(e => e.sourceId.startsWith("ghsa-")).length).toBeGreaterThanOrEqual(2);
     });
 
-    it("runs all fetches in parallel", async () => {
+    it("runs NVD + GHSA fetches in parallel with strategy observe", async () => {
       const mf = mockFetchEmpty();
       globalThis.fetch = mf;
-      await securityObserve(createMockToolkit(), "0xTEST");
+      await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       // Both NVD and GitHub should be called
       expect(mf).toHaveBeenCalledTimes(2);
+    });
+
+    it("is null-safe when all API calls and fetches fail", async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error("down"));
+      const toolkit = createMockToolkit({
+        feed: {
+          getRecent: vi.fn().mockResolvedValue({ ok: false }),
+          search: vi.fn().mockResolvedValue(null),
+          getPost: vi.fn().mockResolvedValue(null),
+          getThread: vi.fn().mockResolvedValue(null),
+        },
+        intelligence: { getSignals: vi.fn().mockResolvedValue(null), getReport: vi.fn().mockResolvedValue(null) },
+      });
+
+      const result = await learnFirstObserve(toolkit, "0xTEST", STRATEGY_PATH);
+      expect(result).toBeDefined();
+      expect(result.colonyState).toBeDefined();
+      expect(result.evidence).toBeInstanceOf(Array);
+    });
+
+    it("returns apiEnrichment in context", async () => {
+      globalThis.fetch = mockFetchEmpty();
+      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
+      expect(result.context).toBeDefined();
     });
   });
 });

@@ -1,0 +1,71 @@
+apiVersion: strategy/v3
+rules:
+  - name: engage_novel_agent
+    type: ENGAGE
+    priority: 90
+    conditions:
+      - new agent
+      - quality content
+    enabled: true
+  - name: engage_verified
+    type: ENGAGE
+    priority: 80
+    conditions:
+      - verified topic
+    enabled: true
+  - name: tip_valuable
+    type: TIP
+    priority: 75
+    conditions:
+      - above median
+    enabled: true
+  - name: reply_with_evidence
+    type: REPLY
+    priority: 70
+    conditions:
+      - matching evidence
+    enabled: true
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 40
+    conditions:
+      - fresh rich evidence
+    enabled: true
+rateLimits:
+  postsPerDay: 4
+  postsPerHour: 2
+  reactionsPerSession: 10
+  maxTipAmount: 5
+evidence:
+  categories:
+    core:
+      - threads
+      - engagement
+      - colony-signals
+    domain:
+      - leaderboard
+    meta: []
+budget:
+  maxTipPerAction: 5
+  maxTipPerDay: 25
+  maxBetPerDay: 0
+  maxDahrPerDay: 5
+  maxDemPerDay: 50
+  minBalanceFloor: 100
+tipping:
+  mode: strategic
+  triggers:
+    - answered-our-question
+    - early-quality
+    - cited-our-work
+predictions:
+  mode: off
+  minConfidence: 0
+attestation:
+  method: dahr
+models:
+  scan: haiku
+  analyze: sonnet
+  draft: haiku
+history:
+  retentionHours: 72

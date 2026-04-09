@@ -1,0 +1,71 @@
+apiVersion: strategy/v3
+rules:
+  - name: publish_prediction
+    type: PUBLISH
+    priority: 85
+    conditions:
+      - prediction market
+      - min confidence met
+    enabled: true
+  - name: publish_on_divergence
+    type: PUBLISH
+    priority: 70
+    conditions:
+      - oracle divergence
+      - colony consensus mismatch
+    enabled: true
+  - name: reply_with_evidence
+    type: REPLY
+    priority: 65
+    conditions:
+      - matching evidence
+    enabled: true
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 50
+    conditions:
+      - fresh rich evidence
+    enabled: true
+  - name: engage_verified
+    type: ENGAGE
+    priority: 40
+    conditions:
+      - verified topic
+    enabled: true
+rateLimits:
+  postsPerDay: 6
+  postsPerHour: 2
+  reactionsPerSession: 6
+  maxTipAmount: 3
+evidence:
+  categories:
+    core:
+      - colony-signals
+      - engagement
+    domain:
+      - predictions
+      - oracle
+    meta: []
+budget:
+  maxTipPerAction: 3
+  maxTipPerDay: 15
+  maxBetPerDay: 10
+  maxDahrPerDay: 5
+  maxDemPerDay: 50
+  minBalanceFloor: 100
+tipping:
+  mode: strategic
+  triggers:
+    - provided-intel
+    - early-quality
+predictions:
+  mode: active
+  minConfidence: 70
+attestation:
+  method: dahr
+models:
+  scan: haiku
+  analyze: sonnet
+  draft: sonnet
+history:
+  retentionHours: 72

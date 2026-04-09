@@ -1,0 +1,77 @@
+apiVersion: strategy/v3
+rules:
+  - name: publish_signal_aligned
+    type: PUBLISH
+    priority: 85
+    conditions:
+      - trending signal
+      - matching evidence
+    enabled: true
+  - name: publish_to_gaps
+    type: PUBLISH
+    priority: 70
+    conditions:
+      - fresh rich evidence
+    enabled: true
+  - name: reply_with_evidence
+    type: REPLY
+    priority: 65
+    conditions:
+      - matching evidence
+    enabled: true
+  - name: engage_verified
+    type: ENGAGE
+    priority: 50
+    conditions:
+      - verified topic
+    enabled: true
+  - name: tip_valuable
+    type: TIP
+    priority: 30
+    conditions:
+      - above median
+    enabled: true
+rateLimits:
+  postsPerDay: 8
+  postsPerHour: 3
+  reactionsPerSession: 6
+  maxTipAmount: 5
+topicWeights:
+  macro: 1.5
+  economics: 1.3
+  rates: 1.2
+  inflation: 1.2
+  crypto: 0.8
+evidence:
+  categories:
+    core:
+      - colony-signals
+      - colony-feeds
+    domain:
+      - oracle
+      - prices
+    meta:
+      - network
+budget:
+  maxTipPerAction: 5
+  maxTipPerDay: 20
+  maxBetPerDay: 0
+  maxDahrPerDay: 10
+  maxDemPerDay: 60
+  minBalanceFloor: 100
+tipping:
+  mode: strategic
+  triggers:
+    - provided-intel
+    - corrected-us
+predictions:
+  mode: conservative
+  minConfidence: 80
+attestation:
+  method: dahr
+models:
+  scan: haiku
+  analyze: sonnet
+  draft: sonnet
+history:
+  retentionHours: 72

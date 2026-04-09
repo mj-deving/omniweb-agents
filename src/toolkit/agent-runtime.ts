@@ -40,6 +40,8 @@ export interface AgentRuntimeOptions {
   envPath?: string;
   agentName?: string;
   apiBaseUrl?: string; // default: https://supercolony.ai
+  /** Enable colony DB for source caching + evidence computation. Default: true if agent data dir exists. */
+  enableColonyDb?: boolean;
 }
 
 /**
@@ -99,5 +101,22 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   // Step 8: Resolve LLM provider (optional — null if no API keys configured)
   const llmProvider = resolveProvider(envPath);
 
-  return { toolkit, sdkBridge, address, getToken, demos, authenticatedApiCall, llmProvider };
+  // Step 9: Colony DB (optional — for source caching + evidence computation)
+  let colonyDb: ColonyDatabase | undefined;
+  if (opts?.enableColonyDb !== false) {
+    try {
+      const { resolve } = await import("node:path");
+      const { homedir } = await import("node:os");
+      const { mkdirSync } = await import("node:fs");
+      const { initColonyCache } = await import("./colony/schema.js");
+      const agentDir = resolve(homedir(), `.${opts?.agentName ?? "agent"}`);
+      const colonyDir = resolve(agentDir, "colony");
+      mkdirSync(colonyDir, { recursive: true });
+      colonyDb = initColonyCache(resolve(colonyDir, "cache.db"));
+    } catch {
+      // Non-fatal — templates work without colony DB (no source evidence)
+    }
+  }
+
+  return { toolkit, sdkBridge, address, getToken, demos, authenticatedApiCall, colonyDb, llmProvider };
 }

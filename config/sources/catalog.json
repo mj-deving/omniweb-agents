@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-04-08T13:16:52.281Z",
+  "generatedAt": "2026-04-09T14:48:41.112Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -16604,6 +16604,84 @@
       },
       "adapter": {
         "operation": "ecb-jsondata"
+      }
+    },
+    {
+      "id": "nvd-cve-recent",
+      "name": "nvd-cve-recent",
+      "provider": "nvd",
+      "url": "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=20",
+      "urlPattern": "services.nvd.nist.gov/rest/json/cves/2.0",
+      "topics": [
+        "security",
+        "vulnerability",
+        "cve"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 50,
+      "note": "NVD CVE feed. No auth required. Rate limited to 5 req/30s.",
+      "topicAliases": [],
+      "domainTags": [
+        "security",
+        "vulnerability"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "agents": []
+      },
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "reliability": 50,
+        "freshness": 50
+      },
+      "runtime": {
+        "timeoutMs": 10000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 2000
+        }
+      }
+    },
+    {
+      "id": "github-security-advisories",
+      "name": "github-security-advisories",
+      "provider": "github",
+      "url": "https://api.github.com/advisories?type=reviewed&severity=critical,high&per_page=10",
+      "urlPattern": "api.github.com/advisories",
+      "topics": [
+        "security",
+        "vulnerability",
+        "advisory"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 30,
+      "note": "GitHub Security Advisories API. No auth for public advisories. Rate limited.",
+      "topicAliases": [],
+      "domainTags": [
+        "security",
+        "vulnerability"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "global",
+        "agents": []
+      },
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "reliability": 50,
+        "freshness": 50
+      },
+      "runtime": {
+        "timeoutMs": 10000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 2000
+        }
       }
     }
   ]

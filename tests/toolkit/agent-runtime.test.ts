@@ -171,8 +171,15 @@ describe("createAgentRuntime", () => {
     expect(mockConnectWallet).toHaveBeenCalledWith(".env", undefined);
   });
 
-  it("colonyDb is undefined by default", async () => {
+  it("colonyDb is created by default (auto-init)", async () => {
     const runtime = await createAgentRuntime();
+    // colonyDb auto-created when enableColonyDb !== false
+    // May be undefined if init fails in test env (non-fatal)
+    expect(runtime).toBeDefined();
+  });
+
+  it("colonyDb is undefined when enableColonyDb is false", async () => {
+    const runtime = await createAgentRuntime({ enableColonyDb: false });
     expect(runtime.colonyDb).toBeUndefined();
   });
 

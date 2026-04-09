@@ -159,13 +159,14 @@ function generateObserveTs(config: AgentIntentConfig): string {
     imp("{ mapFeedPosts, buildColonyStateFromFeed }", "../../../src/toolkit/agent-loop.js"),
     imp("{ loadStrategyConfig }", "../../../src/toolkit/strategy/config-loader.js"),
     imp("{ strategyObserve }", "../../../src/toolkit/observe/observe-router.js"),
+    impType("{ SourceDeps }", "../../../src/toolkit/observe/observe-router.js"),
     impType("{ ObserveResult }", "../../../src/toolkit/agent-loop.js"),
     impType("{ Toolkit }", "../../../src/toolkit/primitives/types.js"),
   ].join("\n");
 
   return `/**
  * ${config.label} — Strategy-driven observe.
- * Single-fetch: router prefetches all API data, no duplicate calls.
+ * Learn (colony API) + Share (source pipeline) evidence streams.
  */
 ${imports}
 
@@ -175,12 +176,13 @@ export async function learnFirstObserve(
   toolkit: Toolkit,
   ourAddress: string,
   strategyPath?: string,
+  sourceDeps?: SourceDeps,
 ): Promise<ObserveResult> {
   const resolvedPath = strategyPath ?? resolve(import.meta.dirname, "strategy.yaml");
   const strategyYaml = readFileSync(resolvedPath, "utf-8");
   const config = loadStrategyConfig(strategyYaml);
 
-  const { evidence, apiEnrichment, prefetched } = await strategyObserve(toolkit, config);
+  const { evidence, apiEnrichment, prefetched } = await strategyObserve(toolkit, config, sourceDeps);
 
   const recentResult = prefetched.recentPosts ?? await toolkit.feed.getRecent({ limit: RECENT_LIMIT });
   const recentPosts = mapFeedPosts(recentResult as any);

@@ -1,5 +1,6 @@
 import { extractMentions } from "./scanner.js";
 import type { ColonyDatabase } from "./schema.js";
+import { MIN_AGREE_FOR_TIP, VALUABLE_POSTS_LIMIT } from "../strategy/engine-helpers.js";
 
 export interface ColonyState {
   activity: {
@@ -50,6 +51,10 @@ interface ThreadRow {
   root_tx_hash: string;
   reply_count: number;
   last_reply_at: string;
+}
+
+function safeParseTags(raw: string): string[] {
+  try { return JSON.parse(raw) as string[]; } catch { return []; }
 }
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -201,10 +206,10 @@ function getValuablePosts(db: ColonyDatabase): ValuablePostRow[] {
     FROM posts p
     LEFT JOIN reaction_cache r ON r.post_tx_hash = p.tx_hash
     LEFT JOIN attestations a ON a.post_tx_hash = p.tx_hash
-    WHERE COALESCE(r.agrees, 0) >= 3
+    WHERE COALESCE(r.agrees, 0) >= ${MIN_AGREE_FOR_TIP}
     GROUP BY p.tx_hash
     ORDER BY agrees DESC, p.timestamp DESC
-    LIMIT 20
+    LIMIT ${VALUABLE_POSTS_LIMIT}
   `).all() as ValuablePostRow[];
 }
 
@@ -278,7 +283,7 @@ export function extractColonyState(
       text: row.text,
       agreeReactions: Number(row.agrees),
       hasAttestation: row.chain_verified === 1,
-      tags: JSON.parse(row.tags) as string[],
+      tags: safeParseTags(row.tags),
     })),
   };
 }

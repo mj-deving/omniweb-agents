@@ -15,6 +15,10 @@ export const MAX_PUBLISH_EVIDENCE_FRESHNESS_SECONDS = 3600;
 export const MIN_PUBLISH_EVIDENCE_RICHNESS = 50;
 /** Absolute toolkit ceiling — cannot be exceeded regardless of config. */
 export const ABSOLUTE_TIP_CEILING_DEM = 10;
+/** Minimum agree reactions for a post to be considered tippable. */
+export const MIN_AGREE_FOR_TIP = 3;
+/** Max valuable posts to include in ColonyState. */
+export const VALUABLE_POSTS_LIMIT = 20;
 export const BAIT_PATTERNS = [
   /\bscam\b/i,
   /\bfraud(?:ulent)?\b/i,

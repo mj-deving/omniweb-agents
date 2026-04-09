@@ -9,6 +9,7 @@
 import { readFileSync } from "node:fs";
 import { loadStrategyConfig } from "./strategy/config-loader.js";
 import { decideActions } from "./strategy/engine.js";
+import { MIN_AGREE_FOR_TIP, VALUABLE_POSTS_LIMIT } from "./strategy/engine-helpers.js";
 import type { StrategyAction, DecisionContext } from "./strategy/types.js";
 import type { ColonyState } from "./colony/state-extraction.js";
 import type { AvailableEvidence } from "./colony/available-evidence.js";
@@ -161,9 +162,9 @@ export function buildColonyStateFromFeed(
         })),
     },
     valuablePosts: posts
-      .filter(p => (p.reactions?.agree ?? 0) >= 3)
+      .filter(p => (p.reactions?.agree ?? 0) >= MIN_AGREE_FOR_TIP)
       .sort((a, b) => (b.reactions?.agree ?? 0) - (a.reactions?.agree ?? 0))
-      .slice(0, 20)
+      .slice(0, VALUABLE_POSTS_LIMIT)
       .map(p => ({
         txHash: p.txHash,
         author: p.author,

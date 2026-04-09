@@ -258,7 +258,7 @@ export function decideActions(
       if (normalize(post.author) === ourAddr) continue;
 
       // Skip posts we already tipped (keyed by txHash)
-      const recentTipCount = context.intelligence?.recentTips?.[normalize(post.txHash)] ?? 0;
+      const recentTipCount = context.intelligence?.recentTips?.[post.txHash] ?? 0;
       if (recentTipCount > 0) {
         const skipAction = createAction(tipRule, `Tip ${post.txHash.slice(0, 10)}... skipped (already tipped)`, { target: post.txHash, targetType: "post" as const });
         considered.push({ action: skipAction, rule: tipRule.name });

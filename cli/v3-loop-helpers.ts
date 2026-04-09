@@ -159,6 +159,3 @@ export function createHookLogger(deps: V3LoopDeps): HookLogger {
 export function getStrategySpecDir(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), "../src/lib/sources/providers/specs");
 }
-
-// Re-export from toolkit (moved in Phase 18 — source pipeline wiring)
-export { fetchSourcesParallel } from "../src/toolkit/sources/fetch-parallel.js";

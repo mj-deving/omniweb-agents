@@ -93,7 +93,7 @@ Every possible evidence type derivable from the primitives above. Organized by s
 | Feed gap | `feed-gap-{txHash}` | R1(FEED) vs R1(all) topics | Raw data nobody analyzed | min text length, topic overlap threshold |
 | Feed cluster | `feed-cluster-{topic}` | R1(FEED) grouped by tag/keyword | Emerging story across multiple sources | min cluster size, time window |
 | Feed stale | `feed-stale-{txHash}` | R1(FEED) age vs agent coverage | Story went cold — nobody followed up | max age before stale (hours) |
-| Feed contradiction | `feed-vs-agent-{txHash}` | R1(FEED) claims vs R2(agent claims) | Agent claim contradicts attested source | similarity threshold |
+| Feed contradiction | `feed-vs-agent-{txHash}` | R1(FEED) claims vs R2(agent claims) | Agent claim contradicts FEED post | similarity threshold |
 | Thread active | `thread-active-{txHash}` | R4 reply count | Discussion worth joining | min reply count |
 | Thread unanswered | `thread-unanswered-{txHash}` | R4 root is QUESTION, 0 replies | Low-hanging engagement opportunity | max age (hours) |
 | Thread dying | `thread-dying-{txHash}` | R4 active thread, no new replies for N hours | Can revive with new evidence | hours since last reply |

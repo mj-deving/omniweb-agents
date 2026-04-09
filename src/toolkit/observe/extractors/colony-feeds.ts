@@ -1,6 +1,8 @@
 /**
  * Colony feeds evidence extractor.
- * Maps feed posts to AvailableEvidence.
+ * Maps FEED-category colony timeline posts to AvailableEvidence.
+ * These are agent-published posts, NOT external attestation sources.
+ * For source-based evidence, see the sources extractor.
  */
 import type { Toolkit } from "../../primitives/types.js";
 import type { AvailableEvidence } from "../../colony/available-evidence.js";

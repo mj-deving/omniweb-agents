@@ -4,15 +4,21 @@
  * Single-fetch architecture: prefetches all needed API data once,
  * then passes results to extractors. No duplicate API calls.
  *
- * Also builds ApiEnrichmentData from the same prefetched results,
- * replacing the need for a separate enrichedObserve call.
+ * Two evidence streams:
+ * 1. Colony intelligence (Learn) — colony API extractors
+ * 2. Source evidence (Share) — external URL fetching via catalog pipeline
+ *
+ * Both feed into the same AvailableEvidence[] for the strategy engine.
+ * Also builds ApiEnrichmentData from the prefetched results.
  */
 import type { StrategyConfig, ApiEnrichmentData } from "../strategy/types.js";
 import type { Toolkit } from "../primitives/types.js";
 import type { AvailableEvidence } from "../colony/available-evidence.js";
+import type { ColonyDatabase } from "../colony/schema.js";
+import type { AgentSourceView } from "../sources/catalog.js";
 import { EXTRACTOR_REGISTRY, type EvidenceExtractor } from "./extractors/index.js";
 
-/** All 10 ADR-0020 evidence categories — used as default when no config. */
+/** All ADR-0020 evidence categories (colony intelligence). */
 const ALL_CATEGORIES = Object.keys(EXTRACTOR_REGISTRY);
 
 /** Raw API results shared between extractors to avoid duplicate calls. */
@@ -49,7 +55,7 @@ const CATEGORY_DEPS: Record<string, (keyof PrefetchedData)[]> = {
 
 /**
  * Determine which evidence categories are active based on strategy config.
- * If no evidence.categories is configured, all 10 are active.
+ * If no evidence.categories is configured, all colony intelligence categories are active.
  */
 export function getActiveCategories(config: StrategyConfig): string[] {
   const ev = config.evidence?.categories;
@@ -64,7 +70,7 @@ export function getActiveCategories(config: StrategyConfig): string[] {
 
 /**
  * Prefetch all API data needed by active categories in one parallel batch.
- * Also fetches agents (needed for enrichment agentCount) if not already covered.
+ * Always fetches enrichment-critical data regardless of categories.
  */
 async function prefetchData(
   toolkit: Toolkit,
@@ -212,6 +218,52 @@ export function buildEnrichmentFromPrefetched(data: PrefetchedData): ApiEnrichme
   return enrichment;
 }
 
+/** Optional deps for source evidence fetching (Share stream). */
+export interface SourceDeps {
+  /** Colony DB with source_response_cache table. */
+  db: ColonyDatabase;
+  /** Agent's filtered source view from catalog. */
+  sourceView: AgentSourceView;
+  /** Observer for logging. */
+  observe?: (type: string, msg: string, meta?: Record<string, unknown>) => void;
+  /** Source fetch budget in ms (default: 15_000). */
+  budgetMs?: number;
+  /** Concurrent source fetches (default: 5). */
+  concurrency?: number;
+}
+
+/**
+ * Fetch source evidence from the catalog pipeline.
+ * Returns AvailableEvidence[] from external URLs — attestation-grade data.
+ */
+async function fetchSourceEvidence(deps: SourceDeps): Promise<AvailableEvidence[]> {
+  const { fetchSourcesParallel } = await import("../sources/fetch-parallel.js");
+  const { computeAvailableEvidence } = await import("../colony/available-evidence.js");
+
+  const observe = deps.observe ?? (() => {});
+  const activeSources = deps.sourceView.sources ?? [];
+
+  if (activeSources.length === 0) return [];
+
+  // Fetch external sources → cache in colony DB
+  await fetchSourcesParallel(
+    activeSources,
+    deps.db,
+    observe,
+    deps.budgetMs ?? 15_000,
+    deps.concurrency ?? 5,
+  );
+
+  // Compute evidence from cached responses
+  const catalogSources = activeSources.map(s => ({
+    id: s.id,
+    topics: s.topics ?? [],
+    domainTags: s.domainTags,
+  }));
+
+  return computeAvailableEvidence(deps.db, catalogSources);
+}
+
 /** Result of strategy-driven observe — evidence + enrichment in one pass. */
 export interface StrategyObserveResult {
   evidence: AvailableEvidence[];
@@ -220,14 +272,18 @@ export interface StrategyObserveResult {
 }
 
 /**
- * Strategy-driven observe: prefetch all API data once, run extractors
- * with prefetched results, build enrichment from same data.
+ * Strategy-driven observe: two evidence streams merged into one.
  *
- * This is the single entry point — no separate enrichedObserve needed.
+ * Stream 1 (Learn): Colony API extractors — what agents think (signals, feed, oracle).
+ * Stream 2 (Share): Source pipeline — external data for attestation (catalog → fetch → cache).
+ *
+ * Both run in parallel. Source deps are optional — templates work
+ * without them (colony intelligence only, no attestation sources).
  */
 export async function strategyObserve(
   toolkit: Toolkit,
   config: StrategyConfig,
+  sourceDeps?: SourceDeps,
 ): Promise<StrategyObserveResult> {
   const categories = getActiveCategories(config);
 
@@ -235,19 +291,25 @@ export async function strategyObserve(
     return { evidence: [], apiEnrichment: {}, prefetched: {} };
   }
 
-  // One parallel fetch for all needed data
-  const prefetched = await prefetchData(toolkit, categories);
+  // Run colony API prefetch and source pipeline in parallel
+  const [prefetched, sourceEvidence] = await Promise.all([
+    prefetchData(toolkit, categories),
+    sourceDeps ? fetchSourceEvidence(sourceDeps) : Promise.resolve([]),
+  ]);
 
-  // Run extractors with prefetched data (no new API calls)
+  // Run colony intelligence extractors with prefetched data (no new API calls)
   const extractorPromises = categories
     .map(cat => EXTRACTOR_REGISTRY[cat])
     .filter(Boolean)
     .map(extractor => extractor(toolkit, prefetched));
 
   const results = await Promise.all(extractorPromises);
-  const evidence = results.flat();
+  const colonyEvidence = results.flat();
 
-  // Build enrichment from same prefetched data
+  // Merge both evidence streams
+  const evidence = [...colonyEvidence, ...sourceEvidence];
+
+  // Build enrichment from prefetched colony data
   const apiEnrichment = buildEnrichmentFromPrefetched(prefetched);
 
   return { evidence, apiEnrichment, prefetched };

@@ -32,8 +32,8 @@ const INTERVAL_MS = Number(process.env.LOOP_INTERVAL_MS ?? 300_000); // 5 min
 const AGENT_LABEL = "base-agent";
 const DRY_RUN = process.env.DRY_RUN !== "false"; // Default dry-run=true for safety (real DEM on mainnet)
 
-// ── Observe ──────────────────────────────────
-const observe: ObserveFn = (toolkit, address) =>
+// ── Observe (sourceDeps wired at startup in main()) ──
+let observe: ObserveFn = (toolkit, address) =>
   learnFirstObserve(toolkit, address, STRATEGY_PATH);
 
 // ── Executor wiring (bridges toolkit boundary per ADR-0019) ──
@@ -88,6 +88,17 @@ async function main() {
   const agentConfig = loadAgentConfig();
   const sourceView = loadAgentSourceView(agentConfig.name);
   const { executeLightActions, executeHeavyActions } = createExecutors(AGENT_LABEL, agentConfig, sourceView);
+
+  // Wire source deps for attestation evidence (Share stream)
+  if (runtime.colonyDb && sourceView.sources.length > 0) {
+    observe = (toolkit, address) =>
+      learnFirstObserve(toolkit, address, STRATEGY_PATH, {
+        db: runtime.colonyDb!,
+        sourceView,
+        observe: (type, msg) => console.log(`[${AGENT_LABEL}:sources] ${type}: ${msg}`),
+      });
+    console.log(`[${AGENT_LABEL}] Source pipeline wired (${sourceView.sources.length} sources)`);
+  }
 
   await runAgentLoop(runtime, observe, {
     strategyPath: STRATEGY_PATH,

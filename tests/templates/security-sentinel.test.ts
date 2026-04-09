@@ -8,7 +8,7 @@
  * - strategy.yaml is well-formed with 5 rules
  * - sources.yaml exists and has security sources
  * - agent.ts uses learnFirstObserve
- * - security-sources.ts exports fetcher functions
+ * - NVD and GHSA are catalog sources (not custom fetchers)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
@@ -81,30 +81,6 @@ function createMockToolkit(overrides: Record<string, unknown> = {}): Toolkit {
 }
 
 // ── Mock fetch data ───────────────────────────────
-
-const MOCK_NVD = {
-  vulnerabilities: [
-    { cve: { id: "CVE-2026-1234", descriptions: [{ lang: "en", value: "Critical buffer overflow" }], metrics: { cvssMetricV31: [{ cvssData: { baseScore: 9.8, baseSeverity: "CRITICAL" } }] } } },
-    { cve: { id: "CVE-2026-5678", descriptions: [{ lang: "en", value: "SQL injection" }], metrics: { cvssMetricV31: [{ cvssData: { baseScore: 8.1, baseSeverity: "HIGH" } }] } } },
-  ],
-};
-
-const MOCK_GHSA = [
-  { ghsa_id: "GHSA-abcd-1234-efgh", summary: "RCE in framework", severity: "critical", html_url: "https://github.com/advisories/GHSA-abcd-1234-efgh" },
-  { ghsa_id: "GHSA-ijkl-5678-mnop", summary: "Auth bypass", severity: "high", html_url: "https://github.com/advisories/GHSA-ijkl-5678-mnop" },
-];
-
-function mockFetchBoth() {
-  return vi.fn().mockImplementation(async (url: string) => {
-    if (String(url).includes("nvd.nist.gov")) return { ok: true, json: async () => MOCK_NVD };
-    if (String(url).includes("github.com")) return { ok: true, json: async () => MOCK_GHSA };
-    return { ok: true, json: async () => ({}) };
-  });
-}
-
-function mockFetchEmpty() {
-  return vi.fn().mockResolvedValue({ ok: true, json: async () => ({ vulnerabilities: [] }) });
-}
 
 // ── File structure tests ──────────────────────────
 
@@ -180,23 +156,13 @@ describe("templates/security-sentinel", () => {
     });
   });
 
-  describe("security-sources.ts", () => {
-    it("exists and exports fetchNvd and fetchGhsa", () => {
-      const content = readFileSync(resolve(TEMPLATE_DIR, "security-sources.ts"), "utf-8");
-      expect(content).toContain("export async function fetchNvd");
-      expect(content).toContain("export async function fetchGhsa");
-    });
-
-    it("exports NvdVulnerability and GhAdvisory interfaces", () => {
-      const content = readFileSync(resolve(TEMPLATE_DIR, "security-sources.ts"), "utf-8");
-      expect(content).toContain("export interface NvdVulnerability");
-      expect(content).toContain("export interface GhAdvisory");
-    });
-
-    it("exports nvdToEvidence and ghsaToEvidence converters", () => {
-      const content = readFileSync(resolve(TEMPLATE_DIR, "security-sources.ts"), "utf-8");
-      expect(content).toContain("export function nvdToEvidence");
-      expect(content).toContain("export function ghsaToEvidence");
+  describe("catalog sources", () => {
+    it("NVD and GHSA exist in catalog.json", () => {
+      const catalogPath = resolve(TEMPLATE_DIR, "../../config/sources/catalog.json");
+      const catalog = JSON.parse(readFileSync(catalogPath, "utf-8"));
+      const ids = catalog.sources.map((s: any) => s.id);
+      expect(ids).toContain("nvd-cve-recent");
+      expect(ids).toContain("github-security-advisories");
     });
   });
 
@@ -204,93 +170,38 @@ describe("templates/security-sentinel", () => {
 
   describe("learnFirstObserve()", () => {
     let learnFirstObserve: (toolkit: Toolkit, address: string, strategyPath?: string) => Promise<ObserveResult>;
-    let originalFetch: typeof globalThis.fetch;
 
     beforeEach(async () => {
-      originalFetch = globalThis.fetch;
       const mod = await import("../../templates/security-sentinel/observe.js");
       learnFirstObserve = mod.learnFirstObserve;
     });
 
     afterEach(() => {
-      globalThis.fetch = originalFetch;
       vi.restoreAllMocks();
     });
 
     it("calls intelligence.getSignals() via strategy router", async () => {
-      globalThis.fetch = mockFetchEmpty();
       const tk = createMockToolkit();
       await learnFirstObserve(tk, "0xTEST", STRATEGY_PATH);
       expect(tk.intelligence.getSignals).toHaveBeenCalled();
     });
 
-    it("fetches NVD CVEs via global fetch", async () => {
-      const mf = mockFetchBoth();
-      globalThis.fetch = mf;
-      await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      expect(mf.mock.calls.some((c: any[]) => String(c[0]).includes("nvd.nist.gov"))).toBe(true);
-    });
-
-    it("fetches GitHub advisories via global fetch", async () => {
-      const mf = mockFetchBoth();
-      globalThis.fetch = mf;
-      await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      expect(mf.mock.calls.some((c: any[]) => String(c[0]).includes("api.github.com/advisories"))).toBe(true);
-    });
-
-    it("produces CVE evidence with AvailableEvidence shape", async () => {
-      globalThis.fetch = mockFetchBoth();
-      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      const cves = result.evidence.filter(e => e.sourceId.startsWith("nvd-"));
-      expect(cves.length).toBeGreaterThanOrEqual(2);
-      const first = cves.find(e => e.sourceId === "nvd-CVE-2026-1234")!;
-      expect(first.subject).toBe("security-vulnerability");
-      expect(first.metrics).toContain("CRITICAL");
-      expect(first.metrics).toContain("CVE-2026-1234");
-      expect(typeof first.richness).toBe("number");
-      expect(typeof first.freshness).toBe("number");
-      expect(first.stale).toBe(false);
-    });
-
-    it("produces GitHub advisory evidence with AvailableEvidence shape", async () => {
-      globalThis.fetch = mockFetchBoth();
-      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      const ghs = result.evidence.filter(e => e.sourceId.startsWith("ghsa-"));
-      expect(ghs.length).toBeGreaterThanOrEqual(2);
-      const first = ghs.find(e => e.sourceId === "ghsa-GHSA-abcd-1234-efgh")!;
-      expect(first.subject).toBe("security-advisory");
-      expect(typeof first.richness).toBe("number");
-      expect(first.stale).toBe(false);
-    });
-
-    it("handles fetch failures gracefully (try/catch)", async () => {
-      globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network timeout"));
-      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      expect(result).toBeDefined();
-      expect(result.colonyState).toBeDefined();
-    });
-
-    it("handles NVD non-ok response without CVE evidence", async () => {
-      globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
-        if (String(url).includes("nvd.nist.gov")) return { ok: false, status: 503 };
-        if (String(url).includes("github.com")) return { ok: true, json: async () => MOCK_GHSA };
-        return { ok: true, json: async () => ({}) };
+    it("returns colony evidence from strategy-driven extractors", async () => {
+      const tk = createMockToolkit({
+        intelligence: {
+          getSignals: vi.fn().mockResolvedValue({
+            ok: true,
+            data: [{ topic: "CVE-2026-critical", consensus: true, direction: "alert", agentCount: 4, confidence: 90, text: "Critical vulnerability discussion", trending: true }],
+          }),
+          getReport: vi.fn().mockResolvedValue(null),
+        },
       });
-      const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      expect(result.evidence.filter(e => e.sourceId.startsWith("nvd-"))).toHaveLength(0);
-      expect(result.evidence.filter(e => e.sourceId.startsWith("ghsa-")).length).toBeGreaterThanOrEqual(2);
+      const result = await learnFirstObserve(tk, "0xTEST", STRATEGY_PATH);
+      const signals = result.evidence.filter(e => e.sourceId.startsWith("signal-"));
+      expect(signals.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("runs NVD + GHSA fetches in parallel with strategy observe", async () => {
-      const mf = mockFetchEmpty();
-      globalThis.fetch = mf;
-      await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
-      // Both NVD and GitHub should be called
-      expect(mf).toHaveBeenCalledTimes(2);
-    });
-
-    it("is null-safe when all API calls and fetches fail", async () => {
-      globalThis.fetch = vi.fn().mockRejectedValue(new Error("down"));
+    it("is null-safe when all API calls fail", async () => {
       const toolkit = createMockToolkit({
         feed: {
           getRecent: vi.fn().mockResolvedValue({ ok: false }),
@@ -308,7 +219,6 @@ describe("templates/security-sentinel", () => {
     });
 
     it("returns apiEnrichment in context", async () => {
-      globalThis.fetch = mockFetchEmpty();
       const result = await learnFirstObserve(createMockToolkit(), "0xTEST", STRATEGY_PATH);
       expect(result.context).toBeDefined();
     });

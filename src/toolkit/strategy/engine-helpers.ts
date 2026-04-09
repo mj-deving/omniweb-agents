@@ -37,7 +37,7 @@ export interface TopicEvidenceMatch {
 }
 
 export function normalize(value: string): string {
-  return value.trim().toLowerCase();
+  return (value ?? "").trim().toLowerCase();
 }
 
 export function tokenizeTopic(value: string): string[] {

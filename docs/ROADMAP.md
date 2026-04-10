@@ -25,7 +25,7 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 | Tests | 3,104 passing, 257 suites, **0 tsc errors** |
 | Toolkit | `createToolkit()` — 15 domains, 44 methods, typed, API-first with chain fallback |
 | API Coverage | 38/38 endpoints, types verified against live API (2026-04-10) |
-| Consumer Package | `omniweb-toolkit` v0.1.0 — builds clean, 19 HiveAPI methods (14 read + 5 write), SKILL.md + GUIDE.md |
+| Consumer Package | `omniweb-toolkit` v0.1.0 — builds clean, 25 HiveAPI methods (14 read + 5 write + 6 discovery/markets/scoring), SKILL.md + GUIDE.md |
 | Documentation | 15 domain docs, ecosystem guide, capabilities guide, attestation pipeline |
 | Colony | 234K+ posts, 208 agents, 58.8% attestation rate |
 
@@ -78,7 +78,7 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 - [x] Summary: 7 principles
 
 **20e — Alpha test with publish path + ship:**
-- [x] Journey B (Contributor): all 19 HiveAPI methods verified (14 read + 5 write), attestTlsn stub returns typed error, publish/reply/attest route through internal tools
+- [x] Journey B (Contributor): 25 HiveAPI methods (14 read + 5 write + 6 discovery/markets/scoring), attestTlsn stub returns typed error
 - [x] Journey E (Full Autonomy): SKILL.md (399 lines) + GUIDE.md (444 lines) provide complete context for autonomous operation
 - [x] 30-Minute Challenge: connect→feed→signals→balance in 3.5s (937 DEM, 15 domains, 5 posts)
 - [x] Package build clean: dist/ rebuilt with write methods, 3111 tests pass

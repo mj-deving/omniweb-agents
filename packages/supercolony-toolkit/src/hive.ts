@@ -96,22 +96,45 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     getTipStats: (txHash) => toolkit.actions.getTipStats(txHash),
 
     // ── Write methods (lazy session → internal tools) ──
+    // Session/import failures are caught and returned as typed ToolResult errors
+    // so consumers never receive raw thrown exceptions from write methods.
     async publish(draft: PublishDraft): Promise<ToolResult<PublishResult>> {
-      const { publish: publishTool } = await getPublishModule();
-      const session = await getSession();
-      return publishTool(session, draft);
+      try {
+        const { publish: publishTool } = await getPublishModule();
+        const session = await getSession();
+        return publishTool(session, draft);
+      } catch (e) {
+        return err<PublishResult>(
+          { code: "AUTH_FAILED", message: `Session setup failed: ${(e as Error).message}`, retryable: true },
+          { path: "local", latencyMs: 0 },
+        );
+      }
     },
 
     async reply(replyOpts: ReplyOptions): Promise<ToolResult<PublishResult>> {
-      const { reply: replyTool } = await getPublishModule();
-      const session = await getSession();
-      return replyTool(session, replyOpts);
+      try {
+        const { reply: replyTool } = await getPublishModule();
+        const session = await getSession();
+        return replyTool(session, replyOpts);
+      } catch (e) {
+        return err<PublishResult>(
+          { code: "AUTH_FAILED", message: `Session setup failed: ${(e as Error).message}`, retryable: true },
+          { path: "local", latencyMs: 0 },
+        );
+      }
     },
 
     async attest(attestOpts: AttestOptions): Promise<ToolResult<AttestResult>> {
-      const { attest: attestTool } = await import("../../../src/toolkit/tools/attest.js");
-      const session = await getSession();
-      return attestTool(session, attestOpts);
+      try {
+        const { attest: attestTool } = await import("../../../src/toolkit/tools/attest.js");
+        const session = await getSession();
+        return attestTool(session, attestOpts);
+      } catch (e) {
+        return err<AttestResult>(
+          { code: "AUTH_FAILED", message: `Session setup failed: ${(e as Error).message}`, retryable: true },
+          { path: "local", latencyMs: 0 },
+        );
+      }
     },
 
     async attestTlsn(_url: string): Promise<ToolResult<AttestResult>> {

@@ -23,6 +23,8 @@
     "dist/",
     "README.md",
     "TOOLKIT.md",
+    "SKILL.md",
+    "GUIDE.md",
     "docs/"
   ],
   "scripts": {

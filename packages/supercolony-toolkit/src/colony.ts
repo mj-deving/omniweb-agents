@@ -16,6 +16,10 @@ export interface ConnectOptions {
   agentName?: string;
   /** Override state directory for write guard persistence */
   stateDir?: string;
+  /** URL allowlist for attestation — only these origins can be attested */
+  urlAllowlist?: string[];
+  /** Allow insecure (HTTP) URLs — for local dev only */
+  allowInsecureUrls?: boolean;
 }
 
 export interface Colony {
@@ -29,7 +33,11 @@ export async function connect(opts?: ConnectOptions): Promise<Colony> {
   const runtime = await createAgentRuntime(opts);
   return {
     toolkit: runtime.toolkit,
-    hive: createHiveAPI(runtime, { stateDir: opts?.stateDir }),
+    hive: createHiveAPI(runtime, {
+      stateDir: opts?.stateDir,
+      urlAllowlist: opts?.urlAllowlist,
+      allowInsecureUrls: opts?.allowInsecureUrls,
+    }),
     runtime,
     address: runtime.address,
   };

@@ -9,6 +9,8 @@ updated: 2026-04-02
 > Verified against `@kynesyslabs/demosdk` v2.11.5 source (node_modules).
 > Last audit: 2026-04-02. Update after SDK version bumps.
 
+**Environment:** The SDK reads wallet credentials from `DEMOS_MNEMONIC` (not bare `MNEMONIC`). See SKILL.md line 105.
+
 ## Rule 1: Every Transaction Requires a 3-Step Pipeline
 
 **Statement:** SDK methods that create transactions (`transfer`, `store`, `pay`) return a **signed but unsubmitted** Transaction object. You MUST call `confirm()` then `broadcast()` to actually submit to the network.

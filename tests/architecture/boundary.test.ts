@@ -244,7 +244,7 @@ describe("Deprecated Shim Validation — ADR-0002", () => {
     const violations: string[] = [];
     for (const { rel, imports } of shims) {
       for (const imp of imports) {
-        if (!imp.path.includes("/toolkit/") && !imp.path.includes("@demos-agents/core")) {
+        if (!imp.path.includes("/toolkit/")) {
           violations.push(`  ${rel} imports "${imp.path}" (expected toolkit path)`);
         }
       }

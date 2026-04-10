@@ -10,11 +10,8 @@
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": false,
-    "paths": {
-      "@demos-agents/core": ["./packages/core/src/index.ts"],
-      "@demos-agents/core/*": ["./packages/core/src/*"]
-    }
+    "paths": {}
   },
-  "include": ["src/**/*.ts", "cli/**/*.ts", "platform/**/*.ts", "connectors/**/*.ts", "packages/core/src/**/*.ts", "packages/supercolony-toolkit/src/**/*.ts"],
+  "include": ["src/**/*.ts", "cli/**/*.ts", "packages/supercolony-toolkit/src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

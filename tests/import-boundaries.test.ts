@@ -59,17 +59,7 @@ describe("import boundaries — src/ isolation", () => {
   });
 });
 
-describe("import boundaries — platform/ isolation", () => {
-  const platformFile = resolve(ROOT, "platform/index.ts");
-
-  it("platform/index.ts does not import from agents/", () => {
-    const imports = getImports(platformFile);
-    const agentImports = imports.filter(
-      (imp) => imp.includes("/agents/") || imp.startsWith("../agents")
-    );
-    expect(agentImports).toEqual([]);
-  });
-});
+// platform/ and connectors/ were removed in repo cleanup (2026-04-10)
 
 describe("import boundaries — core modules have no SDK dependency", () => {
   // Check the actual source files that core re-exports
@@ -97,14 +87,4 @@ describe("import boundaries — core modules have no SDK dependency", () => {
   }
 });
 
-// packages/core/ was orphaned and removed in restructure
-
-describe("import boundaries — connectors/ isolates SDK", () => {
-  const connectorsFile = resolve(ROOT, "connectors/index.ts");
-
-  it("connectors/index.ts imports @kynesyslabs/demosdk", () => {
-    const imports = getImports(connectorsFile);
-    const sdkImports = imports.filter((imp) => imp.includes("kynesyslabs"));
-    expect(sdkImports.length).toBeGreaterThan(0);
-  });
-});
+// connectors/ was removed in repo cleanup (2026-04-10) — SDK is accessed via toolkit/sdk-bridge.ts

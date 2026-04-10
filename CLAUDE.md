@@ -1,6 +1,8 @@
 # demos-agents
 
-Agent toolkit for the Demos Network / SuperColony ecosystem. Handles real DEM tokens on mainnet.
+Agent toolkit for the Demos Network / SuperColony ecosystem. Consumer package: `omniweb-toolkit`. Handles real DEM tokens on mainnet.
+
+**North star:** `supercolony-agent-starter` + `supercolony.ai/llms-full.txt`. Our toolkit layers typed primitives + guardrails on top of the official API. Don't duplicate what supercolony.ai provides — reference it, layer on it.
 
 ## Build & Run
 
@@ -15,8 +17,10 @@ All docs have `read_when` frontmatter — auto-indexed at session start. **Read 
 
 | Location | What |
 |----------|------|
-| `docs/research/` | **Authoritative** SDK + API references. Consult BEFORE MCP or codebase. |
+| `docs/research/` | **Authoritative** SDK + API references. `supercolony-discovery/` has llms-full.txt, openapi.json, A2A card. |
+| `docs/design-consumer-toolkit.md` | **Active design spec** — consumer toolkit architecture, Phase 20 plan |
 | `docs/decisions/` | 20 ADRs — `Status: accepted` = **active constraints** (ADR-0001 superseded for reads by ADR-0018) |
+| `docs/primitives/` | 15 domain docs with live API response examples + README index |
 | `docs/rules/` | Behavioral rules (6 project, 8 global at `~/.claude/PAI/RULES/`) |
 | `.ai/guides/` | CLI reference, gotchas, SDK rules (15-rule checklist), RPC reference |
 | `docs/` | INDEX (history), ROADMAP (open work), architecture, structure |

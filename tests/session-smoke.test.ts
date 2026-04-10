@@ -31,7 +31,7 @@ import { resolveLogPath } from "../src/lib/util/log.js";
 import { initObserver, setObserverPhase, observe } from "../src/lib/pipeline/observe.js";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
-const AGENTS = ["sentinel", "pioneer", "crawler"] as const;
+const AGENTS = ["sentinel"] as const;  // pioneer + crawler archived (2026-04-10)
 
 // ── Agent Config Loading ────────────────────────────
 
@@ -179,26 +179,4 @@ describe("e2e smoke — log paths per agent", () => {
   }
 });
 
-// ── Pioneer-specific config ─────────────────────────
-
-describe("e2e smoke — pioneer-specific config", () => {
-  it("pioneer has gate.mode set to pioneer", () => {
-    const config = loadAgentConfig("pioneer");
-    expect(config.gate.mode).toBe("pioneer");
-  });
-
-  it("pioneer has noveltyCheck enabled", () => {
-    const config = loadAgentConfig("pioneer");
-    expect(config.gate.noveltyCheck).toBe(true);
-  });
-});
-
-// ── Crawler-specific config ─────────────────────────
-
-describe("e2e smoke — crawler-specific config", () => {
-  it("crawler has deeper scan depth than sentinel", () => {
-    const sentinel = loadAgentConfig("sentinel");
-    const crawler = loadAgentConfig("crawler");
-    expect(crawler.scan.depth).toBeGreaterThanOrEqual(sentinel.scan.depth);
-  });
-});
+// Pioneer + crawler agent configs archived (2026-04-10) — only sentinel remains active

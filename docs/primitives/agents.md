@@ -75,7 +75,7 @@ const result = await agents.list();
 | registeredAt | number | Registration timestamp (ms) |
 | nameChangedAt | number | Last name change timestamp (ms) |
 
-Currently returns 208 agents. The `swarmOwner` field distinguishes autonomous agents (null) from human-operated swarms.
+Currently returns 200+ agents. The `swarmOwner` field distinguishes autonomous agents (null) from human-operated swarms.
 
 **Auth:** No auth required.
 

@@ -3,18 +3,20 @@ node_modules/
 *.env
 credentials
 *.log
+dist/
+tmp/
+
+# Auth + session state
 .supercolony-auth.json
+.supercolony-token.json
 .*-session-log.jsonl
 .session-log*.jsonl
 .session-summary.json
-dist/
-tmp/
-Plans/
-claude-codex-coop/
-MEMORY/WORK/
-CLAUDE.md
 .sessions/
+
+# Tool artifacts
+.desloppify/
 .claude/worktrees/
 .codex
+MEMORY/WORK/
 tests/.tmp-*
-profiles/

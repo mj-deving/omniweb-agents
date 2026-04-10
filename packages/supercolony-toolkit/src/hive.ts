@@ -112,6 +112,24 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     return identityModulePromise;
   }
 
+  let chainIdentityPromise: Promise<typeof import("../../../src/toolkit/supercolony/chain-identity.js")> | null = null;
+  function getChainIdentityModule() {
+    if (!chainIdentityPromise) {
+      chainIdentityPromise = import("../../../src/toolkit/supercolony/chain-identity.js");
+    }
+    return chainIdentityPromise;
+  }
+
+  let storageModulePromise: Promise<typeof import("../../../src/toolkit/network/storage-client.js")> | null = null;
+  function getStorageModule() {
+    if (!storageModulePromise) {
+      storageModulePromise = import("../../../src/toolkit/network/storage-client.js");
+    }
+    return storageModulePromise;
+  }
+
+  const rpcUrl = process.env.RPC_URL ?? "https://demosnode.discus.sh";
+
   return {
     // ── Read methods (delegate to toolkit primitives) ──
     getFeed: (o) => toolkit.feed.getRecent(o),
@@ -239,8 +257,7 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
       const clampedAmount = Math.min(10, Math.max(1, amount));
 
       try {
-        const { lookupByWeb2 } = await import("../../../src/toolkit/supercolony/chain-identity.js");
-        const rpcUrl = process.env.RPC_URL ?? "https://demosnode.discus.sh";
+        const { lookupByWeb2 } = await getChainIdentityModule();
         const accounts = await lookupByWeb2(rpcUrl, platform, username);
 
         if (!accounts || accounts.length === 0) {
@@ -257,9 +274,9 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     // ── On-chain storage ─────────────────────────────
     async readStorage(storageAddress) {
       try {
-        const { createStorageClient } = await import("../../../src/toolkit/network/storage-client.js");
+        const { createStorageClient } = await getStorageModule();
         const client = createStorageClient({
-          rpcUrl: process.env.RPC_URL ?? "https://demosnode.discus.sh",
+          rpcUrl,
           agentName: "agent",
           agentAddress: runtime.address,
         });
@@ -273,16 +290,18 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
 
     async writeStorage(storageAddress, field, value) {
       try {
-        const { createStorageClient } = await import("../../../src/toolkit/network/storage-client.js");
+        const { createStorageClient } = await getStorageModule();
         const client = createStorageClient({
-          rpcUrl: process.env.RPC_URL ?? "https://demosnode.discus.sh",
+          rpcUrl,
           agentName: "agent",
           agentAddress: runtime.address,
         });
-        const payload = client.setFieldPayload(storageAddress, field, value);
-        // Storage writes go through the SDK's store→confirm→broadcast pipeline
-        const result = await runtime.sdkBridge.publishHivePost(payload as any);
-        return { ok: true };
+        // Validate the payload can be constructed (catches size/format issues early)
+        client.setFieldPayload(storageAddress, field, value);
+        // Storage writes require the SDK's StorageProgram transaction pipeline,
+        // not publishHivePost (which is for social posts). Direct SDK access needed.
+        // TODO: Wire through a dedicated sdkBridge.writeStorage() method when available.
+        return { ok: false, error: "Storage writes not yet wired to chain pipeline — use readStorage() for reads. Chain write support pending SDK bridge extension." };
       } catch (e) {
         return { ok: false, error: (e as Error).message };
       }
@@ -291,10 +310,7 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     // ── Forecast scoring ─────────────────────────────
     async getForecastScore(address) {
       try {
-        const [predictions, leaderboard] = await Promise.all([
-          toolkit.predictions.query({ agent: address }),
-          toolkit.scores.getLeaderboard({ limit: 100 }),
-        ]);
+        const predictions = await toolkit.predictions.query({ agent: address });
 
         // Betting accuracy: % of resolved predictions that were correct
         let bettingScore = 50; // default if no data

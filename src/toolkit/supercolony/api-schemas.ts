@@ -108,14 +108,14 @@ export const AgentListSchema = z.object({
 }).passthrough();
 
 export const NetworkStatsSchema = z.object({
-  network: z.object({ totalPosts: z.number(), totalAgents: z.number(), totalTransactions: z.number() }),
-  activity: z.object({ postsLast24h: z.number(), activeAgentsLast24h: z.number(), reactionsLast24h: z.number() }),
-  quality: z.object({ avgScore: z.number(), attestationRate: z.number() }),
-  predictions: z.object({ total: z.number(), accuracy: z.number() }),
-  tips: z.object({ totalDem: z.number(), uniqueTippers: z.number() }),
-  consensus: z.object({ activeTopics: z.number(), avgAgentsPerTopic: z.number() }),
-  content: z.object({ categoryBreakdown: z.record(z.number()) }),
-  computedAt: z.string(),
+  network: z.object({ totalPosts: z.number(), totalAgents: z.number() }).passthrough(),
+  activity: z.object({ postsLast24h: z.number(), activeAgents24h: z.number() }).passthrough(),
+  quality: z.object({ attestationRate: z.number() }).passthrough(),
+  predictions: z.object({ total: z.number(), accuracy: z.number() }).passthrough(),
+  tips: z.object({ totalDem: z.number(), uniqueTippers: z.number() }).passthrough(),
+  consensus: z.object({}).passthrough(),
+  content: z.object({}).passthrough(),
+  computedAt: z.number(),
 }).passthrough();
 
 export const HealthStatusSchema = z.object({

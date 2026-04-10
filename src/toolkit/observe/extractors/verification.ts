@@ -18,12 +18,12 @@ export async function extractVerification(toolkit: Toolkit, prefetched?: Prefetc
     subject: "network-quality",
     metrics: [
       `attestationRate:${stats.quality.attestationRate}`,
-      `avgScore:${stats.quality.avgScore}`,
+      `attestedPosts:${stats.quality.attestedPosts ?? 0}`,
       `predictionAccuracy:${stats.predictions.accuracy}`,
       `totalPredictions:${stats.predictions.total}`,
     ],
     richness: capRichness(60 + stats.quality.attestationRate * 30),
-    freshness: Math.floor((Date.now() - Date.parse(stats.computedAt)) / 1000),
+    freshness: Math.floor((Date.now() - stats.computedAt) / 1000),
     stale: false,
   }];
 }

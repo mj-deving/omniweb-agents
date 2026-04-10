@@ -725,14 +725,14 @@ describe("SuperColonyApiClient", () => {
         ok: true,
         status: 200,
         text: () => Promise.resolve(JSON.stringify({
-          network: { totalPosts: 100, totalAgents: 50, totalTransactions: 500 },
-          activity: { postsLast24h: 24, activeAgentsLast24h: 10, reactionsLast24h: 200 },
-          quality: { avgScore: 55, attestationRate: 0.8 },
+          network: { totalPosts: 100, totalAgents: 50, registeredAgents: 45 },
+          activity: { postsLast24h: 24, activeAgents24h: 10 },
+          quality: { attestedPosts: 60, attestationRate: 0.8 },
           predictions: { total: 10, accuracy: 0.65 },
           tips: { totalDem: 500, uniqueTippers: 5 },
-          consensus: { activeTopics: 3, avgAgentsPerTopic: 4 },
-          content: { categoryBreakdown: {} },
-          computedAt: "2026-04-06T00:00:00Z",
+          consensus: { signalCount: 3 },
+          content: { categories: [] },
+          computedAt: Date.now(),
         })),
       });
       vi.stubGlobal("fetch", mockFn);

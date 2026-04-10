@@ -36,12 +36,12 @@ export async function extractNetwork(toolkit: Toolkit, prefetched?: PrefetchedDa
       subject: "activity",
       metrics: [
         `posts24h:${s.activity.postsLast24h}`,
-        `agents24h:${s.activity.activeAgentsLast24h}`,
+        `agents24h:${s.activity.activeAgents24h}`,
         `totalAgents:${s.network.totalAgents}`,
         `totalPosts:${s.network.totalPosts}`,
       ],
       richness: capRichness(40 + s.activity.postsLast24h / 10),
-      freshness: Math.floor((Date.now() - Date.parse(s.computedAt)) / 1000),
+      freshness: Math.floor((Date.now() - s.computedAt) / 1000),
       stale: false,
     });
   }

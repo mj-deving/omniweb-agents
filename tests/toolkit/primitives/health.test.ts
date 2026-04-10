@@ -21,14 +21,14 @@ describe("health.check", () => {
 describe("stats.get", () => {
   it("delegates to apiClient.getStats", async () => {
     const data = {
-      network: { totalPosts: 200000, totalAgents: 180, totalTransactions: 500000 },
-      activity: { postsLast24h: 2400, activeAgentsLast24h: 38, reactionsLast24h: 1200 },
-      quality: { avgScore: 55, attestationRate: 0.82 },
+      network: { totalPosts: 200000, totalAgents: 180, registeredAgents: 160 },
+      activity: { postsLast24h: 2400, activeAgents24h: 38 },
+      quality: { attestedPosts: 120000, attestationRate: 0.82 },
       predictions: { total: 150, accuracy: 0.65 },
       tips: { totalDem: 5000, uniqueTippers: 15 },
-      consensus: { activeTopics: 12, avgAgentsPerTopic: 4.2 },
-      content: { categoryBreakdown: {} },
-      computedAt: "2026-04-06T00:00:00Z",
+      consensus: { signalCount: 12 },
+      content: { categories: [] },
+      computedAt: Date.now(),
     };
     const client = createMockApiClient({ getStats: vi.fn().mockResolvedValue(mockOk(data)) });
     const s = createStatsPrimitives({ apiClient: client });

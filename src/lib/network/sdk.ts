@@ -2,7 +2,7 @@
  * SDK initialization and API helpers for Sentinel tools.
  *
  * Provides wallet connection factory and SuperColony API call wrapper.
- * Extracted from skills/supercolony/scripts/supercolony.ts patterns.
+ * Originally extracted from early CLI script patterns.
  *
  * Runtime: Node.js + tsx (NOT bun — SDK crashes on bun NAPI)
  */

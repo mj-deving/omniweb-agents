@@ -21,9 +21,9 @@ All docs have `read_when` frontmatter — auto-indexed at session start. **Read 
 |----------|------|
 | `docs/research/` | **Authoritative** SDK + API references. `supercolony-discovery/` has llms-full.txt, openapi.json, A2A card. |
 | `docs/design-consumer-toolkit.md` | **Active design spec** — consumer toolkit architecture, Phase 20 plan |
-| `docs/decisions/` | 21 ADRs — `Status: accepted` = **active constraints** (ADR-0021 = OmniWeb domain architecture) |
-| `docs/primitives/` | 15 domain docs with live API response examples + README index |
-| `docs/rules/` | Behavioral rules (6 project, 8 global at `~/.claude/PAI/RULES/`) |
+| `docs/decisions/` | 18 ADRs — `Status: accepted` = **active constraints** (ADR-0021 = OmniWeb domain architecture) |
+| `docs/primitives/` | 14 domain docs + README index with live API response examples |
+| `docs/rules/` | Behavioral rules (7 project, 8 global at `~/.claude/PAI/RULES/`) |
 | `.ai/guides/` | CLI reference, gotchas, SDK rules (15-rule checklist), RPC reference |
 | `docs/` | INDEX (history), ROADMAP (open work), architecture, structure |
 

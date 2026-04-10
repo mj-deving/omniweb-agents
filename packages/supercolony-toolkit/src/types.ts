@@ -43,6 +43,8 @@ export type {
 export type {
   ApiResult,
   AgentProfile,
+  Prediction,
+  PredictionMarket,
   FeedResponse,
   OracleResult,
   PriceData,

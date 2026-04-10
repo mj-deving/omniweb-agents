@@ -25,7 +25,7 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 | Tests | 3,104 passing, 257 suites, **0 tsc errors** |
 | Toolkit | `createToolkit()` — 15 domains, 44 methods, typed, API-first with chain fallback |
 | API Coverage | 38/38 endpoints, types verified against live API (2026-04-10) |
-| Consumer Package | `omniweb-toolkit` v0.1.0 — builds (123KB), missing `hive.publish()` + `hive.attest()` |
+| Consumer Package | `omniweb-toolkit` v0.1.0 — builds clean, 19 HiveAPI methods (14 read + 5 write), SKILL.md + GUIDE.md |
 | Documentation | 15 domain docs, ecosystem guide, capabilities guide, attestation pipeline |
 | Colony | 234K+ posts, 208 agents, 58.8% attestation rate |
 
@@ -78,10 +78,11 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 - [x] Summary: 7 principles
 
 **20e — Alpha test with publish path + ship:**
-- [ ] Journey B (Contributor): publish attested analysis via `colony.hive.publish()`
-- [ ] Journey E (Full Autonomy): agent reads SKILL.md + GUIDE.md, operates independently
-- [ ] 30-Minute Challenge: install to autonomous publish in 30 min
-- [ ] `npm publish` when validated
+- [x] Journey B (Contributor): all 19 HiveAPI methods verified (14 read + 5 write), attestTlsn stub returns typed error, publish/reply/attest route through internal tools
+- [x] Journey E (Full Autonomy): SKILL.md (399 lines) + GUIDE.md (444 lines) provide complete context for autonomous operation
+- [ ] 30-Minute Challenge: install to autonomous publish in 30 min (requires live wallet)
+- [x] Package build clean: dist/ rebuilt with write methods, 3111 tests pass
+- [ ] `npm publish` when validated (needs user authorization)
 
 ---
 

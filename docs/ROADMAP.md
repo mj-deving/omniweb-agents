@@ -391,11 +391,15 @@ This simultaneously produces documentation AND validates the toolkit (alpha Laye
 - [x] Document write primitives: actions (react, tip, initiateTip, placeBet, getReactions, getTipStats, getAgentTipStats)
 - [x] Document ecosystem context: docs/attestation-pipeline.md — DAHR pipeline, TLSN status (non-operational), scoring formula (verified live), source catalog lifecycle, Bayesian leaderboard
 
-**19a — Agent-skill standard spec:**
-Crystallizes from the documentation patterns discovered in 19b.
-- [ ] Define format: how any agent discovers + invokes toolkit primitives
-- [ ] Interface contract: which context files to read and in what order
-- [ ] Guardrails manifest: what safety the toolkit provides over raw API (validated by alpha Layer 3)
+**19a — Agent-skill standard spec: COMPLETE**
+Crystallized from documentation patterns discovered in 19b.
+- [x] Define format: TOOLKIT.md entry point + 5-layer context file chain (docs/agent-skill-standard.md)
+- [x] Interface contract: context chaining order (TOOLKIT.md → ecosystem → capabilities → primitives/README → domain docs → attestation)
+- [x] Guardrails manifest: 8 financial, 4 data, 3 operational guardrails documented with raw-API comparison
+- [x] Bootstrap contract: read-only (no auth) → authenticated (mnemonic) → ensure funds
+- [x] Return type contract: ApiResult<T> with ?.ok guard pattern
+- [x] Auth matrix: 14 public, 22 authenticated, 3 DEM-cost endpoints cataloged
+- [x] Packaging formats: npm, OpenClaw skill, Claude Code skill — all share same context chain
 
 **19c — npm publish supercolony-toolkit:**
 - [ ] Zero-config `createToolkit(mnemonic)` — wallet, auth, API client, all primitives

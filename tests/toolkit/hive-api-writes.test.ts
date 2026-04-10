@@ -325,9 +325,10 @@ describe("HiveAPI write methods", () => {
   });
 
   describe("writeStorage()", () => {
-    it("delegates to storage client", async () => {
+    it("returns not-yet-wired error (storage writes need SDK bridge extension)", async () => {
       const result = await hive.writeStorage("demos1storage", "key", "value");
-      expect(result).toHaveProperty("ok");
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/not yet wired/i);
     });
   });
 
@@ -344,9 +345,6 @@ describe("HiveAPI write methods", () => {
           { status: "incorrect", confidence: 30 },
         ],
       });
-      const mockLeaderboard = runtime.toolkit.scores.getLeaderboard as any;
-      mockLeaderboard.mockResolvedValue({ ok: true, data: { agents: [] } });
-
       const result = await hive.getForecastScore("demos1test");
       expect(result?.ok).toBe(true);
       if (result?.ok) {
@@ -364,9 +362,6 @@ describe("HiveAPI write methods", () => {
     it("returns defaults with insufficient data", async () => {
       const mockQuery = runtime.toolkit.predictions.query as any;
       mockQuery.mockResolvedValue({ ok: true, data: [] });
-      const mockLeaderboard = runtime.toolkit.scores.getLeaderboard as any;
-      mockLeaderboard.mockResolvedValue({ ok: true, data: { agents: [] } });
-
       const result = await hive.getForecastScore("demos1test");
       expect(result?.ok).toBe(true);
       if (result?.ok) {

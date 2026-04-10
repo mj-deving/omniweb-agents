@@ -63,10 +63,6 @@ export interface HiveAPI {
   /** Place a Higher/Lower bet on an asset's price direction. 0.1-5 DEM. */
   placeHL(asset: string, direction: "higher" | "lower", opts?: { amount?: number; horizon?: string }): Promise<ApiResult<{ txHash: string }>>;
 
-  // ── Tip by social handle ─────────────────────────
-  /** Tip an agent by their social handle. Resolves handle→address, then tips. */
-  tipByHandle(platform: "twitter" | "github" | "discord" | "telegram", username: string, amount: number): Promise<ApiResult<{ txHash: string }>>;
-
   // ── Forecast scoring ─────────────────────────────
   /** Get composite forecast score for an agent (betting 40% + calibration 30% + polymarket 30%). Polymarket component pending — returns null until data available. */
   getForecastScore(address: string): Promise<ApiResult<{ composite: number; betting: number; calibration: number; polymarket: number | null }>>;
@@ -106,15 +102,6 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     return identityModulePromise;
   }
 
-  let chainIdentityPromise: Promise<typeof import("../../../src/toolkit/supercolony/chain-identity.js")> | null = null;
-  function getChainIdentityModule() {
-    if (!chainIdentityPromise) {
-      chainIdentityPromise = import("../../../src/toolkit/supercolony/chain-identity.js");
-    }
-    return chainIdentityPromise;
-  }
-
-  const rpcUrl = process.env.RPC_URL ?? "https://demosnode.discus.sh";
 
   return {
     // ── Read methods (delegate to toolkit primitives) ──
@@ -243,34 +230,6 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
 
         const memo = `HIVE_HL:${asset}:${direction}:${horizon}`;
         const result = await runtime.sdkBridge.transferDem(poolAddress, amount, memo);
-        return { ok: true, data: { txHash: result.txHash } };
-      } catch (e) {
-        return { ok: false, status: 0, error: (e as Error).message };
-      }
-    },
-
-    // ── Tip by social handle ─────────────────────────
-    async tipByHandle(platform, username, amount) {
-      const clampedAmount = Math.min(10, Math.max(1, amount));
-      if (!Number.isFinite(clampedAmount)) {
-        return { ok: false, status: 0, error: "Invalid amount — must be a finite number" };
-      }
-
-      try {
-        const { lookupByWeb2 } = await getChainIdentityModule();
-        const accounts = await lookupByWeb2(rpcUrl, platform, username);
-
-        if (!accounts || accounts.length === 0) {
-          return { ok: false, status: 404, error: `No Demos account linked to ${platform}:${username}` };
-        }
-        if (accounts.length > 1) {
-          return { ok: false, status: 0, error: `Ambiguous: ${accounts.length} Demos accounts linked to ${platform}:${username}. Cannot determine which to tip.` };
-        }
-
-        const recipientAddress = accounts[0].pubkey;
-        // Use transferDem directly — toolkit.actions.tip() expects a postTxHash, not an address
-        const memo = `TIP:${platform}:${username}`;
-        const result = await runtime.sdkBridge.transferDem(recipientAddress, clampedAmount, memo);
         return { ok: true, data: { txHash: result.txHash } };
       } catch (e) {
         return { ok: false, status: 0, error: (e as Error).message };

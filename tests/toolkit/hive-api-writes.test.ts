@@ -56,10 +56,6 @@ vi.mock("../../src/lib/auth/identity.js", () => ({
   addGithubIdentity: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-// Mock chain-identity — avoid real RPC lookups
-vi.mock("../../src/toolkit/supercolony/chain-identity.js", () => ({
-  lookupByWeb2: vi.fn().mockResolvedValue([{ pubkey: "demos1resolved" }]),
-}));
 
 
 import { createHiveAPI } from "../../packages/supercolony-toolkit/src/hive.js";
@@ -283,29 +279,6 @@ describe("HiveAPI write methods", () => {
       await hive.placeHL("BTC", "higher", { amount: 100 });
       expect((runtime.sdkBridge as any).transferDem).toHaveBeenCalledWith(
         "demos1pool", 5, expect.any(String)
-      );
-    });
-  });
-
-  // ── tipByHandle() ──────────────────────────────────
-
-  describe("tipByHandle()", () => {
-    it("resolves handle and transfers DEM directly", async () => {
-      (runtime.sdkBridge as any).transferDem = vi.fn().mockResolvedValue({ txHash: "tx_tip_001" });
-
-      const result = await hive.tipByHandle("twitter", "alice", 5);
-      expect(result?.ok).toBe(true);
-      expect((runtime.sdkBridge as any).transferDem).toHaveBeenCalledWith(
-        "demos1resolved", 5, "TIP:twitter:alice"
-      );
-    });
-
-    it("clamps amount to 1-10 range", async () => {
-      (runtime.sdkBridge as any).transferDem = vi.fn().mockResolvedValue({ txHash: "tx_tip_002" });
-
-      await hive.tipByHandle("twitter", "alice", 100);
-      expect((runtime.sdkBridge as any).transferDem).toHaveBeenCalledWith(
-        "demos1resolved", 10, "TIP:twitter:alice"
       );
     });
   });

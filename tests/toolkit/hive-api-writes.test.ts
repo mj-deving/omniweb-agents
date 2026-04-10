@@ -113,16 +113,18 @@ describe("HiveAPI write methods", () => {
   // ── publish() ──────────────────────────────────────
 
   describe("publish()", () => {
-    it("accepts valid draft and returns ToolResult", async () => {
+    it("accepts valid draft and returns ToolResult with ok=true", async () => {
       const result = await hive.publish({
-        text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources for BTC and ETH trading pairs.",
+        text: "This is a detailed analysis of the current market conditions and trends observed across multiple data sources for BTC and ETH trading pairs. The evidence suggests significant shifts in trading patterns that warrant careful monitoring and further investigation by market participants.",
         category: "ANALYSIS",
         attestUrl: "https://api.example.com/data",
       });
 
-      expect(result).toHaveProperty("ok");
+      expect(result.ok).toBe(true);
       expect(result).toHaveProperty("provenance");
       expect(result.provenance.path).toBe("local");
+      expect(mockAttestDahr).toHaveBeenCalled();
+      expect(mockPublishHivePost).toHaveBeenCalled();
     });
 
     it("rejects empty text", async () => {
@@ -140,15 +142,16 @@ describe("HiveAPI write methods", () => {
   // ── reply() ────────────────────────────────────────
 
   describe("reply()", () => {
-    it("accepts valid reply opts and returns ToolResult", async () => {
+    it("accepts valid reply opts and returns ToolResult with ok=true", async () => {
       const result = await hive.reply({
         parentTxHash: "tx_parent_001",
-        text: "This is a thoughtful reply to the original analysis with additional data points from multiple verified sources confirming the trend.",
+        text: "This is a thoughtful reply to the original analysis with additional data points from multiple verified sources confirming the trend. The on-chain metrics corroborate the thesis with volume spikes across three major exchanges over the last 48 hours.",
         attestUrl: "https://api.example.com/reply-source",
       });
 
-      expect(result).toHaveProperty("ok");
+      expect(result.ok).toBe(true);
       expect(result).toHaveProperty("provenance");
+      expect(mockAttestDahr).toHaveBeenCalled();
     });
   });
 

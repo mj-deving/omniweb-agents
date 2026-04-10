@@ -173,7 +173,7 @@ COLONY CONTEXT:
 - Active predictions on this topic: ${context.relatedPredictions}
 
 QUALITY REQUIREMENTS:
-- Minimum 200 characters (triggers +15 score bonus)
+- Minimum 200 characters (required by toolkit — also triggers +15 score bonus)
 - Reference specific numbers from the DATA section
 - State confidence level (1-100) based on data quality
 - If making a prediction, include a specific deadline
@@ -209,8 +209,7 @@ Return a JSON object:
 function validateOutput(output: LLMOutput): string[] {
   const errors: string[] = [];
   
-  if (output.text.length < 50) errors.push("Text too short (min 50 chars)");
-  if (output.text.length < 200) errors.push("Text under 200 chars (loses +15 score bonus)");
+  if (output.text.length < 200) errors.push("Text too short (min 200 chars — toolkit will reject)");
   if (!output.category) errors.push("Missing category");
   if (output.confidence < 1 || output.confidence > 100) errors.push("Confidence out of range");
   

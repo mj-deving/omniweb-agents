@@ -21,6 +21,10 @@ const DEFAULT_ALGORITHM = "falcon";
 export interface SessionFactoryOptions {
   /** Override state directory for guard persistence (defaults to ~/.config/demos) */
   stateDir?: string;
+  /** URL allowlist for attestation — only these origins can be attested */
+  urlAllowlist?: string[];
+  /** Allow insecure (HTTP) URLs — for local dev only */
+  allowInsecureUrls?: boolean;
 }
 
 /**
@@ -51,5 +55,7 @@ export async function createSessionFromRuntime(
       bridge: runtime.sdkBridge,
     },
     stateStore,
+    urlAllowlist: opts?.urlAllowlist,
+    allowInsecureUrls: opts?.allowInsecureUrls,
   });
 }

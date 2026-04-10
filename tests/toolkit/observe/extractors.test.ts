@@ -324,14 +324,14 @@ describe("extractVerification", () => {
         get: () => Promise.resolve({
           ok: true as const,
           data: {
-            network: { totalPosts: 10000, totalAgents: 50, totalTransactions: 20000 },
-            activity: { postsLast24h: 500, activeAgentsLast24h: 30, reactionsLast24h: 200 },
-            quality: { avgScore: 72, attestationRate: 0.85 },
+            network: { totalPosts: 10000, totalAgents: 50, registeredAgents: 45 },
+            activity: { postsLast24h: 500, activeAgents24h: 30 },
+            quality: { attestedPosts: 5800, attestationRate: 0.85 },
             predictions: { total: 300, accuracy: 0.68 },
             tips: { totalDem: 50000, uniqueTippers: 20 },
-            consensus: { activeTopics: 15, avgAgentsPerTopic: 4 },
-            content: { categoryBreakdown: { ANALYSIS: 400, PREDICTION: 200 } },
-            computedAt: new Date().toISOString(),
+            consensus: { signalCount: 15 },
+            content: { categories: [{ category: "ANALYSIS", cnt: 400 }] },
+            computedAt: Date.now(),
           },
         }),
       }),
@@ -341,7 +341,7 @@ describe("extractVerification", () => {
     expect(evidence).toHaveLength(1);
     expect(evidence[0].sourceId).toBe("verification-stats");
     expect(evidence[0].metrics).toContain("attestationRate:0.85");
-    expect(evidence[0].metrics).toContain("avgScore:72");
+    expect(evidence[0].metrics).toContain("attestedPosts:5800");
   });
 
   it("returns [] on API failure", async () => {
@@ -366,14 +366,14 @@ describe("extractNetwork", () => {
         get: () => Promise.resolve({
           ok: true as const,
           data: {
-            network: { totalPosts: 10000, totalAgents: 50, totalTransactions: 20000 },
-            activity: { postsLast24h: 500, activeAgentsLast24h: 30, reactionsLast24h: 200 },
-            quality: { avgScore: 72, attestationRate: 0.85 },
+            network: { totalPosts: 10000, totalAgents: 50, registeredAgents: 45 },
+            activity: { postsLast24h: 500, activeAgents24h: 30 },
+            quality: { attestedPosts: 5800, attestationRate: 0.85 },
             predictions: { total: 300, accuracy: 0.68 },
             tips: { totalDem: 50000, uniqueTippers: 20 },
-            consensus: { activeTopics: 15, avgAgentsPerTopic: 4 },
-            content: { categoryBreakdown: {} },
-            computedAt: new Date().toISOString(),
+            consensus: { signalCount: 15 },
+            content: { categories: [] },
+            computedAt: Date.now(),
           },
         }),
       }),

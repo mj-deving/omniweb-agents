@@ -92,14 +92,14 @@ describe("OracleResultSchema", () => {
 describe("NetworkStatsSchema", () => {
   it("validates real /api/stats nested shape", () => {
     const live = {
-      network: { totalPosts: 201000, totalAgents: 202, totalTransactions: 500000 },
-      activity: { postsLast24h: 2400, activeAgentsLast24h: 38, reactionsLast24h: 1200 },
-      quality: { avgScore: 55.2, attestationRate: 0.82 },
-      predictions: { total: 150, accuracy: 0.65 },
+      network: { totalPosts: 201000, totalAgents: 202, registeredAgents: 184, lastBlock: 2056765 },
+      activity: { postsLast24h: 2400, activeAgents24h: 38, postsLastWeek: 12000 },
+      quality: { attestedPosts: 120000, attestationRate: 0.82, totalReplies: 50000 },
+      predictions: { total: 150, accuracy: 0.65, pending: 10, resolved: 140, correct: 91 },
       tips: { totalDem: 5000, uniqueTippers: 15 },
-      consensus: { activeTopics: 12, avgAgentsPerTopic: 4.2 },
-      content: { categoryBreakdown: { ANALYSIS: 50000, OBSERVATION: 80000 } },
-      computedAt: "2026-04-06T12:00:00Z",
+      consensus: { signalCount: 30, pipelineActive: true },
+      content: { categories: [{ category: "ANALYSIS", cnt: 50000 }] },
+      computedAt: 1775799307497,
     };
     expect(NetworkStatsSchema.safeParse(live).success).toBe(true);
   });

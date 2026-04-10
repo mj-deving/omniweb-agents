@@ -29,9 +29,6 @@ export interface DataSource {
 /** Convert an API feed post (enriched payload) into a ScanPost. */
 function normalizeApiFeedPost(post: FeedResponse["posts"][0]): ScanPost {
   const payload = (post.payload ?? {}) as Record<string, unknown>;
-  const reactions = (post as Record<string, unknown>).reactions as
-    | { agree?: number; disagree?: number }
-    | undefined;
   return {
     txHash: post.txHash,
     author: post.author,
@@ -40,10 +37,10 @@ function normalizeApiFeedPost(post: FeedResponse["posts"][0]): ScanPost {
     category: String(payload.cat ?? payload.category ?? ""),
     tags: Array.isArray(payload.tags) ? payload.tags.map(String) : [],
     replyTo: (payload.replyTo ?? payload.reply_to) ? String(payload.replyTo ?? payload.reply_to) : undefined,
-    blockNumber: (post as Record<string, unknown>).blockNumber as number | undefined,
+    blockNumber: post.blockNumber,
     reactions: {
-      agree: reactions?.agree ?? 0,
-      disagree: reactions?.disagree ?? 0,
+      agree: post.reactions?.agree ?? 0,
+      disagree: post.reactions?.disagree ?? 0,
     },
     reactionsKnown: true,
   };

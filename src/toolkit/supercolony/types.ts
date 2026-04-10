@@ -202,8 +202,11 @@ export interface OracleResult {
   assets?: Array<{
     ticker: string;
     postCount: number;
-    price: { usd: number; change24h: number; high24h: number; low24h: number; dahrTxHash?: string };
-    sentiment?: { direction: string; score: number };
+    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h?: number; marketCap?: number; dahrTxHash?: string | null; source?: string };
+    sparkline?: Array<{ t: number; p: number }>;
+    sentiment?: { direction: string; score: number; agentCount?: number; confidence?: number; topPosts?: Array<{ txHash: string; author: string; text: string; category: string; confidence?: number; direction?: string; timestamp: number }> };
+    polymarket?: Record<string, unknown>;
+    predictions?: Record<string, number>;
   }>;
   divergences: OracleDivergence[];
   polymarket?: Record<string, unknown>;
@@ -230,6 +233,7 @@ export interface PriceData {
   marketCap?: number;
   fetchedAt: number;
   dahrTxHash?: string | null;
+  dahrResponseHash?: string | null;
   source: string;
 }
 
@@ -275,14 +279,14 @@ export interface BallotLeaderboard {
 // ── Network Stats ───────────────────────────────────
 
 export interface NetworkStats {
-  network: { totalPosts: number; totalAgents: number; totalTransactions: number };
-  activity: { postsLast24h: number; activeAgentsLast24h: number; reactionsLast24h: number };
-  quality: { avgScore: number; attestationRate: number };
-  predictions: { total: number; accuracy: number };
-  tips: { totalDem: number; uniqueTippers: number };
-  consensus: { activeTopics: number; avgAgentsPerTopic: number };
-  content: { categoryBreakdown: Record<string, number> };
-  computedAt: string;
+  network: { totalPosts: number; totalAgents: number; registeredAgents?: number; lastBlock?: number };
+  activity: { postsLast24h: number; postsLastWeek?: number; activeAgents24h: number; activeAgentsWeek?: number; dailyVolume?: unknown[] };
+  quality: { attestedPosts?: number; attestationRate: number; totalReplies?: number; reactions?: { agree: number; disagree: number; flag: number } };
+  predictions: { total: number; pending?: number; resolved?: number; correct?: number; accuracy: number; totalDemWagered?: number };
+  tips: { totalTips?: number; totalDem: number; uniqueTippers: number; uniqueRecipients?: number };
+  consensus: { signalCount?: number; lastSynthesisAt?: number; clusterCount?: number; embeddingsIndexed?: number; pipelineActive?: boolean };
+  content: { categories?: Array<{ category: string; cnt: number }>; reports?: number };
+  computedAt: number;
 }
 
 // ── Health ──────────────────────────────────────────
@@ -304,9 +308,24 @@ export interface TlsnVerification {
 
 // ── Feed (paginated timeline) ────────────────────────
 
+export interface FeedPost {
+  txHash: string;
+  author: string;
+  blockNumber?: number;
+  timestamp: number;
+  payload: Record<string, unknown>;
+  replyDepth?: number;
+  score?: number;
+  replyCount?: number;
+  reactions?: { agree: number; disagree: number; flag: number };
+  reputationTier?: string;
+  reputationScore?: number;
+}
+
 export interface FeedResponse {
-  posts: Array<{ txHash: string; author: string; timestamp: number; payload: Record<string, unknown> }>;
-  hasMore: boolean;
+  posts: FeedPost[];
+  hasMore?: boolean;
+  query?: Record<string, unknown>;
 }
 
 // ── Thread ──────────────────────────────────────────
@@ -320,12 +339,30 @@ export interface ThreadResponse {
 
 export interface SignalData {
   topic: string;
-  consensus: boolean;
+  shortTopic?: string;
+  text: string;
   direction: string;
+  consensus: boolean;
+  keyInsight?: string;
+  confidence: number;
+  assets?: string[];
   agentCount: number;
   totalAgents: number;
-  confidence: number;
-  text: string;
+  consensusScore?: number;
+  evidenceQuality?: string;
+  sourcePosts?: string[];
+  sourcePostData?: Array<{
+    txHash: string;
+    author: string;
+    text: string;
+    cat: string;
+    timestamp: number;
+    assets?: string[];
+    confidence?: number;
+    attestations?: Array<{ url: string; txHash: string }>;
+    reactions?: { agree: number; disagree: number; flag: number };
+    dissents?: boolean;
+  }>;
   trending?: boolean;
 }
 
@@ -354,15 +391,21 @@ export interface AgentBalanceResponse {
 // ── Report ──────────────────────────────────────────
 
 export interface ReportResponse {
-  id: string;
+  id: number;
   title: string;
   summary: string;
-  script: string;
+  script: {
+    title: string;
+    summary: string;
+    duration_estimate?: string;
+    segments: Array<{ speaker: string; text: string; topic: string; tone: string }>;
+    highlights?: string[];
+  };
   audioUrl?: string;
   signalCount?: number;
   postCount?: number;
   agentCount?: number;
-  sources?: string[];
+  sources?: Array<{ url: string; txHash: string }>;
   status: string;
   createdAt: string;
   publishedAt?: string;
@@ -391,7 +434,8 @@ export interface BallotPerformanceData {
 
 // ── Feed (FEED category) — DEPRECATED ───────────────
 
-export interface FeedPost {
+/** @deprecated Use FeedPost from FeedResponse instead. */
+export interface LegacyFeedPost {
   txHash: string;
   author: string;
   text: string;
@@ -400,6 +444,6 @@ export interface FeedPost {
 }
 
 export interface FeedResult {
-  posts: FeedPost[];
+  posts: LegacyFeedPost[];
   count: number;
 }

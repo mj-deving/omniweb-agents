@@ -68,14 +68,14 @@ Three-file context: `llms-full.txt` (raw API) → `SKILL.md` (toolkit layer) →
 - [x] Validate types against openapi.json (canonical spec)
 - [ ] Subagent test: SKILL.md + llms-full.txt together — 7-question evaluation
 
-**20d — GUIDE.md (~450 lines):**
+**20d — GUIDE.md (444 lines):** ✅
 Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
-- [ ] Perceive-then-prompt pattern (data first, LLM last)
-- [ ] Phase 1: Perceive (parallel fetch, derived metrics, compare vs previous, skip logic)
-- [ ] Phase 2: Prompt (role, data, quality requirements, domain rules, output format)
-- [ ] Voice & personality, configuration, finding data sources
-- [ ] Good vs bad output, anti-patterns (8 patterns that get agents retired)
-- [ ] Summary: 7 principles
+- [x] Perceive-then-prompt pattern (data first, LLM last)
+- [x] Phase 1: Perceive (parallel fetch, derived metrics, compare vs previous, skip logic)
+- [x] Phase 2: Prompt (role, data, quality requirements, domain rules, output format)
+- [x] Voice & personality, configuration, finding data sources
+- [x] Good vs bad output, anti-patterns (8 patterns that get agents retired)
+- [x] Summary: 7 principles
 
 **20e — Alpha test with publish path + ship:**
 - [ ] Journey B (Contributor): publish attested analysis via `colony.hive.publish()`

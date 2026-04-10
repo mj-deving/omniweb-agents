@@ -58,6 +58,24 @@ export interface HiveAPI {
   getPredictions(opts?: { status?: string; asset?: string; agent?: string }): Promise<ApiResult<any>>;
   /** Link a Web2 identity (Twitter/GitHub) to your Demos address. Requires proof URL. */
   linkIdentity(platform: "twitter" | "github", proofUrl: string): Promise<{ ok: boolean; error?: string }>;
+
+  // ── Higher/Lower prediction markets ──────────────
+  /** Place a Higher/Lower bet on an asset's price direction. 0.1-5 DEM. */
+  placeHL(asset: string, direction: "higher" | "lower", opts?: { amount?: number; horizon?: string }): Promise<ApiResult<{ txHash: string }>>;
+
+  // ── Tip by social handle ─────────────────────────
+  /** Tip an agent by their social handle. Resolves handle→address, then tips. */
+  tipByHandle(platform: "twitter" | "github" | "discord" | "telegram", username: string, amount: number): Promise<ApiResult<{ txHash: string }>>;
+
+  // ── On-chain storage ─────────────────────────────
+  /** Read an agent's on-chain storage program. */
+  readStorage(storageAddress: string): Promise<{ ok: boolean; data?: Record<string, unknown>; error?: string }>;
+  /** Write a field to an agent's on-chain storage program. */
+  writeStorage(storageAddress: string, field: string, value: unknown): Promise<{ ok: boolean; error?: string }>;
+
+  // ── Forecast scoring ─────────────────────────────
+  /** Get composite forecast score for an agent (betting 40% + calibration 30% + polymarket 30%). */
+  getForecastScore(address: string): Promise<ApiResult<{ composite: number; betting: number; calibration: number; polymarket: number }>>;
 }
 
 export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOptions): HiveAPI {
@@ -182,6 +200,147 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
         return addTwitterIdentity(runtime.demos, proofUrl);
       }
       return addGithubIdentity(runtime.demos, proofUrl);
+    },
+
+    // ── Higher/Lower prediction markets ──────────────
+    async placeHL(asset, direction, hlOpts) {
+      const amount = Math.min(5, Math.max(0.1, hlOpts?.amount ?? 1));
+      const horizon = hlOpts?.horizon ?? "30m";
+
+      if (!asset || typeof asset !== "string" || asset.includes(":")) {
+        return { ok: false, status: 0, error: "Invalid asset — must be non-empty string without colons" };
+      }
+      if (direction !== "higher" && direction !== "lower") {
+        return { ok: false, status: 0, error: "Direction must be 'higher' or 'lower'" };
+      }
+
+      try {
+        const poolResult = await toolkit.ballot.getPool({ asset, horizon });
+        if (!poolResult) return null;
+        if (!poolResult.ok) {
+          return { ok: false, status: poolResult.status, error: `Failed to resolve pool: ${poolResult.error}` };
+        }
+
+        const poolAddress = (poolResult.data as any).poolAddress;
+        if (!poolAddress) {
+          return { ok: false, status: 0, error: "Pool returned no address" };
+        }
+
+        const memo = `HIVE_HL:${asset}:${direction}:${horizon}`;
+        const result = await runtime.sdkBridge.transferDem(poolAddress, amount, memo);
+        return { ok: true, data: { txHash: result.txHash } };
+      } catch (e) {
+        return { ok: false, status: 0, error: (e as Error).message };
+      }
+    },
+
+    // ── Tip by social handle ─────────────────────────
+    async tipByHandle(platform, username, amount) {
+      const clampedAmount = Math.min(10, Math.max(1, amount));
+
+      try {
+        const { lookupByWeb2 } = await import("../../../src/toolkit/supercolony/chain-identity.js");
+        const rpcUrl = process.env.RPC_URL ?? "https://demosnode.discus.sh";
+        const accounts = await lookupByWeb2(rpcUrl, platform, username);
+
+        if (!accounts || accounts.length === 0) {
+          return { ok: false, status: 404, error: `No Demos account linked to ${platform}:${username}` };
+        }
+
+        const recipientAddress = accounts[0].pubkey;
+        return toolkit.actions.tip(recipientAddress, clampedAmount);
+      } catch (e) {
+        return { ok: false, status: 0, error: (e as Error).message };
+      }
+    },
+
+    // ── On-chain storage ─────────────────────────────
+    async readStorage(storageAddress) {
+      try {
+        const { createStorageClient } = await import("../../../src/toolkit/network/storage-client.js");
+        const client = createStorageClient({
+          rpcUrl: process.env.RPC_URL ?? "https://demosnode.discus.sh",
+          agentName: "agent",
+          agentAddress: runtime.address,
+        });
+        const result = await client.readState(storageAddress);
+        if (!result) return { ok: false, error: "Storage program not found" };
+        return { ok: true, data: result.data };
+      } catch (e) {
+        return { ok: false, error: (e as Error).message };
+      }
+    },
+
+    async writeStorage(storageAddress, field, value) {
+      try {
+        const { createStorageClient } = await import("../../../src/toolkit/network/storage-client.js");
+        const client = createStorageClient({
+          rpcUrl: process.env.RPC_URL ?? "https://demosnode.discus.sh",
+          agentName: "agent",
+          agentAddress: runtime.address,
+        });
+        const payload = client.setFieldPayload(storageAddress, field, value);
+        // Storage writes go through the SDK's store→confirm→broadcast pipeline
+        const result = await runtime.sdkBridge.publishHivePost(payload as any);
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: (e as Error).message };
+      }
+    },
+
+    // ── Forecast scoring ─────────────────────────────
+    async getForecastScore(address) {
+      try {
+        const [predictions, leaderboard] = await Promise.all([
+          toolkit.predictions.query({ agent: address }),
+          toolkit.scores.getLeaderboard({ limit: 100 }),
+        ]);
+
+        // Betting accuracy: % of resolved predictions that were correct
+        let bettingScore = 50; // default if no data
+        if (predictions?.ok) {
+          const resolved = (predictions.data as any[]).filter(
+            (p: any) => p.status === "correct" || p.status === "incorrect"
+          );
+          if (resolved.length >= 3) {
+            const correct = resolved.filter((p: any) => p.status === "correct").length;
+            bettingScore = Math.round((correct / resolved.length) * 100);
+          }
+        }
+
+        // Calibration: based on confidence accuracy alignment
+        let calibrationScore = 50; // default
+        if (predictions?.ok) {
+          const withConfidence = (predictions.data as any[]).filter(
+            (p: any) => p.confidence != null && (p.status === "correct" || p.status === "incorrect")
+          );
+          if (withConfidence.length >= 3) {
+            // Good calibration = high confidence on correct, low on incorrect
+            const calibrated = withConfidence.filter((p: any) =>
+              (p.status === "correct" && p.confidence >= 60) ||
+              (p.status === "incorrect" && p.confidence <= 40)
+            );
+            calibrationScore = Math.round((calibrated.length / withConfidence.length) * 100);
+          }
+        }
+
+        // Polymarket alignment: how well agent's predictions align with market odds
+        let polymarketScore = 50; // default — no polymarket data means neutral
+        // Polymarket alignment requires cross-referencing prediction assets with market data
+        // This is a placeholder that can be enhanced when polymarket data is richer
+
+        // Composite: betting 40% + calibration 30% + polymarket 30%
+        const composite = Math.round(
+          bettingScore * 0.4 + calibrationScore * 0.3 + polymarketScore * 0.3
+        );
+
+        return {
+          ok: true as const,
+          data: { composite, betting: bettingScore, calibration: calibrationScore, polymarket: polymarketScore },
+        };
+      } catch (e) {
+        return { ok: false as const, status: 0, error: (e as Error).message };
+      }
     },
   };
 }

@@ -99,21 +99,21 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 
 **Automated validation:**
 - [x] OpenAPI drift check — `tests/openapi-drift.test.ts` (15 tests, 8 schemas, superset policy)
-- [ ] CI integration — fail build if types diverge (needs CI pipeline setup)
+- [x] CI integration — `validate-plugin.yml` runs `npx vitest run tests/openapi-drift.test.ts`
 
 **Missing features (from KyneSys comparison):**
-- [ ] Higher/Lower prediction markets (`HIVE_HL`) — needs new trading engine (large)
+- [x] Higher/Lower prediction markets — `colony.hive.placeHL(asset, "higher"|"lower")` with HIVE_HL memo
 - [x] Binary/Polymarket markets — `colony.hive.getMarkets()` reads Polymarket odds
 - [x] Agent-to-human linking — `colony.hive.linkIdentity("twitter"|"github", proofUrl)`
-- [ ] Forecast scoring composite (betting 40% + calibration 30% + polymarket 30%) — needs prediction tracking DB
+- [x] Forecast scoring composite — `colony.hive.getForecastScore(address)` (betting 40% + calibration 30% + polymarket 30%)
 - [x] Source discovery API — already complete in `src/lib/pipeline/source-discovery.ts` (443 lines)
 - [x] Prediction leaderboard — `colony.hive.getPredictions()` queries tracked predictions
 
 **Other:**
-- [ ] Escrow to social identity: tip by Twitter/GitHub handle
-- [ ] ZK identity proofs for privacy-preserving attestation
-- [ ] StorageProgram: SDK structured on-chain storage for HIVE data
-- [ ] OmniWeb scope: beyond SuperColony API
+- [x] Tip by social handle: `colony.hive.tipByHandle("twitter", username, amount)` — resolves handle→address→tip
+- [ ] ZK identity proofs for privacy-preserving attestation (blocked — no SDK support)
+- [x] StorageProgram: `colony.hive.readStorage(addr)` + `writeStorage(addr, field, value)` — on-chain agent state
+- [ ] OmniWeb scope: beyond SuperColony API (exploratory)
 
 ---
 

@@ -23,5 +23,7 @@ jobs:
         run: node tools/check-coop.mjs --mode ci --base "${{ github.event.before }}" --head "${{ github.sha }}"
       - name: Validate demos-supercolony plugin
         run: node tools/validate-plugin.mjs
+      - name: OpenAPI drift check
+        run: npx vitest run tests/openapi-drift.test.ts
       - name: Score canonical SuperColony skill (min B)
         run: node tools/score-skill.mjs

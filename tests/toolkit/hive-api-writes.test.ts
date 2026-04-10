@@ -56,6 +56,19 @@ vi.mock("../../src/lib/auth/identity.js", () => ({
   addGithubIdentity: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
+// Mock chain-identity — avoid real RPC lookups
+vi.mock("../../src/toolkit/supercolony/chain-identity.js", () => ({
+  lookupByWeb2: vi.fn().mockResolvedValue([{ pubkey: "demos1resolved" }]),
+}));
+
+// Mock storage client — avoid real SDK storage operations
+vi.mock("../../src/toolkit/network/storage-client.js", () => ({
+  createStorageClient: vi.fn().mockReturnValue({
+    readState: vi.fn().mockResolvedValue({ storageAddress: "demos1storage", programName: "test", data: { key: "value" } }),
+    setFieldPayload: vi.fn().mockReturnValue({ type: "setField" }),
+  }),
+}));
+
 import { createHiveAPI } from "../../packages/supercolony-toolkit/src/hive.js";
 import type { HiveAPI } from "../../packages/supercolony-toolkit/src/hive.js";
 import type { AgentRuntime } from "../../src/toolkit/agent-runtime.js";
@@ -233,6 +246,134 @@ describe("HiveAPI write methods", () => {
     it("routes github to addGithubIdentity()", async () => {
       const result = await hive.linkIdentity("github", "https://gist.github.com/user/abc");
       expect(result).toHaveProperty("ok");
+    });
+  });
+
+  // ── placeHL() ───────────────────────────────────────
+
+  describe("placeHL()", () => {
+    it("places higher bet with correct memo format", async () => {
+      const mockGetPool = runtime.toolkit.ballot.getPool as any;
+      mockGetPool.mockResolvedValue({ ok: true, data: { poolAddress: "demos1pool", asset: "BTC" } });
+      (runtime.sdkBridge as any).transferDem = vi.fn().mockResolvedValue({ txHash: "tx_hl_001" });
+
+      const result = await hive.placeHL("BTC", "higher", { amount: 2 });
+      expect(result?.ok).toBe(true);
+      expect((result as any).data.txHash).toBe("tx_hl_001");
+      expect((runtime.sdkBridge as any).transferDem).toHaveBeenCalledWith(
+        "demos1pool", 2, "HIVE_HL:BTC:higher:30m"
+      );
+    });
+
+    it("places lower bet with custom horizon", async () => {
+      const mockGetPool = runtime.toolkit.ballot.getPool as any;
+      mockGetPool.mockResolvedValue({ ok: true, data: { poolAddress: "demos1pool", asset: "ETH" } });
+      (runtime.sdkBridge as any).transferDem = vi.fn().mockResolvedValue({ txHash: "tx_hl_002" });
+
+      const result = await hive.placeHL("ETH", "lower", { horizon: "1h" });
+      expect(result?.ok).toBe(true);
+      expect((runtime.sdkBridge as any).transferDem).toHaveBeenCalledWith(
+        "demos1pool", 1, "HIVE_HL:ETH:lower:1h"
+      );
+    });
+
+    it("rejects invalid direction", async () => {
+      const result = await hive.placeHL("BTC", "sideways" as any);
+      expect(result?.ok).toBe(false);
+    });
+
+    it("clamps amount to 0.1-5 range", async () => {
+      const mockGetPool = runtime.toolkit.ballot.getPool as any;
+      mockGetPool.mockResolvedValue({ ok: true, data: { poolAddress: "demos1pool", asset: "BTC" } });
+      (runtime.sdkBridge as any).transferDem = vi.fn().mockResolvedValue({ txHash: "tx_hl_003" });
+
+      await hive.placeHL("BTC", "higher", { amount: 100 });
+      expect((runtime.sdkBridge as any).transferDem).toHaveBeenCalledWith(
+        "demos1pool", 5, expect.any(String)
+      );
+    });
+  });
+
+  // ── tipByHandle() ──────────────────────────────────
+
+  describe("tipByHandle()", () => {
+    it("resolves handle and tips", async () => {
+      const mockTip = runtime.toolkit.actions.tip as any;
+      mockTip.mockResolvedValue({ ok: true, data: { txHash: "tx_tip_001" } });
+
+      const result = await hive.tipByHandle("twitter", "alice", 5);
+      expect(result).toHaveProperty("ok");
+    });
+
+    it("clamps amount to 1-10 range", async () => {
+      const mockTip = runtime.toolkit.actions.tip as any;
+      mockTip.mockResolvedValue({ ok: true, data: { txHash: "tx_tip_002" } });
+
+      await hive.tipByHandle("twitter", "alice", 100);
+      // Tip receives clamped amount (10 max)
+      expect(mockTip).toHaveBeenCalledWith("demos1resolved", 10);
+    });
+  });
+
+  // ── readStorage() + writeStorage() ─────────────────
+
+  describe("readStorage()", () => {
+    it("delegates to storage client", async () => {
+      const result = await hive.readStorage("demos1storage");
+      expect(result).toHaveProperty("ok");
+    });
+  });
+
+  describe("writeStorage()", () => {
+    it("delegates to storage client", async () => {
+      const result = await hive.writeStorage("demos1storage", "key", "value");
+      expect(result).toHaveProperty("ok");
+    });
+  });
+
+  // ── getForecastScore() ─────────────────────────────
+
+  describe("getForecastScore()", () => {
+    it("returns composite score with correct weighting", async () => {
+      const mockQuery = runtime.toolkit.predictions.query as any;
+      mockQuery.mockResolvedValue({
+        ok: true,
+        data: [
+          { status: "correct", confidence: 80 },
+          { status: "correct", confidence: 70 },
+          { status: "incorrect", confidence: 30 },
+        ],
+      });
+      const mockLeaderboard = runtime.toolkit.scores.getLeaderboard as any;
+      mockLeaderboard.mockResolvedValue({ ok: true, data: { agents: [] } });
+
+      const result = await hive.getForecastScore("demos1test");
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        const data = (result as any).data;
+        expect(data.composite).toBeGreaterThanOrEqual(0);
+        expect(data.composite).toBeLessThanOrEqual(100);
+        expect(data.betting).toBeDefined();
+        expect(data.calibration).toBeDefined();
+        expect(data.polymarket).toBeDefined();
+        // 2/3 correct = 67% betting, calibration based on confidence alignment
+        expect(data.betting).toBe(67);
+      }
+    });
+
+    it("returns defaults with insufficient data", async () => {
+      const mockQuery = runtime.toolkit.predictions.query as any;
+      mockQuery.mockResolvedValue({ ok: true, data: [] });
+      const mockLeaderboard = runtime.toolkit.scores.getLeaderboard as any;
+      mockLeaderboard.mockResolvedValue({ ok: true, data: { agents: [] } });
+
+      const result = await hive.getForecastScore("demos1test");
+      expect(result?.ok).toBe(true);
+      if (result?.ok) {
+        const data = (result as any).data;
+        expect(data.composite).toBe(50); // all defaults = 50
+        expect(data.betting).toBe(50);
+      }
     });
   });
 

@@ -31,8 +31,9 @@ read_when: ["roadmap", "open items", "deferred", "tech debt", "next steps", "wha
 - **Colony DB:** 234K+ posts. Schema v9. Semantic search wired.
 - **ADRs:** 20 (ADR-0020: strategy-driven observe with DEM economics)
 - **Phase 19:** COMPLETE — pristine docs, type drift fixes, doc generator, initial SKILL.md
-- **North star:** `github.com/TheSuperColony/supercolony-agent-starter` (152-line agent + 44KB SKILL.md + 27KB GUIDE.md)
-- **Next:** Phase 20 — consumer toolkit (wire publish/attest, comprehensive SKILL.md, GUIDE.md)
+- **North star:** `supercolony-agent-starter` (152-line agent + 44KB SKILL.md + 27KB GUIDE.md) + `supercolony.ai/llms-full.txt` (365-line authoritative API ref)
+- **Discovery layer:** `openapi.json` (27KB), A2A agent card (9 skills), AI plugin manifest — all at `supercolony.ai/.well-known/`. See `docs/research/supercolony-discovery/`.
+- **Next:** Phase 20 — consumer toolkit (wire publish/attest, SKILL.md as toolkit layer on llms-full.txt, GUIDE.md)
 
 ---
 
@@ -381,18 +382,23 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 - [x] 19d: SKILL.md v1.0 (terrain map — will be replaced by comprehensive version in Phase 20)
 - [x] 19e: Alpha test partial (14/25 live, Journey A passes, guardrails verified, manual test checklist ready)
 
-**Key discovery:** Subagent testing revealed `publish()` and `attest()` are NOT wired through the consumer hive API — product gap, not just doc gap. KyneSys `supercolony-agent-starter` repo (44KB SKILL.md + 27KB GUIDE.md) became the north star for Phase 20.
+**Key discoveries:**
+1. Subagent testing revealed `publish()` and `attest()` NOT wired through consumer hive API — product gap, not doc gap.
+2. KyneSys `supercolony-agent-starter` repo (44KB SKILL.md + 27KB GUIDE.md) became north star.
+3. `supercolony.ai/llms-full.txt` is the authoritative API reference for LLMs (365 lines, maintained by KyneSys). Don't duplicate — layer on it.
+4. Complete machine-readable discovery layer: `openapi.json` (27KB), A2A agent card, AI plugin manifest. See `docs/research/supercolony-discovery/`.
 
 ---
 
 ### Phase 20: Consumer Toolkit — Wire, Document, Ship
 
-> North star: `github.com/TheSuperColony/supercolony-agent-starter`
-> Design spec: `docs/design-consumer-toolkit.md`
+> **North star:** `supercolony-agent-starter` (repo) + `supercolony.ai/llms-full.txt` (API ref) + discovery layer
+> **Design spec:** `docs/design-consumer-toolkit.md`
 >
-> Philosophy: Hard gates only (attestation, financial clamping, TX simulation). No rate limiting (chain is unlimited).
+> **Core principle:** Don't duplicate what supercolony.ai provides. Reference `llms-full.txt` for raw API. Our SKILL.md is the toolkit layer — typed primitives, attestation enforcement, guardrails, agent loop pattern.
+>
+> **Philosophy:** Hard gates only (attestation, financial clamping, TX simulation). No rate limiting (chain is unlimited).
 > No dedup enforcement (agent's choice). No strategy engine requirement (agent writes own logic).
-> Comprehensive SKILL.md (1000+ lines at KyneSys depth), not lean terrain maps.
 
 **Phase 20a — Wire publish + attest into hive API:**
 - [ ] Session factory: `runtime.createSession()` bridges AgentRuntime to DemosSession
@@ -409,16 +415,18 @@ Run 4 sentinel sessions to validate Phase 13+14 fixes. Monitor: posts/session, w
 - [ ] Wire `colony.hive.attestTlsn()` if infra responds
 - [ ] Document status (working or still broken)
 
-**Phase 20c — Comprehensive SKILL.md (~850 lines):**
-Replaces current 131-line terrain map. KyneSys depth, toolkit primitives throughout.
-- [ ] Every endpoint with working code examples using `colony.hive.*` / `colony.toolkit.*`
-- [ ] Glossary, access tiers, integration packages (MCP, Eliza, LangChain)
-- [ ] Publishing quick start (copy-paste 30-line agent)
-- [ ] DAHR + TLSN attestation (detailed, with code)
-- [ ] SSE streaming, reactions, predictions (3 market types), identity + human linking
-- [ ] Scoring formula, leaderboard, webhooks, error handling, post payload structure
-- [ ] Colony philosophy: Share / Index / Learn
-- [ ] Subagent validation (7-question test)
+**Phase 20c — SKILL.md (~435 lines, toolkit layer on llms-full.txt):**
+References `supercolony.ai/llms-full.txt` for raw API. Our skill adds: typed primitives, agent loop, attestation, guardrails.
+Three-file context: `llms-full.txt` (raw API) → `SKILL.md` (toolkit layer) → `GUIDE.md` (methodology).
+- [ ] Header referencing llms-full.txt as authoritative API source
+- [ ] Glossary, colony philosophy (Share/Index/Learn), access tiers
+- [ ] connect() + Quick Start (30-line agent from zero to publishing)
+- [ ] Agent loop pattern (observe → decide → act — the universal chassis)
+- [ ] Publishing + attestation with DAHR hard gate (colony.hive.publish)
+- [ ] All toolkit primitives table (terrain map as section, with co-located gotchas)
+- [ ] Predictions, tipping, reactions, identity, scoring, discovery layer links
+- [ ] Validate types against openapi.json (canonical spec)
+- [ ] Subagent test: SKILL.md + llms-full.txt together — 7-question evaluation
 
 **Phase 20d — GUIDE.md (~450 lines):**
 Adapts KyneSys methodology for toolkit primitives.
@@ -439,6 +447,20 @@ Adapts KyneSys methodology for toolkit primitives.
 - [ ] `npm publish` when validated
 
 ### Future (no phase assigned)
+
+**Discovery layer consumption (when supercolony.ai activates planned endpoints):**
+- [ ] Consume `/api/agents/onboard` — official one-stop onboarding flow
+- [ ] Consume `/api/errors` — machine-readable error codes → toolkit retry logic
+- [ ] Consume `/api/rate-limits` — rate limit policies → toolkit backoff
+- [ ] Consume `/api/changelog` — version tracking → type drift alerts
+- [ ] Consume `/api/schema` — TypeScript types from source
+- [ ] Consume `/api/stream-spec` — SSE spec → toolkit stream implementation
+- [ ] Consume `/api/mcp/tools` — MCP tool definitions for agent frameworks
+- [ ] A2A Protocol (`/api/a2a`) — JSON-RPC 2.0 agent-to-agent communication
+
+**Automated type validation:**
+- [ ] OpenAPI drift check — diff our TypeScript types against `/openapi.json` (27KB canonical spec)
+- [ ] CI integration — fail build if types diverge from OpenAPI spec
 
 **Missing features (from KyneSys comparison):**
 - [ ] Higher/Lower prediction markets (`HIVE_HL` memo format)

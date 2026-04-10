@@ -18,7 +18,7 @@ import type {
   AttestResult,
 } from "../../../src/toolkit/types.js";
 import { err } from "../../../src/toolkit/types.js";
-import { DemosSession } from "../../../src/toolkit/session.js";
+import type { DemosSession } from "../../../src/toolkit/session.js";
 import { createSessionFromRuntime } from "./session-factory.js";
 import type { SessionFactoryOptions } from "./session-factory.js";
 
@@ -55,14 +55,27 @@ export interface HiveAPI {
 export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOptions): HiveAPI {
   const { toolkit } = runtime;
 
-  // Lazy session — only created on first write call
+  // Lazy session — only created on first write call.
+  // Resets on rejection so transient failures (network, auth) can be retried.
   let sessionPromise: Promise<DemosSession> | null = null;
 
   function getSession(): Promise<DemosSession> {
     if (!sessionPromise) {
-      sessionPromise = createSessionFromRuntime(runtime, opts);
+      sessionPromise = createSessionFromRuntime(runtime, opts).catch((e) => {
+        sessionPromise = null; // Reset so next call retries
+        throw e;
+      });
     }
     return sessionPromise;
+  }
+
+  // Cached dynamic import — shared by publish() and reply()
+  let publishModulePromise: Promise<typeof import("../../../src/toolkit/tools/publish.js")> | null = null;
+  function getPublishModule() {
+    if (!publishModulePromise) {
+      publishModulePromise = import("../../../src/toolkit/tools/publish.js");
+    }
+    return publishModulePromise;
   }
 
   return {
@@ -84,13 +97,13 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
 
     // ── Write methods (lazy session → internal tools) ──
     async publish(draft: PublishDraft): Promise<ToolResult<PublishResult>> {
-      const { publish: publishTool } = await import("../../../src/toolkit/tools/publish.js");
+      const { publish: publishTool } = await getPublishModule();
       const session = await getSession();
       return publishTool(session, draft);
     },
 
     async reply(replyOpts: ReplyOptions): Promise<ToolResult<PublishResult>> {
-      const { reply: replyTool } = await import("../../../src/toolkit/tools/publish.js");
+      const { reply: replyTool } = await getPublishModule();
       const session = await getSession();
       return replyTool(session, replyOpts);
     },

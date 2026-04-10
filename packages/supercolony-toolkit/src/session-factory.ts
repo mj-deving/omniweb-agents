@@ -14,6 +14,10 @@ import type { AgentRuntime } from "../../../src/toolkit/agent-runtime.js";
 import { DemosSession } from "../../../src/toolkit/session.js";
 import { FileStateStore } from "../../../src/toolkit/state-store.js";
 
+// Mirrors connect.ts defaults — session factory uses the same values
+const DEFAULT_RPC_URL = "https://demosnode.discus.sh";
+const DEFAULT_ALGORITHM = "falcon";
+
 export interface SessionFactoryOptions {
   /** Override state directory for guard persistence (defaults to ~/.config/demos) */
   stateDir?: string;
@@ -39,8 +43,8 @@ export async function createSessionFromRuntime(
 
   return new DemosSession({
     walletAddress: runtime.address,
-    rpcUrl: process.env.RPC_URL ?? "https://demosnode.discus.sh",
-    algorithm: process.env.DEMOS_ALGORITHM ?? "falcon",
+    rpcUrl: DEFAULT_RPC_URL,
+    algorithm: DEFAULT_ALGORITHM,
     authToken,
     signingHandle: {
       demos: runtime.demos,

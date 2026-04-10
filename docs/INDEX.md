@@ -1,9 +1,9 @@
 ---
 type: index
 status: current
-updated: 2026-04-08
-summary: "Project history and narrative — 8 eras from harness to API-first toolkit. SDK capability map. Documentation index with archive inventory."
-read_when: ["project history", "evolution", "what happened", "session changelog", "SDK capability map", "documentation map", "archive"]
+updated: 2026-04-10
+summary: "Project history and narrative — 9 eras from harness to consumer toolkit. Phases 1-19 complete. Phase 20 active."
+read_when: ["project history", "evolution", "what happened", "session changelog", "documentation map", "archive", "completed phases"]
 ---
 
 # demos-agents — Project Index
@@ -11,7 +11,7 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 > **The one document you read to understand the project's story.**
 > Architecture: CLAUDE.md. Operations: MEMORY.md. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** V3 loop LIVE | Phases 1–17 COMPLETE | 258 suites, 3199 tests | 0 tsc errors | 20 ADRs | 38+ API methods | 10 strategy rules | 15 toolkit domains + 10 extractors | Agent Compiler | Schema v9 | SDK 2.11.5
+**Current state:** Phases 1-19 COMPLETE | 257 suites, 3104 tests | 0 tsc errors | 20 ADRs | 38 API methods | 15 toolkit domains, 44 methods | `omniweb-toolkit` v0.1.0 | Consumer toolkit Phase 20 active
 
 ---
 
@@ -215,6 +215,29 @@ Key architectural achievement: `strategyObserve()` is the single entry point for
 
 **Tests at era end:** 258 suites, 3199 passing. 0 tsc errors. 20 ADRs. Schema v9.
 
+### Era 12: Consumer Toolkit + Discovery (April 10)
+
+**The seventh pivot: "Toolkit as infrastructure for autonomous agents."**
+
+Phase 19 delivered pristine documentation (15 domain docs with live response examples), caught 6 type drifts and 2 extractor bugs via documentation-as-testing, built a doc generator, and prepared the `omniweb-toolkit` npm package (renamed from supercolony-toolkit).
+
+**Key discoveries this era:**
+1. **KyneSys `supercolony-agent-starter` repo** — 152-line agent.mjs with `observe()` as the only customization point. 44KB SKILL.md + 27KB GUIDE.md (perceive-then-prompt methodology, 7 principles).
+2. **`supercolony.ai/llms-full.txt`** — 365-line authoritative API reference designed for LLMs. Plus discovery layer: `openapi.json` (27KB), A2A agent card (v0.2.0, 9 skills), AI plugin manifest, agents manifest.
+3. **Product gap** — subagent testing revealed `publish()` and `attest()` not wired through consumer hive API. Not a doc gap — a missing feature.
+
+**Design decisions:**
+- Hard gates only: attestation on publish, tip/bet clamping, TX simulation
+- NOT enforced: rate limiting (chain unlimited), dedup (agent's choice), strategy engine (agent writes own logic)
+- SKILL.md references `llms-full.txt` — layers toolkit value, doesn't duplicate raw API
+- Three-file context: `llms-full.txt` → `SKILL.md` → `GUIDE.md`
+
+**Phase 19 deliverables:** 15 domain docs, ecosystem guide, capabilities guide, attestation pipeline doc, verification script (--snapshot, --generate), type drift fixes (6 types), omniweb-toolkit v0.1.0 package, initial SKILL.md, alpha test partial
+
+**Repo cleanup:** -217K lines. Deleted: connectors/, plugins/, profiles/, prompts/, tools/, platform/, Plans/, dist/, .desloppify/ (untracked), 4 root cruft files. Archived: 6 agent configs (sentinel kept), 7 stale phase docs.
+
+**Tests at era end:** 257 suites, 3104 passing. 0 tsc errors. Phase 20 active.
+
 ---
 
 ## Demos SDK Capability Map
@@ -288,8 +311,13 @@ What Demos offers vs what we use. SDK v2.11.5. See [demos-sdk-capabilities.md](r
 
 | Resource | URL |
 |----------|-----|
+| **SuperColony LLM Reference** | `supercolony.ai/llms-full.txt` — THE authoritative API reference |
+| **OpenAPI Spec** | `supercolony.ai/openapi.json` — canonical type schema |
+| **A2A Agent Card** | `supercolony.ai/.well-known/agent.json` — A2A v0.2.0 |
+| **Agent Starter** | `github.com/TheSuperColony/supercolony-agent-starter` — north star template |
+| SuperColony | `supercolony.ai` |
 | Demos SDK Docs | `docs.kynesys.xyz` |
 | SDK API Reference | `kynesyslabs.github.io/demosdk-api-ref` |
-| SuperColony | `supercolony.ai` |
 | KyneSys GitHub | `github.com/kynesyslabs` |
+| TheSuperColony GitHub | `github.com/TheSuperColony` |
 | This repo | `github.com/mj-deving/demos-agents` |

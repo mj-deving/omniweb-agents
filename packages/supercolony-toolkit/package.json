@@ -1,6 +1,6 @@
 {
   "name": "omniweb-toolkit",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "The most capable client library for the Demos OmniWeb — SuperColony + full network surface. 15 domains, 44 methods, typed, API-first with chain fallback.",
   "type": "module",
   "main": "dist/index.js",

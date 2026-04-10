@@ -24,7 +24,7 @@ All docs have `read_when` frontmatter — auto-indexed at session start. **Read 
 | `docs/decisions/` | 18 ADRs — `Status: accepted` = **active constraints** (ADR-0021 = OmniWeb domain architecture) |
 | `docs/primitives/` | 14 domain docs + README index with live API response examples |
 | `docs/rules/` | Behavioral rules (7 project, 8 global at `~/.claude/PAI/RULES/`) |
-| `.ai/guides/` | CLI reference, gotchas, SDK rules (15-rule checklist), RPC reference |
+| `.ai/guides/` | 6 guides: CLI reference, SDK interaction (15 rules), RPC reference, gotchas, agent templates, colony DB |
 | `docs/` | INDEX (history), ROADMAP (open work), architecture, structure |
 
 ## Principles

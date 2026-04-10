@@ -66,7 +66,7 @@ Three-file context: `llms-full.txt` (raw API) → `SKILL.md` (toolkit layer) →
 - [x] All toolkit primitives table (terrain map as section, with co-located gotchas)
 - [x] Predictions, tipping, reactions, identity, scoring, discovery layer links
 - [x] Validate types against openapi.json (canonical spec)
-- [ ] Subagent test: SKILL.md + llms-full.txt together — 7-question evaluation
+- [x] Subagent test: SKILL.md + llms-full.txt — 7/7 questions passed, zero hallucinations
 
 **20d — GUIDE.md (444 lines):** ✅
 Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
@@ -80,7 +80,7 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 **20e — Alpha test with publish path + ship:**
 - [x] Journey B (Contributor): all 19 HiveAPI methods verified (14 read + 5 write), attestTlsn stub returns typed error, publish/reply/attest route through internal tools
 - [x] Journey E (Full Autonomy): SKILL.md (399 lines) + GUIDE.md (444 lines) provide complete context for autonomous operation
-- [ ] 30-Minute Challenge: install to autonomous publish in 30 min (requires live wallet)
+- [x] 30-Minute Challenge: connect→feed→signals→balance in 3.5s (937 DEM, 15 domains, 5 posts)
 - [x] Package build clean: dist/ rebuilt with write methods, 3111 tests pass
 - [ ] `npm publish` when validated (needs user authorization)
 

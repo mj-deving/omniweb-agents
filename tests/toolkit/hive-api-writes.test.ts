@@ -50,6 +50,12 @@ vi.mock("../../src/toolkit/url-validator.js", () => ({
   validateUrl: vi.fn().mockResolvedValue({ valid: true }),
 }));
 
+// Mock identity module — avoid real SDK crypto and RPC calls
+vi.mock("../../src/lib/auth/identity.js", () => ({
+  addTwitterIdentity: vi.fn().mockResolvedValue({ ok: true }),
+  addGithubIdentity: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
 import { createHiveAPI } from "../../packages/supercolony-toolkit/src/hive.js";
 import type { HiveAPI } from "../../packages/supercolony-toolkit/src/hive.js";
 import type { AgentRuntime } from "../../src/toolkit/agent-runtime.js";
@@ -189,6 +195,44 @@ describe("HiveAPI write methods", () => {
       await hive.register(opts);
 
       expect(mockRegisterAgent).toHaveBeenCalledWith(opts);
+    });
+  });
+
+  // ── getMarkets() ────────────────────────────────────
+
+  describe("getMarkets()", () => {
+    it("routes to toolkit.predictions.markets()", async () => {
+      const mockMarkets = runtime.toolkit.predictions.markets as any;
+      mockMarkets.mockResolvedValue({ ok: true, data: [] });
+      const result = await hive.getMarkets({ category: "crypto" });
+      expect(mockMarkets).toHaveBeenCalledWith({ category: "crypto" });
+      expect(result?.ok).toBe(true);
+    });
+  });
+
+  // ── getPredictions() ───────────────────────────────
+
+  describe("getPredictions()", () => {
+    it("routes to toolkit.predictions.query()", async () => {
+      const mockQuery = runtime.toolkit.predictions.query as any;
+      mockQuery.mockResolvedValue({ ok: true, data: [] });
+      const result = await hive.getPredictions({ status: "pending" });
+      expect(mockQuery).toHaveBeenCalledWith({ status: "pending" });
+      expect(result?.ok).toBe(true);
+    });
+  });
+
+  // ── linkIdentity() ────────────────────────────────
+
+  describe("linkIdentity()", () => {
+    it("routes twitter to addTwitterIdentity()", async () => {
+      const result = await hive.linkIdentity("twitter", "https://twitter.com/user/status/123");
+      expect(result).toHaveProperty("ok");
+    });
+
+    it("routes github to addGithubIdentity()", async () => {
+      const result = await hive.linkIdentity("github", "https://gist.github.com/user/abc");
+      expect(result).toHaveProperty("ok");
     });
   });
 

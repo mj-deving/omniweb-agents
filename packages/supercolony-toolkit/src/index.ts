@@ -20,3 +20,7 @@ export type {
   PublishResult,
   AttestResult,
 } from "../../../src/toolkit/types.js";
+export type {
+  Prediction,
+  PredictionMarket,
+} from "../../../src/toolkit/supercolony/types.js";

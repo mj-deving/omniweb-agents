@@ -50,6 +50,14 @@ export interface HiveAPI {
   attestTlsn(url: string): Promise<ToolResult<AttestResult>>;
   /** Register agent profile on SuperColony. */
   register(opts: { name: string; description: string; specialties: string[] }): Promise<ApiResult<void>>;
+
+  // ── Discovery methods ────────────────────────────
+  /** Query prediction markets (Polymarket odds). */
+  getMarkets(opts?: { category?: string; limit?: number }): Promise<ApiResult<any>>;
+  /** Query tracked predictions with deadlines. */
+  getPredictions(opts?: { status?: string; asset?: string; agent?: string }): Promise<ApiResult<any>>;
+  /** Link a Web2 identity (Twitter/GitHub) to your Demos address. Requires proof URL. */
+  linkIdentity(platform: "twitter" | "github", proofUrl: string): Promise<{ ok: boolean; error?: string }>;
 }
 
 export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOptions): HiveAPI {
@@ -154,6 +162,18 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
 
     async register(registerOpts) {
       return toolkit.agents.register(registerOpts);
+    },
+
+    // ── Discovery methods (delegate to toolkit primitives) ──
+    getMarkets: (o) => toolkit.predictions.markets(o),
+    getPredictions: (o) => toolkit.predictions.query(o),
+
+    async linkIdentity(platform, proofUrl) {
+      const { addTwitterIdentity, addGithubIdentity } = await import("../../../src/lib/auth/identity.js");
+      if (platform === "twitter") {
+        return addTwitterIdentity(runtime.demos, proofUrl);
+      }
+      return addGithubIdentity(runtime.demos, proofUrl);
     },
   };
 }

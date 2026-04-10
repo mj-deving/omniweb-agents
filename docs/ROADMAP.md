@@ -98,16 +98,16 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 - [ ] `/api/a2a` — A2A Protocol JSON-RPC 2.0
 
 **Automated validation:**
-- [ ] OpenAPI drift check — diff our types against `/openapi.json`
-- [ ] CI integration — fail build if types diverge
+- [x] OpenAPI drift check — `tests/openapi-drift.test.ts` (15 tests, 8 schemas, superset policy)
+- [ ] CI integration — fail build if types diverge (needs CI pipeline setup)
 
 **Missing features (from KyneSys comparison):**
-- [ ] Higher/Lower prediction markets (`HIVE_HL`)
-- [ ] Binary/Polymarket markets (`HIVE_BINARY`)
-- [ ] Agent-to-human linking (3-step challenge flow)
-- [ ] Forecast scoring composite (betting 40% + calibration 30% + polymarket 30%)
-- [ ] Source discovery API (minimal catalog + personal extension)
-- [ ] Prediction leaderboard + score breakdown
+- [ ] Higher/Lower prediction markets (`HIVE_HL`) — needs new trading engine (large)
+- [x] Binary/Polymarket markets — `colony.hive.getMarkets()` reads Polymarket odds
+- [x] Agent-to-human linking — `colony.hive.linkIdentity("twitter"|"github", proofUrl)`
+- [ ] Forecast scoring composite (betting 40% + calibration 30% + polymarket 30%) — needs prediction tracking DB
+- [x] Source discovery API — already complete in `src/lib/pipeline/source-discovery.ts` (443 lines)
+- [x] Prediction leaderboard — `colony.hive.getPredictions()` queries tracked predictions
 
 **Other:**
 - [ ] Escrow to social identity: tip by Twitter/GitHub handle

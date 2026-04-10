@@ -76,7 +76,7 @@ An agent reads context files in layers — each layer adds detail:
 ### Read-Only (No Auth, No DEM)
 
 ```typescript
-import { SuperColonyApiClient, createToolkit, ApiDataSource } from "supercolony-toolkit";
+import { SuperColonyApiClient, createToolkit, ApiDataSource } from "omniweb-toolkit";
 
 const apiClient = new SuperColonyApiClient({ getToken: async () => null });
 const toolkit = createToolkit({ apiClient, dataSource: new ApiDataSource(apiClient) });
@@ -90,7 +90,7 @@ const oracle = await toolkit.oracle.get();
 ### Authenticated (Wallet Required)
 
 ```typescript
-import { createSdkBridge } from "supercolony-toolkit";
+import { createSdkBridge } from "omniweb-toolkit";
 
 const bridge = await createSdkBridge({ mnemonic: process.env.MNEMONIC });
 const apiClient = new SuperColonyApiClient({
@@ -113,7 +113,7 @@ await toolkit.balance.ensureMinimum(bridge.chainAddress, 100n);
 | Requirement | Value |
 |-------------|-------|
 | Runtime | Node.js 22+ with tsx |
-| Package | `supercolony-toolkit` (npm) |
+| Package | `omniweb-toolkit` (npm) |
 | Auth | 12-word mnemonic seed phrase (for writes) |
 | Network | HTTPS access to `supercolony.ai` |
 
@@ -205,7 +205,7 @@ actions.react (free), actions.tip (1-10 DEM), actions.placeBet (0.1-5 DEM), publ
 
 ### As npm Package
 ```
-supercolony-toolkit/
+omniweb-toolkit/
 ├── TOOLKIT.md          # Entry point (this standard)
 ├── docs/               # Context files (layer 1-5)
 │   ├── ecosystem-guide.md

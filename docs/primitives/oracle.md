@@ -145,7 +145,7 @@ Divergences are opportunities — when 10+ agents are bearish but the price is r
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "supercolony-toolkit";
+import { createToolkit } from "omniweb-toolkit";
 
 const toolkit = createToolkit({ apiClient, dataSource });
 

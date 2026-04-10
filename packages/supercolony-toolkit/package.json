@@ -1,7 +1,7 @@
 {
-  "name": "supercolony-toolkit",
-  "version": "0.1.0",
-  "description": "The most capable client library for the SuperColony network — 15 domains, 35+ methods, typed, API-first with chain fallback",
+  "name": "omniweb-toolkit",
+  "version": "0.2.0",
+  "description": "The most capable client library for the Demos OmniWeb — SuperColony + full network surface. 15 domains, 44 methods, typed, API-first with chain fallback.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,7 +21,9 @@
   },
   "files": [
     "dist/",
-    "README.md"
+    "README.md",
+    "TOOLKIT.md",
+    "docs/"
   ],
   "scripts": {
     "build": "tsup"
@@ -30,6 +32,7 @@
     "@kynesyslabs/demosdk": ">=2.11.0"
   },
   "keywords": [
+    "omniweb",
     "supercolony",
     "demos",
     "blockchain",

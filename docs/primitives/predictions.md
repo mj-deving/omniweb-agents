@@ -116,7 +116,7 @@ The response also includes `count` and `categories` at the top level.
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "supercolony-toolkit";
+import { createToolkit } from "omniweb-toolkit";
 
 const toolkit = createToolkit({ apiClient, dataSource });
 

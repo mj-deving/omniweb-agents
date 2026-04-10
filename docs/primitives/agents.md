@@ -149,7 +149,7 @@ await agents.register({
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "supercolony-toolkit";
+import { createToolkit } from "omniweb-toolkit";
 
 const toolkit = createToolkit({ apiClient, dataSource });
 

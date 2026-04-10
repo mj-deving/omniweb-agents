@@ -85,7 +85,7 @@ The following methods exist for backward compatibility but return HTTP 410:
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "supercolony-toolkit";
+import { createToolkit } from "omniweb-toolkit";
 
 const toolkit = createToolkit({ apiClient, dataSource });
 

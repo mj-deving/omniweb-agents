@@ -110,7 +110,7 @@ The toolkit unwraps the API response automatically. The raw API returns `{ price
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "supercolony-toolkit";
+import { createToolkit } from "omniweb-toolkit";
 
 const toolkit = createToolkit({ apiClient, dataSource });
 

@@ -55,17 +55,17 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 - [x] Wire `colony.hive.attestTlsn()` — returns typed ATTEST_FAILED error (TLSN non-operational since March 2026)
 - [x] Document status: **still broken** — MPC-TLS relay not accepting connections. 0% success rate unchanged.
 
-**20c — SKILL.md (~435 lines, toolkit layer on llms-full.txt):**
+**20c — SKILL.md (399 lines, toolkit layer on llms-full.txt):** ✅
 References `supercolony.ai/llms-full.txt` for raw API. Our skill adds typed primitives, agent loop, attestation, guardrails.
 Three-file context: `llms-full.txt` (raw API) → `SKILL.md` (toolkit layer) → `GUIDE.md` (methodology).
-- [ ] Header referencing llms-full.txt as authoritative API source
-- [ ] Glossary, colony philosophy (Share/Index/Learn), access tiers
-- [ ] connect() + Quick Start (30-line agent from zero to publishing)
-- [ ] Agent loop pattern (observe → decide → act — the universal chassis)
-- [ ] Publishing + attestation with DAHR hard gate (colony.hive.publish)
-- [ ] All toolkit primitives table (terrain map as section, with co-located gotchas)
-- [ ] Predictions, tipping, reactions, identity, scoring, discovery layer links
-- [ ] Validate types against openapi.json (canonical spec)
+- [x] Header referencing llms-full.txt as authoritative API source
+- [x] Glossary, colony philosophy (Share/Index/Learn), access tiers
+- [x] connect() + Quick Start (30-line agent from zero to publishing)
+- [x] Agent loop pattern (observe → decide → act — the universal chassis)
+- [x] Publishing + attestation with DAHR hard gate (colony.hive.publish)
+- [x] All toolkit primitives table (terrain map as section, with co-located gotchas)
+- [x] Predictions, tipping, reactions, identity, scoring, discovery layer links
+- [x] Validate types against openapi.json (canonical spec)
 - [ ] Subagent test: SKILL.md + llms-full.txt together — 7-question evaluation
 
 **20d — GUIDE.md (~450 lines):**

@@ -109,11 +109,23 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 - [x] Source discovery API — already complete in `src/lib/pipeline/source-discovery.ts` (443 lines)
 - [x] Prediction leaderboard — `omni.colony.getPredictions()` queries tracked predictions
 
-**Other:**
-- [ ] Tip by social handle: Demos chain primitive (NOT SuperColony/HIVE). Identity lookup + DEM transfer. Needs own domain like StorageProgram. Implementation exists in chain-identity.ts + sdkBridge.transferDem().
-- [ ] ZK identity proofs for privacy-preserving attestation (blocked — no SDK support)
-- [ ] StorageProgram: Demos chain primitive (NOT SuperColony/HIVE). Needs own domain `colony.storage.*`. SDK client exists at `src/toolkit/network/storage-client.ts`. Testnet now live per Demos blog (2026-04-10). Previously BLOCKED (node returned "Unknown message").
-- [ ] OmniWeb scope: beyond SuperColony API (exploratory)
+**OmniWeb domains (ADR-0021):**
+- [x] Tip by social handle → `omni.escrow.sendToIdentity()` (trustless escrow, not raw transfer)
+- [x] StorageProgram → `omni.storage.read/list/search()` (testnet live, read-only until writes verified)
+- [x] OmniWeb architecture → 6 domains: colony, identity, escrow, storage, ipfs, chain
+- [x] Identity domain → `omni.identity.link/lookup/getIdentities/createProof()`
+- [x] Chain domain → `omni.chain.transfer/getBalance/signMessage()`
+- [x] IPFS domain → `omni.ipfs.upload/pin/unpin()`
+- [ ] ZK identity proofs for privacy-preserving attestation (blocked — NAPI crash)
+
+**Remaining:**
+- [ ] `npm publish` omniweb-toolkit to npm registry (needs user authorization)
+- [ ] StorageProgram write probe — verify testnet accepts SET_FIELD/CREATE operations
+- [ ] Escrow live test — verify `sendToIdentity` works with real DEM
+- [ ] IPFS live test — verify `upload` works with real content
+- [ ] XMCore domain (`omni.xm`) — cross-chain operations (9 blockchains, massive scope)
+- [ ] Messaging domain (`omni.messaging`) — E2E encrypted P2P (needs WebSocket)
+- [ ] Encryption/ZK domain (`omni.crypto`) — blocked (NAPI SIGSEGV)
 
 ---
 

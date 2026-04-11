@@ -317,7 +317,7 @@ export async function runV3Loop(
 
             return mergeExecutionResults(lightResult, heavyResult);
           } else {
-            state.publishSuppressed = flags.shadow ? true : state.publishSuppressed;
+            if (flags.shadow) state.publishSuppressed = true;
             return { skipped: true, reason: flags.shadow ? "shadow" : "no actions" } as unknown;
           }
         },

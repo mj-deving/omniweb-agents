@@ -95,6 +95,14 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     return publishModulePromise;
   }
 
+  let attestModulePromise: Promise<typeof import("../../../src/toolkit/tools/attest.js")> | null = null;
+  function getAttestModule() {
+    if (!attestModulePromise) {
+      attestModulePromise = import("../../../src/toolkit/tools/attest.js");
+    }
+    return attestModulePromise;
+  }
+
   let identityModulePromise: Promise<typeof import("../../../src/lib/auth/identity.js")> | null = null;
   function getIdentityModule() {
     if (!identityModulePromise) {
@@ -152,9 +160,9 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
 
     async attest(attestOpts: AttestOptions): Promise<ToolResult<AttestResult>> {
       try {
-        const { attest: attestTool } = await import("../../../src/toolkit/tools/attest.js");
+        const attestModule = await getAttestModule();
         const session = await getSession();
-        return attestTool(session, attestOpts);
+        return attestModule.attest(session, attestOpts);
       } catch (e) {
         return err<AttestResult>(
           { code: "AUTH_FAILED", message: `Session setup failed: ${(e as Error).message}`, retryable: true },
@@ -243,29 +251,27 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
       try {
         const predictions = await toolkit.predictions.query({ agent: address });
 
-        // Betting accuracy: % of resolved predictions that were correct
         let bettingScore = 50; // default if no data
+        let calibrationScore = 50; // default
+
         if (predictions?.ok) {
-          const resolved = (predictions.data as any[]).filter(
-            (p: any) => p.status === "correct" || p.status === "incorrect"
+          const allPredictions = predictions.data as Array<{ status?: string; confidence?: number }>;
+          const resolved = allPredictions.filter(
+            (p) => p.status === "correct" || p.status === "incorrect"
           );
+
+          // Betting accuracy: % of resolved predictions that were correct
           if (resolved.length >= 3) {
-            const correct = resolved.filter((p: any) => p.status === "correct").length;
+            const correct = resolved.filter((p) => p.status === "correct").length;
             bettingScore = Math.round((correct / resolved.length) * 100);
           }
-        }
 
-        // Calibration: based on confidence accuracy alignment
-        let calibrationScore = 50; // default
-        if (predictions?.ok) {
-          const withConfidence = (predictions.data as any[]).filter(
-            (p: any) => p.confidence != null && (p.status === "correct" || p.status === "incorrect")
-          );
+          // Calibration: based on confidence accuracy alignment
+          const withConfidence = resolved.filter((p) => p.confidence != null);
           if (withConfidence.length >= 3) {
-            // Good calibration = high confidence on correct, low on incorrect
-            const calibrated = withConfidence.filter((p: any) =>
-              (p.status === "correct" && p.confidence >= 60) ||
-              (p.status === "incorrect" && p.confidence <= 40)
+            const calibrated = withConfidence.filter((p) =>
+              (p.status === "correct" && (p.confidence ?? 0) >= 60) ||
+              (p.status === "incorrect" && (p.confidence ?? 100) <= 40)
             );
             calibrationScore = Math.round((calibrated.length / withConfidence.length) * 100);
           }

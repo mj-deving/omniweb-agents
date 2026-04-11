@@ -14,9 +14,10 @@
  *   npx tsx agents/reference/agent.ts [--dry-run] [--cycles N]
  */
 
-import { connect, type OmniWeb } from "omniweb-toolkit";
+import { connect, type OmniWeb } from "../../packages/supercolony-toolkit/src/colony.js";
 import { observe, type Observation } from "./observe.js";
-import { readFileSync, appendFileSync, existsSync } from "node:fs";
+import { fetchSourcePrice, DEFAULT_SOURCE } from "./sources.js";
+import { readFileSync, appendFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
@@ -38,19 +39,10 @@ function loadStrategy(): Strategy {
   return parseYaml(raw) as Strategy;
 }
 
-// Reuse existing asset map — CoinGecko IDs differ from tickers
-// (e.g., "BTC" → "bitcoin", "AVAX" → "avalanche-2")
-import { ASSET_MAP } from "../../src/toolkit/chain/asset-helpers.js";
-
-/** Resolve ticker to CoinGecko coin ID via ASSET_MAP */
-function tickerToCoinId(ticker: string): string {
-  const entry = ASSET_MAP.find(([, , sym]) => sym === ticker);
-  return entry ? entry[1] : ticker.toLowerCase();
-}
-
 // ── Decision types ─────────────────────────────────
+// Publish is now an intent — act() resolves the attestation source and composes text
 type Action =
-  | { type: "publish"; text: string; category: string; attestUrl: string }
+  | { type: "publish"; asset: string; divergence: Observation["divergences"][0]; oraclePrice: { priceUsd: number; change24h: number } | undefined }
   | { type: "react"; txHash: string; reaction: "agree" | "disagree" }
   | { type: "tip"; txHash: string; amount: number }
   | { type: "bet"; asset: string; direction: "higher" | "lower"; horizon: string };
@@ -60,33 +52,12 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
   const actions: Action[] = [];
   let budgetRemaining = Math.min(strategy.budget.dailyCap, obs.balance);
 
-  // 1. Publish on divergence — GUIDE.md: "publish when you have something valuable"
+  // 1. Publish on divergence — returns intent, act() resolves attestation source
   if (obs.divergences.length > 0 && budgetRemaining >= strategy.budget.perPublish) {
     const div = obs.divergences[0];
     const oraclePrice = obs.oracle[div.asset];
-    const priceStr = oraclePrice ? `$${oraclePrice.priceUsd.toLocaleString()}` : "N/A";
-    const changeStr = oraclePrice ? `${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%` : "";
-
-    const text = [
-      `Market Signal Analysis: ${div.asset}`,
-      ``,
-      `Oracle price: ${priceStr} (24h: ${changeStr})`,
-      `Divergence: ${div.type} — severity: ${div.severity}`,
-      `Signal direction: ${div.signalDirection}`,
-      ``,
-      `${div.description}`,
-      ``,
-      `The oracle data shows a ${div.severity}-severity divergence between agent consensus `,
-      `and market signals. This pattern warrants close monitoring for confirmation or reversal. `,
-      `Data sourced from Demos oracle and colony signals, DAHR-attested for verification.`,
-    ].join("\n");
-
-    if (text.length >= strategy.publishing.minTextLength) {
-      const coinId = tickerToCoinId(div.asset);
-      const attestUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
-      actions.push({ type: "publish", text, category: "ANALYSIS", attestUrl });
-      budgetRemaining -= strategy.budget.perPublish;
-    }
+    actions.push({ type: "publish", asset: div.asset, divergence: div, oraclePrice });
+    budgetRemaining -= strategy.budget.perPublish;
   }
 
   // 2. React to top posts — SKILL.md: "react(txHash, 'agree'|'disagree'|'flag')"
@@ -137,36 +108,79 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
 }
 
 // ── Act phase ──────────────────────────────────────
-async function act(omni: OmniWeb, actions: Action[], dryRun: boolean): Promise<void> {
+// Source-matched publish: fetch → verify → compose text from attested data → publish
+async function act(omni: OmniWeb, actions: Action[], dryRun: boolean, strategy: Strategy): Promise<void> {
   for (const action of actions) {
-    if (dryRun) {
-      console.log(`[DRY-RUN] ${action.type}:`, JSON.stringify(action, null, 2));
-      continue;
-    }
-
     try {
       switch (action.type) {
         case "publish": {
-          const result = await omni.colony.publish({
-            text: action.text,
-            category: action.category,
-            attestUrl: action.attestUrl,
-          });
+          // Source-matched attestation: fetch price from attestation source FIRST,
+          // then compose text from that data, then attest the same URL.
+          // This guarantees the DAHR proof covers exactly the data quoted in the post.
+          const sourceData = await fetchSourcePrice(action.asset, DEFAULT_SOURCE);
+          if (!sourceData) {
+            console.log(`[PUBLISH] SKIP: could not fetch price for ${action.asset} from ${DEFAULT_SOURCE}`);
+            break;
+          }
+
+          const { url: attestUrl, source, price, currency } = sourceData;
+          const div = action.divergence;
+          const oraclePrice = action.oraclePrice;
+
+          // Compose text using ONLY the attested data + oracle context
+          const text = [
+            `Market Signal Analysis: ${action.asset}`,
+            ``,
+            `${source.name} price: $${price.toLocaleString()} ${currency}`,
+            oraclePrice ? `Demos oracle price: $${oraclePrice.priceUsd.toLocaleString()} (24h: ${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%)` : "",
+            `Divergence: ${div.type} — severity: ${div.severity}`,
+            `Signal direction: ${div.signalDirection}`,
+            ``,
+            `${div.description}`,
+            ``,
+            `Source-matched attestation: ${source.name} price ($${price.toLocaleString()}) verified via DAHR. `,
+            `The oracle data shows a ${div.severity}-severity divergence between agent consensus `,
+            `and market signals, warranting close monitoring for confirmation or reversal.`,
+          ].filter(Boolean).join("\n");
+
+          if (text.length < strategy.publishing.minTextLength) {
+            console.log(`[PUBLISH] SKIP: text too short (${text.length} < ${strategy.publishing.minTextLength})`);
+            break;
+          }
+
+          if (dryRun) {
+            console.log(`[DRY-RUN] publish: ${action.asset}`);
+            console.log(`  attestUrl: ${attestUrl}`);
+            console.log(`  source: ${source.name}, price: $${price.toLocaleString()}`);
+            console.log(`  text (${text.length} chars): ${text.slice(0, 100)}...`);
+            break;
+          }
+
+          const result = await omni.colony.publish({ text, category: "ANALYSIS", attestUrl });
           const detail = result.ok ? result.data?.txHash : result.error?.message;
           console.log(`[PUBLISH] ${result.ok ? "OK" : "FAIL"}: ${detail}`);
+          if (result.ok) {
+            console.log(`  Attested: ${source.name} ${action.asset} = $${price.toLocaleString()}`);
+          }
           break;
         }
+
         case "react": {
+          if (dryRun) { console.log(`[DRY-RUN] react: ${action.reaction} on ${action.txHash.slice(0, 12)}...`); break; }
           const result = await omni.colony.react(action.txHash, action.reaction);
           console.log(`[REACT] ${action.reaction} on ${action.txHash.slice(0, 12)}...: ${result?.ok ? "OK" : "FAIL"}`);
           break;
         }
+
         case "tip": {
+          if (dryRun) { console.log(`[DRY-RUN] tip: ${action.amount} DEM to ${action.txHash.slice(0, 12)}...`); break; }
           const result = await omni.colony.tip(action.txHash, action.amount);
           console.log(`[TIP] ${action.amount} DEM to ${action.txHash.slice(0, 12)}...: ${result?.ok ? "OK" : "FAIL"}`);
           break;
         }
+
         case "bet": {
+          if (dryRun) { console.log(`[DRY-RUN] bet: ${action.direction} on ${action.asset} (${action.horizon})`); break; }
           const result = await omni.colony.placeHL(action.asset, action.direction, {
             horizon: action.horizon,
           });
@@ -298,9 +312,9 @@ async function main() {
     const actions = decide(obs, strategy);
     console.log(`[DECIDE] ${actions.length} actions planned: ${actions.map((a) => a.type).join(", ") || "none"}`);
 
-    // 3. Act
+    // 3. Act — source-matched publishing (fetch → attest → compose → publish)
     if (actions.length > 0) {
-      await act(omni, actions, dryRun);
+      await act(omni, actions, dryRun, strategy);
     } else {
       console.log("[ACT] Nothing to do this cycle — no signals above threshold.");
     }

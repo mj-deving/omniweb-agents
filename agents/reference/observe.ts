@@ -10,7 +10,7 @@
  * Response shapes match references/response-shapes.md exactly.
  */
 
-import type { OmniWeb } from "omniweb-toolkit";
+import type { OmniWeb } from "../../packages/supercolony-toolkit/src/colony.js";
 
 export interface Observation {
   /** Consensus signals with direction and confidence */

@@ -1,6 +1,6 @@
 import { extractMentions } from "./scanner.js";
 import type { ColonyDatabase } from "./schema.js";
-import { MIN_AGREE_FOR_TIP, VALUABLE_POSTS_LIMIT } from "../strategy/engine-helpers.js";
+import { MIN_AGREE_FOR_TIP, VALUABLE_POSTS_LIMIT } from "./constants.js";
 
 export interface ColonyState {
   activity: {

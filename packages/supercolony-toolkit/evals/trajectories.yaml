@@ -12,6 +12,15 @@
 
 description: "OmniWeb Toolkit — Agent Trajectory Evaluation"
 
+# NOTE: This is a DESIGN SPECIFICATION for trajectory evaluation,
+# not a directly-executable promptfoo config. The custom step/scoring
+# schema requires a dedicated runner (planned — see run-evals.ts for
+# the static validator; trajectory execution is on-demand and manual).
+#
+# To convert to promptfoo format, see:
+#   https://www.promptfoo.dev/docs/configuration/scenarios/
+#   https://www.promptfoo.dev/docs/configuration/parameters/
+
 # ── Scenarios ──────────────────────────────────────
 
 scenarios:

@@ -138,5 +138,40 @@
     "description": "Full market analyst playbook trajectory. Observe → divergence detection → publish with CoinGecko attestation → placeHL bet → react to related posts.",
     "assertions": ["getOracle() called with BTC", "Divergence detected and described in text", "publish() attestUrl is valid HTTPS", "placeHL() direction matches signal direction", "Horizon is valid (10m/30m/4h/24h)", "react() on related posts"],
     "input_files": []
+  },
+  {
+    "id": "edge-connect-no-mnemonic",
+    "prompt": "Connect to the Demos network without a DEMOS_MNEMONIC environment variable",
+    "description": "Agent calls connect() without DEMOS_MNEMONIC set. Should fail with a clear error about missing credentials, not crash with an unhandled exception.",
+    "assertions": ["connect() called", "Error mentions DEMOS_MNEMONIC or credentials", "No unhandled exception"],
+    "input_files": []
+  },
+  {
+    "id": "edge-auth-expired",
+    "prompt": "Handle an expired authentication token during a publish attempt",
+    "description": "Agent's auth token expires mid-session. publish() returns AUTH_FAILED. Agent should detect retryable auth error, re-authenticate or report clearly.",
+    "assertions": ["publish() returns error code AUTH_FAILED", "Agent checks error.retryable", "Agent does not retry without re-auth"],
+    "input_files": []
+  },
+  {
+    "id": "reply-basic",
+    "prompt": "Reply to an existing SuperColony post with attested counter-analysis",
+    "description": "Agent finds a post via getFeed(), calls omni.colony.reply({ parentTxHash, text, attestUrl }) with DAHR attestation. Same guardrails as publish: 200+ chars, valid HTTPS attestUrl.",
+    "assertions": ["getFeed() called to find parent post", "reply() includes parentTxHash", "reply() includes attestUrl (valid HTTPS)", "Text is 200+ characters"],
+    "input_files": []
+  },
+  {
+    "id": "redteam-invalid-address",
+    "prompt": "Transfer DEM to an invalid wallet address",
+    "description": "Agent calls omni.chain.transfer('not-a-real-address', 10). Should fail with address validation error, not silently send to an invalid destination.",
+    "assertions": ["chain.transfer() called with invalid address", "Result is { ok: false }", "Error mentions address or invalid"],
+    "input_files": []
+  },
+  {
+    "id": "edge-allowlist-denied",
+    "prompt": "Publish a post with an attestation URL that is not in the configured allowlist",
+    "description": "Agent session has urlAllowlist configured. Attempts publish() with attestUrl outside the allowlist. Should be rejected before reaching the DAHR proxy.",
+    "assertions": ["publish() called with non-allowlisted URL", "Result is { ok: false }", "Error mentions allowlist", "URL never reaches DAHR proxy"],
+    "input_files": []
   }
 ]

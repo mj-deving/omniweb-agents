@@ -124,21 +124,37 @@ function validateEval(ev: EvalCase): EvalResult {
     reason: hasSubjective ? "contains subjective assertion words" : undefined,
   });
 
-  // Check 4: Methods in description exist in SKILL.md
-  const methodPattern = /omni\.(colony|identity|escrow|chain|ipfs|storage)\.\w+/g;
-  const referencedMethods = ev.description.match(methodPattern) ?? [];
-  const unknownMethods = referencedMethods.filter((m) => !skillContent.includes(m));
+  // Check 4: Methods in description + assertions exist in SKILL.md
+  // Check both namespaced (omni.colony.getFeed) and bare (getFeed, placeHL) references
+  const namespacedPattern = /omni\.(colony|identity|escrow|chain|ipfs|storage)\.\w+/g;
+  const bareMethodPattern = /\b(getFeed|search|getSignals|getOracle|getPrices|getLeaderboard|getAgents|getPool|getBalance|getReactions|getTipStats|publish|reply|attest|attestTlsn|react|tip|placeBet|placeHL|register|getMarkets|getPredictions|linkIdentity|getForecastScore|connect)\b/g;
+  const allText = ev.description + " " + ev.assertions.join(" ");
+  const namespacedRefs = allText.match(namespacedPattern) ?? [];
+  const bareRefs = allText.match(bareMethodPattern) ?? [];
+  const allRefs = [...new Set([...namespacedRefs, ...bareRefs])];
+  const unknownNamespaced = namespacedRefs.filter((m) => !skillContent.includes(m));
+  const unknownBare = bareRefs.filter((m) => !KNOWN_METHODS.includes(m) && !KNOWN_METHODS.some((km) => km.endsWith(`.${m}`)));
+  const unknownMethods = [...new Set([...unknownNamespaced, ...unknownBare])];
   checks.push({
     check: "all referenced methods exist in SKILL.md",
     passed: unknownMethods.length === 0,
     reason: unknownMethods.length > 0 ? `unknown: ${unknownMethods.join(", ")}` : undefined,
   });
 
-  // Check 5: Has at least 2 assertions
+  // Check 5: Assertions reference concrete verifiable tokens
+  const guardrailTokens = ["INVALID_INPUT", "RATE_LIMITED", "DUPLICATE", "ATTEST_FAILED", "TX_FAILED",
+    "10m", "30m", "4h", "24h", "1-10", "1000", "200"];
+  const assertionText = ev.assertions.join(" ");
+  const mentionsGuardrail = guardrailTokens.some((t) => assertionText.includes(t)) ||
+    ev.assertions.some((a) => /\b(integer|clamped|blocked|rejected|error|fail)\b/i.test(a));
+  // Only require guardrail tokens for redteam/guardrail evals (not edge — those test resilience)
+  const needsGuardrailCheck = ev.id.startsWith("redteam-") || ev.id.startsWith("guardrail-");
   checks.push({
-    check: "has sufficient assertions (≥2)",
-    passed: ev.assertions.length >= 2,
-    reason: ev.assertions.length < 2 ? `only ${ev.assertions.length} assertion(s)` : undefined,
+    check: needsGuardrailCheck ? "guardrail assertions reference concrete tokens" : "has sufficient assertions (≥2)",
+    passed: needsGuardrailCheck ? mentionsGuardrail : ev.assertions.length >= 2,
+    reason: needsGuardrailCheck && !mentionsGuardrail
+      ? "guardrail eval lacks concrete error codes or constraint values"
+      : ev.assertions.length < 2 ? `only ${ev.assertions.length} assertion(s)` : undefined,
   });
 
   const passCount = checks.filter((c) => c.passed).length;

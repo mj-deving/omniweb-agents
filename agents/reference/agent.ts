@@ -16,7 +16,7 @@
 
 import { connect, type OmniWeb } from "omniweb-toolkit";
 import { observe, type Observation } from "./observe.js";
-import { readFileSync } from "node:fs";
+import { readFileSync, appendFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
@@ -180,18 +180,106 @@ async function act(omni: OmniWeb, actions: Action[], dryRun: boolean): Promise<v
   }
 }
 
+// ── Tracking ───────────────────────────────────────
+
+interface CycleLog {
+  cycle: number;
+  timestamp: string;
+  actions: string[];
+  balance: number;
+  score: number | null;
+  leaderboardRank: number | null;
+  divergences: number;
+  profile: string;
+}
+
+const SCORES_FILE = join(__dirname, "scores.jsonl");
+
+async function trackCycle(
+  omni: OmniWeb,
+  cycle: number,
+  actions: Action[],
+  obs: Observation,
+  profile: string,
+): Promise<CycleLog> {
+  // Fetch current score and leaderboard position
+  let score: number | null = null;
+  let leaderboardRank: number | null = null;
+
+  try {
+    const scoreResult = await omni.colony.getForecastScore(omni.address);
+    if (scoreResult?.ok) score = (scoreResult.data as any).composite ?? null;
+  } catch { /* score fetch is best-effort */ }
+
+  try {
+    const lbResult = await omni.colony.getLeaderboard({ limit: 50 });
+    if (lbResult?.ok) {
+      const agents = (lbResult.data as any).agents ?? lbResult.data;
+      if (Array.isArray(agents)) {
+        const idx = agents.findIndex((a: any) => a.address === omni.address);
+        leaderboardRank = idx >= 0 ? idx + 1 : null;
+      }
+    }
+  } catch { /* leaderboard fetch is best-effort */ }
+
+  const entry: CycleLog = {
+    cycle,
+    timestamp: new Date().toISOString(),
+    actions: actions.map((a) => a.type),
+    balance: obs.balance,
+    score,
+    leaderboardRank,
+    divergences: obs.divergences.length,
+    profile,
+  };
+
+  appendFileSync(SCORES_FILE, JSON.stringify(entry) + "\n");
+  console.log(`[TRACK] Score: ${score ?? "N/A"}, Rank: ${leaderboardRank ?? "N/A"}, Balance: ${obs.balance} DEM`);
+
+  return entry;
+}
+
+function printTrackingSummary(logs: CycleLog[]) {
+  const scores = logs.filter((l) => l.score !== null).map((l) => l.score!);
+  const ranks = logs.filter((l) => l.leaderboardRank !== null).map((l) => l.leaderboardRank!);
+
+  console.log("\n═══ Tracking Summary ════════════════════════════");
+  console.log(`Cycles: ${logs.length}`);
+  console.log(`Actions: ${logs.reduce((s, l) => s + l.actions.length, 0)} total`);
+  console.log(`  publish: ${logs.reduce((s, l) => s + l.actions.filter((a) => a === "publish").length, 0)}`);
+  console.log(`  react:   ${logs.reduce((s, l) => s + l.actions.filter((a) => a === "react").length, 0)}`);
+  console.log(`  tip:     ${logs.reduce((s, l) => s + l.actions.filter((a) => a === "tip").length, 0)}`);
+  console.log(`  bet:     ${logs.reduce((s, l) => s + l.actions.filter((a) => a === "bet").length, 0)}`);
+
+  if (scores.length > 0) {
+    console.log(`Score: avg ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)}, ` +
+      `min ${Math.min(...scores).toFixed(1)}, max ${Math.max(...scores).toFixed(1)}`);
+  }
+  if (ranks.length > 0) {
+    console.log(`Rank: best #${Math.min(...ranks)}, worst #${Math.max(...ranks)}`);
+  }
+
+  const startBalance = logs[0]?.balance ?? 0;
+  const endBalance = logs[logs.length - 1]?.balance ?? 0;
+  console.log(`Balance: ${startBalance} → ${endBalance} DEM (Δ${endBalance - startBalance})`);
+  console.log(`Log: ${SCORES_FILE}`);
+}
+
 // ── Main loop ──────────────────────────────────────
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const track = args.includes("--track");
   const cyclesArg = args.indexOf("--cycles");
   const maxCycles = cyclesArg >= 0 ? Number(args[cyclesArg + 1]) : 1;
 
   const strategy = loadStrategy();
-  console.log(`Reference Agent — profile: ${strategy.profile}, dry-run: ${dryRun}, cycles: ${maxCycles}`);
+  console.log(`Reference Agent — profile: ${strategy.profile}, dry-run: ${dryRun}, track: ${track}, cycles: ${maxCycles}`);
 
   const omni = await connect();
   console.log(`Connected as ${omni.address}`);
+
+  const cycleLogs: CycleLog[] = [];
 
   for (let cycle = 1; cycle <= maxCycles; cycle++) {
     console.log(`\n═══ Cycle ${cycle}/${maxCycles} ═══════════════════════════`);
@@ -217,12 +305,22 @@ async function main() {
       console.log("[ACT] Nothing to do this cycle — no signals above threshold.");
     }
 
+    // 4. Track (if enabled)
+    if (track) {
+      const log = await trackCycle(omni, cycle, actions, obs, strategy.profile);
+      cycleLogs.push(log);
+    }
+
     // Wait between cycles (if multi-cycle)
     if (cycle < maxCycles) {
-      const waitMs = 60_000; // 1 minute between cycles
+      const waitMs = 60_000;
       console.log(`Waiting ${waitMs / 1000}s before next cycle...`);
       await new Promise((r) => setTimeout(r, waitMs));
     }
+  }
+
+  if (track && cycleLogs.length > 0) {
+    printTrackingSummary(cycleLogs);
   }
 
   console.log("\nReference Agent complete.");

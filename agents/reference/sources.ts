@@ -82,8 +82,8 @@ export const SOURCES: Record<string, AttestationSource> = {
   },
 };
 
-/** Default source for price attestation */
-export const DEFAULT_SOURCE = "coingecko";
+/** Default source for price attestation — Binance primary (CoinGecko 429s DAHR proxy) */
+export const DEFAULT_SOURCE = "binance";
 
 /**
  * Build a source-matched attestation URL for an asset.

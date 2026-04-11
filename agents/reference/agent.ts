@@ -40,9 +40,8 @@ function loadStrategy(): Strategy {
 }
 
 // ── Decision types ─────────────────────────────────
-// Publish is now an intent — act() resolves the attestation source and composes text
 type Action =
-  | { type: "publish"; asset: string; divergence: Observation["divergences"][0]; oraclePrice: { priceUsd: number; change24h: number } | undefined }
+  | { type: "publish"; signal: Observation["signals"][0]; asset: string; oraclePrice: { priceUsd: number; change24h: number } | undefined }
   | { type: "react"; txHash: string; reaction: "agree" | "disagree" }
   | { type: "tip"; txHash: string; amount: number }
   | { type: "bet"; asset: string; direction: "higher" | "lower"; horizon: string };
@@ -52,11 +51,18 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
   const actions: Action[] = [];
   let budgetRemaining = Math.min(strategy.budget.dailyCap, obs.balance);
 
-  // 1. Publish on divergence — returns intent, act() resolves attestation source
-  if (obs.divergences.length > 0 && budgetRemaining >= strategy.budget.perPublish) {
-    const div = obs.divergences[0];
-    const oraclePrice = obs.oracle[div.asset];
-    actions.push({ type: "publish", asset: div.asset, divergence: div, oraclePrice });
+  // 1. Publish on high-confidence signals — the colony's primary intelligence
+  // (divergences are rare/zero; signals are always available)
+  const publishableSignals = obs.signals
+    .filter((s) => s.confidence >= strategy.thresholds.publishConfidence)
+    .filter((s) => s.assets.length > 0) // need an asset for price attestation
+    .slice(0, strategy.publishing.maxPerCycle);
+
+  for (const sig of publishableSignals) {
+    if (budgetRemaining < strategy.budget.perPublish) break;
+    const asset = sig.assets[0];
+    const oraclePrice = obs.oracle[asset];
+    actions.push({ type: "publish", signal: sig, asset, oraclePrice });
     budgetRemaining -= strategy.budget.perPublish;
   }
 
@@ -87,17 +93,19 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
     break; // tip one per cycle
   }
 
-  // 4. Bet on divergences — direction from signal consensus, not price magnitude
+  // 4. Bet on high-confidence directional signals
   let betCount = 0;
-  for (const div of obs.divergences) {
+  for (const sig of obs.signals) {
     if (betCount >= strategy.budget.betsPerCycle) break;
     if (budgetRemaining < strategy.budget.perBet) break;
-    if (div.signalDirection === "neutral") continue; // skip if no directional signal
+    if (sig.direction === "mixed" || sig.direction === "neutral") continue;
+    if (sig.confidence < strategy.thresholds.publishConfidence) continue;
+    if (sig.assets.length === 0) continue;
 
     actions.push({
       type: "bet",
-      asset: div.asset,
-      direction: div.signalDirection === "bullish" ? "higher" : "lower",
+      asset: sig.assets[0],
+      direction: sig.direction === "bullish" ? "higher" : "lower",
       horizon: strategy.predictions.defaultHorizon,
     });
     budgetRemaining -= strategy.budget.perBet;
@@ -116,7 +124,6 @@ async function act(omni: OmniWeb, actions: Action[], dryRun: boolean, strategy: 
         case "publish": {
           // Source-matched attestation: fetch price from attestation source FIRST,
           // then compose text from that data, then attest the same URL.
-          // This guarantees the DAHR proof covers exactly the data quoted in the post.
           const sourceData = await fetchSourcePrice(action.asset, DEFAULT_SOURCE);
           if (!sourceData) {
             console.log(`[PUBLISH] SKIP: could not fetch price for ${action.asset} from ${DEFAULT_SOURCE}`);
@@ -124,23 +131,22 @@ async function act(omni: OmniWeb, actions: Action[], dryRun: boolean, strategy: 
           }
 
           const { url: attestUrl, source, price, currency } = sourceData;
-          const div = action.divergence;
+          const sig = action.signal;
           const oraclePrice = action.oraclePrice;
 
-          // Compose text using ONLY the attested data + oracle context
+          // Compose text from signal + attested price data
           const text = [
-            `Market Signal Analysis: ${action.asset}`,
+            `Colony Signal Analysis: ${sig.topic}`,
             ``,
-            `${source.name} price: $${price.toLocaleString()} ${currency}`,
-            oraclePrice ? `Demos oracle price: $${oraclePrice.priceUsd.toLocaleString()} (24h: ${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%)` : "",
-            `Divergence: ${div.type} — severity: ${div.severity}`,
-            `Signal direction: ${div.signalDirection}`,
+            `Direction: ${sig.direction} | Confidence: ${sig.confidence}/100 | ${sig.agentCount} agents contributing`,
+            `${source.name} ${action.asset} price: $${price.toLocaleString()} ${currency}`,
+            oraclePrice ? `Oracle 24h change: ${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%` : "",
             ``,
-            `${div.description}`,
+            sig.keyInsight ? `Key insight: ${sig.keyInsight}` : "",
             ``,
-            `Source-matched attestation: ${source.name} price ($${price.toLocaleString()}) verified via DAHR. `,
-            `The oracle data shows a ${div.severity}-severity divergence between agent consensus `,
-            `and market signals, warranting close monitoring for confirmation or reversal.`,
+            `Colony consensus is ${sig.consensus ? "aligned" : "divided"} on this signal. `,
+            `${sig.agentCount} agents have weighed in with ${sig.direction} sentiment at ${sig.confidence}% confidence. `,
+            `Price data source-matched and DAHR-attested via ${source.name} for cryptographic verification.`,
           ].filter(Boolean).join("\n");
 
           if (text.length < strategy.publishing.minTextLength) {
@@ -216,14 +222,9 @@ async function trackCycle(
   obs: Observation,
   profile: string,
 ): Promise<CycleLog> {
-  // Fetch current score and leaderboard position
+  // Fetch leaderboard score (bayesianScore) — this is the real score, not forecast composite
   let score: number | null = null;
   let leaderboardRank: number | null = null;
-
-  try {
-    const scoreResult = await omni.colony.getForecastScore(omni.address);
-    if (scoreResult?.ok) score = (scoreResult.data as any).composite ?? null;
-  } catch { /* score fetch is best-effort */ }
 
   try {
     const lbResult = await omni.colony.getLeaderboard({ limit: 50 });
@@ -232,6 +233,8 @@ async function trackCycle(
       if (Array.isArray(agents)) {
         const idx = agents.findIndex((a: any) => a.address === omni.address);
         leaderboardRank = idx >= 0 ? idx + 1 : null;
+        // Use bayesianScore from leaderboard — the real score, not forecast composite
+        if (idx >= 0) score = agents[idx].bayesianScore ?? agents[idx].avgScore ?? null;
       }
     }
   } catch { /* leaderboard fetch is best-effort */ }

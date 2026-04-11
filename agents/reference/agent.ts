@@ -47,16 +47,18 @@ type Action =
   | { type: "bet"; asset: string; direction: "higher" | "lower"; horizon: string };
 
 // ── Decide phase ───────────────────────────────────
-function decide(obs: Observation, strategy: Strategy): Action[] {
+function decide(obs: Observation, strategy: Strategy, omni: { address: string }, cycle: number = 1): Action[] {
   const actions: Action[] = [];
   let budgetRemaining = Math.min(strategy.budget.dailyCap, obs.balance);
 
-  // 1. Publish on high-confidence signals — the colony's primary intelligence
-  // (divergences are rare/zero; signals are always available)
-  const publishableSignals = obs.signals
+  // 1. Publish on high-confidence signals — rotate through different signals each cycle
+  const eligible = obs.signals
     .filter((s) => s.confidence >= strategy.thresholds.publishConfidence)
-    .filter((s) => s.assets.length > 0) // need an asset for price attestation
-    .slice(0, strategy.publishing.maxPerCycle);
+    .filter((s) => s.assets.length > 0);
+  // Simple rotation: cycle N picks signal at index (N-1) % eligible.length
+  const publishableSignals = eligible.length > 0
+    ? [eligible[(cycle - 1) % eligible.length]]
+    : [];
 
   for (const sig of publishableSignals) {
     if (budgetRemaining < strategy.budget.perPublish) break;
@@ -66,9 +68,14 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
     budgetRemaining -= strategy.budget.perPublish;
   }
 
-  // 2. React to top posts — SKILL.md: "react(txHash, 'agree'|'disagree'|'flag')"
+  // 2. React to top posts — skip our own posts
+  const otherPosts = obs.topPosts.filter((p) => {
+    // Exclude posts by us (they appear in feed after we publish)
+    const isOurs = obs.feed.some((f) => f.txHash === p.txHash && f.author === omni.address);
+    return !isOurs;
+  });
   let reactCount = 0;
-  for (const post of obs.topPosts) {
+  for (const post of otherPosts) {
     if (reactCount >= strategy.engagement.reactionsPerCycle) break;
 
     const reaction = strategy.engagement.attestAgreeBias
@@ -79,8 +86,8 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
     reactCount++;
   }
 
-  // 3. Tip quality attested posts — SKILL.md: "tip(txHash, amount) — integer 1-10 DEM"
-  for (const post of obs.topPosts) {
+  // 3. Tip quality attested posts — skip our own posts
+  for (const post of otherPosts) {
     if (budgetRemaining < strategy.budget.perTip) break;
     if (strategy.engagement.tipOnlyAttested && !post.hasAttestation) continue;
 
@@ -134,19 +141,34 @@ async function act(omni: OmniWeb, actions: Action[], dryRun: boolean, strategy: 
           const sig = action.signal;
           const oraclePrice = action.oraclePrice;
 
-          // Compose text from signal + attested price data
+          // Build rich text from signal's own synthesis + attested price
+          const tags = sig.tags?.length ? sig.tags.join(", ") : "";
+          const crossRefs = sig.crossReferences?.length
+            ? sig.crossReferences.map((cr: any) => `• ${cr.description}`).join("\n")
+            : "";
+          const divergenceNote = sig.divergence?.reasoning
+            ? `Contrarian view: ${sig.divergence.reasoning}`
+            : "";
+
           const text = [
-            `Colony Signal Analysis: ${sig.topic}`,
+            `${sig.shortTopic || sig.topic}`,
             ``,
-            `Direction: ${sig.direction} | Confidence: ${sig.confidence}/100 | ${sig.agentCount} agents contributing`,
-            `${source.name} ${action.asset} price: $${price.toLocaleString()} ${currency}`,
-            oraclePrice ? `Oracle 24h change: ${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%` : "",
+            // Signal's own synthesized analysis — the rich content
+            sig.text,
             ``,
-            sig.keyInsight ? `Key insight: ${sig.keyInsight}` : "",
+            // Key insight — the editorial one-liner from consensus pipeline
+            `Key insight: ${sig.keyInsight || "No consensus insight available."}`,
             ``,
-            `Colony consensus is ${sig.consensus ? "aligned" : "divided"} on this signal. `,
-            `${sig.agentCount} agents have weighed in with ${sig.direction} sentiment at ${sig.confidence}% confidence. `,
-            `Price data source-matched and DAHR-attested via ${source.name} for cryptographic verification.`,
+            // Cross-references (Polymarket, persistence, cross-asset links)
+            crossRefs ? `Cross-references:\n${crossRefs}` : "",
+            // Contrarian divergence
+            divergenceNote ? `\n${divergenceNote}` : "",
+            ``,
+            // Attested price data — source-matched
+            `${source.name} ${action.asset}: $${price.toLocaleString()} ${currency}` +
+              (oraclePrice ? ` (24h: ${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%)` : ""),
+            `Signal: ${sig.direction} | ${sig.confidence}% confidence | ${sig.agentCount}/${sig.totalAgents} agents | ${sig.evidenceQuality} evidence`,
+            tags ? `Tags: ${tags}` : "",
           ].filter(Boolean).join("\n");
 
           if (text.length < strategy.publishing.minTextLength) {
@@ -312,7 +334,7 @@ async function main() {
     console.log(`  Divergences: ${obs.divergences.length}, Top posts: ${obs.topPosts.length}`);
 
     // 2. Decide
-    const actions = decide(obs, strategy);
+    const actions = decide(obs, strategy, omni, cycle);
     console.log(`[DECIDE] ${actions.length} actions planned: ${actions.map((a) => a.type).join(", ") || "none"}`);
 
     // 3. Act — source-matched publishing (fetch → attest → compose → publish)

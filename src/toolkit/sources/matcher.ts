@@ -17,7 +17,7 @@ import type { AttestationType } from "../../lib/attestation/attestation-policy.j
 import type { LLMProvider } from "../../lib/llm/llm-provider.js";
 import type { ClaimExtractionDetail, MatchScoreDetail, SourceRelevanceEntry, TranscriptContext } from "../../lib/transcript.js";
 import type { AgentSourceView, SourceRecordV2 } from "./catalog.js";
-import { tokenizeTopic, sourceTopicTokens } from "./catalog.js";
+import { sourceTopicTokens } from "./catalog.js";
 import type { PreflightCandidate } from "./policy.js";
 import { fetchSource } from "./fetch.js";
 import { getProviderAdapter } from "../../lib/sources/providers/index.js";

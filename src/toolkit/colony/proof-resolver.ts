@@ -9,7 +9,6 @@
  */
 
 import type { ChainReaderRpc } from "../chain-reader.js";
-import type { AttestationMethod } from "../providers/types.js";
 
 // ── Verification status constants ──────────────────────
 export const CHAIN_UNRESOLVED = 0;

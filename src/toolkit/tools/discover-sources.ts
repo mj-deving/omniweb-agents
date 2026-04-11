@@ -11,7 +11,6 @@ import type { DiscoverSourcesOptions, DiscoverSourcesResult, Source, SourceStatu
 import { ok, err } from "../types.js";
 import { DemosSession } from "../session.js";
 import { validateInput, DiscoverSourcesOptionsSchema, CatalogEntrySchema } from "../schemas.js";
-import type { CatalogEntry } from "../schemas.js";
 import { safeParse } from "../guards/state-helpers.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
 

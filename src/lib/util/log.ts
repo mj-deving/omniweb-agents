@@ -5,7 +5,12 @@
  * Handles rotation to archive when entry count exceeds threshold.
  */
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync, renameSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  appendFileSync,
+  existsSync
+} from "node:fs";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
 

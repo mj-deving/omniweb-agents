@@ -8,7 +8,12 @@
 import { randomUUID } from "node:crypto";
 import type { StateStore, DemosError, PayPolicy } from "../types.js";
 import { demosError } from "../types.js";
-import { stateKey, checkAndAppend, appendEntry, loadState, GUARD_LOCK_TTL_MS, DAY_MS } from "./state-helpers.js";
+import {
+  stateKey,
+  loadState,
+  GUARD_LOCK_TTL_MS,
+  DAY_MS
+} from "./state-helpers.js";
 
 /** Shared validation for payment amount — used by both check and reserve paths */
 function validatePayAmount(amount: number, maxPerCall: number): DemosError | null {

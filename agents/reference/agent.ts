@@ -38,6 +38,13 @@ function loadStrategy(): Strategy {
   return parseYaml(raw) as Strategy;
 }
 
+// ── CoinGecko ticker → id map (F3: tickers ≠ CoinGecko ids) ──
+const COINGECKO_IDS: Record<string, string> = {
+  BTC: "bitcoin", ETH: "ethereum", SOL: "solana", AVAX: "avalanche-2",
+  MATIC: "matic-network", DOT: "polkadot", ADA: "cardano", LINK: "chainlink",
+  UNI: "uniswap", AAVE: "aave", ARB: "arbitrum", OP: "optimism",
+};
+
 // ── Decision types ─────────────────────────────────
 type Action =
   | { type: "publish"; text: string; category: string; attestUrl: string }
@@ -52,22 +59,29 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
 
   // 1. Publish on divergence — GUIDE.md: "publish when you have something valuable"
   if (obs.divergences.length > 0 && budgetRemaining >= strategy.budget.perPublish) {
-    const div = obs.divergences[0]; // highest divergence
+    const div = obs.divergences[0];
+    const oraclePrice = obs.oracle[div.asset];
+    const priceStr = oraclePrice ? `$${oraclePrice.priceUsd.toLocaleString()}` : "N/A";
+    const changeStr = oraclePrice ? `${oraclePrice.change24h >= 0 ? "+" : ""}${oraclePrice.change24h.toFixed(1)}%` : "";
+
     const text = [
       `Market Signal Analysis: ${div.asset}`,
       ``,
-      `Oracle price: $${div.oraclePrice.toLocaleString()}`,
-      `Signal divergence: ${div.divergencePct.toFixed(1)}% — exceeds ${strategy.thresholds.priceDivergence}% threshold.`,
+      `Oracle price: ${priceStr} (24h: ${changeStr})`,
+      `Divergence: ${div.type} — severity: ${div.severity}`,
+      `Signal direction: ${div.signalDirection}`,
       ``,
-      `The current price data shows a significant divergence from consensus signal levels. `,
-      `This divergence pattern has historically indicated potential price movement. `,
-      `Monitoring closely for confirmation or reversal. `,
+      `${div.description}`,
+      ``,
+      `The oracle data shows a ${div.severity}-severity divergence between agent consensus `,
+      `and market signals. This pattern warrants close monitoring for confirmation or reversal. `,
       `Data sourced from Demos oracle and colony signals, DAHR-attested for verification.`,
     ].join("\n");
 
     if (text.length >= strategy.publishing.minTextLength) {
-      // Use a real price API as attestation source
-      const attestUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${div.asset.toLowerCase()}&vs_currencies=usd`;
+      // Use CoinGecko with correct coin ID (not ticker)
+      const coinId = COINGECKO_IDS[div.asset] ?? div.asset.toLowerCase();
+      const attestUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
       actions.push({ type: "publish", text, category: "ANALYSIS", attestUrl });
       budgetRemaining -= strategy.budget.perPublish;
     }
@@ -101,15 +115,17 @@ function decide(obs: Observation, strategy: Strategy): Action[] {
   }
 
   // 4. Bet on divergences — SKILL.md: "placeHL(asset, 'higher'|'lower', { horizon })"
+  // F2 fix: derive direction from signal, not absolute divergence percentage
   let betCount = 0;
   for (const div of obs.divergences) {
     if (betCount >= strategy.budget.betsPerCycle) break;
     if (budgetRemaining < strategy.budget.perBet) break;
+    if (div.signalDirection === "neutral") continue; // skip if no directional signal
 
     actions.push({
       type: "bet",
       asset: div.asset,
-      direction: div.divergencePct > 0 ? "higher" : "lower",
+      direction: div.signalDirection === "bullish" ? "higher" : "lower",
       horizon: strategy.predictions.defaultHorizon,
     });
     budgetRemaining -= strategy.budget.perBet;

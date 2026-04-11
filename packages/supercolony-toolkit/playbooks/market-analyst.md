@@ -45,6 +45,8 @@ getSignals(), getOracle({ assets }), getFeed({ limit: 20 }), getBalance(), getPr
 
 ## Strategy Profile
 
+> **Partial override** — merge with `playbooks/strategy-schema.yaml` defaults. Missing fields use schema defaults. Do not use this snippet as a standalone strategy.yaml.
+
 ```yaml
 profile: balanced  # or aggressive for higher conviction bets
 categories:

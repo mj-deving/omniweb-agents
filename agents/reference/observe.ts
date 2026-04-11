@@ -7,14 +7,21 @@
  * 3. Return structured observation for the decide phase
  *
  * Built using ONLY omniweb-toolkit methods documented in SKILL.md.
+ * Response shapes match references/response-shapes.md exactly.
  */
 
 import type { OmniWeb } from "omniweb-toolkit";
 
 export interface Observation {
-  /** Raw signal data from /api/signals */
-  signals: Array<{ asset: string; signal: string; confidence: number; source: string }>;
-  /** Recent feed posts sorted by score */
+  /** Consensus signals with direction and confidence */
+  signals: Array<{
+    topic: string;
+    direction: string;   // "bullish" | "bearish" | "neutral"
+    confidence: number;
+    assets: string[];
+    consensus: boolean;
+  }>;
+  /** Recent feed posts with content from payload */
   feed: Array<{
     txHash: string;
     text: string;
@@ -23,13 +30,19 @@ export interface Observation {
     hasAttestation: boolean;
     category: string;
   }>;
-  /** Oracle prices for tracked assets */
-  oracle: Record<string, { price: number; sources: number }>;
+  /** Oracle prices keyed by ticker */
+  oracle: Record<string, { priceUsd: number; change24h: number }>;
+  /** Oracle divergences — the most actionable signal */
+  divergences: Array<{
+    asset: string;
+    type: string;
+    severity: string;
+    description: string;
+    signalDirection: string;
+  }>;
   /** Agent's current DEM balance */
   balance: number;
-  /** Derived: price divergences exceeding threshold */
-  divergences: Array<{ asset: string; divergencePct: number; oraclePrice: number }>;
-  /** Derived: top posts worth engaging with */
+  /** Top posts worth engaging with */
   topPosts: Array<{ txHash: string; score: number; hasAttestation: boolean }>;
   /** Timestamp of this observation */
   timestamp: number;
@@ -42,7 +55,7 @@ export interface Observation {
  */
 export async function observe(
   omni: OmniWeb,
-  opts: { assets: string[]; qualityThreshold: number; divergenceThreshold: number },
+  opts: { assets: string[]; qualityThreshold: number },
 ): Promise<Observation> {
   // Phase 1: Parallel fetch — GUIDE.md principle: "data first, LLM last"
   const [signalsResult, feedResult, oracleResult, balanceResult] = await Promise.all([
@@ -52,58 +65,67 @@ export async function observe(
     omni.colony.getBalance(),
   ]);
 
-  // Extract signals (safe defaults if API returns error)
+  // Extract signals — using SignalData shape from references/response-shapes.md
   const signals = signalsResult?.ok && signalsResult.data
-    ? (signalsResult.data as Array<{ asset: string; signal: string; confidence: number; source: string }>)
-    : [];
-
-  // Extract feed posts
-  const feedPosts = feedResult?.ok && feedResult.data?.posts
-    ? feedResult.data.posts.map((p: any) => ({
-        txHash: p.txHash ?? p.tx_hash ?? "",
-        text: (p.text ?? p.content ?? "").slice(0, 200),
-        author: p.author ?? p.address ?? "",
-        score: p.score ?? 0,
-        hasAttestation: !!(p.attestation || p.dahr || p.sourceAttestations?.length),
-        category: p.category ?? "UNKNOWN",
+    ? (signalsResult.data as any[]).map((s) => ({
+        topic: s.topic ?? "",
+        direction: s.direction ?? "neutral",
+        confidence: s.confidence ?? 0,
+        assets: s.assets ?? [],
+        consensus: s.consensus ?? false,
       }))
     : [];
 
-  // Extract oracle prices
-  const oracle: Record<string, { price: number; sources: number }> = {};
-  if (oracleResult?.ok && oracleResult.data) {
-    const oracleData = oracleResult.data as any;
-    const prices = oracleData.prices ?? oracleData;
-    if (Array.isArray(prices)) {
-      for (const p of prices) {
-        oracle[p.asset ?? p.symbol] = { price: p.price ?? p.value, sources: p.sources ?? 1 };
-      }
+  // Extract feed — FeedPost shape: content is in payload.text / payload.cat
+  const feedPosts = feedResult?.ok && (feedResult.data as any)?.posts
+    ? (feedResult.data as any).posts.map((p: any) => ({
+        txHash: p.txHash ?? "",
+        text: (p.payload?.text ?? "").slice(0, 200),
+        author: p.author ?? "",
+        score: p.score ?? 0,
+        hasAttestation: !!(p.payload?.sourceAttestations?.length),
+        category: p.payload?.cat ?? "UNKNOWN",
+      }))
+    : [];
+
+  // Extract oracle — OracleResult shape: assets[].ticker, assets[].price.usd
+  const oracle: Record<string, { priceUsd: number; change24h: number }> = {};
+  if (oracleResult?.ok && (oracleResult.data as any)?.assets) {
+    for (const a of (oracleResult.data as any).assets) {
+      oracle[a.ticker] = {
+        priceUsd: a.price?.usd ?? 0,
+        change24h: a.price?.change24h ?? 0,
+      };
     }
   }
 
-  // Extract balance
+  // Extract divergences directly from oracle — these are the most actionable signal
+  const rawDivergences = oracleResult?.ok && (oracleResult.data as any)?.divergences
+    ? (oracleResult.data as any).divergences as Array<{
+        type: string; asset: string; severity: string; description: string;
+        details?: { agentDirection?: string; marketDirection?: string };
+      }>
+    : [];
+
+  // Enrich divergences with signal direction for bet decisions
+  const divergences = rawDivergences.map((d) => {
+    // Find matching signal for this asset to get direction
+    const matchingSignal = signals.find((s) =>
+      s.assets.includes(d.asset) || s.topic.toLowerCase().includes(d.asset.toLowerCase())
+    );
+    return {
+      asset: d.asset,
+      type: d.type,
+      severity: d.severity,
+      description: d.description,
+      signalDirection: matchingSignal?.direction ?? d.details?.agentDirection ?? "neutral",
+    };
+  });
+
+  // Extract balance — AgentBalanceResponse: { balance: number }
   const balance = balanceResult?.ok && balanceResult.data
-    ? Number((balanceResult.data as any).balance ?? (balanceResult.data as any).available ?? 0)
+    ? Number((balanceResult.data as any).balance ?? 0)
     : 0;
-
-  // Phase 2: Derive metrics
-
-  // Price divergences — compare signals against oracle
-  const divergences: Observation["divergences"] = [];
-  for (const sig of signals) {
-    const oracleEntry = oracle[sig.asset];
-    if (oracleEntry && sig.confidence > 50) {
-      // Check if signal implies a price that diverges from oracle
-      const divergencePct = Math.abs(sig.confidence - 50) / 50 * 100;
-      if (divergencePct >= opts.divergenceThreshold) {
-        divergences.push({
-          asset: sig.asset,
-          divergencePct,
-          oraclePrice: oracleEntry.price,
-        });
-      }
-    }
-  }
 
   // Top posts — worth engaging with (reactions/tips)
   const topPosts = feedPosts
@@ -116,8 +138,8 @@ export async function observe(
     signals,
     feed: feedPosts,
     oracle,
-    balance,
     divergences,
+    balance,
     topPosts,
     timestamp: Date.now(),
   };

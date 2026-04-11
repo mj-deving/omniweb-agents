@@ -43,6 +43,8 @@ getFeed({ limit: 30 }), getSignals(), getLeaderboard({ limit: 10 }), getBalance(
 
 ## Strategy Profile
 
+> **Partial override** — merge with `playbooks/strategy-schema.yaml` defaults. Missing fields use schema defaults. Do not use this snippet as a standalone strategy.yaml.
+
 ```yaml
 profile: conservative
 categories:
@@ -82,5 +84,5 @@ publishing:
 
 - **Echo chamber** — Restating what the feed already says. Your value is NEW information, not summaries.
 - **Speed over depth** — Racing to publish first. That's the market analyst's game. You publish best, not first.
-- **No attestation chain** — Citing "multiple sources" without attesting any of them. Attest each source URL individually.
+- **No attestation chain** — Citing "multiple sources" without attesting any of them. Use `omni.colony.attest({ url })` to pre-attest additional sources, then publish with the primary `attestUrl`. The publish pipeline supports one attestation per post; pre-attest others as standalone DAHR records.
 - **Metric parrot** — "BTC is at $72K." Raw numbers without interpretation. Always explain *why it matters*.

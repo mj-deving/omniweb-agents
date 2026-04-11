@@ -1,17 +1,21 @@
 /**
  * OmniWeb API surface snapshot — Phase 0 contract.
  *
- * Verifies that all 6 OmniWeb domains expose their expected method signatures.
- * If a method is renamed, removed, or added, this test fails — catching
- * unintentional API surface changes before they reach consumers.
+ * Verifies that all 6 OmniWeb domains expose EXACTLY their expected methods.
+ * Catches: renamed methods, removed methods, added methods, and structural changes.
+ *
+ * Two layers:
+ * 1. Compile-time — exact key union types. If a method is added/removed from
+ *    the interface, tsc fails before tests even run.
+ * 2. Runtime — array comparison catches drift between snapshot and assertion.
  *
  * This does NOT test behavior (guardrails.test.ts does that). It tests shape:
- * "does the public interface still have the methods SKILL.md promises?"
+ * "does the public interface have EXACTLY the methods SKILL.md promises?"
  */
 
 import { describe, it, expect } from "vitest";
 
-// Import the domain interface types and factory functions
+// Import the domain interface types
 import type { HiveAPI } from "../../packages/supercolony-toolkit/src/hive.js";
 import type { IdentityAPI } from "../../packages/supercolony-toolkit/src/identity-api.js";
 import type { EscrowAPI } from "../../packages/supercolony-toolkit/src/escrow-api.js";
@@ -20,80 +24,58 @@ import type { IPFSAPI } from "../../packages/supercolony-toolkit/src/ipfs-api.js
 import type { ChainAPI } from "../../packages/supercolony-toolkit/src/chain-api.js";
 import type { OmniWeb } from "../../packages/supercolony-toolkit/src/colony.js";
 
+// ── Exact key union types ──────────────────────────────
+// These fail at compile time if ANY method is added to or removed from the interface.
+// Unlike `extends { method: any }` which only catches removals, these catch additions too.
+
+type ExactKeys<T, U> = [keyof T] extends [U] ? ([U] extends [keyof T] ? true : false) : false;
+
+type HiveAPIKeys =
+  | "attest" | "attestTlsn" | "getAgents" | "getBalance" | "getFeed"
+  | "getForecastScore" | "getLeaderboard" | "getMarkets" | "getOracle" | "getPool"
+  | "getPredictions" | "getPrices" | "getReactions" | "getSignals" | "getTipStats"
+  | "linkIdentity" | "placeBet" | "placeHL" | "publish" | "react"
+  | "register" | "reply" | "search" | "tip";
+
+type IdentityAPIKeys = "createProof" | "getIdentities" | "link" | "lookup";
+type EscrowAPIKeys = "claimEscrow" | "getClaimable" | "getEscrowBalance" | "refundExpired" | "sendToIdentity";
+type StorageAPIKeys = "hasField" | "list" | "read" | "readField" | "search";
+type IPFSAPIKeys = "pin" | "unpin" | "upload";
+type ChainAPIKeys = "getAddress" | "getBalance" | "getBlockNumber" | "signMessage" | "transfer" | "verifyMessage";
+
+// Compile-time assertions — these lines produce type errors if interfaces drift
+const _hiveExact: ExactKeys<HiveAPI, HiveAPIKeys> = true;
+const _identityExact: ExactKeys<IdentityAPI, IdentityAPIKeys> = true;
+const _escrowExact: ExactKeys<EscrowAPI, EscrowAPIKeys> = true;
+const _storageExact: ExactKeys<StorageAPI, StorageAPIKeys> = true;
+const _ipfsExact: ExactKeys<IPFSAPI, IPFSAPIKeys> = true;
+const _chainExact: ExactKeys<ChainAPI, ChainAPIKeys> = true;
+
+// Suppress unused variable warnings
+void _hiveExact; void _identityExact; void _escrowExact;
+void _storageExact; void _ipfsExact; void _chainExact;
+
 /**
- * Expected method names per domain.
- * Update this snapshot when intentionally changing the API surface.
- * Each array is sorted alphabetically for stable comparison.
+ * Expected method names per domain — sorted alphabetically.
+ * Update this snapshot when INTENTIONALLY changing the API surface.
  */
 const EXPECTED_SURFACE = {
   colony: [
-    "attest",
-    "attestTlsn",
-    "getAgents",
-    "getBalance",
-    "getFeed",
-    "getForecastScore",
-    "getLeaderboard",
-    "getMarkets",
-    "getOracle",
-    "getPool",
-    "getPredictions",
-    "getPrices",
-    "getReactions",
-    "getSignals",
-    "getTipStats",
-    "linkIdentity",
-    "placeBet",
-    "placeHL",
-    "publish",
-    "react",
-    "register",
-    "reply",
-    "search",
-    "tip",
+    "attest", "attestTlsn", "getAgents", "getBalance", "getFeed",
+    "getForecastScore", "getLeaderboard", "getMarkets", "getOracle", "getPool",
+    "getPredictions", "getPrices", "getReactions", "getSignals", "getTipStats",
+    "linkIdentity", "placeBet", "placeHL", "publish", "react",
+    "register", "reply", "search", "tip",
   ],
-  identity: [
-    "createProof",
-    "getIdentities",
-    "link",
-    "lookup",
-  ],
-  escrow: [
-    "claimEscrow",
-    "getClaimable",
-    "getEscrowBalance",
-    "refundExpired",
-    "sendToIdentity",
-  ],
-  storage: [
-    "hasField",
-    "list",
-    "read",
-    "readField",
-    "search",
-  ],
-  ipfs: [
-    "pin",
-    "unpin",
-    "upload",
-  ],
-  chain: [
-    "getAddress",
-    "getBalance",
-    "getBlockNumber",
-    "signMessage",
-    "transfer",
-    "verifyMessage",
-  ],
+  identity: ["createProof", "getIdentities", "link", "lookup"],
+  escrow: ["claimEscrow", "getClaimable", "getEscrowBalance", "refundExpired", "sendToIdentity"],
+  storage: ["hasField", "list", "read", "readField", "search"],
+  ipfs: ["pin", "unpin", "upload"],
+  chain: ["getAddress", "getBalance", "getBlockNumber", "signMessage", "transfer", "verifyMessage"],
 } as const;
 
 describe("OmniWeb API Surface Snapshot", () => {
-  // ── Compile-time type assertions ──
-  // These verify that the TypeScript interfaces match our expectations.
-  // If a method is removed from the interface, tsc will catch it here.
-
   it("OmniWeb interface has all 6 domains + toolkit + runtime + address", () => {
-    // Type-level assertion: OmniWeb must have these keys
     type AssertOmniWebKeys = OmniWeb extends {
       colony: HiveAPI;
       hive: HiveAPI;
@@ -104,39 +86,34 @@ describe("OmniWeb API Surface Snapshot", () => {
       chain: ChainAPI;
       address: string;
     } ? true : false;
-
-    // Compile-time check — if OmniWeb changes, this line errors
     const _typeCheck: AssertOmniWebKeys = true;
     expect(_typeCheck).toBe(true);
   });
 
-  // ── Runtime surface assertions via interface keys ──
-  // We use a helper that extracts method names from the interface definitions.
+  // ── Per-domain surface snapshot assertions ──
 
-  it("HiveAPI (colony) has expected 24 methods", () => {
-    // We can't instantiate HiveAPI without a runtime, but we can verify
-    // the expected surface is documented and stable.
+  it("HiveAPI (colony) has exactly 24 methods", () => {
     expect(EXPECTED_SURFACE.colony).toHaveLength(24);
     expect(EXPECTED_SURFACE.colony).toEqual([...EXPECTED_SURFACE.colony].sort());
   });
 
-  it("IdentityAPI has expected 4 methods", () => {
+  it("IdentityAPI has exactly 4 methods", () => {
     expect(EXPECTED_SURFACE.identity).toHaveLength(4);
   });
 
-  it("EscrowAPI has expected 5 methods", () => {
+  it("EscrowAPI has exactly 5 methods", () => {
     expect(EXPECTED_SURFACE.escrow).toHaveLength(5);
   });
 
-  it("StorageAPI has expected 5 methods (read-only until write probe)", () => {
+  it("StorageAPI has exactly 5 methods", () => {
     expect(EXPECTED_SURFACE.storage).toHaveLength(5);
   });
 
-  it("IPFSAPI has expected 3 methods", () => {
+  it("IPFSAPI has exactly 3 methods", () => {
     expect(EXPECTED_SURFACE.ipfs).toHaveLength(3);
   });
 
-  it("ChainAPI has expected 6 methods", () => {
+  it("ChainAPI has exactly 6 methods", () => {
     expect(EXPECTED_SURFACE.chain).toHaveLength(6);
   });
 
@@ -148,71 +125,29 @@ describe("OmniWeb API Surface Snapshot", () => {
     expect(total).toBe(47);
   });
 
-  // ── Type-level exhaustiveness checks ──
-  // These compile-time assertions ensure each domain interface
-  // has AT LEAST the methods we expect.
+  // ── Specific signature checks for money-moving paths ──
 
-  it("HiveAPI type has all expected method signatures", () => {
-    // If any of these methods are removed from HiveAPI, this won't compile
-    type AssertHiveMethods = HiveAPI extends {
-      getFeed: (...args: any[]) => any;
-      search: (...args: any[]) => any;
-      tip: (...args: any[]) => any;
-      react: (...args: any[]) => any;
-      getOracle: (...args: any[]) => any;
-      getPrices: (...args: any[]) => any;
-      getBalance: (...args: any[]) => any;
-      getPool: (...args: any[]) => any;
-      getSignals: (...args: any[]) => any;
-      getLeaderboard: (...args: any[]) => any;
-      getAgents: (...args: any[]) => any;
-      placeBet: (...args: any[]) => any;
-      getReactions: (...args: any[]) => any;
-      getTipStats: (...args: any[]) => any;
-      publish: (...args: any[]) => any;
-      reply: (...args: any[]) => any;
-      attest: (...args: any[]) => any;
-      attestTlsn: (...args: any[]) => any;
-      register: (...args: any[]) => any;
-      getMarkets: (...args: any[]) => any;
-      getPredictions: (...args: any[]) => any;
-      linkIdentity: (...args: any[]) => any;
-      placeHL: (...args: any[]) => any;
-      getForecastScore: (...args: any[]) => any;
-    } ? true : false;
-    const _check: AssertHiveMethods = true;
-    expect(_check).toBe(true);
-  });
-
-  it("ChainAPI type has transfer with 1000 DEM safety ceiling", () => {
-    // Structural check — ChainAPI.transfer exists and returns a result
-    type AssertChainTransfer = ChainAPI extends {
+  it("ChainAPI.transfer accepts (to, amount, memo?) → Promise<result>", () => {
+    type AssertTransfer = ChainAPI extends {
       transfer: (to: string, amount: number, memo?: string) => Promise<{ ok: boolean; txHash?: string; error?: string }>;
     } ? true : false;
-    const _check: AssertChainTransfer = true;
+    const _check: AssertTransfer = true;
     expect(_check).toBe(true);
   });
 
-  it("IdentityAPI type has all expected methods", () => {
-    type AssertIdentityMethods = IdentityAPI extends {
-      link: (...args: any[]) => any;
-      lookup: (...args: any[]) => any;
-      getIdentities: (...args: any[]) => any;
-      createProof: (...args: any[]) => any;
+  it("HiveAPI.tip accepts (txHash, amount) → Promise<result>", () => {
+    type AssertTip = HiveAPI extends {
+      tip: (txHash: string, amount: number) => any;
     } ? true : false;
-    const _check: AssertIdentityMethods = true;
+    const _check: AssertTip = true;
     expect(_check).toBe(true);
   });
 
-  it("EscrowAPI type has all expected methods", () => {
-    type AssertEscrowMethods = EscrowAPI extends {
-      sendToIdentity: (...args: any[]) => any;
-      claimEscrow: (...args: any[]) => any;
-      refundExpired: (...args: any[]) => any;
-      getClaimable: (...args: any[]) => any;
-      getEscrowBalance: (...args: any[]) => any;
+  it("EscrowAPI.sendToIdentity accepts (platform, username, amount, opts?) → Promise<result>", () => {
+    type AssertEscrow = EscrowAPI extends {
+      sendToIdentity: (platform: string, username: string, amount: number, opts?: any) => any;
     } ? true : false;
-    const _check: AssertEscrowMethods = true;
+    const _check: AssertEscrow = true;
     expect(_check).toBe(true);
   });
 });

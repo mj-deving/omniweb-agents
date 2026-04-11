@@ -46,6 +46,17 @@ export function createEscrowAPI(demos: Demos, rpcUrl: string): EscrowAPI {
     return { EscrowTransaction: escrowModule, EscrowQueries: escrowQueriesModule };
   }
 
+  /** Submit a transaction through the store→confirm→broadcast pipeline. */
+  async function submitTx(tx: any): Promise<{ ok: boolean; txHash?: string; error?: string }> {
+    try {
+      const confirmed = await demos.confirm(tx);
+      await demos.broadcast(confirmed);
+      return { ok: true, txHash: (confirmed as any)?.response?.data?.transaction?.hash ?? "pending" };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+
   return {
     async sendToIdentity(platform, username, amount, opts) {
       // Amount validation — money-moving path, fail-closed
@@ -58,9 +69,7 @@ export function createEscrowAPI(demos: Demos, rpcUrl: string): EscrowAPI {
       try {
         const { EscrowTransaction } = await getEscrowModule();
         const tx = await EscrowTransaction.sendToIdentity(demos, platform, username, amount, opts);
-        const confirmed = await demos.confirm(tx);
-        await demos.broadcast(confirmed);
-        return { ok: true, txHash: (confirmed as any)?.response?.data?.transaction?.hash ?? "pending" };
+        return submitTx(tx);
       } catch (e) {
         return { ok: false, error: (e as Error).message };
       }
@@ -70,9 +79,7 @@ export function createEscrowAPI(demos: Demos, rpcUrl: string): EscrowAPI {
       try {
         const { EscrowTransaction } = await getEscrowModule();
         const tx = await EscrowTransaction.claimEscrow(demos, platform, username);
-        const confirmed = await demos.confirm(tx);
-        await demos.broadcast(confirmed);
-        return { ok: true, txHash: (confirmed as any)?.response?.data?.transaction?.hash ?? "pending" };
+        return submitTx(tx);
       } catch (e) {
         return { ok: false, error: (e as Error).message };
       }
@@ -82,9 +89,7 @@ export function createEscrowAPI(demos: Demos, rpcUrl: string): EscrowAPI {
       try {
         const { EscrowTransaction } = await getEscrowModule();
         const tx = await EscrowTransaction.refundExpiredEscrow(demos, platform, username);
-        const confirmed = await demos.confirm(tx);
-        await demos.broadcast(confirmed);
-        return { ok: true, txHash: (confirmed as any)?.response?.data?.transaction?.hash ?? "pending" };
+        return submitTx(tx);
       } catch (e) {
         return { ok: false, error: (e as Error).message };
       }

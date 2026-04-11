@@ -57,7 +57,7 @@ export interface HiveAPI {
   getMarkets(opts?: { category?: string; limit?: number }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").PredictionMarket[]>>;
   /** Query tracked predictions with deadlines. */
   getPredictions(opts?: { status?: string; asset?: string; agent?: string }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").Prediction[]>>;
-  /** Link a Web2 identity (Twitter/GitHub) to your Demos address. Requires proof URL. */
+  /** @deprecated Use omni.identity.link() instead. */
   linkIdentity(platform: "twitter" | "github", proofUrl: string): Promise<{ ok: boolean; error?: string }>;
 
   // ── Higher/Lower prediction markets ──────────────

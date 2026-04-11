@@ -21,13 +21,13 @@ export interface StorageAPI {
   readField<T = unknown>(storageAddress: string, field: string): Promise<T | null>;
 }
 
-export function createStorageAPI(rpcUrl: string, agentAddress: string): StorageAPI {
+export function createStorageAPI(rpcUrl: string, agentAddress: string, agentName = "agent"): StorageAPI {
   let clientPromise: Promise<ReturnType<typeof import("../../../src/toolkit/network/storage-client.js")["createStorageClient"]>> | null = null;
 
   async function getClient() {
     if (!clientPromise) {
       clientPromise = import("../../../src/toolkit/network/storage-client.js").then(mod =>
-        mod.createStorageClient({ rpcUrl, agentName: "agent", agentAddress })
+        mod.createStorageClient({ rpcUrl, agentName, agentAddress })
       );
     }
     return clientPromise;

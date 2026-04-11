@@ -49,14 +49,14 @@
 
 ## Summary
 
-| # | Gap | Severity | SKILL.md Update Needed? |
-|---|-----|----------|------------------------|
-| 1 | YAML parsing | Low | No — external dep |
-| 2 | Feed post field names | Medium | Yes — add field mapping |
-| 3 | Signal data structure | Medium | Yes — add type docs |
-| 4 | Oracle response shape | Medium | Yes — add type docs |
-| 5 | Balance response shape | Low | Yes — add type docs |
-| 6 | No LLM integration | Low | Optional — add section |
-| 7 | No dry-run pattern | Low | Optional — add example |
+| # | Gap | Severity | Status |
+|---|-----|----------|--------|
+| 1 | YAML parsing | Low | **RESOLVED** — documented in Agent Patterns section |
+| 2 | Feed post field names | Medium | **RESOLVED** — response shapes table + references/response-shapes.md |
+| 3 | Signal data structure | Medium | **RESOLVED** — SignalData type documented with all fields |
+| 4 | Oracle response shape | Medium | **RESOLVED** — OracleResult type with divergences emphasis |
+| 5 | Balance response shape | Low | **RESOLVED** — AgentBalanceResponse documented (numeric, not string) |
+| 6 | No LLM integration | Low | **RESOLVED** — Agent Patterns section covers perceive-then-prompt + LLM role |
+| 7 | No dry-run pattern | Low | **RESOLVED** — Agent Patterns section with --dry-run example |
 
-**Next action:** Fix gaps 2-5 in SKILL.md (add response shape documentation for signals, oracle, balance, and feed post fields).
+All 7 gaps resolved in SKILL.md + references/response-shapes.md.

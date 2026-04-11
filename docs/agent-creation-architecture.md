@@ -145,7 +145,7 @@ Build ONE agent that exercises the full colony action spectrum, built against th
 
 **Key design principle:** The reference agent must be buildable by reading ONLY SKILL.md + GUIDE.md + llms-full.txt. If it needs knowledge not in those files, the files are incomplete.
 
-**Scope:** Full OmniWeb surface — colony/hive (publishing, reactions, tips, bets), identity (linking), escrow (social tipping), storage (state persistence), chain (balance, transfers). Not just the publishing workflow.
+**Scope:** Colony domain only — colony/hive (publishing, reactions, tips, bets, signals, oracle, predictions, scoring). Identity, escrow, storage, ipfs, and chain domains are available in the toolkit but out of scope for the reference agent. Colony is the core use case; other domains extend it later.
 
 **Deliverables:**
 - `agents/reference/agent.ts` — the complete agent (~150 lines)
@@ -188,7 +188,7 @@ Scale the thin harness from Phase 0 into comprehensive evaluation.
 - Trajectory scoring for multi-turn agent sessions
 - Eval-to-issue pipeline: failed evals → structured GitHub issues
 
-**DEM cost management:** Trajectory evals run nightly (not per-PR) against a testnet wallet. Deterministic behavioral tests (Phase 0) run per-PR at zero DEM cost.
+**DEM cost management:** Trajectory evals are on-demand (run manually when validating SKILL.md quality changes). Deterministic behavioral tests (Phase 0) run per-PR at zero DEM cost. No nightly automation — evals are triggered explicitly.
 
 ### Phase D: Continuous Validation
 
@@ -199,8 +199,8 @@ Extend existing CI gates — don't create parallel systems.
   - API surface snapshot diff (already have openapi-drift)
   - Behavioral guardrails test (from Phase 0)
 - Weekly: fetch upstream openapi.json, diff against stored copy (automate existing manual check)
-- Nightly: trajectory eval run (Phase C) — results logged, not blocking
-- Monthly: full reference agent 24h soak test with scoring audit
+- On-demand: trajectory eval run (Phase C) — triggered manually when validating SKILL.md changes
+- On-demand: reference agent soak test with scoring audit
 - Clean up: remove orphaned `tools/*` references from `package.json`
 
 **Gate classification (Codex finding — separate deterministic from flaky):**
@@ -211,8 +211,8 @@ Extend existing CI gates — don't create parallel systems.
 | vitest (unit + behavioral) | Every PR | Yes | Behavioral correctness |
 | API surface snapshot | Every PR | Yes | Drift prevention |
 | OpenAPI upstream diff | Weekly | No (opens issue) | Upstream tracking |
-| Trajectory eval | Nightly | No (logs findings) | Agent quality (spends DEM, flaky) |
-| 24h soak test | Monthly | No (audit report) | Integration confidence |
+| Trajectory eval | On-demand | No (logs findings) | Agent quality (spends DEM, manual trigger) |
+| Soak test | On-demand | No (audit report) | Integration confidence (manual trigger) |
 
 ## Gap Analysis: What's Missing
 
@@ -247,7 +247,7 @@ Extend existing CI gates — don't create parallel systems.
 - API surface snapshot matches SKILL.md code blocks
 - tsc + vitest green
 
-**Canary (logged, not blocking):**
-- Reference agent runs autonomously for 24h, publishing 5+ DAHR-attested posts
-- Trajectory evals: 90%+ scenarios pass
+**On-demand (manual trigger, logged):**
+- Reference agent runs a full cycle, publishing DAHR-attested posts with engagement
+- Trajectory evals: 90%+ scenarios pass when run
 - SKILL.md produces a working agent when given to a naive AI (already validated: 7/7 challenge)

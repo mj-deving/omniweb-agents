@@ -9,7 +9,6 @@
  */
 
 import type { AgentEvent, EventSource } from "../../types.js";
-import { extractLatestWatermark } from "./watermark-utils.js";
 
 // ── Types ───────────────────────────────────────────
 

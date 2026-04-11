@@ -8,7 +8,7 @@
 import { createHash } from "node:crypto";
 import type { StateStore, DemosError } from "../types.js";
 import { demosError } from "../types.js";
-import { stateKey, checkAndAppend, appendEntry, DAY_MS } from "./state-helpers.js";
+import { stateKey, checkAndAppend, DAY_MS } from "./state-helpers.js";
 
 interface DedupEntry {
   timestamp: number;

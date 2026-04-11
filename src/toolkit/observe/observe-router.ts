@@ -16,7 +16,7 @@ import type { Toolkit } from "../primitives/types.js";
 import type { AvailableEvidence } from "../colony/available-evidence.js";
 import type { ColonyDatabase } from "../colony/schema.js";
 import type { AgentSourceView } from "../sources/catalog.js";
-import { EXTRACTOR_REGISTRY, type EvidenceExtractor } from "./extractors/index.js";
+import { EXTRACTOR_REGISTRY } from "./extractors/index.js";
 import { fetchSourcesParallel } from "../sources/fetch-parallel.js";
 import { computeAvailableEvidence } from "../colony/available-evidence.js";
 

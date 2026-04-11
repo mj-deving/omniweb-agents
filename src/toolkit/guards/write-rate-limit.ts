@@ -9,7 +9,13 @@
 
 import type { StateStore, DemosError } from "../types.js";
 import { demosError } from "../types.js";
-import { stateKey, loadState, checkAndAppend, appendEntry, DAY_MS, GUARD_LOCK_TTL_MS } from "./state-helpers.js";
+import {
+  stateKey,
+  loadState,
+  checkAndAppend,
+  DAY_MS,
+  GUARD_LOCK_TTL_MS
+} from "./state-helpers.js";
 
 const DAILY_LIMIT = 14;
 const HOURLY_LIMIT = 5;

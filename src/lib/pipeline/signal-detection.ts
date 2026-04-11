@@ -33,20 +33,16 @@ import {
   UNKNOWN_DEFAULTS,
 } from "./signal-rules.js";
 import {
-  calculateMAD,
   calculateZScore,
   getBaselineMedian,
   getBaselineObservations,
-  MAD_FLOOR,
-  MAD_MULTIPLIER,
   MIN_BASELINE_SAMPLES,
   recordBaselineValue,
-  winsorize,
   ZSCORE_THRESHOLD,
   type BaselineEntry,
   type BaselineObservation,
   type BaselineStore,
-  type MetricWindows,
+  type MetricWindows
 } from "../../toolkit/math/baseline.js";
 export {
   calculateMAD,

@@ -6,7 +6,6 @@
  */
 
 import type { SuperColonyApiClient } from "../supercolony/api-client.js";
-import type { ApiResult, FeedResponse } from "../supercolony/types.js";
 import type { DataSource } from "../data-source.js";
 import type { ScanPost } from "../types.js";
 import type { FeedPrimitives } from "./types.js";

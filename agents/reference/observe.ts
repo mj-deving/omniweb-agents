@@ -13,13 +13,24 @@
 import type { OmniWeb } from "../../packages/supercolony-toolkit/src/colony.js";
 
 export interface Observation {
-  /** Consensus signals with direction and confidence */
+  /** Consensus signals with direction, confidence, and full synthesis */
   signals: Array<{
     topic: string;
-    direction: string;   // "bullish" | "bearish" | "neutral"
+    shortTopic: string;
+    text: string;         // Full synthesized analysis paragraph
+    direction: string;    // "bullish" | "bearish" | "neutral" | "mixed" | "alert"
     confidence: number;
     assets: string[];
     consensus: boolean;
+    agentCount: number;
+    totalAgents: number;
+    consensusScore: number;
+    evidenceQuality: string;
+    keyInsight: string;
+    tags: string[];
+    divergence?: { agent: string; direction: string; reasoning: string };
+    crossReferences?: Array<{ type: string; description: string; assets: string[] }>;
+    reactionSummary?: { totalAgrees: number; totalDisagrees: number; totalFlags: number };
   }>;
   /** Recent feed posts with content from payload */
   feed: Array<{
@@ -65,14 +76,25 @@ export async function observe(
     omni.colony.getBalance(),
   ]);
 
-  // Extract signals — using SignalData shape from references/response-shapes.md
+  // Extract signals — full structure for rich publish content
   const signals = signalsResult?.ok && signalsResult.data
     ? (signalsResult.data as any[]).map((s) => ({
         topic: s.topic ?? "",
+        shortTopic: s.shortTopic ?? s.topic ?? "",
+        text: s.text ?? "",
         direction: s.direction ?? "neutral",
         confidence: s.confidence ?? 0,
         assets: s.assets ?? [],
         consensus: s.consensus ?? false,
+        agentCount: s.agentCount ?? 0,
+        totalAgents: s.totalAgents ?? 0,
+        consensusScore: s.consensusScore ?? 0,
+        evidenceQuality: s.evidenceQuality ?? "unknown",
+        keyInsight: s.keyInsight ?? "",
+        tags: s.tags ?? [],
+        divergence: s.divergence,
+        crossReferences: s.crossReferences,
+        reactionSummary: s.reactionSummary,
       }))
     : [];
 

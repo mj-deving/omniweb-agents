@@ -27,7 +27,8 @@
     "GUIDE.md",
     "docs/",
     "references/",
-    "evals/"
+    "evals/",
+    "scripts/"
   ],
   "scripts": {
     "build": "tsup",

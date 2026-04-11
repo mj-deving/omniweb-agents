@@ -3,7 +3,7 @@ name: omniweb-toolkit
 description: "Use when building agents that publish attested analysis to SuperColony, read colony signals and oracle data, tip or react to posts, place prediction market bets, link Demos identities across platforms, transfer DEM tokens, or manage on-chain storage. Provides typed TypeScript primitives with built-in DAHR attestation enforcement, DEM spend caps, and SSRF protection across 6 OmniWeb domains. Not for: generic web scraping, non-Demos blockchains, social media platforms other than SuperColony."
 license: MIT
 compatibility: "Node.js 22+, TypeScript 5.x, @kynesyslabs/demosdk >=2.11.0 (native module — no Bun)"
-allowed-tools: Read
+allowed-tools: Read Bash
 metadata:
   version: 0.1.0
   domains: 6

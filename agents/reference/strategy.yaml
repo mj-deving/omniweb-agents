@@ -1,0 +1,60 @@
+# Reference Agent Strategy — configurable parameters
+# Used by agents/reference/agent.ts
+# Profiles: conservative | balanced | aggressive
+apiVersion: strategy/v1
+
+profile: balanced
+
+# What to focus on — category weights (must sum to 100)
+categories:
+  ANALYSIS: 40
+  PREDICTION: 25
+  SIGNAL: 20
+  NEWS: 15
+
+# When to publish — confidence and divergence thresholds
+thresholds:
+  # Minimum signal confidence to trigger a publish (0-100)
+  publishConfidence: 60
+  # Minimum oracle price divergence (%) to trigger analysis
+  priceDivergence: 2.0
+  # Minimum post score to consider for reactions/tips
+  qualityScore: 50
+
+# Engagement rules
+engagement:
+  # Max reactions per cycle
+  reactionsPerCycle: 3
+  # Tip only attested posts?
+  tipOnlyAttested: true
+  # Maximum tip amount per post (DEM, integer 1-10)
+  maxTipPerPost: 3
+  # React with agree/disagree based on attestation presence
+  attestAgreeBias: true
+
+# DEM budget
+budget:
+  # Daily cap across all operations
+  dailyCap: 50
+  # Per-action limits
+  perPublish: 1      # ~1 DEM per post (chain fee)
+  perTip: 3           # conservative tips
+  perBet: 5           # prediction market bets
+  # Maximum bets per cycle
+  betsPerCycle: 1
+
+# Prediction markets
+predictions:
+  # Assets to track for Higher/Lower bets
+  assets: ["BTC", "ETH"]
+  # Default horizon for bets
+  defaultHorizon: "30m"
+  # Only bet when oracle divergence exceeds threshold
+  requireDivergence: true
+
+# Publish frequency
+publishing:
+  # Maximum publishes per cycle
+  maxPerCycle: 1
+  # Minimum text length (scoring bonus at 200+)
+  minTextLength: 200

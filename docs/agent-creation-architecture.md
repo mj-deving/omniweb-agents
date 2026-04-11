@@ -130,14 +130,14 @@ Our SKILL.md predates the spec. It's high-quality content but non-compliant stru
 
 ### Decisions
 
-**D1: Frontmatter fields.** We'll use all six spec fields:
+**D1: Frontmatter fields.** We use all six spec fields. Description is intent-first per spec guidance. `allowed-tools` narrowed to `Read` only until Phase A adds dedicated scripts/ (Codex finding F7).
 ```yaml
 ---
 name: omniweb-toolkit
-description: "Integrate AI agents with the Demos OmniWeb — 6 typed domains (colony, identity, escrow, storage, ipfs, chain) with DAHR attestation enforcement, DEM spend caps, and SSRF protection. Use when building agents that publish to SuperColony, interact with prediction markets, tip other agents, or manage on-chain identity."
+description: "Use when building agents that publish attested analysis to SuperColony, read colony signals and oracle data, tip or react to posts, place prediction market bets, link Demos identities, transfer DEM tokens, or manage on-chain storage. Provides typed TypeScript primitives with DAHR attestation enforcement, DEM spend caps, and SSRF protection across 6 OmniWeb domains. Not for: generic web scraping, non-Demos blockchains, social media platforms other than SuperColony."
 license: MIT
-compatibility: "Node.js 22+, TypeScript 5.x, demosdk native module (no Bun)"
-allowed-tools: Bash Read Write Edit
+compatibility: "Node.js 22+, TypeScript 5.x, @kynesyslabs/demosdk >=2.11.0 (native module — no Bun)"
+allowed-tools: Read
 metadata:
   version: 0.1.0
   domains: 6
@@ -197,7 +197,8 @@ Define what "correct" means before building anything. Extend existing CI, don't 
   - ChainAPI.transfer() rejects > 1000 DEM
 - `tests/behavioral/api-surface.test.ts` — snapshot of OmniWeb public API (all 6 domains + internal toolkit, not just HiveAPI)
 - Reconcile existing CI: extend `validate-plugin.yml`, remove orphaned `tools/*` script references from `package.json`
-- Contract: "these tests pass = toolkit is correct. If reference agent fails and these pass, the problem is in the skill/playbook, not the toolkit."
+- Contract: "these tests define the minimum behavioral contract for currently surfaced behaviors. If reference agent fails and these pass, the problem is likely in the skill/playbook, not the toolkit. Coverage expands as new behaviors are added."
+- **Exit criteria (Codex review):** All behavioral tests green, `npm pack --dry-run` includes references/ and evals/, evals reference correct method names, API surface uses exact key unions (not loose counts).
 
 **Deliverables — AgentSkills spec compliance:**
 - SKILL.md YAML frontmatter: `name`, `description`, `license`, `compatibility`, `allowed-tools`, `metadata` (see D1 above)
@@ -346,11 +347,31 @@ Extend existing CI gates — don't create parallel systems.
 6. **Separate deterministic gates from flaky canaries.** PR merge gates must be fast and deterministic. DEM-spending evals and soak tests are nightly/monthly — they inform but don't block.
 7. **Follow the AgentSkills spec.** SKILL.md uses spec-compliant YAML frontmatter, ≤500 lines body, `references/` + `scripts/` + `evals/` directories. Description is eval-tested for discovery accuracy. This makes our skill portable across Claude Code, Cursor, Windsurf, and any agent platform that implements the spec. The spec is the interop layer — our content is the differentiator.
 
+## Codex Review Log
+
+**Review 1 (2026-04-10, GPT-5.4):** Sequencing corrected, drift claims scoped, open questions resolved. 3 findings implemented.
+
+**Review 2 (2026-04-11, GPT-5.4):** 8 findings on Phase 0 + spec alignment. All implemented or documented:
+- F1 HIGH: Skill name/directory — no fix needed (npm name matches, dev dir differs)
+- F2 HIGH: references/ symlinks don't survive npm pack — **fixed** (real copies + prepack script)
+- F3 HIGH: Evals reference wrong methods — **fixed** (all 8 seeds corrected)
+- F4 HIGH: API surface test overclaims — **fixed** (exact key unions, not loose counts)
+- F5 HIGH: Missing guardrail tests — **fixed** (added allowlist, placeHL direction, write-rate, boundary)
+- F6 MEDIUM: Description not intent-first — **fixed** (rewritten, method count corrected)
+- F7 MEDIUM: allowed-tools too broad — **fixed** (narrowed to Read only)
+- F8 LOW: Architecture doc overclaims — **fixed** (wording downgraded, exit criteria added)
+
+**Deferred (not Phase 0 scope):**
+- `skills-ref validate` — requires Python tooling; add as CI step when publishing
+- DAHR proxy SSRF coverage — client-side tests can't test proxy behavior; documented as trust boundary
+- Description eval testing (~20 queries) — planned for Phase C eval expansion
+
 ## Success Criteria
 
 **Deterministic (CI-enforced):**
-- Behavioral guardrail tests pass (10 assertions, zero DEM)
-- API surface snapshot matches SKILL.md code blocks
+- Behavioral guardrail tests pass (14 assertions, zero DEM)
+- API surface snapshot uses exact key unions for all 6 domains
+- `npm pack --dry-run` includes references/ and evals/
 - tsc + vitest green
 
 **On-demand (manual trigger, logged):**

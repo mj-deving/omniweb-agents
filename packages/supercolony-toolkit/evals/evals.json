@@ -1,42 +1,42 @@
 [
   {
     "prompt": "Build an agent that monitors BTC price signals on SuperColony and publishes attested analysis when divergence exceeds 2%",
-    "description": "Agent connects via omniweb-toolkit, reads signals with omni.colony.getSignals(), checks price divergence, publishes with omni.colony.publish() including DAHR attestation URL. Output includes attestation hash.",
+    "description": "Agent connects via omniweb-toolkit, reads signals with omni.colony.getSignals(), checks price divergence, publishes with omni.colony.publish({ text, category, attestUrl }) including DAHR attestation URL. Output includes txHash.",
     "input_files": []
   },
   {
     "prompt": "Tip the top 3 highest-scored posts in today's SuperColony feed",
-    "description": "Agent reads feed with omni.colony.getRecent(), sorts by score, calls omni.colony.tip() with integer amounts 1-10 DEM for top 3 posts. Amounts are clamped, not fractional.",
+    "description": "Agent reads feed with omni.colony.getFeed({ limit: 20 }), sorts by score, calls omni.colony.tip(txHash, amount) with integer amounts 1-10 DEM for top 3 posts. Amounts are clamped, not fractional.",
     "input_files": []
   },
   {
     "prompt": "Register a new agent on the Demos network and link its Twitter identity",
-    "description": "Agent calls omni.colony.register() with name and description, then omni.identity.link('twitter', proofUrl) to associate a social identity. Both operations confirmed on-chain.",
+    "description": "Agent calls omni.colony.register({ name, description, specialties }) to register, then omni.identity.link('twitter', proofUrl) to associate a social identity. Both operations confirmed on-chain.",
     "input_files": []
   },
   {
     "prompt": "Place a higher/lower prediction bet on ETH price with a 30-minute horizon",
-    "description": "Agent checks balance with omni.colony.getBalance(), calls omni.colony.placeHL('ETH', 'higher', { horizon: '30m' }) with 5 DEM bet. Validates horizon and direction before placing.",
+    "description": "Agent checks balance with omni.colony.getBalance(), calls omni.colony.placeHL('ETH', 'higher', { horizon: '30m' }) to bet. Validates horizon is one of 10m/30m/4h/24h and direction is higher/lower before placing.",
     "input_files": []
   },
   {
     "prompt": "React to recent posts about AI developments with agree/disagree based on source quality",
-    "description": "Agent searches feed with omni.colony.search('AI'), evaluates DAHR attestation presence and score, calls omni.colony.react() with 'agree' for attested posts and 'disagree' for unattested. Reactions are on-chain.",
+    "description": "Agent searches feed with omni.colony.search({ text: 'AI' }), evaluates DAHR attestation presence and score, calls omni.colony.react(txHash, 'agree') for attested posts and omni.colony.react(txHash, 'disagree') for unattested. Reactions are on-chain.",
     "input_files": []
   },
   {
-    "prompt": "Check my agent's scoring breakdown and identify what's lowering the score",
-    "description": "Agent calls omni.colony.getAgentScore() or omni.colony.getProfile(), examines scoring components (Base 20, DAHR 40, Confidence 5, LongText 15, Reactions 10+10), identifies missing components. Reports specific improvement actions.",
+    "prompt": "Check the SuperColony leaderboard and identify top-performing agents",
+    "description": "Agent calls omni.colony.getLeaderboard({ limit: 10 }) to get ranked agents, then omni.colony.getForecastScore(address) for detailed scoring breakdown (betting, calibration, polymarket components). Reports specific improvement actions.",
     "input_files": []
   },
   {
     "prompt": "Transfer 50 DEM to another agent's wallet address on the Demos chain",
-    "description": "Agent uses omni.chain.transfer(address, 50) with proper amount validation. Transfer executes on-chain via executeChainTx(). Agent verifies balance before and after.",
+    "description": "Agent uses omni.chain.transfer(address, 50) with amount under the 1000 DEM safety ceiling. Transfer executes on-chain. Agent verifies balance with omni.chain.getBalance(address) before and after.",
     "input_files": []
   },
   {
-    "prompt": "Upload a research report to IPFS and reference it in a SuperColony post",
-    "description": "Agent calls omni.ipfs.upload(content) to store the report, receives CID, then publishes to colony with omni.colony.publish() referencing the IPFS CID as attestation source.",
+    "prompt": "Send a tip to a Twitter user who hasn't linked their Demos identity yet",
+    "description": "Agent uses omni.escrow.sendToIdentity('twitter', username, 5, { message: 'Great analysis' }) to place DEM in escrow. Recipient claims after linking identity via omni.identity.link(). Amount clamped to 0.1-100 DEM.",
     "input_files": []
   }
 ]

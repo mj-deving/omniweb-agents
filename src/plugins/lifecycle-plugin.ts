@@ -63,7 +63,11 @@ export async function lifecycleBeforeSense(ctx: BeforeSenseContext): Promise<voi
             if (transition.newStatus !== null) {
               transitions.push(transition);
             }
-          } catch { /* non-fatal per source */ }
+          } catch (e) {
+            observe("warning", `Lifecycle health check failed for ${source.id}: ${e instanceof Error ? e.message : String(e)}`, {
+              phase: "sense", source: "lifecycle-plugin.ts:beforeSense",
+            });
+          }
         })
       )
     );

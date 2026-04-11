@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Coop handoff check — disabled (tools/ directory removed in architecture cleanup)
+# Previously ran: node tools/check-coop.mjs --mode solo --soft-ack true
+# Re-enable when coop system is reimplemented in cli/ or removed entirely.
+
 if [[ "${SKIP_COOP_CHECK:-}" == "1" ]]; then
-  echo "[coop] skipping check (SKIP_COOP_CHECK=1)"
   exit 0
 fi
 
-echo "[coop] running solo handoff check"
-node tools/check-coop.mjs --mode solo --soft-ack true
+exit 0

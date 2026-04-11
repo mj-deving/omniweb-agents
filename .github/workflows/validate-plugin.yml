@@ -15,9 +15,29 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm ci
+
+      # ── Deterministic gates (block merge) ──────────
       - name: Type check
         run: npx tsc --noEmit
       - name: OpenAPI drift check
         run: npx vitest run tests/openapi-drift.test.ts
-      - name: Run tests
+      - name: Behavioral guardrails (Phase 0 contract)
+        run: npx vitest run tests/behavioral/
+      - name: Run full test suite
         run: npx vitest run
+
+      # ── Packaging check ────────────────────────────
+      - name: Verify npm pack includes all skill files
+        working-directory: packages/supercolony-toolkit
+        run: |
+          npm pack --dry-run 2>&1 | tee /tmp/pack-output.txt
+          grep -q "references/" /tmp/pack-output.txt || (echo "ERROR: references/ missing from pack" && exit 1)
+          grep -q "evals/" /tmp/pack-output.txt || (echo "ERROR: evals/ missing from pack" && exit 1)
+          grep -q "playbooks/" /tmp/pack-output.txt || (echo "ERROR: playbooks/ missing from pack" && exit 1)
+          grep -q "scripts/" /tmp/pack-output.txt || (echo "ERROR: scripts/ missing from pack" && exit 1)
+          echo "All skill directories present in package"
+
+      # ── Eval consistency check ─────────────────────
+      - name: Validate evals against SKILL.md
+        working-directory: packages/supercolony-toolkit
+        run: npx tsx evals/run-evals.ts --summary

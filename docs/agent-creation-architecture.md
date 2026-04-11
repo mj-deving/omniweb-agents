@@ -12,7 +12,7 @@ read_when: ["agent architecture", "roadmap", "what's next", "agent creation", "s
 
 ## Problem Statement
 
-We have perfect plumbing (44 methods, 52/52 live stress test, 100% API coverage) but our agents can't use it well yet. Templates implement the observe-decide-act loop but skip the strategic layer: signals consumption, DAHR guarantee, engagement execution, cost budgeting. Iterating on toolkit code without a feedback loop from real agent usage creates drift and circular work.
+We have perfect plumbing (47 methods, 52/52 live stress test, 100% API coverage) but our agents can't use it well yet. Templates implement the observe-decide-act loop but skip the strategic layer: signals consumption, DAHR guarantee, engagement execution, cost budgeting. Iterating on toolkit code without a feedback loop from real agent usage creates drift and circular work.
 
 ## Architecture: Three Layers, One Source of Truth
 

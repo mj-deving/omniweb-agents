@@ -25,7 +25,9 @@
     "TOOLKIT.md",
     "SKILL.md",
     "GUIDE.md",
-    "docs/"
+    "docs/",
+    "references/",
+    "evals/"
   ],
   "scripts": {
     "build": "tsup"

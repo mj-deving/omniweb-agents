@@ -19,11 +19,7 @@ jobs:
       # ── Deterministic gates (block merge) ──────────
       - name: Type check
         run: npx tsc --noEmit
-      - name: OpenAPI drift check
-        run: npx vitest run tests/openapi-drift.test.ts
-      - name: Behavioral guardrails (Phase 0 contract)
-        run: npx vitest run tests/behavioral/
-      - name: Run full test suite
+      - name: Run full test suite (includes behavioral guardrails + OpenAPI drift)
         run: npx vitest run
 
       # ── Packaging check ────────────────────────────

@@ -141,12 +141,13 @@ async function main() {
 
   console.error(`Sample txHash: ${sampleTx?.slice(0, 16) ?? "none"}...\n`);
 
+  const enc = encodeURIComponent;
   const endpoints: Array<{ name: string; path: string }> = [
     // ── Feed ──
     { name: "feed.getRecent", path: "/api/feed?limit=2" },
     { name: "feed.search", path: "/api/feed/search?text=bitcoin&limit=2" },
-    { name: "feed.getPost", path: sampleTx ? `/api/post/${sampleTx}` : "" },
-    { name: "feed.getThread", path: sampleTx ? `/api/feed/thread/${sampleTx}` : "" },
+    { name: "feed.getPost", path: sampleTx ? `/api/post/${enc(sampleTx)}` : "" },
+    { name: "feed.getThread", path: sampleTx ? `/api/feed/thread/${enc(sampleTx)}` : "" },
 
     // ── Intelligence ──
     { name: "signals.get", path: "/api/signals" },
@@ -159,12 +160,13 @@ async function main() {
 
     // ── Prices ──
     { name: "prices.get", path: "/api/prices?assets=BTC,ETH" },
+    { name: "prices.getHistory", path: "/api/prices?asset=BTC&history=24" },
 
     // ── Agents ──
     { name: "agents.list", path: "/api/agents" },
-    { name: "agents.getProfile", path: `/api/agent/${AGENT_ADDR}` },
-    { name: "agents.getIdentities", path: `/api/agent/${AGENT_ADDR}/identities` },
-    { name: "agents.getBalance", path: `/api/agent/${AGENT_ADDR}/balance` },
+    { name: "agents.getProfile", path: `/api/agent/${enc(AGENT_ADDR)}` },
+    { name: "agents.getIdentities", path: `/api/agent/${enc(AGENT_ADDR)}/identities` },
+    { name: "agents.getBalance", path: `/api/agent/${enc(AGENT_ADDR)}/balance` },
 
     // ── Scores ──
     { name: "scores.leaderboard", path: "/api/scores/agents?limit=3" },
@@ -185,21 +187,26 @@ async function main() {
     { name: "ballot.graduationMarkets", path: "/api/bets/graduation/markets?limit=3" },
 
     // ── Actions (reads) ──
-    { name: "actions.getReactions", path: sampleTx ? `/api/feed/${sampleTx}/react` : "" },
-    { name: "actions.getTipStats", path: sampleTx ? `/api/tip/${sampleTx}` : "" },
-    { name: "actions.getAgentTips", path: `/api/agent/${AGENT_ADDR}/tips` },
+    { name: "actions.getReactions", path: sampleTx ? `/api/feed/${enc(sampleTx)}/react` : "" },
+    { name: "actions.getTipStats", path: sampleTx ? `/api/tip/${enc(sampleTx)}` : "" },
+    { name: "actions.getAgentTips", path: `/api/agent/${enc(AGENT_ADDR)}/tips` },
 
     // ── Identity ──
     { name: "identity.search", path: "/api/identity?search=demos" },
+    { name: "identity.byPlatform", path: "/api/identity?platform=twitter&username=demos_ai" },
+    { name: "identity.byChain", path: `/api/identity?chain=demos&address=${enc(AGENT_ADDR)}` },
 
     // ── Webhooks ──
     { name: "webhooks.list", path: "/api/webhooks" },
 
     // ── Verification ──
-    { name: "verify.dahr", path: sampleTx ? `/api/verify/${sampleTx}` : "" },
+    { name: "verify.dahr", path: sampleTx ? `/api/verify/${enc(sampleTx)}` : "" },
+    { name: "verify.tlsn", path: sampleTx ? `/api/verify-tlsn/${enc(sampleTx)}` : "" },
+    { name: "verify.tlsnProof", path: sampleTx ? `/api/tlsn-proof/${enc(sampleTx)}` : "" },
   ];
 
-  // Filter out endpoints that need a sample txHash but we don't have one
+  // Track skipped endpoints (need sampleTx but don't have one)
+  const skippedEndpoints = endpoints.filter(e => e.path === "");
   const validEndpoints = endpoints.filter(e => e.path !== "");
 
   console.error(`Auditing ${validEndpoints.length} endpoints...\n`);
@@ -222,7 +229,10 @@ async function main() {
   const failed = results.filter(r => !r.ok).length;
 
   console.error(`\n═══ API Depth Audit Summary ═══`);
-  console.error(`Endpoints: ${results.length} | OK: ${passed} | Failed: ${failed}`);
+  console.error(`Endpoints: ${results.length} | OK: ${passed} | Failed: ${failed} | Skipped: ${skippedEndpoints.length}`);
+  if (skippedEndpoints.length > 0) {
+    console.error(`Skipped (no sampleTx): ${skippedEndpoints.map(e => e.name).join(", ")}`);
+  }
 
   const allFields = new Set(results.flatMap(r => r.fields));
   console.error(`Total unique field paths: ${allFields.size}\n`);

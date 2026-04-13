@@ -201,20 +201,20 @@ export interface PolymarketEntry {
 }
 
 export interface OracleResult {
-  overallSentiment: { direction: string; score: number; agentCount: number; topAssets: string[] };
-  assets: Array<{
+  overallSentiment?: { direction: string; score: number; agentCount: number; topAssets: string[] };
+  assets?: Array<{
     ticker: string;
     postCount: number;
-    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h: number; marketCap: number; dahrTxHash: string | null; source: string };
-    sparkline: unknown[];
-    sentiment: { direction: string; score: number; agentCount: number; confidence: number; topPosts: Array<{ txHash: string; author: string; text: string; category: string; confidence: number; direction: string; timestamp: number }> };
-    sentimentTimeline: Array<{ t: number; score: number; postCount: number }>;
-    predictions: { pending: number; resolved: number; accuracy: number | null; topPredictions: unknown[] };
-    polymarketOdds: unknown[];
+    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h?: number; marketCap?: number; dahrTxHash?: string | null; source?: string };
+    sparkline?: unknown[];
+    sentiment?: { direction: string; score: number; agentCount?: number; confidence?: number; topPosts?: Array<{ txHash: string; author: string; text: string; category: string; confidence?: number; direction?: string; timestamp: number }> };
+    sentimentTimeline?: Array<{ t: number; score: number; postCount: number }>;
+    predictions?: { pending: number; resolved: number; accuracy: number | null; topPredictions: unknown[] };
+    polymarketOdds?: unknown[];
   }>;
-  polymarket: { assetSpecific: PolymarketEntry[]; macro: PolymarketEntry[] };
+  polymarket?: { assetSpecific: PolymarketEntry[]; macro: PolymarketEntry[] };
   divergences: OracleDivergence[];
-  meta: { pricesFetchedAt: number; pricesStale: boolean; computedAt: number; ragAvailable: boolean; window: string };
+  meta?: { pricesFetchedAt: number; pricesStale: boolean; computedAt: number; ragAvailable: boolean; window: string };
 }
 
 // ── Prices ──────────────────────────────────────────
@@ -277,22 +277,15 @@ export interface TlsnVerification {
 export interface FeedPost {
   txHash: string;
   author: string;
-  blockNumber: number;
+  blockNumber?: number;
   timestamp: number;
-  payload: {
-    v: number;
-    cat: string;
-    text: string;
-    tags?: string[];
-    confidence?: number;
-    payload?: Record<string, unknown>;
-  };
-  replyDepth: number;
-  score: number;
-  replyCount: number;
-  reactions: { agree: number; disagree: number; flag: number };
-  reputationTier: string;
-  reputationScore: number;
+  payload: Record<string, unknown>;
+  replyDepth?: number;
+  score?: number;
+  replyCount?: number;
+  reactions?: { agree: number; disagree: number; flag: number };
+  reputationTier?: string;
+  reputationScore?: number;
 }
 
 export interface FeedResponse {
@@ -318,45 +311,32 @@ export interface ThreadResponse {
 
 export interface SignalData {
   topic: string;
-  shortTopic: string;
+  shortTopic?: string;
   text: string;
   direction: string;
   consensus: boolean;
-  keyInsight: string;
+  keyInsight?: string;
   confidence: number;
-  assets: string[];
+  assets?: string[];
   agentCount: number;
   totalAgents: number;
-  consensusScore: number;
-  evidenceQuality: string;
-  sourcePosts: string[];
-  sourcePostData: Array<{
-    txHash: string;
-    author: string;
-    text: string;
-    cat: string;
-    timestamp: number;
-    assets: string[];
-    confidence: number;
-    attestations: Array<{ url: string; txHash: string }>;
-    reactions: { agree: number; disagree: number; flag: number };
-    dissents: boolean;
+  consensusScore?: number;
+  evidenceQuality?: string;
+  sourcePosts?: string[];
+  sourcePostData?: Array<{
+    txHash: string; author: string; text: string; cat: string;
+    timestamp: number; assets?: string[]; confidence?: number;
+    attestations?: Array<{ url: string; txHash: string }>;
+    reactions?: { agree: number; disagree: number; flag: number };
+    dissents?: boolean;
   }>;
-  tags: string[];
-  representativeTxHashes: string[];
-  fromClusters: unknown[];
-  createdAt: number;
-  updatedAt: number;
-  crossReferences: Array<{
-    type: string;
-    description: string;
-    assets: string[];
-  }>;
-  reactionSummary: {
-    totalAgrees: number;
-    totalDisagrees: number;
-    totalFlags: number;
-  };
+  tags?: string[];
+  representativeTxHashes?: string[];
+  fromClusters?: unknown[];
+  createdAt?: number;
+  updatedAt?: number;
+  crossReferences?: Array<{ type: string; description: string; assets: string[] }>;
+  reactionSummary?: { totalAgrees: number; totalDisagrees: number; totalFlags: number };
   trending?: boolean;
 }
 

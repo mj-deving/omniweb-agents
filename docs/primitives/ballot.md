@@ -1,11 +1,11 @@
 ---
-summary: "Ballot primitives — getPool (active). Deprecated: getState, getAccuracy, getLeaderboard, getPerformance. Betting pool access."
-read_when: ["ballot", "betting", "pool", "bets", "getPool", "deprecated ballot"]
+summary: "Ballot primitives — getPool, getHigherLowerPool, getBinaryPools, getGraduationMarkets. Active betting pools via /api/bets/*."
+read_when: ["ballot", "betting", "pool", "bets", "getPool", "higher lower", "binary pool", "graduation"]
 ---
 
 # Ballot Primitives
 
-Access betting pools. The old ballot endpoints (`/api/ballot/*`) return 410 — use `getPool()` instead.
+Access betting pools via `/api/bets/*`. Four pool types: price prediction, higher/lower, binary (Polymarket), and graduation markets.
 
 ```typescript
 const ballot = toolkit.ballot;
@@ -28,30 +28,19 @@ const result = await ballot.getPool({ asset: "BTC" });
 
 **Returns:** `ApiResult<BettingPool>`
 
-<!-- generated:shape:start -->
 **Live Response Example:**
 
 ```json
 {
-  "totalDem": 5,
-  "totalBets": 1,
+  "totalDem": 0,
+  "totalBets": 0,
   "asset": "BTC",
   "horizon": "30m",
   "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf16233...",
-  "roundEnd": 1775806200000,
-  "bets": [
-    {
-      "txHash": "dc0406f110cc52242ba983a3f65ed2fef4c714...",
-      "bettor": "0xb382ee3611bb7f4b80584bc326adb7a3512ee8...",
-      "predictedPrice": 71980,
-      "amount": 5,
-      "roundEnd": 1775806200000,
-      "horizon": "30m"
-    }
-  ]
+  "roundEnd": 1776110400000,
+  "bets": []
 }
 ```
-<!-- generated:shape:end -->
 
 **BettingPool fields:**
 
@@ -69,16 +58,98 @@ const result = await ballot.getPool({ asset: "BTC" });
 
 ---
 
-## Deprecated Endpoints
+## getHigherLowerPool
 
-The following methods exist for backward compatibility but return HTTP 410:
+Get higher/lower prediction pools — bet on whether price goes up or down.
 
-| Method | Was | Use Instead |
-|--------|-----|-------------|
-| `getState(assets?)` | `/api/ballot` | `getPool({ asset })` |
-| `getAccuracy(address, asset?)` | `/api/ballot/accuracy` | — |
-| `getLeaderboard(opts?)` | `/api/ballot/leaderboard` | — |
-| `getPerformance(opts?)` | `/api/ballot/performance` | — |
+```typescript
+const result = await ballot.getHigherLowerPool({ asset: "BTC", horizon: "30m" });
+```
+
+**Parameters:** Same as `getPool`.
+
+**Returns:** `ApiResult<HigherLowerPool>`
+
+**Live Response Example:**
+
+```json
+{
+  "asset": "BTC",
+  "horizon": "30m",
+  "totalHigher": 0,
+  "totalLower": 0,
+  "totalDem": 0,
+  "higherCount": 0,
+  "lowerCount": 0,
+  "roundEnd": 1776112200000,
+  "referencePrice": null,
+  "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf16233...",
+  "currentPrice": 72696
+}
+```
+
+**Auth:** No auth required.
+
+---
+
+## getBinaryPools
+
+Get binary (yes/no) prediction pools mirroring Polymarket questions.
+
+```typescript
+const result = await ballot.getBinaryPools({ limit: 10 });
+```
+
+**Parameters:**
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| category | string | — | Filter by category |
+| limit | number | — | Max pools to return |
+
+**Returns:** `ApiResult<Record<string, BinaryPool>>`
+
+> **Note:** Response is `{ pools: Record<string, BinaryPool> }` — keyed by marketId, NOT an array.
+
+**Live Response Example:**
+
+```json
+{
+  "pools": {
+    "553827": {
+      "marketId": "553827",
+      "totalYes": 0,
+      "totalNo": 0,
+      "totalDem": 0,
+      "yesBetsCount": 0,
+      "noBetsCount": 0,
+      "yesMultiplier": null,
+      "noMultiplier": null,
+      "polymarketYes": 0.078,
+      "polymarketNo": 0.922,
+      "endDate": "2026-06-30T00:00:00Z",
+      "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf16233...",
+      "status": "active"
+    }
+  }
+}
+```
+
+**Auth:** No auth required.
+
+---
+
+## getGraduationMarkets
+
+Get graduation market pools.
+
+```typescript
+const result = await ballot.getGraduationMarkets({ limit: 10 });
+```
+
+> **Known issue (April 2026):** Returns HTTP 500 — `no such table: graduation_markets`. Not yet deployed on the backend.
+
+**Auth:** No auth required.
 
 ---
 

@@ -89,25 +89,29 @@ const result = await predictions.markets({ limit: 10 });
 
 > The toolkit unwraps `predictions` from the API response automatically.
 
-<!-- generated:shape:start -->
 **Live Response Example:**
 
 ```json
 {
-  "marketId": "678940",
-  "question": "Will Jeon Hyun-heui win the 2026 Seoul Mayoral Election",
-  "category": "crypto",
-  "outcomeYes": 0.0045,
-  "outcomeNo": 0.9955,
-  "volume": 999991.04,
-  "liquidity": 70122.77,
-  "endDate": "2026-06-03T00:00:00Z",
-  "lastUpdated": 1775676066033
+  "predictions": [
+    {
+      "marketId": "678940",
+      "question": "Will Jeon Hyun-heui win the 2026 Seoul Mayoral Election",
+      "category": "crypto",
+      "outcomeYes": 0.0045,
+      "outcomeNo": 0.9955,
+      "volume": 999991.04,
+      "liquidity": 70122.77,
+      "endDate": "2026-06-03T00:00:00Z",
+      "lastUpdated": 1775676066033
+    }
+  ],
+  "count": 3,
+  "categories": ["crypto", "politics"]
 }
 ```
-<!-- generated:shape:end -->
 
-The response also includes `count` and `categories` at the top level.
+The toolkit unwraps `predictions` from the response. Top-level `count` and `categories` are available in the raw response.
 
 **Auth:** No auth required.
 

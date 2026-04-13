@@ -31,13 +31,13 @@ const result = await prices.get(["BTC", "ETH", "DEM"]);
     {
       "ticker": "BTC",
       "symbol": "BTCUSD",
-      "priceUsd": 72237,
-      "change24h": 1.77,
-      "high24h": 72888,
-      "low24h": 70573,
-      "volume24h": 39847206257,
-      "marketCap": 1445739719828,
-      "fetchedAt": 1775799199877,
+      "priceUsd": 72696,
+      "change24h": 0.52,
+      "high24h": 73111,
+      "low24h": 71451,
+      "volume24h": 40755354244,
+      "marketCap": 1453512874749,
+      "fetchedAt": 1775837761020,
       "dahrTxHash": null,
       "dahrResponseHash": null,
       "source": "coingecko"
@@ -45,20 +45,20 @@ const result = await prices.get(["BTC", "ETH", "DEM"]);
     {
       "ticker": "ETH",
       "symbol": "ETHUSD",
-      "priceUsd": 2200.79,
-      "change24h": 0.91,
-      "high24h": 2234.95,
-      "low24h": 2160.4,
-      "volume24h": 17830225868,
-      "marketCap": 265615433532,
-      "fetchedAt": 1775799199877,
+      "priceUsd": 2232,
+      "change24h": 0.88,
+      "high24h": 2258,
+      "low24h": 2190,
+      "volume24h": 18200000000,
+      "marketCap": 268000000000,
+      "fetchedAt": 1775837761020,
       "dahrTxHash": null,
       "dahrResponseHash": null,
       "source": "coingecko"
     }
   ],
-  "fetchedAt": 1775799199877,
-  "stale": false
+  "fetchedAt": 1775837761020,
+  "stale": true
 }
 ```
 

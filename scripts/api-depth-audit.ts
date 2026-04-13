@@ -2,21 +2,25 @@
 /**
  * api-depth-audit.ts — Fetch EVERY read endpoint and capture full response shapes.
  *
+ * Uses direct HTTP fetch — no SDK, no connect(), no wallet, no RPC dependency.
  * Produces a JSON report of every field at every depth level for every endpoint.
  * This is the ground truth — what the API actually returns, not what types.ts says.
  *
  * Usage:
  *   npx tsx scripts/api-depth-audit.ts > api-depth-report.json
+ *   npx tsx scripts/api-depth-audit.ts --samples > api-depth-report-with-samples.json
  */
 
-import { connect } from "../packages/supercolony-toolkit/src/colony.js";
+const BASE_URL = process.env.SUPERCOLONY_API_URL ?? "https://supercolony.ai";
+const INCLUDE_SAMPLES = process.argv.includes("--samples");
+const AGENT_ADDR = "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b";
 
 interface FieldInfo {
   type: string;
   sample: unknown;
   children?: Record<string, FieldInfo>;
   arrayItemShape?: Record<string, FieldInfo>;
-  count?: number; // for arrays
+  count?: number;
 }
 
 /** Recursively extract the shape of any value */
@@ -24,14 +28,13 @@ function extractShape(value: unknown, depth: number = 0): FieldInfo {
   if (depth > 6) return { type: "...(max depth)", sample: null };
   if (value === null) return { type: "null", sample: null };
   if (value === undefined) return { type: "undefined", sample: undefined };
-  if (typeof value === "string") return { type: "string", sample: value.slice(0, 100) };
-  if (typeof value === "number") return { type: "number", sample: value };
-  if (typeof value === "boolean") return { type: "boolean", sample: value };
+  if (typeof value === "string") return { type: "string", sample: INCLUDE_SAMPLES ? value.slice(0, 100) : "(string)" };
+  if (typeof value === "number") return { type: "number", sample: INCLUDE_SAMPLES ? value : 0 };
+  if (typeof value === "boolean") return { type: "boolean", sample: INCLUDE_SAMPLES ? value : false };
 
   if (Array.isArray(value)) {
     const info: FieldInfo = { type: "array", sample: null, count: value.length };
     if (value.length > 0) {
-      // Shape from first item
       info.arrayItemShape = typeof value[0] === "object" && value[0] !== null
         ? Object.fromEntries(
             Object.entries(value[0]).map(([k, v]) => [k, extractShape(v, depth + 1)])
@@ -64,7 +67,7 @@ function flattenShape(shape: Record<string, FieldInfo>, prefix: string = ""): st
       lines.push(`${path}: array[${info.count}]`);
       lines.push(...flattenShape(info.arrayItemShape, `${path}[]`));
     } else {
-      const sampleStr = info.sample !== null && info.sample !== undefined
+      const sampleStr = INCLUDE_SAMPLES && info.sample !== null && info.sample !== undefined
         ? ` = ${JSON.stringify(info.sample)}` : "";
       lines.push(`${path}: ${info.type}${sampleStr}`);
     }
@@ -72,108 +75,170 @@ function flattenShape(shape: Record<string, FieldInfo>, prefix: string = ""): st
   return lines;
 }
 
-async function auditEndpoint(
-  name: string,
-  fn: () => Promise<unknown>,
-): Promise<{ name: string; ok: boolean; fields: string[]; rawShape?: Record<string, FieldInfo>; error?: string }> {
-  try {
-    const raw = await fn();
-    if (raw === null) return { name, ok: false, fields: [], error: "null (API unreachable)" };
+interface AuditResult {
+  name: string;
+  path: string;
+  ok: boolean;
+  fields: string[];
+  rawData?: unknown;
+  error?: string;
+  httpStatus?: number;
+}
 
-    const result = raw as any;
-    const data = result.ok === true ? result.data : result;
+async function auditEndpoint(name: string, path: string): Promise<AuditResult> {
+  const url = `${BASE_URL}${path}`;
+  try {
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("json")) {
+      return { name, path, ok: false, fields: [], httpStatus: res.status, error: `Non-JSON response: ${contentType.slice(0, 60)}` };
+    }
+
+    const data = await res.json();
+    if (!res.ok) {
+      return { name, path, ok: false, fields: [], httpStatus: res.status, error: `HTTP ${res.status}: ${JSON.stringify(data).slice(0, 100)}` };
+    }
+
     const shape = typeof data === "object" && data !== null
       ? Object.fromEntries(
           Object.entries(data).map(([k, v]) => [k, extractShape(v)])
         )
       : { _root: extractShape(data) };
 
-    return { name, ok: result.ok !== false, fields: flattenShape(shape), rawShape: shape };
+    return {
+      name,
+      path,
+      ok: true,
+      fields: flattenShape(shape),
+      rawData: INCLUDE_SAMPLES ? data : undefined,
+      httpStatus: res.status,
+    };
   } catch (err) {
-    return { name, ok: false, fields: [], error: (err as Error).message.slice(0, 200) };
+    return { name, path, ok: false, fields: [], error: (err as Error).message.slice(0, 200) };
   }
 }
 
 async function main() {
-  const omni = await connect();
-  const addr = omni.address;
-  const results: Array<{ name: string; ok: boolean; fields: string[]; error?: string }> = [];
+  console.error(`API Depth Audit — ${BASE_URL}`);
+  console.error(`Agent address: ${AGENT_ADDR}\n`);
 
-  // Get a sample txHash for per-post endpoints
-  const feedSample = await omni.colony.getFeed({ limit: 1 });
-  const sampleTx = feedSample?.ok ? (feedSample.data as any).posts?.[0]?.txHash : null;
+  // Get a sample txHash from feed for per-post endpoints
+  let sampleTx: string | null = null;
+  try {
+    const feedRes = await fetch(`${BASE_URL}/api/feed?limit=1`, {
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (feedRes.ok) {
+      const feedData = await feedRes.json();
+      sampleTx = feedData?.posts?.[0]?.txHash ?? null;
+    }
+  } catch { /* non-critical */ }
 
-  console.error("Auditing all endpoints...");
+  console.error(`Sample txHash: ${sampleTx?.slice(0, 16) ?? "none"}...\n`);
 
-  // ── Colony domain ──
-  results.push(await auditEndpoint("colony.getFeed({})", () => omni.colony.getFeed()));
-  results.push(await auditEndpoint("colony.getFeed({limit:1,category:'ANALYSIS'})", () => omni.colony.getFeed({ limit: 1, category: "ANALYSIS" })));
-  results.push(await auditEndpoint("colony.search({text:'bitcoin'})", () => omni.colony.search({ text: "bitcoin" })));
-  results.push(await auditEndpoint("colony.getSignals()", () => omni.colony.getSignals()));
-  results.push(await auditEndpoint("colony.getOracle()", () => omni.colony.getOracle()));
-  results.push(await auditEndpoint("colony.getOracle({assets:['BTC','ETH']})", () => omni.colony.getOracle({ assets: ["BTC", "ETH"] })));
-  results.push(await auditEndpoint("colony.getPrices(['BTC','ETH'])", () => omni.colony.getPrices(["BTC", "ETH"])));
-  results.push(await auditEndpoint("colony.getBalance()", () => omni.colony.getBalance()));
-  results.push(await auditEndpoint("colony.getLeaderboard({limit:3})", () => omni.colony.getLeaderboard({ limit: 3 })));
-  results.push(await auditEndpoint("colony.getAgents()", () => omni.colony.getAgents()));
-  results.push(await auditEndpoint("colony.getPool({asset:'BTC',horizon:'30m'})", () => omni.colony.getPool({ asset: "BTC", horizon: "30m" })));
-  if (sampleTx) {
-    results.push(await auditEndpoint(`colony.getReactions('${sampleTx.slice(0, 12)}...')`, () => omni.colony.getReactions(sampleTx)));
-    results.push(await auditEndpoint(`colony.getTipStats('${sampleTx.slice(0, 12)}...')`, () => omni.colony.getTipStats(sampleTx)));
+  const endpoints: Array<{ name: string; path: string }> = [
+    // ── Feed ──
+    { name: "feed.getRecent", path: "/api/feed?limit=2" },
+    { name: "feed.search", path: "/api/feed/search?text=bitcoin&limit=2" },
+    { name: "feed.getPost", path: sampleTx ? `/api/post/${sampleTx}` : "" },
+    { name: "feed.getThread", path: sampleTx ? `/api/feed/thread/${sampleTx}` : "" },
+
+    // ── Intelligence ──
+    { name: "signals.get", path: "/api/signals" },
+    { name: "convergence.get", path: "/api/convergence" },
+    { name: "report.get", path: "/api/report" },
+
+    // ── Oracle ──
+    { name: "oracle.get", path: "/api/oracle" },
+    { name: "oracle.getFiltered", path: "/api/oracle?assets=BTC,ETH" },
+
+    // ── Prices ──
+    { name: "prices.get", path: "/api/prices?assets=BTC,ETH" },
+
+    // ── Agents ──
+    { name: "agents.list", path: "/api/agents" },
+    { name: "agents.getProfile", path: `/api/agent/${AGENT_ADDR}` },
+    { name: "agents.getIdentities", path: `/api/agent/${AGENT_ADDR}/identities` },
+    { name: "agents.getBalance", path: `/api/agent/${AGENT_ADDR}/balance` },
+
+    // ── Scores ──
+    { name: "scores.leaderboard", path: "/api/scores/agents?limit=3" },
+    { name: "scores.topPosts", path: "/api/scores/top?limit=3" },
+
+    // ── Health & Stats ──
+    { name: "health.check", path: "/api/health" },
+    { name: "stats.get", path: "/api/stats" },
+
+    // ── Predictions ──
+    { name: "predictions.query", path: "/api/predictions?status=pending" },
+    { name: "predictions.markets", path: "/api/predictions/markets?limit=3" },
+
+    // ── Betting ──
+    { name: "ballot.getPool", path: "/api/bets/pool?asset=BTC&horizon=30m" },
+    { name: "ballot.higherLower", path: "/api/bets/higher-lower/pool?asset=BTC&horizon=30m" },
+    { name: "ballot.binaryPools", path: "/api/bets/binary/pools?limit=3" },
+    { name: "ballot.graduationMarkets", path: "/api/bets/graduation/markets?limit=3" },
+
+    // ── Actions (reads) ──
+    { name: "actions.getReactions", path: sampleTx ? `/api/feed/${sampleTx}/react` : "" },
+    { name: "actions.getTipStats", path: sampleTx ? `/api/tip/${sampleTx}` : "" },
+    { name: "actions.getAgentTips", path: `/api/agent/${AGENT_ADDR}/tips` },
+
+    // ── Identity ──
+    { name: "identity.search", path: "/api/identity?search=demos" },
+
+    // ── Webhooks ──
+    { name: "webhooks.list", path: "/api/webhooks" },
+
+    // ── Verification ──
+    { name: "verify.dahr", path: sampleTx ? `/api/verify/${sampleTx}` : "" },
+  ];
+
+  // Filter out endpoints that need a sample txHash but we don't have one
+  const validEndpoints = endpoints.filter(e => e.path !== "");
+
+  console.error(`Auditing ${validEndpoints.length} endpoints...\n`);
+
+  const results: AuditResult[] = [];
+
+  // Run sequentially to avoid rate limiting
+  for (const ep of validEndpoints) {
+    const result = await auditEndpoint(ep.name, ep.path);
+    results.push(result);
+    const status = result.ok ? "✓" : "✗";
+    const httpTag = result.httpStatus ? ` [${result.httpStatus}]` : "";
+    console.error(
+      `  ${status} ${result.name.padEnd(30)} ${result.fields.length.toString().padStart(3)} fields${httpTag}${result.error ? ` — ${result.error.slice(0, 50)}` : ""}`,
+    );
   }
-  results.push(await auditEndpoint("colony.getMarkets({limit:2})", () => omni.colony.getMarkets({ limit: 2 })));
-  results.push(await auditEndpoint("colony.getPredictions({status:'pending'})", () => omni.colony.getPredictions({ status: "pending" })));
-  results.push(await auditEndpoint(`colony.getForecastScore('${addr.slice(0, 12)}...')`, () => omni.colony.getForecastScore(addr)));
 
-  // ── Toolkit internal domains ──
-  results.push(await auditEndpoint("toolkit.agents.getProfile(addr)", () => omni.toolkit.agents.getProfile(addr)));
-  results.push(await auditEndpoint("toolkit.agents.getIdentities(addr)", () => omni.toolkit.agents.getIdentities(addr)));
-  results.push(await auditEndpoint("toolkit.agents.list()", () => omni.toolkit.agents.list()));
-  results.push(await auditEndpoint("toolkit.intelligence.getSignals()", () => omni.toolkit.intelligence.getSignals()));
-  results.push(await auditEndpoint("toolkit.intelligence.getReport()", () => omni.toolkit.intelligence.getReport()));
-  results.push(await auditEndpoint("toolkit.scores.getLeaderboard({limit:3})", () => omni.toolkit.scores.getLeaderboard({ limit: 3 })));
-  results.push(await auditEndpoint("toolkit.oracle.get()", () => omni.toolkit.oracle.get()));
-  results.push(await auditEndpoint("toolkit.prices.get(['BTC'])", () => omni.toolkit.prices.get(["BTC"])));
-  results.push(await auditEndpoint("toolkit.balance.get()", () => omni.toolkit.balance.get()));
-  results.push(await auditEndpoint("toolkit.health.check()", () => omni.toolkit.health.check()));
-  results.push(await auditEndpoint("toolkit.stats.get()", () => omni.toolkit.stats.get()));
-  results.push(await auditEndpoint("toolkit.predictions.query({})", () => omni.toolkit.predictions.query({})));
-  results.push(await auditEndpoint("toolkit.predictions.markets()", () => omni.toolkit.predictions.markets()));
-  results.push(await auditEndpoint("toolkit.ballot.getPool({asset:'BTC'})", () => omni.toolkit.ballot.getPool({ asset: "BTC" })));
-  results.push(await auditEndpoint("toolkit.webhooks.list()", () => omni.toolkit.webhooks.list()));
-
-  // ── Identity domain ──
-  results.push(await auditEndpoint("identity.getIdentities()", () => omni.identity.getIdentities()));
-  results.push(await auditEndpoint("identity.lookup('twitter','demos_ai')", () => omni.identity.lookup("twitter", "demos_ai")));
-  results.push(await auditEndpoint("identity.createProof()", () => omni.identity.createProof()));
-
-  // ── Chain domain ──
-  results.push(await auditEndpoint("chain.getBalance(addr)", () => omni.chain.getBalance(addr)));
-  results.push(await auditEndpoint("chain.getBlockNumber()", () => omni.chain.getBlockNumber()));
-
-  // ── Storage domain ──
-  results.push(await auditEndpoint("storage.list()", () => omni.storage.list()));
-  results.push(await auditEndpoint("storage.search('agent')", () => omni.storage.search("agent")));
-
-  // ── Print human-readable summary to stderr, JSON to stdout ──
+  // ── Summary ──
   const passed = results.filter(r => r.ok).length;
   const failed = results.filter(r => !r.ok).length;
 
-  console.error(`\n═══ API Depth Audit ═══`);
-  console.error(`Endpoints: ${results.length} | OK: ${passed} | Failed: ${failed}\n`);
+  console.error(`\n═══ API Depth Audit Summary ═══`);
+  console.error(`Endpoints: ${results.length} | OK: ${passed} | Failed: ${failed}`);
 
-  // Print field counts per endpoint
-  for (const r of results) {
-    const status = r.ok ? "✓" : "✗";
-    console.error(`${status} ${r.name.padEnd(55)} ${r.fields.length} fields${r.error ? ` — ${r.error.slice(0, 60)}` : ""}`);
-  }
-
-  // Total unique field paths
   const allFields = new Set(results.flatMap(r => r.fields));
-  console.error(`\nTotal unique field paths: ${allFields.size}`);
+  console.error(`Total unique field paths: ${allFields.size}\n`);
 
   // Output full JSON report to stdout
-  console.log(JSON.stringify(results.map(r => ({ name: r.name, ok: r.ok, fieldCount: r.fields.length, fields: r.fields, error: r.error })), null, 2));
+  const output = results.map(r => ({
+    name: r.name,
+    path: r.path,
+    ok: r.ok,
+    httpStatus: r.httpStatus,
+    fieldCount: r.fields.length,
+    fields: r.fields,
+    rawData: r.rawData,
+    error: r.error,
+  }));
+  console.log(JSON.stringify(output, null, 2));
 }
 
 main().catch(e => { console.error("Fatal:", e.message); process.exit(1); });

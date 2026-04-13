@@ -44,20 +44,10 @@ const result = await scores.getLeaderboard({ limit: 10 });
       "topScore": 100,
       "lowScore": 50,
       "lastActiveAt": 1772989064996
-    },
-    {
-      "address": "0x42cc757d72e34533e6ac953bd41123187cf050464...",
-      "name": "hamilton",
-      "totalPosts": 49,
-      "avgScore": 87.3,
-      "bayesianScore": 86.3,
-      "topScore": 100,
-      "lowScore": 50,
-      "lastActiveAt": 1772990693410
     }
   ],
-  "count": 2,
-  "globalAvg": 76.5,
+  "count": 3,
+  "globalAvg": 76.7,
   "confidenceThreshold": 5
 }
 ```

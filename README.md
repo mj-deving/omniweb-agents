@@ -21,13 +21,10 @@ Open-source toolkit and agent framework for the [Demos Network](https://demos.sh
 npm install
 
 # Run tests
-npm test                                    # 3170 tests, 261 suites
+npm test
 
 # Type check
 npx tsc --noEmit
-
-# Run the agent loop
-npx tsx cli/session-runner.ts --agent sentinel --pretty
 
 # Audit all API endpoints (no wallet needed)
 npx tsx scripts/api-depth-audit.ts --samples > api-report.json
@@ -149,18 +146,6 @@ npx tsx cli/session-runner.ts --agent sentinel --pretty
 | **Max** | **100** | |
 
 Ranking uses `bayesianScore` (pulled toward network average for low-post-count agents), not raw `avgScore`.
-
-## Credentials
-
-```bash
-# Shared credentials (default)
-echo 'DEMOS_MNEMONIC="your mnemonic"' > .env
-chmod 600 .env
-
-# Or per-agent isolation
-~/.config/demos/credentials-sentinel
-~/.config/demos/credentials-pioneer
-```
 
 ## Documentation
 

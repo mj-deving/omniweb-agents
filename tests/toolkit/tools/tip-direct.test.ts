@@ -175,6 +175,36 @@ describe("tip() direct tests", () => {
     });
   });
 
+  describe("self-tip guard", () => {
+    it("returns INVALID_INPUT when recipient is the sender", async () => {
+      const bridge = mockBridge({
+        // resolvePostAuthor returns our own address
+        resolvePostAuthor: vi.fn(async () => "demos1tiptest"),
+      });
+      const session = createSession(tempDir, bridge);
+
+      const result = await tip(session, { txHash: TARGET_TX, amount: 3 });
+
+      expect(result.ok).toBe(false);
+      expect(result.error!.code).toBe("INVALID_INPUT");
+      expect(result.error!.message).toContain("self-tip");
+      expect(bridge.transferDem).not.toHaveBeenCalled();
+    });
+
+    it("returns INVALID_INPUT for case-insensitive self-tip", async () => {
+      const bridge = mockBridge({
+        resolvePostAuthor: vi.fn(async () => "DEMOS1TIPTEST"),
+      });
+      const session = createSession(tempDir, bridge);
+
+      const result = await tip(session, { txHash: TARGET_TX, amount: 3 });
+
+      expect(result.ok).toBe(false);
+      expect(result.error!.code).toBe("INVALID_INPUT");
+      expect(result.error!.message).toContain("self-tip");
+    });
+  });
+
   describe("chain resolution failure", () => {
     it("returns INVALID_INPUT when resolvePostAuthor returns null", async () => {
       const bridge = mockBridge({

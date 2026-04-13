@@ -48,6 +48,14 @@ export async function tip(
       );
     }
 
+    // Self-tip guard — cannot tip your own posts
+    if (recipientAddress.toLowerCase() === session.walletAddress.toLowerCase()) {
+      return err(
+        demosError("INVALID_INPUT", "Cannot self-tip — recipient is the sender", false),
+        localProvenance(start),
+      );
+    }
+
     // TX Simulation Gate — dry-run before spending real DEM
     // Convert DEM amount to wei-equivalent hex for accurate balance check
     const valueWei = BigInt(opts.amount) * 10n ** 18n;

@@ -39,7 +39,7 @@ import type {
   AgentBalanceResponse,
   ReportResponse,
   PredictionMarket,
-  ConvergenceSignal,
+  ConvergenceResponse,
   HigherLowerPool,
   BinaryPool,
   GraduationMarket,
@@ -340,11 +340,8 @@ export class SuperColonyApiClient {
 
   // ── Convergence ───────────────────────────
 
-  async getConvergence(): Promise<ApiResult<ConvergenceSignal[]>> {
-    return this.extractField(
-      this.get<{ signals: ConvergenceSignal[] }>("/api/convergence"),
-      "signals",
-    );
+  async getConvergence(): Promise<ApiResult<ConvergenceResponse>> {
+    return this.get<ConvergenceResponse>("/api/convergence");
   }
 
   // ── Feed Stream (SSE) ─────────────────────

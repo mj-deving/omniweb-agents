@@ -1,14 +1,7 @@
-/**
- * Shared SuperColony type definitions.
- *
- * These types reflect the official SuperColony skill spec and are used
- * across toolkit and strategy layers. Includes post categories, API response
- * types, and the ApiResult<T> generic for graceful degradation.
- */
+/** Shared SuperColony type definitions — reflects live API shapes (verified April 2026). */
 
 // ── Post Categories ─────────────────────────────────
 
-/** All post categories from the official SuperColony docs (supercolony.ai/docs) */
 export type PostCategory =
   | "OBSERVATION"
   | "ANALYSIS"
@@ -35,8 +28,6 @@ export const POST_CATEGORIES: readonly PostCategory[] = [
 ] as const;
 
 // ── Generic Result ──────────────────────────────────
-
-/** Generic API result -- null means API was unreachable (graceful degradation) */
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number; error: string }
@@ -197,27 +188,33 @@ export interface OracleDivergence {
   };
 }
 
+export interface PolymarketEntry {
+  marketId: string;
+  question: string;
+  category: string;
+  outcomeYes: number;
+  outcomeNo: number;
+  volume: number;
+  liquidity: number;
+  endDate: string;
+  lastUpdated: number;
+}
+
 export interface OracleResult {
-  overallSentiment?: { direction: string; score: number; agentCount: number; topAssets: string[] };
-  assets?: Array<{
+  overallSentiment: { direction: string; score: number; agentCount: number; topAssets: string[] };
+  assets: Array<{
     ticker: string;
     postCount: number;
-    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h?: number; marketCap?: number; dahrTxHash?: string | null; source?: string };
-    sparkline?: Array<{ t: number; p: number }>;
-    sentiment?: { direction: string; score: number; agentCount?: number; confidence?: number; topPosts?: Array<{ txHash: string; author: string; text: string; category: string; confidence?: number; direction?: string; timestamp: number }> };
-    polymarket?: Record<string, unknown>;
-    predictions?: Record<string, number>;
+    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h: number; marketCap: number; dahrTxHash: string | null; source: string };
+    sparkline: unknown[];
+    sentiment: { direction: string; score: number; agentCount: number; confidence: number; topPosts: Array<{ txHash: string; author: string; text: string; category: string; confidence: number; direction: string; timestamp: number }> };
+    sentimentTimeline: Array<{ t: number; score: number; postCount: number }>;
+    predictions: { pending: number; resolved: number; accuracy: number | null; topPredictions: unknown[] };
+    polymarketOdds: unknown[];
   }>;
+  polymarket: { assetSpecific: PolymarketEntry[]; macro: PolymarketEntry[] };
   divergences: OracleDivergence[];
-  polymarket?: Record<string, unknown>;
-  meta?: Record<string, unknown>;
-  /** @deprecated Use divergences. Old shape kept for backward compat in tests. */
-  priceDivergences?: Array<{ asset: string; cex: number; dex: number; spread: number }>;
-  /** @deprecated Use overallSentiment. */
-  sentiment?: Record<string, number>;
-  /** @deprecated */
-  polymarketOdds?: Array<{ market: string; outcome: string; probability: number }>;
-  timestamp?: number;
+  meta: { pricesFetchedAt: number; pricesStale: boolean; computedAt: number; ragAvailable: boolean; window: string };
 }
 
 // ── Prices ──────────────────────────────────────────
@@ -244,11 +241,6 @@ export interface PriceHistoryResponse {
   history: Record<string, PriceData[]>;
 }
 
-/** @deprecated Use PriceHistoryResponse instead. */
-export interface PriceHistoryEntry {
-  price: number;
-  timestamp: number;
-}
 
 // ── Network Stats ───────────────────────────────────
 
@@ -285,21 +277,34 @@ export interface TlsnVerification {
 export interface FeedPost {
   txHash: string;
   author: string;
-  blockNumber?: number;
+  blockNumber: number;
   timestamp: number;
-  payload: Record<string, unknown>;
-  replyDepth?: number;
-  score?: number;
-  replyCount?: number;
-  reactions?: { agree: number; disagree: number; flag: number };
-  reputationTier?: string;
-  reputationScore?: number;
+  payload: {
+    v: number;
+    cat: string;
+    text: string;
+    tags?: string[];
+    confidence?: number;
+    payload?: Record<string, unknown>;
+  };
+  replyDepth: number;
+  score: number;
+  replyCount: number;
+  reactions: { agree: number; disagree: number; flag: number };
+  reputationTier: string;
+  reputationScore: number;
 }
 
 export interface FeedResponse {
   posts: FeedPost[];
-  hasMore?: boolean;
+  hasMore: boolean;
   query?: Record<string, unknown>;
+  meta?: {
+    totalIndexed: number;
+    lastBlock: number;
+    publishers: number;
+    categories: Record<string, number>;
+  };
 }
 
 // ── Thread ──────────────────────────────────────────
@@ -313,41 +318,52 @@ export interface ThreadResponse {
 
 export interface SignalData {
   topic: string;
-  shortTopic?: string;
+  shortTopic: string;
   text: string;
   direction: string;
   consensus: boolean;
-  keyInsight?: string;
+  keyInsight: string;
   confidence: number;
-  assets?: string[];
+  assets: string[];
   agentCount: number;
   totalAgents: number;
-  consensusScore?: number;
-  evidenceQuality?: string;
-  sourcePosts?: string[];
-  sourcePostData?: Array<{
+  consensusScore: number;
+  evidenceQuality: string;
+  sourcePosts: string[];
+  sourcePostData: Array<{
     txHash: string;
     author: string;
     text: string;
     cat: string;
     timestamp: number;
-    assets?: string[];
-    confidence?: number;
-    attestations?: Array<{ url: string; txHash: string }>;
-    reactions?: { agree: number; disagree: number; flag: number };
-    dissents?: boolean;
+    assets: string[];
+    confidence: number;
+    attestations: Array<{ url: string; txHash: string }>;
+    reactions: { agree: number; disagree: number; flag: number };
+    dissents: boolean;
   }>;
+  tags: string[];
+  representativeTxHashes: string[];
+  fromClusters: unknown[];
+  createdAt: number;
+  updatedAt: number;
+  crossReferences: Array<{
+    type: string;
+    description: string;
+    assets: string[];
+  }>;
+  reactionSummary: {
+    totalAgrees: number;
+    totalDisagrees: number;
+    totalFlags: number;
+  };
   trending?: boolean;
 }
-
-// ── TLSN Proof ──────────────────────────────────────
 
 export interface TlsnProofData {
   proof: Record<string, unknown>;
   txHash: string;
 }
-
-// ── Tip Initiation ──────────────────────────────────
 
 export interface TipInitiateResponse {
   ok: boolean;
@@ -371,18 +387,18 @@ export interface ReportResponse {
   script: {
     title: string;
     summary: string;
-    duration_estimate?: string;
+    duration_estimate: string;
     segments: Array<{ speaker: string; text: string; topic: string; tone: string }>;
-    highlights?: string[];
+    highlights: string[];
   };
-  audioUrl?: string;
-  signalCount?: number;
-  postCount?: number;
-  agentCount?: number;
-  sources?: Array<{ url: string; txHash: string }>;
+  audioUrl: string;
+  signalCount: number;
+  postCount: number;
+  agentCount: number;
+  sources: Array<{ url: string; txHash: string; timestamp: number }>;
   status: string;
-  createdAt: string;
-  publishedAt?: string;
+  createdAt: number;    // Unix ms (NOT ISO string)
+  publishedAt: number;  // Unix ms (NOT ISO string)
 }
 
 // ── Prediction Markets ──────────────────────────────
@@ -393,44 +409,77 @@ export interface PredictionMarket {
   category: string;
   outcomeYes: number;
   outcomeNo: number;
-  volume: string;
-  liquidity?: string;
-  endDate?: string;
+  volume: number;
+  liquidity: number;
+  endDate: string;
+  lastUpdated: number;
 }
 
 // ── Convergence ────────────────────────────────────
 
-export interface ConvergenceSignal {
-  topic: string;
-  direction: string;
-  confidence: number;
-  sources: Array<{ agent: string; text: string; timestamp: number }>;
-  assets?: string[];
-  createdAt: string;
+export interface ConvergenceResponse {
+  pulse: {
+    activeSignals: number;
+    agentsOnline: number;
+    postsPerHour: number;
+    dataSources: number;
+    signalAgentRunning: boolean;
+    lastSynthesisAt: number;
+  };
+  mindshare: {
+    buckets: number[];
+    series: Array<{
+      topic: string;
+      shortTopic: string;
+      direction: string;
+      agentCount: number;
+      totalAgents: number;
+      totalPosts: number;
+      agrees: number;
+      disagrees: number;
+      counts: number[];
+      sourceTxHashes: string[];
+      assets: string[];
+      confidence: number;
+    }>;
+  };
+  stats: { totalPosts: number; totalAgents: number; totalAssets: number };
+  cached: boolean;
 }
+
 
 // ── Higher-Lower Betting ───────────────────────────
 
 export interface HigherLowerPool {
   asset: string;
-  currentPrice: number;
-  roundEnd: number;
+  horizon: string;
   totalHigher: number;
   totalLower: number;
   totalDem: number;
-  bets: Array<{ txHash: string; bettor: string; direction: "higher" | "lower"; amount: number; roundEnd: number }>;
+  higherCount: number;
+  lowerCount: number;
+  roundEnd: number;
+  referencePrice: number | null;
+  poolAddress: string;
+  currentPrice: number;
 }
 
 // ── Binary Betting (Polymarket) ────────────────────
 
 export interface BinaryPool {
   marketId: string;
-  question: string;
-  outcomeYes: number;
-  outcomeNo: number;
-  volume: number;
-  endDate?: string;
-  bets: Array<{ txHash: string; bettor: string; outcome: "yes" | "no"; amount: number }>;
+  totalYes: number;
+  totalNo: number;
+  totalDem: number;
+  yesBetsCount: number;
+  noBetsCount: number;
+  yesMultiplier: number | null;
+  noMultiplier: number | null;
+  polymarketYes: number;
+  polymarketNo: number;
+  endDate: string;
+  poolAddress: string;
+  status: string;
 }
 
 // ── Graduation Markets (PumpFun → Raydium) ─────────
@@ -445,18 +494,7 @@ export interface GraduationMarket {
   createdAt: string;
 }
 
-// ── Feed (FEED category) — DEPRECATED ───────────────
-
-/** @deprecated Use FeedPost from FeedResponse instead. */
-export interface LegacyFeedPost {
-  txHash: string;
-  author: string;
-  text: string;
-  timestamp: number;
-  tags: string[];
-}
-
 export interface FeedResult {
-  posts: LegacyFeedPost[];
+  posts: Array<{ txHash: string; author: string; text: string; timestamp: number; tags: string[] }>;
   count: number;
 }

@@ -194,6 +194,8 @@ export interface DahrVerification {
     explorerUrl: string;
   }>;
   reason?: string;
+  postAuthor?: string;
+  postCategory?: string;
 }
 
 // ── Webhooks ────────────────────────────────────────

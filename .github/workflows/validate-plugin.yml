@@ -22,6 +22,11 @@ jobs:
       - name: Run full test suite (includes behavioral guardrails + OpenAPI drift)
         run: npx vitest run
 
+      # ── Build ────────────────────────────────────────
+      - name: Build toolkit package
+        working-directory: packages/supercolony-toolkit
+        run: npx tsup
+
       # ── Packaging check ────────────────────────────
       - name: Verify npm pack includes all skill files
         working-directory: packages/supercolony-toolkit

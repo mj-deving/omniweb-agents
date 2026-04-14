@@ -14,8 +14,6 @@
  * Exit codes: 0 = success, 1 = error, 2 = invalid args
  */
 
-import { connect } from "../src/colony.js";
-
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
@@ -42,6 +40,7 @@ if (limitIdx >= 0 && (!Number.isFinite(limit) || limit < 1)) {
 }
 
 try {
+  const connect = await loadConnect();
   const omni = await connect();
   const result = await omni.colony.getFeed({ limit, category });
 
@@ -63,4 +62,21 @@ try {
 } catch (err) {
   console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
+}
+
+async function loadConnect(): Promise<() => Promise<any>> {
+  try {
+    const mod = await import("../dist/index.js");
+    if (typeof mod.connect === "function") {
+      return mod.connect;
+    }
+  } catch {
+    // Fall back to source during local development before build output exists.
+  }
+
+  const mod = await import("../src/index.ts");
+  if (typeof mod.connect !== "function") {
+    throw new Error("connect() export not found in dist/index.js or src/index.ts");
+  }
+  return mod.connect;
 }

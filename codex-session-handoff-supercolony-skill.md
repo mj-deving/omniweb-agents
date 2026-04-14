@@ -31,6 +31,7 @@ Three kinds of work were completed:
 5. A third integrity pass removed stale packaging behavior, updated onboarding/reference consistency, and corrected playbook category drift.
 6. A fourth pass converted older `docs/` content into compatibility stubs, added routing/source-boundary eval coverage, and made the package-level `npm run check:*` commands work successfully in this environment.
 7. A fifth pass focused on release integrity: split live checks into smoke vs detailed paths, made smoke-check failures report structured DNS/network diagnostics, removed the last stale fixed-count metadata claims, rebuilt the package so shipped artifacts matched the new source wording, and tightened package-facing docs so shipped README content no longer points at repo-only audit files.
+8. A sixth pass fixed the published-script surface: repo-shipped helper scripts no longer depend on unshipped `src/` paths, the release check now requires the documented `feed.ts` and `balance.ts` scripts, and the package self-audit verifies that every top-level script supports `--help`.
 
 ## Research Performed
 
@@ -281,6 +282,12 @@ On the sixth pass, package-facing maintenance cues were tightened:
 - `scripts/skill-self-audit.ts` now audits `README.md` alongside the other package entry docs and fails if repo-only audit links leak back into the shipped package surface
 - both shell helpers, `check-live.sh` and `check-release.sh`, now implement `--help` so the documented non-interactive script surface is accurate
 
+On the seventh pass, the published script surface itself was corrected:
+
+- `scripts/feed.ts` and `scripts/balance.ts` now load `connect()` from the public built package surface first and fall back to source only for local development
+- `scripts/check-release.sh` now requires those documented helper scripts to appear in the dry-run tarball
+- `scripts/skill-self-audit.ts` now verifies that every top-level script responds successfully to `--help`
+
 #### `agents/openai.yaml`
 
 Added UI-facing AgentSkills metadata:
@@ -403,6 +410,8 @@ Result:
 - confirmed package metadata no longer contains a `prepack` step that overwrites `references/`
 - confirmed `SKILL.md` now routes to every maintained top-level script, including `check-release.sh`
 - confirmed `README.md` no longer links to repo-only audit docs that are excluded from the tarball
+- confirmed documented helper scripts no longer depend on unshipped `src/` paths without a dist fallback
+- confirmed every top-level script responds to `--help`
 
 Latest passing self-audit counts after the final pass:
 
@@ -424,6 +433,8 @@ Confirmed each new script supports `--help` and returns structured usage text:
 - `skill-self-audit.ts`
 - `check-live.sh`
 - `check-release.sh`
+- `feed.ts`
+- `balance.ts`
 
 ### Eval verification
 
@@ -494,6 +505,7 @@ Latest release-check result:
 - tarball entry count: `64`
 - required files missing: none
 - forbidden repo-only docs included: none
+- documented helper scripts included: `scripts/feed.ts`, `scripts/balance.ts`, `scripts/check-live.sh`, `scripts/check-release.sh`
 
 Current expected constrained check:
 

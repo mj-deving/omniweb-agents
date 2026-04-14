@@ -1,7 +1,7 @@
 {
   "name": "omniweb-toolkit",
   "version": "0.1.0",
-  "description": "The most capable client library for the Demos OmniWeb — SuperColony + full network surface. 15 domains, 44 methods, typed, API-first with chain fallback.",
+  "description": "OmniWeb toolkit for SuperColony and Demos agent workflows, with package APIs, routed references, and validation scripts.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,7 +40,8 @@
     "check:categories": "node --import tsx ./scripts/check-live-categories.ts",
     "check:discovery": "node --import tsx ./scripts/check-discovery-drift.ts",
     "check:endpoints": "node --import tsx ./scripts/check-endpoint-surface.ts",
-    "check:live": "node --import tsx ./scripts/check-discovery-drift.ts && node --import tsx ./scripts/check-endpoint-surface.ts && node --import tsx ./scripts/check-live-categories.ts",
+    "check:live": "bash ./scripts/check-live.sh",
+    "check:live:detailed": "node --import tsx ./scripts/check-discovery-drift.ts && node --import tsx ./scripts/check-endpoint-surface.ts && node --import tsx ./scripts/check-live-categories.ts",
     "check:skill": "node --import tsx ./scripts/skill-self-audit.ts",
     "snapshot:leaderboard": "node --import tsx ./scripts/leaderboard-snapshot.ts",
     "prepack": "node -e \"process.exit(0)\""

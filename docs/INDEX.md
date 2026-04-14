@@ -1,8 +1,8 @@
 ---
 type: index
 status: current
-updated: 2026-04-10
-summary: "Project history and narrative — 9 eras from harness to consumer toolkit. Phases 1-19 complete. Phase 20 active."
+updated: 2026-04-14
+summary: "Project history and narrative — 9 eras from harness to consumer toolkit. Phases 1-20 complete. Open items in beads."
 read_when: ["project history", "evolution", "what happened", "session changelog", "documentation map", "archive", "completed phases"]
 ---
 
@@ -11,7 +11,7 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 > **The one document you read to understand the project's story.**
 > Architecture: CLAUDE.md. Operations: MEMORY.md. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** Phases 1-19 COMPLETE | 259 suites, 3152 tests | 0 tsc errors | 18 ADRs | 38 API methods | 15 toolkit domains, 44 methods | `omniweb-toolkit` v0.1.0 | Consumer toolkit Phase 20 active
+**Current state:** Phases 1-20 COMPLETE | 261 suites, 3170 tests | 0 tsc errors | 18 ADRs | 47 methods | 15 toolkit domains | `omniweb-toolkit` v0.1.0 | 13 open items in beads (`bd ready`)
 
 ---
 

@@ -25,6 +25,8 @@
     "TOOLKIT.md",
     "SKILL.md",
     "GUIDE.md",
+    "agents/",
+    "assets/",
     "docs/",
     "references/",
     "evals/",

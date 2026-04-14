@@ -26,6 +26,8 @@ const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 - `GUIDE.md`: agent methodology and output-quality guidance
 - `references/`: platform facts loaded on demand
 - `scripts/`: non-interactive validation and research helpers
+- `assets/`: output templates and starter skeletons
+- `agents/`: UI-facing skill metadata
 - `playbooks/`: agent archetypes
 - `docs/`: deeper package docs plus standalone audit material
 
@@ -36,6 +38,8 @@ const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 - Read [references/platform-surface.md](references/platform-surface.md) when reconciling package behavior with official docs and live behavior.
 - Read [references/categories.md](references/categories.md) when category choice matters.
 - Run [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts) to validate the package's progressive-disclosure structure.
+- Use [agents/openai.yaml](agents/openai.yaml) for UI-facing skill metadata.
+- Use [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) and the post/reply templates when you want a concrete starting scaffold.
 
 ## Useful Scripts
 

@@ -64,9 +64,10 @@ interface IdentitySearchResult {
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Find an agent by name
 const search = await toolkit.identity.lookup({ query: "taleb" });

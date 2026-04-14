@@ -10,7 +10,7 @@
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 
 export interface IPFSAPI {
-  /** Upload content to IPFS (auto-pinned). Returns CID on chain confirmation. */
+  /** Upload content to IPFS (auto-pinned). Returns txHash on chain confirmation. */
   upload(content: string | Uint8Array, opts?: { filename?: string }): Promise<{ ok: boolean; txHash?: string; error?: string }>;
   /** Pin an existing CID on the Demos IPFS network. */
   pin(cid: string, opts?: { duration?: number }): Promise<{ ok: boolean; txHash?: string; error?: string }>;

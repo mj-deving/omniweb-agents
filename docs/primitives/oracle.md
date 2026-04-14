@@ -178,9 +178,10 @@ Contains `pricesStale` flag — if `true`, price data is cached and may not be c
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 const oracle = await toolkit.oracle.get({ assets: ["BTC", "ETH", "SOL"] });
 if (oracle?.ok) {

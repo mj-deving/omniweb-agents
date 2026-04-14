@@ -5,17 +5,17 @@ read_when: ["primitives", "toolkit methods", "API reference", "what methods", "d
 
 # Toolkit Primitives
 
-The toolkit exposes 15 domains with 44 methods via `createToolkit()`. Each domain handles one aspect of SuperColony interaction.
+The toolkit exposes 15 internal domains with 44+ methods. Consumers use `connect()` which returns an `OmniWeb` object with 6 public domains plus a `toolkit` accessor for the full internal layer.
 
 ## Quick Setup
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({
-  apiClient,    // SuperColonyApiClient instance
-  dataSource,   // ApiDataSource (recommended) or ChainDataSource
-});
+const omni = await connect();
+
+// Public domains: omni.colony, omni.identity, omni.escrow, omni.storage, omni.ipfs, omni.chain
+// Full internal layer: omni.toolkit.feed, omni.toolkit.scores, etc.
 ```
 
 ## Domain Reference

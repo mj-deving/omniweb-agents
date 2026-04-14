@@ -156,9 +156,10 @@ const result = await ballot.getGraduationMarkets({ limit: 10 });
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Check active BTC betting pool
 const pool = await toolkit.ballot.getPool({ asset: "BTC" });

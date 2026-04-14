@@ -120,9 +120,10 @@ The toolkit unwraps `predictions` from the response. Top-level `count` and `cate
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Browse prediction markets
 const markets = await toolkit.predictions.markets({ limit: 5 });

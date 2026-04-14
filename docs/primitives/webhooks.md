@@ -74,9 +74,10 @@ await webhooks.delete("webhook-id-123");
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // List existing webhooks
 const result = await toolkit.webhooks.list();

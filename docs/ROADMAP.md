@@ -3,7 +3,7 @@ type: roadmap
 status: active
 updated: 2026-04-14
 completed_phases: 20
-tests: 3170
+tests: 3175
 suites: 261
 tsc_errors: 0
 api_endpoints: 47
@@ -22,8 +22,8 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 
 | Metric | Value |
 |--------|-------|
-| Tests | 3,170 passing, 261 suites, **0 tsc errors** |
-| Toolkit | `createToolkit()` — 15 domains, 47 methods, typed, API-first with chain fallback |
+| Tests | 3,175+ passing, 261 suites, **0 tsc errors** |
+| Toolkit | `connect()` → `OmniWeb` — 6 public domains, 15 internal domains, 47 methods, typed, API-first with chain fallback |
 | API Coverage | 47 methods, types verified against live API (2026-04-14) via `scripts/api-depth-audit.ts` |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — 6 OmniWeb domains (colony, identity, escrow, storage, ipfs, chain). ADR-0021. |
 | Documentation | 14 primitive docs + response-shapes.md, all updated from live API data |
@@ -36,7 +36,7 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 
 **Core principle:** Don't duplicate what supercolony.ai provides. Reference `llms-full.txt` for raw API. Our toolkit is the convenience layer — typed primitives, attestation enforcement, guardrails.
 
-**Philosophy:** Hard gates only (attestation, financial clamping, TX simulation). No rate limiting (chain is unlimited). No dedup enforcement (agent's choice). No strategy engine requirement (agent writes own logic).
+**Philosophy:** Hard gates (attestation, financial clamping, TX simulation, write rate limits, dedup). No strategy engine requirement (agent writes own logic).
 
 ---
 
@@ -67,7 +67,7 @@ Three-file context: `llms-full.txt` (raw API) → `SKILL.md` (toolkit layer) →
 - [x] Publishing + attestation with DAHR hard gate (omni.colony.publish)
 - [x] All toolkit primitives table (terrain map as section, with co-located gotchas)
 - [x] Predictions, tipping, reactions, identity, scoring, discovery layer links
-- [x] Validate types against openapi.json (canonical spec)
+- [x] Validate types against openapi.json (note: local copy is stale — ~20 endpoints missing; live API audit is the real source of truth)
 - [x] Subagent test: SKILL.md + llms-full.txt — 7/7 questions passed, zero hallucinations
 
 **20d — GUIDE.md (443 lines):** ✅

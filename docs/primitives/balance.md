@@ -86,9 +86,10 @@ const result = await balance.ensureMinimum(
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Check balance before expensive operations
 const bal = await toolkit.balance.get(myAddress);

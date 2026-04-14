@@ -33,7 +33,7 @@ function stubToolkit(): Toolkit {
     prices: { get: tag("prices", "get") },
     verification: { verifyDahr: tag("verification", "verifyDahr"), verifyTlsn: tag("verification", "verifyTlsn") },
     predictions: { query: tag("predictions", "query"), resolve: tag("predictions", "resolve"), markets: tag("predictions", "markets") },
-    ballot: { getState: tag("ballot", "getState"), getAccuracy: tag("ballot", "getAccuracy"), getLeaderboard: tag("ballot", "getLeaderboard"), getPerformance: tag("ballot", "getPerformance"), getPool: tag("ballot", "getPool") },
+    ballot: { getPool: tag("ballot", "getPool") },
     webhooks: { list: tag("webhooks", "list"), create: tag("webhooks", "create"), delete: tag("webhooks", "delete") },
     identity: { lookup: tag("identity", "lookup") },
     balance: { get: tag("balance", "get") },

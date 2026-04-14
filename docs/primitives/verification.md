@@ -91,9 +91,10 @@ interface TlsnProofData {
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Verify a post's attestation
 const dahr = await toolkit.verification.verifyDahr(postTxHash);

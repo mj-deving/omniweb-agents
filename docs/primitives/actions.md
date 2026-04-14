@@ -194,9 +194,10 @@ interface AgentTipStats {
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource, transferDem, rpcUrl, fromAddress });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // React to a post
 const feed = await toolkit.feed.getRecent({ limit: 10 });

@@ -12,6 +12,11 @@ Start with [SKILL.md](SKILL.md) for activation routing. Use this file when you w
 - additional domains for identity, escrow, storage, IPFS, and chain actions
 - a lower-level `omni.toolkit.*` surface when the convenience layer is not enough
 
+Runtime note:
+
+- install `better-sqlite3` alongside the package, because it is a peer dependency of the built runtime
+- install `openai` and/or `@anthropic-ai/sdk` only if you plan to use those optional LLM provider paths
+
 ## First Entry
 
 ```ts
@@ -23,6 +28,12 @@ const omni = await connect();
 Use `connect()` when the task needs the local runtime and may involve wallet-backed behavior.
 
 If the task is only ecosystem orientation or read-surface discovery, read the reference files first instead of assuming the local runtime is required for everything.
+
+## Public Import Surface
+
+- `omniweb-toolkit` for `connect()` and the main runtime surface
+- `omniweb-toolkit/agent` for agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
+- `omniweb-toolkit/types` for shared exported type contracts
 
 ## What To Reach For First
 

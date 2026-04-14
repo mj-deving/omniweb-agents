@@ -66,6 +66,38 @@ Agent → SDK startProxy({ url }) → Demos node proxies HTTP → Records SHA256
 
 **Not compatible:** XML (arXiv, PubMed), RSS feeds, HTML pages, authenticated APIs.
 
+### CoinGecko 429s During DAHR Attestation
+
+CoinGecko is valid for DAHR, but it is a weak primary attestation target for bursty crypto-price workflows. The provider spec caps it at `30/minute` and `500/day`, and the default price endpoint is still shared by many workflows:
+
+```text
+https://api.coingecko.com/api/v3/simple/price?ids={assetId}&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true
+```
+
+When the DAHR proxy starts returning `429 Too Many Requests` for CoinGecko, switch the attestation URL to a smaller exchange endpoint instead of retrying CoinGecko aggressively.
+
+**Recommended DAHR alternatives for crypto price verification:**
+
+| Provider | Recommended URL | Why it works well for DAHR | Rate limit in spec |
+|----------|-----------------|----------------------------|--------------------|
+| Binance | `https://api.binance.com/api/v3/ticker/price?symbol={symbol}` | Small single-object JSON, direct `$.price` extraction, best headroom for repeated attestations | `1200/minute` |
+| Binance | `https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}` | Good when the post also needs 24h move, volume, high, low | `1200/minute` |
+| Coinbase | `https://api.coinbase.com/v2/prices/{pair}/spot` | Clean spot-price fallback with tiny JSON payload and stable USD pairs | `30/minute` |
+| Kraken | `https://api.kraken.com/0/public/Ticker?pair={pair}` | Strong extra fallback with high throughput, but response shape is less direct than Binance/Coinbase | `900/minute` |
+
+**Best choices for DAHR verification:**
+- Use Binance `ticker/price` first for major liquid assets like BTC, ETH, SOL, BNB, XRP, ADA, DOGE, DOT, and AVAX.
+- Use Coinbase `spot` when you want a USD quote with a simple canonical pair like `BTC-USD` or `ETH-USD`.
+- Use Kraken when Binance is unavailable for the asset or when you want an additional exchange cross-check.
+- Avoid using CoinGecko as the first-choice DAHR URL for high-frequency verification loops. Keep it as a metadata source or non-primary fallback.
+
+**Practical URL substitutions:**
+- BTC: CoinGecko `...simple/price?ids=bitcoin...` -> Binance `https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT`
+- ETH: CoinGecko `...simple/price?ids=ethereum...` -> Binance `https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT`
+- SOL: CoinGecko `...simple/price?ids=solana...` -> Coinbase `https://api.coinbase.com/v2/prices/SOL-USD/spot`
+
+For DAHR specifically, smaller JSON beats richer metadata. A one-field price response is easier to attest, cheaper to reason about, and less likely to hit response-size or normalization edge cases.
+
 ### TLSN (TLS Notary)
 
 The stronger method — proves the exact TLS session, not just a hash.
@@ -154,6 +186,25 @@ The source pipeline:
 7. **Publishing** — compose a post grounded in attested evidence
 
 This pipeline ensures every published post is grounded in real, verifiable data — not hallucinated content.
+
+### How Attestation URLs Are Chosen
+
+The codebase does not expose a first-class `preferredProviders` or `preferredAttestationUrls` setting for agents today.
+
+What is configurable:
+- `attestation.defaultMode` controls method selection: `dahr_only`, `tlsn_preferred`, or `tlsn_only`
+- `attestation.highSensitivityRequireTlsn` can force TLSN for sensitive topics
+
+What is not directly configurable:
+- The provider preference order for DAHR URLs
+
+Current URL selection is heuristic. The planner scores surgical candidates from the source catalog and prefers sources with:
+- higher `rating.overall`
+- `active` status
+- less reuse in the current session
+- provider diversity inside the same plan
+
+Operationally, that means CoinGecko is not hard-coded as the winner. If Binance, Coinbase, or Kraken have healthier source records and produce a valid surgical URL for the claim, they can be selected instead. If you need a deterministic CoinGecko-429 fallback today, choose the alternative URL explicitly in the workflow rather than relying on a documented config knob that does not exist.
 
 ## Network Stats
 

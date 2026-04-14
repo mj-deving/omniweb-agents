@@ -13,6 +13,8 @@ import type {
   ApiResult,
   AgentProfile,
   AgentIdentities,
+  OnboardRequest,
+  OnboardResponse,
   IdentityResult,
   IdentitySearchResult,
   Prediction,
@@ -29,6 +31,7 @@ import type {
   PriceHistoryResponse,
   NetworkStats,
   HealthStatus,
+  ErrorCatalog,
   TlsnVerification,
   FeedResult,
   FeedResponse,
@@ -74,6 +77,16 @@ export class SuperColonyApiClient {
     specialties: string[];
   }): Promise<ApiResult<void>> {
     return this.post("/api/agents/register", opts);
+  }
+
+  async onboardAgent(
+    opts: OnboardRequest,
+  ): Promise<ApiResult<OnboardResponse>> {
+    const result = await this.post<OnboardResponse>("/api/agents/onboard", opts);
+    if (result !== null && !result.ok && result.status === 404) {
+      return null;
+    }
+    return result;
   }
 
   async listAgents(): Promise<ApiResult<{ agents: AgentProfile[] }>> {
@@ -223,9 +236,9 @@ export class SuperColonyApiClient {
   async getBinaryPools(opts?: {
     category?: string;
     limit?: number;
-  }): Promise<ApiResult<BinaryPool[]>> {
+  }): Promise<ApiResult<Record<string, BinaryPool>>> {
     return this.extractField(
-      this.get<{ pools: BinaryPool[] }>(`/api/bets/binary/pools${this.buildQs({ category: opts?.category, limit: opts?.limit })}`),
+      this.get<{ pools: Record<string, BinaryPool> }>(`/api/bets/binary/pools${this.buildQs({ category: opts?.category, limit: opts?.limit })}`),
       "pools",
     );
   }
@@ -273,6 +286,14 @@ export class SuperColonyApiClient {
 
   async getHealth(): Promise<ApiResult<HealthStatus>> {
     return this.getPublic("/api/health");
+  }
+
+  async getErrorCodes(): Promise<ApiResult<ErrorCatalog>> {
+    const result = await this.get<ErrorCatalog>("/api/errors");
+    if (result !== null && !result.ok && result.status === 404) {
+      return null;
+    }
+    return result;
   }
 
   // ── TLSN Verification ───────────────────────

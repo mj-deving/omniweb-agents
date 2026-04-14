@@ -18,8 +18,10 @@ import type {
   IdentityResult,
   IdentitySearchResult,
   Prediction,
+  PredictionsQueryResponse,
   TipStats,
   AgentTipStats,
+  ReactionCountsResponse,
   LeaderboardResult,
   TopPostsResult,
   DahrVerification,
@@ -42,6 +44,7 @@ import type {
   AgentBalanceResponse,
   ReportResponse,
   PredictionMarket,
+  PredictionMarketsResponse,
   ConvergenceResponse,
   HigherLowerPool,
   BinaryPool,
@@ -94,7 +97,20 @@ export class SuperColonyApiClient {
   }
 
   async getAgentProfile(address: string): Promise<ApiResult<AgentProfile>> {
-    return this.get(`/api/agent/${encodeURIComponent(address)}`);
+    const result = await this.get<AgentProfile | { agent: AgentProfile }>(`/api/agent/${encodeURIComponent(address)}`);
+    if (result === null || !result.ok) {
+      return result;
+    }
+
+    const envelope = await this.extractField(
+      Promise.resolve(result as ApiResult<{ agent: AgentProfile }>),
+      "agent",
+    );
+    if (envelope !== null && envelope.ok) {
+      return envelope;
+    }
+
+    return result as ApiResult<AgentProfile>;
   }
 
   async getAgentIdentities(
@@ -137,7 +153,7 @@ export class SuperColonyApiClient {
     opts?: { status?: string; asset?: string; agent?: string },
   ): Promise<ApiResult<Prediction[]>> {
     return this.extractField(
-      this.get<{ predictions: Prediction[] }>(`/api/predictions${this.buildQs({ status: opts?.status, asset: opts?.asset, agent: opts?.agent })}`),
+      this.get<PredictionsQueryResponse>(`/api/predictions${this.buildQs({ status: opts?.status, asset: opts?.asset, agent: opts?.agent })}`),
       "predictions",
     );
   }
@@ -347,7 +363,28 @@ export class SuperColonyApiClient {
   }
 
   async getThread(txHash: string): Promise<ApiResult<ThreadResponse>> {
-    return this.get(`/api/feed/thread/${encodeURIComponent(txHash)}`);
+    const result = await this.get<Partial<ThreadResponse>>(`/api/feed/thread/${encodeURIComponent(txHash)}`);
+    if (result === null || !result.ok) {
+      return result as ApiResult<ThreadResponse>;
+    }
+
+    const focusedPost = result.data.focusedPost ?? result.data.root;
+    const posts = result.data.posts ?? result.data.replies;
+    if (focusedPost === undefined || posts === undefined) {
+      return { ok: false, status: 200, error: "Response missing expected thread fields" };
+    }
+
+    return {
+      ok: true,
+      data: {
+        ...result.data,
+        focusedPost,
+        posts,
+        totalReplies: result.data.totalReplies ?? posts.length,
+        root: result.data.root ?? focusedPost,
+        replies: result.data.replies ?? posts,
+      },
+    };
   }
 
   // ── Signals ────────────────────────────────
@@ -397,7 +434,7 @@ export class SuperColonyApiClient {
     return this.post(`/api/feed/${encodeURIComponent(txHash)}/react`, { type });
   }
 
-  async getReactionCounts(txHash: string): Promise<ApiResult<{ agree: number; disagree: number; flag: number }>> {
+  async getReactionCounts(txHash: string): Promise<ApiResult<ReactionCountsResponse>> {
     return this.get(`/api/feed/${encodeURIComponent(txHash)}/react`);
   }
 
@@ -426,7 +463,7 @@ export class SuperColonyApiClient {
     limit?: number;
   }): Promise<ApiResult<PredictionMarket[]>> {
     return this.extractField(
-      this.get<{ predictions: PredictionMarket[] }>(`/api/predictions/markets${this.buildQs({ category: opts?.category, limit: opts?.limit })}`),
+      this.get<PredictionMarketsResponse>(`/api/predictions/markets${this.buildQs({ category: opts?.category, limit: opts?.limit })}`),
       "predictions",
     );
   }
@@ -464,7 +501,7 @@ export class SuperColonyApiClient {
   }
 
   /** Unwrap a nested field from a wrapper API response into a flat ApiResult. */
-  private async extractField<W extends Record<string, unknown>, K extends keyof W>(
+  private async extractField<W extends object, K extends keyof W>(
     resultPromise: Promise<ApiResult<W>>,
     field: K,
   ): Promise<ApiResult<W[K]>> {

@@ -79,7 +79,7 @@ export function createBalancePrimitives(deps: { apiClient: SuperColonyApiClient 
         return { ok: false, error: "Failed to check current balance" };
       }
 
-      const currentBalance = BigInt(Math.floor(balanceResult.data.balance));
+      const currentBalance = BigInt(Math.floor(Number(balanceResult.data.balance)));
       if (currentBalance >= threshold) {
         return { ok: true, topped: false, balance: currentBalance };
       }
@@ -96,7 +96,7 @@ export function createBalancePrimitives(deps: { apiClient: SuperColonyApiClient 
         return { ok: false, error: "Could not verify post-faucet balance" };
       }
 
-      const newBalance = BigInt(Math.floor(postResult.data.balance));
+      const newBalance = BigInt(Math.floor(Number(postResult.data.balance)));
       return { ok: true, topped: true, balance: newBalance };
     },
   };

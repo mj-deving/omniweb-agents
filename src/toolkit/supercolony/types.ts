@@ -82,6 +82,13 @@ export interface AgentProfile {
 export interface AgentIdentities {
   web2Identities: Array<{ platform: string; username: string }>;
   xmIdentities: Array<{ chain: string; address: string }>;
+  address?: string;
+  fetchedAt?: number;
+  ok?: boolean;
+  points?: Record<string, unknown>;
+  raw?: Record<string, unknown>;
+  referralInfo?: Record<string, unknown>;
+  udDomains?: string[];
 }
 
 // ── Identity Lookup ─────────────────────────────────
@@ -102,14 +109,23 @@ export interface IdentitySearchResult {
 export interface Prediction {
   txHash: string;
   author: string;
-  asset: string;
-  predictedPrice: number;
+  assets: string[];
+  confidence: number;
+  deadline: number;
+  text: string;
+  asset?: string;
+  predictedPrice?: number;
   actualPrice?: number;
   accuracy?: number;
   status: "pending" | "correct" | "incorrect" | "expired" | "resolved";
   evidence?: string;
   resolvedAt?: number;
   resolvedBy?: string;
+}
+
+export interface PredictionsQueryResponse {
+  predictions: Prediction[];
+  pendingExpired?: number;
 }
 
 // ── Tipping ─────────────────────────────────────────
@@ -119,11 +135,20 @@ export interface TipStats {
   totalDem: number;
   tippers: string[];
   topTip: number;
+  myTip?: unknown;
 }
 
 export interface AgentTipStats {
   tipsGiven: { count: number; totalDem: number };
   tipsReceived: { count: number; totalDem: number };
+  address?: string;
+}
+
+export interface ReactionCountsResponse {
+  agree: number;
+  disagree: number;
+  flag: number;
+  myReaction?: string;
 }
 
 // ── Scoring & Leaderboard ───────────────────────────
@@ -168,6 +193,7 @@ export interface DahrVerification {
     txHash: string;
     explorerUrl: string;
   }>;
+  reason?: string;
 }
 
 // ── Webhooks ────────────────────────────────────────
@@ -294,8 +320,8 @@ export interface HealthStatus {
 
 export interface TlsnVerification {
   verified: boolean;
-  proof: Record<string, unknown>;
-  txHash: string;
+  proofs: Array<Record<string, unknown>>;
+  reason?: string;
 }
 
 // ── Feed (paginated timeline) ────────────────────────
@@ -329,6 +355,9 @@ export interface FeedResponse {
 // ── Thread ──────────────────────────────────────────
 
 export interface ThreadResponse {
+  focusedPost: Record<string, unknown>;
+  posts: Array<Record<string, unknown>>;
+  totalReplies: number;
   root: Record<string, unknown>;
   replies: Array<Record<string, unknown>>;
 }
@@ -380,8 +409,10 @@ export interface TipInitiateResponse {
 // ── Agent Balance ───────────────────────────────────
 
 export interface AgentBalanceResponse {
-  balance: number;
+  balance: string | number;
   updatedAt: number;
+  address?: string;
+  cached?: boolean;
 }
 
 // ── Report ──────────────────────────────────────────
@@ -419,6 +450,12 @@ export interface PredictionMarket {
   liquidity: number;
   endDate: string;
   lastUpdated: number;
+}
+
+export interface PredictionMarketsResponse {
+  predictions: PredictionMarket[];
+  count: number;
+  categories: string[];
 }
 
 // ── Convergence ────────────────────────────────────

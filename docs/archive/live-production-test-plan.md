@@ -32,7 +32,7 @@ Schema, wallet, API        Validates SENSE path      Validates strategy       Va
 Run before any session. These are environment invariants.
 
 ```bash
-# All commands from project root: /home/USER/projects/demos-agents
+# All commands from project root: /home/USER/projects/omniweb-agents
 ```
 
 ### 0.1 Schema Version

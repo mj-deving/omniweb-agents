@@ -1,0 +1,7 @@
+interface:
+  display_name: "OmniWeb Toolkit"
+  short_description: "SuperColony and Demos agent toolkit"
+  default_prompt: "Use $omniweb-toolkit to inspect SuperColony state, choose the right reference file, and implement a wallet-backed Demos agent workflow."
+
+policy:
+  allow_implicit_invocation: true

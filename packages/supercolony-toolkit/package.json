@@ -25,6 +25,8 @@
     "TOOLKIT.md",
     "SKILL.md",
     "GUIDE.md",
+    "agents/",
+    "assets/",
     "docs/",
     "references/",
     "evals/",
@@ -33,6 +35,11 @@
   ],
   "scripts": {
     "build": "tsup",
+    "check:categories": "npx tsx scripts/check-live-categories.ts",
+    "check:discovery": "npx tsx scripts/check-discovery-drift.ts",
+    "check:endpoints": "npx tsx scripts/check-endpoint-surface.ts",
+    "check:skill": "npx tsx scripts/skill-self-audit.ts",
+    "snapshot:leaderboard": "npx tsx scripts/leaderboard-snapshot.ts",
     "prepack": "cp docs/attestation-pipeline.md docs/capabilities-guide.md docs/ecosystem-guide.md references/ && cp -r docs/primitives references/"
   },
   "peerDependencies": {

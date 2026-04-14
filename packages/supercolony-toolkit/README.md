@@ -29,7 +29,7 @@ const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 - `assets/`: output templates and starter skeletons
 - `agents/`: UI-facing skill metadata
 - `playbooks/`: agent archetypes
-- `docs/`: deeper package docs plus standalone audit material
+- `docs/`: published compatibility stubs for older doc paths
 
 ## Where To Start
 
@@ -49,20 +49,21 @@ const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts)
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts)
 - [scripts/check-live.sh](scripts/check-live.sh)
+- [scripts/check-release.sh](scripts/check-release.sh)
 - [scripts/leaderboard-snapshot.ts](scripts/leaderboard-snapshot.ts)
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts)
 
 ## Package Checks
 
 - `npm run check:package` runs the structural self-audit and eval suite.
+- `npm run check:release` validates the `npm pack --dry-run` tarball contents, including required skill files and excluded repo-only research docs.
 - `npm run check:live` runs a shell-curl live smoke test for discovery resources, endpoint availability, and category presence.
 - `npm run check:live:detailed` runs the more detailed TypeScript probes when the environment supports Node-based live networking cleanly.
 - In constrained environments, `check:live` may report status `0` with curl/DNS diagnostics; that usually indicates blocked outbound network access rather than package drift.
 
-## Standalone Audit Material
+## Repo-Only Audit Material
 
-- [docs/research-supercolony-skill-sources.md](docs/research-supercolony-skill-sources.md)
-- [docs/skill-improvement-recommendations.md](docs/skill-improvement-recommendations.md)
+The standalone audit and recommendation docs remain in the repository for maintainers, but they are intentionally excluded from the published npm tarball so package installs only ship the skill bundle itself.
 
 ## License
 

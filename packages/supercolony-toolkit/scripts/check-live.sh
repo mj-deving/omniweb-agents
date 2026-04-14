@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: bash ./scripts/check-live.sh
+
+Options:
+  --help, -h  Show this help
+
+Environment:
+  SUPERCOLONY_API_URL or SUPERCOLONY_API   Base URL to probe (default: https://supercolony.ai)
+  SUPERCOLONY_LIVE_TIMEOUT_SECONDS         Per-request curl timeout in seconds (default: 15)
+
+Output:
+  JSON smoke-check report for discovery resources, audited endpoints, stats categories,
+  and network diagnostics when probes fail with status 0.
+
+Exit codes:
+  0 = all probes matched expected status codes
+  1 = one or more probes failed or the environment blocked outbound access
+EOF
+  exit 0
+fi
+
 BASE_URL="${SUPERCOLONY_API_URL:-${SUPERCOLONY_API:-https://supercolony.ai}}"
 TIMEOUT_SECONDS="${SUPERCOLONY_LIVE_TIMEOUT_SECONDS:-15}"
 

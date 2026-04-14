@@ -65,6 +65,10 @@ vi.mock("../../src/lib/llm/llm-provider.js", () => ({
   resolveProvider: mockResolveProvider,
 }));
 
+vi.mock("../../src/toolkit/colony/schema.js", () => ({
+  initColonyCache: vi.fn().mockReturnValue({}),
+}));
+
 // ── Import under test ────────────────────────────
 
 import { createAgentRuntime } from "../../src/toolkit/agent-runtime.js";

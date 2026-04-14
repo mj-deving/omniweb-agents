@@ -5,6 +5,7 @@ import { makeSSEPost, makeTextStream } from "./test-helpers.js";
 
 describe("createSSEFeedSource", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -124,5 +125,94 @@ describe("createSSEFeedSource", () => {
     });
 
     await expect(source.poll()).rejects.toThrow("fallback down");
+  });
+
+  it("returns fallback immediately on SSE failure and skips SSE during backoff window", async () => {
+    vi.useFakeTimers({ now: 10_000 });
+
+    const fetchMock = vi.fn().mockRejectedValue(new Error("stream down"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const fetchFeedFallback = vi.fn().mockResolvedValue([]);
+    const source = createSSEFeedSource({
+      streamUrl: "https://example.com/feed/stream",
+      getToken: vi.fn().mockResolvedValue("token-1"),
+      fetchFeedFallback,
+      reconnectBackoff: { initialMs: 1_000, maxMs: 8_000, factor: 2 },
+    });
+
+    // First failure: fallback returns immediately, SSE disabled for 1s
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchFeedFallback).toHaveBeenCalledTimes(1);
+
+    // Poll within backoff window: SSE not attempted, fallback only
+    fetchMock.mockClear();
+    fetchFeedFallback.mockClear();
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchMock).not.toHaveBeenCalled(); // SSE skipped
+    expect(fetchFeedFallback).toHaveBeenCalledTimes(1);
+
+    // Advance past backoff window (1s)
+    vi.advanceTimersByTime(1_001);
+    fetchMock.mockClear();
+    fetchFeedFallback.mockClear();
+
+    // SSE attempted again (still fails), backoff now 2s
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // SSE retried
+  });
+
+  it("resets reconnect backoff after a successful SSE read", async () => {
+    vi.useFakeTimers({ now: 10_000 });
+
+    const successPost = makeSSEPost({ txHash: "tx-success", timestamp: 500 });
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new Error("stream down"))
+      .mockResolvedValueOnce(
+        new Response(
+          makeTextStream(`event: post\nid: 12\ndata: ${JSON.stringify(successPost)}\n\n`),
+          { status: 200 },
+        ),
+      )
+      .mockRejectedValueOnce(new Error("stream down again"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const fetchFeedFallback = vi.fn().mockResolvedValue([]);
+    const source = createSSEFeedSource({
+      streamUrl: "https://example.com/feed/stream",
+      getToken: vi.fn().mockResolvedValue("token-1"),
+      fetchFeedFallback,
+      reconnectBackoff: { initialMs: 1_000, maxMs: 8_000, factor: 2 },
+    });
+
+    // First failure: fallback immediate, SSE disabled for 1s
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchFeedFallback).toHaveBeenCalledTimes(1);
+
+    // Advance past 1s backoff
+    vi.advanceTimersByTime(1_001);
+
+    // Second poll: SSE succeeds — resets backoff
+    await expect(source.poll()).resolves.toEqual({
+      timestamp: expect.any(Number),
+      posts: [successPost],
+      source: "sse",
+    });
+
+    // Third poll: SSE fails again — backoff should be 1s (reset), not 2s
+    fetchFeedFallback.mockClear();
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchFeedFallback).toHaveBeenCalledTimes(1);
+
+    // Verify SSE is skipped within 1s window but retried after
+    fetchMock.mockClear();
+    await source.poll(); // within window — SSE skipped
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1_001);
+    fetchMock.mockRejectedValueOnce(new Error("still down"));
+    await source.poll(); // past window — SSE retried
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

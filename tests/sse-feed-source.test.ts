@@ -85,6 +85,7 @@ describe("SSEFeedSource", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -205,6 +206,52 @@ describe("SSEFeedSource", () => {
     const snapshot = await source.poll();
 
     expect(snapshot.source).toBe("poll-fallback");
+  });
+
+  it("stays on poll fallback after max reconnect attempts are exhausted", async () => {
+    vi.useFakeTimers({ now: 10_000 });
+
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    const fetchFeedFallback = vi.fn().mockResolvedValue([makeSSEPost({ txHash: "tx-fallback-lockout" })]);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const source = createSSEFeedSource(
+      makeConfig({
+        fetchFeedFallback,
+        reconnectBackoff: { initialMs: 1_000, maxMs: 4_000, factor: 2 },
+        maxReconnectAttempts: 3,
+      }),
+    );
+
+    // Exhaust 3 attempts, advancing past each backoff window
+    for (const backoffMs of [1_000, 2_000, 4_000]) {
+      await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+      vi.advanceTimersByTime(backoffMs + 1); // advance past backoff window
+    }
+
+    // After 3 failures, permanent fallback — SSE never attempted again
+    fetchMock.mockClear();
+    fetchFeedFallback.mockClear();
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchMock).not.toHaveBeenCalled(); // SSE permanently disabled
+    expect(fetchFeedFallback).toHaveBeenCalledTimes(1);
+  });
+
+  it("bypasses SSE entirely when maxReconnectAttempts is 0", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const fetchFeedFallback = vi.fn().mockResolvedValue([makeSSEPost({ txHash: "tx-direct-fallback" })]);
+    const source = createSSEFeedSource(
+      makeConfig({
+        fetchFeedFallback,
+        maxReconnectAttempts: 0,
+      }),
+    );
+
+    await expect(source.poll()).resolves.toMatchObject({ source: "poll-fallback" });
+    expect(fetchMock).not.toHaveBeenCalled(); // SSE never attempted
+    expect(fetchFeedFallback).toHaveBeenCalledTimes(1);
   });
 
   // ── diff() tests ──
@@ -389,6 +436,37 @@ describe("SSEFeedSource", () => {
   });
 
   // ── SSE parsing edge cases ──
+
+  it("parses CRLF-terminated SSE streams (RFC 8895 compliance)", async () => {
+    const encoder = new TextEncoder();
+    const crlfStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        // Use \r\n line endings throughout — standards-compliant server
+        controller.enqueue(
+          encoder.encode(
+            `event: post\r\nid: 99\r\ndata: ${JSON.stringify(makeSSEPost({ txHash: "tx-crlf" }))}\r\n\r\n`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: crlfStream,
+        headers: new Headers(),
+      }),
+    );
+
+    const source = createSSEFeedSource(makeConfig());
+    const snapshot = await source.poll();
+
+    expect(snapshot.posts).toHaveLength(1);
+    expect(snapshot.posts[0].txHash).toBe("tx-crlf");
+    expect(snapshot.source).toBe("sse");
+  });
 
   it("ignores keepalive comments in SSE stream", async () => {
     const encoder = new TextEncoder();

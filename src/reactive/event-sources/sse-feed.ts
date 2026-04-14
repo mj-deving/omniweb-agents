@@ -36,16 +36,26 @@ export interface SSEFeedSourceConfig {
   /** Optional: SSE query params for filtering */
   categories?: string[];
   assets?: string[];
+  /** Optional reconnect backoff tuning for consecutive SSE failures */
+  reconnectBackoff?: {
+    initialMs?: number;
+    maxMs?: number;
+    factor?: number;
+  };
+  /** Maximum consecutive SSE failures before staying on poll fallback */
+  maxReconnectAttempts?: number;
 }
 
 /**
  * Parse an SSE text chunk into structured events.
  * Each SSE event is separated by a blank line (\n\n).
  * Lines starting with : are comments (keepalives).
+ * Per RFC 8895, normalizes \r\n and lone \r to \n before parsing.
  */
 function parseSSEChunk(text: string): Array<{ event: string; data: string; id: string }> {
   const results: Array<{ event: string; data: string; id: string }> = [];
-  const blocks = text.split("\n\n");
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const blocks = normalized.split("\n\n");
 
   for (const block of blocks) {
     const trimmed = block.trim();
@@ -87,6 +97,21 @@ function buildStreamUrl(config: SSEFeedSourceConfig): string {
 
 /** Default read timeout — SSE streams are long-lived, so poll() must not block forever */
 const SSE_READ_TIMEOUT_MS = 5_000;
+const DEFAULT_RECONNECT_BACKOFF = {
+  initialMs: 1_000,
+  maxMs: 30_000,
+  factor: 2,
+} as const;
+const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+
+function getReconnectDelayMs(config: SSEFeedSourceConfig, failureCount: number): number {
+  const initialMs = Math.max(0, config.reconnectBackoff?.initialMs ?? DEFAULT_RECONNECT_BACKOFF.initialMs);
+  const maxMs = Math.max(initialMs, config.reconnectBackoff?.maxMs ?? DEFAULT_RECONNECT_BACKOFF.maxMs);
+  const factor = Math.max(1, config.reconnectBackoff?.factor ?? DEFAULT_RECONNECT_BACKOFF.factor);
+
+  return Math.min(initialMs * factor ** Math.max(0, failureCount - 1), maxMs);
+}
+
 
 /**
  * Read SSE response body with a timeout. SSE streams are long-lived (server
@@ -157,6 +182,14 @@ async function readSSEStream(
  */
 export function createSSEFeedSource(config: SSEFeedSourceConfig): EventSource<SSESnapshot> {
   let lastEventId = "";
+  let consecutiveFailures = 0;
+  const maxReconnectAttempts = Math.max(
+    0,
+    config.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS,
+  );
+  let usePermanentFallback = maxReconnectAttempts === 0;
+  /** Timestamp until which SSE reconnects are suppressed (backoff window). */
+  let sseDisabledUntil = 0;
 
   async function fetchSSE(): Promise<SSESnapshot> {
     const token = await config.getToken();
@@ -213,9 +246,30 @@ export function createSSEFeedSource(config: SSEFeedSourceConfig): EventSource<SS
     eventTypes: ["feed_post"],
 
     async poll(): Promise<SSESnapshot> {
+      if (usePermanentFallback) {
+        return await fetchFallback();
+      }
+
+      // Skip SSE while inside a backoff window — fall back immediately.
+      if (Date.now() < sseDisabledUntil) {
+        return await fetchFallback();
+      }
+
       try {
-        return await fetchSSE();
+        const snapshot = await fetchSSE();
+        consecutiveFailures = 0;
+        sseDisabledUntil = 0;
+        return snapshot;
       } catch {
+        consecutiveFailures += 1;
+
+        if (consecutiveFailures >= maxReconnectAttempts) {
+          usePermanentFallback = true;
+        } else {
+          // Suppress SSE for the backoff duration — next poll skips SSE, returns fallback instantly.
+          sseDisabledUntil = Date.now() + getReconnectDelayMs(config, consecutiveFailures);
+        }
+
         return await fetchFallback();
       }
     },

@@ -33,7 +33,33 @@ export type ApiResult<T> =
   | { ok: false; status: number; error: string }
   | null;
 
+// ── Error Catalog ──────────────────────────────────
+
+export interface ApiErrorCode {
+  code: string;
+  message: string;
+  retryable: boolean;
+}
+
+export interface ErrorCatalog {
+  errors: ApiErrorCode[];
+}
+
 // ── Agent Identity ──────────────────────────────────
+
+/** Speculative — verify against live API when available */
+export interface OnboardRequest {
+  name: string;
+  description: string;
+  categories?: string[];
+}
+
+/** Speculative — verify against live API when available */
+export interface OnboardResponse {
+  agentId: string;
+  address: string;
+  authToken?: string;
+}
 
 export interface AgentProfile {
   address: string;

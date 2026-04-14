@@ -1,14 +1,14 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-10
-completed_phases: 19
-tests: 3152
-suites: 259
+updated: 2026-04-14
+completed_phases: 20
+tests: 3170
+suites: 261
 tsc_errors: 0
-api_endpoints: 38
-colony_posts: 239000
-summary: "Phase 20: Consumer Toolkit. Wire publish/attest, SKILL.md as toolkit layer on llms-full.txt, GUIDE.md methodology. North star: supercolony-agent-starter + supercolony.ai discovery layer."
+api_endpoints: 47
+colony_posts: 265000
+summary: "Phase 20 complete. API types verified against live data. Open items tracked in beads (bd ready). Next: npm publish, live domain tests (blocked by RPC node)."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "phase 20", "publish wiring"]
 ---
 
@@ -22,13 +22,14 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 
 | Metric | Value |
 |--------|-------|
-| Tests | 3,152 passing, 259 suites, **0 tsc errors** |
-| Toolkit | `createToolkit()` — 15 domains, 44 methods, typed, API-first with chain fallback |
-| API Coverage | 38/38 endpoints, types verified against live API (2026-04-10) |
+| Tests | 3,170 passing, 261 suites, **0 tsc errors** |
+| Toolkit | `createToolkit()` — 15 domains, 47 methods, typed, API-first with chain fallback |
+| API Coverage | 47 methods, types verified against live API (2026-04-14) via `scripts/api-depth-audit.ts` |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — 6 OmniWeb domains (colony, identity, escrow, storage, ipfs, chain). ADR-0021. |
-| Documentation | 15 domain docs, ecosystem guide, capabilities guide, attestation pipeline |
-| Colony | 239K+ posts, 208 agents, 59% DAHR attestation rate, 0% TLSN |
-| Stress Test | 70/70 ISC passed — 52 primitives live, 7/7 doc challenge, TLSN investigated |
+| Documentation | 14 primitive docs + response-shapes.md, all updated from live API data |
+| Colony | 265K+ posts, 221 agents, 59.5% DAHR attestation rate, 0% TLSN |
+| Open Issues | 13 in beads (`bd ready` for unblocked work) |
+| Blocker | RPC node TLS broken — blocks connect(), live cycles, npm publish |
 
 **North star:** `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -78,70 +79,67 @@ Adapts KyneSys perceive-then-prompt methodology for toolkit primitives.
 - [x] Good vs bad output, anti-patterns (8 patterns that get agents retired)
 - [x] Summary: 7 principles
 
-**20e — Alpha test with publish path + ship:**
-- [x] Journey B (Contributor): 24 HiveAPI methods (14 read + 5 write + 6 discovery/markets/scoring), attestTlsn stub returns typed error
-- [x] Journey E (Full Autonomy): SKILL.md (399 lines) + GUIDE.md (444 lines) provide complete context for autonomous operation
-- [x] 30-Minute Challenge (FULL): connect→feed→signals→balance→react(3)→tip(1 DEM)→bet(5 DEM, 30m) in 4.5s. All 7 steps live on chain.
-- [x] Package build clean: dist/ rebuilt with write methods, 3111 tests pass
-- [ ] `npm publish` when validated (needs user authorization)
+**20e — Alpha test with publish path + ship:** ✅
+- [x] Journey B (Contributor): 24 HiveAPI methods, attestTlsn stub returns typed error
+- [x] Journey E (Full Autonomy): SKILL.md + GUIDE.md provide complete context
+- [x] 30-Minute Challenge: connect→feed→signals→balance→react→tip→bet in 4.5s live
+- [x] Package build clean: dist/ rebuilt, 3170 tests pass
+- [ ] `npm publish` — blocked by RPC node (need live validation first) → `omniweb-agents-028`
+
+**20f — API Type Correction Wave (April 13-14):** ✅
+- [x] `api-depth-audit.ts` refactored to direct HTTP (no SDK/RPC dependency)
+- [x] 30 endpoints audited live (16 public OK, 13 auth-gated, 1 server error)
+- [x] `response-shapes.md` complete rewrite from live data
+- [x] 10 primitives docs updated with live examples
+- [x] `types.ts` — 9 interfaces corrected (FeedPost, SignalData, OracleResult, ReportResponse, PredictionMarket, ConvergenceResponse, HigherLowerPool, BinaryPool, PolymarketEntry)
+- [x] 3 Codex reviews (focused, prompt files, findings-first) — 13 findings, 10 fixed
+- [x] README rewritten for April 2026 state
+- [x] Beads issue tracker activated (stealth mode)
+- [x] Project renamed: demos-agents → omniweb-agents
 
 ---
 
-## Future
+## Open Items
 
-**Discovery layer consumption (when supercolony.ai activates):**
-- [ ] `/api/agents/onboard` — official one-stop onboarding
-- [ ] `/api/errors` — machine-readable error codes → toolkit retry logic
-- [ ] `/api/rate-limits` — rate limit policies → toolkit backoff
-- [ ] `/api/changelog` — version tracking → type drift alerts
-- [ ] `/api/schema` — TypeScript types from source
-- [ ] `/api/mcp/tools` — MCP tool definitions
-- [ ] `/api/a2a` — A2A Protocol JSON-RPC 2.0
+All open items tracked in beads: `bd ready` for unblocked work, `bd list` for all.
 
-**Automated validation:**
-- [x] OpenAPI drift check — `tests/openapi-drift.test.ts` (15 tests, 8 schemas, superset policy)
-- [x] CI integration — `validate-plugin.yml` runs `npx vitest run tests/openapi-drift.test.ts`
+**Ready now (no blockers):**
 
-**Missing features (from KyneSys comparison):**
-- [x] Higher/Lower prediction markets — `omni.colony.placeHL(asset, "higher"|"lower")` with HIVE_HL memo
-- [x] Binary/Polymarket markets — `omni.colony.getMarkets()` reads Polymarket odds
-- [x] Agent-to-human linking — `omni.colony.linkIdentity("twitter"|"github", proofUrl)`
-- [x] Forecast scoring composite — `omni.colony.getForecastScore(address)` (betting 57% + calibration 43%; polymarket component pending, returns null)
-- [x] Source discovery API — already complete in `src/lib/pipeline/source-discovery.ts` (443 lines)
-- [x] Prediction leaderboard — `omni.colony.getPredictions()` queries tracked predictions
+| ID | P | Type | Item |
+|----|---|------|------|
+| `omniweb-agents-23j` | P1 | bug | Fix BinaryPool api-client vs live API mismatch |
+| `omniweb-agents-ynq` | P2 | task | CoinGecko 429s — document alternative attestation URLs |
+| `omniweb-agents-clo` | P3 | task | SSE endpoint configuration (URL, auth, reconnect) |
+| `omniweb-agents-xdq` | P3 | bug | TLSN MPC-TLS relay fix (external — KyneSys) |
+| `omniweb-agents-2a0` | P3 | feature | Consume /api/agents/onboard when activated |
+| `omniweb-agents-ve5` | P3 | feature | Consume /api/errors for machine-readable codes |
 
-**OmniWeb domains (ADR-0021):**
-- [x] Tip by social handle → `omni.escrow.sendToIdentity()` (trustless escrow, not raw transfer)
-- [x] StorageProgram → `omni.storage.read/list/search()` (testnet live, read-only until writes verified)
-- [x] OmniWeb architecture → 6 domains: colony, identity, escrow, storage, ipfs, chain
-- [x] Identity domain → `omni.identity.link/lookup/getIdentities/createProof()`
-- [x] Chain domain → `omni.chain.transfer/getBalance/signMessage()`
-- [x] IPFS domain → `omni.ipfs.upload/pin/unpin()`
-- [ ] ZK identity proofs for privacy-preserving attestation (blocked — NAPI crash)
+**Blocked by RPC node fix (`omniweb-agents-b63`):**
 
-**Remaining:**
-- [ ] `npm publish` omniweb-toolkit to npm registry (needs user authorization)
-- [ ] StorageProgram write probe — verify testnet accepts SET_FIELD/CREATE operations
-- [ ] Escrow live test — verify `sendToIdentity` works with real DEM
-- [ ] IPFS live test — verify `upload` works with real content
-- [ ] XMCore domain (`omni.xm`) — cross-chain operations (9 blockchains, massive scope)
-- [ ] Messaging domain (`omni.messaging`) — E2E encrypted P2P (needs WebSocket)
-- [ ] Encryption/ZK domain (`omni.crypto`) — blocked (NAPI SIGSEGV)
+| ID | P | Type | Item |
+|----|---|------|------|
+| `omniweb-agents-der` | P2 | task | Run api-depth-audit with auth token (14 endpoints) |
+| `omniweb-agents-028` | P2 | task | npm publish omniweb-toolkit |
+| `omniweb-agents-l4h` | P3 | task | StorageProgram write probe |
+| `omniweb-agents-p5l` | P3 | task | Escrow live test with real DEM |
+| `omniweb-agents-ubn` | P3 | task | IPFS live test with real content |
+| `omniweb-agents-5x6` | P2 | task | Update types.ts after BinaryPool fix |
+
+**Future (not yet tracked — large scope):**
+- XMCore domain (`omni.xm`) — cross-chain operations (9 blockchains)
+- Messaging domain (`omni.messaging`) — E2E encrypted P2P (needs WebSocket)
+- Encryption/ZK domain (`omni.crypto`) — blocked (NAPI SIGSEGV)
+- ZK identity proofs for privacy-preserving attestation
 
 ---
 
-## Tech Debt (open items only)
+## Tech Debt
 
-| Item | Revisit When |
-|------|-------------|
-| Cursor not functional (SDK has no sinceBlock param) | SDK adds pagination |
-| SSE endpoint configuration (URL, auth, reconnect backoff) | SSE endpoint stable |
-| Wire AbortSignal through fetchSource | Source fetch latency becomes bottleneck |
-| Integration tests for strategy bridge | Adding un-mocked integration tests |
-| socialHandles in agent profiles unused by rules | Consumer rule needs it |
-| ~~tip() rejects non-integer amounts~~ | **Fixed:** Math.round + clamp 1-10 in actions.ts |
-| ~~prices.getHistory() returns 0 snapshots~~ | **Fixed:** returns ok:false with descriptive error when empty |
-| CoinGecko 429s during DAHR attestation (use Binance or similar) | Document alternative attestation URLs |
-| TLSN notary HTTP back online but end-to-end still broken | KyneSys deploys MPC-TLS relay fix |
+| Item | Status |
+|------|--------|
+| Cursor not functional (SDK has no sinceBlock param) | Waiting on SDK |
+| Wire AbortSignal through fetchSource | Low priority |
+| Integration tests for strategy bridge | Low priority |
+| socialHandles in agent profiles unused by rules | Low priority |
 
-See `docs/archive/` for full historical tech debt log + deferred evaluation table.
+See `docs/archive/` for full historical tech debt log.

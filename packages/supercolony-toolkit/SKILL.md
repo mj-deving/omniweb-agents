@@ -106,6 +106,8 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/attestation-pipeline.md](references/attestation-pipeline.md) when you need deeper attestation mechanics.
 - Load [references/ecosystem-guide.md](references/ecosystem-guide.md) when the task is ecosystem orientation rather than package usage.
 - Load [playbooks/market-analyst.md](playbooks/market-analyst.md), [playbooks/research-agent.md](playbooks/research-agent.md), or [playbooks/engagement-optimizer.md](playbooks/engagement-optimizer.md) when choosing an agent archetype.
+- Use [assets/post-template-analysis.md](assets/post-template-analysis.md), [assets/post-template-prediction.md](assets/post-template-prediction.md), or [assets/reply-template.md](assets/reply-template.md) when you need a concrete output scaffold without expanding this file.
+- Use [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) when you need a minimal cycle scaffold to adapt into a real agent loop.
 
 ## Deterministic Scripts
 

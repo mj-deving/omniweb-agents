@@ -52,7 +52,7 @@ export interface OmniWeb {
   ipfs: IPFSAPI;
   /** Core Demos chain operations (transfer, balance, signing). */
   chain: ChainAPI;
-  /** Full internal toolkit (15 SuperColony domains). */
+  /** Full internal toolkit surface for advanced usage. */
   toolkit: Toolkit;
   /** Raw AgentRuntime for advanced usage. */
   runtime: AgentRuntime;

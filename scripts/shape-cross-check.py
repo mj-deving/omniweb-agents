@@ -36,20 +36,20 @@ DEFAULT_AUDIT = "/tmp/api-depth-authed2.json"
 
 EXPECTED_SHAPES: dict[str, dict[str, Any]] = {
     "feed.getRecent": {
-        "top": {"posts", "hasMore", "query", "meta"},
-        "notes": "FeedResponse",
+        "top": {"posts", "hasMore", "meta"},
+        "notes": "FeedResponse (query only on search)",
     },
     "feed.search": {
-        "top": {"posts", "hasMore", "query", "meta"},
-        "notes": "FeedResponse (search)",
+        "top": {"posts", "hasMore", "query"},
+        "notes": "FeedResponse (meta only on feed)",
     },
     "feed.getPost": {
-        "top": {"post", "parent", "replies"},
-        "notes": "PostDetail",
+        "top": {"post", "replies"},
+        "notes": "PostDetail (parent present only if post is a reply)",
     },
     "feed.getThread": {
-        "top": {"root", "replies"},
-        "notes": "ThreadResponse",
+        "top": {"focusedPost", "posts", "totalReplies", "root"},
+        "notes": "ThreadResponse (live: both root and focusedPost present)",
     },
     "signals.get": {
         "top": {"consensusAnalysis", "computed", "window", "signalAgent",
@@ -86,20 +86,18 @@ EXPECTED_SHAPES: dict[str, dict[str, Any]] = {
         "notes": "{ agents: AgentProfile[], total }",
     },
     "agents.getProfile": {
-        "top": {"address", "name", "description", "specialties", "postCount",
-                "lastActiveAt", "displayName", "registeredAt", "lastSeen",
-                "nameChangedAt", "categoryBreakdown", "web2Identities",
-                "xmIdentities", "swarmOwner"},
-        "notes": "AgentProfile",
+        "top": {"agent", "posts", "reputation", "hasMore"},
+        "notes": "AgentProfileResponse envelope (api-client unwraps .agent)",
     },
     "agents.getIdentities": {
-        "top": {"web2Identities", "xmIdentities"},
-        "notes": "AgentIdentities",
+        "top": {"web2Identities", "xmIdentities", "address", "fetchedAt",
+                "ok", "points", "raw", "referralInfo", "udDomains"},
+        "notes": "AgentIdentities (extended)",
     },
     "agents.getBalance": {
-        "top": {"balance", "updatedAt"},
-        "type_of": {"balance": "number"},
-        "notes": "AgentBalanceResponse",
+        "top": {"balance", "updatedAt", "address", "cached"},
+        "type_of": {"balance": "string"},
+        "notes": "AgentBalanceResponse (balance is string)",
     },
     "scores.leaderboard": {
         "top": {"agents", "count", "globalAvg", "confidenceThreshold"},
@@ -123,13 +121,12 @@ EXPECTED_SHAPES: dict[str, dict[str, Any]] = {
         "notes": "NetworkStats",
     },
     "predictions.query": {
-        "top": {"predictions", "total"},
+        "top": {"predictions", "total", "pendingExpired"},
         "array_items": {
-            "predictions": {"txHash", "author", "asset", "predictedPrice",
-                            "actualPrice", "accuracy", "status", "evidence",
-                            "resolvedAt", "resolvedBy"},
+            "predictions": {"txHash", "author", "assets", "confidence",
+                            "deadline", "text", "status"},
         },
-        "notes": "Prediction[]",
+        "notes": "PredictionsQueryResponse (pending items have assets/confidence/deadline/text)",
     },
     "predictions.markets": {
         "top": {"predictions", "count", "categories"},
@@ -151,19 +148,19 @@ EXPECTED_SHAPES: dict[str, dict[str, Any]] = {
         "notes": "{ pools: Record<string, BinaryPool> }",
     },
     "actions.getReactions": {
-        "top": {"agree", "disagree", "flag"},
-        "notes": "{ agree, disagree, flag }",
+        "top": {"agree", "disagree", "flag", "myReaction"},
+        "notes": "ReactionCountsResponse",
     },
     "actions.getTipStats": {
-        "top": {"totalTips", "totalDem", "tippers", "topTip"},
+        "top": {"totalTips", "totalDem", "tippers", "topTip", "myTip"},
         "notes": "TipStats",
     },
     "actions.getAgentTips": {
-        "top": {"tipsGiven", "tipsReceived"},
+        "top": {"tipsGiven", "tipsReceived", "address"},
         "notes": "AgentTipStats",
     },
     "identity.search": {
-        "top": {"results", "totalMatches"},
+        "top": {"results", "totalMatches", "query"},
         "notes": "IdentitySearchResult",
     },
     "identity.byPlatform": {
@@ -175,11 +172,11 @@ EXPECTED_SHAPES: dict[str, dict[str, Any]] = {
         "notes": "{ webhooks: Webhook[] }",
     },
     "verify.dahr": {
-        "top": {"verified", "attestations"},
-        "notes": "DahrVerification",
+        "top": {"verified", "attestations", "postAuthor", "postCategory"},
+        "notes": "DahrVerification (reason optional — only when !verified)",
     },
     "verify.tlsn": {
-        "top": {"verified", "proof", "txHash"},
+        "top": {"verified", "proofs", "reason"},
         "notes": "TlsnVerification",
     },
 }

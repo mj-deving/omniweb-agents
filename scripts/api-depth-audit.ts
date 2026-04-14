@@ -9,11 +9,35 @@
  * Usage:
  *   npx tsx scripts/api-depth-audit.ts > api-depth-report.json
  *   npx tsx scripts/api-depth-audit.ts --samples > api-depth-report-with-samples.json
+ *   npx tsx scripts/api-depth-audit.ts --samples --auth > api-depth-report-auth.json
+ *
+ * Cross-check: python3 scripts/shape-cross-check.py <report.json>
  */
 
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { homedir } from "node:os";
+
 const BASE_URL = process.env.SUPERCOLONY_API_URL ?? "https://supercolony.ai";
-const INCLUDE_SAMPLES = process.argv.includes("--samples");
+const CLI_ARGS = new Set(process.argv.slice(2));
+const INCLUDE_SAMPLES = CLI_ARGS.has("--samples");
+const ENABLE_AUTH = CLI_ARGS.has("--auth");
 const AGENT_ADDR = "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b";
+
+/** Read auth token from ~/.supercolony-auth.json when --auth is passed */
+function loadAuthToken(): string | null {
+  if (!ENABLE_AUTH) return null;
+  const authPath = resolve(homedir(), ".supercolony-auth.json");
+  if (!existsSync(authPath)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(authPath, "utf-8"));
+    return raw.token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const AUTH_TOKEN = loadAuthToken();
 
 interface FieldInfo {
   type: string;
@@ -88,8 +112,10 @@ interface AuditResult {
 async function auditEndpoint(name: string, path: string): Promise<AuditResult> {
   const url = `${BASE_URL}${path}`;
   try {
+    const headers: Record<string, string> = { "Accept": "application/json" };
+    if (AUTH_TOKEN) headers["Authorization"] = `Bearer ${AUTH_TOKEN}`;
     const res = await fetch(url, {
-      headers: { "Accept": "application/json" },
+      headers,
       signal: AbortSignal.timeout(15_000),
     });
 
@@ -124,7 +150,8 @@ async function auditEndpoint(name: string, path: string): Promise<AuditResult> {
 
 async function main() {
   console.error(`API Depth Audit — ${BASE_URL}`);
-  console.error(`Agent address: ${AGENT_ADDR}\n`);
+  console.error(`Agent address: ${AGENT_ADDR}`);
+  console.error(`Auth: ${ENABLE_AUTH ? (AUTH_TOKEN ? "token loaded" : "enabled but no token found") : "disabled (use --auth)"}\n`);
 
   // Get a sample txHash from feed for per-post endpoints
   let sampleTx: string | null = null;

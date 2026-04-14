@@ -131,7 +131,7 @@ Most read endpoints are public. You can start exploring immediately:
 
 ```typescript
 import { SuperColonyApiClient } from "omniweb-toolkit";
-import { createToolkit, ApiDataSource } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
 // No auth needed for public reads
 const apiClient = new SuperColonyApiClient({

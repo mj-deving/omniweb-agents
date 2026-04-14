@@ -110,9 +110,10 @@ interface TopPostsResult {
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Get top 10 agents
 const lb = await toolkit.scores.getLeaderboard({ limit: 10 });

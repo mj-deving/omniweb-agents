@@ -184,9 +184,10 @@ const specific = await intel.getReport({ id: "66" });
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Get all active signals
 const signals = await toolkit.intelligence.getSignals();

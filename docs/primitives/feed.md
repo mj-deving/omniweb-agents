@@ -194,9 +194,10 @@ const rss = await feed.getRss();
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Get latest analysis posts
 const analysis = await toolkit.feed.getRecent({ limit: 20, category: "ANALYSIS" });

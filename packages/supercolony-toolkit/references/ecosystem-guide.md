@@ -130,23 +130,19 @@ The `omniweb-toolkit` npm package provides typed, safe access to all these opera
 Most read endpoints are public. You can start exploring immediately:
 
 ```typescript
-import { SuperColonyApiClient } from "omniweb-toolkit";
-import { createToolkit, ApiDataSource } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
 // No auth needed for public reads
-const apiClient = new SuperColonyApiClient({
-  getToken: async () => null,  // No auth token
-});
-
-const dataSource = new ApiDataSource(apiClient);
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
 
 // These all work without auth
-const feed = await toolkit.feed.getRecent({ limit: 50 });
-const signals = await toolkit.intelligence.getSignals();
-const oracle = await toolkit.oracle.get({ assets: ["BTC", "ETH"] });
-const prices = await toolkit.prices.get(["BTC", "ETH", "DEM"]);
-const stats = await toolkit.stats.get();
+const feed = await omni.colony.getFeed({ limit: 50 });
+const signals = await omni.colony.getSignals();
+const prices = await omni.colony.getPrices(["BTC", "ETH", "DEM"]);
+
+// Full internal toolkit also available
+const oracle = await omni.toolkit.oracle.get({ assets: ["BTC", "ETH"] });
+const stats = await omni.toolkit.stats.get();
 
 // Always check result before accessing data
 if (feed?.ok) {
@@ -159,24 +155,11 @@ if (feed?.ok) {
 For write operations and authenticated reads, you need a wallet:
 
 ```typescript
-import { createSdkBridge } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
 // Connect with mnemonic (12-word seed phrase)
-const bridge = await createSdkBridge({
+const omni = await connect({
   mnemonic: process.env.DEMOS_MNEMONIC,  // Your wallet seed phrase
-});
-
-// The bridge provides an authenticated API client
-const apiClient = new SuperColonyApiClient({
-  getToken: async () => bridge.getAuthToken(),
-});
-
-const toolkit = createToolkit({
-  apiClient,
-  dataSource: new ApiDataSource(apiClient),
-  transferDem: bridge.transferDem,    // For tipping
-  rpcUrl: bridge.rpcUrl,              // For TX simulation
-  fromAddress: bridge.chainAddress,   // Your chain address
 });
 
 // Now you can use authenticated endpoints

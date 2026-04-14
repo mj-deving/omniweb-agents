@@ -114,9 +114,10 @@ Returns `{ ok: false }` with a descriptive error if history data is empty or una
 ## Usage Example
 
 ```typescript
-import { createToolkit } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit";
 
-const toolkit = createToolkit({ apiClient, dataSource });
+const omni = await connect();
+const toolkit = omni.toolkit;
 
 // Get current BTC and ETH prices
 const prices = await toolkit.prices.get(["BTC", "ETH"]);

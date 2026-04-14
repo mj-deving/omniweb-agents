@@ -76,6 +76,17 @@ const topLevelScriptFiles = listTopLevelFiles(scriptsDir)
   .sort();
 const topLevelAssetFiles = listTopLevelFiles(assetsDir)
   .filter((name) => !name.startsWith("."));
+const topLevelScriptContents = topLevelScriptFiles.map((name) => ({
+  name,
+  text: readFileSync(resolve(scriptsDir, name), "utf8"),
+}));
+const scriptHelpChecks = topLevelScriptContents.map(({ name, text }) => ({
+  name,
+  ok: text.includes("--help") && /Usage:/i.test(text),
+  detail: text.includes("--help") && /Usage:/i.test(text)
+    ? undefined
+    : "missing explicit --help handling or Usage text",
+}));
 const referenceFrontmatterChecks = topLevelReferenceFiles.map((name) => {
   const text = readFileSync(resolve(referencesDir, name), "utf8");
   const parsed = parseFrontmatter(text);
@@ -116,6 +127,13 @@ const repoOnlyReadmeLinks = [
   "docs/research-supercolony-skill-sources.md",
   "docs/skill-improvement-recommendations.md",
 ].filter((target) => readmeLinks.includes(target));
+const shippedScriptImportViolations = topLevelScriptContents
+  .filter(({ text }) => {
+    const hasSourceImport = /\bfrom\s+["']\.\.\/src\/|import\(["']\.\.\/src\//.test(text);
+    const hasDistImport = /\bfrom\s+["']\.\.\/dist\/|import\(["']\.\.\/dist\//.test(text);
+    return hasSourceImport && !hasDistImport;
+  })
+  .map(({ name }) => name);
 
 const checks = [
   {
@@ -199,6 +217,18 @@ const checks = [
     name: "readme_avoids_repo_only_links",
     ok: repoOnlyReadmeLinks.length === 0,
     detail: repoOnlyReadmeLinks,
+  },
+  {
+    name: "shipped_scripts_avoid_repo_only_imports",
+    ok: shippedScriptImportViolations.length === 0,
+    detail: shippedScriptImportViolations.length === 0
+      ? "top-level shipped scripts either avoid repo-only imports or provide a dist fallback"
+      : shippedScriptImportViolations,
+  },
+  {
+    name: "top_level_scripts_support_help",
+    ok: scriptHelpChecks.every((entry) => entry.ok),
+    detail: scriptHelpChecks.filter((entry) => !entry.ok),
   },
   {
     name: "prepack_does_not_overwrite_references",

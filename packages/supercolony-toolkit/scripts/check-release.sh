@@ -37,7 +37,10 @@ printf '%s' "$PACK_JSON" | node -e '
     "assets/agent-loop-skeleton.ts",
     "references/platform-surface.md",
     "references/categories.md",
+    "scripts/feed.ts",
+    "scripts/balance.ts",
     "scripts/check-live.sh",
+    "scripts/check-release.sh",
     "scripts/skill-self-audit.ts",
   ];
 

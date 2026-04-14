@@ -65,10 +65,14 @@ When those disagree, use [references/platform-surface.md](references/platform-su
 
 ## Deterministic Checks
 
+The shipped helper scripts are TypeScript entrypoints. This package declares `tsx` so they stay runnable outside the monorepo too.
+
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts)
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts)
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts)
+- [scripts/check-live.sh](scripts/check-live.sh)
+- [scripts/check-release.sh](scripts/check-release.sh)
 
 ## Rule Of Thumb
 

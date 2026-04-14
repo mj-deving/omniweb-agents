@@ -31,7 +31,8 @@ Three kinds of work were completed:
 5. A third integrity pass removed stale packaging behavior, updated onboarding/reference consistency, and corrected playbook category drift.
 6. A fourth pass converted older `docs/` content into compatibility stubs, added routing/source-boundary eval coverage, and made the package-level `npm run check:*` commands work successfully in this environment.
 7. A fifth pass focused on release integrity: split live checks into smoke vs detailed paths, made smoke-check failures report structured DNS/network diagnostics, removed the last stale fixed-count metadata claims, rebuilt the package so shipped artifacts matched the new source wording, and tightened package-facing docs so shipped README content no longer points at repo-only audit files.
-8. A sixth pass fixed the published-script surface: repo-shipped helper scripts no longer depend on unshipped `src/` paths, the release check now requires the documented `feed.ts` and `balance.ts` scripts, and the package self-audit verifies that every top-level script supports `--help`.
+8. A sixth pass fixed the published-script surface: repo-shipped helper scripts no longer depend on unshipped `src/` paths, the release check now requires the documented `feed.ts` and `balance.ts` scripts, and the package self-audit verifies the top-level script help contract.
+9. A seventh pass fixed the shipped TypeScript helper runtime contract: the package now declares `tsx` directly, the onboarding docs explain why, and the self-audit fails if top-level `.ts` scripts are shipped without a matching runtime dependency.
 
 ## Research Performed
 
@@ -286,7 +287,15 @@ On the seventh pass, the published script surface itself was corrected:
 
 - `scripts/feed.ts` and `scripts/balance.ts` now load `connect()` from the public built package surface first and fall back to source only for local development
 - `scripts/check-release.sh` now requires those documented helper scripts to appear in the dry-run tarball
-- `scripts/skill-self-audit.ts` now verifies that every top-level script responds successfully to `--help`
+- `scripts/skill-self-audit.ts` now enforces the top-level script help contract via explicit `--help` / `Usage:` handling in the shipped script sources
+
+On the eighth pass, the package-owned runtime contract for shipped helpers was corrected:
+
+- `packages/supercolony-toolkit/package.json` now declares `tsx` directly so shipped `.ts` helper scripts do not rely on the monorepo root dev toolchain
+- the root [package-lock.json](/home/mj/projects/demos-agents/package-lock.json) was updated so the workspace lock metadata matches that new package dependency edge
+- `README.md` and `TOOLKIT.md` now explain that the package-owned `tsx` dependency is what keeps those helper entrypoints runnable after a normal install
+- `scripts/skill-self-audit.ts` now fails if top-level `.ts` scripts are shipped without a corresponding `tsx` dependency
+- `TOOLKIT.md` now surfaces `check-live.sh` and `check-release.sh`, keeping the onboarding surface aligned with the maintained package checks
 
 #### `agents/openai.yaml`
 
@@ -412,12 +421,14 @@ Result:
 - confirmed `README.md` no longer links to repo-only audit docs that are excluded from the tarball
 - confirmed documented helper scripts no longer depend on unshipped `src/` paths without a dist fallback
 - confirmed every top-level script responds to `--help`
+- confirmed the package declares `tsx` so shipped TypeScript helper scripts have a package-owned runtime
+- confirmed `TOOLKIT.md` now lists the shell smoke and release checks alongside the TypeScript probes
 
 Latest passing self-audit counts after the final pass:
 
 - `SKILL.md`: `142` lines
 - `GUIDE.md`: `229` lines
-- `README.md`: `71` lines
+- `README.md`: `73` lines
 - top-level reference files: `11`
 - top-level script files: `9`
 - asset files: `4`
@@ -506,6 +517,14 @@ Latest release-check result:
 - required files missing: none
 - forbidden repo-only docs included: none
 - documented helper scripts included: `scripts/feed.ts`, `scripts/balance.ts`, `scripts/check-live.sh`, `scripts/check-release.sh`
+
+Latest package-audit highlights:
+
+- `shipped_typescript_scripts_have_runtime`: pass
+- `shipped_scripts_avoid_repo_only_imports`: pass
+- `top_level_scripts_support_help`: pass
+- `toolkit_mentions_release_and_live_shell_checks`: pass
+- workspace lock metadata now includes the `packages/supercolony-toolkit -> tsx` dependency edge
 
 Current expected constrained check:
 
@@ -611,6 +630,8 @@ The older highest-risk mismatches have already been addressed:
 - missing runnable package-level check commands
 - stale shipped fixed-count metadata
 - unreadable live-check failures under constrained networking
+- shipped TypeScript helper scripts previously lacking a package-owned runtime dependency
+- onboarding docs previously lagging the maintained shell-check surface
 
 ## GitOps Recommendation
 
@@ -665,6 +686,10 @@ Do not stage unrelated untracked files currently visible in `git status`, such a
 - `codex-sdk-investigate.md`
 - `scorecard.png`
 - `scripts/auth-refresh.ts`
+
+Do stage the root lockfile with this package change:
+
+- `package-lock.json`
 
 ### Recommended commit shape
 

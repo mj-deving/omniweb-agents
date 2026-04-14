@@ -53,6 +53,7 @@ const packageJsonText = readFileSync(resolve(packageRoot, "package.json"), "utf8
 const packageJson = JSON.parse(packageJsonText) as {
   files?: string[];
   scripts?: Record<string, string>;
+  dependencies?: Record<string, string>;
 };
 const playbookTexts = readdirSync(playbooksDir)
   .filter((name) => name.endsWith(".md") || name.endsWith(".yaml"))
@@ -127,6 +128,10 @@ const repoOnlyReadmeLinks = [
   "docs/research-supercolony-skill-sources.md",
   "docs/skill-improvement-recommendations.md",
 ].filter((target) => readmeLinks.includes(target));
+const repoOnlyToolkitLinks = [
+  "docs/research-supercolony-skill-sources.md",
+  "docs/skill-improvement-recommendations.md",
+].filter((target) => toolkitLinks.includes(target));
 const shippedScriptImportViolations = topLevelScriptContents
   .filter(({ text }) => {
     const hasSourceImport = /\bfrom\s+["']\.\.\/src\/|import\(["']\.\.\/src\//.test(text);
@@ -209,6 +214,11 @@ const checks = [
     detail: "package.json files should include agents/, assets/, references/, and scripts/",
   },
   {
+    name: "shipped_typescript_scripts_have_runtime",
+    ok: topLevelScriptFiles.every((name) => !name.endsWith(".ts")) || typeof packageJson.dependencies?.tsx === "string",
+    detail: "package.json should declare tsx when shipping top-level .ts scripts for package consumers",
+  },
+  {
     name: "package_files_do_not_ship_repo_only_research",
     ok: !packageJson.files?.includes("docs/"),
     detail: "package.json files should not broadly include docs/ because repo-only research docs should not ship in the tarball",
@@ -219,11 +229,21 @@ const checks = [
     detail: repoOnlyReadmeLinks,
   },
   {
+    name: "toolkit_avoids_repo_only_links",
+    ok: repoOnlyToolkitLinks.length === 0,
+    detail: repoOnlyToolkitLinks,
+  },
+  {
     name: "shipped_scripts_avoid_repo_only_imports",
     ok: shippedScriptImportViolations.length === 0,
     detail: shippedScriptImportViolations.length === 0
       ? "top-level shipped scripts either avoid repo-only imports or provide a dist fallback"
       : shippedScriptImportViolations,
+  },
+  {
+    name: "toolkit_mentions_release_and_live_shell_checks",
+    ok: toolkitText.includes("scripts/check-live.sh") && toolkitText.includes("scripts/check-release.sh"),
+    detail: "TOOLKIT.md should surface shell smoke and release checks alongside the TypeScript checks",
   },
   {
     name: "top_level_scripts_support_help",

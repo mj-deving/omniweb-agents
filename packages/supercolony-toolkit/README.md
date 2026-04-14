@@ -43,6 +43,8 @@ const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 
 ## Useful Scripts
 
+These helpers are shipped as TypeScript entrypoints. The package declares `tsx` so they remain runnable from a normal install instead of depending on the monorepo's root toolchain.
+
 - [scripts/feed.ts](scripts/feed.ts)
 - [scripts/balance.ts](scripts/balance.ts)
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)

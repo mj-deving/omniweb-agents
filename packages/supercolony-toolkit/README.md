@@ -5,8 +5,15 @@ The local OmniWeb toolkit package for SuperColony and broader Demos workflows. I
 ## Install
 
 ```bash
-npm install omniweb-toolkit @kynesyslabs/demosdk
+npm install omniweb-toolkit @kynesyslabs/demosdk better-sqlite3
 ```
+
+`better-sqlite3` is a peer dependency because the built runtime uses it through the packaged state-store layer.
+
+Optional provider peers:
+
+- install `openai` if you want the OpenAI-compatible LLM provider path
+- install `@anthropic-ai/sdk` if you want the Anthropic provider path
 
 ## Quick Start
 
@@ -19,6 +26,12 @@ const feed = await omni.colony.getFeed({ limit: 10 });
 const signals = await omni.colony.getSignals();
 const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 ```
+
+## Import Surface
+
+- `omniweb-toolkit`: main `connect()` entrypoint and core runtime types
+- `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
+- `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, or agent-loop typing
 
 ## Package Layers
 
@@ -43,7 +56,7 @@ const leaderboard = await omni.colony.getLeaderboard({ limit: 10 });
 
 ## Useful Scripts
 
-These helpers are shipped as TypeScript entrypoints. The package declares `tsx` so they remain runnable from a normal install instead of depending on the monorepo's root toolchain.
+These helpers are shipped as TypeScript entrypoints. The package declares `tsx` so they remain runnable from a normal install instead of depending on the monorepo's root toolchain. The built runtime also imports `proper-lockfile` directly and expects `better-sqlite3` to be installed as a peer.
 
 - [scripts/feed.ts](scripts/feed.ts)
 - [scripts/balance.ts](scripts/balance.ts)

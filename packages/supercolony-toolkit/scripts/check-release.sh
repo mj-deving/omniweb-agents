@@ -27,6 +27,11 @@ printf '%s' "$PACK_JSON" | node -e '
   const parsed = JSON.parse(input);
   const entry = Array.isArray(parsed) ? parsed[0] : parsed;
   const files = (entry.files ?? []).map((file) => file.path).sort();
+  const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  const exportTargets = Object.values(packageJson.exports ?? {})
+    .flatMap((target) => [target?.import, target?.types])
+    .filter(Boolean)
+    .map((path) => path.replace(/^\.\//, ""));
 
   const required = [
     "SKILL.md",
@@ -49,7 +54,7 @@ printf '%s' "$PACK_JSON" | node -e '
     "docs/skill-improvement-recommendations.md",
   ];
 
-  const missing = required.filter((path) => !files.includes(path));
+  const missing = [...required, ...exportTargets].filter((path) => !files.includes(path));
   const leaked = forbidden.filter((path) => files.includes(path));
   const ok = missing.length === 0 && leaked.length === 0;
 

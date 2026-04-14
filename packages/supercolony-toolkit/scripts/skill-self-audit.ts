@@ -9,6 +9,7 @@
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
+import { builtinModules } from "node:module";
 import { resolve } from "node:path";
 import {
   PACKAGE_ROOT,
@@ -41,6 +42,8 @@ const assetsDir = resolve(packageRoot, "assets");
 const playbooksDir = resolve(packageRoot, "playbooks");
 const docsDir = resolve(packageRoot, "docs");
 const openaiYamlPath = resolve(packageRoot, "agents", "openai.yaml");
+const repoRoot = resolve(packageRoot, "..", "..");
+const repoLockPath = resolve(repoRoot, "package-lock.json");
 
 const skillText = readFileSync(skillPath, "utf8");
 const guideText = readFileSync(guidePath, "utf8");
@@ -54,7 +57,17 @@ const packageJson = JSON.parse(packageJsonText) as {
   files?: string[];
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  exports?: Record<string, { import?: string; types?: string }>;
 };
+const repoLock = existsRelative(repoRoot, "package-lock.json")
+  ? JSON.parse(readFileSync(repoLockPath, "utf8")) as {
+      packages?: Record<string, {
+        dependencies?: Record<string, string>;
+        peerDependencies?: Record<string, string>;
+      }>;
+    }
+  : null;
 const playbookTexts = readdirSync(playbooksDir)
   .filter((name) => name.endsWith(".md") || name.endsWith(".yaml"))
   .map((name) => readFileSync(resolve(playbooksDir, name), "utf8"));
@@ -65,6 +78,7 @@ const compatibilityDocPaths = [
   resolve(docsDir, "primitives", "README.md"),
 ];
 const compatibilityDocs = compatibilityDocPaths.map((path) => readFileSync(path, "utf8"));
+const distDir = resolve(packageRoot, "dist");
 
 const skillFrontmatter = parseFrontmatter(skillText);
 const skillLinks = extractRelativeLinks(skillText);
@@ -96,6 +110,21 @@ const referenceFrontmatterChecks = topLevelReferenceFiles.map((name) => {
     ok: !!parsed && typeof parsed.summary === "string" && parsed.summary.length > 0 && typeof parsed.read_when === "string",
   };
 });
+const declaredRuntimeModules = new Set([
+  ...Object.keys(packageJson.dependencies ?? {}),
+  ...Object.keys(packageJson.peerDependencies ?? {}),
+]);
+const externalRuntimeImports = existsRelative(packageRoot, "dist")
+  ? collectExternalImports(distDir)
+  : [];
+const undeclaredRuntimeImports = externalRuntimeImports.filter((specifier) => !isDeclaredModule(specifier, declaredRuntimeModules));
+const workspaceLockEntry = repoLock?.packages?.["packages/supercolony-toolkit"];
+const workspaceLockMatchesManifest =
+  !repoLock ||
+  normalizeRecord(workspaceLockEntry?.dependencies) === normalizeRecord(packageJson.dependencies) &&
+  normalizeRecord(workspaceLockEntry?.peerDependencies) === normalizeRecord(packageJson.peerDependencies);
+const undocumentedPeerDependencies = Object.keys(packageJson.peerDependencies ?? {})
+  .filter((name) => !readmeText.includes(name));
 
 const brokenLinks = [...new Set([...skillLinks, ...guideLinks, ...readmeLinks, ...toolkitLinks])]
   .filter((link) => !existsRelative(packageRoot, link));
@@ -139,6 +168,15 @@ const shippedScriptImportViolations = topLevelScriptContents
     return hasSourceImport && !hasDistImport;
   })
   .map(({ name }) => name);
+const exportTargets = Object.entries(packageJson.exports ?? {}).flatMap(([subpath, value]) => {
+  if (subpath === ".") return [];
+  return [subpath, value.import, value.types].filter((entry): entry is string => typeof entry === "string");
+});
+const docCorpus = [readmeText, toolkitText].join("\n");
+const undocumentedExportSubpaths = Object.keys(packageJson.exports ?? {})
+  .filter((subpath) => subpath !== ".")
+  .map((subpath) => subpath.replace(/^\.\//, "omniweb-toolkit/"))
+  .filter((label) => !docCorpus.includes(label));
 
 const checks = [
   {
@@ -219,9 +257,33 @@ const checks = [
     detail: "package.json should declare tsx when shipping top-level .ts scripts for package consumers",
   },
   {
+    name: "dist_runtime_imports_are_declared",
+    ok: undeclaredRuntimeImports.length === 0,
+    detail: undeclaredRuntimeImports.length === 0
+      ? "all bare-module imports found in dist/ are declared in dependencies or peerDependencies"
+      : undeclaredRuntimeImports,
+  },
+  {
+    name: "workspace_lock_matches_package_manifest",
+    ok: workspaceLockMatchesManifest,
+    detail: repoLock
+      ? "root package-lock.json workspace metadata should match this package's dependencies and peerDependencies"
+      : "package-lock.json not present at repo root; skipped",
+  },
+  {
+    name: "readme_mentions_peer_dependencies",
+    ok: undocumentedPeerDependencies.length === 0,
+    detail: undocumentedPeerDependencies,
+  },
+  {
     name: "package_files_do_not_ship_repo_only_research",
     ok: !packageJson.files?.includes("docs/"),
     detail: "package.json files should not broadly include docs/ because repo-only research docs should not ship in the tarball",
+  },
+  {
+    name: "package_subpath_exports_are_documented",
+    ok: undocumentedExportSubpaths.length === 0,
+    detail: undocumentedExportSubpaths,
   },
   {
     name: "readme_avoids_repo_only_links",
@@ -340,6 +402,74 @@ function listTopLevelFiles(dir: string, extension?: string): string[] {
   return readdirSync(dir)
     .filter((name) => !extension || name.endsWith(extension))
     .sort();
+}
+
+function collectExternalImports(dir: string): string[] {
+  const found = new Set<string>();
+  const stack = [dir];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = resolve(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(fullPath);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith(".js")) {
+        continue;
+      }
+
+      const text = readFileSync(fullPath, "utf8");
+      for (const match of text.matchAll(/from\s+["']([^"']+)["']/g)) {
+        const specifier = match[1];
+        if (specifier.startsWith(".") || specifier.startsWith("node:")) {
+          continue;
+        }
+        found.add(specifier);
+      }
+      for (const match of text.matchAll(/import\(\s*["']([^"']+)["']\s*\)/g)) {
+        const specifier = match[1];
+        if (specifier.startsWith(".") || specifier.startsWith("node:")) {
+          continue;
+        }
+        found.add(specifier);
+      }
+      for (const match of text.matchAll(/const\s+([A-Za-z_$][\w$]*)\s*=\s*["']([^"']+)["'][\s\S]{0,800}?import\(\s*(?:\/\*[\s\S]*?\*\/\s*)?\1\s*\)/g)) {
+        const specifier = match[2];
+        if (specifier.startsWith(".") || specifier.startsWith("node:")) {
+          continue;
+        }
+        found.add(specifier);
+      }
+    }
+  }
+
+  return [...found].sort();
+}
+
+function isDeclaredModule(specifier: string, declared: Set<string>): boolean {
+  const builtinRoots = new Set(builtinModules.map((name) => name.replace(/^node:/, "").split("/")[0]));
+  const bareRoot = specifier.replace(/^node:/, "").split("/")[0];
+  if (builtinRoots.has(bareRoot)) {
+    return true;
+  }
+
+  if (declared.has(specifier)) {
+    return true;
+  }
+
+  if (specifier.startsWith("@")) {
+    const [scope, name] = specifier.split("/");
+    return declared.has(`${scope}/${name}`);
+  }
+
+  const [name] = specifier.split("/");
+  return declared.has(name);
+}
+
+function normalizeRecord(record: Record<string, string> | undefined): string {
+  return JSON.stringify(Object.fromEntries(Object.entries(record ?? {}).sort(([a], [b]) => a.localeCompare(b))));
 }
 
 function lineCount(text: string): number {

@@ -33,6 +33,8 @@ Three kinds of work were completed:
 7. A fifth pass focused on release integrity: split live checks into smoke vs detailed paths, made smoke-check failures report structured DNS/network diagnostics, removed the last stale fixed-count metadata claims, rebuilt the package so shipped artifacts matched the new source wording, and tightened package-facing docs so shipped README content no longer points at repo-only audit files.
 8. A sixth pass fixed the published-script surface: repo-shipped helper scripts no longer depend on unshipped `src/` paths, the release check now requires the documented `feed.ts` and `balance.ts` scripts, and the package self-audit verifies the top-level script help contract.
 9. A seventh pass fixed the shipped TypeScript helper runtime contract: the package now declares `tsx` directly, the onboarding docs explain why, and the self-audit fails if top-level `.ts` scripts are shipped without a matching runtime dependency.
+10. An eighth pass tightened the public package contract further: documented subpath exports are now surfaced from the onboarding docs, the release check verifies all `package.json` export targets in the tarball, runtime externals observed in `dist/` are checked against declared dependencies and peers, and the package self-audit now verifies that the root workspace lock metadata matches the package manifest.
+11. A ninth pass expanded runtime manifest coverage for optional provider paths: the audit now scans dynamic imports in `dist/`, Node built-ins are excluded correctly, and the package manifest explicitly declares the optional `openai` and `@anthropic-ai/sdk` peers used by the packaged LLM-provider path.
 
 ## Research Performed
 
@@ -297,6 +299,24 @@ On the eighth pass, the package-owned runtime contract for shipped helpers was c
 - `scripts/skill-self-audit.ts` now fails if top-level `.ts` scripts are shipped without a corresponding `tsx` dependency
 - `TOOLKIT.md` now surfaces `check-live.sh` and `check-release.sh`, keeping the onboarding surface aligned with the maintained package checks
 
+On the ninth pass, the documented and declared package API surface was tightened:
+
+- `README.md` and `TOOLKIT.md` now document the public import surface for `omniweb-toolkit`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
+- `scripts/check-release.sh` now verifies that every `package.json` export target is present in the tarball, not just a hand-picked subset of files
+- `package.json` now declares `proper-lockfile` as a dependency and `better-sqlite3` as a peer dependency because those runtime imports survive into the built artifacts
+- `README.md` now tells consumers to install `better-sqlite3` alongside the package
+- `scripts/skill-self-audit.ts` now scans `dist/` for bare-module imports and fails if any runtime import is not declared in `dependencies` or `peerDependencies`
+- `scripts/skill-self-audit.ts` now also checks that the repo root `package-lock.json` workspace metadata matches this package manifest
+- the root [package-lock.json](/home/mj/projects/demos-agents/package-lock.json) was updated again so the workspace entry matches the new `proper-lockfile` dependency and `better-sqlite3` peer
+
+On the tenth pass, optional provider paths were made explicit:
+
+- `scripts/skill-self-audit.ts` now scans both static and dynamic bare-module imports in `dist/`
+- Node built-ins imported without a `node:` prefix are now recognized correctly by the audit and not treated as undeclared package dependencies
+- `package.json` now declares `openai` and `@anthropic-ai/sdk` as optional peer dependencies because the built runtime can load those providers dynamically
+- `README.md` and `TOOLKIT.md` now explain those optional provider peers to consumers
+- the root [package-lock.json](/home/mj/projects/demos-agents/package-lock.json) workspace entry was updated again so the peer set matches the package manifest
+
 #### `agents/openai.yaml`
 
 Added UI-facing AgentSkills metadata:
@@ -423,12 +443,16 @@ Result:
 - confirmed every top-level script responds to `--help`
 - confirmed the package declares `tsx` so shipped TypeScript helper scripts have a package-owned runtime
 - confirmed `TOOLKIT.md` now lists the shell smoke and release checks alongside the TypeScript probes
+- confirmed public subpath exports are documented in the package-facing onboarding docs
+- confirmed built runtime externals are now declared in package dependencies or peers
+- confirmed the workspace lock metadata matches the package manifest after the dependency updates
+- confirmed optional provider imports in the built runtime are now declared explicitly as optional peers
 
 Latest passing self-audit counts after the final pass:
 
 - `SKILL.md`: `142` lines
 - `GUIDE.md`: `229` lines
-- `README.md`: `73` lines
+- `README.md`: `86` lines
 - top-level reference files: `11`
 - top-level script files: `9`
 - asset files: `4`
@@ -521,10 +545,15 @@ Latest release-check result:
 Latest package-audit highlights:
 
 - `shipped_typescript_scripts_have_runtime`: pass
+- `dist_runtime_imports_are_declared`: pass
+- `workspace_lock_matches_package_manifest`: pass
+- `readme_mentions_peer_dependencies`: pass
 - `shipped_scripts_avoid_repo_only_imports`: pass
 - `top_level_scripts_support_help`: pass
 - `toolkit_mentions_release_and_live_shell_checks`: pass
+- `package_subpath_exports_are_documented`: pass
 - workspace lock metadata now includes the `packages/supercolony-toolkit -> tsx` dependency edge
+- workspace lock metadata now also matches `proper-lockfile`, `better-sqlite3`, `openai`, and `@anthropic-ai/sdk` package manifest edges
 
 Current expected constrained check:
 
@@ -632,6 +661,10 @@ The older highest-risk mismatches have already been addressed:
 - unreadable live-check failures under constrained networking
 - shipped TypeScript helper scripts previously lacking a package-owned runtime dependency
 - onboarding docs previously lagging the maintained shell-check surface
+- built runtime externals previously undeclared in the package manifest
+- documented subpath exports previously missing from package-facing docs
+- workspace lock metadata previously able to drift from the package manifest without audit coverage
+- optional provider imports previously present in the built runtime without explicit package peer declarations
 
 ## GitOps Recommendation
 

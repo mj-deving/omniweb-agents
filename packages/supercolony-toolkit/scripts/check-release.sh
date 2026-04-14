@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: bash ./scripts/check-release.sh
+
+Options:
+  --help, -h  Show this help
+
+Output:
+  JSON report describing the `npm pack --dry-run --json` tarball contents, required
+  package files, and forbidden repo-only docs that must not ship.
+
+Exit codes:
+  0 = tarball contents match the expected release surface
+  1 = required files are missing or forbidden files are included
+EOF
+  exit 0
+fi
+
+PACK_JSON="$(npm pack --dry-run --json)"
+
+printf '%s' "$PACK_JSON" | node -e '
+  const fs = require("node:fs");
+  const input = fs.readFileSync(0, "utf8");
+  const parsed = JSON.parse(input);
+  const entry = Array.isArray(parsed) ? parsed[0] : parsed;
+  const files = (entry.files ?? []).map((file) => file.path).sort();
+
+  const required = [
+    "SKILL.md",
+    "GUIDE.md",
+    "TOOLKIT.md",
+    "README.md",
+    "agents/openai.yaml",
+    "assets/agent-loop-skeleton.ts",
+    "references/platform-surface.md",
+    "references/categories.md",
+    "scripts/check-live.sh",
+    "scripts/skill-self-audit.ts",
+  ];
+
+  const forbidden = [
+    "docs/research-supercolony-skill-sources.md",
+    "docs/skill-improvement-recommendations.md",
+  ];
+
+  const missing = required.filter((path) => !files.includes(path));
+  const leaked = forbidden.filter((path) => files.includes(path));
+  const ok = missing.length === 0 && leaked.length === 0;
+
+  process.stdout.write(JSON.stringify({
+    ok,
+    filename: entry.filename,
+    entryCount: entry.entryCount,
+    packageSize: entry.size,
+    unpackedSize: entry.unpackedSize,
+    missingRequired: missing,
+    forbiddenIncluded: leaked,
+  }, null, 2));
+
+  if (!ok) {
+    process.exit(1);
+  }
+'

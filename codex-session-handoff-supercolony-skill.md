@@ -30,7 +30,7 @@ Three kinds of work were completed:
 4. A second follow-up pass added package-complete AgentSkills metadata, output templates, and improved eval coverage so the lean skill structure is enforced.
 5. A third integrity pass removed stale packaging behavior, updated onboarding/reference consistency, and corrected playbook category drift.
 6. A fourth pass converted older `docs/` content into compatibility stubs, added routing/source-boundary eval coverage, and made the package-level `npm run check:*` commands work successfully in this environment.
-7. A fifth pass focused on release integrity: split live checks into smoke vs detailed paths, made smoke-check failures report structured DNS/network diagnostics, removed the last stale fixed-count metadata claims, and rebuilt the package so shipped artifacts matched the new source wording.
+7. A fifth pass focused on release integrity: split live checks into smoke vs detailed paths, made smoke-check failures report structured DNS/network diagnostics, removed the last stale fixed-count metadata claims, rebuilt the package so shipped artifacts matched the new source wording, and tightened package-facing docs so shipped README content no longer points at repo-only audit files.
 
 ## Research Performed
 
@@ -152,6 +152,8 @@ That drove the methodology refactor.
 - [scripts/check-discovery-drift.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-discovery-drift.ts)
 - [scripts/check-live-categories.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-live-categories.ts)
 - [scripts/check-endpoint-surface.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-endpoint-surface.ts)
+- [scripts/check-live.sh](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-live.sh)
+- [scripts/check-release.sh](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-release.sh)
 - [scripts/leaderboard-snapshot.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/leaderboard-snapshot.ts)
 - [scripts/skill-self-audit.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/skill-self-audit.ts)
 
@@ -203,6 +205,7 @@ That drove the methodology refactor.
 - [docs/primitives/README.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/docs/primitives/README.md)
 - [scripts/_shared.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/_shared.ts)
 - [scripts/check-live.sh](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-live.sh)
+- [scripts/check-release.sh](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-release.sh)
 - [src/colony.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/src/colony.ts)
 
 ### Refactor intent
@@ -270,6 +273,13 @@ On the fifth pass, `check:live` was intentionally split:
 - `check:live:detailed` remains the more detailed TypeScript probe path
 
 This was necessary because detailed live networking behavior varies by environment.
+
+On the sixth pass, package-facing maintenance cues were tightened:
+
+- `SKILL.md` now routes to `scripts/check-release.sh` so every maintained top-level script is discoverable from the activation router
+- `README.md` now describes `docs/` as a compatibility layer and no longer links to repo-only audit docs that are intentionally excluded from the npm tarball
+- `scripts/skill-self-audit.ts` now audits `README.md` alongside the other package entry docs and fails if repo-only audit links leak back into the shipped package surface
+- both shell helpers, `check-live.sh` and `check-release.sh`, now implement `--help` so the documented non-interactive script surface is accurate
 
 #### `agents/openai.yaml`
 
@@ -375,6 +385,7 @@ Result:
 
 - passed
 - confirmed frontmatter exists
+- confirmed README, SKILL, and GUIDE line counts remain bounded
 - confirmed line counts are under the desired threshold
 - confirmed no broken relative links
 - confirmed one-level reference discipline
@@ -390,6 +401,17 @@ Result:
 - confirmed `TOOLKIT.md` no longer points at stale copied-doc paths
 - confirmed playbooks no longer use the obsolete `NEWS` category
 - confirmed package metadata no longer contains a `prepack` step that overwrites `references/`
+- confirmed `SKILL.md` now routes to every maintained top-level script, including `check-release.sh`
+- confirmed `README.md` no longer links to repo-only audit docs that are excluded from the tarball
+
+Latest passing self-audit counts after the final pass:
+
+- `SKILL.md`: `142` lines
+- `GUIDE.md`: `229` lines
+- `README.md`: `71` lines
+- top-level reference files: `11`
+- top-level script files: `9`
+- asset files: `4`
 
 ### Script entrypoint verification
 
@@ -400,6 +422,8 @@ Confirmed each new script supports `--help` and returns structured usage text:
 - `check-endpoint-surface.ts`
 - `leaderboard-snapshot.ts`
 - `skill-self-audit.ts`
+- `check-live.sh`
+- `check-release.sh`
 
 ### Eval verification
 
@@ -462,6 +486,14 @@ Current green checks:
 - `npm run check:skill`
 - `npm run check:evals`
 - `npm run check:package`
+- `npm run check:release`
+
+Latest release-check result:
+
+- tarball filename: `omniweb-toolkit-0.1.0.tgz`
+- tarball entry count: `64`
+- required files missing: none
+- forbidden repo-only docs included: none
 
 Current expected constrained check:
 
@@ -552,22 +584,10 @@ Recent higher-performing category mix leaned heavily toward `ANALYSIS`, with sma
 
 ## Known Limits / Open Next Steps
 
-No blocking issues remain from this session, but Claude could reasonably continue with:
-
-- tightening or trimming existing older reference files so they match the new reference style
-- adding `agents/openai.yaml` if the package should expose richer UI metadata for skill lists
-- adding small assets or templates if concrete post/reply skeletons are desired
-- adding evals that explicitly check progressive disclosure, trigger quality, and source-boundary discipline
-
-The first two of those are now done:
-
-- templates/assets were added
-- eval coverage now includes architecture checks
-
-Remaining reasonable follow-up work for Claude is mainly:
+No blocking issues remain from this session. Remaining reasonable follow-up work for Claude is mainly:
 
 - polish older reference files to match the new reference style
-- decide whether to add more explicit eval cases for source-boundary correctness
+- decide whether to add more explicit eval cases for source-boundary correctness or package-maintenance discoverability
 
 The older highest-risk mismatches have already been addressed:
 
@@ -620,6 +640,11 @@ git add \
   packages/supercolony-toolkit/scripts/
 ```
 
+That staging set now includes both release-integrity shell helpers:
+
+- `packages/supercolony-toolkit/scripts/check-live.sh`
+- `packages/supercolony-toolkit/scripts/check-release.sh`
+
 Do not stage unrelated untracked files currently visible in `git status`, such as:
 
 - `agents/reference/scores.jsonl`
@@ -641,14 +666,14 @@ If you want better reviewability, split into 3 commits:
 
 1. research and audit artifacts
 2. skill/package doc refactor
-3. validation scripts and discovery snapshot
+3. validation scripts, release checks, and discovery snapshot
 
 Suggested messages:
 
 ```bash
 git commit -m "docs(supercolony): add audit and research handoff"
 git commit -m "docs(supercolony-toolkit): refactor skill for progressive disclosure"
-git commit -m "chore(supercolony-toolkit): add drift and self-audit scripts"
+git commit -m "chore(supercolony-toolkit): add drift, release, and self-audit checks"
 ```
 
 ### Recommended PR framing

@@ -121,6 +121,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/leaderboard-snapshot.ts](scripts/leaderboard-snapshot.ts): summarize top agents and recent category mix
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts): validate skill-package progressive-disclosure hygiene
 - [scripts/check-live.sh](scripts/check-live.sh): shell-curl live smoke check with explicit network diagnostics
+- [scripts/check-release.sh](scripts/check-release.sh): validate `npm pack --dry-run` contents before publish
 
 All scripts are non-interactive, print structured JSON to stdout, and support `--help`.
 

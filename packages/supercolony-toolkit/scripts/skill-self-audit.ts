@@ -33,6 +33,7 @@ Exit codes: 0 = pass, 1 = audit failure, 2 = invalid args`);
 const packageRoot = resolve(getStringArg(args, "--package-root") ?? PACKAGE_ROOT);
 const skillPath = resolve(packageRoot, "SKILL.md");
 const guidePath = resolve(packageRoot, "GUIDE.md");
+const readmePath = resolve(packageRoot, "README.md");
 const toolkitPath = resolve(packageRoot, "TOOLKIT.md");
 const referencesDir = resolve(packageRoot, "references");
 const scriptsDir = resolve(packageRoot, "scripts");
@@ -43,6 +44,7 @@ const openaiYamlPath = resolve(packageRoot, "agents", "openai.yaml");
 
 const skillText = readFileSync(skillPath, "utf8");
 const guideText = readFileSync(guidePath, "utf8");
+const readmeText = readFileSync(readmePath, "utf8");
 const toolkitText = readFileSync(toolkitPath, "utf8");
 const openaiYamlText = existsRelative(packageRoot, "agents/openai.yaml")
   ? readFileSync(openaiYamlPath, "utf8")
@@ -66,6 +68,7 @@ const compatibilityDocs = compatibilityDocPaths.map((path) => readFileSync(path,
 const skillFrontmatter = parseFrontmatter(skillText);
 const skillLinks = extractRelativeLinks(skillText);
 const guideLinks = extractRelativeLinks(guideText);
+const readmeLinks = extractRelativeLinks(readmeText);
 const toolkitLinks = extractRelativeLinks(toolkitText);
 const topLevelReferenceFiles = listTopLevelFiles(referencesDir, ".md");
 const topLevelScriptFiles = listTopLevelFiles(scriptsDir)
@@ -82,7 +85,7 @@ const referenceFrontmatterChecks = topLevelReferenceFiles.map((name) => {
   };
 });
 
-const brokenLinks = [...new Set([...skillLinks, ...guideLinks, ...toolkitLinks])]
+const brokenLinks = [...new Set([...skillLinks, ...guideLinks, ...readmeLinks, ...toolkitLinks])]
   .filter((link) => !existsRelative(packageRoot, link));
 
 const oneLevelViolations = skillLinks.filter((link) => {
@@ -109,6 +112,10 @@ const stalePatterns = [
   { label: "stale docs links", ok: !toolkitText.includes("docs/ecosystem-guide.md") && !toolkitText.includes("docs/capabilities-guide.md") && !toolkitText.includes("docs/attestation-pipeline.md") },
   { label: "obsolete NEWS category", ok: playbookTexts.every((text) => !text.includes("NEWS:")) },
 ];
+const repoOnlyReadmeLinks = [
+  "docs/research-supercolony-skill-sources.md",
+  "docs/skill-improvement-recommendations.md",
+].filter((target) => readmeLinks.includes(target));
 
 const checks = [
   {
@@ -127,6 +134,11 @@ const checks = [
     name: "guide_line_count",
     ok: lineCount(guideText) <= 500,
     detail: `GUIDE.md has ${lineCount(guideText)} lines`,
+  },
+  {
+    name: "readme_line_count",
+    ok: lineCount(readmeText) <= 500,
+    detail: `README.md has ${lineCount(readmeText)} lines`,
   },
   {
     name: "broken_relative_links",
@@ -177,6 +189,16 @@ const checks = [
     name: "package_files_include_skill_assets",
     ok: ["agents/", "assets/", "references/", "scripts/"].every((entry) => packageJson.files?.includes(entry)),
     detail: "package.json files should include agents/, assets/, references/, and scripts/",
+  },
+  {
+    name: "package_files_do_not_ship_repo_only_research",
+    ok: !packageJson.files?.includes("docs/"),
+    detail: "package.json files should not broadly include docs/ because repo-only research docs should not ship in the tarball",
+  },
+  {
+    name: "readme_avoids_repo_only_links",
+    ok: repoOnlyReadmeLinks.length === 0,
+    detail: repoOnlyReadmeLinks,
   },
   {
     name: "prepack_does_not_overwrite_references",

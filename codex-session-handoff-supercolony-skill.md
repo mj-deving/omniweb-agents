@@ -2,7 +2,7 @@
 
 Date: 2026-04-14  
 Workspace: `/home/mj/projects/demos-agents`  
-Primary scope: `packages/supercolony-toolkit` and related SuperColony research material
+Primary scope: `packages/omniweb-toolkit` and related SuperColony research material
 
 ## Purpose
 
@@ -28,17 +28,24 @@ Three kinds of work were completed:
 2. The `supercolony-toolkit` skill package was refactored so `SKILL.md` became a lean activation router and `GUIDE.md` became a methodology companion.
 3. Deterministic validation scripts and routed reference files were added, then verified against live SuperColony behavior on 2026-04-14.
 4. A second follow-up pass added package-complete AgentSkills metadata, output templates, and improved eval coverage so the lean skill structure is enforced.
+5. A third integrity pass removed stale packaging behavior, updated onboarding/reference consistency, and corrected playbook category drift.
+6. A fourth pass converted older `docs/` content into compatibility stubs, added routing/source-boundary eval coverage, and made the package-level `npm run check:*` commands work successfully in this environment.
+7. A fifth pass focused on release integrity: split live checks into smoke vs detailed paths, made smoke-check failures report structured DNS/network diagnostics, removed the last stale fixed-count metadata claims, rebuilt the package so shipped artifacts matched the new source wording, and tightened package-facing docs so shipped README content no longer points at repo-only audit files.
+8. A sixth pass fixed the published-script surface: repo-shipped helper scripts no longer depend on unshipped `src/` paths, the release check now requires the documented `feed.ts` and `balance.ts` scripts, and the package self-audit verifies the top-level script help contract.
+9. A seventh pass fixed the shipped TypeScript helper runtime contract: the package now declares `tsx` directly, the onboarding docs explain why, and the self-audit fails if top-level `.ts` scripts are shipped without a matching runtime dependency.
+10. An eighth pass tightened the public package contract further: documented subpath exports are now surfaced from the onboarding docs, the release check verifies all `package.json` export targets in the tarball, runtime externals observed in `dist/` are checked against declared dependencies and peers, and the package self-audit now verifies that the root workspace lock metadata matches the package manifest.
+11. A ninth pass expanded runtime manifest coverage for optional provider paths: the audit now scans dynamic imports in `dist/`, Node built-ins are excluded correctly, and the package manifest explicitly declares the optional `openai` and `@anthropic-ai/sdk` peers used by the packaged LLM-provider path.
 
 ## Research Performed
 
 ### Local package and repo files reviewed
 
-- `packages/supercolony-toolkit/SKILL.md`
-- `packages/supercolony-toolkit/GUIDE.md`
-- `packages/supercolony-toolkit/README.md`
-- `packages/supercolony-toolkit/src/index.ts`
-- `packages/supercolony-toolkit/src/colony.ts`
-- `packages/supercolony-toolkit/src/hive.ts`
+- `packages/omniweb-toolkit/SKILL.md`
+- `packages/omniweb-toolkit/GUIDE.md`
+- `packages/omniweb-toolkit/README.md`
+- `packages/omniweb-toolkit/src/index.ts`
+- `packages/omniweb-toolkit/src/colony.ts`
+- `packages/omniweb-toolkit/src/hive.ts`
 - `scripts/colony-state-reader.ts`
 
 ### Official live resources fetched
@@ -130,35 +137,46 @@ That drove the methodology refactor.
 ### Standalone audit and research docs
 
 - [codex-skill-guide-audit-report.md](/home/mj/projects/demos-agents/codex-skill-guide-audit-report.md)
-- [research-supercolony-skill-sources.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/docs/research-supercolony-skill-sources.md)
-- [skill-improvement-recommendations.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/docs/skill-improvement-recommendations.md)
+- [research-supercolony-skill-sources.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/docs/research-supercolony-skill-sources.md)
+- [skill-improvement-recommendations.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/docs/skill-improvement-recommendations.md)
 
 ### New reference files added to the skill package
 
-- [platform-surface.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/platform-surface.md)
-- [categories.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/categories.md)
-- [discovery-and-manifests.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/discovery-and-manifests.md)
-- [live-endpoints.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/live-endpoints.md)
-- [scoring-and-leaderboard.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/scoring-and-leaderboard.md)
-- [interaction-patterns.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/interaction-patterns.md)
-- [toolkit-guardrails.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/references/toolkit-guardrails.md)
+- [platform-surface.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/platform-surface.md)
+- [categories.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/categories.md)
+- [discovery-and-manifests.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/discovery-and-manifests.md)
+- [live-endpoints.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/live-endpoints.md)
+- [scoring-and-leaderboard.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/scoring-and-leaderboard.md)
+- [interaction-patterns.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/interaction-patterns.md)
+- [toolkit-guardrails.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/toolkit-guardrails.md)
 
 ### New validation / research scripts added to the skill package
 
-- [scripts/_shared.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/_shared.ts)
-- [scripts/check-discovery-drift.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-discovery-drift.ts)
-- [scripts/check-live-categories.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-live-categories.ts)
-- [scripts/check-endpoint-surface.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/check-endpoint-surface.ts)
-- [scripts/leaderboard-snapshot.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/leaderboard-snapshot.ts)
-- [scripts/skill-self-audit.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/skill-self-audit.ts)
+- [scripts/_shared.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/_shared.ts)
+- [scripts/check-discovery-drift.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-discovery-drift.ts)
+- [scripts/check-live-categories.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-live-categories.ts)
+- [scripts/check-endpoint-surface.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-endpoint-surface.ts)
+- [scripts/check-live.sh](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-live.sh)
+- [scripts/check-release.sh](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-release.sh)
+- [scripts/leaderboard-snapshot.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/leaderboard-snapshot.ts)
+- [scripts/skill-self-audit.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/skill-self-audit.ts)
 
 ### New AgentSkills metadata and assets
 
-- [agents/openai.yaml](/home/mj/projects/demos-agents/packages/supercolony-toolkit/agents/openai.yaml)
-- [assets/post-template-analysis.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/assets/post-template-analysis.md)
-- [assets/post-template-prediction.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/assets/post-template-prediction.md)
-- [assets/reply-template.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/assets/reply-template.md)
-- [assets/agent-loop-skeleton.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/assets/agent-loop-skeleton.ts)
+- [agents/openai.yaml](/home/mj/projects/demos-agents/packages/omniweb-toolkit/agents/openai.yaml)
+- [assets/post-template-analysis.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/assets/post-template-analysis.md)
+- [assets/post-template-prediction.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/assets/post-template-prediction.md)
+- [assets/reply-template.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/assets/reply-template.md)
+- [assets/agent-loop-skeleton.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/assets/agent-loop-skeleton.ts)
+
+### Additional package-alignment changes
+
+- [TOOLKIT.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/TOOLKIT.md) was rewritten as a compact onboarding file aligned to the new reference layer.
+- [references/ecosystem-guide.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/ecosystem-guide.md) was rewritten to be source-boundary aware rather than carrying stale network metrics.
+- [references/capabilities-guide.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/capabilities-guide.md) was rewritten as a stable action inventory aligned to the current package surface.
+- the playbooks and strategy schema were updated to use `FEED` instead of the stale `NEWS` category.
+- the legacy `docs/` copies for attestation, capabilities, ecosystem, and primitives were converted into short compatibility stubs that point to the canonical `references/` content.
+- package metadata and playbook intros were cleaned up to remove stale fixed-count claims such as hardcoded agent counts and method/domain counts.
 
 ### Discovery snapshot added
 
@@ -172,12 +190,27 @@ That drove the methodology refactor.
 
 ### Refactored
 
-- [SKILL.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/SKILL.md)
-- [GUIDE.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/GUIDE.md)
-- [README.md](/home/mj/projects/demos-agents/packages/supercolony-toolkit/README.md)
-- [package.json](/home/mj/projects/demos-agents/packages/supercolony-toolkit/package.json)
-- [evals/run-evals.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/evals/run-evals.ts)
-- [scripts/skill-self-audit.ts](/home/mj/projects/demos-agents/packages/supercolony-toolkit/scripts/skill-self-audit.ts)
+- [SKILL.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/SKILL.md)
+- [GUIDE.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/GUIDE.md)
+- [README.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/README.md)
+- [package.json](/home/mj/projects/demos-agents/packages/omniweb-toolkit/package.json)
+- [evals/run-evals.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/evals/run-evals.ts)
+- [evals/evals.json](/home/mj/projects/demos-agents/packages/omniweb-toolkit/evals/evals.json)
+- [scripts/skill-self-audit.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/skill-self-audit.ts)
+- [TOOLKIT.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/TOOLKIT.md)
+- [references/response-shapes.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/references/response-shapes.md)
+- [playbooks/strategy-schema.yaml](/home/mj/projects/demos-agents/packages/omniweb-toolkit/playbooks/strategy-schema.yaml)
+- [playbooks/market-analyst.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/playbooks/market-analyst.md)
+- [playbooks/research-agent.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/playbooks/research-agent.md)
+- [playbooks/engagement-optimizer.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/playbooks/engagement-optimizer.md)
+- [docs/attestation-pipeline.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/docs/attestation-pipeline.md)
+- [docs/capabilities-guide.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/docs/capabilities-guide.md)
+- [docs/ecosystem-guide.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/docs/ecosystem-guide.md)
+- [docs/primitives/README.md](/home/mj/projects/demos-agents/packages/omniweb-toolkit/docs/primitives/README.md)
+- [scripts/_shared.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/_shared.ts)
+- [scripts/check-live.sh](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-live.sh)
+- [scripts/check-release.sh](/home/mj/projects/demos-agents/packages/omniweb-toolkit/scripts/check-release.sh)
+- [src/colony.ts](/home/mj/projects/demos-agents/packages/omniweb-toolkit/src/colony.ts)
 
 ### Refactor intent
 
@@ -222,13 +255,67 @@ Changed to reflect the new package architecture:
 
 Added script entries:
 
+- `check:evals`
+- `check:package`
 - `check:categories`
 - `check:discovery`
 - `check:endpoints`
+- `check:live`
+- `check:live:detailed`
 - `check:skill`
 - `snapshot:leaderboard`
 
 Also updated package publishing scope so `agents/` and `assets/` are included in package files.
+
+On the third pass, the old `prepack` behavior that copied `docs/*.md` back into `references/` was removed. This was important because it would have overwritten the new reference layer at publish time.
+
+On the fourth pass, the package scripts were normalized to `node --import tsx ...` entrypoints so `npm run check:skill`, `npm run check:evals`, and `npm run check:package` all execute successfully in this environment.
+
+On the fifth pass, `check:live` was intentionally split:
+
+- `check:live` is now a shell-curl smoke test with structured diagnostics
+- `check:live:detailed` remains the more detailed TypeScript probe path
+
+This was necessary because detailed live networking behavior varies by environment.
+
+On the sixth pass, package-facing maintenance cues were tightened:
+
+- `SKILL.md` now routes to `scripts/check-release.sh` so every maintained top-level script is discoverable from the activation router
+- `README.md` now describes `docs/` as a compatibility layer and no longer links to repo-only audit docs that are intentionally excluded from the npm tarball
+- `scripts/skill-self-audit.ts` now audits `README.md` alongside the other package entry docs and fails if repo-only audit links leak back into the shipped package surface
+- both shell helpers, `check-live.sh` and `check-release.sh`, now implement `--help` so the documented non-interactive script surface is accurate
+
+On the seventh pass, the published script surface itself was corrected:
+
+- `scripts/feed.ts` and `scripts/balance.ts` now load `connect()` from the public built package surface first and fall back to source only for local development
+- `scripts/check-release.sh` now requires those documented helper scripts to appear in the dry-run tarball
+- `scripts/skill-self-audit.ts` now enforces the top-level script help contract via explicit `--help` / `Usage:` handling in the shipped script sources
+
+On the eighth pass, the package-owned runtime contract for shipped helpers was corrected:
+
+- `packages/omniweb-toolkit/package.json` now declares `tsx` directly so shipped `.ts` helper scripts do not rely on the monorepo root dev toolchain
+- the root [package-lock.json](/home/mj/projects/demos-agents/package-lock.json) was updated so the workspace lock metadata matches that new package dependency edge
+- `README.md` and `TOOLKIT.md` now explain that the package-owned `tsx` dependency is what keeps those helper entrypoints runnable after a normal install
+- `scripts/skill-self-audit.ts` now fails if top-level `.ts` scripts are shipped without a corresponding `tsx` dependency
+- `TOOLKIT.md` now surfaces `check-live.sh` and `check-release.sh`, keeping the onboarding surface aligned with the maintained package checks
+
+On the ninth pass, the documented and declared package API surface was tightened:
+
+- `README.md` and `TOOLKIT.md` now document the public import surface for `omniweb-toolkit`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
+- `scripts/check-release.sh` now verifies that every `package.json` export target is present in the tarball, not just a hand-picked subset of files
+- `package.json` now declares `proper-lockfile` as a dependency and `better-sqlite3` as a peer dependency because those runtime imports survive into the built artifacts
+- `README.md` now tells consumers to install `better-sqlite3` alongside the package
+- `scripts/skill-self-audit.ts` now scans `dist/` for bare-module imports and fails if any runtime import is not declared in `dependencies` or `peerDependencies`
+- `scripts/skill-self-audit.ts` now also checks that the repo root `package-lock.json` workspace metadata matches this package manifest
+- the root [package-lock.json](/home/mj/projects/demos-agents/package-lock.json) was updated again so the workspace entry matches the new `proper-lockfile` dependency and `better-sqlite3` peer
+
+On the tenth pass, optional provider paths were made explicit:
+
+- `scripts/skill-self-audit.ts` now scans both static and dynamic bare-module imports in `dist/`
+- Node built-ins imported without a `node:` prefix are now recognized correctly by the audit and not treated as undeclared package dependencies
+- `package.json` now declares `openai` and `@anthropic-ai/sdk` as optional peer dependencies because the built runtime can load those providers dynamically
+- `README.md` and `TOOLKIT.md` now explain those optional provider peers to consumers
+- the root [package-lock.json](/home/mj/projects/demos-agents/package-lock.json) workspace entry was updated again so the peer set matches the package manifest
 
 #### `agents/openai.yaml`
 
@@ -268,6 +355,57 @@ Expanded the self-audit to enforce:
 - asset discoverability
 - existence of `agents/openai.yaml`
 - presence of `$omniweb-toolkit` in the default prompt
+- current `TOOLKIT.md` links
+- removal of stale `NEWS` category use in playbooks
+- package file-list coverage for `agents/`, `assets/`, `references/`, and `scripts/`
+- absence of `prepack` logic that overwrites `references/`
+- confirmation that canonical `references/*.md` files keep complete frontmatter
+- confirmation that legacy `docs/` copies remain short compatibility stubs
+
+#### `scripts/_shared.ts` and `scripts/check-live.sh`
+
+The live-check path was made more operationally honest:
+
+- `_shared.ts` now contains a best-effort curl fallback path for environments where native fetch fails
+- `check-live.sh` provides a shell-curl smoke test that always prints structured JSON
+- when live probes return status `0`, the smoke test now reports explicit curl exit/error diagnostics instead of failing as unreadable stderr noise
+- `check-live.sh` is now surfaced from `SKILL.md` and `README.md` and counted by the package self-audit as part of the maintained script surface
+
+In this sandboxed environment, `check:live` still fails non-zero because DNS is blocked, but it now fails clearly and usefully.
+
+#### `TOOLKIT.md`
+
+Rewritten as a compact onboarding document that now points at `SKILL.md`, `GUIDE.md`, and the new routed reference set instead of the older copied-doc layout.
+
+#### Playbooks and strategy schema
+
+Updated to replace stale `NEWS` category usage with `FEED`, aligning the package archetypes with the audited category set.
+
+#### Legacy docs compatibility layer
+
+Older published docs were converted into short redirect stubs:
+
+- `docs/attestation-pipeline.md`
+- `docs/capabilities-guide.md`
+- `docs/ecosystem-guide.md`
+- `docs/primitives/README.md`
+
+This preserves existing links without keeping a second stale canon alive.
+
+#### Eval suite
+
+`evals/evals.json` and `evals/run-evals.ts` were expanded to cover:
+
+- category-routing behavior
+- discovery-manifest routing
+- toolkit-guardrail routing
+- source-boundary routing
+- existence and discoverability of referenced companion files
+
+#### Source and build artifacts
+
+- `src/colony.ts` was updated to remove the last stale fixed-count toolkit comment
+- the package was rebuilt so the shipped `dist/` declarations no longer carry that stale count
 
 ## Verification Performed
 
@@ -276,17 +414,48 @@ Expanded the self-audit to enforce:
 Ran:
 
 - `npx tsx scripts/skill-self-audit.ts`
+- `npm run check:skill`
+- `npm run build`
 
 Result:
 
 - passed
 - confirmed frontmatter exists
+- confirmed README, SKILL, and GUIDE line counts remain bounded
 - confirmed line counts are under the desired threshold
 - confirmed no broken relative links
 - confirmed one-level reference discipline
 - confirmed references and scripts are discoverable from `SKILL.md`
 - confirmed assets are discoverable from `SKILL.md` or `GUIDE.md`
 - confirmed `agents/openai.yaml` exists and is wired correctly
+- confirmed `TOOLKIT.md` no longer points at stale copied-doc paths
+- confirmed playbooks no longer use the obsolete `NEWS` category
+- confirmed package metadata no longer contains a `prepack` step that overwrites `references/`
+- confirmed legacy `docs/` copies are short compatibility stubs
+- confirmed canonical reference files keep the expected frontmatter
+- confirmed rebuilt artifacts no longer carry the stale fixed-count wording
+- confirmed `TOOLKIT.md` no longer points at stale copied-doc paths
+- confirmed playbooks no longer use the obsolete `NEWS` category
+- confirmed package metadata no longer contains a `prepack` step that overwrites `references/`
+- confirmed `SKILL.md` now routes to every maintained top-level script, including `check-release.sh`
+- confirmed `README.md` no longer links to repo-only audit docs that are excluded from the tarball
+- confirmed documented helper scripts no longer depend on unshipped `src/` paths without a dist fallback
+- confirmed every top-level script responds to `--help`
+- confirmed the package declares `tsx` so shipped TypeScript helper scripts have a package-owned runtime
+- confirmed `TOOLKIT.md` now lists the shell smoke and release checks alongside the TypeScript probes
+- confirmed public subpath exports are documented in the package-facing onboarding docs
+- confirmed built runtime externals are now declared in package dependencies or peers
+- confirmed the workspace lock metadata matches the package manifest after the dependency updates
+- confirmed optional provider imports in the built runtime are now declared explicitly as optional peers
+
+Latest passing self-audit counts after the final pass:
+
+- `SKILL.md`: `142` lines
+- `GUIDE.md`: `229` lines
+- `README.md`: `86` lines
+- top-level reference files: `11`
+- top-level script files: `9`
+- asset files: `4`
 
 ### Script entrypoint verification
 
@@ -297,12 +466,18 @@ Confirmed each new script supports `--help` and returns structured usage text:
 - `check-endpoint-surface.ts`
 - `leaderboard-snapshot.ts`
 - `skill-self-audit.ts`
+- `check-live.sh`
+- `check-release.sh`
+- `feed.ts`
+- `balance.ts`
 
 ### Eval verification
 
 Ran:
 
 - `npx tsx evals/run-evals.ts --summary`
+- `npm run check:evals`
+- `npm run check:package`
 
 Initial state after the first refactor:
 
@@ -320,6 +495,70 @@ After the follow-up eval/metadata pass:
 - `26` pass
 - `0` warn
 - `0` fail
+
+That status remained green after the third integrity pass.
+
+After adding routing/source-boundary evals:
+
+- `30` pass
+- `0` warn
+- `0` fail
+
+That status remained green after the fifth release-integrity pass.
+
+### Live-check verification
+
+Ran:
+
+- `npm run check:live`
+
+Result in this environment:
+
+- exits non-zero
+- now prints structured JSON instead of raw curl noise
+- clearly reports `curlExit: 6` and DNS resolution failure
+- includes diagnostics explaining that status `0` usually indicates blocked outbound networking rather than package drift
+
+Interpretation:
+
+- the smoke check is operationally improved
+- the environment remains network-constrained for package-level live checks
+- this is now visible and actionable rather than ambiguous
+
+### Package check status at end of session
+
+Current green checks:
+
+- `npm run check:skill`
+- `npm run check:evals`
+- `npm run check:package`
+- `npm run check:release`
+
+Latest release-check result:
+
+- tarball filename: `omniweb-toolkit-0.1.0.tgz`
+- tarball entry count: `64`
+- required files missing: none
+- forbidden repo-only docs included: none
+- documented helper scripts included: `scripts/feed.ts`, `scripts/balance.ts`, `scripts/check-live.sh`, `scripts/check-release.sh`
+
+Latest package-audit highlights:
+
+- `shipped_typescript_scripts_have_runtime`: pass
+- `dist_runtime_imports_are_declared`: pass
+- `workspace_lock_matches_package_manifest`: pass
+- `readme_mentions_peer_dependencies`: pass
+- `shipped_scripts_avoid_repo_only_imports`: pass
+- `top_level_scripts_support_help`: pass
+- `toolkit_mentions_release_and_live_shell_checks`: pass
+- `package_subpath_exports_are_documented`: pass
+- workspace lock metadata now includes the `packages/omniweb-toolkit -> tsx` dependency edge
+- workspace lock metadata now also matches `proper-lockfile`, `better-sqlite3`, `openai`, and `@anthropic-ai/sdk` package manifest edges
+
+Current expected constrained check:
+
+- `npm run check:live`
+  It emits structured diagnostics, but still exits non-zero in this sandbox due DNS/network restriction rather than package inconsistency.
 
 ### Live drift verification
 
@@ -405,22 +644,27 @@ Recent higher-performing category mix leaned heavily toward `ANALYSIS`, with sma
 
 ## Known Limits / Open Next Steps
 
-No blocking issues remain from this session, but Claude could reasonably continue with:
-
-- tightening or trimming existing older reference files so they match the new reference style
-- adding `agents/openai.yaml` if the package should expose richer UI metadata for skill lists
-- adding small assets or templates if concrete post/reply skeletons are desired
-- adding evals that explicitly check progressive disclosure, trigger quality, and source-boundary discipline
-
-The first two of those are now done:
-
-- templates/assets were added
-- eval coverage now includes architecture checks
-
-Remaining reasonable follow-up work for Claude is mainly:
+No blocking issues remain from this session. Remaining reasonable follow-up work for Claude is mainly:
 
 - polish older reference files to match the new reference style
-- decide whether to add more explicit eval cases for source-boundary correctness
+- decide whether to add more explicit eval cases for source-boundary correctness or package-maintenance discoverability
+
+The older highest-risk mismatches have already been addressed:
+
+- stale `TOOLKIT.md`
+- stale `NEWS` category in playbooks
+- stale packaging overwrite behavior
+- stale non-bundled audit-tool references in `response-shapes.md`
+- stale duplicated `docs/` canon
+- missing runnable package-level check commands
+- stale shipped fixed-count metadata
+- unreadable live-check failures under constrained networking
+- shipped TypeScript helper scripts previously lacking a package-owned runtime dependency
+- onboarding docs previously lagging the maintained shell-check surface
+- built runtime externals previously undeclared in the package manifest
+- documented subpath exports previously missing from package-facing docs
+- workspace lock metadata previously able to drift from the package manifest without audit coverage
+- optional provider imports previously present in the built runtime without explicit package peer declarations
 
 ## GitOps Recommendation
 
@@ -443,18 +687,29 @@ git add \
   codex-skill-guide-audit-report.md \
   codex-session-handoff-supercolony-skill.md \
   docs/research/supercolony-discovery/agent.json \
-  packages/supercolony-toolkit/SKILL.md \
-  packages/supercolony-toolkit/GUIDE.md \
-  packages/supercolony-toolkit/README.md \
-  packages/supercolony-toolkit/package.json \
-  packages/supercolony-toolkit/agents/openai.yaml \
-  packages/supercolony-toolkit/assets/ \
-  packages/supercolony-toolkit/docs/research-supercolony-skill-sources.md \
-  packages/supercolony-toolkit/docs/skill-improvement-recommendations.md \
-  packages/supercolony-toolkit/evals/run-evals.ts \
-  packages/supercolony-toolkit/references/ \
-  packages/supercolony-toolkit/scripts/
+  packages/omniweb-toolkit/SKILL.md \
+  packages/omniweb-toolkit/GUIDE.md \
+  packages/omniweb-toolkit/README.md \
+  packages/omniweb-toolkit/package.json \
+  packages/omniweb-toolkit/agents/openai.yaml \
+  packages/omniweb-toolkit/assets/ \
+  packages/omniweb-toolkit/docs/research-supercolony-skill-sources.md \
+  packages/omniweb-toolkit/docs/skill-improvement-recommendations.md \
+  packages/omniweb-toolkit/docs/attestation-pipeline.md \
+  packages/omniweb-toolkit/docs/capabilities-guide.md \
+  packages/omniweb-toolkit/docs/ecosystem-guide.md \
+  packages/omniweb-toolkit/docs/primitives/README.md \
+  packages/omniweb-toolkit/evals/evals.json \
+  packages/omniweb-toolkit/evals/run-evals.ts \
+  packages/omniweb-toolkit/references/ \
+  packages/omniweb-toolkit/src/colony.ts \
+  packages/omniweb-toolkit/scripts/
 ```
+
+That staging set now includes both release-integrity shell helpers:
+
+- `packages/omniweb-toolkit/scripts/check-live.sh`
+- `packages/omniweb-toolkit/scripts/check-release.sh`
 
 Do not stage unrelated untracked files currently visible in `git status`, such as:
 
@@ -464,6 +719,10 @@ Do not stage unrelated untracked files currently visible in `git status`, such a
 - `codex-sdk-investigate.md`
 - `scorecard.png`
 - `scripts/auth-refresh.ts`
+
+Do stage the root lockfile with this package change:
+
+- `package-lock.json`
 
 ### Recommended commit shape
 
@@ -477,14 +736,14 @@ If you want better reviewability, split into 3 commits:
 
 1. research and audit artifacts
 2. skill/package doc refactor
-3. validation scripts and discovery snapshot
+3. validation scripts, release checks, and discovery snapshot
 
 Suggested messages:
 
 ```bash
 git commit -m "docs(supercolony): add audit and research handoff"
 git commit -m "docs(supercolony-toolkit): refactor skill for progressive disclosure"
-git commit -m "chore(supercolony-toolkit): add drift and self-audit scripts"
+git commit -m "chore(supercolony-toolkit): add drift, release, and self-audit checks"
 ```
 
 ### Recommended PR framing

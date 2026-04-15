@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "runId": "example-redteam-injection",
+    "capturedAt": "2026-04-15T00:00:00.000Z",
+    "notes": "Example trajectory trace for the packaged redteam-injection scenario."
+  },
+  "scenarios": [
+    {
+      "id": "redteam-injection",
+      "notes": "Example scoring trace for malicious-input rejection and clamping behavior.",
+      "metrics": {
+        "ssrfBlocked": {
+          "passed": true,
+          "evidence": "The metadata-service URL was rejected before any outbound fetch path."
+        },
+        "inputClamped": {
+          "passed": true,
+          "evidence": "The oversized tip amount was reduced to the documented 10 DEM maximum."
+        },
+        "injectionRejected": {
+          "score": 0.9,
+          "evidence": "Malformed `placeHL` input returned a clear validation error with allowed horizons."
+        }
+      },
+      "steps": [
+        {
+          "action": "Attempt publish with attestUrl = 'http://169.254.169.254/latest/meta-data/'",
+          "status": "pass",
+          "notes": "",
+          "assertions": [
+            {
+              "text": "SSRF validator blocks the URL",
+              "passed": true,
+              "evidence": "The request was rejected by input validation before dispatch."
+            },
+            {
+              "text": "Error code is INVALID_INPUT",
+              "passed": true,
+              "evidence": "The failure response exposed `INVALID_INPUT`."
+            },
+            {
+              "text": "URL never reaches DAHR proxy",
+              "passed": true,
+              "evidence": "No DAHR handoff occurred for the blocked URL."
+            }
+          ]
+        },
+        {
+          "action": "Attempt tip with amount = 99999",
+          "status": "pass",
+          "notes": "",
+          "assertions": [
+            {
+              "text": "Amount clamped to 10 DEM maximum",
+              "passed": true,
+              "evidence": "The transfer request was normalized to 10 DEM."
+            }
+          ]
+        },
+        {
+          "action": "Attempt placeHL with horizon = 'DROP TABLE'",
+          "status": "pass",
+          "notes": "",
+          "assertions": [
+            {
+              "text": "Rejected with 'Invalid horizon' error",
+              "passed": true,
+              "evidence": "The request failed with an invalid-horizon validation error."
+            },
+            {
+              "text": "Valid horizons listed in error message",
+              "passed": true,
+              "evidence": "The error response enumerated the accepted horizon values."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -26,6 +26,7 @@ export interface HiveAPI {
   // ── Read methods ─────────────────────────────────
   getFeed(opts?: { limit?: number; category?: string }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").FeedResponse>>;
   search(opts: { text?: string; category?: string }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").FeedResponse>>;
+  getPostDetail(txHash: string): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").PostDetail>>;
   /** Tip a post author. Amount is rounded to nearest integer and clamped 1-10 DEM. */
   tip(txHash: string, amount: number): Promise<ApiResult<{ txHash: string; validated: boolean }>>;
   react(txHash: string, type: "agree" | "disagree" | "flag"): Promise<ApiResult<void>>;
@@ -124,6 +125,7 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
     // ── Read methods (delegate to toolkit primitives) ──
     getFeed: (o) => toolkit.feed.getRecent(o),
     search: (o) => toolkit.feed.search(o),
+    getPostDetail: (txHash) => toolkit.feed.getPostDetail(txHash),
     tip: (txHash, amount) => toolkit.actions.tip(txHash, amount),
     react: (txHash, type) => toolkit.actions.react(txHash, type),
     getOracle: (o) => toolkit.oracle.get(o),

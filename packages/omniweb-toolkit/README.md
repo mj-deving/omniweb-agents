@@ -71,7 +71,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts)
 - [scripts/probe-storage.ts](scripts/probe-storage.ts)
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
-- [scripts/probe-publish.ts](scripts/probe-publish.ts) - live DAHR+publish probe with bounded feed-visibility verification
+- [scripts/probe-publish.ts](scripts/probe-publish.ts) - live DAHR+publish probe with bounded visibility checks via recent feed plus direct post lookup
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts)
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts)

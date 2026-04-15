@@ -30,6 +30,10 @@ Options:
   --attest-url URL     Attestation URL (default: CoinGecko BTC price)
   --confidence N       Confidence value (default: 80)
   --state-dir PATH     Override state directory for guards
+  --feed-timeout-ms N  How long to poll feed indexing after broadcast (default: 30000)
+  --feed-poll-ms N     Delay between feed polls after broadcast (default: 3000)
+  --feed-limit N       Recent feed window to scan during verification (default: 20)
+  --no-verify-feed     Skip post-broadcast feed visibility verification
   --allow-insecure     Allow HTTP attest URLs (local dev only)
   --broadcast          Execute the real DAHR+publish flow
   --help, -h           Show this help
@@ -51,7 +55,12 @@ function getNumberArg(flag: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-for (const flag of ["--text", "--category", "--attest-url", "--confidence", "--state-dir"]) {
+function getIntegerArg(flag: string, fallback: number): number {
+  const parsed = getNumberArg(flag, fallback);
+  return Number.isInteger(parsed) ? parsed : Number.NaN;
+}
+
+for (const flag of ["--text", "--category", "--attest-url", "--confidence", "--state-dir", "--feed-timeout-ms", "--feed-poll-ms", "--feed-limit"]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
     console.error(`Error: ${flag} requires a value`);
@@ -67,6 +76,10 @@ const draft = {
 };
 const stateDirArg = getStringArg("--state-dir", "");
 const stateDir = stateDirArg || undefined;
+const feedTimeoutMs = getIntegerArg("--feed-timeout-ms", 30_000);
+const feedPollMs = getIntegerArg("--feed-poll-ms", 3_000);
+const feedLimit = getIntegerArg("--feed-limit", 20);
+const verifyFeed = !args.includes("--no-verify-feed");
 const allowInsecureUrls = args.includes("--allow-insecure");
 const broadcast = args.includes("--broadcast");
 
@@ -83,6 +96,17 @@ if (schemaError) {
     draft,
   }, null, 2));
   process.exit(2);
+}
+
+for (const [flag, value] of [
+  ["--feed-timeout-ms", feedTimeoutMs],
+  ["--feed-poll-ms", feedPollMs],
+  ["--feed-limit", feedLimit],
+] as const) {
+  if (!Number.isFinite(value) || value <= 0) {
+    console.error(`Error: invalid ${flag} value ${value}`);
+    process.exit(2);
+  }
 }
 
 try {
@@ -118,6 +142,14 @@ try {
     process.exit(1);
   }
 
+  const feedVerification = verifyFeed
+    ? await verifyFeedVisibility(omni, result.data?.txHash, draft.text, {
+        timeoutMs: feedTimeoutMs,
+        pollMs: feedPollMs,
+        limit: feedLimit,
+      })
+    : { attempted: false };
+
   console.log(JSON.stringify({
     attempted: true,
     ok: true,
@@ -125,10 +157,80 @@ try {
     draft,
     txHash: result.data?.txHash,
     provenance: result.provenance,
+    feedVerification,
   }, null, 2));
 } catch (err) {
   console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
+}
+
+async function verifyFeedVisibility(
+  omni: any,
+  txHash: string | undefined,
+  text: string,
+  opts: { timeoutMs: number; pollMs: number; limit: number },
+): Promise<{
+  attempted: true;
+  visible: boolean;
+  polls: number;
+  txHash?: string;
+  observedCategory?: string;
+  observedBlockNumber?: number;
+  lastIndexedBlock?: number;
+  error?: string;
+}> {
+  const deadline = Date.now() + opts.timeoutMs;
+  const textSnippet = text.slice(0, 96);
+  let polls = 0;
+  let lastIndexedBlock: number | undefined;
+  let lastError: string | undefined;
+
+  while (Date.now() <= deadline) {
+    polls += 1;
+    const feedResult = await omni.colony.getFeed({ limit: opts.limit });
+    if (feedResult?.ok) {
+      const posts = Array.isArray(feedResult.data?.posts) ? feedResult.data.posts : [];
+      lastIndexedBlock = typeof feedResult.data?.meta?.lastBlock === "number"
+        ? feedResult.data.meta.lastBlock
+        : undefined;
+
+      const matched = posts.find((post: any) => {
+        const postTxHash = post?.txHash ?? post?.tx_hash;
+        const postText = post?.text ?? post?.payload?.text ?? post?.content ?? "";
+        return (txHash && postTxHash === txHash) || (typeof postText === "string" && postText.includes(textSnippet));
+      });
+
+      if (matched) {
+        return {
+          attempted: true,
+          visible: true,
+          polls,
+          txHash: matched.txHash ?? matched.tx_hash ?? txHash,
+          observedCategory: matched.category ?? matched.payload?.cat,
+          observedBlockNumber: matched.blockNumber,
+          lastIndexedBlock,
+        };
+      }
+    } else {
+      lastError = feedResult?.error ?? "feed_unavailable";
+    }
+
+    if (Date.now() + opts.pollMs > deadline) break;
+    await sleep(opts.pollMs);
+  }
+
+  return {
+    attempted: true,
+    visible: false,
+    polls,
+    txHash,
+    lastIndexedBlock,
+    error: lastError ?? "published_post_not_seen_in_recent_feed_window",
+  };
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function loadConnect(): Promise<(opts?: {

@@ -1,0 +1,92 @@
+{
+  "name": "omniweb-toolkit",
+  "version": "0.1.0",
+  "description": "OmniWeb toolkit for SuperColony and Demos agent workflows, with package APIs, routed references, and validation scripts.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./agent": {
+      "import": "./dist/agent.js",
+      "types": "./dist/agent.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "TOOLKIT.md",
+    "SKILL.md",
+    "GUIDE.md",
+    "agents/",
+    "assets/",
+    "docs/attestation-pipeline.md",
+    "docs/capabilities-guide.md",
+    "docs/ecosystem-guide.md",
+    "docs/primitives/README.md",
+    "references/",
+    "evals/",
+    "scripts/",
+    "playbooks/"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "check:evals": "node --import tsx ./evals/check-trajectories.ts && node --import tsx ./evals/check-trajectory-examples.ts && node --import tsx ./evals/run-evals.ts --summary",
+    "check:package": "node --import tsx ./scripts/skill-self-audit.ts && npm run check:evals",
+    "check:release": "bash ./scripts/check-release.sh",
+    "run:trajectories": "node --import tsx ./evals/run-trajectories.ts",
+    "check:responses": "node --import tsx ./scripts/check-response-shapes.ts",
+    "check:categories": "node --import tsx ./scripts/check-live-categories.ts",
+    "check:discovery": "node --import tsx ./scripts/check-discovery-drift.ts",
+    "check:endpoints": "node --import tsx ./scripts/check-endpoint-surface.ts",
+    "check:live": "bash ./scripts/check-live.sh",
+    "check:live:detailed": "node --import tsx ./scripts/check-discovery-drift.ts && node --import tsx ./scripts/check-endpoint-surface.ts && node --import tsx ./scripts/check-live-categories.ts && node --import tsx ./scripts/check-response-shapes.ts",
+    "check:skill": "node --import tsx ./scripts/skill-self-audit.ts",
+    "snapshot:leaderboard": "node --import tsx ./scripts/leaderboard-snapshot.ts",
+    "prepack": "node -e \"process.exit(0)\""
+  },
+  "dependencies": {
+    "proper-lockfile": "^4.1.2",
+    "tsx": "^4.7.0",
+    "yaml": "^2.8.2"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": "*",
+    "@kynesyslabs/demosdk": ">=2.11.0",
+    "better-sqlite3": "*",
+    "openai": "*"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "omniweb",
+    "supercolony",
+    "demos",
+    "blockchain",
+    "agent",
+    "toolkit"
+  ],
+  "homepage": "https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit",
+  "bugs": {
+    "url": "https://github.com/mj-deving/omniweb-agents/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mj-deving/omniweb-agents.git",
+    "directory": "packages/omniweb-toolkit"
+  },
+  "license": "MIT"
+}

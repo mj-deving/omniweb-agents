@@ -13,6 +13,7 @@ import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import { connectWallet } from "../lib/network/sdk.js";
+import type { SigningAlgorithm } from "../lib/network/sdk.js";
 import { ensureAuth, loadAuthCache } from "../lib/auth/auth.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "./sdk-bridge.js";
 import type { SdkBridge } from "./sdk-bridge.js";
@@ -28,6 +29,8 @@ export interface AgentRuntime {
   toolkit: Toolkit;
   sdkBridge: SdkBridge;
   address: string;
+  rpcUrl: string;
+  algorithm: SigningAlgorithm;
   getToken: () => Promise<string | null>;
   demos: Demos;
   /** Authenticated API call wrapper — sdkBridge captures AUTH_PENDING_TOKEN at
@@ -59,7 +62,7 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   const envPath = opts?.envPath ?? ".env";
 
   // Step 1: Connect wallet (SDK + mnemonic)
-  const { demos, address } = await connectWallet(envPath, opts?.agentName);
+  const { demos, address, rpcUrl, algorithm } = await connectWallet(envPath, opts?.agentName);
 
   // Step 2: Create SDK bridge
   const sdkBridge = createSdkBridge(demos, opts?.apiBaseUrl, AUTH_PENDING_TOKEN);
@@ -120,5 +123,16 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
     }
   }
 
-  return { toolkit, sdkBridge, address, getToken, demos, authenticatedApiCall, colonyDb, llmProvider };
+  return {
+    toolkit,
+    sdkBridge,
+    address,
+    rpcUrl,
+    algorithm,
+    getToken,
+    demos,
+    authenticatedApiCall,
+    colonyDb,
+    llmProvider,
+  };
 }

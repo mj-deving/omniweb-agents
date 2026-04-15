@@ -84,11 +84,12 @@ function createMockRuntime(tempDir: string): AgentRuntime {
     } as any,
     sdkBridge: mockSdkBridge as any,
     address: "demos1testaddr",
+    rpcUrl: "https://rpc.test",
+    algorithm: "ed25519",
     getToken: vi.fn().mockResolvedValue("test-auth-token"),
     demos: {} as any,
     authenticatedApiCall: vi.fn(),
     llmProvider: null,
-    _stateDir: tempDir, // Test-only: override state dir for FileStateStore
   } as any;
 }
 

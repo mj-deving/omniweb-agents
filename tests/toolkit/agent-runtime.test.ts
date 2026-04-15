@@ -38,7 +38,12 @@ const { fakeDemos, mockSdkBridge, mockConnectWallet, mockEnsureAuth, mockLoadAut
   return {
     fakeDemos,
     mockSdkBridge,
-    mockConnectWallet: vi.fn().mockResolvedValue({ demos: fakeDemos, address: "0xfakeaddress1234567890" }),
+    mockConnectWallet: vi.fn().mockResolvedValue({
+      demos: fakeDemos,
+      address: "0xfakeaddress1234567890",
+      rpcUrl: "https://rpc.test",
+      algorithm: "ed25519",
+    }),
     mockEnsureAuth: vi.fn().mockResolvedValue("test-auth-token-123"),
     mockLoadAuthCache: vi.fn().mockReturnValue({ token: "test-auth-token-123", expiresAt: "2099-01-01", address: "0xfakeaddress1234567890" }),
     mockApiCall: vi.fn().mockResolvedValue({ ok: true, status: 200, data: {} }),
@@ -80,7 +85,12 @@ describe("createAgentRuntime", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Restore defaults after clearAllMocks
-    mockConnectWallet.mockResolvedValue({ demos: fakeDemos, address: FAKE_ADDRESS });
+    mockConnectWallet.mockResolvedValue({
+      demos: fakeDemos,
+      address: FAKE_ADDRESS,
+      rpcUrl: "https://rpc.test",
+      algorithm: "ed25519",
+    });
     mockEnsureAuth.mockResolvedValue(FAKE_TOKEN);
     mockLoadAuthCache.mockReturnValue({ token: FAKE_TOKEN, expiresAt: "2099-01-01", address: FAKE_ADDRESS });
     mockApiCall.mockResolvedValue({ ok: true, status: 200, data: {} });
@@ -91,6 +101,8 @@ describe("createAgentRuntime", () => {
     const runtime = await createAgentRuntime({ envPath: ".env" });
 
     expect(runtime.address).toBe(FAKE_ADDRESS);
+    expect(runtime.rpcUrl).toBe("https://rpc.test");
+    expect(runtime.algorithm).toBe("ed25519");
     expect(runtime.demos).toBe(fakeDemos);
     expect(runtime.sdkBridge).toBe(mockSdkBridge);
     expect(typeof runtime.getToken).toBe("function");
@@ -103,6 +115,20 @@ describe("createAgentRuntime", () => {
   it("calls connectWallet with provided envPath", async () => {
     await createAgentRuntime({ envPath: "/custom/.env" });
     expect(mockConnectWallet).toHaveBeenCalledWith("/custom/.env", undefined);
+  });
+
+  it("preserves rpcUrl and algorithm from connectWallet", async () => {
+    mockConnectWallet.mockResolvedValueOnce({
+      demos: fakeDemos,
+      address: FAKE_ADDRESS,
+      rpcUrl: "https://rpc.override",
+      algorithm: "falcon",
+    });
+
+    const runtime = await createAgentRuntime();
+
+    expect(runtime.rpcUrl).toBe("https://rpc.override");
+    expect(runtime.algorithm).toBe("falcon");
   });
 
   it("calls connectWallet with agentName when provided", async () => {

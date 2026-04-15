@@ -15,7 +15,7 @@ import { homedir } from "node:os";
 import { Demos } from "@kynesyslabs/demosdk/websdk";
 
 /** Signing algorithm — matches SDK's internal type without deep import */
-type SigningAlgorithm = "ed25519" | "falcon" | "ml-dsa";
+export type SigningAlgorithm = "ed25519" | "falcon" | "ml-dsa";
 
 interface RuntimeConfig {
   rpcUrl: string;
@@ -192,7 +192,7 @@ export async function connectWallet(
   envPath: string,
   agentName?: string,
   walletOpts?: WalletOptions,
-): Promise<{ demos: Demos; address: string }> {
+): Promise<{ demos: Demos; address: string; rpcUrl: string; algorithm: SigningAlgorithm }> {
   ensureCrypto();
   const mnemonic = loadMnemonic(envPath, agentName);
   const { algorithm: resolvedAlgorithm, dualSign: resolvedDualSign } = runtimeConfig;
@@ -215,7 +215,7 @@ export async function connectWallet(
     ? await demos.connectWallet(mnemonic, connectOpts)
     : await demos.connectWallet(mnemonic);
 
-  return { demos, address };
+  return { demos, address, rpcUrl: getRpcUrl(), algorithm };
 }
 
 // ── API Helpers ────────────────────────────────────

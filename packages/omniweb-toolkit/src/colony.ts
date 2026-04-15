@@ -65,7 +65,7 @@ export type Colony = OmniWeb;
 
 export async function connect(opts?: ConnectOptions): Promise<OmniWeb> {
   const runtime = await createAgentRuntime(opts);
-  const rpcUrl = process.env.RPC_URL ?? "https://demosnode.discus.sh";
+  const rpcUrl = runtime.rpcUrl;
 
   const colonyAPI = createHiveAPI(runtime, {
     stateDir: opts?.stateDir,

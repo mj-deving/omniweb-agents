@@ -6,6 +6,19 @@ import { dirname, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+/**
+ * Clear inherited insecure TLS overrides for package-owned probes unless the caller
+ * explicitly opts back in. The live SuperColony checks succeed here with normal
+ * certificate verification, and inherited NODE_TLS_REJECT_UNAUTHORIZED=0 causes
+ * noisy warnings plus weaker security than these scripts need.
+ */
+if (
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0" &&
+  process.env.SUPERCOLONY_ALLOW_INSECURE_TLS !== "1"
+) {
+  delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+}
+
 export const DEFAULT_BASE_URL =
   process.env.SUPERCOLONY_API_URL ??
   process.env.SUPERCOLONY_API ??

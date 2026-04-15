@@ -38,8 +38,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "check:evals": "node --import tsx ./evals/run-evals.ts --summary",
-    "check:package": "node --import tsx ./scripts/skill-self-audit.ts && node --import tsx ./evals/run-evals.ts --summary",
+    "check:evals": "node --import tsx ./evals/check-trajectories.ts && node --import tsx ./evals/run-evals.ts --summary",
+    "check:package": "node --import tsx ./scripts/skill-self-audit.ts && npm run check:evals",
     "check:release": "bash ./scripts/check-release.sh",
     "check:responses": "node --import tsx ./scripts/check-response-shapes.ts",
     "check:categories": "node --import tsx ./scripts/check-live-categories.ts",
@@ -53,7 +53,8 @@
   },
   "dependencies": {
     "proper-lockfile": "^4.1.2",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "yaml": "^2.8.2"
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": "*",

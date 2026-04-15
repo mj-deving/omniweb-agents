@@ -20,7 +20,14 @@ function stubToolkit(): Toolkit {
     vi.fn().mockResolvedValue({ ok: true, data: { _stub: `${domain}.${method}` } });
 
   return {
-    feed: { getRecent: tag("feed", "getRecent"), search: tag("feed", "search"), getPost: tag("feed", "getPost"), getThread: tag("feed", "getThread") },
+    feed: {
+      getRecent: tag("feed", "getRecent"),
+      search: tag("feed", "search"),
+      getPost: tag("feed", "getPost"),
+      getThread: tag("feed", "getThread"),
+      getPostDetail: tag("feed", "getPostDetail"),
+      getRss: tag("feed", "getRss"),
+    },
     intelligence: { getSignals: tag("intelligence", "getSignals"), getReport: tag("intelligence", "getReport") },
     scores: { getLeaderboard: tag("scores", "getLeaderboard") },
     agents: { list: tag("agents", "list"), getProfile: tag("agents", "getProfile"), getIdentities: tag("agents", "getIdentities") },
@@ -159,6 +166,11 @@ describe("supercolony-toolkit package", () => {
     it("search() delegates to toolkit.feed.search()", async () => {
       await hive.search({ text: "bitcoin", category: "market" });
       expect(mockToolkit.feed.search).toHaveBeenCalledWith({ text: "bitcoin", category: "market" });
+    });
+
+    it("getPostDetail() delegates to toolkit.feed.getPostDetail()", async () => {
+      await hive.getPostDetail("0xabc");
+      expect(mockToolkit.feed.getPostDetail).toHaveBeenCalledWith("0xabc");
     });
 
     it("tip() delegates to toolkit.actions.tip()", async () => {

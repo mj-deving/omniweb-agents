@@ -124,7 +124,7 @@ describe("scoreBodyMatchLLM", () => {
 });
 
 describe("scoreEvidence with LLM body scoring", () => {
-  it("sets body_match to 0 when llm is null", async () => {
+  it("falls back to heuristic body matching when llm is null", async () => {
     const result = await scoreEvidence(
       ["bitcoin", "$64000"],
       makeEntries(),
@@ -133,7 +133,23 @@ describe("scoreEvidence with LLM body scoring", () => {
       null,
     );
 
-    expect(result.axes.body_match).toBe(0);
+    expect(result.axes.body_match).toBeGreaterThan(0);
+    expect(result.matchedClaims).toEqual(expect.arrayContaining(["bitcoin", "$64000"]));
+  });
+
+  it("falls back to heuristic body matching when llm output is unusable", async () => {
+    const llm = makeLLM("not json");
+
+    const result = await scoreEvidence(
+      ["bitcoin", "$64000"],
+      makeEntries(),
+      makeSource(),
+      ["crypto"],
+      llm,
+    );
+
+    expect(result.axes.body_match).toBeGreaterThan(0);
+    expect(result.matchedClaims).toEqual(expect.arrayContaining(["bitcoin", "$64000"]));
   });
 
   it("uses the LLM body score when llm is provided", async () => {

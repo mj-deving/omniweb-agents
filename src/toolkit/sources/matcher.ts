@@ -190,6 +190,47 @@ function emptyBodyMatchResult(): { bodyScore: number; bodyMatches: number; match
   };
 }
 
+function scoreBodyMatchHeuristic(
+  claims: string[],
+  entries: EvidenceEntry[],
+): { bodyScore: number; bodyMatches: number; matchedClaims: string[] } {
+  const normalizedCorpus = entries
+    .flatMap((entry) => [entry.title ?? "", entry.bodyText ?? ""])
+    .join("\n")
+    .toLowerCase()
+    .replace(/[_{}[\]":,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalizedCorpus) {
+    return emptyBodyMatchResult();
+  }
+
+  const matchedClaims: string[] = [];
+  for (const claim of claims) {
+    const lowered = claim.trim().toLowerCase();
+    if (!lowered) continue;
+
+    const normalized = lowered.replace(/[^a-z0-9$%.]+/g, " ").replace(/\s+/g, " ").trim();
+    const numeric = lowered.replace(/[$,%]/g, "").trim();
+    const variants = [...new Set([lowered, normalized, numeric].filter((value) => value.length >= 2))];
+
+    if (variants.some((variant) => normalizedCorpus.includes(variant))) {
+      matchedClaims.push(claim);
+    }
+  }
+
+  if (matchedClaims.length === 0) {
+    return emptyBodyMatchResult();
+  }
+
+  return {
+    bodyScore: Math.min(25, Math.round((matchedClaims.length / Math.max(Math.min(claims.length, 4), 1)) * 25)),
+    bodyMatches: matchedClaims.length,
+    matchedClaims,
+  };
+}
+
 export async function scoreBodyMatchLLM(
   claims: string[],
   entries: EvidenceEntry[],
@@ -250,6 +291,23 @@ Score 0 = no support, 25 = strong direct evidence.`;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
+}
+
+async function scoreBodyMatch(
+  claims: string[],
+  entries: EvidenceEntry[],
+  llm?: LLMProvider | null,
+): Promise<{ bodyScore: number; bodyMatches: number; matchedClaims: string[] }> {
+  if (!llm) {
+    return scoreBodyMatchHeuristic(claims, entries);
+  }
+
+  const llmResult = await scoreBodyMatchLLM(claims, entries, llm);
+  if (llmResult.bodyScore > 0 || llmResult.bodyMatches > 0) {
+    return llmResult;
+  }
+
+  return scoreBodyMatchHeuristic(claims, entries);
 }
 
 /**
@@ -413,9 +471,7 @@ export async function scoreEvidence(
   if (titleMatches > 0) evidenceNotes.push(`${titleMatches} title match(es)`);
 
   // Evidence body match (0-25)
-  const { bodyScore, bodyMatches, matchedClaims: bodyMatchedClaims } = llm
-    ? await scoreBodyMatchLLM(claims, entries, llm)
-    : emptyBodyMatchResult();
+  const { bodyScore, bodyMatches, matchedClaims: bodyMatchedClaims } = await scoreBodyMatch(claims, entries, llm);
   score += bodyScore;
   for (const claim of bodyMatchedClaims) {
     if (!matched.includes(claim)) matched.push(claim);

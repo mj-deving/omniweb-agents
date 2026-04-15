@@ -141,7 +141,9 @@ const results = selectedScenarios.map((scenario) => {
 });
 
 const overallScore = round2(results.reduce((sum, result) => sum + result.score, 0) / results.length);
-const overallStatus = classifyScore(overallScore, thresholds);
+const overallStatus = results.every((result) => result.status === "PASS")
+  ? classifyScore(overallScore, thresholds)
+  : "FAIL";
 const ok = overallStatus === "PASS";
 
 console.log(JSON.stringify({
@@ -206,13 +208,33 @@ function scoreScenario(specScenario: ScenarioSpec, traceScenario?: ScenarioTrace
 
   const score = round2(metricResults.reduce((sum, metric) => sum + metric.weightedContribution, 0));
   const thresholds = isRecord(spec.scoring?.thresholds) ? spec.scoring!.thresholds! : { pass: 70, warn: 50, fail: 0 };
+  const stepCoverage = {
+    expectedSteps: specSteps.length,
+    matchedSteps: stepResults.filter((step) => step.actionMatches && step.status === "pass").length,
+    expectedAssertions: stepResults.reduce((sum, step) => sum + step.assertionResults.length, 0),
+    matchedAssertions: stepResults.reduce((sum, step) => (
+      sum + step.assertionResults.filter((entry) => entry.present && entry.passed).length
+    ), 0),
+  };
+  const hasCompleteCoverage =
+    !!traceScenario &&
+    stepCoverage.matchedSteps === stepCoverage.expectedSteps &&
+    stepCoverage.matchedAssertions === stepCoverage.expectedAssertions;
+  const scoreStatus = classifyScore(score, thresholds);
+  const status = hasCompleteCoverage ? scoreStatus : "FAIL";
 
   return {
     id: specScenario.id ?? "<invalid>",
     description: specScenario.description ?? null,
     tracePresent: !!traceScenario,
     score,
-    status: classifyScore(score, thresholds),
+    status,
+    scoreStatus,
+    coverageOk: hasCompleteCoverage,
+    statusReason: hasCompleteCoverage
+      ? null
+      : "trace is missing required step/action/assertion coverage",
+    stepCoverage,
     stepResults,
     metricResults,
     notes: traceScenario?.notes ?? null,

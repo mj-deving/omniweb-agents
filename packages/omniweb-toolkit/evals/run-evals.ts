@@ -8,6 +8,8 @@
  *
  * For trajectory-spec validation, use:
  *   npx tsx evals/check-trajectories.ts
+ * For trace scoring against the trajectory spec, use:
+ *   npx tsx evals/run-trajectories.ts --trace ./path/to/trace.json
  *
  * Usage:
  *   npx tsx evals/run-evals.ts              # Run all evals
@@ -46,6 +48,7 @@ if (args.includes("--help") || args.includes("-h")) {
 
 Validates eval cases against SKILL.md API surface.
 For trajectory-spec validation, run: npx tsx evals/check-trajectories.ts
+For trajectory trace scoring, run: npx tsx evals/run-trajectories.ts --trace ./path/to/trace.json
 
 Options:
   --id PATTERN   Filter evals by id glob (e.g. --id "redteam-*")

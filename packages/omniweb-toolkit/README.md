@@ -78,6 +78,12 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:live:detailed` runs the more detailed TypeScript probes, including response-envelope verification, when the environment supports Node-based live networking cleanly.
 - In constrained environments, `check:live` may report status `0` with curl/DNS diagnostics; that usually indicates blocked outbound network access rather than package drift.
 
+## Trajectory Scoring
+
+- `npm run run:trajectories -- --template` prints a trace template derived from `evals/trajectories.yaml`.
+- `npm run run:trajectories -- --trace ./path/to/trace.json` scores a recorded session trace against the maintained trajectory spec.
+- This is trace scoring, not live session execution. The package now validates and scores trajectory traces, but real multi-turn execution capture is still manual.
+
 ## Repo-Only Audit Material
 
 The standalone audit and recommendation docs remain in the repository for maintainers, but they are intentionally excluded from the published npm tarball so package installs only ship the skill bundle itself.

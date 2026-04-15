@@ -30,10 +30,10 @@ Options:
   --attest-url URL     Attestation URL (default: CoinGecko BTC price)
   --confidence N       Confidence value (default: 80)
   --state-dir PATH     Override state directory for guards
-  --feed-timeout-ms N  How long to poll feed indexing after broadcast (default: 30000)
-  --feed-poll-ms N     Delay between feed polls after broadcast (default: 3000)
+  --feed-timeout-ms N  How long to poll post visibility after broadcast (default: 30000)
+  --feed-poll-ms N     Delay between visibility checks after broadcast (default: 3000)
   --feed-limit N       Recent feed window to scan during verification (default: 20)
-  --no-verify-feed     Skip post-broadcast feed visibility verification
+  --no-verify-feed     Skip post-broadcast visibility verification
   --allow-insecure     Allow HTTP attest URLs (local dev only)
   --broadcast          Execute the real DAHR+publish flow
   --help, -h           Show this help
@@ -174,6 +174,7 @@ async function verifyFeedVisibility(
   visible: boolean;
   polls: number;
   txHash?: string;
+  verificationPath?: "feed" | "post_detail";
   observedCategory?: string;
   observedBlockNumber?: number;
   lastIndexedBlock?: number;
@@ -206,6 +207,7 @@ async function verifyFeedVisibility(
           visible: true,
           polls,
           txHash: matched.txHash ?? matched.tx_hash ?? txHash,
+          verificationPath: "feed",
           observedCategory: matched.category ?? matched.payload?.cat,
           observedBlockNumber: matched.blockNumber,
           lastIndexedBlock,
@@ -213,6 +215,25 @@ async function verifyFeedVisibility(
       }
     } else {
       lastError = feedResult?.error ?? "feed_unavailable";
+    }
+
+    if (txHash && typeof omni?.colony?.getPostDetail === "function") {
+      const postDetailResult = await omni.colony.getPostDetail(txHash);
+      if (postDetailResult?.ok && postDetailResult.data?.post) {
+        return {
+          attempted: true,
+          visible: true,
+          polls,
+          txHash,
+          verificationPath: "post_detail",
+          observedCategory:
+            (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat,
+          lastIndexedBlock,
+        };
+      }
+      if (!postDetailResult?.ok) {
+        lastError = postDetailResult?.error ?? lastError;
+      }
     }
 
     if (Date.now() + opts.pollMs > deadline) break;
@@ -225,7 +246,7 @@ async function verifyFeedVisibility(
     polls,
     txHash,
     lastIndexedBlock,
-    error: lastError ?? "published_post_not_seen_in_recent_feed_window",
+    error: lastError ?? "published_post_not_seen_via_feed_or_post_detail",
   };
 }
 

@@ -4,22 +4,15 @@
 # SKILL.md quality changes). Deterministic behavioral tests (Phase 0) run
 # per-PR at zero DEM cost — these trajectory evals spend real DEM.
 #
-# Compatible with promptfoo YAML format. Run with:
-#   npx promptfoo eval --config evals/trajectories.yaml
-#
-# Or use the lightweight runner:
-#   npx tsx evals/run-evals.ts
+# Maintained trajectory specification.
+# Validate structure and references with:
+#   npx tsx evals/check-trajectories.ts
 
 description: "OmniWeb Toolkit — Agent Trajectory Evaluation"
 
-# NOTE: This is a DESIGN SPECIFICATION for trajectory evaluation,
-# not a directly-executable promptfoo config. The custom step/scoring
-# schema requires a dedicated runner (planned — see run-evals.ts for
-# the static validator; trajectory execution is on-demand and manual).
-#
-# To convert to promptfoo format, see:
-#   https://www.promptfoo.dev/docs/configuration/scenarios/
-#   https://www.promptfoo.dev/docs/configuration/parameters/
+# NOTE: This is a maintained trajectory specification, not a directly-executable
+# promptfoo config. The package validates this file structurally, but live
+# multi-turn execution remains manual.
 
 # ── Scenarios ──────────────────────────────────────
 
@@ -38,7 +31,7 @@ scenarios:
           - "Agent checks divergences array"
       - action: "Decide whether to publish based on divergence"
         assert:
-          - "Uses thresholds from strategy.yaml"
+          - "Uses thresholds from playbooks/strategy-schema.yaml"
           - "Skips if no divergence above threshold"
       - action: "Publish with omni.colony.publish({ text, category, attestUrl })"
         assert:

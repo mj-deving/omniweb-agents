@@ -6,8 +6,8 @@
  * Does NOT execute live API calls or spend DEM — this is a static
  * consistency check that the eval descriptions match the actual API surface.
  *
- * For live trajectory evaluation, use promptfoo:
- *   npx promptfoo eval --config evals/trajectories.yaml
+ * For trajectory-spec validation, use:
+ *   npx tsx evals/check-trajectories.ts
  *
  * Usage:
  *   npx tsx evals/run-evals.ts              # Run all evals
@@ -45,6 +45,7 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log(`Usage: npx tsx evals/run-evals.ts [--id PATTERN] [--summary]
 
 Validates eval cases against SKILL.md API surface.
+For trajectory-spec validation, run: npx tsx evals/check-trajectories.ts
 
 Options:
   --id PATTERN   Filter evals by id glob (e.g. --id "redteam-*")

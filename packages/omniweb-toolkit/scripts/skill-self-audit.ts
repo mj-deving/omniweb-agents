@@ -96,6 +96,13 @@ const topLevelScriptContents = topLevelScriptFiles.map((name) => ({
   name,
   text: readFileSync(resolve(scriptsDir, name), "utf8"),
 }));
+const evalScriptFiles = listTopLevelFiles(resolve(packageRoot, "evals"))
+  .filter((name) => name.endsWith(".ts"))
+  .sort();
+const evalScriptContents = evalScriptFiles.map((name) => ({
+  name,
+  text: readFileSync(resolve(packageRoot, "evals", name), "utf8"),
+}));
 const scriptHelpChecks = topLevelScriptContents.map(({ name, text }) => ({
   name,
   ok: text.includes("--help") && /Usage:/i.test(text),
@@ -115,6 +122,14 @@ const declaredRuntimeModules = new Set([
   ...Object.keys(packageJson.dependencies ?? {}),
   ...Object.keys(packageJson.peerDependencies ?? {}),
 ]);
+const scriptRuntimeImports = [...topLevelScriptContents, ...evalScriptContents].flatMap(({ name, text }) =>
+  collectExternalImportsFromText(text).map((specifier) => ({
+    file: name,
+    specifier,
+  })));
+const undeclaredScriptRuntimeImports = scriptRuntimeImports
+  .filter(({ specifier }) => !isDeclaredModule(specifier, declaredRuntimeModules))
+  .map(({ file, specifier }) => `${file}: ${specifier}`);
 const externalRuntimeImports = existsRelative(packageRoot, "dist")
   ? collectExternalImports(distDir)
   : [];
@@ -275,6 +290,13 @@ const checks = [
     detail: undeclaredRuntimeImports.length === 0
       ? "all bare-module imports found in dist/ are declared in dependencies or peerDependencies"
       : undeclaredRuntimeImports,
+  },
+  {
+    name: "script_runtime_imports_are_declared",
+    ok: undeclaredScriptRuntimeImports.length === 0,
+    detail: undeclaredScriptRuntimeImports.length === 0
+      ? "all bare-module imports used by shipped scripts and eval helpers are declared"
+      : undeclaredScriptRuntimeImports,
   },
   {
     name: "workspace_lock_matches_package_manifest",
@@ -488,6 +510,27 @@ function collectExternalImports(dir: string): string[] {
         found.add(specifier);
       }
     }
+  }
+
+  return [...found].sort();
+}
+
+function collectExternalImportsFromText(text: string): string[] {
+  const found = new Set<string>();
+
+  for (const match of text.matchAll(/from\s+["']([^"']+)["']/g)) {
+    const specifier = match[1];
+    if (specifier.startsWith(".") || specifier.startsWith("node:")) {
+      continue;
+    }
+    found.add(specifier);
+  }
+  for (const match of text.matchAll(/import\(\s*["']([^"']+)["']\s*\)/g)) {
+    const specifier = match[1];
+    if (specifier.startsWith(".") || specifier.startsWith("node:")) {
+      continue;
+    }
+    found.add(specifier);
   }
 
   return [...found].sort();

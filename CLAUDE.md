@@ -10,6 +10,7 @@ OmniWeb toolkit for the Demos Network — the full stack, not just SuperColony. 
 
 - `npm test` — vitest, all changes must include tests
 - `npx tsc --noEmit` — must pass with zero errors
+- `npm run check:package --prefix packages/omniweb-toolkit` — 31 self-audit + 30 evals + trajectory checks
 - `npx tsx cli/session-runner.ts --agent sentinel --pretty` — run V3 loop
 - Runtime: Node.js + tsx (Bun causes NAPI crash with demosdk)
 
@@ -19,7 +20,8 @@ All docs have `read_when` frontmatter — auto-indexed at session start. **Read 
 
 | Location | What |
 |----------|------|
-| `docs/research/` | **Authoritative** SDK + API references. `supercolony-discovery/` has llms-full.txt, openapi.json, A2A card. |
+| `packages/omniweb-toolkit/` | **Authoritative** package docs: SKILL.md (router), GUIDE.md, references/, evals/, scripts/, playbooks/. Codex-authored. |
+| `docs/research/` | SDK + API references. `supercolony-discovery/` has llms-full.txt, openapi.json, A2A card. |
 | `docs/design-consumer-toolkit.md` | **Active design spec** — consumer toolkit architecture, Phase 20 plan |
 | `docs/decisions/` | 18 ADRs — `Status: accepted` = **active constraints** (ADR-0021 = OmniWeb domain architecture) |
 | `docs/primitives/` | 14 domain docs + README index with live API response examples |

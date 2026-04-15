@@ -1,0 +1,187 @@
+# AGENTS.md
+
+Operational guide for coding agents working in this repository.
+
+This file is the workflow companion to `CLAUDE.md`.
+
+- `CLAUDE.md` is the baseline source for architecture, principles, and repo-wide rules.
+- `AGENTS.md` is the baseline source for execution workflow, branch discipline, PR discipline, and beads usage.
+
+## Mandatory Read Order
+
+Before starting work:
+
+1. read `CLAUDE.md`
+2. read `AGENTS.md`
+3. read the relevant package docs for the area being changed
+4. inspect `bd ready`
+5. inspect open GitHub PRs if recent work may overlap
+
+There is currently no repo `MEMORY.md`.
+
+## Coordination Model
+
+This repository should not depend on manual Codex-to-Claude handoffs.
+
+Shared state should come from:
+
+- `main` for merged truth
+- open GitHub PRs for in-flight work
+- beads for live task selection and blockers
+- `CLAUDE.md` and `AGENTS.md` for operating rules
+
+If an agent needs context, it should reconstruct it from those sources rather than waiting for a human relay.
+
+## Current Operating Model
+
+This repo now uses:
+
+- `main` as the integration branch
+- `bd` / beads as the live task tracker
+- separate worktrees for parallel agent execution
+- one small task per branch and PR
+- PRs as the normal merge vehicle
+
+Do not treat old stacked Codex branches as the default source of truth unless the user explicitly tells you to resume one.
+
+## Beads Workflow
+
+Use `bd` as the task authority.
+
+Important commands:
+
+- `bd ready --json` to see unblocked work
+- `bd show <id>` to inspect one task
+- `bd update <id> --claim` to claim a task
+- `bd note <id> "..."` to leave execution notes
+- `bd close <id> --reason "..."` when work is complete
+
+Rules:
+
+- always inspect `bd ready` before choosing work
+- claim a task before starting implementation
+- if new work is discovered, create or note a follow-up bead
+- if a task is blocked, record the blocker in beads
+- do not silently work on a task someone else has already claimed
+- beads content should be treated as public workflow metadata
+- never put secrets, credentials, tokens, or private operational notes into beads
+
+## Branch / PR Discipline
+
+For every task:
+
+1. sync from `main`
+2. create one task branch
+3. make one coherent change
+4. run the smallest meaningful validation
+5. push and open one PR against `main`
+
+Pattern:
+
+```bash
+git fetch origin
+git switch main
+git pull --ff-only
+git switch -c codex/<short-task-name>
+```
+
+Rules:
+
+- one bead = one branch = one PR
+- do not mix unrelated fixes
+- if a task grows, split follow-up work into new beads and new PRs
+- do not push directly to `main` unless the user explicitly instructs an emergency exception
+- do not force-reset or discard user work
+
+## PR-First Merge Model
+
+PRs here are not primarily requests for manual line-by-line human review. They are the merge unit, audit trail, and task boundary.
+
+Default expectation:
+
+1. agent makes a scoped change
+2. agent runs relevant checks
+3. agent opens a PR
+4. CI passes
+5. the PR is merged or auto-merged to `main`
+
+Preferred repo settings:
+
+- protect `main`
+- disable direct pushes to `main`
+- require the CI checks you actually trust
+- do not require human approval if the goal is zero manual review
+- prefer squash merge for small scoped branches
+- enable auto-merge
+
+Merge responsibility:
+
+- the agent that opened a PR may merge it once checks are green and conflicts are clear
+- any agent may merge a green PR when acting as the current maintainer
+- the human should only need to intervene for ambiguous product decisions, broken CI, or merge conflicts
+
+## Worktree Cooperation
+
+When more than one agent is active:
+
+- use separate git worktrees
+- keep code changes isolated per agent
+- keep task state shared through beads and GitHub
+- prefer disjoint file ownership when running in parallel
+
+If two tasks would touch the same files heavily, serialize them instead of racing.
+
+## Validation Ladder
+
+Use the smallest relevant check first, then broader checks when justified.
+
+For `packages/omniweb-toolkit`, important commands currently include:
+
+- `npm run check:evals`
+- `npm run check:package`
+- `npm run check:release`
+- `npm run check:live`
+- `npm run check:live:detailed`
+- `npm run run:trajectories -- --trace ./evals/examples/<scenario>.trace.json --scenario <scenario>`
+
+For trajectory work:
+
+- `evals/trajectories.yaml` is the maintained scenario source of truth
+- packaged examples must stay aligned with it
+- do not weaken coverage or naming enforcement just to pass checks
+
+## Documentation Discipline
+
+- keep the package as the primary authority for its public surface
+- do not duplicate official platform facts when the package should layer on them
+- keep repo-only research separate from shipped package docs
+- if publish-facing behavior changes, update docs and checks in the same PR when possible
+
+## Untracked / Local Artifacts
+
+Treat these cautiously if present:
+
+- `codex-full-review.md`
+- `codex-pre-publish-review.md`
+- `codex-sdk-investigate.md`
+- `scripts/auth-refresh.ts`
+- `agents/reference/scores.jsonl`
+- `scorecard.png`
+
+Default behavior:
+
+- do not commit them casually
+- only use the `codex-*.md` files if explicitly executing those review/investigation prompts
+- treat `scripts/auth-refresh.ts` as experimental unless deliberately productized
+- treat score/image artifacts as local data unless instructed otherwise
+
+## Beads Storage Note
+
+Current beads setup:
+
+- local embedded beads database remains the live working database
+- remote durability is provided by DoltHub backup
+- there are currently no federation peers configured
+- do not run `bd init --server` or reinitialize beads unless the user explicitly requests a backend migration
+
+`--server` only matters if the repo intentionally moves from embedded local beads to a shared external Dolt SQL server as the primary live backend.

@@ -119,7 +119,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts): execute one explicit escrow send probe to a linked or controlled social identity
 - [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
-- [scripts/probe-publish.ts](scripts/probe-publish.ts): execute one explicit DAHR+publish probe when you intentionally need a live end-to-end write
+- [scripts/probe-publish.ts](scripts/probe-publish.ts): execute one explicit DAHR+publish probe and optionally verify that the post becomes visible in recent feed results
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts): compare live discovery resources against committed snapshots
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts): report currently active categories from stats and feed probes
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts): probe audited live endpoints and flagged `404` resources

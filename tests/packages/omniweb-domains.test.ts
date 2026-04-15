@@ -32,12 +32,30 @@ vi.mock("../../src/toolkit/network/storage-client.js", () => ({
 import { createIdentityAPI } from "../../packages/omniweb-toolkit/src/identity-api.js";
 import { createStorageAPI } from "../../packages/omniweb-toolkit/src/storage-api.js";
 import { createChainAPI } from "../../packages/omniweb-toolkit/src/chain-api.js";
+import { createIPFSAPI } from "../../packages/omniweb-toolkit/src/ipfs-api.js";
 
 const mockDemos: any = {
   signMessage: vi.fn().mockResolvedValue({ type: "falcon", data: "sig" }),
   verifyMessage: vi.fn().mockResolvedValue(true),
   getAddressInfo: vi.fn().mockResolvedValue({ balance: 1000n }),
   getLastBlockNumber: vi.fn().mockResolvedValue(12345),
+  keypair: { publicKey: new Uint8Array([1, 2, 3, 4]) },
+  tx: {
+    empty: vi.fn().mockImplementation(() => ({
+      content: {
+        to: "",
+        nonce: 0,
+        amount: 0,
+        type: "",
+        timestamp: 0,
+        data: null,
+      },
+    })),
+  },
+  getAddressNonce: vi.fn().mockResolvedValue(41),
+  sign: vi.fn().mockImplementation(async (tx) => ({ ...tx, hash: "signed_ipfs_tx" })),
+  confirm: vi.fn().mockResolvedValue({ response: { data: { transaction: { hash: "tx_ipfs_001" } } } }),
+  broadcast: vi.fn().mockResolvedValue({ ok: true }),
 };
 
 const mockSdkBridge: any = {
@@ -51,6 +69,11 @@ describe("OmniWeb domain APIs", () => {
     mockDemos.verifyMessage.mockResolvedValue(true);
     mockDemos.getAddressInfo.mockResolvedValue({ balance: 1000n });
     mockDemos.getLastBlockNumber.mockResolvedValue(12345);
+    mockDemos.tx.empty.mockClear();
+    mockDemos.getAddressNonce.mockResolvedValue(41);
+    mockDemos.sign.mockImplementation(async (tx: any) => ({ ...tx, hash: "signed_ipfs_tx" }));
+    mockDemos.confirm.mockResolvedValue({ response: { data: { transaction: { hash: "tx_ipfs_001" } } } });
+    mockDemos.broadcast.mockResolvedValue({ ok: true });
     mockSdkBridge.transferDem.mockResolvedValue({ txHash: "tx_transfer_001" });
   });
 
@@ -156,6 +179,23 @@ describe("OmniWeb domain APIs", () => {
     it("getBlockNumber returns current block", async () => {
       const result = await chain.getBlockNumber();
       expect(result).toBe(12345);
+    });
+  });
+
+  // ── IPFS API ─────────────────────────────────────
+
+  describe("IPFSAPI", () => {
+    const ipfs = createIPFSAPI(mockDemos);
+
+    it("upload uses the SDK IPFS payload builder and returns the confirmed tx hash", async () => {
+      const result = await ipfs.upload("hello ipfs", { filename: "hello.txt" });
+      expect(result.ok).toBe(true);
+      expect(result.txHash).toBe("tx_ipfs_001");
+      expect(mockDemos.tx.empty).toHaveBeenCalledTimes(1);
+      expect(mockDemos.getAddressNonce).toHaveBeenCalledWith("01020304");
+      expect(mockDemos.sign).toHaveBeenCalledTimes(1);
+      expect(mockDemos.confirm).toHaveBeenCalledTimes(1);
+      expect(mockDemos.broadcast).toHaveBeenCalledTimes(1);
     });
   });
 

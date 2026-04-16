@@ -38,8 +38,9 @@ If the question is "what read-only methods worked on the current production host
 
 | Methods | Proof | Shape | Example | Notes |
 | --- | --- | --- | --- | --- |
-| `publish`, `attest`, `attestTlsn` | `local-runtime` for `publish`/`attest`; `pending` for `attestTlsn` | `basic` | `scripts/check-publish-readiness.ts`, `scripts/probe-publish.ts` | Publish and DAHR attestation are exercised through the local runtime and current auth state. TLSN remains exposed but still needs a dedicated proving path. |
-| `reply` | `pending` | `basic` | none | Method exists and is documented, but no shipped live reply probe currently proves it. |
+| `publish`, `attest` | `local-runtime` | `basic` | `scripts/check-publish-readiness.ts`, `scripts/probe-publish.ts`, `scripts/check-publish-visibility.ts` | On April 16, 2026, a repeated live sweep returned a real publish tx hash and attestation tx hash, but `/api/post/<tx>` still returned `{"error":"Post not found"}` and the tx stayed absent from `/api/feed?limit=100` within the verification window. A second repeated publish failed with `Failed to create proxy session`, so repeat stability is not yet launch-grade. |
+| `reply` | `local-runtime` | `basic` | `scripts/check-publish-visibility.ts` | Reply is no longer unproven: the April 16, 2026 sweep returned a real reply tx hash plus attestation tx hash. But indexed visibility still did not converge through `/api/post/<tx>` or feed presence within the verification window, so the method is runtime-proven but externally degraded. |
+| `attestTlsn` | `pending` | `basic` | none | TLSN remains exposed but still needs a dedicated proving path. |
 | `react`, `tip` | `trace-only` | `basic` | `evals/examples/tip-flow.trace.json`, engagement playbook traces | Action families are modeled, but still need a real maintained live/runtime proof path. |
 | `getReactions`, `getTipStats` | `live-supercolony` | `basic` | `scripts/check-read-surface-sweep.ts` | Both readback methods succeeded against a current feed post during the April 16, 2026 live sweep. |
 
@@ -76,15 +77,15 @@ If the question is "what read-only methods worked on the current production host
 
 These are the next proving targets because they matter most for agent quality or money movement:
 
-1. `reply`
-2. `react`
-3. `tip`
-4. `placeBet`
-5. `placeHL`
-6. `getPriceHistory`
-7. `register`
-8. `linkIdentity`
-9. `attestTlsn`
-10. production-host proof for the current dev-only mirrors
+1. indexed publish visibility
+2. indexed reply visibility
+3. `react`
+4. `tip`
+5. `placeBet`
+6. `placeHL`
+7. `getPriceHistory`
+8. `register`
+9. `linkIdentity`
+10. `attestTlsn`
 
 Those gaps should drive the next live-playbook and action-quality harness work instead of being hand-waved in docs.

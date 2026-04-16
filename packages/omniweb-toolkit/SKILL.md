@@ -131,6 +131,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/verification-matrix.md](references/verification-matrix.md) when you need to know which package methods are live-proven, runtime-proven, or still pending harder verification.
 - Load [references/launch-proving-matrix.md](references/launch-proving-matrix.md) when you need the maintained operator plan for primitive sweeps, consumer journeys, DEM budgets, or evidence capture.
 - Load [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype and external-consumer journey results rather than method-level proof alone.
+- Load [references/publish-visibility-sweep.md](references/publish-visibility-sweep.md) when you need the latest live publish/reply indexing evidence and tx-hash trust assessment.
 - Load [references/read-surface-sweep.md](references/read-surface-sweep.md) when you need the latest production-host read-only proof run rather than the broader plan.
 - Load [references/interaction-patterns.md](references/interaction-patterns.md) when building a streaming, reply-capable, or reaction-capable agent.
 - Load [references/scoring-and-leaderboard.md](references/scoring-and-leaderboard.md) when interpreting scores, leaderboard output, or forecast scoring routes.
@@ -152,6 +153,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/feed.ts](scripts/feed.ts): fetch recent feed data as JSON
 - [scripts/balance.ts](scripts/balance.ts): inspect connected DEM balance
 - [scripts/check-publish-readiness.ts](scripts/check-publish-readiness.ts): run a non-destructive publish preflight and optionally probe standalone DAHR
+- [scripts/check-publish-visibility.ts](scripts/check-publish-visibility.ts): run the maintained repeated publish/reply indexing harness and separate tx-hash acceptance from indexed visibility
 - [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts): score primary/supporting source choice, evidence-chain strength, and draft quality before a real publish
 - [scripts/check-openclaw-export.ts](scripts/check-openclaw-export.ts): verify the committed OpenClaw bundles still match package source and current export rules
 - [scripts/check-registry-export.ts](scripts/check-registry-export.ts): verify the committed registry-facing skill artifacts still match package source and current metadata rules

@@ -244,8 +244,14 @@ try {
     if (tip?.ok) {
       nominalSpendDem += config.tipAmount;
     }
+    const beforeMyTip = parseOptionalNumber(beforeTips?.data?.myTip);
+    const afterMyTip = parseOptionalNumber(afterTips?.data?.myTip);
     const tipReadbackConfirmed =
-      !!afterTips?.ok && Number(afterTips.data?.myTip ?? 0) >= config.tipAmount;
+      beforeTips?.ok === true
+      && afterTips?.ok === true
+      && beforeMyTip !== null
+      && afterMyTip !== null
+      && afterMyTip - beforeMyTip >= config.tipAmount;
     const balanceDelta = computeBalanceDelta(balanceBefore, balanceAfterTip);
     if (tip?.ok && !tipReadbackConfirmed) {
       warnings.push(
@@ -381,7 +387,11 @@ try {
     if (primaryAttempt?.ok) {
       nominalSpendDem += config.hlAmount;
     }
-    const minimumMismatch = !minimumAttempt?.ok;
+    const minimumAttemptError = summarizeAttemptError(minimumAttempt);
+    const minimumMismatch =
+      primaryAttempt?.ok === true
+      && minimumAttempt?.ok !== true
+      && /not an integer|integer/i.test(minimumAttemptError ?? "");
     if (minimumMismatch) {
       warnings.push(
         "Higher/lower minimum-amount contract is currently inconsistent: the documented 0.1 DEM floor failed while an integer retry succeeded.",
@@ -525,6 +535,31 @@ function computeBalanceDelta(before: any, after: any): number | null {
   const afterValue = parseBalanceValue(after);
   if (beforeValue == null || afterValue == null) return null;
   return beforeValue - afterValue;
+}
+
+function parseOptionalNumber(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function summarizeAttemptError(result: any): string | null {
+  if (!result || result.ok) return null;
+
+  const candidates = [
+    result.error,
+    result.message,
+    result.data?.error,
+    result.data?.message,
+    result.details,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return null;
 }
 
 async function freshColony(connectFn: ConnectFn, currentConfig: typeof config): Promise<any> {

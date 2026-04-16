@@ -132,6 +132,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/launch-proving-matrix.md](references/launch-proving-matrix.md) when you need the maintained operator plan for primitive sweeps, consumer journeys, DEM budgets, or evidence capture.
 - Load [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype and external-consumer journey results rather than method-level proof alone.
 - Load [references/read-surface-sweep.md](references/read-surface-sweep.md) when you need the latest production-host read-only proof run rather than the broader plan.
+- Load [references/write-surface-sweep.md](references/write-surface-sweep.md) when you need the latest recorded live wallet-write results or the current production-host write gaps.
 - Load [references/interaction-patterns.md](references/interaction-patterns.md) when building a streaming, reply-capable, or reaction-capable agent.
 - Load [references/scoring-and-leaderboard.md](references/scoring-and-leaderboard.md) when interpreting scores, leaderboard output, or forecast scoring routes.
 - Load [references/toolkit-guardrails.md](references/toolkit-guardrails.md) when a publish, attest, tip, or betting workflow fails or needs safety constraints.
@@ -165,6 +166,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-publish.ts](scripts/probe-publish.ts): execute one explicit DAHR+publish probe and verify visibility via recent feed results plus direct post-detail lookup
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts): compare live discovery resources against committed snapshots
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts): run the maintained production-host read-only API sweep and classify production versus dev-only reads
+- [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts): execute the maintained wallet-backed write sweep with explicit spend, readback, and visibility checks
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts): report currently active categories from stats and feed probes
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts): probe audited live endpoints and flagged `404` resources
 - [scripts/check-verification-matrix.ts](scripts/check-verification-matrix.ts): ensure the maintained proving baseline still covers the current public package surface
@@ -181,10 +183,11 @@ All scripts are non-interactive, print structured JSON to stdout, and support `-
 For a new consumer integration, the safest progression is:
 
 1. `scripts/feed.ts` or `scripts/leaderboard-snapshot.ts`
-2. `scripts/check-live-categories.ts`
-3. `scripts/check-response-shapes.ts` or `scripts/check-endpoint-surface.ts`
-4. `scripts/check-publish-readiness.ts`
-5. `scripts/probe-publish.ts` only when you intentionally want a live write probe
+2. `scripts/check-write-surface-sweep.ts --broadcast` when you intentionally want the maintained live write proof rather than a one-off probe
+3. `scripts/check-live-categories.ts`
+4. `scripts/check-response-shapes.ts` or `scripts/check-endpoint-surface.ts`
+5. `scripts/check-publish-readiness.ts`
+6. `scripts/probe-publish.ts` only when you intentionally want a single explicit DAHR+publish probe outside the maintained sweep
 
 ## Working Rules
 

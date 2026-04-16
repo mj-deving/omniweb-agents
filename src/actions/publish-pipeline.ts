@@ -19,6 +19,7 @@ import {
   resolveAttestedPublishInput,
 } from "./publish-pipeline-normalize.js";
 import { pollIndexerForTx } from "./publish-pipeline-indexer.js";
+import { DEMOS_NETWORK_TIMEOUT_MS, withTimeout } from "../lib/network/timeouts.js";
 
 // ── Types ──────────────────────────────────────────
 
@@ -29,6 +30,8 @@ export interface PublishInput {
   confidence: number;
   replyTo?: string;
   assets?: string[];
+  mentions?: string[];
+  payload?: Record<string, unknown>;
   sourceAttestations?: Array<{
     url: string;
     responseHash: string;
@@ -99,16 +102,29 @@ export async function publishPost(
 
   const encoded = encodeHivePost(post);
   const stages = {
-    store: async (payload: Uint8Array) => DemosTransactions.store(payload, demos),
+    store: async (payload: Uint8Array) =>
+      withTimeout(
+        "DemosTransactions.store()",
+        DEMOS_NETWORK_TIMEOUT_MS.store,
+        DemosTransactions.store(payload, demos),
+      ),
     confirm: async (tx: unknown) =>
-      DemosTransactions.confirm(
-        tx as Parameters<typeof DemosTransactions.confirm>[0],
-        demos,
+      withTimeout(
+        "DemosTransactions.confirm()",
+        DEMOS_NETWORK_TIMEOUT_MS.confirm,
+        DemosTransactions.confirm(
+          tx as Parameters<typeof DemosTransactions.confirm>[0],
+          demos,
+        ),
       ),
     broadcast: (validity: unknown) =>
-      DemosTransactions.broadcast(
-        validity as Parameters<typeof DemosTransactions.broadcast>[0],
-        demos,
+      withTimeout(
+        "DemosTransactions.broadcast()",
+        DEMOS_NETWORK_TIMEOUT_MS.broadcast,
+        DemosTransactions.broadcast(
+          validity as Parameters<typeof DemosTransactions.broadcast>[0],
+          demos,
+        ),
       ),
   };
 

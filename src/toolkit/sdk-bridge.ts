@@ -19,7 +19,6 @@ import {
 import { executeChainTx } from "./chain/tx-pipeline.js";
 import { safeParse } from "./guards/state-helpers.js";
 import { encodeHivePayload } from "./hive-codec.js";
-import { DEMOS_NETWORK_TIMEOUT_MS, withTimeout } from "../lib/network/timeouts.js";
 
 /** Sentinel token indicating auth has not completed — never sent as Bearer */
 export const AUTH_PENDING_TOKEN = "__AUTH_PENDING__";
@@ -61,6 +60,12 @@ export interface TxModule {
 
 /** Error keywords indicating auth/rate-limit failures in DAHR proxy responses */
 const DAHR_ERROR_KEYWORDS = ["unauthorized", "forbidden", "rate limit", "api key", "access denied"] as const;
+// Mirror the upstream timeout contract locally to preserve the toolkit boundary.
+const CHAIN_STORE_TIMEOUT_MS = 10_000;
+const CHAIN_CONFIRM_TIMEOUT_MS = 30_000;
+const CHAIN_BROADCAST_TIMEOUT_MS = 15_000;
+const DAHR_CREATE_TIMEOUT_MS = 10_000;
+const DAHR_PROXY_TIMEOUT_MS = 30_000;
 const DAHR_RETRY_BACKOFF_MS = 2_000;
 const DAHR_MAX_ATTEMPTS = 2;
 
@@ -302,14 +307,14 @@ export function createSdkBridge(
       for (let attempt = 0; attempt < DAHR_MAX_ATTEMPTS; attempt += 1) {
         try {
           const dahr = await withTimeout(
-            "demos.web2.createDahr()",
-            DEMOS_NETWORK_TIMEOUT_MS.createDahr,
             rpc.web2.createDahr(),
+            DAHR_CREATE_TIMEOUT_MS,
+            `demos.web2.createDahr() timed out after ${DAHR_CREATE_TIMEOUT_MS}ms`,
           );
           const proxyResponse = await withTimeout(
-            "dahr.startProxy()",
-            DEMOS_NETWORK_TIMEOUT_MS.startProxy,
             dahr.startProxy({ url, method }),
+            DAHR_PROXY_TIMEOUT_MS,
+            `dahr.startProxy() timed out after ${DAHR_PROXY_TIMEOUT_MS}ms`,
           );
 
           // HTTP status guard (same logic as publish-pipeline.ts:attestDahr)
@@ -436,21 +441,21 @@ export function createSdkBridge(
       const stages = {
         store: (payload: Uint8Array) =>
           withTimeout(
-            "DemosTransactions.store()",
-            DEMOS_NETWORK_TIMEOUT_MS.store,
             tx.store(payload, demos),
+            CHAIN_STORE_TIMEOUT_MS,
+            `DemosTransactions.store() timed out after ${CHAIN_STORE_TIMEOUT_MS}ms`,
           ),
         confirm: (storeTx: unknown) =>
           withTimeout(
-            "DemosTransactions.confirm()",
-            DEMOS_NETWORK_TIMEOUT_MS.confirm,
             tx.confirm(storeTx, demos),
+            CHAIN_CONFIRM_TIMEOUT_MS,
+            `DemosTransactions.confirm() timed out after ${CHAIN_CONFIRM_TIMEOUT_MS}ms`,
           ),
         broadcast: (validity: unknown) =>
           withTimeout(
-            "DemosTransactions.broadcast()",
-            DEMOS_NETWORK_TIMEOUT_MS.broadcast,
             tx.broadcast(validity, demos),
+            CHAIN_BROADCAST_TIMEOUT_MS,
+            `DemosTransactions.broadcast() timed out after ${CHAIN_BROADCAST_TIMEOUT_MS}ms`,
           ),
       };
 
@@ -582,6 +587,16 @@ function isRetryableDahrStartupError(error: unknown): boolean {
     "timed out after",
   ].some((token) => message.includes(token))
     || /\b502\b|\b503\b|\b504\b/.test(message);
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+    }),
+  ]).finally(() => clearTimeout(timeoutId));
 }
 
 async function sleep(ms: number): Promise<void> {

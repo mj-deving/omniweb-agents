@@ -13,7 +13,6 @@
  */
 
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.ts";
-import { verifyPublishVisibility } from "../src/publish-visibility.ts";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_CATEGORY = "OBSERVATION";
@@ -287,6 +286,7 @@ async function executePublishAttempt(
   run: number,
   draft: { text: string; category: string; attestUrl: string },
 ): Promise<ProbeAttempt> {
+  const verifyPublishVisibility = await loadVerifyPublishVisibility();
   const startedAt = Date.now();
   const result = await omni.colony.publish(draft);
   const publishLatencyMs = Date.now() - startedAt;
@@ -324,6 +324,7 @@ async function executeReplyAttempt(
   run: number,
   draft: { text: string; category: string; attestUrl: string; parentTxHash: string },
 ): Promise<ProbeAttempt> {
+  const verifyPublishVisibility = await loadVerifyPublishVisibility();
   const startedAt = Date.now();
   const result = await omni.colony.reply(draft);
   const publishLatencyMs = Date.now() - startedAt;
@@ -459,4 +460,21 @@ async function loadConnect(): Promise<(opts?: {
     throw new Error("connect() export not found in dist/index.js or src/index.ts");
   }
   return mod.connect;
+}
+
+async function loadVerifyPublishVisibility(): Promise<typeof import("../src/publish-visibility.ts")["verifyPublishVisibility"]> {
+  try {
+    const mod = await import("../dist/publish-visibility.js");
+    if (typeof mod.verifyPublishVisibility === "function") {
+      return mod.verifyPublishVisibility;
+    }
+  } catch {
+    // Fall back to source during local development before build output exists.
+  }
+
+  const mod = await import("../src/publish-visibility.ts");
+  if (typeof mod.verifyPublishVisibility !== "function") {
+    throw new Error("verifyPublishVisibility() export not found in dist/publish-visibility.js or src/publish-visibility.ts");
+  }
+  return mod.verifyPublishVisibility;
 }

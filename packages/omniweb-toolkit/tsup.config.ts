@@ -5,6 +5,7 @@ export default defineConfig({
     index: "src/index.ts",
     agent: "src/agent.ts",
     types: "src/types.ts",
+    "publish-visibility": "src/publish-visibility.ts",
   },
   format: ["esm"],
   target: "es2022",

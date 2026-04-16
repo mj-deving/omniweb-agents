@@ -2,19 +2,13 @@
 
 import { resolve } from "node:path";
 
-import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
-import {
-  inferProvider,
-  loadAgentSourceView,
-  type SourceRecordV2,
-} from "../../../src/toolkit/sources/catalog.js";
-import { selectSourceForTopicV2 } from "../../../src/toolkit/sources/policy.js";
-import { validateUrl } from "../../../src/toolkit/url-validator.js";
+import type { SourceRecordV2 } from "../src/attestation-workflow-support.ts";
 import {
   REPO_ROOT,
   getNumberArg,
   getStringArg,
   hasFlag,
+  loadPackageExport,
 } from "./_shared.js";
 
 type AgentName = "sentinel" | "crawler" | "pioneer";
@@ -136,6 +130,13 @@ for (const flag of ["--attest-url", "--topic", "--text", "--category", "--confid
 }
 
 const catalogPath = resolve(REPO_ROOT, "config", "sources", "catalog.json");
+const {
+  checkPublishQuality,
+  inferProvider,
+  loadAgentSourceView,
+  selectSourceForTopicV2,
+  validateUrl,
+} = await loadAttestationWorkflowSupport();
 const sourceView = loadAgentSourceView(agent, catalogPath, catalogPath, "catalog-only");
 const allUrls = [attestUrl, ...supportingUrls];
 const uniqueHosts = new Set<string>();
@@ -242,6 +243,38 @@ console.log(JSON.stringify({
 }, null, 2));
 
 process.exit(blockers.length === 0 ? 0 : 1);
+
+async function loadAttestationWorkflowSupport(): Promise<Pick<
+  typeof import("../src/attestation-workflow-support.ts"),
+  | "checkPublishQuality"
+  | "inferProvider"
+  | "loadAgentSourceView"
+  | "selectSourceForTopicV2"
+  | "validateUrl"
+>> {
+  const checkPublishQuality = await loadPackageExport<
+    typeof import("../src/attestation-workflow-support.ts")["checkPublishQuality"]
+  >("../dist/attestation-workflow-support.js", "../src/attestation-workflow-support.ts", "checkPublishQuality");
+  const inferProvider = await loadPackageExport<
+    typeof import("../src/attestation-workflow-support.ts")["inferProvider"]
+  >("../dist/attestation-workflow-support.js", "../src/attestation-workflow-support.ts", "inferProvider");
+  const loadAgentSourceView = await loadPackageExport<
+    typeof import("../src/attestation-workflow-support.ts")["loadAgentSourceView"]
+  >("../dist/attestation-workflow-support.js", "../src/attestation-workflow-support.ts", "loadAgentSourceView");
+  const selectSourceForTopicV2 = await loadPackageExport<
+    typeof import("../src/attestation-workflow-support.ts")["selectSourceForTopicV2"]
+  >("../dist/attestation-workflow-support.js", "../src/attestation-workflow-support.ts", "selectSourceForTopicV2");
+  const validateUrl = await loadPackageExport<
+    typeof import("../src/attestation-workflow-support.ts")["validateUrl"]
+  >("../dist/attestation-workflow-support.js", "../src/attestation-workflow-support.ts", "validateUrl");
+  return {
+    checkPublishQuality,
+    inferProvider,
+    loadAgentSourceView,
+    selectSourceForTopicV2,
+    validateUrl,
+  };
+}
 
 function buildEvidenceChecks(input: {
   category: string;

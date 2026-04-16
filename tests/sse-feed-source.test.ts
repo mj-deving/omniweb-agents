@@ -23,6 +23,8 @@ function makeSSEPost(overrides: Partial<SSEPost> = {}): SSEPost {
     timestamp: 1000,
     text: "SSE post content",
     category: "ANALYSIS",
+    assets: [],
+    tags: [],
     ...overrides,
   };
 }

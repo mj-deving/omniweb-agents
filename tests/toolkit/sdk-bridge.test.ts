@@ -122,6 +122,42 @@ describe("SDK Bridge Adapter", () => {
       bridge = createSdkBridge(demos as any, "https://www.supercolony.ai", "token");
       await expect(bridge.attestDahr("https://example.com")).rejects.toThrow("Unauthorized");
     });
+
+    it("retries once on transient proxy-session startup failure", async () => {
+      vi.useFakeTimers();
+      const startProxy = vi.fn()
+        .mockRejectedValueOnce(new Error("Failed to create proxy session"))
+        .mockResolvedValueOnce({
+          responseHash: "retry-response-hash",
+          txHash: "retry-tx-hash",
+          data: JSON.stringify({ price: 99 }),
+          status: 200,
+        });
+      demos.web2.createDahr = vi.fn(async () => ({ startProxy }));
+      bridge = createSdkBridge(demos as any, "https://www.supercolony.ai", "token");
+
+      const pending = bridge.attestDahr("https://example.com");
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      expect(result.txHash).toBe("retry-tx-hash");
+      expect(demos.web2.createDahr).toHaveBeenCalledTimes(2);
+      expect(startProxy).toHaveBeenCalledTimes(2);
+      vi.useRealTimers();
+    });
+
+    it("does not retry non-retryable source errors", async () => {
+      const startProxy = vi.fn().mockResolvedValue({
+        status: 403,
+        data: "{}",
+      });
+      demos.web2.createDahr = vi.fn(async () => ({ startProxy }));
+      bridge = createSdkBridge(demos as any, "https://www.supercolony.ai", "token");
+
+      await expect(bridge.attestDahr("https://example.com")).rejects.toThrow("HTTP 403");
+      expect(demos.web2.createDahr).toHaveBeenCalledTimes(1);
+      expect(startProxy).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("apiCall", () => {
@@ -294,6 +330,38 @@ describe("SDK Bridge Adapter", () => {
       const decoded = new TextDecoder().decode(encoded.slice(4));
       const parsed = JSON.parse(decoded);
       expect(parsed.feedRefs).toEqual(["0xfeed1", "0xfeed2"]);
+    });
+
+    it("includes mentions and payload when provided", async () => {
+      const localTxMock = {
+        store: vi.fn(async () => ({ type: "store" })),
+        confirm: vi.fn(async () => ({
+          response: { data: { transaction: { hash: "payload-hash" } } },
+        })),
+        broadcast: vi.fn(async () => ({})),
+      };
+
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        localTxMock as any,
+      );
+
+      await bridge.publishHivePost({
+        text: "Payload-rich post",
+        category: "OBSERVATION",
+        mentions: ["0xabc", "0xdef"],
+        payload: { price: 2340.5, driver: "geopolitical" },
+      });
+
+      const storeCall = localTxMock.store.mock.calls[0];
+      const encoded = storeCall[0] as Uint8Array;
+      const decoded = new TextDecoder().decode(encoded.slice(4));
+      const parsed = JSON.parse(decoded);
+      expect(parsed.mentions).toEqual(["0xabc", "0xdef"]);
+      expect(parsed.payload).toEqual({ price: 2340.5, driver: "geopolitical" });
     });
 
     it("omits feedRefs when empty array", async () => {

@@ -13,6 +13,53 @@ This file tracks deliberate alignment against the official starter repo:
 
 Use it when the local toolkit or agent loop drifts from the official starter and you need to decide whether to mirror upstream, document an intentional divergence, or mark a gap as still open.
 
+## Audit Order
+
+Work the upstream `SKILL.md` strictly in document order:
+
+1. Dependencies
+2. Glossary
+3. Access Tiers
+4. Integration Packages
+5. Starter Template
+6. Publishing Quick Start
+7. SDK Connection / Wallet / Faucet / Timeouts
+8. Publishing Posts
+9. Authentication
+10. DAHR Attestation
+11. TLSNotary Attestation
+12. Reading the Feed
+13. Real-Time Streaming
+14. Reactions
+15. Predictions / Prediction Markets
+16. Forecast & Scoring
+17. Agent Identity / Identity Lookup / Human Linking
+18. Tipping
+19. Scoring & Leaderboard
+20. Webhooks / RSS
+21. Error Handling
+22. API Endpoints
+23. Post Payload Structure
+24. Cost
+
+Do not skip ahead because one section looks more interesting in chat. Treat this as the execution queue.
+
+## Fast Execution Model
+
+To keep the audit fast and avoid dragging unrelated checks into every change:
+
+1. build the gap matrix section-by-section in upstream order
+2. group adjacent sections into one implementation cluster only when they share the same local code path
+3. use the smallest validation that can actually fail for that cluster
+4. reserve live runs only for claims that are explicitly operational or timing-sensitive
+
+Validation ladder for this audit:
+
+- docs/reference-only change: `npx tsc --noEmit`
+- parser/runtime shape change: targeted unit tests for the touched files
+- local publish/auth path change: targeted tests plus one focused smoke path if needed
+- live timing or visibility claim: one maintained live script, not the full package sweep
+
 ## Source Of Truth
 
 - Official starter `SKILL.md`: implementation reference for platform usage and live interaction behavior
@@ -32,7 +79,14 @@ Use it when the local toolkit or agent loop drifts from the official starter and
 | Use thread lookup to avoid duplicate replies | `implemented` | Opinion backfill checks `/api/feed/thread/:txHash` for our prior reply before emitting an event. |
 | Stream payload should preserve OPINION/category semantics | `implemented` | SSE parser now accepts both `category` and `cat` from upstream payload shapes. |
 | Read-only integration tier is zero-config and distinct from wallet-backed writes | `partial` | Local skill documents this, but still centers `connect()` more than the upstream starter does. |
+| Direct wallet-backed publish quick start should be visible as a minimal path | `open` | Local docs focus on `connect()` and higher-level helpers; they do not yet provide a maintained direct-SDK `first-post` equivalent. |
+| Wallet funding/auth round-trip should be documented end-to-end | `partial` | Pieces exist locally (`faucet`, `signMessage`, auth helpers), but not as one compact upstream-mirroring quick start. |
 | DAHR/TLSN timeout guidance should match upstream | `partial` | Runtime should follow upstream values; verify current code before claiming parity. |
+| Network timeout guidance should be easy to find and tied to concrete operations | `open` | Some timeout values exist in runtime code, but local package docs do not yet expose them as a maintained operator-facing contract. |
+| HIVE encoding should be explicit and match upstream direct-SDK examples | `implemented` | Local encode path uses the same `HIVE` prefix and JSON body model. |
+| Publish path should be explicit `store -> confirm -> broadcast` | `implemented` | Local chain publish pipeline follows the same three-step sequence internally. |
+| Publish payload should accept the richer upstream post shape | `partial` | Local normalized writes include `v`, `cat`, `text`, `tags`, `assets`, `confidence`, `replyTo`, and attestations, but not a generic `payload` or `mentions` field yet. |
+| Feed visibility timing claims should match proven live behavior | `contradicted-by-live` | Upstream says feed appearance is typically 10-30s after broadcast; current production-host proving still shows accepted writes that fail indexed readback within the verification window. |
 | Opinion replies should carry explicit attested backing data when available | `open` | Current reactive reply path generates an ANALYSIS reply but does not yet inject an attested source into that reply path. |
 
 ### `GUIDE.md`

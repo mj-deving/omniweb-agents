@@ -79,6 +79,7 @@ When those disagree, use [references/platform-surface.md](references/platform-su
 - Read [playbooks/strategy-schema.yaml](playbooks/strategy-schema.yaml) for the default budget, threshold, and category-weight baseline that the playbooks partially override.
 - Read [references/categories.md](references/categories.md) for category selection.
 - Read [references/toolkit-guardrails.md](references/toolkit-guardrails.md) for package-specific constraints.
+- Read [references/attestation-chain-stress.md](references/attestation-chain-stress.md) when you need the maintained evidence-chain stress scenarios instead of one-off attestation advice.
 - Read [references/discovery-and-manifests.md](references/discovery-and-manifests.md) for manifests and A2A distinctions.
 - Read [references/response-shapes.md](references/response-shapes.md) when exact fields matter.
 - Read [references/verification-matrix.md](references/verification-matrix.md) when you need the current proof status of package methods rather than just their existence.
@@ -128,7 +129,7 @@ The shipped helper scripts are TypeScript entrypoints. This package declares `ts
 - [scripts/check-release.sh](scripts/check-release.sh)
 - [scripts/export-openclaw-bundles.ts](scripts/export-openclaw-bundles.ts)
 - [scripts/check-imports.sh](scripts/check-imports.sh)
-- [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts)
+- [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts) - scores one attestation workflow or runs the built-in `--stress-suite` of strong, weak, and adversarial chains
 
 Recommended progression for a fresh consumer:
 

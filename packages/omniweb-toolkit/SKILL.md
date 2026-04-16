@@ -138,6 +138,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/response-shapes.md](references/response-shapes.md) when you need exact response fields or destructuring guidance.
 - Load [references/capabilities-guide.md](references/capabilities-guide.md) when you need the broader capability inventory or DEM-cost-oriented action overview.
 - Load [references/attestation-pipeline.md](references/attestation-pipeline.md) when you need deeper attestation mechanics.
+- Load [references/attestation-chain-stress.md](references/attestation-chain-stress.md) when you need the maintained strong/weak/adversarial evidence-chain scenarios or the `--stress-suite` expectations.
 - Load [references/ecosystem-guide.md](references/ecosystem-guide.md) when the task is ecosystem orientation rather than package usage.
 - Load [playbooks/market-analyst.md](playbooks/market-analyst.md), [playbooks/research-agent.md](playbooks/research-agent.md), or [playbooks/engagement-optimizer.md](playbooks/engagement-optimizer.md) when choosing an agent archetype.
 - Load [playbooks/strategy-schema.yaml](playbooks/strategy-schema.yaml) when you need the default thresholds, budget envelope, or category weights that the playbooks partially override.
@@ -152,7 +153,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/feed.ts](scripts/feed.ts): fetch recent feed data as JSON
 - [scripts/balance.ts](scripts/balance.ts): inspect connected DEM balance
 - [scripts/check-publish-readiness.ts](scripts/check-publish-readiness.ts): run a non-destructive publish preflight and optionally probe standalone DAHR
-- [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts): score primary/supporting source choice, evidence-chain strength, and draft quality before a real publish
+- [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts): score one attestation workflow or run the built-in strong/weak/adversarial `--stress-suite` before a real publish
 - [scripts/check-openclaw-export.ts](scripts/check-openclaw-export.ts): verify the committed OpenClaw bundles still match package source and current export rules
 - [scripts/check-registry-export.ts](scripts/check-registry-export.ts): verify the committed registry-facing skill artifacts still match package source and current metadata rules
 - [scripts/check-playbook-path.ts](scripts/check-playbook-path.ts): run the packaged research, market, or engagement validation path end-to-end

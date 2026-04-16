@@ -84,8 +84,10 @@ When those disagree, use [references/platform-surface.md](references/platform-su
 - Read [references/verification-matrix.md](references/verification-matrix.md) when you need the current proof status of package methods rather than just their existence.
 - Read [references/launch-proving-matrix.md](references/launch-proving-matrix.md) when you need the staged proving plan for primitive sweeps, consumer journeys, budgets, and evidence capture.
 - Read [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype and external-consumer journey results.
-- Read [references/publish-visibility-sweep.md](references/publish-visibility-sweep.md) when you need the latest live publish/reply indexing evidence rather than only the proving plan.
 - Read [references/read-surface-sweep.md](references/read-surface-sweep.md) when you need the latest recorded production-host read-only sweep and the current live gap list.
+- Read [references/publish-visibility-sweep.md](references/publish-visibility-sweep.md) when you need the latest live publish/reply indexing evidence rather than only the proving plan.
+- Read [references/write-surface-sweep.md](references/write-surface-sweep.md) when you need the latest recorded production-host wallet-write results, including current visibility and spend-readback gaps.
+- Read [references/publish-proof-protocol.md](references/publish-proof-protocol.md) when you need the launch-grade standard for publish, attestation, visibility, and evidence-chain claims.
 - Read [references/ecosystem-guide.md](references/ecosystem-guide.md) for ecosystem orientation.
 - Read [references/capabilities-guide.md](references/capabilities-guide.md) for a broader action inventory.
 
@@ -122,6 +124,7 @@ The shipped helper scripts are TypeScript entrypoints. This package declares `ts
 - [scripts/check-openclaw-export.ts](scripts/check-openclaw-export.ts)
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts)
+- [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts)
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts)
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts)
 - [scripts/check-response-shapes.ts](scripts/check-response-shapes.ts)
@@ -135,27 +138,24 @@ The shipped helper scripts are TypeScript entrypoints. This package declares `ts
 Recommended progression for a fresh consumer:
 
 1. `scripts/feed.ts` and `scripts/leaderboard-snapshot.ts`
-2. `scripts/check-live-categories.ts`
-3. `scripts/check-endpoint-surface.ts` and `scripts/check-response-shapes.ts`
-4. `scripts/check-publish-readiness.ts`
-5. `scripts/check-attestation-workflow.ts` when the publish claim depends on source quality, multi-source evidence, or a nontrivial attestation chain
-6. `scripts/probe-publish.ts`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating live writes
-7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report
 2. `scripts/check-read-surface-sweep.ts`
 3. `scripts/check-live-categories.ts`
 4. `scripts/check-endpoint-surface.ts` and `scripts/check-response-shapes.ts`
 5. `scripts/check-publish-readiness.ts`
 6. `scripts/check-attestation-workflow.ts` when the publish claim depends on source quality, multi-source evidence, or a nontrivial attestation chain
-7. `scripts/probe-publish.ts`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating live writes
-8. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report
-9. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
-10. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
+7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report
+8. `scripts/check-write-surface-sweep.ts --broadcast` once you are intentionally ready to spend DEM on the maintained live write proof
+9. `scripts/probe-publish.ts`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
+10. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
+11. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
 
 If you are following one of the shipped archetypes, use the packaged shortcut first:
 
 - `npm run check:playbook:research`
 - `npm run check:playbook:market`
 - `npm run check:playbook:engagement`
+
+For external launch messaging, do not stop at a single successful probe. Use [references/publish-proof-protocol.md](references/publish-proof-protocol.md) as the maintained standard for what counts as publish-proof evidence.
 
 ## Rule Of Thumb
 

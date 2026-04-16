@@ -48,7 +48,7 @@ async function guardAndPublish(
   if (rateLimitCheck.error) return err(rateLimitCheck.error, localProvenance(start));
   if (dedupError) return err(dedupError, localProvenance(start));
 
-  const { txHash, responseHash } = await executePublishPipeline(session, draft);
+  const { publishTxHash, attestationTxHash, responseHash } = await executePublishPipeline(session, draft);
 
   // Record only after pipeline commits (prevents false entries on failure)
   await Promise.all([
@@ -57,11 +57,11 @@ async function guardAndPublish(
   ]);
 
   return ok<PublishResult>(
-    { txHash },
+    { txHash: publishTxHash },
     {
       path: "local",
       latencyMs: Date.now() - start,
-      attestation: { txHash, responseHash },
+      attestation: { txHash: attestationTxHash, responseHash },
     },
   );
 }
@@ -88,7 +88,10 @@ export async function reply(
   });
 }
 
-async function executePublishPipeline(session: DemosSession, draft: PublishDraft): Promise<{ txHash: string; responseHash: string }> {
+async function executePublishPipeline(
+  session: DemosSession,
+  draft: PublishDraft,
+): Promise<{ publishTxHash: string; attestationTxHash: string; responseHash: string }> {
   const bridge = session.getBridge();
 
   // Step 1: DAHR attestation (mandatory — every post must carry proof)
@@ -127,5 +130,9 @@ async function executePublishPipeline(session: DemosSession, draft: PublishDraft
     }],
   });
 
-  return { txHash: result.txHash, responseHash: attestResult.responseHash };
+  return {
+    publishTxHash: result.txHash,
+    attestationTxHash: attestResult.txHash,
+    responseHash: attestResult.responseHash,
+  };
 }

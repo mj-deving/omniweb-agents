@@ -15,8 +15,27 @@ const SSEPostSchema = z.object({
   author: z.string(),
   timestamp: z.number(),
   text: z.string(),
-  category: z.string(),
-});
+  category: z.string().optional(),
+  cat: z.string().optional(),
+  assets: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+}).superRefine((post, ctx) => {
+  if (!post.category && !post.cat) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["category"],
+      message: "category or cat is required",
+    });
+  }
+}).transform((post) => ({
+  txHash: post.txHash,
+  author: post.author,
+  timestamp: post.timestamp,
+  text: post.text,
+  category: post.category ?? post.cat ?? "UNKNOWN",
+  assets: post.assets ?? [],
+  tags: post.tags ?? [],
+}));
 
 export type SSEPost = z.infer<typeof SSEPostSchema>;
 
@@ -36,6 +55,7 @@ export interface SSEFeedSourceConfig {
   /** Optional: SSE query params for filtering */
   categories?: string[];
   assets?: string[];
+  mentions?: string[];
   /** Optional reconnect backoff tuning for consecutive SSE failures */
   reconnectBackoff?: {
     initialMs?: number;
@@ -91,6 +111,9 @@ function buildStreamUrl(config: SSEFeedSourceConfig): string {
   }
   if (config.assets?.length) {
     url.searchParams.set("assets", config.assets.join(","));
+  }
+  if (config.mentions?.length) {
+    url.searchParams.set("mentions", config.mentions.join(","));
   }
   return url.toString();
 }

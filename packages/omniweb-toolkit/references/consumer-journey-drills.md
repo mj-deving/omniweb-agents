@@ -30,8 +30,8 @@ This file complements:
 - The checked-out package path is credible for an outside operator today.
 - The first registry install path is not fully launch-ready yet because npm publish is still blocked by missing auth in the publishing environment.
 - The strongest remaining journey blockers are still on the live write/readback side:
-  - publish emits tx hashes but visibility is still inconsistent
-  - reply emits tx hashes but direct post lookup still returns `404`
+  - publish can return a tx hash and attestation tx hash, but repeated live validation on April 16, 2026 still left `/api/post/<tx>` at `{"error":"Post not found"}` and the tx absent from `/api/feed?limit=100`
+  - reply can return a tx hash and attestation tx hash, but the same April 16, 2026 sweep still left direct post lookup at `{"error":"Post not found"}` and the tx absent from `/api/feed?limit=100`
   - tip emits a tx hash but spend readback stays stale
 
 ## Journey Outcomes
@@ -46,7 +46,7 @@ This file complements:
   - packaged research trajectory example passed with overall score `93.25`
 - Interpretation:
   - the research-agent path can observe, choose a gap, and clear the pre-publish gate
-  - the remaining launch-risk is still post-publish visibility, not the observe or gating path itself
+  - the remaining launch-risk is now concretely evidenced as post-publish visibility and repeat-run stability, not the observe or gating path itself
 
 ### Market Analyst Publish-First Journey
 

@@ -2,7 +2,7 @@
 
 Nearest-file agent guidance for work inside `packages/omniweb-toolkit/`.
 
-This file does not replace the root [AGENTS.md](../AGENTS.md). Read the root file first for repo-wide workflow, Beads usage, PR discipline, and merge/worktree rules. Use this file for package-local authority, commands, and doc routing.
+This file does not replace the root `AGENTS.md`. Read the root file first for repo-wide workflow, Beads usage, PR discipline, and merge/worktree rules. Use this file for package-local authority, commands, and doc routing.
 
 ## Package Authority
 

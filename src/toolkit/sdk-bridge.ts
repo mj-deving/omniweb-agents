@@ -19,6 +19,7 @@ import {
 import { executeChainTx } from "./chain/tx-pipeline.js";
 import { safeParse } from "./guards/state-helpers.js";
 import { encodeHivePayload } from "./hive-codec.js";
+import { DEMOS_NETWORK_TIMEOUT_MS, withTimeout } from "../lib/network/timeouts.js";
 
 /** Sentinel token indicating auth has not completed — never sent as Bearer */
 export const AUTH_PENDING_TOKEN = "__AUTH_PENDING__";
@@ -139,6 +140,8 @@ export interface HivePost {
   confidence?: number;
   replyTo?: string;
   assets?: string[];
+  mentions?: string[];
+  payload?: Record<string, unknown>;
   /** Citation links to FEED posts — creates a proof chain from source to analysis */
   feedRefs?: string[];
   sourceAttestations?: Array<{
@@ -291,18 +294,17 @@ export function createSdkBridge(
      * URLs reach the proxy.
      */
     async attestDahr(url: string, method: string = "GET"): Promise<DahrResult> {
-      const dahr = await rpc.web2.createDahr();
+      const dahr = await withTimeout(
+        "demos.web2.createDahr()",
+        DEMOS_NETWORK_TIMEOUT_MS.createDahr,
+        rpc.web2.createDahr(),
+      );
       const safeUrl = sanitizeUrl(url);
-
-      // startProxy can hang indefinitely (observed 300s+ in TLSN era) — bound to 30s
-      const DAHR_PROXY_TIMEOUT_MS = 30_000;
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      const proxyResponse: Record<string, unknown> = await Promise.race([
+      const proxyResponse: Record<string, unknown> = await withTimeout(
+        "dahr.startProxy()",
+        DEMOS_NETWORK_TIMEOUT_MS.startProxy,
         dahr.startProxy({ url, method }),
-        new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error(`DAHR proxy timeout (${DAHR_PROXY_TIMEOUT_MS / 1000}s)`)), DAHR_PROXY_TIMEOUT_MS);
-        }),
-      ]).finally(() => clearTimeout(timeoutId));
+      );
 
       // HTTP status guard (same logic as publish-pipeline.ts:attestDahr)
       const httpStatus = proxyResponse.status ?? proxyResponse.statusCode ?? proxyResponse.httpStatus;
@@ -402,6 +404,8 @@ export function createSdkBridge(
       if (post.confidence !== undefined) hivePost.confidence = post.confidence;
       if (post.replyTo) hivePost.replyTo = post.replyTo;
       if (post.assets && post.assets.length > 0) hivePost.assets = post.assets;
+      if (post.mentions && post.mentions.length > 0) hivePost.mentions = post.mentions;
+      if (post.payload && Object.keys(post.payload).length > 0) hivePost.payload = post.payload;
       if (post.feedRefs && post.feedRefs.length > 0) hivePost.feedRefs = post.feedRefs;
       if (post.sourceAttestations && post.sourceAttestations.length > 0) {
         hivePost.sourceAttestations = post.sourceAttestations.map((a) => ({
@@ -414,9 +418,24 @@ export function createSdkBridge(
 
       const encoded = encodeHivePayload(hivePost);
       const stages = {
-        store: (payload: Uint8Array) => tx.store(payload, demos),
-        confirm: (storeTx: unknown) => tx.confirm(storeTx, demos),
-        broadcast: (validity: unknown) => tx.broadcast(validity, demos),
+        store: (payload: Uint8Array) =>
+          withTimeout(
+            "DemosTransactions.store()",
+            DEMOS_NETWORK_TIMEOUT_MS.store,
+            tx.store(payload, demos),
+          ),
+        confirm: (storeTx: unknown) =>
+          withTimeout(
+            "DemosTransactions.confirm()",
+            DEMOS_NETWORK_TIMEOUT_MS.confirm,
+            tx.confirm(storeTx, demos),
+          ),
+        broadcast: (validity: unknown) =>
+          withTimeout(
+            "DemosTransactions.broadcast()",
+            DEMOS_NETWORK_TIMEOUT_MS.broadcast,
+            tx.broadcast(validity, demos),
+          ),
       };
 
       const chainTx = await executeChainTx(stages, encoded).catch((error: unknown) => {

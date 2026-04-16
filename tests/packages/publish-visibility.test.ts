@@ -55,6 +55,7 @@ describe("verifyPublishVisibility", () => {
       verificationPath: "post_detail",
       txHash: "tx-1",
       observedBlockNumber: 77,
+      elapsedMs: 2_000,
     });
     expect(getHivePosts).toHaveBeenCalledTimes(2);
     expect(getPostDetail).toHaveBeenCalledTimes(3);
@@ -97,6 +98,7 @@ describe("verifyPublishVisibility", () => {
       txHash: "tx-2",
       observedBlockNumber: 88,
       lastIndexedBlock: 222,
+      elapsedMs: 3_000,
       error: "not_found",
     });
   });

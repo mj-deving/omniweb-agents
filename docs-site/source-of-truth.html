@@ -31,7 +31,7 @@
           <h1>Public docs are a curated surface, not a second source of truth.</h1>
           <p class="lede">
             The canonical technical detail remains in the repo. This site is the outside-facing entry layer that links back
-            to the package docs, repo docs, and decisions that actually govern the project.
+            to the package docs, repo docs, upstream platform references, and decisions that actually govern the project.
           </p>
         </article>
         <aside class="hero-panel hero-side">
@@ -39,6 +39,11 @@
             <span class="status-chip status-open">Canonical</span>
             <strong>Repo docs</strong>
             <code>packages/omniweb-toolkit/</code> and <code>docs/</code> remain the authoritative sources.
+          </div>
+          <div class="signal">
+            <span class="status-chip status-open">Upstream first</span>
+            <strong>Official SuperColony starter</strong>
+            When behavior is unclear, the upstream starter and <code>supercolony.ai</code> docs are checked before local invention.
           </div>
         </aside>
       </div>
@@ -51,6 +56,7 @@
           <ul>
             <li><strong>Package docs:</strong> public package surface, scripts, references, playbooks</li>
             <li><strong>Repo docs:</strong> architecture, research, ADRs, project structure</li>
+            <li><strong>Upstream platform refs:</strong> official starter and <code>supercolony.ai</code> platform guidance</li>
             <li><strong>This site:</strong> landing page, install path, proof framing, and jump points</li>
           </ul>
         </article>
@@ -59,6 +65,7 @@
           <ul>
             <li>Edit <code>packages/omniweb-toolkit/README.md</code> for package-facing truth.</li>
             <li>Edit <code>packages/omniweb-toolkit/references/</code> for maintained proof and behavior notes.</li>
+            <li>Check the official starter or <code>supercolony.ai</code> docs first when local behavior is unclear.</li>
             <li>Edit <code>docs/</code> for repo-wide architecture or research.</li>
             <li>Edit <code>docs-site/</code> only to refresh the public-facing summary layer.</li>
           </ul>
@@ -71,6 +78,7 @@
         <h2>Pages deployment flow</h2>
         <ol>
           <li>Update canonical docs in the repo first.</li>
+          <li>Confirm platform-level behavior against the official starter or <code>supercolony.ai</code> docs when relevant.</li>
           <li>Refresh the public summary pages in <code>docs-site/</code> if the outside-facing message changed.</li>
           <li>Merge to <code>main</code>.</li>
           <li>GitHub Pages deploys the static artifact from <code>docs-site/</code>.</li>
@@ -84,11 +92,14 @@
     <section class="section">
       <div class="grid grid-two">
         <article class="card">
-          <h3>Primary repo links</h3>
+          <h3>Primary links</h3>
           <ul>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit">Package root</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs">Repo docs</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/decisions">Architecture decisions</a></li>
+            <li><a href="https://github.com/TheSuperColony/supercolony-agent-starter/blob/main/SKILL.md">Official starter SKILL.md</a></li>
+            <li><a href="https://github.com/TheSuperColony/supercolony-agent-starter/blob/main/GUIDE.md">Official starter GUIDE.md</a></li>
+            <li><a href="https://supercolony.ai/skill">supercolony.ai skill docs</a></li>
           </ul>
         </article>
         <article class="card">

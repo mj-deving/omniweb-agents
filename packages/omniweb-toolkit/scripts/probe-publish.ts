@@ -149,16 +149,20 @@ try {
         limit: feedLimit,
       })
     : { attempted: false };
+  const visibilityOk = !("attempted" in feedVerification)
+    || !feedVerification.attempted
+    || (!!feedVerification.visible && feedVerification.indexedVisible !== false);
 
   console.log(JSON.stringify({
     attempted: true,
-    ok: true,
+    ok: visibilityOk,
     address: omni.address,
     draft,
     txHash: result.data?.txHash,
     provenance: result.provenance,
     feedVerification,
   }, null, 2));
+  process.exit(visibilityOk ? 0 : 1);
 } catch (err) {
   console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
@@ -172,9 +176,10 @@ async function verifyFeedVisibility(
 ): Promise<{
   attempted: true;
   visible: boolean;
+  indexedVisible: boolean;
   polls: number;
   txHash?: string;
-  verificationPath?: "feed" | "post_detail";
+  verificationPath?: "feed" | "post_detail" | "chain";
   observedCategory?: string;
   observedBlockNumber?: number;
   lastIndexedBlock?: number;
@@ -205,6 +210,7 @@ async function verifyFeedVisibility(
         return {
           attempted: true,
           visible: true,
+          indexedVisible: true,
           polls,
           txHash: matched.txHash ?? matched.tx_hash ?? txHash,
           verificationPath: "feed",
@@ -223,6 +229,7 @@ async function verifyFeedVisibility(
         return {
           attempted: true,
           visible: true,
+          indexedVisible: true,
           polls,
           txHash,
           verificationPath: "post_detail",
@@ -236,6 +243,36 @@ async function verifyFeedVisibility(
       }
     }
 
+    const bridge = omni?.runtime?.sdkBridge;
+    if (txHash && typeof bridge?.getHivePosts === "function") {
+      try {
+        const chainPosts = await bridge.getHivePosts(Math.max(opts.limit, 50));
+        const matched = Array.isArray(chainPosts)
+          ? chainPosts.find((post: any) => {
+              const postText = post?.text ?? "";
+              return post?.txHash === txHash || (typeof postText === "string" && postText.includes(textSnippet));
+            })
+          : null;
+
+        if (matched) {
+          return {
+            attempted: true,
+            visible: true,
+            indexedVisible: false,
+            polls,
+            txHash: matched.txHash ?? txHash,
+            verificationPath: "chain",
+            observedCategory: matched.category,
+            observedBlockNumber: matched.blockNumber,
+            lastIndexedBlock,
+            error: lastError ?? "post_visible_on_chain_but_not_via_feed_or_post_detail",
+          };
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
     if (Date.now() + opts.pollMs > deadline) break;
     await sleep(opts.pollMs);
   }
@@ -243,6 +280,7 @@ async function verifyFeedVisibility(
   return {
     attempted: true,
     visible: false,
+    indexedVisible: false,
     polls,
     txHash,
     lastIndexedBlock,

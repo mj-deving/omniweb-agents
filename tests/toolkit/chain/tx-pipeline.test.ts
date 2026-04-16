@@ -40,7 +40,7 @@ describe("executeChainTx", () => {
     expect(pipeline.broadcast).not.toHaveBeenCalled();
   });
 
-  it("returns the txHash from the confirm step", async () => {
+  it("prefers the broadcast txHash when present", async () => {
     const pipeline = {
       store: vi.fn(async () => ({ signed: true })),
       confirm: vi.fn(async () => ({
@@ -56,6 +56,26 @@ describe("executeChainTx", () => {
       broadcast: vi.fn(async () => ({
         response: { results: { tx1: { hash: "broadcast-hash" } } },
       })),
+    };
+
+    const result = await executeChainTx(pipeline, { encoded: "payload" });
+    expect(result).toEqual({ txHash: "broadcast-hash", blockNumber: 99 });
+  });
+
+  it("falls back to the confirm txHash when broadcast has no hash", async () => {
+    const pipeline = {
+      store: vi.fn(async () => ({ signed: true })),
+      confirm: vi.fn(async () => ({
+        response: {
+          data: {
+            transaction: {
+              hash: "confirm-hash",
+              blockNumber: 99,
+            },
+          },
+        },
+      })),
+      broadcast: vi.fn(async () => ({ result: 200 })),
     };
 
     const result = await executeChainTx(pipeline, { encoded: "payload" });

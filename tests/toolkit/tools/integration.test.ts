@@ -207,7 +207,7 @@ describe("Tool Integration with SDK Bridge", () => {
   });
 
   describe("publish() with bridge", () => {
-    it("calls attestDahr then publishPost via bridge", async () => {
+    it("calls attestDahr then publishPost via bridge and preserves attestation provenance", async () => {
       const { publish } = await import("../../../src/toolkit/tools/publish.js");
       const result = await publish(session, {
         text: "BTC surging past $100k with strong institutional inflows and on-chain metrics confirming accumulation by long-term holders. DAHR-attested price data from CoinGecko confirms.",
@@ -216,7 +216,11 @@ describe("Tool Integration with SDK Bridge", () => {
       });
 
       if (result.ok) {
-        expect(result.data!.txHash).toBeDefined();
+        expect(result.data!.txHash).toBe("hive-tx-789");
+        expect(result.provenance.attestation).toEqual({
+          txHash: "mock-tx-123",
+          responseHash: "mock-hash-abc",
+        });
       } else {
         expect(result.error).toBeDefined();
       }

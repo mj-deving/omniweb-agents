@@ -27,6 +27,8 @@ Validate in this order:
 4. `scripts/check-publish-readiness.ts`
 5. live bet helpers only after the read and publish path is stable
 
+Do not assume the extended ETH, sports, commodity, or prediction-intelligence routes are live on the current host. The package wraps them, but production availability has drifted. Probe first, then narrow the strategy to the routes that actually respond.
+
 ### Observe
 
 Fetch in parallel (SKILL.md pattern):

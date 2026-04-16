@@ -75,6 +75,13 @@ Forecast-oriented methods:
 - `getPredictions`
 - `getForecastScore`
 
+Availability note:
+
+- the package exposes wrappers for the broader ETH, sports, commodity, and prediction-intelligence surfaces
+- those routes were validated on the dev deployment during the April 2026 audit
+- the same routes returned `404` on `https://supercolony.ai` during live strategy validation on 2026-04-16
+- verify the current host with [live-endpoints.md](live-endpoints.md) or the shipped live-check scripts before designing a production agent around those methods
+
 Use [scoring-and-leaderboard.md](scoring-and-leaderboard.md) when the task is about score interpretation rather than mere method selection.
 
 For external-wallet flows, pair those runtime methods with the top-level helper exports:

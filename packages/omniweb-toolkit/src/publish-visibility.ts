@@ -3,6 +3,7 @@ export interface PublishVisibilityResult {
   visible: boolean;
   indexedVisible: boolean;
   polls: number;
+  elapsedMs: number;
   txHash?: string;
   verificationPath?: "feed" | "post_detail" | "chain";
   observedCategory?: string;
@@ -37,6 +38,7 @@ export async function verifyPublishVisibility(
 ): Promise<PublishVisibilityResult> {
   const now = opts.now ?? Date.now;
   const sleep = opts.sleep ?? defaultSleep;
+  const startedAt = now();
   const deadline = now() + opts.timeoutMs;
   const textSnippet = text.slice(0, 96);
   let polls = 0;
@@ -65,6 +67,7 @@ export async function verifyPublishVisibility(
           visible: true,
           indexedVisible: true,
           polls,
+          elapsedMs: now() - startedAt,
           txHash: matched.txHash ?? matched.tx_hash ?? txHash,
           verificationPath: "feed",
           observedCategory: matched.category ?? matched.payload?.cat,
@@ -84,6 +87,7 @@ export async function verifyPublishVisibility(
           visible: true,
           indexedVisible: true,
           polls,
+          elapsedMs: now() - startedAt,
           txHash,
           verificationPath: "post_detail",
           observedCategory:
@@ -114,6 +118,7 @@ export async function verifyPublishVisibility(
             visible: true,
             indexedVisible: false,
             polls,
+            elapsedMs: now() - startedAt,
             txHash: matched.txHash ?? txHash,
             verificationPath: "chain",
             observedCategory: matched.category,
@@ -145,6 +150,7 @@ export async function verifyPublishVisibility(
     visible: false,
     indexedVisible: false,
     polls,
+    elapsedMs: now() - startedAt,
     txHash,
     lastIndexedBlock,
     error: lastError ?? "published_post_not_seen_via_feed_or_post_detail",

@@ -61,6 +61,8 @@ export interface TxModule {
 
 /** Error keywords indicating auth/rate-limit failures in DAHR proxy responses */
 const DAHR_ERROR_KEYWORDS = ["unauthorized", "forbidden", "rate limit", "api key", "access denied"] as const;
+const DAHR_RETRY_BACKOFF_MS = 2_000;
+const DAHR_MAX_ATTEMPTS = 2;
 
 /** Minimal typed surface for Demos SDK methods used by the bridge */
 interface DemosRpcMethods {
@@ -290,62 +292,76 @@ export function createSdkBridge(
      * SSRF validator. The proxy is operated by KyneSys and has its own URL restrictions.
      * Client-side SSRF checks (validateUrl) protect against client-originated requests
      * but cannot prevent the DAHR proxy from being used as an SSRF amplifier.
-     * Mitigation: URL allowlist enforcement in attest.ts + publish.ts restricts which
+    * Mitigation: URL allowlist enforcement in attest.ts + publish.ts restricts which
      * URLs reach the proxy.
      */
     async attestDahr(url: string, method: string = "GET"): Promise<DahrResult> {
-      const dahr = await withTimeout(
-        "demos.web2.createDahr()",
-        DEMOS_NETWORK_TIMEOUT_MS.createDahr,
-        rpc.web2.createDahr(),
-      );
       const safeUrl = sanitizeUrl(url);
-      const proxyResponse: Record<string, unknown> = await withTimeout(
-        "dahr.startProxy()",
-        DEMOS_NETWORK_TIMEOUT_MS.startProxy,
-        dahr.startProxy({ url, method }),
-      );
+      let lastError: unknown;
 
-      // HTTP status guard (same logic as publish-pipeline.ts:attestDahr)
-      const httpStatus = proxyResponse.status ?? proxyResponse.statusCode ?? proxyResponse.httpStatus;
-      if (typeof httpStatus === "number" && (httpStatus < 200 || httpStatus >= 300)) {
-        throw new Error(`DAHR source returned HTTP ${httpStatus} — refusing to attest. URL: ${safeUrl}`);
-      }
-
-      // Parse response data
-      let data: unknown;
-      if (typeof proxyResponse.data === "string") {
-        const trimmed = proxyResponse.data.trim();
-        if (trimmed.startsWith("<")) {
-          throw new Error(`DAHR returned XML/HTML instead of JSON. URL: ${safeUrl}`);
-        }
+      for (let attempt = 0; attempt < DAHR_MAX_ATTEMPTS; attempt += 1) {
         try {
-          data = safeParse(proxyResponse.data);
-        } catch {
-          throw new Error(`DAHR returned non-JSON response. URL: ${safeUrl}`);
-        }
-      } else {
-        data = proxyResponse.data;
-      }
+          const dahr = await withTimeout(
+            "demos.web2.createDahr()",
+            DEMOS_NETWORK_TIMEOUT_MS.createDahr,
+            rpc.web2.createDahr(),
+          );
+          const proxyResponse = await withTimeout(
+            "dahr.startProxy()",
+            DEMOS_NETWORK_TIMEOUT_MS.startProxy,
+            dahr.startProxy({ url, method }),
+          );
 
-      // Error payload guard
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        const obj = data as Record<string, unknown>;
-        const errField = obj.error ?? obj.Error ?? obj.message ?? obj.detail;
-        if (typeof errField === "string") {
-          const errLower = errField.toLowerCase();
-          if (DAHR_ERROR_KEYWORDS.some(kw => errLower.includes(kw))) {
-            throw new Error(`DAHR source returned error: "${errField}". URL: ${safeUrl}`);
+          // HTTP status guard (same logic as publish-pipeline.ts:attestDahr)
+          const httpStatus = proxyResponse.status ?? proxyResponse.statusCode ?? proxyResponse.httpStatus;
+          if (typeof httpStatus === "number" && (httpStatus < 200 || httpStatus >= 300)) {
+            throw new Error(`DAHR source returned HTTP ${httpStatus} — refusing to attest. URL: ${safeUrl}`);
           }
+
+          // Parse response data
+          let data: unknown;
+          if (typeof proxyResponse.data === "string") {
+            const trimmed = proxyResponse.data.trim();
+            if (trimmed.startsWith("<")) {
+              throw new Error(`DAHR returned XML/HTML instead of JSON. URL: ${safeUrl}`);
+            }
+            try {
+              data = safeParse(proxyResponse.data);
+            } catch {
+              throw new Error(`DAHR returned non-JSON response. URL: ${safeUrl}`);
+            }
+          } else {
+            data = proxyResponse.data;
+          }
+
+          // Error payload guard
+          if (data && typeof data === "object" && !Array.isArray(data)) {
+            const obj = data as Record<string, unknown>;
+            const errField = obj.error ?? obj.Error ?? obj.message ?? obj.detail;
+            if (typeof errField === "string") {
+              const errLower = errField.toLowerCase();
+              if (DAHR_ERROR_KEYWORDS.some(kw => errLower.includes(kw))) {
+                throw new Error(`DAHR source returned error: "${errField}". URL: ${safeUrl}`);
+              }
+            }
+          }
+
+          return {
+            responseHash: String(proxyResponse.responseHash ?? ""),
+            txHash: String(proxyResponse.txHash ?? ""),
+            data,
+            url,
+          };
+        } catch (error) {
+          lastError = error;
+          if (attempt >= DAHR_MAX_ATTEMPTS - 1 || !isRetryableDahrStartupError(error)) {
+            throw error;
+          }
+          await sleep(DAHR_RETRY_BACKOFF_MS * (attempt + 1));
         }
       }
 
-      return {
-        responseHash: String(proxyResponse.responseHash ?? ""),
-        txHash: String(proxyResponse.txHash ?? ""),
-        data,
-        url,
-      };
+      throw lastError instanceof Error ? lastError : new Error(String(lastError));
     },
 
     async apiCall(path: string, options: RequestInit = {}): Promise<ApiCallResult> {
@@ -548,4 +564,26 @@ export function createSdkBridge(
       return demos;
     },
   };
+}
+
+function isRetryableDahrStartupError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return [
+    "failed to create proxy session",
+    "bad gateway",
+    "gateway timeout",
+    "service unavailable",
+    "network error",
+    "fetch failed",
+    "socket hang up",
+    "econnreset",
+    "ecconnreset",
+    "proxy setup timeout",
+    "timed out after",
+  ].some((token) => message.includes(token))
+    || /\b502\b|\b503\b|\b504\b/.test(message);
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }

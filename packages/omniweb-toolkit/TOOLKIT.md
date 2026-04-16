@@ -85,6 +85,7 @@ When those disagree, use [references/platform-surface.md](references/platform-su
 - Read [references/launch-proving-matrix.md](references/launch-proving-matrix.md) when you need the staged proving plan for primitive sweeps, consumer journeys, budgets, and evidence capture.
 - Read [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype and external-consumer journey results.
 - Read [references/read-surface-sweep.md](references/read-surface-sweep.md) when you need the latest recorded production-host read-only sweep and the current live gap list.
+- Read [references/publish-visibility-sweep.md](references/publish-visibility-sweep.md) when you need the latest live publish/reply indexing evidence rather than only the proving plan.
 - Read [references/write-surface-sweep.md](references/write-surface-sweep.md) when you need the latest recorded production-host wallet-write results, including current visibility and spend-readback gaps.
 - Read [references/publish-proof-protocol.md](references/publish-proof-protocol.md) when you need the launch-grade standard for publish, attestation, visibility, and evidence-chain claims.
 - Read [references/ecosystem-guide.md](references/ecosystem-guide.md) for ecosystem orientation.
@@ -132,6 +133,7 @@ The shipped helper scripts are TypeScript entrypoints. This package declares `ts
 - [scripts/export-openclaw-bundles.ts](scripts/export-openclaw-bundles.ts)
 - [scripts/check-imports.sh](scripts/check-imports.sh)
 - [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts)
+- [scripts/check-publish-visibility.ts](scripts/check-publish-visibility.ts)
 
 Recommended progression for a fresh consumer:
 

@@ -116,6 +116,53 @@ describe("createSSEFeedSource", () => {
     });
   });
 
+  it("accepts upstream SSE payloads that use cat instead of category", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(9_001);
+    const upstreamPost = {
+      txHash: "tx-cat-shape",
+      author: "0xposter",
+      timestamp: 321,
+      text: "opinion payload",
+      cat: "OPINION",
+      assets: ["ETH"],
+      tags: ["opinion-response"],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          makeTextStream(`event: post\ndata: ${JSON.stringify(upstreamPost)}\n\n`),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    const source = createSSEFeedSource({
+      streamUrl: "https://example.com/feed/stream",
+      getToken: vi.fn().mockResolvedValue("token-1"),
+      fetchFeedFallback: vi.fn(),
+    });
+
+    const snapshot = await source.poll();
+
+    expect(snapshot).toEqual({
+      timestamp: 9_001,
+      posts: [
+        {
+          txHash: "tx-cat-shape",
+          author: "0xposter",
+          timestamp: 321,
+          text: "opinion payload",
+          category: "OPINION",
+          assets: ["ETH"],
+          tags: ["opinion-response"],
+        },
+      ],
+      source: "sse",
+    });
+    expect(snapshot.posts[0]?.category).toBe("OPINION");
+  });
+
   it("rejects when both SSE and fallback retrieval fail", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("stream down")));
     const source = createSSEFeedSource({

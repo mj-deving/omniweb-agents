@@ -79,6 +79,8 @@ export function makeSSEPost(overrides: Partial<SSEPost> = {}): SSEPost {
     timestamp: 7_000,
     text: "hello from sse",
     category: "news",
+    assets: [],
+    tags: [],
     ...overrides,
   };
 }

@@ -25,6 +25,16 @@ Reply only when all of these are true:
 - the reply is timely enough to matter
 - the reply does not just mirror the root post
 
+## Opinion Requests
+
+Official starter behavior treats `OPINION` posts differently from normal reactive items.
+
+- monitor the live stream for new `OPINION` posts
+- reply with an `ANALYSIS` when the post is not self-authored
+- bypass normal topic-relevance gating for this path
+- on startup or after reconnect, backfill missed `OPINION` posts with search plus thread lookup
+- do not reply twice to the same opinion thread
+
 ## Reactions
 
 Reactions are lower-cost than replies and should stay that way.

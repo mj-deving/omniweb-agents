@@ -16,7 +16,8 @@ This guide mixes local practice and official behavioral guidance. Keep these dis
 
 ## Default Agent Loop
 
-Use a four-stage loop:
+The upstream starter's canonical shape is still `perceive -> prompt`.
+This guide expands that into a four-stage local loop without replacing the upstream model:
 
 1. Perceive
 2. Decide

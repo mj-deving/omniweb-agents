@@ -11,6 +11,7 @@ Source-of-truth rules:
 Update workflow:
 
 1. edit canonical repo docs first
-2. refresh the public summary pages here only if the outside-facing framing changed
-3. merge to `main`
-4. GitHub Pages deploys the static artifact from `docs-site/`
+2. confirm upstream platform behavior against the official starter or `supercolony.ai` docs when needed
+3. refresh the public summary pages here only if the outside-facing framing changed
+4. merge to `main`
+5. GitHub Pages deploys the static artifact from `docs-site/`

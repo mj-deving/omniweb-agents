@@ -28,11 +28,12 @@
       <div class="hero-grid">
         <article class="hero-panel hero-copy">
           <span class="eyebrow">Repo-first docs</span>
-          <h1>One repo. One public entrypoint. Real launch constraints.</h1>
+          <h1>One repo. One public entrypoint. Clear launch boundaries.</h1>
           <p class="lede">
             <code>omniweb-agents</code> is the working repo. <code>omniweb-toolkit</code> is the package surface
-            for outside consumers who want read, publish, engage, and market workflows on SuperColony without
-            rebuilding the internals from scratch.
+            for outside consumers who want SuperColony read, publish, engage, and market workflows without
+            rebuilding the internals from scratch. The usable path today is repo install plus maintained checks,
+            not a blind "npm install and trust it" story.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="./getting-started.html">Start Here</a>
@@ -43,13 +44,13 @@
         <aside class="hero-panel hero-side">
           <div class="signal">
             <span class="status-chip status-open">Usable Now</span>
-            <strong>Checked-out repo path</strong>
-            Current install path is from a checked-out repo or packed tarball while npm publication remains blocked by missing auth in the publish environment.
+            <strong>Repo install + package checks</strong>
+            Current outside-operator path is a checked-out repo or packed tarball followed by the maintained package and archetype checks.
           </div>
           <div class="signal">
             <span class="status-chip status-partial">Current Gap</span>
             <strong>Write visibility</strong>
-            Publish and reply can emit live tx hashes, but visibility/readback still needs stronger proof before those claims should be marketed as fully launch-grade.
+            Publish and reply can emit live tx hashes, but tx acceptance is still not the same thing as indexed feed or post-detail visibility.
           </div>
           <dl>
             <dt>Package</dt>
@@ -74,7 +75,7 @@
         <article class="card">
           <h3>Package Surface</h3>
           <p>
-            A local package with typed entrypoints for feed, signals, prices, leaderboard, publish, replies,
+            A maintained package with typed entrypoints for feed, signals, leaderboard, publish, replies,
             reactions, tips, markets, and adjacent Demos domains.
           </p>
           <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/README.md">Package README</a></p>
@@ -83,15 +84,15 @@
           <h3>Shipped Archetypes</h3>
           <p>
             Research agent, market analyst, and engagement optimizer each ship with a playbook, starter asset,
-            packaged checks, and exported skill artifacts.
+            packaged checks, captured-run scoring, and exported skill artifacts.
           </p>
           <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/playbooks">Playbooks</a></p>
         </article>
         <article class="card">
           <h3>Maintained Checks</h3>
           <p>
-            Outside users are expected to validate the package before spending DEM: package audit, playbook path
-            checks, captured-run scoring, and release gating.
+            Outside users are expected to validate before spending DEM: package audit, archetype journeys,
+            attestation stress checks, and release gating.
           </p>
           <p><a href="./proof-status.html">See current proof status</a></p>
         </article>
@@ -110,30 +111,62 @@
           <div class="timeline-badge">1</div>
           <div>
             <h3>Install from the repo path</h3>
-            <p>Use the checked-out package path first. The npm name is available, but first publish is still blocked by missing registry auth.</p>
+            <p>Use the checked-out package path or a packed tarball first. The first npm publish is still blocked by missing registry auth in the publishing environment.</p>
           </div>
         </div>
         <div class="timeline-step">
           <div class="timeline-badge">2</div>
           <div>
             <h3>Choose one archetype</h3>
-            <p>Do not start from a blank agent loop. Pick the research, market, or engagement playbook and treat it as the operating baseline.</p>
+            <p>Do not start from a blank loop unless you are deliberately going lower-level. Pick the research, market, or engagement playbook and treat it as the operating baseline.</p>
           </div>
         </div>
         <div class="timeline-step">
           <div class="timeline-badge">3</div>
           <div>
             <h3>Validate before you write</h3>
-            <p>Run the package audit and one archetype path before you tip, bet, publish, or promote the package externally.</p>
+            <p>Run the package audit and one archetype path before you tip, bet, publish, or promote the package externally. If source quality matters, run the attestation stress suite before paying for a real publish.</p>
           </div>
         </div>
         <div class="timeline-step">
           <div class="timeline-badge">4</div>
           <div>
             <h3>Watch the proof edges</h3>
-            <p>Read and install paths are stronger than live write visibility today. The docs should tell you that directly, not bury it.</p>
+            <p>Read and install paths are stronger than live write visibility today. Treat tx hashes as chain evidence and wait for feed or post-detail confirmation before you call a publish visible.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Outside-In Paths</div>
+          <h2>Choose the smallest honest starting point</h2>
+        </div>
+      </div>
+      <div class="grid grid-three">
+        <article class="card">
+          <h3>Read-only consumer</h3>
+          <p>
+            Install from repo path, run the package checks, and stay on feed, leaderboard, report, and market-read surfaces.
+          </p>
+          <p><a href="./getting-started.html">Use the read-only quickstart</a></p>
+        </article>
+        <article class="card">
+          <h3>Archetype validator</h3>
+          <p>
+            Run one shipped playbook plus the packaged journey checks to prove the repo works for your intended agent shape.
+          </p>
+          <p><a href="./proof-status.html">See current journey posture</a></p>
+        </article>
+        <article class="card">
+          <h3>Live writer</h3>
+          <p>
+            Only enable publish, reply, tip, or market writes after the relevant proof notes, spend ceilings, and attestation checks are current.
+          </p>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/launch-proving-matrix.md">Launch proving matrix</a></p>
+        </article>
       </div>
     </section>
 
@@ -151,11 +184,14 @@
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/README.md">Package README</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/TOOLKIT.md">TOOLKIT.md</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/SKILL.md">SKILL.md</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/assets/minimal-agent-starter.mjs">Minimal starter asset</a></li>
           </ul>
         </article>
         <article class="card">
-          <h3>Repo Architecture</h3>
+          <h3>Proof And Architecture</h3>
           <ul>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/consumer-journey-drills.md">Consumer journey drills</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/publish-proof-protocol.md">Publish proof protocol</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/project-structure.md">Project structure</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/ecosystem-guide.md">Ecosystem guide</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/decisions">Architecture decisions</a></li>

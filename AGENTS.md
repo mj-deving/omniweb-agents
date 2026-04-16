@@ -65,6 +65,7 @@ Important commands:
 - `bd show <id>` to inspect one task
 - `bd update <id> --claim` to claim a task
 - `bd note <id> "..."` to leave execution notes
+- `bd dep <blocker> --blocks <blocked>` to encode real execution order
 - `bd close <id> --reason "..."` when work is complete
 - `bd remember "..." --key <name>` to store durable repo facts
 - `bd memories` / `bd recall <key>` to retrieve stored repo facts
@@ -72,12 +73,14 @@ Important commands:
 - `bd merge-slot acquire` / `bd merge-slot release` for serialized hot-file landing work
 - `bd gate list` / `bd gate check` to inspect async waits
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
+- `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
 
 Rules:
 
 - always inspect `bd ready` before choosing work
 - claim a task before starting implementation
 - if new work is discovered, create or note a follow-up bead
+- if a multi-bead effort has real sequencing, encode it with `bd dep` instead of leaving it implicit in notes
 - if a task is blocked, record the blocker in beads
 - do not silently work on a task someone else has already claimed
 - use `bd remember` for stable repo facts that future agents will need; do not leave them only in chat
@@ -92,7 +95,9 @@ Rules:
 - Use the repo merge slot before rebasing, resolving, or landing work that touches shared hot files such as `packages/omniweb-toolkit/src/hive.ts`, `packages/omniweb-toolkit/src/index.ts`, `src/toolkit/supercolony/api-client.ts`, or the live validation scripts.
 - Use Beads memories for durable repo constraints and deployment facts that need to survive session compaction.
 - Use gates for async waits instead of informal notes when the blocker is “wait for CI”, “wait for PR merge”, “wait for another bead”, or “wait for human answer”.
+- For epics or multi-step hardening tracks, add dependency edges early so `bd ready` reflects actual order rather than just named backlog.
 - Use `bd swarm` when an epic is clearly parallelizable and child beads can be worked independently.
+- Run `./scripts/beads-maintenance.sh` at natural boundaries: before `/clear`, after a merged work cluster, or when the queue starts to feel noisy.
 
 ## Branch / PR Discipline
 

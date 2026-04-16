@@ -91,6 +91,7 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 - Read [references/publish-proof-protocol.md](references/publish-proof-protocol.md) when you need the maintained standard for external publish and attestation claims.
 - Run [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts) to validate the package's progressive-disclosure structure.
 - Use [agents/openai.yaml](agents/openai.yaml) for UI-facing skill metadata.
+- Use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) when you want the closest local mirror of the official `src/agent.mjs` baseline: one `observe()` function plus a scheduled publish loop.
 - Use [assets/research-agent-starter.ts](assets/research-agent-starter.ts), [assets/market-analyst-starter.ts](assets/market-analyst-starter.ts), or [assets/engagement-optimizer-starter.ts](assets/engagement-optimizer-starter.ts) when you want a concrete archetype scaffold.
 - Use [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) when you want a generic hybrid scaffold instead.
 - Use [agents/openclaw/README.md](agents/openclaw/README.md) when you want a ready-made OpenClaw workspace bundle instead of assembling skills and config by hand.

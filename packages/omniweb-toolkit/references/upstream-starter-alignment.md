@@ -120,9 +120,9 @@ Validation ladder for this audit:
 
 | Upstream convention | Local status | Notes |
 |---|---|---|
-| Minimal baseline is one `observe()` function plus a scheduled loop | `partial` | Local package favors richer starter assets and a larger runtime surface. Keep the minimal baseline visible for new consumers. |
-| Publish path is explicit `store -> confirm -> broadcast` | `partial` | Local toolkit abstracts this behind higher-level helpers. Good for users, but we should still document the minimal upstream shape. |
-| Starter baseline should be easy to customize without adopting the whole framework | `partial` | Local onboarding is broader than the upstream starter; keep the minimal path available. |
+| Minimal baseline is one `observe()` function plus a scheduled loop | `implemented` | `assets/minimal-agent-starter.mjs` now mirrors the official starter shape directly for consumers who want the narrow baseline. |
+| Publish path is explicit `store -> confirm -> broadcast` | `implemented` | The minimal starter asset keeps the official direct SDK write sequence visible instead of hiding it behind the convenience layer. |
+| Starter baseline should be easy to customize without adopting the whole framework | `implemented` | The package now ships a narrow starter asset alongside the richer archetype starters and `runAgentLoop` helpers. |
 
 ## Working Rule
 

@@ -15,11 +15,7 @@
  * 1 on runtime error, 2 on invalid args.
  */
 
-import { validateInput, PublishDraftSchema } from "../../../src/toolkit/schemas.js";
-import { validateUrl } from "../../../src/toolkit/url-validator.js";
-import { checkAndRecordDedup } from "../../../src/toolkit/guards/dedup-guard.js";
-import { getWriteRateRemaining } from "../../../src/toolkit/guards/write-rate-limit.js";
-import { createSessionFromRuntime } from "../src/session-factory.js";
+import { loadConnect, loadPackageExport } from "./_shared.ts";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_TEXT =
@@ -70,6 +66,14 @@ const stateDir = stateDirArg || undefined;
 
 try {
   const connect = await loadConnect();
+  const {
+    validateInput,
+    PublishDraftSchema,
+    validateUrl,
+    checkAndRecordDedup,
+    getWriteRateRemaining,
+    createSessionFromRuntime,
+  } = await loadPublishReadinessSupport();
   const omni = await connect({ stateDir, allowInsecureUrls });
   const session = await createSessionFromRuntime(omni.runtime, { stateDir, allowInsecureUrls });
   const authToken = await omni.runtime.getToken();
@@ -190,22 +194,39 @@ try {
   process.exit(1);
 }
 
-async function loadConnect(): Promise<(opts?: {
-  stateDir?: string;
-  allowInsecureUrls?: boolean;
-}) => Promise<any>> {
-  try {
-    const mod = await import("../dist/index.js");
-    if (typeof mod.connect === "function") {
-      return mod.connect;
-    }
-  } catch {
-    // Fall back to source during local development before build output exists.
-  }
-
-  const mod = await import("../src/index.ts");
-  if (typeof mod.connect !== "function") {
-    throw new Error("connect() export not found in dist/index.js or src/index.ts");
-  }
-  return mod.connect;
+async function loadPublishReadinessSupport(): Promise<Pick<
+  typeof import("../src/publish-readiness-support.ts"),
+  | "validateInput"
+  | "PublishDraftSchema"
+  | "validateUrl"
+  | "checkAndRecordDedup"
+  | "getWriteRateRemaining"
+  | "createSessionFromRuntime"
+>> {
+  const validateInput = await loadPackageExport<
+    typeof import("../src/publish-readiness-support.ts")["validateInput"]
+  >("../dist/publish-readiness-support.js", "../src/publish-readiness-support.ts", "validateInput");
+  const PublishDraftSchema = await loadPackageExport<
+    typeof import("../src/publish-readiness-support.ts")["PublishDraftSchema"]
+  >("../dist/publish-readiness-support.js", "../src/publish-readiness-support.ts", "PublishDraftSchema");
+  const validateUrl = await loadPackageExport<
+    typeof import("../src/publish-readiness-support.ts")["validateUrl"]
+  >("../dist/publish-readiness-support.js", "../src/publish-readiness-support.ts", "validateUrl");
+  const checkAndRecordDedup = await loadPackageExport<
+    typeof import("../src/publish-readiness-support.ts")["checkAndRecordDedup"]
+  >("../dist/publish-readiness-support.js", "../src/publish-readiness-support.ts", "checkAndRecordDedup");
+  const getWriteRateRemaining = await loadPackageExport<
+    typeof import("../src/publish-readiness-support.ts")["getWriteRateRemaining"]
+  >("../dist/publish-readiness-support.js", "../src/publish-readiness-support.ts", "getWriteRateRemaining");
+  const createSessionFromRuntime = await loadPackageExport<
+    typeof import("../src/publish-readiness-support.ts")["createSessionFromRuntime"]
+  >("../dist/publish-readiness-support.js", "../src/publish-readiness-support.ts", "createSessionFromRuntime");
+  return {
+    validateInput,
+    PublishDraftSchema,
+    validateUrl,
+    checkAndRecordDedup,
+    getWriteRateRemaining,
+    createSessionFromRuntime,
+  };
 }

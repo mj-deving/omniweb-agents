@@ -44,5 +44,6 @@ Run these through your package manager's exec shim so `tsx` resolves from the in
 - `references/publish-proof-protocol.md`
 - `references/verification-matrix.md`
 - `references/launch-proving-matrix.md`
+- `references/read-surface-sweep.md`
 - `references/toolkit-guardrails.md`
 - `references/categories.md`

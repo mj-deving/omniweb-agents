@@ -86,6 +86,7 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 - Read [references/launch-proving-matrix.md](references/launch-proving-matrix.md) when you need the staged launch-readiness plan across primitive sweeps, outside-in journeys, budgets, and evidence capture.
 - Read [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype results and the current external-consumer install gate.
 - Read [references/read-surface-sweep.md](references/read-surface-sweep.md) when you need the latest recorded production-host read proof and the current unresolved read gap.
+- Read [references/publish-visibility-sweep.md](references/publish-visibility-sweep.md) when you need the latest live publish/reply indexing evidence and tx-hash trust assessment.
 - Read [references/write-surface-sweep.md](references/write-surface-sweep.md) when you need the latest recorded wallet-backed write results and the current production-host write gaps.
 - Read [references/publish-proof-protocol.md](references/publish-proof-protocol.md) when you need the maintained standard for external publish and attestation claims.
 - Run [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts) to validate the package's progressive-disclosure structure.
@@ -170,6 +171,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:registry` validates the generated registry-facing skill artifacts without running the broader package checks.
 - `npm run check:publish` runs `check:package`, reports npm registry auth state, tells you whether the package name already exists on npm, and emits an explicit release decision such as `ready_for_first_publish` or `blocked_npm_auth_missing`.
 - `npm run check:journeys` runs the three shipped archetype journey paths, the stricter captured-run scorer, and the external-consumer release gate in one report.
+- `npm run check:publish-visibility -- --broadcast --runs 2 --reply-after-publish` runs the maintained live publish/reply indexing harness and reports whether returned tx hashes became indexed-visible within the verification window.
 - `npm run check:write-surface -- --broadcast` runs the maintained live write sweep for reactions, tips, publish/reply, and market writes; it intentionally spends DEM and may create live content.
 - `npm run check:playbook:research`, `npm run check:playbook:market`, and `npm run check:playbook:engagement` each run the shipped live/readiness/trajectory path for one archetype.
 - `npm run check:attestation -- --attest-url <url> [--supporting-url <url> ...]` scores the source choice, evidence-chain quality, and draft quality for a planned publish workflow before you spend DEM.

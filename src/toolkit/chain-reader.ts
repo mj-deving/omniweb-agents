@@ -119,7 +119,7 @@ export async function getHivePosts(rpc: ChainReaderRpc, limit: number): Promise<
 
   for (let page = 0; page < MAX_PAGES && posts.length < limit; page++) {
     const txs = await rpc.getTransactions(start, PAGE_SIZE);
-    if (!txs || txs.length === 0) break;
+    if (!Array.isArray(txs) || txs.length === 0) break;
 
     for (const rawTx of txs) {
       if (rawTx.type !== "storage") continue;
@@ -201,7 +201,7 @@ export async function getRepliesTo(rpc: ChainReaderRpc, txHashes: string[]): Pro
 
   for (let page = 0; page < MAX_PAGES; page++) {
     const txs = await rpc.getTransactions(start, PAGE_SIZE);
-    if (!txs || txs.length === 0) break;
+    if (!Array.isArray(txs) || txs.length === 0) break;
 
     for (const rawTx of txs) {
       if (rawTx.type !== "storage") continue;

@@ -212,13 +212,13 @@ describe("SDK Bridge Adapter", () => {
         sourceAttestations: [{ url: "https://api.coingecko.com", responseHash: "abc", txHash: "def" }],
       });
 
-      expect(result.txHash).toBe("mock-confirm-hash");
+      expect(result.txHash).toBe("mock-broadcast-hash");
       expect(mockDemosTransactions.store).toHaveBeenCalled();
       expect(mockDemosTransactions.confirm).toHaveBeenCalled();
       expect(mockDemosTransactions.broadcast).toHaveBeenCalled();
     });
 
-    it("extracts txHash from confirm response", async () => {
+    it("extracts txHash from broadcast response when available", async () => {
       bridge = createSdkBridge(
         demos as any,
         "https://www.supercolony.ai",
@@ -232,8 +232,7 @@ describe("SDK Bridge Adapter", () => {
         category: "UPDATE",
       });
 
-      expect(typeof result.txHash).toBe("string");
-      expect(result.txHash.length).toBeGreaterThan(0);
+      expect(result.txHash).toBe("mock-broadcast-hash");
     });
 
     it("includes replyTo when provided", async () => {
@@ -341,10 +340,9 @@ describe("SDK Bridge Adapter", () => {
       expect(demos.broadcast).toHaveBeenCalled();
     });
 
-    it("extracts txHash from confirm response (SDK convention)", async () => {
+    it("prefers the broadcast txHash for transfers when available", async () => {
       const result = await bridge.transferDem("demos1recipient", 3, "memo");
-      // extractTxHash checks confirm response first, then broadcast
-      expect(result.txHash).toBe("mock-transfer-hash");
+      expect(result.txHash).toBe("mock-broadcast-hash");
     });
 
     it("does not pass memo to SDK transfer (SDK only accepts 2 params)", async () => {

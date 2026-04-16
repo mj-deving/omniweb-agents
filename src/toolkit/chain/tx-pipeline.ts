@@ -24,8 +24,19 @@ function extractTxHash(value: unknown): string | null {
     getPath(value, ["transactionHash"]),
     getPath(value, ["response", "data", "transaction", "hash"]),
     getPath(value, ["response", "data", "txHash"]),
+    getPath(value, ["response", "data", "hash"]),
+    getPath(value, ["response", "results", "tx1", "hash"]),
     getPath(value, ["data", "transaction", "hash"]),
   ];
+
+  const responseResults = getPath(value, ["response", "results"]);
+  if (responseResults && typeof responseResults === "object") {
+    for (const result of Object.values(responseResults as Record<string, unknown>)) {
+      if (result && typeof result === "object" && typeof (result as Record<string, unknown>).hash === "string") {
+        candidates.push((result as Record<string, unknown>).hash);
+      }
+    }
+  }
 
   for (const candidate of candidates) {
     if (typeof candidate === "string" && candidate.length > 0) {
@@ -88,9 +99,9 @@ export async function executeChainTx<TPayload, TStored, TConfirmed, TBroadcast>(
 ): Promise<ChainTxResult> {
   const stored = await stages.store(payload);
   const confirmed = await stages.confirm(stored);
-  const txHash = extractTxHash(confirmed);
+  const confirmedTxHash = extractTxHash(confirmed);
 
-  if (!txHash) {
+  if (!confirmedTxHash) {
     throw new Error("Confirmed transaction missing txHash");
   }
 
@@ -101,6 +112,7 @@ export async function executeChainTx<TPayload, TStored, TConfirmed, TBroadcast>(
       `Broadcast failed with result ${broadcastStatus}: ${formatBroadcastFailure(broadcastResult)}`,
     );
   }
+  const txHash = extractTxHash(broadcastResult) ?? confirmedTxHash;
 
   return {
     txHash,

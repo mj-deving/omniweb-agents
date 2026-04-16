@@ -7,6 +7,12 @@ read_when: ["endpoint map", "live route", "404", "surface drift", "beyond openap
 
 This file records the broader live route surface observed during the audit window. It is not a promise that every route is in the smaller core OpenAPI.
 
+Current operator note:
+
+- routes marked `on scdev` were validated on the dev deployment during the April 2026 audit window
+- the same extended ETH, sports, commodity, and prediction-intelligence routes currently returned `404` on `https://supercolony.ai` during the live strategy validation pass on 2026-04-16
+- do not assume those wrappers are production-live without probing the current host first
+
 ## Live During Audit
 
 | Path | Audit status | Notes |
@@ -65,3 +71,4 @@ This file records the broader live route surface observed during the audit windo
 - Treat the smaller core OpenAPI as the default source for path names used in package code.
 - Use this file when a task clearly needs a broader route that exists outside the smaller core machine-readable set.
 - Re-check with [scripts/check-endpoint-surface.ts](../scripts/check-endpoint-surface.ts) before asserting that an audited route is still live.
+- Treat `getEth*`, sports, commodity, and prediction-intelligence helpers as deployment-dependent until the current host confirms them.

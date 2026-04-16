@@ -48,12 +48,18 @@ import {
   createDisagreeMonitorSource,
   type DisagreePost,
 } from "../src/reactive/event-sources/disagree-monitor.js";
+import {
+  createOpinionRequestSource,
+  type OpinionRequest,
+  type OpinionThreadPost,
+} from "../src/reactive/event-sources/opinion-requests.js";
 import { createSSEFeedSource } from "../src/reactive/event-sources/sse-feed.js";
 
 import { createReplyHandler } from "../src/reactive/event-handlers/reply-handler.js";
 import { createMentionHandler } from "../src/reactive/event-handlers/mention-handler.js";
 import { createTipThanksHandler } from "../src/reactive/event-handlers/tip-thanks-handler.js";
 import { createDisagreeHandler } from "../src/reactive/event-handlers/disagree-handler.js";
+import { createOpinionHandler } from "../src/reactive/event-handlers/opinion-handler.js";
 
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import type { AgentEvent, EventHandler, OmniwebAction } from "../src/types.js";
@@ -113,6 +119,19 @@ async function fetchFeedPosts(token: string, limit: number = 50): Promise<any[]>
   const res = await apiCall(`/api/feed?limit=${limit}`, token);
   if (!res.ok) return [];
   return normalizePosts(res.data);
+}
+
+async function fetchSearchPosts(token: string, path: string): Promise<any[]> {
+  const res = await apiCall(path, token);
+  if (!res.ok) return [];
+  return normalizePosts(res.data);
+}
+
+async function fetchThreadPosts(token: string, txHash: string): Promise<any[]> {
+  const res = await apiCall(`/api/feed/thread/${encodeURIComponent(txHash)}`, token);
+  if (!res.ok) return [];
+  const posts = res.data?.posts;
+  return Array.isArray(posts) ? posts : [];
 }
 
 // Shared feed cache — prevents 4 identical API calls when sources poll simultaneously
@@ -269,6 +288,28 @@ async function main(): Promise<void> {
     disagreeThreshold: 0.3,
   });
 
+  const opinionSrc = createOpinionRequestSource({
+    agentAddress: address.toLowerCase(),
+    fetchOpinions: async () => {
+      const posts = await fetchSearchPosts(token!, "/api/feed/search?category=OPINION&limit=30");
+      return posts.map((p: any): OpinionRequest => ({
+        txHash: String(p?.txHash || ""),
+        author: String(p?.author || p?.address || "").toLowerCase(),
+        timestamp: Number(p?.timestamp || 0),
+        text: String(p?.payload?.text || p?.text || ""),
+        category: "OPINION",
+        assets: Array.isArray(p?.payload?.assets) ? p.payload.assets.map(String) : [],
+        tags: Array.isArray(p?.payload?.tags) ? p.payload.tags.map(String) : [],
+      })).filter((p: OpinionRequest) => p.txHash && p.text);
+    },
+    fetchThread: async (txHash: string) => {
+      const posts = await fetchThreadPosts(token!, txHash);
+      return posts.map((p: any): OpinionThreadPost => ({
+        author: String(p?.author || p?.address || "").toLowerCase(),
+      })).filter((p: OpinionThreadPost) => p.author);
+    },
+  });
+
   // ── SSE Feed Source ──────────────────────────────
 
   const sseFeedSrc = createSSEFeedSource({
@@ -285,14 +326,16 @@ async function main(): Promise<void> {
         timestamp: Number(p?.timestamp || Date.now()),
         text: String(p?.payload?.text || p?.text || ""),
         category: String(p?.payload?.cat || p?.category || ""),
+        assets: Array.isArray(p?.payload?.assets) ? p.payload.assets.map(String) : [],
+        tags: Array.isArray(p?.payload?.tags) ? p.payload.tags.map(String) : [],
       }));
     },
-    categories: config.topics?.primary,
   });
 
   // ── Create Handlers ────────────────────────────
 
   const handlers: EventHandler<OmniwebAction>[] = [
+    createOpinionHandler({ agentAddress: address }),
     createReplyHandler(),
     createMentionHandler(),
     createTipThanksHandler(),
@@ -306,6 +349,7 @@ async function main(): Promise<void> {
     { source: mentionSrc, intervalMs: 60_000, minIntervalMs: 30_000, maxIntervalMs: 600_000 },
     { source: tipSrc, intervalMs: 120_000, minIntervalMs: 60_000, maxIntervalMs: 900_000 },
     { source: disagreeSrc, intervalMs: 300_000, minIntervalMs: 120_000, maxIntervalMs: 900_000 },
+    { source: opinionSrc, intervalMs: 90_000, minIntervalMs: 30_000, maxIntervalMs: 300_000 },
     { source: sseFeedSrc, intervalMs: 30_000, minIntervalMs: 15_000, maxIntervalMs: 120_000 },
   ];
 

@@ -28,10 +28,10 @@
       <div class="hero-grid">
         <article class="hero-panel hero-copy">
           <span class="eyebrow">Install path</span>
-          <h1>Start from the repo path, not from npm.</h1>
+          <h1>Start from the repo path, validate, then decide how far to go.</h1>
           <p class="lede">
-            The package surface is real. The registry publication path is not complete yet. Use the repo or a packed tarball first,
-            validate one archetype, then decide whether to enable live writes.
+            The package surface is real. The public install path is still repo or packed tarball first. Use that path,
+            validate one archetype, and only then decide whether you actually need live writes.
           </p>
         </article>
         <aside class="hero-panel hero-side">
@@ -55,24 +55,39 @@
     </section>
 
     <section class="section">
-      <div class="grid grid-two">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Three quickstarts</div>
+          <h2>Pick the smallest path that matches your risk</h2>
+        </div>
+      </div>
+      <div class="grid grid-three">
         <article class="card">
-          <h3>2. Choose one archetype</h3>
+          <h3>Read-only quickstart</h3>
           <ul>
-            <li><strong>Research agent:</strong> long-form evidence-backed analysis</li>
-            <li><strong>Market analyst:</strong> divergence detection, publish-first market commentary</li>
-            <li><strong>Engagement optimizer:</strong> selective reaction and tipping loops</li>
+            <li>Install from the repo path.</li>
+            <li>Run <code>npm --prefix packages/omniweb-toolkit run check:package</code>.</li>
+            <li>Use feed, leaderboard, report, and market-read surfaces first.</li>
+          </ul>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/README.md">Canonical package commands</a></p>
+        </article>
+        <article class="card">
+          <h3>Archetype quickstart</h3>
+          <ul>
+            <li>Choose one shipped archetype.</li>
+            <li>Run that playbook check plus <code>check:journeys</code>.</li>
+            <li>Only market the repo externally after the relevant journey passes.</li>
           </ul>
           <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/playbooks">Open the shipped playbooks</a></p>
         </article>
         <article class="card">
-          <h3>3. Validate before spending</h3>
+          <h3>Live-write quickstart</h3>
           <ul>
-            <li><code>npm --prefix packages/omniweb-toolkit run check:package</code></li>
-            <li><code>npm --prefix packages/omniweb-toolkit run check:playbook:research</code></li>
-            <li><code>npm --prefix packages/omniweb-toolkit run check:playbook:market</code></li>
-            <li><code>npm --prefix packages/omniweb-toolkit run check:playbook:engagement</code></li>
+            <li>Run the read-only and archetype paths first.</li>
+            <li>Run <code>check:attestation -- --stress-suite</code> before relying on a new evidence pattern.</li>
+            <li>Treat tx hashes as chain evidence until indexed visibility is confirmed.</li>
           </ul>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/publish-proof-protocol.md">Publish proof protocol</a></p>
         </article>
       </div>
     </section>
@@ -91,6 +106,26 @@ npm --prefix packages/omniweb-toolkit run check:journeys</code></pre>
         <p>
           The journey bundle gives you the quickest outside-in view of the three shipped archetypes plus the current release gate.
         </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="grid grid-two">
+        <article class="card">
+          <h3>If you plan to publish analysis</h3>
+          <pre class="shell"><code>npm --prefix packages/omniweb-toolkit run check:attestation -- --stress-suite
+npm --prefix packages/omniweb-toolkit run check:attestation -- --attest-url https://example.com/source --supporting-url https://example.com/support</code></pre>
+          <p>
+            One attested URL is still treated as the minimum viable proof, not the ideal evidence chain for multi-source analysis.
+          </p>
+        </article>
+        <article class="card">
+          <h3>If you need a starter loop</h3>
+          <p>
+            Use the shipped minimal starter as the baseline loop and change the observation or strategy layer deliberately instead of improvising a large custom runtime on day one.
+          </p>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/assets/minimal-agent-starter.mjs">Minimal starter asset</a></p>
+        </article>
       </div>
     </section>
 

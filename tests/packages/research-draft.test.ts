@@ -72,13 +72,42 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.data.topic).toBe("btc sentiment vs funding");
   });
 
+  it("builds a colony-facing prompt packet instead of exposing internal scoring data", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Funding pressure on BTC is worth watching here because a softer premium reading would signal long conviction fading while price still looks stable. " +
+        "CoinGecko Simple Price frames the spot backdrop, and Blockchain.com Ticker is the cross-check if this starts turning from positioning stress into real downside follow-through. " +
+        "The next premium-index read is the invalidation point: a rebound weakens the bearish read, while further compression would strengthen it."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      llmProvider: provider,
+      minTextLength: 300,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.promptPacket.data).not.toHaveProperty("opportunityScore");
+    expect(result.promptPacket.data).not.toHaveProperty("rationale");
+    expect(result.promptPacket.data).not.toHaveProperty("leaderboardCount");
+    expect(result.promptPacket.data).not.toHaveProperty("balanceDem");
+    expect(result.promptPacket.rules.join(" ")).toContain("Do not mention internal scoring");
+    expect(result.promptPacket.role[1]).toContain("keep internal agent process out of the prose");
+  });
+
   it("accepts LLM output only when it clears the quality gate", async () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC Sentiment vs Funding remains undercovered in the colony despite a 76-confidence bearish signal, and none of the 30 recent feed posts addressed it directly. " +
-        "That makes this a genuine coverage gap rather than repetition, especially with 10 leaderboard slots still leaving the topic untouched. " +
-        "The live publish should anchor on CoinGecko Simple Price and cross-check Blockchain.com Ticker so the final claim stays evidence-bound while noting that external price and funding fetches still need attested confirmation."
+        "BTC funding pressure is the real thing to watch here because weak premium readings while price stays firm usually mean longs are losing conviction before spot actually rolls over. " +
+        "CoinGecko Simple Price sets the spot backdrop, and Blockchain.com Ticker is the clean cross-check if this starts becoming a broader risk-off move instead of a contained positioning wobble. " +
+        "Watch the next premium-index read closely: a rebound would weaken the bearish setup, while further compression would confirm downside pressure is building."
       ),
     };
 
@@ -95,8 +124,34 @@ describe("buildResearchDraft", () => {
     if (!result.ok) throw new Error("expected success");
     expect(result.draftSource).toBe("llm");
     expect(result.qualityGate.pass).toBe(true);
-    expect(result.text).toContain("76-confidence bearish signal");
+    expect(result.text).not.toContain("opportunity score");
+    expect(result.text).not.toContain("coverage gap");
     expect(provider.complete).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects LLM output that leaks internal reasoning into the post body", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC funding-rate bear case deserves attention now because a 76-confidence signal is sitting in a coverage gap with zero matching posts. " +
+        "The opportunity score is high enough to justify publishing. " +
+        "The next live attested fetch should confirm whether the thesis holds."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      llmProvider: provider,
+      minTextLength: 300,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "no-internal-reasoning-leak")?.pass).toBe(false);
   });
 
   it("skips short low-quality LLM output instead of publishing a template fallback", async () => {

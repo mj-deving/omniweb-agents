@@ -25,25 +25,17 @@ export interface ResearchPromptPacket {
   role: string[];
   data: {
     topic: string;
-    opportunityKind: ResearchOpportunity["kind"];
-    opportunityScore: number;
-    rationale: string;
     signal: {
-      confidence: number | null;
       direction: string | null;
     };
-    feed: {
-      feedCount: number;
-      matchingPostCount: number;
-      matchingAuthors: string[];
-      lastSeenAt: string | null;
+    colonyContext: {
+      situation: "fresh-topic" | "conflicting-takes" | "stale-coverage";
       contradictionSignals: string[];
+      lastCoveredAt: string | null;
     };
-    leaderboardCount: number;
-    balanceDem: number;
-    attestation: {
-      primarySource: string | null;
-      supportingSources: string[];
+    evidence: {
+      primarySourceName: string | null;
+      supportingSourceNames: string[];
     };
   };
   rules: string[];
@@ -72,6 +64,28 @@ export interface ResearchDraftFailure {
 export type ResearchDraftResult = ResearchDraftSuccess | ResearchDraftFailure;
 
 const DEFAULT_MIN_TEXT_LENGTH = 300;
+const RESEARCH_META_PATTERNS: Array<{ name: string; pattern: RegExp; detail: string }> = [
+  {
+    name: "internal-signal-metadata",
+    pattern: /\b\d{1,3}-confidence\b|\bconfidence signal\b/i,
+    detail: "mentions internal confidence metadata instead of stating the thesis plainly",
+  },
+  {
+    name: "internal-opportunity-metrics",
+    pattern: /\bopportunity score\b|\bcoverage gap\b|\bmatching posts?\b|\bfeed items?\b|\bleaderboard\b/i,
+    detail: "mentions internal ranking or deduplication metrics",
+  },
+  {
+    name: "attestation-pipeline-narration",
+    pattern: /\bprimary evidence routes\b|\bprimary source\b|\bsupporting source\b|\bsole supporting source\b|\bnext live attested fetch\b|\battestation plan\b/i,
+    detail: "narrates the attestation workflow instead of using evidence in the post itself",
+  },
+  {
+    name: "decision-rationale-leak",
+    pattern: /\bdeserves (fresh )?attention now\b|\bwhy this topic deserves attention\b/i,
+    detail: "explains the agent's decision to post rather than the market observation",
+  },
+];
 
 export async function buildResearchDraft(
   opts: BuildResearchDraftOptions,
@@ -79,24 +93,19 @@ export async function buildResearchDraft(
   const promptPacket = buildResearchPromptPacket(opts);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
   const llmText = await generateViaProvider(opts.llmProvider, promptPacket);
+  const emptyQualityGate = checkResearchDraftQuality("", minTextLength);
 
   if (!llmText) {
     return {
       ok: false,
       reason: "llm_provider_unavailable",
       promptPacket,
-      qualityGate: checkPublishQuality(
-        { text: "", category: "ANALYSIS" },
-        { minTextLength },
-      ),
+      qualityGate: emptyQualityGate,
       notes: ["Phase 2 prompt step requires a real LLM provider; deterministic fallback is intentionally disabled."],
     };
   }
 
-  const preferredGate = checkPublishQuality(
-    { text: llmText, category: "ANALYSIS" },
-    { minTextLength },
-  );
+  const preferredGate = checkResearchDraftQuality(llmText, minTextLength);
   if (preferredGate.pass) {
     return {
       ok: true,
@@ -123,55 +132,43 @@ export async function buildResearchDraft(
 }
 
 function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPromptPacket {
-  const matchingAuthors = Array.from(new Set(
-    opts.opportunity.matchingFeedPosts
-      .map((post) => post.author)
-      .filter((author): author is string => typeof author === "string" && author.length > 0),
-  ));
   const primarySource = opts.opportunity.attestationPlan.primary?.name ?? null;
   const supportingSources = opts.opportunity.attestationPlan.supporting.map((candidate) => candidate.name);
 
   return {
     role: [
-      "You are a deep research analyst contributing original insights to a live agent colony.",
-      "Your role is to explain why this topic deserves attention now, using only the evidence packet below.",
+      "You are a deep research analyst writing a colony-facing ANALYSIS post for human readers.",
+      "Your job is to state the thesis clearly, support it with the evidence packet, and keep internal agent process out of the prose.",
     ],
     data: {
       topic: opts.opportunity.topic,
-      opportunityKind: opts.opportunity.kind,
-      opportunityScore: opts.opportunity.score,
-      rationale: opts.opportunity.rationale,
       signal: {
-        confidence: opts.opportunity.matchedSignal.confidence,
         direction: opts.opportunity.matchedSignal.direction,
       },
-      feed: {
-        feedCount: opts.feedCount,
-        matchingPostCount: opts.opportunity.matchingFeedPosts.length,
-        matchingAuthors,
-        lastSeenAt: opts.opportunity.lastSeenAt == null
+      colonyContext: {
+        situation: mapOpportunitySituation(opts.opportunity.kind),
+        contradictionSignals: opts.opportunity.contradictionSignals ?? [],
+        lastCoveredAt: opts.opportunity.lastSeenAt == null
           ? null
           : new Date(opts.opportunity.lastSeenAt).toISOString(),
-        contradictionSignals: opts.opportunity.contradictionSignals ?? [],
       },
-      leaderboardCount: opts.leaderboardCount,
-      balanceDem: opts.availableBalance,
-      attestation: {
-        primarySource,
-        supportingSources,
+      evidence: {
+        primarySourceName: primarySource,
+        supportingSourceNames: supportingSources,
       },
     },
     rules: [
-      "Interpret the data; do not invent extra metrics or claims.",
-      "State the main claim once, then support it with concrete evidence from the packet.",
-      "Explain what is still uncertain or what the next live attested fetch must confirm.",
-      "If the packet contains contradiction signals, explicitly frame the post as a synthesis or resolution of conflicting takes.",
-      "Output one compact ANALYSIS post in plain prose, not headings or bullets.",
+      "Write a standalone ANALYSIS post that makes sense to a human reader who never saw the agent's internal decision process.",
+      "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
+      "Do not narrate the attestation pipeline, source ranking, or supporting-source bookkeeping.",
+      "State one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
+      "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
+      "Output plain prose only, with no headings, bullets, labels, or markdown.",
     ],
     outputFormat: [
-      "Sentence 1: claim and why it matters now.",
-      "Sentence 2: concrete evidence from the signal/feed packet.",
-      "Sentence 3: attestation/source context and remaining uncertainty.",
+      "Sentence 1: the core thesis in plain language.",
+      "Sentence 2: the mechanism, evidence, or market structure behind the thesis.",
+      "Sentence 3: what to watch next that would confirm or invalidate the view.",
     ],
   };
 }
@@ -199,11 +196,22 @@ async function generateViaProvider(
   ].join("\n");
 
   const completion = await provider.complete(prompt, {
-    system: "You write concise, evidence-bound colony posts. Never use headings, labels, or markdown.",
+    system: "You write concise, evidence-bound colony posts for human readers. Never mention internal agent scoring, feed coverage, or attestation workflow details.",
     maxTokens: 220,
     modelTier: "standard",
   });
   return normalizeDraftText(completion);
+}
+
+function mapOpportunitySituation(kind: ResearchOpportunity["kind"]): "fresh-topic" | "conflicting-takes" | "stale-coverage" {
+  switch (kind) {
+    case "contradiction":
+      return "conflicting-takes";
+    case "stale_topic":
+      return "stale-coverage";
+    default:
+      return "fresh-topic";
+  }
 }
 
 function buildTags(opportunity: ResearchOpportunity): string[] {
@@ -220,4 +228,53 @@ function normalizeDraftText(text: string): string {
     .replace(/\s+/g, " ")
     .replace(/^Claim:\s*/i, "")
     .trim();
+}
+
+function checkResearchDraftQuality(text: string, minTextLength: number): QualityGateResult {
+  const base = checkPublishQuality(
+    { text, category: "ANALYSIS" },
+    { minTextLength },
+  );
+  const leak = findResearchMetaLeak(text);
+  const checks = [
+    ...base.checks,
+    {
+      name: "no-internal-reasoning-leak",
+      pass: leak == null,
+      detail: leak == null ? "no internal scoring or workflow language detected" : `${leak.name}: ${leak.detail}`,
+    },
+  ];
+
+  if (!base.pass) {
+    return {
+      pass: false,
+      reason: base.reason,
+      checks,
+    };
+  }
+
+  if (leak) {
+    return {
+      pass: false,
+      reason: `failed: no-internal-reasoning-leak — ${leak.detail}`,
+      checks,
+    };
+  }
+
+  return {
+    pass: true,
+    checks,
+  };
+}
+
+function findResearchMetaLeak(text: string): { name: string; detail: string } | null {
+  for (const entry of RESEARCH_META_PATTERNS) {
+    if (entry.pattern.test(text)) {
+      return {
+        name: entry.name,
+        detail: entry.detail,
+      };
+    }
+  }
+  return null;
 }

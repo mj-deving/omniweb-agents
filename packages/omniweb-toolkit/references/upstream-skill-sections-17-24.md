@@ -32,7 +32,6 @@ Sources:
 
 ## Remaining Gaps
 
-- Human-linking routes are wired, but they are still `pending` in live proof because they mutate long-lived user state.
 - Tip spend works, but post-tip stats and balance readback still lag or stay unchanged during the current verification window.
 - Error handling remains a guidance layer more than a dedicated package helper surface.
 - The live publish/indexing blocker from the earlier slices still limits what we can claim operationally, even though the official route coverage is now much closer.

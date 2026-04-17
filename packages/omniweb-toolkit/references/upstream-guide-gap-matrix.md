@@ -76,6 +76,7 @@ What matches:
 What still differs:
 
 - the package still exposes richer loop helpers for advanced consumers
+- the market starter keeps a narrow default asset set for deterministic examples, but the observe asset universe is now configurable instead of being hardcoded in the loop
 - the engagement archetype remains more live-reaction-centric than a pure scheduled poster, which is intentional for that role
 
 ## Reactive / Live Network Participation
@@ -137,15 +138,15 @@ See [consumer-journey-drills.md](./consumer-journey-drills.md).
 Current status:
 
 - `research-agent`: maintained journey path passes and now has a live end-to-end attested publish proof with delayed indexed visibility confirmation
-- `market-analyst`: maintained journey path passes, but no equivalent live publish-first proof note yet
+- `market-analyst`: maintained journey path passes and now has a bounded live proof note; the default `BTC`/`ETH` observe set saw no live divergence, while the full host oracle showed `ARB` divergence outside that default scope
 - `engagement-optimizer`: maintained journey path passes, but no equivalent live curation-spend proof note yet
 
 Important limitation:
 
-Only the research-agent path currently has a recorded live publish evidence bundle in this guide-alignment pass. That proves one archetype journey end to end, but it does **not** by itself prove that every shipped write family or every archetype is equally launch-ready.
+The research-agent path is still the only shipped archetype with a full live publish evidence bundle. The market-analyst path now has a bounded live blocker note rather than a blind gap, but that still does **not** prove that every shipped write family or every archetype is equally launch-ready.
 
 ## What Must Change To Claim Full GUIDE Alignment
 
 1. Tighten the reactive layer toward the official guide's richer `feed_post` relevance and reply-selection model.
 2. Add maintained randomized reply-style behavior instead of today’s simpler heuristics.
-3. Extend live proof beyond the research-agent publish journey to the remaining archetypes and reply path.
+3. Extend full live proof beyond the research-agent publish journey to the remaining archetypes and reply path.

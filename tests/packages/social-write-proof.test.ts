@@ -30,6 +30,17 @@ describe("social-write-proof helpers", () => {
     });
   });
 
+  it("accepts snake_case tx_hash feed payloads", () => {
+    const candidate = selectSocialWriteCandidate(
+      [
+        { tx_hash: "ext-2", author: "0xOther", payload: { text: "snake case hash" } },
+      ],
+      "0xself",
+    );
+
+    expect(candidate?.txHash).toBe("ext-2");
+  });
+
   it("accepts reaction readback via myReaction or count delta", () => {
     expect(
       reactionReadbackSatisfied(
@@ -84,6 +95,18 @@ describe("social-write-proof helpers", () => {
     expect(hasRecordedTip(0)).toBe(false);
     expect(hasRecordedTip("0")).toBe(false);
     expect(hasRecordedTip(1)).toBe(true);
+  });
+
+  it("requires a new myTip delta when a post was already tipped", () => {
+    expect(
+      tipReadbackSatisfied(
+        normalizeTipReadback({ totalTips: 1, totalDem: 2, myTip: 2 }),
+        normalizeTipReadback({ totalTips: 1, totalDem: 2, myTip: 2 }),
+        normalizeBalance("10"),
+        normalizeBalance("10"),
+        1,
+      ),
+    ).toBe(false);
   });
 
   it("detects a reply in parent thread detail", () => {

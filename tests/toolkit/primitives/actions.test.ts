@@ -309,7 +309,7 @@ describe("actions.placeHL", () => {
     });
     const transferDem = vi.fn().mockResolvedValue({ txHash: "0xhl1" });
     const actions = createActionsPrimitives({ apiClient: client, transferDem });
-    const result = await actions.placeHL("BTC", "higher", { amount: 2, horizon: "30m" });
+    const result = await actions.placeHL("BTC", "higher", { amount: 5, horizon: "30m" });
 
     expect(result).not.toBeNull();
     expect(result!.ok).toBe(true);
@@ -318,8 +318,22 @@ describe("actions.placeHL", () => {
       expect(result.data.memo).toBe("HIVE_HL:BTC:HIGHER:30m");
       expect(result.data.registered).toBe(true);
     }
-    expect(transferDem).toHaveBeenCalledWith("0xpool", 2, "HIVE_HL:BTC:HIGHER:30m");
+    expect(transferDem).toHaveBeenCalledWith("0xpool", 5, "HIVE_HL:BTC:HIGHER:30m");
     expect(client.registerHigherLowerBet).toHaveBeenCalledWith("0xhl1", "BTC", "HIGHER", { horizon: "30m" });
+  });
+
+  it("rejects non-5 higher-lower amounts before transfer", async () => {
+    const client = createMockApiClient();
+    const transferDem = vi.fn();
+    const actions = createActionsPrimitives({ apiClient: client, transferDem });
+    const result = await actions.placeHL("BTC", "lower", { amount: 1, horizon: "24h" });
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    if (!result!.ok) {
+      expect(result.error).toContain("exactly 5 DEM");
+    }
+    expect(transferDem).not.toHaveBeenCalled();
   });
 });
 

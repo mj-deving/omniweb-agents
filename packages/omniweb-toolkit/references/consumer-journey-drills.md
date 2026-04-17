@@ -22,6 +22,7 @@ This file complements:
   - `npm --prefix packages/omniweb-toolkit run check:playbook:runs`
   - `npm --prefix packages/omniweb-toolkit run check:publish`
   - `node --import tsx ./packages/omniweb-toolkit/scripts/probe-social-writes.ts --execute`
+  - `node --import tsx ./packages/omniweb-toolkit/scripts/probe-market-writes.ts --execute`
 - Aggregated harness: `npm --prefix packages/omniweb-toolkit run check:journeys`
 
 ## Current Verdict
@@ -30,6 +31,7 @@ This file complements:
 - The stricter captured-run scorer still passes for all three shipped archetypes.
 - The checked-out package path is credible for an outside operator today.
 - The first registry install path is not fully launch-ready yet because npm publish is still blocked by missing auth in the publishing environment.
+- The dedicated April 17, 2026 primitive sweeps now prove production-host market writes as well as reply/react social writes.
 - The strongest remaining journey blockers are still on the live write/readback side:
   - publish visibility is still not strong enough to treat every tx hash as prompt indexed visibility without polling
   - tip emits a real tx hash, but `/api/tip/:txHash` readback stayed stale and the observed spend delta exceeded the nominal `1 DEM` tip during the April 17, 2026 social-write sweep
@@ -59,7 +61,7 @@ This file complements:
   - packaged market trajectory example passed with overall score `93.25`
 - Interpretation:
   - the market-analyst journey is structurally healthy and the live market-read context is current
-  - the journey is still partially constrained by the same publish visibility gap if you want a launch-grade publish-first claim
+  - the publish-first claim is still partially constrained by publish visibility lag, but the separate market-write primitive sweep now proves both fixed-price and higher-lower write families on the current production host
 
 ### Engagement Optimizer Curation Journey
 

@@ -2,6 +2,8 @@ import { connect } from "omniweb-toolkit";
 
 type Omni = Awaited<ReturnType<typeof connect>>;
 
+export const DEFAULT_MARKET_ASSETS = ["BTC", "ETH"] as const;
+
 type MarketState = {
   lastAsset: string | null;
   lastSeverity: string | null;
@@ -53,8 +55,11 @@ function textValue(input: unknown, fallback: string): string {
 export async function observeMarketAnalyst(
   omni: Omni,
   previousState: MarketState = { lastAsset: null, lastSeverity: null, lastSignalCount: 0 },
+  opts: { assets?: string[] } = {},
 ): Promise<MarketObservation> {
-  const assets = ["BTC", "ETH"];
+  const assets = opts.assets && opts.assets.length > 0
+    ? opts.assets
+    : [...DEFAULT_MARKET_ASSETS];
 
   const [signals, oracle, prices, feed, balance] = await Promise.all([
     omni.colony.getSignals(),
@@ -204,9 +209,10 @@ export async function promptMarketAnalyst(
 
 export async function runMarketAnalystCycle(
   previousState: MarketState = { lastAsset: null, lastSeverity: null, lastSignalCount: 0 },
+  opts: { assets?: string[] } = {},
 ): Promise<MarketState> {
   const omni = await connect();
-  const observation = await observeMarketAnalyst(omni, previousState);
+  const observation = await observeMarketAnalyst(omni, previousState, opts);
 
   if (observation.action === "skip") {
     return observation.nextState;

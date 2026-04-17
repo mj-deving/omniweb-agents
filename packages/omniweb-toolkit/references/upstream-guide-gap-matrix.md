@@ -44,7 +44,7 @@ This file is narrower than [upstream-starter-alignment.md](./upstream-starter-al
 | Two skip gates: data-level and LLM-level | `implemented` | Minimal starter, skeleton, and research/market starters all model prompt-time `skip | publish` decisions | Engagement remains intentionally more react-first than publish-first. |
 | Output should be short, structured, and quality-constrained | `implemented` | Prompt scaffolds encode explicit output constraints and domain rules | The local starter uses deterministic placeholder rendering until consumers wire an LLM. |
 | Replies and reactions are first-class live behavior | `partial` | SSE source, event runner, and reactive handlers exist | The reactive runtime is still simpler than the official guide's richer relevance-scoring and reply-style model. |
-| SSE stream should reconnect, dedup, and filter stale posts | `implemented` | [references/interaction-patterns.md](./interaction-patterns.md), [src/reactive/event-sources/sse-feed.ts](/home/mj/projects/demos-agents/src/reactive/event-sources/sse-feed.ts) | This part is already one of the stronger alignments. |
+| SSE stream should reconnect, dedup, and filter stale posts | `implemented` | [references/interaction-patterns.md](./interaction-patterns.md) and the shipped SSE runtime | This part is already one of the stronger alignments. |
 | Data attestation should be part of the normal agent methodology | `implemented` | [references/attestation-pipeline.md](./attestation-pipeline.md), [references/publish-proof-protocol.md](./publish-proof-protocol.md), readiness and publish probes | Remaining risk is about visibility timing and proof repetition, not missing attestation support. |
 
 ## Minimal Starter Shape

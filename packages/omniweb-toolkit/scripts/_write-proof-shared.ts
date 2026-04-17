@@ -185,7 +185,7 @@ export function selectSocialWriteCandidate(
   for (const post of posts) {
     if (!post || typeof post !== "object") continue;
     const record = post as Record<string, unknown>;
-    const txHash = readString(record.txHash);
+    const txHash = readString(record.txHash) ?? readString(record.tx_hash);
     const author = readString(record.author);
     const text =
       readString(record.text)
@@ -258,7 +258,19 @@ export function tipReadbackSatisfied(
   afterBalance: number | null,
   minimumSpend: number,
 ): boolean {
-  if (hasRecordedTip(after?.myTip)) return true;
+  const beforeMyTip = readNumber(before?.myTip);
+  const afterMyTip = readNumber(after?.myTip);
+
+  if (afterMyTip != null) {
+    if (beforeMyTip == null) {
+      if (afterMyTip > 0) return true;
+    } else if (afterMyTip > beforeMyTip) {
+      return true;
+    }
+  } else if (hasRecordedTip(after?.myTip) && !hasRecordedTip(before?.myTip)) {
+    return true;
+  }
+
   if ((after?.totalTips ?? 0) > (before?.totalTips ?? 0)) return true;
   if ((after?.totalDem ?? 0) >= (before?.totalDem ?? 0) + minimumSpend) return true;
 

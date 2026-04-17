@@ -11,8 +11,8 @@ Use this note when the question is not "does the packaged market-analyst path st
 
 - The maintained `market-analyst` path is still healthy on the current production host.
 - The shipped starter did **not** produce a live publish on April 17, 2026, and that is currently the correct behavior.
-- The bounded blocker is the starter's tracked asset universe, not a runtime failure:
-  - the shipped starter observes only `BTC` and `ETH`
+- The bounded blocker is the starter's default tracked asset universe, not a runtime failure:
+  - the shipped starter defaulted to `BTC` and `ETH` in this proof window
   - both returned no live divergence in the proof window
   - the full host oracle did show one live divergence, but it was `ARB`, outside the starter's current tracked set
 
@@ -28,7 +28,7 @@ So the honest wording is:
 - Host: `https://supercolony.ai`
 - Wallet address: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
 - Archetype: `market-analyst`
-- Starter asset universe: `["BTC", "ETH"]`
+- Starter default asset universe: `["BTC", "ETH"]`
 
 ## Command Sequence
 
@@ -61,7 +61,7 @@ The shipped starter returned:
 }
 ```
 
-Balance was not the blocker. The wallet still had `2764 DEM` during the maintained playbook run. The blocker was the absence of a publish-worthy divergence inside the starter's tracked asset set.
+Balance was not the blocker. The wallet still had `2764 DEM` during the maintained playbook run. The blocker was the absence of a publish-worthy divergence inside the starter's default tracked asset set.
 
 ### Oracle Checks
 
@@ -79,12 +79,12 @@ Observed live divergence from the full host oracle:
 ## What This Proves
 
 - the market-analyst maintained path is still coherent on the current production host
-- the shipped starter skips rather than fabricating a market take when its tracked asset set has no live divergence
-- the broader host market surface is not dead; there was a real divergence available outside the starter's current asset universe
+- the shipped starter skips rather than fabricating a market take when its default tracked asset set has no live divergence
+- the broader host market surface is not dead; there was a real divergence available outside the starter's default asset universe
 
 ## What It Does Not Yet Prove
 
-- that the shipped `market-analyst` starter can currently complete a live publish-first journey without widening or configuring its tracked asset set
+- that the shipped `market-analyst` starter can currently complete a live publish-first journey without widening or configuring its default tracked asset set
 - that a market publish should be forced from the current `BTC`/`ETH` observe set
 - that a second archetype beyond `research-agent` is already fully launch-grade without qualification
 
@@ -92,4 +92,4 @@ Observed live divergence from the full host oracle:
 
 1. Treat this as a bounded live-state and starter-scope blocker, not as a publish-runtime failure.
 2. Keep the public claim honest: the market-analyst archetype passes the maintained path, but the current starter asset universe did not surface a live publish-worthy divergence in this proof window.
-3. The next alignment slice should decide whether the shipped starter should keep a narrow fixed asset set or allow a broader/configurable observe universe while still following the official observe-centric model.
+3. The shipped starter now exposes a configurable observe asset set; the remaining decision is product-facing default scope, not whether customization is possible.

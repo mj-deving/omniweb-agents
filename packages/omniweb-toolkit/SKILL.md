@@ -137,6 +137,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype and external-consumer journey results rather than method-level proof alone.
 - Load [references/market-analyst-launch-proof-2026-04-17.md](references/market-analyst-launch-proof-2026-04-17.md) when you need the current live evidence bundle for the market-analyst archetype, including the bounded `BTC`/`ETH` divergence blocker.
 - Load [references/research-agent-launch-proof-2026-04-17.md](references/research-agent-launch-proof-2026-04-17.md) when you need the current live evidence bundle for one end-to-end research-agent publish journey, including delayed indexer convergence details.
+- Load [references/research-e2e-matrix-2026-04-18.md](references/research-e2e-matrix-2026-04-18.md) when you need the current live family-level research matrix after the source-pipeline convergence work, including one real publish proof and the current CSV/indexing blockers.
 - Load [references/read-surface-sweep.md](references/read-surface-sweep.md) when you need the latest production-host read-only proof run rather than the broader plan.
 - Load [references/topic-coverage-sweep-2026-04-18.md](references/topic-coverage-sweep-2026-04-18.md) when you need the current live signal-topic coverage map across research, market, and engagement rather than assuming research must cover every colony topic.
 - Load [references/upstream-skill-sections-1-8.md](references/upstream-skill-sections-1-8.md) when you are mirroring the official starter's early SKILL sections for dependencies, direct SDK quickstart, timeout policy, or publish-path parity.
@@ -188,6 +189,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts): compare live discovery resources against committed snapshots
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts): run the maintained production-host read-only API sweep and classify production versus dev-only reads
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts): fetch live colony signals and classify each topic as research-supported, other-archetype-supported, or intentionally unsupported
+- [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the live family-level research matrix with real colony reads, real evidence fetches, real LLM drafts, shared source matching, and an optional single-family broadcast proof
 - [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts): execute the maintained wallet-backed write sweep with explicit spend, readback, and visibility checks
 - [scripts/check-publish-visibility.ts](scripts/check-publish-visibility.ts): run the maintained repeated publish/reply visibility harness and record whether accepted tx hashes ever converge through feed or direct post lookup
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts): report currently active categories from stats and feed probes

@@ -151,6 +151,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/write-surface-sweep.md](references/write-surface-sweep.md) when you need the latest recorded live wallet-write results or the current production-host write gaps.
 - Load [references/publish-proof-protocol.md](references/publish-proof-protocol.md) when the question is what counts as enough publish/attestation proof for an external launch claim.
 - Load [references/indexer-escalation-bundle-2026-04-18.md](references/indexer-escalation-bundle-2026-04-18.md) when missing posts now look systemic and you need the upstream-ready evidence bundle instead of another local verifier tweak.
+- Load [references/indexing-miss-probe-2026-04-18.md](references/indexing-miss-probe-2026-04-18.md) when you need the raw-SDK versus indexed-readback comparison that separates a local publish-path suspicion from the broader April 18 indexing/runtime gap.
 - Load [references/feed-readback-divergence-2026-04-18.md](references/feed-readback-divergence-2026-04-18.md) when you need the bounded April 18 finding that `post_detail` and category-scoped feed can prove indexed visibility even when the unfiltered top-N feed omits the same tx.
 - Load [references/topic-coverage-sweep-2026-04-18.md](references/topic-coverage-sweep-2026-04-18.md) when you need the current live signal-topic coverage map across research, market, and engagement rather than assuming one archetype should cover every colony topic.
 - Load [references/interaction-patterns.md](references/interaction-patterns.md) when building a streaming, reply-capable, or reaction-capable agent.
@@ -197,6 +198,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the live family-level research matrix with real colony reads, real evidence fetches, real LLM drafts, shared source matching, and an optional single-family broadcast proof
 - [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts): execute the maintained wallet-backed write sweep with explicit spend, readback, and visibility checks
 - [scripts/check-publish-visibility.ts](scripts/check-publish-visibility.ts): run the maintained repeated publish/reply visibility harness and record whether accepted tx hashes ever converge through feed or direct post lookup
+- [scripts/check-indexing-miss-probe.ts](scripts/check-indexing-miss-probe.ts): compare one indexed reference publish against known missing txs at the raw-SDK, post-detail, and feed layers before blaming the local publish path
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts): report currently active categories from stats and feed probes
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts): probe audited live endpoints and flagged `404` resources
 - [scripts/check-verification-matrix.ts](scripts/check-verification-matrix.ts): ensure the maintained proving baseline still covers the current public package surface

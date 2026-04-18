@@ -136,6 +136,80 @@
       }
     },
     {
+      "id": "btcetfdata-current-btc",
+      "name": "btcetfdata-current",
+      "provider": "btcetfdata",
+      "url": "https://www.btcetfdata.com/v1/current.json",
+      "urlPattern": "www.btcetfdata.com/v1/current.json",
+      "topics": [
+        "bitcoin",
+        "etf",
+        "flows",
+        "holdings"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 4,
+      "note": "Public JSON for current spot Bitcoin ETF holdings and daily BTC changes across issuers.",
+      "topicAliases": [
+        "bitcoin etf flows",
+        "spot bitcoin etf flows",
+        "bitcoin etf holdings",
+        "institutional bitcoin flows"
+      ],
+      "domainTags": [
+        "bitcoin",
+        "markets",
+        "finance"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "crawler"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "established",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 1,
+        "successCount": 1,
+        "consecutiveFailures": 0,
+        "lastTestedAt": "2026-04-18T07:33:00.000Z"
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-18T07:33:00.000Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-04-18T07:33:00.000Z",
+        "promotedAt": "2026-04-18T07:33:00.000Z"
+      },
+      "adapter": {
+        "operation": "current-holdings"
+      }
+    },
+    {
       "id": "coingecko-4f110a61",
       "name": "coingecko-coin-detail",
       "provider": "coingecko",

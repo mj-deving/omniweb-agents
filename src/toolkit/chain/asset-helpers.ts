@@ -34,6 +34,8 @@ export const ASSET_MAP: Array<[RegExp, string, string]> = [
   [/\bmana\b|\bdecentraland\b/i, "decentraland", "MANA"],
   [/\bbinance\b|\bbnb\b/i, "binancecoin", "BNB"],
   [/\btron\b|\btrx\b/i, "tron", "TRX"],
+  [/\btether\b|\busdt\b/i, "tether", "USDT"],
+  [/\busd\s?coin\b|\busdc\b/i, "usd-coin", "USDC"],
   [/\bshiba\b|\bshib\b/i, "shiba-inu", "SHIB"],
   [/\btoncoin\b|\bton\b/i, "the-open-network", "TON"],
   [/\bhedera\b|\bhbar\b/i, "hedera-hashgraph", "HBAR"],

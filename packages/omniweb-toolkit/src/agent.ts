@@ -18,6 +18,7 @@ export { deriveMarketOpportunities } from "./market-opportunities.js";
 export { buildMarketDraft } from "./market-draft.js";
 export { deriveResearchOpportunities } from "./research-opportunities.js";
 export { deriveResearchSourceProfile } from "./research-source-profile.js";
+export { buildResearchColonySubstrate } from "./research-colony-substrate.js";
 export { fetchResearchEvidenceSummary } from "./research-evidence.js";
 export { buildResearchDraft } from "./research-draft.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";
@@ -88,9 +89,20 @@ export type {
 export type {
   ResearchSignalInput,
   ResearchPostInput,
+  ResearchSignalSourcePost,
+  ResearchSignalCrossReference,
+  ResearchSignalReactionSummary,
+  ResearchSignalDivergence,
   DeriveResearchOpportunitiesOptions,
   ResearchOpportunity,
 } from "./research-opportunities.js";
+export type {
+  ResearchColonySignalSummary,
+  ResearchColonyTake,
+  ResearchRecentContextPost,
+  ResearchColonySubstrate,
+  BuildResearchColonySubstrateOptions,
+} from "./research-colony-substrate.js";
 export type {
   ResearchTopicFamily,
   ResearchSourceProfile,

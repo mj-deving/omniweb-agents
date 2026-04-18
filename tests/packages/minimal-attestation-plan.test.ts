@@ -59,6 +59,22 @@ describe("buildMinimalAttestationPlan", () => {
     expect(plan.supporting.map((candidate) => candidate.sourceId)).toContain("binance-futures-oi-btc");
   });
 
+  it("keeps preferred treasury interest-rate sources pinned to avg_interest_rates", () => {
+    const plan = buildMinimalAttestationPlan({
+      topic: "VIX Credit Stress Signal",
+      preferredSourceIds: ["cboe-vix-daily"],
+      supportingPreferredSourceIds: ["treasury-interest-rates"],
+      allowTopicFallback: false,
+      minSupportingSources: 1,
+    });
+
+    expect(plan.ready).toBe(true);
+    expect(plan.primary?.sourceId).toBe("cboe-vix-daily");
+    expect(plan.supporting[0]?.sourceId).toBe("treasury-interest-rates");
+    expect(plan.supporting[0]?.url).toContain("/avg_interest_rates");
+    expect(plan.supporting[0]?.url).not.toContain("/debt_to_penny");
+  });
+
   it("can build a ready plan from attested feed URLs without catalog lookups", () => {
     const plan = buildMinimalAttestationPlanFromUrls({
       topic: "engagement spotlight 0xpost",

@@ -260,6 +260,79 @@ function makeEtfOpportunity(): ResearchOpportunity {
   };
 }
 
+function makeVixOpportunity(): ResearchOpportunity {
+  const sourceProfile: ResearchSourceProfile = {
+    family: "vix-credit",
+    topic: "vix credit stress signal",
+    asset: null,
+    supported: true,
+    reason: null,
+    primarySourceIds: ["cboe-vix-daily"],
+    supportingSourceIds: ["treasury-interest-rates"],
+    expectedMetrics: [
+      "vixClose",
+      "vixPreviousClose",
+      "vixHigh",
+      "vixLow",
+      "treasuryBillsAvgRatePct",
+      "treasuryNotesAvgRatePct",
+      "vixSessionChangePct",
+      "billNoteSpreadBps",
+    ],
+  };
+  return {
+    kind: "coverage_gap",
+    topic: "vix credit stress signal",
+    score: 85,
+    rationale: "Volatility stress topic is not covered in the recent feed.",
+    sourceProfile,
+    matchedSignal: {
+      topic: "vix credit stress signal",
+      confidence: 74,
+      direction: "bearish",
+    },
+    matchingFeedPosts: [],
+    lastSeenAt: null,
+    attestationPlan: {
+      topic: "vix credit stress signal",
+      agent: "sentinel",
+      catalogPath: "/tmp/catalog.json",
+      ready: true,
+      reason: "ready",
+      primary: {
+        sourceId: "cboe-vix-daily",
+        name: "cboe-vix-history",
+        provider: "cboe",
+        status: "active",
+        trustTier: "official",
+        responseFormat: "csv",
+        ratingOverall: 81,
+        dahrSafe: true,
+        tlsnSafe: false,
+        url: "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+        score: 18,
+      },
+      supporting: [
+        {
+          sourceId: "treasury-interest-rates",
+          name: "treasury-rates",
+          provider: "treasury",
+          status: "active",
+          trustTier: "official",
+          responseFormat: "json",
+          ratingOverall: 79,
+          dahrSafe: true,
+          tlsnSafe: false,
+          url: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5",
+          score: 14,
+        },
+      ],
+      fallbacks: [],
+      warnings: [],
+    },
+  };
+}
+
 function makeEvidenceSummary(): ResearchEvidenceSummary {
   return {
     source: "Binance Futures Premium Index",
@@ -378,6 +451,39 @@ function makeEtfEvidenceSummary(): ResearchEvidenceSummary {
       largestInflowTicker: "IBIT",
       largestOutflowTicker: "FBTC",
       netFlowDirection: "positive",
+    },
+  };
+}
+
+function makeVixEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "cboe-vix-history",
+    url: "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+    fetchedAt: "2026-04-18T11:00:00.000Z",
+    values: {
+      vixClose: "21.34",
+      vixPreviousClose: "19.80",
+      vixHigh: "22.10",
+      vixLow: "19.65",
+    },
+    derivedMetrics: {
+      vixSessionChangePct: "7.78",
+      vixIntradayRange: "2.45",
+    },
+  };
+}
+
+function makeTreasurySupportingEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "treasury-rates",
+    url: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5",
+    fetchedAt: "2026-04-18T11:00:02.000Z",
+    values: {
+      treasuryBillsAvgRatePct: "5.22",
+      treasuryNotesAvgRatePct: "4.61",
+    },
+    derivedMetrics: {
+      billNoteSpreadBps: "61",
     },
   };
 }
@@ -549,6 +655,34 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.brief.falseInferenceGuards[0]).toContain("positive net flow alone");
   });
 
+  it("adds a family dossier brief for vix-credit topics", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Volatility is repricing faster than the short-rate backdrop, but the real point is calibration rather than crash-calling: VIX closed at 21.34 after a 7.78 percent session jump while bills still yield 5.22 percent versus 4.61 percent on notes. " +
+        "That mix says fear is rising against an already restrictive front-end curve, so the tape is flashing stress without yet proving a full macro break. " +
+        "The read weakens if VIX mean-reverts quickly or if the rates backdrop stops holding this inversion."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeVixOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeVixEvidenceSummary(),
+      supportingEvidenceSummaries: [makeTreasurySupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.promptPacket.input.brief.family).toBe("vix-credit");
+    expect(result.promptPacket.input.brief.baselineContext[0]).toContain("VIX level is context");
+    expect(result.promptPacket.input.brief.falseInferenceGuards[1]).toContain("credit spread");
+  });
+
   it("accepts LLM output only when it clears the quality gate", async () => {
     const provider = {
       name: "test-provider",
@@ -703,6 +837,33 @@ describe("buildResearchDraft", () => {
       availableBalance: 25,
       evidenceSummary: makeStablecoinEvidenceSummary(),
       supportingEvidenceSummaries: [makeStablecoinSupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "family-dossier-grounding")?.pass).toBe(false);
+  });
+
+  it("rejects vix-credit drafts that treat vix alone as a crash signal", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "High VIX proves a crash is coming here, because the volatility spike confirms recession panic and the credit spread is already signaling the same thing. " +
+        "VIX alone is enough to make the call because fear metrics only move like this when the market is about to break. " +
+        "Only a sudden drop in VIX would challenge that crash thesis."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeVixOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeVixEvidenceSummary(),
+      supportingEvidenceSummaries: [makeTreasurySupportingEvidenceSummary()],
       llmProvider: provider,
       minTextLength: 260,
     });

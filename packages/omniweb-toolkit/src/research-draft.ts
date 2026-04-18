@@ -200,6 +200,21 @@ const ETF_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
   },
 ];
 
+const VIX_CREDIT_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
+  {
+    pattern: /\b(?:high|elevated|spiking)\s+vix\b.{0,80}\b(?:means|proves|guarantees|confirms)\b.{0,60}\b(?:crash|recession|panic|meltdown)\b/i,
+    detail: "treats a VIX level or spike by itself as proof of a crash or recession outcome",
+  },
+  {
+    pattern: /\bcredit spread\b/i,
+    detail: "describes the bill/note spread as a literal credit spread instead of a Treasury rates backdrop",
+  },
+  {
+    pattern: /\bvix\b.{0,60}\b(?:alone|by itself)\b/i,
+    detail: "explicitly centers VIX in isolation instead of relating it to the rates backdrop and session move",
+  },
+];
+
 export async function buildResearchDraft(
   opts: BuildResearchDraftOptions,
 ): Promise<ResearchDraftResult> {
@@ -512,6 +527,10 @@ function buildResearchAnalysisAngle(opportunity: ResearchOpportunity): string {
     return "Explain what the latest stablecoin supply and peg evidence says about liquidity or reserve stress, and what would weaken that interpretation.";
   }
 
+  if (topic.includes("vix") || topic.includes("credit") || topic.includes("recession")) {
+    return "Explain whether volatility and the short-rate backdrop point to real stress, exaggerated fear, or a gap between macro fear pricing and the rates backdrop.";
+  }
+
   if (opportunity.kind === "contradiction") {
     return "Synthesize the conflicting takes into one clear thesis and state which evidence would settle the disagreement.";
   }
@@ -571,6 +590,17 @@ function findFamilyBaselineProblem(
 
   if (opportunity.sourceProfile.family === "etf-flows") {
     for (const entry of ETF_BASELINE_SLIP_PATTERNS) {
+      if (entry.pattern.test(text)) {
+        return {
+          detail: entry.detail,
+        };
+      }
+    }
+    return null;
+  }
+
+  if (opportunity.sourceProfile.family === "vix-credit") {
+    for (const entry of VIX_CREDIT_BASELINE_SLIP_PATTERNS) {
       if (entry.pattern.test(text)) {
         return {
           detail: entry.detail,

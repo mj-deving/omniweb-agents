@@ -2,6 +2,10 @@ import {
   buildMinimalAttestationPlan,
   type MinimalAttestationPlan,
 } from "./minimal-attestation-plan.js";
+import {
+  deriveResearchSourceProfile,
+  type ResearchSourceProfile,
+} from "./research-source-profile.js";
 
 export interface ResearchSignalInput {
   topic: string | null;
@@ -33,6 +37,7 @@ export interface ResearchOpportunity {
   topic: string;
   score: number;
   rationale: string;
+  sourceProfile: ResearchSourceProfile;
   matchedSignal: ResearchSignalInput;
   matchingFeedPosts: ResearchPostInput[];
   lastSeenAt: number | null;
@@ -67,11 +72,18 @@ export function deriveResearchOpportunities(
       return latest == null || post.timestamp > latest ? post.timestamp : latest;
     }, null);
 
+    const sourceProfile = deriveResearchSourceProfile(topic);
     const attestationPlan = buildMinimalAttestationPlan({
       topic,
       agent: "sentinel",
-      minSupportingSources: 1,
+      minSupportingSources: Math.min(1, sourceProfile.supportingSourceIds.length),
+      preferredSourceIds: [
+        ...sourceProfile.primarySourceIds,
+        ...sourceProfile.supportingSourceIds,
+      ],
+      allowTopicFallback: false,
     });
+    const sourcePenalty = sourceProfile.supported ? 0 : 25;
     const supportingBonus = attestationPlan.supporting.length * 3;
     const attestationPenalty = attestationPlan.ready ? 0 : 20;
     const contradictionSignals = detectContradictionSignals(matchingFeedPosts);
@@ -81,8 +93,9 @@ export function deriveResearchOpportunities(
       opportunities.push({
         kind: "coverage_gap",
         topic,
-        score: confidence + 20 + supportingBonus - attestationPenalty - repeatedTopicPenalty,
+        score: confidence + 20 + supportingBonus - attestationPenalty - repeatedTopicPenalty - sourcePenalty,
         rationale: "High-confidence signal is not covered in the recent feed.",
+        sourceProfile,
         matchedSignal: signal,
         matchingFeedPosts,
         lastSeenAt: null,
@@ -96,8 +109,9 @@ export function deriveResearchOpportunities(
       opportunities.push({
         kind: "contradiction",
         topic,
-        score: confidence + 25 + supportingBonus - attestationPenalty - repeatedTopicPenalty,
+        score: confidence + 25 + supportingBonus - attestationPenalty - repeatedTopicPenalty - sourcePenalty,
         rationale: "Recent matching feed posts point in conflicting directions and need an evidence-bound synthesis.",
+        sourceProfile,
         matchedSignal: signal,
         matchingFeedPosts,
         lastSeenAt,
@@ -111,8 +125,9 @@ export function deriveResearchOpportunities(
       opportunities.push({
         kind: "stale_topic",
         topic,
-        score: confidence + 10 + supportingBonus - attestationPenalty - repeatedTopicPenalty,
+        score: confidence + 10 + supportingBonus - attestationPenalty - repeatedTopicPenalty - sourcePenalty,
         rationale: "Signal remains active but the most recent matching feed post is stale.",
+        sourceProfile,
         matchedSignal: signal,
         matchingFeedPosts,
         lastSeenAt,

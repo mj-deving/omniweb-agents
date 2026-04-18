@@ -52,6 +52,10 @@ describe("fetchResearchEvidenceSummary", () => {
       lastFundingRate: "-0.012",
       interestRate: "0.0001",
     });
+    expect(result.summary.derivedMetrics).toEqual({
+      fundingRateBps: "-120",
+      markIndexSpreadUsd: "4.88",
+    });
   });
 
   it("falls back to generic numeric extraction for other JSON endpoints", async () => {
@@ -77,6 +81,109 @@ describe("fetchResearchEvidenceSummary", () => {
       bitcoin: "67250.12",
       ethereum: "3200.55",
       solana: "145.03",
+    });
+    expect(result.summary.derivedMetrics).toEqual({});
+  });
+
+  it("extracts market-chart values and derived metrics for research spot momentum", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          prices: [
+            [1713427200000, 64000],
+            [1713513600000, 67250],
+          ],
+          total_volumes: [
+            [1713427200000, 22000000000],
+            [1713513600000, 31000000000],
+          ],
+          market_caps: [
+            [1713427200000, 1200000000000],
+            [1713513600000, 1260000000000],
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      currentPriceUsd: "67250",
+      startingPriceUsd: "64000",
+      high7d: "67250",
+      low7d: "64000",
+      latestVolumeUsd: "31000000000",
+      latestMarketCapUsd: "1260000000000",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      priceChangePercent7d: "5.08",
+      tradingRangeWidthUsd: "3250",
+    });
+  });
+
+  it("extracts ETF holdings and net-flow metrics from btcetfdata current JSON", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            IBIT: {
+              ticker: "IBIT",
+              dt: "2026-04-16",
+              holdings: 799151.0369,
+              change: 1088.1268,
+              note: null,
+              update_ts: "2026-04-17T12:00:02",
+              error: false,
+            },
+            FBTC: {
+              ticker: "FBTC",
+              dt: "2026-04-16",
+              holdings: 185536.41,
+              change: -478.92,
+              note: null,
+              update_ts: "2026-04-17T12:30:01",
+              error: false,
+            },
+            GBTC: {
+              ticker: "GBTC",
+              dt: "2026-04-17",
+              holdings: 152510.8761,
+              change: -301.9038,
+              note: null,
+              update_ts: "2026-04-17T21:30:01",
+              error: false,
+            },
+          },
+          batch_ts: "2026-04-18T07:00:02",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://www.btcetfdata.com/v1/current.json"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      totalHoldingsBtc: "1137198.32",
+      netFlowBtc: "307.3",
+      issuerCount: "3",
+      positiveIssuerCount: "1",
+      negativeIssuerCount: "2",
+      largestInflowBtc: "1088.13",
+      largestOutflowBtc: "-478.92",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      largestInflowTicker: "IBIT",
+      largestOutflowTicker: "FBTC",
+      netFlowDirection: "inflow",
     });
   });
 

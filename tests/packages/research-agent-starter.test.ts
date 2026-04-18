@@ -123,6 +123,7 @@ describe("research-agent starter", () => {
     expect(result.text).toContain("67,250");
     expect(result.audit?.selectedEvidence).toHaveProperty("evidenceSummary");
     expect((result.audit?.selectedEvidence as { evidenceSummary?: { values?: Record<string, string> } }).evidenceSummary?.values?.lastFundingRate).toBe("-0.012");
+    expect((result.audit?.selectedEvidence as { sourceProfile?: { family?: string } }).sourceProfile?.family).toBe("funding-structure");
   });
 
   it("keeps working when the optional leaderboard read fails", async () => {
@@ -226,5 +227,114 @@ describe("research-agent starter", () => {
     expect(result.reason).toBe("values_within_normal_range");
     expect(provider).not.toHaveBeenCalled();
     expect(result.audit?.selectedEvidence).toHaveProperty("evidenceDelta");
+  });
+
+  it("skips unsupported research families before trying to fetch mismatched evidence", async () => {
+    const omni = makeOmni();
+    omni.colony.getSignals = async () => ({
+      ok: true,
+      data: [
+        {
+          shortTopic: "ETH ETF Flows",
+          confidence: 82,
+          direction: "bullish",
+        },
+      ],
+    });
+
+    const provider = vi.fn().mockResolvedValue("This should never be called.");
+    omni.runtime.llmProvider.complete = provider;
+
+    const result = await observe({
+      omni,
+      cycle: {
+        id: "cycle-5",
+        iteration: 1,
+        startedAt: "2026-04-18T08:20:00.000Z",
+        stateDir: "/tmp/research-starter-test",
+        dryRun: true,
+      },
+      memory: {
+        state: {},
+        lastCycle: null,
+      },
+    });
+
+    expect(result.kind).toBe("skip");
+    if (result.kind !== "skip") throw new Error("expected skip");
+    expect(result.reason).toBe("research_family_not_ready");
+    expect(result.facts).toMatchObject({
+      researchFamily: "unsupported",
+      sourceProfileReason: "no_family_sources_for_asset",
+    });
+    expect(provider).not.toHaveBeenCalled();
+  });
+
+  it("publishes BTC ETF flow topics through the dedicated ETF evidence family", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            IBIT: {
+              ticker: "IBIT",
+              dt: "2026-04-16",
+              holdings: 799151.0369,
+              change: 1088.1268,
+              note: null,
+              update_ts: "2026-04-17T12:00:02",
+              error: false,
+            },
+            FBTC: {
+              ticker: "FBTC",
+              dt: "2026-04-16",
+              holdings: 185536.41,
+              change: -478.92,
+              note: null,
+              update_ts: "2026-04-17T12:30:01",
+              error: false,
+            },
+          },
+          batch_ts: "2026-04-18T07:00:02",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const omni = makeOmni();
+    omni.colony.getSignals = async () => ({
+      ok: true,
+      data: [
+        {
+          shortTopic: "BTC ETF Flows",
+          confidence: 82,
+          direction: "bullish",
+        },
+      ],
+    });
+    omni.runtime.llmProvider.complete = async () =>
+      "BTC ETF demand is still net positive because total holdings sit above 984,687 BTC while the latest daily flow is still roughly 609.21 BTC in aggregate. IBIT is still leading the positive side of the tape, which matters because a single dominant inflow can keep institutional demand firm even when other issuers are leaking coins. A flip to net outflows or a sharp slowdown in the leader's intake would weaken the thesis, but for now the ETF complex is still absorbing supply rather than releasing it.";
+
+    const result = await observe({
+      omni,
+      cycle: {
+        id: "cycle-6",
+        iteration: 1,
+        startedAt: "2026-04-18T08:25:00.000Z",
+        stateDir: "/tmp/research-starter-test",
+        dryRun: true,
+      },
+      memory: {
+        state: {},
+        lastCycle: null,
+      },
+    });
+
+    expect(result.kind).toBe("publish");
+    if (result.kind !== "publish") throw new Error("expected publish");
+    expect(result.facts).toMatchObject({
+      researchFamily: "etf-flows",
+    });
+    expect((result.audit?.selectedEvidence as { sourceProfile?: { primarySourceIds?: string[] } }).sourceProfile?.primarySourceIds).toEqual(["btcetfdata-current-btc"]);
+    expect((result.audit?.selectedEvidence as { evidenceSummary?: { values?: Record<string, string> } }).evidenceSummary?.values?.netFlowBtc).toBe("609.21");
   });
 });

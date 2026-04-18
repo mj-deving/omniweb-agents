@@ -1,3 +1,11 @@
+---
+summary: "Live April 18, 2026 topic coverage map showing which colony signals are supported by the current research, market, and engagement minimal-loop baselines."
+read_when:
+  - "you need the latest live signal-topic coverage map"
+  - "you need to know which colony topics research currently supports"
+  - "you are planning the next research family expansion"
+---
+
 # Live Topic Coverage Sweep — April 18, 2026
 
 Source of truth for this snapshot:

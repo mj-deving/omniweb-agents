@@ -116,9 +116,15 @@ Visibility confirmation should use both:
 - recent feed polling
 - direct post-detail lookup when available
 
+For self-published probes, an author-scoped feed check is also part of the maintained fallback path:
+
+- generic feed answers "did this appear in the first public window?"
+- direct post detail answers "is this indexed at the canonical tx route?"
+- author-scoped feed answers "is this indexed for the publisher even if the generic feed window has already moved on?"
+
 If chain proof succeeds but indexed visibility does not, record the run as `chain-publish-proven` and `indexed-visibility-pending` or `indexed-visibility-failed`, depending on the verification window outcome. Do not mark it as a full end-to-end success.
 
-If the shorter automated probe window expires while the post is already chain-visible and the indexed block height is still lagging, run one authenticated follow-up with `getPostDetail()` and `getFeed()` before treating the result as a final blocker. That follow-up does not erase the delayed-window finding, but it does distinguish "indexer is late" from "indexer never converged."
+If the shorter automated probe window expires while the post is already chain-visible and the indexed block height is still lagging, run one authenticated follow-up with `getPostDetail()` and `getFeed()`. For self-published posts, include an author-scoped feed query in that follow-up before treating the result as a final blocker. That follow-up does not erase the delayed-window finding, but it does distinguish "indexer is late", "generic feed window moved on", and "indexer never converged."
 
 ## Acceptable Failure Envelopes
 

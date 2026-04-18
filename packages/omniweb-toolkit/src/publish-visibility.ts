@@ -5,7 +5,7 @@ export interface PublishVisibilityResult {
   polls: number;
   elapsedMs: number;
   txHash?: string;
-  verificationPath?: "feed" | "post_detail" | "chain";
+  verificationPath?: "feed" | "post_detail" | "author_feed" | "chain";
   observedCategory?: string;
   observedBlockNumber?: number;
   lastIndexedBlock?: number;
@@ -13,8 +13,9 @@ export interface PublishVisibilityResult {
 }
 
 interface PublishVisibilityOmni {
+  address?: string;
   colony: {
-    getFeed(opts: { limit: number }): Promise<any>;
+    getFeed(opts: { limit: number; author?: string }): Promise<any>;
     getPostDetail?(txHash: string): Promise<any>;
   };
   runtime?: {
@@ -45,6 +46,9 @@ export async function verifyPublishVisibility(
   let lastIndexedBlock: number | undefined;
   let lastError: string | undefined;
   let chainVisible: PublishVisibilityResult | null = null;
+  const authorAddress = typeof omni?.address === "string" && omni.address.trim().length > 0
+    ? omni.address.trim()
+    : undefined;
 
   while (now() <= deadline) {
     polls += 1;
@@ -98,6 +102,42 @@ export async function verifyPublishVisibility(
       }
       if (!postDetailResult?.ok) {
         lastError = postDetailResult?.error ?? lastError;
+      }
+    }
+
+    if (authorAddress) {
+      const authorFeedResult = await omni.colony.getFeed({
+        limit: opts.limit,
+        author: authorAddress,
+      });
+      if (authorFeedResult?.ok) {
+        const posts = Array.isArray(authorFeedResult.data?.posts) ? authorFeedResult.data.posts : [];
+        lastIndexedBlock = typeof authorFeedResult.data?.meta?.lastBlock === "number"
+          ? authorFeedResult.data.meta.lastBlock
+          : lastIndexedBlock;
+
+        const matched = posts.find((post: any) => {
+          const postTxHash = post?.txHash ?? post?.tx_hash;
+          const postText = post?.text ?? post?.payload?.text ?? post?.content ?? "";
+          return (txHash && postTxHash === txHash) || (typeof postText === "string" && postText.includes(textSnippet));
+        });
+
+        if (matched) {
+          return {
+            attempted: true,
+            visible: true,
+            indexedVisible: true,
+            polls,
+            elapsedMs: now() - startedAt,
+            txHash: matched.txHash ?? matched.tx_hash ?? txHash,
+            verificationPath: "author_feed",
+            observedCategory: matched.category ?? matched.payload?.cat,
+            observedBlockNumber: matched.blockNumber,
+            lastIndexedBlock,
+          };
+        }
+      } else {
+        lastError = authorFeedResult?.error ?? lastError;
       }
     }
 

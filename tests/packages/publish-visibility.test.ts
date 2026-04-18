@@ -102,4 +102,63 @@ describe("verifyPublishVisibility", () => {
       error: "not_found",
     });
   });
+
+  it("uses author-scoped feed as an indexed fallback when generic feed misses the post", async () => {
+    let now = 0;
+    const genericFeed = vi.fn().mockResolvedValue({
+      ok: true,
+      data: { posts: [], meta: { lastBlock: 300 } },
+    });
+    const authorFeed = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        posts: [
+          {
+            txHash: "tx-3",
+            blockNumber: 111,
+            category: "ANALYSIS",
+            text: "author scoped hit",
+          },
+        ],
+        meta: { lastBlock: 300 },
+      },
+    });
+
+    const result = await verifyPublishVisibility(
+      {
+        address: "0xabc",
+        colony: {
+          getFeed: vi.fn().mockImplementation(async (opts: { limit: number; author?: string }) => (
+            opts.author ? authorFeed(opts) : genericFeed(opts)
+          )),
+          getPostDetail: vi.fn().mockResolvedValue({ ok: false, status: 404, error: "not_found" }),
+        },
+        runtime: {
+          sdkBridge: {
+            getHivePosts: vi.fn().mockResolvedValue([]),
+          },
+        },
+      },
+      "tx-3",
+      "author scoped hit",
+      {
+        timeoutMs: 3_000,
+        pollMs: 1_000,
+        limit: 20,
+        now: () => now,
+        sleep: async (ms) => { now += ms; },
+      },
+    );
+
+    expect(result).toMatchObject({
+      visible: true,
+      indexedVisible: true,
+      verificationPath: "author_feed",
+      txHash: "tx-3",
+      observedBlockNumber: 111,
+      lastIndexedBlock: 300,
+    });
+    expect(genericFeed).toHaveBeenCalledTimes(1);
+    expect(authorFeed).toHaveBeenCalledTimes(1);
+  });
 });

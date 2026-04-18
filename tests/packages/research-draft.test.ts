@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildResearchDraft } from "../../packages/omniweb-toolkit/src/research-draft.js";
+import type { ResearchColonySubstrate } from "../../packages/omniweb-toolkit/src/research-colony-substrate.js";
 import type { ResearchEvidenceSummary } from "../../packages/omniweb-toolkit/src/research-evidence.js";
 import type { ResearchOpportunity } from "../../packages/omniweb-toolkit/src/research-opportunities.js";
 import type { ResearchSourceProfile } from "../../packages/omniweb-toolkit/src/research-source-profile.js";
@@ -414,6 +415,75 @@ function makeStablecoinSupportingEvidenceSummary(): ResearchEvidenceSummary {
   };
 }
 
+function makeStablecoinColonySubstrate(): ResearchColonySubstrate {
+  return {
+    signalSummary: {
+      topic: "usdt supply ath stablecoin inflation",
+      shortTopic: "USDT ATH Stablecoin Risk",
+      text: "USDT Supply ATH and Stablecoin Inflation Pressure on BTC Absorption",
+      keyInsight: "Supply is expanding while the colony is split on whether BTC can absorb the new dollar liquidity cleanly.",
+      direction: "mixed",
+      confidence: 70,
+      consensus: false,
+      consensusScore: 55,
+      agentCount: 4,
+      totalAgents: 8,
+      assets: ["USDT", "BTC"],
+      tags: ["stablecoins", "liquidity"],
+    },
+    supportingTakes: [
+      {
+        txHash: "0xsupport",
+        author: "macro-sentinel",
+        category: "ANALYSIS",
+        confidence: 71,
+        stance: "supporting",
+        textSnippet: "Fresh USDT issuance is only constructive if BTC and majors keep absorbing the flow instead of stalling under it.",
+        reactions: {
+          totalAgrees: 6,
+          totalDisagrees: 1,
+          totalFlags: 0,
+        },
+      },
+    ],
+    dissentingTake: {
+      txHash: "0xdissent",
+      author: "risk-watch",
+      category: "ANALYSIS",
+      confidence: 64,
+      stance: "dissenting",
+      textSnippet: "If dollar tightness returns, stablecoin growth can rotate into tokenized treasuries instead of crypto beta.",
+      reactions: {
+        totalAgrees: 3,
+        totalDisagrees: 2,
+        totalFlags: 0,
+      },
+    },
+    crossReferences: [
+      {
+        type: "macro-link",
+        description: "BlackRock BUIDL and tokenized treasuries are competing for the same onchain dollar pool.",
+        assets: ["USDT", "BUIDL"],
+      },
+    ],
+    reactionSummary: {
+      totalAgrees: 9,
+      totalDisagrees: 3,
+      totalFlags: 0,
+    },
+    recentRelatedPosts: [
+      {
+        txHash: "0xrecent",
+        author: "liq-watch",
+        category: "OBSERVATION",
+        score: 82,
+        textSnippet: "BTC absorption has stayed resilient so far, but the next supply leg matters more than the last one.",
+        matchedOn: ["btc", "absorption"],
+      },
+    ],
+  };
+}
+
 function makeSpotEvidenceSummary(): ResearchEvidenceSummary {
   return {
     source: "CoinGecko Market Chart",
@@ -635,6 +705,40 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.brief.family).toBe("stablecoin-supply");
     expect(result.promptPacket.input.brief.baselineContext[0]).toContain("near 1.00 USD is baseline");
     expect(result.promptPacket.input.brief.falseInferenceGuards[0]).toContain("normal peg");
+  });
+
+  it("adds bounded linked themes and domain context when colony substrate implies them", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "USDT supply near 186.6 billion dollars is becoming a BTC absorption question rather than a peg story because the 1.79 percent 30-day expansion is still outrunning the 1.26 percent weekly pace while the colony is explicitly debating whether risk can absorb the new dollar liquidity cleanly. " +
+        "The relevant spillover is the split between crypto beta and tokenized-treasury parking: a flat 1.00 peg keeps stress in the background, but it does not remove the possibility that fresh dollar supply rotates into RWA yield instead of extending the BTC bid. " +
+        "The thesis weakens if supply growth cools back below the current monthly trend or if the next absorption read fails to turn the same issuance into follow-through for majors."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeStablecoinOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      colonySubstrate: makeStablecoinColonySubstrate(),
+      evidenceSummary: makeStablecoinEvidenceSummary(),
+      supportingEvidenceSummaries: [makeStablecoinSupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.promptPacket.input.brief.linkedThemes.map((theme) => theme.key)).toEqual([
+      "dollar-liquidity",
+      "btc-absorption",
+      "rwa-rotation",
+    ]);
+    expect(result.promptPacket.input.brief.domainContext[0]).toContain("Dollar liquidity");
+    expect(result.promptPacket.input.brief.domainContext[1]).toContain("BTC absorption");
+    expect(result.promptPacket.constraints.join(" ")).toContain("linked themes or domain context");
   });
 
   it("adds a family dossier brief for spot-momentum topics", async () => {

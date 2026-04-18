@@ -6,6 +6,7 @@ export type ResearchTopicFamily =
   | "spot-momentum"
   | "network-activity"
   | "stablecoin-supply"
+  | "vix-credit"
   | "unsupported";
 
 export interface ResearchSourceProfile {
@@ -76,6 +77,14 @@ const STABLECOIN_TERMS = [
   "ath",
 ];
 
+const VIX_CREDIT_TERMS = [
+  "vix",
+  "credit",
+  "recession",
+  "stress",
+  "risk",
+];
+
 const PRICE_TICKER_SOURCE_IDS: Partial<Record<string, string>> = {
   BTC: "binance-24hr-btc",
 };
@@ -106,6 +115,28 @@ function stablecoinSourceIdsFor(symbol: string): string[] {
 export function deriveResearchSourceProfile(topic: string): ResearchSourceProfile {
   const normalized = topic.trim().toLowerCase();
   const asset = inferAssetAlias(topic);
+
+  if (containsAny(normalized, VIX_CREDIT_TERMS) && containsAny(normalized, ["vix", "credit", "recession"])) {
+    return {
+      family: "vix-credit",
+      topic,
+      asset: null,
+      supported: true,
+      reason: null,
+      primarySourceIds: ["cboe-vix-daily"],
+      supportingSourceIds: ["treasury-interest-rates"],
+      expectedMetrics: [
+        "vixClose",
+        "vixPreviousClose",
+        "vixHigh",
+        "vixLow",
+        "treasuryBillsAvgRatePct",
+        "treasuryNotesAvgRatePct",
+        "vixSessionChangePct",
+        "billNoteSpreadBps",
+      ],
+    };
+  }
 
   if (asset && containsAny(normalized, ETF_TERMS)) {
     const ids = ETF_FLOW_SOURCE_IDS[asset.symbol] ?? [];

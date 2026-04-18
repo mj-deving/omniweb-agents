@@ -14932,7 +14932,7 @@
         "promotedAt": "2026-03-21T18:54:34.310Z"
       },
       "adapter": {
-        "operation": "debt"
+        "operation": "interest-rates"
       }
     },
     {

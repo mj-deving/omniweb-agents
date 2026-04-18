@@ -46,6 +46,16 @@ describe("deriveResearchSourceProfile", () => {
     expect(profile.supportingSourceIds).toContain("coingecko-2a7ea372");
   });
 
+  it("maps vix-credit topics without needing asset detection", () => {
+    const profile = deriveResearchSourceProfile("VIX Credit Stress Signal");
+
+    expect(profile.family).toBe("vix-credit");
+    expect(profile.supported).toBe(true);
+    expect(profile.asset).toBeNull();
+    expect(profile.primarySourceIds).toEqual(["cboe-vix-daily"]);
+    expect(profile.supportingSourceIds).toContain("treasury-interest-rates");
+  });
+
   it("keeps reserve-risk topics unsupported when the family cannot ground the claim", () => {
     const profile = deriveResearchSourceProfile("USDC Regulatory Reserve Risk");
 

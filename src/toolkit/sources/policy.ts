@@ -24,6 +24,7 @@ import {
   tokenizeTopic,
   sourceTopicTokens,
 } from "./catalog.js";
+import { expandTopicToDomains } from "./topic-vocabulary.js";
 import { getProviderAdapter } from "../../lib/sources/providers/index.js";
 import type { CandidateRequest, AttestationMethod } from "../../lib/sources/providers/types.js";
 
@@ -53,12 +54,17 @@ export interface SourceSelectionResult {
   adapterCandidates?: CandidateRequest[];
 }
 
-function rankSourceSelections(
+interface TopicSelectionContext {
+  vars: Record<string, string>;
+  topicWords: Set<string>;
+  domainTokens: Set<string>;
+  tokens: string[];
+}
+
+function buildTopicSelectionContext(
   topic: string,
   sourceView: AgentSourceView,
-  method: AttestationType,
-  maxCandidatesPerTopic: number = 5
-): SourceSelectionResult[] {
+): TopicSelectionContext {
   const vars = extractTopicVars(topic);
   const topicWords = tokenizeTopic(topic);
   const alias = inferAssetAlias(topic);
@@ -66,11 +72,132 @@ function rankSourceSelections(
     topicWords.add(alias.asset.toLowerCase());
     topicWords.add(alias.symbol.toLowerCase());
   }
-  const tokens = [...topicWords];
+
+  const knownDomainTags = new Set(sourceView.index.byDomainTag.keys());
+  const domainTokens = new Set(
+    expandTopicToDomains([...topicWords], knownDomainTags).map((token) => token.toLowerCase()),
+  );
+
+  return {
+    vars,
+    topicWords,
+    domainTokens,
+    tokens: [...topicWords],
+  };
+}
+
+function resolveSelectionForSource(
+  topic: string,
+  source: SourceRecordV2,
+  method: AttestationType,
+  maxCandidatesPerTopic: number,
+  context: TopicSelectionContext,
+  options?: { requireOverlap?: boolean; allowUnregisteredAdapter?: boolean },
+): SourceSelectionResult | null {
+  if (!isSourceCompatible(source, method)) return null;
+
+  // Phase 4: Reject active/degraded generic sources from runtime
+  const allowUnregisteredAdapter = options?.allowUnregisteredAdapter ?? false;
+  if (
+    (source.status === "active" || source.status === "degraded")
+    && !hasRegisteredAdapter(source)
+    && !allowUnregisteredAdapter
+  ) {
+    return null;
+  }
+
+  const adapter = getProviderAdapter(source.provider);
+  let resolvedUrl: string;
+  let adapterCandidates: CandidateRequest[] | undefined;
+
+  if (adapter && adapter.supports(source)) {
+    const candidates = adapter.buildCandidates({
+      source,
+      topic,
+      tokens: context.tokens,
+      vars: context.vars,
+      attestation: method as AttestationMethod,
+      maxCandidates: maxCandidatesPerTopic,
+    });
+
+    if (candidates.length === 0) return null;
+
+    const validatedCandidates: CandidateRequest[] = [];
+    for (const candidate of candidates) {
+      const validated = adapter.validateCandidate(candidate);
+      if (!validated.ok) continue;
+      validatedCandidates.push({
+        ...candidate,
+        url: validated.rewrittenUrl || candidate.url,
+      });
+    }
+
+    if (validatedCandidates.length === 0) return null;
+
+    resolvedUrl = validatedCandidates[0].url;
+    adapterCandidates = validatedCandidates;
+  } else {
+    resolvedUrl = fillUrlTemplate(source.url, context.vars);
+    if (unresolvedPlaceholders(resolvedUrl).length > 0) return null;
+  }
+
+  let score = 0;
+  const tags = sourceTopicTokens(source);
+  let topicOverlap = 0;
+  for (const word of context.topicWords) {
+    if (tags.has(word)) topicOverlap++;
+  }
+  score += topicOverlap * 4;
+
+  let aliasOverlap = 0;
+  for (const alias of source.topicAliases || []) {
+    for (const token of alias.toLowerCase().split(/[^a-z0-9]+/)) {
+      if (token.length >= 2 && context.topicWords.has(token)) aliasOverlap++;
+    }
+  }
+  score += aliasOverlap * 3;
+
+  let domainOverlap = 0;
+  for (const tag of source.domainTags) {
+    if (context.domainTokens.has(tag.toLowerCase())) domainOverlap++;
+  }
+  score += domainOverlap * 3;
+
+  const requireOverlap = options?.requireOverlap ?? true;
+  if (requireOverlap && topicOverlap === 0 && aliasOverlap === 0 && domainOverlap === 0) {
+    return null;
+  }
+
+  for (const word of context.topicWords) {
+    if (word.length >= 3 && source.name.toLowerCase().includes(word)) score += 1;
+  }
+
+  if (source.tlsn_safe) score += 1;
+  if (source.dahr_safe) score += 1;
+
+  if (method === "TLSN" && (source.max_response_kb || 999) <= 16) score += 1;
+  if (source.status === "degraded") score -= 5;
+  if (source.rating?.overall != null && source.rating.overall < 50) score -= 3;
+
+  return {
+    source,
+    url: resolvedUrl,
+    score,
+    adapterCandidates,
+  };
+}
+
+function rankSourceSelections(
+  topic: string,
+  sourceView: AgentSourceView,
+  method: AttestationType,
+  maxCandidatesPerTopic: number = 5
+): SourceSelectionResult[] {
+  const context = buildTopicSelectionContext(topic, sourceView);
 
   // Use index for fast candidate retrieval: gather all source IDs that match any topic token
   const candidateIds = new Set<string>();
-  for (const token of topicWords) {
+  for (const token of context.topicWords) {
     const ids = sourceView.index.byTopicToken.get(token);
     if (ids) {
       for (const id of ids) candidateIds.add(id);
@@ -78,7 +205,7 @@ function rankSourceSelections(
   }
 
   // Also check domain tags
-  for (const token of topicWords) {
+  for (const token of context.domainTokens) {
     const ids = sourceView.index.byDomainTag.get(token);
     if (ids) {
       for (const id of ids) candidateIds.add(id);
@@ -93,93 +220,15 @@ function rankSourceSelections(
   for (const id of candidateIds) {
     const source = sourceView.index.byId.get(id);
     if (!source) continue;
-    if (!isSourceCompatible(source, method)) continue;
-
-    // Phase 4: Reject active/degraded generic sources from runtime
-    if ((source.status === "active" || source.status === "degraded") && !hasRegisteredAdapter(source)) {
-      continue;
-    }
-
-    let score = 0;
-    const tags = sourceTopicTokens(source);
-    let topicOverlap = 0;
-    for (const w of topicWords) {
-      if (tags.has(w)) topicOverlap++;
-    }
-    score += topicOverlap * 4;
-
-    // Alias token overlap
-    let aliasOverlap = 0;
-    for (const a of source.topicAliases || []) {
-      for (const tok of a.toLowerCase().split(/[^a-z0-9]+/)) {
-        if (tok.length >= 2 && topicWords.has(tok)) aliasOverlap++;
-      }
-    }
-    score += aliasOverlap * 3;
-
-    // Domain tag overlap
-    let domainOverlap = 0;
-    for (const tag of source.domainTags) {
-      if (topicWords.has(tag.toLowerCase())) domainOverlap++;
-    }
-    score += domainOverlap * 3;
-
-    if (topicOverlap === 0 && aliasOverlap === 0 && domainOverlap === 0) continue;
-
-    // Name match bonus
-    for (const w of topicWords) {
-      if (w.length >= 3 && source.name.toLowerCase().includes(w)) score += 1;
-    }
-
-    // Method preference bonus
-    if (source.tlsn_safe) score += 1;
-    if (source.dahr_safe) score += 1;
-
-    // Small response bonus (TLSN-friendly) — only for TLSN where 16KB limit matters
-    // DAHR tiebreak handled in sort below (prefer richer data for better match scores)
-    if (method === "TLSN" && (source.max_response_kb || 999) <= 16) score += 1;
-
-    // Source health penalty — prefer reliable sources over degraded/low-quality ones
-    // -5 for degraded status: unreliable responses, may fail attestation
-    if (source.status === "degraded") score -= 5;
-    // -3 for low rating (<50): consistently poor quality (lifecycle degrades at 40, recovers at 60)
-    if (source.rating?.overall != null && source.rating.overall < 50) score -= 3;
-
-    // Phase 4: Use adapter for URL generation
-    const adapter = getProviderAdapter(source.provider);
-    let resolvedUrl: string;
-    let adapterCandidates: CandidateRequest[] | undefined;
-
-    if (adapter && adapter.supports(source)) {
-      const candidates = adapter.buildCandidates({
-        source,
-        topic,
-        tokens,
-        vars,
-        attestation: method as AttestationMethod,
-        maxCandidates: maxCandidatesPerTopic,
-      });
-
-      if (candidates.length === 0) continue; // adapter can't build URL for this method
-
-      // Validate all candidates once, apply URL rewrites
-      const validatedCandidates: CandidateRequest[] = [];
-      for (const c of candidates) {
-        const v = adapter.validateCandidate(c);
-        if (!v.ok) continue;
-        validatedCandidates.push({ ...c, url: v.rewrittenUrl || c.url });
-      }
-      if (validatedCandidates.length === 0) continue;
-
-      resolvedUrl = validatedCandidates[0].url;
-      adapterCandidates = validatedCandidates;
-    } else {
-      // Fallback: fillUrlTemplate (only for quarantined/generic sources)
-      resolvedUrl = fillUrlTemplate(source.url, vars);
-      if (unresolvedPlaceholders(resolvedUrl).length > 0) continue;
-    }
-
-    ranked.push({ source, url: resolvedUrl, score, adapterCandidates });
+    const selection = resolveSelectionForSource(
+      topic,
+      source,
+      method,
+      maxCandidatesPerTopic,
+      context,
+      { requireOverlap: true, allowUnregisteredAdapter: false },
+    );
+    if (selection) ranked.push(selection);
   }
 
   if (ranked.length === 0) return [];
@@ -237,6 +286,26 @@ export function selectSourceForTopic(
   maxCandidatesPerTopic: number = 5
 ): SourceSelectionResult | null {
   return rankSourceSelections(topic, sourceView, method, maxCandidatesPerTopic)[0] ?? null;
+}
+
+export function resolveSourceSelectionForSourceId(
+  topic: string,
+  sourceView: AgentSourceView,
+  sourceId: string,
+  method: AttestationType,
+  maxCandidatesPerTopic: number = 1,
+): SourceSelectionResult | null {
+  const source = sourceView.index.byId.get(sourceId);
+  if (!source) return null;
+
+  return resolveSelectionForSource(
+    topic,
+    source,
+    method,
+    maxCandidatesPerTopic,
+    buildTopicSelectionContext(topic, sourceView),
+    { requireOverlap: false, allowUnregisteredAdapter: true },
+  );
 }
 
 // ── Preflight ──────────────────────────────────────

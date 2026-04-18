@@ -359,8 +359,40 @@ export async function observe(
     };
   }
 
-  const evidenceSummaryResult = await fetchResearchEvidenceSummary({
-    source: attestationPlan.primary,
+  const evidenceReads = await Promise.allSettled([
+    fetchResearchEvidenceSummary({
+      source: attestationPlan.primary,
+      topic,
+    }),
+    ...attestationPlan.supporting.map((source) =>
+      fetchResearchEvidenceSummary({
+        source,
+        topic,
+      })),
+  ]);
+  const primaryEvidenceRead = evidenceReads[0];
+  const supportingEvidenceReads = evidenceReads.slice(1);
+  const evidenceSummaryResult = primaryEvidenceRead?.status === "fulfilled"
+    ? primaryEvidenceRead.value
+    : {
+      ok: false as const,
+      reason: "fetch_failed" as const,
+      note: primaryEvidenceRead?.status === "rejected"
+        ? `Primary evidence fetch failed for ${attestationPlan.primary.name}: ${String(primaryEvidenceRead.reason)}`
+        : `Primary evidence fetch failed for ${attestationPlan.primary.name}.`,
+    };
+  const supportingEvidenceSummaries = supportingEvidenceReads.flatMap((entry) =>
+    entry.status === "fulfilled" && entry.value.ok ? [entry.value.summary] : []);
+  const supportingEvidenceNotes = supportingEvidenceReads.flatMap((entry, index) => {
+    const source = attestationPlan.supporting[index];
+    if (!source) return [];
+    if (entry.status === "rejected") {
+      return [`Supporting evidence fetch failed for ${source.name}: ${String(entry.reason)}`];
+    }
+    if (!entry.value.ok) {
+      return [`Supporting evidence fetch skipped for ${source.name}: ${entry.value.note}`];
+    }
+    return [];
   });
 
   if (!evidenceSummaryResult.ok) {
@@ -389,6 +421,7 @@ export async function observe(
           feedMentions: matchingFeedPosts,
           sourceProfile,
           evidenceSummary: null,
+          supportingEvidenceSummaries: [],
         },
         promptPacket: {
           objective: "Only prompt from real fetched evidence, not just topic labels and source names.",
@@ -402,6 +435,7 @@ export async function observe(
         },
         notes: [
           evidenceSummaryResult.note,
+          ...supportingEvidenceNotes,
           ...attestationPlan.warnings,
         ],
       },
@@ -442,6 +476,7 @@ export async function observe(
           feedMentions: matchingFeedPosts,
           sourceProfile,
           evidenceSummary: evidenceSummaryResult.summary,
+          supportingEvidenceSummaries,
           evidenceDelta,
         },
         promptPacket: {
@@ -473,6 +508,7 @@ export async function observe(
     leaderboardCount: leaderboardAgents.length,
     availableBalance,
     evidenceSummary: evidenceSummaryResult.summary,
+    supportingEvidenceSummaries,
     llmProvider: ctx.omni.runtime.llmProvider,
     minTextLength: 300,
   });
@@ -504,11 +540,13 @@ export async function observe(
           feedMentions: matchingFeedPosts,
           sourceProfile,
           evidenceSummary: evidenceSummaryResult.summary,
+          supportingEvidenceSummaries,
           evidenceDelta,
         },
         promptPacket: draft.promptPacket as unknown as Record<string, unknown>,
         notes: [
           ...draft.notes,
+          ...supportingEvidenceNotes,
           ...attestationPlan.warnings,
         ],
       },
@@ -547,6 +585,7 @@ export async function observe(
         feedMentions: matchingFeedPosts,
         sourceProfile,
         evidenceSummary: evidenceSummaryResult.summary,
+        supportingEvidenceSummaries,
         evidenceDelta,
       },
       promptPacket: {
@@ -559,6 +598,7 @@ export async function observe(
       },
       notes: [
         "This starter now persists reduced raw inputs, selected evidence, the prompt packet, and the attestation plan for operator audit.",
+        ...supportingEvidenceNotes,
         ...attestationPlan.warnings,
       ],
     },

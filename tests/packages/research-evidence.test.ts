@@ -85,6 +85,34 @@ describe("fetchResearchEvidenceSummary", () => {
     expect(result.summary.derivedMetrics).toEqual({});
   });
 
+  it("extracts a simple peg price from the CoinGecko simple-price endpoint", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          tether: {
+            usd: 1.0004,
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd"),
+      topic: "USDT Supply ATH Stablecoin Inflation",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      assetId: "tether",
+      priceUsd: "1.0004",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      pegDeviationPct: "0.04",
+    });
+  });
+
   it("extracts market-chart values and derived metrics for research spot momentum", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(
@@ -184,6 +212,53 @@ describe("fetchResearchEvidenceSummary", () => {
       largestInflowTicker: "IBIT",
       largestOutflowTicker: "FBTC",
       netFlowDirection: "inflow",
+    });
+  });
+
+  it("extracts targeted stablecoin supply metrics from DefiLlama", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          peggedAssets: [
+            {
+              symbol: "USDT",
+              circulating: { peggedUSD: 186624595113.62906 },
+              circulatingPrevDay: { peggedUSD: 185821073382.75705 },
+              circulatingPrevWeek: { peggedUSD: 184294812347.6592 },
+              circulatingPrevMonth: { peggedUSD: 183336749243.18744 },
+            },
+            {
+              symbol: "USDC",
+              circulating: { peggedUSD: 78623991015.38954 },
+              circulatingPrevDay: { peggedUSD: 78780102398.10326 },
+              circulatingPrevWeek: { peggedUSD: 78765579195.09525 },
+              circulatingPrevMonth: { peggedUSD: 79400644158.13521 },
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://stablecoins.llama.fi/stablecoins?includePrices=true"),
+      topic: "USDT Supply ATH Stablecoin Inflation",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      assetSymbol: "USDT",
+      circulatingUsd: "186624595113.63",
+      circulatingPrevDayUsd: "185821073382.76",
+      circulatingPrevWeekUsd: "184294812347.66",
+      circulatingPrevMonthUsd: "183336749243.19",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      supplyChangePct1d: "0.43",
+      supplyChangePct7d: "1.26",
+      supplyChangePct30d: "1.79",
+      stablecoinFocus: "USDT",
     });
   });
 

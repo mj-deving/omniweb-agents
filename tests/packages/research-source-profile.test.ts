@@ -36,4 +36,21 @@ describe("deriveResearchSourceProfile", () => {
     expect(profile.supported).toBe(false);
     expect(profile.reason).toBe("no_family_sources_for_asset");
   });
+
+  it("maps stablecoin supply topics to stablecoin evidence plus a peg check", () => {
+    const profile = deriveResearchSourceProfile("USDT Supply ATH Stablecoin Inflation");
+
+    expect(profile.family).toBe("stablecoin-supply");
+    expect(profile.supported).toBe(true);
+    expect(profile.primarySourceIds).toEqual(["defillama-stablecoins"]);
+    expect(profile.supportingSourceIds).toContain("coingecko-2a7ea372");
+  });
+
+  it("keeps reserve-risk topics unsupported when the family cannot ground the claim", () => {
+    const profile = deriveResearchSourceProfile("USDC Regulatory Reserve Risk");
+
+    expect(profile.family).toBe("unsupported");
+    expect(profile.supported).toBe(false);
+    expect(profile.reason).toBe("no_supported_research_family");
+  });
 });

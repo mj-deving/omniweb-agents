@@ -2,7 +2,7 @@ import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gat
 import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
 import { renderColonyPromptPacket, type ColonyPromptPacket } from "./colony-prompt.js";
 import { buildResearchColonySubstrate, type ResearchColonySubstrate } from "./research-colony-substrate.js";
-import type { ResearchEvidenceSummary } from "./research-evidence.js";
+import { classifyResearchEvidenceSemanticClass, type ResearchEvidenceSummary } from "./research-evidence.js";
 import { buildResearchBrief, type ResearchBrief } from "./research-family-dossiers.js";
 import type { ResearchOpportunity } from "./research-opportunities.js";
 import type { ResearchSelfHistorySummary } from "./research-self-history.js";
@@ -446,6 +446,7 @@ function checkResearchDraftQuality(
   );
   const leak = findResearchMetaLeak(text);
   const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary, supportingEvidenceSummaries);
+  const semanticEvidence = checkSemanticEvidenceGrounding(evidenceSummary, supportingEvidenceSummaries);
   const contextualGrounding = checkContextualGrounding(text, opportunity);
   const styleLeak = findResearchStyleProblem(text);
   const familyBaselineLeak = findFamilyBaselineProblem(text, opportunity);
@@ -460,6 +461,11 @@ function checkResearchDraftQuality(
       name: "evidence-value-overlap",
       pass: evidenceAlignment.pass,
       detail: evidenceAlignment.detail,
+    },
+    {
+      name: "semantic-evidence-grounding",
+      pass: semanticEvidence.pass,
+      detail: semanticEvidence.detail,
     },
     {
       name: "research-angle-grounding",
@@ -504,6 +510,14 @@ function checkResearchDraftQuality(
     };
   }
 
+  if (!semanticEvidence.pass) {
+    return {
+      pass: false,
+      reason: `failed: semantic-evidence-grounding — ${semanticEvidence.detail}`,
+      checks,
+    };
+  }
+
   if (!contextualGrounding.pass) {
     return {
       pass: false,
@@ -531,6 +545,40 @@ function checkResearchDraftQuality(
   return {
     pass: true,
     checks,
+  };
+}
+
+function checkSemanticEvidenceGrounding(
+  evidenceSummary: ResearchEvidenceSummary,
+  supportingEvidenceSummaries: ResearchEvidenceSummary[] = [],
+): { pass: boolean; detail: string } {
+  const primaryClass = evidenceSummary.semanticClass
+    ?? classifyResearchEvidenceSemanticClass("generic", evidenceSummary.values, evidenceSummary.derivedMetrics);
+
+  if (primaryClass === "metadata") {
+    return {
+      pass: false,
+      detail: "primary evidence is metadata-shaped (search/result-count style) rather than market, macro, or liquidity evidence",
+    };
+  }
+
+  if (primaryClass === "generic") {
+    return {
+      pass: false,
+      detail: "primary evidence could not be classified as market, macro, or liquidity evidence",
+    };
+  }
+
+  const supportingClasses = supportingEvidenceSummaries.map((summary) =>
+    summary.semanticClass
+      ?? classifyResearchEvidenceSemanticClass("generic", summary.values, summary.derivedMetrics));
+
+  const metadataSupport = supportingClasses.filter((entry) => entry === "metadata").length;
+  return {
+    pass: true,
+    detail: metadataSupport > 0
+      ? `primary evidence is ${primaryClass}; ignored ${metadataSupport} metadata-only supporting packet(s)`
+      : `primary evidence is ${primaryClass}`,
   };
 }
 

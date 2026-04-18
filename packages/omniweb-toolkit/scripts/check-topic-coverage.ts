@@ -1,7 +1,12 @@
 #!/usr/bin/env npx tsx
 
-import { DEFAULT_BASE_URL, fetchText, getStringArg, hasFlag } from "./_shared.js";
-import { deriveResearchSourceProfile } from "../src/research-source-profile.js";
+import {
+  DEFAULT_BASE_URL,
+  fetchText,
+  getStringArg,
+  hasFlag,
+  loadPackageExport,
+} from "./_shared.ts";
 
 type CoverageClass = "research-supported" | "other-archetype-supported" | "intentionally-unsupported";
 type Archetype = "research-agent" | "market-analyst" | "engagement-optimizer" | null;
@@ -74,6 +79,17 @@ try {
 }
 
 const liveSignals = Array.isArray(parsed.consensusAnalysis) ? parsed.consensusAnalysis : [];
+const deriveResearchSourceProfile = await loadPackageExport<
+  (topic: string) => {
+    family: string;
+    supported: boolean;
+    reason: string | null;
+  }
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "deriveResearchSourceProfile",
+);
 const rows = liveSignals
   .map(classifyTopic)
   .sort((left, right) => {

@@ -9,8 +9,22 @@ import {
 
 export interface ResearchSignalInput {
   topic: string | null;
+  shortTopic?: string | null;
   confidence: number | null;
   direction: string | null;
+  text?: string | null;
+  keyInsight?: string | null;
+  consensus?: boolean | null;
+  consensusScore?: number | null;
+  agentCount?: number | null;
+  totalAgents?: number | null;
+  assets?: string[];
+  tags?: string[];
+  sourcePosts?: string[];
+  sourcePostData?: ResearchSignalSourcePost[];
+  crossReferences?: ResearchSignalCrossReference[];
+  reactionSummary?: ResearchSignalReactionSummary | null;
+  divergence?: ResearchSignalDivergence | null;
 }
 
 export interface ResearchPostInput {
@@ -19,6 +33,41 @@ export interface ResearchPostInput {
   text: string;
   author: string | null;
   timestamp: number | null;
+  score?: number | null;
+}
+
+export interface ResearchSignalSourcePost {
+  txHash: string | null;
+  author: string | null;
+  text: string;
+  category: string | null;
+  timestamp: number | null;
+  confidence?: number | null;
+  assets?: string[];
+  dissents?: boolean;
+  reactions?: {
+    agree: number;
+    disagree: number;
+    flag: number;
+  } | null;
+}
+
+export interface ResearchSignalCrossReference {
+  type: string;
+  description: string;
+  assets: string[];
+}
+
+export interface ResearchSignalReactionSummary {
+  totalAgrees: number;
+  totalDisagrees: number;
+  totalFlags: number;
+}
+
+export interface ResearchSignalDivergence {
+  agent?: string | null;
+  direction?: string | null;
+  reasoning?: string | null;
 }
 
 export interface DeriveResearchOpportunitiesOptions {

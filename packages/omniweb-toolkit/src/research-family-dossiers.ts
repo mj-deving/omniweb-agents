@@ -1,4 +1,5 @@
 import type { ResearchEvidenceSummary } from "./research-evidence.js";
+import type { ResearchColonySubstrate } from "./research-colony-substrate.js";
 import type { ResearchOpportunity } from "./research-opportunities.js";
 import type { ResearchTopicFamily } from "./research-source-profile.js";
 
@@ -17,7 +18,15 @@ export interface ResearchBrief {
   anomalySummary: string;
   allowedThesisSpace: string;
   invalidationFocus: string;
+  linkedThemes: Array<{
+    key: string;
+    label: string;
+    reason: string;
+  }>;
+  domainContext: string[];
 }
+
+type CoreResearchBrief = Omit<ResearchBrief, "linkedThemes" | "domainContext">;
 
 const GENERIC_DOSSIER: ResearchFamilyDossier = {
   family: "unsupported",
@@ -129,39 +138,45 @@ const VIX_CREDIT_DOSSIER: ResearchFamilyDossier = {
 
 export function buildResearchBrief(
   opportunity: ResearchOpportunity,
+  colonySubstrate: ResearchColonySubstrate | undefined,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[] = [],
 ): ResearchBrief {
   const dossier = dossierForFamily(opportunity.sourceProfile.family);
+  const linkedContext = buildLinkedResearchContext(
+    opportunity,
+    colonySubstrate,
+    evidenceSummary,
+    supportingEvidenceSummaries,
+  );
+  let baseBrief: Omit<ResearchBrief, "linkedThemes" | "domainContext">;
 
   if (opportunity.sourceProfile.family === "stablecoin-supply") {
-    return buildStablecoinSupplyBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
-  }
-
-  if (opportunity.sourceProfile.family === "funding-structure") {
-    return buildFundingStructureBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
-  }
-
-  if (opportunity.sourceProfile.family === "spot-momentum") {
-    return buildSpotMomentumBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
-  }
-
-  if (opportunity.sourceProfile.family === "etf-flows") {
-    return buildEtfFlowsBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
-  }
-
-  if (opportunity.sourceProfile.family === "vix-credit") {
-    return buildVixCreditBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+    baseBrief = buildStablecoinSupplyBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  } else if (opportunity.sourceProfile.family === "funding-structure") {
+    baseBrief = buildFundingStructureBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  } else if (opportunity.sourceProfile.family === "spot-momentum") {
+    baseBrief = buildSpotMomentumBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  } else if (opportunity.sourceProfile.family === "etf-flows") {
+    baseBrief = buildEtfFlowsBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  } else if (opportunity.sourceProfile.family === "vix-credit") {
+    baseBrief = buildVixCreditBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  } else {
+    baseBrief = {
+      family: opportunity.sourceProfile.family,
+      baselineContext: dossier.baseline,
+      focusNow: dossier.focus,
+      falseInferenceGuards: dossier.falseInferenceGuards,
+      anomalySummary: "Focus on the strongest non-trivial change or mismatch in the fetched evidence.",
+      allowedThesisSpace: "Use the evidence to form one concrete, externally legible thesis.",
+      invalidationFocus: "State the next observable condition that would weaken the thesis.",
+    };
   }
 
   return {
-    family: opportunity.sourceProfile.family,
-    baselineContext: dossier.baseline,
-    focusNow: dossier.focus,
-    falseInferenceGuards: dossier.falseInferenceGuards,
-    anomalySummary: "Focus on the strongest non-trivial change or mismatch in the fetched evidence.",
-    allowedThesisSpace: "Use the evidence to form one concrete, externally legible thesis.",
-    invalidationFocus: "State the next observable condition that would weaken the thesis.",
+    ...baseBrief,
+    linkedThemes: linkedContext.linkedThemes,
+    domainContext: linkedContext.domainContext,
   };
 }
 
@@ -169,7 +184,7 @@ function buildEtfFlowsBrief(
   dossier: ResearchFamilyDossier,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[],
-): ResearchBrief {
+): CoreResearchBrief {
   const netFlowBtc = findMetric("netFlowBtc", evidenceSummary, supportingEvidenceSummaries);
   const totalHoldingsBtc = findMetric("totalHoldingsBtc", evidenceSummary, supportingEvidenceSummaries);
   const positiveIssuerCount = findMetric("positiveIssuerCount", evidenceSummary, supportingEvidenceSummaries);
@@ -206,7 +221,7 @@ function buildVixCreditBrief(
   dossier: ResearchFamilyDossier,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[],
-): ResearchBrief {
+): CoreResearchBrief {
   const vixClose = findMetric("vixClose", evidenceSummary, supportingEvidenceSummaries);
   const vixPreviousClose = findMetric("vixPreviousClose", evidenceSummary, supportingEvidenceSummaries);
   const vixSessionChangePct = findMetric("vixSessionChangePct", evidenceSummary, supportingEvidenceSummaries);
@@ -239,7 +254,7 @@ function buildSpotMomentumBrief(
   dossier: ResearchFamilyDossier,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[],
-): ResearchBrief {
+): CoreResearchBrief {
   const currentPrice = findMetric("currentPriceUsd", evidenceSummary, supportingEvidenceSummaries);
   const startPrice = findMetric("startingPriceUsd", evidenceSummary, supportingEvidenceSummaries);
   const high7d = findMetric("high7d", evidenceSummary, supportingEvidenceSummaries);
@@ -264,7 +279,7 @@ function buildFundingStructureBrief(
   dossier: ResearchFamilyDossier,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[],
-): ResearchBrief {
+): CoreResearchBrief {
   const fundingBps = findMetric("fundingRateBps", evidenceSummary, supportingEvidenceSummaries);
   const markPrice = findMetric("markPrice", evidenceSummary, supportingEvidenceSummaries);
   const spreadUsd = findMetric("markIndexSpreadUsd", evidenceSummary, supportingEvidenceSummaries);
@@ -294,7 +309,7 @@ function buildStablecoinSupplyBrief(
   dossier: ResearchFamilyDossier,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[],
-): ResearchBrief {
+): CoreResearchBrief {
   const pegPrice = findMetric("priceUsd", evidenceSummary, supportingEvidenceSummaries);
   const pegDeviation = findMetric("pegDeviationPct", evidenceSummary, supportingEvidenceSummaries);
   const supply1d = evidenceSummary.derivedMetrics.supplyChangePct1d ?? null;
@@ -417,4 +432,88 @@ function describeRangeLocation(
   if (normalized >= 0.67) return "upper third";
   if (normalized <= 0.33) return "lower third";
   return "middle third";
+}
+
+function buildLinkedResearchContext(
+  opportunity: ResearchOpportunity,
+  colonySubstrate: ResearchColonySubstrate | undefined,
+  evidenceSummary: ResearchEvidenceSummary,
+  supportingEvidenceSummaries: ResearchEvidenceSummary[],
+): Pick<ResearchBrief, "linkedThemes" | "domainContext"> {
+  const themeMap = new Map<string, { key: string; label: string; reason: string }>();
+  const haystack = collectColonyContextText(opportunity, colonySubstrate).join(" ").toLowerCase();
+  const assets = new Set(
+    [
+      ...(opportunity.matchedSignal.assets ?? []),
+      ...(colonySubstrate?.signalSummary.assets ?? []),
+    ].map((value) => value.toLowerCase()),
+  );
+  const pegDeviation = parseMetric(findMetric("pegDeviationPct", evidenceSummary, supportingEvidenceSummaries));
+
+  const addTheme = (key: string, label: string, reason: string): void => {
+    if (!themeMap.has(key)) {
+      themeMap.set(key, { key, label, reason });
+    }
+  };
+
+  const mentions = (...keywords: string[]): boolean => keywords.some((keyword) => haystack.includes(keyword));
+  const family = opportunity.sourceProfile.family;
+
+  if (family === "stablecoin-supply") {
+    addTheme("dollar-liquidity", "Dollar liquidity", "Stablecoin supply is best read as a dollar-liquidity input, not a standalone direction call.");
+    if (mentions("absorption", "bitcoin absorption", "btc absorption") || assets.has("btc") || assets.has("bitcoin")) {
+      addTheme("btc-absorption", "BTC absorption", "The colony signal ties stablecoin issuance to whether BTC can absorb the added liquidity cleanly.");
+    }
+    if ((pegDeviation != null && pegDeviation >= 0.1) || mentions("peg", "reserve", "regulatory", "redemption")) {
+      addTheme("peg-stress", "Peg stress", "Peg behavior matters here only as a stress check layered on top of supply dynamics.");
+    }
+    if (mentions("rwa", "treasury", "treasuries", "yield", "buidl", "flight to safety")) {
+      addTheme("rwa-rotation", "RWA rotation", "Recent colony context links stablecoin liquidity to rotation into tokenized yield or treasury products.");
+    }
+  }
+
+  if (family === "funding-structure") {
+    addTheme("exchange-liquidity", "Exchange liquidity", "Funding, premium, and open interest describe how exchange liquidity is being used, not just where price is trading.");
+    if (assets.has("btc") || assets.has("bitcoin") || mentions("btc", "bitcoin")) {
+      addTheme("btc-absorption", "BTC absorption", "The derivatives setup matters because it can show whether BTC is absorbing bearish positioning or failing under it.");
+    }
+  }
+
+  if (family === "etf-flows") {
+    addTheme("btc-absorption", "BTC absorption", "ETF demand only matters if BTC can absorb the flow without narrowing into one-issuer support.");
+    if (mentions("rwa", "treasury", "treasuries", "yield", "buidl")) {
+      addTheme("rwa-rotation", "RWA rotation", "The colony context links ETF demand to broader institutional allocation across onchain yield and treasury products.");
+    }
+  }
+
+  if (family === "vix-credit") {
+    addTheme("dollar-liquidity", "Dollar liquidity", "Front-end rates and volatility together are a dollar-liquidity backdrop, not just a one-session fear gauge.");
+  }
+
+  const linkedThemes = Array.from(themeMap.values()).slice(0, 3);
+  const domainContext = linkedThemes.map((theme) => `${theme.label}: ${theme.reason}`);
+  return { linkedThemes, domainContext };
+}
+
+function collectColonyContextText(
+  opportunity: ResearchOpportunity,
+  colonySubstrate: ResearchColonySubstrate | undefined,
+): string[] {
+  const values = [
+    opportunity.topic,
+    opportunity.matchedSignal.shortTopic ?? null,
+    opportunity.matchedSignal.text ?? null,
+    opportunity.matchedSignal.keyInsight ?? null,
+    ...(opportunity.matchedSignal.tags ?? []),
+    ...(opportunity.matchedSignal.crossReferences ?? []).map((entry) => entry.description),
+    colonySubstrate?.signalSummary.shortTopic ?? null,
+    colonySubstrate?.signalSummary.text ?? null,
+    colonySubstrate?.signalSummary.keyInsight ?? null,
+    ...(colonySubstrate?.crossReferences ?? []).map((entry) => entry.description),
+    ...(colonySubstrate?.supportingTakes ?? []).map((entry) => entry.textSnippet),
+    colonySubstrate?.dissentingTake?.textSnippet ?? null,
+    ...(colonySubstrate?.recentRelatedPosts ?? []).map((entry) => entry.textSnippet),
+  ];
+
+  return values.filter((value): value is string => typeof value === "string" && value.length > 0);
 }

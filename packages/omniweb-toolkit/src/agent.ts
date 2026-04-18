@@ -17,6 +17,7 @@ export { buildEngagementDraft } from "./engagement-draft.js";
 export { deriveMarketOpportunities } from "./market-opportunities.js";
 export { buildMarketDraft } from "./market-draft.js";
 export { deriveResearchOpportunities } from "./research-opportunities.js";
+export { fetchResearchEvidenceSummary } from "./research-evidence.js";
 export { buildResearchDraft } from "./research-draft.js";
 export type {
   MinimalAgentState,
@@ -72,6 +73,11 @@ export type {
   MarketDraftFailure,
   MarketDraftResult,
 } from "./market-draft.js";
+export type {
+  ResearchEvidenceSummary,
+  FetchResearchEvidenceSummaryOptions,
+  FetchResearchEvidenceSummaryResult,
+} from "./research-evidence.js";
 export type {
   ResearchSignalInput,
   ResearchPostInput,

@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
 import {
   buildResearchDraft,
+  fetchResearchEvidenceSummary,
   deriveResearchOpportunities,
   runMinimalAgentLoop,
   type MinimalObserveContext,
@@ -274,11 +275,55 @@ export async function observe(
     };
   }
 
+  const evidenceSummaryResult = await fetchResearchEvidenceSummary({
+    source: attestationPlan.primary,
+  });
+
+  if (!evidenceSummaryResult.ok) {
+    return {
+      kind: "skip",
+      reason: "evidence_summary_not_ready",
+      facts: {
+        topic,
+        signalCount: signalList.length,
+        feedCount: posts.length,
+        availableBalance,
+        opportunityKind: chosenOpportunity.kind,
+      },
+      attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: Array.isArray(leaderboard.data) ? leaderboard.data.slice(0, 5) : [],
+        },
+        selectedEvidence: {
+          matchedSignal,
+          feedMentions: matchingFeedPosts,
+          evidenceSummary: null,
+        },
+        promptPacket: {
+          objective: "Only prompt from real fetched evidence, not just topic labels and source names.",
+          topic,
+          opportunityKind: chosenOpportunity.kind,
+          result: "skip",
+          attestationPlanReady: attestationPlan.ready,
+        },
+        notes: [
+          evidenceSummaryResult.note,
+          ...attestationPlan.warnings,
+        ],
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
+
   const draft = await buildResearchDraft({
     opportunity: chosenOpportunity,
     feedCount: posts.length,
     leaderboardCount: Array.isArray(leaderboard.data) ? leaderboard.data.length : 0,
     availableBalance,
+    evidenceSummary: evidenceSummaryResult.summary,
     llmProvider: ctx.omni.runtime.llmProvider,
     minTextLength: 300,
   });
@@ -305,6 +350,7 @@ export async function observe(
         selectedEvidence: {
           matchedSignal,
           feedMentions: matchingFeedPosts,
+          evidenceSummary: evidenceSummaryResult.summary,
         },
         promptPacket: draft.promptPacket as unknown as Record<string, unknown>,
         notes: [
@@ -342,6 +388,7 @@ export async function observe(
       selectedEvidence: {
         matchedSignal,
         feedMentions: matchingFeedPosts,
+        evidenceSummary: evidenceSummaryResult.summary,
       },
       promptPacket: {
         ...draft.promptPacket,

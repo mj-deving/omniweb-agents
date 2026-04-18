@@ -1,6 +1,7 @@
 import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gate.js";
 import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
 import { renderColonyPromptPacket, type ColonyPromptPacket } from "./colony-prompt.js";
+import type { ResearchEvidenceSummary } from "./research-evidence.js";
 import type { ResearchOpportunity } from "./research-opportunities.js";
 
 interface PromptCapableProvider {
@@ -18,6 +19,7 @@ export interface BuildResearchDraftOptions {
   feedCount: number;
   leaderboardCount: number;
   availableBalance: number;
+  evidenceSummary: ResearchEvidenceSummary;
   llmProvider?: PromptCapableProvider | null;
   minTextLength?: number;
 }
@@ -34,6 +36,9 @@ export interface ResearchPromptInput {
   };
   evidence: {
     primarySourceName: string | null;
+    primarySourceUrl: string;
+    fetchedAt: string;
+    values: Record<string, string>;
     supportingSourceNames: string[];
   };
 }
@@ -91,7 +96,7 @@ export async function buildResearchDraft(
   const promptPacket = buildResearchPromptPacket(opts);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
   const llmText = await generateViaProvider(opts.llmProvider, promptPacket);
-  const emptyQualityGate = checkResearchDraftQuality("", minTextLength);
+  const emptyQualityGate = checkResearchDraftQuality("", minTextLength, opts.evidenceSummary);
 
   if (!llmText) {
     return {
@@ -103,7 +108,7 @@ export async function buildResearchDraft(
     };
   }
 
-  const preferredGate = checkResearchDraftQuality(llmText, minTextLength);
+  const preferredGate = checkResearchDraftQuality(llmText, minTextLength, opts.evidenceSummary);
   if (preferredGate.pass) {
     return {
       ok: true,
@@ -158,6 +163,9 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       },
       evidence: {
         primarySourceName: primarySource,
+        primarySourceUrl: opts.evidenceSummary.url,
+        fetchedAt: opts.evidenceSummary.fetchedAt,
+        values: opts.evidenceSummary.values,
         supportingSourceNames: supportingSources,
       },
     },
@@ -166,6 +174,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
+      "Use the concrete evidence values in the packet; do not write a research post that never cites the fetched data.",
       "Treat source names as evidence anchors, not as the subject of the prose.",
       "State one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
       "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
@@ -232,18 +241,28 @@ function normalizeDraftText(text: string): string {
     .trim();
 }
 
-function checkResearchDraftQuality(text: string, minTextLength: number): QualityGateResult {
+function checkResearchDraftQuality(
+  text: string,
+  minTextLength: number,
+  evidenceSummary: ResearchEvidenceSummary,
+): QualityGateResult {
   const base = checkPublishQuality(
     { text, category: "ANALYSIS" },
     { minTextLength },
   );
   const leak = findResearchMetaLeak(text);
+  const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary);
   const checks = [
     ...base.checks,
     {
       name: "no-internal-reasoning-leak",
       pass: leak == null,
       detail: leak == null ? "no internal scoring or workflow language detected" : `${leak.name}: ${leak.detail}`,
+    },
+    {
+      name: "evidence-value-overlap",
+      pass: evidenceAlignment.pass,
+      detail: evidenceAlignment.detail,
     },
   ];
 
@@ -259,6 +278,14 @@ function checkResearchDraftQuality(text: string, minTextLength: number): Quality
     return {
       pass: false,
       reason: `failed: no-internal-reasoning-leak — ${leak.detail}`,
+      checks,
+    };
+  }
+
+  if (!evidenceAlignment.pass) {
+    return {
+      pass: false,
+      reason: `failed: evidence-value-overlap — ${evidenceAlignment.detail}`,
       checks,
     };
   }
@@ -279,4 +306,51 @@ function findResearchMetaLeak(text: string): { name: string; detail: string } | 
     }
   }
   return null;
+}
+
+function checkEvidenceValueOverlap(
+  text: string,
+  evidenceSummary: ResearchEvidenceSummary,
+): { pass: boolean; detail: string } {
+  const draftNumbers = extractNumericValues(text);
+  const evidenceNumbers = Object.values(evidenceSummary.values)
+    .flatMap((value) => extractNumericValues(value));
+
+  if (evidenceNumbers.length === 0) {
+    return {
+      pass: false,
+      detail: "no numeric evidence values were available for grounding",
+    };
+  }
+
+  const overlap = draftNumbers.find((draftValue) =>
+    evidenceNumbers.some((evidenceValue) => numericOverlap(draftValue, evidenceValue)));
+
+  if (overlap == null) {
+    return {
+      pass: false,
+      detail: "draft does not reference any fetched evidence value",
+    };
+  }
+
+  return {
+    pass: true,
+    detail: `draft references fetched evidence value ${formatEvidenceValue(overlap)}`,
+  };
+}
+
+function extractNumericValues(text: string): number[] {
+  const matches = text.match(/-?\d[\d,]*(?:\.\d+)?/g) ?? [];
+  return matches
+    .map((match) => Number.parseFloat(match.replace(/,/g, "")))
+    .filter((value) => Number.isFinite(value));
+}
+
+function numericOverlap(left: number, right: number): boolean {
+  const tolerance = Math.max(Math.abs(right) * 0.01, 0.01);
+  return Math.abs(left - right) <= tolerance;
+}
+
+function formatEvidenceValue(value: number): string {
+  return Number.isInteger(value) ? value.toString() : value.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
 }

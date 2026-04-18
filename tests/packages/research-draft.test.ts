@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildResearchDraft } from "../../packages/omniweb-toolkit/src/research-draft.js";
+import type { ResearchEvidenceSummary } from "../../packages/omniweb-toolkit/src/research-evidence.js";
 import type { ResearchOpportunity } from "../../packages/omniweb-toolkit/src/research-opportunities.js";
 
 function makeOpportunity(): ResearchOpportunity {
@@ -55,6 +56,20 @@ function makeOpportunity(): ResearchOpportunity {
   };
 }
 
+function makeEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "Binance Futures Premium Index",
+    url: "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT",
+    fetchedAt: "2026-04-18T08:00:00.000Z",
+    values: {
+      markPrice: "67250.00",
+      indexPrice: "67245.12",
+      lastFundingRate: "-0.012",
+      interestRate: "0.0001",
+    },
+  };
+}
+
 describe("buildResearchDraft", () => {
   it("requires a real LLM provider for Phase 2 drafting", async () => {
     const result = await buildResearchDraft({
@@ -62,6 +77,7 @@ describe("buildResearchDraft", () => {
       feedCount: 30,
       leaderboardCount: 10,
       availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
       llmProvider: null,
       minTextLength: 300,
     });
@@ -76,9 +92,9 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "Funding pressure on BTC is worth watching here because a softer premium reading would signal long conviction fading while price still looks stable. " +
-        "CoinGecko Simple Price frames the spot backdrop, and Blockchain.com Ticker is the cross-check if this starts turning from positioning stress into real downside follow-through. " +
-        "The next premium-index read is the invalidation point: a rebound weakens the bearish read, while further compression would strengthen it."
+        "BTC funding pressure is worth watching because the premium setup is leaning bearish while mark price still sits near 67,250 dollars instead of breaking lower. " +
+        "A negative funding read around -0.012 would fit the idea that long conviction is fading before spot fully rolls over, which is why the premium signal matters more than a generic macro mood. " +
+        "A rebound in the premium reading would weaken the bearish case, while further compression would confirm downside pressure is still building."
       ),
     };
 
@@ -87,6 +103,7 @@ describe("buildResearchDraft", () => {
       feedCount: 30,
       leaderboardCount: 10,
       availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
       minTextLength: 300,
     });
@@ -103,14 +120,15 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.edge[0]).toContain("Depth over speed");
     expect(result.promptPacket.output.confidenceStyle).toContain("calibrated and evidence-led");
     expect(result.promptPacket.output.successCriteria[0]).toContain("original research");
+    expect(result.promptPacket.input.evidence.values.markPrice).toBe("67250.00");
   });
 
   it("accepts LLM output only when it clears the quality gate", async () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC funding pressure is the real thing to watch here because weak premium readings while price stays firm usually mean longs are losing conviction before spot actually rolls over. " +
-        "CoinGecko Simple Price sets the spot backdrop, and Blockchain.com Ticker is the clean cross-check if this starts becoming a broader risk-off move instead of a contained positioning wobble. " +
+        "BTC funding pressure is the real thing to watch here because weak premium readings while price stays firm near 67,250 dollars usually mean longs are losing conviction before spot actually rolls over. " +
+        "A negative funding read around -0.012 turns that into a concrete bearish setup instead of a vague macro complaint, because positioning stress is visible in the fetched evidence itself. " +
         "Watch the next premium-index read closely: a rebound would weaken the bearish setup, while further compression would confirm downside pressure is building."
       ),
     };
@@ -120,6 +138,7 @@ describe("buildResearchDraft", () => {
       feedCount: 30,
       leaderboardCount: 10,
       availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
       minTextLength: 300,
     });
@@ -148,6 +167,7 @@ describe("buildResearchDraft", () => {
       feedCount: 30,
       leaderboardCount: 10,
       availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
       minTextLength: 300,
     });
@@ -156,6 +176,32 @@ describe("buildResearchDraft", () => {
     if (result.ok) throw new Error("expected failure");
     expect(result.reason).toBe("draft_quality_gate_failed");
     expect(result.qualityGate.checks.find((check) => check.name === "no-internal-reasoning-leak")?.pass).toBe(false);
+  });
+
+  it("rejects LLM output that never references fetched evidence values", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC funding pressure still looks bearish because conviction is clearly fading even if spot is holding together for now. " +
+        "The structure is negative enough to justify caution, and the broader setup still points to downside risk building under the surface. " +
+        "A reversal in positioning would weaken the thesis, but until then the bear case still deserves close attention."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 300,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(false);
   });
 
   it("skips short low-quality LLM output instead of publishing a template fallback", async () => {
@@ -169,6 +215,7 @@ describe("buildResearchDraft", () => {
       feedCount: 30,
       leaderboardCount: 10,
       availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
       minTextLength: 300,
     });

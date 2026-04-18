@@ -558,6 +558,22 @@ function makeTreasurySupportingEvidenceSummary(): ResearchEvidenceSummary {
   };
 }
 
+function makeMetadataEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "hn-oil",
+    url: "https://hn.algolia.com/api/v1/search?query=oil&hitsPerPage=5",
+    fetchedAt: "2026-04-18T12:00:00.000Z",
+    values: {
+      hitsPerPage: "5",
+      nbHits: "138423",
+      nbPages: "200",
+      page: "0",
+      processingTimeMS: "9",
+    },
+    derivedMetrics: {},
+  };
+}
+
 describe("buildResearchDraft", () => {
   it("requires a real LLM provider for Phase 2 drafting", async () => {
     const result = await buildResearchDraft({
@@ -957,6 +973,33 @@ describe("buildResearchDraft", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected success");
     expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(true);
+  });
+
+  it("rejects metadata-shaped primary evidence even when the draft cites real fetched numbers", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Oil is underpricing a real tail because the market keeps treating geopolitical escalation as background noise even with 138,423 matching items sitting across 200 pages of discussion. " +
+        "That persistence is why the risk still matters now, and the search corpus itself is enough to show the market is overlooking the problem rather than pricing it. " +
+        "If the discussion count falls sharply, the thesis weakens."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeMetadataEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(true);
+    expect(result.qualityGate.checks.find((check) => check.name === "semantic-evidence-grounding")?.pass).toBe(false);
   });
 
   it("rejects funding drafts that treat negative funding alone as proof", async () => {

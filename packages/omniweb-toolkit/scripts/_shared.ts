@@ -79,7 +79,10 @@ export async function loadPackageExport<T>(
     if (exportName in mod) {
       return mod[exportName as keyof typeof mod] as T;
     }
-  } catch {
+  } catch (error) {
+    if (!isModuleUnavailableError(error, sourcePath)) {
+      throw error;
+    }
     // Fall back to built output when source import is unavailable.
   }
 
@@ -88,6 +91,16 @@ export async function loadPackageExport<T>(
     throw new Error(`${exportName} export not found in ${sourcePath} or ${distPath}`);
   }
   return mod[exportName as keyof typeof mod] as T;
+}
+
+function isModuleUnavailableError(error: unknown, sourcePath: string): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message ?? "";
+  return (
+    message.includes("Cannot find module") ||
+    message.includes("ERR_MODULE_NOT_FOUND") ||
+    message.includes(sourcePath)
+  );
 }
 
 export async function loadConnect(): Promise<(opts?: {

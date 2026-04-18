@@ -108,6 +108,25 @@ const ETF_FLOWS_DOSSIER: ResearchFamilyDossier = {
   ],
 };
 
+const VIX_CREDIT_DOSSIER: ResearchFamilyDossier = {
+  family: "vix-credit",
+  baseline: [
+    "An elevated VIX level is context, not a complete stress thesis by itself.",
+    "One volatility spike is not automatically a recession or credit event.",
+    "The Treasury bill/note spread is a short-rate backdrop signal, not a literal corporate credit spread.",
+  ],
+  focus: [
+    "Focus on whether volatility is repricing faster than the rates backdrop would justify, or whether the rates backdrop is already signaling stress that volatility still understates.",
+    "Use the VIX close, session change, intraday range, and bill-vs-note rate spread together instead of narrating any one number in isolation.",
+    "Explain whether the latest tape implies real stress, fading panic, or a gap between macro fear pricing and the rates backdrop.",
+  ],
+  falseInferenceGuards: [
+    "Do not claim that a high VIX level by itself guarantees a crash or recession.",
+    "Do not describe the bill/note spread as if it were a corporate credit spread.",
+    "Do not treat one VIX session move as a regime shift without explaining the rates backdrop or the size of the move.",
+  ],
+};
+
 export function buildResearchBrief(
   opportunity: ResearchOpportunity,
   evidenceSummary: ResearchEvidenceSummary,
@@ -129,6 +148,10 @@ export function buildResearchBrief(
 
   if (opportunity.sourceProfile.family === "etf-flows") {
     return buildEtfFlowsBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  }
+
+  if (opportunity.sourceProfile.family === "vix-credit") {
+    return buildVixCreditBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
   }
 
   return {
@@ -176,6 +199,39 @@ function buildEtfFlowsBrief(
     anomalySummary: `ETF holdings sit around ${totalHoldingsBtc ?? "an unresolved total"} BTC, aggregate flow is ${netFlowDirection ?? "unclear"}${netFlowBtc ? ` at ${netFlowBtc} BTC` : ""}, issuer breadth reads ${breadthSummary || "unclear"}, and ${concentrationSummary}.`,
     allowedThesisSpace: "Write about broad institutional demand only if the aggregate flow, issuer breadth, and leadership all point in the same direction. Otherwise, frame the tape as concentrated, mixed, or weakening demand.",
     invalidationFocus: "Invalidate with a flip in net flow, a collapse in breadth, or a reversal in the issuer that is currently leading the tape.",
+  };
+}
+
+function buildVixCreditBrief(
+  dossier: ResearchFamilyDossier,
+  evidenceSummary: ResearchEvidenceSummary,
+  supportingEvidenceSummaries: ResearchEvidenceSummary[],
+): ResearchBrief {
+  const vixClose = findMetric("vixClose", evidenceSummary, supportingEvidenceSummaries);
+  const vixPreviousClose = findMetric("vixPreviousClose", evidenceSummary, supportingEvidenceSummaries);
+  const vixSessionChangePct = findMetric("vixSessionChangePct", evidenceSummary, supportingEvidenceSummaries);
+  const vixIntradayRange = findMetric("vixIntradayRange", evidenceSummary, supportingEvidenceSummaries);
+  const billRate = findMetric("treasuryBillsAvgRatePct", evidenceSummary, supportingEvidenceSummaries);
+  const noteRate = findMetric("treasuryNotesAvgRatePct", evidenceSummary, supportingEvidenceSummaries);
+  const billNoteSpreadBps = findMetric("billNoteSpreadBps", evidenceSummary, supportingEvidenceSummaries);
+
+  const spreadValue = parseMetric(billNoteSpreadBps);
+  const spreadRead = spreadValue == null
+    ? "the short-rate backdrop is unresolved"
+    : spreadValue > 0
+      ? `the bill/note curve is still inverted by ${billNoteSpreadBps} bps`
+      : spreadValue < 0
+        ? `notes are yielding above bills by ${Math.abs(spreadValue).toFixed(2)} bps`
+        : "the bill/note curve is effectively flat";
+
+  return {
+    family: "vix-credit",
+    baselineContext: dossier.baseline,
+    focusNow: dossier.focus,
+    falseInferenceGuards: dossier.falseInferenceGuards,
+    anomalySummary: `VIX closed${vixClose ? ` at ${vixClose}` : ""}${vixPreviousClose ? ` versus ${vixPreviousClose} prior` : ""}${vixSessionChangePct ? `, a ${vixSessionChangePct}% session move` : ""}${vixIntradayRange ? ` with a ${vixIntradayRange}-point intraday range` : ""}, while ${spreadRead}${billRate && noteRate ? ` (${billRate}% bills vs ${noteRate}% notes)` : ""}.`,
+    allowedThesisSpace: "Write about whether volatility is outrunning, matching, or lagging the short-rate stress backdrop. Keep the thesis on fear repricing versus macro backdrop, not on generic crash language.",
+    invalidationFocus: "Invalidate with a fast mean reversion in VIX, a collapse in the intraday stress signal, or a rates backdrop that stops supporting the stress interpretation.",
   };
 }
 
@@ -281,6 +337,10 @@ function dossierForFamily(family: ResearchTopicFamily): ResearchFamilyDossier {
 
   if (family === "spot-momentum") {
     return SPOT_MOMENTUM_DOSSIER;
+  }
+
+  if (family === "vix-credit") {
+    return VIX_CREDIT_DOSSIER;
   }
 
   if (family === "stablecoin-supply") {

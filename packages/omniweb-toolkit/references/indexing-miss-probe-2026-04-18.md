@@ -1,9 +1,14 @@
+---
+summary: "Raw-SDK and readback comparison between one indexed research publish and three missing publishes to isolate whether April 18 indexing failures are local-pipeline or systemic."
+read_when: ["indexing miss probe", "raw sdk divergence", "missing post_detail", "research publish missing", "block-range indexing gap"]
+---
+
 # Indexing Miss Probe — 2026-04-18
 
 This probe compared one known indexed research publish against three known missing research publishes at the raw SDK, authenticated `post_detail`, and feed readback layers.
 
 Probe script:
-- [check-indexing-miss-probe.ts](/home/mj/projects/demos-agents/tx-format-probe/packages/omniweb-toolkit/scripts/check-indexing-miss-probe.ts)
+- [check-indexing-miss-probe.ts](../scripts/check-indexing-miss-probe.ts)
 
 Primary output artifact:
 - `/tmp/indexing-miss-probe.json`

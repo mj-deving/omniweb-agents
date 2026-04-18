@@ -36,6 +36,17 @@ export interface FetchResearchEvidenceSummaryOptions {
   maxValues?: number;
 }
 
+type ResearchEvidenceSourceKind =
+  | "binance-premium-index"
+  | "binance-open-interest"
+  | "coingecko-market-chart"
+  | "coingecko-simple-price"
+  | "btcetfdata-current"
+  | "defillama-stablecoins"
+  | "treasury-interest-rates"
+  | "cboe-vix-history"
+  | "generic";
+
 export async function fetchResearchEvidenceSummary(
   opts: FetchResearchEvidenceSummaryOptions,
 ): Promise<FetchResearchEvidenceSummaryResult> {
@@ -61,9 +72,11 @@ export async function fetchResearchEvidenceSummary(
 
     const contentType = response.headers.get("content-type") ?? "";
     const rawText = await response.text();
-    const payload = parseResearchEvidencePayload(opts.source.url, contentType, rawText);
+    const sourceKind = classifyResearchEvidenceSource(opts.source);
+    const payload = parseResearchEvidencePayload(opts.source, sourceKind, contentType, rawText);
     const values = extractResearchEvidenceValues(
-      opts.source.url,
+      opts.source,
+      sourceKind,
       payload,
       opts.maxValues ?? DEFAULT_MAX_VALUES,
       opts.topic,
@@ -84,7 +97,7 @@ export async function fetchResearchEvidenceSummary(
         url: opts.source.url,
         fetchedAt: new Date().toISOString(),
         values,
-        derivedMetrics: deriveResearchMetrics(opts.source.url, payload, values, opts.topic),
+        derivedMetrics: deriveResearchMetrics(opts.source, sourceKind, payload, values, opts.topic),
       },
     };
   } catch (error) {
@@ -100,68 +113,69 @@ export async function fetchResearchEvidenceSummary(
 }
 
 function extractResearchEvidenceValues(
-  url: string,
+  source: MinimalAttestationCandidate,
+  sourceKind: ResearchEvidenceSourceKind,
   payload: unknown,
   maxValues: number,
   topic?: string,
 ): Record<string, string> {
-  if (isBinancePremiumIndexUrl(url)) {
+  if (sourceKind === "binance-premium-index") {
     const premiumValues = extractBinancePremiumValues(payload);
     if (Object.keys(premiumValues).length > 0) {
       return premiumValues;
     }
   }
 
-  if (isBinanceOpenInterestUrl(url)) {
+  if (sourceKind === "binance-open-interest") {
     const openInterestValues = extractBinanceOpenInterestValues(payload);
     if (Object.keys(openInterestValues).length > 0) {
       return openInterestValues;
     }
   }
 
-  if (isCoinGeckoMarketChartUrl(url)) {
+  if (sourceKind === "coingecko-market-chart") {
     const marketValues = extractCoinGeckoMarketChartValues(payload);
     if (Object.keys(marketValues).length > 0) {
       return marketValues;
     }
   }
 
-  if (isCoinGeckoSimplePriceUrl(url)) {
+  if (sourceKind === "coingecko-simple-price") {
     const simplePriceValues = extractCoinGeckoSimplePriceValues(payload);
     if (Object.keys(simplePriceValues).length > 0) {
       return simplePriceValues;
     }
   }
 
-  if (isBtcEtfDataCurrentUrl(url)) {
+  if (sourceKind === "btcetfdata-current") {
     const etfValues = extractBtcEtfFlowValues(payload);
     if (Object.keys(etfValues).length > 0) {
       return etfValues;
     }
   }
 
-  if (isDefiLlamaStablecoinsUrl(url)) {
+  if (sourceKind === "defillama-stablecoins") {
     const stablecoinValues = extractDefiLlamaStablecoinValues(payload, topic);
     if (Object.keys(stablecoinValues).length > 0) {
       return stablecoinValues;
     }
   }
 
-  if (isTreasuryRatesUrl(url)) {
+  if (sourceKind === "treasury-interest-rates") {
     const treasuryValues = extractTreasuryInterestRateValues(payload);
     if (Object.keys(treasuryValues).length > 0) {
       return treasuryValues;
     }
   }
 
-  if (isCboeVixUrl(url)) {
+  if (sourceKind === "cboe-vix-history") {
     const vixValues = extractVixCsvValues(payload);
     if (Object.keys(vixValues).length > 0) {
       return vixValues;
     }
   }
 
-  if (!isRecord(payload)) {
+  if (source.provider !== "generic" || !isRecord(payload)) {
     return {};
   }
 
@@ -439,44 +453,45 @@ function extractVixCsvValues(payload: unknown): Record<string, string> {
 }
 
 function deriveResearchMetrics(
-  url: string,
+  source: MinimalAttestationCandidate,
+  sourceKind: ResearchEvidenceSourceKind,
   payload: unknown,
   values: Record<string, string>,
   topic?: string,
 ): Record<string, string> {
-  if (isBinancePremiumIndexUrl(url)) {
+  if (sourceKind === "binance-premium-index") {
     return deriveBinancePremiumMetrics(values);
   }
 
-  if (isBinanceOpenInterestUrl(url)) {
+  if (sourceKind === "binance-open-interest") {
     return deriveBinanceOpenInterestMetrics(values);
   }
 
-  if (isCoinGeckoMarketChartUrl(url)) {
+  if (sourceKind === "coingecko-market-chart") {
     return deriveCoinGeckoMarketMetrics(values);
   }
 
-  if (isBtcEtfDataCurrentUrl(url)) {
+  if (sourceKind === "btcetfdata-current") {
     return deriveBtcEtfFlowMetrics(payload, values);
   }
 
-  if (isCoinGeckoSimplePriceUrl(url)) {
+  if (sourceKind === "coingecko-simple-price") {
     return deriveCoinGeckoSimplePriceMetrics(values);
   }
 
-  if (isDefiLlamaStablecoinsUrl(url)) {
+  if (sourceKind === "defillama-stablecoins") {
     return deriveStablecoinSupplyMetrics(values, topic);
   }
 
-  if (isTreasuryRatesUrl(url)) {
+  if (sourceKind === "treasury-interest-rates") {
     return deriveTreasuryRateMetrics(values);
   }
 
-  if (isCboeVixUrl(url)) {
+  if (sourceKind === "cboe-vix-history") {
     return deriveVixMetrics(values);
   }
 
-  if (isRecord(payload)) {
+  if (source.provider === "generic" && isRecord(payload)) {
     return {};
   }
 
@@ -566,12 +581,66 @@ function deriveVixMetrics(values: Record<string, string>): Record<string, string
   });
 }
 
-function parseResearchEvidencePayload(url: string, contentType: string, body: string): unknown {
-  if (isCboeVixUrl(url) || contentType.includes("text/csv")) {
+function parseResearchEvidencePayload(
+  source: MinimalAttestationCandidate,
+  sourceKind: ResearchEvidenceSourceKind,
+  contentType: string,
+  body: string,
+): unknown {
+  if (sourceKind === "cboe-vix-history" || source.responseFormat === "csv" || contentType.includes("text/csv")) {
     return parseCsv(body);
   }
 
   return JSON.parse(body) as unknown;
+}
+
+function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): ResearchEvidenceSourceKind {
+  const sourceId = source.sourceId.toLowerCase();
+  const provider = source.provider.toLowerCase();
+  const name = source.name.toLowerCase();
+
+  if (sourceId === "cboe-vix-daily" || provider === "cboe") {
+    return "cboe-vix-history";
+  }
+
+  if (sourceId === "treasury-interest-rates" || (provider === "treasury" && name.includes("rates"))) {
+    return "treasury-interest-rates";
+  }
+
+  if (sourceId === "defillama-stablecoins" || (provider === "defillama" && name.includes("stablecoins"))) {
+    return "defillama-stablecoins";
+  }
+
+  if (sourceId.startsWith("btcetfdata-current") || provider === "btcetfdata") {
+    return "btcetfdata-current";
+  }
+
+  if (sourceId === "coingecko-42ff8c85" || (provider === "coingecko" && name.includes("market"))) {
+    return "coingecko-market-chart";
+  }
+
+  if (sourceId === "coingecko-2a7ea372" || (provider === "coingecko" && name.includes("simple"))) {
+    return "coingecko-simple-price";
+  }
+
+  if (sourceId.startsWith("binance-futures-oi-") || (provider === "binance-futures" && name.includes("open-interest"))) {
+    return "binance-open-interest";
+  }
+
+  if (sourceId.startsWith("binance-futures-") || (provider === "binance-futures" && name.includes("premium"))) {
+    return "binance-premium-index";
+  }
+
+  // Compatibility fallback for feed-derived or older opaque candidates.
+  if (isCboeVixUrl(source.url)) return "cboe-vix-history";
+  if (isTreasuryRatesUrl(source.url)) return "treasury-interest-rates";
+  if (isDefiLlamaStablecoinsUrl(source.url)) return "defillama-stablecoins";
+  if (isBtcEtfDataCurrentUrl(source.url)) return "btcetfdata-current";
+  if (isCoinGeckoMarketChartUrl(source.url)) return "coingecko-market-chart";
+  if (isCoinGeckoSimplePriceUrl(source.url)) return "coingecko-simple-price";
+  if (isBinanceOpenInterestUrl(source.url)) return "binance-open-interest";
+  if (isBinancePremiumIndexUrl(source.url)) return "binance-premium-index";
+  return "generic";
 }
 
 function parseCsv(body: string): Array<Record<string, string>> {

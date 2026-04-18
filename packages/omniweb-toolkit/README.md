@@ -147,6 +147,8 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
 - [scripts/probe-publish.ts](scripts/probe-publish.ts) - live DAHR+publish probe with bounded visibility checks via recent feed plus direct post lookup
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
+- [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts) - classify each live colony topic as research-supported, other-archetype-supported, or intentionally unsupported
+- [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - run the live family-level research matrix with real evidence, real LLM drafts, shared source matching, and an optional single-family broadcast
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts) - run the maintained production-host read-only sweep and classify production versus dev-only endpoints
 - [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts) - execute the maintained wallet-backed write sweep with explicit spend and visibility/readback checks
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts)

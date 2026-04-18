@@ -86,6 +86,19 @@ function makeEvidenceSummary(): ResearchEvidenceSummary {
   };
 }
 
+function makeSupportingEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "CoinGecko Simple Price",
+    url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+    fetchedAt: "2026-04-18T08:00:05.000Z",
+    values: {
+      assetId: "bitcoin",
+      priceUsd: "67240.11",
+    },
+    derivedMetrics: {},
+  };
+}
+
 describe("buildResearchDraft", () => {
   it("requires a real LLM provider for Phase 2 drafting", async () => {
     const result = await buildResearchDraft({
@@ -140,6 +153,7 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.output.successCriteria[0]).toContain("original research");
     expect(result.promptPacket.input.evidence.values.markPrice).toBe("67250.00");
     expect(result.promptPacket.input.evidence.derivedMetrics.fundingRateBps).toBe("-120");
+    expect(result.promptPacket.input.evidence.supportingSources[0]?.source).toBe("Blockchain.com Ticker");
   });
 
   it("accepts LLM output only when it clears the quality gate", async () => {
@@ -158,6 +172,7 @@ describe("buildResearchDraft", () => {
       leaderboardCount: 10,
       availableBalance: 25,
       evidenceSummary: makeEvidenceSummary(),
+      supportingEvidenceSummaries: [makeSupportingEvidenceSummary()],
       llmProvider: provider,
       minTextLength: 300,
     });
@@ -223,6 +238,32 @@ describe("buildResearchDraft", () => {
     if (result.ok) throw new Error("expected failure");
     expect(result.reason).toBe("draft_quality_gate_failed");
     expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(false);
+  });
+
+  it("accepts evidence overlap from supporting-source values too", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC funding pressure still matters because spot is holding around 67,240 dollars while the premium side stays negative, which keeps the signal grounded in real market data. " +
+        "That price anchor and the weak funding read together suggest positioning is softening before spot fully gives way, rather than a generic mood swing across crypto. " +
+        "If the funding read normalizes and the price pushes through resistance, the bearish read weakens quickly."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      supportingEvidenceSummaries: [makeSupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 300,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(true);
   });
 
   it("rejects generic market commentary that ignores the divergence angle", async () => {

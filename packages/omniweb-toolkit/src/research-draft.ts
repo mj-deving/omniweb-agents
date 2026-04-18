@@ -20,6 +20,7 @@ export interface BuildResearchDraftOptions {
   leaderboardCount: number;
   availableBalance: number;
   evidenceSummary: ResearchEvidenceSummary;
+  supportingEvidenceSummaries?: ResearchEvidenceSummary[];
   llmProvider?: PromptCapableProvider | null;
   minTextLength?: number;
 }
@@ -41,7 +42,13 @@ export interface ResearchPromptInput {
     fetchedAt: string;
     values: Record<string, string>;
     derivedMetrics: Record<string, string>;
-    supportingSourceNames: string[];
+    supportingSources: Array<{
+      source: string;
+      url: string;
+      fetchedAt: string;
+      values: Record<string, string>;
+      derivedMetrics: Record<string, string>;
+    }>;
   };
 }
 
@@ -133,7 +140,13 @@ export async function buildResearchDraft(
   const promptPacket = buildResearchPromptPacket(opts);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
   const llmText = await generateViaProvider(opts.llmProvider, promptPacket);
-  const emptyQualityGate = checkResearchDraftQuality("", minTextLength, opts.opportunity, opts.evidenceSummary);
+  const emptyQualityGate = checkResearchDraftQuality(
+    "",
+    minTextLength,
+    opts.opportunity,
+    opts.evidenceSummary,
+    opts.supportingEvidenceSummaries ?? [],
+  );
 
   if (!llmText) {
     return {
@@ -145,7 +158,13 @@ export async function buildResearchDraft(
     };
   }
 
-  const preferredGate = checkResearchDraftQuality(llmText, minTextLength, opts.opportunity, opts.evidenceSummary);
+  const preferredGate = checkResearchDraftQuality(
+    llmText,
+    minTextLength,
+    opts.opportunity,
+    opts.evidenceSummary,
+    opts.supportingEvidenceSummaries ?? [],
+  );
   if (preferredGate.pass) {
     return {
       ok: true,
@@ -174,6 +193,7 @@ export async function buildResearchDraft(
 function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPromptPacket {
   const primarySource = opts.opportunity.attestationPlan.primary?.name ?? null;
   const supportingSources = opts.opportunity.attestationPlan.supporting.map((candidate) => candidate.name);
+  const supportingEvidenceSummaries = opts.supportingEvidenceSummaries ?? [];
   const analysisAngle = buildResearchAnalysisAngle(opts.opportunity);
 
   return {
@@ -206,7 +226,21 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
         fetchedAt: opts.evidenceSummary.fetchedAt,
         values: opts.evidenceSummary.values,
         derivedMetrics: opts.evidenceSummary.derivedMetrics,
-        supportingSourceNames: supportingSources,
+        supportingSources: supportingEvidenceSummaries.length > 0
+          ? supportingEvidenceSummaries.map((summary) => ({
+            source: summary.source,
+            url: summary.url,
+            fetchedAt: summary.fetchedAt,
+            values: summary.values,
+            derivedMetrics: summary.derivedMetrics,
+          }))
+          : supportingSources.map((source) => ({
+            source,
+            url: "",
+            fetchedAt: "",
+            values: {},
+            derivedMetrics: {},
+          })),
       },
     },
     instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Center the post on the stated analysis angle instead of generic market color.",
@@ -289,13 +323,14 @@ function checkResearchDraftQuality(
   minTextLength: number,
   opportunity: ResearchOpportunity,
   evidenceSummary: ResearchEvidenceSummary,
+  supportingEvidenceSummaries: ResearchEvidenceSummary[] = [],
 ): QualityGateResult {
   const base = checkPublishQuality(
     { text, category: "ANALYSIS" },
     { minTextLength },
   );
   const leak = findResearchMetaLeak(text);
-  const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary);
+  const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary, supportingEvidenceSummaries);
   const contextualGrounding = checkContextualGrounding(text, opportunity);
   const styleLeak = findResearchStyleProblem(text);
   const checks = [
@@ -384,6 +419,10 @@ function buildResearchAnalysisAngle(opportunity: ResearchOpportunity): string {
     return "Explain what the latest ETF flow and holdings data implies about institutional demand, and what would mark that demand as weakening.";
   }
 
+  if (topic.includes("stablecoin") || topic.includes("usdt") || topic.includes("usdc") || topic.includes("peg")) {
+    return "Explain what the latest stablecoin supply and peg evidence says about liquidity or reserve stress, and what would weaken that interpretation.";
+  }
+
   if (opportunity.kind === "contradiction") {
     return "Synthesize the conflicting takes into one clear thesis and state which evidence would settle the disagreement.";
   }
@@ -453,10 +492,12 @@ function describeSignalRead(opportunity: ResearchOpportunity): string {
 function checkEvidenceValueOverlap(
   text: string,
   evidenceSummary: ResearchEvidenceSummary,
+  supportingEvidenceSummaries: ResearchEvidenceSummary[] = [],
 ): { pass: boolean; detail: string } {
   const draftNumbers = extractNumericValues(text);
-  const evidenceNumbers = Object.values(evidenceSummary.values)
-    .concat(Object.values(evidenceSummary.derivedMetrics))
+  const allEvidence = [evidenceSummary, ...supportingEvidenceSummaries];
+  const evidenceNumbers = allEvidence
+    .flatMap((summary) => Object.values(summary.values).concat(Object.values(summary.derivedMetrics)))
     .flatMap((value) => extractNumericValues(value));
 
   if (evidenceNumbers.length === 0) {

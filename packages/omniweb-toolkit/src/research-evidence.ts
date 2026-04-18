@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from "../../../src/toolkit/network/fetch-with-timeout.js";
+import { inferAssetAlias } from "../../../src/toolkit/chain/asset-helpers.js";
 import type { MinimalAttestationCandidate } from "./minimal-attestation-plan.js";
 
 const DEFAULT_RESEARCH_EVIDENCE_TIMEOUT_MS = 10_000;
@@ -30,6 +31,7 @@ export type FetchResearchEvidenceSummaryResult =
 
 export interface FetchResearchEvidenceSummaryOptions {
   source: MinimalAttestationCandidate;
+  topic?: string;
   timeoutMs?: number;
   maxValues?: number;
 }
@@ -57,8 +59,15 @@ export async function fetchResearchEvidenceSummary(
       };
     }
 
-    const payload = await response.json() as unknown;
-    const values = extractResearchEvidenceValues(opts.source.url, payload, opts.maxValues ?? DEFAULT_MAX_VALUES);
+    const contentType = response.headers.get("content-type") ?? "";
+    const rawText = await response.text();
+    const payload = parseResearchEvidencePayload(opts.source.url, contentType, rawText);
+    const values = extractResearchEvidenceValues(
+      opts.source.url,
+      payload,
+      opts.maxValues ?? DEFAULT_MAX_VALUES,
+      opts.topic,
+    );
 
     if (Object.keys(values).length === 0) {
       return {
@@ -75,7 +84,7 @@ export async function fetchResearchEvidenceSummary(
         url: opts.source.url,
         fetchedAt: new Date().toISOString(),
         values,
-        derivedMetrics: deriveResearchMetrics(opts.source.url, payload, values),
+        derivedMetrics: deriveResearchMetrics(opts.source.url, payload, values, opts.topic),
       },
     };
   } catch (error) {
@@ -94,6 +103,7 @@ function extractResearchEvidenceValues(
   url: string,
   payload: unknown,
   maxValues: number,
+  topic?: string,
 ): Record<string, string> {
   if (isBinancePremiumIndexUrl(url)) {
     const premiumValues = extractBinancePremiumValues(payload);
@@ -116,10 +126,38 @@ function extractResearchEvidenceValues(
     }
   }
 
+  if (isCoinGeckoSimplePriceUrl(url)) {
+    const simplePriceValues = extractCoinGeckoSimplePriceValues(payload);
+    if (Object.keys(simplePriceValues).length > 0) {
+      return simplePriceValues;
+    }
+  }
+
   if (isBtcEtfDataCurrentUrl(url)) {
     const etfValues = extractBtcEtfFlowValues(payload);
     if (Object.keys(etfValues).length > 0) {
       return etfValues;
+    }
+  }
+
+  if (isDefiLlamaStablecoinsUrl(url)) {
+    const stablecoinValues = extractDefiLlamaStablecoinValues(payload, topic);
+    if (Object.keys(stablecoinValues).length > 0) {
+      return stablecoinValues;
+    }
+  }
+
+  if (isTreasuryRatesUrl(url)) {
+    const treasuryValues = extractTreasuryInterestRateValues(payload);
+    if (Object.keys(treasuryValues).length > 0) {
+      return treasuryValues;
+    }
+  }
+
+  if (isCboeVixUrl(url)) {
+    const vixValues = extractVixCsvValues(payload);
+    if (Object.keys(vixValues).length > 0) {
+      return vixValues;
     }
   }
 
@@ -165,11 +203,47 @@ function isCoinGeckoMarketChartUrl(url: string): boolean {
   }
 }
 
+function isCoinGeckoSimplePriceUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "api.coingecko.com" && parsed.pathname.includes("/simple/price");
+  } catch {
+    return false;
+  }
+}
+
 function isBtcEtfDataCurrentUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     return (parsed.hostname === "www.btcetfdata.com" || parsed.hostname === "btcetfdata.com")
       && parsed.pathname === "/v1/current.json";
+  } catch {
+    return false;
+  }
+}
+
+function isDefiLlamaStablecoinsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "stablecoins.llama.fi" && parsed.pathname === "/stablecoins";
+  } catch {
+    return false;
+  }
+}
+
+function isTreasuryRatesUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "api.fiscaldata.treasury.gov" && parsed.pathname.includes("/avg_interest_rates");
+  } catch {
+    return false;
+  }
+}
+
+function isCboeVixUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "cdn.cboe.com" && parsed.pathname.endsWith("/VIX_History.csv");
   } catch {
     return false;
   }
@@ -243,6 +317,27 @@ function extractCoinGeckoMarketChartValues(payload: unknown): Record<string, str
   return Object.fromEntries(values.filter((entry): entry is [string, string] => entry[1] != null));
 }
 
+function extractCoinGeckoSimplePriceValues(payload: unknown): Record<string, string> {
+  if (!isRecord(payload)) {
+    return {};
+  }
+
+  const [assetId, quoteMap] = Object.entries(payload)[0] ?? [];
+  if (typeof assetId !== "string" || !isRecord(quoteMap)) {
+    return {};
+  }
+
+  const usd = normalizeScalarValue(quoteMap.usd);
+  if (!usd) {
+    return {};
+  }
+
+  return {
+    assetId,
+    priceUsd: usd,
+  };
+}
+
 function extractBtcEtfFlowValues(payload: unknown): Record<string, string> {
   if (!isRecord(payload) || !isRecord(payload.data)) {
     return {};
@@ -280,10 +375,74 @@ function extractBtcEtfFlowValues(payload: unknown): Record<string, string> {
   });
 }
 
+function extractDefiLlamaStablecoinValues(payload: unknown, topic?: string): Record<string, string> {
+  if (!isRecord(payload) || !Array.isArray(payload.peggedAssets)) {
+    return {};
+  }
+
+  const targetSymbol = inferAssetAlias(topic ?? "")?.symbol ?? null;
+  const assets = payload.peggedAssets.filter(isRecord);
+  const matching = targetSymbol
+    ? assets.find((entry) => typeof entry.symbol === "string" && entry.symbol.toUpperCase() === targetSymbol)
+    : assets[0];
+
+  if (!matching) {
+    return {};
+  }
+
+  return compactMetrics({
+    assetSymbol: typeof matching.symbol === "string" ? matching.symbol.toUpperCase() : null,
+    circulatingUsd: formatNestedMetric(matching.circulating),
+    circulatingPrevDayUsd: formatNestedMetric(matching.circulatingPrevDay),
+    circulatingPrevWeekUsd: formatNestedMetric(matching.circulatingPrevWeek),
+    circulatingPrevMonthUsd: formatNestedMetric(matching.circulatingPrevMonth),
+  });
+}
+
+function extractTreasuryInterestRateValues(payload: unknown): Record<string, string> {
+  if (!isRecord(payload) || !Array.isArray(payload.data)) {
+    return {};
+  }
+
+  const rows = payload.data.filter(isRecord);
+  const marketable = rows.find((entry) => entry.security_type_desc === "Marketable");
+  const bills = rows.find((entry) => entry.security_desc === "Treasury Bills");
+  const notes = rows.find((entry) => entry.security_desc === "Treasury Notes");
+
+  return compactMetrics({
+    marketableAvgRatePct: normalizeScalarValue(marketable?.avg_interest_rate_amt),
+    treasuryBillsAvgRatePct: normalizeScalarValue(bills?.avg_interest_rate_amt),
+    treasuryNotesAvgRatePct: normalizeScalarValue(notes?.avg_interest_rate_amt),
+    recordDate: typeof marketable?.record_date === "string" ? marketable.record_date : null,
+  });
+}
+
+function extractVixCsvValues(payload: unknown): Record<string, string> {
+  if (!Array.isArray(payload) || payload.length === 0) {
+    return {};
+  }
+
+  const latest = payload.at(-1);
+  const previous = payload.length > 1 ? payload.at(-2) : null;
+  if (!isRecord(latest)) {
+    return {};
+  }
+
+  return compactMetrics({
+    vixDate: typeof latest.DATE === "string" ? latest.DATE : null,
+    vixClose: normalizeScalarValue(latest.CLOSE),
+    vixOpen: normalizeScalarValue(latest.OPEN),
+    vixHigh: normalizeScalarValue(latest.HIGH),
+    vixLow: normalizeScalarValue(latest.LOW),
+    vixPreviousClose: previous && isRecord(previous) ? normalizeScalarValue(previous.CLOSE) : null,
+  });
+}
+
 function deriveResearchMetrics(
   url: string,
   payload: unknown,
   values: Record<string, string>,
+  topic?: string,
 ): Record<string, string> {
   if (isBinancePremiumIndexUrl(url)) {
     return deriveBinancePremiumMetrics(values);
@@ -299,6 +458,22 @@ function deriveResearchMetrics(
 
   if (isBtcEtfDataCurrentUrl(url)) {
     return deriveBtcEtfFlowMetrics(payload, values);
+  }
+
+  if (isCoinGeckoSimplePriceUrl(url)) {
+    return deriveCoinGeckoSimplePriceMetrics(values);
+  }
+
+  if (isDefiLlamaStablecoinsUrl(url)) {
+    return deriveStablecoinSupplyMetrics(values, topic);
+  }
+
+  if (isTreasuryRatesUrl(url)) {
+    return deriveTreasuryRateMetrics(values);
+  }
+
+  if (isCboeVixUrl(url)) {
+    return deriveVixMetrics(values);
   }
 
   if (isRecord(payload)) {
@@ -355,6 +530,73 @@ function deriveBtcEtfFlowMetrics(payload: unknown, values: Record<string, string
     largestOutflowTicker: largestOutflow?.ticker ?? null,
     netFlowDirection: deriveNetFlowDirection(values.netFlowBtc),
   });
+}
+
+function deriveCoinGeckoSimplePriceMetrics(values: Record<string, string>): Record<string, string> {
+  const price = parseNumber(values.priceUsd);
+  if (price == null) {
+    return {};
+  }
+
+  const pegDeviation = Math.abs(price - 1) * 100;
+  return compactMetrics({
+    pegDeviationPct: String(Number(pegDeviation.toFixed(4))),
+  });
+}
+
+function deriveStablecoinSupplyMetrics(values: Record<string, string>, topic?: string): Record<string, string> {
+  return compactMetrics({
+    supplyChangePct1d: percentChange(values.circulatingUsd, values.circulatingPrevDayUsd),
+    supplyChangePct7d: percentChange(values.circulatingUsd, values.circulatingPrevWeekUsd),
+    supplyChangePct30d: percentChange(values.circulatingUsd, values.circulatingPrevMonthUsd),
+    stablecoinFocus: inferAssetAlias(topic ?? "")?.symbol ?? values.assetSymbol ?? null,
+  });
+}
+
+function deriveTreasuryRateMetrics(values: Record<string, string>): Record<string, string> {
+  return compactMetrics({
+    billNoteSpreadBps: basisPointSpread(values.treasuryBillsAvgRatePct, values.treasuryNotesAvgRatePct),
+  });
+}
+
+function deriveVixMetrics(values: Record<string, string>): Record<string, string> {
+  return compactMetrics({
+    vixSessionChangePct: percentChange(values.vixClose, values.vixPreviousClose),
+    vixIntradayRange: subtractValues(values.vixHigh, values.vixLow),
+  });
+}
+
+function parseResearchEvidencePayload(url: string, contentType: string, body: string): unknown {
+  if (isCboeVixUrl(url) || contentType.includes("text/csv")) {
+    return parseCsv(body);
+  }
+
+  return JSON.parse(body) as unknown;
+}
+
+function parseCsv(body: string): Array<Record<string, string>> {
+  const lines = body.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  const [header, ...rows] = lines;
+  if (!header) {
+    return [];
+  }
+
+  const columns = header.split(",").map((value) => value.trim());
+  return rows.map((row) => {
+    const values = row.split(",").map((value) => value.trim());
+    return Object.fromEntries(columns.map((column, index) => [column, values[index] ?? ""]));
+  });
+}
+
+function formatNestedMetric(value: unknown): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const peggedUsd = value.peggedUSD;
+  return typeof peggedUsd === "number" && Number.isFinite(peggedUsd)
+    ? String(Number(peggedUsd.toFixed(2)))
+    : null;
 }
 
 function normalizeScalarValue(value: unknown): string | null {
@@ -433,6 +675,24 @@ function subtractValues(left: string | undefined, right: string | undefined): st
   const b = parseNumber(right);
   if (a == null || b == null) return null;
   return String(Number((a - b).toFixed(2)));
+}
+
+function percentChange(currentValue: string | undefined, previousValue: string | undefined): string | null {
+  const current = parseNumber(currentValue);
+  const previous = parseNumber(previousValue);
+  if (current == null || previous == null || previous === 0) {
+    return null;
+  }
+  return String(Number((((current - previous) / previous) * 100).toFixed(2)));
+}
+
+function basisPointSpread(left: string | undefined, right: string | undefined): string | null {
+  const a = parseNumber(left);
+  const b = parseNumber(right);
+  if (a == null || b == null) {
+    return null;
+  }
+  return String(Number(((a - b) * 100).toFixed(2)));
 }
 
 function compactMetrics(metrics: Record<string, string | null>): Record<string, string> {

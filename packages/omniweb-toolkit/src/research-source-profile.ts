@@ -5,6 +5,7 @@ export type ResearchTopicFamily =
   | "etf-flows"
   | "spot-momentum"
   | "network-activity"
+  | "stablecoin-supply"
   | "unsupported";
 
 export interface ResearchSourceProfile {
@@ -64,6 +65,17 @@ const ETF_TERMS = [
   "custody",
 ];
 
+const STABLECOIN_TERMS = [
+  "stablecoin",
+  "supply",
+  "mint",
+  "redemption",
+  "depeg",
+  "peg",
+  "inflation",
+  "ath",
+];
+
 const PRICE_TICKER_SOURCE_IDS: Partial<Record<string, string>> = {
   BTC: "binance-24hr-btc",
 };
@@ -83,6 +95,13 @@ const NETWORK_SOURCE_IDS: Partial<Record<string, string[]>> = {
   ETH: ["blockchair-eth-stats", "coingecko-2a7ea372"],
   SOL: ["blockchair-solana", "coingecko-2a7ea372"],
 };
+
+function stablecoinSourceIdsFor(symbol: string): string[] {
+  if (symbol === "USDT" || symbol === "USDC") {
+    return ["defillama-stablecoins", "coingecko-2a7ea372"];
+  }
+  return [];
+}
 
 export function deriveResearchSourceProfile(topic: string): ResearchSourceProfile {
   const normalized = topic.trim().toLowerCase();
@@ -146,6 +165,29 @@ export function deriveResearchSourceProfile(topic: string): ResearchSourceProfil
     };
   }
 
+  if (asset && containsAny(normalized, STABLECOIN_TERMS)) {
+    const ids = stablecoinSourceIdsFor(asset.symbol);
+    if (ids.length === 0) {
+      return unsupportedProfile(topic, asset, "no_family_sources_for_asset");
+    }
+    return {
+      family: "stablecoin-supply",
+      topic,
+      asset,
+      supported: true,
+      reason: null,
+      primarySourceIds: ids.slice(0, 1),
+      supportingSourceIds: ids.slice(1),
+      expectedMetrics: [
+        "circulatingUsd",
+        "circulatingPrevDayUsd",
+        "circulatingPrevWeekUsd",
+        "priceUsd",
+        "supplyChangePct7d",
+      ],
+    };
+  }
+
   if (asset && containsAny(normalized, SPOT_TERMS)) {
     const ids = ["coingecko-42ff8c85", "coingecko-2a7ea372"];
     const ticker = PRICE_TICKER_SOURCE_IDS[asset.symbol];
@@ -183,5 +225,10 @@ function unsupportedProfile(
 }
 
 function containsAny(text: string, terms: string[]): boolean {
-  return terms.some((term) => text.includes(term));
+  return terms.some((term) => matchesTerm(text, term));
+}
+
+function matchesTerm(text: string, term: string): boolean {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  return new RegExp(`\\b${escaped}\\b`, "i").test(text);
 }

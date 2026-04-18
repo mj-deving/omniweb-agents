@@ -70,3 +70,59 @@ operations:
             jsonPath: "$.record_date"
         raw:
           mode: item
+
+  interest-rates:
+    when:
+      sourceAdapterOperation: [interest-rates]
+      urlPatterns: ["/avg_interest_rates"]
+    claimTypes: [metric]
+    extractionPath: "$.data[*]"
+    request:
+      method: GET
+      urlTemplate: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates"
+      query:
+        sort: "-record_date"
+        "page[size]": "5"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "treasury"
+        - "interest rates"
+        - "bills"
+        - "notes"
+        - "yield curve"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 32
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.data[*]"
+      fields:
+        id:
+          template: "treasury-rates-{record_date}-{security_desc}"
+          required: true
+        title:
+          template: "US Treasury {security_desc} average rate ({record_date})"
+        summary:
+          template: "{security_desc}: {avg_interest_rate_amt}%"
+        bodyText:
+          template: "US Treasury {security_desc} average interest rate on {record_date}: {avg_interest_rate_amt}%"
+        topics:
+          template: "economics,macro,treasury,rates,yield-curve"
+        metrics:
+          avg_interest_rate_amt:
+            jsonPath: "$.avg_interest_rate_amt"
+          security_desc:
+            jsonPath: "$.security_desc"
+          record_date:
+            jsonPath: "$.record_date"
+        raw:
+          mode: item

@@ -1,0 +1,72 @@
+schemaVersion: 1
+
+provider:
+  name: btcetfdata
+  displayName: BTC ETF Data
+  matches:
+    providers: [btcetfdata]
+    hosts: [www.btcetfdata.com, btcetfdata.com]
+  domains: [bitcoin, markets, finance]
+  rateLimit:
+    bucket: btcetfdata
+    maxPerMinute: 20
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  current-holdings:
+    when:
+      sourceAdapterOperation: [current-holdings]
+      urlPatterns: ["/v1/current.json"]
+      default: true
+    claimTypes: [metric]
+    extractionPath: "$.data"
+    request:
+      method: GET
+      urlTemplate: "https://www.btcetfdata.com/v1/current.json"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "bitcoin"
+        - "spot etf"
+        - "flows"
+        - "holdings"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: object-entries
+        jsonPath: "$.data"
+      fields:
+        id:
+          jsonPath: "$.ticker"
+          required: true
+        title:
+          template: "{ticker} ETF holdings"
+        summary:
+          template: "{ticker}: holdings {holdings}, change {change}"
+        bodyText:
+          template: "{ticker} ETF holdings: {holdings} BTC, daily change: {change} BTC"
+        topics:
+          template: "bitcoin,etf,flows,holdings"
+        metrics:
+          holdings:
+            jsonPath: "$.holdings"
+            default: 0
+          change:
+            jsonPath: "$.change"
+            default: 0
+        raw:
+          mode: item

@@ -1,0 +1,284 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fetchResearchEvidenceSummary } from "../../packages/omniweb-toolkit/src/research-evidence.js";
+import type { MinimalAttestationCandidate } from "../../packages/omniweb-toolkit/src/minimal-attestation-plan.js";
+
+const originalFetch = globalThis.fetch;
+
+function makeSource(url: string): MinimalAttestationCandidate {
+  return {
+    sourceId: "binance-btc-premium",
+    name: "Binance Futures Premium Index",
+    provider: "binance",
+    status: "active",
+    trustTier: "official",
+    responseFormat: "json",
+    ratingOverall: 88,
+    dahrSafe: true,
+    tlsnSafe: false,
+    url,
+    score: 17,
+  };
+}
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+  vi.restoreAllMocks();
+});
+
+describe("fetchResearchEvidenceSummary", () => {
+  it("extracts the key Binance premium index values", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          markPrice: "67250.00",
+          indexPrice: "67245.12",
+          lastFundingRate: "-0.012",
+          interestRate: "0.0001",
+          nextFundingTime: 123456789,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      markPrice: "67250.00",
+      indexPrice: "67245.12",
+      lastFundingRate: "-0.012",
+      interestRate: "0.0001",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      fundingRateBps: "-120",
+      markIndexSpreadUsd: "4.88",
+    });
+  });
+
+  it("falls back to generic numeric extraction for other JSON endpoints", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          bitcoin: 67250.12,
+          ethereum: 3200.55,
+          provider: "coingecko",
+          solana: "145.03",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      bitcoin: "67250.12",
+      ethereum: "3200.55",
+      solana: "145.03",
+    });
+    expect(result.summary.derivedMetrics).toEqual({});
+  });
+
+  it("extracts a simple peg price from the CoinGecko simple-price endpoint", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          tether: {
+            usd: 1.0004,
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd"),
+      topic: "USDT Supply ATH Stablecoin Inflation",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      assetId: "tether",
+      priceUsd: "1.0004",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      pegDeviationPct: "0.04",
+    });
+  });
+
+  it("extracts market-chart values and derived metrics for research spot momentum", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          prices: [
+            [1713427200000, 64000],
+            [1713513600000, 67250],
+          ],
+          total_volumes: [
+            [1713427200000, 22000000000],
+            [1713513600000, 31000000000],
+          ],
+          market_caps: [
+            [1713427200000, 1200000000000],
+            [1713513600000, 1260000000000],
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      currentPriceUsd: "67250",
+      startingPriceUsd: "64000",
+      high7d: "67250",
+      low7d: "64000",
+      latestVolumeUsd: "31000000000",
+      latestMarketCapUsd: "1260000000000",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      priceChangePercent7d: "5.08",
+      tradingRangeWidthUsd: "3250",
+    });
+  });
+
+  it("extracts ETF holdings and net-flow metrics from btcetfdata current JSON", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            IBIT: {
+              ticker: "IBIT",
+              dt: "2026-04-16",
+              holdings: 799151.0369,
+              change: 1088.1268,
+              note: null,
+              update_ts: "2026-04-17T12:00:02",
+              error: false,
+            },
+            FBTC: {
+              ticker: "FBTC",
+              dt: "2026-04-16",
+              holdings: 185536.41,
+              change: -478.92,
+              note: null,
+              update_ts: "2026-04-17T12:30:01",
+              error: false,
+            },
+            GBTC: {
+              ticker: "GBTC",
+              dt: "2026-04-17",
+              holdings: 152510.8761,
+              change: -301.9038,
+              note: null,
+              update_ts: "2026-04-17T21:30:01",
+              error: false,
+            },
+          },
+          batch_ts: "2026-04-18T07:00:02",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://www.btcetfdata.com/v1/current.json"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      totalHoldingsBtc: "1137198.32",
+      netFlowBtc: "307.3",
+      issuerCount: "3",
+      positiveIssuerCount: "1",
+      negativeIssuerCount: "2",
+      largestInflowBtc: "1088.13",
+      largestOutflowBtc: "-478.92",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      largestInflowTicker: "IBIT",
+      largestOutflowTicker: "FBTC",
+      netFlowDirection: "inflow",
+    });
+  });
+
+  it("extracts targeted stablecoin supply metrics from DefiLlama", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          peggedAssets: [
+            {
+              symbol: "USDT",
+              circulating: { peggedUSD: 186624595113.62906 },
+              circulatingPrevDay: { peggedUSD: 185821073382.75705 },
+              circulatingPrevWeek: { peggedUSD: 184294812347.6592 },
+              circulatingPrevMonth: { peggedUSD: 183336749243.18744 },
+            },
+            {
+              symbol: "USDC",
+              circulating: { peggedUSD: 78623991015.38954 },
+              circulatingPrevDay: { peggedUSD: 78780102398.10326 },
+              circulatingPrevWeek: { peggedUSD: 78765579195.09525 },
+              circulatingPrevMonth: { peggedUSD: 79400644158.13521 },
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://stablecoins.llama.fi/stablecoins?includePrices=true"),
+      topic: "USDT Supply ATH Stablecoin Inflation",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      assetSymbol: "USDT",
+      circulatingUsd: "186624595113.63",
+      circulatingPrevDayUsd: "185821073382.76",
+      circulatingPrevWeekUsd: "184294812347.66",
+      circulatingPrevMonthUsd: "183336749243.19",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      supplyChangePct1d: "0.43",
+      supplyChangePct7d: "1.26",
+      supplyChangePct30d: "1.79",
+      stablecoinFocus: "USDT",
+    });
+  });
+
+  it("fails when no usable numeric values are present", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: "ok",
+          provider: "example",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://example.com/data.json"),
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("no_usable_values");
+  });
+});

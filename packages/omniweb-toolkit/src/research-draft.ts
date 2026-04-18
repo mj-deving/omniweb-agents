@@ -1,6 +1,7 @@
 import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gate.js";
 import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
 import { renderColonyPromptPacket, type ColonyPromptPacket } from "./colony-prompt.js";
+import { buildResearchColonySubstrate, type ResearchColonySubstrate } from "./research-colony-substrate.js";
 import type { ResearchEvidenceSummary } from "./research-evidence.js";
 import { buildResearchBrief, type ResearchBrief } from "./research-family-dossiers.js";
 import type { ResearchOpportunity } from "./research-opportunities.js";
@@ -20,6 +21,7 @@ export interface BuildResearchDraftOptions {
   feedCount: number;
   leaderboardCount: number;
   availableBalance: number;
+  colonySubstrate?: ResearchColonySubstrate;
   evidenceSummary: ResearchEvidenceSummary;
   supportingEvidenceSummaries?: ResearchEvidenceSummary[];
   llmProvider?: PromptCapableProvider | null;
@@ -37,6 +39,12 @@ export interface ResearchPromptInput {
     situation: "fresh-topic" | "conflicting-takes" | "stale-coverage";
     contradictionSignals: string[];
     lastCoveredAt: string | null;
+    signalSummary: ResearchColonySubstrate["signalSummary"];
+    supportingTakes: ResearchColonySubstrate["supportingTakes"];
+    dissentingTake: ResearchColonySubstrate["dissentingTake"];
+    recentRelatedPosts: ResearchColonySubstrate["recentRelatedPosts"];
+    crossReferences: ResearchColonySubstrate["crossReferences"];
+    reactionSummary: ResearchColonySubstrate["reactionSummary"];
   };
   evidence: {
     primarySourceName: string | null;
@@ -272,6 +280,10 @@ export async function buildResearchDraft(
 }
 
 function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPromptPacket {
+  const colonySubstrate = opts.colonySubstrate ?? buildResearchColonySubstrate({
+    opportunity: opts.opportunity,
+    allPosts: opts.opportunity.matchingFeedPosts,
+  });
   const primarySource = opts.opportunity.attestationPlan.primary?.name ?? null;
   const supportingSources = opts.opportunity.attestationPlan.supporting.map((candidate) => candidate.name);
   const supportingEvidenceSummaries = opts.supportingEvidenceSummaries ?? [];
@@ -306,6 +318,12 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
         lastCoveredAt: opts.opportunity.lastSeenAt == null
           ? null
           : new Date(opts.opportunity.lastSeenAt).toISOString(),
+        signalSummary: colonySubstrate.signalSummary,
+        supportingTakes: colonySubstrate.supportingTakes,
+        dissentingTake: colonySubstrate.dissentingTake,
+        recentRelatedPosts: colonySubstrate.recentRelatedPosts,
+        crossReferences: colonySubstrate.crossReferences,
+        reactionSummary: colonySubstrate.reactionSummary,
       },
       evidence: {
         primarySourceName: primarySource,
@@ -330,12 +348,14 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
           })),
       },
     },
-    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Center the post on the stated analysis angle instead of generic market color.",
+    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. Center the post on the stated analysis angle instead of generic market color.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
       "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
+      "Use the colony substrate compactly: synthesize the signal summary, supporting takes, dissenting take, and recent related context into a readable thesis rather than quoting them mechanically.",
+      "If recent related context or dissent is present, use it to say what the colony has already noticed and what still remains unresolved.",
       "Use the analysis angle explicitly. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
       "Use the research brief as doctrine. Treat baseline context as background, anomaly summary as the reason this cycle matters, and false-inference guards as hard constraints.",
       "When describing colony sentiment, use natural phrases like 'the bearish read in colony signals', 'the bullish read', or 'mixed positioning' rather than clunky constructions.",

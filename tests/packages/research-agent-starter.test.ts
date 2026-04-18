@@ -27,8 +27,53 @@ function makeOmni(): any {
         data: [
           {
             shortTopic: "BTC Funding Rate Contrarian",
+            text: "Derivatives positioning looks more bearish than spot action currently justifies.",
             confidence: 76,
             direction: "bearish",
+            keyInsight: "Funding is rolling over while the colony still has mixed conviction on whether spot can absorb it.",
+            agentCount: 4,
+            totalAgents: 4,
+            tags: ["BTC", "funding", "sentiment"],
+            assets: ["BTC"],
+            sourcePostData: [
+              {
+                txHash: "0xsig1",
+                author: "0xagent1",
+                text: "Funding is rolling over while open interest stays elevated.",
+                cat: "ANALYSIS",
+                timestamp: Date.UTC(2026, 3, 17, 13, 0, 0),
+                confidence: 82,
+                reactions: { agree: 2, disagree: 0, flag: 0 },
+                dissents: false,
+              },
+              {
+                txHash: "0xsig2",
+                author: "0xagent2",
+                text: "Price still looks resilient enough that the bearish read may be early.",
+                cat: "ANALYSIS",
+                timestamp: Date.UTC(2026, 3, 17, 13, 15, 0),
+                confidence: 70,
+                reactions: { agree: 0, disagree: 1, flag: 0 },
+                dissents: true,
+              },
+            ],
+            crossReferences: [
+              {
+                type: "cross_asset",
+                description: "BTC positioning stress is also showing up in dollar-liquidity discussions.",
+                assets: ["BTC", "DXY"],
+              },
+            ],
+            reactionSummary: {
+              totalAgrees: 2,
+              totalDisagrees: 1,
+              totalFlags: 0,
+            },
+            divergence: {
+              agent: "0xagent2",
+              direction: "bullish",
+              reasoning: "Spot still looks resilient enough to absorb the derivatives pressure.",
+            },
           },
         ],
       }),
@@ -142,6 +187,12 @@ describe("research-agent starter", () => {
     expect(result.audit?.selectedEvidence).toHaveProperty("evidenceSummary");
     expect((result.audit?.selectedEvidence as { evidenceSummary?: { values?: Record<string, string> } }).evidenceSummary?.values?.lastFundingRate).toBe("-0.012");
     expect((result.audit?.selectedEvidence as { sourceProfile?: { family?: string } }).sourceProfile?.family).toBe("funding-structure");
+    expect((result.audit?.selectedEvidence as { colonySubstrate?: { signalSummary?: { keyInsight?: string | null } } }).colonySubstrate?.signalSummary?.keyInsight)
+      .toContain("Funding is rolling over");
+    expect((result.audit?.selectedEvidence as { colonySubstrate?: { supportingTakes?: Array<{ textSnippet: string }> } }).colonySubstrate?.supportingTakes?.[0]?.textSnippet)
+      .toContain("Funding is rolling over while open interest stays elevated");
+    expect((result.audit?.selectedEvidence as { colonySubstrate?: { dissentingTake?: { textSnippet: string } | null } }).colonySubstrate?.dissentingTake?.textSnippet)
+      .toContain("Price still looks resilient enough");
   });
 
   it("keeps working when the optional leaderboard read fails", async () => {

@@ -175,6 +175,41 @@ When more than one agent is active:
 
 If two tasks would touch the same files heavily, serialize them instead of racing.
 
+## Model Routing
+
+Use the stronger reasoning model by default for product, architecture, prompt, and strategy work.
+
+Use a fast-lane model only for bounded, low-ambiguity work with a clear verification path.
+
+Fast-lane equivalents:
+
+- Codex agents: `gpt-5.3-codex-spark`
+- Claude agents: Claude Sonnet
+
+Good fast-lane tasks:
+
+- first-pass PR scans
+- CI/log triage
+- changed-file skims
+- search-heavy codebase exploration
+- narrow deterministic fixes
+- summarizing review threads or unresolved comments
+
+Keep stronger models for:
+
+- architecture or repo-wide design
+- prompt or agent-strategy changes
+- ambiguous bugs or regressions
+- research-quality judgment
+- final merge decisions when findings are subtle
+
+Recommended pattern:
+
+1. use the fast-lane model for initial triage or a bounded mechanical patch
+2. escalate to the stronger model for ambiguous cases, integration, and final judgment
+
+Do not let a fast-lane model make the final call on product behavior, publish quality, or architectural tradeoffs without review by the stronger model.
+
 ## Validation Ladder
 
 Use the smallest relevant check first, then broader checks when justified.

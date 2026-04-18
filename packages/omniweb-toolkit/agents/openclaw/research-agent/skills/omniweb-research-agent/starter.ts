@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import {
+  buildResearchColonySubstrate,
   buildResearchDraft,
   fetchResearchEvidenceSummary,
   deriveResearchOpportunities,
@@ -7,6 +8,12 @@ import {
   runMinimalAgentLoop,
   type MinimalObserveContext,
   type MinimalObserveResult,
+  type ResearchPostInput,
+  type ResearchSignalInput,
+  type ResearchSignalCrossReference,
+  type ResearchSignalDivergence,
+  type ResearchSignalReactionSummary,
+  type ResearchSignalSourcePost,
 } from "omniweb-toolkit/agent";
 
 interface ResearchState {
@@ -31,13 +38,7 @@ interface ResearchState {
   }>;
 }
 
-interface FeedSample {
-  txHash: string | null;
-  category: string | null;
-  text: string;
-  author: string | null;
-  timestamp: number | null;
-}
+type FeedSample = ResearchPostInput;
 
 interface ReadResult<T> {
   ok: boolean;
@@ -60,6 +61,24 @@ function signalConfidence(signal: unknown): number | null {
   if (!signal || typeof signal !== "object") return null;
   const candidate = (signal as { confidence?: unknown }).confidence;
   return typeof candidate === "number" ? candidate : null;
+}
+
+function signalString(signal: unknown, key: string): string | null {
+  if (!signal || typeof signal !== "object") return null;
+  const candidate = (signal as Record<string, unknown>)[key];
+  return typeof candidate === "string" && candidate.length > 0 ? candidate : null;
+}
+
+function signalNumber(signal: unknown, key: string): number | null {
+  if (!signal || typeof signal !== "object") return null;
+  const candidate = (signal as Record<string, unknown>)[key];
+  return typeof candidate === "number" ? candidate : null;
+}
+
+function signalBoolean(signal: unknown, key: string): boolean | null {
+  if (!signal || typeof signal !== "object") return null;
+  const candidate = (signal as Record<string, unknown>)[key];
+  return typeof candidate === "boolean" ? candidate : null;
 }
 
 function postText(post: unknown): string {
@@ -89,6 +108,92 @@ function samplePost(post: unknown): FeedSample {
     text: postText(post),
     author: typeof (post as { author?: unknown }).author === "string" ? (post as { author: string }).author : null,
     timestamp: typeof (post as { timestamp?: unknown }).timestamp === "number" ? (post as { timestamp: number }).timestamp : null,
+    score: typeof (post as { score?: unknown }).score === "number" ? (post as { score: number }).score : null,
+  };
+}
+
+function sampleSignalSourcePost(post: unknown): ResearchSignalSourcePost | null {
+  if (!post || typeof post !== "object") return null;
+  const reactionsValue = (post as { reactions?: unknown }).reactions;
+  const reactions = reactionsValue && typeof reactionsValue === "object"
+    ? {
+        agree: typeof (reactionsValue as { agree?: unknown }).agree === "number" ? (reactionsValue as { agree: number }).agree : 0,
+        disagree: typeof (reactionsValue as { disagree?: unknown }).disagree === "number" ? (reactionsValue as { disagree: number }).disagree : 0,
+        flag: typeof (reactionsValue as { flag?: unknown }).flag === "number" ? (reactionsValue as { flag: number }).flag : 0,
+      }
+    : null;
+
+  const assetsValue = (post as { assets?: unknown }).assets;
+  return {
+    txHash: signalString(post, "txHash"),
+    author: signalString(post, "author"),
+    text: signalString(post, "text") ?? "",
+    category: signalString(post, "cat"),
+    timestamp: signalNumber(post, "timestamp"),
+    confidence: signalNumber(post, "confidence"),
+    assets: Array.isArray(assetsValue) ? assetsValue.filter((value): value is string => typeof value === "string") : [],
+    dissents: signalBoolean(post, "dissents") ?? false,
+    reactions,
+  };
+}
+
+function sampleSignalCrossReference(value: unknown): ResearchSignalCrossReference | null {
+  if (!value || typeof value !== "object") return null;
+  const assetsValue = (value as { assets?: unknown }).assets;
+  return {
+    type: signalString(value, "type") ?? "unknown",
+    description: signalString(value, "description") ?? "",
+    assets: Array.isArray(assetsValue) ? assetsValue.filter((entry): entry is string => typeof entry === "string") : [],
+  };
+}
+
+function sampleSignalReactionSummary(value: unknown): ResearchSignalReactionSummary | null {
+  if (!value || typeof value !== "object") return null;
+  return {
+    totalAgrees: signalNumber(value, "totalAgrees") ?? 0,
+    totalDisagrees: signalNumber(value, "totalDisagrees") ?? 0,
+    totalFlags: signalNumber(value, "totalFlags") ?? 0,
+  };
+}
+
+function sampleSignalDivergence(value: unknown): ResearchSignalDivergence | null {
+  if (!value || typeof value !== "object") return null;
+  return {
+    agent: signalString(value, "agent"),
+    direction: signalString(value, "direction"),
+    reasoning: signalString(value, "reasoning"),
+  };
+}
+
+function sampleSignal(signal: unknown): ResearchSignalInput {
+  const assetsValue = signal && typeof signal === "object" ? (signal as { assets?: unknown }).assets : null;
+  const tagsValue = signal && typeof signal === "object" ? (signal as { tags?: unknown }).tags : null;
+  const sourcePostsValue = signal && typeof signal === "object" ? (signal as { sourcePosts?: unknown }).sourcePosts : null;
+  const sourcePostDataValue = signal && typeof signal === "object" ? (signal as { sourcePostData?: unknown }).sourcePostData : null;
+  const crossReferencesValue = signal && typeof signal === "object" ? (signal as { crossReferences?: unknown }).crossReferences : null;
+
+  return {
+    topic: signalTopic(signal),
+    shortTopic: signalString(signal, "shortTopic"),
+    confidence: signalConfidence(signal),
+    direction: signalString(signal, "direction"),
+    text: signalString(signal, "text"),
+    keyInsight: signalString(signal, "keyInsight"),
+    consensus: signalBoolean(signal, "consensus"),
+    consensusScore: signalNumber(signal, "consensusScore"),
+    agentCount: signalNumber(signal, "agentCount"),
+    totalAgents: signalNumber(signal, "totalAgents"),
+    assets: Array.isArray(assetsValue) ? assetsValue.filter((value): value is string => typeof value === "string") : [],
+    tags: Array.isArray(tagsValue) ? tagsValue.filter((value): value is string => typeof value === "string") : [],
+    sourcePosts: Array.isArray(sourcePostsValue) ? sourcePostsValue.filter((value): value is string => typeof value === "string") : [],
+    sourcePostData: Array.isArray(sourcePostDataValue)
+      ? sourcePostDataValue.map(sampleSignalSourcePost).filter((value): value is ResearchSignalSourcePost => value != null)
+      : [],
+    crossReferences: Array.isArray(crossReferencesValue)
+      ? crossReferencesValue.map(sampleSignalCrossReference).filter((value): value is ResearchSignalCrossReference => value != null)
+      : [],
+    reactionSummary: sampleSignalReactionSummary(signal && typeof signal === "object" ? (signal as { reactionSummary?: unknown }).reactionSummary : null),
+    divergence: sampleSignalDivergence(signal && typeof signal === "object" ? (signal as { divergence?: unknown }).divergence : null),
   };
 }
 
@@ -134,16 +239,19 @@ export async function observe(
   const signalList = extractSignalList(signalsRead.data);
   const leaderboardAgents = extractLeaderboardAgents(leaderboardRead.data);
   const availableBalance = extractAvailableBalance(balanceRead.data);
-  const feedSample = posts.slice(0, 10).map(samplePost);
-  const signalSample = signalList.slice(0, 10).map((signal) => ({
-    topic: signalTopic(signal),
-    confidence: signalConfidence(signal),
-    direction:
-      signal && typeof signal === "object" && typeof (signal as { direction?: unknown }).direction === "string"
-        ? (signal as { direction: string }).direction
-        : null,
+  const feedSample = posts.slice(0, 10);
+  const signalEntries = signalList.map(sampleSignal);
+  const signalSample = signalEntries.slice(0, 10).map((signal) => ({
+    topic: signal.topic,
+    shortTopic: signal.shortTopic ?? null,
+    confidence: signal.confidence,
+    direction: signal.direction,
+    keyInsight: signal.keyInsight ?? null,
+    agentCount: signal.agentCount ?? null,
+    assets: signal.assets ?? [],
+    tags: signal.tags ?? [],
   }));
-  const highConfidenceSignals = signalSample.filter((signal) => (signal.confidence ?? 0) >= 70);
+  const highConfidenceSignals = signalEntries.filter((signal) => (signal.confidence ?? 0) >= 70);
 
   if (availableBalance < 10 || signalList.length === 0) {
     return {
@@ -171,8 +279,8 @@ export async function observe(
   }
 
   const opportunities = deriveResearchOpportunities({
-    signals: signalSample,
-    posts: feedSample,
+    signals: signalEntries,
+    posts,
     lastCoverageTopic: ctx.memory.state?.lastCoverageTopic ?? null,
     recentCoverageTopics: (ctx.memory.state?.topicHistory ?? []).map((entry) => entry.topic),
   });
@@ -225,14 +333,13 @@ export async function observe(
   }
 
   const matchingFeedPosts = chosenOpportunity.matchingFeedPosts;
-  const matchedSignal = {
-    topic: chosenOpportunity.matchedSignal.topic,
-    confidence: chosenOpportunity.matchedSignal.confidence,
-    direction: chosenOpportunity.matchedSignal.direction,
-    shortTopic: chosenOpportunity.matchedSignal.topic,
-  };
+  const matchedSignal = chosenOpportunity.matchedSignal;
   const attestationPlan = chosenOpportunity.attestationPlan;
   const sourceProfile = chosenOpportunity.sourceProfile;
+  const colonySubstrate = buildResearchColonySubstrate({
+    opportunity: chosenOpportunity,
+    allPosts: posts,
+  });
 
   if (!sourceProfile.supported) {
     return {
@@ -260,6 +367,7 @@ export async function observe(
           matchedSignal,
           feedMentions: matchingFeedPosts,
           sourceProfile,
+          colonySubstrate,
         },
         promptPacket: {
           objective: "Only prompt when the research topic maps to a supported evidence family with attestation-ready sources.",
@@ -304,6 +412,7 @@ export async function observe(
           matchedSignal,
           feedMentions: matchingFeedPosts,
           sourceProfile,
+          colonySubstrate,
         },
         promptPacket: {
           objective: "Only publish when the claim has a viable primary plus supporting attestation plan.",
@@ -384,6 +493,7 @@ export async function observe(
           matchedSignal,
           feedMentions: matchingFeedPosts,
           sourceProfile,
+          colonySubstrate,
           evidenceSummary: null,
           supportingEvidenceSummaries: [],
         },
@@ -439,6 +549,7 @@ export async function observe(
           matchedSignal,
           feedMentions: matchingFeedPosts,
           sourceProfile,
+          colonySubstrate,
           evidenceSummary: evidenceSummaryResult.summary,
           supportingEvidenceSummaries,
           evidenceDelta,
@@ -471,6 +582,7 @@ export async function observe(
     feedCount: posts.length,
     leaderboardCount: leaderboardAgents.length,
     availableBalance,
+    colonySubstrate,
     evidenceSummary: evidenceSummaryResult.summary,
     supportingEvidenceSummaries,
     llmProvider: ctx.omni.runtime.llmProvider,
@@ -503,6 +615,7 @@ export async function observe(
           matchedSignal,
           feedMentions: matchingFeedPosts,
           sourceProfile,
+          colonySubstrate,
           evidenceSummary: evidenceSummaryResult.summary,
           supportingEvidenceSummaries,
           evidenceDelta,
@@ -552,6 +665,7 @@ export async function observe(
           matchedSignal,
           feedMentions: matchingFeedPosts,
           sourceProfile,
+          colonySubstrate,
           evidenceSummary: evidenceSummaryResult.summary,
           supportingEvidenceSummaries,
           evidenceDelta,
@@ -598,6 +712,7 @@ export async function observe(
         matchedSignal,
         feedMentions: matchingFeedPosts,
         sourceProfile,
+        colonySubstrate,
         evidenceSummary: evidenceSummaryResult.summary,
         supportingEvidenceSummaries,
         evidenceDelta,
@@ -672,10 +787,10 @@ function describeReadStatus(result: ReadResult<unknown>): "ok" | string {
   return result.ok ? "ok" : result.error ?? "unavailable";
 }
 
-function extractFeedPosts(feed: unknown): unknown[] {
+function extractFeedPosts(feed: unknown): FeedSample[] {
   if (!feed || typeof feed !== "object") return [];
   const candidate = (feed as { data?: { posts?: unknown } }).data?.posts;
-  return Array.isArray(candidate) ? candidate : [];
+  return Array.isArray(candidate) ? candidate.map(samplePost) : [];
 }
 
 function extractSignalList(signals: unknown): unknown[] {

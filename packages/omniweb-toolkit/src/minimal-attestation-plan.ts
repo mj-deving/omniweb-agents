@@ -2,15 +2,16 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inferAssetAlias } from "../../../src/toolkit/chain/asset-helpers.js";
-import { extractTopicVars, fillUrlTemplate, unresolvedPlaceholders } from "../../../src/toolkit/chain/url-helpers.js";
 import {
   loadAgentSourceView,
   type AgentName,
   type SourceRecordV2,
-  tokenizeTopic,
 } from "../../../src/toolkit/sources/catalog.js";
-import { selectSourceForTopicV2, type SourceSelectionResult } from "../../../src/toolkit/sources/policy.js";
-import { getProviderAdapter } from "../../../src/lib/sources/providers/index.js";
+import {
+  selectSourceForTopicV2,
+  resolveSourceSelectionForSourceId,
+  type SourceSelectionResult,
+} from "../../../src/toolkit/sources/policy.js";
 
 export interface MinimalAttestationCandidate {
   sourceId: string;
@@ -254,61 +255,13 @@ function resolvePreferredCandidates(
     const source = sourceView.index.byId.get(sourceId);
     if (!source || source.dahr_safe !== true) continue;
 
-    const ranked = selectSourceForTopicV2(topic, sourceView, "DAHR", 10)
-      .find((candidate) => candidate.source.id === sourceId);
-    if (ranked) {
-      resolved.push(ranked);
-      continue;
-    }
-
-    // Generic/provider-adapter-backed sources may not match the raw topic tokens
-    // strongly enough to survive normal ranking. Resolve them directly instead.
-    const direct = resolveSourceSelection(topic, source);
+    const direct = resolveSourceSelectionForSourceId(topic, sourceView, sourceId, "DAHR");
     if (direct) {
       resolved.push(direct);
     }
   }
 
   return resolved;
-}
-
-function resolveSourceSelection(topic: string, source: SourceRecordV2): SourceSelectionResult | null {
-  const adapter = getDirectProviderAdapter(source);
-  if (adapter) {
-    const candidates = adapter.buildCandidates({
-      source,
-      topic,
-      tokens: Array.from(tokenizeTopic(topic)),
-      vars: extractTopicVars(topic),
-      attestation: "DAHR",
-      maxCandidates: 1,
-    });
-    const candidate = candidates[0];
-    if (!candidate) return null;
-    const validated = adapter.validateCandidate(candidate);
-    if (!validated.ok) return null;
-    return {
-      source,
-      url: validated.rewrittenUrl || candidate.url,
-      score: 100,
-      adapterCandidates: [{ ...candidate, url: validated.rewrittenUrl || candidate.url }],
-    };
-  }
-
-  const url = fillUrlTemplate(source.url, extractTopicVars(topic));
-  if (unresolvedPlaceholders(url).length > 0) return null;
-  return {
-    source,
-    url,
-    score: 100,
-  };
-}
-
-function getDirectProviderAdapter(source: SourceRecordV2) {
-  if (source.provider === "generic") return null;
-  const adapter = getProviderAdapter(source.provider);
-  if (!adapter || !adapter.supports(source)) return null;
-  return adapter;
 }
 
 function resolveCatalogPath(explicitPath?: string): string | null {

@@ -293,6 +293,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
   const analysisAngle = buildResearchAnalysisAngle(opts.opportunity);
   const brief = buildResearchBrief(
     opts.opportunity,
+    colonySubstrate,
     opts.evidenceSummary,
     supportingEvidenceSummaries,
   );
@@ -361,6 +362,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Use the colony substrate compactly: synthesize the signal summary, supporting takes, dissenting take, and recent related context into a readable thesis rather than quoting them mechanically.",
       "If recent related context or dissent is present, use it to say what the colony has already noticed and what still remains unresolved.",
       "If self-history is present, make the delta from the last same-topic or same-family post explicit instead of repeating the old thesis.",
+      "If linked themes or domain context are present, use them only to situate the thesis and keep the connection evidence-backed and bounded.",
       "Use the analysis angle explicitly. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
       "Use the research brief as doctrine. Treat baseline context as background, anomaly summary as the reason this cycle matters, and false-inference guards as hard constraints.",
       "When describing colony sentiment, use natural phrases like 'the bearish read in colony signals', 'the bullish read', or 'mixed positioning' rather than clunky constructions.",

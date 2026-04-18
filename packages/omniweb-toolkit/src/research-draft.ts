@@ -39,6 +39,7 @@ export interface ResearchPromptInput {
     primarySourceUrl: string;
     fetchedAt: string;
     values: Record<string, string>;
+    derivedMetrics: Record<string, string>;
     supportingSourceNames: string[];
   };
 }
@@ -166,6 +167,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
         primarySourceUrl: opts.evidenceSummary.url,
         fetchedAt: opts.evidenceSummary.fetchedAt,
         values: opts.evidenceSummary.values,
+        derivedMetrics: opts.evidenceSummary.derivedMetrics,
         supportingSourceNames: supportingSources,
       },
     },
@@ -174,7 +176,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
-      "Use the concrete evidence values in the packet; do not write a research post that never cites the fetched data.",
+      "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
       "Treat source names as evidence anchors, not as the subject of the prose.",
       "State one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
       "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
@@ -314,6 +316,7 @@ function checkEvidenceValueOverlap(
 ): { pass: boolean; detail: string } {
   const draftNumbers = extractNumericValues(text);
   const evidenceNumbers = Object.values(evidenceSummary.values)
+    .concat(Object.values(evidenceSummary.derivedMetrics))
     .flatMap((value) => extractNumericValues(value));
 
   if (evidenceNumbers.length === 0) {

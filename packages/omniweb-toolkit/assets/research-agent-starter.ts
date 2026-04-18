@@ -232,6 +232,7 @@ export async function observe(
     shortTopic: chosenOpportunity.matchedSignal.topic,
   };
   const attestationPlan = chosenOpportunity.attestationPlan;
+  const sourceProfile = chosenOpportunity.sourceProfile;
   const publishedAtMs = parseIsoMs(ctx.memory.state?.lastPublishedAt);
 
   if (publishedAtMs != null && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS) {
@@ -255,6 +256,7 @@ export async function observe(
         selectedEvidence: {
           matchedSignal,
           feedMentions: matchingFeedPosts,
+          sourceProfile,
         },
         promptPacket: {
           objective: "Skip repeated research publishes until the one-hour cooldown expires.",
@@ -270,12 +272,14 @@ export async function observe(
     };
   }
 
-  if (!attestationPlan.ready || !attestationPlan.primary) {
+  if (!sourceProfile.supported) {
     return {
       kind: "skip",
-      reason: "attestation_plan_not_ready",
+      reason: "research_family_not_ready",
       facts: {
         topic,
+        researchFamily: sourceProfile.family,
+        sourceProfileReason: sourceProfile.reason,
         signalCount: signalList.length,
         feedCount: posts.length,
         availableBalance,
@@ -293,11 +297,57 @@ export async function observe(
         selectedEvidence: {
           matchedSignal,
           feedMentions: matchingFeedPosts,
+          sourceProfile,
+        },
+        promptPacket: {
+          objective: "Only prompt when the research topic maps to a supported evidence family with attestation-ready sources.",
+          topic,
+          opportunityKind: chosenOpportunity.kind,
+          researchFamily: sourceProfile.family,
+          sourceProfileReason: sourceProfile.reason,
+          derivedMetrics,
+          readStatus,
+          result: "skip",
+        },
+        notes: [
+          ...attestationPlan.warnings,
+        ],
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
+
+  if (!attestationPlan.ready || !attestationPlan.primary) {
+    return {
+      kind: "skip",
+      reason: "attestation_plan_not_ready",
+      facts: {
+        topic,
+        researchFamily: sourceProfile.family,
+        signalCount: signalList.length,
+        feedCount: posts.length,
+        availableBalance,
+        opportunityKind: chosenOpportunity.kind,
+        ...derivedMetrics,
+        ...readStatus,
+      },
+      attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal,
+          feedMentions: matchingFeedPosts,
+          sourceProfile,
         },
         promptPacket: {
           objective: "Only publish when the claim has a viable primary plus supporting attestation plan.",
           topic,
           opportunityKind: chosenOpportunity.kind,
+          researchFamily: sourceProfile.family,
           derivedMetrics,
           readStatus,
           result: "skip",
@@ -319,6 +369,7 @@ export async function observe(
       reason: "evidence_summary_not_ready",
       facts: {
         topic,
+        researchFamily: sourceProfile.family,
         signalCount: signalList.length,
         feedCount: posts.length,
         availableBalance,
@@ -336,12 +387,14 @@ export async function observe(
         selectedEvidence: {
           matchedSignal,
           feedMentions: matchingFeedPosts,
+          sourceProfile,
           evidenceSummary: null,
         },
         promptPacket: {
           objective: "Only prompt from real fetched evidence, not just topic labels and source names.",
           topic,
           opportunityKind: chosenOpportunity.kind,
+          researchFamily: sourceProfile.family,
           derivedMetrics,
           readStatus,
           result: "skip",
@@ -369,6 +422,7 @@ export async function observe(
       reason: "values_within_normal_range",
       facts: {
         topic,
+        researchFamily: sourceProfile.family,
         signalCount: signalList.length,
         feedCount: posts.length,
         availableBalance,
@@ -386,6 +440,7 @@ export async function observe(
         selectedEvidence: {
           matchedSignal,
           feedMentions: matchingFeedPosts,
+          sourceProfile,
           evidenceSummary: evidenceSummaryResult.summary,
           evidenceDelta,
         },
@@ -393,6 +448,7 @@ export async function observe(
           objective: "Skip when the same research topic has not moved meaningfully since the last cycle.",
           topic,
           opportunityKind: chosenOpportunity.kind,
+          researchFamily: sourceProfile.family,
           derivedMetrics,
           readStatus,
           deltaSummary,
@@ -427,6 +483,7 @@ export async function observe(
       reason: draft.reason,
       facts: {
         topic,
+        researchFamily: sourceProfile.family,
         signalCount: signalList.length,
         feedCount: posts.length,
         availableBalance,
@@ -445,6 +502,7 @@ export async function observe(
         selectedEvidence: {
           matchedSignal,
           feedMentions: matchingFeedPosts,
+          sourceProfile,
           evidenceSummary: evidenceSummaryResult.summary,
           evidenceDelta,
         },
@@ -467,6 +525,7 @@ export async function observe(
     confidence: draft.confidence,
     facts: {
       topic,
+      researchFamily: sourceProfile.family,
       signalCount: signalList.length,
       feedCount: posts.length,
       availableBalance,
@@ -486,6 +545,7 @@ export async function observe(
       selectedEvidence: {
         matchedSignal,
         feedMentions: matchingFeedPosts,
+        sourceProfile,
         evidenceSummary: evidenceSummaryResult.summary,
         evidenceDelta,
       },

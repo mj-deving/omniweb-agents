@@ -2,13 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 import { buildResearchDraft } from "../../packages/omniweb-toolkit/src/research-draft.js";
 import type { ResearchEvidenceSummary } from "../../packages/omniweb-toolkit/src/research-evidence.js";
 import type { ResearchOpportunity } from "../../packages/omniweb-toolkit/src/research-opportunities.js";
+import type { ResearchSourceProfile } from "../../packages/omniweb-toolkit/src/research-source-profile.js";
 
 function makeOpportunity(): ResearchOpportunity {
+  const sourceProfile: ResearchSourceProfile = {
+    family: "funding-structure",
+    topic: "btc sentiment vs funding",
+    asset: { asset: "bitcoin", symbol: "BTC" },
+    supported: true,
+    reason: null,
+    primarySourceIds: ["binance-futures-btc"],
+    supportingSourceIds: ["binance-futures-oi-btc", "coingecko-42ff8c85"],
+    expectedMetrics: ["markPrice", "indexPrice", "lastFundingRate", "openInterest"],
+  };
   return {
     kind: "coverage_gap",
     topic: "btc sentiment vs funding",
     score: 99,
     rationale: "High-confidence signal is not covered in the recent feed.",
+    sourceProfile,
     matchedSignal: {
       topic: "btc sentiment vs funding",
       confidence: 76,
@@ -67,6 +79,10 @@ function makeEvidenceSummary(): ResearchEvidenceSummary {
       lastFundingRate: "-0.012",
       interestRate: "0.0001",
     },
+    derivedMetrics: {
+      fundingRateBps: "-120",
+      markIndexSpreadUsd: "4.88",
+    },
   };
 }
 
@@ -121,6 +137,7 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.output.confidenceStyle).toContain("calibrated and evidence-led");
     expect(result.promptPacket.output.successCriteria[0]).toContain("original research");
     expect(result.promptPacket.input.evidence.values.markPrice).toBe("67250.00");
+    expect(result.promptPacket.input.evidence.derivedMetrics.fundingRateBps).toBe("-120");
   });
 
   it("accepts LLM output only when it clears the quality gate", async () => {

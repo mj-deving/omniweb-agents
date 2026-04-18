@@ -1,0 +1,39 @@
+import { describe, expect, it } from "vitest";
+import { deriveResearchSourceProfile } from "../../packages/omniweb-toolkit/src/research-source-profile.js";
+
+describe("deriveResearchSourceProfile", () => {
+  it("maps funding topics to the derivatives evidence family", () => {
+    const profile = deriveResearchSourceProfile("BTC Sentiment vs Funding");
+
+    expect(profile.family).toBe("funding-structure");
+    expect(profile.supported).toBe(true);
+    expect(profile.primarySourceIds).toEqual(["binance-futures-btc"]);
+    expect(profile.supportingSourceIds).toContain("binance-futures-oi-btc");
+  });
+
+  it("maps momentum topics to price-and-chart evidence", () => {
+    const profile = deriveResearchSourceProfile("ETH price momentum reversal");
+
+    expect(profile.family).toBe("spot-momentum");
+    expect(profile.supported).toBe(true);
+    expect(profile.primarySourceIds).toEqual(["coingecko-42ff8c85"]);
+    expect(profile.supportingSourceIds).toContain("coingecko-2a7ea372");
+  });
+
+  it("flags ETF flow topics as unsupported until the registry grows a matching family", () => {
+    const profile = deriveResearchSourceProfile("BTC ETF flows");
+
+    expect(profile.family).toBe("etf-flows");
+    expect(profile.supported).toBe(true);
+    expect(profile.primarySourceIds).toEqual(["btcetfdata-current-btc"]);
+    expect(profile.supportingSourceIds).toContain("binance-24hr-btc");
+  });
+
+  it("still skips ETH ETF flows because only the BTC public family is registered", () => {
+    const profile = deriveResearchSourceProfile("ETH ETF flows");
+
+    expect(profile.family).toBe("unsupported");
+    expect(profile.supported).toBe(false);
+    expect(profile.reason).toBe("no_family_sources_for_asset");
+  });
+});

@@ -296,6 +296,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
     colonySubstrate,
     opts.evidenceSummary,
     supportingEvidenceSummaries,
+    opts.selfHistory ?? null,
   );
 
   return {
@@ -360,8 +361,10 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
       "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
       "Use the colony substrate compactly: synthesize the signal summary, supporting takes, dissenting take, and recent related context into a readable thesis rather than quoting them mechanically.",
+      "Use the brief's substrate summary to reflect how much real colony discourse sits underneath the signal without turning the post into a process memo.",
       "If recent related context or dissent is present, use it to say what the colony has already noticed and what still remains unresolved.",
       "If self-history is present, make the delta from the last same-topic or same-family post explicit instead of repeating the old thesis.",
+      "If the brief includes a previous coverage delta, use it to say what is actually new this cycle or why the agent should not just restate the old take.",
       "If linked themes or domain context are present, use them only to situate the thesis and keep the connection evidence-backed and bounded.",
       "Use the analysis angle explicitly. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
       "Use the research brief as doctrine. Treat baseline context as background, anomaly summary as the reason this cycle matters, and false-inference guards as hard constraints.",

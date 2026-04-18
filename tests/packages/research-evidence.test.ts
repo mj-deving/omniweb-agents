@@ -4,11 +4,14 @@ import type { MinimalAttestationCandidate } from "../../packages/omniweb-toolkit
 
 const originalFetch = globalThis.fetch;
 
-function makeSource(url: string): MinimalAttestationCandidate {
+function makeSource(
+  url: string,
+  overrides: Partial<MinimalAttestationCandidate> = {},
+): MinimalAttestationCandidate {
   return {
-    sourceId: "binance-btc-premium",
-    name: "Binance Futures Premium Index",
-    provider: "binance",
+    sourceId: "binance-futures-btc",
+    name: "binance-futures-premium-index",
+    provider: "binance-futures",
     status: "active",
     trustTier: "official",
     responseFormat: "json",
@@ -17,6 +20,7 @@ function makeSource(url: string): MinimalAttestationCandidate {
     tlsnSafe: false,
     url,
     score: 17,
+    ...overrides,
   };
 }
 
@@ -58,6 +62,37 @@ describe("fetchResearchEvidenceSummary", () => {
     });
   });
 
+  it("prefers source identity over URL shape for premium-index extraction", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          markPrice: "67250.00",
+          indexPrice: "67245.12",
+          lastFundingRate: "-0.012",
+          interestRate: "0.0001",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://example.com/provider-path-changed.json"),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      markPrice: "67250.00",
+      indexPrice: "67245.12",
+      lastFundingRate: "-0.012",
+      interestRate: "0.0001",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      fundingRateBps: "-120",
+      markIndexSpreadUsd: "4.88",
+    });
+  });
+
   it("falls back to generic numeric extraction for other JSON endpoints", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(
@@ -72,7 +107,12 @@ describe("fetchResearchEvidenceSummary", () => {
     ) as typeof fetch;
 
     const result = await fetchResearchEvidenceSummary({
-      source: makeSource("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
+      source: makeSource("https://example.com/data.json", {
+        sourceId: "generic-example",
+        name: "generic-example",
+        provider: "generic",
+        ratingOverall: 60,
+      }),
     });
 
     expect(result.ok).toBe(true);
@@ -98,7 +138,11 @@ describe("fetchResearchEvidenceSummary", () => {
     ) as typeof fetch;
 
     const result = await fetchResearchEvidenceSummary({
-      source: makeSource("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd"),
+      source: makeSource("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd", {
+        sourceId: "coingecko-2a7ea372",
+        name: "coingecko-simple",
+        provider: "coingecko",
+      }),
       topic: "USDT Supply ATH Stablecoin Inflation",
     });
 
@@ -135,7 +179,11 @@ describe("fetchResearchEvidenceSummary", () => {
     ) as typeof fetch;
 
     const result = await fetchResearchEvidenceSummary({
-      source: makeSource("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7"),
+      source: makeSource("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7", {
+        sourceId: "coingecko-42ff8c85",
+        name: "coingecko-market",
+        provider: "coingecko",
+      }),
     });
 
     expect(result.ok).toBe(true);
@@ -194,7 +242,11 @@ describe("fetchResearchEvidenceSummary", () => {
     ) as typeof fetch;
 
     const result = await fetchResearchEvidenceSummary({
-      source: makeSource("https://www.btcetfdata.com/v1/current.json"),
+      source: makeSource("https://www.btcetfdata.com/v1/current.json", {
+        sourceId: "btcetfdata-current-btc",
+        name: "btcetfdata-current",
+        provider: "btcetfdata",
+      }),
     });
 
     expect(result.ok).toBe(true);
@@ -241,7 +293,11 @@ describe("fetchResearchEvidenceSummary", () => {
     ) as typeof fetch;
 
     const result = await fetchResearchEvidenceSummary({
-      source: makeSource("https://stablecoins.llama.fi/stablecoins?includePrices=true"),
+      source: makeSource("https://stablecoins.llama.fi/stablecoins?includePrices=true", {
+        sourceId: "defillama-stablecoins",
+        name: "defillama-stablecoins-list",
+        provider: "defillama",
+      }),
       topic: "USDT Supply ATH Stablecoin Inflation",
     });
 

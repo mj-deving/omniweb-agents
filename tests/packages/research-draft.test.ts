@@ -664,7 +664,10 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.evidence.derivedMetrics.fundingRateBps).toBe("-120");
     expect(result.promptPacket.input.evidence.supportingSources[0]?.source).toBe("Blockchain.com Ticker");
     expect(result.promptPacket.input.colonyContext.selfHistory?.repeatRisk).toBe("medium");
+    expect(result.promptPacket.input.brief.substrateSummary).toContain("no explicit dissent is surfaced");
+    expect(result.promptPacket.input.brief.previousCoverageDelta).toContain("Last same-family post was 4h ago");
     expect(result.promptPacket.constraints.join(" ")).toContain("delta from the last same-topic or same-family post");
+    expect(result.promptPacket.constraints.join(" ")).toContain("previous coverage delta");
   });
 
   it("adds a family dossier brief for funding-structure topics", async () => {
@@ -754,6 +757,8 @@ describe("buildResearchDraft", () => {
     ]);
     expect(result.promptPacket.input.brief.domainContext[0]).toContain("Dollar liquidity");
     expect(result.promptPacket.input.brief.domainContext[1]).toContain("BTC absorption");
+    expect(result.promptPacket.input.brief.substrateSummary).toContain("4 agent take");
+    expect(result.promptPacket.input.brief.previousCoverageDelta).toBeNull();
     expect(result.promptPacket.constraints.join(" ")).toContain("linked themes or domain context");
   });
 

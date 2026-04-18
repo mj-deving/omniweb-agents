@@ -2,6 +2,7 @@ import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gat
 import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
 import { renderColonyPromptPacket, type ColonyPromptPacket } from "./colony-prompt.js";
 import type { ResearchEvidenceSummary } from "./research-evidence.js";
+import { buildResearchBrief, type ResearchBrief } from "./research-family-dossiers.js";
 import type { ResearchOpportunity } from "./research-opportunities.js";
 
 interface PromptCapableProvider {
@@ -28,6 +29,7 @@ export interface BuildResearchDraftOptions {
 export interface ResearchPromptInput {
   topic: string;
   analysisAngle: string;
+  brief: ResearchBrief;
   signal: {
     direction: string | null;
   };
@@ -134,6 +136,25 @@ const RESEARCH_STYLE_PATTERNS: Array<{ name: string; pattern: RegExp; detail: st
   },
 ];
 
+const STABLECOIN_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
+  {
+    pattern: /\b(?:still|sits|holding|staying|exactly|right at|near|around)\s+\$?1(?:\.0+)?\b/i,
+    detail: "treats the normal 1.00 peg as the thesis instead of background context",
+  },
+  {
+    pattern: /\bwithout (?:any )?peg deviation means\b/i,
+    detail: "turns a normal peg sanity check into the main causal claim",
+  },
+  {
+    pattern: /\b(?:still\s+sitting|staying|holding|exactly|right at|near|around)\s+(?:exactly\s+)?\$?1(?:\.0+)?\b.{0,80}\b(?:prove|proves|means|constructive|healthy|bullish|signal|safe)\b/i,
+    detail: "uses a normal peg to prove health, bullishness, or the main market signal",
+  },
+  {
+    pattern: /\bpeg\s+(?:staying|holding|remaining|sitting)\s+(?:at\s+)?\$?1(?:\.0+)?\b.{0,80}\b(?:mean|means|proves|shows)\b/i,
+    detail: "treats peg stability itself as the key causal conclusion",
+  },
+];
+
 export async function buildResearchDraft(
   opts: BuildResearchDraftOptions,
 ): Promise<ResearchDraftResult> {
@@ -195,6 +216,11 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
   const supportingSources = opts.opportunity.attestationPlan.supporting.map((candidate) => candidate.name);
   const supportingEvidenceSummaries = opts.supportingEvidenceSummaries ?? [];
   const analysisAngle = buildResearchAnalysisAngle(opts.opportunity);
+  const brief = buildResearchBrief(
+    opts.opportunity,
+    opts.evidenceSummary,
+    supportingEvidenceSummaries,
+  );
 
   return {
     archetype: "research-agent",
@@ -210,6 +236,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
     input: {
       topic: opts.opportunity.topic,
       analysisAngle,
+      brief,
       signal: {
         direction: opts.opportunity.matchedSignal.direction,
       },
@@ -250,6 +277,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
       "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
       "Use the analysis angle explicitly. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
+      "Use the research brief as doctrine. Treat baseline context as background, anomaly summary as the reason this cycle matters, and false-inference guards as hard constraints.",
       "When describing colony sentiment, use natural phrases like 'the bearish read in colony signals', 'the bullish read', or 'mixed positioning' rather than clunky constructions.",
       "End in plain language. Do not use mirrored rhetorical constructions or clever symmetry in the closing sentence.",
       "Treat source names as evidence anchors, not as the subject of the prose.",
@@ -333,6 +361,7 @@ function checkResearchDraftQuality(
   const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary, supportingEvidenceSummaries);
   const contextualGrounding = checkContextualGrounding(text, opportunity);
   const styleLeak = findResearchStyleProblem(text);
+  const familyBaselineLeak = findFamilyBaselineProblem(text, opportunity);
   const checks = [
     ...base.checks,
     {
@@ -354,6 +383,13 @@ function checkResearchDraftQuality(
       name: "research-style",
       pass: styleLeak == null,
       detail: styleLeak == null ? "wording reads like colony-facing analysis" : `${styleLeak.name}: ${styleLeak.detail}`,
+    },
+    {
+      name: "family-dossier-grounding",
+      pass: familyBaselineLeak == null,
+      detail: familyBaselineLeak == null
+        ? "draft respects family-level baseline and false-inference rules"
+        : familyBaselineLeak.detail,
     },
   ];
 
@@ -393,6 +429,14 @@ function checkResearchDraftQuality(
     return {
       pass: false,
       reason: `failed: research-style — ${styleLeak.detail}`,
+      checks,
+    };
+  }
+
+  if (familyBaselineLeak) {
+    return {
+      pass: false,
+      reason: `failed: family-dossier-grounding — ${familyBaselineLeak.detail}`,
       checks,
     };
   }
@@ -451,6 +495,25 @@ function findResearchStyleProblem(text: string): { name: string; detail: string 
       };
     }
   }
+  return null;
+}
+
+function findFamilyBaselineProblem(
+  text: string,
+  opportunity: ResearchOpportunity,
+): { detail: string } | null {
+  if (opportunity.sourceProfile.family !== "stablecoin-supply") {
+    return null;
+  }
+
+  for (const entry of STABLECOIN_BASELINE_SLIP_PATTERNS) {
+    if (entry.pattern.test(text)) {
+      return {
+        detail: entry.detail,
+      };
+    }
+  }
+
   return null;
 }
 

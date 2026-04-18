@@ -68,6 +68,70 @@ function makeOpportunity(): ResearchOpportunity {
   };
 }
 
+function makeStablecoinOpportunity(): ResearchOpportunity {
+  const sourceProfile: ResearchSourceProfile = {
+    family: "stablecoin-supply",
+    topic: "usdt supply ath stablecoin inflation",
+    asset: { asset: "tether", symbol: "USDT" },
+    supported: true,
+    reason: null,
+    primarySourceIds: ["defillama-stablecoins"],
+    supportingSourceIds: ["coingecko-2a7ea372"],
+    expectedMetrics: ["circulatingUsd", "circulatingPrevDayUsd", "circulatingPrevWeekUsd", "priceUsd", "supplyChangePct7d"],
+  };
+  return {
+    kind: "coverage_gap",
+    topic: "usdt supply ath stablecoin inflation",
+    score: 88,
+    rationale: "High-confidence stablecoin supply topic is not covered in the recent feed.",
+    sourceProfile,
+    matchedSignal: {
+      topic: "usdt supply ath stablecoin inflation",
+      confidence: 68,
+      direction: "mixed",
+    },
+    matchingFeedPosts: [],
+    lastSeenAt: null,
+    attestationPlan: {
+      topic: "usdt supply ath stablecoin inflation",
+      agent: "sentinel",
+      catalogPath: "/tmp/catalog.json",
+      ready: true,
+      reason: "ready",
+      primary: {
+        sourceId: "defillama-stablecoins",
+        name: "defillama-stablecoins-list",
+        provider: "defillama",
+        status: "active",
+        trustTier: "established",
+        responseFormat: "json",
+        ratingOverall: 80,
+        dahrSafe: true,
+        tlsnSafe: false,
+        url: "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+        score: 19,
+      },
+      supporting: [
+        {
+          sourceId: "coingecko-2a7ea372",
+          name: "coingecko-simple",
+          provider: "coingecko",
+          status: "active",
+          trustTier: "established",
+          responseFormat: "json",
+          ratingOverall: 78,
+          dahrSafe: true,
+          tlsnSafe: true,
+          url: "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd",
+          score: 14,
+        },
+      ],
+      fallbacks: [],
+      warnings: [],
+    },
+  };
+}
+
 function makeEvidenceSummary(): ResearchEvidenceSummary {
   return {
     source: "Binance Futures Premium Index",
@@ -96,6 +160,42 @@ function makeSupportingEvidenceSummary(): ResearchEvidenceSummary {
       priceUsd: "67240.11",
     },
     derivedMetrics: {},
+  };
+}
+
+function makeStablecoinEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "defillama-stablecoins-list",
+    url: "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+    fetchedAt: "2026-04-18T08:25:34.421Z",
+    values: {
+      assetSymbol: "USDT",
+      circulatingUsd: "186624595113.63",
+      circulatingPrevDayUsd: "185821073382.76",
+      circulatingPrevWeekUsd: "184294812347.66",
+      circulatingPrevMonthUsd: "183336749243.19",
+    },
+    derivedMetrics: {
+      supplyChangePct1d: "0.43",
+      supplyChangePct7d: "1.26",
+      supplyChangePct30d: "1.79",
+      stablecoinFocus: "USDT",
+    },
+  };
+}
+
+function makeStablecoinSupportingEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "coingecko-simple",
+    url: "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd",
+    fetchedAt: "2026-04-18T08:25:34.454Z",
+    values: {
+      assetId: "tether",
+      priceUsd: "1",
+    },
+    derivedMetrics: {
+      pegDeviationPct: "0",
+    },
   };
 }
 
@@ -154,6 +254,34 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.evidence.values.markPrice).toBe("67250.00");
     expect(result.promptPacket.input.evidence.derivedMetrics.fundingRateBps).toBe("-120");
     expect(result.promptPacket.input.evidence.supportingSources[0]?.source).toBe("Blockchain.com Ticker");
+  });
+
+  it("adds a family dossier brief for stablecoin supply topics", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "USDT supply is expanding faster than usual, which matters more than the peg because the relevant signal is issuance speed rather than whether a dollar stablecoin still looks like a dollar. " +
+        "The evidence shows 1.79 percent growth over thirty days and 1.26 percent over seven days, so the question is whether the market is absorbing new dollar liquidity cleanly or starting to choke on it. " +
+        "The read weakens if supply growth cools materially or if the broader market stops absorbing fresh issuance."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeStablecoinOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeStablecoinEvidenceSummary(),
+      supportingEvidenceSummaries: [makeStablecoinSupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.promptPacket.input.brief.family).toBe("stablecoin-supply");
+    expect(result.promptPacket.input.brief.baselineContext[0]).toContain("near 1.00 USD is baseline");
+    expect(result.promptPacket.input.brief.falseInferenceGuards[0]).toContain("normal peg");
   });
 
   it("accepts LLM output only when it clears the quality gate", async () => {
@@ -264,6 +392,33 @@ describe("buildResearchDraft", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected success");
     expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(true);
+  });
+
+  it("rejects stablecoin drafts that treat a normal peg as alpha", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "USDT supply expansion is constructive because the token is still sitting exactly at $1, and that alone proves the system is healthy enough to absorb new issuance without stress. " +
+        "The peg staying at 1 means the latest supply growth is a clean bullish signal rather than a reserve concern, which is why the new issuance should be read as straightforward fuel for risk assets. " +
+        "Only a break below the peg would challenge that interpretation."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeStablecoinOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeStablecoinEvidenceSummary(),
+      supportingEvidenceSummaries: [makeStablecoinSupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "family-dossier-grounding")?.pass).toBe(false);
   });
 
   it("rejects generic market commentary that ignores the divergence angle", async () => {

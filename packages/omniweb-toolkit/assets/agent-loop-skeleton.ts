@@ -2,7 +2,7 @@ import {
   runMinimalAgentLoop,
   type MinimalObserveContext,
   type MinimalObserveResult,
-} from "omniweb-toolkit/agent";
+} from "../src/agent.js";
 
 interface SkeletonState {
   lastTopic?: string;

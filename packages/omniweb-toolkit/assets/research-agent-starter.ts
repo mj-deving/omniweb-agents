@@ -18,7 +18,7 @@ import {
   type ResearchSignalDivergence,
   type ResearchSignalReactionSummary,
   type ResearchSignalSourcePost,
-} from "omniweb-toolkit/agent";
+} from "../src/agent.js";
 
 interface ResearchState {
   lastCoverageTopic?: string;

@@ -539,7 +539,7 @@ export async function observe(
     const deltaSummary = summarizeResearchEvidenceDelta(evidenceDelta);
 
     if (previousSnapshot?.topic === topic && !deltaSummary.hasMeaningfulChange) {
-      deferredRepeatSkip = {
+      deferredRepeatSkip ??= {
         kind: "skip",
         reason: "values_within_normal_range",
         facts: {
@@ -595,7 +595,7 @@ export async function observe(
     }
 
     if (selfHistory.skipSuggested) {
-      deferredRepeatSkip = {
+      deferredRepeatSkip ??= {
         kind: "skip",
         reason: "recent_self_coverage_without_new_delta",
         facts: {

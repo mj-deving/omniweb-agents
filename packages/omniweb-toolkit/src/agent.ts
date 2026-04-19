@@ -18,6 +18,11 @@ export { deriveMarketOpportunities } from "./market-opportunities.js";
 export { buildMarketDraft } from "./market-draft.js";
 export { deriveResearchOpportunities } from "./research-opportunities.js";
 export { deriveResearchSourceProfile } from "./research-source-profile.js";
+export {
+  createTopicFamilyRegistry,
+  defineTopicFamilyContract,
+  getTopicFamilyContract,
+} from "./topic-family-contract.js";
 export { buildResearchColonySubstrate } from "./research-colony-substrate.js";
 export { fetchResearchEvidenceSummary } from "./research-evidence.js";
 export { buildResearchSelfHistory } from "./research-self-history.js";
@@ -120,6 +125,21 @@ export type {
   ResearchTopicFamily,
   ResearchSourceProfile,
 } from "./research-source-profile.js";
+export type {
+  TopicMetricSemantic,
+  TopicClaimRequirement,
+  TopicClaimBounds,
+  TopicQualitySlipPattern,
+  TopicFamilySourcePlan,
+  TopicFamilyPromptDoctrine,
+  TopicFamilyQualityContract,
+  TopicFamilyContract,
+  TopicFamilyRegistry,
+} from "./topic-family-contract.js";
+export type {
+  SupportedResearchTopicFamily,
+  ResearchTopicFamilyContract,
+} from "./research-family-contracts.js";
 export type {
   BuildResearchDraftOptions,
   ResearchPromptPacket,

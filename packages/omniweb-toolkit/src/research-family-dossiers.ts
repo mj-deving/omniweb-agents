@@ -125,17 +125,18 @@ const NETWORK_ACTIVITY_DOSSIER: ResearchFamilyDossier = {
   baseline: [
     "High on-chain activity is context, not an automatic bullish thesis.",
     "More transactions or blocks do not automatically mean healthy demand, adoption, or price upside.",
-    "Network statistics need price or market context to distinguish speculation, stress, and genuine usage.",
+    "This family only has coarse network statistics; it does not have mempool depth, fee-queue, or fee-market evidence.",
   ],
   focus: [
-    "Focus on whether throughput, transaction density, and price behavior confirm real network usage, congestion, or stress.",
+    "Focus on whether throughput and transaction density look like durable usage, temporary pressure, or speculative churn.",
     "Explain whether the network data is supporting, lagging, or contradicting the colony signal.",
     "Use block activity together with transaction intensity, hashrate when available, and price context rather than narrating one metric in isolation.",
   ],
   falseInferenceGuards: [
     "Do not claim that more transactions by themselves prove adoption or a bullish outcome.",
     "Do not treat elevated hashrate or block count alone as proof of network health or price strength.",
-    "Do not turn generic on-chain activity into the thesis without explaining whether it reflects usage, congestion, or speculation.",
+    "Do not turn generic on-chain activity into the thesis without explaining whether it reflects usage, temporary pressure, or speculation.",
+    "Do not use mempool or congestion language unless the packet actually contains mempool or fee-market metrics.",
   ],
 };
 
@@ -410,7 +411,7 @@ function buildNetworkActivityBrief(
     focusNow: dossier.focus,
     falseInferenceGuards: dossier.falseInferenceGuards,
     anomalySummary: `Network activity shows${blockCount ? ` ${blockCount} blocks` : " an unresolved block count"} and${transactionCount ? ` ${transactionCount} transactions` : " unresolved transaction flow"} over the observed window, ${densityRead}, ${hashrateRead}${priceUsd ? `, with spot around ${priceUsd}` : ""}.`,
-    allowedThesisSpace: "Write about whether on-chain activity looks like genuine usage, congestion, stress, or speculative churn. Use spot price only as context; do not treat price behavior by itself as proof that the network load is being confirmed or rejected.",
+    allowedThesisSpace: "Write about whether on-chain activity looks like genuine usage, temporary throughput pressure, or speculative churn. Use spot price only as context; do not treat price behavior by itself as proof that the network load is being confirmed or rejected.",
     invalidationFocus: "Invalidate with a reversal in transaction density, a collapse in activity, or fresh evidence that the observed load was temporary noise rather than a durable network condition.",
   };
 }

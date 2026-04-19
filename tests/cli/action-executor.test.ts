@@ -308,7 +308,6 @@ describe("executeStrategyActions", () => {
       { action, reason: "missing attestUrl for REPLY" },
     ]);
   });
-
   it("continues after a failed action and executes subsequent actions", async () => {
     const deps = createDeps({
       bridge: {

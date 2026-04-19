@@ -758,7 +758,7 @@ describe("buildResearchDraft", () => {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
         "Negative funding matters here because it is showing up alongside real positioning size and a still-firm price, which makes the setup a derivatives mismatch rather than an automatic trend call. " +
-        "Funding near -120 basis points with open interest around 105,600 means traders are paying for bearish positioning while spot remains elevated, so the real question is whether price starts to validate that stress or squeezes it out. " +
+        "Funding near -120 basis points with open interest around 105,600 means traders are paying for bearish positioning while spot remains elevated, so the real question is whether price starts to follow that stress or keeps resisting it. " +
         "The view weakens if funding normalizes without price damage or if price decisively breaks higher while positioning stays stretched."
       ),
     };
@@ -850,8 +850,8 @@ describe("buildResearchDraft", () => {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
         "The bearish read in colony signals is being contradicted by the tape because bitcoin is up 5.8% over the week at 76,991 dollars and the mismatch is that price is still trading in the upper third of a 7,279-dollar range rather than breaking down. " +
-        "That matters because price has rebuilt toward the weekly high on heavy volume instead of validating the bearish signal, which makes the live question one of resistance absorption rather than momentum failure. " +
-        "The thesis weakens if bitcoin loses the weekly starting level and slips back into the lower half of the range on rising volume."
+        "That matters because price has rebuilt toward the weekly high instead of resolving lower, while the latest volume print only adds secondary context rather than settling the signal by itself. " +
+        "The thesis weakens if bitcoin loses the weekly starting level and slips back into the lower half of the range while the rebound stalls out."
       ),
     };
 

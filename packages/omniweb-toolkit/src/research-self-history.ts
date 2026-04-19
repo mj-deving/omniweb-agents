@@ -68,6 +68,8 @@ export function buildResearchSelfHistory(opts: BuildResearchSelfHistoryOptions):
   const lastSameFamily = opts.family == null
     ? null
     : sortedHistory.find((entry) => normalize(entry.family) === normalize(opts.family)) ?? null;
+  const lastSameFamilyIsSameTopic = lastSameFamily != null
+    && normalize(lastSameFamily.topic) === normalize(opts.topic);
 
   const windows = {
     total24h: countSince(sortedHistory, nowMs, DAY_MS),
@@ -95,7 +97,13 @@ export function buildResearchSelfHistory(opts: BuildResearchSelfHistoryOptions):
     repeatRisk = "high";
     skipSuggested = true;
     repetitionReason = "same_topic_no_material_change_within_7d";
-  } else if (lastSameFamilySummary && changeSinceLastSameFamily && !changeSinceLastSameFamily.hasMeaningfulChange && lastSameFamilySummary.hoursAgo <= 24) {
+  } else if (
+    lastSameFamilySummary
+    && lastSameFamilyIsSameTopic
+    && changeSinceLastSameFamily
+    && !changeSinceLastSameFamily.hasMeaningfulChange
+    && lastSameFamilySummary.hoursAgo <= 24
+  ) {
     repeatRisk = "high";
     skipSuggested = true;
     repetitionReason = "same_family_no_material_change_within_24h";

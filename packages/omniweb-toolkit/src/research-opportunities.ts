@@ -77,8 +77,10 @@ export interface DeriveResearchOpportunitiesOptions {
   staleAfterMs?: number;
   lastCoverageTopic?: string | null;
   recentCoverageTopics?: string[];
+  recentCoverageFamilies?: string[];
   minConfidence?: number;
   recentCoveragePenalty?: number;
+  recentFamilyCoveragePenalty?: number;
 }
 
 export interface ResearchOpportunity {
@@ -97,6 +99,7 @@ export interface ResearchOpportunity {
 const DEFAULT_STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 const DEFAULT_MIN_CONFIDENCE = 70;
 const DEFAULT_RECENT_COVERAGE_PENALTY = 15;
+const DEFAULT_RECENT_FAMILY_COVERAGE_PENALTY = 8;
 
 export function deriveResearchOpportunities(
   opts: DeriveResearchOpportunitiesOptions,
@@ -106,7 +109,9 @@ export function deriveResearchOpportunities(
   const minConfidence = opts.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
   const lastCoverageTopic = normalize(opts.lastCoverageTopic);
   const recentCoverageTopics = new Set((opts.recentCoverageTopics ?? []).map(normalize).filter(Boolean));
+  const recentCoverageFamilies = new Set((opts.recentCoverageFamilies ?? []).map(normalize).filter(Boolean));
   const recentCoveragePenalty = opts.recentCoveragePenalty ?? DEFAULT_RECENT_COVERAGE_PENALTY;
+  const recentFamilyCoveragePenalty = opts.recentFamilyCoveragePenalty ?? DEFAULT_RECENT_FAMILY_COVERAGE_PENALTY;
   const opportunities: ResearchOpportunity[] = [];
 
   for (const signal of opts.signals) {
@@ -139,12 +144,21 @@ export function deriveResearchOpportunities(
     const attestationPenalty = attestationPlan.ready ? 0 : 20;
     const contradictionSignals = detectContradictionSignals(matchingFeedPosts);
     const repeatedTopicPenalty = recentCoverageTopics.has(topic) ? recentCoveragePenalty : 0;
+    const repeatedFamilyPenalty = recentCoverageFamilies.has(normalize(sourceProfile.family))
+      ? recentFamilyCoveragePenalty
+      : 0;
+    const signalRichnessBonus = computeSignalRichnessBonus(signal);
+    const baseScore = confidence + supportingBonus + signalRichnessBonus
+      - attestationPenalty
+      - repeatedTopicPenalty
+      - repeatedFamilyPenalty
+      - sourcePenalty;
 
     if (matchingFeedPosts.length === 0) {
       opportunities.push({
         kind: "coverage_gap",
         topic,
-        score: confidence + 20 + supportingBonus - attestationPenalty - repeatedTopicPenalty - sourcePenalty,
+        score: baseScore + 20,
         rationale: "High-confidence signal is not covered in the recent feed.",
         sourceProfile,
         matchedSignal: signal,
@@ -160,7 +174,7 @@ export function deriveResearchOpportunities(
       opportunities.push({
         kind: "contradiction",
         topic,
-        score: confidence + 25 + supportingBonus - attestationPenalty - repeatedTopicPenalty - sourcePenalty,
+        score: baseScore + 25,
         rationale: "Recent matching feed posts point in conflicting directions and need an evidence-bound synthesis.",
         sourceProfile,
         matchedSignal: signal,
@@ -176,7 +190,7 @@ export function deriveResearchOpportunities(
       opportunities.push({
         kind: "stale_topic",
         topic,
-        score: confidence + 10 + supportingBonus - attestationPenalty - repeatedTopicPenalty - sourcePenalty,
+        score: baseScore + 10,
         rationale: "Signal remains active but the most recent matching feed post is stale.",
         sourceProfile,
         matchedSignal: signal,
@@ -222,6 +236,27 @@ function detectContradictionSignals(posts: ResearchPostInput[]): string[] {
 function contradictionCueSet(text: string): string[] {
   const cues = ["bullish", "bearish", "higher", "lower", "up", "down", "long", "short", "positive", "negative"];
   return cues.filter((cue) => text.includes(cue));
+}
+
+function computeSignalRichnessBonus(signal: ResearchSignalInput): number {
+  const sourcePostCount = Math.min(signal.sourcePostData?.length ?? 0, 3);
+  const crossReferenceCount = Math.min(signal.crossReferences?.length ?? 0, 2);
+  const reactionSignal = signal.reactionSummary
+    ? signal.reactionSummary.totalAgrees + signal.reactionSummary.totalDisagrees + signal.reactionSummary.totalFlags
+    : 0;
+  const agentCountBonus = (signal.agentCount ?? 0) >= 5
+    ? 2
+    : (signal.agentCount ?? 0) >= 3
+      ? 1
+      : 0;
+
+  return sourcePostCount
+    + crossReferenceCount
+    + agentCountBonus
+    + (signal.keyInsight ? 2 : 0)
+    + (signal.consensus ? 1 : 0)
+    + (signal.divergence ? 1 : 0)
+    + (reactionSignal >= 3 ? 1 : 0);
 }
 
 function normalize(value: string | null | undefined): string {

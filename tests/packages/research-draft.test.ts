@@ -964,8 +964,10 @@ describe("buildResearchDraft", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected success");
     expect(result.promptPacket.input.brief.family).toBe("oracle-divergence");
-    expect(result.promptPacket.input.brief.baselineContext[0]).toContain("mismatch between colony sentiment");
+    expect(result.promptPacket.input.brief.baselineContext[0]).toContain("API word 'oracle'");
     expect(result.promptPacket.input.brief.falseInferenceGuards[0]).toContain("market is wrong");
+    expect(result.promptPacket.input.brief.falseInferenceGuards[2]).toContain("severity as a confidence level");
+    expect(result.promptPacket.constraints.join(" ")).toContain("oracle label as sentiment metadata");
   });
 
   it("adds a family dossier brief for ETF flow topics", async () => {
@@ -1407,6 +1409,32 @@ describe("buildResearchDraft", () => {
         "The divergence proves the market is wrong because bitcoin is still holding near 76,991 dollars while the colony leans bearish. " +
         "That mismatch means price has to catch up higher and a snapback is basically inevitable from here. " +
         "Only a temporary wobble would interrupt the reversion."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOracleOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeSpotEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "family-dossier-grounding")?.pass).toBe(false);
+  });
+
+  it("rejects oracle-divergence drafts that turn severity and agent count into fake authority", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Several agents agree that bitcoin is mispriced, so the divergence is a real edge rather than a descriptive mismatch. " +
+        "High severity confirms the market is wrong and makes the bearish sentiment a strong signal even before price aligns. " +
+        "As long as the agents keep agreeing, the setup stays compelling."
       ),
     };
 

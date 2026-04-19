@@ -85,19 +85,22 @@ const FUNDING_STRUCTURE_DOSSIER: ResearchFamilyDossier = {
 const ORACLE_DIVERGENCE_DOSSIER: ResearchFamilyDossier = {
   family: "oracle-divergence",
   baseline: [
+    "This family inherits the API word 'oracle', but the packet is aggregated agent sentiment, not a verified external oracle feed.",
     "A divergence is a mismatch between colony sentiment and observed market behavior, not proof that either side is objectively wrong.",
-    "Divergence without price and range context is descriptive, not actionable.",
-    "A mismatch can widen, resolve slowly, or disappear without a dramatic snapback.",
+    "Agent consensus may repeat correlated model errors rather than independent agreement.",
+    "Divergence severity is an internal grading, not a calibrated probability or validated signal strength.",
   ],
   focus: [
-    "Focus on what exactly is mismatched: sentiment direction, conviction, and the observed price/range behavior.",
-    "Explain whether the mismatch is widening, stabilizing, or beginning to resolve.",
-    "Keep the claim on descriptive dislocation, not on guaranteed mean reversion.",
+    "Focus on what exactly is mismatched: sentiment direction, confidence, and the observed price/range behavior.",
+    "Explain whether the mismatch is widening, stabilizing, or beginning to resolve when the packet supports that read.",
+    "Frame the thesis as an open question worth watching, not as a directional call.",
   ],
   falseInferenceGuards: [
     "Do not claim that a divergence proves the market is wrong.",
     "Do not claim that a divergence guarantees mean reversion or a reversal.",
-    "Do not collapse descriptive mismatch into certainty about the next move.",
+    "Do not treat divergence severity as a confidence level or probability.",
+    "Do not treat agent count as evidence of independent agreement unless model diversity is known.",
+    "Do not describe the divergence as a tradeable edge or immediate alpha.",
   ],
 };
 
@@ -400,8 +403,8 @@ function buildOracleDivergenceBrief(
     baselineContext: dossier.baseline,
     focusNow: dossier.focus,
     falseInferenceGuards: dossier.falseInferenceGuards,
-    anomalySummary: `${mismatchRead}, with spot${currentPrice ? ` at ${currentPrice}` : ""}${change7d ? `, ${change7d}% from the 7d start` : ""}${rangeLocation ? ` and sitting in the ${rangeLocation} of the observed range` : ""}.${divergenceReasoning ? ` The surfaced counter-read is: ${divergenceReasoning}` : ""}`,
-    allowedThesisSpace: "Write about whether the sentiment-vs-market mismatch is widening, stabilizing, or starting to resolve. Keep the claim on descriptive dislocation, not on guaranteed reversion or proof that one side must capitulate.",
+    anomalySummary: `${mismatchRead}, with spot${currentPrice ? ` at ${currentPrice}` : ""}${change7d ? `, ${change7d}% from the 7d start` : ""}${rangeLocation ? ` and sitting in the ${rangeLocation} of the observed range` : ""}.${divergenceReasoning ? ` The surfaced counter-read is: ${divergenceReasoning}` : ""} Treat the API's oracle label as sentiment metadata, not as verified external truth.`,
+    allowedThesisSpace: "Write about whether the sentiment-vs-market mismatch is widening, stabilizing, or starting to resolve. Keep the claim on descriptive dislocation and open uncertainty, not on guaranteed reversion, calibrated odds, or proof that one side must capitulate.",
     invalidationFocus: "Invalidate with a clear alignment between colony sentiment and market behavior, such as price/range action moving back into line with the original signal or the mismatch simply fading out.",
   };
 }

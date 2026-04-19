@@ -286,6 +286,9 @@ export async function observe(
     posts,
     lastCoverageTopic: ctx.memory.state?.lastCoverageTopic ?? null,
     recentCoverageTopics: (ctx.memory.state?.topicHistory ?? []).map((entry) => entry.topic),
+    recentCoverageFamilies: (ctx.memory.state?.publishHistory ?? [])
+      .map((entry) => entry.family)
+      .filter((family): family is string => typeof family === "string" && family.length > 0),
   });
   const derivedMetrics = {
     highConfidenceSignalCount: highConfidenceSignals.length,

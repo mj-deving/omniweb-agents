@@ -1278,6 +1278,32 @@ describe("buildResearchDraft", () => {
     expect(result.qualityGate.checks.find((check) => check.name === "family-dossier-grounding")?.pass).toBe(false);
   });
 
+  it("rejects ETF drafts that turn issuer counts into weighted breadth", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Three ETF issuers green today proves breadth is broadening across the complex, so participation is clearly expanding beyond one fund. " +
+        "That issuer count confirms broad demand is taking over rather than concentration driving the tape. " +
+        "Only a sudden collapse in the green-issuer count would weaken that read."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeEtfOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEtfEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "family-dossier-grounding")?.pass).toBe(false);
+  });
+
   it("rejects generic market commentary that ignores the divergence angle", async () => {
     const provider = {
       name: "test-provider",

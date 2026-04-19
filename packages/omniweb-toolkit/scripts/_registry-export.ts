@@ -9,6 +9,7 @@ import {
   getArchetypeSpec,
   isArchetype,
   parseFrontmatter,
+  rewriteBundleAgentImport,
   SUPPORTED_ARCHETYPES,
   type Archetype,
   type ExportedFile,
@@ -31,9 +32,9 @@ export function buildRegistryExport(archetypes: readonly Archetype[] = SUPPORTED
   for (const archetype of archetypes) {
     const spec = getArchetypeSpec(archetype);
     const playbookText = rewritePlaybookLinks(readPackageFile(spec.playbookPath), spec);
-    const starterText = readPackageFile(spec.starterPath);
+    const starterText = rewriteBundleAgentImport(readPackageFile(spec.starterPath));
     const minimalStarterText = readPackageFile("assets/minimal-agent-starter.mjs");
-    const loopSkeletonText = readPackageFile("assets/agent-loop-skeleton.ts");
+    const loopSkeletonText = rewriteBundleAgentImport(readPackageFile("assets/agent-loop-skeleton.ts"));
     const exampleTraceText = readPackageFile(`evals/examples/${spec.trajectoryScenario}.trace.json`);
     const strategyText = buildMergedStrategy(playbookText);
     const skillDir = spec.skillName;

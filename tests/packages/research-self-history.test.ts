@@ -55,4 +55,23 @@ describe('buildResearchSelfHistory', () => {
     expect(result.changeSinceLastSameFamily?.hasMeaningfulChange).toBe(true);
     expect(result.changeSinceLastSameFamily?.changedFields).toContain('vixClose');
   });
+
+  it('does not hard-skip a distinct same-family topic when evidence is unchanged', () => {
+    const result = buildResearchSelfHistory({
+      history: [makeEntry({ topic: 'recession odds vs vix gap' })],
+      topic: 'private credit yield premium',
+      family: 'vix-credit',
+      now: '2026-04-18T12:00:00.000Z',
+      currentEvidenceValues: {
+        vixClose: '17.48',
+        vixPreviousClose: '17.95',
+        vixCurrentPrice: '17.48',
+      },
+    });
+
+    expect(result.skipSuggested).toBe(false);
+    expect(result.repeatRisk).toBe('medium');
+    expect(result.repetitionReason).toBe('recent_same_family_coverage');
+    expect(result.changeSinceLastSameFamily?.hasMeaningfulChange).toBe(false);
+  });
 });

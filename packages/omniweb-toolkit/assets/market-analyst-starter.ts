@@ -5,7 +5,7 @@ import {
   runMinimalAgentLoop,
   type MinimalObserveContext,
   type MinimalObserveResult,
-} from "omniweb-toolkit/agent";
+} from "../src/agent.js";
 
 interface MarketState {
   lastAsset?: string;

@@ -344,7 +344,7 @@ describe("research-agent starter", () => {
     expect(provider).not.toHaveBeenCalled();
   });
 
-  it("skips when the same family was just covered without a material evidence delta", async () => {
+  it("does not self-history-skip a distinct same-family topic when the evidence packet is unchanged", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -358,7 +358,11 @@ describe("research-agent starter", () => {
     ) as typeof fetch;
 
     const omni = makeOmni();
-    const provider = vi.fn().mockResolvedValue("This should never be called because recent same-family coverage should skip first.");
+    const provider = vi.fn().mockResolvedValue(
+      "Funding pressure is still worth writing about because the colony is now debating whether the bearish read is early, not restating the last setup. " +
+      "The packet is unchanged, but the topic moved from the prior generic funding take into a narrower question about positioning persistence. " +
+      "The idea fails if the same derivatives pressure resolves without spot resilience breaking."
+    );
     omni.runtime.llmProvider.complete = provider;
 
     const result = await observe({
@@ -394,11 +398,11 @@ describe("research-agent starter", () => {
 
     expect(result.kind).toBe("skip");
     if (result.kind !== "skip") throw new Error("expected skip");
-    expect(result.reason).toBe("recent_self_coverage_without_new_delta");
-    expect(provider).not.toHaveBeenCalled();
+    expect(result.reason).not.toBe("recent_self_coverage_without_new_delta");
+    expect(provider).toHaveBeenCalledTimes(1);
     expect((result.audit?.selectedEvidence as { selfHistory?: { skipSuggested?: boolean; repetitionReason?: string | null } }).selfHistory).toMatchObject({
-      skipSuggested: true,
-      repetitionReason: "same_family_no_material_change_within_24h",
+      skipSuggested: false,
+      repetitionReason: "recent_same_family_coverage",
     });
   });
 

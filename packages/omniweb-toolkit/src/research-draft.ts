@@ -179,6 +179,10 @@ const FUNDING_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }>
     pattern: /\bfunding\b.{0,60}\b(?:by itself|alone)\b/i,
     detail: "explicitly centers funding in isolation instead of relating it to price and positioning context",
   },
+  {
+    pattern: /\bsqueez(?:e|es|ed|ing)\b/i,
+    detail: "uses squeeze language even though the packet lacks open-interest change or liquidation context",
+  },
 ];
 
 const SPOT_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
@@ -613,7 +617,7 @@ function buildResearchAnalysisAngle(opportunity: ResearchOpportunity): string {
   const sentimentRead = describeSignalRead(opportunity);
 
   if (topic.includes("divergence") || topic.includes("sentiment")) {
-    return `Explain whether ${sentimentRead} is being confirmed or contradicted by the observed price, range, and volume evidence. Name the mismatch directly.`;
+    return `Explain whether ${sentimentRead} is aligning with or pushing against the observed price location and range structure. Treat the latest volume print as secondary context, not proof.`;
   }
 
   if (topic.includes("funding") || topic.includes("premium") || topic.includes("basis")) {

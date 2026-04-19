@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-04-09T14:48:41.112Z",
+  "generatedAt": "2026-04-19T19:08:02Z",
   "aliasesVersion": 1,
   "sources": [
     {
@@ -857,7 +857,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "quarantined",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -873,7 +873,8 @@
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
-        "discoveredBy": "import"
+        "discoveredBy": "import",
+        "statusChangedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "repo"
@@ -924,7 +925,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "quarantined",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -940,7 +941,8 @@
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
-        "discoveredBy": "import"
+        "discoveredBy": "import",
+        "statusChangedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "releases"
@@ -1200,7 +1202,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "quarantined",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1217,8 +1219,7 @@
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
-        "statusChangedAt": "2026-03-21T04:58:31.492887Z",
-        "archivedReason": "curation-2026-03-21"
+        "statusChangedAt": "2026-04-19T19:08:02Z"
       }
     },
     {
@@ -1465,7 +1466,7 @@
         }
       },
       "trustTier": "established",
-      "status": "degraded",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1483,7 +1484,8 @@
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "lastFailedAt": "2026-03-14T20:22:58.326Z",
-        "statusChangedAt": "2026-04-08T13:13:42.738Z"
+        "statusChangedAt": "2026-04-19T19:08:02Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       }
     },
     {
@@ -1596,7 +1598,7 @@
         }
       },
       "trustTier": "established",
-      "status": "degraded",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1614,7 +1616,8 @@
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
         "lastFailedAt": "2026-03-14T20:22:59.307Z",
-        "statusChangedAt": "2026-04-08T13:13:42.738Z"
+        "statusChangedAt": "2026-04-19T19:08:02Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       }
     },
     {
@@ -1660,7 +1663,7 @@
         }
       },
       "trustTier": "established",
-      "status": "stale",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1677,9 +1680,10 @@
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
-        "statusChangedAt": "2026-03-31T18:38:15.887Z",
+        "statusChangedAt": "2026-04-19T19:08:02Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-08T13:16:35.660Z"
+        "lastFailedAt": "2026-04-08T13:16:35.660Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "lookup"
@@ -1796,7 +1800,7 @@
         }
       },
       "trustTier": "established",
-      "status": "stale",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -1813,9 +1817,10 @@
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
-        "statusChangedAt": "2026-03-31T18:38:15.887Z",
+        "statusChangedAt": "2026-04-19T19:08:02Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-08T13:16:35.715Z"
+        "lastFailedAt": "2026-04-08T13:16:35.715Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "chart"
@@ -3660,7 +3665,7 @@
         }
       },
       "trustTier": "established",
-      "status": "degraded",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -3677,9 +3682,10 @@
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
         "discoveredBy": "import",
-        "statusChangedAt": "2026-04-06T12:06:52.528Z",
+        "statusChangedAt": "2026-04-19T19:08:02Z",
         "promotedAt": "2026-03-14T20:01:37.679Z",
-        "lastFailedAt": "2026-04-08T13:16:52.281Z"
+        "lastFailedAt": "2026-04-08T13:16:52.281Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "fees"
@@ -4724,7 +4730,7 @@
         }
       },
       "trustTier": "established",
-      "status": "active",
+      "status": "quarantined",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -4740,7 +4746,8 @@
       },
       "lifecycle": {
         "discoveredAt": "2026-03-13T21:52:08.386Z",
-        "discoveredBy": "import"
+        "discoveredBy": "import",
+        "statusChangedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "commits"
@@ -11607,7 +11614,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "degraded",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -11624,9 +11631,10 @@
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
-        "statusChangedAt": "2026-04-07T06:59:58.404Z",
+        "statusChangedAt": "2026-04-19T19:08:02Z",
         "promotedAt": "2026-03-21T15:42:39.860Z",
-        "lastFailedAt": "2026-04-08T13:16:52.281Z"
+        "lastFailedAt": "2026-04-08T13:16:52.281Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       },
       "id": "mempool-hashrate",
       "name": "mempool-hashrate-3d",
@@ -11951,7 +11959,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "degraded",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -11968,9 +11976,10 @@
       "lifecycle": {
         "discoveredAt": "2026-03-21T15:24:25.305Z",
         "discoveredBy": "manual",
-        "statusChangedAt": "2026-04-07T07:04:34.183Z",
+        "statusChangedAt": "2026-04-19T19:08:02Z",
         "promotedAt": "2026-03-21T15:42:39.860Z",
-        "lastFailedAt": "2026-04-08T13:16:35.568Z"
+        "lastFailedAt": "2026-04-08T13:16:35.568Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       },
       "id": "deribit-perp-sol",
       "name": "deribit-sol-perpetual",
@@ -14710,7 +14719,7 @@
         }
       },
       "trustTier": "experimental",
-      "status": "degraded",
+      "status": "archived",
       "rating": {
         "overall": 50,
         "uptime": 50,
@@ -14727,9 +14736,10 @@
       "lifecycle": {
         "discoveredAt": "2026-03-21T18:46:06.589Z",
         "discoveredBy": "manual",
-        "statusChangedAt": "2026-04-07T16:51:22.311Z",
+        "statusChangedAt": "2026-04-19T19:08:02Z",
         "promotedAt": "2026-03-21T18:54:34.310Z",
-        "lastFailedAt": "2026-04-08T13:16:36.079Z"
+        "lastFailedAt": "2026-04-08T13:16:36.079Z",
+        "archivedAt": "2026-04-19T19:08:02Z"
       },
       "adapter": {
         "operation": "stats"
@@ -14933,6 +14943,279 @@
       },
       "adapter": {
         "operation": "interest-rates"
+      }
+    },
+    {
+      "id": "polymarket-active-markets",
+      "name": "polymarket-active-markets",
+      "provider": "polymarket",
+      "url": "https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=2&order=volume24hr&ascending=false",
+      "urlPattern": "gamma-api.polymarket.com/markets",
+      "topics": [
+        "prediction-markets",
+        "polymarket"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "note": "Polymarket Gamma API — top active markets by 24h volume. No auth required.",
+      "topicAliases": [
+        "predictions",
+        "betting",
+        "forecasting"
+      ],
+      "domainTags": [
+        "prediction-markets",
+        "crypto",
+        "politics",
+        "world-events"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "pioneer"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 10000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 80,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-19T19:08:02Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "markets-active"
+      }
+    },
+    {
+      "id": "polymarket-events",
+      "name": "polymarket-events",
+      "provider": "polymarket",
+      "url": "https://gamma-api.polymarket.com/events?active=true&closed=false&limit=2",
+      "urlPattern": "gamma-api.polymarket.com/events",
+      "topics": [
+        "prediction-markets",
+        "polymarket"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "note": "Polymarket events with nested markets. No auth required.",
+      "topicAliases": [
+        "predictions",
+        "events"
+      ],
+      "domainTags": [
+        "prediction-markets",
+        "world-events"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "pioneer"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 10000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 80,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-19T19:08:02Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "events-active"
+      }
+    },
+    {
+      "id": "kalshi-markets",
+      "name": "kalshi-markets",
+      "provider": "kalshi",
+      "url": "https://api.elections.kalshi.com/trade-api/v2/markets?limit=3",
+      "urlPattern": "api.elections.kalshi.com/trade-api/v2/markets",
+      "topics": [
+        "prediction-markets",
+        "kalshi"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "note": "Kalshi prediction markets — binary event contracts. No auth for reads.",
+      "topicAliases": [
+        "predictions",
+        "betting",
+        "elections"
+      ],
+      "domainTags": [
+        "prediction-markets",
+        "politics",
+        "world-events",
+        "finance",
+        "sports"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "pioneer"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 10000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 80,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-19T19:08:02Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "markets"
+      }
+    },
+    {
+      "id": "kalshi-events",
+      "name": "kalshi-events",
+      "provider": "kalshi",
+      "url": "https://api.elections.kalshi.com/trade-api/v2/events?limit=3&status=open",
+      "urlPattern": "api.elections.kalshi.com/trade-api/v2/events",
+      "topics": [
+        "prediction-markets",
+        "kalshi"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 4,
+      "note": "Kalshi open events — groups of related markets. No auth for reads.",
+      "topicAliases": [
+        "predictions",
+        "events",
+        "elections"
+      ],
+      "domainTags": [
+        "prediction-markets",
+        "politics",
+        "world-events"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel",
+          "pioneer"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 10000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 70,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-19T19:08:02Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "events"
       }
     },
     {
@@ -15269,6 +15552,134 @@
         "discoveredBy": "manual",
         "statusChangedAt": "2026-03-21T18:54:34.310Z",
         "promotedAt": "2026-03-21T18:54:34.310Z"
+      },
+      "adapter": {
+        "operation": "timeseries"
+      }
+    },
+    {
+      "id": "bls-employment",
+      "name": "bls-timeseries",
+      "provider": "bls",
+      "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/CES0000000001",
+      "urlPattern": "api.bls.gov/publicAPI",
+      "topics": [
+        "macro",
+        "economics",
+        "employment",
+        "labor"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "economics",
+        "macro",
+        "labor"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-19T19:08:02Z",
+        "discoveredBy": "manual"
+      },
+      "adapter": {
+        "operation": "timeseries"
+      }
+    },
+    {
+      "id": "bls-wages",
+      "name": "bls-timeseries",
+      "provider": "bls",
+      "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/CES0500000003",
+      "urlPattern": "api.bls.gov/publicAPI",
+      "topics": [
+        "macro",
+        "economics",
+        "wages",
+        "labor"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 16,
+      "topicAliases": [],
+      "domainTags": [
+        "economics",
+        "macro",
+        "labor"
+      ],
+      "responseFormat": "json",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "experimental",
+      "status": "quarantined",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-19T19:08:02Z",
+        "discoveredBy": "manual"
       },
       "adapter": {
         "operation": "timeseries"

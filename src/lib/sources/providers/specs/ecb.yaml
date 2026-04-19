@@ -1,0 +1,89 @@
+schemaVersion: 1
+
+provider:
+  name: ecb
+  displayName: European Central Bank
+  matches:
+    providers: [ecb]
+    hosts: [data-api.ecb.europa.eu]
+  domains: [economics, macro, forex, monetary-policy]
+  rateLimit:
+    bucket: ecb
+    maxPerMinute: 20
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  ecb-jsondata:
+    when:
+      sourceAdapterOperation: [ecb-jsondata]
+      urlPatterns: ["/service/data/"]
+      default: true
+    claimTypes: [metric]
+    extractionPath: "$.observations.0[0]"
+    request:
+      method: GET
+      urlTemplate: "https://data-api.ecb.europa.eu/service/data/{flow}/{series}"
+      query:
+        format: "{format}"
+        lastNObservations: "{lastNObservations}"
+      estimatedSizeKb:
+        TLSN: 8
+        DAHR: 8
+      matchHints:
+        - "ecb"
+        - "{flow}"
+        - "{series}"
+    variables:
+      flow:
+        sources: [vars.flow]
+        required: true
+      series:
+        sources: [vars.series]
+        required: true
+      format:
+        sources: [vars.format]
+        default: "jsondata"
+      lastNObservations:
+        sources: [vars.lastNObservations]
+        default: "1"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+        requireQuery:
+          format: jsondata
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: object-entries
+        jsonPath: "$.dataSets[0].series"
+      fields:
+        id:
+          template: "ecb-{series}-{key}"
+          required: true
+        title:
+          template: "ECB {key}"
+        summary:
+          template: "{key}: {observations.0[0]}"
+        bodyText:
+          template: "ECB {key} latest value: {observations.0[0]}"
+        topics:
+          template: "economics,ecb,{key}"
+        metrics:
+          value:
+            jsonPath: "$.observations.0[0]"
+          statusIndex:
+            jsonPath: "$.observations.0[1]"
+          confidentialityIndex:
+            jsonPath: "$.observations.0[2]"
+        raw:
+          mode: item

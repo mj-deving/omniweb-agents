@@ -44,6 +44,7 @@ operations:
     variables:
       limit:
         sources:
+          - vars.limit
           - literal: "10"
         default: "10"
       category:
@@ -64,7 +65,7 @@ operations:
     parse:
       format: json
       items:
-        mode: array
+        mode: json-path
         jsonPath: "$[*]"
       fields:
         id:
@@ -131,6 +132,7 @@ operations:
     variables:
       limit:
         sources:
+          - vars.limit
           - literal: "5"
         default: "5"
     compatibility:
@@ -148,7 +150,7 @@ operations:
     parse:
       format: json
       items:
-        mode: array
+        mode: json-path
         jsonPath: "$[*]"
       fields:
         id:

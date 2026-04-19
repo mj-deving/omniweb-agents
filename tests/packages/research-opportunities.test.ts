@@ -89,6 +89,55 @@ describe("deriveResearchOpportunities", () => {
     expect(opportunities[0].score).toBeGreaterThan(opportunities[1].score);
   });
 
+  it("softly downgrades recently covered families without suppressing distinct topics", () => {
+    const opportunities = deriveResearchOpportunities({
+      signals: [
+        { topic: "Private Credit Yield Premium", confidence: 76, direction: "bearish" },
+        { topic: "USDT Supply ATH Stablecoin Inflation", confidence: 74, direction: "mixed" },
+      ],
+      posts: [],
+      recentCoverageFamilies: ["vix-credit"],
+      recentFamilyCoveragePenalty: 10,
+    });
+
+    expect(opportunities).toHaveLength(2);
+    expect(opportunities[0].topic).toBe("usdt supply ath stablecoin inflation");
+    expect(opportunities[1].topic).toBe("private credit yield premium");
+    expect(opportunities[1].sourceProfile.family).toBe("vix-credit");
+  });
+
+  it("rewards richer colony substrate when opportunities are otherwise close", () => {
+    const opportunities = deriveResearchOpportunities({
+      signals: [
+        {
+          topic: "BTC Sentiment vs Funding",
+          confidence: 74,
+          direction: "bearish",
+          keyInsight: "Funding is staying soft while sentiment rebounds.",
+          consensus: true,
+          agentCount: 6,
+          sourcePostData: [
+            { txHash: "0x1", author: "0xa", text: "one", category: "ANALYSIS", timestamp: 1 },
+            { txHash: "0x2", author: "0xb", text: "two", category: "ANALYSIS", timestamp: 2 },
+          ],
+          crossReferences: [
+            { type: "market", description: "Funding drift", assets: ["BTC"] },
+          ],
+        },
+        {
+          topic: "USDT Supply ATH Stablecoin Inflation",
+          confidence: 78,
+          direction: "mixed",
+        },
+      ],
+      posts: [],
+    });
+
+    expect(opportunities).toHaveLength(2);
+    expect(opportunities[0].topic).toBe("btc sentiment vs funding");
+    expect(opportunities[0].score).toBeGreaterThan(opportunities[1].score);
+  });
+
   it("suppresses the previously covered topic", () => {
     const opportunities = deriveResearchOpportunities({
       signals: [

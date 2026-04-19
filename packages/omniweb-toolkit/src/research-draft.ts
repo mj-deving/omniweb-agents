@@ -202,7 +202,7 @@ const ETF_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
     detail: "treats positive aggregate flow alone as proof of broad institutional demand",
   },
   {
-    pattern: /\b(?:positiveIssuerCount|negativeIssuerCount|issuer count|issuer counts|issuers?\s+green|issuers?\s+positive)\b.{0,80}\b(?:prove|proves|means|shows|confirms)\b.{0,60}\b(?:breadth|broad participation|broad demand)\b/i,
+    pattern: /\b(?:positiveIssuerCount|negativeIssuerCount|issuer count|issuer counts|issuers?\s+green|issuers?\s+positive)\b(?!.{0,40}\b(?:do|does)\s+not\b).{0,40}\b(?:(?:is|are)\b.{0,12})?(?:prove|proves|means|shows|confirms)\b.{0,60}\b(?:breadth|broad participation|broad demand)\b/i,
     detail: "treats simple issuer counts as proof of weighted breadth or broad participation",
   },
   {

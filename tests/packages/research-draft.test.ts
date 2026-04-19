@@ -899,6 +899,30 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.brief.falseInferenceGuards[0]).toContain("positive net flow alone");
   });
 
+  it("allows ETF drafts to disclaim breadth claims explicitly", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Net ETF flow is positive at 609.21 BTC, but issuer counts do not prove breadth because the tape is still being carried by a narrow leadership set rather than AUM-weighted participation across the complex. " +
+        "IBIT is doing the real lifting with a 1,088.13 BTC inflow while FBTC is still leaking 478.92 BTC, so the flow picture is supportive but concentrated instead of broad institutional demand. " +
+        "That view weakens if the net flow flips negative or if the current leader stops carrying the tape."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeEtfOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEtfEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+  });
+
   it("adds a family dossier brief for vix-credit topics", async () => {
     const provider = {
       name: "test-provider",

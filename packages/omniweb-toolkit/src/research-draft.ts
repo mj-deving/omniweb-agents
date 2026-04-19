@@ -116,7 +116,13 @@ const DIVERGENCE_CONTEXT_PATTERNS = [
   /\bdivergence\b/i,
   /\bmismatch\b/i,
   /\bdisconnect\b/i,
+  /\bcontradict(?:ed|ing|s)?\b/i,
+  /\bdiverg(?:e|es|ed|ing)\s+from\b/i,
+  /\baligning with\b/i,
+  /\bpushing against\b/i,
   /\bdespite\b/i,
+  /\bbut\b/i,
+  /\byet\b/i,
   /\beven as\b/i,
   /\bwhile\b/i,
 ];
@@ -180,8 +186,8 @@ const FUNDING_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }>
     detail: "explicitly centers funding in isolation instead of relating it to price and positioning context",
   },
   {
-    pattern: /\bsqueez(?:e|es|ed|ing)\b/i,
-    detail: "uses squeeze language even though the packet lacks open-interest change or liquidation context",
+    pattern: /\b(?:this|it|the setup|the structure|funding|positioning)\b.{0,30}\b(?:is|means|signals|sets up)\b.{0,20}\b(?:a\s+)?(?:short|long)?\s*squeeze\b/i,
+    detail: "calls a squeeze setup directly even though the packet lacks open-interest change or liquidation context",
   },
 ];
 
@@ -197,6 +203,10 @@ const SPOT_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = 
   {
     pattern: /\brange[- ]bound indecision\b|\bprice keeps oscillating between support and resistance\b/i,
     detail: "falls back to generic range commentary instead of stating where price sits in the range and why that matters",
+  },
+  {
+    pattern: /\blatest volume print\b.{0,80}\b(?:proves|means|shows|confirms)\b.{0,60}\b(?:confirming|rejecting|the tape|the signal|order flow)\b/i,
+    detail: "treats the latest volume print as proof that the tape is confirming or rejecting the signal",
   },
 ];
 

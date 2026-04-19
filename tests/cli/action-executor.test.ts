@@ -61,6 +61,8 @@ describe("executeStrategyActions", () => {
     expect(deps.attestAndPublish).toHaveBeenCalledWith({
       text: "generated text",
       category: "discussion",
+      tags: [],
+      confidence: 70,
       replyTo: "0xparent",
     }, "https://example.test/reply.json");
     expect(deps.bridge.publishHivePost).not.toHaveBeenCalled();
@@ -82,6 +84,8 @@ describe("executeStrategyActions", () => {
     expect(deps.attestAndPublish).toHaveBeenCalledWith({
       text: "generated text",
       category: "analysis",
+      tags: [],
+      confidence: 70,
     }, "https://example.test/publish.json");
     expect(deps.bridge.publishHivePost).not.toHaveBeenCalled();
     expect(result.executed).toEqual([
@@ -285,6 +289,23 @@ describe("executeStrategyActions", () => {
     expect(result.executed).toEqual([]);
     expect(result.skipped).toEqual([
       { action, reason: "missing attestUrl for PUBLISH" },
+    ]);
+  });
+
+  it("fails closed on REPLY when attestUrl is missing", async () => {
+    const deps = createDeps();
+    const action = makeAction({
+      type: "REPLY",
+      target: "0xparent",
+    });
+
+    const result = await executeStrategyActions([action], deps);
+
+    expect(deps.generateText).not.toHaveBeenCalled();
+    expect(deps.attestAndPublish).not.toHaveBeenCalled();
+    expect(result.executed).toEqual([]);
+    expect(result.skipped).toEqual([
+      { action, reason: "missing attestUrl for REPLY" },
     ]);
   });
 

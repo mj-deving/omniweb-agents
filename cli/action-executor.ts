@@ -230,6 +230,8 @@ export async function executeStrategyActions(
           const publishResult = await deps.attestAndPublish({
             text,
             category: "discussion",
+            tags: [],
+            confidence: 70,
             replyTo: action.target,
           }, attestUrl);
           result.executed.push({ action, success: true, txHash: publishResult.txHash });
@@ -276,6 +278,8 @@ export async function executeStrategyActions(
           const publishResult = await deps.attestAndPublish({
             text,
             category: inferCategory(action),
+            tags: [],
+            confidence: 70,
           }, attestUrl);
           result.executed.push({ action, success: true, txHash: publishResult.txHash });
           deps.observe("insight", "Strategy PUBLISH executed", {

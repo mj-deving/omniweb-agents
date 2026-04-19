@@ -57,10 +57,10 @@ export function defineTopicFamilyContract<TFamily extends string>(
 export function createTopicFamilyRegistry<TFamily extends string>(
   contracts: TopicFamilyContract<TFamily>[],
 ): TopicFamilyRegistry<TFamily> {
-  const registry = {} as TopicFamilyRegistry<TFamily>;
+  const registry = Object.create(null) as TopicFamilyRegistry<TFamily>;
 
   for (const contract of contracts) {
-    if (contract.family in registry) {
+    if (Object.hasOwn(registry, contract.family)) {
       throw new Error(`duplicate_topic_family_contract:${contract.family}`);
     }
     registry[contract.family] = contract;
@@ -73,9 +73,8 @@ export function getTopicFamilyContract<TFamily extends string>(
   registry: TopicFamilyRegistry<TFamily>,
   family: TFamily,
 ): TopicFamilyContract<TFamily> {
-  const contract = registry[family];
-  if (!contract) {
+  if (!Object.hasOwn(registry, family)) {
     throw new Error(`unknown_topic_family_contract:${family}`);
   }
-  return contract;
+  return registry[family];
 }

@@ -83,6 +83,34 @@ describe("topic-family contract foundation", () => {
     );
   });
 
+  it("allows family ids that would collide with plain-object prototype keys", () => {
+    const contract = defineTopicFamilyContract({
+      family: "toString",
+      displayName: "Prototype Key Contract",
+      sourcePlan: {
+        primarySourceIds: [],
+        supportingSourceIds: [],
+        expectedMetrics: [],
+      },
+      promptDoctrine: {
+        baseline: [],
+        focus: [],
+      },
+      claimBounds: {
+        defensible: [],
+        blocked: [],
+        requiresExtra: [],
+      },
+      metricSemantics: {},
+      quality: {
+        slipPatterns: [],
+      },
+    });
+
+    const registry = createTopicFamilyRegistry([contract]);
+    expect(getTopicFamilyContract(registry, "toString")).toBe(contract);
+  });
+
   it("provides a research-family-specific helper without allowing unsupported", () => {
     const contract = defineResearchTopicFamilyContract({
       family: "funding-structure",

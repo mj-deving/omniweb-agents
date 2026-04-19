@@ -629,7 +629,7 @@ function buildResearchAnalysisAngle(opportunity: ResearchOpportunity): string {
   }
 
   if (topic.includes("on-chain") || topic.includes("network") || topic.includes("mempool") || topic.includes("hashrate") || topic.includes("addresses")) {
-    return "Explain whether the latest on-chain activity reflects real usage, congestion, stress, or speculative churn, and what would invalidate that read.";
+    return "Explain whether the latest on-chain activity reflects real usage, temporary throughput pressure, or speculative churn, and what would invalidate that read.";
   }
 
   if (topic.includes("vix") || topic.includes("credit") || topic.includes("recession")) {

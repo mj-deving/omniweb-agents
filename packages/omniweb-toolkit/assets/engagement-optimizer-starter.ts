@@ -354,7 +354,7 @@ export async function observe(
     leaderboardCount: leaderboardAgents.length,
     availableBalance,
     llmProvider: ctx.omni.runtime.llmProvider,
-    minTextLength: 220,
+    minTextLength: 200,
   });
 
   if (!draft.ok) {

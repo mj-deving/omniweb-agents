@@ -77,7 +77,7 @@ export interface MarketDraftFailure {
 
 export type MarketDraftResult = MarketDraftSuccess | MarketDraftFailure;
 
-const DEFAULT_MIN_TEXT_LENGTH = 220;
+const DEFAULT_MIN_TEXT_LENGTH = 200;
 
 export async function buildMarketDraft(
   opts: BuildMarketDraftOptions,

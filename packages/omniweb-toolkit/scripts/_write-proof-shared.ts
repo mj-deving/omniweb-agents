@@ -394,6 +394,7 @@ export function agentTipReadbackSatisfied(
   minimumSpend: number,
 ): boolean {
   if (!after) return false;
+  if (!before) return false;
   if ((after.receivedCount ?? 0) > (before?.receivedCount ?? 0)) return true;
   if ((after.receivedDem ?? 0) >= (before?.receivedDem ?? 0) + minimumSpend) return true;
   return false;

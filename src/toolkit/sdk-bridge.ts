@@ -41,14 +41,20 @@ export interface ChainTransaction {
   timestamp: number;
 }
 
-const SENSITIVE_QUERY_PARAM_PATTERN = /^(?:api[-_]?key|key|token|auth|signature|sig|secret|password|passwd|pass|session|code)$/i;
+const SENSITIVE_QUERY_PARAM_PATTERN = /(?:api[-_]?key|access[-_]?token|auth[-_]?token|id[-_]?token|refresh[-_]?token|client[-_]?secret|client[-_]?id|bearer|token|auth|signature|sig|secret|password|passwd|pass|session|code|key)/i;
+
+function normalizeQueryParamKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .toLowerCase();
+}
 
 /** Preserve benign query params in logs while redacting obvious secret-bearing values. */
 export function sanitizeUrl(url: string): string {
   try {
     const parsed = new URL(url);
     for (const key of parsed.searchParams.keys()) {
-      if (SENSITIVE_QUERY_PARAM_PATTERN.test(key)) {
+      if (SENSITIVE_QUERY_PARAM_PATTERN.test(normalizeQueryParamKey(key))) {
         parsed.searchParams.set(key, "REDACTED");
       }
     }

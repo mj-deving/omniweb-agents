@@ -52,6 +52,18 @@ describe("S10: URL sanitization in error messages", () => {
     expect(result).not.toContain("SECRET");
   });
 
+  it("sanitizeUrl redacts common secret-bearing query params beyond exact-name matches", () => {
+    const result = sanitizeUrl(
+      "https://api.example.com/data?access_token=SECRET&clientSecret=TOPSECRET&id_token=JWT&other=value",
+    );
+    expect(result).toBe(
+      "https://api.example.com/data?access_token=REDACTED&clientSecret=REDACTED&id_token=REDACTED&other=value",
+    );
+    expect(result).not.toContain("SECRET");
+    expect(result).not.toContain("TOPSECRET");
+    expect(result).not.toContain("JWT");
+  });
+
   it("sanitizeUrl handles URL without query params", () => {
     const result = sanitizeUrl("https://api.example.com/data");
     expect(result).toBe("https://api.example.com/data");

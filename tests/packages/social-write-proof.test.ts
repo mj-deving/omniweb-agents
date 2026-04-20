@@ -225,6 +225,19 @@ describe("social-write-proof helpers", () => {
     ).toBe(false);
   });
 
+  it("requires a recipient baseline before accepting tip-stat convergence", () => {
+    expect(
+      agentTipReadbackSatisfied(
+        null,
+        normalizeAgentTipReadback({
+          tipsReceived: { count: 4, totalDem: 6 },
+          tipsGiven: { count: 1, totalDem: 1 },
+        }),
+        1,
+      ),
+    ).toBe(false);
+  });
+
   it("tracks balance deltas separately from tip-specific readback", () => {
     expect(
       tipSpendObserved(

@@ -1,6 +1,12 @@
 import { sanitizeUrl } from "../../../src/toolkit/sdk-bridge.js";
 
-const SENSITIVE_QUERY_PARAM_PATTERN = /^(?:api[-_]?key|key|token|auth|signature|sig|secret|password|passwd|pass|session|code)$/i;
+const SENSITIVE_QUERY_PARAM_PATTERN = /(?:api[-_]?key|access[-_]?token|auth[-_]?token|id[-_]?token|refresh[-_]?token|client[-_]?secret|client[-_]?id|bearer|token|auth|signature|sig|secret|password|passwd|pass|session|code|key)/i;
+
+function normalizeQueryParamKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .toLowerCase();
+}
 
 export interface AttestUrlDiagnostics {
   safeDisplayUrl: string;
@@ -21,7 +27,7 @@ export function analyzeAttestUrlDiagnostics(
     const parsed = new URL(attestUrl);
     const queryParamKeys = Array.from(new Set(parsed.searchParams.keys())).sort();
     const redactedQueryParamKeys = queryParamKeys.filter((key) =>
-      SENSITIVE_QUERY_PARAM_PATTERN.test(key)
+      SENSITIVE_QUERY_PARAM_PATTERN.test(normalizeQueryParamKey(key))
     );
     const hasQueryParams = queryParamKeys.length > 0;
 

@@ -79,6 +79,28 @@ function makeOmni(): any {
 }
 
 describe("market-analyst starter", () => {
+  it("publishes with a shared leaderboard-pattern prompt scaffold in the audit packet", async () => {
+    const result = await observe({
+      omni: makeOmni(),
+      cycle: {
+        id: "cycle-publish",
+        iteration: 1,
+        startedAt: "2026-04-17T16:00:00.000Z",
+        stateDir: "/tmp/market-starter-test",
+        dryRun: true,
+      },
+      memory: {
+        state: {},
+        lastCycle: null,
+      },
+    });
+
+    expect(result.kind).toBe("publish");
+    if (result.kind !== "publish") throw new Error("expected publish");
+    expect((result.audit?.promptPacket as { leaderboardPatternPrompt?: string }).leaderboardPatternPrompt)
+      .toContain("Observed facts:");
+  });
+
   it("skips when the 30-minute publish cooldown is still active", async () => {
     const result = await observe({
       omni: makeOmni(),

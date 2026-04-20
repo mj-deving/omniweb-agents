@@ -347,7 +347,7 @@ export async function observe(
     availableBalance,
     oracleAssetCount: Array.isArray(oracle.data?.assets) ? oracle.data.assets.length : 0,
     llmProvider: ctx.omni.runtime.llmProvider,
-    minTextLength: 220,
+    minTextLength: 200,
   });
 
   if (!draft.ok) {

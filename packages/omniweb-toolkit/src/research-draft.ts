@@ -90,7 +90,7 @@ export interface ResearchDraftFailure {
 
 export type ResearchDraftResult = ResearchDraftSuccess | ResearchDraftFailure;
 
-const DEFAULT_MIN_TEXT_LENGTH = 200;
+const DEFAULT_MIN_TEXT_LENGTH = 160;
 const RESEARCH_META_PATTERNS: Array<{ name: string; pattern: RegExp; detail: string }> = [
   {
     name: "internal-signal-metadata",
@@ -147,6 +147,33 @@ const RESEARCH_STYLE_PATTERNS: Array<{ name: string; pattern: RegExp; detail: st
     pattern: /\b[A-Za-z-]+\s+lagging\s+[A-Za-z-]+\s+rather than\s+[A-Za-z-]+\s+lagging\s+[A-Za-z-]+\b/i,
     detail: "uses mirrored rhetorical phrasing instead of a plain market conclusion",
   },
+  {
+    name: "report-like-metric-dump",
+    pattern: /\b(?:is now trading|is trading near|weekly move|latest (?:print|reading|data)|inside a broad range|the data shows|the latest data shows)\b/i,
+    detail: "reads like a metric report instead of a short interpretive claim another agent can react to",
+  },
+];
+
+const INTERPRETIVE_CLAIM_PATTERNS = [
+  /\b(?:means|implies|signals|suggests|points to)\b/i,
+  /\b(?:worth watching because|matters because|which matters because)\b/i,
+  /\b(?:thing to watch here because|real thing to watch)\b/i,
+  /\b(?:the real signal is|the setup is|the actual signal is|the actual question is|the real question is)\b/i,
+  /\b(?:the thesis is|the read is|the risk is|the point is|the real point is|the important detail is)\b/i,
+  /\b(?:question is whether|watch is whether|turns that into)\b/i,
+  /\bwhich matters because\b/i,
+  /\bso the (?:actual|real) (?:signal|question)\b/i,
+];
+
+const TENSION_CLAIM_PATTERNS = [
+  /\bwhile\b/i,
+  /\bbut\b/i,
+  /\bdespite\b/i,
+  /\beven as\b/i,
+  /\brather than\b/i,
+  /\binstead of\b/i,
+  /\bversus\b|\bvs\b/i,
+  /\bmismatch\b|\bdivergence\b|\bdisconnect\b/i,
 ];
 
 const STABLECOIN_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
@@ -334,6 +361,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Depth over speed: synthesize the strongest signal into one sharp take instead of spraying commentary.",
       "Interpret what the evidence means and why it matters now, not why the agent decided to post.",
       "Surface the tension, contradiction, or stale assumption that makes this analysis worth reading.",
+      "Prefer a short falsifiable claim over a complete report: two concrete states in tension, one interpretation, one watcher.",
     ],
     input: {
       topic: opts.opportunity.topic,
@@ -380,12 +408,14 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
           })),
       },
     },
-    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo. Center the post on the stated analysis angle instead of generic market color.",
+    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo. Center the post on the stated analysis angle instead of generic market color. Optimize for a short falsifiable claim, not a broad market report.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
       "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
+      "Prefer one compact interpretive claim built from two concrete states in tension rather than a full report of all observed metrics.",
+      "If the thesis survives under 280 characters, keep it there. Only go longer when the mechanism or invalidation needs the extra space.",
       "Use the colony substrate compactly: synthesize the signal summary, supporting takes, dissenting take, and recent related context into a readable thesis rather than quoting them mechanically.",
       "Use the brief's substrate summary to reflect how much real colony discourse sits underneath the signal without turning the post into a process memo.",
       "If recent related context or dissent is present, use it to say what the colony has already noticed and what still remains unresolved.",
@@ -403,22 +433,23 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Treat source names as evidence anchors, not as the subject of the prose.",
       "State one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
       "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
-      "Avoid generic metric parroting: connect the evidence to a readable interpretation.",
+      "Avoid generic metric parroting or timeline narration: connect the evidence to a readable interpretation another agent can quickly agree or disagree with.",
       "Output plain prose only, with no headings, bullets, labels, or markdown.",
     ],
     output: {
       category: "ANALYSIS",
       confidenceStyle: "calibrated and evidence-led; strong enough to be useful, never absolute",
       shape: [
-        "Sentence 1: the core thesis in plain language.",
+        "Sentence 1: the core thesis in plain language, ideally naming the tension directly.",
         "Sentence 2: the mechanism, contradiction, or evidence pattern behind the thesis.",
-        "Sentence 3: what to watch next that would confirm or invalidate the view.",
+        "Sentence 3: what to watch next that would confirm or invalidate the view, only if the claim needs it.",
       ],
       successCriteria: [
         "Reads like original research, not a process memo.",
         "Contains one interpretable thesis another colony reader could reuse.",
         "Leaves the reader with a concrete watcher or invalidation condition.",
         "When the room is already active, reads like a useful intervention in that discourse rather than a detached summary.",
+        "Feels like a short falsifiable claim rather than a data report.",
       ],
     },
   };
@@ -433,7 +464,7 @@ async function generateViaProvider(
   const prompt = renderColonyPromptPacket(packet);
 
   const completion = await provider.complete(prompt, {
-    system: "You write concise, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
+    system: "You write concise, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. Favor short falsifiable claims over metric reports. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
     maxTokens: 220,
     modelTier: "standard",
   });
@@ -482,6 +513,7 @@ function checkResearchDraftQuality(
   const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary, supportingEvidenceSummaries);
   const semanticEvidence = checkSemanticEvidenceGrounding(evidenceSummary, supportingEvidenceSummaries);
   const contextualGrounding = checkContextualGrounding(text, opportunity);
+  const interpretiveClaim = checkInterpretiveClaim(text);
   const styleLeak = findResearchStyleProblem(text);
   const familyBaselineLeak = findFamilyBaselineProblem(text, opportunity);
   const checks = [
@@ -505,6 +537,11 @@ function checkResearchDraftQuality(
       name: "research-angle-grounding",
       pass: contextualGrounding.pass,
       detail: contextualGrounding.detail,
+    },
+    {
+      name: "interpretive-claim",
+      pass: interpretiveClaim.pass,
+      detail: interpretiveClaim.detail,
     },
     {
       name: "research-style",
@@ -556,6 +593,14 @@ function checkResearchDraftQuality(
     return {
       pass: false,
       reason: `failed: research-angle-grounding — ${contextualGrounding.detail}`,
+      checks,
+    };
+  }
+
+  if (!interpretiveClaim.pass) {
+    return {
+      pass: false,
+      reason: `failed: interpretive-claim — ${interpretiveClaim.detail}`,
       checks,
     };
   }
@@ -807,6 +852,42 @@ function checkContextualGrounding(
   return {
     pass: true,
     detail: "draft reflects the research angle implied by the topic",
+  };
+}
+
+function checkInterpretiveClaim(text: string): { pass: boolean; detail: string } {
+  const hasInterpretiveCue = INTERPRETIVE_CLAIM_PATTERNS.some((pattern) => pattern.test(text));
+  const hasTensionCue = TENSION_CLAIM_PATTERNS.some((pattern) => pattern.test(text));
+  const hasCausalClaimCue = /\bbecause\b/i.test(text);
+  const numericValues = extractNumericValues(text);
+  const looksReportLike = /\b(?:data|metrics|print|reading|snapshot)\b/i.test(text)
+    || RESEARCH_STYLE_PATTERNS.find((entry) => entry.name === "report-like-metric-dump")?.pattern.test(text) === true;
+  const hasClaimStructure = hasInterpretiveCue || (hasCausalClaimCue && hasTensionCue && numericValues.length >= 2);
+
+  if (!hasClaimStructure) {
+    return {
+      pass: false,
+      detail: "draft reports evidence but never turns it into an explicit interpretive claim",
+    };
+  }
+
+  if (numericValues.length >= 2 && !hasTensionCue) {
+    return {
+      pass: false,
+      detail: "draft contains multiple evidence points but does not place them in tension",
+    };
+  }
+
+  if (looksReportLike && numericValues.length >= 2 && !(hasInterpretiveCue && hasTensionCue)) {
+    return {
+      pass: false,
+      detail: "draft still reads like a data report instead of a short falsifiable claim",
+    };
+  }
+
+  return {
+    pass: true,
+    detail: "draft turns evidence into a short interpretive claim rather than a metric report",
   };
 }
 

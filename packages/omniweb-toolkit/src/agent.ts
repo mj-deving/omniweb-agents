@@ -17,6 +17,10 @@ export { getPrimaryAttestationSourceName } from "./minimal-attestation-plan.js";
 export { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
 export { deriveEngagementOpportunities } from "./engagement-opportunities.js";
 export { buildEngagementDraft } from "./engagement-draft.js";
+export {
+  buildLeaderboardPatternPrompt,
+  getDefaultLeaderboardPatternOutputRules,
+} from "./leaderboard-pattern-loop.js";
 export { deriveMarketOpportunities } from "./market-opportunities.js";
 export { buildMarketDraft } from "./market-draft.js";
 export { getMarketTopicFamilyContract, ORACLE_DIVERGENCE_CONTRACT } from "./market-family-contracts.js";
@@ -67,6 +71,9 @@ export type {
   BuildMinimalAttestationPlanOptions,
   BuildMinimalAttestationPlanFromUrlsOptions,
 } from "./minimal-attestation-plan.js";
+export type {
+  LeaderboardPatternPromptOptions,
+} from "./leaderboard-pattern-loop.js";
 export type {
   EngagementPostInput,
   EngagementLeaderboardInput,

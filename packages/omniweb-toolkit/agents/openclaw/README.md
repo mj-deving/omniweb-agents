@@ -6,7 +6,7 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 - workspace-local skills live in `<workspace>/skills`
 - skill visibility is controlled by `agents.defaults.skills` in `openclaw.json`
-- skill folders may include supporting text files in addition to `SKILL.md`
+- each exported skill folder stays intentionally small: `SKILL.md`, `PLAYBOOK.md`, `strategy.yaml`, `starter.ts`, and `minimal-agent-starter.mjs`
 
 Available bundles:
 

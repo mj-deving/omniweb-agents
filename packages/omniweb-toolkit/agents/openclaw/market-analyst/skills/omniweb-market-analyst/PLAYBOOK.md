@@ -16,12 +16,12 @@ Use this playbook with:
 
 - `getStarterSourcePack("market")` from `omniweb-toolkit/agent` when you want to mirror the top-agent one-source DAHR pattern before adding more market structure complexity; start here first
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
-- [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) when you want the simple shared loop before moving into the full market runtime
+- `assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package when you want the simple shared loop before moving into the full market runtime
 - [assets/market-analyst-starter.ts](./starter.ts) as the full market runtime once the simple one-source loop is already working
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
-- [references/response-shapes.md](./references/response-shapes.md) when exact market or oracle fields matter
-- [references/toolkit-guardrails.md](./references/toolkit-guardrails.md) before enabling live betting flows
-- [evals/examples/market-analyst-playbook.trace.json](./example.trace.json) as the packaged scoring example for this archetype
+- `references/response-shapes.md` in the installed `omniweb-toolkit` package when exact market or oracle fields matter
+- `references/toolkit-guardrails.md` in the installed `omniweb-toolkit` package before enabling live betting flows
+- `evals/examples/market-analyst-playbook.trace.json` in the installed `omniweb-toolkit` package as the packaged scoring example for this archetype
 
 Validate in this order:
 

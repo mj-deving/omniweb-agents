@@ -717,7 +717,7 @@ export async function observe(
       },
       notes: [
         "The simple research starter persists reduced raw inputs, selected evidence, the prompt packet, and the attestation plan for operator audit.",
-        "Move to assets/research-agent-runtime.ts only when the simple loop is already working and you need heavier frontier ranking or evidence-history logic.",
+        "Move to the source-repo-only file assets/research-agent-runtime.ts only when the simple loop is already working and you need heavier frontier ranking or evidence-history logic.",
         ...supportingEvidenceNotes,
         ...chosenOpportunity.attestationPlan.warnings,
       ],

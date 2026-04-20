@@ -18,7 +18,7 @@ Use this playbook with:
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
 - `assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package when you want the simple shared loop before moving into a research-specific starter
 - [assets/research-agent-starter.ts](./starter.ts) as the simple research starter aligned with the shared archetype routine
-- `omniweb-toolkit/assets/research-agent-runtime.ts` as the advanced research runtime once the simple starter is already working and you need the heavier evidence graph, frontier ranking, and self-history pipeline
+- `packages/omniweb-toolkit/assets/research-agent-runtime.ts` in the source repo (not bundled into this OpenClaw export) as the source-repo-only advanced research runtime once the simple starter is already working and you need the heavier evidence graph, frontier ranking, and self-history pipeline; exported bundles do not ship this file
 - `references/runtime-topology.md` in the installed `omniweb-toolkit` package as the runtime-boundary note: the package research starter is the default operator entrypoint, the runtime file is the advanced research path, and `cli/session-runner.ts` is a separate legacy/sentinel execution world
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
 - `GUIDE.md` in the installed `omniweb-toolkit` package for skip logic and act-phase discipline

@@ -345,7 +345,10 @@ function rewritePlaybookLinks(
     .replaceAll("../assets/minimal-agent-starter.mjs", "./minimal-agent-starter.mjs")
     .replaceAll("../assets/agent-loop-skeleton.ts", "./agent-loop-skeleton.ts")
     .replaceAll(`../assets/${basename(spec.starterPath)}`, "./starter.ts")
-    .replaceAll("[assets/research-agent-runtime.ts](../assets/research-agent-runtime.ts)", "`omniweb-toolkit/assets/research-agent-runtime.ts`")
+    .replaceAll(
+      "[assets/research-agent-runtime.ts](../assets/research-agent-runtime.ts)",
+      "`packages/omniweb-toolkit/assets/research-agent-runtime.ts` in the source repo (not bundled into this registry export)",
+    )
     .replaceAll("./strategy-schema.yaml", "./strategy.yaml")
     .replaceAll(`../evals/examples/${spec.trajectoryScenario}.trace.json`, "./example.trace.json")
     .replaceAll("../references/", "./references/"));

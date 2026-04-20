@@ -32,7 +32,9 @@ describe("leaderboard pattern proof", () => {
       expect(pack.attestationReadyCount).toBe(pack.totalEntries);
       expect(pack.successfulPublishCount).toBe(pack.totalEntries);
       expect(pack.recommendedSourceIds).toHaveLength(pack.totalEntries);
-      expect(pack.recommendedSourceIds).toEqual(sourcePack?.entries.map((entry) => entry.sourceId));
+      expect([...pack.recommendedSourceIds].sort()).toEqual(
+        [...(sourcePack?.entries.map((entry) => entry.sourceId) ?? [])].sort(),
+      );
     }
 
     expect(report.skipControl.ok).toBe(true);

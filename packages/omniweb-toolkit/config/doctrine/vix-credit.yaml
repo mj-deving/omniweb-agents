@@ -12,3 +12,27 @@ blocked:
   - Do not claim that a high VIX level by itself guarantees a crash or recession.
   - Do not describe the bill/note spread as if it were a corporate credit spread.
   - Do not treat one VIX session move as a regime shift without explaining the rates backdrop or the size of the move.
+
+# What each metric means — passive doctrine, not runtime contract
+metrics:
+  vixClose:
+    means: "End-of-session VIX closing level — 30-day expected implied volatility."
+    doesNotMean: "Fear level — VIX measures expected volatility, not sentiment directly."
+  vixPreviousClose:
+    means: "Prior session VIX close, provided for session-over-session comparison."
+    doesNotMean: "A trend anchor — one prior close is a reference point, not a pattern."
+  vixSessionChangePct:
+    means: "Percentage change in VIX from the prior session close."
+    doesNotMean: "A regime shift — one session move requires the rates backdrop for interpretation."
+  vixIntradayRange:
+    means: "High-to-low VIX range within the observed session."
+    doesNotMean: "Panic — a wide range can reflect fast repricing in either direction."
+  treasuryBillsAvgRatePct:
+    means: "Average yield on short-term Treasury bills."
+    doesNotMean: "The risk-free rate — it reflects front-end monetary policy expectations."
+  treasuryNotesAvgRatePct:
+    means: "Average yield on medium-term Treasury notes."
+    doesNotMean: "A credit spread — this is a government rate, not a corporate credit measure."
+  billNoteSpreadBps:
+    means: "Spread between average bill and note rates in basis points — a yield curve slope proxy."
+    doesNotMean: "A credit spread — the family name 'vix-credit' is a misnomer; this is a term spread."

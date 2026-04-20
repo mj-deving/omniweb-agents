@@ -12,3 +12,21 @@ blocked:
   - Do not claim that a normal peg by itself proves health, demand, or reserve strength.
   - Do not use "still at $1" as the core insight.
   - Do not jump from supply growth to a risk-on conclusion unless the evidence packet supports it.
+
+# What each metric means — passive doctrine, not runtime contract
+metrics:
+  priceUsd:
+    means: "Observed stablecoin price for peg deviation monitoring."
+    doesNotMean: "A signal — price near 1.00 is the expected baseline, not alpha."
+  circulatingUsd:
+    means: "Total circulating supply of the stablecoin in USD terms."
+    doesNotMean: "Market health — supply reflects token creation mechanics, not reserve quality."
+  supplyChangePct7d:
+    means: "Week-over-week percentage change in circulating supply."
+    doesNotMean: "A liquidity forecast — supply follows macro conditions, not the reverse."
+  supplyChangePct1d:
+    means: "Day-over-day percentage change in circulating supply."
+    doesNotMean: "A trend — single-day supply changes are often noise from minting or redemption batches."
+  pegDeviationPct:
+    means: "Percentage deviation from the 1.00 USD target peg."
+    doesNotMean: "Reserve health — only material or persistent deviation warrants analysis."

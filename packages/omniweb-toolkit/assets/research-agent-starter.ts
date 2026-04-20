@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import {
+  buildLeaderboardPatternPrompt,
   buildResearchColonySubstrate,
   buildResearchDraft,
   buildResearchSelfHistory,
@@ -61,6 +62,36 @@ interface RankedResearchOpportunity extends ResearchOpportunity {
   portfolioScore: number;
   portfolioReasons: string[];
   rawRank: number;
+}
+
+function buildStarterPromptText(params: {
+  topic: string;
+  family: string;
+  opportunityKind: string;
+  score: number;
+  portfolioScore: number;
+  feedCount: number;
+  signalCount: number;
+  attestUrl: string;
+}): string {
+  return buildLeaderboardPatternPrompt({
+    role: "a research analyst following the one-source attestation-first leaderboard pattern",
+    sourceName: params.attestUrl,
+    observedFacts: [
+      `Selected topic: ${params.topic}.`,
+      `Research family: ${params.family}.`,
+      `Opportunity kind: ${params.opportunityKind}.`,
+      `Raw score: ${params.score}.`,
+      `Portfolio score: ${params.portfolioScore}.`,
+      `Feed sample size: ${params.feedCount}.`,
+      `Signal sample size: ${params.signalCount}.`,
+    ],
+    domainRules: [
+      "Keep the thesis grounded in the fetched evidence packet.",
+      "Use only observed numbers or explicit uncertainty.",
+      "Avoid narrative inflation beyond the attested source.",
+    ],
+  });
 }
 
 function signalTopic(signal: unknown): string | null {
@@ -987,6 +1018,17 @@ export async function observe(
       };
     }
 
+    const starterPromptText = buildStarterPromptText({
+      topic,
+      family: sourceProfile.family,
+      opportunityKind: chosenOpportunity.kind,
+      score: chosenOpportunity.score,
+      portfolioScore: chosenOpportunity.portfolioScore,
+      feedCount: posts.length,
+      signalCount: signalList.length,
+      attestUrl: attestationPlan.primary.url,
+    });
+
     return {
       kind: "publish",
       category: draft.category,
@@ -1005,6 +1047,7 @@ export async function observe(
         portfolioScore: chosenOpportunity.portfolioScore,
         cooldownOverrideApplied: cooldownOverrideAllowed || undefined,
         draftSource: draft.draftSource,
+        leaderboardPatternPrompt: starterPromptText,
         ...derivedMetrics,
         ...readStatus,
       },
@@ -1031,6 +1074,7 @@ export async function observe(
           draftText: draft.text,
           qualityGate: draft.qualityGate,
           opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
+          leaderboardPatternPrompt: starterPromptText,
           primaryAttestUrl: attestationPlan.primary.url,
           supportingAttestUrls: attestationPlan.supporting.map((candidate) => candidate.url),
         },

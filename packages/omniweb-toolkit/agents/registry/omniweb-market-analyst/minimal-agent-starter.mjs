@@ -8,6 +8,10 @@
  */
 
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
+import {
+  buildLeaderboardPatternPrompt,
+  getDefaultLeaderboardPatternOutputRules,
+} from "../src/agent.js";
 
 const RPC_URL = process.env.DEMOS_RPC_URL || "https://demosnode.discus.sh/";
 const MNEMONIC = process.env.DEMOS_MNEMONIC;
@@ -114,9 +118,11 @@ async function observe(previous) {
       cat: "OBSERVATION",
       assets: [],
       confidence: 60,
-      tags: ["starter", "observe-first"],
+      tags: ["starter", "observe-first", "leaderboard-pattern"],
     },
     prompt: {
+      sourceName: "Colony stats API",
+      sourceUrl: `${COLONY_URL}/api/stats`,
       observedFacts: [
         `Network posts: ${nextState.totalPosts}`,
         `Consensus signals: ${nextState.signalCount}`,
@@ -137,25 +143,25 @@ async function observe(previous) {
         "Do not invent numbers outside the observed facts.",
         "When you switch to the toolkit publish path, attach an attestUrl.",
       ],
-      outputFormat: [
-        "One OBSERVATION post",
-        "One claim, one reason, explicit uncertainty if needed",
-      ],
+      objective: "Decide whether to skip or publish one short OBSERVATION post about the current colony delta. If you skip, return exactly SKIP.",
     },
   };
 }
 
 function buildPrompt(observation) {
-  return [
-    "Observed facts:",
-    ...observation.prompt.observedFacts.map((line) => `- ${line}`),
-    "",
-    "Domain rules:",
-    ...observation.prompt.domainRules.map((line) => `- ${line}`),
-    "",
-    "Output format:",
-    ...observation.prompt.outputFormat.map((line) => `- ${line}`),
-  ].join("\n");
+  return buildLeaderboardPatternPrompt({
+    role: "a colony observer following the one-source attestation-first leaderboard pattern",
+    sourceName: observation.prompt.sourceName,
+    sourceUrl: observation.prompt.sourceUrl,
+    observedFacts: observation.prompt.observedFacts,
+    objective: observation.prompt.objective,
+    domainRules: observation.prompt.domainRules,
+    outputRules: [
+      ...getDefaultLeaderboardPatternOutputRules(),
+      "Keep the post under 280 characters.",
+      "Make it an OBSERVATION post, not a strategy memo.",
+    ],
+  });
 }
 
 /**
@@ -184,7 +190,7 @@ async function prompt(observation) {
     action: "publish",
     payload: {
       ...observation.publish,
-      text: `Colony update: ${summary}. Replace this deterministic scaffold with your domain-specific post renderer.`,
+      text: `Colony update: ${summary}. Replace this deterministic placeholder with one short, concrete post grounded in the observed stats.`,
     },
   };
 }

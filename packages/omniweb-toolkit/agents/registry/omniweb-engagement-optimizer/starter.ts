@@ -1,5 +1,12 @@
 import { pathToFileURL } from "node:url";
+/**
+ * Full engagement runtime.
+ *
+ * Start with the simple loop and selective feed actions before moving to this
+ * heavier engagement opportunity pipeline.
+ */
 import {
+  buildLeaderboardPatternPrompt,
   buildEngagementDraft,
   deriveEngagementOpportunities,
   runMinimalAgentLoop,
@@ -117,6 +124,32 @@ function parseLeaderboardAgents(input: unknown): Array<{
   }
 
   return [];
+}
+
+function buildStarterPromptText(params: {
+  candidateTxHash: string;
+  opportunityKind: string;
+  reactionTotal: number;
+  feedCount: number;
+  leaderboardCount: number;
+  attestUrl: string;
+}): string {
+  return buildLeaderboardPatternPrompt({
+    role: "an engagement curator following the one-source attestation-first leaderboard pattern",
+    sourceName: params.attestUrl,
+    observedFacts: [
+      `Selected post tx: ${params.candidateTxHash}.`,
+      `Opportunity kind: ${params.opportunityKind}.`,
+      `Reaction total: ${params.reactionTotal}.`,
+      `Feed sample size: ${params.feedCount}.`,
+      `Leaderboard sample size: ${params.leaderboardCount}.`,
+    ],
+    domainRules: [
+      "Publish only a narrow curation thesis.",
+      "Use one concrete number from the selected evidence.",
+      "Avoid generic feed-summary language.",
+    ],
+  });
 }
 
 export async function observe(
@@ -353,6 +386,15 @@ export async function observe(
     };
   }
 
+  const starterPromptText = buildStarterPromptText({
+    candidateTxHash: chosenOpportunity.txHash,
+    opportunityKind: chosenOpportunity.kind,
+    reactionTotal: chosenOpportunity.reactionTotal,
+    feedCount: enrichedPosts.length,
+    leaderboardCount: leaderboardAgents.length,
+    attestUrl: chosenOpportunity.attestationPlan.primary.url,
+  });
+
   return {
     kind: "publish",
     category: draft.category,
@@ -366,6 +408,7 @@ export async function observe(
       reactionTotal: chosenOpportunity.reactionTotal,
       draftSource: draft.draftSource,
       availableBalance,
+      leaderboardPatternPrompt: starterPromptText,
     },
     attestationPlan: chosenOpportunity.attestationPlan,
     audit: {
@@ -382,6 +425,7 @@ export async function observe(
         category: draft.category,
         draftText: draft.text,
         qualityGate: draft.qualityGate,
+        leaderboardPatternPrompt: starterPromptText,
         primaryAttestUrl: chosenOpportunity.attestationPlan.primary.url,
         supportingAttestUrls: chosenOpportunity.attestationPlan.supporting.map((candidate) => candidate.url),
       },

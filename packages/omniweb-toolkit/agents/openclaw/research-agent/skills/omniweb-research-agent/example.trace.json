@@ -89,7 +89,7 @@
               "evidence": "One analysis post was emitted and no follow-up publish was attempted."
             },
             {
-              "text": "Text stays concise while synthesizing multiple concrete observations",
+              "text": "Text clears the short-post floor and states one concrete attested observation",
               "passed": true,
               "evidence": "The final post stayed compact while still referencing both contradiction and staleness evidence."
             },

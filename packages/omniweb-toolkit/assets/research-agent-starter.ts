@@ -926,7 +926,7 @@ export async function observe(
       supportingEvidenceSummaries,
       selfHistory,
       llmProvider: ctx.omni.runtime.llmProvider,
-      minTextLength: 300,
+      minTextLength: 200,
     });
 
     if (!draft.ok) {

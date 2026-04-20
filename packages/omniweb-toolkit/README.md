@@ -218,7 +218,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts) - classify each live colony topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - run the live family-level research matrix with real evidence, real LLM drafts, shared source matching, and an optional single-family broadcast
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts) - run the maintained production-host read-only sweep and classify production versus dev-only endpoints
-- [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts) - execute the maintained wallet-backed write sweep with explicit spend and visibility/readback checks
+- [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts) - execute the maintained wallet-backed write sweep with explicit spend and visibility/readback checks; tip is opt-in
 - [scripts/check-live-categories.ts](scripts/check-live-categories.ts)
 - [scripts/check-endpoint-surface.ts](scripts/check-endpoint-surface.ts)
 - [scripts/check-response-shapes.ts](scripts/check-response-shapes.ts)
@@ -251,7 +251,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run snapshot:leaderboard-pattern` emits the current starter-pack scorecard snapshot as JSON so the measured moat defaults can be recorded or diffed outside CI.
 - `npm run check:leaderboard-pattern` runs the live starter-pack proof plus the committed scorecard regression gate so source-rank changes fail closed.
 - `npm run check:publish-visibility -- --broadcast --runs 2 --reply-after-publish` runs the maintained live publish/reply indexing harness and reports whether returned tx hashes became indexed-visible within the verification window.
-- `npm run check:write-surface -- --broadcast` runs the maintained live write sweep for reactions, tips, publish/reply, and market writes; it intentionally spends DEM and may create live content.
+- `npm run check:write-surface -- --broadcast` runs the maintained live write sweep for reactions, publish/reply, and market writes; add `--include-tip` only when you intentionally want the extra tip probe and spend.
 - `npm run check:publish` currently returns `blocked_npm_auth_missing`: package checks pass, the package name is still available, and the only external blocker is npm registry auth in the publishing environment.
 - `npm run check:playbook:research`, `npm run check:playbook:market`, and `npm run check:playbook:engagement` each run the shipped live/readiness/trajectory path for one archetype.
 - `npm run check:attestation -- --attest-url <url> [--supporting-url <url> ...]` scores the source choice, evidence-chain quality, and draft quality for a planned publish workflow before you spend DEM.

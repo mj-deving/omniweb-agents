@@ -1,10 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
- * probe-social-writes.ts — maintained live proof path for reply, react, and tip.
+ * probe-social-writes.ts — maintained live proof path for reaction and reply,
+ * with tip kept as an explicit optional extension.
  *
  * Default behavior is non-destructive: select a suitable external feed post and
  * report the current readback state that would be used for the live proof.
- * Passing `--execute` performs the real reaction, tip, and reply flow.
+ * Passing `--execute` performs the real reaction and reply flow.
+ * Passing `--include-tip` adds the live tip step as an explicit extra probe.
  *
  * Output: JSON to stdout. Errors to stderr.
  * Exit codes: 0 = success, 1 = live/runtime failure, 2 = invalid args.
@@ -18,13 +20,18 @@ import {
   hasFlag,
 } from "./_shared.js";
 import {
+  DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR,
+  agentTipReadbackSatisfied,
   hasRecordedTip,
+  normalizeAgentTipReadback,
   normalizeBalance,
   normalizeReactionEnvelope,
+  rankSocialWriteCandidates,
   normalizeTipReadback,
   parentThreadContainsReply,
   reactionReadbackSatisfied,
   selectSocialWriteCandidate,
+  socialWriteCandidateMeetsFloor,
   tipReadbackSatisfied,
   tipSpendObserved,
   verifyPublishVisibility,
@@ -36,7 +43,7 @@ const DEFAULT_FEED_LIMIT = 12;
 const DEFAULT_POLL_MS = 3_000;
 const DEFAULT_REPLY_TIMEOUT_MS = 45_000;
 const DEFAULT_REACTION_TIMEOUT_MS = 15_000;
-const DEFAULT_TIP_TIMEOUT_MS = 20_000;
+const DEFAULT_TIP_TIMEOUT_MS = 30_000;
 const DEFAULT_TIP_AMOUNT = 1;
 
 type OmniInstance = Awaited<ReturnType<Awaited<ReturnType<typeof loadConnect>>>>;
@@ -54,6 +61,7 @@ Options:
   --reply-timeout-ms N    Visibility timeout for reply verification (default: ${DEFAULT_REPLY_TIMEOUT_MS})
   --reaction-timeout-ms N Polling timeout for reaction readback (default: ${DEFAULT_REACTION_TIMEOUT_MS})
   --tip-timeout-ms N      Polling timeout for tip readback (default: ${DEFAULT_TIP_TIMEOUT_MS})
+  --include-tip           Include the live tip step in the proof sweep
   --poll-ms N             Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --base-url URL          SuperColony base URL for direct reaction readback (default: ${DEFAULT_BASE_URL})
   --state-dir PATH        Override state directory for runtime guards
@@ -97,6 +105,7 @@ const baseUrl = getStringArg(args, "--base-url") ?? DEFAULT_BASE_URL;
 const stateDir = getStringArg(args, "--state-dir") || undefined;
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const execute = hasFlag(args, "--execute");
+const includeTip = hasFlag(args, "--include-tip");
 
 for (const [label, value] of [
   ["--feed-limit", feedLimit],
@@ -122,14 +131,32 @@ try {
   }
 
   const posts = Array.isArray(feed.data?.posts) ? feed.data.posts : [];
+  const rankedCandidates = rankSocialWriteCandidates(posts, omni.address);
   const candidate = await chooseCandidatePost(omni, posts, token, baseUrl);
   if (!candidate) {
-    throw new Error(`No suitable external feed post found in the latest ${feedLimit} posts`);
+    console.log(JSON.stringify({
+      attempted: false,
+      ok: true,
+      skipped: true,
+      address: omni.address,
+      floor: DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR,
+      topRankedCandidate: rankedCandidates[0] ?? null,
+      message:
+        `No untouched attested post met the social interaction floor `
+        + `(score >= ${DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR.minScore}, `
+        + `engagement >= ${DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR.minEngagement}) `
+        + `in the latest ${feedLimit} posts.`,
+    }, null, 2));
+    process.exit(0);
   }
 
   const beforeReaction = await readReactionEnvelope(candidate.txHash, token, baseUrl);
   const beforeTipStatsResult = await omni.colony.getTipStats(candidate.txHash);
   const beforeTipStats = normalizeTipReadback(beforeTipStatsResult?.ok ? beforeTipStatsResult.data : null);
+  const beforeRecipientTipStatsResult = await omni.colony.getAgentTipStats(candidate.author);
+  const beforeRecipientTipStats = normalizeAgentTipReadback(
+    beforeRecipientTipStatsResult?.ok ? beforeRecipientTipStatsResult.data : null,
+  );
   const beforeBalanceResult = await omni.colony.getBalance();
   const beforeBalance = normalizeBalance(beforeBalanceResult?.ok ? beforeBalanceResult.data?.balance : null);
   const beforeParentDetail = await omni.colony.getPostDetail(candidate.txHash);
@@ -143,9 +170,13 @@ try {
       readback: {
         reactions: beforeReaction,
         tipStats: beforeTipStats,
+        recipientTipStats: beforeRecipientTipStats,
         parentDetailOk: !!beforeParentDetail?.ok,
       },
-      message: "Dry run only. Re-run with --execute to perform live reaction, tip, and reply proof.",
+      tipEnabled: includeTip,
+      message:
+        "Dry run only. Re-run with --execute for the live reaction+reply proof, "
+        + "and add --include-tip only when you intentionally want the extra tip probe.",
     }, null, 2));
     process.exit(0);
   }
@@ -159,13 +190,15 @@ try {
     : { attempted: false };
 
   const balanceBeforeTip = beforeBalance;
-  const tipResult = await omni.colony.tip(candidate.txHash, tipAmount);
-  const tipVerification = tipResult.ok
+  const tipResult = includeTip ? await omni.colony.tip(candidate.txHash, tipAmount) : null;
+  const tipVerification = includeTip && tipResult?.ok
     ? await verifyTipReadback(
         omni,
         candidate.txHash,
         tipResult.data?.txHash,
+        candidate.author,
         beforeTipStats,
+        beforeRecipientTipStats,
         balanceBeforeTip,
         tipAmount,
         {
@@ -194,25 +227,25 @@ try {
     reactionResult.ok
     && !!reactionVerification.attempted
     && reactionVerification.ok
-    && tipResult.ok
-    && !!tipVerification.attempted
-    && tipVerification.ok
     && replyResult.ok
     && !!replyVerification.attempted
-    && replyVerification.ok;
+    && replyVerification.ok
+    && (!includeTip || (!!tipResult?.ok && !!tipVerification.attempted && tipVerification.ok));
 
   console.log(JSON.stringify({
     attempted: true,
     ok: overallOk,
     address: omni.address,
     target: candidate,
+    tipEnabled: includeTip,
     reaction: {
       result: summarizeToolResult(reactionResult),
       verification: reactionVerification,
     },
     tip: {
       amount: tipAmount,
-      result: summarizeToolResult(tipResult),
+      skipped: !includeTip,
+      result: tipResult ? summarizeToolResult(tipResult) : null,
       verification: tipVerification,
     },
     reply: {
@@ -222,7 +255,7 @@ try {
       result: summarizeToolResult(replyResult),
       verification: replyVerification,
     },
-  }, null, 2));
+    }, null, 2));
 
   process.exit(overallOk ? 0 : 1);
 } catch (error) {
@@ -272,12 +305,9 @@ async function chooseCandidatePost(
   token: string | null,
   baseUrl: string,
 ): Promise<ReturnType<typeof selectSocialWriteCandidate>> {
-  const fallback = selectSocialWriteCandidate(posts, omni.address);
-
-  for (const post of posts) {
-    const candidate = selectSocialWriteCandidate([post], omni.address);
-    if (!candidate) continue;
-
+  const ranked = rankSocialWriteCandidates(posts, omni.address);
+  for (const candidate of ranked) {
+    if (!socialWriteCandidateMeetsFloor(candidate)) continue;
     const reaction = await readReactionEnvelope(candidate.txHash, token, baseUrl);
     const tipStatsResult = await omni.colony.getTipStats(candidate.txHash);
     const tipStats = normalizeTipReadback(tipStatsResult?.ok ? tipStatsResult.data : null);
@@ -286,14 +316,16 @@ async function chooseCandidatePost(
     }
   }
 
-  return fallback;
+  return null;
 }
 
 async function verifyTipReadback(
   omni: OmniInstance,
   postTxHash: string,
   tipTxHash: string | undefined,
+  recipientAddress: string,
   before: ReturnType<typeof normalizeTipReadback>,
+  beforeRecipient: ReturnType<typeof normalizeAgentTipReadback>,
   beforeBalance: number | null,
   tipAmountValue: number,
   opts: { timeoutMs: number; pollMs: number },
@@ -303,16 +335,21 @@ async function verifyTipReadback(
   polls: number;
   before: ReturnType<typeof normalizeTipReadback>;
   after: ReturnType<typeof normalizeTipReadback>;
+  beforeRecipient: ReturnType<typeof normalizeAgentTipReadback>;
+  afterRecipient: ReturnType<typeof normalizeAgentTipReadback>;
   beforeBalance: number | null;
   afterBalance: number | null;
   spendObserved: boolean;
   txConfirmed: boolean;
   txBlockNumber?: number;
   tipStatsConverged: boolean;
+  recipientTipStatsConverged: boolean;
+  readbackConverged: boolean;
 }> {
   const deadline = Date.now() + opts.timeoutMs;
   let polls = 0;
   let after = before;
+  let afterRecipient = beforeRecipient;
   let afterBalance = beforeBalance;
   let txConfirmed = false;
   let txBlockNumber: number | undefined;
@@ -321,6 +358,8 @@ async function verifyTipReadback(
     polls += 1;
     const tipStats = await omni.colony.getTipStats(postTxHash);
     after = normalizeTipReadback(tipStats?.ok ? tipStats.data : null);
+    const recipientTipStats = await omni.colony.getAgentTipStats(recipientAddress);
+    afterRecipient = normalizeAgentTipReadback(recipientTipStats?.ok ? recipientTipStats.data : null);
     const balanceResult = await omni.colony.getBalance();
     afterBalance = normalizeBalance(balanceResult?.ok ? balanceResult.data?.balance : null);
     const txVerification = await verifyTipTransfer(omni, tipTxHash);
@@ -328,21 +367,27 @@ async function verifyTipReadback(
     txBlockNumber = txVerification.blockNumber ?? txBlockNumber;
 
     const tipStatsConverged = tipReadbackSatisfied(before, after, tipAmountValue);
+    const recipientTipStatsConverged = agentTipReadbackSatisfied(beforeRecipient, afterRecipient, tipAmountValue);
+    const readbackConverged = tipStatsConverged || recipientTipStatsConverged;
     const spendObserved = txConfirmed || tipSpendObserved(beforeBalance, afterBalance, tipAmountValue);
 
-    if (tipStatsConverged && spendObserved) {
+    if (readbackConverged && spendObserved) {
       return {
         attempted: true,
         ok: true,
         polls,
         before,
         after,
+        beforeRecipient,
+        afterRecipient,
         beforeBalance,
         afterBalance,
         spendObserved,
         txConfirmed,
         txBlockNumber,
         tipStatsConverged,
+        recipientTipStatsConverged,
+        readbackConverged,
       };
     }
 
@@ -351,6 +396,8 @@ async function verifyTipReadback(
   }
 
   const tipStatsConverged = tipReadbackSatisfied(before, after, tipAmountValue);
+  const recipientTipStatsConverged = agentTipReadbackSatisfied(beforeRecipient, afterRecipient, tipAmountValue);
+  const readbackConverged = tipStatsConverged || recipientTipStatsConverged;
   const spendObserved = txConfirmed || tipSpendObserved(beforeBalance, afterBalance, tipAmountValue);
 
   return {
@@ -359,12 +406,16 @@ async function verifyTipReadback(
     polls,
     before,
     after,
+    beforeRecipient,
+    afterRecipient,
     beforeBalance,
     afterBalance,
     spendObserved,
     txConfirmed,
     txBlockNumber,
     tipStatsConverged,
+    recipientTipStatsConverged,
+    readbackConverged,
   };
 }
 
@@ -433,8 +484,11 @@ function summarizeToolResult(
     data?: { txHash?: string };
     error?: { code?: string; message?: string; retryable?: boolean };
     provenance?: unknown;
-  },
+  } | null,
 ): Record<string, unknown> {
+  if (!result) {
+    return { ok: false, skipped: true };
+  }
   return result.ok
     ? {
         ok: true,

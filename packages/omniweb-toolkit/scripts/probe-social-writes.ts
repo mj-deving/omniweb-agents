@@ -18,7 +18,9 @@ import {
   hasFlag,
 } from "./_shared.js";
 import {
+  agentTipReadbackSatisfied,
   hasRecordedTip,
+  normalizeAgentTipReadback,
   normalizeBalance,
   normalizeReactionEnvelope,
   rankSocialWriteCandidates,
@@ -37,7 +39,7 @@ const DEFAULT_FEED_LIMIT = 12;
 const DEFAULT_POLL_MS = 3_000;
 const DEFAULT_REPLY_TIMEOUT_MS = 45_000;
 const DEFAULT_REACTION_TIMEOUT_MS = 15_000;
-const DEFAULT_TIP_TIMEOUT_MS = 20_000;
+const DEFAULT_TIP_TIMEOUT_MS = 30_000;
 const DEFAULT_TIP_AMOUNT = 1;
 
 type OmniInstance = Awaited<ReturnType<Awaited<ReturnType<typeof loadConnect>>>>;
@@ -131,6 +133,10 @@ try {
   const beforeReaction = await readReactionEnvelope(candidate.txHash, token, baseUrl);
   const beforeTipStatsResult = await omni.colony.getTipStats(candidate.txHash);
   const beforeTipStats = normalizeTipReadback(beforeTipStatsResult?.ok ? beforeTipStatsResult.data : null);
+  const beforeRecipientTipStatsResult = await omni.colony.getAgentTipStats(candidate.author);
+  const beforeRecipientTipStats = normalizeAgentTipReadback(
+    beforeRecipientTipStatsResult?.ok ? beforeRecipientTipStatsResult.data : null,
+  );
   const beforeBalanceResult = await omni.colony.getBalance();
   const beforeBalance = normalizeBalance(beforeBalanceResult?.ok ? beforeBalanceResult.data?.balance : null);
   const beforeParentDetail = await omni.colony.getPostDetail(candidate.txHash);
@@ -144,6 +150,7 @@ try {
       readback: {
         reactions: beforeReaction,
         tipStats: beforeTipStats,
+        recipientTipStats: beforeRecipientTipStats,
         parentDetailOk: !!beforeParentDetail?.ok,
       },
       message: "Dry run only. Re-run with --execute to perform live reaction, tip, and reply proof.",
@@ -166,7 +173,9 @@ try {
         omni,
         candidate.txHash,
         tipResult.data?.txHash,
+        candidate.author,
         beforeTipStats,
+        beforeRecipientTipStats,
         balanceBeforeTip,
         tipAmount,
         {
@@ -292,7 +301,9 @@ async function verifyTipReadback(
   omni: OmniInstance,
   postTxHash: string,
   tipTxHash: string | undefined,
+  recipientAddress: string,
   before: ReturnType<typeof normalizeTipReadback>,
+  beforeRecipient: ReturnType<typeof normalizeAgentTipReadback>,
   beforeBalance: number | null,
   tipAmountValue: number,
   opts: { timeoutMs: number; pollMs: number },
@@ -302,16 +313,21 @@ async function verifyTipReadback(
   polls: number;
   before: ReturnType<typeof normalizeTipReadback>;
   after: ReturnType<typeof normalizeTipReadback>;
+  beforeRecipient: ReturnType<typeof normalizeAgentTipReadback>;
+  afterRecipient: ReturnType<typeof normalizeAgentTipReadback>;
   beforeBalance: number | null;
   afterBalance: number | null;
   spendObserved: boolean;
   txConfirmed: boolean;
   txBlockNumber?: number;
   tipStatsConverged: boolean;
+  recipientTipStatsConverged: boolean;
+  readbackConverged: boolean;
 }> {
   const deadline = Date.now() + opts.timeoutMs;
   let polls = 0;
   let after = before;
+  let afterRecipient = beforeRecipient;
   let afterBalance = beforeBalance;
   let txConfirmed = false;
   let txBlockNumber: number | undefined;
@@ -320,6 +336,8 @@ async function verifyTipReadback(
     polls += 1;
     const tipStats = await omni.colony.getTipStats(postTxHash);
     after = normalizeTipReadback(tipStats?.ok ? tipStats.data : null);
+    const recipientTipStats = await omni.colony.getAgentTipStats(recipientAddress);
+    afterRecipient = normalizeAgentTipReadback(recipientTipStats?.ok ? recipientTipStats.data : null);
     const balanceResult = await omni.colony.getBalance();
     afterBalance = normalizeBalance(balanceResult?.ok ? balanceResult.data?.balance : null);
     const txVerification = await verifyTipTransfer(omni, tipTxHash);
@@ -327,21 +345,27 @@ async function verifyTipReadback(
     txBlockNumber = txVerification.blockNumber ?? txBlockNumber;
 
     const tipStatsConverged = tipReadbackSatisfied(before, after, tipAmountValue);
+    const recipientTipStatsConverged = agentTipReadbackSatisfied(beforeRecipient, afterRecipient, tipAmountValue);
+    const readbackConverged = tipStatsConverged || recipientTipStatsConverged;
     const spendObserved = txConfirmed || tipSpendObserved(beforeBalance, afterBalance, tipAmountValue);
 
-    if (tipStatsConverged && spendObserved) {
+    if (readbackConverged && spendObserved) {
       return {
         attempted: true,
         ok: true,
         polls,
         before,
         after,
+        beforeRecipient,
+        afterRecipient,
         beforeBalance,
         afterBalance,
         spendObserved,
         txConfirmed,
         txBlockNumber,
         tipStatsConverged,
+        recipientTipStatsConverged,
+        readbackConverged,
       };
     }
 
@@ -350,6 +374,8 @@ async function verifyTipReadback(
   }
 
   const tipStatsConverged = tipReadbackSatisfied(before, after, tipAmountValue);
+  const recipientTipStatsConverged = agentTipReadbackSatisfied(beforeRecipient, afterRecipient, tipAmountValue);
+  const readbackConverged = tipStatsConverged || recipientTipStatsConverged;
   const spendObserved = txConfirmed || tipSpendObserved(beforeBalance, afterBalance, tipAmountValue);
 
   return {
@@ -358,12 +384,16 @@ async function verifyTipReadback(
     polls,
     before,
     after,
+    beforeRecipient,
+    afterRecipient,
     beforeBalance,
     afterBalance,
     spendObserved,
     txConfirmed,
     txBlockNumber,
     tipStatsConverged,
+    recipientTipStatsConverged,
+    readbackConverged,
   };
 }
 

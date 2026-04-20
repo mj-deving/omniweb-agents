@@ -5,10 +5,13 @@ import {
   type TopicFamilyContract,
   type TopicFamilyRegistry,
 } from "./topic-family-contract.js";
+import { loadOracleDivergenceDoctrine } from "./market-family-doctrine.js";
 
 export type MarketTopicFamily = "oracle-divergence";
 
 export type MarketTopicFamilyContract = TopicFamilyContract<MarketTopicFamily>;
+
+const oracleDivergenceDoctrine = loadOracleDivergenceDoctrine();
 
 export const ORACLE_DIVERGENCE_CONTRACT: MarketTopicFamilyContract = defineTopicFamilyContract({
   family: "oracle-divergence",
@@ -26,16 +29,8 @@ export const ORACLE_DIVERGENCE_CONTRACT: MarketTopicFamilyContract = defineTopic
     ],
   },
   promptDoctrine: {
-    baseline: [
-      "A sentiment-price divergence is descriptive, not predictive.",
-      "The API label 'oracle' is sentiment metadata, not verified external truth.",
-      "Divergence severity is an internal grading, not a calibrated probability.",
-    ],
-    focus: [
-      "Name what the agents lean toward and what price is doing instead.",
-      "Frame the setup as a measurable dislocation worth watching, not a tradeable edge.",
-      "End with the next condition that would narrow, widen, or dissolve the dislocation.",
-    ],
+    baseline: oracleDivergenceDoctrine.baseline,
+    focus: oracleDivergenceDoctrine.focus,
   },
   claimBounds: {
     defensible: [
@@ -43,50 +38,10 @@ export const ORACLE_DIVERGENCE_CONTRACT: MarketTopicFamilyContract = defineTopic
       "Say why the dislocation is worth monitoring now.",
       "State what would confirm or weaken the dislocation next.",
     ],
-    blocked: [
-      "Do not claim the agents are right and the market is wrong.",
-      "Do not describe the divergence as an edge or recommendation.",
-      "Do not treat severity or agent count as calibrated confidence.",
-    ],
-    requiresExtra: [
-      {
-        claim: "Independent agreement strength",
-        requiredMetrics: ["modelDiversityScore"],
-        reason: "Agent count alone does not show independent consensus.",
-      },
-      {
-        claim: "Tradable predictive edge",
-        requiredMetrics: ["historicalResolutionRate", "severityMethodology"],
-        reason: "The current packet does not show that divergences resolve predictably.",
-      },
-    ],
+    blocked: oracleDivergenceDoctrine.blocked,
+    requiresExtra: oracleDivergenceDoctrine.requiresExtra,
   },
-  metricSemantics: {
-    severity: {
-      means: "An internal low/medium/high grading of the dislocation.",
-      doesNotMean: "A calibrated probability or validated signal strength.",
-    },
-    agentDirection: {
-      means: "The consensus directional lean of the agent cluster.",
-      doesNotMean: "Ground truth about where the market should trade.",
-    },
-    marketDirection: {
-      means: "Observed market-direction metadata from the upstream divergence packet.",
-      doesNotMean: "Proof that price will continue or reverse.",
-    },
-    agentConfidence: {
-      means: "A self-reported confidence-like score from the sentiment side when present.",
-      doesNotMean: "Well-calibrated confidence or independent verification.",
-    },
-    priceUsd: {
-      means: "Observed spot price context for the asset.",
-      doesNotMean: "Proof that the market side of the divergence is correct.",
-    },
-    change24h: {
-      means: "Observed 24-hour price move context.",
-      doesNotMean: "A resolution of the divergence by itself.",
-    },
-  },
+  metricSemantics: oracleDivergenceDoctrine.metricSemantics,
   quality: {
     slipPatterns: [
       {

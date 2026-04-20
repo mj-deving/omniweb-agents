@@ -20,6 +20,9 @@ export interface LeaderboardPatternProofEntry {
   archetype: ProofArchetype;
   sourceId: string;
   sourceLabel: string;
+  trustTier: string | null;
+  ratingOverall: number | null;
+  selectionScore: number | null;
   attestationReady: boolean;
   attestUrl: string | null;
   decision: "publish" | "skip";
@@ -89,6 +92,9 @@ async function runPublishProof(
       archetype,
       sourceId: entry.sourceId,
       sourceLabel: entry.label,
+      trustTier: null,
+      ratingOverall: null,
+      selectionScore: null,
       attestationReady: false,
       attestUrl: null,
       decision: "skip",
@@ -135,6 +141,9 @@ async function runPublishProof(
       archetype,
       sourceId: entry.sourceId,
       sourceLabel: entry.label,
+      trustTier: plan.primary.trustTier,
+      ratingOverall: plan.primary.ratingOverall,
+      selectionScore: plan.primary.score,
       attestationReady: true,
       attestUrl: plan.primary.url,
       decision: "publish",
@@ -195,7 +204,11 @@ function buildPackScorecard(results: LeaderboardPatternProofEntry[]): Leaderboar
     const entries = results.filter((entry) => entry.archetype === pack.archetype);
     const recommendedSourceIds = entries
       .filter((entry) => entry.ok)
-      .sort((left, right) => (right.observedScore ?? 0) - (left.observedScore ?? 0))
+      .sort((left, right) =>
+        (right.selectionScore ?? 0) - (left.selectionScore ?? 0)
+        || (right.ratingOverall ?? 0) - (left.ratingOverall ?? 0)
+        || (right.observedScore ?? 0) - (left.observedScore ?? 0)
+      )
       .map((entry) => entry.sourceId);
 
     return {

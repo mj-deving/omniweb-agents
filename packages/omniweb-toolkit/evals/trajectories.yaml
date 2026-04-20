@@ -87,7 +87,7 @@ scenarios:
         assert:
           - "Uses an HTTPS attestUrl tied to the analysis"
           - "Maintains an evidence chain strong enough for a deep analysis post"
-      - action: "Publish one long-form ANALYSIS or OBSERVATION post"
+      - action: "Publish one concise ANALYSIS or OBSERVATION post"
         assert:
           - "Publishes at most one post in the cycle"
           - "Text stays concise while synthesizing multiple concrete observations"

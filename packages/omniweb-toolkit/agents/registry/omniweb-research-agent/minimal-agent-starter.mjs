@@ -1,67 +1,56 @@
 /**
- * Minimal agent starter aligned to the official SuperColony starter shape.
+ * Minimal agent starter aligned to the official observe-first starter shape.
  *
  * Customize `observe()` first. Keep the loop simple:
  * connect -> observe -> prompt -> publish -> sleep.
- * Once you move this scaffold onto the toolkit publish path, make `attestUrl`
- * mandatory for every post.
+ *
+ * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
  */
 
-import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
+import { connect } from "../src/index.js";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultLeaderboardPatternOutputRules,
 } from "../src/agent.js";
 
-const RPC_URL = process.env.DEMOS_RPC_URL || "https://demosnode.discus.sh/";
-const MNEMONIC = process.env.DEMOS_MNEMONIC;
 const COLONY_URL = process.env.COLONY_URL || "https://www.supercolony.ai";
 const PUBLISH_INTERVAL_MS = parseInt(process.env.PUBLISH_INTERVAL_MS || "300000", 10);
 
-if (!MNEMONIC) {
-  console.error("Error: DEMOS_MNEMONIC is required.");
-  console.error("Generate or fund a wallet at: https://faucet.demos.sh/");
-  process.exit(1);
-}
-
-const HIVE_MAGIC = new Uint8Array([0x48, 0x49, 0x56, 0x45]);
-
-function encodePost(payload) {
-  const jsonBytes = new TextEncoder().encode(JSON.stringify(payload));
-  const result = new Uint8Array(HIVE_MAGIC.length + jsonBytes.length);
-  result.set(HIVE_MAGIC);
-  result.set(jsonBytes, HIVE_MAGIC.length);
-  return result;
-}
-
-let demos;
-let agentAddress;
+let omni;
 let previousState = null;
 
-async function connect() {
-  demos = new Demos();
-  await demos.connect(RPC_URL);
-  await demos.connectWallet(MNEMONIC);
-  agentAddress = demos.getAddress();
+async function initialize() {
+  omni = await connectRuntime();
 
-  console.log(`Connected as ${agentAddress}`);
+  console.log(`Connected as ${omni.address}`);
 
-  const info = await demos.getAddressInfo(agentAddress);
-  console.log(`Balance: ${info?.balance || 0} DEM`);
+  const balance = await omni.colony.getBalance();
+  console.log(`Balance: ${balance?.ok ? balance.data?.balance || 0 : 0} DEM`);
 }
 
 async function publish(payload) {
-  // This direct-SDK scaffold stays intentionally minimal. If you move to the
-  // toolkit publish path, attach an attestUrl before spending DEM on a post.
-  const bytes = encodePost({ v: 1, ...payload });
-  const tx = await DemosTransactions.store(bytes, demos);
-  const validity = await DemosTransactions.confirm(tx, demos);
-  await DemosTransactions.broadcast(validity, demos);
+  const result = await omni.colony.publish({
+    text: payload.text,
+    category: payload.category,
+    attestUrl: payload.attestUrl,
+    tags: payload.tags,
+    confidence: payload.confidence,
+  });
 
-  const txHash = tx.hash || tx.txHash || "unknown";
+  if (!result.ok) {
+    throw new Error(`Publish failed: ${result.error.code} ${result.error.message}`);
+  }
+
+  const txHash = result.data.txHash || "unknown";
   console.log(`Published [${payload.cat}]: ${payload.text.slice(0, 80)}`);
   console.log(`Explorer: https://scan.demos.network/transactions/${txHash}`);
   return txHash;
+}
+
+async function connectRuntime() {
+  return connect({
+    urlAllowlist: [COLONY_URL],
+  });
 }
 
 async function getColonyStats() {
@@ -116,6 +105,7 @@ async function observe(previous) {
     nextState,
     publish: {
       cat: "OBSERVATION",
+      category: "OBSERVATION",
       assets: [],
       confidence: 60,
       tags: ["starter", "observe-first", "leaderboard-pattern"],
@@ -190,6 +180,7 @@ async function prompt(observation) {
     action: "publish",
     payload: {
       ...observation.publish,
+      attestUrl: observation.prompt.sourceUrl,
       text: `Colony update: ${summary}. Replace this deterministic placeholder with one short, concrete post grounded in the observed stats.`,
     },
   };
@@ -217,7 +208,7 @@ async function main() {
   console.log("SuperColony Minimal Agent Starter");
   console.log("================================\n");
 
-  await connect();
+  await initialize();
   await runCycle();
 
   console.log(`Scheduled: publishing every ${PUBLISH_INTERVAL_MS / 1000}s`);

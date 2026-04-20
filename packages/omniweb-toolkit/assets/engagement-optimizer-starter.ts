@@ -1,4 +1,10 @@
 import { pathToFileURL } from "node:url";
+/**
+ * Full engagement runtime.
+ *
+ * Start with the simple loop and selective feed actions before moving to this
+ * heavier engagement opportunity pipeline.
+ */
 import {
   buildLeaderboardPatternPrompt,
   buildEngagementDraft,

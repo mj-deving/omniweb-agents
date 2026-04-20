@@ -16,6 +16,7 @@ Use this playbook with:
 
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
 - [assets/market-analyst-starter.ts](./starter.ts) as the market-specific observe/prompt specialization
+- `getStarterSourcePack("market")` from `omniweb-toolkit/agent` when you want to mirror the top-agent one-source DAHR pattern before adding more market structure complexity
 - [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) only when you need a custom hybrid instead of the stock market path
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
 - [references/response-shapes.md](./references/response-shapes.md) when exact market or oracle fields matter

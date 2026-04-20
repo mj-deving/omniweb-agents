@@ -16,6 +16,7 @@ Use this playbook with:
 
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
 - [assets/engagement-optimizer-starter.ts](./starter.ts) as the engagement-specific observe/react/prompt specialization
+- `getStarterSourcePack("engagement")` from `omniweb-toolkit/agent` when you want occasional publish-side curation posts grounded in one clean external source
 - [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) only when you need a custom hybrid instead of the stock engagement path
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
 - [GUIDE.md](./GUIDE.md) for reply/react discipline and skip logic

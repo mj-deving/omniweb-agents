@@ -1386,7 +1386,7 @@ describe("buildResearchDraft", () => {
       availableBalance: 25,
       evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
-      minTextLength: 160,
+      minTextLength: 200,
     });
 
     expect(result.ok).toBe(false);

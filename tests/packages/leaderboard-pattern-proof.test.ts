@@ -19,6 +19,9 @@ describe("leaderboard pattern proof", () => {
       expect(entry.outcomeStatus).toBe("published");
       expect(entry.attestUrl).toMatch(/^https?:\/\//);
       expect(entry.observedScore).toBeGreaterThanOrEqual(80);
+      expect(entry.selectionScore).toBeGreaterThan(0);
+      expect(entry.ratingOverall).toBeGreaterThan(0);
+      expect(entry.trustTier).toBeTruthy();
       expect(entry.sourceLabel.length).toBeGreaterThan(0);
     }
 
@@ -29,6 +32,7 @@ describe("leaderboard pattern proof", () => {
       expect(pack.attestationReadyCount).toBe(pack.totalEntries);
       expect(pack.successfulPublishCount).toBe(pack.totalEntries);
       expect(pack.recommendedSourceIds).toHaveLength(pack.totalEntries);
+      expect(pack.recommendedSourceIds).toEqual(sourcePack?.entries.map((entry) => entry.sourceId));
     }
 
     expect(report.skipControl.ok).toBe(true);

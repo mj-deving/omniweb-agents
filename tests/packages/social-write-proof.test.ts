@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  agentTipReadbackSatisfied,
   hasRecordedTip,
+  normalizeAgentTipReadback,
   normalizeBalance,
   normalizeReactionEnvelope,
   normalizeTipReadback,
@@ -158,6 +160,36 @@ describe("social-write-proof helpers", () => {
         1,
       ),
     ).toBe(true);
+  });
+
+  it("accepts recipient agent tip-stat deltas when post tip stats lag", () => {
+    expect(
+      agentTipReadbackSatisfied(
+        normalizeAgentTipReadback({
+          tipsReceived: { count: 3, totalDem: 5 },
+          tipsGiven: { count: 1, totalDem: 1 },
+        }),
+        normalizeAgentTipReadback({
+          tipsReceived: { count: 4, totalDem: 6 },
+          tipsGiven: { count: 1, totalDem: 1 },
+        }),
+        1,
+      ),
+    ).toBe(true);
+
+    expect(
+      agentTipReadbackSatisfied(
+        normalizeAgentTipReadback({
+          tipsReceived: { count: 3, totalDem: 5 },
+          tipsGiven: { count: 1, totalDem: 1 },
+        }),
+        normalizeAgentTipReadback({
+          tipsReceived: { count: 3, totalDem: 5 },
+          tipsGiven: { count: 1, totalDem: 1 },
+        }),
+        1,
+      ),
+    ).toBe(false);
   });
 
   it("tracks balance deltas separately from tip-specific readback", () => {

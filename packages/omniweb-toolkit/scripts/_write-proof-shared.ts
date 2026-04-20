@@ -3,17 +3,20 @@ export interface PublishVisibilityResult {
   visible: boolean;
   indexedVisible: boolean;
   polls: number;
+  elapsedMs: number;
   txHash?: string;
   verificationPath?: "feed" | "post_detail" | "chain";
+  feedScope?: "recent" | "category";
   observedCategory?: string;
   observedBlockNumber?: number;
+  observedScore?: number;
   lastIndexedBlock?: number;
   error?: string;
 }
 
 interface PublishVisibilityOmni {
   colony: {
-    getFeed(opts: { limit: number }): Promise<any>;
+    getFeed(opts: { limit: number; category?: string }): Promise<any>;
     getPostDetail?(txHash: string): Promise<any>;
   };
   runtime?: {
@@ -37,6 +40,7 @@ export async function verifyPublishVisibility(
 ): Promise<PublishVisibilityResult> {
   const now = opts.now ?? Date.now;
   const sleep = opts.sleep ?? defaultSleep;
+  const startedAt = now();
   const deadline = now() + opts.timeoutMs;
   const textSnippet = text.slice(0, 96);
   let polls = 0;
@@ -46,48 +50,73 @@ export async function verifyPublishVisibility(
 
   while (now() <= deadline) {
     polls += 1;
-    const feedResult = await omni.colony.getFeed({ limit: opts.limit });
-    if (feedResult?.ok) {
-      const posts = Array.isArray(feedResult.data?.posts) ? feedResult.data.posts : [];
-      lastIndexedBlock = typeof feedResult.data?.meta?.lastBlock === "number"
-        ? feedResult.data.meta.lastBlock
+    const recentFeedMatch = await readFeedMatch(omni, txHash, textSnippet, {
+      limit: opts.limit,
+    });
+    if (recentFeedMatch.result?.ok) {
+      lastIndexedBlock = typeof recentFeedMatch.result.data?.meta?.lastBlock === "number"
+        ? recentFeedMatch.result.data.meta.lastBlock
         : undefined;
+    } else if (recentFeedMatch.result) {
+      lastError = recentFeedMatch.result?.error ?? "feed_unavailable";
+    }
 
-      const matched = posts.find((post: any) => {
-        const postTxHash = post?.txHash ?? post?.tx_hash;
-        const postText = post?.text ?? post?.payload?.text ?? post?.content ?? "";
-        return (txHash && postTxHash === txHash) || (typeof postText === "string" && postText.includes(textSnippet));
-      });
-
-      if (matched) {
-        return {
-          attempted: true,
-          visible: true,
-          indexedVisible: true,
-          polls,
-          txHash: matched.txHash ?? matched.tx_hash ?? txHash,
-          verificationPath: "feed",
-          observedCategory: matched.category ?? matched.payload?.cat,
-          observedBlockNumber: matched.blockNumber,
-          lastIndexedBlock,
-        };
-      }
-    } else {
-      lastError = feedResult?.error ?? "feed_unavailable";
+    if (recentFeedMatch.matched) {
+      return {
+        attempted: true,
+        visible: true,
+        indexedVisible: true,
+        polls,
+        elapsedMs: now() - startedAt,
+        txHash: recentFeedMatch.matched.txHash ?? recentFeedMatch.matched.tx_hash ?? txHash,
+        verificationPath: "feed",
+        feedScope: "recent",
+        observedCategory: recentFeedMatch.matched.category ?? recentFeedMatch.matched.payload?.cat,
+        observedBlockNumber: recentFeedMatch.matched.blockNumber,
+        observedScore: typeof recentFeedMatch.matched.score === "number" ? recentFeedMatch.matched.score : undefined,
+        lastIndexedBlock,
+      };
     }
 
     if (txHash && typeof omni?.colony?.getPostDetail === "function") {
       const postDetailResult = await omni.colony.getPostDetail(txHash);
       if (postDetailResult?.ok && postDetailResult.data?.post) {
+        const observedCategory =
+          (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat;
+        if (observedCategory) {
+          const categoryFeedMatch = await readFeedMatch(omni, txHash, textSnippet, {
+            limit: opts.limit,
+            category: observedCategory,
+          });
+          if (categoryFeedMatch.matched) {
+            return {
+              attempted: true,
+              visible: true,
+              indexedVisible: true,
+              polls,
+              elapsedMs: now() - startedAt,
+              txHash: categoryFeedMatch.matched.txHash ?? categoryFeedMatch.matched.tx_hash ?? txHash,
+              verificationPath: "feed",
+              feedScope: "category",
+              observedCategory,
+              observedBlockNumber: categoryFeedMatch.matched.blockNumber ?? postDetailResult.data.post.blockNumber,
+              observedScore: typeof categoryFeedMatch.matched.score === "number"
+                ? categoryFeedMatch.matched.score
+                : undefined,
+              lastIndexedBlock,
+            };
+          }
+        }
+
         return {
           attempted: true,
           visible: true,
           indexedVisible: true,
           polls,
+          elapsedMs: now() - startedAt,
           txHash,
           verificationPath: "post_detail",
-          observedCategory:
-            (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat,
+          observedCategory,
           observedBlockNumber: postDetailResult.data.post.blockNumber,
           lastIndexedBlock,
         };
@@ -114,6 +143,7 @@ export async function verifyPublishVisibility(
             visible: true,
             indexedVisible: false,
             polls,
+            elapsedMs: now() - startedAt,
             txHash: matched.txHash ?? txHash,
             verificationPath: "chain",
             observedCategory: matched.category,
@@ -145,6 +175,7 @@ export async function verifyPublishVisibility(
     visible: false,
     indexedVisible: false,
     polls,
+    elapsedMs: now() - startedAt,
     txHash,
     lastIndexedBlock,
     error: lastError ?? "published_post_not_seen_via_feed_or_post_detail",
@@ -178,6 +209,13 @@ export interface TipReadback {
   totalTips: number;
   totalDem: number;
   myTip?: unknown;
+}
+
+export interface AgentTipReadback {
+  receivedCount: number;
+  receivedDem: number;
+  givenCount: number;
+  givenDem: number;
 }
 
 export interface PostDetailLike {
@@ -286,6 +324,20 @@ export function normalizeTipReadback(value: unknown): TipReadback | null {
   };
 }
 
+export function normalizeAgentTipReadback(value: unknown): AgentTipReadback | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const tipsReceived = readNestedRecord(record.tipsReceived);
+  const tipsGiven = readNestedRecord(record.tipsGiven);
+
+  return {
+    receivedCount: readNumber(tipsReceived?.count) ?? 0,
+    receivedDem: readNumber(tipsReceived?.totalDem) ?? 0,
+    givenCount: readNumber(tipsGiven?.count) ?? 0,
+    givenDem: readNumber(tipsGiven?.totalDem) ?? 0,
+  };
+}
+
 export function normalizeBalance(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
@@ -316,6 +368,17 @@ export function tipReadbackSatisfied(
   if ((after?.totalTips ?? 0) > (before?.totalTips ?? 0)) return true;
   if ((after?.totalDem ?? 0) >= (before?.totalDem ?? 0) + minimumSpend) return true;
 
+  return false;
+}
+
+export function agentTipReadbackSatisfied(
+  before: AgentTipReadback | null,
+  after: AgentTipReadback | null,
+  minimumSpend: number,
+): boolean {
+  if (!after) return false;
+  if ((after.receivedCount ?? 0) > (before?.receivedCount ?? 0)) return true;
+  if ((after.receivedDem ?? 0) >= (before?.receivedDem ?? 0) + minimumSpend) return true;
   return false;
 }
 
@@ -365,6 +428,10 @@ function readNestedNumber(value: unknown, key: string): number | null {
   return readNumber((value as Record<string, unknown>)[key]);
 }
 
+function readNestedRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? value as Record<string, unknown> : null;
+}
+
 function readReactionCounts(record: Record<string, unknown>): ReactionEnvelope {
   const reactions = record.reactions;
   const payloadReactions = (record.payload as { reactions?: unknown } | undefined)?.reactions;
@@ -410,6 +477,27 @@ function scoreSocialWriteCandidate(input: {
     + (input.disagreeCount > input.agreeCount ? 15 : 0);
 
   return quality + supportHeat + attestationBoost - controversyPenalty;
+}
+
+async function readFeedMatch(
+  omni: PublishVisibilityOmni,
+  txHash: string | undefined,
+  textSnippet: string,
+  opts: { limit: number; category?: string },
+): Promise<{ result: any; matched: any | null }> {
+  const result = await omni.colony.getFeed(opts);
+  if (!result?.ok) {
+    return { result, matched: null };
+  }
+
+  const posts = Array.isArray(result.data?.posts) ? result.data.posts : [];
+  const matched = posts.find((post: any) => {
+    const postTxHash = post?.txHash ?? post?.tx_hash;
+    const postText = post?.text ?? post?.payload?.text ?? post?.content ?? "";
+    return (txHash && postTxHash === txHash) || (typeof postText === "string" && postText.includes(textSnippet));
+  }) ?? null;
+
+  return { result, matched };
 }
 
 async function defaultSleep(ms: number): Promise<void> {

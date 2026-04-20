@@ -21,6 +21,7 @@ import {
   hasRecordedTip,
   normalizeBalance,
   normalizeReactionEnvelope,
+  rankSocialWriteCandidates,
   normalizeTipReadback,
   parentThreadContainsReply,
   reactionReadbackSatisfied,
@@ -272,12 +273,10 @@ async function chooseCandidatePost(
   token: string | null,
   baseUrl: string,
 ): Promise<ReturnType<typeof selectSocialWriteCandidate>> {
-  const fallback = selectSocialWriteCandidate(posts, omni.address);
+  const ranked = rankSocialWriteCandidates(posts, omni.address);
+  const fallback = ranked[0] ?? null;
 
-  for (const post of posts) {
-    const candidate = selectSocialWriteCandidate([post], omni.address);
-    if (!candidate) continue;
-
+  for (const candidate of ranked) {
     const reaction = await readReactionEnvelope(candidate.txHash, token, baseUrl);
     const tipStatsResult = await omni.colony.getTipStats(candidate.txHash);
     const tipStats = normalizeTipReadback(tipStatsResult?.ok ? tipStatsResult.data : null);

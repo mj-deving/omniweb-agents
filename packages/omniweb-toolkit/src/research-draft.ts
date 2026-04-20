@@ -89,7 +89,7 @@ export interface ResearchDraftFailure {
 
 export type ResearchDraftResult = ResearchDraftSuccess | ResearchDraftFailure;
 
-const DEFAULT_MIN_TEXT_LENGTH = 300;
+const DEFAULT_MIN_TEXT_LENGTH = 200;
 const RESEARCH_META_PATTERNS: Array<{ name: string; pattern: RegExp; detail: string }> = [
   {
     name: "internal-signal-metadata",

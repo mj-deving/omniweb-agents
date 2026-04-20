@@ -166,6 +166,8 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/export-registry-skills.ts](scripts/export-registry-skills.ts)
 - [scripts/check-npm-publish.ts](scripts/check-npm-publish.ts)
 - [scripts/leaderboard-snapshot.ts](scripts/leaderboard-snapshot.ts)
+- [scripts/leaderboard-pattern-scorecard.ts](scripts/leaderboard-pattern-scorecard.ts) - emit the measured starter-pack leaderboard scorecard snapshot as JSON
+- [scripts/check-leaderboard-scorecard-regression.ts](scripts/check-leaderboard-scorecard-regression.ts) - compare the current starter-pack scorecard against the committed baseline snapshot
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts)
 
 ## Package Checks
@@ -184,6 +186,8 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:registry` validates the generated registry-facing skill artifacts without running the broader package checks.
 - `npm run check:publish` runs `check:package`, reports npm registry auth state, tells you whether the package name already exists on npm, and emits an explicit release decision such as `ready_for_first_publish` or `blocked_npm_auth_missing`.
 - `npm run check:journeys` runs the three shipped archetype journey paths, the stricter captured-run scorer, and the external-consumer release gate in one report.
+- `npm run snapshot:leaderboard-pattern` emits the current starter-pack scorecard snapshot as JSON so the measured moat defaults can be recorded or diffed outside CI.
+- `npm run check:leaderboard-pattern` runs the live starter-pack proof plus the committed scorecard regression gate so source-rank changes fail closed.
 - `npm run check:publish-visibility -- --broadcast --runs 2 --reply-after-publish` runs the maintained live publish/reply indexing harness and reports whether returned tx hashes became indexed-visible within the verification window.
 - `npm run check:write-surface -- --broadcast` runs the maintained live write sweep for reactions, tips, publish/reply, and market writes; it intentionally spends DEM and may create live content.
 - `npm run check:publish` currently returns `blocked_npm_auth_missing`: package checks pass, the package name is still available, and the only external blocker is npm registry auth in the publishing environment.

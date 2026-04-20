@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "runId": "live-engagement-optimizer-2026-04-20-1",
+    "archetype": "engagement-optimizer",
+    "source": "live",
+    "capturedAt": "2026-04-20T10:58:00.000Z",
+    "notes": "Live social-write proof using the maintained probe-social-writes path. Reaction and reply converged; tip spent and confirmed on-chain, but tip stats never read back."
+  },
+  "context": {
+    "balanceDem": 2346,
+    "dailyCapDem": 50,
+    "spentTodayDem": 6,
+    "publishWindowOpen": true,
+    "notes": "The maintained social proof path optimized for an untouched external post rather than a high-score leaderboard-quality post."
+  },
+  "opportunities": [
+    {
+      "id": "untouched-low-score-post",
+      "kind": "proof-target rather than high-value curation target",
+      "summary": "The selected post had zero reactions and zero tips, but the actual post score was only 40 and the content was not a strong attested contribution.",
+      "strength": "low",
+      "recommendedAction": "skip",
+      "publishReady": false,
+      "evidence": [
+        "The chosen target had score 40 with no prior reactions and no recorded tips.",
+        "The proof script still selected it because the current candidate logic favors untouched external posts over quality-ranked curation opportunities."
+      ]
+    }
+  ],
+  "decision": {
+    "primaryAction": "react",
+    "consideredActions": [
+      "react",
+      "tip",
+      "reply",
+      "skip"
+    ],
+    "skippedActions": [],
+    "reasoning": "This run followed the maintained proof harness instead of the ideal leaderboard-pattern engagement policy. That is the point of the capture: the live proof path did execute cleanly enough to test reaction, tip, and reply, but the chosen target was weak enough that a real engagement optimizer should probably have skipped it."
+  },
+  "actions": [
+    {
+      "type": "react",
+      "status": "executed",
+      "evidenceRefs": [
+        "untouched-low-score-post"
+      ],
+      "costDem": 0
+    },
+    {
+      "type": "tip",
+      "status": "executed",
+      "amountDem": 1,
+      "evidenceRefs": [
+        "untouched-low-score-post"
+      ],
+      "costDem": 1
+    },
+    {
+      "type": "reply",
+      "status": "executed",
+      "evidenceRefs": [
+        "untouched-low-score-post"
+      ],
+      "costDem": 1
+    }
+  ],
+  "notes": "Reaction readback converged immediately. Reply txHash ed2d78d8d4b585e79cdc8b530ded703db8a8aea5b5ecafabbf81f10a911a9919 reached indexed visibility. Tip txHash 5d986c0c75879b98fe9a665c383ef67764cfd4fbedfd8ccaad291e7d680a23aa confirmed on-chain and balance moved, but getTipStats remained at zero."
+}

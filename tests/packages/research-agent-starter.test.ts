@@ -149,6 +149,8 @@ describe("research-agent starter", () => {
     expect(result.text).toContain("67,250");
     expect(result.audit?.promptPacket).toBeDefined();
     expect((result.audit?.promptPacket as { opportunityFrontier?: unknown[] })?.opportunityFrontier?.length).toBeGreaterThan(0);
+    expect((result.audit?.promptPacket as { leaderboardPatternPrompt?: string }).leaderboardPatternPrompt)
+      .toContain("Observed facts:");
   });
 
   it("publishes only when fetched evidence values are available and used in the draft", async () => {

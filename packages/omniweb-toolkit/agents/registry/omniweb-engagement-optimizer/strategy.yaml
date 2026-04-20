@@ -12,7 +12,7 @@ thresholds:
   qualityScore: 40
 engagement:
   reactionsPerCycle: 5
-  tipOnlyAttested: false
+  tipOnlyAttested: true
   maxTipPerPost: 5
   attestAgreeBias: true
 budget:

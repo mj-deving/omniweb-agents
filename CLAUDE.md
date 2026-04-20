@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # omniweb-agents
 
 OmniWeb toolkit for the Demos Network — the full stack, not just SuperColony. Consumer package: `omniweb-toolkit`. Handles real DEM tokens on mainnet.
@@ -6,12 +10,21 @@ OmniWeb toolkit for the Demos Network — the full stack, not just SuperColony. 
 
 **North star:** `supercolony-agent-starter` + `supercolony.ai/llms-full.txt`. Our toolkit layers typed primitives + guardrails on top of the official API. Don't duplicate what supercolony.ai provides — reference it, layer on it.
 
+## Prerequisites
+
+- **Node.js 22+** required (for `node:sqlite` built-in per ADR-0016). NOT Bun — demosdk NAPI crash (ADR-0004).
+- **tsx** as the TypeScript runner for all CLI and script invocations.
+
 ## Build & Run
 
-- `npm test` — broad vitest suite when justified; prefer the smallest relevant validation first and add tests when behavior changes
+- `npm test` — full vitest suite; prefer the smallest relevant test first
+- `npx vitest run tests/packages/<file>.test.ts` — run a single test file
+- `npx vitest run -t "test name"` — run tests matching a name pattern
 - `npx tsc --noEmit` — must pass with zero errors
+- `npm --prefix packages/omniweb-toolkit run build` — tsup bundle (needed before `check:release`)
 - `npx tsx cli/session-runner.ts --agent sentinel --pretty` — run V3 loop
-- Runtime: Node.js + tsx (Bun causes NAPI crash with demosdk)
+
+**Test quality gate:** `tests/setup-test-quality.ts` runs as vitest globalSetup and rejects any test without assertions. Every `it()`/`test()` must contain `expect()` or `assert` calls, or the entire suite fails.
 
 ### Package validation ladder
 
@@ -22,6 +35,35 @@ Run from repo root or with `--prefix packages/omniweb-toolkit`:
 - `check:release` — `npm pack --dry-run` tarball contents: required files, forbidden files, export targets
 - `check:live` — shell-curl smoke test (endpoints, discovery, categories)
 - `check:live:detailed` — TypeScript probes: discovery drift, endpoint surface, categories, response shapes (14 endpoints)
+
+## Monorepo Structure
+
+This is an npm workspaces monorepo with one publishable package:
+
+```
+src/                              # Full agent runtime (not published)
+├── toolkit/                      # Mechanism layer — primitives, strategy, publish, guards
+├── lib/                          # Policy layer — attestation, auth, LLM, scoring, sources
+├── actions/                      # Action executors (publish, attest)
+├── adapters/                     # External integrations
+└── plugins/                      # Reputation system
+cli/                              # Operator CLI tools (session-runner, audit, etc.)
+agents/                           # Agent definitions (YAML + Markdown personas)
+config/                           # Source catalogs, strategy configs
+tests/                            # All tests (vitest) — mirrors src/ structure
+packages/omniweb-toolkit/         # Consumer package (published as omniweb-toolkit)
+├── src/                          # Package source — imports from ../../src/ via relative paths
+├── config/doctrine/              # YAML doctrine files (metric semantics, claim bounds)
+├── assets/                       # Agent starter templates (research, market, engagement)
+├── playbooks/                    # Per-archetype strategy playbooks
+├── references/                   # Audited reference docs (response shapes, guardrails, scoring)
+├── evals/                        # Trajectory specs and evaluation harness
+└── scripts/                      # Package validation scripts (check:*, export:*)
+```
+
+**Key architectural pattern:** `packages/omniweb-toolkit/src/` imports from root `src/` via `../../../src/` paths during development. tsup bundles everything at build time, so consumers just `import { connect } from "omniweb-toolkit"`. The package has three subpath exports: `.` (connect + types), `./agent` (agent loop + domain helpers), `./types` (pure types).
+
+The `toolkit/` vs `lib/` split is enforced by `tests/architecture/boundary.test.ts` (ADR-0002): toolkit = mechanism (what can happen), lib = policy (what should happen).
 
 ## Documentation
 

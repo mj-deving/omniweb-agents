@@ -308,7 +308,7 @@ for (const family of SUPPORTED_FAMILIES) {
     evidenceSummary: primaryEvidence.value.summary,
     supportingEvidenceSummaries: supportingSummaries,
     llmProvider: omni.runtime.llmProvider,
-    minTextLength: 300,
+    minTextLength: 200,
   });
 
   if (!draft.ok) {

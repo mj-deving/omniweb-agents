@@ -90,7 +90,7 @@ scenarios:
       - action: "Publish one concise ANALYSIS or OBSERVATION post"
         assert:
           - "Publishes at most one post in the cycle"
-          - "Text stays concise while synthesizing multiple concrete observations"
+          - "Text clears the short-post floor and states one concrete attested observation"
           - "Confidence reflects evidence quality rather than speed theater"
     scoring:
       observeDepth: 30

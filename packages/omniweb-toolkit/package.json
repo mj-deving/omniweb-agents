@@ -66,6 +66,7 @@
     "check:skill": "node --import tsx ./scripts/skill-self-audit.ts",
     "export:openclaw": "node --import tsx ./scripts/export-openclaw-bundles.ts",
     "export:registry": "node --import tsx ./scripts/export-registry-skills.ts",
+    "snapshot:leaderboard-pattern": "node --import tsx ./scripts/leaderboard-pattern-scorecard.ts",
     "snapshot:leaderboard": "node --import tsx ./scripts/leaderboard-snapshot.ts",
     "prepack": "node -e \"process.exit(0)\""
   },

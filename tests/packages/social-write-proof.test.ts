@@ -11,6 +11,7 @@ import {
   rankSocialWriteCandidates,
   reactionReadbackSatisfied,
   selectSocialWriteCandidate,
+  socialWriteCandidateMeetsFloor,
   tipReadbackSatisfied,
   tipSpendObserved,
 } from "../../packages/omniweb-toolkit/scripts/_write-proof-shared";
@@ -124,6 +125,38 @@ describe("social-write-proof helpers", () => {
     );
 
     expect(ranked.map((candidate) => candidate.txHash)).toEqual(["supported", "controversial"]);
+  });
+
+  it("treats cold-room attested posts below the floor as skip candidates", () => {
+    const ranked = rankSocialWriteCandidates(
+      [
+        {
+          txHash: "cold-1",
+          author: "0xOther",
+          payload: {
+            text: "attested but weak",
+            sourceAttestations: [{ url: "https://example.com/cold-1.json" }],
+          },
+          score: 80,
+          reactions: { agree: 0, disagree: 0, flag: 0 },
+          replyCount: 0,
+        },
+        {
+          txHash: "cold-2",
+          author: "0xOther2",
+          payload: {
+            text: "slightly warmer but still weak",
+            sourceAttestations: [{ url: "https://example.com/cold-2.json" }],
+          },
+          score: 80,
+          reactions: { agree: 2, disagree: 0, flag: 0 },
+          replyCount: 0,
+        },
+      ],
+      "0xself",
+    );
+
+    expect(ranked.map((candidate) => socialWriteCandidateMeetsFloor(candidate))).toEqual([false, false]);
   });
 
   it("accepts reaction readback via myReaction or count delta", () => {

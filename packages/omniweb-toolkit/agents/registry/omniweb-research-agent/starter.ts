@@ -68,6 +68,7 @@ interface RankedResearchOpportunity extends ResearchOpportunity {
   portfolioScore: number;
   portfolioReasons: string[];
   rawRank: number;
+  discourseMode: "solitary" | "active-thread";
 }
 
 function buildStarterPromptText(params: {
@@ -180,8 +181,34 @@ function computePortfolioRichnessBonus(opportunity: ResearchOpportunity): number
     + (reactionTotal >= 3 ? 1 : 0);
 }
 
+function computePortfolioDiscourseBonus(
+  colonySubstrate: ReturnType<typeof buildResearchColonySubstrate>,
+): number {
+  const { discourseContext } = colonySubstrate;
+  if (discourseContext.mode !== "active-thread") return 0;
+
+  let bonus = 4;
+  if (discourseContext.namedParticipants.length >= 2) bonus += 2;
+  if (discourseContext.totalReactionSignal >= 5) bonus += 1;
+  if (discourseContext.highScoreRelatedCount > 0) bonus += 1;
+  return Math.min(bonus, 7);
+}
+
+function describeDiscourseReasons(
+  colonySubstrate: ReturnType<typeof buildResearchColonySubstrate>,
+): string[] {
+  const { discourseContext } = colonySubstrate;
+  if (discourseContext.mode !== "active-thread") return [];
+  const reasons = ["active_discourse"];
+  if (discourseContext.namedParticipants.length >= 2) reasons.push("named_counterparties");
+  if (discourseContext.totalReactionSignal >= 5) reasons.push("reaction_heat");
+  if (discourseContext.highScoreRelatedCount > 0) reasons.push("leaderboard_overlap");
+  return reasons;
+}
+
 export function buildResearchOpportunityFrontier(
   opportunities: ResearchOpportunity[],
+  allPosts: ResearchPostInput[],
   state: ResearchState | null | undefined,
   now: string | number | Date = Date.now(),
 ): RankedResearchOpportunity[] {
@@ -216,6 +243,10 @@ export function buildResearchOpportunityFrontier(
     .map((opportunity, index) => {
       const topic = normalizeTopic(opportunity.topic);
       const family = normalizeTopic(opportunity.sourceProfile.family);
+      const colonySubstrate = buildResearchColonySubstrate({
+        opportunity,
+        allPosts,
+      });
       const reasons: string[] = [];
       let portfolioScore = opportunity.score;
 
@@ -244,6 +275,12 @@ export function buildResearchOpportunityFrontier(
         reasons.push("rich_substrate");
       }
 
+      const discourseBonus = computePortfolioDiscourseBonus(colonySubstrate);
+      if (discourseBonus > 0) {
+        portfolioScore += discourseBonus;
+        reasons.push(...describeDiscourseReasons(colonySubstrate));
+      }
+
       if (opportunity.kind === "contradiction") {
         portfolioScore += 2;
         reasons.push("contradiction_priority");
@@ -257,6 +294,7 @@ export function buildResearchOpportunityFrontier(
         portfolioScore,
         portfolioReasons: reasons,
         rawRank: index + 1,
+        discourseMode: colonySubstrate.discourseContext.mode,
       };
     })
     .sort((left, right) =>
@@ -274,6 +312,7 @@ function summarizeOpportunityFrontier(frontier: RankedResearchOpportunity[]): Ar
     portfolioScore: opportunity.portfolioScore,
     portfolioReasons: opportunity.portfolioReasons,
     family: opportunity.sourceProfile.family,
+    discourseMode: opportunity.discourseMode,
   }));
 }
 
@@ -485,6 +524,7 @@ export async function observe(
   });
   const opportunityFrontier = buildResearchOpportunityFrontier(
     opportunities,
+    posts,
     ctx.memory.state,
     ctx.cycle.startedAt,
   );

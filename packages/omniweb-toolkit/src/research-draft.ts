@@ -48,6 +48,7 @@ export interface ResearchPromptInput {
     recentRelatedPosts: ResearchColonySubstrate["recentRelatedPosts"];
     crossReferences: ResearchColonySubstrate["crossReferences"];
     reactionSummary: ResearchColonySubstrate["reactionSummary"];
+    discourseContext: ResearchColonySubstrate["discourseContext"];
     selfHistory: ResearchSelfHistorySummary | null;
   };
   evidence: {
@@ -314,7 +315,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
   const primarySource = getPrimaryAttestationSourceName(opts.opportunity.attestationPlan);
   const supportingSources = opts.opportunity.attestationPlan.supporting.map((candidate) => candidate.name);
   const supportingEvidenceSummaries = opts.supportingEvidenceSummaries ?? [];
-  const analysisAngle = buildResearchAnalysisAngle(opts.opportunity);
+  const analysisAngle = buildResearchAnalysisAngle(opts.opportunity, colonySubstrate);
   const brief = buildResearchBrief(
     opts.opportunity,
     colonySubstrate,
@@ -353,6 +354,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
         recentRelatedPosts: colonySubstrate.recentRelatedPosts,
         crossReferences: colonySubstrate.crossReferences,
         reactionSummary: colonySubstrate.reactionSummary,
+        discourseContext: colonySubstrate.discourseContext,
         selfHistory: opts.selfHistory ?? null,
       },
       evidence: {
@@ -378,7 +380,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
           })),
       },
     },
-    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. Center the post on the stated analysis angle instead of generic market color.",
+    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo. Center the post on the stated analysis angle instead of generic market color.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
@@ -387,11 +389,15 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Use the colony substrate compactly: synthesize the signal summary, supporting takes, dissenting take, and recent related context into a readable thesis rather than quoting them mechanically.",
       "Use the brief's substrate summary to reflect how much real colony discourse sits underneath the signal without turning the post into a process memo.",
       "If recent related context or dissent is present, use it to say what the colony has already noticed and what still remains unresolved.",
+      "When discourseContext.mode is active-thread, place the thesis inside that live conversation instead of writing as if no one else has spoken.",
       "If self-history is present, make the delta from the last same-topic or same-family post explicit instead of repeating the old thesis.",
       "If the brief includes a previous coverage delta, use it to say what is actually new this cycle or why the agent should not just restate the old take.",
       "If linked themes or domain context are present, use them only to situate the thesis and keep the connection evidence-backed and bounded.",
       "Use the analysis angle explicitly. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
       "Use the research brief as doctrine. Treat baseline context as background, anomaly summary as the reason this cycle matters, and false-inference guards as hard constraints.",
+      "Only reference an agent by name when discourseContext supplies a directly relevant named participant and the evidence packet confirms, disputes, or meaningfully qualifies that participant's claim.",
+      "Do not tag or name-drop agents just to chase reactions.",
+      "If discourseContext.mode is solitary, do not force a conversational framing the packet cannot support.",
       "When describing colony sentiment, use natural phrases like 'the bearish read in colony signals', 'the bullish read', or 'mixed positioning' rather than clunky constructions.",
       "End in plain language. Do not use mirrored rhetorical constructions or clever symmetry in the closing sentence.",
       "Treat source names as evidence anchors, not as the subject of the prose.",
@@ -412,6 +418,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
         "Reads like original research, not a process memo.",
         "Contains one interpretable thesis another colony reader could reuse.",
         "Leaves the reader with a concrete watcher or invalidation condition.",
+        "When the room is already active, reads like a useful intervention in that discourse rather than a detached summary.",
       ],
     },
   };
@@ -609,9 +616,40 @@ function checkSemanticEvidenceGrounding(
   };
 }
 
-function buildResearchAnalysisAngle(opportunity: ResearchOpportunity): string {
+function buildResearchAnalysisAngle(
+  opportunity: ResearchOpportunity,
+  colonySubstrate: ResearchColonySubstrate,
+): string {
   const topic = opportunity.topic.toLowerCase();
   const sentimentRead = describeSignalRead(opportunity);
+  const discourseLead = colonySubstrate.discourseContext.namedParticipants[0]?.author ?? null;
+  const discourseReference = discourseLead == null ? null : formatDiscourseReference(discourseLead);
+
+  if (colonySubstrate.discourseContext.mode === "active-thread" && discourseReference) {
+    if (topic.includes("divergence") || topic.includes("sentiment")) {
+      return `Explain whether ${sentimentRead} confirms, qualifies, or overturns ${discourseReference}'s live read, and name the mismatch directly.`;
+    }
+
+    if (topic.includes("funding") || topic.includes("premium") || topic.includes("basis")) {
+      return `Explain whether the latest funding, premium, and price evidence confirms, qualifies, or overturns ${discourseReference}'s live positioning read.`;
+    }
+
+    if (topic.includes("etf") || topic.includes("flow")) {
+      return `Explain whether the latest ETF flow and holdings evidence confirms, qualifies, or overturns ${discourseReference}'s live demand read.`;
+    }
+
+    if (topic.includes("stablecoin") || topic.includes("usdt") || topic.includes("usdc") || topic.includes("peg")) {
+      return `Explain whether the latest stablecoin supply and peg evidence confirms, qualifies, or overturns ${discourseReference}'s live liquidity read.`;
+    }
+
+    if (topic.includes("on-chain") || topic.includes("network") || topic.includes("mempool") || topic.includes("hashrate") || topic.includes("addresses")) {
+      return `Explain whether the latest on-chain evidence confirms, qualifies, or overturns ${discourseReference}'s live usage or stress read.`;
+    }
+
+    if (topic.includes("vix") || topic.includes("credit") || topic.includes("recession")) {
+      return `Explain whether the latest volatility and short-rate evidence confirms, qualifies, or overturns ${discourseReference}'s live macro-stress read.`;
+    }
+  }
 
   if (topic.includes("divergence") || topic.includes("sentiment")) {
     return `Explain whether ${sentimentRead} is being confirmed or contradicted by the observed price, range, and volume evidence. Name the mismatch directly.`;
@@ -638,10 +676,17 @@ function buildResearchAnalysisAngle(opportunity: ResearchOpportunity): string {
   }
 
   if (opportunity.kind === "contradiction") {
+    if (discourseReference) {
+      return `Use the evidence to resolve the active disagreement around ${discourseReference}'s claim and state what would settle the dispute next.`;
+    }
     return "Synthesize the conflicting takes into one clear thesis and state which evidence would settle the disagreement.";
   }
 
   return "Turn the evidence into one clear thesis, explain the mechanism, and state the concrete invalidation condition.";
+}
+
+function formatDiscourseReference(author: string): string {
+  return author.startsWith("@") ? author : `@${author}`;
 }
 
 function findResearchMetaLeak(text: string): { name: string; detail: string } | null {

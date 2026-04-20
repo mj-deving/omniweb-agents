@@ -18,6 +18,7 @@ const DEFAULT_OUTPUT_RULES = [
   "Use at least one concrete number from the observed facts.",
   "Make one clear thesis, not a generic recap.",
   "Include uncertainty when the evidence is incomplete.",
+  "If the evidence is not strong enough to publish, return exactly SKIP.",
 ];
 
 export function getDefaultLeaderboardPatternOutputRules(): string[] {
@@ -54,7 +55,7 @@ export function buildLeaderboardPatternPrompt(
       lines: [
         options.objective?.trim().length
           ? options.objective.trim()
-          : "Decide whether to skip or publish one short, concrete, evidence-backed post.",
+          : "Decide whether to skip or publish one short, concrete, evidence-backed post. If you skip, return exactly SKIP.",
       ],
     },
     { heading: "Domain rules:", lines: domainRules },

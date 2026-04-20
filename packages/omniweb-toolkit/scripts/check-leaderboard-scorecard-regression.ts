@@ -2,13 +2,33 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getStringArg, hasFlag, PACKAGE_ROOT } from "./_shared.js";
-import { buildLeaderboardPatternScorecardSnapshot } from "../src/leaderboard-pattern-scorecard.js";
-import { runLeaderboardPatternProof } from "../src/leaderboard-pattern-proof.js";
-import { compareLeaderboardPatternScorecardSnapshots } from "../src/leaderboard-pattern-scorecard-regression.js";
-import type { LeaderboardPatternScorecardSnapshot } from "../src/leaderboard-pattern-scorecard.js";
+import { getStringArg, hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
 
 const args = process.argv.slice(2);
+
+const runLeaderboardPatternProof = await loadPackageExport<
+  () => Promise<any>
+>(
+  "../dist/leaderboard-pattern-proof.js",
+  "../src/leaderboard-pattern-proof.ts",
+  "runLeaderboardPatternProof",
+);
+
+const buildLeaderboardPatternScorecardSnapshot = await loadPackageExport<
+  (report: any) => any
+>(
+  "../dist/leaderboard-pattern-scorecard.js",
+  "../src/leaderboard-pattern-scorecard.ts",
+  "buildLeaderboardPatternScorecardSnapshot",
+);
+
+const compareLeaderboardPatternScorecardSnapshots = await loadPackageExport<
+  (baseline: any, current: any) => { ok: boolean; checks: unknown[] }
+>(
+  "../dist/leaderboard-pattern-scorecard-regression.js",
+  "../src/leaderboard-pattern-scorecard-regression.ts",
+  "compareLeaderboardPatternScorecardSnapshots",
+);
 
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx scripts/check-leaderboard-scorecard-regression.ts [--baseline PATH]
@@ -29,7 +49,7 @@ const baselinePath = resolve(
     ?? resolve(PACKAGE_ROOT, "evals", "leaderboard-pattern-scorecard.snapshot.json"),
 );
 
-const baseline = JSON.parse(readFileSync(baselinePath, "utf8")) as LeaderboardPatternScorecardSnapshot;
+const baseline = JSON.parse(readFileSync(baselinePath, "utf8")) as any;
 const report = await runLeaderboardPatternProof();
 const current = buildLeaderboardPatternScorecardSnapshot(report);
 const regression = compareLeaderboardPatternScorecardSnapshots(baseline, current);

@@ -2,11 +2,25 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { getStringArg, hasFlag } from "./_shared.js";
-import { runLeaderboardPatternProof } from "../src/leaderboard-pattern-proof.js";
-import { buildLeaderboardPatternScorecardSnapshot } from "../src/leaderboard-pattern-scorecard.js";
+import { getStringArg, hasFlag, loadPackageExport } from "./_shared.js";
 
 const args = process.argv.slice(2);
+
+const runLeaderboardPatternProof = await loadPackageExport<
+  () => Promise<any>
+>(
+  "../dist/leaderboard-pattern-proof.js",
+  "../src/leaderboard-pattern-proof.ts",
+  "runLeaderboardPatternProof",
+);
+
+const buildLeaderboardPatternScorecardSnapshot = await loadPackageExport<
+  (report: any) => any
+>(
+  "../dist/leaderboard-pattern-scorecard.js",
+  "../src/leaderboard-pattern-scorecard.ts",
+  "buildLeaderboardPatternScorecardSnapshot",
+);
 
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx scripts/leaderboard-pattern-scorecard.ts [--out PATH]

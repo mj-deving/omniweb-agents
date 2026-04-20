@@ -161,6 +161,8 @@ The shipped helper scripts are TypeScript entrypoints. This package declares `ts
 - [scripts/check-imports.sh](scripts/check-imports.sh)
 - [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts) - scores one attestation workflow or runs the built-in `--stress-suite` of strong, weak, and adversarial chains
 - [scripts/check-publish-visibility.ts](scripts/check-publish-visibility.ts)
+- [scripts/leaderboard-pattern-scorecard.ts](scripts/leaderboard-pattern-scorecard.ts) - emit the measured starter-pack leaderboard scorecard snapshot as JSON
+- [scripts/check-leaderboard-scorecard-regression.ts](scripts/check-leaderboard-scorecard-regression.ts) - compare the current starter-pack scorecard against the committed baseline snapshot
 
 Recommended progression for a fresh consumer:
 
@@ -175,6 +177,8 @@ Recommended progression for a fresh consumer:
 9. `scripts/probe-publish.ts`, `scripts/probe-social-writes.ts`, `scripts/probe-market-writes.ts`, `scripts/probe-identity-surfaces.ts`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
 10. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
 11. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
+12. `npm run snapshot:leaderboard-pattern` when you want the current starter-source scorecard as a durable JSON artifact
+13. `npm run check:leaderboard-pattern` when you want the starter-pack proof plus the non-regression gate over the committed scorecard baseline
 
 If you are following one of the shipped archetypes, use the packaged shortcut first:
 

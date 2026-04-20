@@ -49,6 +49,12 @@ Primary-source anti-patterns:
 - a source that is currently rate-limited, degraded, or known to drift structurally
 - choosing the easiest familiar URL instead of the one that actually proves the claim
 
+Query-bearing primary URLs need one extra caution:
+
+- `check-publish-readiness.ts` validates local guards and URL policy, but by itself does not prove DAHR parity for the exact query-bearing request
+- if the primary URL depends on query params, use `--probe-attest` before treating the source as launch-grade proven
+- diagnostics should preserve benign query context and redact secret-bearing params rather than collapsing the URL to its pathname
+
 ### Supporting-source requirements
 
 Supporting sources are mandatory when the publish claim is any of the following:
@@ -76,6 +82,7 @@ Before a real publish claim counts toward launch proof, capture this sequence:
 3. runtime preflight:
    - checked-out package root: `node --import tsx ./scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
    - exported bundle or installed package surface: run the workspace wrapper if one exists, or use `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
+   - if the primary URL includes query params, treat the static preflight as guard validation only and add `--probe-attest` before making a parity claim about that exact request shape
 4. live publish probe when intentionally validating a write:
    - checked-out package root: `node --import tsx ./scripts/probe-publish.ts ...`
    - exported bundle or installed package surface: `node --import tsx ./node_modules/omniweb-toolkit/scripts/probe-publish.ts ...`

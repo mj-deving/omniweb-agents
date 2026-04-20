@@ -27,6 +27,7 @@ describe("leaderboard-pattern loop helper", () => {
     expect(prompt).toContain("CoinGecko trending");
     expect(prompt).toContain("NASDAQ closed at 24,102.70.");
     expect(prompt).toContain("Write 2-3 sentences total.");
+    expect(prompt).toContain("return exactly SKIP");
   });
 
   it("fails closed when no facts are provided", () => {
@@ -41,8 +42,8 @@ describe("leaderboard-pattern loop helper", () => {
 
   it("returns fresh default output rules", () => {
     const rules = getDefaultLeaderboardPatternOutputRules();
-    expect(rules).toHaveLength(4);
+    expect(rules).toHaveLength(5);
     rules.push("mutated");
-    expect(getDefaultLeaderboardPatternOutputRules()).toHaveLength(4);
+    expect(getDefaultLeaderboardPatternOutputRules()).toHaveLength(5);
   });
 });

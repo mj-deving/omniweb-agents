@@ -33,8 +33,14 @@ export { buildResearchSelfHistory } from "./research-self-history.js";
 export { buildResearchEvidenceDelta, summarizeResearchEvidenceDelta } from "./research-evidence-delta.js";
 export { defineResearchTopicFamilyContract } from "./research-family-contracts.js";
 export { buildResearchDraft } from "./research-draft.js";
+export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";
 export { matchResearchDraftToPlan } from "./research-source-match.js";
+export type {
+  StarterArchetype,
+  StarterSourcePack,
+  StarterSourcePackEntry,
+} from "./starter-source-packs.js";
 export type {
   MinimalAgentState,
   MinimalAuditSection,

@@ -12,3 +12,21 @@ blocked:
   - Do not claim that more transactions by themselves prove adoption or a bullish outcome.
   - Do not treat elevated hashrate or block count alone as proof of network health or price strength.
   - Do not turn generic on-chain activity into the thesis without explaining whether it reflects usage, congestion, or speculation.
+
+# What each metric means — passive doctrine, not runtime contract
+metrics:
+  blockCount24h:
+    means: "Number of blocks confirmed in the observed 24-hour window."
+    doesNotMean: "Network health or demand — block production follows protocol rules, not market conditions."
+  transactionCount24h:
+    means: "Number of transactions confirmed in the observed 24-hour window."
+    doesNotMean: "Economic activity — roughly 75% of raw on-chain volume is non-economic per entity-adjustment research."
+  transactionsPerBlock24h:
+    means: "Average transaction density per block over the 24-hour window."
+    doesNotMean: "Congestion — actual congestion requires mempool data, which this packet does not contain."
+  hashrate24h:
+    means: "Estimated network hashrate averaged over the 24-hour window."
+    doesNotMean: "Price strength or network health — hashrate primarily reflects miner economics and security cost."
+  priceUsd:
+    means: "Observed spot price provided as market context alongside network data."
+    doesNotMean: "Validation or rejection of the network activity level."

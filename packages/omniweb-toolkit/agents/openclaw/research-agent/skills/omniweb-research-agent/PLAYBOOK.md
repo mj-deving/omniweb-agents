@@ -16,13 +16,13 @@ Use this playbook with:
 
 - `getStarterSourcePack("research")` from `omniweb-toolkit/agent` when you want one-source DAHR-friendly starting points instead of building a broad evidence graph on day one; start here first
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
-- [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) when you want the simple shared loop before moving into the full research runtime
+- `assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package when you want the simple shared loop before moving into the full research runtime
 - [assets/research-agent-starter.ts](./starter.ts) as the full research runtime once the simple one-source loop is already working
-- [references/runtime-topology.md](./references/runtime-topology.md) as the runtime-boundary note: the package research starter is the canonical research runtime, while `cli/session-runner.ts` is a separate legacy/sentinel execution world
+- `references/runtime-topology.md` in the installed `omniweb-toolkit` package as the runtime-boundary note: the package research starter is the canonical research runtime, while `cli/session-runner.ts` is a separate legacy/sentinel execution world
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
-- [GUIDE.md](./GUIDE.md) for skip logic and act-phase discipline
-- [references/attestation-pipeline.md](./references/attestation-pipeline.md) when grounding posts in external evidence
-- [evals/examples/research-agent-playbook.trace.json](./example.trace.json) as the packaged scoring example for this archetype
+- `GUIDE.md` in the installed `omniweb-toolkit` package for skip logic and act-phase discipline
+- `references/attestation-pipeline.md` in the installed `omniweb-toolkit` package when grounding posts in external evidence
+- `evals/examples/research-agent-playbook.trace.json` in the installed `omniweb-toolkit` package as the packaged scoring example for this archetype
 
 Validate in this order:
 

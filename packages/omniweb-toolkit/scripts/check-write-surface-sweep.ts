@@ -4,7 +4,8 @@
  *
  * Default mode is non-destructive and prints the configured targets. Passing
  * `--broadcast` executes a bounded live write sweep against the current host:
- * reactions, tipping, DAHR-backed publish + reply, and market write probes.
+ * reactions, DAHR-backed publish + reply, and market write probes, with tipping
+ * kept as an explicit optional extra step.
  *
  * Output: JSON report to stdout. Errors to stderr. Exit 0 when the sweep runs
  * without hard failures, 1 on hard failures/runtime errors, 2 on invalid args.
@@ -49,8 +50,9 @@ Options:
   --state-dir PATH           Override toolkit state directory
   --reaction-post-tx HASH    Target post for reaction probe
   --reaction-type TYPE       Reaction type: agree|disagree|flag (default: agree)
-  --tip-post-tx HASH         Target post for tip probe
-  --tip-amount N             DEM amount for tip probe (default: 1)
+  --tip-post-tx HASH         Target post for optional tip probe
+  --tip-amount N             DEM amount for optional tip probe (default: 1)
+  --include-tip              Include the live tip probe in the sweep
   --publish-text TEXT        Text for publish probe
   --publish-category CAT     Category for publish probe (default: OBSERVATION)
   --publish-attest-url URL   Attestation URL for publish and reply probes
@@ -142,6 +144,7 @@ const config = {
   broadcast: args.includes("--broadcast"),
   skipReact: args.includes("--skip-react"),
   skipTip: args.includes("--skip-tip"),
+  includeTip: args.includes("--include-tip"),
   skipPublish: args.includes("--skip-publish"),
   skipReply: args.includes("--skip-reply"),
   skipHl: args.includes("--skip-hl"),
@@ -232,7 +235,7 @@ try {
     results.push(skipped("react", "Reaction probe skipped by operator request."));
   }
 
-  if (!config.skipTip) {
+  if (config.includeTip && !config.skipTip) {
     const beforeTips = await freshColony(connect, config).then((fresh) =>
       fresh.colony.getTipStats(config.tipPostTx),
     );
@@ -283,7 +286,12 @@ try {
       },
     });
   } else {
-    results.push(skipped("tip", "Tip probe skipped by operator request."));
+    results.push(skipped(
+      "tip",
+      config.skipTip
+        ? "Tip probe skipped by operator request."
+        : "Tip probe skipped by default; add --include-tip when you intentionally want the extra spend/readback check.",
+    ));
   }
 
   if (!config.skipPublish) {
@@ -499,9 +507,10 @@ function skipped(name: string, rationale: string): ProbeResult {
 }
 
 function skippedFamilies(currentConfig: typeof config): string[] {
+  const tipSkipped = currentConfig.skipTip || !currentConfig.includeTip;
   return [
     currentConfig.skipReact ? "react" : null,
-    currentConfig.skipTip ? "tip" : null,
+    tipSkipped ? "tip" : null,
     currentConfig.skipPublish ? "publish" : null,
     currentConfig.skipReply ? "reply" : null,
     currentConfig.skipHl ? "placeHL" : null,

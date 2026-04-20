@@ -1,0 +1,102 @@
+handleNativeOperations:  native
+nativePayload:  {
+  nativeOperation: 'send',
+  args: [
+    '0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42',
+    5
+  ]
+}
+nativeOperation:  send
+response: {
+  result: 200,
+  response: {
+    data: {
+      valid: true,
+      reference_block: 2124242,
+      message: '[Tx Validation] Transaction signature verified\n',
+      gas_operation: null,
+      transaction: [Object]
+    },
+    signature: {
+      type: 'ed25519',
+      data: '0xedd0a0f388669f4bb3ce343c9dc639fdbb212cb526ce951936d0b1f2b36acf63f6d7a5be78c3c9987950cb9a40ccd319f5b2480604df1117d0140910aa0b6d08'
+    },
+    rpc_public_key: {
+      type: 'ed25519',
+      data: '0xc8bc5866fecf583bc1232f04fa54fd2c5a6f7c15b91c517ac60f468cdc0b8c82'
+    }
+  },
+  require_reply: false,
+  extra: null
+}
+{
+  "attempted": true,
+  "ok": true,
+  "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "balanceBefore": 2324,
+  "balanceAfter": 2324,
+  "estimatedSpend": 0,
+  "fixedBet": {
+    "plan": {
+      "asset": "BTC",
+      "horizon": "4h",
+      "predictedPrice": 74621,
+      "currentPrice": 75375,
+      "sentimentScore": -23,
+      "reason": "BTC 4h fixed-price pool is active and oracle sentiment (-23) supports a predicted close below current spot 75375."
+    },
+    "result": {
+      "ok": true,
+      "txHash": "048eb4322425bbba9e94f6c5efefd5cdfcddc632352b4fa7ca84a082a3b361f6",
+      "memo": "HIVE_BET:BTC:74621:4h",
+      "amount": 5,
+      "registered": true
+    },
+    "verification": {
+      "attempted": true,
+      "ok": true,
+      "polls": 1,
+      "before": {
+        "asset": "BTC",
+        "horizon": "4h",
+        "totalBets": 2,
+        "totalDem": 10,
+        "bets": [
+          {
+            "txHash": "0e561fef3ccc87db4a8cce63aa2917a0c063dc2e2cdbc8c2c74e317dc43c55e1",
+            "predictedPrice": 75920.5,
+            "amount": 5
+          },
+          {
+            "txHash": "c962757bdb1676e5668fe47f7e1e8cc5b38721c936bb997080c7aedc72357005",
+            "predictedPrice": 76350.25,
+            "amount": 5
+          }
+        ]
+      },
+      "after": {
+        "asset": "BTC",
+        "horizon": "4h",
+        "totalBets": 3,
+        "totalDem": 15,
+        "bets": [
+          {
+            "txHash": "0e561fef3ccc87db4a8cce63aa2917a0c063dc2e2cdbc8c2c74e317dc43c55e1",
+            "predictedPrice": 75920.5,
+            "amount": 5
+          },
+          {
+            "txHash": "c962757bdb1676e5668fe47f7e1e8cc5b38721c936bb997080c7aedc72357005",
+            "predictedPrice": 76350.25,
+            "amount": 5
+          },
+          {
+            "txHash": "048eb4322425bbba9e94f6c5efefd5cdfcddc632352b4fa7ca84a082a3b361f6",
+            "predictedPrice": 74621,
+            "amount": 5
+          }
+        ]
+      }
+    }
+  }
+}

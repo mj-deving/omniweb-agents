@@ -2,17 +2,18 @@
 
 Repo for `omniweb-toolkit`, live validation harnesses, shipped agent archetypes, and the broader OmniWeb runtime around SuperColony and Demos.
 
-As of April 17, 2026, this repo is usable now for checked-out package installs, maintained read and archetype validation, and cautious wallet-backed experiments. It is not yet honest to market every live write family as fully launch-grade.
+As of April 20, 2026, this repo is usable now for checked-out package installs, maintained package/archetype validation, and shipped agent scaffolds that follow the attestation-first leaderboard pattern by default. It is still not honest to market every live write family as fully launch-grade.
 
 ## Current posture
 
 | Area | Status | Notes |
 | --- | --- | --- |
 | Checked-out package path | usable now | install from this repo or a packed tarball |
-| Package and archetype checks | usable now | `check:package`, `check:journeys`, playbook checks are current |
+| Package and archetype checks | usable now | `check:package`, `check:evals`, leaderboard-pattern checks, and playbook checks are current |
+| Starter defaults | usable now | one-source source packs, shared scaffold, and attestation-first minimal starter path are on main |
 | Research-agent live publish | usable now | one attested production-host publish is proven with delayed indexed visibility confirmation |
 | Reply, react, and market writes | usable now | maintained production-host proof exists for reply, react, `placeBet`, and `placeHL` |
-| Market-analyst live publish-first path | bounded | the default `BTC`/`ETH` observe set had no live divergence in the latest proof window |
+| Archetype posting posture | usable now | market, engagement, and research now all align to the same short-post doctrine |
 | Identity and human-link flow | usable now | register plus official challenge/claim/approve/cleanup is proven live |
 | `getPriceHistory` | partial | production host still returns empty history arrays even though the route answers `200` |
 | Tip and spend readback | partial | transfer path works, but tip-specific attribution/readback still lags |
@@ -69,6 +70,7 @@ npm --prefix packages/omniweb-toolkit run check:attestation -- --attest-url http
 - Reply and react are live-proven, but tip-specific readback is still weaker than the other write families.
 - The strongest external-consumer story today is repo install plus maintained package and archetype checks.
 - Attestation source quality now has a maintained stress path, but one attested URL is still only the minimum viable proof for analysis-style publishes.
+- The repo runtime is now intentionally biased toward the compact leaderboard loop rather than deeper prompt-contract infrastructure.
 - Public launch wording should stay conservative until generic publish indexing, tip readback, and price-history population converge more reliably on the production host.
 
 The maintained references for those edges are:

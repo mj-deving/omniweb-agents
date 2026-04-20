@@ -1,6 +1,6 @@
 ---
-summary: "Runtime topology for omniweb-toolkit: which agent paths run through the package minimal runtime versus the older V3 session-runner world, and which path is canonical for research hardening."
-read_when: ["runtime topology", "session runner vs package runtime", "canonical research runtime", "research starter", "v3 strategy bridge"]
+summary: "Runtime topology for omniweb-toolkit: which agent paths run through the package minimal runtime versus the older V3 session-runner world, and where the simple research starter ends and the advanced runtime begins."
+read_when: ["runtime topology", "session runner vs package runtime", "canonical research runtime", "research starter", "research runtime", "v3 strategy bridge"]
 ---
 
 # Runtime Topology
@@ -19,6 +19,7 @@ This repo currently contains two valid but separate execution paths:
      - `src/research-evidence.ts`
      - `src/research-family-dossiers.ts`
      - `src/research-self-history.ts`
+   - advanced research-only runtime in `assets/research-agent-runtime.ts`
 
 2. **Legacy V3 session-runner world**
    - `cli/session-runner.ts`
@@ -30,12 +31,22 @@ These worlds can publish similar content, but they do not currently share one co
 
 ## Canonical Research Path
 
-For research-agent work, the **canonical runtime is the package minimal-runtime path**, specifically:
+For research-agent work, the **default operator path is the package minimal-runtime starter**, specifically:
 
 - `assets/research-agent-starter.ts`
 - the exported and packaged copies of that starter
 
-That is where the current research hardening lives, including:
+That is the place to start when the goal is:
+
+- one clear research observe/publish loop
+- the same starter routine as market and engagement
+- one-source attestation-first operation before escalating complexity
+
+When you need the heavier research-specific machinery, the advanced path is:
+
+- `assets/research-agent-runtime.ts`
+
+That advanced runtime contains the deeper research hardening, including:
 
 - family-specific source profiles
 - evidence summaries and derived metrics
@@ -44,7 +55,8 @@ That is where the current research hardening lives, including:
 - self-history and prior-coverage delta
 - substrate-aware prompt packets
 
-If the task is to improve the research agent itself, start there.
+If the task is to simplify operator onboarding or align archetype routines, start with the starter.
+If the task is to improve the advanced research execution logic itself, move to the runtime file.
 
 ## What The Session Runner Is
 
@@ -61,7 +73,10 @@ Do not assume that a change to the package research starter automatically change
 If the work is:
 
 - **research-agent quality, family logic, prompt packet, evidence semantics, self-history, or research-specific skip logic**
-  - change the package research runtime
+  - change the package research runtime when the simple starter no longer covers the need
+
+- **simple research operator flow, default publish path, or archetype alignment**
+  - change the package research starter
 
 - **sentinel session orchestration, V3 hooks, older source matcher wiring, or session oversight behavior**
   - change the session-runner world
@@ -76,4 +91,4 @@ If a piece of research logic now needs to benefit both runtimes:
 2. extract it into a shared package/toolkit boundary on purpose
 3. wire both runtimes to that shared layer
 
-Do **not** duplicate logic across both paths casually, and do **not** assume the session runner is the hidden consumer of package research starters.
+Do **not** duplicate logic across both paths casually, and do **not** assume the session runner is the hidden consumer of package research starters or runtimes.

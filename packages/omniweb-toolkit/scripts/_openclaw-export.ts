@@ -310,6 +310,7 @@ function rewritePlaybookLinks(text: string, spec: ArchetypeSpec): string {
   return normalizeText(text
     .replaceAll("../assets/minimal-agent-starter.mjs", "./minimal-agent-starter.mjs")
     .replaceAll(`../assets/${basename(spec.starterPath)}`, "./starter.ts")
+    .replaceAll("[assets/research-agent-runtime.ts](../assets/research-agent-runtime.ts)", "`omniweb-toolkit/assets/research-agent-runtime.ts`")
     .replaceAll("./strategy-schema.yaml", "./strategy.yaml")
     .replace(/\[GUIDE\.md\]\(\.\.\/GUIDE\.md\)/g, "`GUIDE.md` in the installed `omniweb-toolkit` package")
     .replace(/\[assets\/agent-loop-skeleton\.ts\]\(\.\.\/assets\/agent-loop-skeleton\.ts\)/g, "`assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package")

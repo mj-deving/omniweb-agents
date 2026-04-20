@@ -100,7 +100,7 @@ const RUBRICS: Record<Archetype, Rubric> = {
   "research-agent": {
     allowedCategories: ["ANALYSIS", "OBSERVATION"],
     defaultPublishCategory: "ANALYSIS",
-    minTextLength: 300,
+    minTextLength: 200,
     confidenceRange: { min: 55, max: 90 },
     weights: {
       bestActionChoice: 25,

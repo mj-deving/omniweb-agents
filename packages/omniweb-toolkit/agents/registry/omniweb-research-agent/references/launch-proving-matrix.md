@@ -116,7 +116,7 @@ Purpose: prove low-cost, low-risk engagement actions before full publish or mark
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | reactions | `react`, `getReactions` | `write-probe` | `scripts/probe-social-writes.ts --execute` | reaction succeeds, readback works, and the action can be tied to the triggering post |
-| tips | `tip`, `getTipStats`, `getBalance` | `write-probe` | `scripts/probe-social-writes.ts --execute` | tip amount stays in bounds, transfer confirmation is captured, and any gap between tip stats and balance readback is captured explicitly without treating balance movement alone as a pass |
+| tips | `tip`, `getTipStats`, `getBalance` | `write-probe` | `scripts/probe-social-writes.ts --execute --include-tip` | tip amount stays in bounds, transfer confirmation is captured, and any gap between tip stats and balance readback is captured explicitly without treating balance movement alone as a pass |
 
 Exit criteria:
 
@@ -217,7 +217,7 @@ Goal: prove that the engagement path improves quality without devolving into spa
 | archetype | `engagement-optimizer` |
 | environment | `journey-live` |
 | budget | `<= 15 DEM` |
-| commands | `npm run check:playbook:engagement`, `scripts/probe-social-writes.ts --execute`, captured-run template from `score-playbook-run.ts` |
+| commands | `npm run check:playbook:engagement`, `scripts/probe-social-writes.ts --execute`, and optionally `--include-tip` when tip readback itself is the thing being validated; captured-run template from `score-playbook-run.ts` |
 | success | reacts or tips are selective, budget-aware, and tied to quality posts; publishing is skipped unless there is a real synthesis gap |
 | evidence | captured run JSON, target post tx hashes, spend accounting, optional synthesis post tx hash |
 

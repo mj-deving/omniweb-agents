@@ -1,10 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
- * probe-social-writes.ts — maintained live proof path for reply, react, and tip.
+ * probe-social-writes.ts — maintained live proof path for reaction and reply,
+ * with tip kept as an explicit optional extension.
  *
  * Default behavior is non-destructive: select a suitable external feed post and
  * report the current readback state that would be used for the live proof.
- * Passing `--execute` performs the real reaction, tip, and reply flow.
+ * Passing `--execute` performs the real reaction and reply flow.
+ * Passing `--include-tip` adds the live tip step as an explicit extra probe.
  *
  * Output: JSON to stdout. Errors to stderr.
  * Exit codes: 0 = success, 1 = live/runtime failure, 2 = invalid args.
@@ -59,6 +61,7 @@ Options:
   --reply-timeout-ms N    Visibility timeout for reply verification (default: ${DEFAULT_REPLY_TIMEOUT_MS})
   --reaction-timeout-ms N Polling timeout for reaction readback (default: ${DEFAULT_REACTION_TIMEOUT_MS})
   --tip-timeout-ms N      Polling timeout for tip readback (default: ${DEFAULT_TIP_TIMEOUT_MS})
+  --include-tip           Include the live tip step in the proof sweep
   --poll-ms N             Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --base-url URL          SuperColony base URL for direct reaction readback (default: ${DEFAULT_BASE_URL})
   --state-dir PATH        Override state directory for runtime guards
@@ -102,6 +105,7 @@ const baseUrl = getStringArg(args, "--base-url") ?? DEFAULT_BASE_URL;
 const stateDir = getStringArg(args, "--state-dir") || undefined;
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const execute = hasFlag(args, "--execute");
+const includeTip = hasFlag(args, "--include-tip");
 
 for (const [label, value] of [
   ["--feed-limit", feedLimit],
@@ -169,7 +173,10 @@ try {
         recipientTipStats: beforeRecipientTipStats,
         parentDetailOk: !!beforeParentDetail?.ok,
       },
-      message: "Dry run only. Re-run with --execute to perform live reaction, tip, and reply proof.",
+      tipEnabled: includeTip,
+      message:
+        "Dry run only. Re-run with --execute for the live reaction+reply proof, "
+        + "and add --include-tip only when you intentionally want the extra tip probe.",
     }, null, 2));
     process.exit(0);
   }
@@ -183,8 +190,8 @@ try {
     : { attempted: false };
 
   const balanceBeforeTip = beforeBalance;
-  const tipResult = await omni.colony.tip(candidate.txHash, tipAmount);
-  const tipVerification = tipResult.ok
+  const tipResult = includeTip ? await omni.colony.tip(candidate.txHash, tipAmount) : null;
+  const tipVerification = includeTip && tipResult?.ok
     ? await verifyTipReadback(
         omni,
         candidate.txHash,
@@ -220,25 +227,25 @@ try {
     reactionResult.ok
     && !!reactionVerification.attempted
     && reactionVerification.ok
-    && tipResult.ok
-    && !!tipVerification.attempted
-    && tipVerification.ok
     && replyResult.ok
     && !!replyVerification.attempted
-    && replyVerification.ok;
+    && replyVerification.ok
+    && (!includeTip || (!!tipResult?.ok && !!tipVerification.attempted && tipVerification.ok));
 
   console.log(JSON.stringify({
     attempted: true,
     ok: overallOk,
     address: omni.address,
     target: candidate,
+    tipEnabled: includeTip,
     reaction: {
       result: summarizeToolResult(reactionResult),
       verification: reactionVerification,
     },
     tip: {
       amount: tipAmount,
-      result: summarizeToolResult(tipResult),
+      skipped: !includeTip,
+      result: tipResult ? summarizeToolResult(tipResult) : null,
       verification: tipVerification,
     },
     reply: {
@@ -248,7 +255,7 @@ try {
       result: summarizeToolResult(replyResult),
       verification: replyVerification,
     },
-  }, null, 2));
+    }, null, 2));
 
   process.exit(overallOk ? 0 : 1);
 } catch (error) {
@@ -477,8 +484,11 @@ function summarizeToolResult(
     data?: { txHash?: string };
     error?: { code?: string; message?: string; retryable?: boolean };
     provenance?: unknown;
-  },
+  } | null,
 ): Record<string, unknown> {
+  if (!result) {
+    return { ok: false, skipped: true };
+  }
   return result.ok
     ? {
         ok: true,

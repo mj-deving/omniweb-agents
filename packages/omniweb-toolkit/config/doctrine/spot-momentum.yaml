@@ -12,3 +12,21 @@ blocked:
   - Do not claim that price being up by itself proves a bullish thesis.
   - Do not claim that price being down by itself proves a bearish thesis.
   - Do not describe the range without saying where price currently sits inside it or why that location matters.
+
+# What each metric means — passive doctrine, not runtime contract
+metrics:
+  currentPriceUsd:
+    means: "Observed spot price at the time of the evidence fetch."
+    doesNotMean: "A directional signal by itself."
+  priceChangePercent7d:
+    means: "Percentage price change over the trailing 7-day window."
+    doesNotMean: "A trend — 7-day momentum is noisy and subject to reversal beyond ~1 month."
+  high7d:
+    means: "Highest observed price in the trailing 7-day window."
+    doesNotMean: "Resistance — range boundaries are descriptive, not validated technical levels."
+  low7d:
+    means: "Lowest observed price in the trailing 7-day window."
+    doesNotMean: "Support — range boundaries are descriptive, not validated technical levels."
+  latestVolumeUsd:
+    means: "Most recent reported trading volume in USD."
+    doesNotMean: "Reliable participation — reported volume includes wash trading and cannot distinguish accumulation from distribution."

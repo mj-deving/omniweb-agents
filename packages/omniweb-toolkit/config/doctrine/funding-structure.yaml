@@ -12,3 +12,18 @@ blocked:
   - Do not claim that negative funding by itself proves downside.
   - Do not claim that negative funding by itself guarantees a squeeze higher.
   - Do not ignore open interest or price context when interpreting funding and premium.
+
+# What each metric means — passive doctrine, not runtime contract
+metrics:
+  fundingRateBps:
+    means: "The annualized cost of holding the dominant perpetual side, expressed in basis points."
+    doesNotMean: "A prediction of future price direction."
+  markPrice:
+    means: "The fair-value price computed from the perpetual-to-spot basis."
+    doesNotMean: "The spot price itself."
+  markIndexSpreadUsd:
+    means: "The dollar difference between the perpetual mark price and the spot index."
+    doesNotMean: "Directional conviction — the spread reflects recent momentum, not forward expectations."
+  openInterest:
+    means: "Total open derivative contracts for this asset."
+    doesNotMean: "Directional conviction — high OI can reflect either long or short dominance."

@@ -1,0 +1,85 @@
+handleNativeOperations:  native
+nativePayload:  {
+  nativeOperation: 'send',
+  args: [
+    '0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42',
+    5
+  ]
+}
+nativeOperation:  send
+response: {
+  result: 200,
+  response: {
+    data: {
+      valid: true,
+      reference_block: 2122351,
+      message: '[Tx Validation] Transaction signature verified\n',
+      gas_operation: null,
+      transaction: [Object]
+    },
+    signature: {
+      type: 'ed25519',
+      data: '0x7d07d46c1d181a2851600e245047b84a1aca412675668fa702b23f3b9e4d8adc374f9fb12ce3015cbf1858651a8ba2c33dddb39d10124926d2340fce32293c00'
+    },
+    rpc_public_key: {
+      type: 'ed25519',
+      data: '0xc8bc5866fecf583bc1232f04fa54fd2c5a6f7c15b91c517ac60f468cdc0b8c82'
+    }
+  },
+  require_reply: false,
+  extra: null
+}
+{
+  "attempted": true,
+  "ok": true,
+  "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "balanceBefore": 2342,
+  "balanceAfter": 2342,
+  "estimatedSpend": 0,
+  "higherLower": {
+    "plan": {
+      "asset": "SOL",
+      "horizon": "30m",
+      "direction": "lower",
+      "amount": 5,
+      "currentPrice": 84.98,
+      "referencePrice": 85.24,
+      "sentimentScore": -51,
+      "reason": "SOL 30m pool is active and oracle sentiment (-51) aligns with the current crowd tilt."
+    },
+    "result": {
+      "ok": true,
+      "txHash": "7654ebd4cc28d5f5bcb46f7779a34794ad1b502a47b26e7f27ed6a96e9cfd2b7",
+      "memo": "HIVE_HL:SOL:LOWER:30m",
+      "amount": 5,
+      "registered": true
+    },
+    "verification": {
+      "attempted": true,
+      "ok": true,
+      "polls": 1,
+      "before": {
+        "asset": "SOL",
+        "horizon": "30m",
+        "totalHigher": 0,
+        "totalLower": 5,
+        "totalDem": 5,
+        "higherCount": 0,
+        "lowerCount": 1,
+        "referencePrice": 85.24,
+        "currentPrice": 84.98
+      },
+      "after": {
+        "asset": "SOL",
+        "horizon": "30m",
+        "totalHigher": 0,
+        "totalLower": 10,
+        "totalDem": 10,
+        "higherCount": 0,
+        "lowerCount": 2,
+        "referencePrice": 84.98,
+        "currentPrice": 84.98
+      }
+    }
+  }
+}

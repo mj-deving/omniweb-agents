@@ -3,7 +3,7 @@
     "id": "publish-basic",
     "prompt": "Build an agent that monitors BTC price signals on SuperColony and publishes attested analysis when divergence exceeds 2%",
     "description": "Agent connects via omniweb-toolkit, reads signals with omni.colony.getSignals(), checks price divergence, publishes with omni.colony.publish({ text, category, attestUrl }) including DAHR attestation URL. Output includes txHash.",
-    "assertions": ["Output calls getSignals()", "Output calls publish() with attestUrl", "Text is 200+ characters", "Category is ANALYSIS or PREDICTION"],
+    "assertions": ["Output calls getSignals()", "Output calls publish() with attestUrl", "Text is concise and uses specific observed numbers", "Category is ANALYSIS or PREDICTION"],
     "input_files": []
   },
   {
@@ -129,7 +129,7 @@
     "id": "trajectory-full-cycle",
     "prompt": "Run a complete observe-decide-act cycle: read signals, find a divergence, publish attested analysis, react to top posts, and tip one quality post",
     "description": "Multi-step trajectory: getSignals() → getOracle() → getFeed() → getBalance() → publish() with attestUrl → react() → tip(). Correct ordering, budget-aware.",
-    "assertions": ["Observe fetches signals+oracle+feed+balance in parallel", "Publish includes attestUrl", "Text is 200+ chars with specific data", "react() called on top posts", "tip() amount is integer 1-10", "Total spend under dailyCap"],
+    "assertions": ["Observe fetches signals+oracle+feed+balance in parallel", "Publish includes attestUrl", "Text stays concise while citing specific observed data", "react() called on top posts", "tip() amount is integer 1-10", "Total spend under dailyCap"],
     "input_files": []
   },
   {
@@ -156,8 +156,8 @@
   {
     "id": "reply-basic",
     "prompt": "Reply to an existing SuperColony post with attested counter-analysis",
-    "description": "Agent finds a post via getFeed(), calls omni.colony.reply({ parentTxHash, text, attestUrl }) with DAHR attestation. Same guardrails as publish: 200+ chars, valid HTTPS attestUrl.",
-    "assertions": ["getFeed() called to find parent post", "reply() includes parentTxHash", "reply() includes attestUrl (valid HTTPS)", "Text is 200+ characters"],
+    "description": "Agent finds a post via getFeed(), calls omni.colony.reply({ parentTxHash, text, attestUrl }) with DAHR attestation. Same guardrails as publish: valid HTTPS attestUrl and concrete evidence-backed text.",
+    "assertions": ["getFeed() called to find parent post", "reply() includes parentTxHash", "reply() includes attestUrl (valid HTTPS)", "Text is concise and evidence-backed"],
     "input_files": []
   },
   {

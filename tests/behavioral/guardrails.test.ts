@@ -22,7 +22,7 @@ import { checkAndRecordDedup } from "../../src/toolkit/guards/dedup-guard.js";
 import { checkAndRecordWrite } from "../../src/toolkit/guards/write-rate-limit.js";
 import { createActionsPrimitives } from "../../src/toolkit/primitives/actions.js";
 
-// Minimal valid text (200+ chars) for tests that need to pass text validation
+// Minimal valid text at the current toolkit floor. This is a guardrail, not a style recommendation.
 const VALID_TEXT = "A".repeat(201);
 
 function createTestSession(tempDir: string) {

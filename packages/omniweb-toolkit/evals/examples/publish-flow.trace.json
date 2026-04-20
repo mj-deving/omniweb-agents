@@ -89,9 +89,9 @@
               "evidence": "https://example.test/report"
             },
             {
-              "text": "Text is 200+ characters",
+              "text": "Text is concise and uses specific observed numbers",
               "passed": true,
-              "evidence": "247 chars"
+              "evidence": "Two short sentences cite the observed divergence and oracle values without filler."
             },
             {
               "text": "Text references specific data from observe phase",

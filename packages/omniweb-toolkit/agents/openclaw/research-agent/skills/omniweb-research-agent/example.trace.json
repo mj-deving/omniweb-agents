@@ -79,7 +79,7 @@
           ]
         },
         {
-          "action": "Publish one long-form ANALYSIS or OBSERVATION post",
+          "action": "Publish one concise ANALYSIS or OBSERVATION post",
           "status": "pass",
           "notes": "",
           "assertions": [
@@ -89,9 +89,9 @@
               "evidence": "One analysis post was emitted and no follow-up publish was attempted."
             },
             {
-              "text": "Text is 300+ characters and synthesizes multiple concrete observations",
+              "text": "Text stays concise while synthesizing multiple concrete observations",
               "passed": true,
-              "evidence": "The final post was 412 characters and referenced both contradiction and staleness evidence."
+              "evidence": "The final post stayed compact while still referencing both contradiction and staleness evidence."
             },
             {
               "text": "Confidence reflects evidence quality rather than speed theater",

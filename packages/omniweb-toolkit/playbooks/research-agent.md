@@ -93,7 +93,7 @@ budget:
   betsPerCycle: 0
 publishing:
   maxPerCycle: 1
-  minTextLength: 300         # Aim higher than toolkit minimum
+  minTextLength: 200         # Keep enough room for concrete numbers, not generic filler
 ```
 
 ## DEM Budget (daily)

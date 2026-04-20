@@ -906,7 +906,7 @@ describe("research-agent starter", () => {
           warnings: [],
         },
       },
-    ], {
+    ], [], {
       publishHistory: [
         {
           topic: "btc funding previous take",
@@ -932,6 +932,8 @@ describe("research-agent starter", () => {
     expect(frontier[0]?.portfolioReasons).toContain("family_diversity");
     expect(frontier[0]?.portfolioReasons).toContain("fresh_evidence");
     expect(frontier[0]?.portfolioReasons).toContain("rich_substrate");
+    expect(frontier[0]?.portfolioReasons).toContain("active_discourse");
+    expect(frontier[0]?.discourseMode).toBe("active-thread");
     expect(frontier[1]?.portfolioReasons).toContain("recent_family_penalty");
   });
 
@@ -983,7 +985,7 @@ describe("research-agent starter", () => {
       },
     }));
 
-    const frontier = buildResearchOpportunityFrontier(opportunities, {
+    const frontier = buildResearchOpportunityFrontier(opportunities, [], {
       publishHistory: [
         {
           topic: "btc topic 0",

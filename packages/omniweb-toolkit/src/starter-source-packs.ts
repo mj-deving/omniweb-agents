@@ -15,37 +15,37 @@ export interface StarterSourcePack {
 const STARTER_SOURCE_PACKS: Record<StarterArchetype, StarterSourcePack> = {
   research: {
     archetype: "research",
-    pattern: "Pick one macro or market structure source, attest it, then publish one evidence-backed analysis post.",
+    pattern: "Pick one live-discourse-ready market or macro structure source, attest it, then publish one evidence-backed analysis post that can join an active colony conversation.",
     entries: [
       {
         sourceId: "btcetfdata-current-btc",
         label: "BTC ETF flows",
-        why: "Daily BTC ETF net flow and holdings data with concrete numbers.",
+        why: "Daily BTC ETF net flow and holdings data with concrete numbers and strong overlap with current colony discourse.",
       },
       {
-        sourceId: "ecb-eurusd",
-        label: "ECB EUR/USD",
-        why: "One-source FX context for euro-dollar and macro rotation commentary.",
+        sourceId: "binance-futures-btc",
+        label: "Binance BTC funding",
+        why: "Derivatives stress is frequently live in colony discourse and maps cleanly into contradiction or mismatch posts.",
       },
       {
-        sourceId: "bls-unemployment",
-        label: "BLS unemployment",
-        why: "Labor data supports clear macro theses without requiring a source chain.",
+        sourceId: "coingecko-42ff8c85",
+        label: "CoinGecko market snapshot",
+        why: "One-source range, price, and volume context for research posts that need to resolve live sentiment mismatches.",
       },
       {
-        sourceId: "bls-cpi",
-        label: "BLS CPI",
-        why: "Inflation prints are high-signal, infrequent, and easy to interpret from one source.",
+        sourceId: "coingecko-4f438007",
+        label: "CoinGecko trending",
+        why: "Useful when you want a discourse-aware research topic that is already attracting attention instead of a cold macro print.",
       },
       {
-        sourceId: "treasury-interest-rates",
-        label: "US Treasury rates",
-        why: "Simple short-rate backdrop for macro and risk commentary.",
+        sourceId: "generic-368c5833",
+        label: "Alternative Fear & Greed",
+        why: "Single-source sentiment context helps research posts engage with the colony's current bullish or bearish read directly.",
       },
       {
         sourceId: "cboe-vix-daily",
         label: "CBOE VIX",
-        why: "Single-source volatility context with a clean daily market signal.",
+        why: "Single-source volatility context that still supports macro stress commentary when the colony discourse broadens beyond crypto beta.",
       },
     ],
   },

@@ -398,11 +398,11 @@ The whole point of one-file-per-family is that all knowledge about a family live
 |---|---|
 | `tests/packages/research-draft.test.ts` | **None** — no code reads metrics from YAML |
 | `tests/packages/topic-family-contract.test.ts` | **None** — tests oracle-divergence, not research families |
-| `tests/doctrine/research-family-doctrine.test.ts` | **None** — tests `family`/`baseline`/`focus`/`blocked` only |
+| `tests/packages/research-family-doctrine.test.ts` | **None** — tests `family`/`baseline`/`focus`/`blocked` only |
 
 ### New test to add
 
-One test file: `tests/doctrine/research-metric-semantics.test.ts`
+One test file: `tests/packages/research-metric-semantics.test.ts`
 
 ```
 For each of the 6 research family YAML files:
@@ -497,7 +497,7 @@ The loader does not need to read `metrics:`. The prompt builder does not need to
    - Use the exact YAML from Section 3 of this document
    - Add a `# What each metric means — passive doctrine, not runtime contract` comment before each `metrics:` block
 
-3. **Add test file** `tests/doctrine/research-metric-semantics.test.ts`:
+3. **Add test file** `tests/packages/research-metric-semantics.test.ts`:
    - Parse each of the 6 YAML files
    - Assert `metrics` key exists and is a non-empty object
    - Assert each entry has non-empty `means` and `doesNotMean` strings

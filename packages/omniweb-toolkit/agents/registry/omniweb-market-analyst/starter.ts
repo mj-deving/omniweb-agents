@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import {
+  buildLeaderboardPatternPrompt,
   buildMarketDraft,
   deriveMarketOpportunities,
   runMinimalAgentLoop,
@@ -62,6 +63,36 @@ function samplePost(post: unknown): FeedSample {
 
 function normalizeDirection(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function buildStarterPromptText(params: {
+  asset: string;
+  opportunityKind: string;
+  score: number;
+  feedCount: number;
+  signalCount: number;
+  divergenceSeverity: string | null;
+  attestUrl: string;
+}): string {
+  return buildLeaderboardPatternPrompt({
+    role: "a market analyst following the one-source attestation-first leaderboard pattern",
+    sourceName: params.attestUrl,
+    observedFacts: [
+      `Selected asset: ${params.asset}.`,
+      `Opportunity kind: ${params.opportunityKind}.`,
+      `Opportunity score: ${params.score}.`,
+      `Feed sample size: ${params.feedCount}.`,
+      `Signal sample size: ${params.signalCount}.`,
+      params.divergenceSeverity
+        ? `Divergence severity: ${params.divergenceSeverity}.`
+        : "No divergence severity was available.",
+    ],
+    domainRules: [
+      "Keep the thesis to one measurable market claim.",
+      "Use only observed numbers or explicit uncertainty.",
+      "Do not overclaim from sentiment divergence alone.",
+    ],
+  });
 }
 
 export async function observe(
@@ -348,6 +379,19 @@ export async function observe(
     };
   }
 
+  const starterPromptText = buildStarterPromptText({
+    asset: chosenOpportunity.asset,
+    opportunityKind: chosenOpportunity.kind,
+    score: chosenOpportunity.score,
+    feedCount: posts.length,
+    signalCount: signalList.length,
+    divergenceSeverity:
+      chosenOpportunity.divergence && typeof chosenOpportunity.divergence.severity === "string"
+        ? chosenOpportunity.divergence.severity
+        : null,
+    attestUrl: chosenOpportunity.attestationPlan.primary.url,
+  });
+
   return {
     kind: "publish",
     category: draft.category,
@@ -362,6 +406,7 @@ export async function observe(
       draftSource: draft.draftSource,
       recommendedDirection: chosenOpportunity.recommendedDirection,
       availableBalance,
+      leaderboardPatternPrompt: starterPromptText,
     },
     attestationPlan: chosenOpportunity.attestationPlan,
     audit: {
@@ -383,6 +428,7 @@ export async function observe(
         category: draft.category,
         draftText: draft.text,
         qualityGate: draft.qualityGate,
+        leaderboardPatternPrompt: starterPromptText,
         primaryAttestUrl: chosenOpportunity.attestationPlan.primary.url,
         supportingAttestUrls: chosenOpportunity.attestationPlan.supporting.map((candidate) => candidate.url),
       },

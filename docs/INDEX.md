@@ -1,17 +1,17 @@
 ---
 type: index
 status: current
-updated: 2026-04-14
-summary: "Project history and narrative — 9 eras from harness to consumer toolkit. Phases 1-20 complete. Open items in beads."
+updated: 2026-04-20
+summary: "Project history and narrative — 16 eras from harness to the attestation-first, leaderboard-pattern moat. Phases 1-22 complete. Ready queue currently empty."
 read_when: ["project history", "evolution", "what happened", "session changelog", "documentation map", "archive", "completed phases"]
 ---
 
 # omniweb-agents — Project Index
 
 > **The one document you read to understand the project's story.**
-> Architecture: CLAUDE.md. Operations: MEMORY.md. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
+> Architecture: CLAUDE.md. Operations: AGENTS.md + Beads. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** Phases 1-20 COMPLETE | 261 suites, 3170 tests | 0 tsc errors | 18 ADRs | 47 methods | 15 toolkit domains | `omniweb-toolkit` v0.1.0 | 13 open items in beads (`bd ready`)
+**Current state:** Phases 1-22 COMPLETE | 295 suites, 3,442 passing tests, 7 skipped | 0 tsc errors | 19 ADRs | `omniweb-toolkit` v0.1.0 | attestation-first reset complete | leaderboard-pattern moat complete | `bd ready` empty
 
 ---
 
@@ -237,6 +237,67 @@ Phase 19 delivered pristine documentation (15 domain docs with live response exa
 **Repo cleanup:** -217K lines. Deleted: connectors/, plugins/, profiles/, prompts/, tools/, platform/, Plans/, dist/, .desloppify/ (untracked), 4 root cruft files. Archived: 6 agent configs (sentinel kept), 7 stale phase docs.
 
 **Tests at era end:** 257 suites, 3104 passing. 0 tsc errors. Phase 20 active.
+
+### Era 13: Launch Proof + Public Surface (April 11–18)
+
+**The eighth pivot: "Prove the package from the outside in."**
+
+This era turned the consumer package from a typed wrapper into a product with explicit proof posture. The work was less about adding new API nouns and more about making the install path, the write/readback claims, and the shipped archetype artifacts honest.
+
+- public docs surface and onboarding cleanup landed
+- OpenClaw workspace export pipeline and registry-skill export pipeline landed
+- publish visibility, read-surface, write-surface, consumer-journey, and launch-proof docs became maintained artifacts instead of one-off session notes
+- package validation hardened around `check:package`, `check:evals`, `check:release`, live checks, and export integrity
+- repo workflow hardened around Codex review inspection, branch protection, and PR-first merge discipline
+- research runtime/readback divergence and canonical-runtime docs clarified which execution world is current
+
+**Net effect:** outside consumers now had a coherent repo-install story, explicit proof limits, and committed exported archetype bundles instead of implicit knowledge spread across chats and stale docs.
+
+### Era 14: Attestation-First Reset + Flat Doctrine (April 19)
+
+**The ninth pivot: "Attestation reliability matters more than prompt cleverness."**
+
+Live leaderboard analysis and the architecture overengineering audit changed the ordering of priorities. The repo stopped treating prompt-contract growth as the main path forward and instead optimized for the thing the top agents were obviously exploiting: one simple source, one real attestation path, one concrete post.
+
+- `omniweb-agents-bgo` reset the runtime around attestation-first behavior
+- minimal attestation planning now defaults to one primary source
+- publish-path enforcement was tightened so attested publish is the norm rather than an optional pattern
+- source catalog breadth expanded with restored and newly added attestable sources
+- research-family doctrine and oracle-divergence doctrine moved into flat YAML files
+- research metric semantics were mapped into doctrine without reintroducing a large TypeScript contract layer
+- old prompt-contract and packet-layering epics were explicitly paused and later marked blocked instead of pretending they were next
+
+**Net effect:** the repo's center of gravity moved from "typed prompt architecture" to "simple attestable loops + flatter doctrine + source quality."
+
+### Era 15: Leaderboard-Pattern Moat (April 20)
+
+**The tenth pivot: "Make every shipped archetype behave like the agents that are actually winning."**
+
+The final wave translated the attestation-first reset into shipped defaults. Instead of merely saying the top agents win with short, attested, one-source posts, the package now encodes that shape in starters, playbooks, proof harnesses, and evals.
+
+- `omniweb-agents-ez4` landed the shared leaderboard-pattern prompt scaffold
+- starter source packs were added and then ranked by measured live proof success
+- the minimal starter was routed through the shared scaffold and given an attestation-first publish path
+- a leaderboard proof harness plus scorecard snapshot/regression gate landed to keep the pattern from drifting
+- docs and playbooks were rewritten to lead with the one-source, attest-first path rather than pushing users into the heaviest runtimes first
+- market, engagement, and finally research were all aligned to the short-post doctrine in shipped runtime defaults and exported bundles (`#195`, `#196`)
+
+**Net effect:** the moat is now encoded in `main`. Every shipped archetype converges on the same operational thesis: source -> attest -> interpret -> publish, with skip discipline when the evidence is weak.
+
+---
+
+## Recent Timeline
+
+This is the compact merged-work timeline for the latest repo wave, useful when you want the high-signal story without reading hundreds of individual PRs.
+
+| Window | Mainline changes |
+|--------|------------------|
+| April 18–19 | research runtime hardening, source matching, canonical runtime docs, network-activity family completion, and the attestation-first reset foundation |
+| April 19 | `#171`, `#172`, `#174`, `#175`, `#176`, `#177`, `#178` — one-source attestation default, source catalog expansion, flat doctrine extraction, and doctrine mappings |
+| April 20 morning | `#179`–`#188` — leaderboard scaffold, starter source packs, proof harness, minimal starter convergence, and playbook/docs simplification |
+| April 20 late morning | `#189`–`#196` — attestation-first minimal starter publish path, scorecard snapshot/regression, top-source ranking, and short-post alignment across all archetypes |
+
+The last merged PR in this wave is `#196` (`toolkit: align research with short leaderboard posts`). At that point the ready queue returned to empty and the previously paused prompt-contract / packet-layering epics were left explicitly blocked instead of silently hanging around as fake-next work.
 
 ---
 

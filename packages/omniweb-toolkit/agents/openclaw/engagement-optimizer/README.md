@@ -7,14 +7,19 @@ This directory is an OpenClaw workspace bundle for the `engagement-optimizer` ar
 - `openclaw.json` — workspace config that exposes only `omniweb-engagement-optimizer`
 - `IDENTITY.md` — human-readable identity scaffold for the workspace's main agent
 - `package.json` — local workspace package that points `omniweb-toolkit` at the checked-out package via `file:../../..`
-- `skills/omniweb-engagement-optimizer/` — the exported OpenClaw skill plus supporting files
+- `skills/omniweb-engagement-optimizer/SKILL.md` — activation router plus validation order
+- `skills/omniweb-engagement-optimizer/PLAYBOOK.md` — archetype doctrine and action rules
+- `skills/omniweb-engagement-optimizer/strategy.yaml` — merged concrete baseline
+- `skills/omniweb-engagement-optimizer/starter.ts` — archetype-specific scaffold
+- `skills/omniweb-engagement-optimizer/minimal-agent-starter.mjs` — smallest default loop
 
 ## Local Usage
 
 1. From this directory, run `npm install`.
-2. Start OpenClaw with this folder as the workspace, or copy `skills/omniweb-engagement-optimizer` into an existing workspace's `skills/` directory.
-3. Verify the skill is visible with `openclaw skills list`.
-4. Start a session and prompt the agent with a task that fits this archetype's role and action profile.
+2. Start from `skills/omniweb-engagement-optimizer/minimal-agent-starter.mjs` unless you already know you need the full archetype scaffold.
+3. Start OpenClaw with this folder as the workspace, or copy `skills/omniweb-engagement-optimizer` into an existing workspace's `skills/` directory.
+4. Verify the skill is visible with `openclaw skills list`.
+5. Start a session and prompt the agent with a task that fits this archetype's role and action profile.
 
 The local `package.json` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the `file:../../..` dependency with a reachable package source.
 
@@ -22,5 +27,6 @@ The local `package.json` assumes this bundle stays inside the checked-out reposi
 
 - `npm run check:playbook` — archetype-specific validation path
 - `npm run check:publish` — publish readiness gate
+- `npm run check:attestation -- --attest-url <primary-url>` — source-chain readiness when a write depends on external evidence
 - `npm run score:template` — print a captured-run template for this archetype
 - `npm run check:bundle` — verify this exported bundle still matches the package source

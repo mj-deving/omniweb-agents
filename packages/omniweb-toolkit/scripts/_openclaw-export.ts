@@ -189,8 +189,6 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
     const playbookText = rewritePlaybookLinks(readPackageFile(spec.playbookPath), spec);
     const starterText = rewriteBundleAgentImport(readPackageFile(spec.starterPath));
     const minimalStarterText = readPackageFile("assets/minimal-agent-starter.mjs");
-    const loopSkeletonText = rewriteBundleAgentImport(readPackageFile("assets/agent-loop-skeleton.ts"));
-    const exampleTraceText = readPackageFile(`evals/examples/${spec.trajectoryScenario}.trace.json`);
     const strategyText = buildMergedStrategy(playbookText);
     const bundleDir = archetype;
     const skillDir = `${bundleDir}/skills/${spec.skillName}`;
@@ -225,37 +223,14 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
         content: strategyText,
       },
       {
-        path: `${skillDir}/GUIDE.md`,
-        content: renderLocalGuide(spec),
-      },
-      {
         path: `${skillDir}/minimal-agent-starter.mjs`,
         content: normalizeText(minimalStarterText),
-      },
-      {
-        path: `${skillDir}/agent-loop-skeleton.ts`,
-        content: loopSkeletonText,
       },
       {
         path: `${skillDir}/starter.ts`,
         content: normalizeText(starterText),
       },
-      {
-        path: `${skillDir}/example.trace.json`,
-        content: exampleTraceText,
-      },
-      {
-        path: `${skillDir}/RUNBOOK.md`,
-        content: renderRunbook(spec),
-      },
     );
-
-    for (const referencePath of spec.references.filter((path) => path.startsWith("references/"))) {
-      files.push({
-        path: `${skillDir}/references/${basename(referencePath)}`,
-        content: rewriteReferenceLinks(readPackageFile(referencePath)),
-      });
-    }
   }
 
   return files.sort((left, right) => left.path.localeCompare(right.path));
@@ -333,13 +308,13 @@ function buildMergedStrategy(playbookText: string): string {
 
 function rewritePlaybookLinks(text: string, spec: ArchetypeSpec): string {
   return normalizeText(text
-    .replaceAll("../GUIDE.md", "./GUIDE.md")
     .replaceAll("../assets/minimal-agent-starter.mjs", "./minimal-agent-starter.mjs")
-    .replaceAll("../assets/agent-loop-skeleton.ts", "./agent-loop-skeleton.ts")
     .replaceAll(`../assets/${basename(spec.starterPath)}`, "./starter.ts")
     .replaceAll("./strategy-schema.yaml", "./strategy.yaml")
-    .replaceAll(`../evals/examples/${spec.trajectoryScenario}.trace.json`, "./example.trace.json")
-    .replaceAll("../references/", "./references/"));
+    .replace(/\[GUIDE\.md\]\(\.\.\/GUIDE\.md\)/g, "`GUIDE.md` in the installed `omniweb-toolkit` package")
+    .replace(/\[assets\/agent-loop-skeleton\.ts\]\(\.\.\/assets\/agent-loop-skeleton\.ts\)/g, "`assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package")
+    .replace(/\[references\/([^\]]+)\]\(\.\.\/references\/[^)]+\)/g, "`references/$1` in the installed `omniweb-toolkit` package")
+    .replace(/\[evals\/examples\/([^\]]+)\]\(\.\.\/evals\/examples\/[^)]+\)/g, "`evals/examples/$1` in the installed `omniweb-toolkit` package"));
 }
 
 function extractFirstYamlFence(text: string): string {
@@ -382,7 +357,7 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 - workspace-local skills live in \`<workspace>/skills\`
 - skill visibility is controlled by \`agents.defaults.skills\` in \`openclaw.json\`
-- skill folders may include supporting text files in addition to \`SKILL.md\`
+- each exported skill folder stays intentionally small: \`SKILL.md\`, \`PLAYBOOK.md\`, \`strategy.yaml\`, \`starter.ts\`, and \`minimal-agent-starter.mjs\`
 
 Available bundles:
 
@@ -412,14 +387,19 @@ This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype 
 - \`openclaw.json\` — workspace config that exposes only \`${spec.skillName}\`
 - \`IDENTITY.md\` — human-readable identity scaffold for the workspace's main agent
 - \`package.json\` — local workspace package that points \`omniweb-toolkit\` at the checked-out package via \`file:../../..\`
-- \`skills/${spec.skillName}/\` — the exported OpenClaw skill plus supporting files
+- \`skills/${spec.skillName}/SKILL.md\` — activation router plus validation order
+- \`skills/${spec.skillName}/PLAYBOOK.md\` — archetype doctrine and action rules
+- \`skills/${spec.skillName}/strategy.yaml\` — merged concrete baseline
+- \`skills/${spec.skillName}/starter.ts\` — archetype-specific scaffold
+- \`skills/${spec.skillName}/minimal-agent-starter.mjs\` — smallest default loop
 
 ## Local Usage
 
 1. From this directory, run \`npm install\`.
-2. Start OpenClaw with this folder as the workspace, or copy \`skills/${spec.skillName}\` into an existing workspace's \`skills/\` directory.
-3. Verify the skill is visible with \`openclaw skills list\`.
-4. Start a session and prompt the agent with a task that fits this archetype's role and action profile.
+2. Start from \`skills/${spec.skillName}/minimal-agent-starter.mjs\` unless you already know you need the full archetype scaffold.
+3. Start OpenClaw with this folder as the workspace, or copy \`skills/${spec.skillName}\` into an existing workspace's \`skills/\` directory.
+4. Verify the skill is visible with \`openclaw skills list\`.
+5. Start a session and prompt the agent with a task that fits this archetype's role and action profile.
 
 The local \`package.json\` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the \`file:../../..\` dependency with a reachable package source.
 
@@ -427,6 +407,7 @@ The local \`package.json\` assumes this bundle stays inside the checked-out repo
 
 - \`npm run check:playbook\` — archetype-specific validation path
 - \`npm run check:publish\` — publish readiness gate
+- \`npm run check:attestation -- --attest-url <primary-url>\` — source-chain readiness when a write depends on external evidence
 - \`npm run score:template\` — print a captured-run template for this archetype
 - \`npm run check:bundle\` — verify this exported bundle still matches the package source
 `);
@@ -508,15 +489,22 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. Read \`{baseDir}/PLAYBOOK.md\` for the archetype's intent and action-selection rules.
 2. Load \`{baseDir}/strategy.yaml\` as the concrete merged strategy baseline.
-3. Open \`{baseDir}/RUNBOOK.md\` for the local validation path and workspace commands.
-4. Use \`{baseDir}/starter.ts\` when you need the nearest code scaffold instead of improvising a loop from scratch.
+3. Start from \`{baseDir}/minimal-agent-starter.mjs\` unless the task clearly needs the full archetype scaffold.
+4. Use \`{baseDir}/starter.ts\` when the minimal loop is too small for the current job.
 
 ## Default Workflow
 
 1. Start read-first. Gather only the live state needed for the next decision.
 2. Prefer the smallest action that advances the archetype's job.
-3. Before any wallet-backed write, run the readiness checks listed in \`RUNBOOK.md\`.
+3. Before any wallet-backed write, run \`npm run check:publish\` and then \`npm run check:attestation -- --attest-url <primary-url>\` when the claim depends on external evidence.
 4. If the current state does not justify a publish, skip the write and keep the evidence trail explicit.
+
+## Validation Order
+
+1. \`npm run check:playbook\`
+2. \`npm run check:publish\`
+3. \`npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\`
+4. \`${spec.runTemplateScript}\`
 
 ## What To Preserve
 
@@ -525,113 +513,12 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 - The starter scaffold is intentionally conservative. Extend it only after the packaged checks pass.
 - When a publish depends on external evidence, treat \`check-attestation-workflow.ts\` as part of the loop rather than optional polish.
 
-## Local Boundaries
+## Workspace Defaults
 
 - This skill assumes the workspace package has already installed \`omniweb-toolkit\` plus its required peers.
-- Run commands from the workspace root unless \`RUNBOOK.md\` says otherwise.
-- Use the exported files in this directory as the first source of truth, then fall back to the upstream package docs they reference.
+- Run commands from the workspace root.
+- Treat this directory as the default surface; use the installed package docs under \`node_modules/omniweb-toolkit/\` only when you need deeper detail.
 `);
-}
-
-function renderRunbook(spec: ArchetypeSpec): string {
-  const references = spec.references
-    .map((path) => `- \`${path}\``)
-    .join("\n");
-  const observeFocus = spec.observeFocus
-    .map((entry) => `- \`${entry}\``)
-    .join("\n");
-  const priorities = spec.actionPriorities
-    .map((entry) => `- ${entry}`)
-    .join("\n");
-
-  return normalizeText(`# ${spec.displayName} Runbook
-
-This file turns the exported skill into an operational OpenClaw workspace instead of a bare prompt.
-
-## Validation Order
-
-1. \`npm run check:playbook\`
-2. \`npm run check:publish\`
-3. \`npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\` when the claim depends on external evidence
-4. \`${spec.runTemplateScript}\` when you want a captured-run template for deeper scoring or soak-testing
-
-## Observe Focus
-
-${observeFocus}
-
-## Action Priorities
-
-${priorities}
-
-## Starter Scaffold
-
-- File: \`starter.ts\`
-- Main export: \`${spec.starterExportName}\`
-- Goal: ${spec.starterGoal}
-- Note: ${spec.starterCheckNote}
-
-## Upstream References
-
-${references}
-
-## Packaged Eval Anchor
-
-- Trajectory scenario: \`${spec.trajectoryScenario}\`
-- Package shortcut: \`npm --prefix ../../../ run ${spec.playbookCheckScript}\`
-`);
-}
-
-function renderLocalGuide(spec: ArchetypeSpec): string {
-  const observeFocus = spec.observeFocus
-    .map((entry) => `- \`${entry}\``)
-    .join("\n");
-  const priorities = spec.actionPriorities
-    .map((entry) => `- ${entry}`)
-    .join("\n");
-  const localReferences = [
-    "- [PLAYBOOK.md](./PLAYBOOK.md)",
-    "- [strategy.yaml](./strategy.yaml)",
-    "- [RUNBOOK.md](./RUNBOOK.md)",
-    "- [starter.ts](./starter.ts)",
-    "- [agent-loop-skeleton.ts](./agent-loop-skeleton.ts)",
-    "- [example.trace.json](./example.trace.json)",
-  ].concat(
-    spec.references
-      .filter((path) => path.startsWith("references/"))
-      .map((path) => `- [references/${basename(path)}](./references/${basename(path)})`),
-  ).join("\n");
-
-  return normalizeText(`# ${spec.displayName} Local Guide
-
-This bundle-local guide replaces the broader package GUIDE for OpenClaw workspace use.
-
-## Method
-
-1. Read the playbook before you act.
-2. Treat \`strategy.yaml\` as the concrete baseline rather than inventing thresholds.
-3. Use the starter scaffold when you need code and the runbook when you need commands.
-4. Skip the write path when the observed state does not justify it.
-
-## Observe Focus
-
-${observeFocus}
-
-## Action Priorities
-
-${priorities}
-
-## Local Files
-
-${localReferences}
-`);
-}
-
-function rewriteReferenceLinks(text: string): string {
-  return normalizeText(text
-    .replaceAll("../scripts/check-live-categories.ts", "../RUNBOOK.md")
-    .replaceAll("../scripts/check-response-shapes.ts", "../RUNBOOK.md")
-    .replaceAll("../scripts/leaderboard-snapshot.ts", "../RUNBOOK.md")
-    .replaceAll("primitives/README.md", "../RUNBOOK.md"));
 }
 
 function readPackageFile(relativePath: string): string {

@@ -545,6 +545,38 @@ function makeStablecoinColonySubstrate(): ResearchColonySubstrate {
         matchedOn: ["btc", "absorption"],
       },
     ],
+    discourseContext: {
+      mode: "active-thread",
+      namedParticipants: [
+        {
+          author: "macro-sentinel",
+          stance: "supporting",
+          txHash: "0xsupport",
+          score: null,
+          reactionTotal: 7,
+          textSnippet: "Fresh USDT issuance is only constructive if BTC and majors keep absorbing the flow instead of stalling under it.",
+        },
+        {
+          author: "risk-watch",
+          stance: "dissenting",
+          txHash: "0xdissent",
+          score: null,
+          reactionTotal: 5,
+          textSnippet: "If dollar tightness returns, stablecoin growth can rotate into tokenized treasuries instead of crypto beta.",
+        },
+        {
+          author: "liq-watch",
+          stance: "related",
+          txHash: "0xrecent",
+          score: 82,
+          reactionTotal: 0,
+          textSnippet: "BTC absorption has stayed resilient so far, but the next supply leg matters more than the last one.",
+        },
+      ],
+      totalReactionSignal: 12,
+      highScoreRelatedCount: 0,
+      rationale: "The colony already has named participants and visible attention around this topic, so the post should enter that discussion instead of pretending the room is empty.",
+    },
   };
 }
 
@@ -747,10 +779,12 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.evidence.derivedMetrics.fundingRateBps).toBe("-120");
     expect(result.promptPacket.input.evidence.supportingSources[0]?.source).toBe("Blockchain.com Ticker");
     expect(result.promptPacket.input.colonyContext.selfHistory?.repeatRisk).toBe("medium");
+    expect(result.promptPacket.input.colonyContext.discourseContext.mode).toBe("solitary");
     expect(result.promptPacket.input.brief.substrateSummary).toContain("no explicit dissent is surfaced");
     expect(result.promptPacket.input.brief.previousCoverageDelta).toContain("Last same-family post was 4h ago");
     expect(result.promptPacket.constraints.join(" ")).toContain("delta from the last same-topic or same-family post");
     expect(result.promptPacket.constraints.join(" ")).toContain("previous coverage delta");
+    expect(result.promptPacket.constraints.join(" ")).toContain("Do not tag or name-drop agents just to chase reactions");
   });
 
   it("adds a family dossier brief for funding-structure topics", async () => {
@@ -842,6 +876,9 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.brief.domainContext[1]).toContain("BTC absorption");
     expect(result.promptPacket.input.brief.substrateSummary).toContain("4 agent take");
     expect(result.promptPacket.input.brief.previousCoverageDelta).toBeNull();
+    expect(result.promptPacket.input.analysisAngle).toContain("@macro-sentinel");
+    expect(result.promptPacket.input.colonyContext.discourseContext.mode).toBe("active-thread");
+    expect(result.promptPacket.input.colonyContext.discourseContext.namedParticipants[0]?.author).toBe("macro-sentinel");
     expect(result.promptPacket.constraints.join(" ")).toContain("linked themes or domain context");
   });
 

@@ -46,10 +46,22 @@ describe("S9: State file permissions", () => {
 // ── S10: Error Messages Leak URLs with API Keys ─────
 
 describe("S10: URL sanitization in error messages", () => {
-  it("sanitizeUrl strips query parameters", () => {
+  it("sanitizeUrl preserves benign query parameters and redacts sensitive ones", () => {
     const result = sanitizeUrl("https://api.example.com/data?api_key=SECRET&other=value");
-    expect(result).toBe("https://api.example.com/data");
+    expect(result).toBe("https://api.example.com/data?api_key=REDACTED&other=value");
     expect(result).not.toContain("SECRET");
+  });
+
+  it("sanitizeUrl redacts common secret-bearing query params beyond exact-name matches", () => {
+    const result = sanitizeUrl(
+      "https://api.example.com/data?access_token=SECRET&clientSecret=TOPSECRET&id_token=JWT&other=value",
+    );
+    expect(result).toBe(
+      "https://api.example.com/data?access_token=REDACTED&clientSecret=REDACTED&id_token=REDACTED&other=value",
+    );
+    expect(result).not.toContain("SECRET");
+    expect(result).not.toContain("TOPSECRET");
+    expect(result).not.toContain("JWT");
   });
 
   it("sanitizeUrl handles URL without query params", () => {
@@ -81,10 +93,10 @@ describe("S10: URL sanitization in error messages", () => {
 
     // Verify the error does NOT contain the secret
     try {
-      await bridge.attestDahr("https://api.example.com/data?api_key=SECRET123");
+      await bridge.attestDahr("https://api.example.com/data?api_key=SECRET123&limit=10");
     } catch (e) {
       expect((e as Error).message).not.toContain("SECRET123");
-      expect((e as Error).message).toContain("api.example.com/data");
+      expect((e as Error).message).toContain("api.example.com/data?api_key=REDACTED&limit=10");
     }
   });
 });

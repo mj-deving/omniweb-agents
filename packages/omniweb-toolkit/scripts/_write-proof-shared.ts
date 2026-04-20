@@ -3,17 +3,20 @@ export interface PublishVisibilityResult {
   visible: boolean;
   indexedVisible: boolean;
   polls: number;
+  elapsedMs: number;
   txHash?: string;
   verificationPath?: "feed" | "post_detail" | "chain";
+  feedScope?: "recent" | "category";
   observedCategory?: string;
   observedBlockNumber?: number;
+  observedScore?: number;
   lastIndexedBlock?: number;
   error?: string;
 }
 
 interface PublishVisibilityOmni {
   colony: {
-    getFeed(opts: { limit: number }): Promise<any>;
+    getFeed(opts: { limit: number; category?: string }): Promise<any>;
     getPostDetail?(txHash: string): Promise<any>;
   };
   runtime?: {
@@ -37,6 +40,7 @@ export async function verifyPublishVisibility(
 ): Promise<PublishVisibilityResult> {
   const now = opts.now ?? Date.now;
   const sleep = opts.sleep ?? defaultSleep;
+  const startedAt = now();
   const deadline = now() + opts.timeoutMs;
   const textSnippet = text.slice(0, 96);
   let polls = 0;
@@ -46,48 +50,73 @@ export async function verifyPublishVisibility(
 
   while (now() <= deadline) {
     polls += 1;
-    const feedResult = await omni.colony.getFeed({ limit: opts.limit });
-    if (feedResult?.ok) {
-      const posts = Array.isArray(feedResult.data?.posts) ? feedResult.data.posts : [];
-      lastIndexedBlock = typeof feedResult.data?.meta?.lastBlock === "number"
-        ? feedResult.data.meta.lastBlock
+    const recentFeedMatch = await readFeedMatch(omni, txHash, textSnippet, {
+      limit: opts.limit,
+    });
+    if (recentFeedMatch.result?.ok) {
+      lastIndexedBlock = typeof recentFeedMatch.result.data?.meta?.lastBlock === "number"
+        ? recentFeedMatch.result.data.meta.lastBlock
         : undefined;
+    } else if (recentFeedMatch.result) {
+      lastError = recentFeedMatch.result?.error ?? "feed_unavailable";
+    }
 
-      const matched = posts.find((post: any) => {
-        const postTxHash = post?.txHash ?? post?.tx_hash;
-        const postText = post?.text ?? post?.payload?.text ?? post?.content ?? "";
-        return (txHash && postTxHash === txHash) || (typeof postText === "string" && postText.includes(textSnippet));
-      });
-
-      if (matched) {
-        return {
-          attempted: true,
-          visible: true,
-          indexedVisible: true,
-          polls,
-          txHash: matched.txHash ?? matched.tx_hash ?? txHash,
-          verificationPath: "feed",
-          observedCategory: matched.category ?? matched.payload?.cat,
-          observedBlockNumber: matched.blockNumber,
-          lastIndexedBlock,
-        };
-      }
-    } else {
-      lastError = feedResult?.error ?? "feed_unavailable";
+    if (recentFeedMatch.matched) {
+      return {
+        attempted: true,
+        visible: true,
+        indexedVisible: true,
+        polls,
+        elapsedMs: now() - startedAt,
+        txHash: recentFeedMatch.matched.txHash ?? recentFeedMatch.matched.tx_hash ?? txHash,
+        verificationPath: "feed",
+        feedScope: "recent",
+        observedCategory: recentFeedMatch.matched.category ?? recentFeedMatch.matched.payload?.cat,
+        observedBlockNumber: recentFeedMatch.matched.blockNumber,
+        observedScore: typeof recentFeedMatch.matched.score === "number" ? recentFeedMatch.matched.score : undefined,
+        lastIndexedBlock,
+      };
     }
 
     if (txHash && typeof omni?.colony?.getPostDetail === "function") {
       const postDetailResult = await omni.colony.getPostDetail(txHash);
       if (postDetailResult?.ok && postDetailResult.data?.post) {
+        const observedCategory =
+          (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat;
+        if (observedCategory) {
+          const categoryFeedMatch = await readFeedMatch(omni, txHash, textSnippet, {
+            limit: opts.limit,
+            category: observedCategory,
+          });
+          if (categoryFeedMatch.matched) {
+            return {
+              attempted: true,
+              visible: true,
+              indexedVisible: true,
+              polls,
+              elapsedMs: now() - startedAt,
+              txHash: categoryFeedMatch.matched.txHash ?? categoryFeedMatch.matched.tx_hash ?? txHash,
+              verificationPath: "feed",
+              feedScope: "category",
+              observedCategory,
+              observedBlockNumber: categoryFeedMatch.matched.blockNumber ?? postDetailResult.data.post.blockNumber,
+              observedScore: typeof categoryFeedMatch.matched.score === "number"
+                ? categoryFeedMatch.matched.score
+                : undefined,
+              lastIndexedBlock,
+            };
+          }
+        }
+
         return {
           attempted: true,
           visible: true,
           indexedVisible: true,
           polls,
+          elapsedMs: now() - startedAt,
           txHash,
           verificationPath: "post_detail",
-          observedCategory:
-            (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat,
+          observedCategory,
           observedBlockNumber: postDetailResult.data.post.blockNumber,
           lastIndexedBlock,
         };
@@ -114,6 +143,7 @@ export async function verifyPublishVisibility(
             visible: true,
             indexedVisible: false,
             polls,
+            elapsedMs: now() - startedAt,
             txHash: matched.txHash ?? txHash,
             verificationPath: "chain",
             observedCategory: matched.category,
@@ -145,6 +175,7 @@ export async function verifyPublishVisibility(
     visible: false,
     indexedVisible: false,
     polls,
+    elapsedMs: now() - startedAt,
     txHash,
     lastIndexedBlock,
     error: lastError ?? "published_post_not_seen_via_feed_or_post_detail",
@@ -157,7 +188,25 @@ export interface SocialWriteCandidate {
   text: string;
   category?: string;
   score?: number;
+  sourceAttestationUrls: string[];
+  agreeCount: number;
+  disagreeCount: number;
+  flagCount: number;
+  replyCount: number;
+  reactionTotal: number;
+  engagementTotal: number;
+  selectionScore: number;
 }
+
+export interface SocialWriteCandidateFloor {
+  minScore: number;
+  minEngagement: number;
+}
+
+export const DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR: SocialWriteCandidateFloor = {
+  minScore: 85,
+  minEngagement: 5,
+};
 
 export interface ReactionEnvelope {
   agree: number;
@@ -172,15 +221,23 @@ export interface TipReadback {
   myTip?: unknown;
 }
 
+export interface AgentTipReadback {
+  receivedCount: number;
+  receivedDem: number;
+  givenCount: number;
+  givenDem: number;
+}
+
 export interface PostDetailLike {
   replies?: Array<{ txHash?: string | null } | null> | null;
 }
 
-export function selectSocialWriteCandidate(
+export function rankSocialWriteCandidates(
   posts: unknown[],
   ownAddress: string,
-): SocialWriteCandidate | null {
+): SocialWriteCandidate[] {
   const normalizedOwn = ownAddress.trim().toLowerCase();
+  const candidates: SocialWriteCandidate[] = [];
 
   for (const post of posts) {
     if (!post || typeof post !== "object") continue;
@@ -192,20 +249,62 @@ export function selectSocialWriteCandidate(
       ?? readNestedString(record.payload, "text")
       ?? readString(record.content)
       ?? "";
+    const sourceAttestationUrls = readAttestationUrls(record);
 
     if (!txHash || !author || !text) continue;
     if (author.trim().toLowerCase() === normalizedOwn) continue;
+    if (sourceAttestationUrls.length === 0) continue;
 
-    return {
+    const score = readNumber(record.score) ?? undefined;
+    const reactions = readReactionCounts(record);
+    const replyCount = readNumber(record.replyCount) ?? readNestedNumber(record.payload, "replyCount") ?? 0;
+    const reactionTotal = reactions.agree + reactions.disagree + reactions.flag;
+    const engagementTotal = reactionTotal + replyCount;
+
+    candidates.push({
       txHash,
       author,
       text,
       category: readString(record.category) ?? readNestedString(record.payload, "cat") ?? undefined,
-      score: typeof record.score === "number" ? record.score : undefined,
-    };
+      score,
+      sourceAttestationUrls,
+      agreeCount: reactions.agree,
+      disagreeCount: reactions.disagree,
+      flagCount: reactions.flag,
+      replyCount,
+      reactionTotal,
+      engagementTotal,
+      selectionScore: scoreSocialWriteCandidate({
+        score: score ?? 0,
+        agreeCount: reactions.agree,
+        disagreeCount: reactions.disagree,
+        flagCount: reactions.flag,
+        replyCount,
+        attestationCount: sourceAttestationUrls.length,
+      }),
+    });
   }
 
-  return null;
+  return candidates.sort((left, right) => {
+    if (right.selectionScore !== left.selectionScore) return right.selectionScore - left.selectionScore;
+    if (right.engagementTotal !== left.engagementTotal) return right.engagementTotal - left.engagementTotal;
+    if (right.score !== left.score) return (right.score ?? 0) - (left.score ?? 0);
+    return left.txHash.localeCompare(right.txHash);
+  });
+}
+
+export function selectSocialWriteCandidate(
+  posts: unknown[],
+  ownAddress: string,
+): SocialWriteCandidate | null {
+  return rankSocialWriteCandidates(posts, ownAddress)[0] ?? null;
+}
+
+export function socialWriteCandidateMeetsFloor(
+  candidate: SocialWriteCandidate,
+  floor: SocialWriteCandidateFloor = DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR,
+): boolean {
+  return (candidate.score ?? 0) >= floor.minScore && candidate.engagementTotal >= floor.minEngagement;
 }
 
 export function normalizeReactionEnvelope(value: unknown): ReactionEnvelope | null {
@@ -242,6 +341,20 @@ export function normalizeTipReadback(value: unknown): TipReadback | null {
   };
 }
 
+export function normalizeAgentTipReadback(value: unknown): AgentTipReadback | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const tipsReceived = readNestedRecord(record.tipsReceived);
+  const tipsGiven = readNestedRecord(record.tipsGiven);
+
+  return {
+    receivedCount: readNumber(tipsReceived?.count) ?? 0,
+    receivedDem: readNumber(tipsReceived?.totalDem) ?? 0,
+    givenCount: readNumber(tipsGiven?.count) ?? 0,
+    givenDem: readNumber(tipsGiven?.totalDem) ?? 0,
+  };
+}
+
 export function normalizeBalance(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
@@ -272,6 +385,18 @@ export function tipReadbackSatisfied(
   if ((after?.totalTips ?? 0) > (before?.totalTips ?? 0)) return true;
   if ((after?.totalDem ?? 0) >= (before?.totalDem ?? 0) + minimumSpend) return true;
 
+  return false;
+}
+
+export function agentTipReadbackSatisfied(
+  before: AgentTipReadback | null,
+  after: AgentTipReadback | null,
+  minimumSpend: number,
+): boolean {
+  if (!after) return false;
+  if (!before) return false;
+  if ((after.receivedCount ?? 0) > (before?.receivedCount ?? 0)) return true;
+  if ((after.receivedDem ?? 0) >= (before?.receivedDem ?? 0) + minimumSpend) return true;
   return false;
 }
 
@@ -314,6 +439,83 @@ function readNumber(value: unknown): number | null {
 function readNestedString(value: unknown, key: string): string | null {
   if (!value || typeof value !== "object") return null;
   return readString((value as Record<string, unknown>)[key]);
+}
+
+function readNestedNumber(value: unknown, key: string): number | null {
+  if (!value || typeof value !== "object") return null;
+  return readNumber((value as Record<string, unknown>)[key]);
+}
+
+function readNestedRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? value as Record<string, unknown> : null;
+}
+
+function readReactionCounts(record: Record<string, unknown>): ReactionEnvelope {
+  const reactions = record.reactions;
+  const payloadReactions = (record.payload as { reactions?: unknown } | undefined)?.reactions;
+  const source = reactions && typeof reactions === "object"
+    ? reactions
+    : payloadReactions && typeof payloadReactions === "object"
+      ? payloadReactions
+      : null;
+  const envelope = normalizeReactionEnvelope(source);
+  return envelope ?? { agree: 0, disagree: 0, flag: 0, myReaction: null };
+}
+
+function readAttestationUrls(record: Record<string, unknown>): string[] {
+  const payload = record.payload;
+  const entries = Array.isArray(record.sourceAttestations)
+    ? record.sourceAttestations
+    : Array.isArray((payload as { sourceAttestations?: unknown } | undefined)?.sourceAttestations)
+      ? (payload as { sourceAttestations: unknown[] }).sourceAttestations
+      : [];
+
+  return entries
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      return readString((entry as Record<string, unknown>).url);
+    })
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+function scoreSocialWriteCandidate(input: {
+  score: number;
+  agreeCount: number;
+  disagreeCount: number;
+  flagCount: number;
+  replyCount: number;
+  attestationCount: number;
+}): number {
+  const quality = Math.max(0, input.score);
+  const supportHeat = input.agreeCount + Math.min(input.replyCount, 10);
+  const attestationBoost = Math.min(input.attestationCount, 3) * 3;
+  const controversyPenalty =
+    (input.disagreeCount * 2)
+    + (input.flagCount * 5)
+    + (input.disagreeCount > input.agreeCount ? 15 : 0);
+
+  return quality + supportHeat + attestationBoost - controversyPenalty;
+}
+
+async function readFeedMatch(
+  omni: PublishVisibilityOmni,
+  txHash: string | undefined,
+  textSnippet: string,
+  opts: { limit: number; category?: string },
+): Promise<{ result: any; matched: any | null }> {
+  const result = await omni.colony.getFeed(opts);
+  if (!result?.ok) {
+    return { result, matched: null };
+  }
+
+  const posts = Array.isArray(result.data?.posts) ? result.data.posts : [];
+  const matched = posts.find((post: any) => {
+    const postTxHash = post?.txHash ?? post?.tx_hash;
+    const postText = post?.text ?? post?.payload?.text ?? post?.content ?? "";
+    return (txHash && postTxHash === txHash) || (typeof postText === "string" && postText.includes(textSnippet));
+  }) ?? null;
+
+  return { result, matched };
 }
 
 async function defaultSleep(ms: number): Promise<void> {

@@ -20,6 +20,10 @@ import { validateUrl } from "../../../src/toolkit/url-validator.js";
 import { checkAndRecordDedup } from "../../../src/toolkit/guards/dedup-guard.js";
 import { getWriteRateRemaining } from "../../../src/toolkit/guards/write-rate-limit.js";
 import { createSessionFromRuntime } from "../src/session-factory.js";
+import {
+  analyzeAttestUrlDiagnostics,
+  buildAttestUrlWarnings,
+} from "./_publish-readiness-shared.js";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_TEXT =
@@ -84,8 +88,10 @@ try {
     attestUrl,
   });
   const urlCheck = await validateUrl(attestUrl, { allowInsecure: allowInsecureUrls });
+  const attestUrlDiagnostics = analyzeAttestUrlDiagnostics(attestUrl, { probeAttest });
   const writeRate = await getWriteRateRemaining(session.stateStore, session.walletAddress);
   const dedupError = await checkAndRecordDedup(session.stateStore, session.walletAddress, text, false);
+  const warnings = buildAttestUrlWarnings(attestUrlDiagnostics);
 
   let attestProbe:
     | {
@@ -152,6 +158,7 @@ try {
           textLength: text.length,
           attestUrl,
         },
+        warnings,
         checks: {
           connect: true,
           tokenAvailable: !!authToken,
@@ -175,6 +182,7 @@ try {
           urlValidation: urlCheck.valid
             ? { ok: true }
             : { ok: false, reason: urlCheck.reason ?? "unknown" },
+          attestUrlDiagnostics,
           writeRate,
           dedup: dedupError
             ? { ok: false, code: dedupError.code, message: dedupError.message }

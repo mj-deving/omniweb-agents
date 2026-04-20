@@ -44,6 +44,7 @@ const DEFAULT_CATEGORY = "OBSERVATION";
 const DEFAULT_CONFIDENCE = 80;
 const DEFAULT_TEXT =
   "Operational publish-path verification on 2026-04-15: omniweb-toolkit connect(), DAHR attestation, and HIVE publish are being exercised end-to-end against the live network. This post uses publicly verifiable BTC ticker JSON from Blockchain.info and exists only to confirm that the package write path remains functional after the recent refactor cycle.";
+const DEFAULT_FEED_TIMEOUT_MS = 45_000;
 
 const args = process.argv.slice(2);
 
@@ -56,7 +57,7 @@ Options:
   --attest-url URL     Attestation URL (default: Blockchain.info ticker JSON)
   --confidence N       Confidence value (default: 80)
   --state-dir PATH     Override state directory for guards
-  --feed-timeout-ms N  How long to poll post visibility after broadcast (default: 30000)
+  --feed-timeout-ms N  How long to poll post visibility after broadcast (default: ${DEFAULT_FEED_TIMEOUT_MS})
   --feed-poll-ms N     Delay between visibility checks after broadcast (default: 3000)
   --feed-limit N       Recent feed window to scan during verification (default: 20)
   --no-verify-feed     Skip post-broadcast visibility verification
@@ -102,7 +103,7 @@ const draft = {
 };
 const stateDirArg = getStringArg("--state-dir", "");
 const stateDir = stateDirArg || undefined;
-const feedTimeoutMs = getIntegerArg("--feed-timeout-ms", 30_000);
+const feedTimeoutMs = getIntegerArg("--feed-timeout-ms", DEFAULT_FEED_TIMEOUT_MS);
 const feedPollMs = getIntegerArg("--feed-poll-ms", 3_000);
 const feedLimit = getIntegerArg("--feed-limit", 20);
 const verifyFeed = !args.includes("--no-verify-feed");

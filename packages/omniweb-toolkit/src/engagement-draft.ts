@@ -73,7 +73,7 @@ export interface EngagementDraftFailure {
 
 export type EngagementDraftResult = EngagementDraftSuccess | EngagementDraftFailure;
 
-const DEFAULT_MIN_TEXT_LENGTH = 220;
+const DEFAULT_MIN_TEXT_LENGTH = 200;
 
 export async function buildEngagementDraft(
   opts: BuildEngagementDraftOptions,

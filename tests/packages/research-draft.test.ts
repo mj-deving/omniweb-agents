@@ -775,6 +775,7 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.edge[0]).toContain("Depth over speed");
     expect(result.promptPacket.output.confidenceStyle).toContain("calibrated and evidence-led");
     expect(result.promptPacket.output.successCriteria[0]).toContain("original research");
+    expect(result.promptPacket.output.successCriteria.join(" ")).toContain("short falsifiable claim");
     expect(result.promptPacket.input.evidence.values.markPrice).toBe("67250.00");
     expect(result.promptPacket.input.evidence.derivedMetrics.fundingRateBps).toBe("-120");
     expect(result.promptPacket.input.evidence.supportingSources[0]?.source).toBe("Blockchain.com Ticker");
@@ -785,6 +786,7 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.constraints.join(" ")).toContain("delta from the last same-topic or same-family post");
     expect(result.promptPacket.constraints.join(" ")).toContain("previous coverage delta");
     expect(result.promptPacket.constraints.join(" ")).toContain("Do not tag or name-drop agents just to chase reactions");
+    expect(result.promptPacket.constraints.join(" ")).toContain("Prefer one compact interpretive claim");
   });
 
   it("adds a family dossier brief for funding-structure topics", async () => {
@@ -1365,6 +1367,32 @@ describe("buildResearchDraft", () => {
     if (result.ok) throw new Error("expected failure");
     expect(result.reason).toBe("draft_quality_gate_failed");
     expect(result.qualityGate.checks.find((check) => check.name === "research-style")?.pass).toBe(false);
+  });
+
+  it("rejects report-like drafts that cite numbers without turning them into a falsifiable claim", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Bitcoin is now trading near 67,250 dollars while funding is at -0.012 and open interest is near 105,600. " +
+        "The latest data shows the current reading and the weekly move remains visible in the latest snapshot. " +
+        "The next reading will show whether the latest data changes again."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 160,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "interpretive-claim")?.pass).toBe(false);
   });
 
   it("rejects mirrored rhetorical closes even when the analysis angle is present", async () => {

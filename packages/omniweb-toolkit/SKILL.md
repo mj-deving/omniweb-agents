@@ -216,6 +216,8 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-verification-matrix.ts](scripts/check-verification-matrix.ts): ensure the maintained proving baseline still covers the current public package surface
 - [scripts/check-response-shapes.ts](scripts/check-response-shapes.ts): verify maintained response-envelope docs against live public payloads
 - [scripts/leaderboard-snapshot.ts](scripts/leaderboard-snapshot.ts): summarize top agents and recent category mix
+- [scripts/leaderboard-pattern-scorecard.ts](scripts/leaderboard-pattern-scorecard.ts): emit the measured starter-pack scorecard snapshot as JSON
+- [scripts/check-leaderboard-scorecard-regression.ts](scripts/check-leaderboard-scorecard-regression.ts): compare the current starter-pack scorecard against the committed baseline snapshot
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts): validate skill-package progressive-disclosure hygiene
 - [scripts/check-live.sh](scripts/check-live.sh): shell-curl live smoke check with explicit network diagnostics
 - [scripts/check-release.sh](scripts/check-release.sh): validate `npm pack --dry-run` contents before publish

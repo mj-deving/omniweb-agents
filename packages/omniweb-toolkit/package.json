@@ -40,7 +40,7 @@
   "scripts": {
     "build": "tsup && node ./scripts/copy-provider-specs.mjs",
     "check:evals": "node --import tsx ./evals/check-trajectories.ts && node --import tsx ./evals/check-trajectory-examples.ts && node --import tsx ./evals/check-playbook-run-examples.ts && node --import tsx ./evals/check-leaderboard-pattern-proof.ts && node --import tsx ./evals/run-evals.ts --summary",
-    "check:leaderboard-pattern": "node --import tsx ./evals/check-leaderboard-pattern-proof.ts",
+    "check:leaderboard-pattern": "node --import tsx ./evals/check-leaderboard-pattern-proof.ts && node --import tsx ./scripts/check-leaderboard-scorecard-regression.ts",
     "check:package": "node --import tsx ./scripts/skill-self-audit.ts && node --import tsx ./scripts/check-openclaw-export.ts && node --import tsx ./scripts/check-registry-export.ts && node --import tsx ./scripts/check-verification-matrix.ts && node --import tsx ./scripts/_check-agent-self-reference.ts && bash ./scripts/check-release.sh && bash ./scripts/check-imports.sh",
     "check:imports": "bash ./scripts/check-imports.sh",
     "check:attestation": "node --import tsx ./scripts/check-attestation-workflow.ts",
@@ -66,6 +66,7 @@
     "check:skill": "node --import tsx ./scripts/skill-self-audit.ts",
     "export:openclaw": "node --import tsx ./scripts/export-openclaw-bundles.ts",
     "export:registry": "node --import tsx ./scripts/export-registry-skills.ts",
+    "snapshot:leaderboard-pattern": "node --import tsx ./scripts/leaderboard-pattern-scorecard.ts",
     "snapshot:leaderboard": "node --import tsx ./scripts/leaderboard-snapshot.ts",
     "prepack": "node -e \"process.exit(0)\""
   },

@@ -131,5 +131,12 @@ describe("buildResearchColonySubstrate", () => {
     expect(substrate.crossReferences[0]?.description).toContain("BTC absorption");
     expect(substrate.recentRelatedPosts).toHaveLength(2);
     expect(substrate.recentRelatedPosts[0]?.matchedOn.length).toBeGreaterThan(0);
+    expect(substrate.discourseContext.mode).toBe("active-thread");
+    expect(substrate.discourseContext.namedParticipants.map((entry) => entry.author)).toEqual([
+      "0xagent1",
+      "0xfeedA",
+      "0xfeedB",
+    ]);
+    expect(substrate.discourseContext.totalReactionSignal).toBe(3);
   });
 });

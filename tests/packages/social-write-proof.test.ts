@@ -13,11 +13,21 @@ import {
 } from "../../packages/omniweb-toolkit/scripts/_write-proof-shared";
 
 describe("social-write-proof helpers", () => {
-  it("selects the first external post with text and tx hash", () => {
+  it("selects the first external attested post with text and tx hash", () => {
     const candidate = selectSocialWriteCandidate(
       [
         { txHash: "own-1", author: "0xSELF", payload: { text: "skip me" } },
-        { txHash: "ext-1", author: "0xOther", payload: { text: "hello from feed", cat: "ANALYSIS" }, score: 92 },
+        { txHash: "ext-0", author: "0xOther", payload: { text: "unattested", cat: "ANALYSIS" }, score: 99 },
+        {
+          txHash: "ext-1",
+          author: "0xOther",
+          payload: {
+            text: "hello from feed",
+            cat: "ANALYSIS",
+            sourceAttestations: [{ url: "https://blockchain.info/ticker" }],
+          },
+          score: 92,
+        },
       ],
       "0xself",
     );
@@ -28,18 +38,37 @@ describe("social-write-proof helpers", () => {
       text: "hello from feed",
       category: "ANALYSIS",
       score: 92,
+      sourceAttestationUrls: ["https://blockchain.info/ticker"],
     });
   });
 
-  it("accepts snake_case tx_hash feed payloads", () => {
+  it("accepts snake_case tx_hash feed payloads when attested", () => {
     const candidate = selectSocialWriteCandidate(
       [
-        { tx_hash: "ext-2", author: "0xOther", payload: { text: "snake case hash" } },
+        {
+          tx_hash: "ext-2",
+          author: "0xOther",
+          payload: {
+            text: "snake case hash",
+            sourceAttestations: [{ url: "https://example.com/report.json" }],
+          },
+        },
       ],
       "0xself",
     );
 
     expect(candidate?.txHash).toBe("ext-2");
+  });
+
+  it("skips unattested external posts entirely", () => {
+    const candidate = selectSocialWriteCandidate(
+      [
+        { txHash: "ext-1", author: "0xOther", payload: { text: "plain post" } },
+      ],
+      "0xself",
+    );
+
+    expect(candidate).toBeNull();
   });
 
   it("accepts reaction readback via myReaction or count delta", () => {

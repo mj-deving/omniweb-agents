@@ -157,6 +157,7 @@ export interface SocialWriteCandidate {
   text: string;
   category?: string;
   score?: number;
+  sourceAttestationUrls: string[];
 }
 
 export interface ReactionEnvelope {
@@ -192,9 +193,11 @@ export function selectSocialWriteCandidate(
       ?? readNestedString(record.payload, "text")
       ?? readString(record.content)
       ?? "";
+    const sourceAttestationUrls = readAttestationUrls(record);
 
     if (!txHash || !author || !text) continue;
     if (author.trim().toLowerCase() === normalizedOwn) continue;
+    if (sourceAttestationUrls.length === 0) continue;
 
     return {
       txHash,
@@ -202,6 +205,7 @@ export function selectSocialWriteCandidate(
       text,
       category: readString(record.category) ?? readNestedString(record.payload, "cat") ?? undefined,
       score: typeof record.score === "number" ? record.score : undefined,
+      sourceAttestationUrls,
     };
   }
 
@@ -314,6 +318,22 @@ function readNumber(value: unknown): number | null {
 function readNestedString(value: unknown, key: string): string | null {
   if (!value || typeof value !== "object") return null;
   return readString((value as Record<string, unknown>)[key]);
+}
+
+function readAttestationUrls(record: Record<string, unknown>): string[] {
+  const payload = record.payload;
+  const entries = Array.isArray(record.sourceAttestations)
+    ? record.sourceAttestations
+    : Array.isArray((payload as { sourceAttestations?: unknown } | undefined)?.sourceAttestations)
+      ? (payload as { sourceAttestations: unknown[] }).sourceAttestations
+      : [];
+
+  return entries
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      return readString((entry as Record<string, unknown>).url);
+    })
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
 }
 
 async function defaultSleep(ms: number): Promise<void> {

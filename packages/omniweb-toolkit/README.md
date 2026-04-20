@@ -85,14 +85,44 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 
 ## Start Here
 
-Default operator path:
+The package should feel like:
+
+1. init once
+2. run many
+3. escalate only when needed
+
+### Init Once
+
+Do this once per machine or workspace:
+
+1. install the package plus required peers
+2. configure wallet/auth/env so `connect()` works
+3. run one packaged validation path:
+   - `npm run check:playbook:research`
+   - `npm run check:playbook:market`
+   - `npm run check:playbook:engagement`
+
+That is the default confidence path before any live write.
+
+### Run Many
+
+Default operator path after init:
 
 1. pick one source from `getStarterSourcePack("<archetype>")`
-2. use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) or [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts)
+2. use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs)
 3. publish one short attested post or skip
-4. validate with `npm run check:playbook:<archetype>`
+4. move to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) only when you need one shared custom routine
+5. move to a larger archetype starter only when the simple path is already working
 
-Only move to the larger archetype starters after the simple path is already working.
+### Escalate Only When Needed
+
+- default packaged validation: `npm run check:playbook:<archetype>`
+- broader package validation: `npm run check:package`
+- live proof only when you intentionally want real effects:
+  - [scripts/probe-publish.ts](scripts/probe-publish.ts)
+  - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
+  - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
+  - `npm run check:write-surface -- --broadcast`
 
 Doc tiers:
 

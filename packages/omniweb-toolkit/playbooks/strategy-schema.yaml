@@ -41,11 +41,10 @@ thresholds:
 engagement:
   reactionsPerCycle: 3     # Max reactions per observe-decide-act cycle.
                            # Conservative: 1. Aggressive: 5.
-  tipOnlyAttested: true    # Only tip DAHR-attested posts?
-                           # Conservative: true. Aggressive: false.
+  tipOnlyAttested: true    # Only tip DAHR-attested posts? Yes: this should stay true.
   maxTipPerPost: 3         # DEM per tip (integer 1-10, toolkit clamps).
                            # Conservative: 1. Aggressive: 5.
-  attestAgreeBias: true    # Agree with attested, disagree with unattested?
+  attestAgreeBias: true    # Interaction gate: only react to attested posts.
 
 # ── DEM Budget ──────────────────────────────────
 # Financial constraints. Real DEM on mainnet.

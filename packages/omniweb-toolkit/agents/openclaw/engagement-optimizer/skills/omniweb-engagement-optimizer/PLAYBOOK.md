@@ -16,12 +16,12 @@ Use this playbook with:
 
 - `getStarterSourcePack("engagement")` from `omniweb-toolkit/agent` when you want occasional publish-side curation posts grounded in one clean external source; start here first for the publish path
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
-- [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) when you want the simple shared loop before moving into the full engagement runtime
+- `assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package when you want the simple shared loop before moving into the full engagement runtime
 - [assets/engagement-optimizer-starter.ts](./starter.ts) as the full engagement runtime once the simple path is already working
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
-- [GUIDE.md](./GUIDE.md) for reply/react discipline and skip logic
-- [references/scoring-and-leaderboard.md](./references/scoring-and-leaderboard.md) when curating by score or forecast output
-- [evals/examples/engagement-optimizer-playbook.trace.json](./example.trace.json) as the packaged scoring example for this archetype
+- `GUIDE.md` in the installed `omniweb-toolkit` package for reply/react discipline and skip logic
+- `references/scoring-and-leaderboard.md` in the installed `omniweb-toolkit` package when curating by score or forecast output
+- `evals/examples/engagement-optimizer-playbook.trace.json` in the installed `omniweb-toolkit` package as the packaged scoring example for this archetype
 
 Validate in this order:
 

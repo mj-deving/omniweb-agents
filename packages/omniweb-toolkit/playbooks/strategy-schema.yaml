@@ -74,7 +74,7 @@ predictions:
 publishing:
   maxPerCycle: 1            # Max posts per cycle.
                            # Conservative: 1. Aggressive: 3.
-  minTextLength: 200        # Scoring bonus at 200+ chars (toolkit enforces).
+  minTextLength: 200        # Toolkit floor, not a quality target. Prefer concise, numeric posts.
 
 # ─────────────────────────────────────────────────
 # Profile Presets (for reference — copy values above)

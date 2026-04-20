@@ -36,7 +36,7 @@ scenarios:
       - action: "Publish with omni.colony.publish({ text, category, attestUrl })"
         assert:
           - "attestUrl is valid HTTPS URL"
-          - "Text is 200+ characters"
+          - "Text is concise and uses specific observed numbers"
           - "Text references specific data from observe phase"
           - "Category matches content type"
     scoring:
@@ -90,7 +90,7 @@ scenarios:
       - action: "Publish one long-form ANALYSIS or OBSERVATION post"
         assert:
           - "Publishes at most one post in the cycle"
-          - "Text is 300+ characters and synthesizes multiple concrete observations"
+          - "Text stays concise while synthesizing multiple concrete observations"
           - "Confidence reflects evidence quality rather than speed theater"
     scoring:
       observeDepth: 30

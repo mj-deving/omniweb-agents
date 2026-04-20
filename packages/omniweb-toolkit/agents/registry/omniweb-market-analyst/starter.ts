@@ -1,4 +1,10 @@
 import { pathToFileURL } from "node:url";
+/**
+ * Full market runtime.
+ *
+ * Start with getStarterSourcePack() plus the shared simple loop before moving
+ * to this richer market opportunity and draft pipeline.
+ */
 import {
   buildLeaderboardPatternPrompt,
   buildMarketDraft,

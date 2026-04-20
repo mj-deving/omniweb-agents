@@ -5,6 +5,13 @@ import {
   type MinimalObserveResult,
 } from "../src/agent.js";
 
+/**
+ * Shared simple loop starter.
+ *
+ * Start with one useful source. Add extra reads only after the simple loop
+ * proves it can publish concrete, attested posts without overposting noise.
+ */
+
 interface SkeletonState {
   lastTopic?: string;
   lastPublishedAt?: string;
@@ -15,31 +22,24 @@ interface Perception {
   reason: string;
   facts: Record<string, unknown>;
   topic?: string;
-  leaderboardSize?: number;
-  feedCount?: number;
+  signalCount?: number;
 }
 
 async function perceive(ctx: MinimalObserveContext<SkeletonState>): Promise<Perception> {
-  const [feed, signals, leaderboard] = await Promise.all([
-    ctx.omni.colony.getFeed({ limit: 10 }),
-    ctx.omni.colony.getSignals(),
-    ctx.omni.colony.getLeaderboard({ limit: 10 }),
-  ]);
+  const signals = await ctx.omni.colony.getSignals();
 
-  if (!feed?.ok || !signals?.ok || !leaderboard?.ok) {
+  if (!signals?.ok) {
     return {
       shouldSkip: true,
       reason: "read_failed",
       facts: {
-        feedOk: feed?.ok === true,
         signalsOk: signals?.ok === true,
-        leaderboardOk: leaderboard?.ok === true,
       },
     };
   }
 
-  const posts = Array.isArray(feed.data.posts) ? feed.data.posts : [];
-  const topSignal = Array.isArray(signals.data) ? signals.data[0] : null;
+  const signalEntries = Array.isArray(signals.data) ? signals.data : [];
+  const topSignal = signalEntries[0] ?? null;
   const topic = topSignal && typeof topSignal === "object"
     ? ((topSignal as { shortTopic?: unknown; topic?: unknown }).shortTopic
       ?? (topSignal as { shortTopic?: unknown; topic?: unknown }).topic)
@@ -51,7 +51,7 @@ async function perceive(ctx: MinimalObserveContext<SkeletonState>): Promise<Perc
       shouldSkip: true,
       reason: "no_signal_topic",
       facts: {
-        feedCount: posts.length,
+        signalCount: signalEntries.length,
       },
     };
   }
@@ -71,12 +71,10 @@ async function perceive(ctx: MinimalObserveContext<SkeletonState>): Promise<Perc
     shouldSkip: false,
     reason: "topic_ready",
     topic: normalizedTopic,
-    leaderboardSize: Array.isArray(leaderboard.data) ? leaderboard.data.length : 0,
-    feedCount: posts.length,
+    signalCount: signalEntries.length,
     facts: {
       topic: normalizedTopic,
-      feedCount: posts.length,
-      leaderboardSize: Array.isArray(leaderboard.data) ? leaderboard.data.length : 0,
+      signalCount: signalEntries.length,
     },
   };
 }
@@ -99,8 +97,7 @@ function prompt(
     sourceName: "SuperColony signal/feed snapshot",
     observedFacts: [
       `${perception.topic} is the top current signal topic.`,
-      `Recent feed sample size: ${perception.feedCount ?? 0} posts.`,
-      `Leaderboard sample size: ${perception.leaderboardSize ?? 0} agents.`,
+      `Current signal sample size: ${perception.signalCount ?? 0} topics.`,
     ],
     domainRules: [
       "Only use the observed facts listed here.",
@@ -114,8 +111,7 @@ function prompt(
     category: "ANALYSIS",
     text: [
       `${perception.topic} is emerging in colony signals.`,
-      `Recent feed sample: ${perception.feedCount ?? 0} posts.`,
-      `Leaderboard sample: ${perception.leaderboardSize ?? 0} agents.`,
+      `Current signal sample: ${perception.signalCount ?? 0} topics.`,
       "Replace this placeholder text by running the shared leaderboard-pattern prompt scaffold.",
     ].join(" "),
     attestUrl: "https://example.com/report",
@@ -151,3 +147,4 @@ await runMinimalAgentLoop(observe, {
 // - runs/YYYY-MM-DD/<cycle-id>.md
 //
 // Remove dryRun only after your read path and attestation target are stable.
+// Start with one source. Add more reads only when the simple loop is too thin.

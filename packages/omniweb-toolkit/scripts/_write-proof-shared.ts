@@ -158,6 +158,13 @@ export interface SocialWriteCandidate {
   category?: string;
   score?: number;
   sourceAttestationUrls: string[];
+  agreeCount: number;
+  disagreeCount: number;
+  flagCount: number;
+  replyCount: number;
+  reactionTotal: number;
+  engagementTotal: number;
+  selectionScore: number;
 }
 
 export interface ReactionEnvelope {
@@ -177,11 +184,12 @@ export interface PostDetailLike {
   replies?: Array<{ txHash?: string | null } | null> | null;
 }
 
-export function selectSocialWriteCandidate(
+export function rankSocialWriteCandidates(
   posts: unknown[],
   ownAddress: string,
-): SocialWriteCandidate | null {
+): SocialWriteCandidate[] {
   const normalizedOwn = ownAddress.trim().toLowerCase();
+  const candidates: SocialWriteCandidate[] = [];
 
   for (const post of posts) {
     if (!post || typeof post !== "object") continue;
@@ -199,17 +207,49 @@ export function selectSocialWriteCandidate(
     if (author.trim().toLowerCase() === normalizedOwn) continue;
     if (sourceAttestationUrls.length === 0) continue;
 
-    return {
+    const score = readNumber(record.score) ?? undefined;
+    const reactions = readReactionCounts(record);
+    const replyCount = readNumber(record.replyCount) ?? readNestedNumber(record.payload, "replyCount") ?? 0;
+    const reactionTotal = reactions.agree + reactions.disagree + reactions.flag;
+    const engagementTotal = reactionTotal + replyCount;
+
+    candidates.push({
       txHash,
       author,
       text,
       category: readString(record.category) ?? readNestedString(record.payload, "cat") ?? undefined,
-      score: typeof record.score === "number" ? record.score : undefined,
+      score,
       sourceAttestationUrls,
-    };
+      agreeCount: reactions.agree,
+      disagreeCount: reactions.disagree,
+      flagCount: reactions.flag,
+      replyCount,
+      reactionTotal,
+      engagementTotal,
+      selectionScore: scoreSocialWriteCandidate({
+        score: score ?? 0,
+        agreeCount: reactions.agree,
+        disagreeCount: reactions.disagree,
+        flagCount: reactions.flag,
+        replyCount,
+        attestationCount: sourceAttestationUrls.length,
+      }),
+    });
   }
 
-  return null;
+  return candidates.sort((left, right) => {
+    if (right.selectionScore !== left.selectionScore) return right.selectionScore - left.selectionScore;
+    if (right.engagementTotal !== left.engagementTotal) return right.engagementTotal - left.engagementTotal;
+    if (right.score !== left.score) return (right.score ?? 0) - (left.score ?? 0);
+    return left.txHash.localeCompare(right.txHash);
+  });
+}
+
+export function selectSocialWriteCandidate(
+  posts: unknown[],
+  ownAddress: string,
+): SocialWriteCandidate | null {
+  return rankSocialWriteCandidates(posts, ownAddress)[0] ?? null;
 }
 
 export function normalizeReactionEnvelope(value: unknown): ReactionEnvelope | null {
@@ -320,6 +360,23 @@ function readNestedString(value: unknown, key: string): string | null {
   return readString((value as Record<string, unknown>)[key]);
 }
 
+function readNestedNumber(value: unknown, key: string): number | null {
+  if (!value || typeof value !== "object") return null;
+  return readNumber((value as Record<string, unknown>)[key]);
+}
+
+function readReactionCounts(record: Record<string, unknown>): ReactionEnvelope {
+  const reactions = record.reactions;
+  const payloadReactions = (record.payload as { reactions?: unknown } | undefined)?.reactions;
+  const source = reactions && typeof reactions === "object"
+    ? reactions
+    : payloadReactions && typeof payloadReactions === "object"
+      ? payloadReactions
+      : null;
+  const envelope = normalizeReactionEnvelope(source);
+  return envelope ?? { agree: 0, disagree: 0, flag: 0, myReaction: null };
+}
+
 function readAttestationUrls(record: Record<string, unknown>): string[] {
   const payload = record.payload;
   const entries = Array.isArray(record.sourceAttestations)
@@ -334,6 +391,25 @@ function readAttestationUrls(record: Record<string, unknown>): string[] {
       return readString((entry as Record<string, unknown>).url);
     })
     .filter((value): value is string => typeof value === "string" && value.length > 0);
+}
+
+function scoreSocialWriteCandidate(input: {
+  score: number;
+  agreeCount: number;
+  disagreeCount: number;
+  flagCount: number;
+  replyCount: number;
+  attestationCount: number;
+}): number {
+  const quality = Math.max(0, input.score);
+  const supportHeat = input.agreeCount + Math.min(input.replyCount, 10);
+  const attestationBoost = Math.min(input.attestationCount, 3) * 3;
+  const controversyPenalty =
+    (input.disagreeCount * 2)
+    + (input.flagCount * 5)
+    + (input.disagreeCount > input.agreeCount ? 15 : 0);
+
+  return quality + supportHeat + attestationBoost - controversyPenalty;
 }
 
 async function defaultSleep(ms: number): Promise<void> {

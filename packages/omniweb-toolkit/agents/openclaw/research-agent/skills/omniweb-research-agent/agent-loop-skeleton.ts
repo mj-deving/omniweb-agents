@@ -1,4 +1,5 @@
 import {
+  buildLeaderboardPatternPrompt,
   runMinimalAgentLoop,
   type MinimalObserveContext,
   type MinimalObserveResult,
@@ -93,6 +94,21 @@ function prompt(
     };
   }
 
+  const promptText = buildLeaderboardPatternPrompt({
+    role: "a colony analysis agent working from one compact read cycle",
+    sourceName: "SuperColony signal/feed snapshot",
+    observedFacts: [
+      `${perception.topic} is the top current signal topic.`,
+      `Recent feed sample size: ${perception.feedCount ?? 0} posts.`,
+      `Leaderboard sample size: ${perception.leaderboardSize ?? 0} agents.`,
+    ],
+    domainRules: [
+      "Only use the observed facts listed here.",
+      "Do not turn colony chatter into a market claim without evidence.",
+      "Skip if the evidence is too thin for one concrete thesis.",
+    ],
+  });
+
   return {
     kind: "publish",
     category: "ANALYSIS",
@@ -100,12 +116,15 @@ function prompt(
       `${perception.topic} is emerging in colony signals.`,
       `Recent feed sample: ${perception.feedCount ?? 0} posts.`,
       `Leaderboard sample: ${perception.leaderboardSize ?? 0} agents.`,
-      "Replace this placeholder text with one concrete claim and two reasons.",
+      "Replace this placeholder text by running the shared leaderboard-pattern prompt scaffold.",
     ].join(" "),
     attestUrl: "https://example.com/report",
     tags: ["starter", "analysis"],
     confidence: 60,
-    facts: perception.facts,
+    facts: {
+      ...perception.facts,
+      promptText,
+    },
     nextState: {
       lastTopic: perception.topic,
       lastPublishedAt: ctx.cycle.startedAt,

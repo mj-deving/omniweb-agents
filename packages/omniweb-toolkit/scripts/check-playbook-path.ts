@@ -23,8 +23,7 @@ Options:
   --base-url URL      Forwarded to live HTTP-based checks
   --timeout-ms N      Forwarded to live HTTP-based checks
   --state-dir PATH    Forwarded to runtime-backed checks
-  --allow-insecure    Forwarded to publish-readiness or probe-publish
-  --probe-publish     Include a real publish visibility probe after readiness checks
+  --allow-insecure    Forwarded to publish-readiness checks
   --help, -h          Show this help
 
 Output: JSON summary of the archetype-specific validation path
@@ -37,8 +36,6 @@ const baseUrl = getStringArg(args, "--base-url");
 const timeoutMs = getNumberArg(args, "--timeout-ms");
 const stateDir = getStringArg(args, "--state-dir");
 const allowInsecure = hasFlag(args, "--allow-insecure");
-const probePublish = hasFlag(args, "--probe-publish");
-
 if (!archetype || !["research-agent", "market-analyst", "engagement-optimizer"].includes(archetype)) {
   console.error("Error: --archetype must be one of research-agent, market-analyst, engagement-optimizer");
   process.exit(2);
@@ -77,10 +74,6 @@ const stepsByArchetype: Record<Archetype, Step[]> = {
 
 const steps = [...stepsByArchetype[archetype]];
 
-if (probePublish) {
-  steps.push({ id: "probe-publish", kind: "tsx", file: "scripts/probe-publish.ts" });
-}
-
 steps.push({
   id: "trajectory-example",
   kind: "tsx",
@@ -102,7 +95,6 @@ console.log(JSON.stringify({
   baseUrl: baseUrl ?? null,
   timeoutMs: timeoutMs ?? null,
   stateDir: stateDir ?? null,
-  probePublish,
   ok,
   results,
 }, null, 2));
@@ -161,7 +153,6 @@ function supportsBaseUrl(file: string): boolean {
     "scripts/leaderboard-snapshot.ts",
     "scripts/check-endpoint-surface.ts",
     "scripts/check-response-shapes.ts",
-    "scripts/probe-publish.ts",
   ].includes(file);
 }
 
@@ -170,20 +161,17 @@ function supportsTimeout(file: string): boolean {
     "scripts/leaderboard-snapshot.ts",
     "scripts/check-endpoint-surface.ts",
     "scripts/check-response-shapes.ts",
-    "scripts/probe-publish.ts",
   ].includes(file);
 }
 
 function supportsStateDir(file: string): boolean {
   return [
     "scripts/check-publish-readiness.ts",
-    "scripts/probe-publish.ts",
   ].includes(file);
 }
 
 function supportsAllowInsecure(file: string): boolean {
   return [
     "scripts/check-publish-readiness.ts",
-    "scripts/probe-publish.ts",
   ].includes(file);
 }

@@ -31,7 +31,7 @@ Validate in this order:
 2. `scripts/leaderboard-snapshot.ts`
 3. `scripts/check-attestation-workflow.ts` when the draft depends on multiple external sources or a nontrivial evidence chain
 4. `scripts/check-publish-readiness.ts`
-5. `scripts/probe-publish.ts` only when you intentionally want a live publish probe
+5. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>` only when you intentionally want one real agent-backed research publish
 6. `npm run run:trajectories -- --trace ./evals/examples/research-agent-playbook.trace.json --scenario research-agent-playbook`
 
 ### Observe

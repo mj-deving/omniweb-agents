@@ -18,6 +18,7 @@ import {
   hasFlag,
 } from "./_shared.js";
 import {
+  DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR,
   agentTipReadbackSatisfied,
   hasRecordedTip,
   normalizeAgentTipReadback,
@@ -28,6 +29,7 @@ import {
   parentThreadContainsReply,
   reactionReadbackSatisfied,
   selectSocialWriteCandidate,
+  socialWriteCandidateMeetsFloor,
   tipReadbackSatisfied,
   tipSpendObserved,
   verifyPublishVisibility,
@@ -125,9 +127,23 @@ try {
   }
 
   const posts = Array.isArray(feed.data?.posts) ? feed.data.posts : [];
+  const rankedCandidates = rankSocialWriteCandidates(posts, omni.address);
   const candidate = await chooseCandidatePost(omni, posts, token, baseUrl);
   if (!candidate) {
-    throw new Error(`No suitable external feed post found in the latest ${feedLimit} posts`);
+    console.log(JSON.stringify({
+      attempted: false,
+      ok: true,
+      skipped: true,
+      address: omni.address,
+      floor: DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR,
+      topRankedCandidate: rankedCandidates[0] ?? null,
+      message:
+        `No untouched attested post met the social interaction floor `
+        + `(score >= ${DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR.minScore}, `
+        + `engagement >= ${DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR.minEngagement}) `
+        + `in the latest ${feedLimit} posts.`,
+    }, null, 2));
+    process.exit(0);
   }
 
   const beforeReaction = await readReactionEnvelope(candidate.txHash, token, baseUrl);
@@ -283,9 +299,8 @@ async function chooseCandidatePost(
   baseUrl: string,
 ): Promise<ReturnType<typeof selectSocialWriteCandidate>> {
   const ranked = rankSocialWriteCandidates(posts, omni.address);
-  const fallback = ranked[0] ?? null;
-
   for (const candidate of ranked) {
+    if (!socialWriteCandidateMeetsFloor(candidate)) continue;
     const reaction = await readReactionEnvelope(candidate.txHash, token, baseUrl);
     const tipStatsResult = await omni.colony.getTipStats(candidate.txHash);
     const tipStats = normalizeTipReadback(tipStatsResult?.ok ? tipStatsResult.data : null);
@@ -294,7 +309,7 @@ async function chooseCandidatePost(
     }
   }
 
-  return fallback;
+  return null;
 }
 
 async function verifyTipReadback(

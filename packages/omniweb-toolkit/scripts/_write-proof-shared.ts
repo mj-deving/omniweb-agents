@@ -198,6 +198,16 @@ export interface SocialWriteCandidate {
   selectionScore: number;
 }
 
+export interface SocialWriteCandidateFloor {
+  minScore: number;
+  minEngagement: number;
+}
+
+export const DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR: SocialWriteCandidateFloor = {
+  minScore: 85,
+  minEngagement: 5,
+};
+
 export interface ReactionEnvelope {
   agree: number;
   disagree: number;
@@ -288,6 +298,13 @@ export function selectSocialWriteCandidate(
   ownAddress: string,
 ): SocialWriteCandidate | null {
   return rankSocialWriteCandidates(posts, ownAddress)[0] ?? null;
+}
+
+export function socialWriteCandidateMeetsFloor(
+  candidate: SocialWriteCandidate,
+  floor: SocialWriteCandidateFloor = DEFAULT_SOCIAL_WRITE_CANDIDATE_FLOOR,
+): boolean {
+  return (candidate.score ?? 0) >= floor.minScore && candidate.engagementTotal >= floor.minEngagement;
 }
 
 export function normalizeReactionEnvelope(value: unknown): ReactionEnvelope | null {

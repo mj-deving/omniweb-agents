@@ -9,6 +9,7 @@ import {
 } from "./minimal-agent.js";
 import {
   getStarterSourcePack,
+  listStarterSourcePacks,
   type StarterArchetype,
   type StarterSourcePackEntry,
 } from "./starter-source-packs.js";
@@ -18,12 +19,21 @@ type ProofArchetype = StarterArchetype;
 export interface LeaderboardPatternProofEntry {
   archetype: ProofArchetype;
   sourceId: string;
+  sourceLabel: string;
   attestationReady: boolean;
   attestUrl: string | null;
   decision: "publish" | "skip";
   ok: boolean;
   outcomeStatus: MinimalCycleRecord["outcome"]["status"];
   observedScore: number | null;
+}
+
+export interface LeaderboardPatternPackScorecard {
+  archetype: ProofArchetype;
+  totalEntries: number;
+  attestationReadyCount: number;
+  successfulPublishCount: number;
+  recommendedSourceIds: string[];
 }
 
 export interface LeaderboardPatternSkipControl {
@@ -36,6 +46,7 @@ export interface LeaderboardPatternProofReport {
   checkedAt: string;
   ok: boolean;
   results: LeaderboardPatternProofEntry[];
+  packScorecard: LeaderboardPatternPackScorecard[];
   skipControl: LeaderboardPatternSkipControl;
 }
 
@@ -45,22 +56,28 @@ export async function runLeaderboardPatternProof(): Promise<LeaderboardPatternPr
   const results: LeaderboardPatternProofEntry[] = [];
 
   for (const archetype of ARCHETYPES) {
-    results.push(await runPublishProof(archetype));
+    const pack = getStarterSourcePack(archetype);
+    for (const entry of pack.entries) {
+      results.push(await runPublishProof(archetype, entry));
+    }
   }
 
   const skipControl = await runSkipControl();
+  const packScorecard = buildPackScorecard(results);
 
   return {
     checkedAt: new Date().toISOString(),
     ok: results.every((entry) => entry.ok) && skipControl.ok,
     results,
+    packScorecard,
     skipControl,
   };
 }
 
-async function runPublishProof(archetype: ProofArchetype): Promise<LeaderboardPatternProofEntry> {
-  const pack = getStarterSourcePack(archetype);
-  const entry = pack.entries[0];
+async function runPublishProof(
+  archetype: ProofArchetype,
+  entry: StarterSourcePackEntry,
+): Promise<LeaderboardPatternProofEntry> {
   const plan = buildMinimalAttestationPlan({
     topic: entry.label,
     preferredSourceIds: [entry.sourceId],
@@ -71,6 +88,7 @@ async function runPublishProof(archetype: ProofArchetype): Promise<LeaderboardPa
     return {
       archetype,
       sourceId: entry.sourceId,
+      sourceLabel: entry.label,
       attestationReady: false,
       attestUrl: null,
       decision: "skip",
@@ -116,6 +134,7 @@ async function runPublishProof(archetype: ProofArchetype): Promise<LeaderboardPa
     return {
       archetype,
       sourceId: entry.sourceId,
+      sourceLabel: entry.label,
       attestationReady: true,
       attestUrl: plan.primary.url,
       decision: "publish",
@@ -169,6 +188,24 @@ function buildProofText(
     : "one short attested thesis";
 
   return `${entry.label} is publishable as ${posture} because the primary source rates ${ratingOverall} overall and the source-selection score is ${score}. Keep the claim narrow until the next attested refresh confirms the move.`;
+}
+
+function buildPackScorecard(results: LeaderboardPatternProofEntry[]): LeaderboardPatternPackScorecard[] {
+  return listStarterSourcePacks().map((pack) => {
+    const entries = results.filter((entry) => entry.archetype === pack.archetype);
+    const recommendedSourceIds = entries
+      .filter((entry) => entry.ok)
+      .sort((left, right) => (right.observedScore ?? 0) - (left.observedScore ?? 0))
+      .map((entry) => entry.sourceId);
+
+    return {
+      archetype: pack.archetype,
+      totalEntries: pack.entries.length,
+      attestationReadyCount: entries.filter((entry) => entry.attestationReady).length,
+      successfulPublishCount: entries.filter((entry) => entry.ok).length,
+      recommendedSourceIds,
+    };
+  });
 }
 
 function makeProofOmni(

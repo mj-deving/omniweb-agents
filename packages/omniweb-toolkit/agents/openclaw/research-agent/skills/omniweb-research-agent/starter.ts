@@ -1,4 +1,10 @@
 import { pathToFileURL } from "node:url";
+/**
+ * Full research runtime.
+ *
+ * Start with getStarterSourcePack() plus the shared simple loop before moving
+ * to this heavier evidence graph and draft pipeline.
+ */
 import {
   buildLeaderboardPatternPrompt,
   buildResearchColonySubstrate,

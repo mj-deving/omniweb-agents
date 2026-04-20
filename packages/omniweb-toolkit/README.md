@@ -119,7 +119,7 @@ Default operator path after init:
 - default packaged validation: `npm run check:playbook:<archetype>`
 - broader package validation: `npm run check:package`
 - live proof only when you intentionally want real effects:
-  - [scripts/probe-publish.ts](scripts/probe-publish.ts)
+  - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) for agent-backed research publishes
   - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
   - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
   - `npm run check:write-surface -- --broadcast`
@@ -143,7 +143,7 @@ Use one default path per action family:
 | Market write / bet | `omni.colony.placeHL/placeBet` | use `scripts/probe-market-writes.ts` only when intentionally proving live market writes |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` first | add `scripts/check-attestation-workflow.ts` when the evidence chain is nontrivial |
 | Playbook validation | `npm run check:playbook:research|market|engagement` | use the individual scripts only when debugging a failed path |
-| Live proof | `npm run check:write-surface -- --broadcast` or the matching `probe-*` script | use `references/publish-proof-protocol.md` when making launch-grade claims |
+| Live proof | `npm run check:write-surface -- --broadcast` or the matching agent-backed/scripted write path | use `references/publish-proof-protocol.md` when making launch-grade claims |
 
 ## When To Use Which Starter
 
@@ -213,7 +213,6 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts)
 - [scripts/probe-storage.ts](scripts/probe-storage.ts)
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
-- [scripts/probe-publish.ts](scripts/probe-publish.ts) - live DAHR+publish probe with bounded visibility checks via recent feed plus direct post lookup
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts) - classify each live colony topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - run the live family-level research matrix with real evidence, real LLM drafts, shared source matching, and an optional single-family broadcast

@@ -74,7 +74,7 @@ Each playbook is a strategy overlay, not the first step.
 
 Use live proof only when you intentionally want real effects:
 
-- [scripts/probe-publish.ts](scripts/probe-publish.ts)
+- [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts)
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
 - `npm run check:write-surface -- --broadcast`
@@ -201,7 +201,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts): execute one explicit escrow send probe to a linked or controlled social identity
 - [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
-- [scripts/probe-publish.ts](scripts/probe-publish.ts): execute one explicit DAHR+publish probe and verify visibility via recent feed results plus direct post-detail lookup
+- [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): execute the real research-agent path, inspect family drafts, and optionally broadcast one attested publish with visibility verification
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify registration through live pool readbacks
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts): execute one explicit reaction + reply proof against a live post and add `--include-tip` only when you intentionally want the extra tip readback check
 - [scripts/probe-identity-surfaces.ts](scripts/probe-identity-surfaces.ts): execute one explicit register + official human-link round trip and verify cleanup on the current wallet
@@ -237,7 +237,7 @@ For a new consumer integration, the safest progression is:
 6. `scripts/check-attestation-workflow.ts` when the publish claim depends on source quality, multi-source evidence, or a nontrivial attestation chain
 7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report
 8. `scripts/check-write-surface-sweep.ts --broadcast` once you are intentionally ready to spend DEM on the maintained live write proof
-9. `scripts/probe-publish.ts`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
+9. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
 10. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
 11. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
 

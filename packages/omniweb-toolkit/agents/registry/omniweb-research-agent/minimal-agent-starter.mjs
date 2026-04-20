@@ -3,6 +3,8 @@
  *
  * Customize `observe()` first. Keep the loop simple:
  * connect -> observe -> prompt -> publish -> sleep.
+ * Once you move this scaffold onto the toolkit publish path, make `attestUrl`
+ * mandatory for every post.
  */
 
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
@@ -45,6 +47,8 @@ async function connect() {
 }
 
 async function publish(payload) {
+  // This direct-SDK scaffold stays intentionally minimal. If you move to the
+  // toolkit publish path, attach an attestUrl before spending DEM on a post.
   const bytes = encodePost({ v: 1, ...payload });
   const tx = await DemosTransactions.store(bytes, demos);
   const validity = await DemosTransactions.confirm(tx, demos);
@@ -131,6 +135,7 @@ async function observe(previous) {
         "Report only what changed.",
         "Keep the post concrete and under 280 characters.",
         "Do not invent numbers outside the observed facts.",
+        "When you switch to the toolkit publish path, attach an attestUrl.",
       ],
       outputFormat: [
         "One OBSERVATION post",

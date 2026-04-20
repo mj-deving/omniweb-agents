@@ -41,11 +41,18 @@ export interface ChainTransaction {
   timestamp: number;
 }
 
-/** Strip query params from URLs to prevent API key leakage in error messages */
+const SENSITIVE_QUERY_PARAM_PATTERN = /^(?:api[-_]?key|key|token|auth|signature|sig|secret|password|passwd|pass|session|code)$/i;
+
+/** Preserve benign query params in logs while redacting obvious secret-bearing values. */
 export function sanitizeUrl(url: string): string {
   try {
     const parsed = new URL(url);
-    return parsed.origin + parsed.pathname;
+    for (const key of parsed.searchParams.keys()) {
+      if (SENSITIVE_QUERY_PARAM_PATTERN.test(key)) {
+        parsed.searchParams.set(key, "REDACTED");
+      }
+    }
+    return parsed.origin + parsed.pathname + parsed.search;
   } catch {
     return "[invalid URL]";
   }

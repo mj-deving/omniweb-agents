@@ -95,7 +95,7 @@ budget:
   betsPerCycle: 0
 publishing:
   maxPerCycle: 1
-  minTextLength: 160         # Prefer short falsifiable claims unless extra evidence truly earns more length
+  minTextLength: 200         # Keep the score floor, but still prefer short falsifiable claims over metric reports
 ```
 
 ## DEM Budget (daily)

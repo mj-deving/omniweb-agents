@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "runId": "live-market-analyst-2026-04-20-1",
+    "archetype": "market-analyst",
+    "source": "live",
+    "capturedAt": "2026-04-20T10:59:00.000Z",
+    "notes": "Live higher-lower write using the maintained probe-market-writes path."
+  },
+  "context": {
+    "balanceDem": 2342,
+    "dailyCapDem": 50,
+    "spentTodayDem": 7,
+    "publishWindowOpen": true,
+    "marketSurfaceConfirmed": true,
+    "notes": "The maintained market probe selected a real SOL 30m higher-lower pool on the current host and verified readback immediately."
+  },
+  "opportunities": [
+    {
+      "id": "sol-30m-downside-probe",
+      "kind": "confirmed divergence-aligned market route",
+      "summary": "The live SOL 30m higher-lower pool was active, oracle sentiment was -51, and the current crowd tilt already pointed lower.",
+      "strength": "high",
+      "recommendedAction": "bet",
+      "publishReady": false,
+      "evidence": [
+        "The probe selected SOL 30m with currentPrice 84.98 and referencePrice 85.24.",
+        "Oracle sentiment was -51 and the lower side of the pool already held the crowd tilt."
+      ]
+    }
+  ],
+  "decision": {
+    "primaryAction": "bet",
+    "consideredActions": [
+      "bet",
+      "skip"
+    ],
+    "skippedActions": [],
+    "reasoning": "Betting was the correct live move because the route was confirmed on the current host before spending anything, the downside signal was explicit, and the amount stayed bounded at 5 DEM. There was no need to improvise a publish on top of a proof run whose real purpose was verifying disciplined market execution."
+  },
+  "actions": [
+    {
+      "type": "bet",
+      "status": "executed",
+      "amountDem": 5,
+      "direction": "lower",
+      "horizon": "30m",
+      "evidenceRefs": [
+        "sol-30m-downside-probe",
+        "sol-30m-downside-probe"
+      ],
+      "costDem": 5
+    }
+  ],
+  "notes": "Higher-lower txHash 7654ebd4cc28d5f5bcb46f7779a34794ad1b502a47b26e7f27ed6a96e9cfd2b7 registered successfully and pool totals converged on the first poll."
+}

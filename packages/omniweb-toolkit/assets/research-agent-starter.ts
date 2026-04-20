@@ -1,29 +1,27 @@
 import { pathToFileURL } from "node:url";
 /**
- * Full research runtime.
+ * Simple research starter.
  *
- * Start with getStarterSourcePack() plus the shared simple loop before moving
- * to this heavier evidence graph and draft pipeline.
+ * Use this before the advanced runtime. It follows the same streamlined
+ * observe -> attestation -> draft -> publish-or-skip flow as the other
+ * archetype starters.
  */
 import {
   buildLeaderboardPatternPrompt,
   buildResearchColonySubstrate,
   buildResearchDraft,
   buildResearchSelfHistory,
-  buildResearchEvidenceDelta,
   fetchResearchEvidenceSummary,
   deriveResearchOpportunities,
   matchResearchDraftToPlan,
   runMinimalAgentLoop,
-  summarizeResearchEvidenceDelta,
   type MinimalObserveContext,
   type MinimalObserveResult,
-  type ResearchOpportunity,
   type ResearchPostInput,
   type ResearchPublishHistoryEntry,
-  type ResearchSignalInput,
   type ResearchSignalCrossReference,
   type ResearchSignalDivergence,
+  type ResearchSignalInput,
   type ResearchSignalReactionSummary,
   type ResearchSignalSourcePost,
 } from "../src/agent.js";
@@ -31,18 +29,6 @@ import {
 interface ResearchState {
   lastCoverageTopic?: string;
   lastPublishedAt?: string;
-  lastResearchSnapshot?: {
-    topic: string;
-    observedAt: string;
-    evidenceValues: Record<string, string>;
-    derivedMetrics: {
-      highConfidenceSignalCount: number;
-      coverageGapCount: number;
-      contradictionCount: number;
-      staleTopicCount: number;
-      feedCoverageRatio: number | null;
-    };
-  };
   topicHistory?: Array<{
     topic: string;
     publishedAt: string;
@@ -60,23 +46,13 @@ interface ReadResult<T> {
 }
 
 const MAX_TOPIC_HISTORY = 5;
-const RESEARCH_FRONTIER_SIZE = 4;
 const PUBLISH_COOLDOWN_MS = 30 * 60 * 1000;
-const CROSS_FAMILY_COOLDOWN_OVERRIDE_SCORE = 130;
-
-interface RankedResearchOpportunity extends ResearchOpportunity {
-  portfolioScore: number;
-  portfolioReasons: string[];
-  rawRank: number;
-  discourseMode: "solitary" | "active-thread";
-}
 
 function buildStarterPromptText(params: {
   topic: string;
   family: string;
   opportunityKind: string;
   score: number;
-  portfolioScore: number;
   feedCount: number;
   signalCount: number;
   attestUrl: string;
@@ -88,30 +64,48 @@ function buildStarterPromptText(params: {
       `Selected topic: ${params.topic}.`,
       `Research family: ${params.family}.`,
       `Opportunity kind: ${params.opportunityKind}.`,
-      `Raw score: ${params.score}.`,
-      `Portfolio score: ${params.portfolioScore}.`,
+      `Opportunity score: ${params.score}.`,
       `Feed sample size: ${params.feedCount}.`,
       `Signal sample size: ${params.signalCount}.`,
     ],
     domainRules: [
-      "Keep the thesis grounded in the fetched evidence packet.",
+      "Keep one concrete thesis anchored in fetched evidence.",
       "Use only observed numbers or explicit uncertainty.",
-      "Avoid narrative inflation beyond the attested source.",
+      "Skip when the evidence packet does not move the topic forward.",
     ],
   });
 }
 
-function signalTopic(signal: unknown): string | null {
-  if (!signal || typeof signal !== "object") return null;
-  const candidate = (signal as { shortTopic?: unknown; topic?: unknown }).shortTopic
-    ?? (signal as { shortTopic?: unknown; topic?: unknown }).topic;
-  return typeof candidate === "string" && candidate.length > 0 ? candidate : null;
+function postText(post: unknown): string {
+  if (!post || typeof post !== "object") return "";
+  const payload = (post as { payload?: { text?: unknown } }).payload;
+  const payloadText = payload?.text;
+  if (typeof payloadText === "string") return payloadText;
+  const direct = (post as { text?: unknown }).text;
+  return typeof direct === "string" ? direct : "";
 }
 
-function signalConfidence(signal: unknown): number | null {
-  if (!signal || typeof signal !== "object") return null;
-  const candidate = (signal as { confidence?: unknown }).confidence;
-  return typeof candidate === "number" ? candidate : null;
+function samplePost(post: unknown): FeedSample {
+  if (!post || typeof post !== "object") {
+    return {
+      txHash: null,
+      category: null,
+      text: "",
+      author: null,
+      timestamp: null,
+      score: null,
+    };
+  }
+
+  const payload = (post as { payload?: { cat?: unknown } }).payload;
+  return {
+    txHash: typeof (post as { txHash?: unknown }).txHash === "string" ? (post as { txHash: string }).txHash : null,
+    category: typeof payload?.cat === "string" ? payload.cat : null,
+    text: postText(post),
+    author: typeof (post as { author?: unknown }).author === "string" ? (post as { author: string }).author : null,
+    timestamp: typeof (post as { timestamp?: unknown }).timestamp === "number" ? (post as { timestamp: number }).timestamp : null,
+    score: typeof (post as { score?: unknown }).score === "number" ? (post as { score: number }).score : null,
+  };
 }
 
 function signalString(signal: unknown, key: string): string | null {
@@ -132,219 +126,17 @@ function signalBoolean(signal: unknown, key: string): boolean | null {
   return typeof candidate === "boolean" ? candidate : null;
 }
 
-function normalizeTopic(value: string | null | undefined): string | null {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim().toLowerCase();
-  return normalized.length > 0 ? normalized : null;
+function signalTopic(signal: unknown): string | null {
+  if (!signal || typeof signal !== "object") return null;
+  const candidate = (signal as { shortTopic?: unknown; topic?: unknown }).shortTopic
+    ?? (signal as { shortTopic?: unknown; topic?: unknown }).topic;
+  return typeof candidate === "string" && candidate.length > 0 ? candidate : null;
 }
 
-function parseTimestamp(value: string | null | undefined): number | null {
-  if (typeof value !== "string" || value.length === 0) return null;
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function latestSignalTimestamp(opportunity: ResearchOpportunity): number | null {
-  return (opportunity.matchedSignal.sourcePostData ?? []).reduce<number | null>((latest, post) => {
-    if (typeof post.timestamp !== "number") return latest;
-    return latest == null || post.timestamp > latest ? post.timestamp : latest;
-  }, null);
-}
-
-function computePortfolioFreshnessBonus(opportunity: ResearchOpportunity, nowMs: number): number {
-  const freshest = latestSignalTimestamp(opportunity);
-  if (freshest == null) return 0;
-  const ageMs = Math.max(0, nowMs - freshest);
-  if (ageMs <= 6 * 60 * 60 * 1000) return 4;
-  if (ageMs <= 24 * 60 * 60 * 1000) return 2;
-  return 0;
-}
-
-function computePortfolioRichnessBonus(opportunity: ResearchOpportunity): number {
-  const signal = opportunity.matchedSignal;
-  const sourcePostCount = Math.min(signal.sourcePostData?.length ?? 0, 3);
-  const crossReferenceCount = Math.min(signal.crossReferences?.length ?? 0, 2);
-  const reactionTotal = signal.reactionSummary
-    ? signal.reactionSummary.totalAgrees + signal.reactionSummary.totalDisagrees + signal.reactionSummary.totalFlags
-    : 0;
-  const agentBonus = (signal.agentCount ?? 0) >= 5
-    ? 2
-    : (signal.agentCount ?? 0) >= 3
-      ? 1
-      : 0;
-
-  return sourcePostCount
-    + crossReferenceCount
-    + agentBonus
-    + (signal.keyInsight ? 1 : 0)
-    + (signal.divergence ? 1 : 0)
-    + (reactionTotal >= 3 ? 1 : 0);
-}
-
-function computePortfolioDiscourseBonus(
-  colonySubstrate: ReturnType<typeof buildResearchColonySubstrate>,
-): number {
-  const { discourseContext } = colonySubstrate;
-  if (discourseContext.mode !== "active-thread") return 0;
-
-  let bonus = 4;
-  if (discourseContext.namedParticipants.length >= 2) bonus += 2;
-  if (discourseContext.totalReactionSignal >= 5) bonus += 1;
-  if (discourseContext.highScoreRelatedCount > 0) bonus += 1;
-  return Math.min(bonus, 7);
-}
-
-function describeDiscourseReasons(
-  colonySubstrate: ReturnType<typeof buildResearchColonySubstrate>,
-): string[] {
-  const { discourseContext } = colonySubstrate;
-  if (discourseContext.mode !== "active-thread") return [];
-  const reasons = ["active_discourse"];
-  if (discourseContext.namedParticipants.length >= 2) reasons.push("named_counterparties");
-  if (discourseContext.totalReactionSignal >= 5) reasons.push("reaction_heat");
-  if (discourseContext.highScoreRelatedCount > 0) reasons.push("leaderboard_overlap");
-  return reasons;
-}
-
-export function buildResearchOpportunityFrontier(
-  opportunities: ResearchOpportunity[],
-  allPosts: ResearchPostInput[],
-  state: ResearchState | null | undefined,
-  now: string | number | Date = Date.now(),
-): RankedResearchOpportunity[] {
-  const nowMsRaw = typeof now === "string" ? Date.parse(now) : now instanceof Date ? now.getTime() : now;
-  const nowMs = Number.isFinite(nowMsRaw) ? nowMsRaw : Date.now();
-  const recentTopics = new Set<string>();
-  const recentFamilies = new Set<string>();
-
-  for (const entry of state?.topicHistory ?? []) {
-    const normalized = normalizeTopic(entry.topic);
-    if (normalized) recentTopics.add(normalized);
-  }
-
-  for (const entry of state?.publishHistory ?? []) {
-    const topic = normalizeTopic(entry.topic);
-    const family = normalizeTopic(entry.family);
-    if (topic) recentTopics.add(topic);
-    if (family) recentFamilies.add(family);
-  }
-
-  const mostRecentPublish = (state?.publishHistory ?? []).reduce<ResearchPublishHistoryEntry | null>((latest, entry) => {
-    if (!latest) return entry;
-    const latestTs = parseTimestamp(latest.publishedAt);
-    const currentTs = parseTimestamp(entry.publishedAt);
-    if (currentTs == null) return latest;
-    if (latestTs == null || currentTs > latestTs) return entry;
-    return latest;
-  }, null);
-  const mostRecentFamily = normalizeTopic(mostRecentPublish?.family);
-
-  return opportunities
-    .map((opportunity, index) => {
-      const topic = normalizeTopic(opportunity.topic);
-      const family = normalizeTopic(opportunity.sourceProfile.family);
-      const colonySubstrate = buildResearchColonySubstrate({
-        opportunity,
-        allPosts,
-      });
-      const reasons: string[] = [];
-      let portfolioScore = opportunity.score;
-
-      if (topic && !recentTopics.has(topic)) {
-        portfolioScore += 6;
-        reasons.push("novel_topic");
-      }
-
-      if (family && !recentFamilies.has(family)) {
-        portfolioScore += 5;
-        reasons.push("family_diversity");
-      } else if (family && family === mostRecentFamily) {
-        portfolioScore -= 4;
-        reasons.push("recent_family_penalty");
-      }
-
-      const freshnessBonus = computePortfolioFreshnessBonus(opportunity, nowMs);
-      if (freshnessBonus > 0) {
-        portfolioScore += freshnessBonus;
-        reasons.push("fresh_evidence");
-      }
-
-      const richnessBonus = computePortfolioRichnessBonus(opportunity);
-      if (richnessBonus > 0) {
-        portfolioScore += Math.min(richnessBonus, 5);
-        reasons.push("rich_substrate");
-      }
-
-      const discourseBonus = computePortfolioDiscourseBonus(colonySubstrate);
-      if (discourseBonus > 0) {
-        portfolioScore += discourseBonus;
-        reasons.push(...describeDiscourseReasons(colonySubstrate));
-      }
-
-      if (opportunity.kind === "contradiction") {
-        portfolioScore += 2;
-        reasons.push("contradiction_priority");
-      } else if (opportunity.kind === "stale_topic") {
-        portfolioScore -= 2;
-        reasons.push("stale_topic_penalty");
-      }
-
-      return {
-        ...opportunity,
-        portfolioScore,
-        portfolioReasons: reasons,
-        rawRank: index + 1,
-        discourseMode: colonySubstrate.discourseContext.mode,
-      };
-    })
-    .sort((left, right) =>
-      right.portfolioScore - left.portfolioScore
-      || right.score - left.score
-      || left.rawRank - right.rawRank);
-}
-
-function summarizeOpportunityFrontier(frontier: RankedResearchOpportunity[]): Array<Record<string, unknown>> {
-  return frontier.slice(0, RESEARCH_FRONTIER_SIZE).map((opportunity) => ({
-    topic: opportunity.topic,
-    kind: opportunity.kind,
-    rawRank: opportunity.rawRank,
-    score: opportunity.score,
-    portfolioScore: opportunity.portfolioScore,
-    portfolioReasons: opportunity.portfolioReasons,
-    family: opportunity.sourceProfile.family,
-    discourseMode: opportunity.discourseMode,
-  }));
-}
-
-function postText(post: unknown): string {
-  if (!post || typeof post !== "object") return "";
-  const payload = (post as { payload?: { text?: unknown } }).payload;
-  const payloadText = payload?.text;
-  if (typeof payloadText === "string") return payloadText;
-  const direct = (post as { text?: unknown }).text;
-  return typeof direct === "string" ? direct : "";
-}
-
-function samplePost(post: unknown): FeedSample {
-  if (!post || typeof post !== "object") {
-    return {
-      txHash: null,
-      category: null,
-      text: "",
-      author: null,
-      timestamp: null,
-    };
-  }
-
-  const payload = (post as { payload?: { cat?: unknown } }).payload;
-  return {
-    txHash: typeof (post as { txHash?: unknown }).txHash === "string" ? (post as { txHash: string }).txHash : null,
-    category: typeof payload?.cat === "string" ? payload.cat : null,
-    text: postText(post),
-    author: typeof (post as { author?: unknown }).author === "string" ? (post as { author: string }).author : null,
-    timestamp: typeof (post as { timestamp?: unknown }).timestamp === "number" ? (post as { timestamp: number }).timestamp : null,
-    score: typeof (post as { score?: unknown }).score === "number" ? (post as { score: number }).score : null,
-  };
+function signalConfidence(signal: unknown): number | null {
+  if (!signal || typeof signal !== "object") return null;
+  const candidate = (signal as { confidence?: unknown }).confidence;
+  return typeof candidate === "number" ? candidate : null;
 }
 
 function sampleSignalSourcePost(post: unknown): ResearchSignalSourcePost | null {
@@ -403,7 +195,6 @@ function sampleSignalDivergence(value: unknown): ResearchSignalDivergence | null
 function sampleSignal(signal: unknown): ResearchSignalInput {
   const assetsValue = signal && typeof signal === "object" ? (signal as { assets?: unknown }).assets : null;
   const tagsValue = signal && typeof signal === "object" ? (signal as { tags?: unknown }).tags : null;
-  const sourcePostsValue = signal && typeof signal === "object" ? (signal as { sourcePosts?: unknown }).sourcePosts : null;
   const sourcePostDataValue = signal && typeof signal === "object" ? (signal as { sourcePostData?: unknown }).sourcePostData : null;
   const crossReferencesValue = signal && typeof signal === "object" ? (signal as { crossReferences?: unknown }).crossReferences : null;
 
@@ -420,7 +211,6 @@ function sampleSignal(signal: unknown): ResearchSignalInput {
     totalAgents: signalNumber(signal, "totalAgents"),
     assets: Array.isArray(assetsValue) ? assetsValue.filter((value): value is string => typeof value === "string") : [],
     tags: Array.isArray(tagsValue) ? tagsValue.filter((value): value is string => typeof value === "string") : [],
-    sourcePosts: Array.isArray(sourcePostsValue) ? sourcePostsValue.filter((value): value is string => typeof value === "string") : [],
     sourcePostData: Array.isArray(sourcePostDataValue)
       ? sourcePostDataValue.map(sampleSignalSourcePost).filter((value): value is ResearchSignalSourcePost => value != null)
       : [],
@@ -457,12 +247,10 @@ export async function observe(
     return {
       kind: "skip",
       reason: "read_failed",
-      facts: {
-        ...readStatus,
-      },
+      facts: readStatus,
       audit: {
         promptPacket: {
-          objective: "Continue only when the research loop has the core reads it needs: feed, signals, and balance.",
+          objective: "Continue only when the simple research starter has feed, signals, and balance reads.",
           readStatus,
         },
       },
@@ -471,11 +259,10 @@ export async function observe(
   }
 
   const posts = extractFeedPosts(feedRead.data);
-  const signalList = extractSignalList(signalsRead.data);
+  const signalEntries = extractSignalList(signalsRead.data).map(sampleSignal);
   const leaderboardAgents = extractLeaderboardAgents(leaderboardRead.data);
   const availableBalance = extractAvailableBalance(balanceRead.data);
   const feedSample = posts.slice(0, 10);
-  const signalEntries = signalList.map(sampleSignal);
   const signalSample = signalEntries.slice(0, 10).map((signal) => ({
     topic: signal.topic,
     shortTopic: signal.shortTopic ?? null,
@@ -486,15 +273,15 @@ export async function observe(
     assets: signal.assets ?? [],
     tags: signal.tags ?? [],
   }));
-  const highConfidenceSignals = signalEntries.filter((signal) => (signal.confidence ?? 0) >= 70);
 
-  if (availableBalance < 10 || signalList.length === 0) {
+  if (availableBalance < 10 || signalEntries.length === 0) {
     return {
       kind: "skip",
       reason: availableBalance < 10 ? "low_balance" : "no_signals",
       facts: {
         availableBalance,
-        signalCount: signalList.length,
+        signalCount: signalEntries.length,
+        feedCount: posts.length,
         ...readStatus,
       },
       audit: {
@@ -504,7 +291,7 @@ export async function observe(
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
         promptPacket: {
-          objective: "Decide whether a research publish is justified from current signals and feed coverage.",
+          objective: "Decide whether a simple research publish is justified from current signals and feed coverage.",
           skipReason: availableBalance < 10 ? "low_balance" : "no_signals",
           readStatus,
         },
@@ -522,37 +309,20 @@ export async function observe(
       .map((entry) => entry.family)
       .filter((family): family is string => typeof family === "string" && family.length > 0),
   });
-  const opportunityFrontier = buildResearchOpportunityFrontier(
-    opportunities,
-    posts,
-    ctx.memory.state,
-    ctx.cycle.startedAt,
-  );
-  const publishedAtMs = parseTimestamp(ctx.memory.state?.lastPublishedAt);
-  const mostRecentPublishFamily = normalizeTopic(ctx.memory.state?.publishHistory?.[0]?.family ?? null);
-  const derivedMetrics = {
-    highConfidenceSignalCount: highConfidenceSignals.length,
-    coverageGapCount: opportunities.filter((opportunity) => opportunity.kind === "coverage_gap").length,
-    contradictionCount: opportunities.filter((opportunity) => opportunity.kind === "contradiction").length,
-    staleTopicCount: opportunities.filter((opportunity) => opportunity.kind === "stale_topic").length,
-    feedCoverageRatio: highConfidenceSignals.length === 0
-      ? null
-      : Number(
-          (
-            (highConfidenceSignals.length
-              - opportunities.filter((opportunity) => opportunity.kind === "coverage_gap").length)
-            / highConfidenceSignals.length
-          ).toFixed(3),
-        ),
-  };
-  if (opportunities.length === 0) {
+
+  const chosenOpportunity = opportunities.find((opportunity) =>
+    opportunity.sourceProfile.supported
+    && opportunity.attestationPlan.ready
+    && opportunity.attestationPlan.primary,
+  ) ?? opportunities[0] ?? null;
+
+  if (!chosenOpportunity) {
     return {
       kind: "skip",
       reason: "no_publishable_research_opportunity",
       facts: {
-        signalCount: signalList.length,
+        signalCount: signalEntries.length,
         feedCount: posts.length,
-        ...derivedMetrics,
         ...readStatus,
       },
       audit: {
@@ -561,14 +331,8 @@ export async function observe(
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
-        selectedEvidence: {
-          matchedSignal: null,
-          feedMentions: [],
-        },
         promptPacket: {
-          objective: "Find a publishable research opportunity grounded in current signals, feed drift, and attestation viability.",
-          derivedMetrics,
-          opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
+          objective: "Find one publishable research opportunity grounded in current signals and feed drift.",
           readStatus,
           result: "skip",
         },
@@ -577,527 +341,19 @@ export async function observe(
     };
   }
 
-  let deferredRepeatSkip: MinimalObserveResult<ResearchState> | null = null;
-  let deferredCooldownSkip: MinimalObserveResult<ResearchState> | null = null;
-
-  for (const chosenOpportunity of opportunityFrontier) {
-    const topic = chosenOpportunity.topic;
-    const matchingFeedPosts = chosenOpportunity.matchingFeedPosts;
-    const matchedSignal = chosenOpportunity.matchedSignal;
-    const attestationPlan = chosenOpportunity.attestationPlan;
-    const sourceProfile = chosenOpportunity.sourceProfile;
-    const colonySubstrate = buildResearchColonySubstrate({
-      opportunity: chosenOpportunity,
-      allPosts: posts,
-    });
-    const sameFamilyAsRecentPublish = normalizeTopic(sourceProfile.family) === mostRecentPublishFamily;
-    const cooldownOverrideAllowed = publishedAtMs != null
-      && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS
-      && mostRecentPublishFamily != null
-      && !sameFamilyAsRecentPublish
-      && chosenOpportunity.portfolioScore >= CROSS_FAMILY_COOLDOWN_OVERRIDE_SCORE;
-
-    if (
-      publishedAtMs != null
-      && mostRecentPublishFamily != null
-      && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS
-      && !cooldownOverrideAllowed
-    ) {
-      deferredCooldownSkip ??= {
-        kind: "skip",
-        reason: "published_within_last_30m",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          opportunityScore: chosenOpportunity.score,
-          portfolioScore: chosenOpportunity.portfolioScore,
-          lastPublishedAt: ctx.memory.state?.lastPublishedAt ?? null,
-          cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
-          sameFamilyAsRecentPublish,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-          },
-          promptPacket: {
-            objective: "Skip rapid research republishing during the 30-minute cooldown unless a cross-family frontier candidate is strong enough to justify breaking cadence.",
-            topic,
-            opportunityKind: chosenOpportunity.kind,
-            researchFamily: sourceProfile.family,
-            portfolioScore: chosenOpportunity.portfolioScore,
-            sameFamilyAsRecentPublish,
-            cooldownOverrideAllowed,
-            opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
-            derivedMetrics,
-            readStatus,
-            result: "skip",
-          },
-        },
-        nextState: ctx.memory.state ?? {},
-      };
-      continue;
-    }
-
-    if (!sourceProfile.supported) {
-      return {
-        kind: "skip",
-        reason: "research_family_not_ready",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          sourceProfileReason: sourceProfile.reason,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-          },
-          promptPacket: {
-            objective: "Only prompt when the research topic maps to a supported evidence family with attestation-ready sources.",
-            topic,
-            opportunityKind: chosenOpportunity.kind,
-            researchFamily: sourceProfile.family,
-            sourceProfileReason: sourceProfile.reason,
-            derivedMetrics,
-            opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
-            readStatus,
-            result: "skip",
-          },
-          notes: [
-            ...attestationPlan.warnings,
-          ],
-        },
-        nextState: ctx.memory.state ?? {},
-      };
-    }
-
-    if (!attestationPlan.ready || !attestationPlan.primary) {
-      return {
-        kind: "skip",
-        reason: "attestation_plan_not_ready",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-          },
-          promptPacket: {
-            objective: "Only publish when the claim has a viable primary plus supporting attestation plan.",
-            topic,
-            opportunityKind: chosenOpportunity.kind,
-            researchFamily: sourceProfile.family,
-            derivedMetrics,
-            opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
-            readStatus,
-            result: "skip",
-            attestationPlanReady: attestationPlan.ready,
-          },
-          notes: attestationPlan.warnings,
-        },
-        nextState: ctx.memory.state ?? {},
-      };
-    }
-    const evidenceReads = await Promise.allSettled([
-      fetchResearchEvidenceSummary({
-        source: attestationPlan.primary,
-        topic,
-      }),
-      ...attestationPlan.supporting.map((source) =>
-        fetchResearchEvidenceSummary({
-          source,
-          topic,
-        })),
-    ]);
-    const primaryEvidenceRead = evidenceReads[0];
-    const supportingEvidenceReads = evidenceReads.slice(1);
-    const prefetchedReadResults = evidenceReads.flatMap((entry) =>
-      entry.status === "fulfilled" ? [entry.value] : []);
-    const evidenceSummaryResult = primaryEvidenceRead?.status === "fulfilled"
-      ? primaryEvidenceRead.value
-      : {
-        ok: false as const,
-        reason: "fetch_failed" as const,
-        note: primaryEvidenceRead?.status === "rejected"
-          ? `Primary evidence fetch failed for ${attestationPlan.primary.name}: ${String(primaryEvidenceRead.reason)}`
-          : `Primary evidence fetch failed for ${attestationPlan.primary.name}.`,
-      };
-    const supportingEvidenceSummaries = supportingEvidenceReads.flatMap((entry) =>
-      entry.status === "fulfilled" && entry.value.ok ? [entry.value.summary] : []);
-    const supportingEvidenceNotes = supportingEvidenceReads.flatMap((entry, index) => {
-      const source = attestationPlan.supporting[index];
-      if (!source) return [];
-      if (entry.status === "rejected") {
-        return [`Supporting evidence fetch failed for ${source.name}: ${String(entry.reason)}`];
-      }
-      if (!entry.value.ok) {
-        return [`Supporting evidence fetch skipped for ${source.name}: ${entry.value.note}`];
-      }
-      return [];
-    });
-
-    if (!evidenceSummaryResult.ok) {
-      return {
-        kind: "skip",
-        reason: "evidence_summary_not_ready",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-            evidenceSummary: null,
-            supportingEvidenceSummaries: [],
-          },
-          promptPacket: {
-            objective: "Only prompt from real fetched evidence, not just topic labels and source names.",
-            topic,
-            opportunityKind: chosenOpportunity.kind,
-            researchFamily: sourceProfile.family,
-            derivedMetrics,
-            readStatus,
-            result: "skip",
-            attestationPlanReady: attestationPlan.ready,
-          },
-          notes: [
-            evidenceSummaryResult.note,
-            ...supportingEvidenceNotes,
-            ...attestationPlan.warnings,
-          ],
-        },
-        nextState: ctx.memory.state ?? {},
-      };
-    }
-
-    const previousSnapshot = ctx.memory.state?.lastResearchSnapshot;
-    const evidenceDelta = buildResearchEvidenceDelta(
-      previousSnapshot?.topic === topic ? previousSnapshot.evidenceValues : null,
-      evidenceSummaryResult.summary.values,
-    );
-    const selfHistory = buildResearchSelfHistory({
-      history: ctx.memory.state?.publishHistory ?? [],
-      topic,
-      family: sourceProfile.family,
-      now: ctx.cycle.startedAt,
-      currentEvidenceValues: evidenceSummaryResult.summary.values,
-    });
-    const deltaSummary = summarizeResearchEvidenceDelta(evidenceDelta);
-
-    if (previousSnapshot?.topic === topic && !deltaSummary.hasMeaningfulChange) {
-      deferredRepeatSkip ??= {
-        kind: "skip",
-        reason: "values_within_normal_range",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-            evidenceSummary: evidenceSummaryResult.summary,
-            supportingEvidenceSummaries,
-            evidenceDelta,
-            selfHistory,
-          },
-          promptPacket: {
-            objective: "Skip when the same research topic has not moved meaningfully since the last cycle.",
-            topic,
-            opportunityKind: chosenOpportunity.kind,
-            researchFamily: sourceProfile.family,
-            derivedMetrics,
-            readStatus,
-            deltaSummary,
-            selfHistory,
-            result: "skip",
-          },
-        },
-        nextState: {
-          ...(ctx.memory.state ?? {}),
-          lastResearchSnapshot: {
-            topic,
-            observedAt: ctx.cycle.startedAt,
-            evidenceValues: evidenceSummaryResult.summary.values,
-            derivedMetrics,
-          },
-        },
-      };
-      continue;
-    }
-
-    if (selfHistory.skipSuggested) {
-      deferredRepeatSkip ??= {
-        kind: "skip",
-        reason: "recent_self_coverage_without_new_delta",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-            evidenceSummary: evidenceSummaryResult.summary,
-            supportingEvidenceSummaries,
-            evidenceDelta,
-            selfHistory,
-          },
-          promptPacket: {
-            objective: "Skip when the same family or topic was just covered and the evidence packet has not moved enough to justify repeating the thesis.",
-            topic,
-            opportunityKind: chosenOpportunity.kind,
-            researchFamily: sourceProfile.family,
-            derivedMetrics,
-            readStatus,
-            deltaSummary,
-            selfHistory,
-            result: "skip",
-          },
-        },
-        nextState: {
-          ...(ctx.memory.state ?? {}),
-          lastResearchSnapshot: {
-            topic,
-            observedAt: ctx.cycle.startedAt,
-            evidenceValues: evidenceSummaryResult.summary.values,
-            derivedMetrics,
-          },
-        },
-      };
-      continue;
-    }
-
-    const draft = await buildResearchDraft({
-      opportunity: chosenOpportunity,
-      feedCount: posts.length,
-      leaderboardCount: leaderboardAgents.length,
-      availableBalance,
-      colonySubstrate,
-      evidenceSummary: evidenceSummaryResult.summary,
-      supportingEvidenceSummaries,
-      selfHistory,
-      llmProvider: ctx.omni.runtime.llmProvider,
-      minTextLength: 200,
-    });
-
-    if (!draft.ok) {
-      return {
-        kind: "skip",
-        reason: draft.reason,
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          opportunityScore: chosenOpportunity.score,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-            evidenceSummary: evidenceSummaryResult.summary,
-            supportingEvidenceSummaries,
-            evidenceDelta,
-            selfHistory,
-          },
-          promptPacket: draft.promptPacket as unknown as Record<string, unknown>,
-          notes: [
-            ...draft.notes,
-            ...supportingEvidenceNotes,
-            ...attestationPlan.warnings,
-          ],
-        },
-        nextState: ctx.memory.state ?? {},
-      };
-    }
-
-    const sourceMatch = await matchResearchDraftToPlan({
-      topic,
-      text: draft.text,
-      tags: draft.tags,
-      attestationPlan,
-      evidenceReads: prefetchedReadResults,
-    });
-
-    if (!sourceMatch.pass) {
-      return {
-        kind: "skip",
-        reason: "draft_source_match_failed",
-        facts: {
-          topic,
-          researchFamily: sourceProfile.family,
-          signalCount: signalList.length,
-          feedCount: posts.length,
-          availableBalance,
-          opportunityKind: chosenOpportunity.kind,
-          opportunityScore: chosenOpportunity.score,
-          ...derivedMetrics,
-          ...readStatus,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            feedSample,
-            signalSample,
-            leaderboardSample: leaderboardAgents.slice(0, 5),
-          },
-          selectedEvidence: {
-            matchedSignal,
-            feedMentions: matchingFeedPosts,
-            sourceProfile,
-            colonySubstrate,
-            evidenceSummary: evidenceSummaryResult.summary,
-            supportingEvidenceSummaries,
-            evidenceDelta,
-            selfHistory,
-          },
-          promptPacket: draft.promptPacket as unknown as Record<string, unknown>,
-          notes: [
-            `shared_source_match_failed: ${sourceMatch.reason}`,
-            ...draft.notes,
-            ...supportingEvidenceNotes,
-            ...attestationPlan.warnings,
-          ],
-        },
-        nextState: ctx.memory.state ?? {},
-      };
-    }
-
-    const starterPromptText = buildStarterPromptText({
-      topic,
-      family: sourceProfile.family,
-      opportunityKind: chosenOpportunity.kind,
-      score: chosenOpportunity.score,
-      portfolioScore: chosenOpportunity.portfolioScore,
-      feedCount: posts.length,
-      signalCount: signalList.length,
-      attestUrl: attestationPlan.primary.url,
-    });
-
+  const publishedAtMs = parseIsoMs(ctx.memory.state?.lastPublishedAt);
+  if (publishedAtMs != null && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS) {
     return {
-      kind: "publish",
-      category: draft.category,
-      text: draft.text,
-      attestUrl: attestationPlan.primary.url,
-      tags: draft.tags,
-      confidence: draft.confidence,
+      kind: "skip",
+      reason: "published_within_last_30m",
       facts: {
-        topic,
-        researchFamily: sourceProfile.family,
-        signalCount: signalList.length,
-        feedCount: posts.length,
-        availableBalance,
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
         opportunityKind: chosenOpportunity.kind,
-        opportunityScore: chosenOpportunity.score,
-        portfolioScore: chosenOpportunity.portfolioScore,
-        cooldownOverrideApplied: cooldownOverrideAllowed || undefined,
-        draftSource: draft.draftSource,
-        leaderboardPatternPrompt: starterPromptText,
-        ...derivedMetrics,
-        ...readStatus,
+        lastPublishedAt: ctx.memory.state?.lastPublishedAt ?? null,
+        cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
       },
-      attestationPlan,
+      attestationPlan: chosenOpportunity.attestationPlan,
       audit: {
         inputs: {
           feedSample,
@@ -1105,106 +361,385 @@ export async function observe(
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
         selectedEvidence: {
-          matchedSignal,
-          feedMentions: matchingFeedPosts,
-          sourceProfile,
-          colonySubstrate,
-          evidenceSummary: evidenceSummaryResult.summary,
-          supportingEvidenceSummaries,
-          evidenceDelta,
-          selfHistory,
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
         },
         promptPacket: {
-          ...draft.promptPacket,
-          category: draft.category,
-          draftText: draft.text,
-          qualityGate: draft.qualityGate,
-          opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
-          leaderboardPatternPrompt: starterPromptText,
-          primaryAttestUrl: attestationPlan.primary.url,
-          supportingAttestUrls: attestationPlan.supporting.map((candidate) => candidate.url),
-        },
-        notes: [
-          "This starter now persists reduced raw inputs, selected evidence, the prompt packet, and the attestation plan for operator audit.",
-          ...supportingEvidenceNotes,
-          ...attestationPlan.warnings,
-        ],
-      },
-      nextState: {
-        lastCoverageTopic: topic,
-        lastPublishedAt: ctx.cycle.startedAt,
-        topicHistory: buildNextTopicHistory(ctx.memory.state?.topicHistory ?? [], {
-          topic,
-          publishedAt: ctx.cycle.startedAt,
+          objective: "Skip repeated research publishes until the 30-minute cooldown expires.",
+          topic: chosenOpportunity.topic,
           opportunityKind: chosenOpportunity.kind,
-        }),
-        publishHistory: buildNextPublishHistory(ctx.memory.state?.publishHistory ?? [], {
-          topic,
-          family: sourceProfile.family,
-          publishedAt: ctx.cycle.startedAt,
-          opportunityKind: chosenOpportunity.kind,
-          textSnippet: snippetText(draft.text),
-          evidenceValues: evidenceSummaryResult.summary.values,
-        }),
-        lastResearchSnapshot: {
-          topic,
-          observedAt: ctx.cycle.startedAt,
-          evidenceValues: evidenceSummaryResult.summary.values,
-          derivedMetrics,
+          result: "skip",
         },
       },
+      nextState: ctx.memory.state ?? {},
     };
   }
 
-  if (deferredCooldownSkip) {
-    return deferredCooldownSkip;
+  if (!chosenOpportunity.sourceProfile.supported) {
+    return {
+      kind: "skip",
+      reason: "research_family_not_ready",
+      facts: {
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
+        sourceProfileReason: chosenOpportunity.sourceProfile.reason,
+      },
+      attestationPlan: chosenOpportunity.attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
+        },
+        promptPacket: {
+          objective: "Only publish when the topic maps cleanly to a supported research family.",
+          topic: chosenOpportunity.topic,
+          opportunityKind: chosenOpportunity.kind,
+          result: "skip",
+        },
+      },
+      nextState: ctx.memory.state ?? {},
+    };
   }
 
-  if (deferredRepeatSkip) {
-    return deferredRepeatSkip;
+  if (!chosenOpportunity.attestationPlan.ready || !chosenOpportunity.attestationPlan.primary) {
+    return {
+      kind: "skip",
+      reason: "attestation_plan_not_ready",
+      facts: {
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
+        opportunityKind: chosenOpportunity.kind,
+        opportunityScore: chosenOpportunity.score,
+      },
+      attestationPlan: chosenOpportunity.attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
+        },
+        promptPacket: {
+          objective: "Only publish when the claim has a viable primary attestation source.",
+          topic: chosenOpportunity.topic,
+          opportunityKind: chosenOpportunity.kind,
+          result: "skip",
+          attestationPlanReady: chosenOpportunity.attestationPlan.ready,
+        },
+        notes: chosenOpportunity.attestationPlan.warnings,
+      },
+      nextState: ctx.memory.state ?? {},
+    };
   }
+
+  const colonySubstrate = buildResearchColonySubstrate({
+    opportunity: chosenOpportunity,
+    allPosts: posts,
+  });
+
+  const evidenceReads = await Promise.allSettled([
+    fetchResearchEvidenceSummary({
+      source: chosenOpportunity.attestationPlan.primary,
+      topic: chosenOpportunity.topic,
+    }),
+    ...chosenOpportunity.attestationPlan.supporting.map((source) =>
+      fetchResearchEvidenceSummary({
+        source,
+        topic: chosenOpportunity.topic,
+      })),
+  ]);
+
+  const prefetchedReadResults = evidenceReads.flatMap((entry) =>
+    entry.status === "fulfilled" ? [entry.value] : []);
+  const primaryEvidenceRead = evidenceReads[0];
+  const supportingEvidenceReads = evidenceReads.slice(1);
+  const evidenceSummaryResult = primaryEvidenceRead?.status === "fulfilled"
+    ? primaryEvidenceRead.value
+    : {
+        ok: false as const,
+        reason: "fetch_failed" as const,
+        note: primaryEvidenceRead?.status === "rejected"
+          ? `Primary evidence fetch failed for ${chosenOpportunity.attestationPlan.primary.name}: ${String(primaryEvidenceRead.reason)}`
+          : `Primary evidence fetch failed for ${chosenOpportunity.attestationPlan.primary.name}.`,
+      };
+  const supportingEvidenceSummaries = supportingEvidenceReads.flatMap((entry) =>
+    entry.status === "fulfilled" && entry.value.ok ? [entry.value.summary] : []);
+  const supportingEvidenceNotes = supportingEvidenceReads.flatMap((entry, index) => {
+    const source = chosenOpportunity.attestationPlan.supporting[index];
+    if (!source) return [];
+    if (entry.status === "rejected") {
+      return [`Supporting evidence fetch failed for ${source.name}: ${String(entry.reason)}`];
+    }
+    if (!entry.value.ok) {
+      return [`Supporting evidence fetch skipped for ${source.name}: ${entry.value.note}`];
+    }
+    return [];
+  });
+
+  if (!evidenceSummaryResult.ok) {
+    return {
+      kind: "skip",
+      reason: "evidence_summary_not_ready",
+      facts: {
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
+        opportunityKind: chosenOpportunity.kind,
+      },
+      attestationPlan: chosenOpportunity.attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
+          colonySubstrate,
+        },
+        promptPacket: {
+          objective: "Only prompt from real fetched evidence, not topic labels alone.",
+          topic: chosenOpportunity.topic,
+          opportunityKind: chosenOpportunity.kind,
+          result: "skip",
+        },
+        notes: [
+          evidenceSummaryResult.note,
+          ...supportingEvidenceNotes,
+          ...chosenOpportunity.attestationPlan.warnings,
+        ],
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
+
+  const selfHistory = buildResearchSelfHistory({
+    history: ctx.memory.state?.publishHistory ?? [],
+    topic: chosenOpportunity.topic,
+    family: chosenOpportunity.sourceProfile.family,
+    now: ctx.cycle.startedAt,
+    currentEvidenceValues: evidenceSummaryResult.summary.values,
+  });
+
+  if (selfHistory.skipSuggested) {
+    return {
+      kind: "skip",
+      reason: "recent_self_coverage_without_new_delta",
+      facts: {
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
+        opportunityKind: chosenOpportunity.kind,
+      },
+      attestationPlan: chosenOpportunity.attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
+          colonySubstrate,
+          evidenceSummary: evidenceSummaryResult.summary,
+          supportingEvidenceSummaries,
+          selfHistory,
+        },
+        promptPacket: {
+          objective: "Skip when the same research topic or family was just covered without meaningful evidence change.",
+          topic: chosenOpportunity.topic,
+          opportunityKind: chosenOpportunity.kind,
+          result: "skip",
+        },
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
+
+  const draft = await buildResearchDraft({
+    opportunity: chosenOpportunity,
+    feedCount: posts.length,
+    leaderboardCount: leaderboardAgents.length,
+    availableBalance,
+    colonySubstrate,
+    evidenceSummary: evidenceSummaryResult.summary,
+    supportingEvidenceSummaries,
+    selfHistory,
+    llmProvider: ctx.omni.runtime.llmProvider,
+    minTextLength: 200,
+  });
+
+  if (!draft.ok) {
+    return {
+      kind: "skip",
+      reason: draft.reason,
+      facts: {
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
+        opportunityKind: chosenOpportunity.kind,
+        opportunityScore: chosenOpportunity.score,
+      },
+      attestationPlan: chosenOpportunity.attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
+          colonySubstrate,
+          evidenceSummary: evidenceSummaryResult.summary,
+          supportingEvidenceSummaries,
+          selfHistory,
+        },
+        promptPacket: draft.promptPacket as unknown as Record<string, unknown>,
+        notes: [
+          ...draft.notes,
+          ...supportingEvidenceNotes,
+          ...chosenOpportunity.attestationPlan.warnings,
+        ],
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
+
+  const sourceMatch = await matchResearchDraftToPlan({
+    topic: chosenOpportunity.topic,
+    text: draft.text,
+    tags: draft.tags,
+    attestationPlan: chosenOpportunity.attestationPlan,
+    evidenceReads: prefetchedReadResults,
+  });
+
+  if (!sourceMatch.pass) {
+    return {
+      kind: "skip",
+      reason: "draft_source_match_failed",
+      facts: {
+        topic: chosenOpportunity.topic,
+        researchFamily: chosenOpportunity.sourceProfile.family,
+        opportunityKind: chosenOpportunity.kind,
+      },
+      attestationPlan: chosenOpportunity.attestationPlan,
+      audit: {
+        inputs: {
+          feedSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
+        selectedEvidence: {
+          matchedSignal: chosenOpportunity.matchedSignal,
+          feedMentions: chosenOpportunity.matchingFeedPosts,
+          sourceProfile: chosenOpportunity.sourceProfile,
+          colonySubstrate,
+          evidenceSummary: evidenceSummaryResult.summary,
+          supportingEvidenceSummaries,
+          selfHistory,
+          sourceMatch,
+        },
+        promptPacket: draft.promptPacket as unknown as Record<string, unknown>,
+        notes: [
+          ...supportingEvidenceNotes,
+          ...chosenOpportunity.attestationPlan.warnings,
+        ],
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
+
+  const starterPromptText = buildStarterPromptText({
+    topic: chosenOpportunity.topic,
+    family: chosenOpportunity.sourceProfile.family,
+    opportunityKind: chosenOpportunity.kind,
+    score: chosenOpportunity.score,
+    feedCount: posts.length,
+    signalCount: signalEntries.length,
+    attestUrl: chosenOpportunity.attestationPlan.primary.url,
+  });
 
   return {
-    kind: "skip",
-    reason: "no_publishable_research_opportunity",
+    kind: "publish",
+    category: draft.category,
+    text: draft.text,
+    attestUrl: chosenOpportunity.attestationPlan.primary.url,
+    tags: draft.tags,
+    confidence: draft.confidence,
     facts: {
-      signalCount: signalList.length,
-      feedCount: posts.length,
+      topic: chosenOpportunity.topic,
+      researchFamily: chosenOpportunity.sourceProfile.family,
+      opportunityKind: chosenOpportunity.kind,
+      opportunityScore: chosenOpportunity.score,
+      draftSource: draft.draftSource,
       availableBalance,
-      ...derivedMetrics,
-      ...readStatus,
+      leaderboardPatternPrompt: starterPromptText,
     },
+    attestationPlan: chosenOpportunity.attestationPlan,
     audit: {
       inputs: {
         feedSample,
         signalSample,
         leaderboardSample: leaderboardAgents.slice(0, 5),
       },
-      promptPacket: {
-        objective: "Find a publishable research opportunity grounded in current signals, feed drift, and attestation viability.",
-        derivedMetrics,
-        opportunityFrontier: summarizeOpportunityFrontier(opportunityFrontier),
-        readStatus,
-        result: "skip",
+      selectedEvidence: {
+        matchedSignal: chosenOpportunity.matchedSignal,
+        feedMentions: chosenOpportunity.matchingFeedPosts,
+        sourceProfile: chosenOpportunity.sourceProfile,
+        colonySubstrate,
+        evidenceSummary: evidenceSummaryResult.summary,
+        supportingEvidenceSummaries,
+        selfHistory,
+        sourceMatch,
       },
+      promptPacket: {
+        ...draft.promptPacket,
+        category: draft.category,
+        draftText: draft.text,
+        qualityGate: draft.qualityGate,
+        leaderboardPatternPrompt: starterPromptText,
+        primaryAttestUrl: chosenOpportunity.attestationPlan.primary.url,
+        supportingAttestUrls: chosenOpportunity.attestationPlan.supporting.map((candidate) => candidate.url),
+      },
+      notes: [
+        "The simple research starter persists reduced raw inputs, selected evidence, the prompt packet, and the attestation plan for operator audit.",
+        "Move to assets/research-agent-runtime.ts only when the simple loop is already working and you need heavier frontier ranking or evidence-history logic.",
+        ...supportingEvidenceNotes,
+        ...chosenOpportunity.attestationPlan.warnings,
+      ],
     },
-    nextState: ctx.memory.state ?? {},
+    nextState: {
+      lastCoverageTopic: chosenOpportunity.topic,
+      lastPublishedAt: ctx.cycle.startedAt,
+      topicHistory: buildNextTopicHistory(ctx.memory.state?.topicHistory ?? [], {
+        topic: chosenOpportunity.topic,
+        publishedAt: ctx.cycle.startedAt,
+        opportunityKind: chosenOpportunity.kind,
+      }),
+      publishHistory: buildNextPublishHistory(ctx.memory.state?.publishHistory ?? [], {
+        topic: chosenOpportunity.topic,
+        family: chosenOpportunity.sourceProfile.family,
+        publishedAt: ctx.cycle.startedAt,
+        opportunityKind: chosenOpportunity.kind,
+        textSnippet: snippetText(draft.text),
+        evidenceValues: evidenceSummaryResult.summary.values,
+      }),
+    },
   };
-}
-
-function buildNextTopicHistory(
-  previous: Array<{ topic: string; publishedAt: string; opportunityKind: string }>,
-  nextEntry: { topic: string; publishedAt: string; opportunityKind: string },
-): Array<{ topic: string; publishedAt: string; opportunityKind: string }> {
-  const deduped = previous.filter((entry) => entry.topic !== nextEntry.topic);
-  return [nextEntry, ...deduped].slice(0, MAX_TOPIC_HISTORY);
-}
-
-function buildNextPublishHistory(
-  previous: ResearchPublishHistoryEntry[],
-  nextEntry: ResearchPublishHistoryEntry,
-): ResearchPublishHistoryEntry[] {
-  return [nextEntry, ...previous].slice(0, 20);
 }
 
 function unwrapReadResult<T extends { ok?: boolean }>(
@@ -1274,6 +809,27 @@ function extractAvailableBalance(balance: unknown): number {
   return 0;
 }
 
+function buildNextTopicHistory(
+  previous: Array<{ topic: string; publishedAt: string; opportunityKind: string }>,
+  nextEntry: { topic: string; publishedAt: string; opportunityKind: string },
+): Array<{ topic: string; publishedAt: string; opportunityKind: string }> {
+  const deduped = previous.filter((entry) => entry.topic !== nextEntry.topic);
+  return [nextEntry, ...deduped].slice(0, MAX_TOPIC_HISTORY);
+}
+
+function buildNextPublishHistory(
+  previous: ResearchPublishHistoryEntry[],
+  nextEntry: ResearchPublishHistoryEntry,
+): ResearchPublishHistoryEntry[] {
+  return [nextEntry, ...previous].slice(0, 20);
+}
+
+function parseIsoMs(value: string | undefined): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   return String(error);
@@ -1284,16 +840,13 @@ function snippetText(text: string, maxLength: number = 220): string {
   if (normalized.length <= maxLength) return normalized;
   return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
 }
+
 if (isMainModule()) {
   await runMinimalAgentLoop(observe, {
     intervalMs: 15 * 60_000,
     dryRun: true,
   });
 }
-
-// Before enabling live writes, run check-attestation-workflow.ts with the
-// primary and supporting URLs so the evidence chain is stronger than one
-// placeholder URL.
 
 function isMainModule(): boolean {
   const entry = process.argv[1];

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildResearchOpportunityFrontier,
   observe,
-} from "../../packages/omniweb-toolkit/assets/research-agent-starter.ts";
+} from "../../packages/omniweb-toolkit/assets/research-agent-runtime.ts";
 
 const originalFetch = globalThis.fetch;
 

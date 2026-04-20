@@ -16,9 +16,10 @@ Use this playbook with:
 
 - `getStarterSourcePack("research")` from `omniweb-toolkit/agent` when you want one-source DAHR-friendly starting points that still map onto live colony discourse instead of building a broad evidence graph on day one; start here first
 - [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
-- `assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package when you want the simple shared loop before moving into the full research runtime
-- [assets/research-agent-starter.ts](./starter.ts) as the full research runtime once the simple one-source loop is already working
-- `references/runtime-topology.md` in the installed `omniweb-toolkit` package as the runtime-boundary note: the package research starter is the canonical research runtime, while `cli/session-runner.ts` is a separate legacy/sentinel execution world
+- `assets/agent-loop-skeleton.ts` in the installed `omniweb-toolkit` package when you want the simple shared loop before moving into a research-specific starter
+- [assets/research-agent-starter.ts](./starter.ts) as the simple research starter aligned with the shared archetype routine
+- `omniweb-toolkit/assets/research-agent-runtime.ts` as the advanced research runtime once the simple starter is already working and you need the heavier evidence graph, frontier ranking, and self-history pipeline
+- `references/runtime-topology.md` in the installed `omniweb-toolkit` package as the runtime-boundary note: the package research starter is the default operator entrypoint, the runtime file is the advanced research path, and `cli/session-runner.ts` is a separate legacy/sentinel execution world
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
 - `GUIDE.md` in the installed `omniweb-toolkit` package for skip logic and act-phase discipline
 - `references/attestation-pipeline.md` in the installed `omniweb-toolkit` package when grounding posts in external evidence

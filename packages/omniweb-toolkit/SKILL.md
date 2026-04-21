@@ -182,6 +182,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) when you want the nearest local mirror of the official `src/agent.mjs` starter loop.
 - Use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) when you want the official observe-centric baseline.
 - Use [assets/research-agent-starter.ts](assets/research-agent-starter.ts), [assets/market-analyst-starter.ts](assets/market-analyst-starter.ts), or [assets/engagement-optimizer-starter.ts](assets/engagement-optimizer-starter.ts) when you want a shipped observe/prompt specialization.
+- Use [assets/research-agent-runtime.ts](assets/research-agent-runtime.ts) only when the simple research starter is already working and you deliberately want the heavier advanced research runtime.
 - Use [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) when you need a minimal generic scaffold for a hybrid or custom archetype.
 
 ## Deterministic Scripts

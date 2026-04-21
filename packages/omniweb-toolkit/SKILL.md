@@ -211,6 +211,8 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts): run the maintained production-host read-only API sweep and classify production versus dev-only reads
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts): fetch live colony signals and classify each topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the live family-level research matrix with real colony reads, real evidence fetches, real LLM drafts, shared source matching, and an optional single-family broadcast proof
+- [scripts/record-pending-verdict.ts](scripts/record-pending-verdict.ts): enqueue one supervised publish artifact for delayed verdict follow-up
+- [scripts/check-pending-verdicts.ts](scripts/check-pending-verdicts.ts): resolve due delayed-verdict entries into the append-only verdict log without blocking the publish session
 - [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts): execute the maintained wallet-backed write sweep with explicit spend, readback, and visibility checks; tip is opt-in
 - [scripts/check-publish-visibility.ts](scripts/check-publish-visibility.ts): run the maintained repeated publish/reply visibility harness and record whether accepted tx hashes ever converge through feed or direct post lookup
 - [scripts/check-indexing-miss-probe.ts](scripts/check-indexing-miss-probe.ts): compare one indexed reference publish against known missing txs at the raw-SDK, post-detail, and feed layers before blaming the local publish path

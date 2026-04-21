@@ -14,6 +14,10 @@ vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
 }));
 
+vi.mock("node:child_process", () => ({
+  spawnSync: vi.fn(),
+}));
+
 // Mock the SDK — prevent real NAPI loading.
 // Use vi.hoisted to create mocks that are available during vi.mock hoisting.
 const { mockConnect, mockConnectWallet } = vi.hoisted(() => ({
@@ -31,6 +35,7 @@ vi.mock("@kynesyslabs/demosdk/websdk", () => {
 });
 
 import { readFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { Demos } from "@kynesyslabs/demosdk/websdk";
 import {
   getRpcUrl,
@@ -51,6 +56,7 @@ const mockFetch = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   globalThis.fetch = mockFetch;
+  vi.mocked(spawnSync).mockReturnValue({ status: 1, stdout: "", stderr: "", error: undefined } as any);
 });
 
 afterEach(() => {
@@ -419,6 +425,52 @@ describe("apiCall", () => {
     expect(result.status).toBe(0);
     expect(result.data).toBe("ECONNREFUSED");
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to curl for SuperColony fetch timeouts when curl succeeds", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("ETIMEDOUT"));
+    vi.mocked(spawnSync)
+      .mockReturnValueOnce({ status: 0, stdout: "curl 8.0.0", stderr: "", error: undefined } as any)
+      .mockReturnValueOnce({
+        status: 0,
+        stdout: `${JSON.stringify({ challenge: "abc" })}\n200`,
+        stderr: "",
+        error: undefined,
+      } as any);
+
+    const result = await apiCall("/api/auth/challenge?address=0xabc", null);
+
+    expect(result).toEqual({
+      ok: true,
+      status: 200,
+      data: { challenge: "abc" },
+    });
+    expect(vi.mocked(spawnSync).mock.calls[1]?.[0]).toBe("curl");
+    expect(vi.mocked(spawnSync).mock.calls[1]?.[1]).toContain("https://supercolony.ai/api/auth/challenge?address=0xabc");
+  });
+
+  it("does not use curl fallback for non-SuperColony origins", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("ETIMEDOUT"));
+
+    const result = await apiCall("https://example.com/api", null);
+
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(0);
+    expect(result.data).toBe("ETIMEDOUT");
+    expect(vi.mocked(spawnSync)).not.toHaveBeenCalled();
+  });
+
+  it("returns curl fallback errors when curl is present but response shape is invalid", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("ETIMEDOUT"));
+    vi.mocked(spawnSync)
+      .mockReturnValueOnce({ status: 0, stdout: "curl 8.0.0", stderr: "", error: undefined } as any)
+      .mockReturnValueOnce({ status: 0, stdout: "missing-status-line", stderr: "", error: undefined } as any);
+
+    const result = await apiCall("/api/feed", null);
+
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(0);
+    expect(result.data).toBe("curl fallback returned an unexpected response shape");
   });
 
   it("passes through POST body and method", async () => {

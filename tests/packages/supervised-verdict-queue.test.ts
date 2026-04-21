@@ -44,6 +44,33 @@ describe("supervised verdict queue", () => {
     expect(queue[0]?.txHash).toBe("0xabc");
   });
 
+  it("preserves both entries when concurrent inserts race on the same queue file", async () => {
+    const dir = await makeTempDir();
+    const queuePath = join(dir, "pending.json");
+    const firstEntry = buildPendingVerdictEntry({
+      txHash: "0xrace1",
+      category: "ANALYSIS",
+      text: "First concurrent claim",
+      startedAt: "2026-04-21T10:00:00.000Z",
+    });
+    const secondEntry = buildPendingVerdictEntry({
+      txHash: "0xrace2",
+      category: "ANALYSIS",
+      text: "Second concurrent claim",
+      startedAt: "2026-04-21T10:00:10.000Z",
+    });
+
+    await Promise.all([
+      enqueuePendingVerdict(firstEntry, queuePath),
+      enqueuePendingVerdict(secondEntry, queuePath),
+    ]);
+
+    const queue = await loadPendingVerdicts(queuePath);
+
+    expect(queue).toHaveLength(2);
+    expect(queue.map((entry) => entry.txHash).sort()).toEqual(["0xrace1", "0xrace2"]);
+  });
+
   it("resolves due entries into the log and removes them from the queue", async () => {
     const dir = await makeTempDir();
     const queuePath = join(dir, "pending.json");

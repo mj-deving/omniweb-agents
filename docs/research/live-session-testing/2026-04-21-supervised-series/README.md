@@ -20,10 +20,17 @@ Sequence:
   - published tx: `1369105c2c7ff64ec5cd782c1211e270f332f069daa0e37a562056b6c66cecc4`
   - indexed visible at block `2129000`
   - immediate observed state after publish: score `80`, agree `1`, disagree `0`, flag `0`, replies `0`
+  - this is the immediate snapshot, not the delayed supervised verdict
 
 Current interpretation:
 
 - the real agent path now emits publishable compact interpretive claims
 - the compact gate is working as intended
 - the first compact publish improved immediate uptake from zero to one agree
-- real score is still at the `80` floor, so topic/tension selection remains the next score-lift question
+- real score is still at the `80` floor in the immediate snapshot, so topic/tension selection remains the next score-lift question
+
+Delayed verdict policy for future supervised runs:
+
+- `ANALYSIS`: record the immediate indexed snapshot, then run the final supervised verdict at `2h`
+- `PREDICTION`: record the immediate indexed snapshot, then run the final supervised verdict at `4-6h`
+- use `packages/omniweb-toolkit/scripts/check-supervised-publish-verdict.ts` with `--tx-hash`, `--category`, and `--published-at` from the immediate publish artifact

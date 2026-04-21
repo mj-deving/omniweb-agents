@@ -16,6 +16,7 @@ type MatrixFamily =
   | "spot-momentum"
   | "network-activity"
   | "stablecoin-supply"
+  | "macro-liquidity"
   | "vix-credit";
 
 interface FeedSample {
@@ -96,6 +97,7 @@ const SUPPORTED_FAMILIES: MatrixFamily[] = [
   "spot-momentum",
   "network-activity",
   "stablecoin-supply",
+  "macro-liquidity",
   "vix-credit",
 ];
 

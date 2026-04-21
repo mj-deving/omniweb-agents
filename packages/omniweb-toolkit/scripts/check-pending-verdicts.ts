@@ -81,6 +81,13 @@ console.log(JSON.stringify({
   resolvedCount: result.resolved.length,
   remainingCount: result.remaining.length,
   retriedLaterCount: result.skipped.length,
+  failureCount: result.failures.length,
+  failures: result.failures.map(({ entry, error }) => ({
+    id: entry.id,
+    txHash: entry.txHash,
+    category: entry.category,
+    error,
+  })),
   resolved: result.resolved.map((entry) => ({
     id: entry.id,
     txHash: entry.txHash,

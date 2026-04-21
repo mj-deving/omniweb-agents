@@ -166,6 +166,7 @@ export async function resolveDuePendingVerdicts(
   const logPath = opts.logPath ?? DEFAULT_VERDICT_LOG_PATH;
   const now = opts.now ?? Date.now;
   const queue = await loadPendingVerdicts(queuePath);
+  const originalIds = new Set(queue.map((entry) => entry.id));
   const resolved: VerdictLogEntry[] = [];
   const remaining: PendingVerdictEntry[] = [];
   const skipped: PendingVerdictEntry[] = [];
@@ -200,8 +201,13 @@ export async function resolveDuePendingVerdicts(
     }
   }
 
-  await savePendingVerdicts(remaining, queuePath);
-  return { resolved, remaining, skipped };
+  const mergedRemaining = await mergePendingVerdictsWithNewEntries(
+    remaining,
+    queuePath,
+    originalIds,
+  );
+  await savePendingVerdicts(mergedRemaining, queuePath);
+  return { resolved, remaining: mergedRemaining, skipped };
 }
 
 export function buildPendingVerdictId(txHash: string, category: string): string {
@@ -222,4 +228,25 @@ function isPendingVerdictEntry(value: unknown): value is PendingVerdictEntry {
     typeof candidate.checkAt === "string" &&
     typeof candidate.checkAfterMs === "number"
   );
+}
+
+async function mergePendingVerdictsWithNewEntries(
+  remaining: PendingVerdictEntry[],
+  path: string,
+  originalIds: Set<string>,
+): Promise<PendingVerdictEntry[]> {
+  const latestQueue = await loadPendingVerdicts(path);
+  const merged = new Map<string, PendingVerdictEntry>();
+
+  for (const entry of remaining) {
+    merged.set(entry.id, entry);
+  }
+
+  for (const entry of latestQueue) {
+    if (!originalIds.has(entry.id)) {
+      merged.set(entry.id, entry);
+    }
+  }
+
+  return Array.from(merged.values());
 }

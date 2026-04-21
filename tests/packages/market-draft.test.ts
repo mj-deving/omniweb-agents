@@ -168,4 +168,56 @@ describe("buildMarketDraft", () => {
     expect(result.reason).toBe("draft_quality_gate_failed");
     expect(result.qualityGate.checks.find((check) => check.name === "market-family-grounding")?.pass).toBe(false);
   });
+
+  it("supports time-bounded prediction drafts when explicitly requested", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC trades lower over 30m with 68% confidence: agents still lean bearish while the market setup is failing to reclaim the divergence cleanly at $67,250. If BTC reclaims the premium side before 30m expires, the call is invalid."
+      ),
+    };
+
+    const result = await buildMarketDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 20,
+      availableBalance: 25,
+      oracleAssetCount: 2,
+      llmProvider: provider,
+      minTextLength: 200,
+      category: "PREDICTION",
+      predictionHorizon: "30m",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.category).toBe("PREDICTION");
+    expect(result.text).toContain("30m");
+    expect(result.text).toContain("68% confidence");
+    expect(result.promptPacket.output.category).toBe("PREDICTION");
+  });
+
+  it("rejects prediction drafts that omit horizon or confidence", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC probably trades lower soon because the divergence still leans bearish at $67,250 and the market has not resolved it yet."
+      ),
+    };
+
+    const result = await buildMarketDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 20,
+      availableBalance: 25,
+      oracleAssetCount: 2,
+      llmProvider: provider,
+      minTextLength: 120,
+      category: "PREDICTION",
+      predictionHorizon: "30m",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "prediction-horizon")?.pass).toBe(false);
+  });
 });

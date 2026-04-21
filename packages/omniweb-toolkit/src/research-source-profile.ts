@@ -6,6 +6,7 @@ export type ResearchTopicFamily =
   | "spot-momentum"
   | "network-activity"
   | "stablecoin-supply"
+  | "macro-liquidity"
   | "vix-credit"
   | "unsupported";
 
@@ -85,6 +86,26 @@ const VIX_CREDIT_TERMS = [
   "risk",
 ];
 
+const MACRO_LIQUIDITY_TERMS = [
+  "fed",
+  "walcl",
+  "balance sheet",
+  "balance-sheet",
+  "liquidity",
+  "fiscal",
+  "deficit",
+  "issuance",
+  "treasury",
+  "bill",
+  "bills",
+  "note",
+  "notes",
+  "yield",
+  "yields",
+  "rates",
+  "dollar liquidity",
+];
+
 const PRICE_TICKER_SOURCE_IDS: Partial<Record<string, string>> = {
   BTC: "binance-24hr-btc",
 };
@@ -133,6 +154,23 @@ export function deriveResearchSourceProfile(topic: string): ResearchSourceProfil
         "treasuryBillsAvgRatePct",
         "treasuryNotesAvgRatePct",
         "vixSessionChangePct",
+        "billNoteSpreadBps",
+      ],
+    };
+  }
+
+  if (containsAny(normalized, MACRO_LIQUIDITY_TERMS)) {
+    return {
+      family: "macro-liquidity",
+      topic,
+      asset: null,
+      supported: true,
+      reason: null,
+      primarySourceIds: ["treasury-interest-rates"],
+      supportingSourceIds: [],
+      expectedMetrics: [
+        "treasuryBillsAvgRatePct",
+        "treasuryNotesAvgRatePct",
         "billNoteSpreadBps",
       ],
     };

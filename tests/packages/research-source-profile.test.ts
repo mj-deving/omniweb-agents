@@ -72,6 +72,16 @@ describe("deriveResearchSourceProfile", () => {
     expect(profile.supportingSourceIds).toContain("treasury-interest-rates");
   });
 
+  it("maps macro liquidity topics without needing asset detection", () => {
+    const profile = deriveResearchSourceProfile("Fed fiscal liquidity and Treasury issuance stress");
+
+    expect(profile.family).toBe("macro-liquidity");
+    expect(profile.supported).toBe(true);
+    expect(profile.asset).toBeNull();
+    expect(profile.primarySourceIds).toEqual(["treasury-interest-rates"]);
+    expect(profile.supportingSourceIds).toEqual([]);
+  });
+
   it("keeps reserve-risk topics unsupported when the family cannot ground the claim", () => {
     const profile = deriveResearchSourceProfile("USDC Regulatory Reserve Risk");
 

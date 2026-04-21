@@ -27,6 +27,7 @@ const SUPPORTED_RESEARCH_FAMILIES: SupportedResearchTopicFamily[] = [
   "spot-momentum",
   "etf-flows",
   "network-activity",
+  "macro-liquidity",
   "vix-credit",
 ];
 

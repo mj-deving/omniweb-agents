@@ -439,6 +439,158 @@ describe("fetchResearchEvidenceSummary", () => {
     expect(result.summary.semanticClass).toBe("network");
   });
 
+  it("extracts a topic-matched row from CoinGecko coins/markets arrays", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: "wrapped-bitcoin",
+            symbol: "wbtc",
+            name: "Wrapped Bitcoin",
+            current_price: 75507,
+            market_cap: 8961207045,
+            total_volume: 222019562,
+            high_24h: 76595,
+            low_24h: 74825,
+            price_change_percentage_24h: -0.23219,
+          },
+          {
+            id: "stacks",
+            symbol: "stx",
+            name: "Stacks",
+            current_price: 1.84,
+            market_cap: 2800000000,
+            total_volume: 110000000,
+            high_24h: 1.92,
+            low_24h: 1.8,
+            price_change_percentage_24h: 1.4,
+          },
+        ]),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=wrapped-bitcoin,stacks", {
+        sourceId: "feed-attested-generic",
+        name: "feed-attested-coingecko-markets",
+        provider: "generic",
+      }),
+      topic: "Wrapped Bitcoin liquidity is diverging from the rest of the wrapped BTC stack",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      assetId: "wrapped-bitcoin",
+      assetSymbol: "WBTC",
+      assetName: "Wrapped Bitcoin",
+      currentPriceUsd: "75507",
+      marketCapUsd: "8961207045",
+      volume24hUsd: "222019562",
+      high24hUsd: "76595",
+      low24hUsd: "74825",
+      priceChangePct24h: "-0.23219",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      tradingRangeWidthUsd24h: "1770",
+      marketCapVolumeRatio: "40.36",
+    });
+    expect(result.summary.semanticClass).toBe("market");
+  });
+
+  it("rejects CoinGecko coins/markets arrays when the topic does not match any row", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: "wrapped-bitcoin",
+            symbol: "wbtc",
+            name: "Wrapped Bitcoin",
+            current_price: 75507,
+            market_cap: 8961207045,
+            total_volume: 222019562,
+            high_24h: 76595,
+            low_24h: 74825,
+            price_change_percentage_24h: -0.23219,
+          },
+        ]),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=wrapped-bitcoin", {
+        sourceId: "feed-attested-generic",
+        name: "feed-attested-coingecko-markets",
+        provider: "generic",
+      }),
+      topic: "Lightning capacity is growing while wallet UX still lags",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("no_usable_values");
+  });
+
+  it("extracts a topic-matched protocol row from DefiLlama /protocols arrays", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: "other",
+            name: "Other Protocol",
+            symbol: "OTHER",
+            slug: "other-protocol",
+            category: "DEX",
+            tvl: 120000000,
+            change_1d: 3.5,
+            change_7d: 9.2,
+            mcap: 80000000,
+          },
+          {
+            id: "buidl",
+            name: "BlackRock BUIDL",
+            symbol: "BUIDL",
+            slug: "blackrock-buidl",
+            category: "RWA",
+            tvl: 500000000,
+            change_1d: 4.2,
+            change_7d: 1.1,
+            mcap: 520000000,
+          },
+        ]),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://api.llama.fi/protocols", {
+        sourceId: "feed-attested-generic",
+        name: "feed-attested-defillama-protocols",
+        provider: "generic",
+      }),
+      topic: "BlackRock BUIDL TVL keeps rising while tokenized treasury demand broadens",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      protocolName: "BlackRock BUIDL",
+      protocolSymbol: "BUIDL",
+      category: "RWA",
+      tvlUsd: "500000000",
+      change1dPct: "4.2",
+      change7dPct: "1.1",
+      mcapUsd: "520000000",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      tvlMomentumDeltaPct: "3.1",
+      mcapToTvlRatio: "1.04",
+    });
+    expect(result.summary.semanticClass).toBe("liquidity");
+  });
+
   it("fails when no usable numeric values are present", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(

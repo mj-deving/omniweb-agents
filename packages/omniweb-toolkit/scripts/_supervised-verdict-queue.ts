@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { REPO_ROOT } from "./_shared.ts";
 
@@ -20,6 +20,8 @@ export const DEFAULT_VERDICT_LOG_PATH = resolve(
 
 const DEFAULT_ANALYSIS_DELAY_MS = 2 * 60 * 60 * 1000;
 const DEFAULT_PREDICTION_DELAY_MS = 4 * 60 * 60 * 1000;
+const DEFAULT_QUEUE_LOCK_TIMEOUT_MS = 5_000;
+const DEFAULT_QUEUE_LOCK_RETRY_MS = 50;
 
 export interface PendingVerdictEntry {
   version: 1;
@@ -141,14 +143,16 @@ export async function enqueuePendingVerdict(
   entry: PendingVerdictEntry,
   path = DEFAULT_PENDING_VERDICT_PATH,
 ): Promise<{ entry: PendingVerdictEntry; inserted: boolean; queue: PendingVerdictEntry[] }> {
-  const queue = await loadPendingVerdicts(path);
-  const existing = queue.find((candidate) => candidate.id === entry.id || candidate.txHash === entry.txHash);
-  if (existing) {
-    return { entry: existing, inserted: false, queue };
-  }
-  const nextQueue = [...queue, entry];
-  await savePendingVerdicts(nextQueue, path);
-  return { entry, inserted: true, queue: nextQueue };
+  return withPendingVerdictQueueLock(path, async () => {
+    const queue = await loadPendingVerdicts(path);
+    const existing = queue.find((candidate) => candidate.id === entry.id || candidate.txHash === entry.txHash);
+    if (existing) {
+      return { entry: existing, inserted: false, queue };
+    }
+    const nextQueue = [...queue, entry];
+    await savePendingVerdicts(nextQueue, path);
+    return { entry, inserted: true, queue: nextQueue };
+  });
 }
 
 export async function appendVerdictLogEntry(
@@ -249,4 +253,34 @@ async function mergePendingVerdictsWithNewEntries(
   }
 
   return Array.from(merged.values());
+}
+
+async function withPendingVerdictQueueLock<T>(
+  path: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const lockPath = `${path}.lock`;
+  const deadline = Date.now() + DEFAULT_QUEUE_LOCK_TIMEOUT_MS;
+
+  while (true) {
+    try {
+      await mkdir(lockPath);
+      break;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "EEXIST") {
+        throw error;
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(`Timed out waiting for queue lock: ${lockPath}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, DEFAULT_QUEUE_LOCK_RETRY_MS));
+    }
+  }
+
+  try {
+    return await fn();
+  } finally {
+    await rm(lockPath, { recursive: true, force: true });
+  }
 }

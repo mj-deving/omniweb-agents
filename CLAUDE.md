@@ -113,6 +113,7 @@ After reading this file, immediately load the root `AGENTS.md`.
 - **Fix ALL review findings** — Fabric, `/simplify`, Codex. Zero skips without user approval.
 - **Before merge, read the PR review output** — CI alone is not enough. Inspect PR comments/reviews, especially `chatgpt-codex-connector[bot]`, before merging or enabling auto-merge.
 - **Session start** — read `CLAUDE.md`, then root `AGENTS.md`, then any nearer nested `AGENTS.md`, then the relevant package docs, then `bd ready`, then open PRs if overlap is likely.
+- **Multi-agent Beads sync** — when another agent may be active, run `bd dolt pull` at session start and `bd dolt push` after major bead changes or session end. If `bd dolt pull` reports the branch-selection error, repair tracking once with `cd .beads/embeddeddolt/omniweb_agents && dolt push --set-upstream origin main`.
 - **Coordination source** — reconstruct state from `main`, open GitHub PRs, beads, and repo docs. Do not depend on manual Codex-to-Claude handoff.
 - **Agent workflow** — one bead = one branch = one PR. Use GitHub PRs as the merge unit and beads as the live task ledger.
 - **Parallel agents** — use separate worktrees. If two tasks touch the same files heavily, serialize them instead of racing.

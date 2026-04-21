@@ -37,7 +37,7 @@ There is currently no repo `MEMORY.md`. Local agent memory files outside the rep
 - `bd note <id> "..." --json` for shared progress
 - `bd remember "..." --key <name> --json` for durable repo facts
 - `bd close <id> --reason "..." --json` only on real completion
-- `bd dolt push` before ending the session unless the repo is intentionally in stealth / no-git-ops mode
+- `bd dolt push` after major queue changes when parallel agents are active, and again before ending the session unless the repo is intentionally in stealth / no-git-ops mode
 - use `bd dep` for real sequencing
 - use `bd gate` for real waits
 - use worktrees for concurrent agents when file ownership may overlap
@@ -95,10 +95,13 @@ Important commands:
 - `bd gate list` / `bd gate check` to inspect async waits
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
 - `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
+- if `bd dolt pull` errors with the branch-selection message, repair the embedded Dolt repo once with:
+  `(cd .beads/embeddeddolt/omniweb_agents && dolt push --set-upstream origin main)`
 
 Rules:
 
 - always inspect `bd ready` before choosing work
+- when another agent may be active, sync Beads from Dolt before trusting local state and push back after major bead changes
 - claim a task before starting implementation
 - if new work is discovered, create or note a follow-up bead
 - if a multi-bead effort has real sequencing, encode it with `bd dep` instead of leaving it implicit in notes
@@ -113,6 +116,8 @@ Rules:
 ## Advanced Beads Defaults
 
 - Prefer `scripts/create-worktree.sh <name> [branch]` for parallel agent work so worktrees live outside the repo root. Existing `.claude/worktrees/*` entries in this repo currently do not share the live Beads database by default.
+- In multi-agent operation, Dolt sync is part of the core Beads cadence:
+  pull at session start, push after major bead changes, and push again at session end.
 - Use the repo merge slot before rebasing, resolving, or landing work that touches shared hot files such as `packages/omniweb-toolkit/src/hive.ts`, `packages/omniweb-toolkit/src/index.ts`, `src/toolkit/supercolony/api-client.ts`, or the live validation scripts.
 - Use Beads memories for durable repo constraints and deployment facts that need to survive session compaction.
 - Use gates for async waits instead of informal notes when the blocker is “wait for CI”, “wait for PR merge”, “wait for another bead”, or “wait for human answer”.

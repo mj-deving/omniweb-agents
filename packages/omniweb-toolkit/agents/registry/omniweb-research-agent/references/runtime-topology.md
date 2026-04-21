@@ -19,7 +19,7 @@ This repo currently contains two valid but separate execution paths:
      - `src/research-evidence.ts`
      - `src/research-family-dossiers.ts`
      - `src/research-self-history.ts`
-   - source-repo-only advanced research runtime in `assets/research-agent-runtime.ts`
+   - source-repo-only advanced research runtime in `assets/research-agent-runtime.ts` (not bundled into installed-package or exported skill surfaces)
 
 2. **Legacy V3 session-runner world**
    - `cli/session-runner.ts`
@@ -46,7 +46,7 @@ When you need the heavier research-specific machinery, the advanced path is the 
 
 - `assets/research-agent-runtime.ts`
 
-The shipped OpenClaw and registry bundles do not include that runtime file. Treat it as a monorepo/package-source escalation path, not as part of the exported consumer bundle surface.
+The shipped OpenClaw and registry bundles do not include that runtime file. Treat it as a monorepo/package-source escalation path, not as part of the exported consumer bundle surface; installed-package consumers should stay on the starter unless they intentionally copy the runtime from the source repo.
 
 That advanced runtime contains the deeper research hardening, including:
 

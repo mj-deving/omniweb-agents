@@ -31,32 +31,31 @@ const delayMs = getOptionalPositiveInt("--delay-ms");
 
 const report = JSON.parse(await readFile(resolve(fromRun), "utf8")) as {
   checkedAt?: string;
+  startedAt?: string;
+  stateDir?: string;
+  decision?: {
+    kind?: string;
+    text?: string;
+    category?: string;
+  };
+  outcome?: {
+    status?: string;
+    txHash?: string;
+  };
   familyResults?: Array<{
     status?: string;
     draft?: { text?: string; category?: string };
     publish?: { txHash?: string };
   }>;
 };
-
-const published = (report.familyResults ?? []).filter((entry) =>
-  entry?.status === "published" &&
-  typeof entry.publish?.txHash === "string" &&
-  typeof entry.draft?.text === "string" &&
-  typeof entry.draft?.category === "string"
-);
-
-if (published.length !== 1) {
-  throw new Error(`Expected exactly one published result in ${fromRun}; found ${published.length}`);
-}
-
-const publishedEntry = published[0]!;
+const publishedEntry = extractPublishedEntry(report, fromRun);
 const pendingEntry = buildPendingVerdictEntry({
-  txHash: publishedEntry.publish!.txHash!,
-  category: publishedEntry.draft!.category!,
-  text: publishedEntry.draft!.text!,
-  startedAt: report.checkedAt ?? new Date().toISOString(),
+  txHash: publishedEntry.txHash,
+  category: publishedEntry.category,
+  text: publishedEntry.text,
+  startedAt: publishedEntry.startedAt,
   sourceRunPath: resolve(fromRun),
-  stateDir,
+  stateDir: stateDir ?? report.stateDir,
   checkAfterMs: delayMs,
 });
 
@@ -85,4 +84,58 @@ function getOptionalPositiveInt(flag: string): number | undefined {
     throw new Error(`Invalid ${flag} value: ${raw}`);
   }
   return parsed;
+}
+
+function extractPublishedEntry(
+  report: {
+    checkedAt?: string;
+    startedAt?: string;
+    decision?: { kind?: string; text?: string; category?: string };
+    outcome?: { status?: string; txHash?: string };
+    familyResults?: Array<{
+      status?: string;
+      draft?: { text?: string; category?: string };
+      publish?: { txHash?: string };
+    }>;
+  },
+  fromRunPath: string,
+): {
+  txHash: string;
+  category: string;
+  text: string;
+  startedAt: string;
+} {
+  const matrixPublished = (report.familyResults ?? []).filter((entry) =>
+    entry?.status === "published" &&
+    typeof entry.publish?.txHash === "string" &&
+    typeof entry.draft?.text === "string" &&
+    typeof entry.draft?.category === "string"
+  );
+
+  if (matrixPublished.length === 1) {
+    const published = matrixPublished[0]!;
+    return {
+      txHash: published.publish!.txHash!,
+      category: published.draft!.category!,
+      text: published.draft!.text!,
+      startedAt: report.checkedAt ?? new Date().toISOString(),
+    };
+  }
+
+  if (
+    report.outcome?.status === "published" &&
+    typeof report.outcome.txHash === "string" &&
+    report.decision?.kind === "publish" &&
+    typeof report.decision.text === "string" &&
+    typeof report.decision.category === "string"
+  ) {
+    return {
+      txHash: report.outcome.txHash,
+      category: report.decision.category,
+      text: report.decision.text,
+      startedAt: report.startedAt ?? report.checkedAt ?? new Date().toISOString(),
+    };
+  }
+
+  throw new Error(`Expected one published result in ${fromRunPath}; unable to match a supported report shape`);
 }

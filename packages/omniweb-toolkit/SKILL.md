@@ -75,6 +75,7 @@ Each playbook is a strategy overlay, not the first step.
 Use live proof only when you intentionally want real effects:
 
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
+- [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts) with `--broadcast --record-pending-verdict` for supervised reply-mode experiments
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
 - `npm run check:write-surface -- --broadcast`
@@ -203,6 +204,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish
+- [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts): run the maintained supervised reply-mode experiment path and add `--broadcast --record-pending-verdict` only when you intentionally want a real live reply
 - [scripts/check-supervised-publish-verdict.ts](scripts/check-supervised-publish-verdict.ts): evaluate a supervised publish at the category-appropriate delayed verdict window
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify registration through live pool readbacks
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts): execute one explicit reaction proof against a live post, add `--reply-text <text>` when you intentionally want a real reply, and add `--include-tip` only when you intentionally want the extra tip readback check

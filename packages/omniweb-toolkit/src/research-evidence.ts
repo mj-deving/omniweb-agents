@@ -44,9 +44,11 @@ type ResearchEvidenceSourceKind =
   | "binance-premium-index"
   | "binance-open-interest"
   | "coingecko-market-chart"
+  | "coingecko-coins-markets"
   | "coingecko-simple-price"
   | "btcetfdata-current"
   | "blockchair-stats"
+  | "defillama-protocols"
   | "defillama-stablecoins"
   | "treasury-interest-rates"
   | "cboe-vix-history"
@@ -128,6 +130,7 @@ export function classifyResearchEvidenceSemanticClass(
     sourceKind === "binance-premium-index"
     || sourceKind === "binance-open-interest"
     || sourceKind === "coingecko-market-chart"
+    || sourceKind === "coingecko-coins-markets"
     || sourceKind === "coingecko-simple-price"
     || sourceKind === "btcetfdata-current"
     || sourceKind === "cboe-vix-history"
@@ -137,6 +140,10 @@ export function classifyResearchEvidenceSemanticClass(
 
   if (sourceKind === "treasury-interest-rates") {
     return "macro";
+  }
+
+  if (sourceKind === "defillama-protocols") {
+    return "liquidity";
   }
 
   if (sourceKind === "defillama-stablecoins") {
@@ -272,6 +279,13 @@ function extractResearchEvidenceValues(
     }
   }
 
+  if (sourceKind === "coingecko-coins-markets") {
+    const marketValues = extractCoinGeckoCoinsMarketsValues(payload, topic);
+    if (Object.keys(marketValues).length > 0) {
+      return marketValues;
+    }
+  }
+
   if (sourceKind === "coingecko-simple-price") {
     const simplePriceValues = extractCoinGeckoSimplePriceValues(payload);
     if (Object.keys(simplePriceValues).length > 0) {
@@ -297,6 +311,13 @@ function extractResearchEvidenceValues(
     const stablecoinValues = extractDefiLlamaStablecoinValues(payload, topic);
     if (Object.keys(stablecoinValues).length > 0) {
       return stablecoinValues;
+    }
+  }
+
+  if (sourceKind === "defillama-protocols") {
+    const protocolValues = extractDefiLlamaProtocolValues(payload, topic);
+    if (Object.keys(protocolValues).length > 0) {
+      return protocolValues;
     }
   }
 
@@ -356,6 +377,15 @@ function isCoinGeckoMarketChartUrl(url: string): boolean {
   }
 }
 
+function isCoinGeckoCoinsMarketsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "api.coingecko.com" && parsed.pathname.includes("/coins/markets");
+  } catch {
+    return false;
+  }
+}
+
 function isCoinGeckoSimplePriceUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -379,6 +409,15 @@ function isDefiLlamaStablecoinsUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     return parsed.hostname === "stablecoins.llama.fi" && parsed.pathname === "/stablecoins";
+  } catch {
+    return false;
+  }
+}
+
+function isDefiLlamaProtocolsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "api.llama.fi" && parsed.pathname === "/protocols";
   } catch {
     return false;
   }
@@ -504,6 +543,30 @@ function extractCoinGeckoSimplePriceValues(payload: unknown): Record<string, str
   };
 }
 
+function extractCoinGeckoCoinsMarketsValues(payload: unknown, topic?: string): Record<string, string> {
+  if (!Array.isArray(payload)) {
+    return {};
+  }
+
+  const rows = payload.filter(isRecord);
+  const matching = selectCoinGeckoMarketsEntry(rows, topic);
+  if (!matching) {
+    return {};
+  }
+
+  return compactMetrics({
+    assetId: typeof matching.id === "string" ? matching.id : null,
+    assetSymbol: typeof matching.symbol === "string" ? matching.symbol.toUpperCase() : null,
+    assetName: typeof matching.name === "string" ? matching.name : null,
+    currentPriceUsd: normalizeScalarValue(matching.current_price),
+    marketCapUsd: normalizeScalarValue(matching.market_cap),
+    volume24hUsd: normalizeScalarValue(matching.total_volume),
+    high24hUsd: normalizeScalarValue(matching.high_24h),
+    low24hUsd: normalizeScalarValue(matching.low_24h),
+    priceChangePct24h: normalizeScalarValue(matching.price_change_percentage_24h),
+  });
+}
+
 function extractBtcEtfFlowValues(payload: unknown): Record<string, string> {
   if (!isRecord(payload) || !isRecord(payload.data)) {
     return {};
@@ -562,6 +625,28 @@ function extractDefiLlamaStablecoinValues(payload: unknown, topic?: string): Rec
     circulatingPrevDayUsd: formatNestedMetric(matching.circulatingPrevDay),
     circulatingPrevWeekUsd: formatNestedMetric(matching.circulatingPrevWeek),
     circulatingPrevMonthUsd: formatNestedMetric(matching.circulatingPrevMonth),
+  });
+}
+
+function extractDefiLlamaProtocolValues(payload: unknown, topic?: string): Record<string, string> {
+  if (!Array.isArray(payload)) {
+    return {};
+  }
+
+  const rows = payload.filter(isRecord);
+  const matching = selectDefiLlamaProtocolEntry(rows, topic);
+  if (!matching) {
+    return {};
+  }
+
+  return compactMetrics({
+    protocolName: typeof matching.name === "string" ? matching.name : null,
+    protocolSymbol: typeof matching.symbol === "string" ? matching.symbol.toUpperCase() : null,
+    category: typeof matching.category === "string" ? matching.category : null,
+    tvlUsd: normalizeScalarValue(matching.tvl),
+    change1dPct: normalizeScalarValue(matching.change_1d),
+    change7dPct: normalizeScalarValue(matching.change_7d),
+    mcapUsd: normalizeScalarValue(matching.mcap),
   });
 }
 
@@ -655,6 +740,10 @@ function deriveResearchMetrics(
     return deriveCoinGeckoMarketMetrics(values);
   }
 
+  if (sourceKind === "coingecko-coins-markets") {
+    return deriveCoinGeckoCoinsMarketsMetrics(values);
+  }
+
   if (sourceKind === "btcetfdata-current") {
     return deriveBtcEtfFlowMetrics(payload, values);
   }
@@ -665,6 +754,10 @@ function deriveResearchMetrics(
 
   if (sourceKind === "blockchair-stats") {
     return deriveBlockchairStatsMetrics(values);
+  }
+
+  if (sourceKind === "defillama-protocols") {
+    return deriveDefiLlamaProtocolMetrics(values);
   }
 
   if (sourceKind === "defillama-stablecoins") {
@@ -713,6 +806,13 @@ function deriveCoinGeckoMarketMetrics(values: Record<string, string>): Record<st
   });
 }
 
+function deriveCoinGeckoCoinsMarketsMetrics(values: Record<string, string>): Record<string, string> {
+  return compactMetrics({
+    tradingRangeWidthUsd24h: subtractValues(values.high24hUsd, values.low24hUsd),
+    marketCapVolumeRatio: divideValues(values.marketCapUsd, values.volume24hUsd, 2),
+  });
+}
+
 function deriveBtcEtfFlowMetrics(payload: unknown, values: Record<string, string>): Record<string, string> {
   const entries = isRecord(payload) && isRecord(payload.data)
     ? Object.values(payload.data).filter(isRecord)
@@ -756,6 +856,13 @@ function deriveBlockchairStatsMetrics(values: Record<string, string>): Record<st
 
   return compactMetrics({
     transactionsPerBlock24h: txPerBlock,
+  });
+}
+
+function deriveDefiLlamaProtocolMetrics(values: Record<string, string>): Record<string, string> {
+  return compactMetrics({
+    tvlMomentumDeltaPct: subtractValues(values.change1dPct, values.change7dPct),
+    mcapToTvlRatio: divideValues(values.mcapUsd, values.tvlUsd, 2),
   });
 }
 
@@ -815,6 +922,10 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
     return "defillama-stablecoins";
   }
 
+  if (sourceId === "defillama-protocols" || (provider === "defillama" && name.includes("protocols"))) {
+    return "defillama-protocols";
+  }
+
   if (sourceId.startsWith("blockchair-") || provider === "blockchair") {
     return "blockchair-stats";
   }
@@ -825,6 +936,10 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
 
   if (sourceId === "coingecko-42ff8c85" || (provider === "coingecko" && name.includes("market"))) {
     return "coingecko-market-chart";
+  }
+
+  if (sourceId === "coingecko-coins-markets" || (provider === "coingecko" && name.includes("coins-markets"))) {
+    return "coingecko-coins-markets";
   }
 
   if (sourceId === "coingecko-2a7ea372" || (provider === "coingecko" && name.includes("simple"))) {
@@ -843,9 +958,11 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
   if (isCboeVixUrl(source.url)) return "cboe-vix-history";
   if (isTreasuryRatesUrl(source.url)) return "treasury-interest-rates";
   if (isDefiLlamaStablecoinsUrl(source.url)) return "defillama-stablecoins";
+  if (isDefiLlamaProtocolsUrl(source.url)) return "defillama-protocols";
   if (isBlockchairStatsUrl(source.url)) return "blockchair-stats";
   if (isBtcEtfDataCurrentUrl(source.url)) return "btcetfdata-current";
   if (isCoinGeckoMarketChartUrl(source.url)) return "coingecko-market-chart";
+  if (isCoinGeckoCoinsMarketsUrl(source.url)) return "coingecko-coins-markets";
   if (isCoinGeckoSimplePriceUrl(source.url)) return "coingecko-simple-price";
   if (isBinanceOpenInterestUrl(source.url)) return "binance-open-interest";
   if (isBinancePremiumIndexUrl(source.url)) return "binance-premium-index";
@@ -876,6 +993,111 @@ function formatNestedMetric(value: unknown): string | null {
     ? String(Number(peggedUsd.toFixed(2)))
     : null;
 }
+
+function selectCoinGeckoMarketsEntry(
+  rows: Array<Record<string, unknown>>,
+  topic?: string,
+): Record<string, unknown> | null {
+  const targetSymbol = inferAssetAlias(topic ?? "")?.symbol ?? null;
+  if (targetSymbol) {
+    const matchedBySymbol = rows.find((entry) =>
+      typeof entry.symbol === "string" && entry.symbol.toUpperCase() === targetSymbol);
+    if (matchedBySymbol) return matchedBySymbol;
+  }
+
+  return selectBestTopicMatchedEntry(rows, topic, (entry) => [
+    entry.id,
+    entry.symbol,
+    entry.name,
+  ]);
+}
+
+function selectDefiLlamaProtocolEntry(
+  rows: Array<Record<string, unknown>>,
+  topic?: string,
+): Record<string, unknown> | null {
+  return selectBestTopicMatchedEntry(rows, topic, (entry) => [
+    entry.id,
+    entry.name,
+    entry.symbol,
+    entry.slug,
+  ]);
+}
+
+function matchesTopicEntry(topic: string | undefined, rawCandidates: unknown[]): boolean {
+  return scoreTopicEntryMatch(topic, rawCandidates) > 0;
+}
+
+function selectBestTopicMatchedEntry(
+  rows: Array<Record<string, unknown>>,
+  topic: string | undefined,
+  rawCandidates: (entry: Record<string, unknown>) => unknown[],
+): Record<string, unknown> | null {
+  let best: { entry: Record<string, unknown>; score: number } | null = null;
+  for (const entry of rows) {
+    const score = scoreTopicEntryMatch(topic, rawCandidates(entry));
+    if (score <= 0) continue;
+    if (!best || score > best.score) {
+      best = { entry, score };
+    }
+  }
+  return best?.entry ?? null;
+}
+
+function scoreTopicEntryMatch(topic: string | undefined, rawCandidates: unknown[]): number {
+  const normalizedTopic = normalizeTopicText(topic ?? "");
+  if (!normalizedTopic) return 0;
+  const tokens = new Set(normalizedTopic.split(/\s+/).filter(isMeaningfulTopicToken));
+  let bestScore = 0;
+
+  for (const rawCandidate of rawCandidates) {
+    if (typeof rawCandidate !== "string") continue;
+    const candidate = normalizeTopicText(rawCandidate);
+    if (!candidate) continue;
+    if (normalizedTopic.includes(candidate)) {
+      bestScore = Math.max(bestScore, 100 + candidate.length);
+      continue;
+    }
+    if (candidate.includes(normalizedTopic)) {
+      bestScore = Math.max(bestScore, 80 + normalizedTopic.length);
+      continue;
+    }
+
+    const matchedTokens = candidate.split(/\s+/).filter(isMeaningfulTopicToken).filter((token) => tokens.has(token));
+    if (matchedTokens.length > 0) {
+      bestScore = Math.max(bestScore, 10 + matchedTokens.length);
+    }
+  }
+
+  return bestScore;
+}
+
+function normalizeTopicText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isMeaningfulTopicToken(token: string): boolean {
+  if (token.length < 4) return false;
+  return !GENERIC_TOPIC_TOKENS.has(token);
+}
+
+const GENERIC_TOPIC_TOKENS = new Set([
+  "bitcoin",
+  "crypto",
+  "token",
+  "asset",
+  "price",
+  "market",
+  "chain",
+  "network",
+  "yield",
+  "value",
+  "dollar",
+  "usd",
+]);
 
 function normalizeScalarValue(value: unknown): string | null {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -955,6 +1177,15 @@ function subtractValues(left: string | undefined, right: string | undefined): st
   const b = parseNumber(right);
   if (a == null || b == null) return null;
   return String(Number((a - b).toFixed(2)));
+}
+
+function divideValues(left: string | undefined, right: string | undefined, precision: number): string | null {
+  const numerator = parseNumber(left);
+  const denominator = parseNumber(right);
+  if (numerator == null || denominator == null || denominator === 0) {
+    return null;
+  }
+  return String(Number((numerator / denominator).toFixed(precision)));
 }
 
 function percentChange(currentValue: string | undefined, previousValue: string | undefined): string | null {

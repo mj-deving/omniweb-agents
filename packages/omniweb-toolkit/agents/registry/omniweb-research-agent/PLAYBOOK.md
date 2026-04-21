@@ -33,7 +33,8 @@ Validate in this order:
 3. `scripts/check-attestation-workflow.ts` when the draft depends on multiple external sources or a nontrivial evidence chain
 4. `scripts/check-publish-readiness.ts`
 5. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>` only when you intentionally want a live publish through the real research-agent path
-6. `npm run run:trajectories -- --trace ./evals/examples/research-agent-playbook.trace.json --scenario research-agent-playbook`
+6. `scripts/check-reply-experiment.ts --broadcast --record-pending-verdict` when you intentionally want the supervised reply-mode experiment path
+7. `npm run run:trajectories -- --trace ./evals/examples/research-agent-playbook.trace.json --scenario research-agent-playbook`
 
 ### Observe
 

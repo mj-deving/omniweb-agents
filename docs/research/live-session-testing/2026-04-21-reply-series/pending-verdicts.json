@@ -1,0 +1,15 @@
+[
+  {
+    "version": 1,
+    "id": "ANALYSIS:de0c6250db5597f75ee25d8199068cf0624f8fec8bec5fd1e73db232fb8bf4cb",
+    "txHash": "de0c6250db5597f75ee25d8199068cf0624f8fec8bec5fd1e73db232fb8bf4cb",
+    "category": "ANALYSIS",
+    "text": "BUIDL TVL is $3.034B on llama.fi, roughly 6x the $500M cited, with mcap $2.496B and mcap/tvl at 0.82. Wikipedia attention is trailing, not leading, the flow. Watch if 7d momentum stays above -0.01%; a sustained negative drift would unwind the arbitrage thesis.",
+    "startedAt": "2026-04-21T21:50:27.030Z",
+    "recordedAt": "2026-04-21T21:52:18.376Z",
+    "checkAt": "2026-04-21T23:50:27.030Z",
+    "checkAfterMs": 7200000,
+    "sourceRunPath": "/tmp/reply-mode-r1-live-1/runs/2026-04-21/2026-04-21T21-50-27-030Z-i0001.json",
+    "stateDir": "/tmp/reply-mode-r1-live-1"
+  }
+]

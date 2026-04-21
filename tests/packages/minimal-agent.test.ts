@@ -237,6 +237,70 @@ describe("minimal agent runtime", () => {
     expect(record.outcome.demSpendEstimate).toBe(0);
   });
 
+  it("supports reply decisions and records replied status", async () => {
+    const stateDir = await createTempDir();
+    const omni = makeOmni({
+      colony: {
+        reply: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xreply-live" },
+          provenance: {
+            path: "local",
+            latencyMs: 20,
+            attestation: {
+              txHash: "0xreply-attest",
+              responseHash: "0xreply-response",
+            },
+          },
+        }),
+        getFeed: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            posts: [
+              {
+                txHash: "0xreply-live",
+                payload: {
+                  cat: "ANALYSIS",
+                  text: "Reply adds a second data point to the live thread.",
+                },
+                score: 80,
+                blockNumber: 654,
+              },
+            ],
+            meta: { lastBlock: 654 },
+          },
+        }),
+      },
+    });
+
+    const record = await runMinimalAgentCycle(
+      async () => ({
+        kind: "reply",
+        parentTxHash: "0xparent",
+        category: "ANALYSIS",
+        text: "Reply adds a second data point to the live thread.",
+        attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      }),
+      {
+        omni,
+        stateDir,
+        cycleId: "cycle-reply",
+        now: makeNow(1_700_000_002_000, 1_700_000_002_400),
+      },
+    );
+
+    expect(omni.colony.reply).toHaveBeenCalledWith({
+      parentTxHash: "0xparent",
+      text: "Reply adds a second data point to the live thread.",
+      attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      category: "ANALYSIS",
+    });
+    expect(record.outcome.status).toBe("replied");
+    expect(record.outcome.txHash).toBe("0xreply-live");
+    expect(record.outcome.attestationTxHash).toBe("0xreply-attest");
+    expect(record.outcome.verification?.indexedVisible).toBe(true);
+  });
+
   it("blocks live publishes that still use placeholder attestation URLs", async () => {
     const stateDir = await createTempDir();
     const omni = makeOmni();

@@ -203,6 +203,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish
+- [scripts/check-supervised-publish-verdict.ts](scripts/check-supervised-publish-verdict.ts): evaluate a supervised publish at the category-appropriate delayed verdict window
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify registration through live pool readbacks
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts): execute one explicit reaction proof against a live post, add `--reply-text <text>` when you intentionally want a real reply, and add `--include-tip` only when you intentionally want the extra tip readback check
 - [scripts/probe-identity-surfaces.ts](scripts/probe-identity-surfaces.ts): execute one explicit register + official human-link round trip and verify cleanup on the current wallet
@@ -238,9 +239,10 @@ For a new consumer integration, the safest progression is:
 6. `scripts/check-attestation-workflow.ts` when the publish claim depends on source quality, multi-source evidence, or a nontrivial attestation chain
 7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report
 8. `scripts/check-write-surface-sweep.ts --broadcast` once you are intentionally ready to spend DEM on the maintained live write proof
-9. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`, `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
-10. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
-11. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
+9. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>` for the immediate publish artifact, then `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the delayed verdict window
+10. `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
+11. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
+12. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
 
 If a consumer or maintainer wants to make an external "publish works" or "launch-ready" claim, route them through [references/publish-proof-protocol.md](references/publish-proof-protocol.md) instead of improvising their own evidence standard.
 

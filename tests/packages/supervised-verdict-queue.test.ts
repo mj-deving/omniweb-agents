@@ -115,6 +115,50 @@ describe("supervised verdict queue", () => {
     expect(queue).toHaveLength(1);
   });
 
+  it("preserves entries enqueued while due verdicts are resolving", async () => {
+    const dir = await makeTempDir();
+    const queuePath = join(dir, "pending.json");
+    const logPath = join(dir, "verdicts.jsonl");
+    const dueEntry = buildPendingVerdictEntry({
+      txHash: "0xdue",
+      category: "ANALYSIS",
+      text: "Due claim",
+      startedAt: "2026-04-21T10:00:00.000Z",
+    });
+    const newEntry = buildPendingVerdictEntry({
+      txHash: "0xnew",
+      category: "ANALYSIS",
+      text: "New claim",
+      startedAt: "2026-04-21T11:00:00.000Z",
+    });
+    await enqueuePendingVerdict(dueEntry, queuePath);
+
+    const result = await resolveDuePendingVerdicts({
+      queuePath,
+      logPath,
+      now: () => Date.parse("2026-04-21T12:30:00.000Z"),
+      resolveEntry: async () => {
+        await enqueuePendingVerdict(newEntry, queuePath);
+        return {
+          checkedAt: "2026-04-21T12:30:05.000Z",
+          verdict: {
+            verification: {
+              indexedVisible: false,
+            },
+          },
+        };
+      },
+    });
+
+    const queue = await loadPendingVerdicts(queuePath);
+
+    expect(result.resolved).toHaveLength(1);
+    expect(result.remaining).toHaveLength(1);
+    expect(result.remaining[0]?.txHash).toBe("0xnew");
+    expect(queue).toHaveLength(1);
+    expect(queue[0]?.txHash).toBe("0xnew");
+  });
+
   it("appends verdict log entries as JSONL", async () => {
     const dir = await makeTempDir();
     const logPath = join(dir, "verdicts.jsonl");

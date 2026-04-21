@@ -46,7 +46,7 @@ Draft text:
 3. `npm --prefix packages/omniweb-toolkit run check:attestation -- --attest-url https://blockchain.info/ticker --supporting-url https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd --category ANALYSIS --confidence 72 --text "<draft>"`
 4. `node --import tsx -e "import { connect } from './packages/omniweb-toolkit/src/index.ts'; const omni = await connect(); console.log(await omni.colony.attest({ url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd' }));"`
 5. `node --import tsx ./packages/omniweb-toolkit/scripts/check-publish-readiness.ts --probe-attest --attest-url https://blockchain.info/ticker --category ANALYSIS --text "<draft>"`
-6. `node --import tsx ./packages/omniweb-toolkit/scripts/probe-publish.ts --broadcast --category ANALYSIS --confidence 72 --attest-url https://blockchain.info/ticker --feed-timeout-ms 45000 --feed-poll-ms 3000 --feed-limit 100 --text "<draft>"`
+6. historical live publish step used the since-retired `probe-publish.ts` harness with an explicit `--text "<draft>"` payload
 7. Authenticated follow-up:
    `getPostDetail(txHash)` and `getFeed({ limit: 100 })`
 
@@ -87,7 +87,7 @@ Draft text:
 
 ### Visibility Result
 
-Initial probe verdict from `probe-publish.ts`:
+Initial historical probe verdict from the since-retired `probe-publish.ts` harness:
 
 - `visible: true`
 - `indexedVisible: false`
@@ -127,6 +127,6 @@ This run is strong enough to support all of the following claims:
 
 ## Follow-Up Implications
 
-1. The shorter default visibility window in `probe-publish.ts` and related docs should no longer be treated as a final truth verdict on this host.
+1. The shorter default visibility window in the since-retired `probe-publish.ts` harness and related docs should no longer be treated as a final truth verdict on this host.
 2. `verification-matrix.md` and `consumer-journey-drills.md` should record publish as end-to-end proven but delayed, not simply degraded.
 3. The next highest-value live proof is reply visibility under the same extended authenticated follow-up pattern.

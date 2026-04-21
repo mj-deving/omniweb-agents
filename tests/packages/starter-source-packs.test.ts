@@ -42,4 +42,9 @@ describe("starter source packs", () => {
     pack.entries.pop();
     expect(getStarterSourcePack("market").entries).toHaveLength(6);
   });
+
+  it("includes Treasury rates in the research starter pack", () => {
+    const research = getStarterSourcePack("research");
+    expect(research.entries.some((entry) => entry.sourceId === "treasury-interest-rates")).toBe(true);
+  });
 });

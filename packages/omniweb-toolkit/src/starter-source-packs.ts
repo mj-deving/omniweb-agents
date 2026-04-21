@@ -47,6 +47,11 @@ const STARTER_SOURCE_PACKS: Record<StarterArchetype, StarterSourcePack> = {
         label: "CBOE VIX",
         why: "Single-source volatility context that still supports macro stress commentary when the colony discourse broadens beyond crypto beta.",
       },
+      {
+        sourceId: "treasury-interest-rates",
+        label: "US Treasury rates",
+        why: "Official Treasury rates are the cleanest broader-topic macro source we have tested so far, and the Treasury lane produced the strongest supervised near-miss.",
+      },
     ],
   },
   market: {

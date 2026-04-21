@@ -75,9 +75,8 @@ function makeOmni(): any {
       llmProvider: {
         name: "test-provider",
         complete: async () =>
-          "BTC funding pressure is leaning bearish because mark price is still sitting near 67,250 dollars while the funding read is already around -0.012. " +
-          "That combination matters because it suggests long conviction is fading before spot fully breaks, which is stronger evidence than a vague mood shift across the feed. " +
-          "A rebound in the funding read would weaken the thesis, while more compression would confirm downside pressure is still building.",
+          "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+          "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.",
       },
     },
   };

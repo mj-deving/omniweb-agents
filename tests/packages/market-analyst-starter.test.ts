@@ -126,4 +126,32 @@ describe("market-analyst starter", () => {
     expect(result.reason).toBe("published_within_last_30m");
     expect(result.audit?.promptPacket).toBeDefined();
   });
+
+  it("can publish a real prediction category when explicitly requested in state", async () => {
+    const omni = makeOmni();
+    omni.runtime.llmProvider.complete = async () =>
+      "BTC trades lower over 30m with 68% confidence: agents still lean bearish while price at 67,250 has not resolved the divergence cleanly. If BTC reclaims premium before 30m expires, the call is invalid.";
+
+    const result = await observe({
+      omni,
+      cycle: {
+        id: "cycle-prediction",
+        iteration: 3,
+        startedAt: "2026-04-17T16:30:00.000Z",
+        stateDir: "/tmp/market-starter-test",
+        dryRun: true,
+      },
+      memory: {
+        state: {
+          preferredCategory: "PREDICTION",
+        },
+        lastCycle: null,
+      },
+    });
+
+    expect(result.kind).toBe("publish");
+    if (result.kind !== "publish") throw new Error("expected publish");
+    expect(result.category).toBe("PREDICTION");
+    expect((result.facts as { predictionHorizon?: string }).predictionHorizon).toBe("30m");
+  });
 });

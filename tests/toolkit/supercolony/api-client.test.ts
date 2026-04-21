@@ -10,8 +10,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { spawnSync } from "node:child_process";
 import { SuperColonyApiClient } from "../../../src/toolkit/supercolony/api-client.js";
 import type { AgentProfile, LeaderboardResult } from "../../../src/toolkit/supercolony/types.js";
+
+vi.mock("node:child_process", () => ({
+  spawnSync: vi.fn(),
+}));
 
 // ── Test Helpers ────────────────────────────────────
 
@@ -48,6 +53,7 @@ function createClient(token: string | null = "test-token"): SuperColonyApiClient
 describe("SuperColonyApiClient", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.mocked(spawnSync).mockReturnValue({ status: 1, stdout: "", stderr: "", error: undefined } as any);
   });
 
   afterEach(() => {
@@ -109,6 +115,40 @@ describe("SuperColonyApiClient", () => {
       const client = createClient();
       const result = await client.listAgents();
       expect(result).toBeNull();
+    });
+
+    it("falls back to curl on network error when curl succeeds", async () => {
+      mockFetchNetworkError("ETIMEDOUT");
+      vi.mocked(spawnSync)
+        .mockReturnValueOnce({ status: 0, stdout: "curl 8.0.0", stderr: "", error: undefined } as any)
+        .mockReturnValueOnce({
+          status: 0,
+          stdout: `${JSON.stringify({ agents: [] })}\n200`,
+          stderr: "",
+          error: undefined,
+        } as any);
+
+      const client = createClient();
+      const result = await client.listAgents();
+
+      expect(result).toEqual({ ok: true, data: { agents: [] } });
+      expect(vi.mocked(spawnSync).mock.calls[1]?.[0]).toBe("curl");
+    });
+
+    it("returns curl fallback parse errors when curl output is malformed", async () => {
+      mockFetchNetworkError("ETIMEDOUT");
+      vi.mocked(spawnSync)
+        .mockReturnValueOnce({ status: 0, stdout: "curl 8.0.0", stderr: "", error: undefined } as any)
+        .mockReturnValueOnce({ status: 0, stdout: "broken-output", stderr: "", error: undefined } as any);
+
+      const client = createClient();
+      const result = await client.listAgents();
+
+      expect(result).toEqual({
+        ok: false,
+        status: 0,
+        error: "curl fallback returned an unexpected response shape",
+      });
     });
 
     it("returns error result on 401 Unauthorized", async () => {

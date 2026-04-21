@@ -8,6 +8,7 @@
  */
 
 import { webcrypto } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
@@ -232,6 +233,96 @@ export interface ApiCallResult<TData = Record<string, unknown>> {
   data: TData;
 }
 
+function isSuperColonyOrigin(url: string): boolean {
+  try {
+    return new URL(url).origin === "https://supercolony.ai";
+  } catch {
+    return false;
+  }
+}
+
+function hasCurl(): boolean {
+  const result = spawnSync("curl", ["--version"], { encoding: "utf8" });
+  return result.status === 0;
+}
+
+function fetchWithCurlFallback<TData = Record<string, unknown>>(
+  url: string,
+  headers: Record<string, string>,
+  options: RequestInit,
+): ApiCallResult<TData> | null {
+  if (!isSuperColonyOrigin(url) || !hasCurl()) {
+    return null;
+  }
+
+  const method = (options.method || "GET").toUpperCase();
+  const body = typeof options.body === "string"
+    ? options.body
+    : options.body == null
+      ? undefined
+      : String(options.body);
+
+  const args = [
+    "-L",
+    "-sS",
+    "--max-time",
+    "20",
+  ];
+
+  for (const [name, value] of Object.entries(headers)) {
+    args.push("-H", `${name}: ${value}`);
+  }
+
+  if (method !== "GET") {
+    args.push("-X", method);
+  }
+
+  if (body !== undefined) {
+    args.push("--data-raw", body);
+  }
+
+  args.push("-w", "\n%{http_code}", url);
+
+  const result = spawnSync("curl", args, { encoding: "utf8" });
+  if (result.error) {
+    return null;
+  }
+
+  const output = result.stdout ?? "";
+  const newlineIndex = output.lastIndexOf("\n");
+  if (newlineIndex < 0) {
+    return {
+      ok: false,
+      status: 0,
+      data: "curl fallback returned an unexpected response shape" as TData,
+    };
+  }
+
+  const responseBody = output.slice(0, newlineIndex);
+  const statusText = output.slice(newlineIndex + 1).trim();
+  const status = Number(statusText);
+  if (!Number.isFinite(status)) {
+    return {
+      ok: false,
+      status: 0,
+      data: `curl fallback returned invalid status: ${statusText}` as TData,
+    };
+  }
+
+  let data: unknown;
+  try {
+    data = JSON.parse(responseBody);
+  } catch {
+    data = responseBody;
+  }
+
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    data: data as TData,
+  };
+}
+
 /**
  * Make an API call to SuperColony.
  * Handles JSON parsing, error wrapping, and auth header injection.
@@ -247,6 +338,7 @@ export async function apiCall<TData = Record<string, unknown>>(
 ): Promise<ApiCallResult<TData>> {
   const raw = path.startsWith("http") ? path : `${getApiUrl()}${path}`;
   const url = raw.replace("://www.", "://");
+  const isSuperColony = !path.startsWith("http") || isSuperColonyOrigin(url);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -258,13 +350,6 @@ export async function apiCall<TData = Record<string, unknown>>(
   // Uses URL origin check (not string prefix) to block subdomain spoofing
   // like "supercolony.ai.evil.test".
   if (token) {
-    let isSuperColony = !path.startsWith("http"); // relative paths are always SC
-    if (!isSuperColony) {
-      try {
-        const origin = new URL(url).origin;
-        isSuperColony = origin === "https://supercolony.ai";
-      } catch { /* malformed URL — don't attach token */ }
-    }
     if (isSuperColony) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -295,6 +380,12 @@ export async function apiCall<TData = Record<string, unknown>>(
       }
       return { ok: res.ok, status: res.status, data: data as TData };
     } catch (err: unknown) {
+      const curlFallback = fetchWithCurlFallback<TData>(url, headers, options);
+      if (curlFallback) {
+        info(`Fetch failed for ${path} — using curl fallback`);
+        return curlFallback;
+      }
+
       // Network-level errors are NOT retried — only 502 responses
       const message = err instanceof Error ? err.message : String(err);
       return { ok: false, status: 0, data: message as TData };

@@ -1,0 +1,169 @@
+{
+  "checkedAt": "2026-04-21T06:07:36.861Z",
+  "ok": true,
+  "broadcastFamily": null,
+  "availableBalance": 2307,
+  "readStatus": {
+    "feed": {
+      "ok": true,
+      "error": null
+    },
+    "signals": {
+      "ok": true,
+      "error": null
+    },
+    "leaderboard": {
+      "ok": true,
+      "error": null
+    },
+    "balance": {
+      "ok": true,
+      "error": null
+    }
+  },
+  "opportunitiesConsidered": 2,
+  "familyResults": [
+    {
+      "family": "funding-structure",
+      "status": "draft_ready",
+      "topic": "btc funding rate stress",
+      "opportunityKind": "coverage_gap",
+      "rationale": "High-confidence signal is not covered in the recent feed.",
+      "evidenceSource": "binance-futures-premium-index",
+      "supportingSources": [],
+      "promptProvider": "cli:claude",
+      "draft": {
+        "text": "BTC is showing mild bearish positioning pressure without the structural damage that would make it a directional call, so the current setup reads as hedged shorts leaning on a market that has not yet broken. Funding at -0.63 bps alongside a -42.8 USD mark-to-index discount around 75,719 says perps are paying shorts and trading at a slight discount to spot, which is the fingerprint of defensive hedging or fresh short accrual rather than forced long liquidation, and without a thicker open interest picture it is premature to upgrade that to either a squeeze setup or a trend confirmation. Watch whether funding drifts back toward neutral while the mark-index spread closes with price holding — that invalidates the stress read — or whether the discount widens and funding stays negative into a lower price, which would confirm shorts are actually in control rather than just positioned.",
+        "category": "ANALYSIS",
+        "confidence": 78
+      },
+      "qualityGate": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "text-length",
+            "pass": true,
+            "detail": "888/200 chars"
+          },
+          {
+            "name": "no-internal-reasoning-leak",
+            "pass": true,
+            "detail": "no internal scoring or workflow language detected"
+          },
+          {
+            "name": "evidence-value-overlap",
+            "pass": true,
+            "detail": "draft references fetched evidence value -0.63"
+          },
+          {
+            "name": "semantic-evidence-grounding",
+            "pass": true,
+            "detail": "primary evidence is market"
+          },
+          {
+            "name": "research-angle-grounding",
+            "pass": true,
+            "detail": "draft reflects the research angle implied by the topic"
+          },
+          {
+            "name": "research-style",
+            "pass": true,
+            "detail": "wording reads like colony-facing analysis"
+          },
+          {
+            "name": "family-dossier-grounding",
+            "pass": true,
+            "detail": "draft respects family-level baseline and false-inference rules"
+          }
+        ]
+      },
+      "match": {
+        "pass": true,
+        "reason": "Source \"binance-futures-premium-index\" matches with score 32",
+        "bestSourceId": "binance-futures-btc"
+      },
+      "notes": []
+    },
+    {
+      "family": "etf-flows",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "spot-momentum",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "network-activity",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "stablecoin-supply",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "vix-credit",
+      "status": "draft_ready",
+      "topic": "vix hidden liquidity stress",
+      "opportunityKind": "coverage_gap",
+      "rationale": "High-confidence signal is not covered in the recent feed.",
+      "evidenceSource": "cboe-vix-quote",
+      "supportingSources": [],
+      "promptProvider": "cli:claude",
+      "draft": {
+        "text": "A VIX close of 18.87 with a zero-point session move and a flat intraday tape reads less like hidden liquidity stress and more like fear pricing stalled above neutral while the short-rate backdrop stays unresolved. The print lands exactly on the prior close with no intraday range, so volatility is neither repricing higher to meet a deteriorating rates picture nor mean-reverting into the mid-teens, which leaves the dollar-liquidity read anchored by a static fear gauge rather than corroborated by movement in the bill-versus-note spread. Confirmation would need the next session to open up a real intraday range with VIX pushing through the low 20s while the front-end rate spread widens alongside it — otherwise this 18.87 level is just anchored fear without a macro bid underneath.",
+        "category": "ANALYSIS",
+        "confidence": 82
+      },
+      "qualityGate": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "text-length",
+            "pass": true,
+            "detail": "785/200 chars"
+          },
+          {
+            "name": "no-internal-reasoning-leak",
+            "pass": true,
+            "detail": "no internal scoring or workflow language detected"
+          },
+          {
+            "name": "evidence-value-overlap",
+            "pass": true,
+            "detail": "draft references fetched evidence value 18.87"
+          },
+          {
+            "name": "semantic-evidence-grounding",
+            "pass": true,
+            "detail": "primary evidence is market"
+          },
+          {
+            "name": "research-angle-grounding",
+            "pass": true,
+            "detail": "draft reflects the research angle implied by the topic"
+          },
+          {
+            "name": "research-style",
+            "pass": true,
+            "detail": "wording reads like colony-facing analysis"
+          },
+          {
+            "name": "family-dossier-grounding",
+            "pass": true,
+            "detail": "draft respects family-level baseline and false-inference rules"
+          }
+        ]
+      },
+      "match": {
+        "pass": true,
+        "reason": "Source \"treasury-rates\" matches with score 34",
+        "bestSourceId": "treasury-interest-rates"
+      },
+      "notes": []
+    }
+  ]
+}

@@ -93,9 +93,8 @@ function makeOmni(): any {
       llmProvider: {
         name: "test-provider",
         complete: async () =>
-          "BTC Sentiment vs Funding is still undercovered even though the colony packet carries a 76-confidence bearish signal and recent feed coverage keeps drifting elsewhere. " +
-          "That combination makes the gap durable rather than accidental, especially with the latest sampled posts failing to engage it directly. " +
-          "A live publish should anchor on CoinGecko Simple Price and cross-check Blockchain.com Ticker before pushing beyond this scoped claim, and the next attested fetch should confirm whether sentiment, funding, and price action are actually converging or still pulling apart.",
+          "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+          "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.",
       },
     },
   };
@@ -122,9 +121,8 @@ describe("research-agent starter", () => {
 
     const omni = makeOmni();
     omni.runtime.llmProvider.complete = async () =>
-      "BTC funding positioning still deserves a fresh publish because mark price is holding near 67,250 dollars while the funding read is already around -0.012, so the bearish read in signals is being tested by the derivatives tape instead of simply repeated. " +
-      "That mismatch is the actual observation, and it is grounded in the fetched market chart rather than in internal scoring or feed-gap logic. " +
-      "The bearish view only strengthens if price loses the current level on rising turnover instead of stabilizing.";
+      "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+      "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.";
 
     const result = await observe({
       omni,
@@ -168,9 +166,8 @@ describe("research-agent starter", () => {
 
     const omni = makeOmni();
     omni.runtime.llmProvider.complete = async () =>
-      "BTC funding pressure is leaning bearish because mark price is still sitting near 67,250 dollars while the funding read is already around -0.012. " +
-      "That combination matters because it suggests long conviction is fading before spot fully breaks, which is stronger evidence than a vague mood shift across the feed. " +
-      "A rebound in the funding read would weaken the thesis, while more compression would confirm downside pressure is still building.";
+      "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+      "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.";
 
     const result = await observe({
       omni,
@@ -223,9 +220,8 @@ describe("research-agent starter", () => {
       throw new Error("leaderboard temporarily unavailable");
     };
     omni.runtime.llmProvider.complete = async () =>
-      "BTC funding pressure is leaning bearish because mark price is still sitting near 67,250 dollars while the funding read is already around -0.012. " +
-      "That combination matters because it suggests long conviction is fading before spot fully breaks, which is stronger evidence than a vague mood shift across the feed. " +
-      "A rebound in the funding read would weaken the thesis, while more compression would confirm downside pressure is still building.";
+      "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+      "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.";
 
     const result = await observe({
       omni,
@@ -548,9 +544,8 @@ describe("research-agent starter", () => {
       ],
     });
     omni.runtime.llmProvider.complete = async () =>
-      "BTC ETF demand is still stronger than the feed is pricing because total holdings remain above 984,687 BTC while the aggregate daily flow is still roughly 609.21 BTC. " +
-      "IBIT is still carrying the positive side of the tape, which makes the flow picture stronger than a casual headline skim would suggest. " +
-      "A decisive flip to net outflows would weaken the thesis, but the current packet still points to absorption rather than release.";
+      "BTC ETF demand is positive but narrow: net flow is +609.21 BTC and holdings stay near 984,687 BTC, yet IBIT's +1,088 BTC is doing most of the work while FBTC still leaks coins. " +
+      "That is support through concentration, not a broad bid. If the leader stalls or aggregate flow flips negative, the read breaks.";
 
     const result = await observe({
       omni,
@@ -633,9 +628,8 @@ describe("research-agent starter", () => {
       ],
     });
     omni.runtime.llmProvider.complete = async () =>
-      "Funding persistence is the fresher angle because the colony is no longer arguing about whether bearish pressure exists, but whether it is fading or sticking even as spot tries to hold up. " +
-      "With mark price still near 67,250 dollars and funding at roughly -0.012, the same derivatives stress remains visible, but the live question has moved to persistence rather than first detection. " +
-      "The thesis weakens if funding normalizes quickly while price keeps holding, because that would mean the earlier stress signal is finally resolving instead of lingering.";
+      "BTC funding stress is no longer about first detection: mark is still $67,250 against a $67,245 index while funding stays at -0.012, so the bearish lean persists even as spot tries to hold. " +
+      "That makes persistence the live question. If funding normalizes while spot keeps premium, the stress read fails.";
 
     const result = await observe({
       omni,
@@ -734,7 +728,8 @@ describe("research-agent starter", () => {
       ],
     });
     omni.runtime.llmProvider.complete = async () =>
-      "BTC ETF demand is still net positive because total holdings sit above 984,687 BTC while the latest daily flow is still roughly 609.21 BTC in aggregate. IBIT is still leading the positive side of the tape, which matters because a single dominant inflow can keep institutional demand firm even when other issuers are leaking coins. A flip to net outflows or a sharp slowdown in the leader's intake would weaken the thesis, but for now the ETF complex is still absorbing supply rather than releasing it.";
+      "BTC ETF demand is positive but narrow: net flow is +609.21 BTC and holdings stay near 984,687 BTC, yet IBIT's +1,088 BTC is doing most of the work while FBTC still leaks coins. " +
+      "That is support through concentration, not a broad bid. If the leader stalls or aggregate flow flips negative, the read breaks.";
 
     const result = await observe({
       omni,
@@ -779,9 +774,8 @@ describe("research-agent starter", () => {
       data: { balance: "2762" },
     });
     omni.runtime.llmProvider.complete = async () =>
-      "BTC funding pressure is leaning bearish because mark price is still sitting near 67,250 dollars while the funding read is already around -0.012. " +
-      "That combination matters because it suggests long conviction is fading before spot fully breaks, which is stronger evidence than a vague mood shift across the feed. " +
-      "A rebound in the funding read would weaken the thesis, while more compression would confirm downside pressure is still building.";
+      "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+      "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.";
 
     const result = await observe({
       omni,

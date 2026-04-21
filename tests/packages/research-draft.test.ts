@@ -698,7 +698,7 @@ describe("buildResearchDraft", () => {
       availableBalance: 25,
       evidenceSummary: makeEvidenceSummary(),
       llmProvider: null,
-      minTextLength: 300,
+      minTextLength: 260,
     });
 
     expect(result.ok).toBe(false);
@@ -711,9 +711,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC funding pressure is worth watching because the premium setup is leaning bearish while mark price still sits near 67,250 dollars instead of breaking lower. " +
-        "A negative funding read around -0.012 would fit the idea that long conviction is fading before spot fully rolls over, which is why the premium signal matters more than a generic macro mood. " +
-        "A rebound in the premium reading would weaken the bearish case, while further compression would confirm downside pressure is still building."
+        "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+        "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens."
       ),
     };
 
@@ -758,7 +757,7 @@ describe("buildResearchDraft", () => {
         repetitionReason: "recent_same_family_coverage",
       },
       llmProvider: provider,
-      minTextLength: 300,
+      minTextLength: 260,
     });
 
     expect(result.ok).toBe(true);
@@ -791,9 +790,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "Negative funding matters here because it is showing up alongside real positioning size and a still-firm price, which makes the setup a derivatives mismatch rather than an automatic trend call. " +
-        "Funding near -120 basis points with open interest around 105,600 means traders are paying for bearish positioning while spot remains elevated, so the real question is whether price starts to validate that stress or squeezes it out. " +
-        "The view weakens if funding normalizes without price damage or if price decisively breaks higher while positioning stays stretched."
+        "Negative funding is not sufficient on its own: -120 bps alongside 105,600 of open interest while price stays firm means traders are paying for bearish positioning before spot confirms it. " +
+        "That is a derivatives mismatch, not a trend call. If funding normalizes or price squeezes higher, the read weakens."
       ),
     };
 
@@ -819,9 +817,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "USDT supply is expanding faster than usual, which matters more than the peg because the relevant signal is issuance speed rather than whether a dollar stablecoin still looks like a dollar. " +
-        "The evidence shows 1.79 percent growth over thirty days and 1.26 percent over seven days, so the question is whether the market is absorbing new dollar liquidity cleanly or starting to choke on it. " +
-        "The read weakens if supply growth cools materially or if the broader market stops absorbing fresh issuance."
+        "USDT growth is turning into an absorption test, not a peg story: supply is up 1.79% in 30d and 1.26% in 7d while the peg still sits at $1.00. " +
+        "New dollar liquidity is arriving faster than the weekly pace implies. If growth cools or majors stop absorbing issuance, the constructive read weakens."
       ),
     };
 
@@ -847,9 +844,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "USDT supply near 186.6 billion dollars is becoming a BTC absorption question rather than a peg story because the 1.79 percent 30-day expansion is still outrunning the 1.26 percent weekly pace while the colony is explicitly debating whether risk can absorb the new dollar liquidity cleanly. " +
-        "The relevant spillover is the split between crypto beta and tokenized-treasury parking: a flat 1.00 peg keeps stress in the background, but it does not remove the possibility that fresh dollar supply rotates into RWA yield instead of extending the BTC bid. " +
-        "The thesis weakens if supply growth cools back below the current monthly trend or if the next absorption read fails to turn the same issuance into follow-through for majors."
+        "USDT supply near 186.6B is becoming a BTC absorption question, not a peg story: 30d growth at 1.79% still outruns the 1.26% weekly pace while the colony debates whether risk can absorb the new dollars. " +
+        "That leaves a live split between crypto beta and RWA parking. If growth cools, the thesis weakens."
       ),
     };
 
@@ -886,9 +882,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "The bearish read in colony signals is being contradicted by the tape because bitcoin is up 5.8% over the week at 76,991 dollars and the mismatch is that price is still trading in the upper third of a 7,279-dollar range rather than breaking down. " +
-        "That matters because price has rebuilt toward the weekly high on heavy volume instead of validating the bearish signal, which makes the live question one of resistance absorption rather than momentum failure. " +
-        "The thesis weakens if bitcoin loses the weekly starting level and slips back into the lower half of the range on rising volume."
+        "BTC is not validating the bearish signal yet: price is $76,991, up 5.8% on the week, while it still sits in the upper third of a $7,279 range instead of breaking down. " +
+        "That says resistance is being tested, not lost momentum. If BTC loses the weekly open and falls back into the lower half, this rebuttal fails."
       ),
     };
 
@@ -913,9 +908,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC ETF demand is still constructive, but the important detail is that the tape is concentrated rather than broad: aggregate net flow is positive at 609.21 BTC while holdings sit near 984,687 BTC and only one issuer is on the positive side. " +
-        "IBIT is doing the real lifting with a 1,088.13 BTC inflow while FBTC is still leaking 478.92 BTC, so the flow picture is supportive but narrow rather than a uniform institutional bid across the complex. " +
-        "That view weakens if the net flow flips negative or if the current leader stops carrying the tape."
+        "BTC ETF demand is positive but narrow: net flow is +609.21 BTC and holdings stay near 984,687 BTC, yet IBIT's +1,088 BTC is doing most of the work while FBTC still leaks coins. " +
+        "That is support through concentration, not a broad bid. If the leader stalls or aggregate flow flips negative, the read breaks."
       ),
     };
 
@@ -940,9 +934,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "Volatility is repricing faster than the short-rate backdrop, but the real point is calibration rather than crash-calling: VIX closed at 21.34 after a 7.78 percent session jump while bills still yield 5.22 percent versus 4.61 percent on notes. " +
-        "That mix says fear is rising against an already restrictive front-end curve, so the tape is flashing stress without yet proving a full macro break. " +
-        "The read weakens if VIX mean-reverts quickly or if the rates backdrop stops holding this inversion."
+        "Macro stress is repricing faster than rates are relaxing: VIX closed at 21.34 after a 7.78% jump while 3m bills still yield 5.22% against 4.61% on notes. " +
+        "That is tighter front-end money meeting rising fear, not a crash call. If VIX mean-reverts fast or the curve normalizes, the stress read weakens."
       ),
     };
 
@@ -968,9 +961,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "Bitcoin's on-chain stress looks more like congestion than clean adoption because 412,338 transactions are running through just 144 blocks, which leaves throughput density near 2,863 transactions per block while hashrate stays elevated and spot sits around 77,201 dollars. " +
-        "That matters because activity this compressed can reflect speculative churn or fee pressure rather than healthy demand, so the right question is whether the load persists, cools, or broadens into a cleaner usage pattern instead of treating price alone as proof. " +
-        "The thesis weakens if transaction density drops quickly and the rest of the network picture normalizes, suggesting the spike was temporary noise rather than a durable condition."
+        "Bitcoin's chain looks crowded, not automatically healthy: 412,338 transactions across 144 blocks puts throughput near 2,863 per block while spot sits around $77,201. " +
+        "That density can mean churn or fee pressure before it means adoption. If the load cools quickly, the congestion thesis was transient noise."
       ),
     };
 
@@ -1023,9 +1015,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC funding pressure is the real thing to watch here because weak premium readings while price stays firm near 67,250 dollars usually mean longs are losing conviction before spot actually rolls over. " +
-        "A negative funding read around -0.012 turns that into a concrete bearish setup instead of a vague macro complaint, because positioning stress is visible in the fetched evidence itself. " +
-        "Watch the next premium-index read closely: a rebound would weaken the bearish setup, while further compression would confirm downside pressure is building."
+        "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+        "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens."
       ),
     };
 
@@ -1037,7 +1028,7 @@ describe("buildResearchDraft", () => {
       evidenceSummary: makeEvidenceSummary(),
       supportingEvidenceSummaries: [makeSupportingEvidenceSummary()],
       llmProvider: provider,
-      minTextLength: 300,
+      minTextLength: 260,
     });
 
     expect(result.ok).toBe(true);
@@ -1068,7 +1059,7 @@ describe("buildResearchDraft", () => {
       availableBalance: 25,
       evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
-      minTextLength: 300,
+      minTextLength: 260,
     });
 
     expect(result.ok).toBe(false);
@@ -1133,9 +1124,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC funding pressure still matters because spot is holding around 67,240 dollars while the premium side stays negative, which keeps the signal grounded in real market data. " +
-        "That price anchor and the weak funding read together suggest positioning is softening before spot fully gives way, rather than a generic mood swing across crypto. " +
-        "If the funding read normalizes and the price pushes through resistance, the bearish read weakens quickly."
+        "BTC futures lean bearish without panic: spot is holding around $67,240 while the premium side stays negative, so the tape still shows traders paying short before spot breaks. " +
+        "That is positioning drift, not generic mood. If the premium normalizes and price pushes through resistance, the bearish read weakens."
       ),
     };
 
@@ -1147,7 +1137,7 @@ describe("buildResearchDraft", () => {
       evidenceSummary: makeEvidenceSummary(),
       supportingEvidenceSummaries: [makeSupportingEvidenceSummary()],
       llmProvider: provider,
-      minTextLength: 300,
+      minTextLength: 260,
     });
 
     expect(result.ok).toBe(true);

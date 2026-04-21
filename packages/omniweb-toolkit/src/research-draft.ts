@@ -91,6 +91,7 @@ export interface ResearchDraftFailure {
 export type ResearchDraftResult = ResearchDraftSuccess | ResearchDraftFailure;
 
 const DEFAULT_MIN_TEXT_LENGTH = 200;
+const DEFAULT_MAX_TEXT_LENGTH = 320;
 const RESEARCH_META_PATTERNS: Array<{ name: string; pattern: RegExp; detail: string }> = [
   {
     name: "internal-signal-metadata",
@@ -331,7 +332,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Your job is to turn evidence into a thesis another agent could cite without needing the internal workflow behind it.",
     ],
     edge: [
-      "Depth over speed: synthesize the strongest signal into one sharp take instead of spraying commentary.",
+      "Depth over speed does not mean long: synthesize the strongest signal into one sharp take instead of spraying commentary.",
       "Interpret what the evidence means and why it matters now, not why the agent decided to post.",
       "Surface the tension, contradiction, or stale assumption that makes this analysis worth reading.",
     ],
@@ -380,9 +381,10 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
           })),
       },
     },
-    instruction: "Write one standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo. Center the post on the stated analysis angle instead of generic market color.",
+    instruction: "Write one compact standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo. Keep the finished post in the 200-320 character band whenever possible, and center it on the stated analysis angle instead of generic market color.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
+      "Keep the finished post compact: 2-3 short sentences, 200+ characters, and no sprawling explanatory paragraphs.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
       "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
@@ -403,20 +405,20 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "Treat source names as evidence anchors, not as the subject of the prose.",
       "State one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
       "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
-      "Avoid generic metric parroting: connect the evidence to a readable interpretation.",
+      "Avoid generic metric parroting: connect the evidence to a readable interpretation in one compact claim, not a report.",
       "Output plain prose only, with no headings, bullets, labels, or markdown.",
     ],
     output: {
       category: "ANALYSIS",
       confidenceStyle: "calibrated and evidence-led; strong enough to be useful, never absolute",
       shape: [
-        "Sentence 1: the core thesis in plain language.",
-        "Sentence 2: the mechanism, contradiction, or evidence pattern behind the thesis.",
-        "Sentence 3: what to watch next that would confirm or invalidate the view.",
+        "Sentence 1: the core thesis in plain language, naming the concrete tension directly.",
+        "Sentence 2: the mechanism or evidence pattern behind the thesis.",
+        "Sentence 3: optional, only if needed to state the watcher or invalidation condition without bloating the post.",
       ],
       successCriteria: [
         "Reads like original research, not a process memo.",
-        "Contains one interpretable thesis another colony reader could reuse.",
+        "Contains one compact interpretable thesis another colony reader could reuse quickly.",
         "Leaves the reader with a concrete watcher or invalidation condition.",
         "When the room is already active, reads like a useful intervention in that discourse rather than a detached summary.",
       ],
@@ -433,8 +435,8 @@ async function generateViaProvider(
   const prompt = renderColonyPromptPacket(packet);
 
   const completion = await provider.complete(prompt, {
-    system: "You write concise, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
-    maxTokens: 220,
+    system: "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, keep the finished post in roughly the 200-320 character band, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
+    maxTokens: 110,
     modelTier: "standard",
   });
   return normalizeDraftText(completion);
@@ -487,6 +489,13 @@ function checkResearchDraftQuality(
   const checks = [
     ...base.checks,
     {
+      name: "compact-claim-length",
+      pass: text.length <= DEFAULT_MAX_TEXT_LENGTH,
+      detail: text.length <= DEFAULT_MAX_TEXT_LENGTH
+        ? `${text.length}/${DEFAULT_MAX_TEXT_LENGTH} chars`
+        : `${text.length}/${DEFAULT_MAX_TEXT_LENGTH} chars — too long for the compact interpretive-claim format`,
+    },
+    {
       name: "no-internal-reasoning-leak",
       pass: leak == null,
       detail: leak == null ? "no internal scoring or workflow language detected" : `${leak.name}: ${leak.detail}`,
@@ -524,6 +533,14 @@ function checkResearchDraftQuality(
     return {
       pass: false,
       reason: base.reason,
+      checks,
+    };
+  }
+
+  if (text.length > DEFAULT_MAX_TEXT_LENGTH) {
+    return {
+      pass: false,
+      reason: `failed: compact-claim-length — ${text.length}/${DEFAULT_MAX_TEXT_LENGTH} chars exceeds the compact interpretive-claim ceiling`,
       checks,
     };
   }

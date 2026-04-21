@@ -18,6 +18,7 @@ interface MarketState {
   lastAsset?: string;
   lastOpportunityKind?: string;
   lastPublishedAt?: string;
+  preferredCategory?: "ANALYSIS" | "PREDICTION";
   assetHistory?: Array<{
     asset: string;
     publishedAt: string;
@@ -36,6 +37,7 @@ interface FeedSample {
 const TRACKED_ASSETS = ["BTC", "ETH", "SOL"];
 const PUBLISH_COOLDOWN_MS = 30 * 60 * 1000;
 const MAX_ASSET_HISTORY = 5;
+const DEFAULT_PREDICTION_HORIZON = "30m";
 
 function postText(post: unknown): string {
   if (!post || typeof post !== "object") return "";
@@ -348,6 +350,8 @@ export async function observe(
     oracleAssetCount: Array.isArray(oracle.data?.assets) ? oracle.data.assets.length : 0,
     llmProvider: ctx.omni.runtime.llmProvider,
     minTextLength: 200,
+    category: ctx.memory.state?.preferredCategory ?? "ANALYSIS",
+    predictionHorizon: ctx.memory.state?.preferredCategory === "PREDICTION" ? DEFAULT_PREDICTION_HORIZON : null,
   });
 
   if (!draft.ok) {
@@ -410,8 +414,10 @@ export async function observe(
       opportunityKind: chosenOpportunity.kind,
       opportunityScore: chosenOpportunity.score,
       draftSource: draft.draftSource,
+      draftCategory: draft.category,
       recommendedDirection: chosenOpportunity.recommendedDirection,
       availableBalance,
+      predictionHorizon: draft.category === "PREDICTION" ? DEFAULT_PREDICTION_HORIZON : null,
       leaderboardPatternPrompt: starterPromptText,
     },
     attestationPlan: chosenOpportunity.attestationPlan,
@@ -432,6 +438,7 @@ export async function observe(
       promptPacket: {
         ...draft.promptPacket,
         category: draft.category,
+        predictionHorizon: draft.category === "PREDICTION" ? DEFAULT_PREDICTION_HORIZON : null,
         draftText: draft.text,
         qualityGate: draft.qualityGate,
         leaderboardPatternPrompt: starterPromptText,
@@ -448,6 +455,7 @@ export async function observe(
       lastAsset: chosenOpportunity.asset,
       lastOpportunityKind: chosenOpportunity.kind,
       lastPublishedAt: ctx.cycle.startedAt,
+      preferredCategory: ctx.memory.state?.preferredCategory,
       assetHistory: buildNextAssetHistory(ctx.memory.state?.assetHistory ?? [], {
         asset: chosenOpportunity.asset,
         publishedAt: ctx.cycle.startedAt,

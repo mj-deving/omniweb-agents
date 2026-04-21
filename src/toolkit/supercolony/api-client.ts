@@ -9,6 +9,8 @@
  * - API base URL configurable (default: https://supercolony.ai)
  */
 
+import { spawnSync } from "node:child_process";
+
 import type {
   ApiResult,
   AgentProfile,
@@ -88,6 +90,91 @@ export class SuperColonyApiClient {
     this.getToken = config.getToken;
     this.baseUrl = config.baseUrl ?? "https://supercolony.ai";
     this.timeout = config.timeout ?? 10_000;
+  }
+
+  private isSuperColonyOrigin(): boolean {
+    try {
+      return new URL(this.baseUrl.replace("://www.", "://")).origin === "https://supercolony.ai";
+    } catch {
+      return false;
+    }
+  }
+
+  private hasCurl(): boolean {
+    const result = spawnSync("curl", ["--version"], { encoding: "utf8" });
+    return result.status === 0;
+  }
+
+  private fetchWithCurlFallback<T>(
+    url: string,
+    headers: Record<string, string>,
+    init: RequestInit,
+    opts?: { raw?: boolean },
+  ): ApiResult<T> | null {
+    if (!this.isSuperColonyOrigin() || !this.hasCurl()) {
+      return null;
+    }
+
+    const method = (init.method || "GET").toUpperCase();
+    const body = typeof init.body === "string"
+      ? init.body
+      : init.body == null
+        ? undefined
+        : String(init.body);
+
+    const args = ["-L", "-sS", "--max-time", String(Math.max(1, Math.ceil(this.timeout / 1000)))];
+    for (const [name, value] of Object.entries(headers)) {
+      args.push("-H", `${name}: ${value}`);
+    }
+    if (method !== "GET") {
+      args.push("-X", method);
+    }
+    if (body !== undefined) {
+      args.push("--data-raw", body);
+    }
+    args.push("-w", "\n%{http_code}", url);
+
+    const result = spawnSync("curl", args, { encoding: "utf8" });
+    if (result.error) {
+      return null;
+    }
+
+    const output = result.stdout ?? "";
+    const newlineIndex = output.lastIndexOf("\n");
+    if (newlineIndex < 0) {
+      return { ok: false, status: 0, error: "curl fallback returned an unexpected response shape" };
+    }
+
+    const responseBody = output.slice(0, newlineIndex);
+    const statusText = output.slice(newlineIndex + 1).trim();
+    const status = Number(statusText);
+    if (!Number.isFinite(status)) {
+      return { ok: false, status: 0, error: `curl fallback returned invalid status: ${statusText}` };
+    }
+
+    if (opts?.raw) {
+      if (status < 200 || status >= 300) {
+        return { ok: false, status, error: responseBody };
+      }
+      return { ok: true, data: responseBody as T };
+    }
+
+    let data: unknown;
+    try {
+      data = JSON.parse(responseBody);
+    } catch {
+      data = responseBody;
+    }
+
+    if (status < 200 || status >= 300) {
+      const errorMsg =
+        typeof data === "object" && data !== null && "message" in data
+          ? String((data as Record<string, unknown>).message)
+          : responseBody;
+      return { ok: false, status, error: errorMsg };
+    }
+
+    return { ok: true, data: data as T };
   }
 
   // ── Agent Identity ──────────────────────────────
@@ -797,7 +884,19 @@ export class SuperColonyApiClient {
 
       return { ok: true, data: data as T };
     } catch {
-      return null;
+      const url = `${this.baseUrl}${path}`;
+      const headers: Record<string, string> = {};
+      if (!opts?.skipAuth) {
+        const token = await this.getToken();
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      }
+      if (init.method !== "GET" && init.method !== "HEAD") {
+        headers["Content-Type"] = "application/json";
+      }
+      const curlFallback = this.fetchWithCurlFallback<T>(url, headers, init, opts);
+      return curlFallback;
     }
   }
 }

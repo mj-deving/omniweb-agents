@@ -51,6 +51,8 @@ export function buildResearchBrief(
     baseBrief = buildSpotMomentumBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
   } else if (opportunity.sourceProfile.family === "etf-flows") {
     baseBrief = buildEtfFlowsBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
+  } else if (opportunity.sourceProfile.family === "macro-liquidity") {
+    baseBrief = buildMacroLiquidityBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
   } else if (opportunity.sourceProfile.family === "vix-credit") {
     baseBrief = buildVixCreditBrief(dossier, evidenceSummary, supportingEvidenceSummaries);
   } else {
@@ -195,6 +197,35 @@ function buildVixCreditBrief(
     anomalySummary: `VIX closed${vixClose ? ` at ${vixClose}` : ""}${vixPreviousClose ? ` versus ${vixPreviousClose} prior` : ""}${vixSessionChangePct ? `, a ${vixSessionChangePct}% session move` : ""}${vixIntradayRange ? ` with a ${vixIntradayRange}-point intraday range` : ""}, while ${spreadRead}${billRate && noteRate ? ` (${billRate}% bills vs ${noteRate}% notes)` : ""}.`,
     allowedThesisSpace: "Write about whether volatility is outrunning, matching, or lagging the short-rate stress backdrop. Keep the thesis on fear repricing versus macro backdrop, not on generic crash language.",
     invalidationFocus: "Invalidate with a fast mean reversion in VIX, a collapse in the intraday stress signal, or a rates backdrop that stops supporting the stress interpretation.",
+  };
+}
+
+function buildMacroLiquidityBrief(
+  dossier: ResearchFamilyDossier,
+  evidenceSummary: ResearchEvidenceSummary,
+  supportingEvidenceSummaries: ResearchEvidenceSummary[],
+): CoreResearchBrief {
+  const billRate = findMetric("treasuryBillsAvgRatePct", evidenceSummary, supportingEvidenceSummaries);
+  const noteRate = findMetric("treasuryNotesAvgRatePct", evidenceSummary, supportingEvidenceSummaries);
+  const billNoteSpreadBps = findMetric("billNoteSpreadBps", evidenceSummary, supportingEvidenceSummaries);
+
+  const spreadValue = parseMetric(billNoteSpreadBps);
+  const curveRead = spreadValue == null
+    ? "the front-end curve shape is unresolved"
+    : spreadValue > 0
+      ? `bills still yield ${billNoteSpreadBps} bps above notes`
+      : spreadValue < 0
+        ? `notes now yield ${Math.abs(spreadValue).toFixed(2)} bps above bills`
+        : "bills and notes are effectively flat to each other";
+
+  return {
+    family: "macro-liquidity",
+    baselineContext: dossier.baseline,
+    focusNow: dossier.focus,
+    falseInferenceGuards: dossier.falseInferenceGuards,
+    anomalySummary: `Treasury bills${billRate ? ` are yielding ${billRate}%` : ""}${noteRate ? ` against notes at ${noteRate}%` : ""}, and ${curveRead}.`,
+    allowedThesisSpace: "Write about whether the latest Treasury structure still signals tight front-end liquidity, easing pressure, or a mismatch between rates and market calm. Keep the thesis on the observed rates backdrop, not generic Fed narrative.",
+    invalidationFocus: "Invalidate with a meaningful change in the bill-vs-note spread or a rate move that breaks the current liquidity read.",
   };
 }
 
@@ -426,6 +457,13 @@ function buildLinkedResearchContext(
     addTheme("exchange-liquidity", "Exchange liquidity", "Funding, premium, and open interest describe how exchange liquidity is being used, not just where price is trading.");
     if (assets.has("btc") || assets.has("bitcoin") || mentions("btc", "bitcoin")) {
       addTheme("btc-absorption", "BTC absorption", "The derivatives setup matters because it can show whether BTC is absorbing bearish positioning or failing under it.");
+    }
+  }
+
+  if (family === "macro-liquidity") {
+    addTheme("dollar-liquidity", "Dollar liquidity", "Treasury bills versus notes are a front-end dollar-liquidity backdrop, not just a rates factoid.");
+    if (mentions("treasury", "treasuries", "yield", "issuance", "fiscal", "deficit")) {
+      addTheme("rwa-rotation", "RWA rotation", "Treasury structure matters when the colony is weighing onchain yield, fiscal supply, and broader risk absorption together.");
     }
   }
 

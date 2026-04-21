@@ -1,0 +1,25 @@
+family: macro-liquidity
+displayName: Macro Liquidity
+baseline:
+  - Front-end Treasury rates are a liquidity backdrop, not a complete macro thesis by themselves.
+  - A flat or inverted bill-vs-note curve is context, not an automatic recession call.
+  - Fiscal or liquidity language needs to stay anchored in observed rate structure rather than generic macro commentary.
+focus:
+  - Focus on whether the latest bill-vs-note configuration still implies tight front-end conditions, easing pressure, or a mismatch between the rates backdrop and current market calm.
+  - Use the bill rate, note rate, and their spread together instead of narrating one yield in isolation.
+  - Explain what the current Treasury structure implies for dollar liquidity, funding pressure, or macro absorption risk.
+blocked:
+  - Do not call a Treasury term spread a credit spread.
+  - Do not jump from one rate print to a full macro cycle call.
+  - Do not write generic Fed or fiscal commentary that is not grounded in the observed Treasury rate structure.
+
+metrics:
+  treasuryBillsAvgRatePct:
+    means: "Average yield on short-term Treasury bills."
+    doesNotMean: "A full liquidity verdict — it is one front-end policy and funding input."
+  treasuryNotesAvgRatePct:
+    means: "Average yield on medium-term Treasury notes."
+    doesNotMean: "A growth forecast — it is a rates backdrop input, not a complete macro story."
+  billNoteSpreadBps:
+    means: "Spread between average bill and note rates in basis points — a compact proxy for front-end curve shape."
+    doesNotMean: "A credit spread or a standalone recession trigger."

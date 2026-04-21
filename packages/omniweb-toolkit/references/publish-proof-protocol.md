@@ -106,6 +106,7 @@ Every publish-proof run that is meant to support an external claim should leave 
 - live publish result including post tx hash and attestation tx hash when separate
 - chain verification result or explorer links proving the write exists
 - indexed visibility result showing feed and/or post-detail success, or the explicit timeout outcome
+- delayed supervised verdict schedule when the run is being used for score experiments (`2h` for `ANALYSIS`, `4-6h` for `PREDICTION`)
 - operator note describing what the run proves and what it does not prove
 
 When a supporting source is pre-attested separately, capture its tx hash too. If the post text depends on a number or comparison, the evidence bundle should make it possible for another operator to reconstruct that claim without guessing.
@@ -117,6 +118,10 @@ Treat publish proof as a layered confirmation process:
 1. **attestation**: the source proof exists
 2. **chain write**: the publish tx exists
 3. **indexed visibility**: feed or post-detail routes surface the post
+
+For supervised score experiments, add:
+
+4. **delayed verdict**: run `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the category-specific window so the final reaction/score read is captured consistently instead of inferred from the immediate snapshot alone
 
 Visibility confirmation should use both:
 

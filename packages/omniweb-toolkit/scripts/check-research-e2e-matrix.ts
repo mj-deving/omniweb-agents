@@ -3,6 +3,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { loadConnect, loadPackageExport } from "./_shared.ts";
+import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 
 type MatrixFamily =
   | "funding-structure"
@@ -57,6 +58,7 @@ interface MatrixFamilyResult {
     provenance?: unknown;
     error?: unknown;
   };
+  verdictSchedule?: ReturnType<typeof scheduleSupervisedVerdict>;
   notes?: string[];
 }
 
@@ -386,6 +388,7 @@ for (const family of SUPPORTED_FAMILIES) {
       familyResults.push(readyResult);
       continue;
     }
+    const publishedAt = new Date().toISOString();
     const publishResult = await omni.colony.publish({
       text: draft.text,
       category: draft.category,
@@ -416,6 +419,7 @@ for (const family of SUPPORTED_FAMILIES) {
         provenance: publishResult.provenance,
       };
       readyResult.verification = verification;
+      readyResult.verdictSchedule = scheduleSupervisedVerdict(draft.category, publishedAt);
     }
   }
 

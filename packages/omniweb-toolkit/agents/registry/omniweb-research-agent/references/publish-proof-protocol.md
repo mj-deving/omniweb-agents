@@ -83,16 +83,16 @@ Before a real publish claim counts toward launch proof, capture this sequence:
    - checked-out package root: `node --import tsx ./scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
    - exported bundle or installed package surface: run the workspace wrapper if one exists, or use `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
    - if the primary URL includes query params, treat the static preflight as guard validation only and add `--probe-attest` before making a parity claim about that exact request shape
-4. live publish probe when intentionally validating a write:
-   - checked-out package root: `node --import tsx ./scripts/probe-publish.ts ...`
-   - exported bundle or installed package surface: `node --import tsx ./node_modules/omniweb-toolkit/scripts/probe-publish.ts ...`
+4. live publish proof when intentionally validating a write:
+   - real research publish: `node --import tsx ./scripts/check-research-e2e-matrix.ts --broadcast-family <family> ...`
+   - explicit visibility harness with operator-supplied text: `node --import tsx ./scripts/check-publish-visibility.ts --broadcast --text "<draft>" [--reply-after-publish --reply-text "<reply>"] ...`
 
 Interpretation:
 
 - `check:publish` answers whether the package is structurally shippable
 - `check:attestation` answers whether the evidence chain is strong enough
 - `check-publish-readiness.ts` answers whether the current runtime, auth, and guardrails permit a write
-- `probe-publish.ts` is the actual live publish proof, not a substitute for the preflights
+- the actual live publish proof must either use a real agent-backed path or explicit operator-supplied live text; canned operational verification copy does not count
 
 Skipping the preflight sequence downgrades the run from "launch evidence" to "anecdotal operator test."
 

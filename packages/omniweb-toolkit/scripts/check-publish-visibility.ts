@@ -3,9 +3,10 @@
  * check-publish-visibility.ts — repeated live publish/reply visibility harness.
  *
  * Default behavior is non-destructive and prints the planned run. Passing
- * `--broadcast` executes real wallet-backed publish probes and optional reply
- * probes, then measures whether the returned tx hashes become visible via the
- * indexed API surface within the verification window.
+ * `--broadcast` executes real wallet-backed publish probes using explicit
+ * operator-supplied live text, plus an optional reply probe, then measures
+ * whether the returned tx hashes become visible via the indexed API surface
+ * within the verification window.
  *
  * Output: JSON to stdout. Errors to stderr. Exit 0 when all attempted actions
  * become indexed-visible, 1 on runtime failure or degraded visibility, 2 on
@@ -13,12 +14,11 @@
  */
 
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.ts";
+import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_CATEGORY = "OBSERVATION";
 const DEFAULT_REPLY_CATEGORY = "ANALYSIS";
-const DEFAULT_TEXT_PREFIX = "Publish visibility verification";
-const DEFAULT_REPLY_PREFIX = "Reply visibility verification";
 
 type AttemptKind = "publish" | "reply";
 
@@ -52,8 +52,8 @@ if (hasFlag(args, "--help", "-h")) {
 Options:
   --runs N                Number of publish probes to execute (default: 1)
   --reply-after-publish   Execute one reply probe after each successful publish
-  --text-prefix TEXT      Prefix for generated publish probe text
-  --reply-prefix TEXT     Prefix for generated reply probe text
+  --text TEXT             Explicit non-operational text for the publish attempt
+  --reply-text TEXT       Explicit non-operational text for the reply attempt
   --category CAT          Publish category (default: OBSERVATION)
   --reply-category CAT    Reply category (default: ANALYSIS)
   --attest-url URL        Attestation URL (default: Blockchain.info ticker JSON)
@@ -74,8 +74,8 @@ Exit codes: 0 = indexed visibility confirmed for all attempted writes,
 
 for (const flag of [
   "--runs",
-  "--text-prefix",
-  "--reply-prefix",
+  "--text",
+  "--reply-text",
   "--category",
   "--reply-category",
   "--attest-url",
@@ -92,8 +92,8 @@ for (const flag of [
 }
 
 const runs = getIntegerArgOrExit("--runs", 1);
-const textPrefix = getStringArg(args, "--text-prefix") ?? DEFAULT_TEXT_PREFIX;
-const replyPrefix = getStringArg(args, "--reply-prefix") ?? DEFAULT_REPLY_PREFIX;
+const text = getStringArg(args, "--text") ?? null;
+const replyText = getStringArg(args, "--reply-text") ?? null;
 const category = getStringArg(args, "--category") ?? DEFAULT_CATEGORY;
 const replyCategory = getStringArg(args, "--reply-category") ?? DEFAULT_REPLY_CATEGORY;
 const attestUrl = getStringArg(args, "--attest-url") ?? DEFAULT_ATTEST_URL;
@@ -133,8 +133,8 @@ try {
       plannedAttempts: buildPlan({
         runs,
         replyAfterPublish,
-        textPrefix,
-        replyPrefix,
+        text,
+        replyText,
         category,
         replyCategory,
         attestUrl,
@@ -145,11 +145,21 @@ try {
   }
 
   const attempts: ProbeAttempt[] = [];
+  if (!text) {
+    throw new Error("Live publish visibility checks now require explicit --text.");
+  }
+  assertLiveColonyCopy(text, "Publish visibility text");
+  if (replyAfterPublish) {
+    if (!replyText) {
+      throw new Error("Reply visibility checks now require explicit --reply-text.");
+    }
+    assertLiveColonyCopy(replyText, "Reply visibility text");
+  }
 
   for (let run = 1; run <= runs; run += 1) {
     const publishDraft = buildPublishDraft({
       run,
-      textPrefix,
+      text,
       category,
       attestUrl,
     });
@@ -162,7 +172,7 @@ try {
 
     const replyDraft = buildReplyDraft({
       run,
-      replyPrefix,
+      replyText,
       category: replyCategory,
       attestUrl,
       parentTxHash: publishAttempt.txHash,
@@ -215,8 +225,8 @@ function getIntegerArgOrExit(flag: string, fallback: number): number {
 function buildPlan(opts: {
   runs: number;
   replyAfterPublish: boolean;
-  textPrefix: string;
-  replyPrefix: string;
+  text: string | null;
+  replyText: string | null;
   category: string;
   replyCategory: string;
   attestUrl: string;
@@ -243,18 +253,12 @@ function buildPlan(opts: {
 
 function buildPublishDraft(opts: {
   run: number;
-  textPrefix: string;
+  text: string;
   category: string;
   attestUrl: string;
 }): { text: string; category: string; attestUrl: string } {
   return {
-    text: ensureLongFormText(
-      `${opts.textPrefix} ${opts.run} on ${new Date().toISOString()}: ` +
-      "this live probe measures whether a DAHR-backed publish returns a tx hash, " +
-      "whether that tx can be confirmed through the package read surface, how long " +
-      "indexing takes to converge, and whether the current operator should trust " +
-      "feed visibility, post-detail lookup, or only chain-level confirmation.",
-    ),
+    text: appendRunTag(opts.text, opts.run),
     category: opts.category,
     attestUrl: opts.attestUrl,
   };
@@ -262,19 +266,13 @@ function buildPublishDraft(opts: {
 
 function buildReplyDraft(opts: {
   run: number;
-  replyPrefix: string;
+  replyText: string;
   category: string;
   attestUrl: string;
   parentTxHash: string;
 }): { text: string; category: string; attestUrl: string; parentTxHash: string } {
   return {
-    text: ensureLongFormText(
-      `${opts.replyPrefix} ${opts.run} on ${new Date().toISOString()}: ` +
-      `this threaded probe targets parent ${opts.parentTxHash.slice(0, 12)} and checks ` +
-      "whether reply writes behave like root posts, whether indexed lookup catches up " +
-      "within the polling window, and whether reply tx hashes are currently more or less " +
-      "trustworthy than root publish tx hashes for launch-grade external guidance.",
-    ),
+    text: appendRunTag(opts.replyText, opts.run),
     category: opts.category,
     attestUrl: opts.attestUrl,
     parentTxHash: opts.parentTxHash,
@@ -416,11 +414,11 @@ async function readBalance(omni: any): Promise<number | null> {
   }
 }
 
-function ensureLongFormText(text: string): string {
-  if (text.length >= 200) {
+function appendRunTag(text: string, run: number): string {
+  if (run === 1) {
     return text;
   }
-  return `${text} This note intentionally stays detailed enough to satisfy the package long-form publish requirement while keeping the probe purpose explicit and auditable.`;
+  return `${text} [run ${run}]`;
 }
 
 function balanceDelta(initialBalance: number | null, finalBalance: number | null): number | null {

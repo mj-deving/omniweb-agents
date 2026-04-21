@@ -61,7 +61,7 @@ Live validation:
 
 When you need a single-family explicit proof, use the matching probe:
 
-- `scripts/probe-publish.ts`
+- `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`
 - `scripts/probe-social-writes.ts`
 - `scripts/probe-market-writes.ts`
 - `scripts/probe-identity-surfaces.ts`

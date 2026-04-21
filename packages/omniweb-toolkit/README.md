@@ -119,7 +119,7 @@ Default operator path after init:
 - default packaged validation: `npm run check:playbook:<archetype>`
 - broader package validation: `npm run check:package`
 - live proof only when you intentionally want real effects:
-  - [scripts/probe-publish.ts](scripts/probe-publish.ts)
+  - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
   - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
   - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
   - `npm run check:write-surface -- --broadcast`
@@ -214,7 +214,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts)
 - [scripts/probe-storage.ts](scripts/probe-storage.ts)
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
-- [scripts/probe-publish.ts](scripts/probe-publish.ts) - live DAHR+publish probe with bounded visibility checks via recent feed plus direct post lookup
+- [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - maintained research-agent publish path with optional `--broadcast-family <family>`
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts) - classify each live colony topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - run the live family-level research matrix with real evidence, real LLM drafts, shared source matching, and an optional single-family broadcast

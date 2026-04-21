@@ -1,17 +1,21 @@
 #!/usr/bin/env npx tsx
 /**
- * probe-social-writes.ts — maintained live proof path for reaction and reply,
- * with tip kept as an explicit optional extension.
+ * probe-social-writes.ts — maintained live proof path for reactions, with
+ * reply and tip kept as explicit optional extensions.
  *
  * Default behavior is non-destructive: select a suitable external feed post and
  * report the current readback state that would be used for the live proof.
- * Passing `--execute` performs the real reaction and reply flow.
+ * Passing `--execute` performs the real reaction flow.
+ * Add `--reply-text` when you intentionally want a real reply.
  * Passing `--include-tip` adds the live tip step as an explicit extra probe.
  *
  * Output: JSON to stdout. Errors to stderr.
  * Exit codes: 0 = success, 1 = live/runtime failure, 2 = invalid args.
  */
 
+import {
+  assertLiveColonyCopy,
+} from "./_live-colony-copy-guard.js";
 import {
   fetchText,
   DEFAULT_BASE_URL,
@@ -58,6 +62,7 @@ Options:
   --tip-amount N          DEM amount to tip (default: ${DEFAULT_TIP_AMOUNT})
   --reply-category CAT    Reply category (default: ${DEFAULT_REPLY_CATEGORY})
   --reply-attest-url URL  Reply attestation URL (default: ${DEFAULT_REPLY_ATTEST_URL})
+  --reply-text TEXT       Explicit non-operational text for live reply proof
   --reply-timeout-ms N    Visibility timeout for reply verification (default: ${DEFAULT_REPLY_TIMEOUT_MS})
   --reaction-timeout-ms N Polling timeout for reaction readback (default: ${DEFAULT_REACTION_TIMEOUT_MS})
   --tip-timeout-ms N      Polling timeout for tip readback (default: ${DEFAULT_TIP_TIMEOUT_MS})
@@ -79,6 +84,7 @@ for (const flag of [
   "--tip-amount",
   "--reply-category",
   "--reply-attest-url",
+  "--reply-text",
   "--reply-timeout-ms",
   "--reaction-timeout-ms",
   "--tip-timeout-ms",
@@ -97,6 +103,7 @@ const feedLimit = getIntegerArg("--feed-limit", DEFAULT_FEED_LIMIT);
 const tipAmount = getIntegerArg("--tip-amount", DEFAULT_TIP_AMOUNT);
 const replyCategory = getStringArg(args, "--reply-category") ?? DEFAULT_REPLY_CATEGORY;
 const replyAttestUrl = getStringArg(args, "--reply-attest-url") ?? DEFAULT_REPLY_ATTEST_URL;
+const replyTextArg = getStringArg(args, "--reply-text") ?? null;
 const replyTimeoutMs = getIntegerArg("--reply-timeout-ms", DEFAULT_REPLY_TIMEOUT_MS);
 const reactionTimeoutMs = getIntegerArg("--reaction-timeout-ms", DEFAULT_REACTION_TIMEOUT_MS);
 const tipTimeoutMs = getIntegerArg("--tip-timeout-ms", DEFAULT_TIP_TIMEOUT_MS);
@@ -175,7 +182,8 @@ try {
       },
       tipEnabled: includeTip,
       message:
-        "Dry run only. Re-run with --execute for the live reaction+reply proof, "
+        "Dry run only. Re-run with --execute for the live reaction proof, "
+        + "add --reply-text when you intentionally want a real reply, "
         + "and add --include-tip only when you intentionally want the extra tip probe.",
     }, null, 2));
     process.exit(0);
@@ -208,14 +216,19 @@ try {
       )
     : { attempted: false };
 
-  const replyText = buildReplyText(candidate.txHash);
-  const replyResult = await omni.colony.reply({
-    parentTxHash: candidate.txHash,
-    text: replyText,
-    category: replyCategory,
-    attestUrl: replyAttestUrl,
-  });
-  const replyVerification = replyResult.ok
+  if (replyTextArg) {
+    assertLiveColonyCopy(replyTextArg, "Reply proof text");
+  }
+  const replyText = replyTextArg;
+  const replyResult = replyText
+    ? await omni.colony.reply({
+        parentTxHash: candidate.txHash,
+        text: replyText,
+        category: replyCategory,
+        attestUrl: replyAttestUrl,
+      })
+    : null;
+  const replyVerification = replyText && replyResult?.ok
     ? await verifyReplyReadback(omni, candidate.txHash, replyResult.data?.txHash, replyText, {
         timeoutMs: replyTimeoutMs,
         pollMs,
@@ -227,9 +240,11 @@ try {
     reactionResult.ok
     && !!reactionVerification.attempted
     && reactionVerification.ok
-    && replyResult.ok
-    && !!replyVerification.attempted
-    && replyVerification.ok
+    && (!replyText || (
+      !!replyResult?.ok
+      && !!replyVerification.attempted
+      && replyVerification.ok
+    ))
     && (!includeTip || (!!tipResult?.ok && !!tipVerification.attempted && tipVerification.ok));
 
   console.log(JSON.stringify({
@@ -249,6 +264,7 @@ try {
       verification: tipVerification,
     },
     reply: {
+      skipped: !replyText,
       category: replyCategory,
       attestUrl: replyAttestUrl,
       text: replyText,
@@ -500,11 +516,6 @@ function summarizeToolResult(
         error: result.error,
         provenance: result.provenance,
       };
-}
-
-function buildReplyText(parentTxHash: string): string {
-  const stamp = new Date().toISOString();
-  return `Operational reply-path verification at ${stamp}. This reply targets ${parentTxHash.slice(0, 16)} and exists only to prove the maintained omniweb-toolkit reply flow, visibility polling, and thread readback path on the current production host.`;
 }
 
 async function loadConnect(): Promise<(opts?: {

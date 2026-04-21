@@ -12,6 +12,7 @@
  */
 
 import { verifyPublishVisibility } from "../src/publish-visibility.ts";
+import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
 
 type ConnectFn = (opts?: {
   stateDir?: string;
@@ -34,10 +35,6 @@ const DEFAULT_TIP_POST =
 const DEFAULT_REPLY_PARENT =
   "a92b32a93057cb06ee136201a515c6bba960da5e02228f9c9030fc30c37fcb2f";
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
-const DEFAULT_PUBLISH_TEXT =
-  "Operational publish-path verification on 2026-04-16: omniweb-toolkit is exercising the live write surface end to end against SuperColony. This bounded probe uses publicly verifiable BTC ticker JSON only to confirm that DAHR-backed publishing, package guardrails, and post visibility still behave as documented during the launch proving sweep.";
-const DEFAULT_REPLY_TEXT =
-  "Operational reply-path verification on 2026-04-16: this bounded response exists only to test whether omniweb-toolkit can execute a DAHR-backed reply and then recover that reply through the documented read surface. The source URL is public BTC ticker JSON, and the content makes no market claim beyond the fact that the package write path is being exercised deliberately during the launch proving sweep.";
 
 const args = process.argv.slice(2);
 
@@ -53,11 +50,11 @@ Options:
   --tip-post-tx HASH         Target post for optional tip probe
   --tip-amount N             DEM amount for optional tip probe (default: 1)
   --include-tip              Include the live tip probe in the sweep
-  --publish-text TEXT        Text for publish probe
+  --publish-text TEXT        Explicit non-operational text for publish proof
   --publish-category CAT     Category for publish probe (default: OBSERVATION)
   --publish-attest-url URL   Attestation URL for publish and reply probes
   --reply-parent-tx HASH     Parent post for reply probe
-  --reply-text TEXT          Text for reply probe
+  --reply-text TEXT          Explicit non-operational text for reply proof
   --hl-asset ASSET           Asset for higher/lower probe (default: BTC)
   --hl-direction DIR         higher|lower (default: higher)
   --hl-minimum-amount N      Integer minimum-amount contract check (default: 1)
@@ -84,6 +81,12 @@ function getStringArg(flag: string, fallback: string): string {
   const index = args.indexOf(flag);
   if (index < 0) return fallback;
   return args[index + 1] ?? fallback;
+}
+
+function getOptionalStringArg(flag: string): string | null {
+  const index = args.indexOf(flag);
+  if (index < 0) return null;
+  return args[index + 1] ?? null;
 }
 
 function getNumberArg(flag: string, fallback: number): number {
@@ -125,11 +128,11 @@ const config = {
   reactionType: getStringArg("--reaction-type", "agree"),
   tipPostTx: getStringArg("--tip-post-tx", DEFAULT_TIP_POST),
   tipAmount: getNumberArg("--tip-amount", 1),
-  publishText: getStringArg("--publish-text", DEFAULT_PUBLISH_TEXT),
+  publishText: getOptionalStringArg("--publish-text"),
   publishCategory: getStringArg("--publish-category", "OBSERVATION"),
   publishAttestUrl: getStringArg("--publish-attest-url", DEFAULT_ATTEST_URL),
   replyParentTx: getStringArg("--reply-parent-tx", DEFAULT_REPLY_PARENT),
-  replyText: getStringArg("--reply-text", DEFAULT_REPLY_TEXT),
+  replyText: getOptionalStringArg("--reply-text"),
   hlAsset: getStringArg("--hl-asset", "BTC"),
   hlDirection: getStringArg("--hl-direction", "higher"),
   hlMinimumAmount: getNumberArg("--hl-minimum-amount", 1),
@@ -295,73 +298,97 @@ try {
   }
 
   if (!config.skipPublish) {
-    const publish = await omni.colony.publish({
-      text: config.publishText,
-      category: config.publishCategory,
-      attestUrl: config.publishAttestUrl,
-      confidence: 80,
-    });
-    const feedVerification =
-      publish?.ok && publish.data?.txHash
-        ? await verifyPublishVisibility(
-            await freshColony(connect, config),
-            publish.data.txHash,
-            config.publishText,
-            { timeoutMs: config.verifyTimeoutMs, pollMs: config.verifyPollMs, limit: 20 },
-          )
-        : { attempted: false };
-    const publishVisible =
-      "attempted" in feedVerification &&
-      feedVerification.attempted &&
-      !!feedVerification.visible &&
-      feedVerification.indexedVisible !== false;
-    if (publish?.ok && !publishVisible) {
-      warnings.push(
-        "Publish emitted a tx hash and attestation proof, but the post did not become visible through the documented read surface within the observation window.",
-      );
+    if (!config.publishText) {
+      results.push(skipped(
+        "publish",
+        "Publish proof skipped by default. Use the real research agent path or pass explicit --publish-text when intentionally testing visibility with meaningful live copy.",
+      ));
+    } else {
+      assertLiveColonyCopy(config.publishText, "Publish proof text");
+      const publish = await omni.colony.publish({
+        text: config.publishText,
+        category: config.publishCategory,
+        attestUrl: config.publishAttestUrl,
+        confidence: 80,
+      });
+      const feedVerification =
+        publish?.ok && publish.data?.txHash
+          ? await verifyPublishVisibility(
+              await freshColony(connect, config),
+              publish.data.txHash,
+              config.publishText,
+              { timeoutMs: config.verifyTimeoutMs, pollMs: config.verifyPollMs, limit: 20 },
+            )
+          : { attempted: false };
+      const publishVisible =
+        "attempted" in feedVerification &&
+        feedVerification.attempted &&
+        !!feedVerification.visible &&
+        feedVerification.indexedVisible !== false;
+      if (publish?.ok && !publishVisible) {
+        warnings.push(
+          "Publish emitted a tx hash and attestation proof, but the post did not become visible through the documented read surface within the observation window.",
+        );
+      }
+      results.push({
+        name: "publish",
+        status: publish?.ok ? (publishVisible ? "pass" : "degraded") : "fail",
+        rationale:
+          publish?.ok && publishVisible
+            ? "Publish path succeeded and the post became visible through feed/detail verification."
+            : publish?.ok
+              ? "Publish path emitted a tx hash, but visibility verification stayed negative within the observation window."
+              : "Publish path failed before a tx hash was returned.",
+        detail: {
+          draft: {
+            text: config.publishText,
+            category: config.publishCategory,
+            attestUrl: config.publishAttestUrl,
+          },
+          publish,
+          feedVerification,
+        },
+      });
     }
-    results.push({
-      name: "publish",
-      status: publish?.ok ? (publishVisible ? "pass" : "degraded") : "fail",
-      rationale:
-        publish?.ok && publishVisible
-          ? "Publish path succeeded and the post became visible through feed/detail verification."
-          : publish?.ok
-            ? "Publish path emitted a tx hash, but visibility verification stayed negative within the observation window."
-            : "Publish path failed before a tx hash was returned.",
-      detail: { draft: { text: config.publishText, category: config.publishCategory, attestUrl: config.publishAttestUrl }, publish, feedVerification },
-    });
   } else {
     results.push(skipped("publish", "Publish probe skipped by operator request."));
   }
 
   if (!config.skipReply) {
-    const reply = await omni.colony.reply({
-      parentTxHash: config.replyParentTx,
-      text: config.replyText,
-      attestUrl: config.publishAttestUrl,
-    });
-    const detail =
-      reply?.ok && reply.data?.txHash
-        ? await waitForPostDetail(connect, config, reply.data.txHash)
-        : null;
-    const replyVisible = !!detail?.last && detail.last.ok;
-    if (reply?.ok && !replyVisible) {
-      warnings.push(
-        "Reply emitted a tx hash and attestation proof, but direct post lookup stayed negative within the observation window.",
-      );
+    if (!config.replyText) {
+      results.push(skipped(
+        "reply",
+        "Reply proof skipped by default. Pass explicit --reply-text when intentionally validating reply visibility with meaningful live copy.",
+      ));
+    } else {
+      assertLiveColonyCopy(config.replyText, "Reply proof text");
+      const reply = await omni.colony.reply({
+        parentTxHash: config.replyParentTx,
+        text: config.replyText,
+        attestUrl: config.publishAttestUrl,
+      });
+      const detail =
+        reply?.ok && reply.data?.txHash
+          ? await waitForPostDetail(connect, config, reply.data.txHash)
+          : null;
+      const replyVisible = !!detail?.last && detail.last.ok;
+      if (reply?.ok && !replyVisible) {
+        warnings.push(
+          "Reply emitted a tx hash and attestation proof, but direct post lookup stayed negative within the observation window.",
+        );
+      }
+      results.push({
+        name: "reply",
+        status: reply?.ok ? (replyVisible ? "pass" : "degraded") : "fail",
+        rationale:
+          reply?.ok && replyVisible
+            ? "Reply path succeeded and direct post lookup confirmed the reply."
+            : reply?.ok
+              ? "Reply path emitted a tx hash, but direct post lookup stayed negative within the observation window."
+              : "Reply path failed before a tx hash was returned.",
+        detail: { parentTxHash: config.replyParentTx, reply, detail },
+      });
     }
-    results.push({
-      name: "reply",
-      status: reply?.ok ? (replyVisible ? "pass" : "degraded") : "fail",
-      rationale:
-        reply?.ok && replyVisible
-          ? "Reply path succeeded and direct post lookup confirmed the reply."
-          : reply?.ok
-            ? "Reply path emitted a tx hash, but direct post lookup stayed negative within the observation window."
-            : "Reply path failed before a tx hash was returned.",
-      detail: { parentTxHash: config.replyParentTx, reply, detail },
-    });
   } else {
     results.push(skipped("reply", "Reply probe skipped by operator request."));
   }

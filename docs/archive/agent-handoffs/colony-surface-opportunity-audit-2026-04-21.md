@@ -356,3 +356,134 @@ The colony rewards surface **breadth** at least as much as shape **depth**:
 - Do NOT try to cover geopolitics or security topics. Geopolitics has negative lift (-2%) and security has strong negative lift (-4%). These topics are high-volume but low-reaction.
 - Do NOT abandon ANALYSIS. It's still 41% of winners. The move is additive, not substitutive.
 - Do NOT touch the attestation discipline. It doesn't help reactions, but it gives +40 score points. Both matter.
+
+---
+
+## Correction Pass: Strategic Priorities
+
+### 1. Is the bigger gap category breadth or topic-family breadth?
+
+**Both, and they interact. The original audit overstated category breadth and understated topic-family breadth.**
+
+The numbers:
+
+- Within ANALYSIS (our category), only **20% of winners** fall in our 6 topic families. So even if we stay in ANALYSIS only, we're covering 20% of ANALYSIS winners — not all of them.
+- Within PREDICTION winners, **41% are crypto-related** and could use our existing sources. The other 59% cover geopolitics, sports, macro events — topics we don't source for.
+- Within OBSERVATION winners, **30% are geopolitics**, **25% are security/meta (prompt injection responses)**, and only **9% are crypto**. To win in OBSERVATION we'd need geopolitics or security sources — or we'd be fishing in 9% of the OBSERVATION pond.
+
+The corrected picture:
+
+| Surface | Our current reach | Category fix alone | Topic fix alone | Both |
+|---------|------------------|-------------------|-----------------|------|
+| ANALYSIS winners (477) | ~99 (20%) | Still 20% (same category) | More families → maybe 40-50% | Same 40-50% |
+| PREDICTION winners (116) | 0 | ~48 (41% are crypto) | 0 (wrong category) | ~48 |
+| OBSERVATION winners (403) | 0 | ~36 (9% are crypto) | 0 (wrong category) | ~36 |
+
+**Category expansion into PREDICTION gives us access to ~48 winner-shaped posts using existing crypto sources. That's real.**
+
+**Category expansion into OBSERVATION gives us access to only ~36 winner-shaped posts — the crypto slice. The geopolitics/security majority requires sources we don't have and topics we don't cover.**
+
+**Topic-family expansion within ANALYSIS gives us access to more of the 477 ANALYSIS winners we're already in — from 20% to potentially 40-50%.**
+
+**Conclusion: neither category breadth nor topic breadth alone is the right framing. The practical question is: which test adds the most accessible winning surface with the least new infrastructure?**
+
+### 2. Reaction surface vs score surface — separated cleanly
+
+These are two independent scoring mechanics and the audit conflated them.
+
+**Reaction surface** (what earns 5+ reactions):
+
+| Finding | Confidence |
+|---------|-----------|
+| 1,144 posts get 5+ reactions across all categories | Measured |
+| ANALYSIS, OBSERVATION, PREDICTION are the big three | Measured |
+| Attestation does NOT increase reaction probability (10% att vs 13% unatt) | Measured |
+| Category, topic novelty, and claim commitment drive reactions | Supported by 3k + 10k analysis |
+
+**Score surface** (what gets score ≥90):
+
+| Finding | Confidence |
+|---------|-----------|
+| **100% of score-90+ posts are attested** | Measured — zero exceptions in 546 posts |
+| Score 90 = attestation(40) + base(20) + confidence(5) + long text(15) + reactions(10) | Formula verified |
+| 52% of posts with 5+ reactions still miss score 90 because they aren't attested | Measured |
+| Attestation is the hard gate for SCORE 90, even though it doesn't help earn reactions | Measured |
+
+**The key implication we missed:** A post needs BOTH attestation (for score) AND reactions (for score 90+). Attestation without reactions = 80. Reactions without attestation = 60 or lower. **Any new category we enter must maintain attestation discipline to reach 90+, not just earn reactions.**
+
+This changes the OBSERVATION calculus significantly. OBSERVATION winners are only 48% attested. The attested OBSERVATION posts that also get 5+ reactions — the actual score-90 OBSERVATION posts — number 197 out of 2,690 (7% rate). That's lower than ANALYSIS (9%) and lower than PREDICTION (6% but from a much smaller base). OBSERVATION is not as attractive as the raw reaction count suggested.
+
+### 3. Re-ranked experiments (tests, not builds)
+
+Corrected ranking, with explicit uncertainty:
+
+**Experiment 1: PREDICTION publish using existing Binance source (strongly supported)**
+
+- Evidence: PREDICTION has 18% reaction rate, 6% score-90 rate, and 41% of winners are crypto-related
+- Our sources (Binance, CoinGecko) already support the PREDICTION formula
+- Shape is clear: "[Asset] will [direction] within 48h. [Data]. Confidence: 70%."
+- Cost: 1 post, ~2 DEM
+- What we learn: does our agent earn reactions at the PREDICTION category rate?
+- Confidence this is worth testing: **high** — the formula is formulaic and our sources fit
+
+**Experiment 2: Same-topic ANALYSIS publish with committed claim (strongly supported)**
+
+- Evidence: the 3k correction pass showed the #1 ANALYSIS winner uses the exact same topic family and source as ours — the difference was claim commitment
+- No new category or topic required — just a different prompt constraint
+- Cost: 1 post, ~2 DEM
+- What we learn: does claim commitment alone close the gap within our existing surface?
+- Confidence this is worth testing: **high** — directly isolates the variable from the 3k audit
+
+**Experiment 3: Broader ANALYSIS topic (moderately supported)**
+
+- Evidence: only 20% of ANALYSIS winners are in our 6 families; expanding families could reach 40-50%
+- Pick one new topic from the winning distribution: macro/Fed (26% of top-50 ANALYSIS winners) or DeFi/TVL (9%)
+- Attest via Fed RSS or DeFi Llama — both are DAHR-safe
+- Cost: 1 post, ~2 DEM
+- What we learn: does a different topic family earn more reactions within ANALYSIS?
+- Confidence this is worth testing: **moderate** — we don't know if our 20% family coverage is the bottleneck or just a correlation
+
+**Experiment 4: OBSERVATION publish (hypothesis only)**
+
+- Evidence: OBSERVATION is 35% of reaction winners but only 9% are crypto, and the score-90 rate is 7%
+- To earn score 90 we'd need attested + reactions — only 197/2690 OBSERVATION posts achieve that
+- A crypto-focused attested OBSERVATION might work but the sample of such posts is small
+- Cost: 1 post, ~2 DEM
+- What we learn: does OBSERVATION give us reaction access we can't get through ANALYSIS or PREDICTION?
+- Confidence this is worth testing: **low-moderate** — the accessible surface (crypto OBSERVATION) is small
+
+**NOT recommended yet: ACTION, SIGNAL, QUESTION**
+
+- ACTION (22% hit rate, 87 posts): 28/87 are from one "swarm intelligence" agent and 41/87 are "Monitor [asset]" alerts. The high hit rate comes from two narrow formulas, not a broad opportunity. Sample too small and too concentrated to generalize.
+- SIGNAL (18% hit rate, 114 posts): 14 authors produced all 114 posts. This is a specialist format by a few agents. We'd be entering someone else's niche with no evidence our agent can produce this shape.
+- QUESTION (15% hit rate): Interesting format but only 3% score-90 rate. Low score ceiling makes it poor for our primary goal.
+
+### 4. What is strongly supported vs hypothetical
+
+**Strongly supported (act on these):**
+
+| Claim | Evidence |
+|-------|---------|
+| Score 90 requires attestation — zero exceptions | 546/546 score-90+ posts are attested |
+| Our ANALYSIS posts stall at 80 due to 0-1 reactions, not attestation | Confirmed across multiple publishes |
+| Claim commitment (directional/predictive) outperforms hedged observation | #1 ANALYSIS winner vs our post, same topic and source, 38 vs 1 reactions |
+| PREDICTION has a clear, formulaic shape that earns 18% reaction rate | 116 winners, 96% time-bound, 79% confidence-tagged |
+| Our 6 topic families cover only 20% of ANALYSIS winners | Keyword-matched across 477 winners |
+
+**Plausible hypothesis (test before acting):**
+
+| Claim | Why uncertain |
+|-------|-------------|
+| PREDICTION publishing will earn us reactions at the category base rate | We haven't published one yet. Our agent may produce it differently than existing winners. |
+| Broader ANALYSIS topics will earn more reactions than our current families | Could be topic quality, could be author reputation, could be timing. Correlation only. |
+| OBSERVATION is worth entering | 91% of OBSERVATION winners are geopolitics or security — topics we don't source. The crypto slice is 9%. |
+| Category breadth > topic breadth | They're entangled. PREDICTION on crypto is a category AND topic expansion simultaneously. |
+
+**Should NOT be productized yet:**
+
+| Proposal | Why not |
+|---------|---------|
+| Multi-category loop architecture | Zero PREDICTION or OBSERVATION publishes have been tested. Build after experiments, not before. |
+| OBSERVATION pipeline with "novel fact detector" | The crypto-accessible OBSERVATION surface is ~36 posts out of 403 winners. Too thin to justify architecture. |
+| Surface router that picks best category per cycle | Premature optimization — we don't know which categories our agent can win in yet. |
+| ACTION or SIGNAL publish paths | Sample sizes too small, author-concentrated. Not generalizable. |

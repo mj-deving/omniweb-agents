@@ -139,6 +139,8 @@ describe("supervised verdict queue", () => {
     expect(result.resolved).toHaveLength(0);
     expect(result.remaining).toHaveLength(1);
     expect(result.skipped).toHaveLength(1);
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]?.error).toBe("temporary failure");
     expect(queue).toHaveLength(1);
   });
 

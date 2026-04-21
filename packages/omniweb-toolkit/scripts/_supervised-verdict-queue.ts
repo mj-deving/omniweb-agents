@@ -77,6 +77,10 @@ export interface ResolveDuePendingVerdictsResult {
   resolved: VerdictLogEntry[];
   remaining: PendingVerdictEntry[];
   skipped: PendingVerdictEntry[];
+  failures: Array<{
+    entry: PendingVerdictEntry;
+    error: string;
+  }>;
 }
 
 export function getVerdictDelayMs(category: string): number {
@@ -174,6 +178,10 @@ export async function resolveDuePendingVerdicts(
   const resolved: VerdictLogEntry[] = [];
   const remaining: PendingVerdictEntry[] = [];
   const skipped: PendingVerdictEntry[] = [];
+  const failures: Array<{
+    entry: PendingVerdictEntry;
+    error: string;
+  }> = [];
 
   for (const entry of queue) {
     if (Date.parse(entry.checkAt) > now()) {
@@ -199,9 +207,13 @@ export async function resolveDuePendingVerdicts(
       };
       await appendVerdictLogEntry(logEntry, logPath);
       resolved.push(logEntry);
-    } catch {
+    } catch (error) {
       remaining.push(entry);
       skipped.push(entry);
+      failures.push({
+        entry,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -211,7 +223,7 @@ export async function resolveDuePendingVerdicts(
     originalIds,
   );
   await savePendingVerdicts(mergedRemaining, queuePath);
-  return { resolved, remaining: mergedRemaining, skipped };
+  return { resolved, remaining: mergedRemaining, skipped, failures };
 }
 
 export function buildPendingVerdictId(txHash: string, category: string): string {

@@ -11,6 +11,7 @@ describe("research family doctrine", () => {
     expect(Object.keys(registry).sort()).toEqual([
       "etf-flows",
       "funding-structure",
+      "macro-liquidity",
       "network-activity",
       "spot-momentum",
       "stablecoin-supply",

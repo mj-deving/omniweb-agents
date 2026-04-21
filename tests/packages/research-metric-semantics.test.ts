@@ -13,6 +13,7 @@ const RESEARCH_FAMILIES = [
   "spot-momentum",
   "network-activity",
   "stablecoin-supply",
+  "macro-liquidity",
   "vix-credit",
 ];
 

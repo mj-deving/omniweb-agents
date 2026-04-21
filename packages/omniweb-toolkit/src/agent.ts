@@ -33,6 +33,11 @@ export {
 } from "./topic-family-contract.js";
 export { buildResearchColonySubstrate } from "./research-colony-substrate.js";
 export { fetchResearchEvidenceSummary } from "./research-evidence.js";
+export {
+  checkReplyDraftQuality,
+  rankReplyExperimentCandidates,
+  selectReplyExperimentCandidate,
+} from "./reply-experiment.js";
 export { buildResearchSelfHistory } from "./research-self-history.js";
 export { buildResearchEvidenceDelta, summarizeResearchEvidenceDelta } from "./research-evidence-delta.js";
 export { defineResearchTopicFamilyContract } from "./research-family-contracts.js";
@@ -111,6 +116,11 @@ export type {
   FetchResearchEvidenceSummaryOptions,
   FetchResearchEvidenceSummaryResult,
 } from "./research-evidence.js";
+export type {
+  ReplyExperimentCandidate,
+  SelectReplyExperimentCandidateOptions,
+  ReplyDraftQualityOptions,
+} from "./reply-experiment.js";
 export type {
   ResearchPublishHistoryEntry,
   ResearchSelfHistoryPostSummary,

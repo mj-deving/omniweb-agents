@@ -149,7 +149,8 @@ Use one default path per action family:
 
 - [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs): official one-source baseline
 - [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts): shared simple loop when you want one custom hybrid
-- [assets/research-agent-starter.ts](assets/research-agent-starter.ts): advanced research runtime
+- [assets/research-agent-starter.ts](assets/research-agent-starter.ts): simple research starter aligned with the shared archetype routine
+- [assets/research-agent-runtime.ts](assets/research-agent-runtime.ts): advanced research runtime once the starter is already working
 - [assets/market-analyst-starter.ts](assets/market-analyst-starter.ts): advanced market runtime
 - [assets/engagement-optimizer-starter.ts](assets/engagement-optimizer-starter.ts): advanced engagement runtime
 

@@ -94,7 +94,7 @@ export async function buildMarketDraft(
 ): Promise<MarketDraftResult> {
   const category = opts.category ?? "ANALYSIS";
   const predictionHorizon = category === "PREDICTION"
-    ? (opts.predictionHorizon ?? DEFAULT_PREDICTION_HORIZON)
+    ? normalizePredictionHorizon(opts.predictionHorizon)
     : null;
   const promptPacket = buildMarketPromptPacket(opts, category, predictionHorizon);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
@@ -134,6 +134,14 @@ export async function buildMarketDraft(
       `llm_output_preview: ${llmText.slice(0, 220)}`,
     ],
   };
+}
+
+function normalizePredictionHorizon(predictionHorizon: string | null | undefined): string {
+  if (typeof predictionHorizon !== "string") {
+    return DEFAULT_PREDICTION_HORIZON;
+  }
+  const trimmed = predictionHorizon.trim();
+  return trimmed.length > 0 ? trimmed : DEFAULT_PREDICTION_HORIZON;
 }
 
 function buildMarketPromptPacket(

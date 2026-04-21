@@ -2,6 +2,11 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import {
+  DEFAULT_PENDING_VERDICT_PATH,
+  buildPendingVerdictEntry,
+  enqueuePendingVerdict,
+} from "./_supervised-verdict-queue.ts";
 import { loadConnect, loadPackageExport } from "./_shared.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 
@@ -59,6 +64,12 @@ interface MatrixFamilyResult {
     error?: unknown;
   };
   verdictSchedule?: ReturnType<typeof scheduleSupervisedVerdict>;
+  pendingVerdict?: {
+    id: string;
+    queuePath: string;
+    checkAt: string;
+    inserted: boolean;
+  };
   notes?: string[];
 }
 
@@ -95,6 +106,9 @@ if (args.includes("--help") || args.includes("-h")) {
 
 Options:
   --broadcast-family FAMILY   Execute one real publish for the named family
+  --record-pending-verdict    Queue a delayed verdict follow-up for a successful live publish
+  --pending-verdict-queue P   Override the pending verdict queue path
+  --pending-verdict-delay-ms N Override the category delay for the queued verdict entry
   --out PATH                  Write the JSON report to a file as well as stdout
   --verify-timeout-ms N       Visibility verification timeout when broadcasting (default: 45000)
   --verify-poll-ms N          Visibility poll interval when broadcasting (default: 5000)
@@ -113,6 +127,9 @@ if (broadcastFamily && !SUPPORTED_FAMILIES.includes(broadcastFamily as MatrixFam
 }
 
 const outputPath = getOptionalArg("--out");
+const recordPendingVerdict = args.includes("--record-pending-verdict");
+const pendingVerdictQueuePath = getOptionalArg("--pending-verdict-queue") ?? DEFAULT_PENDING_VERDICT_PATH;
+const pendingVerdictDelayMs = getOptionalInt("--pending-verdict-delay-ms");
 const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
 const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
@@ -420,6 +437,26 @@ for (const family of SUPPORTED_FAMILIES) {
       };
       readyResult.verification = verification;
       readyResult.verdictSchedule = scheduleSupervisedVerdict(draft.category, publishedAt);
+      if (recordPendingVerdict && publishResult.data?.txHash) {
+        const queued = await enqueuePendingVerdict(
+          buildPendingVerdictEntry({
+            txHash: publishResult.data.txHash,
+            category: draft.category,
+            text: draft.text,
+            startedAt: publishedAt,
+            sourceRunPath: outputPath ? resolve(outputPath) : null,
+            stateDir: stateDir ?? null,
+            checkAfterMs: pendingVerdictDelayMs,
+          }),
+          pendingVerdictQueuePath,
+        );
+        readyResult.pendingVerdict = {
+          id: queued.entry.id,
+          queuePath: pendingVerdictQueuePath,
+          checkAt: queued.entry.checkAt,
+          inserted: queued.inserted,
+        };
+      }
     }
   }
 
@@ -452,6 +489,16 @@ function getOptionalArg(flag: string): string | undefined {
 function getPositiveInt(flag: string, fallback: number): number {
   const raw = getOptionalArg(flag);
   if (raw == null) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${flag} value: ${raw}`);
+  }
+  return parsed;
+}
+
+function getOptionalInt(flag: string): number | undefined {
+  const raw = getOptionalArg(flag);
+  if (raw == null) return undefined;
   const parsed = Number(raw);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`Invalid ${flag} value: ${raw}`);

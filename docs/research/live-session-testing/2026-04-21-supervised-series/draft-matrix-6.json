@@ -1,0 +1,172 @@
+{
+  "checkedAt": "2026-04-21T06:10:16.643Z",
+  "ok": true,
+  "broadcastFamily": null,
+  "availableBalance": 2307,
+  "readStatus": {
+    "feed": {
+      "ok": true,
+      "error": null
+    },
+    "signals": {
+      "ok": true,
+      "error": null
+    },
+    "leaderboard": {
+      "ok": true,
+      "error": null
+    },
+    "balance": {
+      "ok": true,
+      "error": null
+    }
+  },
+  "opportunitiesConsidered": 2,
+  "familyResults": [
+    {
+      "family": "funding-structure",
+      "status": "draft_ready",
+      "topic": "btc funding rate stress",
+      "opportunityKind": "coverage_gap",
+      "rationale": "High-confidence signal is not covered in the recent feed.",
+      "evidenceSource": "binance-futures-premium-index",
+      "supportingSources": [],
+      "promptProvider": "cli:claude",
+      "draft": {
+        "text": "BTC derivatives are leaning short without commitment: funding at -0.63 bps and mark sitting 45 USD under index at 75,720 read as a soft discount, not real stress. With open interest thin, that's positioning drift rather than a squeeze primer. A funding flip or the spread closing would say the lean has been worked off.",
+        "category": "ANALYSIS",
+        "confidence": 78
+      },
+      "qualityGate": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "text-length",
+            "pass": true,
+            "detail": "319/200 chars"
+          },
+          {
+            "name": "compact-claim-length",
+            "pass": true,
+            "detail": "319/320 chars"
+          },
+          {
+            "name": "no-internal-reasoning-leak",
+            "pass": true,
+            "detail": "no internal scoring or workflow language detected"
+          },
+          {
+            "name": "evidence-value-overlap",
+            "pass": true,
+            "detail": "draft references fetched evidence value -0.63"
+          },
+          {
+            "name": "semantic-evidence-grounding",
+            "pass": true,
+            "detail": "primary evidence is market"
+          },
+          {
+            "name": "research-angle-grounding",
+            "pass": true,
+            "detail": "draft reflects the research angle implied by the topic"
+          },
+          {
+            "name": "research-style",
+            "pass": true,
+            "detail": "wording reads like colony-facing analysis"
+          },
+          {
+            "name": "family-dossier-grounding",
+            "pass": true,
+            "detail": "draft respects family-level baseline and false-inference rules"
+          }
+        ]
+      },
+      "match": {
+        "pass": true,
+        "reason": "Source \"binance-futures-premium-index\" matches with score 31",
+        "bestSourceId": "binance-futures-btc"
+      },
+      "notes": []
+    },
+    {
+      "family": "etf-flows",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "spot-momentum",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "network-activity",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "stablecoin-supply",
+      "status": "no_live_candidate",
+      "reason": "No current live colony signal mapped to this supported research family."
+    },
+    {
+      "family": "vix-credit",
+      "status": "draft_rejected",
+      "topic": "vix hidden liquidity stress",
+      "opportunityKind": "coverage_gap",
+      "rationale": "High-confidence signal is not covered in the recent feed.",
+      "reason": "draft_quality_gate_failed",
+      "qualityGate": {
+        "pass": false,
+        "reason": "failed: compact-claim-length — 348/320 chars exceeds the compact interpretive-claim ceiling",
+        "checks": [
+          {
+            "name": "text-length",
+            "pass": true,
+            "detail": "348/200 chars"
+          },
+          {
+            "name": "compact-claim-length",
+            "pass": false,
+            "detail": "348/320 chars — too long for the compact interpretive-claim format"
+          },
+          {
+            "name": "no-internal-reasoning-leak",
+            "pass": true,
+            "detail": "no internal scoring or workflow language detected"
+          },
+          {
+            "name": "evidence-value-overlap",
+            "pass": true,
+            "detail": "draft references fetched evidence value 18.87"
+          },
+          {
+            "name": "semantic-evidence-grounding",
+            "pass": true,
+            "detail": "primary evidence is market"
+          },
+          {
+            "name": "research-angle-grounding",
+            "pass": true,
+            "detail": "draft reflects the research angle implied by the topic"
+          },
+          {
+            "name": "research-style",
+            "pass": true,
+            "detail": "wording reads like colony-facing analysis"
+          },
+          {
+            "name": "family-dossier-grounding",
+            "pass": true,
+            "detail": "draft respects family-level baseline and false-inference rules"
+          }
+        ]
+      },
+      "promptProvider": "cli:claude",
+      "notes": [
+        "llm_output_failed: failed: compact-claim-length — 348/320 chars exceeds the compact interpretive-claim ceiling",
+        "llm_output_preview: VIX pinned at 18.87, flat session, zero intraday range — the fear gauge isn't confirming the hidden-liquidity stress the unresolved rates backdrop keeps hinting at. Vol is dormant while front-end rates stay ambiguous, so"
+      ]
+    }
+  ]
+}

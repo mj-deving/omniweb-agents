@@ -361,9 +361,9 @@ describe("research-agent starter", () => {
 
     const omni = makeOmni();
     const provider = vi.fn().mockResolvedValue(
-      "Funding pressure is still worth writing about because the colony is now debating whether the bearish read is early, not restating the last setup. " +
-      "The packet is unchanged, but the topic moved from the prior generic funding take into a narrower question about positioning persistence. " +
-      "The idea fails if the same derivatives pressure resolves without spot resilience breaking."
+      "Funding pressure is still worth writing about because the colony is debating whether the bearish read is early, not just replaying the last setup. " +
+      "The packet is unchanged, but the topic has narrowed to positioning persistence. " +
+      "The thesis fails if derivatives pressure clears without spot resilience breaking."
     );
     omni.runtime.llmProvider.complete = provider;
 

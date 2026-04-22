@@ -183,6 +183,7 @@ const buildResearchDraft = await loadPackageExport<
     availableBalance: number;
     evidenceSummary: any;
     supportingEvidenceSummaries?: any[];
+    selfHistory?: unknown;
     llmProvider?: unknown;
     minTextLength?: number;
   }) => Promise<any>
@@ -190,6 +191,61 @@ const buildResearchDraft = await loadPackageExport<
   "../dist/agent.js",
   "../src/agent.ts",
   "buildResearchDraft",
+);
+const buildResearchSelfHistory = await loadPackageExport<
+  (opts: {
+    history: Array<{
+      topic: string;
+      family: string | null;
+      publishedAt: string;
+      opportunityKind: string;
+      textSnippet: string | null;
+      evidenceValues: Record<string, string>;
+    }>;
+    topic: string;
+    family: string | null;
+    now: string;
+    currentEvidenceValues: Record<string, string>;
+  }) => unknown
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "buildResearchSelfHistory",
+);
+const loadResearchPublishHistory = await loadPackageExport<
+  (stateDir: string) => Promise<Array<{
+    topic: string;
+    family: string | null;
+    publishedAt: string;
+    opportunityKind: string;
+    textSnippet: string | null;
+    evidenceValues: Record<string, string>;
+  }>>
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "loadResearchPublishHistory",
+);
+const appendResearchPublishHistory = await loadPackageExport<
+  (stateDir: string, entry: {
+    topic: string;
+    family: string | null;
+    publishedAt: string;
+    opportunityKind: string;
+    textSnippet: string | null;
+    evidenceValues: Record<string, string>;
+  }) => Promise<Array<{
+    topic: string;
+    family: string | null;
+    publishedAt: string;
+    opportunityKind: string;
+    textSnippet: string | null;
+    evidenceValues: Record<string, string>;
+  }>>
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "appendResearchPublishHistory",
 );
 const matchResearchDraftToPlan = await loadPackageExport<
   (opts: {
@@ -217,6 +273,7 @@ const verifyPublishVisibility = await loadPackageExport<
 );
 const omni = await connect({ stateDir, allowInsecureUrls });
 const startedAt = new Date().toISOString();
+let publishHistory = stateDir ? await loadResearchPublishHistory(stateDir) : [];
 
 const [feedRead, signalsRead, leaderboardRead, balanceRead] = await Promise.allSettled([
   omni.colony.getFeed({ limit: 30 }),
@@ -271,6 +328,7 @@ const familyResults: MatrixFamilyResult[] = [];
 const readyPublishContexts = new Map<MatrixFamily, {
   draft: Awaited<ReturnType<typeof buildResearchDraft>> & { ok: true };
   opportunity: ResearchOpportunityLike;
+  evidenceValues: Record<string, string>;
 }>();
 for (const family of SUPPORTED_FAMILIES) {
   const opportunity = candidatesByFamily.get(family);
@@ -329,6 +387,13 @@ for (const family of SUPPORTED_FAMILIES) {
 
   const supportingSummaries = supportingEvidence.flatMap((entry) =>
     entry.status === "fulfilled" && entry.value.ok ? [entry.value.summary] : []);
+  const selfHistory = buildResearchSelfHistory({
+    history: publishHistory,
+    topic: opportunity.topic,
+    family: opportunity.sourceProfile.family,
+    now: startedAt,
+    currentEvidenceValues: primaryEvidence.value.summary.values,
+  });
   const prefetchResults = evidenceReads.flatMap((entry) =>
     entry.status === "fulfilled" ? [entry.value] : []);
   const draft = await buildResearchDraft({
@@ -338,6 +403,7 @@ for (const family of SUPPORTED_FAMILIES) {
     availableBalance,
     evidenceSummary: primaryEvidence.value.summary,
     supportingEvidenceSummaries: supportingSummaries,
+    selfHistory,
     llmProvider: omni.runtime.llmProvider,
     minTextLength: 200,
   });
@@ -408,6 +474,7 @@ for (const family of SUPPORTED_FAMILIES) {
   readyPublishContexts.set(family, {
     draft,
     opportunity,
+    evidenceValues: primaryEvidence.value.summary.values,
   });
   familyResults.push(readyResult);
 }
@@ -489,6 +556,16 @@ if (publishSelection.selectedFamily) {
             checkAt: queued.entry.checkAt,
             inserted: queued.inserted,
           };
+        }
+        if (stateDir) {
+          publishHistory = await appendResearchPublishHistory(stateDir, {
+            topic: selectedContext.opportunity.topic,
+            family: selectedContext.opportunity.sourceProfile.family,
+            publishedAt,
+            opportunityKind: selectedContext.opportunity.kind,
+            textSnippet: selectedContext.draft.text.slice(0, 240),
+            evidenceValues: selectedContext.evidenceValues,
+          });
         }
       }
     }

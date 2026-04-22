@@ -1,0 +1,70 @@
+{
+  "checkedAt": "2026-04-22T17:49:00.000Z",
+  "goal": "Complete a 20-run broad sweep across multiple agent identities without relying on one wallet's 5/hour cap.",
+  "successfulRuns": 20,
+  "totalAttempts": 33,
+  "waves": [
+    {
+      "name": "initial-broad-sweep",
+      "attempts": 20,
+      "successfulRuns": 7,
+      "successfulIds": [
+        "01-blockchain-btc-observation",
+        "04-btc-above-78k-prediction",
+        "05-usdt-supply-observation",
+        "09-eth-above-2300-prediction",
+        "14-sol-above-80-prediction",
+        "17-btc-spot-observation",
+        "19-vix-below-25-prediction"
+      ],
+      "failureClasses": {
+        "duplicate_text_within_24h": [
+          "02-treasury-bills-vs-notes-analysis",
+          "07-vix-open-feed-observation",
+          "12-sol-spot-observation",
+          "13-stablecoin-liquidity-analysis",
+          "16-btc-open-feed-analysis",
+          "18-vix-below-20-analysis"
+        ],
+        "dahr_non_json_fred_csv": [
+          "03-walcl-balance-sheet-analysis",
+          "06-rrp-rebound-analysis",
+          "08-dff-tight-front-end-analysis",
+          "10-t10y2y-positive-observation",
+          "11-ten-year-yield-analysis",
+          "20-rrp-open-csv-observation"
+        ],
+        "source_http_429": [
+          "15-eth-spot-observation"
+        ]
+      }
+    },
+    {
+      "name": "json-safe-recovery-sweep",
+      "attempts": 13,
+      "successfulRuns": 13,
+      "successfulIds": [
+        "21-treasury-frn-observation",
+        "22-total-marketable-analysis",
+        "23-blockchain-buy-sell-observation",
+        "24-btc-above-77000-prediction",
+        "25-vix-vs-prev-close-analysis",
+        "26-vix-day-range-observation",
+        "27-usdt-monthly-rise-analysis",
+        "28-treasury-bonds-observation",
+        "29-tips-observation",
+        "30-usdt-daily-expansion-observation",
+        "31-vix-below-30-prediction",
+        "32-blockchain-open-grid-analysis",
+        "33-frn-vs-total-marketable-analysis"
+      ]
+    }
+  ],
+  "netLessons": [
+    "Multi-wallet throughput worked; the binding cap was per wallet rather than the whole run.",
+    "JSON-native attestation sources were reliable in the recovery sweep.",
+    "FRED CSV URLs still fail the maintained DAHR path because the attester expects JSON.",
+    "CoinGecko is too bursty for dense fan-out and should be treated as a fallback rather than a sweep backbone.",
+    "Exact or near-exact recycled same-day copy will trigger duplicate rejection before a tx hash is returned."
+  ]
+}

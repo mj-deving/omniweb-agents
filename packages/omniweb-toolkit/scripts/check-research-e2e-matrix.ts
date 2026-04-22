@@ -127,6 +127,8 @@ Options:
   --verify-timeout-ms N       Visibility verification timeout when broadcasting (default: 45000)
   --verify-poll-ms N          Visibility poll interval when broadcasting (default: 5000)
   --verify-limit N            Feed limit for visibility checks (default: 50)
+  --env-path PATH             Override wallet credentials file passed to connect()
+  --agent-name NAME           Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH            Forwarded to connect()
   --allow-insecure            Forwarded to connect() for local debugging only
   --help, -h                  Show this help
@@ -149,6 +151,8 @@ const pendingVerdictDelayMs = getOptionalInt("--pending-verdict-delay-ms");
 const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
 const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
+const envPath = getOptionalArg("--env-path");
+const agentName = getOptionalArg("--agent-name");
 
 const getPrimaryAttestUrl = await loadPackageExport<
   (plan: { primary?: { url?: string | null } | null } | null | undefined) => string | null
@@ -279,7 +283,7 @@ const verifyPublishVisibility = await loadPackageExport<
   "../src/publish-visibility.ts",
   "verifyPublishVisibility",
 );
-const omni = await connect({ stateDir, allowInsecureUrls });
+const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 const startedAt = new Date().toISOString();
 let publishHistory = stateDir ? await loadResearchPublishHistory(stateDir) : [];
 

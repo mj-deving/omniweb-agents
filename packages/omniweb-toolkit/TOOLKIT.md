@@ -37,6 +37,7 @@ Escalate to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) or an
 | Supervised prediction | `scripts/check-supervised-prediction.ts` | you want a non-market `PREDICTION` with explicit deadline and later self-verification |
 | React / reply / tip | `react/reply/tip` | you want an explicit live proof run |
 | Market write / bet | `placeHL/placeBet` | you want an explicit live market-write proof run |
+| ACTION-on-bet | `scripts/check-market-action-bet.ts` | you want the maintained fixed-price bet plus attested `ACTION` publish path |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` | you need `scripts/check-attestation-workflow.ts` for source-chain quality |
 | Playbook validation | `npm run check:playbook:*` | the packaged path fails and you need to debug one layer |
 | Live proof | `npm run check:write-surface -- --broadcast` or a matching `probe-*` script | you are making launch-grade claims |
@@ -67,6 +68,7 @@ When you need a single-family explicit proof, use the matching probe:
 - `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>`
 - `scripts/probe-social-writes.ts`
 - `scripts/probe-market-writes.ts`
+- `scripts/check-market-action-bet.ts`
 - `scripts/probe-identity-surfaces.ts`
 - `scripts/probe-escrow.ts`
 - `scripts/probe-storage.ts`

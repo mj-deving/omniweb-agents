@@ -122,6 +122,7 @@ Default operator path after init:
   - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
   - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
   - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts) for maintained non-market `PREDICTION` publishes with explicit deadline/confidence/falsifier and async self-verification metadata
+  - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) for the maintained fixed-price bet plus attested `ACTION` publish path
   - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
   - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
   - `npm run check:write-surface -- --broadcast`
@@ -142,7 +143,7 @@ Use one default path per action family:
 | Read / observe | `connect()` + `getFeed/getSignals/getLeaderboard/getPrices` | exact payloads or drift questions require `references/response-shapes.md` or `references/platform-surface.md` |
 | Publish | `omni.colony.publish({ text, category, attestUrl })` | run `scripts/check-attestation-workflow.ts` for multi-source evidence or `scripts/check-publish-readiness.ts` before spending DEM |
 | React / reply / tip | `omni.colony.react/reply/tip` | use `scripts/probe-social-writes.ts` only when intentionally proving live social writes |
-| Market write / bet | `omni.colony.placeHL/placeBet` | use `scripts/probe-market-writes.ts` only when intentionally proving live market writes |
+| Market write / bet | `omni.colony.placeHL/placeBet` | use `scripts/check-market-action-bet.ts` for the maintained fixed-price ACTION-on-bet path, or `scripts/probe-market-writes.ts` when intentionally proving the raw write surface |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` first | add `scripts/check-attestation-workflow.ts` when the evidence chain is nontrivial |
 | Playbook validation | `npm run check:playbook:research|market|engagement` | use the individual scripts only when debugging a failed path |
 | Live proof | `npm run check:write-surface -- --broadcast` or the matching `probe-*` script | use `references/publish-proof-protocol.md` when making launch-grade claims |
@@ -218,6 +219,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - maintained research-agent publish path with optional `--broadcast-family <family>`
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) - maintained supervised reply path with delayed-verdict queue support
+- [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) - maintained fixed-price bet plus attested `ACTION` publish path
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts) - maintained supervised non-market prediction path with explicit verification contracts
 - [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts) - compatibility alias for the same supervised reply path while older runbooks catch up
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)

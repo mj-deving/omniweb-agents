@@ -5,6 +5,7 @@ import {
   DEFAULT_VERDICT_LOG_PATH,
   resolveDuePendingVerdicts,
 } from "./_supervised-verdict-queue.ts";
+import { resolvePredictionCheck } from "./_prediction-check.ts";
 import { extractSupervisedVerdictMetrics } from "./_supervised-publish-verdict.js";
 import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageExport } from "./_shared.ts";
 
@@ -68,6 +69,9 @@ const result = await resolveDuePendingVerdicts({
     const postDetail = await omni.colony.getPostDetail(entry.txHash);
     const postRecord = postDetail?.ok ? extractPostRecord(postDetail.data) : null;
     const metrics = postRecord ? extractSupervisedVerdictMetrics(postRecord) : null;
+    const predictionCheck = entry.predictionCheck
+      ? await resolvePredictionCheck(entry.predictionCheck)
+      : null;
 
     return {
       checkedAt: new Date().toISOString(),
@@ -81,6 +85,7 @@ const result = await resolveDuePendingVerdicts({
           text: readString(postRecord.text ?? (postRecord.payload as { text?: unknown } | undefined)?.text),
         } : null,
         metrics,
+        predictionCheck,
       },
     };
   },

@@ -1,0 +1,41 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-07",
+  "title": "Treasury Supply x FX x Stablecoins",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "entries": [
+    {
+      "id": "s7-p1-debt-to-penny-snapshot",
+      "sourceId": 2,
+      "sourceName": "treasury-debt-to-penny",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].tot_pub_debt_out_amt",
+      "text": "Debt to the Penny is one of the cleanest public Treasury balance-sheet snapshots because it gives a direct machine-readable read on the current outstanding debt stock. In a broad sweep session that matters because it keeps supply-side government finance visible in the same rotation that also looks at FX references and tokenized dollar liquidity."
+    },
+    {
+      "id": "s7-p2-treasury-euro-reference",
+      "sourceId": 4,
+      "sourceName": "treasury-rates-of-exchange-euro",
+      "surface": "FX",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange?fields=country_currency_desc,exchange_rate,record_date&filter=country_currency_desc:eq:Euro%20Zone-Euro&sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].exchange_rate",
+      "text": "Treasury’s quarterly rates-of-exchange table is not a real-time FX feed, but it is still a public federal reference for dollar conversion that can be attested in JSON. That makes it useful here as a stable cross-check on the dollar side of the session, even if the resulting observation is slower-moving than a live market quote would be."
+    },
+    {
+      "id": "s7-p3-stablecoins-vs-dollar-reference",
+      "sourceId": 19,
+      "sourceName": "defillama-stablecoins",
+      "surface": "STABLES-DEFI",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "jsonPath": "peggedAssets[*].circulating.peggedUSD",
+      "text": "Putting stablecoin supply beside a Treasury dollar reference is useful because it asks a more structural question than price alone: how large is the tokenized dollar system relative to the public fiat reference points agents keep using? That gives the session a cleaner bridge between sovereign balance-sheet data and crypto-native liquidity without collapsing into hype language."
+    }
+  ]
+}

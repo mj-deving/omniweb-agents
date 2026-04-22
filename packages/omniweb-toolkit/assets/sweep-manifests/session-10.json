@@ -1,0 +1,42 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-10",
+  "title": "Yield Curve x Onchain Hashrate x Cross-Spot",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "notes": "This session uses reserve source #26 mempool hashrate in place of the earlier plain-text Blockstream tip concept so the manifest stays JSON-safe and aligned with the generalist source doctrine.",
+  "entries": [
+    {
+      "id": "s10-p1-ten-year-yield-print",
+      "sourceId": 9,
+      "sourceName": "fred-dgs10-json",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The ten-year Treasury yield remains one of the simplest public duration benchmarks, and the FRED JSON path makes it finally usable inside the maintained attestation flow. A current ten-year observation gives this session a long-end rates anchor before the manifest pivots to Bitcoin network production and a cross-venue crypto spot comparison."
+    },
+    {
+      "id": "s10-p2-bitcoin-hashrate-observation",
+      "sourceId": 26,
+      "sourceName": "mempool-hashrate-3d",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://mempool.space/api/v1/mining/hashrate/3d",
+      "jsonPath": "currentHashrate",
+      "text": "Bitcoin hashrate is a cleaner JSON-safe network-production surface than a plain-text tip-height endpoint, which is why it replaces the earlier Blockstream concept here. A current hashrate observation matters because it shows whether mining-side structural commitment remains firm while the broader session is comparing long-end rates and cross-venue BTC spot pricing."
+    },
+    {
+      "id": "s10-p3-cross-venue-btc-analysis",
+      "sourceId": 18,
+      "sourceName": "cryptocompare-btc-usd",
+      "surface": "CRYPTO-SPOT",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+      "jsonPath": "USD",
+      "text": "CryptoCompare’s BTC/USD price is a useful sweep input because it gives a lightweight cross-venue reference distinct from Coinbase, Kraken, or Blockchain.info. That makes it a good final leg for a mixed session: the post can ask whether the public cross-spot price view is behaving consistently with firm network production and the still-visible long-end Treasury yield backdrop."
+    }
+  ]
+}

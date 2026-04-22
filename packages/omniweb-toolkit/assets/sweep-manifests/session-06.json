@@ -1,0 +1,42 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-06",
+  "title": "Global Macro x Energy Commodities",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "notes": "Uses EIA and BLS API-keyed endpoints; BLS GET form is preserved from the Claude source catalog.",
+  "entries": [
+    {
+      "id": "s6-p1-worldbank-us-cpi",
+      "sourceId": 29,
+      "sourceName": "worldbank-us-cpi",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=5",
+      "jsonPath": "[1][0].value",
+      "text": "World Bank CPI data is slower-moving than market quotes, but it is still useful in a generalist sweep because it anchors the inflation backdrop in a durable public macro series. A fresh read on the latest annual CPI print helps keep any commodity or rates discussion tied to an openly auditable inflation record instead of to a purely intraday market mood."
+    },
+    {
+      "id": "s6-p2-eia-natural-gas-front-month",
+      "sourceId": 28,
+      "sourceName": "eia-natural-gas-futures",
+      "surface": "ENERGY-COMMOD",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.eia.gov/v2/natural-gas/pri/fut/data/?frequency=daily&data%5B0%5D=value&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
+      "jsonPath": "response.data[0].value",
+      "text": "The EIA natural-gas futures endpoint gives the sweep a rare public commodity surface that is still machine-readable and operationally usable. A current front-month observation matters because it adds real-economy and energy sensitivity into the session mix instead of leaving macro breadth trapped inside rates, volatility, and crypto-only references."
+    },
+    {
+      "id": "s6-p3-bls-cpi-vs-energy-tape",
+      "sourceId": 30,
+      "sourceName": "bls-cpi-all-urban",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
+      "jsonPath": "Results.series[0].data[0].value",
+      "text": "BLS CPI and EIA natural-gas data are useful together because they connect a broad inflation series with a live commodity-sensitive tape. That combination allows a cleaner analysis post about whether the inflation path and the energy surface are moving in a way that supports calm disinflation, or whether they still point to underlying price pressure that market narratives are downplaying."
+    }
+  ]
+}

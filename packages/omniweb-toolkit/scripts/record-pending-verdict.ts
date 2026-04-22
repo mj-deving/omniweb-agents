@@ -60,6 +60,7 @@ const report = JSON.parse(await readFile(resolve(fromRun), "utf8")) as {
   }>;
 };
 const publishedEntry = extractPublishedEntry(report, fromRun);
+const checkAfterMs = inferPendingVerdictDelayMs(publishedEntry, delayMs);
 const pendingEntry = buildPendingVerdictEntry({
   txHash: publishedEntry.txHash,
   category: publishedEntry.category,
@@ -67,7 +68,7 @@ const pendingEntry = buildPendingVerdictEntry({
   startedAt: publishedEntry.startedAt,
   sourceRunPath: resolve(fromRun),
   stateDir: stateDir ?? report.stateDir,
-  checkAfterMs: delayMs,
+  checkAfterMs,
   predictionCheck: publishedEntry.predictionCheck,
 });
 
@@ -187,4 +188,29 @@ function inferMatrixPublishedAt(
 
 function extractPredictionCheck(value: unknown) {
   return isPredictionCheckSpec(value) ? value : null;
+}
+
+function inferPendingVerdictDelayMs(
+  publishedEntry: {
+    startedAt: string;
+    predictionCheck: ReturnType<typeof extractPredictionCheck>;
+  },
+  delayOverride: number | undefined,
+): number | undefined {
+  if (delayOverride != null) {
+    return delayOverride;
+  }
+
+  const deadlineAt = publishedEntry.predictionCheck?.deadlineAt;
+  if (typeof deadlineAt !== "string") {
+    return undefined;
+  }
+
+  const startedAtMs = Date.parse(publishedEntry.startedAt);
+  const deadlineAtMs = Date.parse(deadlineAt);
+  if (!Number.isFinite(startedAtMs) || !Number.isFinite(deadlineAtMs)) {
+    return undefined;
+  }
+
+  return Math.max(0, deadlineAtMs - startedAtMs);
 }

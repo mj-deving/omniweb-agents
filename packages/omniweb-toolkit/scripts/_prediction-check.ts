@@ -8,6 +8,7 @@ export type PredictionCheckOperator =
   | "contains";
 
 export type PredictionCheckValueType = "number" | "string" | "boolean";
+export const PREDICTION_CHECK_VALUE_TYPES: readonly PredictionCheckValueType[] = ["number", "string", "boolean"];
 
 export interface PredictionCheckSpec {
   version: 1;
@@ -79,6 +80,18 @@ export function parsePredictionExpectedValue(
   }
 
   return raw;
+}
+
+export function parsePredictionCheckValueType(
+  raw: string | null | undefined,
+): PredictionCheckValueType {
+  const normalized = (raw ?? "number").trim();
+  if (normalized === "number" || normalized === "string" || normalized === "boolean") {
+    return normalized;
+  }
+  throw new Error(
+    `Invalid --verify-value-type value: ${raw}. Expected one of: ${PREDICTION_CHECK_VALUE_TYPES.join("|")}`,
+  );
 }
 
 export function extractJsonPathValue(input: unknown, jsonPath: string): unknown {

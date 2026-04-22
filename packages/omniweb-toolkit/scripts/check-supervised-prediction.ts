@@ -4,10 +4,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { getStringArg, hasFlag, loadPackageExport } from "./_shared.ts";
 import {
+  parsePredictionCheckValueType,
   parsePredictionExpectedValue,
   type PredictionCheckOperator,
   type PredictionCheckSpec,
-  type PredictionCheckValueType,
 } from "./_prediction-check.ts";
 import {
   buildPendingVerdictEntry,
@@ -56,7 +56,7 @@ const falsifier = getRequiredArg("--falsifier");
 const verifyUrl = getRequiredArg("--verify-url");
 const verifyJsonPath = getRequiredArg("--verify-json-path");
 const verifyOperator = getRequiredOperator("--verify-operator");
-const verifyValueType = (getStringArg(args, "--verify-value-type") ?? "number") as PredictionCheckValueType;
+const verifyValueType = parsePredictionCheckValueType(getStringArg(args, "--verify-value-type"));
 const verifyValue = parsePredictionExpectedValue(getRequiredArg("--verify-value"), verifyValueType);
 const verifyLabel = getStringArg(args, "--verify-label") ?? null;
 const sourceName = getStringArg(args, "--source-name") ?? null;

@@ -7,7 +7,11 @@ import {
   buildPendingVerdictEntry,
   enqueuePendingVerdict,
 } from "./_supervised-verdict-queue.ts";
-import { selectResearchMatrixBroadcastFamily } from "./_research-matrix-broadcast.ts";
+import {
+  buildResearchMatrixEvaluationFamilies,
+  chooseResearchMatrixOpportunity,
+  selectResearchMatrixBroadcastFamily,
+} from "./_research-matrix-broadcast.ts";
 import { loadConnect, loadPackageExport } from "./_shared.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 
@@ -319,12 +323,19 @@ const opportunities = deriveResearchOpportunities({
   posts,
 });
 
+const evaluationFamilies = buildResearchMatrixEvaluationFamilies({
+  requestedFamily: broadcastFamily ? broadcastFamily as MatrixFamily : null,
+  fallbackFamilies: broadcastFallbackFamilies,
+  supportedFamilies: SUPPORTED_FAMILIES,
+});
 const candidatesByFamily = new Map<MatrixFamily, ResearchOpportunityLike>();
-for (const opportunity of opportunities) {
-  const family = opportunity.sourceProfile.family;
-  if (!SUPPORTED_FAMILIES.includes(family as MatrixFamily)) continue;
-  if (!candidatesByFamily.has(family as MatrixFamily)) {
-    candidatesByFamily.set(family as MatrixFamily, opportunity);
+for (const family of evaluationFamilies) {
+  const candidate = chooseResearchMatrixOpportunity(
+    family,
+    opportunities as Array<ResearchOpportunityLike & { sourceProfile: { family: MatrixFamily | string } }>,
+  );
+  if (candidate) {
+    candidatesByFamily.set(family, candidate);
   }
 }
 
@@ -334,7 +345,7 @@ const readyPublishContexts = new Map<MatrixFamily, {
   opportunity: ResearchOpportunityLike;
   evidenceValues: Record<string, string>;
 }>();
-for (const family of SUPPORTED_FAMILIES) {
+for (const family of evaluationFamilies) {
   const opportunity = candidatesByFamily.get(family);
   if (!opportunity) {
     familyResults.push({

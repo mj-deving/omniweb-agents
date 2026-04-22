@@ -14946,6 +14946,150 @@
       }
     },
     {
+      "id": "fred-graph-walcl",
+      "name": "fred-graph-walcl",
+      "provider": "fred-graph",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+      "urlPattern": "fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+      "topics": [
+        "macro",
+        "economics",
+        "liquidity",
+        "fed-balance-sheet"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 64,
+      "note": "Public FRED graph CSV for Federal Reserve total assets (WALCL). No auth required.",
+      "topicAliases": [
+        "walcl",
+        "fed balance sheet",
+        "balance sheet",
+        "liquidity"
+      ],
+      "domainTags": [
+        "economics",
+        "macro",
+        "liquidity"
+      ],
+      "responseFormat": "csv",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "official",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-22T12:35:00.000Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-04-22T12:35:00.000Z",
+        "promotedAt": "2026-04-22T12:35:00.000Z"
+      },
+      "adapter": {
+        "operation": "series-csv"
+      }
+    },
+    {
+      "id": "fred-graph-rrp",
+      "name": "fred-graph-rrp",
+      "provider": "fred-graph",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=RRPONTSYD",
+      "urlPattern": "fred.stlouisfed.org/graph/fredgraph.csv?id=RRPONTSYD",
+      "topics": [
+        "macro",
+        "economics",
+        "liquidity",
+        "reverse-repo"
+      ],
+      "tlsn_safe": true,
+      "dahr_safe": true,
+      "max_response_kb": 64,
+      "note": "Public FRED graph CSV for overnight reverse repo usage (RRPONTSYD). No auth required.",
+      "topicAliases": [
+        "rrp",
+        "reverse repo",
+        "reverse repurchase",
+        "liquidity"
+      ],
+      "domainTags": [
+        "economics",
+        "macro",
+        "liquidity"
+      ],
+      "responseFormat": "csv",
+      "scope": {
+        "visibility": "scoped",
+        "agents": [
+          "sentinel"
+        ],
+        "importedFrom": [
+          "sentinel"
+        ]
+      },
+      "runtime": {
+        "timeoutMs": 8000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 1000,
+          "retryOn": [
+            "timeout",
+            "5xx"
+          ]
+        }
+      },
+      "trustTier": "official",
+      "status": "active",
+      "rating": {
+        "overall": 50,
+        "uptime": 50,
+        "relevance": 50,
+        "freshness": 50,
+        "sizeStability": 50,
+        "engagement": 50,
+        "trust": 50,
+        "testCount": 0,
+        "successCount": 0,
+        "consecutiveFailures": 0
+      },
+      "lifecycle": {
+        "discoveredAt": "2026-04-22T12:35:00.000Z",
+        "discoveredBy": "manual",
+        "statusChangedAt": "2026-04-22T12:35:00.000Z",
+        "promotedAt": "2026-04-22T12:35:00.000Z"
+      },
+      "adapter": {
+        "operation": "series-csv"
+      }
+    },
+    {
       "id": "polymarket-active-markets",
       "name": "polymarket-active-markets",
       "provider": "polymarket",

@@ -233,6 +233,46 @@ describe("fetchResearchEvidenceSummary", () => {
     });
   });
 
+  it("extracts WALCL liquidity values and derived metrics from public FRED graph CSV", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        [
+          "observation_date,WALCL",
+          "2026-04-01,6675344",
+          "2026-04-08,6693871",
+          "2026-04-15,6705696",
+          "",
+        ].join("\n"),
+        { status: 200, headers: { "content-type": "application/csv" } },
+      ),
+    ) as typeof fetch;
+
+    const result = await fetchResearchEvidenceSummary({
+      source: makeSource("https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL", {
+        sourceId: "fred-graph-walcl",
+        name: "fred-graph-walcl",
+        provider: "fred-graph",
+        responseFormat: "csv",
+      }),
+      topic: "Fed liquidity versus pivot reality",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.summary.values).toEqual({
+      walclObservationDate: "2026-04-15",
+      walclLatest: "6705696",
+      walclPreviousDate: "2026-04-08",
+      walclPrevious: "6693871",
+    });
+    expect(result.summary.derivedMetrics).toEqual({
+      walclTrillionsUsd: "6.71",
+      walclChangeBillionsUsd: "11.83",
+      walclChangePct: "0.18",
+    });
+    expect(result.summary.semanticClass).toBe("liquidity");
+  });
+
   it("extracts ETF holdings and net-flow metrics from btcetfdata current JSON", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(

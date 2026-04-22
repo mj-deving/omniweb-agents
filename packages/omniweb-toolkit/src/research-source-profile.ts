@@ -106,6 +106,17 @@ const MACRO_LIQUIDITY_TERMS = [
   "dollar liquidity",
 ];
 
+const MACRO_BALANCE_SHEET_TERMS = [
+  "walcl",
+  "rrp",
+  "pivot",
+  "reverse repo",
+  "reverse-repo",
+  "reverse repurchase",
+  "balance sheet",
+  "balance-sheet",
+];
+
 const PRICE_TICKER_SOURCE_IDS: Partial<Record<string, string>> = {
   BTC: "binance-24hr-btc",
 };
@@ -125,6 +136,9 @@ const NETWORK_SOURCE_IDS: Partial<Record<string, string[]>> = {
   ETH: ["blockchair-eth-stats", "coingecko-2a7ea372"],
   SOL: ["blockchair-solana", "coingecko-2a7ea372"],
 };
+
+const MACRO_TREASURY_SOURCE_IDS = ["treasury-interest-rates"];
+const MACRO_BALANCE_SHEET_SOURCE_IDS = ["fred-graph-walcl", "fred-graph-rrp", "treasury-interest-rates"];
 
 function stablecoinSourceIdsFor(symbol: string): string[] {
   if (symbol === "USDT" || symbol === "USDC") {
@@ -160,15 +174,22 @@ export function deriveResearchSourceProfile(topic: string): ResearchSourceProfil
   }
 
   if (containsAny(normalized, MACRO_LIQUIDITY_TERMS)) {
+    const ids = containsAny(normalized, MACRO_BALANCE_SHEET_TERMS)
+      ? MACRO_BALANCE_SHEET_SOURCE_IDS
+      : MACRO_TREASURY_SOURCE_IDS;
     return {
       family: "macro-liquidity",
       topic,
       asset: null,
       supported: true,
       reason: null,
-      primarySourceIds: ["treasury-interest-rates"],
-      supportingSourceIds: [],
+      primarySourceIds: ids.slice(0, 1),
+      supportingSourceIds: ids.slice(1),
       expectedMetrics: [
+        "walclTrillionsUsd",
+        "walclChangeBillionsUsd",
+        "rrpBillionsUsd",
+        "rrpChangeBillionsUsd",
         "treasuryBillsAvgRatePct",
         "treasuryNotesAvgRatePct",
         "billNoteSpreadBps",

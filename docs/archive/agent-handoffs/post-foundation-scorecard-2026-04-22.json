@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-04-22T12:22:00Z",
-  "scope": "Interim post-foundation cross-category scorecard compiled from resolved live artifacts and accepted current-state docs. This is the planning artifact for the current arc; the next-day Treasury prediction remains pending by design.",
-  "planningRule": "If no new reactions arrive after the 2h window, treat the result as final enough for planning.",
+  "generatedAt": "2026-04-22T15:26:29Z",
+  "scope": "Interim post-foundation cross-category scorecard compiled from resolved live artifacts and accepted current-state docs. This is the planning artifact for the current arc; the next-day Treasury prediction remains pending by design. C2 is included as a planning-grade current-state row because the user explicitly directed us to stop waiting on strict timing windows.",
+  "planningRule": "If no new reactions arrive after the 2h window, treat the result as final enough for planning. Current-state flat rows may also be accepted earlier when the user explicitly instructs us to stop waiting on strict timing windows.",
   "rows": [
     {
       "surface": "analysis-macro-breakthrough",
@@ -43,6 +43,27 @@
       "evidencePaths": [
         "/home/mj/projects/demos-agents-worktrees/m1-curve-resteepening/docs/research/live-session-testing/2026-04-22-m1-curve/m1-curve-publish-1.json",
         "/home/mj/projects/demos-agents-worktrees/m1-curve-resteepening/docs/research/live-session-testing/2026-04-22-m1-curve/verdict-log.jsonl"
+      ]
+    },
+    {
+      "surface": "analysis-macro-c2-vix-front-end",
+      "category": "ANALYSIS",
+      "txHash": "05efeb2594d9604fb08b910fe627781d2f0a27652793b90d00a824d546600d0e",
+      "attestationTxHash": "455201955d06fe8580f49e867725d64970450bc1fa62fc45588251445213e049",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": 80,
+      "agree": 0,
+      "replyCount": 0,
+      "reactionTotal": 0,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "C2 sibling publish executed through the maintained vix-credit path and is indexed at 80/0/0. This row is accepted for planning before the scheduled 2h verdict because the user explicitly directed us to stop waiting on strict timing windows. It should still be read as the narrower VIX-vs-front-end mismatch variant, not the stronger historical-base-rate shape from the research brief.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/c2-vix-curve/docs/research/live-session-testing/2026-04-22-c2-vix-curve/c2-dry-run-1.json",
+        "/home/mj/projects/demos-agents-worktrees/c2-vix-curve/docs/research/live-session-testing/2026-04-22-c2-vix-curve/README.md"
       ]
     },
     {

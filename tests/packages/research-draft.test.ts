@@ -1056,6 +1056,36 @@ describe("buildResearchDraft", () => {
     expect(provider.complete).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps compact macro-liquidity liquidity-vs-funding contradiction posts in ANALYSIS", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Stealth-QE-bid framing is ahead of the rates tape: bills print 5.22% while notes sit at 4.61% — a 61bp front-end inversion that screams tight dollar funding, not loose liquidity. Until that bill-note spread compresses toward zero, any crypto bid is fighting the funding backdrop, not riding it."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeMacroLiquidityOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeMacroLiquidityEvidenceSummary(),
+      supportingEvidenceSummaries: [
+        makeRrpSupportingEvidenceSummary(),
+        makeTreasurySupportingEvidenceSummary(),
+      ],
+      llmProvider: provider,
+      minTextLength: 200,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.category).toBe("ANALYSIS");
+    expect(result.text).toContain("tight dollar funding");
+    expect(result.text).toContain("not loose liquidity");
+    expect(provider.complete).toHaveBeenCalledTimes(1);
+  });
+
   it("adds a family dossier brief for stablecoin supply topics", async () => {
     const provider = {
       name: "test-provider",

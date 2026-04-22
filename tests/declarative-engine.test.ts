@@ -197,6 +197,23 @@ describe("parse modes", () => {
       { item: { rank: 2, asset: "eth" } },
     ]);
   });
+
+  it("extracts regex-block rows across multiple lines", () => {
+    const items = _extractItems(
+      null,
+      {
+        format: "csv",
+        items: { mode: "regex-blocks", blockPattern: "^(\\d{4}-\\d{2}-\\d{2},[^\\r\\n]*)$" },
+        fields: {},
+      },
+      "observation_date,WALCL\n2026-04-08,6693871\n2026-04-15,6705696\n"
+    );
+
+    expect(items).toEqual([
+      { item: "2026-04-08,6693871" },
+      { item: "2026-04-15,6705696" },
+    ]);
+  });
 });
 
 describe("loadDeclarativeProviderAdaptersSync", () => {
@@ -223,5 +240,35 @@ describe("loadDeclarativeProviderAdaptersSync", () => {
 
     expect(candidates).toHaveLength(1);
     expect(candidates?.[0].url).toContain("q=openai+codex");
+  });
+
+  it("loads the fred-graph adapter and preserves the source-bound series id", () => {
+    const specDir = resolve(process.cwd(), "src/lib/sources/providers/specs");
+    const adapters = loadDeclarativeProviderAdaptersSync({ specDir, strictValidation: false });
+    const fredGraph = adapters.get("fred-graph");
+
+    expect(fredGraph).toBeTruthy();
+
+    const source = makeSource({
+      provider: "fred-graph",
+      url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+      urlPattern: "fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+      responseFormat: "csv",
+      adapter: { operation: "series-csv" },
+    });
+
+    expect(fredGraph?.supports(source)).toBe(true);
+
+    const candidates = fredGraph?.buildCandidates({
+      source,
+      topic: "Fed liquidity versus pivot reality",
+      tokens: ["fed", "liquidity", "pivot"],
+      vars: {},
+      attestation: "DAHR",
+      maxCandidates: 1,
+    });
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates?.[0].url).toContain("id=WALCL");
   });
 });

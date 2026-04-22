@@ -205,6 +205,12 @@ function buildMacroLiquidityBrief(
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[],
 ): CoreResearchBrief {
+  const walclTrillionsUsd = findMetric("walclTrillionsUsd", evidenceSummary, supportingEvidenceSummaries);
+  const walclChangeBillionsUsd = findMetric("walclChangeBillionsUsd", evidenceSummary, supportingEvidenceSummaries);
+  const walclObservationDate = findMetric("walclObservationDate", evidenceSummary, supportingEvidenceSummaries);
+  const rrpBillionsUsd = findMetric("rrpBillionsUsd", evidenceSummary, supportingEvidenceSummaries);
+  const rrpChangeBillionsUsd = findMetric("rrpChangeBillionsUsd", evidenceSummary, supportingEvidenceSummaries);
+  const rrpObservationDate = findMetric("rrpObservationDate", evidenceSummary, supportingEvidenceSummaries);
   const billRate = findMetric("treasuryBillsAvgRatePct", evidenceSummary, supportingEvidenceSummaries);
   const noteRate = findMetric("treasuryNotesAvgRatePct", evidenceSummary, supportingEvidenceSummaries);
   const billNoteSpreadBps = findMetric("billNoteSpreadBps", evidenceSummary, supportingEvidenceSummaries);
@@ -218,13 +224,30 @@ function buildMacroLiquidityBrief(
         ? `notes now yield ${Math.abs(spreadValue).toFixed(2)} bps above bills`
         : "bills and notes are effectively flat to each other";
 
+  const liquidityContext = [
+    walclTrillionsUsd
+      ? `WALCL printed ${walclTrillionsUsd}T${walclObservationDate ? ` on ${walclObservationDate}` : ""}${walclChangeBillionsUsd ? `, up ${walclChangeBillionsUsd}B from the prior print` : ""}`
+      : null,
+    rrpBillionsUsd
+      ? `RRP closed at ${rrpBillionsUsd}B${rrpObservationDate ? ` on ${rrpObservationDate}` : ""}${rrpChangeBillionsUsd ? `, a ${rrpChangeBillionsUsd}B move from the prior print` : ""}`
+      : null,
+  ].filter((value): value is string => value != null).join(", while ");
+
+  const ratesContext = billRate || noteRate
+    ? `Treasury bills${billRate ? ` are yielding ${billRate}%` : ""}${noteRate ? ` against notes at ${noteRate}%` : ""}, and ${curveRead}`
+    : curveRead;
+
   return {
     family: "macro-liquidity",
     baselineContext: dossier.baseline,
     focusNow: dossier.focus,
     falseInferenceGuards: dossier.falseInferenceGuards,
-    anomalySummary: `Treasury bills${billRate ? ` are yielding ${billRate}%` : ""}${noteRate ? ` against notes at ${noteRate}%` : ""}, and ${curveRead}.`,
-    allowedThesisSpace: "Write about whether the latest Treasury structure still signals tight front-end liquidity, easing pressure, or a mismatch between rates and market calm. Keep the thesis on the observed rates backdrop, not generic Fed narrative.",
+    anomalySummary: liquidityContext.length > 0
+      ? `${liquidityContext}, while ${ratesContext}.`
+      : `${ratesContext}.`,
+    allowedThesisSpace: liquidityContext.length > 0
+      ? "Write about whether balance-sheet liquidity and the Treasury curve are reinforcing each other or diverging from the pivot narrative. Keep the thesis on the measured liquidity backdrop, not generic Fed storytelling."
+      : "Write about whether the latest Treasury structure still signals tight front-end liquidity, easing pressure, or a mismatch between rates and market calm. Keep the thesis on the observed rates backdrop, not generic Fed narrative.",
     invalidationFocus: "Invalidate with a meaningful change in the bill-vs-note spread or a rate move that breaks the current liquidity read.",
   };
 }

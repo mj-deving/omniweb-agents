@@ -82,6 +82,17 @@ describe("deriveResearchSourceProfile", () => {
     expect(profile.supportingSourceIds).toEqual([]);
   });
 
+  it("routes liquidity-vs-pivot topics to the WALCL/RRP evidence pair", () => {
+    const profile = deriveResearchSourceProfile("Fed liquidity versus pivot reality");
+
+    expect(profile.family).toBe("macro-liquidity");
+    expect(profile.supported).toBe(true);
+    expect(profile.primarySourceIds).toEqual(["fred-graph-walcl"]);
+    expect(profile.supportingSourceIds).toEqual(["fred-graph-rrp", "treasury-interest-rates"]);
+    expect(profile.expectedMetrics).toContain("walclTrillionsUsd");
+    expect(profile.expectedMetrics).toContain("rrpBillionsUsd");
+  });
+
   it("keeps reserve-risk topics unsupported when the family cannot ground the claim", () => {
     const profile = deriveResearchSourceProfile("USDC Regulatory Reserve Risk");
 

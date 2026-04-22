@@ -165,6 +165,14 @@ const ANALYSIS_CATEGORY_PATTERNS = [
   /\bdisconnect\b/i,
 ];
 
+const MACRO_LIQUIDITY_MISMATCH_PATTERNS = [
+  /\btight dollar funding\b/i,
+  /\bfront-end inversion\b/i,
+  /\bfunding backdrop\b/i,
+  /\bnot loose liquidity\b/i,
+  /\bahead of the rates tape\b/i,
+];
+
 const SENTIMENT_CONTEXT_PATTERNS = [
   /\bsentiment\b/i,
   /\bbearish\b/i,
@@ -799,6 +807,10 @@ function inferResearchDraftCategory(
     ...ANALYSIS_CATEGORY_PATTERNS,
   ];
 
+  if (hasExplicitMacroLiquidityMismatchThesis(text, opportunity)) {
+    return "ANALYSIS";
+  }
+
   if (
     numericTokenCount < 2 ||
     interpretiveSignals.some((pattern) => pattern.test(text)) ||
@@ -817,6 +829,24 @@ function inferResearchDraftCategory(
   }
 
   return "OBSERVATION";
+}
+
+function hasExplicitMacroLiquidityMismatchThesis(
+  text: string,
+  opportunity: ResearchOpportunity,
+): boolean {
+  if (opportunity.sourceProfile.family !== "macro-liquidity") {
+    return false;
+  }
+
+  if (MACRO_LIQUIDITY_MISMATCH_PATTERNS.some((pattern) => pattern.test(text))) {
+    return true;
+  }
+
+  const hasLiquidityCue = /\bliquidity\b|\bpivot\b|\beasing\b|\bstealth-qe\b/i.test(text);
+  const hasRatesCue = /\bfunding\b|\binversion\b|\bbills?\b|\bnotes?\b|\bcurve\b/i.test(text);
+  const hasContrastCue = /\bnot\b|\bahead of\b|\bwhile\b|\bversus\b|\bagainst\b|\bfighting\b/i.test(text);
+  return hasLiquidityCue && hasRatesCue && hasContrastCue;
 }
 
 function checkSelfRedundancy(

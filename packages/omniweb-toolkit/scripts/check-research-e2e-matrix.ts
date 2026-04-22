@@ -7,6 +7,7 @@ import {
   buildPendingVerdictEntry,
   enqueuePendingVerdict,
 } from "./_supervised-verdict-queue.ts";
+import { selectResearchMatrixBroadcastFamily } from "./_research-matrix-broadcast.ts";
 import { loadConnect, loadPackageExport } from "./_shared.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 
@@ -108,6 +109,10 @@ if (args.includes("--help") || args.includes("-h")) {
 
 Options:
   --broadcast-family FAMILY   Execute one real publish for the named family
+  --broadcast-fallback-families A,B,C
+                            If the requested family is not draft_ready, fall back to the first
+                            listed family that is draft_ready. Only used when --broadcast-family
+                            is present.
   --record-pending-verdict    Queue a delayed verdict follow-up for a successful live publish
   --pending-verdict-queue P   Override the pending verdict queue path
   --pending-verdict-delay-ms N Override the category delay for the queued verdict entry
@@ -127,6 +132,7 @@ if (broadcastFamily && !SUPPORTED_FAMILIES.includes(broadcastFamily as MatrixFam
   console.error(`Unsupported --broadcast-family value: ${broadcastFamily}`);
   process.exit(2);
 }
+const broadcastFallbackFamilies = getOptionalFamilyList("--broadcast-fallback-families");
 
 const outputPath = getOptionalArg("--out");
 const recordPendingVerdict = args.includes("--record-pending-verdict");
@@ -262,6 +268,10 @@ for (const opportunity of opportunities) {
 }
 
 const familyResults: MatrixFamilyResult[] = [];
+const readyPublishContexts = new Map<MatrixFamily, {
+  draft: Awaited<ReturnType<typeof buildResearchDraft>> & { ok: true };
+  opportunity: ResearchOpportunityLike;
+}>();
 for (const family of SUPPORTED_FAMILIES) {
   const opportunity = candidatesByFamily.get(family);
   if (!opportunity) {
@@ -395,80 +405,103 @@ for (const family of SUPPORTED_FAMILIES) {
     match,
     notes: supportingNotes,
   };
+  readyPublishContexts.set(family, {
+    draft,
+    opportunity,
+  });
+  familyResults.push(readyResult);
+}
 
-  if (broadcastFamily === family) {
-    const attestUrl = getPrimaryAttestUrl(opportunity.attestationPlan);
+const publishSelection = selectResearchMatrixBroadcastFamily({
+  requestedFamily: broadcastFamily ? broadcastFamily as MatrixFamily : null,
+  fallbackFamilies: broadcastFallbackFamilies,
+  readyFamilies: familyResults
+    .filter((result) => result.status === "draft_ready")
+    .map((result) => result.family),
+});
+
+if (publishSelection.selectedFamily) {
+  const selectedResult = familyResults.find((result) => result.family === publishSelection.selectedFamily);
+  const selectedContext = readyPublishContexts.get(publishSelection.selectedFamily);
+  if (selectedResult && selectedContext) {
+    const attestUrl = getPrimaryAttestUrl(selectedContext.opportunity.attestationPlan);
     if (!attestUrl) {
-      readyResult.status = "publish_failed";
-      readyResult.publish = {
+      selectedResult.status = "publish_failed";
+      selectedResult.publish = {
         error: { message: "missing_primary_attest_url" },
         provenance: null,
       };
-      familyResults.push(readyResult);
-      continue;
-    }
-    const publishedAt = new Date().toISOString();
-    const publishResult = await omni.colony.publish({
-      text: draft.text,
-      category: draft.category,
-      attestUrl,
-      confidence: draft.confidence,
-    });
-
-    if (!publishResult.ok) {
-      readyResult.status = "publish_failed";
-      readyResult.publish = {
-        error: publishResult.error ?? null,
-        provenance: publishResult.provenance,
-      };
     } else {
-      const verification = await verifyPublishVisibility(
-        omni,
-        publishResult.data?.txHash,
-        draft.text,
-        {
-          timeoutMs: verifyTimeoutMs,
-          pollMs: verifyPollMs,
-          limit: verifyLimit,
-        },
-      );
-      readyResult.status = "published";
-      readyResult.publish = {
-        txHash: publishResult.data?.txHash,
-        provenance: publishResult.provenance,
-      };
-      readyResult.verification = verification;
-      readyResult.verdictSchedule = scheduleSupervisedVerdict(draft.category, publishedAt);
-      if (recordPendingVerdict && publishResult.data?.txHash) {
-        const queued = await enqueuePendingVerdict(
-          buildPendingVerdictEntry({
-            txHash: publishResult.data.txHash,
-            category: draft.category,
-            text: draft.text,
-            startedAt: publishedAt,
-            sourceRunPath: outputPath ? resolve(outputPath) : null,
-            stateDir: stateDir ?? null,
-            checkAfterMs: pendingVerdictDelayMs,
-          }),
-          pendingVerdictQueuePath,
-        );
-        readyResult.pendingVerdict = {
-          id: queued.entry.id,
-          queuePath: pendingVerdictQueuePath,
-          checkAt: queued.entry.checkAt,
-          inserted: queued.inserted,
+      if (publishSelection.usedFallback && publishSelection.requestedFamily) {
+        selectedResult.notes = [
+          ...(selectedResult.notes ?? []),
+          `broadcast fallback from ${publishSelection.requestedFamily} -> ${publishSelection.selectedFamily}`,
+        ];
+      }
+      const publishedAt = new Date().toISOString();
+      const publishResult = await omni.colony.publish({
+        text: selectedContext.draft.text,
+        category: selectedContext.draft.category,
+        attestUrl,
+        confidence: selectedContext.draft.confidence,
+      });
+
+      if (!publishResult.ok) {
+        selectedResult.status = "publish_failed";
+        selectedResult.publish = {
+          error: publishResult.error ?? null,
+          provenance: publishResult.provenance,
         };
+      } else {
+        const verification = await verifyPublishVisibility(
+          omni,
+          publishResult.data?.txHash,
+          selectedContext.draft.text,
+          {
+            timeoutMs: verifyTimeoutMs,
+            pollMs: verifyPollMs,
+            limit: verifyLimit,
+          },
+        );
+        selectedResult.status = "published";
+        selectedResult.publish = {
+          txHash: publishResult.data?.txHash,
+          provenance: publishResult.provenance,
+        };
+        selectedResult.verification = verification;
+        selectedResult.verdictSchedule = scheduleSupervisedVerdict(selectedContext.draft.category, publishedAt);
+        if (recordPendingVerdict && publishResult.data?.txHash) {
+          const queued = await enqueuePendingVerdict(
+            buildPendingVerdictEntry({
+              txHash: publishResult.data.txHash,
+              category: selectedContext.draft.category,
+              text: selectedContext.draft.text,
+              startedAt: publishedAt,
+              sourceRunPath: outputPath ? resolve(outputPath) : null,
+              stateDir: stateDir ?? null,
+              checkAfterMs: pendingVerdictDelayMs,
+            }),
+            pendingVerdictQueuePath,
+          );
+          selectedResult.pendingVerdict = {
+            id: queued.entry.id,
+            queuePath: pendingVerdictQueuePath,
+            checkAt: queued.entry.checkAt,
+            inserted: queued.inserted,
+          };
+        }
       }
     }
   }
-
-  familyResults.push(readyResult);
 }
 
 const report = {
   checkedAt: startedAt,
   ok: true,
   broadcastFamily: broadcastFamily ?? null,
+  broadcastFallbackFamilies,
+  broadcastPublishedFamily: publishSelection.selectedFamily,
+  broadcastUsedFallback: publishSelection.usedFallback,
   availableBalance,
   readStatus: {
     feed: describeRead(reads.feed),
@@ -506,6 +539,17 @@ function getOptionalInt(flag: string): number | undefined {
     throw new Error(`Invalid ${flag} value: ${raw}`);
   }
   return parsed;
+}
+
+function getOptionalFamilyList(flag: string): MatrixFamily[] {
+  const raw = getOptionalArg(flag);
+  if (!raw) return [];
+  const values = raw.split(",").map((entry) => entry.trim()).filter(Boolean);
+  const invalid = values.filter((entry) => !SUPPORTED_FAMILIES.includes(entry as MatrixFamily));
+  if (invalid.length > 0) {
+    throw new Error(`Invalid ${flag} value(s): ${invalid.join(", ")}`);
+  }
+  return [...new Set(values)] as MatrixFamily[];
 }
 
 function unwrap<T extends { ok?: boolean }>(

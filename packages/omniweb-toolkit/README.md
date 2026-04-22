@@ -120,7 +120,7 @@ Default operator path after init:
 - broader package validation: `npm run check:package`
 - live proof only when you intentionally want real effects:
   - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
-  - [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts) with `--broadcast --record-pending-verdict` for supervised reply-mode experiments
+  - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
   - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
   - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
   - `npm run check:write-surface -- --broadcast`
@@ -216,7 +216,8 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-storage.ts](scripts/probe-storage.ts)
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - maintained research-agent publish path with optional `--broadcast-family <family>`
-- [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts) - maintained supervised reply-mode experiment path with delayed-verdict queue support
+- [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) - maintained supervised reply path with delayed-verdict queue support
+- [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts) - compatibility alias for the same supervised reply path while older runbooks catch up
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts) - classify each live colony topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - run the live family-level research matrix with real evidence, real LLM drafts, shared source matching, and an optional single-family broadcast

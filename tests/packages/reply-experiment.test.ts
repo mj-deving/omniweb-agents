@@ -102,6 +102,50 @@ describe("reply experiment selection", () => {
 
     expect(candidate).toBeNull();
   });
+
+  it("can target attested OBSERVATION parents when the operator asks for that lane", () => {
+    const now = Date.parse("2026-04-21T20:00:00.000Z");
+    const candidate = selectReplyExperimentCandidate(
+      [
+        {
+          txHash: "0xanalysis",
+          author: "macro-eye",
+          timestamp: now - 12 * 60 * 1000,
+          score: 90,
+          replyCount: 3,
+          reactions: { agree: 5, disagree: 0, flag: 0 },
+          payload: {
+            cat: "ANALYSIS",
+            text: "Curve pressure says the pivot narrative is early.",
+            sourceAttestations: [{ url: "https://fiscaldata.treasury.gov" }],
+          },
+        },
+        {
+          txHash: "0xobservation",
+          author: "rates-watch",
+          timestamp: now - 10 * 60 * 1000,
+          score: 86,
+          replyCount: 2,
+          reactions: { agree: 4, disagree: 0, flag: 0 },
+          payload: {
+            cat: "OBSERVATION",
+            text: "13-week bills closed at 5.32 while 10-year notes held 4.41 on the same print.",
+            sourceAttestations: [{ url: "https://home.treasury.gov/resource-center/data-chart-center/interest-rates" }],
+          },
+        },
+      ],
+      {
+        ownAddress: "my-agent",
+        now,
+        maxAgeMs: 2 * 60 * 60 * 1000,
+        minScore: 80,
+        category: "OBSERVATION",
+      },
+    );
+
+    expect(candidate?.txHash).toBe("0xobservation");
+    expect(candidate?.category).toBe("OBSERVATION");
+  });
 });
 
 describe("reply draft quality gate", () => {

@@ -34,6 +34,8 @@ Options:
   --verify-value-type TYPE     number|string|boolean (default: number)
   --verify-label TEXT          Optional human label for the observed metric
   --source-name TEXT           Optional source label for audit output
+  --env-path PATH              Override wallet credentials file passed to connect()
+  --agent-name NAME            Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH             Forwarded to connect()/state persistence
   --allow-insecure             Forwarded to connect() for local debugging only
   --record-pending-verdict     Queue an async follow-up using the prediction deadline
@@ -60,6 +62,8 @@ const verifyValueType = parsePredictionCheckValueType(getStringArg(args, "--veri
 const verifyValue = parsePredictionExpectedValue(getRequiredArg("--verify-value"), verifyValueType);
 const verifyLabel = getStringArg(args, "--verify-label") ?? null;
 const sourceName = getStringArg(args, "--source-name") ?? null;
+const envPath = getStringArg(args, "--env-path");
+const agentName = getStringArg(args, "--agent-name") ?? null;
 const stateDir = getStringArg(args, "--state-dir");
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const recordPendingVerdict = hasFlag(args, "--record-pending-verdict");
@@ -98,6 +102,8 @@ const runMinimalAgentCycle = await loadPackageExport<
     stateDir?: string;
     dryRun?: boolean;
     connectOptions?: {
+      envPath?: string;
+      agentName?: string;
       stateDir?: string;
       allowInsecureUrls?: boolean;
     };
@@ -164,6 +170,8 @@ const record = await runMinimalAgentCycle(
     stateDir,
     dryRun,
     connectOptions: {
+      envPath,
+      agentName,
       stateDir,
       allowInsecureUrls,
     },

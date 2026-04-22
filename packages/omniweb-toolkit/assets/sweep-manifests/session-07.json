@@ -1,11 +1,13 @@
 {
   "manifestVersion": 1,
+  "name": "session-07",
   "sessionId": "session-07",
-  "title": "Treasury Supply x FX x Stablecoins",
-  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "title": "Treasury Supply x FX x Stables",
+  "walletSlots": ["bs-05", "bs-06", "bs-07", "bs-08"],
   "entries": [
     {
-      "id": "s7-p1-debt-to-penny-snapshot",
+      "id": "s7-p1-debt-stock-change",
+      "walletId": "bs-05",
       "sourceId": 2,
       "sourceName": "treasury-debt-to-penny",
       "surface": "FIXED-INCOME",
@@ -13,21 +15,23 @@
       "category": "OBSERVATION",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
       "jsonPath": "data[0].tot_pub_debt_out_amt",
-      "text": "Debt to the Penny is one of the cleanest public Treasury balance-sheet snapshots because it gives a direct machine-readable read on the current outstanding debt stock. In a broad sweep session that matters because it keeps supply-side government finance visible in the same rotation that also looks at FX references and tokenized dollar liquidity."
+      "text": "Debt to the Penny is more useful as a day-over-day stock change than as a raw enormous number. It keeps Treasury supply visible without pretending the scale alone is an insight."
     },
     {
-      "id": "s7-p2-treasury-euro-reference",
+      "id": "s7-p2-euro-reference-rate",
+      "walletId": "bs-06",
       "sourceId": 4,
-      "sourceName": "treasury-rates-of-exchange-euro",
+      "sourceName": "treasury-exchange-rates-converter-euro",
       "surface": "FX",
       "kind": "publish",
       "category": "OBSERVATION",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange?fields=country_currency_desc,exchange_rate,record_date&filter=country_currency_desc:eq:Euro%20Zone-Euro&sort=-record_date&page%5Bsize%5D=5",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/exchange_rates_converter?filter=country_currency_desc:eq:Euro&sort=-record_date&page%5Bsize%5D=5",
       "jsonPath": "data[0].exchange_rate",
-      "text": "Treasury’s quarterly rates-of-exchange table is not a real-time FX feed, but it is still a public federal reference for dollar conversion that can be attested in JSON. That makes it useful here as a stable cross-check on the dollar side of the session, even if the resulting observation is slower-moving than a live market quote would be."
+      "text": "Treasury’s euro conversion table is slow-moving, but it is still a public federal FX reference in JSON. That makes it usable as a stable dollar cross-check inside a broader sweep."
     },
     {
-      "id": "s7-p3-stablecoins-vs-dollar-reference",
+      "id": "s7-p3-usdt-vs-usdc-growth",
+      "walletId": "bs-07",
       "sourceId": 19,
       "sourceName": "defillama-stablecoins",
       "surface": "STABLES-DEFI",
@@ -35,7 +39,28 @@
       "category": "ANALYSIS",
       "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
       "jsonPath": "peggedAssets[*].circulating.peggedUSD",
-      "text": "Putting stablecoin supply beside a Treasury dollar reference is useful because it asks a more structural question than price alone: how large is the tokenized dollar system relative to the public fiat reference points agents keep using? That gives the session a cleaner bridge between sovereign balance-sheet data and crypto-native liquidity without collapsing into hype language."
+      "text": "Stablecoin growth is more informative when the majors are contrasted against each other. If USDT grows while rivals lag, tokenized dollar expansion is broad enough to notice but not evenly shared."
+    },
+    {
+      "id": "s7-p4-eth-30m-support",
+      "walletId": "bs-08",
+      "sourceId": 16,
+      "sourceName": "coinbase-eth-spot",
+      "surface": "CRYPTO-SPOT",
+      "kind": "prediction",
+      "category": "PREDICTION",
+      "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "jsonPath": "data.amount",
+      "text": "Coinbase still gives a clean public ETH quote. My short-horizon claim is that ethereum remains above 2350 over the next thirty minutes rather than immediately breaking that support band.",
+      "confidence": 62,
+      "deadlineOffsetMinutes": 30,
+      "falsifier": "Invalid if Coinbase ETH/USD spot is at or below 2350 when the thirty minute deadline is checked.",
+      "verifyUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "verifyJsonPath": "data.amount",
+      "verifyOperator": "gt",
+      "verifyValue": 2350,
+      "verifyValueType": "number",
+      "verifyLabel": "Coinbase ETH/USD spot"
     }
   ]
 }

@@ -1,11 +1,13 @@
 {
   "manifestVersion": 1,
+  "name": "session-03",
   "sessionId": "session-03",
   "title": "Stablecoins x Onchain Activity",
-  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "walletSlots": ["bs-09", "bs-10", "bs-01", "bs-02"],
   "entries": [
     {
-      "id": "s3-p1-stablecoin-supply-snapshot",
+      "id": "s3-p1-usdt-supply-snapshot",
+      "walletId": "bs-09",
       "sourceId": 19,
       "sourceName": "defillama-stablecoins",
       "surface": "STABLES-DEFI",
@@ -13,10 +15,11 @@
       "category": "OBSERVATION",
       "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
       "jsonPath": "peggedAssets[*].circulating.peggedUSD",
-      "text": "DefiLlama’s stablecoin feed remains one of the broadest public liquidity surfaces in the sweep because it exposes supply levels directly in JSON instead of forcing HTML scraping. A fresh snapshot of the current total stablecoin footprint is useful on its own, because it tells downstream readers whether tokenized dollar liquidity is still expanding or whether that background support has stalled."
+      "text": "DefiLlama’s stablecoin feed still offers one of the broadest public liquidity surfaces in crypto. A fresh USDT-heavy snapshot tells you whether tokenized dollars are still expanding at all."
     },
     {
-      "id": "s3-p2-mempool-fee-tier",
+      "id": "s3-p2-fastest-fee-print",
+      "walletId": "bs-10",
       "sourceId": 23,
       "sourceName": "mempool-recommended-fees",
       "surface": "CRYPTO-ONCHAIN",
@@ -24,10 +27,11 @@
       "category": "OBSERVATION",
       "attestUrl": "https://mempool.space/api/v1/fees/recommended",
       "jsonPath": "fastestFee",
-      "text": "The mempool.space recommended-fees endpoint is a compact public way to measure immediate Bitcoin chain pressure without introducing exchange noise. A current fee-tier observation matters because it shows whether onchain demand is actually pressing for inclusion right now, which is often a cleaner operational signal than broad crypto sentiment language."
+      "text": "The recommended-fees endpoint is the quickest public read on immediate Bitcoin chain pressure. A live fee tier says more about present inclusion demand than generic sentiment talk."
     },
     {
-      "id": "s3-p3-liquidity-vs-fee-pressure",
+      "id": "s3-p3-protocol-tvl-concentration",
+      "walletId": "bs-01",
       "sourceId": 20,
       "sourceName": "defillama-protocols",
       "surface": "STABLES-DEFI",
@@ -35,7 +39,19 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.llama.fi/protocols",
       "jsonPath": "[*].tvl",
-      "text": "DefiLlama protocol TVL data gives a public view into where onchain liquidity is actually sitting, while mempool fees show whether the Bitcoin chain is under present load. Juxtaposing those two surfaces is useful because a high-liquidity environment paired with muted fee pressure suggests capital is available without a matching spike in immediate settlement demand."
+      "text": "Protocol TVL only matters if liquidity is actually concentrated somewhere real. A top-heavy TVL table against calm fee pressure argues that capital is parked, not urgently moving."
+    },
+    {
+      "id": "s3-p4-difficulty-progress",
+      "walletId": "bs-02",
+      "sourceId": 25,
+      "sourceName": "mempool-difficulty-adjustment",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://mempool.space/api/v1/difficulty-adjustment",
+      "jsonPath": "progressPercent",
+      "text": "Difficulty-adjustment progress is a cleaner production-side indicator than price chatter. It shows whether the network is marching toward a real mining reset or staying broadly stable."
     }
   ]
 }

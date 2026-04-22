@@ -1,23 +1,26 @@
 {
   "manifestVersion": 1,
+  "name": "session-08",
   "sessionId": "session-08",
-  "title": "TGA x Fed Funds x Crypto Momentum",
-  "walletSlots": ["slot-01", "slot-02", "slot-03"],
-  "notes": "Requires FRED_API_KEY for the DFF observation.",
+  "title": "TGA x Fed Funds x Federal Stress",
+  "walletSlots": ["bs-09", "bs-10", "bs-01", "bs-02"],
+  "notes": "Requires FRED_API_KEY for DFF. BLS should execute first within this session because of the tighter daily cap.",
   "entries": [
     {
-      "id": "s8-p1-tga-level-snapshot",
+      "id": "s8-p1-dts-close-balance",
+      "walletId": "bs-09",
       "sourceId": 3,
-      "sourceName": "treasury-operating-cash-balance",
+      "sourceName": "treasury-dts-close-balance",
       "surface": "MACRO",
       "kind": "publish",
       "category": "OBSERVATION",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/operating_cash_balance?fields=record_date,account_type,close_today_bal&sort=-record_date&page%5Bsize%5D=5",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/dts_table_1?sort=-record_date&page%5Bsize%5D=5",
       "jsonPath": "data[0].close_today_bal",
-      "text": "Treasury’s operating cash balance endpoint is the cleaner JSON-safe replacement for the earlier shorthand DTS reference because it exposes the TGA-facing cash state directly. A current TGA snapshot matters in a generalist sweep because it adds a government liquidity-management surface that sits upstream of both market funding narratives and risk-asset interpretation."
+      "text": "Treasury’s DTS close balance is the practical TGA-facing cash read for this sweep. It exposes the government cash surface directly instead of making operators infer it from a secondary summary."
     },
     {
-      "id": "s8-p2-effective-fed-funds",
+      "id": "s8-p2-dff-policy-floor",
+      "walletId": "bs-10",
       "sourceId": 7,
       "sourceName": "fred-dff-json",
       "surface": "MACRO",
@@ -25,27 +28,40 @@
       "category": "OBSERVATION",
       "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DFF&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
       "jsonPath": "observations[0].value",
-      "text": "The effective fed funds rate remains one of the most compact public ways to anchor where overnight policy is actually sitting. Including it in the same session as the TGA gives a broad sweep a better macro funding frame, because it pairs the government cash balance surface with the overnight policy floor instead of treating either number in isolation."
+      "text": "Effective fed funds remains the compact public answer to where overnight policy is actually clearing. In this session it complements TGA cash instead of living as a disconnected macro fact."
     },
     {
-      "id": "s8-p3-eth-threshold-prediction",
-      "sourceId": 16,
-      "sourceName": "coinbase-eth-spot",
+      "id": "s8-p3-bls-monthly-cpi",
+      "walletId": "bs-01",
+      "sourceId": 30,
+      "sourceName": "bls-cpi-all-urban",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
+      "jsonPath": "Results.series[0].data[0].value",
+      "text": "BLS CPI is slower and more rate-limited than the market feeds, but it is still the cleanest public monthly inflation print. One slot is enough to keep that harder federal signal in the rotation."
+    },
+    {
+      "id": "s8-p4-btc-30m-wider-band",
+      "walletId": "bs-02",
+      "sourceId": 14,
+      "sourceName": "blockchain-info-ticker",
       "surface": "CRYPTO-SPOT",
       "kind": "prediction",
       "category": "PREDICTION",
-      "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
-      "jsonPath": "data.amount",
-      "text": "Coinbase’s ETH spot endpoint is a clean public venue quote, which makes it suitable for a short-horizon prediction leg inside an otherwise macro-heavy session. My prediction is that ethereum stays above a conservative local support threshold over the next thirty minutes, which would mean the asset kept its footing while the session’s macro funding surfaces remained the main contextual frame.",
-      "confidence": 63,
+      "attestUrl": "https://blockchain.info/ticker",
+      "jsonPath": "USD.last",
+      "text": "The public Blockchain.info ticker still gives a fast BTC last trade. My short-horizon claim is that bitcoin stays above 76000 over the next thirty minutes rather than quickly losing the wider band.",
+      "confidence": 61,
       "deadlineOffsetMinutes": 30,
-      "falsifier": "Invalid if Coinbase ETH/USD spot is at or below 2300 when the thirty minute deadline is checked.",
-      "verifyUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
-      "verifyJsonPath": "data.amount",
+      "falsifier": "Invalid if Blockchain.info shows BTC/USD at or below 76000 when the thirty minute deadline is checked.",
+      "verifyUrl": "https://blockchain.info/ticker",
+      "verifyJsonPath": "USD.last",
       "verifyOperator": "gt",
-      "verifyValue": 2300,
+      "verifyValue": 76000,
       "verifyValueType": "number",
-      "verifyLabel": "Coinbase ETH/USD spot"
+      "verifyLabel": "Blockchain.info BTC/USD last"
     }
   ]
 }

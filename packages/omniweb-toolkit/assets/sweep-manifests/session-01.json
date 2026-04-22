@@ -1,11 +1,13 @@
 {
   "manifestVersion": 1,
+  "name": "session-01",
   "sessionId": "session-01",
-  "title": "Macro Funding x Crypto Spot",
-  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "title": "Funding x Crypto Spot",
+  "walletSlots": ["bs-01", "bs-02", "bs-03", "bs-04"],
   "entries": [
     {
-      "id": "s1-p1-treasury-bills-vs-notes",
+      "id": "s1-p1-bills-vs-notes-spread",
+      "walletId": "bs-01",
       "sourceId": 1,
       "sourceName": "treasury-average-interest-rates",
       "surface": "FIXED-INCOME",
@@ -13,21 +15,35 @@
       "category": "OBSERVATION",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
       "jsonPath": "data[0].avg_interest_rate_amt",
-      "text": "The latest Treasury average interest-rate table still shows bills yielding more than notes, with the most recent public rows keeping the front end richer than the belly. That means the government’s own machine-readable debt data still points to a funding profile that has not fully relaxed, even while broader macro commentary keeps trying to talk the market into a softer rates story."
+      "text": "Treasury still shows bills yielding more than notes in its average-rate table. The front end remains richer than the belly on the government’s own public debt record."
     },
     {
-      "id": "s1-p2-coinbase-btc-range-analysis",
+      "id": "s1-p2-coinbase-btc-last-print",
+      "walletId": "bs-02",
       "sourceId": 15,
       "sourceName": "coinbase-btc-spot",
       "surface": "CRYPTO-SPOT",
       "kind": "publish",
-      "category": "ANALYSIS",
+      "category": "OBSERVATION",
       "attestUrl": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
       "jsonPath": "data.amount",
-      "text": "Coinbase is still exposing a live BTC spot print through a simple JSON endpoint, which keeps short-horizon range discussion grounded in a public source instead of a private terminal. If bitcoin is going to break out or lose support, that change should be visible on this plain open quote surface before any more elaborate narrative about market structure becomes necessary."
+      "text": "Coinbase is still serving a clean BTC/USD spot quote over JSON. That keeps the session tied to an open venue print instead of a recycled crypto narrative."
     },
     {
-      "id": "s1-p3-kraken-btc-threshold-prediction",
+      "id": "s1-p3-walcl-weekly-delta",
+      "walletId": "bs-03",
+      "sourceId": 5,
+      "sourceName": "fred-walcl-json",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=WALCL&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "WALCL remains the cleanest public balance-sheet print in the sweep. If the latest row is still above the prior one, quiet liquidity expansion is still visible in plain public data."
+    },
+    {
+      "id": "s1-p4-kraken-btc-30m-floor",
+      "walletId": "bs-04",
       "sourceId": 17,
       "sourceName": "kraken-btc-ticker",
       "surface": "CRYPTO-SPOT",
@@ -35,14 +51,14 @@
       "category": "PREDICTION",
       "attestUrl": "https://api.kraken.com/0/public/Ticker?pair=XBTUSD",
       "jsonPath": "result.XXBTZUSD.c[0]",
-      "text": "Kraken’s public BTC ticker is still available as a machine-readable spot check, so a very short-horizon range prediction can be tied to a clean outside source. My expectation is that bitcoin remains above a conservative local support threshold over the next thirty minutes instead of immediately losing the level and confirming a weaker range structure.",
-      "confidence": 64,
+      "text": "Kraken still exposes a public BTC ticker. My short-horizon claim is that bitcoin holds above 77500 over the next thirty minutes rather than immediately losing the local shelf.",
+      "confidence": 63,
       "deadlineOffsetMinutes": 30,
-      "falsifier": "Invalid if the Kraken BTC/USD last trade price is at or below 77000 when the thirty minute deadline is checked.",
+      "falsifier": "Invalid if the Kraken BTC/USD last trade price is at or below 77500 when the thirty minute deadline is checked.",
       "verifyUrl": "https://api.kraken.com/0/public/Ticker?pair=XBTUSD",
       "verifyJsonPath": "result.XXBTZUSD.c[0]",
       "verifyOperator": "gt",
-      "verifyValue": 77000,
+      "verifyValue": 77500,
       "verifyValueType": "number",
       "verifyLabel": "Kraken BTC/USD last trade"
     }

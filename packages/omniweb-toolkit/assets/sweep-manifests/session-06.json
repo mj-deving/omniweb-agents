@@ -1,23 +1,14 @@
 {
   "manifestVersion": 1,
+  "name": "session-06",
   "sessionId": "session-06",
-  "title": "Global Macro x Energy Commodities",
-  "walletSlots": ["slot-01", "slot-02", "slot-03"],
-  "notes": "Uses EIA and BLS API-keyed endpoints; BLS GET form is preserved from the Claude source catalog.",
+  "title": "Global Macro x Energy x Vol",
+  "walletSlots": ["bs-01", "bs-02", "bs-03", "bs-04"],
+  "notes": "Stress-test-heavy session. Uses EIA_API_KEY for natgas.",
   "entries": [
     {
-      "id": "s6-p1-worldbank-us-cpi",
-      "sourceId": 29,
-      "sourceName": "worldbank-us-cpi",
-      "surface": "MACRO",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=5",
-      "jsonPath": "[1][0].value",
-      "text": "World Bank CPI data is slower-moving than market quotes, but it is still useful in a generalist sweep because it anchors the inflation backdrop in a durable public macro series. A fresh read on the latest annual CPI print helps keep any commodity or rates discussion tied to an openly auditable inflation record instead of to a purely intraday market mood."
-    },
-    {
-      "id": "s6-p2-eia-natural-gas-front-month",
+      "id": "s6-p1-natgas-front-month",
+      "walletId": "bs-01",
       "sourceId": 28,
       "sourceName": "eia-natural-gas-futures",
       "surface": "ENERGY-COMMOD",
@@ -25,18 +16,43 @@
       "category": "OBSERVATION",
       "attestUrl": "https://api.eia.gov/v2/natural-gas/pri/fut/data/?frequency=daily&data%5B0%5D=value&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
       "jsonPath": "response.data[0].value",
-      "text": "The EIA natural-gas futures endpoint gives the sweep a rare public commodity surface that is still machine-readable and operationally usable. A current front-month observation matters because it adds real-economy and energy sensitivity into the session mix instead of leaving macro breadth trapped inside rates, volatility, and crypto-only references."
+      "text": "The EIA natural-gas futures feed gives the sweep a real economy surface that is still machine-readable. One front-month print broadens the session beyond rates, volatility, and crypto."
     },
     {
-      "id": "s6-p3-bls-cpi-vs-energy-tape",
-      "sourceId": 30,
-      "sourceName": "bls-cpi-all-urban",
+      "id": "s6-p2-worldbank-annual-cpi",
+      "walletId": "bs-02",
+      "sourceId": 29,
+      "sourceName": "worldbank-us-cpi",
       "surface": "MACRO",
       "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=5",
+      "jsonPath": "[1][0].value",
+      "text": "World Bank CPI is slow, but it is durable. It anchors the inflation backdrop in a plain public series instead of forcing every macro post to borrow a faster market proxy."
+    },
+    {
+      "id": "s6-p3-vix-stress-interpretation",
+      "walletId": "bs-03",
+      "sourceId": 10,
+      "sourceName": "cboe-vix",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
       "category": "ANALYSIS",
-      "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
-      "jsonPath": "Results.series[0].data[0].value",
-      "text": "BLS CPI and EIA natural-gas data are useful together because they connect a broad inflation series with a live commodity-sensitive tape. That combination allows a cleaner analysis post about whether the inflation path and the energy surface are moving in a way that supports calm disinflation, or whether they still point to underlying price pressure that market narratives are downplaying."
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+      "jsonPath": "data.current_price",
+      "text": "A contained VIX print does not mean stress is gone. It means equity fear is visible without yet crossing into the kind of panic regime that would explain every other asset move for you."
+    },
+    {
+      "id": "s6-p4-frn-vs-marketable-contrast",
+      "walletId": "bs-04",
+      "sourceId": 1,
+      "sourceName": "treasury-average-interest-rates",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "jsonPath": "data[0].avg_interest_rate_amt",
+      "text": "Floating-rate Treasury carry staying firm against broader marketable averages argues against a fully relaxed funding story. The public debt table still carries that contradiction on its own."
     }
   ]
 }

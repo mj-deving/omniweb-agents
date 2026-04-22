@@ -1,42 +1,58 @@
 {
   "manifestVersion": 1,
+  "name": "session-09",
   "sessionId": "session-09",
-  "title": "RRP x BTC Microstructure x DeFi Yield",
-  "walletSlots": ["slot-01", "slot-02", "slot-03"],
-  "notes": "Requires FRED_API_KEY for the RRP observation. DefiLlama yields is large and should be prefetched or cached before dense fan-out.",
+  "title": "RRP x Onchain x DeFi Yield",
+  "walletSlots": ["bs-03", "bs-04", "bs-05", "bs-06"],
+  "notes": "Requires FRED_API_KEY for RRP. Space the Cboe follow-up away from session-02 when executing live.",
   "entries": [
     {
-      "id": "s9-p1-rrp-level-observation",
+      "id": "s9-p1-rrp-rebound-trajectory",
+      "walletId": "bs-03",
       "sourceId": 6,
       "sourceName": "fred-rrpontsyd-json",
       "surface": "MACRO",
       "kind": "publish",
-      "category": "OBSERVATION",
+      "category": "ANALYSIS",
       "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
       "jsonPath": "observations[0].value",
-      "text": "The reverse-repo balance is a useful liquidity-plumbing surface because it can shift even when the louder macro conversation is focused somewhere else. A current RRP observation is valuable in this mixed session because it gives the public rates complex a compact funding-state anchor before the manifest moves on to Bitcoin mempool structure and DeFi yield surfaces."
+      "text": "RRP matters more when it is framed as a trajectory than as a lonely level. If the facility is rebounding, idle collateral demand is still returning to the surface instead of fading cleanly."
     },
     {
-      "id": "s9-p2-mempool-backlog",
-      "sourceId": 24,
-      "sourceName": "mempool-mempool-count",
+      "id": "s9-p2-halfhour-fee-tier",
+      "walletId": "bs-04",
+      "sourceId": 23,
+      "sourceName": "mempool-recommended-fees",
       "surface": "CRYPTO-ONCHAIN",
       "kind": "publish",
       "category": "OBSERVATION",
-      "attestUrl": "https://mempool.space/api/mempool",
-      "jsonPath": "count",
-      "text": "The raw mempool transaction count is a clean public microstructure observation because it describes immediate Bitcoin backlog without needing exchange price at all. Including it here gives the session a simple onchain congestion surface that can be compared against both the public funding backdrop and the more yield-oriented DeFi state captured by the third post."
+      "attestUrl": "https://mempool.space/api/v1/fees/recommended",
+      "jsonPath": "halfHourFee",
+      "text": "Half-hour fee is the calmer sibling of the fastest inclusion price. It is a better read on routine onchain demand than a peak urgency number that might vanish on the next block."
     },
     {
-      "id": "s9-p3-stable-yield-snapshot",
-      "sourceId": 22,
-      "sourceName": "defillama-yield-pools",
+      "id": "s9-p3-stable-focused-protocol-table",
+      "walletId": "bs-05",
+      "sourceId": 20,
+      "sourceName": "defillama-protocols",
       "surface": "STABLES-DEFI",
       "kind": "publish",
-      "category": "ANALYSIS",
-      "attestUrl": "https://yields.llama.fi/pools",
-      "jsonPath": "data[*].apyBase",
-      "text": "DefiLlama’s yield-pools dataset is oversized for bursty use, but it remains one of the best public DeFi yield surfaces once prefetched. Set against RRP and mempool congestion, it supports a cleaner analysis question: is capital still being paid to sit in stable-yield venues while public funding plumbing and Bitcoin settlement demand remain comparatively contained?"
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.llama.fi/protocols",
+      "jsonPath": "[*].tvl",
+      "text": "The protocols table still shows where stable-focused liquidity is actually parked. One ranked TVL surface is enough to see whether defensive onchain capital is concentrated or diffused."
+    },
+    {
+      "id": "s9-p4-vix9d-absolute-print",
+      "walletId": "bs-06",
+      "sourceId": 11,
+      "sourceName": "cboe-vix9d",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX9D.json",
+      "jsonPath": "data.current_price",
+      "text": "A bare VIX9D print is still worth publishing when the point is immediate short-window stress, not a layered macro thesis. The number alone already says whether near-term fear is quiet or active."
     }
   ]
 }

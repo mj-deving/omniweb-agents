@@ -18,6 +18,8 @@ interface ReplyExperimentState {
 
 const DEFAULT_FEED_LIMIT = 100;
 const DEFAULT_PARENT_CATEGORY = "ANALYSIS";
+const DEFAULT_MIN_AGREE_COUNT = 3;
+const DEFAULT_MIN_REPLY_COUNT = 1;
 const DEFAULT_MAX_PARENT_AGE_HOURS = 2;
 const DEFAULT_MIN_SCORE = 80;
 
@@ -29,7 +31,10 @@ if (hasFlag(args, "--help", "-h")) {
 Options:
   --broadcast                   Execute the real reply instead of dry-run
   --parent-tx TX                Force a specific parent tx when it appears in the feed window
+  --parent-category CAT         Parent category to scan (default: ${DEFAULT_PARENT_CATEGORY})
   --feed-limit N                Number of recent posts to scan (default: ${DEFAULT_FEED_LIMIT})
+  --min-agree-count N           Minimum parent agree-count floor (default: ${DEFAULT_MIN_AGREE_COUNT})
+  --min-reply-count N           Minimum parent reply-count floor (default: ${DEFAULT_MIN_REPLY_COUNT})
   --max-parent-age-hours N      Max parent age in hours (default: ${DEFAULT_MAX_PARENT_AGE_HOURS})
   --min-score N                 Minimum parent score floor (default: ${DEFAULT_MIN_SCORE})
   --record-pending-verdict      Queue a delayed verdict follow-up for a successful reply
@@ -48,7 +53,10 @@ Options:
 
 const broadcast = hasFlag(args, "--broadcast");
 const parentTxOverride = getStringArg(args, "--parent-tx");
+const parentCategory = (getStringArg(args, "--parent-category") ?? DEFAULT_PARENT_CATEGORY).trim().toUpperCase();
 const feedLimit = getPositiveInt("--feed-limit", DEFAULT_FEED_LIMIT);
+const minAgreeCount = getPositiveInt("--min-agree-count", DEFAULT_MIN_AGREE_COUNT);
+const minReplyCount = getPositiveInt("--min-reply-count", DEFAULT_MIN_REPLY_COUNT);
 const maxParentAgeHours = getPositiveInt("--max-parent-age-hours", DEFAULT_MAX_PARENT_AGE_HOURS);
 const minScore = getPositiveInt("--min-score", DEFAULT_MIN_SCORE);
 const recordPendingVerdict = hasFlag(args, "--record-pending-verdict");
@@ -99,6 +107,9 @@ const omni = await connect({ stateDir, allowInsecureUrls });
 const record = await runMinimalAgentCycle(
   async (ctx) => observeReplyExperiment(ctx, {
     feedLimit,
+    parentCategory,
+    minAgreeCount,
+    minReplyCount,
     maxParentAgeMs: maxParentAgeHours * 60 * 60 * 1000,
     minScore,
     parentTxOverride: parentTxOverride ?? null,
@@ -152,7 +163,11 @@ const report = {
   checkedAt: new Date().toISOString(),
   ok: record.outcome.status === "dry_run" || record.outcome.status === "replied",
   broadcast,
+  operatorPath: "supervised-reply",
   stateDir,
+  parentCategory,
+  minAgreeCount,
+  minReplyCount,
   record,
   verdictSchedule,
   pendingVerdict,
@@ -166,6 +181,9 @@ async function observeReplyExperiment(
   ctx: any,
   opts: {
     feedLimit: number;
+    parentCategory: string;
+    minAgreeCount: number;
+    minReplyCount: number;
     maxParentAgeMs: number;
     minScore: number;
     parentTxOverride: string | null;
@@ -173,7 +191,7 @@ async function observeReplyExperiment(
 ): Promise<any> {
   const feed = await fetchFeedWindow(ctx.omni, {
     limit: opts.feedLimit,
-    category: DEFAULT_PARENT_CATEGORY,
+    category: opts.parentCategory,
   });
   if (!feed.ok) {
     return {
@@ -195,14 +213,20 @@ async function observeReplyExperiment(
       {
         ownAddress: ctx.omni.address,
         maxAgeMs: opts.maxParentAgeMs,
+        minAgreeCount: opts.minAgreeCount,
+        minReplyCount: opts.minReplyCount,
         minScore: opts.minScore,
+        category: opts.parentCategory,
         excludeParentTxHashes,
       },
     )
     : rankReplyExperimentCandidates(posts, {
       ownAddress: ctx.omni.address,
       maxAgeMs: opts.maxParentAgeMs,
+      minAgreeCount: opts.minAgreeCount,
+      minReplyCount: opts.minReplyCount,
       minScore: opts.minScore,
+      category: opts.parentCategory,
       excludeParentTxHashes,
     });
 
@@ -213,7 +237,10 @@ async function observeReplyExperiment(
       audit: {
         inputs: {
           feedLimit: opts.feedLimit,
+          parentCategory: opts.parentCategory,
           feedPagesRead: feed.pages,
+          minAgreeCount: opts.minAgreeCount,
+          minReplyCount: opts.minReplyCount,
           maxParentAgeMs: opts.maxParentAgeMs,
           minScore: opts.minScore,
           excludedParents: excludeParentTxHashes,
@@ -322,7 +349,10 @@ async function observeReplyExperiment(
     audit: {
       inputs: {
         feedLimit: opts.feedLimit,
+        parentCategory: opts.parentCategory,
         feedPagesRead: feed.pages,
+        minAgreeCount: opts.minAgreeCount,
+        minReplyCount: opts.minReplyCount,
         maxParentAgeMs: opts.maxParentAgeMs,
         minScore: opts.minScore,
       },

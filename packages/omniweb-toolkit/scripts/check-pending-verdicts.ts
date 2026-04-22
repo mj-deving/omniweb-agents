@@ -5,6 +5,7 @@ import {
   DEFAULT_VERDICT_LOG_PATH,
   resolveDuePendingVerdicts,
 } from "./_supervised-verdict-queue.ts";
+import { extractSupervisedVerdictMetrics } from "./_supervised-publish-verdict.js";
 import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageExport } from "./_shared.ts";
 
 const args = process.argv.slice(2);
@@ -64,11 +65,22 @@ const result = await resolveDuePendingVerdicts({
       pollMs: verifyPollMs,
       limit: verifyLimit,
     });
+    const postDetail = await omni.colony.getPostDetail(entry.txHash);
+    const postRecord = postDetail?.ok ? extractPostRecord(postDetail.data) : null;
+    const metrics = postRecord ? extractSupervisedVerdictMetrics(postRecord) : null;
 
     return {
       checkedAt: new Date().toISOString(),
       verdict: {
         verification,
+        post: postRecord ? {
+          txHash: readString(postRecord.txHash ?? postRecord.tx_hash),
+          blockNumber: readNumber(postRecord.blockNumber ?? postRecord.block_number),
+          timestamp: readNumber(postRecord.timestamp),
+          category: readString(postRecord.category ?? (postRecord.payload as { cat?: unknown } | undefined)?.cat),
+          text: readString(postRecord.text ?? (postRecord.payload as { text?: unknown } | undefined)?.text),
+        } : null,
+        metrics,
       },
     };
   },
@@ -103,4 +115,27 @@ function getPositiveInt(flag: string, fallback: number): number {
     throw new Error(`Invalid ${flag} value`);
   }
   return parsed;
+}
+
+function extractPostRecord(input: unknown): Record<string, unknown> {
+  if (!input || typeof input !== "object") return {};
+  const data = input as Record<string, unknown>;
+  const post = data.post;
+  if (post && typeof post === "object") return post as Record<string, unknown>;
+  const nested = (data.data as { post?: unknown } | undefined)?.post;
+  if (nested && typeof nested === "object") return nested as Record<string, unknown>;
+  return data;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function readNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }

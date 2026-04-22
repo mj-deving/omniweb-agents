@@ -27,6 +27,7 @@ export interface BuildResearchDraftOptions {
   evidenceSummary: ResearchEvidenceSummary;
   supportingEvidenceSummaries?: ResearchEvidenceSummary[];
   selfHistory?: ResearchSelfHistorySummary;
+  preferredCategory?: ResearchDraftCategory | null;
   llmProvider?: PromptCapableProvider | null;
   minTextLength?: number;
 }
@@ -310,10 +311,23 @@ export async function buildResearchDraft(
 ): Promise<ResearchDraftResult> {
   const promptPacket = buildResearchPromptPacket(opts);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
-  const llmText = await generateViaProvider(opts.llmProvider, promptPacket);
-  const draftCategory = llmText == null
-    ? "ANALYSIS"
-    : inferResearchDraftCategory(llmText, opts.opportunity) satisfies ResearchDraftCategory;
+  const preferredCategory = opts.preferredCategory ?? null;
+  let llmText = await generateViaProvider(opts.llmProvider, promptPacket);
+  let draftCategory = llmText == null
+    ? (preferredCategory ?? "ANALYSIS")
+    : inferResearchDraftCategory(llmText, opts.opportunity, preferredCategory) satisfies ResearchDraftCategory;
+  if (
+    llmText &&
+    preferredCategory === "OBSERVATION" &&
+    opts.llmProvider &&
+    (draftCategory !== "OBSERVATION" || llmText.length > DEFAULT_MAX_TEXT_LENGTH)
+  ) {
+    const repaired = await rewriteAsObservation(opts.llmProvider, llmText);
+    if (repaired) {
+      llmText = repaired;
+      draftCategory = inferResearchDraftCategory(llmText, opts.opportunity, preferredCategory);
+    }
+  }
   const emptyQualityGate = checkResearchDraftQuality(
     "",
     draftCategory,
@@ -368,6 +382,7 @@ export async function buildResearchDraft(
 }
 
 function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPromptPacket {
+  const preferredCategory = opts.preferredCategory ?? null;
   const colonySubstrate = opts.colonySubstrate ?? buildResearchColonySubstrate({
     opportunity: opts.opportunity,
     allPosts: opts.opportunity.matchingFeedPosts,
@@ -388,7 +403,9 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
     archetype: "research-agent",
     role: [
       "You are a deep research analyst writing a colony-facing post for human readers.",
-      "Choose the lightest truthful category: OBSERVATION for raw factual reporting, ANALYSIS for an interpretive thesis another agent could cite.",
+      preferredCategory === "OBSERVATION"
+        ? "This run is targeting OBSERVATION: raw factual reporting with no implied thesis beyond what the cited numbers directly say."
+        : "Choose the lightest truthful category: OBSERVATION for raw factual reporting, ANALYSIS for an interpretive thesis another agent could cite.",
     ],
     edge: [
       "Depth over speed does not mean long: synthesize the strongest signal into one sharp take instead of spraying commentary.",
@@ -440,7 +457,9 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
           })),
       },
     },
-    instruction: "Write one compact standalone colony post grounded in the input evidence and colony context. If the packet only supports a factual report, write an OBSERVATION. If it supports an interpretive claim with a watcher or invalidation condition, write an ANALYSIS. Keep the finished post in the 200-320 character band whenever possible. When you choose ANALYSIS, lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo.",
+    instruction: preferredCategory === "OBSERVATION"
+      ? "Write one compact standalone OBSERVATION post grounded in the input evidence and colony context. Stay factual, report what the data says now, and do not add a watcher, invalidation clause, or causal thesis unless the evidence strictly requires it. Keep the finished post in the 200-320 character band whenever possible."
+      : "Write one compact standalone colony post grounded in the input evidence and colony context. If the packet only supports a factual report, write an OBSERVATION. If it supports an interpretive claim with a watcher or invalidation condition, write an ANALYSIS. Keep the finished post in the 200-320 character band whenever possible. When you choose ANALYSIS, lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Keep the finished post compact: 2-3 short sentences, 200+ characters, and no sprawling explanatory paragraphs.",
@@ -462,13 +481,15 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "When describing colony sentiment, use natural phrases like 'the bearish read in colony signals', 'the bullish read', or 'mixed positioning' rather than clunky constructions.",
       "End in plain language. Do not use mirrored rhetorical constructions or clever symmetry in the closing sentence.",
       "Treat source names as evidence anchors, not as the subject of the prose.",
-      "If you choose OBSERVATION, stay factual and do not smuggle in unsupported interpretation. If you choose ANALYSIS, state one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
+      preferredCategory === "OBSERVATION"
+        ? "This run prefers OBSERVATION. Stay factual and do not smuggle in unsupported interpretation."
+        : "If you choose OBSERVATION, stay factual and do not smuggle in unsupported interpretation. If you choose ANALYSIS, state one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
       "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
       "Avoid generic metric parroting: connect the evidence to a readable interpretation in one compact claim, not a report.",
       "Output plain prose only, with no headings, bullets, labels, or markdown.",
     ],
     output: {
-      category: "OBSERVATION or ANALYSIS",
+      category: preferredCategory ?? "OBSERVATION or ANALYSIS",
       confidenceStyle: "calibrated and evidence-led; strong enough to be useful, never absolute",
       shape: [
         "Sentence 1: the core thesis in plain language, naming the concrete tension directly.",
@@ -494,10 +515,37 @@ async function generateViaProvider(
   const prompt = renderColonyPromptPacket(packet);
 
   const completion = await provider.complete(prompt, {
-    system: "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, keep the finished post in roughly the 200-320 character band, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
+    system: packet.output.category === "OBSERVATION"
+      ? "You write compact, evidence-bound colony OBSERVATION posts for human readers. Stay factual, keep the finished post in roughly the 200-320 character band, mention only what the evidence directly supports, and never leak internal scoring, feed coverage, or attestation workflow details."
+      : "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, keep the finished post in roughly the 200-320 character band, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
     maxTokens: 110,
     modelTier: "standard",
   });
+  return normalizeDraftText(completion);
+}
+
+async function rewriteAsObservation(
+  provider: PromptCapableProvider,
+  text: string,
+): Promise<string | null> {
+  const completion = await provider.complete(
+    [
+      "Rewrite this into one compact OBSERVATION post.",
+      "Rules:",
+      "- 200-320 chars",
+      "- factual only",
+      "- keep the concrete numbers",
+      "- no thesis, no watcher, no invalidation, no causal language",
+      "- no labels or markdown",
+      "",
+      text,
+    ].join("\n"),
+    {
+      system: "You rewrite colony drafts into factual OBSERVATION posts. Preserve the numbers, strip the interpretation, and keep the result compact.",
+      maxTokens: 90,
+      modelTier: "standard",
+    },
+  );
   return normalizeDraftText(completion);
 }
 
@@ -524,7 +572,7 @@ function clampConfidence(value: number | null): number {
 function normalizeDraftText(text: string): string {
   return text
     .replace(/\s+/g, " ")
-    .replace(/^Claim:\s*/i, "")
+    .replace(/^(?:Claim|ANALYSIS|OBSERVATION)\s*[:.-]?\s*/i, "")
     .trim();
 }
 
@@ -679,6 +727,7 @@ function checkResearchDraftQuality(
 function inferResearchDraftCategory(
   text: string,
   opportunity: ResearchOpportunity,
+  preferredCategory: ResearchDraftCategory | null = null,
 ): ResearchDraftCategory {
   const numericTokenCount = extractNumericValues(text).length;
   const interpretiveSignals = [
@@ -705,6 +754,10 @@ function inferResearchDraftCategory(
 
   const topic = opportunity.topic.toLowerCase();
   if (/\bcontradiction\b|\bstale topic\b/i.test(topic)) {
+    return "ANALYSIS";
+  }
+
+  if (preferredCategory === "ANALYSIS") {
     return "ANALYSIS";
   }
 

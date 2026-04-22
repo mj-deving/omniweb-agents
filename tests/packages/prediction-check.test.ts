@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   comparePredictionObservedValue,
   extractJsonPathValue,
+  parsePredictionCheckValueType,
   parsePredictionExpectedValue,
   resolvePredictionCheck,
   type PredictionCheckSpec,
@@ -27,6 +28,14 @@ describe("prediction check helper", () => {
     expect(parsePredictionExpectedValue("71.5", "number")).toBe(71.5);
     expect(parsePredictionExpectedValue("true", "boolean")).toBe(true);
     expect(parsePredictionExpectedValue("bearish", "string")).toBe("bearish");
+  });
+
+  it("rejects unsupported prediction value types", () => {
+    expect(parsePredictionCheckValueType(undefined)).toBe("number");
+    expect(parsePredictionCheckValueType("string")).toBe("string");
+    expect(() => parsePredictionCheckValueType("num")).toThrow(
+      "Invalid --verify-value-type value: num",
+    );
   });
 
   it("compares observed values using numeric, boolean, and contains operators", () => {

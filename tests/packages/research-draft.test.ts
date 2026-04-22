@@ -768,7 +768,7 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input).not.toHaveProperty("rationale");
     expect(result.promptPacket.input).not.toHaveProperty("leaderboardCount");
     expect(result.promptPacket.input).not.toHaveProperty("balanceDem");
-    expect(result.promptPacket.instruction).toContain("standalone ANALYSIS post grounded in the input evidence");
+    expect(result.promptPacket.instruction).toContain("standalone colony post grounded in the input evidence");
     expect(result.promptPacket.constraints.join(" ")).toContain("analysis angle");
     expect(result.promptPacket.constraints.join(" ")).toContain("Do not mention internal scoring");
     expect(result.promptPacket.edge[0]).toContain("Depth over speed");
@@ -811,6 +811,32 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.brief.family).toBe("funding-structure");
     expect(result.promptPacket.input.brief.baselineContext[0]).toContain("positioning signals");
     expect(result.promptPacket.input.brief.falseInferenceGuards[0]).toContain("negative funding by itself");
+  });
+
+  it("emits OBSERVATION when the draft is purely factual and avoids interpretation", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC mark is 67,250 against a 67,245 index while funding sits at -0.012 and open interest is 105,600. " +
+        "Premium remains negative into the session and price is still holding near the current range."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      supportingEvidenceSummaries: [makeFundingSupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 160,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.category).toBe("OBSERVATION");
+    expect(result.text).toContain("67,250");
   });
 
   it("adds a family dossier brief for stablecoin supply topics", async () => {

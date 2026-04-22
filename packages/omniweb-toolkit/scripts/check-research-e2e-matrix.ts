@@ -20,6 +20,8 @@ type MatrixFamily =
   | "macro-liquidity"
   | "vix-credit";
 
+type MatrixDraftCategory = "ANALYSIS" | "OBSERVATION";
+
 interface FeedSample {
   txHash: string | null;
   category: string | null;
@@ -113,6 +115,7 @@ Options:
                             If the requested family is not draft_ready, fall back to the first
                             listed family that is draft_ready. Only used when --broadcast-family
                             is present.
+  --preferred-category CAT    Bias drafting toward ANALYSIS or OBSERVATION
   --record-pending-verdict    Queue a delayed verdict follow-up for a successful live publish
   --pending-verdict-queue P   Override the pending verdict queue path
   --pending-verdict-delay-ms N Override the category delay for the queued verdict entry
@@ -133,6 +136,7 @@ if (broadcastFamily && !SUPPORTED_FAMILIES.includes(broadcastFamily as MatrixFam
   process.exit(2);
 }
 const broadcastFallbackFamilies = getOptionalFamilyList("--broadcast-fallback-families");
+const preferredCategory = getOptionalCategory("--preferred-category");
 
 const outputPath = getOptionalArg("--out");
 const recordPendingVerdict = args.includes("--record-pending-verdict");
@@ -404,6 +408,7 @@ for (const family of SUPPORTED_FAMILIES) {
     evidenceSummary: primaryEvidence.value.summary,
     supportingEvidenceSummaries: supportingSummaries,
     selfHistory,
+    preferredCategory,
     llmProvider: omni.runtime.llmProvider,
     minTextLength: 200,
   });
@@ -627,6 +632,14 @@ function getOptionalFamilyList(flag: string): MatrixFamily[] {
     throw new Error(`Invalid ${flag} value(s): ${invalid.join(", ")}`);
   }
   return [...new Set(values)] as MatrixFamily[];
+}
+
+function getOptionalCategory(flag: string): MatrixDraftCategory | null {
+  const value = getOptionalArg(flag);
+  if (!value) return null;
+  if (value === "ANALYSIS" || value === "OBSERVATION") return value;
+  console.error(`Unsupported ${flag} value: ${value}`);
+  process.exit(2);
 }
 
 function unwrap<T extends { ok?: boolean }>(

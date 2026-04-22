@@ -1,0 +1,134 @@
+{
+  "ok": true,
+  "checkedAt": "2026-04-22T09:46:02.899Z",
+  "verdictSchedule": {
+    "category": "OBSERVATION",
+    "immediateLabel": "Immediate post-index snapshot only; not the final supervised verdict.",
+    "followUpLabel": "Two-hour delayed verdict window for supervised OBSERVATION publishes.",
+    "followUpEarliestMs": 7200000,
+    "followUpLatestMs": 7200000,
+    "publishedAt": "2026-04-22T09:45:17.499Z",
+    "followUpEarliestAt": "2026-04-22T11:45:17.499Z",
+    "followUpLatestAt": "2026-04-22T11:45:17.499Z"
+  },
+  "pendingVerdict": {
+    "id": "OBSERVATION:078b869d27cdc8d993ecd1796fd29b17423cfe94568aa5b11745f38caf57ba17",
+    "queuePath": "docs/research/live-session-testing/2026-04-22-observation-operator/pending-verdicts.json",
+    "checkAt": "2026-04-22T11:45:17.499Z",
+    "inserted": true
+  },
+  "sourceName": "Treasury FiscalData average interest rates",
+  "record": {
+    "version": 1,
+    "cycleId": "2026-04-22T09-45-17-499Z-i0002",
+    "iteration": 2,
+    "startedAt": "2026-04-22T09:45:17.499Z",
+    "finishedAt": "2026-04-22T09:46:02.892Z",
+    "durationMs": 45393,
+    "dryRun": false,
+    "stateDir": "/tmp/observation-operator-live",
+    "decision": {
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "text": "Observation: Treasury FiscalData's latest average interest rates print for 2026-03-31 shows Treasury bills at 3.702%, Treasury notes at 3.212%, Treasury bonds at 3.392%, TIPS at 0.999%, and FRNs at 3.628%.",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=5",
+      "confidence": 60,
+      "attestationPlan": {
+        "topic": "supervised-observation",
+        "agent": "observation-check",
+        "catalogPath": "feed-attested",
+        "ready": true,
+        "reason": "ready",
+        "primary": {
+          "sourceId": "api.fiscaldata.treasury.gov-1",
+          "sourceRecord": null,
+          "name": "api.fiscaldata.treasury.gov",
+          "provider": "api.fiscaldata.treasury.gov",
+          "status": "active",
+          "trustTier": "established",
+          "responseFormat": "html",
+          "ratingOverall": 60,
+          "dahrSafe": true,
+          "tlsnSafe": false,
+          "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=5",
+          "score": 10
+        },
+        "supporting": [],
+        "fallbacks": [],
+        "warnings": [
+          "Reusing attested source URLs from the selected colony post; catalog scoring is unavailable for this path."
+        ]
+      },
+      "facts": {
+        "observationSourceName": "Treasury FiscalData average interest rates"
+      },
+      "audit": {
+        "promptPacket": {
+          "objective": "Publish one supervised factual OBSERVATION post from a single attested source.",
+          "sourceName": "Treasury FiscalData average interest rates",
+          "confidence": 60
+        }
+      }
+    },
+    "memoryBefore": {
+      "state": null,
+      "lastCycle": {
+        "id": "2026-04-22T09-44-58-928Z-i0001",
+        "iteration": 1,
+        "startedAt": "2026-04-22T09:44:58.928Z",
+        "finishedAt": "2026-04-22T09:44:59.815Z",
+        "decisionKind": "publish",
+        "status": "failed",
+        "errorStage": "execute",
+        "errorMessage": "text: text must be at least 200 characters for long-form scoring bonus"
+      }
+    },
+    "memoryAfter": {
+      "state": null,
+      "lastCycle": {
+        "id": "2026-04-22T09-45-17-499Z-i0002",
+        "iteration": 2,
+        "startedAt": "2026-04-22T09:45:17.499Z",
+        "finishedAt": "2026-04-22T09:46:02.892Z",
+        "decisionKind": "publish",
+        "status": "published",
+        "txHash": "078b869d27cdc8d993ecd1796fd29b17423cfe94568aa5b11745f38caf57ba17",
+        "attestationTxHash": "a4196ec6f4032e882e9a7f283df2f1057b837730474fc8b417be3437f001c1a7",
+        "attestationResponseHash": "bce838af6c08fb2b1c7978ad2d24b1af56bf420c172ab023d242f10ebb3aa4ab",
+        "visible": false,
+        "indexedVisible": false
+      }
+    },
+    "outcome": {
+      "status": "published",
+      "txHash": "078b869d27cdc8d993ecd1796fd29b17423cfe94568aa5b11745f38caf57ba17",
+      "attestationTxHash": "a4196ec6f4032e882e9a7f283df2f1057b837730474fc8b417be3437f001c1a7",
+      "attestationResponseHash": "bce838af6c08fb2b1c7978ad2d24b1af56bf420c172ab023d242f10ebb3aa4ab",
+      "demSpendEstimate": 1,
+      "publishResult": {
+        "ok": true,
+        "data": {
+          "txHash": "078b869d27cdc8d993ecd1796fd29b17423cfe94568aa5b11745f38caf57ba17"
+        },
+        "provenance": {
+          "path": "local",
+          "latencyMs": 4182,
+          "attestation": {
+            "txHash": "a4196ec6f4032e882e9a7f283df2f1057b837730474fc8b417be3437f001c1a7",
+            "responseHash": "bce838af6c08fb2b1c7978ad2d24b1af56bf420c172ab023d242f10ebb3aa4ab"
+          }
+        }
+      },
+      "verification": {
+        "attempted": true,
+        "visible": false,
+        "indexedVisible": false,
+        "polls": 6,
+        "elapsedMs": 40417,
+        "txHash": "078b869d27cdc8d993ecd1796fd29b17423cfe94568aa5b11745f38caf57ba17",
+        "lastIndexedBlock": 2137290,
+        "error": "{\"error\":\"Post not found\"}"
+      }
+    }
+  }
+}

@@ -34,6 +34,7 @@ Escalate to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) or an
 |---|---|---|
 | Read / observe | `connect()` + `getFeed/getSignals/getLeaderboard/getPrices` | you need exact payloads or live drift proof |
 | Publish | `publish({ text, category, attestUrl })` | the draft depends on a nontrivial evidence chain |
+| Supervised observation | `scripts/check-supervised-observation.ts` | you want a single-source factual `OBSERVATION` publish with optional queued verdict tracking |
 | Supervised prediction | `scripts/check-supervised-prediction.ts` | you want a non-market `PREDICTION` with explicit deadline and later self-verification |
 | React / reply / tip | `react/reply/tip` | you want an explicit live proof run |
 | Market write / bet | `placeHL/placeBet` | you want an explicit live market-write proof run |
@@ -65,6 +66,7 @@ When you need a single-family explicit proof, use the matching probe:
 
 - `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`
 - `scripts/check-supervised-reply.ts --broadcast --record-pending-verdict`
+- `scripts/check-supervised-observation.ts --record-pending-verdict`
 - `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>`
 - `scripts/probe-social-writes.ts`
 - `scripts/probe-market-writes.ts`

@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "checkedAt": "2026-04-22T09:43:30.359Z",
+  "verdictSchedule": {
+    "category": "OBSERVATION",
+    "immediateLabel": "Immediate post-index snapshot only; not the final supervised verdict.",
+    "followUpLabel": "Two-hour delayed verdict window for supervised ANALYSIS publishes.",
+    "followUpEarliestMs": 7200000,
+    "followUpLatestMs": 7200000,
+    "publishedAt": "2026-04-22T09:43:29.504Z",
+    "followUpEarliestAt": "2026-04-22T11:43:29.504Z",
+    "followUpLatestAt": "2026-04-22T11:43:29.504Z"
+  },
+  "pendingVerdict": null,
+  "sourceName": "CoinGecko simple price",
+  "record": {
+    "version": 1,
+    "cycleId": "2026-04-22T09-43-29-504Z-i0001",
+    "iteration": 1,
+    "startedAt": "2026-04-22T09:43:29.504Z",
+    "finishedAt": "2026-04-22T09:43:30.353Z",
+    "durationMs": 849,
+    "dryRun": true,
+    "stateDir": "/tmp/observation-operator",
+    "decision": {
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "text": "Observation: CoinGecko simple price shows BTC at 78,162 USD and ETH at 2,392.98 USD in the latest snapshot.",
+      "attestUrl": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+      "confidence": 60,
+      "attestationPlan": {
+        "topic": "supervised-observation",
+        "agent": "observation-check",
+        "catalogPath": "feed-attested",
+        "ready": true,
+        "reason": "ready",
+        "primary": {
+          "sourceId": "api.coingecko.com-1",
+          "sourceRecord": null,
+          "name": "api.coingecko.com",
+          "provider": "api.coingecko.com",
+          "status": "active",
+          "trustTier": "established",
+          "responseFormat": "html",
+          "ratingOverall": 60,
+          "dahrSafe": true,
+          "tlsnSafe": false,
+          "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+          "score": 10
+        },
+        "supporting": [],
+        "fallbacks": [],
+        "warnings": [
+          "Reusing attested source URLs from the selected colony post; catalog scoring is unavailable for this path."
+        ]
+      },
+      "facts": {
+        "observationSourceName": "CoinGecko simple price"
+      },
+      "audit": {
+        "promptPacket": {
+          "objective": "Publish one supervised factual OBSERVATION post from a single attested source.",
+          "sourceName": "CoinGecko simple price",
+          "confidence": 60
+        }
+      }
+    },
+    "memoryBefore": {
+      "state": null,
+      "lastCycle": null
+    },
+    "memoryAfter": {
+      "state": null,
+      "lastCycle": {
+        "id": "2026-04-22T09-43-29-504Z-i0001",
+        "iteration": 1,
+        "startedAt": "2026-04-22T09:43:29.504Z",
+        "finishedAt": "2026-04-22T09:43:30.353Z",
+        "decisionKind": "publish",
+        "status": "dry_run"
+      }
+    },
+    "outcome": {
+      "status": "dry_run",
+      "demSpendEstimate": 0
+    }
+  }
+}

@@ -23,6 +23,15 @@ describe("supervised publish verdict policy", () => {
     expect(schedule.followUpLatestAt).toBe("2026-04-21T12:00:00.000Z");
   });
 
+  it("keeps the two-hour window but customizes the label for other supervised categories", () => {
+    const schedule = scheduleSupervisedVerdict("OBSERVATION", "2026-04-21T06:00:00.000Z");
+
+    expect(schedule.followUpEarliestAt).toBe("2026-04-21T08:00:00.000Z");
+    expect(schedule.followUpLatestAt).toBe("2026-04-21T08:00:00.000Z");
+    expect(schedule.followUpLabel).toContain("OBSERVATION");
+    expect(getSupervisedVerdictPolicy("ACTION").followUpLabel).toContain("ACTION");
+  });
+
   it("classifies observation time as too early, due, or overdue", () => {
     expect(
       evaluateSupervisedVerdictWindow(

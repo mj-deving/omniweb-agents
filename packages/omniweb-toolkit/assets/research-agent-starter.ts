@@ -531,6 +531,7 @@ export async function observe(
     family: chosenOpportunity.sourceProfile.family,
     now: ctx.cycle.startedAt,
     currentEvidenceValues: evidenceSummaryResult.summary.values,
+    recentColonyPosts: chosenOpportunity.matchingFeedPosts,
   });
 
   if (selfHistory.skipSuggested) {
@@ -559,7 +560,7 @@ export async function observe(
           selfHistory,
         },
         promptPacket: {
-          objective: "Skip when the same research topic or family was just covered without meaningful evidence change.",
+          objective: "Skip when the same research topic, family, or recent colony surface was just covered without enough novelty.",
           topic: chosenOpportunity.topic,
           opportunityKind: chosenOpportunity.kind,
           result: "skip",

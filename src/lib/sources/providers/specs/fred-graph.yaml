@@ -1,0 +1,74 @@
+schemaVersion: 1
+
+provider:
+  name: fred-graph
+  displayName: FRED Graph CSV
+  matches:
+    providers: [fred-graph]
+    hosts: [fred.stlouisfed.org]
+    urlPatterns: ["/graph/fredgraph\\.csv"]
+  domains: [economics, macro, fed, liquidity]
+  rateLimit:
+    bucket: fred-graph
+    maxPerMinute: 60
+    maxPerDay: 2000
+  auth:
+    mode: none
+  defaults:
+    responseFormat: csv
+    parseFailureMode: empty-entries
+    normalizeJson: false
+
+operations:
+  series-csv:
+    when:
+      sourceAdapterOperation: [series-csv]
+      urlPatterns: ["/graph/fredgraph\\.csv"]
+      default: true
+    claimTypes: [metric]
+    request:
+      method: GET
+      urlTemplate: "https://fred.stlouisfed.org/graph/fredgraph.csv"
+      query:
+        id: "{series}"
+      estimatedSizeKb:
+        TLSN: 64
+        DAHR: 64
+      matchHints:
+        - "{series}"
+        - "{topic}"
+    variables:
+      series:
+        sources: [vars.series, vars.query, topic]
+        required: true
+        transforms:
+          - trim
+          - uppercase
+          - map:
+              walcl: WALCL
+              rrp: RRPONTSYD
+              reverse-repo: RRPONTSYD
+              reverse repo: RRPONTSYD
+              balance-sheet: WALCL
+              balance sheet: WALCL
+    compatibility:
+      responseFormats: [csv]
+      tlsn:
+        allowed: true
+        requireHttps: true
+        maxResponseKb: 64
+      dahr:
+        allowed: true
+    parse:
+      format: csv
+      items:
+        mode: regex-blocks
+        blockPattern: "^(\\d{4}-\\d{2}-\\d{2},[^\\r\\n]*)$"
+      fields:
+        id:
+          regex: "^(\\d{4}-\\d{2}-\\d{2}),"
+          required: true
+        bodyText:
+          template: "{.}"
+        raw:
+          mode: matched-block

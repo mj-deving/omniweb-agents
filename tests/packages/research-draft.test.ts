@@ -1258,6 +1258,66 @@ describe("buildResearchDraft", () => {
     expect(result.qualityGate.checks.find((check) => check.name === "semantic-evidence-grounding")?.pass).toBe(false);
   });
 
+  it("rejects drafts that replay the same colony surface inside the recent overlap window", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "Bill-note spread still says the front end is easing: 3.702 on bills versus 3.212 on 2y keeps the 49bps inversion alive while pivot chatter runs ahead of the tape. " +
+        "That mismatch is still the stress signal to watch until the front end reprices."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      selfHistory: {
+        lastPost: null,
+        lastSameTopicPost: null,
+        lastSameFamilyPost: null,
+        windows: {
+          total24h: 0,
+          total7d: 0,
+          sameTopic24h: 0,
+          sameTopic7d: 0,
+          sameFamily24h: 0,
+          sameFamily7d: 0,
+        },
+        changeSinceLastSameTopic: null,
+        changeSinceLastSameFamily: null,
+        colonyNovelty: {
+          recentOverlapCount2h: 1,
+          recentOverlapCount24h: 1,
+          strongestOverlapPost: {
+            txHash: "0xmacro1",
+            author: "0xmacro",
+            category: "ANALYSIS",
+            score: 88,
+            publishedAt: "2026-04-22T07:40:00.000Z",
+            hoursAgo: 0.8,
+            textSnippet: "Bill-note spread still says the front end is easing: 3.702 on bills versus 3.212 on 2y keeps the 49bps inversion alive.",
+            sharedTerms: ["bill", "note", "spread", "pivot"],
+            sharedNumbers: ["3.702", "3.212", "49"],
+          },
+          skipSuggested: true,
+          overlapReason: "recent_colony_numeric_overlap_within_2h",
+        },
+        repeatRisk: "high",
+        skipSuggested: true,
+        repetitionReason: "recent_colony_numeric_overlap_within_2h",
+      },
+      llmProvider: provider,
+      minTextLength: 200,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "no-self-redundancy")?.pass).toBe(false);
+  });
+
   it("rejects funding drafts that treat negative funding alone as proof", async () => {
     const provider = {
       name: "test-provider",

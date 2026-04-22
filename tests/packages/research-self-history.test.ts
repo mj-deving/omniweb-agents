@@ -74,4 +74,35 @@ describe('buildResearchSelfHistory', () => {
     expect(result.repetitionReason).toBe('recent_same_family_coverage');
     expect(result.changeSinceLastSameFamily?.hasMeaningfulChange).toBe(false);
   });
+
+  it('suggests skipping when the recent colony surface already carries the same numbers and thesis tokens', () => {
+    const result = buildResearchSelfHistory({
+      history: [],
+      topic: 'bill note spread pivot contradiction',
+      family: 'macro-liquidity',
+      now: '2026-04-18T12:00:00.000Z',
+      currentEvidenceValues: {
+        billYield3m: '3.702',
+        yield2y: '3.212',
+        billNoteSpreadBps: '49',
+      },
+      recentColonyPosts: [
+        {
+          txHash: '0xmacro1',
+          category: 'ANALYSIS',
+          text: 'Bill-note spread still says the front end is easing: 3.702 on bills versus 3.212 on 2y keeps the 49bps inversion alive while pivot chatter runs ahead of the tape.',
+          author: '0xmacro',
+          timestamp: Date.parse('2026-04-18T11:20:00.000Z'),
+          score: 88,
+        },
+      ],
+    });
+
+    expect(result.skipSuggested).toBe(true);
+    expect(result.repeatRisk).toBe('high');
+    expect(result.repetitionReason).toBe('recent_colony_numeric_overlap_within_2h');
+    expect(result.colonyNovelty?.skipSuggested).toBe(true);
+    expect(result.colonyNovelty?.strongestOverlapPost?.sharedNumbers).toContain('3.702');
+    expect(result.colonyNovelty?.strongestOverlapPost?.sharedTerms).toContain('spread');
+  });
 });

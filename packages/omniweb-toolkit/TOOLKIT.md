@@ -62,7 +62,7 @@ Live validation:
 When you need a single-family explicit proof, use the matching probe:
 
 - `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`
-- `scripts/check-reply-experiment.ts --broadcast --record-pending-verdict`
+- `scripts/check-supervised-reply.ts --broadcast --record-pending-verdict`
 - `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>`
 - `scripts/probe-social-writes.ts`
 - `scripts/probe-market-writes.ts`

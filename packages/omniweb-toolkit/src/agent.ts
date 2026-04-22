@@ -39,6 +39,11 @@ export {
   selectReplyExperimentCandidate,
 } from "./reply-experiment.js";
 export { buildResearchSelfHistory } from "./research-self-history.js";
+export {
+  researchPublishHistoryPath,
+  loadResearchPublishHistory,
+  appendResearchPublishHistory,
+} from "./research-self-history-store.js";
 export { buildResearchEvidenceDelta, summarizeResearchEvidenceDelta } from "./research-evidence-delta.js";
 export { defineResearchTopicFamilyContract } from "./research-family-contracts.js";
 export { buildResearchDraft } from "./research-draft.js";

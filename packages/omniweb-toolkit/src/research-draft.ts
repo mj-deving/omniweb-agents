@@ -92,6 +92,39 @@ export type ResearchDraftResult = ResearchDraftSuccess | ResearchDraftFailure;
 
 const DEFAULT_MIN_TEXT_LENGTH = 200;
 const DEFAULT_MAX_TEXT_LENGTH = 320;
+const SELF_REDUNDANCY_TOKEN_STOPWORDS = new Set([
+  "about",
+  "after",
+  "against",
+  "before",
+  "being",
+  "below",
+  "between",
+  "could",
+  "does",
+  "front",
+  "from",
+  "have",
+  "into",
+  "just",
+  "near",
+  "real",
+  "still",
+  "than",
+  "that",
+  "their",
+  "there",
+  "these",
+  "they",
+  "this",
+  "treating",
+  "under",
+  "until",
+  "watch",
+  "when",
+  "while",
+  "with",
+]);
 const RESEARCH_META_PATTERNS: Array<{ name: string; pattern: RegExp; detail: string }> = [
   {
     name: "internal-signal-metadata",
@@ -282,6 +315,7 @@ export async function buildResearchDraft(
     opts.opportunity,
     opts.evidenceSummary,
     opts.supportingEvidenceSummaries ?? [],
+    opts.selfHistory ?? null,
   );
   if (preferredGate.pass) {
     return {
@@ -475,6 +509,7 @@ function checkResearchDraftQuality(
   opportunity: ResearchOpportunity,
   evidenceSummary: ResearchEvidenceSummary,
   supportingEvidenceSummaries: ResearchEvidenceSummary[] = [],
+  selfHistory: ResearchSelfHistorySummary | null = null,
 ): QualityGateResult {
   const base = checkPublishQuality(
     { text, category: "ANALYSIS" },
@@ -486,6 +521,7 @@ function checkResearchDraftQuality(
   const contextualGrounding = checkContextualGrounding(text, opportunity);
   const styleLeak = findResearchStyleProblem(text);
   const familyBaselineLeak = findFamilyBaselineProblem(text, opportunity);
+  const selfRedundancy = checkSelfRedundancy(text, selfHistory);
   const checks = [
     ...base.checks,
     {
@@ -514,6 +550,11 @@ function checkResearchDraftQuality(
       name: "research-angle-grounding",
       pass: contextualGrounding.pass,
       detail: contextualGrounding.detail,
+    },
+    {
+      name: "no-self-redundancy",
+      pass: selfRedundancy.pass,
+      detail: selfRedundancy.detail,
     },
     {
       name: "research-style",
@@ -577,6 +618,14 @@ function checkResearchDraftQuality(
     };
   }
 
+  if (!selfRedundancy.pass) {
+    return {
+      pass: false,
+      reason: `failed: no-self-redundancy — ${selfRedundancy.detail}`,
+      checks,
+    };
+  }
+
   if (styleLeak) {
     return {
       pass: false,
@@ -597,6 +646,103 @@ function checkResearchDraftQuality(
     pass: true,
     checks,
   };
+}
+
+function checkSelfRedundancy(
+  text: string,
+  selfHistory: ResearchSelfHistorySummary | null,
+): { pass: boolean; detail: string } {
+  if (!selfHistory) {
+    return { pass: true, detail: "no self-history provided" };
+  }
+
+  const sameTopic = evaluateSelfOverlap(
+    text,
+    selfHistory.lastSameTopicPost,
+    selfHistory.changeSinceLastSameTopic,
+    24 * 7,
+    "same-topic",
+  );
+  if (sameTopic) return { pass: false, detail: sameTopic };
+
+  const sameFamily = evaluateSelfOverlap(
+    text,
+    selfHistory.lastSameFamilyPost,
+    selfHistory.changeSinceLastSameFamily,
+    24,
+    "same-family",
+  );
+  if (sameFamily) return { pass: false, detail: sameFamily };
+
+  return { pass: true, detail: "no near-twin self-history overlap detected" };
+}
+
+function evaluateSelfOverlap(
+  text: string,
+  previousPost: ResearchSelfHistorySummary["lastSameTopicPost"] | ResearchSelfHistorySummary["lastSameFamilyPost"],
+  delta: ResearchSelfHistorySummary["changeSinceLastSameTopic"] | ResearchSelfHistorySummary["changeSinceLastSameFamily"],
+  maxHours: number,
+  scope: "same-topic" | "same-family",
+): string | null {
+  if (!previousPost || previousPost.hoursAgo > maxHours) return null;
+
+  const overlap = compareDraftOverlap(text, previousPost.textSnippet ?? "");
+  const noMaterialDelta = delta != null && !delta.hasMeaningfulChange;
+  const strongTokenOverlap = overlap.sharedTerms.length >= 3 && overlap.termOverlapRatio >= 0.5;
+  const numericOverlap = overlap.sharedNumbers.length > 0;
+
+  if (scope === "same-topic" && noMaterialDelta) {
+    return `recent ${scope} post ${formatHoursAgo(previousPost.hoursAgo)} ago still shares the same evidence surface`;
+  }
+
+  if (scope === "same-family" && (numericOverlap || strongTokenOverlap)) {
+    const reasons = [
+      numericOverlap ? `reuses numeric surface ${overlap.sharedNumbers.join(", ")}` : null,
+      strongTokenOverlap ? `repeats thesis tokens ${overlap.sharedTerms.join(", ")}` : null,
+      noMaterialDelta ? "shows no material evidence delta" : null,
+    ].filter((value): value is string => value != null);
+
+    return `recent ${scope} post ${formatHoursAgo(previousPost.hoursAgo)} ago ${reasons.join("; ")}`;
+  }
+
+  return null;
+}
+
+function compareDraftOverlap(currentText: string, previousText: string): {
+  sharedTerms: string[];
+  sharedNumbers: string[];
+  termOverlapRatio: number;
+} {
+  const currentTerms = extractSelfRedundancyTerms(currentText);
+  const previousTerms = extractSelfRedundancyTerms(previousText);
+  const sharedTerms = [...currentTerms].filter((token) => previousTerms.has(token));
+  const denominator = Math.max(1, Math.min(currentTerms.size, previousTerms.size));
+
+  const currentNumbers = extractNumericTokens(currentText);
+  const previousNumbers = extractNumericTokens(previousText);
+  const sharedNumbers = [...currentNumbers].filter((token) => previousNumbers.has(token));
+
+  return {
+    sharedTerms,
+    sharedNumbers,
+    termOverlapRatio: sharedTerms.length / denominator,
+  };
+}
+
+function extractSelfRedundancyTerms(text: string): Set<string> {
+  const tokens = text.toLowerCase().match(/[a-z][a-z-]{2,}/g) ?? [];
+  return new Set(
+    tokens.filter((token) => token.length >= 4 && !SELF_REDUNDANCY_TOKEN_STOPWORDS.has(token)),
+  );
+}
+
+function extractNumericTokens(text: string): Set<string> {
+  const matches = text.match(/\b\d+(?:\.\d+)?(?:bps?|%|usd)?\b/gi) ?? [];
+  return new Set(matches.map((token) => token.toLowerCase()));
+}
+
+function formatHoursAgo(hoursAgo: number): string {
+  return `${Number(hoursAgo.toFixed(1))}h`;
 }
 
 function checkSemanticEvidenceGrounding(

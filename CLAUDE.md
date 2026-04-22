@@ -71,22 +71,36 @@ The `toolkit/` vs `lib/` split is enforced by `tests/architecture/boundary.test.
 
 Every agent must read `AGENTS.md` immediately after reading this file. `CLAUDE.md` defines repo-wide architecture and constraints; `AGENTS.md` defines the execution workflow.
 
+Bead creation must be evidence-first at creation time, not enriched later:
+- use `--description` for the what/why
+- use `--context` for execution details, blockers, or acceptance shape
+- use `--notes` for SOURCES/provenance such as audit docs, tx hashes, PRs, and live artifact paths
+- canonical pattern:
+  `bd create "Issue title" --description "What/why" --context "Fix surface, blockers, or acceptance shape" --notes "SOURCES: audit doc, tx hash, PR, artifact path; kn entry: durable repo fact if needed"`
+
 ## Session Bootstrap
 
 After reading this file, immediately load the root `AGENTS.md`.
+
+- Beads is the task ledger and durable shared memory.
+- Use `main` for merged code truth and open PRs for in-flight work.
+- Local memory or handoff files are convenience only unless this repo explicitly says otherwise.
+- If Claude hooks are installed, let `bd prime` inject current Beads context automatically.
 
 - Use root `AGENTS.md` for workflow, Beads usage, PR discipline, and shared-state reconstruction.
 - If a nearer nested `AGENTS.md` exists for the files you are editing, read that next and follow its local instructions.
 - Reconstruct current state from Beads (`bd ready`, `bd memories`, relevant `bd show` / `bd blocked` lookups), `main`, and open GitHub PRs.
 - Local Claude memory files are pointer/index material only. They are not authoritative current state and must not replace Beads, `main`, open PRs, or `AGENTS.md`.
+- Durable handoff deliverables under `docs/archive/agent-handoffs/` should be tracked when they drive doctrine, priorities, experiment choice, or execution order.
 
 | Location | Authority | What |
 |----------|-----------|------|
 | `AGENTS.md` | **Workflow** | Required execution workflow: read order, beads usage, PR discipline, merge discipline, and multi-agent coordination. |
-| `packages/omniweb-toolkit/` | **Primary** | SKILL.md (activation router), GUIDE.md (methodology), 11 top-level references/, evals/, 18 scripts/, 4 playbooks/, 4 asset templates. Codex-authored. All API shapes, capabilities, categories, guardrails, scoring, attestation, discovery, interaction patterns live here. |
-| `docs/decisions/` | **Unique** | 18 ADRs — repo-level architectural constraints. `Status: accepted` = active. |
-| `docs/ROADMAP.md` | **Unique** | Phase 21: live strategy testing. Open work items and beads. |
-| `docs/INDEX.md` | **Unique** | Project history (Phases 1-20). |
+| `packages/omniweb-toolkit/` | **Primary** | SKILL.md (activation router), GUIDE.md (methodology), references/, evals/, scripts/, playbooks/, asset templates. Codex-authored. All API shapes, capabilities, categories, guardrails, scoring, attestation, discovery, interaction patterns live here. |
+| `docs/decisions/` | **Unique** | ADRs — repo-level architectural constraints. `Status: accepted` = active. |
+| `docs/ROADMAP.md` | **Unique** | Authoritative strategic tracker; live phase, completed bands, open work items. Read its front-matter for the current phase rather than hardcoding it here. |
+| `docs/INDEX.md` | **Unique** | Project history. |
+| `docs/archive/agent-handoffs/` | **Session continuity** | Dated audit / strategy handoffs (`*-YYYY-MM-DD.md`). The most-recent ones are the live strategic context for live-session-testing work — read the latest 2-3 before iterating on agent strategy. |
 | `.ai/guides/` | **Supplementary** | 6 guides: CLI reference, SDK interaction, RPC, gotchas, templates, colony DB. |
 | `docs/research/` | **Supplementary** | SDK research, `supercolony-discovery/` (llms-full.txt, openapi.json, A2A card). |
 | `docs/primitives/` | **Redundant** | 15 files including README — fully superseded by package `references/`. Retire when convenient. |
@@ -101,11 +115,13 @@ After reading this file, immediately load the root `AGENTS.md`.
 
 **Security-first.** Multi-source verification, no silent failures on payment paths, atomic rollback, security tests before implementation.
 
+**Score-formula awareness.** Per ADR-0008, post score = `Base 20 + DAHR 40 + Confidence 5 + LongText(>200ch) 15 + Reactions(5+) 10 + Reactions(15+) 10`. Attested compact posts floor at 80; only earned reactions move the slope from 80 to 90+. The 80 ceiling on a single publish is structural, not a tuning failure.
+
 **SDK compliance.** Lookup: package references/ → `docs/research/` → SDK MCP → codebase. No `as any`. See `.ai/guides/sdk-interaction-guidelines.md`.
 
 **Toolkit vs strategy.** Mechanism = `src/toolkit/`. Policy = `src/lib/`. Mixed = split. Enforced by `tests/architecture/boundary.test.ts`. See `docs/architecture-plumbing-vs-strategy.md`.
 
-**Toolkit is infrastructure, not orchestration.** Consumer experience: `npm install omniweb-toolkit` → import → call primitives. No strategy engine or verification gates required.
+**Toolkit is infrastructure, not orchestration.** Consumer experience: `npm install omniweb-toolkit` → import → call primitives. No strategy engine or verification gates required. Strategy lives in `docs/archive/agent-handoffs/` and operator scripts, not in package code.
 
 ## Conventions
 
@@ -116,6 +132,56 @@ After reading this file, immediately load the root `AGENTS.md`.
 - **Coordination source** — reconstruct state from `main`, open GitHub PRs, beads, and repo docs. Do not depend on manual Codex-to-Claude handoff.
 - **Agent workflow** — one bead = one branch = one PR. Use GitHub PRs as the merge unit and beads as the live task ledger.
 - **Parallel agents** — use separate worktrees. If two tasks touch the same files heavily, serialize them instead of racing.
+- **Merge slot** — acquire `omniweb-agents-merge-slot` (`bd merge-slot acquire`) before rebasing or landing conflict-heavy work in shared hot files: `packages/omniweb-toolkit/src/hive.ts`, `packages/omniweb-toolkit/src/index.ts`, `src/toolkit/supercolony/api-client.ts`, live validation scripts. Release it promptly.
 - **Beads hygiene** — beads content should be treated as public workflow metadata. Never store secrets, credentials, tokens, or private operational notes in beads.
 - Commit messages: clear "why", prefixed by area. kebab-case files.
 - Sessions that make repo changes should usually end with commit + push or an open PR; pure audit/review sessions do not need a commit.
+
+
+<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
+## Beads Issue Tracker
+
+This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+
+### Quick Reference
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
+```
+
+### Rules
+
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+## Session Completion
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd dolt push
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
+- In multi-agent operation, sync Beads from Dolt at session start and again after major bead changes; if `bd dolt pull` reports the branch-selection error, repair tracking once with `cd .beads/embeddeddolt/omniweb_agents && dolt push --set-upstream origin main`.
+<!-- END BEADS INTEGRATION -->

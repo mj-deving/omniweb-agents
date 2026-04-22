@@ -19,14 +19,38 @@ Use the closest `AGENTS.md` to the files you are changing as the local instructi
 
 Before starting work:
 
-1. read `CLAUDE.md`
-2. read `AGENTS.md`
+1. `CLAUDE.md` first
+2. `AGENTS.md` second
 3. if a nearer nested `AGENTS.md` exists for the area you are changing, read it next
 4. read the relevant package docs for the area being changed
-5. inspect `bd ready`
-6. inspect open GitHub PRs if recent work may overlap
+5. sync Beads from the Dolt remote before trusting local task state:
+   `bd dolt pull || true`
+6. inspect `bd ready --json`
+7. inspect open GitHub PRs if recent work may overlap
 
 There is currently no repo `MEMORY.md`. Local agent memory files outside the repo are not authoritative current state.
+
+## Workflow
+
+- `bd ready --json` before choosing work
+- `bd show <id> --json` before implementation
+- `bd update <id> --claim --json` before starting
+- `bd note <id> "..." --json` for shared progress
+- `bd remember "..." --key <name> --json` for durable repo facts
+- `bd close <id> --reason "..." --json` only on real completion
+- when parallel agents may be active, push Beads after major queue changes:
+  `bd dolt push`
+- sync Beads again before ending the session unless the repo is intentionally in stealth / no-git-ops mode
+- use `bd dep` for real sequencing
+- use `bd gate` for real waits
+- use worktrees for concurrent agents when file ownership may overlap
+
+## Memory Model
+
+- Beads = task state and durable repo memory
+- `main` = merged truth
+- open PRs = in-flight work
+- local memory or handoff files = convenience only
 
 ## Coordination Model
 
@@ -74,12 +98,20 @@ Important commands:
 - `bd gate list` / `bd gate check` to inspect async waits
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
 - `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
+- `bd dolt pull` / `bd dolt push` for shared-state sync
+- if `bd dolt pull` errors with the branch-selection message, repair the embedded Dolt repo once with:
+  `(cd .beads/embeddeddolt/omniweb_agents && dolt push --set-upstream origin main)`
 
 Rules:
 
 - always inspect `bd ready` before choosing work
+- when another agent may be active, sync Beads from Dolt before trusting local state and push back after major bead changes
 - claim a task before starting implementation
 - if new work is discovered, create or note a follow-up bead
+- create beads with execution context at creation time:
+  - use `--description` for the what/why
+  - use `--context` for fix surface, blockers, or execution details
+  - use `--notes` for provenance such as audit docs, tx hashes, PRs, or artifact paths
 - if a multi-bead effort has real sequencing, encode it with `bd dep` instead of leaving it implicit in notes
 - if a task is blocked, record the blocker in beads
 - do not silently work on a task someone else has already claimed
@@ -92,6 +124,8 @@ Rules:
 ## Advanced Beads Defaults
 
 - Prefer `scripts/create-worktree.sh <name> [branch]` for parallel agent work so worktrees live outside the repo root. Existing `.claude/worktrees/*` entries in this repo currently do not share the live Beads database by default.
+- In multi-agent operation, Dolt sync is part of the core Beads cadence:
+  pull at session start, push after major bead changes, and push again at session end.
 - Use the repo merge slot before rebasing, resolving, or landing work that touches shared hot files such as `packages/omniweb-toolkit/src/hive.ts`, `packages/omniweb-toolkit/src/index.ts`, `src/toolkit/supercolony/api-client.ts`, or the live validation scripts.
 - Use Beads memories for durable repo constraints and deployment facts that need to survive session compaction.
 - Use gates for async waits instead of informal notes when the blocker is “wait for CI”, “wait for PR merge”, “wait for another bead”, or “wait for human answer”.
@@ -256,6 +290,8 @@ For trajectory work:
 - keep the package as the primary authority for its public surface
 - do not duplicate official platform facts when the package should layer on them
 - keep repo-only research separate from shipped package docs
+- track decision-driving handoffs under `docs/archive/agent-handoffs/` when they change doctrine, priorities, experiment selection, or execution order
+- leave transient JSON artifacts, temporary logs, and one-off scratch notes untracked unless they become part of a maintained validation surface
 - if publish-facing behavior changes, update docs and checks in the same PR when possible
 - keep cross-agent operational rules in `AGENTS.md`, not in agent-specific overlay files
 
@@ -288,3 +324,128 @@ Current beads setup:
 - do not run `bd init --server` or reinitialize beads unless the user explicitly requests a backend migration
 
 `--server` only matters if the repo intentionally moves from embedded local beads to a shared external Dolt SQL server as the primary live backend.
+
+
+<!-- BEGIN BEADS INTEGRATION v:1 profile:full hash:f65d5d33 -->
+## Issue Tracking with bd (beads)
+
+**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+
+### Why bd?
+
+- Dependency-aware: Track blockers and relationships between issues
+- Git-friendly: Dolt-powered version control with native sync
+- Agent-optimized: JSON output, ready work detection, discovered-from links
+- Prevents duplicate tracking systems and confusion
+
+### Quick Start
+
+**Check for ready work:**
+
+```bash
+bd ready --json
+```
+
+**Create new issues:**
+
+```bash
+bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
+bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
+bd create "Issue title" --description="What this issue is about" --context "Fix surface, blockers, or acceptance shape" --notes "SOURCES: audit doc, tx hash, PR, or live artifact path" -p 1 --json
+```
+
+**Claim and update:**
+
+```bash
+bd update <id> --claim --json
+bd update bd-42 --priority 1 --json
+```
+
+**Complete work:**
+
+```bash
+bd close bd-42 --reason "Completed" --json
+```
+
+### Issue Types
+
+- `bug` - Something broken
+- `feature` - New functionality
+- `task` - Work item (tests, docs, refactoring)
+- `epic` - Large feature with subtasks
+- `chore` - Maintenance (dependencies, tooling)
+
+### Priorities
+
+- `0` - Critical (security, data loss, broken builds)
+- `1` - High (major features, important bugs)
+- `2` - Medium (default, nice-to-have)
+- `3` - Low (polish, optimization)
+- `4` - Backlog (future ideas)
+
+### Workflow for AI Agents
+
+1. **Check ready work**: `bd ready` shows unblocked issues
+2. **Claim your task atomically**: `bd update <id> --claim`
+3. **Work on it**: Implement, test, document
+4. **Discover new work?** Create linked issue:
+   - `bd create "Found bug" --description="Details about what was found" --context "Expected fix surface or blocker" --notes "SOURCES: repro, audit, tx, artifact" -p 1 --deps discovered-from:<parent-id>`
+5. **Complete**: `bd close <id> --reason "Done"`
+
+### Quality
+- Use `--acceptance` and `--design` fields when creating issues
+- Use `--validate` to check description completeness
+
+### Lifecycle
+- `bd defer <id>` / `bd supersede <id>` for issue management
+- `bd stale` / `bd orphans` / `bd lint` for hygiene
+- `bd human <id>` to flag for human decisions
+- `bd formula list` / `bd mol pour <name>` for structured workflows
+
+### Auto-Sync
+
+bd automatically syncs via Dolt:
+
+- Each write auto-commits to Dolt history
+- Use `bd dolt push`/`bd dolt pull` for remote sync
+- No manual export/import needed!
+
+### Important Rules
+
+- ✅ Use bd for ALL task tracking
+- ✅ Always use `--json` flag for programmatic use
+- ✅ Link discovered work with `discovered-from` dependencies
+- ✅ Check `bd ready` before asking "what should I work on?"
+- ❌ Do NOT create markdown TODO lists
+- ❌ Do NOT use external issue trackers
+- ❌ Do NOT duplicate tracking systems
+
+For more details, see README.md and docs/QUICKSTART.md.
+
+## Session Completion
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd dolt push
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
+
+<!-- END BEADS INTEGRATION -->

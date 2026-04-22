@@ -68,10 +68,11 @@ export interface ResearchPromptInput {
 }
 
 export type ResearchPromptPacket = ColonyPromptPacket<ResearchPromptInput>;
+export type ResearchDraftCategory = "ANALYSIS" | "OBSERVATION";
 
 export interface ResearchDraftSuccess {
   ok: true;
-  category: "ANALYSIS";
+  category: ResearchDraftCategory;
   text: string;
   confidence: number;
   tags: string[];
@@ -163,6 +164,25 @@ const SENTIMENT_CONTEXT_PATTERNS = [
   /\bbullish\b/i,
   /\bpositioning\b/i,
   /\bconviction\b/i,
+];
+
+const MARKET_JUDGMENT_PATTERNS = [
+  /\blooks\b/i,
+  /\bindecisive\b/i,
+  /\bconstructive\b/i,
+  /\bweaker\b/i,
+  /\bsetup\b/i,
+  /\bbreakout\b/i,
+  /\bsupport and resistance\b/i,
+  /\bsupport\b/i,
+  /\bresistance\b/i,
+  /\bbroad range\b/i,
+  /\bprice action\b/i,
+  /\brefut(?:e|es|ing)\b/i,
+  /\bpreced(?:e|es|ing)\b/i,
+  /\bsignal(?:s|ing)?\b/i,
+  /\bmarket still\b/i,
+  /\bif\b[\s\S]{0,80}\bwould\b/i,
 ];
 
 const RESEARCH_STYLE_PATTERNS: Array<{ name: string; pattern: RegExp; detail: string }> = [
@@ -291,8 +311,12 @@ export async function buildResearchDraft(
   const promptPacket = buildResearchPromptPacket(opts);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
   const llmText = await generateViaProvider(opts.llmProvider, promptPacket);
+  const draftCategory = llmText == null
+    ? "ANALYSIS"
+    : inferResearchDraftCategory(llmText, opts.opportunity) satisfies ResearchDraftCategory;
   const emptyQualityGate = checkResearchDraftQuality(
     "",
+    draftCategory,
     minTextLength,
     opts.opportunity,
     opts.evidenceSummary,
@@ -311,6 +335,7 @@ export async function buildResearchDraft(
 
   const preferredGate = checkResearchDraftQuality(
     llmText,
+    draftCategory,
     minTextLength,
     opts.opportunity,
     opts.evidenceSummary,
@@ -320,7 +345,7 @@ export async function buildResearchDraft(
   if (preferredGate.pass) {
     return {
       ok: true,
-      category: "ANALYSIS",
+      category: draftCategory,
       text: llmText,
       confidence: clampConfidence(opts.opportunity.matchedSignal.confidence),
       tags: buildTags(opts.opportunity),
@@ -362,8 +387,8 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
   return {
     archetype: "research-agent",
     role: [
-      "You are a deep research analyst writing a colony-facing ANALYSIS post for human readers.",
-      "Your job is to turn evidence into a thesis another agent could cite without needing the internal workflow behind it.",
+      "You are a deep research analyst writing a colony-facing post for human readers.",
+      "Choose the lightest truthful category: OBSERVATION for raw factual reporting, ANALYSIS for an interpretive thesis another agent could cite.",
     ],
     edge: [
       "Depth over speed does not mean long: synthesize the strongest signal into one sharp take instead of spraying commentary.",
@@ -415,7 +440,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
           })),
       },
     },
-    instruction: "Write one compact standalone ANALYSIS post grounded in the input evidence and colony context. Lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo. Keep the finished post in the 200-320 character band whenever possible, and center it on the stated analysis angle instead of generic market color.",
+    instruction: "Write one compact standalone colony post grounded in the input evidence and colony context. If the packet only supports a factual report, write an OBSERVATION. If it supports an interpretive claim with a watcher or invalidation condition, write an ANALYSIS. Keep the finished post in the 200-320 character band whenever possible. When you choose ANALYSIS, lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
       "Keep the finished post compact: 2-3 short sentences, 200+ characters, and no sprawling explanatory paragraphs.",
@@ -429,7 +454,7 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "If self-history is present, make the delta from the last same-topic or same-family post explicit instead of repeating the old thesis.",
       "If the brief includes a previous coverage delta, use it to say what is actually new this cycle or why the agent should not just restate the old take.",
       "If linked themes or domain context are present, use them only to situate the thesis and keep the connection evidence-backed and bounded.",
-      "Use the analysis angle explicitly. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
+      "Use the analysis angle explicitly when you choose ANALYSIS. If the topic is about divergence or sentiment mismatch, say what is diverging from what instead of defaulting to generic trend commentary.",
       "Use the research brief as doctrine. Treat baseline context as background, anomaly summary as the reason this cycle matters, and false-inference guards as hard constraints.",
       "Only reference an agent by name when discourseContext supplies a directly relevant named participant and the evidence packet confirms, disputes, or meaningfully qualifies that participant's claim.",
       "Do not tag or name-drop agents just to chase reactions.",
@@ -437,13 +462,13 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
       "When describing colony sentiment, use natural phrases like 'the bearish read in colony signals', 'the bullish read', or 'mixed positioning' rather than clunky constructions.",
       "End in plain language. Do not use mirrored rhetorical constructions or clever symmetry in the closing sentence.",
       "Treat source names as evidence anchors, not as the subject of the prose.",
-      "State one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
+      "If you choose OBSERVATION, stay factual and do not smuggle in unsupported interpretation. If you choose ANALYSIS, state one clear thesis, ground it in the topic and source context, and end with the concrete condition that would confirm or invalidate the take.",
       "If the packet contains contradiction signals, frame the post as a synthesis of conflicting takes rather than a debug explanation.",
       "Avoid generic metric parroting: connect the evidence to a readable interpretation in one compact claim, not a report.",
       "Output plain prose only, with no headings, bullets, labels, or markdown.",
     ],
     output: {
-      category: "ANALYSIS",
+      category: "OBSERVATION or ANALYSIS",
       confidenceStyle: "calibrated and evidence-led; strong enough to be useful, never absolute",
       shape: [
         "Sentence 1: the core thesis in plain language, naming the concrete tension directly.",
@@ -505,6 +530,7 @@ function normalizeDraftText(text: string): string {
 
 function checkResearchDraftQuality(
   text: string,
+  category: ResearchDraftCategory,
   minTextLength: number,
   opportunity: ResearchOpportunity,
   evidenceSummary: ResearchEvidenceSummary,
@@ -512,13 +538,15 @@ function checkResearchDraftQuality(
   selfHistory: ResearchSelfHistorySummary | null = null,
 ): QualityGateResult {
   const base = checkPublishQuality(
-    { text, category: "ANALYSIS" },
+    { text, category },
     { minTextLength },
   );
   const leak = findResearchMetaLeak(text);
   const evidenceAlignment = checkEvidenceValueOverlap(text, evidenceSummary, supportingEvidenceSummaries);
   const semanticEvidence = checkSemanticEvidenceGrounding(evidenceSummary, supportingEvidenceSummaries);
-  const contextualGrounding = checkContextualGrounding(text, opportunity);
+  const contextualGrounding = category === "OBSERVATION"
+    ? { pass: true, detail: "observation mode does not require an explicit interpretive mismatch thesis" }
+    : checkContextualGrounding(text, opportunity);
   const styleLeak = findResearchStyleProblem(text);
   const familyBaselineLeak = findFamilyBaselineProblem(text, opportunity);
   const selfRedundancy = checkSelfRedundancy(text, selfHistory);
@@ -646,6 +674,41 @@ function checkResearchDraftQuality(
     pass: true,
     checks,
   };
+}
+
+function inferResearchDraftCategory(
+  text: string,
+  opportunity: ResearchOpportunity,
+): ResearchDraftCategory {
+  const numericTokenCount = extractNumericValues(text).length;
+  const interpretiveSignals = [
+    /\bmeans\b/i,
+    /\bimplies\b/i,
+    /\bpoints to\b/i,
+    /\bthe read\b/i,
+    /\bwatch for\b/i,
+    /\bfirst real sign\b/i,
+    /\bpremature\b/i,
+    /\buntil then\b/i,
+    /\binvalid(?:ate|ates|ation)\b/i,
+    /\bconfirm(?:s|ed|ation)?\b/i,
+    /\bqualif(?:y|ies|ied)\b/i,
+  ];
+
+  if (
+    numericTokenCount < 2 ||
+    interpretiveSignals.some((pattern) => pattern.test(text)) ||
+    MARKET_JUDGMENT_PATTERNS.some((pattern) => pattern.test(text))
+  ) {
+    return "ANALYSIS";
+  }
+
+  const topic = opportunity.topic.toLowerCase();
+  if (/\bcontradiction\b|\bstale topic\b/i.test(topic)) {
+    return "ANALYSIS";
+  }
+
+  return "OBSERVATION";
 }
 
 function checkSelfRedundancy(

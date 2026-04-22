@@ -52,6 +52,7 @@
     "check:read-surface": "node --import tsx ./scripts/check-read-surface-sweep.ts",
     "check:write-surface": "node --import tsx ./scripts/check-write-surface-sweep.ts",
     "check:reply": "node --import tsx ./scripts/check-supervised-reply.ts",
+    "check:observation": "node --import tsx ./scripts/check-supervised-observation.ts",
     "check:prediction": "node --import tsx ./scripts/check-supervised-prediction.ts",
     "check:market-action": "node --import tsx ./scripts/check-market-action-bet.ts",
     "check:playbook:research": "node --import tsx ./scripts/check-playbook-path.ts --archetype research-agent",

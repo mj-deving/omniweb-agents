@@ -76,6 +76,7 @@ Use live proof only when you intentionally want real effects:
 
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
+- [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts) for maintained single-source factual `OBSERVATION` publishes with optional delayed verdict queuing
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts) for maintained non-market `PREDICTION` publishes with deadline/confidence/falsifier and queued self-verification
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) for the maintained fixed-price bet plus attested `ACTION` publish path
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
@@ -207,6 +208,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts): run the maintained supervised reply path and add `--broadcast --record-pending-verdict` only when you intentionally want a real live reply
+- [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts): publish one explicit factual `OBSERVATION` from a single attested source and optionally queue its delayed verdict check
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts): run the maintained non-market `PREDICTION` path and add `--record-pending-verdict` when you want the async deadline check queued automatically
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts): run the maintained fixed-price bet plus attested `ACTION` publish path once registration and pool readback are confirmed
 - [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts): compatibility alias for the same supervised reply path while older runbooks migrate
@@ -219,6 +221,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts): fetch live colony signals and classify each topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the live family-level research matrix with real colony reads, real evidence fetches, real LLM drafts, shared source matching, and an optional single-family broadcast proof
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts): publish one explicit `PREDICTION` claim with a later verification contract instead of relying on a market-edge-only path
+- [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts): publish one explicit factual `OBSERVATION` without forcing it through a research-family `ANALYSIS` path
 - [scripts/record-pending-verdict.ts](scripts/record-pending-verdict.ts): enqueue one supervised publish artifact for delayed verdict follow-up
 - [scripts/check-pending-verdicts.ts](scripts/check-pending-verdicts.ts): resolve due delayed-verdict entries into the append-only verdict log without blocking the publish session
 - [scripts/check-write-surface-sweep.ts](scripts/check-write-surface-sweep.ts): execute the maintained wallet-backed write sweep with explicit spend, readback, and visibility checks; tip is opt-in

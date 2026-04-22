@@ -1,0 +1,42 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-04",
+  "title": "Rates Term Structure x Equity Vol",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "notes": "Requires FRED_API_KEY for T10Y2Y.",
+  "entries": [
+    {
+      "id": "s4-p1-curve-shape-observation",
+      "sourceId": 8,
+      "sourceName": "fred-t10y2y-json",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=T10Y2Y&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The FRED JSON feed for the ten-year minus two-year spread keeps the curve shape visible without the CSV attestation problem that blocked the first broad sweep. A current curve-shape observation is useful because it tells the reader whether the Treasury term structure is still positive, flattening, or slipping back toward stress without any narrative leap."
+    },
+    {
+      "id": "s4-p2-spx-spot-observation",
+      "sourceId": 13,
+      "sourceName": "cboe-spx",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
+      "jsonPath": "data.current_price",
+      "text": "Cboe’s SPX delayed quote endpoint makes the flagship equity index observable in the same public JSON family as the volatility series. That is helpful because it allows a direct market-state snapshot of the underlying index without requiring a separate vendor, which keeps the follow-on vol comparison inside one consistent public source cluster."
+    },
+    {
+      "id": "s4-p3-vvix-vs-curve-calm",
+      "sourceId": 12,
+      "sourceName": "cboe-vvix",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+      "jsonPath": "data.current_price",
+      "text": "VVIX is useful because it tracks volatility-of-volatility rather than the broad market level itself, while the Treasury curve gives a slower macro calm-versus-stress read. If VVIX is elevated while the curve remains orderly, that pairing creates a clean contradiction: option traders are paying up for instability even though the public rates structure still looks comparatively composed."
+    }
+  ]
+}

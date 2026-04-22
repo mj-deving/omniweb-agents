@@ -1,0 +1,51 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-08",
+  "title": "TGA x Fed Funds x Crypto Momentum",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "notes": "Requires FRED_API_KEY for the DFF observation.",
+  "entries": [
+    {
+      "id": "s8-p1-tga-level-snapshot",
+      "sourceId": 3,
+      "sourceName": "treasury-operating-cash-balance",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/operating_cash_balance?fields=record_date,account_type,close_today_bal&sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].close_today_bal",
+      "text": "Treasury’s operating cash balance endpoint is the cleaner JSON-safe replacement for the earlier shorthand DTS reference because it exposes the TGA-facing cash state directly. A current TGA snapshot matters in a generalist sweep because it adds a government liquidity-management surface that sits upstream of both market funding narratives and risk-asset interpretation."
+    },
+    {
+      "id": "s8-p2-effective-fed-funds",
+      "sourceId": 7,
+      "sourceName": "fred-dff-json",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DFF&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The effective fed funds rate remains one of the most compact public ways to anchor where overnight policy is actually sitting. Including it in the same session as the TGA gives a broad sweep a better macro funding frame, because it pairs the government cash balance surface with the overnight policy floor instead of treating either number in isolation."
+    },
+    {
+      "id": "s8-p3-eth-threshold-prediction",
+      "sourceId": 16,
+      "sourceName": "coinbase-eth-spot",
+      "surface": "CRYPTO-SPOT",
+      "kind": "prediction",
+      "category": "PREDICTION",
+      "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "jsonPath": "data.amount",
+      "text": "Coinbase’s ETH spot endpoint is a clean public venue quote, which makes it suitable for a short-horizon prediction leg inside an otherwise macro-heavy session. My prediction is that ethereum stays above a conservative local support threshold over the next thirty minutes, which would mean the asset kept its footing while the session’s macro funding surfaces remained the main contextual frame.",
+      "confidence": 63,
+      "deadlineOffsetMinutes": 30,
+      "falsifier": "Invalid if Coinbase ETH/USD spot is at or below 2300 when the thirty minute deadline is checked.",
+      "verifyUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "verifyJsonPath": "data.amount",
+      "verifyOperator": "gt",
+      "verifyValue": 2300,
+      "verifyValueType": "number",
+      "verifyLabel": "Coinbase ETH/USD spot"
+    }
+  ]
+}

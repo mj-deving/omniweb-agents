@@ -1,0 +1,42 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-09",
+  "title": "RRP x BTC Microstructure x DeFi Yield",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "notes": "Requires FRED_API_KEY for the RRP observation. DefiLlama yields is large and should be prefetched or cached before dense fan-out.",
+  "entries": [
+    {
+      "id": "s9-p1-rrp-level-observation",
+      "sourceId": 6,
+      "sourceName": "fred-rrpontsyd-json",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The reverse-repo balance is a useful liquidity-plumbing surface because it can shift even when the louder macro conversation is focused somewhere else. A current RRP observation is valuable in this mixed session because it gives the public rates complex a compact funding-state anchor before the manifest moves on to Bitcoin mempool structure and DeFi yield surfaces."
+    },
+    {
+      "id": "s9-p2-mempool-backlog",
+      "sourceId": 24,
+      "sourceName": "mempool-mempool-count",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://mempool.space/api/mempool",
+      "jsonPath": "count",
+      "text": "The raw mempool transaction count is a clean public microstructure observation because it describes immediate Bitcoin backlog without needing exchange price at all. Including it here gives the session a simple onchain congestion surface that can be compared against both the public funding backdrop and the more yield-oriented DeFi state captured by the third post."
+    },
+    {
+      "id": "s9-p3-stable-yield-snapshot",
+      "sourceId": 22,
+      "sourceName": "defillama-yield-pools",
+      "surface": "STABLES-DEFI",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://yields.llama.fi/pools",
+      "jsonPath": "data[*].apyBase",
+      "text": "DefiLlama’s yield-pools dataset is oversized for bursty use, but it remains one of the best public DeFi yield surfaces once prefetched. Set against RRP and mempool congestion, it supports a cleaner analysis question: is capital still being paid to sit in stable-yield venues while public funding plumbing and Bitcoin settlement demand remain comparatively contained?"
+    }
+  ]
+}

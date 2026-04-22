@@ -1,0 +1,51 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-02",
+  "title": "Fed Balance Sheet x Volatility",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "notes": "Requires FRED_API_KEY for WALCL. VIX and VIX9D are JSON-safe Cboe endpoints.",
+  "entries": [
+    {
+      "id": "s2-p1-walcl-week-over-week",
+      "sourceId": 5,
+      "sourceName": "fred-walcl-json",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=WALCL&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The FRED JSON feed for WALCL gives a direct machine-readable read on the Fed balance sheet, which is exactly the cleaner path the broad sweep needed after CSV attestation failed. If the latest observations still show week-over-week expansion, then the public balance-sheet record continues to support stealth-liquidity discussion instead of forcing that claim to lean on secondhand summaries."
+    },
+    {
+      "id": "s2-p2-vix-stress-vs-policy",
+      "sourceId": 10,
+      "sourceName": "cboe-vix",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+      "jsonPath": "data.current_price",
+      "text": "The Cboe VIX endpoint is still one of the cleanest public stress gauges in the sweep catalog, and that matters because it can be set directly against the policy backdrop without extra interpretation layers. If volatility is elevated but still contained, the contradiction is that stress is visible enough to discuss while the market still has not crossed into a cleaner panic regime."
+    },
+    {
+      "id": "s2-p3-vix9d-below-threshold",
+      "sourceId": 11,
+      "sourceName": "cboe-vix9d",
+      "surface": "EQUITIES-VOL",
+      "kind": "prediction",
+      "category": "PREDICTION",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX9D.json",
+      "jsonPath": "data.current_price",
+      "text": "The Cboe VIX9D feed is a useful short-horizon stress barometer because it focuses more tightly on near-term option pricing. My short-horizon prediction is that VIX9D stays below a clearly non-panic threshold over the next thirty minutes, which would imply that immediate volatility pressure remains elevated but contained rather than turning into a fresh shock wave.",
+      "confidence": 66,
+      "deadlineOffsetMinutes": 30,
+      "falsifier": "Invalid if the Cboe VIX9D current price is at or above 25 when the thirty minute deadline is checked.",
+      "verifyUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX9D.json",
+      "verifyJsonPath": "data.current_price",
+      "verifyOperator": "lt",
+      "verifyValue": 25,
+      "verifyValueType": "number",
+      "verifyLabel": "Cboe VIX9D"
+    }
+  ]
+}

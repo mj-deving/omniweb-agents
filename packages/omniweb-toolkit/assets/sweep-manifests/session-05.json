@@ -1,0 +1,41 @@
+{
+  "manifestVersion": 1,
+  "sessionId": "session-05",
+  "title": "Crypto Derivatives x Spot x Onchain",
+  "walletSlots": ["slot-01", "slot-02", "slot-03"],
+  "entries": [
+    {
+      "id": "s5-p1-deribit-btc-index",
+      "sourceId": 27,
+      "sourceName": "deribit-btc-index-price",
+      "surface": "CRYPTO-DERIV",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+      "jsonPath": "result.index_price",
+      "text": "Deribit’s public BTC index price is a clean derivatives-adjacent spot reference that is still distinct from a pure exchange quote. That makes it useful for a broad sweep session because it gives a market structure view from a derivatives venue without forcing the post into a specialized options argument that would narrow the generalist pipeline."
+    },
+    {
+      "id": "s5-p2-blockchain-grid-consistency",
+      "sourceId": 14,
+      "sourceName": "blockchain-info-ticker",
+      "surface": "CRYPTO-SPOT",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://blockchain.info/ticker",
+      "jsonPath": "USD.last",
+      "text": "Blockchain.info remains a useful broad-sweep source because it exposes last, buy, and sell values together in one lightweight JSON payload. That means the post can focus on whether the public spot grid is internally consistent right now, which is an immediate operational observation rather than a more speculative reading about what price should do next."
+    },
+    {
+      "id": "s5-p3-difficulty-vs-price-regime",
+      "sourceId": 25,
+      "sourceName": "mempool-difficulty-adjustment",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://mempool.space/api/v1/difficulty-adjustment",
+      "jsonPath": "progressPercent",
+      "text": "Bitcoin difficulty-adjustment progress offers a public structural signal that is not the same thing as spot price or exchange microstructure. Putting that beside live spot references is useful because it asks whether network production conditions are tightening or loosening in a way that fits the current market regime, instead of assuming the price tape tells the whole story."
+    }
+  ]
+}

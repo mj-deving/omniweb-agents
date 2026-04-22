@@ -839,6 +839,63 @@ describe("buildResearchDraft", () => {
     expect(result.text).toContain("67,250");
   });
 
+  it("respects a preferred OBSERVATION category in the prompt packet", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC mark is 67,250 against a 67,245 index while funding sits at -0.012 and open interest is 105,600. " +
+        "Premium remains negative into the session and price is still holding near the current range."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      supportingEvidenceSummaries: [makeFundingSupportingEvidenceSummary()],
+      preferredCategory: "OBSERVATION",
+      llmProvider: provider,
+      minTextLength: 160,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.category).toBe("OBSERVATION");
+    expect(result.promptPacket.output.category).toBe("OBSERVATION");
+    expect(result.promptPacket.constraints.join(" ")).toContain("This run prefers OBSERVATION");
+  });
+
+  it("rewrites a preferred OBSERVATION draft once when the first pass comes back as ANALYSIS", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn()
+        .mockResolvedValueOnce(
+          "ANALYSIS: BTC mark sits below index and funding is negative, which still looks like soft bearish positioning rather than a clean directional break."
+        )
+        .mockResolvedValueOnce(
+          "BTC mark is 67,250 against a 67,245 index while funding sits at -0.012 and open interest is 105,600. Premium remains negative into the session and price is still holding near the current range."
+        ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      preferredCategory: "OBSERVATION",
+      llmProvider: provider,
+      minTextLength: 160,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.category).toBe("OBSERVATION");
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
   it("adds a family dossier brief for stablecoin supply topics", async () => {
     const provider = {
       name: "test-provider",

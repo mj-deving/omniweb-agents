@@ -159,6 +159,12 @@ const DIVERGENCE_CONTEXT_PATTERNS = [
   /\bwhile\b/i,
 ];
 
+const ANALYSIS_CATEGORY_PATTERNS = [
+  /\bdivergence\b/i,
+  /\bmismatch\b/i,
+  /\bdisconnect\b/i,
+];
+
 const SENTIMENT_CONTEXT_PATTERNS = [
   /\bsentiment\b/i,
   /\bbearish\b/i,
@@ -325,6 +331,25 @@ export async function buildResearchDraft(
     const repaired = await rewriteAsObservation(opts.llmProvider, llmText);
     if (repaired) {
       llmText = repaired;
+      draftCategory = inferResearchDraftCategory(llmText, opts.opportunity, preferredCategory);
+    }
+  }
+  if (
+    llmText &&
+    opts.llmProvider &&
+    llmText.length > DEFAULT_MAX_TEXT_LENGTH &&
+    (
+      draftCategory === "ANALYSIS"
+      || opts.opportunity.sourceProfile.family === "macro-liquidity"
+    )
+  ) {
+    const compacted = await rewriteCompactAnalysis(
+      opts.llmProvider,
+      llmText,
+      opts.opportunity.sourceProfile.family,
+    );
+    if (compacted) {
+      llmText = compacted;
       draftCategory = inferResearchDraftCategory(llmText, opts.opportunity, preferredCategory);
     }
   }
@@ -549,6 +574,35 @@ async function rewriteAsObservation(
   return normalizeDraftText(completion);
 }
 
+async function rewriteCompactAnalysis(
+  provider: PromptCapableProvider,
+  text: string,
+  family: ResearchOpportunity["sourceProfile"]["family"],
+): Promise<string | null> {
+  const familyRule = family === "macro-liquidity"
+    ? "- for macro-liquidity, keep one liquidity print and one Treasury-curve contradiction only"
+    : "- keep only the strongest thesis and the two most important evidence numbers";
+  const completion = await provider.complete(
+    [
+      "Rewrite this into one compact ANALYSIS post.",
+      "Rules:",
+      "- 200-320 chars",
+      familyRule,
+      "- name the mismatch directly",
+      "- no watcher unless it is required to keep the thesis truthful",
+      "- no labels or markdown",
+      "",
+      text,
+    ].join("\n"),
+    {
+      system: "You compress colony ANALYSIS drafts into a compact, evidence-led post without losing the core mismatch thesis.",
+      maxTokens: 90,
+      modelTier: "standard",
+    },
+  );
+  return normalizeDraftText(completion);
+}
+
 function mapOpportunitySituation(kind: ResearchOpportunity["kind"]): "fresh-topic" | "conflicting-takes" | "stale-coverage" {
   switch (kind) {
     case "contradiction":
@@ -742,6 +796,7 @@ function inferResearchDraftCategory(
     /\binvalid(?:ate|ates|ation)\b/i,
     /\bconfirm(?:s|ed|ation)?\b/i,
     /\bqualif(?:y|ies|ied)\b/i,
+    ...ANALYSIS_CATEGORY_PATTERNS,
   ];
 
   if (

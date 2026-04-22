@@ -334,6 +334,91 @@ function makeVixOpportunity(): ResearchOpportunity {
   };
 }
 
+function makeMacroLiquidityOpportunity(): ResearchOpportunity {
+  const sourceProfile: ResearchSourceProfile = {
+    family: "macro-liquidity",
+    topic: "fed stealth qe crypto bid",
+    asset: null,
+    supported: true,
+    reason: null,
+    primarySourceIds: ["fred-graph-walcl"],
+    supportingSourceIds: ["fred-graph-rrp", "treasury-interest-rates"],
+    expectedMetrics: [
+      "walclTrillionsUsd",
+      "walclChangeBillionsUsd",
+      "rrpBillionsUsd",
+      "rrpChangeBillionsUsd",
+      "treasuryBillsAvgRatePct",
+      "treasuryNotesAvgRatePct",
+      "billNoteSpreadBps",
+    ],
+  };
+  return {
+    kind: "coverage_gap",
+    topic: "fed stealth qe crypto bid",
+    score: 93,
+    rationale: "Macro-liquidity mismatch is not covered in the recent feed.",
+    sourceProfile,
+    matchedSignal: {
+      topic: "fed stealth qe crypto bid",
+      confidence: 79,
+      direction: "bullish",
+    },
+    matchingFeedPosts: [],
+    lastSeenAt: null,
+    attestationPlan: {
+      topic: "fed stealth qe crypto bid",
+      agent: "sentinel",
+      catalogPath: "/tmp/catalog.json",
+      ready: true,
+      reason: "ready",
+      primary: {
+        sourceId: "fred-graph-walcl",
+        name: "fred-graph-walcl",
+        provider: "fred-graph",
+        status: "active",
+        trustTier: "official",
+        responseFormat: "csv",
+        ratingOverall: 82,
+        dahrSafe: true,
+        tlsnSafe: false,
+        url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+        score: 19,
+      },
+      supporting: [
+        {
+          sourceId: "fred-graph-rrp",
+          name: "fred-graph-rrp",
+          provider: "fred-graph",
+          status: "active",
+          trustTier: "official",
+          responseFormat: "csv",
+          ratingOverall: 81,
+          dahrSafe: true,
+          tlsnSafe: false,
+          url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=RRPONTSYD",
+          score: 15,
+        },
+        {
+          sourceId: "treasury-interest-rates",
+          name: "treasury-rates",
+          provider: "treasury",
+          status: "active",
+          trustTier: "official",
+          responseFormat: "json",
+          ratingOverall: 79,
+          dahrSafe: true,
+          tlsnSafe: false,
+          url: "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5",
+          score: 14,
+        },
+      ],
+      fallbacks: [],
+      warnings: [],
+    },
+  };
+}
+
 function makeNetworkOpportunity(): ResearchOpportunity {
   const sourceProfile: ResearchSourceProfile = {
     family: "network-activity",
@@ -639,6 +724,46 @@ function makeVixEvidenceSummary(): ResearchEvidenceSummary {
   };
 }
 
+function makeMacroLiquidityEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "fred-graph-walcl",
+    url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+    fetchedAt: "2026-04-22T12:51:08.000Z",
+    values: {
+      walclObservationDate: "2026-04-15",
+      walclLatest: "6705696",
+      walclPreviousDate: "2026-04-08",
+      walclPrevious: "6693871",
+    },
+    derivedMetrics: {
+      walclTrillionsUsd: "6.706",
+      walclChangeBillionsUsd: "11.83",
+      walclChangePct: "0.18",
+    },
+    semanticClass: "liquidity",
+  };
+}
+
+function makeRrpSupportingEvidenceSummary(): ResearchEvidenceSummary {
+  return {
+    source: "fred-graph-rrp",
+    url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=RRPONTSYD",
+    fetchedAt: "2026-04-22T12:51:09.000Z",
+    values: {
+      rrpObservationDate: "2026-04-21",
+      rrpLatest: "0.807",
+      rrpPreviousDate: "2026-04-20",
+      rrpPrevious: "0.503",
+    },
+    derivedMetrics: {
+      rrpBillionsUsd: "0.81",
+      rrpChangeBillionsUsd: "0.3",
+      rrpChangePct: "60.44",
+    },
+    semanticClass: "liquidity",
+  };
+}
+
 function makeTreasurySupportingEvidenceSummary(): ResearchEvidenceSummary {
   return {
     source: "treasury-rates",
@@ -893,6 +1018,41 @@ describe("buildResearchDraft", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected success");
     expect(result.category).toBe("OBSERVATION");
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
+  it("rewrites an overlong macro-liquidity ANALYSIS draft once to clear the compact gate", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn()
+        .mockResolvedValueOnce(
+          "The stealth-QE-into-crypto-bid story still runs ahead of what the rates structure is actually saying, because WALCL has drifted up to 6.706T with an 11.83B weekly increase while reverse repo usage bounced to 0.81B, yet bills still yield 3.702% against notes at 3.212% for a 49 bps inversion. That is balance-sheet easing talking to a front end that still refuses the clean pivot story."
+        )
+        .mockResolvedValueOnce(
+          "WALCL rose to 6.706T while bills still yield 49 bps above notes at 3.702% versus 3.212%. That is the mismatch: balance-sheet liquidity is drifting easier while the front-end curve still refuses the clean pivot story."
+        ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeMacroLiquidityOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeMacroLiquidityEvidenceSummary(),
+      supportingEvidenceSummaries: [
+        makeRrpSupportingEvidenceSummary(),
+        makeTreasurySupportingEvidenceSummary(),
+      ],
+      llmProvider: provider,
+      minTextLength: 200,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.category).toBe("ANALYSIS");
+    expect(result.text.length).toBeLessThanOrEqual(320);
+    expect(result.text).toContain("6.706T");
+    expect(result.text).toContain("49 bps");
     expect(provider.complete).toHaveBeenCalledTimes(2);
   });
 

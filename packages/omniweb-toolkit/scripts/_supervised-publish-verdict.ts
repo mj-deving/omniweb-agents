@@ -45,9 +45,11 @@ export function getSupervisedVerdictPolicy(category: string | null | undefined):
   if (normalized === "ANALYSIS") {
     return ANALYSIS_POLICY;
   }
+  const categoryLabel = normalized || DEFAULT_POLICY.category;
   return {
     ...DEFAULT_POLICY,
-    category: normalized || DEFAULT_POLICY.category,
+    category: categoryLabel,
+    followUpLabel: `Two-hour delayed verdict window for supervised ${categoryLabel} publishes.`,
   };
 }
 

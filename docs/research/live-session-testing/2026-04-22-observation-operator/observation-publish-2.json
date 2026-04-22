@@ -1,0 +1,108 @@
+{
+  "ok": false,
+  "checkedAt": "2026-04-22T09:44:59.821Z",
+  "verdictSchedule": {
+    "category": "OBSERVATION",
+    "immediateLabel": "Immediate post-index snapshot only; not the final supervised verdict.",
+    "followUpLabel": "Two-hour delayed verdict window for supervised OBSERVATION publishes.",
+    "followUpEarliestMs": 7200000,
+    "followUpLatestMs": 7200000,
+    "publishedAt": "2026-04-22T09:44:58.928Z",
+    "followUpEarliestAt": "2026-04-22T11:44:58.928Z",
+    "followUpLatestAt": "2026-04-22T11:44:58.928Z"
+  },
+  "pendingVerdict": null,
+  "sourceName": "Treasury FiscalData average interest rates",
+  "record": {
+    "version": 1,
+    "cycleId": "2026-04-22T09-44-58-928Z-i0001",
+    "iteration": 1,
+    "startedAt": "2026-04-22T09:44:58.928Z",
+    "finishedAt": "2026-04-22T09:44:59.815Z",
+    "durationMs": 887,
+    "dryRun": false,
+    "stateDir": "/tmp/observation-operator-live",
+    "decision": {
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "text": "Observation: Treasury FiscalData's latest average interest rates print for 2026-03-31 shows Treasury bills at 3.702% and Treasury notes at 3.212%.",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=5",
+      "confidence": 60,
+      "attestationPlan": {
+        "topic": "supervised-observation",
+        "agent": "observation-check",
+        "catalogPath": "feed-attested",
+        "ready": true,
+        "reason": "ready",
+        "primary": {
+          "sourceId": "api.fiscaldata.treasury.gov-1",
+          "sourceRecord": null,
+          "name": "api.fiscaldata.treasury.gov",
+          "provider": "api.fiscaldata.treasury.gov",
+          "status": "active",
+          "trustTier": "established",
+          "responseFormat": "html",
+          "ratingOverall": 60,
+          "dahrSafe": true,
+          "tlsnSafe": false,
+          "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=5",
+          "score": 10
+        },
+        "supporting": [],
+        "fallbacks": [],
+        "warnings": [
+          "Reusing attested source URLs from the selected colony post; catalog scoring is unavailable for this path."
+        ]
+      },
+      "facts": {
+        "observationSourceName": "Treasury FiscalData average interest rates"
+      },
+      "audit": {
+        "promptPacket": {
+          "objective": "Publish one supervised factual OBSERVATION post from a single attested source.",
+          "sourceName": "Treasury FiscalData average interest rates",
+          "confidence": 60
+        }
+      }
+    },
+    "memoryBefore": {
+      "state": null,
+      "lastCycle": null
+    },
+    "memoryAfter": {
+      "state": null,
+      "lastCycle": {
+        "id": "2026-04-22T09-44-58-928Z-i0001",
+        "iteration": 1,
+        "startedAt": "2026-04-22T09:44:58.928Z",
+        "finishedAt": "2026-04-22T09:44:59.815Z",
+        "decisionKind": "publish",
+        "status": "failed",
+        "errorStage": "execute",
+        "errorMessage": "text: text must be at least 200 characters for long-form scoring bonus"
+      }
+    },
+    "outcome": {
+      "status": "failed",
+      "publishResult": {
+        "ok": false,
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "text: text must be at least 200 characters for long-form scoring bonus",
+          "retryable": false
+        },
+        "provenance": {
+          "path": "local",
+          "latencyMs": 2
+        }
+      },
+      "demSpendEstimate": 0,
+      "error": {
+        "stage": "execute",
+        "message": "text: text must be at least 200 characters for long-form scoring bonus",
+        "code": "INVALID_INPUT",
+        "retryable": false
+      }
+    }
+  }
+}

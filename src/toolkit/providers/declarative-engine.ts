@@ -108,7 +108,7 @@ export interface CompatibilitySpec {
 }
 
 export interface ParseSpec {
-  format: "json" | "xml" | "rss";
+  format: "json" | "xml" | "rss" | "csv";
   envelope?: {
     jsonPath?: string;
   };
@@ -670,7 +670,7 @@ function extractItems(
     case "regex-blocks": {
       if (!parseSpec.items.blockPattern) break;
       try {
-        const regex = new RegExp(parseSpec.items.blockPattern, "g");
+        const regex = new RegExp(parseSpec.items.blockPattern, "gm");
         let match: RegExpExecArray | null;
         while ((match = regex.exec(responseText)) !== null) {
           // Use the captured group (or full match) as the item text

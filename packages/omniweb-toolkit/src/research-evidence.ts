@@ -50,6 +50,7 @@ type ResearchEvidenceSourceKind =
   | "blockchair-stats"
   | "defillama-protocols"
   | "defillama-stablecoins"
+  | "fred-liquidity-series"
   | "treasury-interest-rates"
   | "cboe-vix-history"
   | "generic";
@@ -140,6 +141,10 @@ export function classifyResearchEvidenceSemanticClass(
 
   if (sourceKind === "treasury-interest-rates") {
     return "macro";
+  }
+
+  if (sourceKind === "fred-liquidity-series") {
+    return "liquidity";
   }
 
   if (sourceKind === "defillama-protocols") {
@@ -328,6 +333,13 @@ function extractResearchEvidenceValues(
     }
   }
 
+  if (sourceKind === "fred-liquidity-series") {
+    const fredValues = extractFredLiquiditySeriesValues(source, payload);
+    if (Object.keys(fredValues).length > 0) {
+      return fredValues;
+    }
+  }
+
   if (sourceKind === "cboe-vix-history") {
     const vixValues = extractVixValues(payload);
     if (Object.keys(vixValues).length > 0) {
@@ -436,6 +448,15 @@ function isTreasuryRatesUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     return parsed.hostname === "api.fiscaldata.treasury.gov" && parsed.pathname.includes("/avg_interest_rates");
+  } catch {
+    return false;
+  }
+}
+
+function isFredGraphSeriesUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "fred.stlouisfed.org" && parsed.pathname === "/graph/fredgraph.csv";
   } catch {
     return false;
   }
@@ -768,6 +789,10 @@ function deriveResearchMetrics(
     return deriveTreasuryRateMetrics(values);
   }
 
+  if (sourceKind === "fred-liquidity-series") {
+    return deriveFredLiquiditySeriesMetrics(source, values);
+  }
+
   if (sourceKind === "cboe-vix-history") {
     return deriveVixMetrics(values);
   }
@@ -881,6 +906,30 @@ function deriveTreasuryRateMetrics(values: Record<string, string>): Record<strin
   });
 }
 
+function deriveFredLiquiditySeriesMetrics(
+  source: MinimalAttestationCandidate,
+  values: Record<string, string>,
+): Record<string, string> {
+  const series = inferFredLiquiditySeries(source, null, values);
+  if (series === "WALCL") {
+    return compactMetrics({
+      walclTrillionsUsd: scaleValue(values.walclLatest, 0.000001),
+      walclChangeBillionsUsd: scaleValue(subtractValues(values.walclLatest, values.walclPrevious) ?? undefined, 0.001),
+      walclChangePct: percentChange(values.walclLatest, values.walclPrevious),
+    });
+  }
+
+  if (series === "RRPONTSYD") {
+    return compactMetrics({
+      rrpBillionsUsd: scaleValue(values.rrpLatest, 1),
+      rrpChangeBillionsUsd: subtractValues(values.rrpLatest, values.rrpPrevious),
+      rrpChangePct: percentChange(values.rrpLatest, values.rrpPrevious),
+    });
+  }
+
+  return {};
+}
+
 function deriveVixMetrics(values: Record<string, string>): Record<string, string> {
   return compactMetrics({
     vixSessionChangePct: percentChange(values.vixClose, values.vixPreviousClose),
@@ -916,6 +965,10 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
 
   if (sourceId === "treasury-interest-rates" || (provider === "treasury" && name.includes("rates"))) {
     return "treasury-interest-rates";
+  }
+
+  if (sourceId.startsWith("fred-graph-") || provider === "fred-graph") {
+    return "fred-liquidity-series";
   }
 
   if (sourceId === "defillama-stablecoins" || (provider === "defillama" && name.includes("stablecoins"))) {
@@ -957,6 +1010,7 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
   // Compatibility fallback for feed-derived or older opaque candidates.
   if (isCboeVixUrl(source.url)) return "cboe-vix-history";
   if (isTreasuryRatesUrl(source.url)) return "treasury-interest-rates";
+  if (isFredGraphSeriesUrl(source.url)) return "fred-liquidity-series";
   if (isDefiLlamaStablecoinsUrl(source.url)) return "defillama-stablecoins";
   if (isDefiLlamaProtocolsUrl(source.url)) return "defillama-protocols";
   if (isBlockchairStatsUrl(source.url)) return "blockchair-stats";
@@ -981,6 +1035,86 @@ function parseCsv(body: string): Array<Record<string, string>> {
     const values = row.split(",").map((value) => value.trim());
     return Object.fromEntries(columns.map((column, index) => [column, values[index] ?? ""]));
   });
+}
+
+function extractFredLiquiditySeriesValues(
+  source: MinimalAttestationCandidate,
+  payload: unknown,
+): Record<string, string> {
+  if (!Array.isArray(payload) || payload.length === 0) {
+    return {};
+  }
+
+  const series = inferFredLiquiditySeries(source, payload, {});
+  if (!series) {
+    return {};
+  }
+
+  const rows = payload
+    .filter(isRecord)
+    .map((entry) => ({
+      date: typeof entry.observation_date === "string" ? entry.observation_date : null,
+      value: normalizeScalarValue(entry[series]),
+    }))
+    .filter((entry): entry is { date: string; value: string } => typeof entry.date === "string" && typeof entry.value === "string");
+
+  const latest = rows.at(-1);
+  const previous = rows.length > 1 ? rows.at(-2) : null;
+  if (!latest) {
+    return {};
+  }
+
+  if (series === "WALCL") {
+    return compactMetrics({
+      walclObservationDate: latest.date,
+      walclLatest: latest.value,
+      walclPreviousDate: previous?.date ?? null,
+      walclPrevious: previous?.value ?? null,
+    });
+  }
+
+  if (series === "RRPONTSYD") {
+    return compactMetrics({
+      rrpObservationDate: latest.date,
+      rrpLatest: latest.value,
+      rrpPreviousDate: previous?.date ?? null,
+      rrpPrevious: previous?.value ?? null,
+    });
+  }
+
+  return {};
+}
+
+function inferFredLiquiditySeries(
+  source: MinimalAttestationCandidate,
+  payload: unknown,
+  values: Record<string, string>,
+): "WALCL" | "RRPONTSYD" | null {
+  const sourceId = source.sourceId.toLowerCase();
+  if (sourceId === "fred-graph-walcl") return "WALCL";
+  if (sourceId === "fred-graph-rrp") return "RRPONTSYD";
+  if (values.walclLatest || values.walclObservationDate) return "WALCL";
+  if (values.rrpLatest || values.rrpObservationDate) return "RRPONTSYD";
+
+  if (Array.isArray(payload)) {
+    const sample = payload.find(isRecord);
+    if (sample) {
+      if ("WALCL" in sample) return "WALCL";
+      if ("RRPONTSYD" in sample) return "RRPONTSYD";
+    }
+  }
+
+  try {
+    const parsed = new URL(source.url);
+    const series = parsed.searchParams.get("id")?.toUpperCase() ?? null;
+    if (series === "WALCL" || series === "RRPONTSYD") {
+      return series;
+    }
+  } catch {
+    // Ignore malformed URLs.
+  }
+
+  return null;
 }
 
 function formatNestedMetric(value: unknown): string | null {

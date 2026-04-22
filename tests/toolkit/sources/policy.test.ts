@@ -122,4 +122,34 @@ describe("source policy shared helpers", () => {
     expect(selection?.source.id).toBe(source.id);
     expect(selection?.url).toContain("usd-coin");
   });
+
+  it("resolves an active fred-graph source through the registered adapter path", () => {
+    const source = makeSourceRecord({
+      id: "fred-graph-walcl",
+      name: "fred-graph-walcl",
+      provider: "fred-graph",
+      url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+      urlPattern: "fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL",
+      topics: ["macro", "liquidity", "fed", "pivot"],
+      domainTags: ["economics", "macro", "liquidity"],
+      responseFormat: "csv",
+      tlsn_safe: true,
+      dahr_safe: true,
+      status: "active",
+      trustTier: "official",
+      adapter: { operation: "series-csv" } as any,
+    });
+    const sourceView = makeSourceView(source);
+
+    const selection = resolveSourceSelectionForSourceId(
+      "Fed liquidity versus pivot reality",
+      sourceView,
+      source.id,
+      "DAHR",
+    );
+
+    expect(selection).not.toBeNull();
+    expect(selection?.source.id).toBe(source.id);
+    expect(selection?.url).toContain("id=WALCL");
+  });
 });

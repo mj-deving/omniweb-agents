@@ -1145,6 +1145,66 @@ describe("buildResearchDraft", () => {
     expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(true);
   });
 
+  it("rejects a near-twin same-family draft when recent self-history reuses the thesis surface", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "VIX at 21.34 with bills still paying 5.22% against 4.61% for notes says stress is broadening rather than fading, so the pivot narrative is still too early. " +
+        "Watch for that 61bp front-end gap to compress before treating this as a clean risk-on reset."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeVixOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeVixEvidenceSummary(),
+      supportingEvidenceSummaries: [makeTreasurySupportingEvidenceSummary()],
+      selfHistory: {
+        lastPost: {
+          topic: "vix credit stress signal",
+          family: "vix-credit",
+          publishedAt: "2026-04-22T06:10:00.000Z",
+          hoursAgo: 0.2,
+          textSnippet: "VIX at 21.34 with bills at 5.22% against notes at 4.61% says stress is still broadening and the pivot narrative is early.",
+        },
+        lastSameTopicPost: null,
+        lastSameFamilyPost: {
+          topic: "vix credit stress signal",
+          family: "vix-credit",
+          publishedAt: "2026-04-22T06:10:00.000Z",
+          hoursAgo: 0.2,
+          textSnippet: "VIX at 21.34 with bills at 5.22% against notes at 4.61% says stress is still broadening and the pivot narrative is early.",
+        },
+        windows: {
+          total24h: 1,
+          total7d: 1,
+          sameTopic24h: 0,
+          sameTopic7d: 0,
+          sameFamily24h: 1,
+          sameFamily7d: 1,
+        },
+        changeSinceLastSameTopic: null,
+        changeSinceLastSameFamily: {
+          comparedToPublishedAt: "2026-04-22T06:10:00.000Z",
+          changedFields: [],
+          hasMeaningfulChange: false,
+        },
+        repeatRisk: "medium",
+        skipSuggested: false,
+        repetitionReason: "recent_same_family_coverage",
+      },
+      llmProvider: provider,
+      minTextLength: 200,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "no-self-redundancy")?.pass).toBe(false);
+  });
+
   it("rejects metadata-shaped primary evidence even when the draft cites real fetched numbers", async () => {
     const provider = {
       name: "test-provider",

@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-04-22T12:22:00Z",
+  "scope": "Interim post-foundation cross-category scorecard compiled from resolved live artifacts and accepted current-state docs. This is the planning artifact for the current arc; the next-day Treasury prediction remains pending by design.",
+  "planningRule": "If no new reactions arrive after the 2h window, treat the result as final enough for planning.",
+  "rows": [
+    {
+      "surface": "analysis-macro-breakthrough",
+      "category": "ANALYSIS",
+      "txHash": "395631d88686a1763d7420aba5261635424ac42e45ec47c22d8a469797142b5a",
+      "attestationTxHash": "1dc5cfe560d459c7f1866f72cb0798a10aa76c75342c0ba56822186a93623ff3",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": true,
+      "score": 90,
+      "agree": 5,
+      "replyCount": 0,
+      "reactionTotal": 5,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "Canonical score-winning surface. Accepted current state from the macro-stress repeatability and cross-category priority audits.",
+      "evidencePaths": [
+        "docs/archive/agent-handoffs/macro-stress-repeatability-audit-2026-04-22.md",
+        "/home/mj/projects/demos-agents-worktrees/verdict-metrics/docs/research/live-session-testing/2026-04-22-supervised-series/macro-stress-publish-fallback-1.json"
+      ]
+    },
+    {
+      "surface": "analysis-macro-m1-curve",
+      "category": "ANALYSIS",
+      "txHash": "2e4d11af82cf344adedde3eea3cb1f19f34f001e0488e00349546c31121dc967",
+      "attestationTxHash": "a34adc85f420644234e194306d152501e00a8da0c611bc1b1da9f1b23a0b6bd4",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": 80,
+      "agree": 0,
+      "replyCount": 0,
+      "reactionTotal": 0,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "Nearest-neighbor macro follow-up resolved flat after the full ANALYSIS window.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/m1-curve-resteepening/docs/research/live-session-testing/2026-04-22-m1-curve/m1-curve-publish-1.json",
+        "/home/mj/projects/demos-agents-worktrees/m1-curve-resteepening/docs/research/live-session-testing/2026-04-22-m1-curve/verdict-log.jsonl"
+      ]
+    },
+    {
+      "surface": "reply-r1-new-data-point",
+      "category": "REPLY",
+      "txHash": "de0c6250db5597f75ee25d8199068cf0624f8fec8bec5fd1e73db232fb8bf4cb",
+      "attestationTxHash": "8e150eaff0a9aaff599d10b84de9330f948ac4e65c4ed6bb2da7c3ec3bdc0dea",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": 80,
+      "agree": 1,
+      "replyCount": 0,
+      "reactionTotal": 1,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "Reply path is operationally proven but score-flat. Final score/reaction state is accepted current state from the existing audit trail; the surviving verdict artifact does not include reaction metrics.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/verdict-metrics/docs/research/live-session-testing/2026-04-21-reply-series/reply-r1-publish-1.json",
+        "/home/mj/projects/demos-agents-worktrees/nkw19-delayed-verdict/docs/research/live-session-testing/verdict-log.jsonl",
+        "docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md"
+      ]
+    },
+    {
+      "surface": "observation-standalone-treasury-rates",
+      "category": "OBSERVATION",
+      "txHash": "078b869d27cdc8d993ecd1796fd29b17423cfe94568aa5b11745f38caf57ba17",
+      "attestationTxHash": "a4196ec6f4032e882e9a7f283df2f1057b837730474fc8b417be3437f001c1a7",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": null,
+      "agree": null,
+      "replyCount": null,
+      "reactionTotal": null,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "Standalone OBSERVATION remained feed/post invisible after the delayed window. Treat as operational proof with no usable colony score surface.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/observation-operator/docs/research/live-session-testing/2026-04-22-observation-operator/observation-publish-3.json",
+        "/home/mj/projects/demos-agents-worktrees/observation-operator/docs/research/live-session-testing/2026-04-22-observation-operator/verdict-log.jsonl"
+      ]
+    },
+    {
+      "surface": "prediction-btc-30m",
+      "category": "PREDICTION",
+      "txHash": "71b036e5d953bbe5465afe7daaaf816c65e66b66231778132244887930e76427",
+      "attestationTxHash": "d6df0e28268f8f3d1fa734fd9c5f882f72ae9354685a7f0072419f0ded7796b3",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": 80,
+      "agree": 0,
+      "replyCount": 0,
+      "reactionTotal": 0,
+      "predictionOutcome": true,
+      "predictionObservedValue": 78403,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "Short-horizon prediction calibrated correctly at the deadline but remained reaction-flat.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/prediction-30m/docs/research/live-session-testing/2026-04-22-prediction-30m/prediction-publish-3.json",
+        "/home/mj/projects/demos-agents-worktrees/prediction-30m/docs/research/live-session-testing/2026-04-22-prediction-30m/verdict-log.jsonl"
+      ]
+    },
+    {
+      "surface": "prediction-treasury-next-day",
+      "category": "PREDICTION",
+      "txHash": "4376ae34d5660a6809c711be25e318b9d04b441d63d53c702dc0064f1df00fc3",
+      "attestationTxHash": "8dd19a0c21296cc605158a11f475447633207a06333f100fa9c70d960d2a46ae",
+      "status": "pending",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": null,
+      "agree": null,
+      "replyCount": null,
+      "reactionTotal": null,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": null,
+      "notes": "Longer-horizon Treasury prediction remains intentionally pending until 2026-04-23T09:00:00Z.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/prediction-proof/docs/research/live-session-testing/2026-04-22-prediction-series/prediction-publish-2.json"
+      ]
+    },
+    {
+      "surface": "action-on-bet-btc-4h",
+      "category": "ACTION",
+      "txHash": "14d2a8c8c532513ad8adadfe4db30f7e714807760985b811dbf89396e2346428",
+      "attestationTxHash": null,
+      "betTxHash": "f61ddc29add5038ca850aed1b02725b17d843d2a3dbdeb54addc1273798d31aa",
+      "status": "resolved",
+      "operationalProof": true,
+      "scoreProof": false,
+      "score": null,
+      "agree": null,
+      "replyCount": null,
+      "reactionTotal": null,
+      "predictionOutcome": null,
+      "publishDemSpendEstimate": 1,
+      "actionDemAtRisk": 5,
+      "notes": "ACTION is evaluated on transparency and bet registration, not on score yield. Bet registration and readback both succeeded; the publish itself never converged through post-detail/feed in the initial window.",
+      "evidencePaths": [
+        "/home/mj/projects/demos-agents-worktrees/action-proof/docs/research/live-session-testing/2026-04-22-action-series/action-publish-2.json"
+      ]
+    }
+  ]
+}

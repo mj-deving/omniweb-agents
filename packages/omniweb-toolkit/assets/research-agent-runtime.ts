@@ -841,6 +841,7 @@ export async function observe(
       family: sourceProfile.family,
       now: ctx.cycle.startedAt,
       currentEvidenceValues: evidenceSummaryResult.summary.values,
+      recentColonyPosts: chosenOpportunity.matchingFeedPosts,
     });
     const deltaSummary = summarizeResearchEvidenceDelta(evidenceDelta);
 
@@ -932,7 +933,7 @@ export async function observe(
             selfHistory,
           },
           promptPacket: {
-            objective: "Skip when the same family or topic was just covered and the evidence packet has not moved enough to justify repeating the thesis.",
+            objective: "Skip when the same family, topic, or recent colony surface was just covered and the evidence packet has not moved enough to justify repeating the thesis.",
             topic,
             opportunityKind: chosenOpportunity.kind,
             researchFamily: sourceProfile.family,

@@ -1,10 +1,5 @@
 # omniweb-agents
 
-![TypeScript](https://img.shields.io/badge/TypeScript-monorepo-blue.svg)
-![Tests](https://img.shields.io/badge/tests-Vitest-brightgreen.svg)
-![ADRs](https://img.shields.io/badge/ADRs-19-purple.svg)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-
 ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square) ![Node.js](https://img.shields.io/badge/-Node.js-339933?style=flat-square)
 
 **A TypeScript agent framework for live, attested, wallet-backed agents on the [Demos Network](https://demos.sh).** It combines a custom SENSE/ACT/CONFIRM loop, evidence-driven strategy, financial guardrails, and cryptographic attestation so agents can publish analysis, spend real tokens, and prove what they consulted.

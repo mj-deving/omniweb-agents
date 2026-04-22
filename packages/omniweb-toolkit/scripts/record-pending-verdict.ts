@@ -8,6 +8,7 @@ import {
   enqueuePendingVerdict,
   getVerdictDelayMs,
 } from "./_supervised-verdict-queue.ts";
+import { isPredictionCheckSpec } from "./_prediction-check.ts";
 import { getStringArg } from "./_shared.ts";
 
 const args = process.argv.slice(2);
@@ -44,6 +45,9 @@ const report = JSON.parse(await readFile(resolve(fromRun), "utf8")) as {
     kind?: string;
     text?: string;
     category?: string;
+    facts?: {
+      predictionCheck?: unknown;
+    };
   };
   outcome?: {
     status?: string;
@@ -56,6 +60,7 @@ const report = JSON.parse(await readFile(resolve(fromRun), "utf8")) as {
   }>;
 };
 const publishedEntry = extractPublishedEntry(report, fromRun);
+const checkAfterMs = inferPendingVerdictDelayMs(publishedEntry, delayMs);
 const pendingEntry = buildPendingVerdictEntry({
   txHash: publishedEntry.txHash,
   category: publishedEntry.category,
@@ -63,7 +68,8 @@ const pendingEntry = buildPendingVerdictEntry({
   startedAt: publishedEntry.startedAt,
   sourceRunPath: resolve(fromRun),
   stateDir: stateDir ?? report.stateDir,
-  checkAfterMs: delayMs,
+  checkAfterMs,
+  predictionCheck: publishedEntry.predictionCheck,
 });
 
 const queued = await enqueuePendingVerdict(pendingEntry, queuePath);
@@ -99,7 +105,14 @@ function extractPublishedEntry(
     startedAt?: string;
     verdictSchedule?: { publishedAt?: string };
     pendingVerdict?: { checkAt?: string };
-    decision?: { kind?: string; text?: string; category?: string };
+    decision?: {
+      kind?: string;
+      text?: string;
+      category?: string;
+      facts?: {
+        predictionCheck?: unknown;
+      };
+    };
     outcome?: { status?: string; txHash?: string };
     familyResults?: Array<{
       status?: string;
@@ -113,6 +126,7 @@ function extractPublishedEntry(
   category: string;
   text: string;
   startedAt: string;
+  predictionCheck: ReturnType<typeof extractPredictionCheck>;
 } {
   const matrixPublished = (report.familyResults ?? []).filter((entry) =>
     entry?.status === "published" &&
@@ -128,6 +142,7 @@ function extractPublishedEntry(
       category: published.draft!.category!,
       text: published.draft!.text!,
       startedAt: inferMatrixPublishedAt(report, published.draft!.category!) ?? report.checkedAt ?? new Date().toISOString(),
+      predictionCheck: null,
     };
   }
 
@@ -143,6 +158,7 @@ function extractPublishedEntry(
       category: report.decision.category,
       text: report.decision.text,
       startedAt: report.startedAt ?? report.checkedAt ?? new Date().toISOString(),
+      predictionCheck: extractPredictionCheck(report.decision.facts?.predictionCheck),
     };
   }
 
@@ -168,4 +184,33 @@ function inferMatrixPublishedAt(
   }
 
   return null;
+}
+
+function extractPredictionCheck(value: unknown) {
+  return isPredictionCheckSpec(value) ? value : null;
+}
+
+function inferPendingVerdictDelayMs(
+  publishedEntry: {
+    startedAt: string;
+    predictionCheck: ReturnType<typeof extractPredictionCheck>;
+  },
+  delayOverride: number | undefined,
+): number | undefined {
+  if (delayOverride != null) {
+    return delayOverride;
+  }
+
+  const deadlineAt = publishedEntry.predictionCheck?.deadlineAt;
+  if (typeof deadlineAt !== "string") {
+    return undefined;
+  }
+
+  const startedAtMs = Date.parse(publishedEntry.startedAt);
+  const deadlineAtMs = Date.parse(deadlineAt);
+  if (!Number.isFinite(startedAtMs) || !Number.isFinite(deadlineAtMs)) {
+    return undefined;
+  }
+
+  return Math.max(0, deadlineAtMs - startedAtMs);
 }

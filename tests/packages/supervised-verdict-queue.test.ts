@@ -1,6 +1,7 @@
-import { rm, mkdtemp, readFile } from "node:fs/promises";
+import { rm, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   appendVerdictLogEntry,
@@ -42,6 +43,48 @@ describe("supervised verdict queue", () => {
     expect(second.inserted).toBe(false);
     expect(queue).toHaveLength(1);
     expect(queue[0]?.txHash).toBe("0xabc");
+  });
+
+  it("persists prediction verification metadata through queue and log entries", async () => {
+    const dir = await makeTempDir();
+    const queuePath = join(dir, "pending.json");
+    const logPath = join(dir, "verdicts.jsonl");
+    const entry = buildPendingVerdictEntry({
+      txHash: "0xpred",
+      category: "PREDICTION",
+      text: "BTC funding stays negative into the next daily reset.",
+      startedAt: "2026-04-21T10:00:00.000Z",
+      predictionCheck: {
+        version: 1,
+        sourceUrl: "https://example.com/data.json",
+        sourceName: "Example Source",
+        jsonPath: "metrics.funding",
+        operator: "lt",
+        expected: 0,
+        expectedType: "number",
+        observedLabel: "Funding",
+        deadlineAt: "2026-04-21T14:00:00.000Z",
+        confidence: 66,
+        falsifier: "Funding flips positive before the deadline.",
+      },
+    });
+    await enqueuePendingVerdict(entry, queuePath);
+
+    const result = await resolveDuePendingVerdicts({
+      queuePath,
+      logPath,
+      now: () => Date.parse("2026-04-21T14:00:00.000Z"),
+      resolveEntry: async (pendingEntry) => ({
+        checkedAt: "2026-04-21T14:00:05.000Z",
+        verdict: {
+          predictionCheck: pendingEntry.predictionCheck,
+        },
+      }),
+    });
+
+    expect(result.resolved).toHaveLength(1);
+    expect(result.resolved[0]?.predictionCheck?.jsonPath).toBe("metrics.funding");
+    expect(result.resolved[0]?.verdict?.predictionCheck?.operator).toBe("lt");
   });
 
   it("preserves both entries when concurrent inserts race on the same queue file", async () => {
@@ -211,10 +254,80 @@ describe("supervised verdict queue", () => {
     expect(raw.trim().split("\n")).toHaveLength(1);
     expect(JSON.parse(raw).verdict.verification.observedScore).toBe(80);
   });
+
+  it("records prediction verdicts at the declared deadline by default", async () => {
+    const dir = await makeTempDir();
+    const queuePath = join(dir, "pending.json");
+    const runPath = join(dir, "prediction-run.json");
+    const startedAt = "2026-04-21T10:00:00.000Z";
+    const deadlineAt = "2026-04-21T14:00:00.000Z";
+
+    await writeJson(runPath, {
+      startedAt,
+      checkedAt: "2026-04-21T10:00:05.000Z",
+      stateDir: dir,
+      decision: {
+        kind: "publish",
+        text: "BTC closes above 70k by the next deadline.",
+        category: "PREDICTION",
+        facts: {
+          predictionCheck: {
+            version: 1,
+            sourceUrl: "https://example.com/data.json",
+            sourceName: "Example Source",
+            jsonPath: "prices.btc",
+            operator: "gte",
+            expected: 70000,
+            expectedType: "number",
+            observedLabel: "BTC price",
+            deadlineAt,
+            confidence: 65,
+            falsifier: "BTC closes below 70k.",
+          },
+        },
+      },
+      outcome: {
+        status: "published",
+        txHash: "0xpreddeadline",
+      },
+    });
+
+    const result = spawnSync(
+      "node",
+      [
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/record-pending-verdict.ts",
+        "--from-run",
+        runPath,
+        "--queue",
+        queuePath,
+      ],
+      {
+        cwd: repoRoot(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    const queue = await loadPendingVerdicts(queuePath);
+    expect(queue).toHaveLength(1);
+    expect(queue[0]?.txHash).toBe("0xpreddeadline");
+    expect(queue[0]?.checkAt).toBe(deadlineAt);
+    expect(queue[0]?.checkAfterMs).toBe(4 * 60 * 60 * 1000);
+  });
 });
 
 async function makeTempDir(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "supervised-verdict-"));
   tempDirs.push(dir);
   return dir;
+}
+
+async function writeJson(path: string, value: unknown): Promise<void> {
+  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function repoRoot(): string {
+  return resolve(__dirname, "../..");
 }

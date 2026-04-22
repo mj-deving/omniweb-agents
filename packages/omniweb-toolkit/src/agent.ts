@@ -23,6 +23,7 @@ export {
 } from "./leaderboard-pattern-loop.js";
 export { deriveMarketOpportunities } from "./market-opportunities.js";
 export { buildMarketDraft } from "./market-draft.js";
+export { buildMarketActionDraft } from "./market-action.js";
 export { getMarketTopicFamilyContract, ORACLE_DIVERGENCE_CONTRACT } from "./market-family-contracts.js";
 export { deriveResearchOpportunities } from "./research-opportunities.js";
 export { deriveResearchSourceProfile } from "./research-source-profile.js";
@@ -116,6 +117,12 @@ export type {
   MarketDraftFailure,
   MarketDraftResult,
 } from "./market-draft.js";
+export type {
+  BuildMarketActionDraftOptions,
+  MarketActionDraftSuccess,
+  MarketActionDraftFailure,
+  MarketActionDraftResult,
+} from "./market-action.js";
 export type {
   ResearchEvidenceSummary,
   FetchResearchEvidenceSummaryOptions,

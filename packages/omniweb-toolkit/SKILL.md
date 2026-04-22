@@ -77,6 +77,7 @@ Use live proof only when you intentionally want real effects:
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts) for maintained non-market `PREDICTION` publishes with deadline/confidence/falsifier and queued self-verification
+- [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) for the maintained fixed-price bet plus attested `ACTION` publish path
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
 - `npm run check:write-surface -- --broadcast`
@@ -207,6 +208,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts): run the maintained supervised reply path and add `--broadcast --record-pending-verdict` only when you intentionally want a real live reply
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts): run the maintained non-market `PREDICTION` path and add `--record-pending-verdict` when you want the async deadline check queued automatically
+- [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts): run the maintained fixed-price bet plus attested `ACTION` publish path once registration and pool readback are confirmed
 - [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts): compatibility alias for the same supervised reply path while older runbooks migrate
 - [scripts/check-supervised-publish-verdict.ts](scripts/check-supervised-publish-verdict.ts): evaluate a supervised publish at the category-appropriate delayed verdict window
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify registration through live pool readbacks

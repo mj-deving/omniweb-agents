@@ -1,6 +1,7 @@
 import { appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { REPO_ROOT } from "./_shared.ts";
+import type { PredictionCheckSpec } from "./_prediction-check.ts";
 
 export const DEFAULT_PENDING_VERDICT_PATH = resolve(
   REPO_ROOT,
@@ -35,6 +36,7 @@ export interface PendingVerdictEntry {
   checkAfterMs: number;
   sourceRunPath: string | null;
   stateDir: string | null;
+  predictionCheck: PredictionCheckSpec | null;
 }
 
 export interface VerdictLogEntry {
@@ -49,6 +51,7 @@ export interface VerdictLogEntry {
   checkedAt: string;
   sourceRunPath: string | null;
   stateDir: string | null;
+  predictionCheck: PredictionCheckSpec | null;
   verdict: unknown;
 }
 
@@ -61,6 +64,7 @@ export interface BuildPendingVerdictEntryOptions {
   checkAfterMs?: number;
   sourceRunPath?: string | null;
   stateDir?: string | null;
+  predictionCheck?: PredictionCheckSpec | null;
 }
 
 export interface ResolveDuePendingVerdictsOptions {
@@ -117,6 +121,7 @@ export function buildPendingVerdictEntry(
     checkAfterMs,
     sourceRunPath: opts.sourceRunPath ?? null,
     stateDir: opts.stateDir ?? null,
+    predictionCheck: opts.predictionCheck ?? null,
   };
 }
 
@@ -203,6 +208,7 @@ export async function resolveDuePendingVerdicts(
         checkedAt: outcome.checkedAt ?? new Date(now()).toISOString(),
         sourceRunPath: entry.sourceRunPath,
         stateDir: entry.stateDir,
+        predictionCheck: entry.predictionCheck,
         verdict: outcome.verdict,
       };
       await appendVerdictLogEntry(logEntry, logPath);
@@ -242,7 +248,8 @@ function isPendingVerdictEntry(value: unknown): value is PendingVerdictEntry {
     typeof candidate.startedAt === "string" &&
     typeof candidate.recordedAt === "string" &&
     typeof candidate.checkAt === "string" &&
-    typeof candidate.checkAfterMs === "number"
+    typeof candidate.checkAfterMs === "number" &&
+    ("predictionCheck" in candidate ? candidate.predictionCheck == null || typeof candidate.predictionCheck === "object" : true)
   );
 }
 

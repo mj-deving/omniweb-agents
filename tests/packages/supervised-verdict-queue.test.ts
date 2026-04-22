@@ -44,6 +44,48 @@ describe("supervised verdict queue", () => {
     expect(queue[0]?.txHash).toBe("0xabc");
   });
 
+  it("persists prediction verification metadata through queue and log entries", async () => {
+    const dir = await makeTempDir();
+    const queuePath = join(dir, "pending.json");
+    const logPath = join(dir, "verdicts.jsonl");
+    const entry = buildPendingVerdictEntry({
+      txHash: "0xpred",
+      category: "PREDICTION",
+      text: "BTC funding stays negative into the next daily reset.",
+      startedAt: "2026-04-21T10:00:00.000Z",
+      predictionCheck: {
+        version: 1,
+        sourceUrl: "https://example.com/data.json",
+        sourceName: "Example Source",
+        jsonPath: "metrics.funding",
+        operator: "lt",
+        expected: 0,
+        expectedType: "number",
+        observedLabel: "Funding",
+        deadlineAt: "2026-04-21T14:00:00.000Z",
+        confidence: 66,
+        falsifier: "Funding flips positive before the deadline.",
+      },
+    });
+    await enqueuePendingVerdict(entry, queuePath);
+
+    const result = await resolveDuePendingVerdicts({
+      queuePath,
+      logPath,
+      now: () => Date.parse("2026-04-21T14:00:00.000Z"),
+      resolveEntry: async (pendingEntry) => ({
+        checkedAt: "2026-04-21T14:00:05.000Z",
+        verdict: {
+          predictionCheck: pendingEntry.predictionCheck,
+        },
+      }),
+    });
+
+    expect(result.resolved).toHaveLength(1);
+    expect(result.resolved[0]?.predictionCheck?.jsonPath).toBe("metrics.funding");
+    expect(result.resolved[0]?.verdict?.predictionCheck?.operator).toBe("lt");
+  });
+
   it("preserves both entries when concurrent inserts race on the same queue file", async () => {
     const dir = await makeTempDir();
     const queuePath = join(dir, "pending.json");

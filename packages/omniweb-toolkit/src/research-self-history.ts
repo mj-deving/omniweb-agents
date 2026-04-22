@@ -1,3 +1,5 @@
+import type { ResearchPostInput } from "./research-opportunities.js";
+
 export interface ResearchPublishHistoryEntry {
   topic: string;
   family: string | null;
@@ -21,6 +23,26 @@ export interface ResearchSelfHistoryDelta {
   hasMeaningfulChange: boolean;
 }
 
+export interface ResearchColonyNoveltyPostSummary {
+  txHash: string | null;
+  author: string | null;
+  category: string | null;
+  score: number | null;
+  publishedAt: string;
+  hoursAgo: number;
+  textSnippet: string;
+  sharedTerms: string[];
+  sharedNumbers: string[];
+}
+
+export interface ResearchColonyNoveltySummary {
+  recentOverlapCount2h: number;
+  recentOverlapCount24h: number;
+  strongestOverlapPost: ResearchColonyNoveltyPostSummary | null;
+  skipSuggested: boolean;
+  overlapReason: string | null;
+}
+
 export interface ResearchSelfHistorySummary {
   lastPost: ResearchSelfHistoryPostSummary | null;
   lastSameTopicPost: ResearchSelfHistoryPostSummary | null;
@@ -35,6 +57,7 @@ export interface ResearchSelfHistorySummary {
   };
   changeSinceLastSameTopic: ResearchSelfHistoryDelta | null;
   changeSinceLastSameFamily: ResearchSelfHistoryDelta | null;
+  colonyNovelty: ResearchColonyNoveltySummary | null;
   repeatRisk: "low" | "medium" | "high";
   skipSuggested: boolean;
   repetitionReason: string | null;
@@ -46,6 +69,7 @@ export interface BuildResearchSelfHistoryOptions {
   family: string | null;
   now: string;
   currentEvidenceValues: Record<string, string>;
+  recentColonyPosts?: ResearchPostInput[];
   minMeaningfulPercentDelta?: number;
   minMeaningfulAbsoluteDelta?: number;
 }
@@ -54,6 +78,25 @@ const DEFAULT_MIN_MEANINGFUL_PERCENT_DELTA = 1;
 const DEFAULT_MIN_MEANINGFUL_ABSOLUTE_DELTA = 0.001;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
+const COLONY_OVERLAP_WINDOW_MS = 2 * 60 * 60 * 1000;
+const NOVELTY_TOKEN_STOPWORDS = new Set([
+  "about",
+  "again",
+  "before",
+  "being",
+  "from",
+  "have",
+  "into",
+  "just",
+  "market",
+  "still",
+  "that",
+  "their",
+  "there",
+  "these",
+  "this",
+  "with",
+]);
 
 export function buildResearchSelfHistory(opts: BuildResearchSelfHistoryOptions): ResearchSelfHistorySummary {
   const nowMs = Date.parse(opts.now);
@@ -86,6 +129,12 @@ export function buildResearchSelfHistory(opts: BuildResearchSelfHistoryOptions):
   const changeSinceLastSameFamily = lastSameFamily
     ? buildDelta(lastSameFamily, opts.currentEvidenceValues, minMeaningfulAbsoluteDelta, minMeaningfulPercentDelta)
     : null;
+  const colonyNovelty = buildColonyNoveltySummary(
+    opts.recentColonyPosts ?? [],
+    opts.topic,
+    opts.currentEvidenceValues,
+    nowMs,
+  );
 
   let repeatRisk: ResearchSelfHistorySummary["repeatRisk"] = "low";
   let skipSuggested = false;
@@ -114,6 +163,18 @@ export function buildResearchSelfHistory(opts: BuildResearchSelfHistoryOptions):
       : "recent_same_topic_coverage";
   }
 
+  if (!skipSuggested && colonyNovelty?.skipSuggested) {
+    repeatRisk = "high";
+    skipSuggested = true;
+    repetitionReason = colonyNovelty.overlapReason;
+  } else if (
+    repeatRisk === "low"
+    && (colonyNovelty?.recentOverlapCount24h ?? 0) > 0
+  ) {
+    repeatRisk = "medium";
+    repetitionReason ??= colonyNovelty?.overlapReason ?? "recent_colony_overlap";
+  }
+
   return {
     lastPost,
     lastSameTopicPost: lastSameTopicSummary,
@@ -121,6 +182,7 @@ export function buildResearchSelfHistory(opts: BuildResearchSelfHistoryOptions):
     windows,
     changeSinceLastSameTopic,
     changeSinceLastSameFamily,
+    colonyNovelty,
     repeatRisk,
     skipSuggested,
     repetitionReason,
@@ -187,4 +249,104 @@ function parseNumeric(value: string | null | undefined): number | null {
 
 function normalize(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
+}
+
+function buildColonyNoveltySummary(
+  posts: ResearchPostInput[],
+  topic: string,
+  currentEvidenceValues: Record<string, string>,
+  nowMs: number,
+): ResearchColonyNoveltySummary | null {
+  const topicTerms = extractNoveltyTerms(topic);
+  const evidenceTokens = extractEvidenceTokens(currentEvidenceValues);
+  const overlapPosts = posts
+    .map((post) => summarizeColonyOverlap(post, topicTerms, evidenceTokens, nowMs))
+    .filter((value): value is ResearchColonyNoveltyPostSummary => value != null);
+
+  if (overlapPosts.length === 0) {
+    return null;
+  }
+
+  const strongestOverlapPost = [...overlapPosts].sort((left, right) =>
+    Number(right.hoursAgo <= 2) - Number(left.hoursAgo <= 2)
+    || right.sharedNumbers.length - left.sharedNumbers.length
+    || right.sharedTerms.length - left.sharedTerms.length
+    || (right.score ?? 0) - (left.score ?? 0)
+    || left.hoursAgo - right.hoursAgo
+  )[0] ?? null;
+  const recentOverlapCount2h = overlapPosts.filter((post) => post.hoursAgo <= 2).length;
+  const recentOverlapCount24h = overlapPosts.filter((post) => post.hoursAgo <= 24).length;
+  const recentStrongOverlap = overlapPosts.find((post) =>
+    post.hoursAgo <= 2
+    && (post.sharedNumbers.length > 0 || post.sharedTerms.length >= 4)
+  ) ?? null;
+
+  return {
+    recentOverlapCount2h,
+    recentOverlapCount24h,
+    strongestOverlapPost,
+    skipSuggested: recentStrongOverlap != null,
+    overlapReason: recentStrongOverlap == null
+      ? recentOverlapCount24h > 0
+        ? "recent_colony_overlap"
+        : null
+      : recentStrongOverlap.sharedNumbers.length > 0
+        ? "recent_colony_numeric_overlap_within_2h"
+        : "recent_colony_topic_overlap_within_2h",
+  };
+}
+
+function summarizeColonyOverlap(
+  post: ResearchPostInput,
+  topicTerms: Set<string>,
+  evidenceTokens: Set<string>,
+  nowMs: number,
+): ResearchColonyNoveltyPostSummary | null {
+  if (typeof post.text !== "string" || typeof post.timestamp !== "number") {
+    return null;
+  }
+  const ageMs = nowMs - post.timestamp;
+  if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > DAY_MS) {
+    return null;
+  }
+
+  const postTerms = extractNoveltyTerms(post.text);
+  const sharedTerms = [...topicTerms].filter((token) => postTerms.has(token));
+  const sharedNumbers = [...evidenceTokens].filter((token) => normalize(post.text).includes(token));
+  if (sharedNumbers.length === 0 && sharedTerms.length < 3) {
+    return null;
+  }
+
+  return {
+    txHash: post.txHash,
+    author: post.author,
+    category: post.category,
+    score: post.score ?? null,
+    publishedAt: new Date(post.timestamp).toISOString(),
+    hoursAgo: Number((ageMs / (60 * 60 * 1000)).toFixed(2)),
+    textSnippet: post.text.length > 220 ? `${post.text.slice(0, 217)}...` : post.text,
+    sharedTerms,
+    sharedNumbers,
+  };
+}
+
+function extractNoveltyTerms(text: string): Set<string> {
+  const tokens = normalize(text).match(/[a-z][a-z-]{2,}/g) ?? [];
+  return new Set(tokens.filter((token) => token.length >= 4 && !NOVELTY_TOKEN_STOPWORDS.has(token)));
+}
+
+function extractEvidenceTokens(values: Record<string, string>): Set<string> {
+  const tokens = new Set<string>();
+  for (const rawValue of Object.values(values)) {
+    for (const token of extractNumericFragments(rawValue)) {
+      tokens.add(token);
+    }
+  }
+  return tokens;
+}
+
+function extractNumericFragments(value: string): string[] {
+  const normalizedValue = normalize(value).replace(/,/g, "");
+  const matches = normalizedValue.match(/\b\d+(?:\.\d+)?(?:bps?|%|usd)?\b/g) ?? [];
+  return matches;
 }

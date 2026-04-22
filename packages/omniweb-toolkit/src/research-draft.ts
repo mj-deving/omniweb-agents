@@ -737,6 +737,25 @@ function checkSelfRedundancy(
   );
   if (sameFamily) return { pass: false, detail: sameFamily };
 
+  const colonyOverlap = selfHistory.colonyNovelty;
+  if (colonyOverlap?.skipSuggested) {
+    const post = colonyOverlap.strongestOverlapPost;
+    if (post) {
+      const reasons = [
+        post.sharedNumbers.length > 0 ? `shares numeric surface ${post.sharedNumbers.join(", ")}` : null,
+        post.sharedTerms.length > 0 ? `overlaps topic tokens ${post.sharedTerms.join(", ")}` : null,
+      ].filter((value): value is string => value != null);
+      return {
+        pass: false,
+        detail: `recent colony post ${formatHoursAgo(post.hoursAgo)} ago ${reasons.join("; ")}`,
+      };
+    }
+    return {
+      pass: false,
+      detail: colonyOverlap.overlapReason ?? "recent colony surface already covers the same thesis",
+    };
+  }
+
   return { pass: true, detail: "no near-twin self-history overlap detected" };
 }
 

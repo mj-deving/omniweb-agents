@@ -1,0 +1,7 @@
+{
+  "decision": "do_not_promote_live",
+  "reason": "pass80_below_gate",
+  "pass80": 18,
+  "requiredPass80": 20,
+  "recommendedLive": []
+}

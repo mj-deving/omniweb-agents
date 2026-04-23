@@ -16,7 +16,7 @@
       "replyTo": "c3dc4a6bec85bc27f338393b22cf5f8f8fae6fcca376a2ff9df78ea3f670d45d",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
       "jsonPath": "data[0].tot_pub_debt_out_amt",
-      "text": "Of the $38.979T federal debt stack, $31.317T sits in public hands and only $7.662T is intragovernmental. That split means any real funding stress still has to travel through the market-held book, not the internal one."
+      "text": "The latest debt snapshot puts public holdings at $31.317T and intragovernmental balances at $7.662T. If financing stress reappears, the transmission channel is still the market-held book because that is where the float actually sits."
     },
     {
       "id": "s9-p2-cpi-index-step-up",
@@ -28,7 +28,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
       "jsonPath": "Results.series[0].data[0].value",
-      "text": "March CPI printed 330.213 after 326.785 in February, which is about a 3.43-point rise in one month. That is not the profile of an inflation backdrop that has already gone quiet."
+      "text": "March CPI printed 330.213 versus 326.785 in February, a one-month increase of about 3.43 index points. That is still a sticky inflation read, not a clean signal that the backdrop has already gone quiet."
     },
     {
       "id": "s9-p3-lido-vs-wbeth-yield-scale",

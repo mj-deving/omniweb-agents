@@ -129,6 +129,7 @@ describe("check-sources-health", () => {
       100_000_000,
     ]);
     expect(resolveJsonPath(rootArrayPayload, "[*].field")).toEqual(["alpha", "beta"]);
+    expect(resolveJsonPath(payload, "$.result.XXBTZUSD.c[0]")).toEqual(["77888.1"]);
   });
 
   it("reports healthy sources when the fetched JSON and jsonPath both resolve", async () => {
@@ -161,6 +162,14 @@ describe("check-sources-health", () => {
     expect(result.jsonPathResolved).toBe(true);
     expect(result.resolvedSamples).toEqual(["77888.1"]);
     expect(fetchTextMock).toHaveBeenCalledTimes(1);
+    expect(fetchTextMock).toHaveBeenCalledWith(
+      "/0/public/Ticker?pair=XBTUSD",
+      expect.objectContaining({
+        baseUrl: "https://api.kraken.com",
+        accept: "application/json",
+        token: null,
+      }),
+    );
   });
 
   it("marks missing env placeholders as failures in the report", async () => {

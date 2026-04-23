@@ -226,6 +226,93 @@ describe("declarative: coingecko", () => {
 });
 
 // ════════════════════════════════════════════════════
+// CBOE
+// ════════════════════════════════════════════════════
+
+describe("declarative: cboe", () => {
+  const adapter = getAdapter("cboe");
+  const source = makeSource({
+    id: "cboe-vix-daily", provider: "cboe",
+    url: "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+    adapter: { operation: "vix-quote" },
+  });
+
+  it("buildCandidates: delayed-quote URL contains delayed quote path", () => {
+    const ctx = makeCtx(source, "vix", "DAHR", { symbol: "_VIX" });
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/api/global/delayed_quotes/quotes/_VIX.json");
+  });
+
+  it("parseResponse: extracts delayed quote metrics", () => {
+    const fixture = JSON.stringify({
+      data: {
+        current_price: 19.39,
+        previous_day_close: 19.5,
+        change: -0.11,
+        percent_change: -0.56,
+        high: 19.54,
+        low: 18.82,
+      },
+    });
+    const resp = makeResponse(fixture, "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json");
+    const parsed = adapter.parseResponse(source, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].metrics?.current_price).toBe(19.39);
+    expect(parsed.entries[0].metrics?.high).toBe(19.54);
+  });
+});
+
+// ════════════════════════════════════════════════════
+// EIA
+// ════════════════════════════════════════════════════
+
+describe("declarative: eia", () => {
+  const adapter = getAdapter("eia");
+
+  const natGasSource = makeSource({
+    id: "eia-natural-gas-futures", provider: "eia",
+    url: "https://api.eia.gov/v2/natural-gas/pri/fut/data/",
+    adapter: { operation: "natural-gas-futures" },
+  });
+
+  const wtiSource = makeSource({
+    id: "eia-crude-wti-spot", provider: "eia",
+    url: "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+    adapter: { operation: "wti-spot" },
+  });
+
+  it("buildCandidates: natural-gas-futures URL contains the EIA gas path", () => {
+    const ctx = makeCtx(natGasSource, "natural gas");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("/v2/natural-gas/pri/fut/data/");
+  });
+
+  it("buildCandidates: wti-spot URL includes the product facet", () => {
+    const ctx = makeCtx(wtiSource, "wti");
+    const candidates = adapter.buildCandidates(ctx);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0].url).toContain("facets%5Bproduct%5D%5B%5D=EPCWTI");
+  });
+
+  it("parseResponse: extracts EIA response.data rows", () => {
+    const fixture = JSON.stringify({
+      response: {
+        data: [
+          { period: "2026-04-22", value: "2.13", product: "EPCWTI" },
+        ],
+      },
+    });
+    const resp = makeResponse(fixture, "https://api.eia.gov/v2/petroleum/pri/spt/data/");
+    const parsed = adapter.parseResponse(wtiSource, resp);
+    expect(parsed.entries.length).toBe(1);
+    expect(parsed.entries[0].id).toBe("eia-wti-2026-04-22");
+    expect(parsed.entries[0].metrics?.value).toBe("2.13");
+  });
+});
+
+// ════════════════════════════════════════════════════
 // GITHUB
 // ════════════════════════════════════════════════════
 

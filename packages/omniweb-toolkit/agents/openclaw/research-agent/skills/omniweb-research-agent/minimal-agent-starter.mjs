@@ -7,13 +7,13 @@
  * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
  */
 
-import { connect } from "../src/index.js";
+import { connect } from "omniweb-toolkit";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultSessionLedgerDir,
   getDefaultLeaderboardPatternOutputRules,
   loadRecentSessionResults,
-} from "../src/agent.js";
+} from "omniweb-toolkit/agent";
 
 const COLONY_URL = process.env.COLONY_URL || "https://www.supercolony.ai";
 const PUBLISH_INTERVAL_MS = parseInt(process.env.PUBLISH_INTERVAL_MS || "300000", 10);

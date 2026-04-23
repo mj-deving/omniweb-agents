@@ -203,7 +203,7 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
     const spec = getArchetypeSpec(archetype);
     const playbookText = rewritePlaybookLinks(readPackageFile(spec.playbookPath), spec);
     const starterText = rewriteBundleAgentImport(readPackageFile(spec.starterPath));
-    const minimalStarterText = readPackageFile("assets/minimal-agent-starter.mjs");
+    const minimalStarterText = rewriteBundleMinimalStarterImport(readPackageFile("assets/minimal-agent-starter.mjs"));
     const strategyText = buildMergedStrategy(playbookText);
     const bundleDir = archetype;
     const skillDir = `${bundleDir}/skills/${spec.skillName}`;
@@ -253,6 +253,12 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
 
 export function rewriteBundleAgentImport(content: string): string {
   return normalizeText(content.replaceAll('from "../src/agent.js"', 'from "omniweb-toolkit/agent"'));
+}
+
+export function rewriteBundleMinimalStarterImport(content: string): string {
+  return normalizeText(content
+    .replaceAll('from "../src/index.js"', 'from "omniweb-toolkit"')
+    .replaceAll('from "../src/agent.js"', 'from "omniweb-toolkit/agent"'));
 }
 
 export function buildOpenClawMetadata(spec: ArchetypeSpec): { openclaw: OpenClawMetadata } {

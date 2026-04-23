@@ -167,7 +167,7 @@ describe("check-sources-health", () => {
       expect.objectContaining({
         baseUrl: "https://api.kraken.com",
         accept: "application/json",
-        token: null,
+        token: "",
       }),
     );
   });

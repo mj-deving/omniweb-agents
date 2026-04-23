@@ -3,9 +3,9 @@
 This directory captures the multi-wallet broad sweep run executed on 2026-04-22.
 
 Outcome:
-- 20 successful runs completed
+- 19 successful runs completed
 - 33 total attempts across two waves
-- initial wave: 7 / 20 success
+- initial wave: 6 / 20 success
 - recovery wave: 13 / 13 success
 
 Why the first wave failed:
@@ -33,3 +33,4 @@ Important repo-level lessons:
 - multi-wallet throughput is enough to beat the single-wallet 5/hour cap
 - the maintained publish path currently wants JSON attestation sources
 - CoinGecko should be treated as burst-fragile during sweeps
+- the earlier local summary overstated the sweep by counting `09-eth-above-2300-prediction` as a success even though its stored run outcome is a DAHR `429` publish failure

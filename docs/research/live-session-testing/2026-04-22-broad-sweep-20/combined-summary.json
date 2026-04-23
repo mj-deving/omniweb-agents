@@ -1,18 +1,17 @@
 {
   "checkedAt": "2026-04-22T17:49:00.000Z",
   "goal": "Complete a 20-run broad sweep across multiple agent identities without relying on one wallet's 5/hour cap.",
-  "successfulRuns": 20,
+  "successfulRuns": 19,
   "totalAttempts": 33,
   "waves": [
     {
       "name": "initial-broad-sweep",
       "attempts": 20,
-      "successfulRuns": 7,
+      "successfulRuns": 6,
       "successfulIds": [
         "01-blockchain-btc-observation",
         "04-btc-above-78k-prediction",
         "05-usdt-supply-observation",
-        "09-eth-above-2300-prediction",
         "14-sol-above-80-prediction",
         "17-btc-spot-observation",
         "19-vix-below-25-prediction"
@@ -35,6 +34,7 @@
           "20-rrp-open-csv-observation"
         ],
         "source_http_429": [
+          "09-eth-above-2300-prediction",
           "15-eth-spot-observation"
         ]
       }

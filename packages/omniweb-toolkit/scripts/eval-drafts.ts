@@ -774,10 +774,113 @@ function between(value: number, min: number, max: number): boolean {
   return value >= min && value <= max;
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
+function isRangeTuple(value: unknown): value is [number, number] {
+  return Array.isArray(value)
+    && value.length === 2
+    && isFiniteNumber(value[0])
+    && isFiniteNumber(value[1]);
+}
+
 function parseConfig(raw: unknown): Partial<DraftEvalConfig> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Config must be a JSON object");
   }
+
+  const config = raw as Record<string, unknown>;
+  const allowedKeys = new Set([
+    "rubricVersion",
+    "liveCandidateMinScore",
+    "duplicateNgramSize",
+    "hardLengthMin",
+    "hardLengthMax",
+    "fillerAdverbs",
+    "hedgeWords",
+    "shieldPhrases",
+    "assetTerms",
+    "institutionTerms",
+    "categoryProfiles",
+  ]);
+
+  for (const key of Object.keys(config)) {
+    if (!allowedKeys.has(key)) {
+      throw new Error(`Unknown config key: ${key}`);
+    }
+  }
+
+  if (config.rubricVersion !== undefined && typeof config.rubricVersion !== "string") {
+    throw new Error("Config rubricVersion must be a string");
+  }
+  if (config.liveCandidateMinScore !== undefined && !isFiniteNumber(config.liveCandidateMinScore)) {
+    throw new Error("Config liveCandidateMinScore must be a finite number");
+  }
+  if (config.duplicateNgramSize !== undefined && !isFiniteNumber(config.duplicateNgramSize)) {
+    throw new Error("Config duplicateNgramSize must be a finite number");
+  }
+  if (config.hardLengthMin !== undefined && !isFiniteNumber(config.hardLengthMin)) {
+    throw new Error("Config hardLengthMin must be a finite number");
+  }
+  if (config.hardLengthMax !== undefined && !isFiniteNumber(config.hardLengthMax)) {
+    throw new Error("Config hardLengthMax must be a finite number");
+  }
+  if (config.fillerAdverbs !== undefined && !isStringArray(config.fillerAdverbs)) {
+    throw new Error("Config fillerAdverbs must be an array of strings");
+  }
+  if (config.hedgeWords !== undefined && !isStringArray(config.hedgeWords)) {
+    throw new Error("Config hedgeWords must be an array of strings");
+  }
+  if (config.shieldPhrases !== undefined && !isStringArray(config.shieldPhrases)) {
+    throw new Error("Config shieldPhrases must be an array of strings");
+  }
+  if (config.assetTerms !== undefined && !isStringArray(config.assetTerms)) {
+    throw new Error("Config assetTerms must be an array of strings");
+  }
+  if (config.institutionTerms !== undefined && !isStringArray(config.institutionTerms)) {
+    throw new Error("Config institutionTerms must be an array of strings");
+  }
+
+  if (config.categoryProfiles !== undefined) {
+    if (!config.categoryProfiles || typeof config.categoryProfiles !== "object" || Array.isArray(config.categoryProfiles)) {
+      throw new Error("Config categoryProfiles must be an object");
+    }
+
+    for (const [track, profile] of Object.entries(config.categoryProfiles)) {
+      if (!(track in DEFAULT_EVAL_DRAFTS_CONFIG.categoryProfiles)) {
+        throw new Error(`Unknown categoryProfiles track: ${track}`);
+      }
+      if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
+        throw new Error(`Config categoryProfiles.${track} must be an object`);
+      }
+
+      const record = profile as Record<string, unknown>;
+      const allowedProfileKeys = new Set(["band", "sweet", "preferredFrames", "maxFrames"]);
+      for (const key of Object.keys(record)) {
+        if (!allowedProfileKeys.has(key)) {
+          throw new Error(`Unknown categoryProfiles.${track} key: ${key}`);
+        }
+      }
+      if (record.band !== undefined && !isRangeTuple(record.band)) {
+        throw new Error(`Config categoryProfiles.${track}.band must be a [min,max] number tuple`);
+      }
+      if (record.sweet !== undefined && !isRangeTuple(record.sweet)) {
+        throw new Error(`Config categoryProfiles.${track}.sweet must be a [min,max] number tuple`);
+      }
+      if (record.preferredFrames !== undefined && !isFiniteNumber(record.preferredFrames)) {
+        throw new Error(`Config categoryProfiles.${track}.preferredFrames must be a finite number`);
+      }
+      if (record.maxFrames !== undefined && !isFiniteNumber(record.maxFrames)) {
+        throw new Error(`Config categoryProfiles.${track}.maxFrames must be a finite number`);
+      }
+    }
+  }
+
   return raw as Partial<DraftEvalConfig>;
 }
 

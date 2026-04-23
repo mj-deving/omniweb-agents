@@ -201,4 +201,36 @@ describe("eval-drafts", () => {
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("must include a non-empty string text");
   });
+
+  it("returns exit code 2 for malformed config overrides", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "eval-drafts-cli-"));
+    const inputPath = join(tempDir, "drafts.json");
+    const configPath = join(tempDir, "bad-config.json");
+    writeFileSync(
+      inputPath,
+      JSON.stringify([
+        {
+          category: "ANALYSIS",
+          text: "BTC at $78.8k and VIX at 19.4 still point in opposite directions even as the macro tape tries to flatten that contradiction.",
+        },
+      ]),
+      "utf8",
+    );
+    writeFileSync(configPath, JSON.stringify({ liveCandidateMinScore: "80" }), "utf8");
+
+    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+    const result = spawnSync(
+      "node",
+      ["--import", "tsx", "./packages/omniweb-toolkit/scripts/eval-drafts.ts", "--in", inputPath, "--config", configPath],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    rmSync(tempDir, { recursive: true, force: true });
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("liveCandidateMinScore");
+  });
 });

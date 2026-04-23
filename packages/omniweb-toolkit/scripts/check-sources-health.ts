@@ -33,6 +33,13 @@ export interface SourceHealthResult {
   jsonPathResolved: boolean;
   resolvedSamples: unknown[];
   error: string | null;
+  classification:
+    | "healthy"
+    | "env_blocked"
+    | "broken_url"
+    | "broken_json_path"
+    | "timeout"
+    | "broken_response";
 }
 
 export interface SourceHealthReport {
@@ -41,6 +48,7 @@ export interface SourceHealthReport {
   manifest: string;
   entriesChecked: number;
   failures: number;
+  classificationCounts: Record<SourceHealthResult["classification"], number>;
   results: SourceHealthResult[];
 }
 
@@ -165,6 +173,7 @@ export async function checkSourceHealth(
       jsonPathResolved: false,
       resolvedSamples: [],
       error: `missing_env:${env.missingEnvKeys.join(",")}`,
+      classification: "env_blocked",
     };
   }
 
@@ -190,6 +199,7 @@ export async function checkSourceHealth(
       jsonPathResolved: false,
       resolvedSamples: [],
       error: cause instanceof Error ? cause.message : "invalid_url",
+      classification: "broken_url",
     };
   }
 
@@ -222,6 +232,12 @@ export async function checkSourceHealth(
     error = response.error ?? `http_${response.status}`;
   }
 
+  const classification = classifySourceHealthResult({
+    ok: response.ok && jsonParseOk && jsonPathResolved,
+    status: response.status,
+    error,
+  });
+
   return {
     id: entry.id,
     sourceName: entry.sourceName,
@@ -240,7 +256,21 @@ export async function checkSourceHealth(
     jsonPathResolved,
     resolvedSamples,
     error,
+    classification,
   };
+}
+
+function classifySourceHealthResult(input: {
+  ok: boolean;
+  status: number;
+  error: string | null;
+}): SourceHealthResult["classification"] {
+  if (input.ok) return "healthy";
+  if ((input.error ?? "").startsWith("missing_env:")) return "env_blocked";
+  if ((input.error ?? "") === "json_path_unresolved") return "broken_json_path";
+  if (input.status === 404 || (input.error ?? "").startsWith("http_404")) return "broken_url";
+  if ((input.error ?? "").toLowerCase().includes("timeout")) return "timeout";
+  return "broken_response";
 }
 
 function extractContentType(body: string): string | null {
@@ -311,6 +341,20 @@ export async function buildSourceHealthReport(
   const entries = loadManifestEntries(manifestPath, options);
   const results = await Promise.all(entries.map((entry) => checkSourceHealth(entry)));
   const failures = results.filter((entry) => !entry.ok).length;
+  const classificationCounts = results.reduce<SourceHealthReport["classificationCounts"]>(
+    (acc, result) => {
+      acc[result.classification] += 1;
+      return acc;
+    },
+    {
+      healthy: 0,
+      env_blocked: 0,
+      broken_url: 0,
+      broken_json_path: 0,
+      timeout: 0,
+      broken_response: 0,
+    },
+  );
 
   return {
     checkedAt: new Date().toISOString(),
@@ -318,6 +362,7 @@ export async function buildSourceHealthReport(
     manifest: resolve(manifestPath),
     entriesChecked: results.length,
     failures,
+    classificationCounts,
     results,
   };
 }

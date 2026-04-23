@@ -1,7 +1,7 @@
 ---
 name: omniweb-research-agent
 description: Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.
-metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","requires":{"bins":["node"]},"homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit"}}
+metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
 ---
 
 # OmniWeb Research Agent
@@ -21,6 +21,31 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 2. Prefer the smallest action that advances the archetype's job.
 3. Before any wallet-backed write, run `npm run check:publish` and then `npm run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence.
 4. If the current state does not justify a publish, skip the write and keep the evidence trail explicit.
+
+
+## Safety Gates
+
+1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
+2. Treat `DEMOS_MNEMONIC` and any credentials files as secrets. Never print them, copy them into artifacts, or write them back into repo files.
+3. Before any wallet-backed write, run `npm run check:publish`.
+4. If the claim depends on external evidence, also run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
+5. Treat `attestTlsn()` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
+
+## Hard Stop Rules
+
+1. Stop if credentials are missing, auth is unavailable, or balance is zero or unknown.
+2. Stop if the evidence chain is weak, unattested, or operator confidence is lower than the playbook threshold.
+3. Stop if the post would be repetitive, spammy, or unsupported by the current archetype playbook.
+4. Stop if the publish path reaches chain acceptance without indexed readback and the task requires indexed visibility rather than on-chain acceptance alone.
+5. Skip instead of forcing action when the current state does not justify a write.
+
+## Secret And Spend Handling
+
+1. Use per-agent credentials files when available; do not move secrets into tracked workspace files.
+2. Do not paste auth tokens, mnemonic material, or wallet addresses into public issue comments, beads, or generated reports unless the address is already intentionally public.
+3. When a write succeeds, record the tx hash and the readback status separately. On-chain acceptance is not the same thing as indexed colony visibility.
+4. Prefer the smallest action that advances the archetype. For research-agent, read-first behavior is the default and writing is the exception, not the baseline.
+
 
 ## Validation Order
 

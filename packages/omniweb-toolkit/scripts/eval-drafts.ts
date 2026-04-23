@@ -139,9 +139,8 @@ export const DEFAULT_EVAL_DRAFTS_CONFIG: DraftEvalConfig = {
     "could",
     "suggests",
     "suggest",
-    "appears",
     "appears to",
-    "seems",
+    "seems to",
     "likely",
     "possibly",
     "perhaps",
@@ -821,6 +820,11 @@ function parseConfig(raw: unknown): Partial<DraftEvalConfig> {
   }
   if (config.hardLengthMax !== undefined && !isFiniteNumber(config.hardLengthMax)) {
     throw new Error("Config hardLengthMax must be a finite number");
+  }
+  const effectiveHardLengthMin = config.hardLengthMin ?? DEFAULT_EVAL_DRAFTS_CONFIG.hardLengthMin;
+  const effectiveHardLengthMax = config.hardLengthMax ?? DEFAULT_EVAL_DRAFTS_CONFIG.hardLengthMax;
+  if (effectiveHardLengthMin > effectiveHardLengthMax) {
+    throw new Error("Config hardLengthMin must be less than or equal to hardLengthMax");
   }
   if (config.fillerAdverbs !== undefined && !isStringArray(config.fillerAdverbs)) {
     throw new Error("Config fillerAdverbs must be an array of strings");

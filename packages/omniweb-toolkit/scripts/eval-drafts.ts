@@ -545,7 +545,6 @@ function extractAnchors(draft: DraftInput, config: DraftEvalConfig): DraftEvalRo
   const institutions = Array.from(new Set([
     ...hintedInstitutions,
     ...explicitInstitutions,
-    ...extractProperNounPhrases(text).filter((phrase) => phrase.split(" ").length <= 3),
   ]));
   const assets = Array.from(new Set([
     ...hintedAssets,
@@ -696,16 +695,6 @@ function extractMetricLikeTokens(text: string): string[] {
   );
 }
 
-function extractProperNounPhrases(text: string): string[] {
-  return Array.from(
-    new Set(
-      Array.from(text.matchAll(/\b(?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g))
-        .map((match) => match[0])
-        .filter((token) => token.length > 2),
-    ),
-  );
-}
-
 function hasWord(normalizedText: string, phrase: string): boolean {
   const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
   return new RegExp(`\\b${escaped}\\b`, "i").test(normalizedText);
@@ -821,8 +810,11 @@ function parseConfig(raw: unknown): Partial<DraftEvalConfig> {
   if (config.liveCandidateMinScore !== undefined && !isFiniteNumber(config.liveCandidateMinScore)) {
     throw new Error("Config liveCandidateMinScore must be a finite number");
   }
-  if (config.duplicateNgramSize !== undefined && !isFiniteNumber(config.duplicateNgramSize)) {
-    throw new Error("Config duplicateNgramSize must be a finite number");
+  if (
+    config.duplicateNgramSize !== undefined
+    && (!isFiniteNumber(config.duplicateNgramSize) || !Number.isInteger(config.duplicateNgramSize) || config.duplicateNgramSize < 1)
+  ) {
+    throw new Error("Config duplicateNgramSize must be a positive integer");
   }
   if (config.hardLengthMin !== undefined && !isFiniteNumber(config.hardLengthMin)) {
     throw new Error("Config hardLengthMin must be a finite number");

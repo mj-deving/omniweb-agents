@@ -87,6 +87,31 @@ function baseArgs(item) {
   return { stateDir, outPath };
 }
 
+function readExistingResult(path) {
+  if (!existsSync(path)) {
+    return null;
+  }
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function artifactShowsSuccess(path) {
+  const existing = readExistingResult(path);
+  if (!existing || typeof existing !== "object") {
+    return false;
+  }
+  if (existing.record?.outcome?.status === "published") {
+    return true;
+  }
+  if (existing.record?.outcome?.publishResult?.ok === true) {
+    return true;
+  }
+  return existing.ok === true;
+}
+
 function validateItem(item) {
   if (!item.text || item.text.length < 200) {
     throw new Error(`${item.id}: text must be at least 200 chars, got ${item.text?.length ?? 0}`);
@@ -102,91 +127,98 @@ function validateItem(item) {
 function buildCommand(item) {
   validateItem(item);
   const { stateDir, outPath } = baseArgs(item);
-  if (existsSync(outPath)) {
+  if (artifactShowsSuccess(outPath)) {
     return {
       item,
+      stateDir,
       outPath,
       skip: true
     };
   }
   if (item.kind === "prediction") {
-    const deadlineAt = isoAfterMinutes(item.deadlineOffsetMinutes ?? 30);
     return {
       item,
+      stateDir,
       outPath,
-      argv: [
-        "node",
-        "--import",
-        "tsx",
-        "packages/omniweb-toolkit/scripts/check-supervised-prediction.ts",
-        "--agent-name",
-        item.agentName,
-        "--state-dir",
-        stateDir,
-        "--text",
-        item.text,
-        "--attest-url",
-        item.attestUrl,
-        "--deadline-at",
-        deadlineAt,
-        "--confidence",
-        String(item.confidence ?? 60),
-        "--falsifier",
-        item.falsifier,
-        "--verify-url",
-        item.verifyUrl,
-        "--verify-json-path",
-        item.verifyJsonPath,
-        "--verify-operator",
-        item.verifyOperator,
-        "--verify-value",
-        String(item.verifyValue),
-        "--verify-value-type",
-        item.verifyValueType ?? "number",
-        "--verify-label",
-        item.verifyLabel ?? item.id,
-        "--source-name",
-        item.sourceName ?? item.id,
-        "--record-pending-verdict",
-        "--verify-timeout-ms",
-        "15000",
-        "--verify-poll-ms",
-        "1500",
-        "--out",
-        outPath
-      ]
+      buildArgv() {
+        const deadlineAt = isoAfterMinutes(item.deadlineOffsetMinutes ?? 30);
+        return [
+          "node",
+          "--import",
+          "tsx",
+          "packages/omniweb-toolkit/scripts/check-supervised-prediction.ts",
+          "--agent-name",
+          item.agentName,
+          "--state-dir",
+          stateDir,
+          "--text",
+          item.text,
+          "--attest-url",
+          item.attestUrl,
+          "--deadline-at",
+          deadlineAt,
+          "--confidence",
+          String(item.confidence ?? 60),
+          "--falsifier",
+          item.falsifier,
+          "--verify-url",
+          item.verifyUrl,
+          "--verify-json-path",
+          item.verifyJsonPath,
+          "--verify-operator",
+          item.verifyOperator,
+          "--verify-value",
+          String(item.verifyValue),
+          "--verify-value-type",
+          item.verifyValueType ?? "number",
+          "--verify-label",
+          item.verifyLabel ?? item.id,
+          "--source-name",
+          item.sourceName ?? item.id,
+          "--record-pending-verdict",
+          "--verify-timeout-ms",
+          "15000",
+          "--verify-poll-ms",
+          "1500",
+          "--out",
+          outPath
+        ];
+      }
     };
   }
 
   return {
     item,
+    stateDir,
     outPath,
-    argv: [
-      "node",
-      "--import",
-      "tsx",
-      "packages/omniweb-toolkit/scripts/check-write-surface-sweep.ts",
-      "--broadcast",
-      "--agent-name",
-      item.agentName,
-      "--state-dir",
-      stateDir,
-      "--skip-react",
-      "--skip-tip",
-      "--skip-reply",
-      "--skip-hl",
-      "--skip-bet",
-      "--publish-category",
-      item.category,
-      "--publish-text",
-      item.text,
-      "--publish-attest-url",
-      item.attestUrl,
-      "--verify-timeout-ms",
-      "12000",
-      "--verify-poll-ms",
-      "1500"
-    ]
+    buildArgv() {
+      return [
+        "node",
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/check-write-surface-sweep.ts",
+        "--broadcast",
+        "--agent-name",
+        item.agentName,
+        "--state-dir",
+        stateDir,
+        "--skip-react",
+        "--skip-tip",
+        "--skip-reply",
+        "--skip-hl",
+        "--skip-bet",
+        "--publish-category",
+        item.category,
+        "--publish-text",
+        item.text,
+        "--publish-attest-url",
+        item.attestUrl,
+        "--verify-timeout-ms",
+        "12000",
+        "--verify-poll-ms",
+        "1500"
+      ];
+    }
   };
 }
 
@@ -204,7 +236,8 @@ function runOne(commandSpec) {
     });
   }
   return new Promise((resolvePromise) => {
-    const { item, argv, outPath } = commandSpec;
+    const { item, outPath } = commandSpec;
+    const argv = commandSpec.buildArgv();
     const child = spawn(argv[0], argv.slice(1), { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";

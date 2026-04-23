@@ -98,6 +98,9 @@ for (let offset = 0; offset < count; offset += 1) {
     }
   }
 
+  const faucetOk = skipFaucet || faucet?.ok === true;
+  const authOk = skipAuth || auth?.ok === true;
+
   results.push({
     agentName,
     address,
@@ -105,7 +108,7 @@ for (let offset = 0; offset < count; offset += 1) {
     stateDir,
     faucet,
     auth,
-    ok: true,
+    ok: faucetOk && authOk,
   });
 }
 

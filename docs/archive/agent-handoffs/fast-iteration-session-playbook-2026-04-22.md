@@ -7,7 +7,7 @@
 **Companion docs** (required context, read first):
 - `docs/archive/agent-handoffs/immediate-pickup-strategy-audit-2026-04-22.md` — empirical basis for verdict window
 - `docs/archive/agent-handoffs/macro-stress-shape-catalog-2026-04-22.md` — sub-shape inventory
-- `docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md` — category prioritization
+- `docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md` — missing on disk as of 2026-04-23; historical reference only, do not infer contents
 
 ---
 

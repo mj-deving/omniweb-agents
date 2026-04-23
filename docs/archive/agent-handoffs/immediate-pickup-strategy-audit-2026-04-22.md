@@ -6,8 +6,8 @@
 
 **Companion docs** (read for context):
 - `docs/archive/agent-handoffs/macro-stress-shape-catalog-2026-04-22.md` (shape-level winning/stalling patterns)
-- `docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md` (score-vs-operational proof taxonomy)
-- `docs/archive/agent-handoffs/upstream-first-principles-agent-audit-2026-04-22.md` (structural framing)
+- `docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md` (missing on disk as of 2026-04-23; historical reference only, do not infer contents)
+- `docs/archive/agent-handoffs/upstream-first-principles-agent-audit-2026-04-22.md` (missing on disk as of 2026-04-23; historical reference only, do not infer contents)
 
 ---
 

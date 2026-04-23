@@ -203,6 +203,16 @@ export function mergeEvalDraftsConfig(
   override?: Partial<DraftEvalConfig>,
 ): DraftEvalConfig {
   if (!override) return DEFAULT_EVAL_DRAFTS_CONFIG;
+  const mergedCategoryProfiles = Object.fromEntries(
+    Object.entries(DEFAULT_EVAL_DRAFTS_CONFIG.categoryProfiles).map(([track, profile]) => [
+      track,
+      {
+        ...profile,
+        ...(override.categoryProfiles?.[track as DraftTrack] ?? {}),
+      },
+    ]),
+  ) as DraftEvalConfig["categoryProfiles"];
+
   return {
     ...DEFAULT_EVAL_DRAFTS_CONFIG,
     ...override,
@@ -211,10 +221,7 @@ export function mergeEvalDraftsConfig(
     shieldPhrases: override.shieldPhrases ?? DEFAULT_EVAL_DRAFTS_CONFIG.shieldPhrases,
     assetTerms: override.assetTerms ?? DEFAULT_EVAL_DRAFTS_CONFIG.assetTerms,
     institutionTerms: override.institutionTerms ?? DEFAULT_EVAL_DRAFTS_CONFIG.institutionTerms,
-    categoryProfiles: {
-      ...DEFAULT_EVAL_DRAFTS_CONFIG.categoryProfiles,
-      ...(override.categoryProfiles ?? {}),
-    },
+    categoryProfiles: mergedCategoryProfiles,
   };
 }
 
@@ -821,10 +828,18 @@ Exit codes: 0 = success, 2 = invalid args/input`);
     process.exit(2);
   }
 
-  const drafts = parseDrafts(JSON.parse(readFileSync(resolve(inputPath), "utf8")) as unknown);
-  const config = configPath
-    ? parseConfig(JSON.parse(readFileSync(resolve(configPath), "utf8")) as unknown)
-    : undefined;
+  let drafts: DraftInput[];
+  let config: Partial<DraftEvalConfig> | undefined;
+  try {
+    drafts = parseDrafts(JSON.parse(readFileSync(resolve(inputPath), "utf8")) as unknown);
+    config = configPath
+      ? parseConfig(JSON.parse(readFileSync(resolve(configPath), "utf8")) as unknown)
+      : undefined;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Error: invalid input/config: ${message}`);
+    process.exit(2);
+  }
   const summary = evaluateDraftBatch(drafts, config);
   const body = JSON.stringify(summary, null, 2);
 

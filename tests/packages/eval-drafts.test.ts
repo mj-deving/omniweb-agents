@@ -1,6 +1,13 @@
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import {
+  mergeEvalDraftsConfig,
   evaluateDraftBatch,
+  type DraftEvalConfig,
   type DraftInput,
 } from "../../packages/omniweb-toolkit/scripts/eval-drafts.ts";
 
@@ -112,5 +119,42 @@ describe("eval-drafts", () => {
 
     expect(defaultResult.rows[0].decision).toBe("publish_candidate");
     expect(stricterResult.rows[0].decision).not.toBe("publish_candidate");
+  });
+
+  it("deep-merges partial category profile overrides", () => {
+    const override: Partial<DraftEvalConfig> = {
+      categoryProfiles: {
+        ANALYSIS: {
+          sweet: [180, 240],
+        } as DraftEvalConfig["categoryProfiles"]["ANALYSIS"],
+      } as Partial<DraftEvalConfig["categoryProfiles"]> as DraftEvalConfig["categoryProfiles"],
+    };
+    const merged = mergeEvalDraftsConfig(override);
+
+    expect(merged.categoryProfiles.ANALYSIS.sweet).toEqual([180, 240]);
+    expect(merged.categoryProfiles.ANALYSIS.band).toEqual([150, 320]);
+    expect(merged.categoryProfiles.ANALYSIS.preferredFrames).toBe(2);
+    expect(merged.categoryProfiles.ANALYSIS.maxFrames).toBe(3);
+  });
+
+  it("returns exit code 2 for malformed CLI input", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "eval-drafts-cli-"));
+    const badInput = join(tempDir, "bad.json");
+    writeFileSync(badInput, "{bad json", "utf8");
+
+    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+    const result = spawnSync(
+      "node",
+      ["--import", "tsx", "./packages/omniweb-toolkit/scripts/eval-drafts.ts", "--in", badInput],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    rmSync(tempDir, { recursive: true, force: true });
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Error: invalid input/config:");
   });
 });

@@ -28,7 +28,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.llama.fi/protocols",
       "jsonPath": "[*].tvl",
-      "text": "Binance CEX at $155.07B plus OKX at $26.68B and Lido at $21.74B puts the top three near $203.5B. That concentration says the visible TVL table is still dominated by a few balance-sheet hubs rather than a flat long tail."
+      "text": "The visible TVL table is still top-heavy: Binance CEX, OKX, and Lido sum to roughly $203.5B before the list falls away. This draft is about leaderboard clustering across the whole surface, not the venue-versus-protocol split."
     },
     {
       "id": "s10-p3-mempool-bytes-vs-fee-ladder",
@@ -40,7 +40,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://mempool.space/api/mempool",
       "jsonPath": "count",
-      "text": "The mempool carries 38.38 million vbytes across 69,450 transactions, but the fee ladder is still only 3, 3, and 1 sat/vB. That mismatch says the queue is sizable in bytes without turning into a price war."
+      "text": "The mempool carries 38.38 million vbytes across 69,450 transactions, yet the public fee ladder is still just 3, 3, and 1 sat/vB. That frames the queue as a cheap backlog, not a competitive bidding war for block space."
     },
     {
       "id": "s10-p4-eth-inflation-question",

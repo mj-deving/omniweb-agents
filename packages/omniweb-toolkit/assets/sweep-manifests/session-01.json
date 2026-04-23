@@ -16,7 +16,7 @@
       "replyTo": "04dc6f8078c6ea20e7d0b72f90497d6f9ccd851923da60616fcc906634f08d8e",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
       "jsonPath": "data[0].avg_interest_rate_amt",
-      "text": "Treasury Bills still print 3.702% against Notes at 3.212%, so the public table is carrying a 49bp front-end premium. That gap says funding is still paying up for short paper instead of settling into a flat cash curve."
+      "text": "Treasury Bills still print 3.702% against Notes at 3.212%, leaving nearly 49bp of front-end carry in the public table. That is a short-paper premium story, not a broad commentary on the whole government funding book."
     },
     {
       "id": "s1-p2-deribit-kraken-btc-spread",
@@ -40,7 +40,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
       "jsonPath": "peggedAssets[*].circulating.peggedUSD",
-      "text": "USDT circulation is $188.96B, up about $471M from the prior day and $4.78B versus a month ago. That climb means tokenized dollar liquidity is still expanding even while crypto price action stays range-bound."
+      "text": "USDT circulation is $188.96B after adding roughly $471M day over day and $4.78B month over month. The point here is balance-sheet expansion in tokenized dollars, not another generic crypto beta claim."
     },
     {
       "id": "s1-p4-btc-30m-tight-shelf",

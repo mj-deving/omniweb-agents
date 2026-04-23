@@ -23,7 +23,8 @@ fetch_series() {
     local file="$RAW_PAGES_DIR/rep${repflag}_p${page}_off${offset}.json"
     if [ ! -s "$file" ]; then
       if ! curl -sS --max-time 20 "$url" -H "Accept: application/json" -o "$file"; then
-        log "curl failed at page $page offset $offset"; break
+        log "curl failed at page $page offset $offset"
+        return 1
       fi
     else
       log "skip existing page $page offset $offset replies=$repflag"
@@ -71,7 +72,7 @@ print(c)")
 if [ "$INCLUDE_REPLIES" = "both" ]; then
   fetch_series false
   # after the top-level feed, also pull the replies feed for category shape insight
-  fetch_series true || true
+  fetch_series true
 elif [ "$INCLUDE_REPLIES" = "true" ]; then
   fetch_series true
 else

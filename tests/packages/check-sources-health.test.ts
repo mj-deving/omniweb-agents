@@ -204,6 +204,7 @@ describe("check-sources-health", () => {
     const result = await checkSourceHealth(entry);
 
     expect(result.ok).toBe(true);
+    expect(result.classification).toBe("healthy");
     expect(result.status).toBe(200);
     expect(result.jsonParseOk).toBe(true);
     expect(result.jsonPathResolved).toBe(true);
@@ -240,6 +241,8 @@ describe("check-sources-health", () => {
     expect(report.ok).toBe(false);
     expect(report.failures).toBe(1);
     expect(report.results[0].error).toBe("missing_env:FRED_API_KEY");
+    expect(report.results[0].classification).toBe("env_blocked");
+    expect(report.classificationCounts.env_blocked).toBe(1);
     expect(fetchTextMock).not.toHaveBeenCalled();
   });
 
@@ -257,6 +260,61 @@ describe("check-sources-health", () => {
     expect(result.ok).toBe(false);
     expect(result.status).toBe(0);
     expect(result.error).toBeTruthy();
+    expect(result.classification).toBe("broken_url");
     expect(fetchTextMock).not.toHaveBeenCalled();
+  });
+
+  it("classifies 404s, unresolved json paths, and timeouts distinctly", async () => {
+    const http404Entry: HealthManifestEntry = {
+      id: "dead-url",
+      sourceName: "dead-url",
+      attestUrl: "https://example.com/missing.json",
+      jsonPath: "data.value",
+      manifestPath: "/tmp/session-01.json",
+    };
+    fetchTextMock.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      url: "https://example.com/missing.json",
+      body: "not found",
+      error: "http_404",
+    });
+
+    const unresolvedPathEntry: HealthManifestEntry = {
+      id: "unresolved-path",
+      sourceName: "unresolved-path",
+      attestUrl: "https://example.com/live.json",
+      jsonPath: "data.value",
+      manifestPath: "/tmp/session-01.json",
+    };
+    fetchTextMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      url: "https://example.com/live.json",
+      body: JSON.stringify({ data: {} }),
+    });
+
+    const timeoutEntry: HealthManifestEntry = {
+      id: "timeout-source",
+      sourceName: "timeout-source",
+      attestUrl: "https://example.com/slow.json",
+      jsonPath: "data.value",
+      manifestPath: "/tmp/session-01.json",
+    };
+    fetchTextMock.mockResolvedValueOnce({
+      ok: false,
+      status: 0,
+      url: "https://example.com/slow.json",
+      body: "",
+      error: "The operation was aborted due to timeout",
+    });
+
+    const http404Result = await checkSourceHealth(http404Entry);
+    const unresolvedPathResult = await checkSourceHealth(unresolvedPathEntry);
+    const timeoutResult = await checkSourceHealth(timeoutEntry);
+
+    expect(http404Result.classification).toBe("broken_url");
+    expect(unresolvedPathResult.classification).toBe("broken_json_path");
+    expect(timeoutResult.classification).toBe("timeout");
   });
 });

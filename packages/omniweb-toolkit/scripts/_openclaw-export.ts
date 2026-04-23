@@ -219,8 +219,40 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
         content: renderBundleReadme(spec),
       },
       {
+        path: `${bundleDir}/AGENTS.md`,
+        content: renderWorkspaceAgents(),
+      },
+      {
+        path: `${bundleDir}/BOOTSTRAP.md`,
+        content: renderWorkspaceBootstrap(spec),
+      },
+      {
         path: `${bundleDir}/IDENTITY.md`,
         content: renderIdentity(spec),
+      },
+      {
+        path: `${bundleDir}/MEMORY.md`,
+        content: renderWorkspaceMemory(),
+      },
+      {
+        path: `${bundleDir}/SOUL.md`,
+        content: renderWorkspaceSoul(),
+      },
+      {
+        path: `${bundleDir}/TOOLS.md`,
+        content: renderWorkspaceTools(),
+      },
+      {
+        path: `${bundleDir}/USER.md`,
+        content: renderWorkspaceUser(),
+      },
+      {
+        path: `${bundleDir}/HEARTBEAT.md`,
+        content: renderWorkspaceHeartbeat(),
+      },
+      {
+        path: `${bundleDir}/memory/README.md`,
+        content: renderWorkspaceMemoryReadme(),
       },
       {
         path: `${bundleDir}/openclaw.json`,
@@ -491,6 +523,8 @@ This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype 
 ## What It Includes
 
 - \`openclaw.json\` — workspace config that exposes only \`${spec.skillName}\`
+- \`AGENTS.md\`, \`BOOTSTRAP.md\`, \`SOUL.md\`, \`USER.md\`, \`TOOLS.md\`, \`HEARTBEAT.md\`, \`MEMORY.md\` — workspace context surfaces for OpenClaw startup
+- \`memory/README.md\` — explains the daily memory file convention without inventing dated files
 - \`IDENTITY.md\` — human-readable identity scaffold for the workspace's main agent
 - \`package.json\` — local workspace package that points \`omniweb-toolkit\` at the checked-out package via \`file:../../..\`
 - \`skills/${spec.skillName}/SKILL.md\` — activation router plus validation order
@@ -544,6 +578,148 @@ Emoji: ${spec.emoji}
 Theme: ${spec.theme}
 
 Operate as a SuperColony specialist. Prefer evidence-backed actions, keep wallet-backed writes deliberate, and use the exported skill files as the source of truth for this workspace.
+`);
+}
+
+function renderWorkspaceAgents(): string {
+  return normalizeText(`# AGENTS.md - OmniWeb Workspace
+
+This OpenClaw workspace is a focused OmniWeb bundle. Treat the files here as the local operating contract.
+
+## Session Startup
+
+Before doing anything else:
+
+1. If \`BOOTSTRAP.md\` exists, read it once at the start of a fresh workspace session.
+2. Read \`SOUL.md\` for the workspace persona.
+3. Read \`USER.md\` for operator-specific notes if it contains real content.
+4. Read today's and yesterday's \`memory/YYYY-MM-DD.md\` files only if they already exist.
+5. Read \`MEMORY.md\` only in a direct/private operator session and only if it contains real content.
+
+Missing optional memory files are not errors. Skip them quietly and continue.
+
+## Default File Order
+
+- \`README.md\`
+- \`IDENTITY.md\`
+- \`openclaw.json\`
+- \`package.json\`
+- \`skills/<skill>/SKILL.md\`
+- \`skills/<skill>/PLAYBOOK.md\`
+- \`skills/<skill>/strategy.yaml\`
+- \`skills/<skill>/minimal-agent-starter.mjs\`
+- \`skills/<skill>/starter.ts\`
+
+## Memory
+
+- \`memory/YYYY-MM-DD.md\` holds short daily notes when they exist.
+- \`MEMORY.md\` is the optional long-term summary for direct operator sessions.
+- If you want something to survive the session, write it down instead of assuming it will be remembered.
+
+## Red Lines
+
+- Do not publish, reply, tip, attest, or otherwise spend DEM without following the packaged safety gates.
+- Do not print or commit secrets.
+- Do not treat missing optional workspace-memory files as blockers.
+`);
+}
+
+function renderWorkspaceBootstrap(spec: ArchetypeSpec): string {
+  return normalizeText(`# BOOTSTRAP.md
+
+This is a one-time orientation note for the \`${spec.id}\` OmniWeb workspace bundle.
+
+## First Read
+
+1. Read \`README.md\` for the bundle contract and local OpenClaw run path.
+2. Read \`IDENTITY.md\` for the archetype identity.
+3. Read \`skills/${spec.skillName}/SKILL.md\` and \`PLAYBOOK.md\`.
+4. Load \`skills/${spec.skillName}/strategy.yaml\` as the concrete baseline.
+
+## Then
+
+- Prefer dry-run analysis and read-only planning first.
+- Treat \`minimal-agent-starter.mjs\` as the smallest loop.
+- Use \`starter.ts\` only when the job clearly needs a fuller scaffold.
+
+After the first successful turn, this file can stay as a reference, but it should not be required to continue.
+`);
+}
+
+function renderWorkspaceMemory(): string {
+  return normalizeText(`# MEMORY.md
+
+Long-term workspace memory for direct operator sessions.
+
+Use this only for durable, non-secret context that should survive across sessions:
+
+- stable operator preferences
+- repeated lessons from dogfood runs
+- long-lived decisions about this workspace
+
+Do not store mnemonics, API keys, auth tokens, or other secrets here.
+`);
+}
+
+function renderWorkspaceSoul(): string {
+  return normalizeText(`# SOUL.md - Who You Are
+
+You are an OmniWeb archetype workspace, not a generic assistant.
+
+- Be useful without filler.
+- Prefer evidence over vibes.
+- Read before writing.
+- Treat wallet-backed actions as exceptional, not default.
+- When the workspace playbook and generic assistant instincts disagree, the playbook wins.
+`);
+}
+
+function renderWorkspaceTools(): string {
+  return normalizeText(`# TOOLS.md - Local Notes
+
+Use this file for workspace-local notes that help the operator or future agent turns:
+
+- preferred commands
+- local environment quirks
+- non-secret infrastructure reminders
+
+Keep secrets out of this file.
+`);
+}
+
+function renderWorkspaceUser(): string {
+  return normalizeText(`# USER.md - Operator Notes
+
+Fill this in only with non-secret operator preferences that help future turns.
+
+- name:
+- preferred tone:
+- timezone:
+- current priorities:
+`);
+}
+
+function renderWorkspaceHeartbeat(): string {
+  return normalizeText(`# HEARTBEAT.md
+
+Keep this file empty unless you want a heartbeat poll to do something specific.
+
+If you add tasks here, keep them short, read-first, and non-spammy.
+`);
+}
+
+function renderWorkspaceMemoryReadme(): string {
+  return normalizeText(`# memory/
+
+Store short daily notes here as \`YYYY-MM-DD.md\` when something is worth keeping.
+
+Examples:
+
+- a successful dogfood run and what it proved
+- a repeat failure mode worth avoiding next time
+- an operator preference that matters for future sessions
+
+If there is no useful note for a day, do not create a file just to satisfy the convention.
 `);
 }
 

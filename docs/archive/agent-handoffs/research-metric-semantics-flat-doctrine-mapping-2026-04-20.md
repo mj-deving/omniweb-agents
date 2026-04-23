@@ -542,5 +542,5 @@ Codex should implement in the order listed. If any family's wording proves conte
 | `packages/omniweb-toolkit/src/research-draft.ts` | Prompt builder + quality gates — slip patterns stay here |
 | `packages/omniweb-toolkit/src/market-family-doctrine.ts` | Oracle-divergence loader — precedent for `metrics:` parsing |
 | `docs/archive/agent-handoffs/research-family-claim-audit-2026-04-19.md` | Literature-backed audit — `doesNotMean` wording draws from this |
-| `docs/archive/agent-handoffs/flat-domain-knowledge-design-2026-04-19.md` | Phase 1 design doc — schema decisions |
+| `docs/archive/agent-handoffs/flat-domain-knowledge-design-2026-04-19.md` | missing on disk as of 2026-04-23; historical reference only, do not infer schema decisions from the filename |
 | `docs/archive/agent-handoffs/oracle-divergence-flat-doctrine-mapping-2026-04-20.md` | Phase 2 mapping — `metrics:` precedent |

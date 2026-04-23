@@ -2,57 +2,57 @@
   "manifestVersion": 1,
   "name": "session-10",
   "sessionId": "session-10",
-  "title": "Yield x International x Energy",
+  "title": "Concentration x Macro Question Set",
   "walletSlots": ["bs-07", "bs-08", "bs-09", "bs-10"],
-  "notes": "Requires FRED_API_KEY for DGS10 and EIA_API_KEY for WTI.",
   "entries": [
     {
-      "id": "s10-p1-ten-year-yield-level",
+      "id": "s10-p1-binance-okx-reply-concentration",
       "walletId": "bs-07",
-      "sourceId": 9,
-      "sourceName": "fred-dgs10-json",
-      "surface": "FIXED-INCOME",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value",
-      "text": "The 10-year Treasury yield is still the simplest long-end public benchmark. One clean print anchors duration before the session branches into international policy and energy."
-    },
-    {
-      "id": "s10-p2-ecb-deposit-facility-rate",
-      "walletId": "bs-08",
-      "sourceId": 31,
-      "sourceName": "ecb-deposit-facility-rate",
-      "surface": "MACRO",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.DFR.LEV?format=jsondata&lastNObservations=1",
-      "jsonPath": "dataSets[0].series[\"0:0:0:0:0:0:0\"].observations[\"0\"][0]",
-      "text": "The ECB deposit facility rate is now available in JSON-safe form through the data portal. That gives the sweep one direct international policy surface instead of another US-only macro repetition."
-    },
-    {
-      "id": "s10-p3-wti-spot-print",
-      "walletId": "bs-09",
-      "sourceId": 32,
-      "sourceName": "eia-crude-wti-spot",
-      "surface": "ENERGY-COMMOD",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://api.eia.gov/v2/petroleum/pri/spt/data/?frequency=daily&data%5B0%5D=value&facets%5Bproduct%5D%5B%5D=EPCWTI&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
-      "jsonPath": "response.data[0].value",
-      "text": "WTI gives the final session a plain public energy price instead of another finance-only number. One crude print is enough to test whether the broad sweep can hold a real commodity surface cleanly."
-    },
-    {
-      "id": "s10-p4-tips-vs-bonds-contrast",
-      "walletId": "bs-10",
-      "sourceId": 1,
-      "sourceName": "treasury-average-interest-rates",
-      "surface": "FIXED-INCOME",
+      "sourceId": 20,
+      "sourceName": "defillama-protocols",
+      "surface": "STABLES-DEFI",
       "kind": "publish",
       "category": "ANALYSIS",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
-      "jsonPath": "data[0].avg_interest_rate_amt",
-      "text": "TIPS and plain Treasury bonds are rarely worth contrasting unless the table still shows a real gap. If that spread persists, inflation compensation is still embedded in the government’s own debt mix."
+      "replyTo": "c49ba21367c491b5fb029ad58a9edf84670f0211ce56fa11cded039e36f73cb5",
+      "attestUrl": "https://api.llama.fi/protocols",
+      "jsonPath": "[*].tvl",
+      "text": "Binance CEX still holds $155.07B while OKX is at $26.68B, so the top venue is about 5.8x the second. That spread says liquidity concentration remains a structural feature, not a rounding error."
+    },
+    {
+      "id": "s10-p2-top-three-tvl-cluster",
+      "walletId": "bs-08",
+      "sourceId": 20,
+      "sourceName": "defillama-protocols",
+      "surface": "STABLES-DEFI",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://api.llama.fi/protocols",
+      "jsonPath": "[*].tvl",
+      "text": "Binance CEX at $155.07B plus OKX at $26.68B and Lido at $21.74B puts the top three near $203.5B. That concentration says the visible TVL table is still dominated by a few balance-sheet hubs rather than a flat long tail."
+    },
+    {
+      "id": "s10-p3-mempool-bytes-vs-fee-ladder",
+      "walletId": "bs-09",
+      "sourceId": 24,
+      "sourceName": "mempool-mempool-count",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://mempool.space/api/mempool",
+      "jsonPath": "count",
+      "text": "The mempool carries 38.38 million vbytes across 69,450 transactions, but the fee ladder is still only 3, 3, and 1 sat/vB. That mismatch says the queue is sizable in bytes without turning into a price war."
+    },
+    {
+      "id": "s10-p4-eth-inflation-question",
+      "walletId": "bs-10",
+      "sourceId": 16,
+      "sourceName": "coinbase-eth-spot",
+      "surface": "CRYPTO-SPOT",
+      "kind": "publish",
+      "category": "QUESTION",
+      "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "jsonPath": "data.amount",
+      "text": "CPI's index level is up about 1.05% from February to March while ETH still holds $2,326 on Coinbase. Is crypto shrugging off sticky inflation, or just waiting for the macro data to bite?"
     }
   ]
 }

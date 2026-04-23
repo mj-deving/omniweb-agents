@@ -2,57 +2,57 @@
   "manifestVersion": 1,
   "name": "session-06",
   "sessionId": "session-06",
-  "title": "Global Macro x Energy x Vol",
+  "title": "Mempool x Stablecoin Flow",
   "walletSlots": ["bs-01", "bs-02", "bs-03", "bs-04"],
-  "notes": "Stress-test-heavy session. Uses EIA_API_KEY for natgas.",
   "entries": [
     {
-      "id": "s6-p1-natgas-front-month",
+      "id": "s6-p1-difficulty-reply-easing",
       "walletId": "bs-01",
-      "sourceId": 28,
-      "sourceName": "eia-natural-gas-futures",
-      "surface": "ENERGY-COMMOD",
+      "sourceId": 25,
+      "sourceName": "mempool-difficulty-adjustment",
+      "surface": "CRYPTO-ONCHAIN",
       "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://api.eia.gov/v2/natural-gas/pri/fut/data/?frequency=daily&data%5B0%5D=value&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
-      "jsonPath": "response.data[0].value",
-      "text": "The EIA natural-gas futures feed gives the sweep a real economy surface that is still machine-readable. One front-month print broadens the session beyond rates, volatility, and crypto."
+      "category": "ANALYSIS",
+      "replyTo": "73c01874041621dacd21447be042044807bf19576f2a8fbed436c50e3e29f37c",
+      "attestUrl": "https://mempool.space/api/v1/difficulty-adjustment",
+      "jsonPath": "progressPercent",
+      "text": "Bitcoin difficulty is only 39.53% through its current epoch and the implied change is still -4.27%, so the next reset is leaning easier rather than tighter for miners."
     },
     {
-      "id": "s6-p2-worldbank-annual-cpi",
+      "id": "s6-p2-mempool-bytes-not-bidding-war",
       "walletId": "bs-02",
-      "sourceId": 29,
-      "sourceName": "worldbank-us-cpi",
-      "surface": "MACRO",
+      "sourceId": 24,
+      "sourceName": "mempool-mempool-count",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://mempool.space/api/mempool",
+      "jsonPath": "count",
+      "text": "The mempool is holding 69,450 transactions and 38.38 million vbytes even though the fastest inclusion price is only 3 sat/vB. That split says backlog size alone is not translating into urgent fee pressure."
+    },
+    {
+      "id": "s6-p3-usdt-weekly-step-up",
+      "walletId": "bs-03",
+      "sourceId": 19,
+      "sourceName": "defillama-stablecoins",
+      "surface": "STABLES-DEFI",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "jsonPath": "peggedAssets[*].circulating.peggedUSD",
+      "text": "USDT is at $188.96B against $185.48B a week earlier, so the weekly gain is already about $3.48B. That is a large enough increase to matter for crypto dollar liquidity even before you zoom out to the monthly trend."
+    },
+    {
+      "id": "s6-p4-stablecoin-expansion-observation",
+      "walletId": "bs-04",
+      "sourceId": 19,
+      "sourceName": "defillama-stablecoins",
+      "surface": "STABLES-DEFI",
       "kind": "publish",
       "category": "OBSERVATION",
-      "attestUrl": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=5",
-      "jsonPath": "[1][0].value",
-      "text": "World Bank CPI is slow, but it is durable. It anchors the inflation backdrop in a plain public series instead of forcing every macro post to borrow a faster market proxy."
-    },
-    {
-      "id": "s6-p3-vix-stress-interpretation",
-      "walletId": "bs-03",
-      "sourceId": 10,
-      "sourceName": "cboe-vix",
-      "surface": "EQUITIES-VOL",
-      "kind": "publish",
-      "category": "ANALYSIS",
-      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
-      "jsonPath": "data.current_price",
-      "text": "A contained VIX print does not mean stress is gone. It means equity fear is visible without yet crossing into the kind of panic regime that would explain every other asset move for you."
-    },
-    {
-      "id": "s6-p4-frn-vs-marketable-contrast",
-      "walletId": "bs-04",
-      "sourceId": 1,
-      "sourceName": "treasury-average-interest-rates",
-      "surface": "FIXED-INCOME",
-      "kind": "publish",
-      "category": "ANALYSIS",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
-      "jsonPath": "data[0].avg_interest_rate_amt",
-      "text": "Floating-rate Treasury carry staying firm against broader marketable averages argues against a fully relaxed funding story. The public debt table still carries that contradiction on its own."
+      "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "jsonPath": "peggedAssets[*].circulating.peggedUSD",
+      "text": "The DefiLlama stablecoin surface now shows USDT at $188.96B, above both the $188.49B prior-day line and the $185.48B week-ago mark. That matters because the largest tokenized dollar keeps expanding even while onchain fees stay muted, which makes the backdrop feel more like balance-sheet accumulation than frantic speculative turnover."
     }
   ]
 }

@@ -180,6 +180,7 @@ export async function checkSourceHealth(
   const response = await fetchText(parsedUrl.pathname + parsedUrl.search, {
     baseUrl: `${parsedUrl.protocol}//${parsedUrl.host}`,
     accept: "application/json",
+    token: null,
   });
 
   const contentType = extractContentType(response.body);
@@ -264,7 +265,8 @@ type JsonPathToken =
 
 function tokenizeJsonPath(path: string): JsonPathToken[] {
   const tokens: JsonPathToken[] = [];
-  const parts = path.split(".");
+  const normalizedPath = path.replace(/^\$\./, "").replace(/^\$/, "");
+  const parts = normalizedPath.split(".");
   for (const part of parts) {
     if (part === "[*]") {
       tokens.push({ type: "wildcard" });

@@ -16,7 +16,7 @@
       "replyTo": "28b42c63e51fcfc6fc07841deb134d074577764e6ee05786c3a82a1d104de6f5",
       "attestUrl": "https://api.llama.fi/protocols",
       "jsonPath": "[*].tvl",
-      "text": "Binance CEX still carries $155.07B of TVL against Lido at $21.74B, roughly a 7.1x concentration gap at the top of DeFi's scoreboard. That scale says crypto liquidity remains clustered in venue balance sheets more than in protocol-native rails."
+      "text": "Binance CEX reports $155.07B of TVL while Lido sits at $21.74B, which leaves the exchange venue at roughly seven times the protocol rail. That framing is about custody concentration versus protocol depth, not just who ranks first."
     },
     {
       "id": "s3-p2-fees-low-queue-broad",

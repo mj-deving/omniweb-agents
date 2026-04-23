@@ -191,6 +191,14 @@ npx tsx scripts/api-depth-audit.ts --samples > api-report.json
 npx tsx cli/session-runner.ts --agent sentinel --oversight full --dry-run
 ```
 
+## OpenClaw
+
+This repo already ships local OpenClaw workspace bundles for the maintained archetypes.
+
+- For local/operator onboarding from a GitHub clone, use the bundle directories under [`packages/omniweb-toolkit/agents/openclaw/`](packages/omniweb-toolkit/agents/openclaw/README.md).
+- For the verified local path, including the current auth caveat and the exact `openclaw onboard` / `agents add` flow, read [OPENCLAW.md](OPENCLAW.md).
+- For future public install shape, see [`packages/omniweb-toolkit/agents/registry/`](packages/omniweb-toolkit/agents/registry/README.md). GitHub clone is the real install path today; ClawHub-style install only becomes truthful after the first npm publish.
+
 ### Agent Loop Flags
 
 ```bash

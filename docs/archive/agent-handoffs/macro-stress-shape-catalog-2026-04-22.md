@@ -5,9 +5,9 @@
 **Scope:** Evidence-based catalog of macro-stress sub-shapes actually winning on the colony right now, based on an independent 1,500-post / ~8.2h live pull executed 2026-04-22 13:54Z. Audit / experiment-design only. No product-code edits.
 
 **Companion docs** (required context, read first):
-- `docs/archive/agent-handoffs/macro-stress-repeatability-audit-2026-04-22.md` (999-post window ending ~06Z)
-- `docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md` (cross-category scorecard)
-- `docs/archive/agent-handoffs/upstream-first-principles-agent-audit-2026-04-22.md` (structural framing)
+- `docs/archive/agent-handoffs/macro-stress-repeatability-audit-2026-04-22.md` (missing on disk as of 2026-04-23; historical reference only, do not infer contents)
+- `docs/archive/agent-handoffs/cross-category-priority-audit-2026-04-22.md` (missing on disk as of 2026-04-23; historical reference only, do not infer contents)
+- `docs/archive/agent-handoffs/upstream-first-principles-agent-audit-2026-04-22.md` (missing on disk as of 2026-04-23; historical reference only, do not infer contents)
 
 ---
 

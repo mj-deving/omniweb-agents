@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getStringArg, hasFlag } from "./_shared.js";
 import {
+  buildRegistryInstallSpecs,
   buildRegistryExport,
   collectTextFiles,
   extractRelativeMarkdownLinks,
@@ -67,8 +68,11 @@ const skillChecks = archetypes.map((archetype) => {
   const frontmatter = existsSync(skillPath)
     ? parseFrontmatter(readFileSync(skillPath, "utf8"))
     : null;
+  const skillText = existsSync(skillPath)
+    ? readFileSync(skillPath, "utf8")
+    : "";
   const skillLinks = existsSync(skillPath)
-    ? extractRelativeMarkdownLinks(readFileSync(skillPath, "utf8"))
+    ? extractRelativeMarkdownLinks(skillText)
     : [];
   const guideLinks = existsSync(resolve(skillDir, "GUIDE.md"))
     ? extractRelativeMarkdownLinks(readFileSync(resolve(skillDir, "GUIDE.md"), "utf8"))
@@ -81,11 +85,16 @@ const skillChecks = archetypes.map((archetype) => {
   const readmeText = existsSync(readmePath)
     ? readFileSync(readmePath, "utf8")
     : "";
-  const metadata = isRecord(frontmatter?.metadata) ? frontmatter?.metadata : null;
+  const metadata = parseMetadata(frontmatter?.metadata);
   const openclaw = metadata && isRecord(metadata.openclaw) ? metadata.openclaw : null;
   const requires = openclaw && isRecord(openclaw.requires) ? openclaw.requires : null;
+  const install = Array.isArray(openclaw?.install) ? openclaw.install : [];
   const bins = Array.isArray(requires?.bins) ? requires.bins : [];
   const anyBins = Array.isArray(requires?.anyBins) ? requires.anyBins : [];
+  const env = Array.isArray(requires?.env) ? requires.env : [];
+  const expectedInstall = typeof frontmatter?.version === "string"
+    ? buildRegistryInstallSpecs(frontmatter.version)
+    : [];
 
   return {
     archetype,
@@ -98,18 +107,36 @@ const skillChecks = archetypes.map((archetype) => {
       openclaw.skillKey === spec.skillName &&
       typeof openclaw.homepage === "string" &&
       openclaw.homepage.includes("omniweb-agents") &&
+      openclaw.primaryEnv === "DEMOS_MNEMONIC" &&
+      openclaw.spendsRealMoney === true &&
+      openclaw.spendToken === "DEM" &&
+      JSON.stringify(install) === JSON.stringify(expectedInstall) &&
       bins.includes("node") &&
       anyBins.some((value) => value === "npm" || value === "pnpm" || value === "yarn") &&
+      env.includes("DEMOS_MNEMONIC") &&
       brokenLinks.length === 0 &&
       runbookText.includes("npm install omniweb-toolkit@") &&
+      runbookText.includes("metadata.openclaw.install") &&
       runbookText.includes("check-playbook-path.ts") &&
-      readmeText.includes("publish-facing skill artifact"),
+      readmeText.includes("publish-facing skill artifact") &&
+      skillText.includes("## Safety Gates") &&
+      skillText.includes("## Hard Stop Rules") &&
+      skillText.includes("## Session Ledger Protocol") &&
+      skillText.includes("spend real DEM") &&
+      skillText.includes("DEMOS_MNEMONIC") &&
+      skillText.includes("sessions/<ISO>/result.json"),
     frontmatterName: frontmatter?.name ?? null,
     version: frontmatter?.version ?? null,
     brokenLinks,
     homepage: typeof openclaw?.homepage === "string" ? openclaw.homepage : null,
     bins,
     anyBins,
+    env,
+    primaryEnv: openclaw?.primaryEnv ?? null,
+    spendsRealMoney: openclaw?.spendsRealMoney ?? null,
+    spendToken: openclaw?.spendToken ?? null,
+    install,
+    expectedInstall,
   };
 });
 
@@ -135,4 +162,21 @@ process.exit(ok ? 0 : 1);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseMetadata(value: unknown): Record<string, unknown> | null {
+  if (isRecord(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return isRecord(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }

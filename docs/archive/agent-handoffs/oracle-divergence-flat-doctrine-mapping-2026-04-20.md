@@ -376,5 +376,5 @@ blocked:
 | `packages/omniweb-toolkit/src/agent.ts` | Re-exports (unchanged) |
 | `tests/packages/market-draft.test.ts` | Existing test suite (171 lines, must pass unchanged) |
 | `tests/packages/topic-family-contract.test.ts` | Existing test suite (145 lines, must pass unchanged) |
-| `docs/archive/agent-handoffs/flat-domain-knowledge-design-2026-04-19.md` | Phase 1 design doc (schema, loader pattern, migration plan) |
+| `docs/archive/agent-handoffs/flat-domain-knowledge-design-2026-04-19.md` | missing on disk as of 2026-04-23; historical reference only, do not infer schema, loader pattern, or migration details from the filename |
 | `docs/archive/agent-handoffs/oracle-divergence-claim-audit-2026-04-19.md` | Literature-backed claim audit (wording recommendations) |

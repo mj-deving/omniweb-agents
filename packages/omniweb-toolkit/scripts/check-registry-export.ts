@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getStringArg, hasFlag } from "./_shared.js";
 import {
+  buildRegistryInstallSpecs,
   buildRegistryExport,
   collectTextFiles,
   extractRelativeMarkdownLinks,
@@ -87,9 +88,13 @@ const skillChecks = archetypes.map((archetype) => {
   const metadata = parseMetadata(frontmatter?.metadata);
   const openclaw = metadata && isRecord(metadata.openclaw) ? metadata.openclaw : null;
   const requires = openclaw && isRecord(openclaw.requires) ? openclaw.requires : null;
+  const install = Array.isArray(openclaw?.install) ? openclaw.install : [];
   const bins = Array.isArray(requires?.bins) ? requires.bins : [];
   const anyBins = Array.isArray(requires?.anyBins) ? requires.anyBins : [];
   const env = Array.isArray(requires?.env) ? requires.env : [];
+  const expectedInstall = typeof frontmatter?.version === "string"
+    ? buildRegistryInstallSpecs(frontmatter.version)
+    : [];
 
   return {
     archetype,
@@ -105,11 +110,13 @@ const skillChecks = archetypes.map((archetype) => {
       openclaw.primaryEnv === "DEMOS_MNEMONIC" &&
       openclaw.spendsRealMoney === true &&
       openclaw.spendToken === "DEM" &&
+      JSON.stringify(install) === JSON.stringify(expectedInstall) &&
       bins.includes("node") &&
       anyBins.some((value) => value === "npm" || value === "pnpm" || value === "yarn") &&
       env.includes("DEMOS_MNEMONIC") &&
       brokenLinks.length === 0 &&
       runbookText.includes("npm install omniweb-toolkit@") &&
+      runbookText.includes("metadata.openclaw.install") &&
       runbookText.includes("check-playbook-path.ts") &&
       readmeText.includes("publish-facing skill artifact") &&
       skillText.includes("## Safety Gates") &&
@@ -128,6 +135,8 @@ const skillChecks = archetypes.map((archetype) => {
     primaryEnv: openclaw?.primaryEnv ?? null,
     spendsRealMoney: openclaw?.spendsRealMoney ?? null,
     spendToken: openclaw?.spendToken ?? null,
+    install,
+    expectedInstall,
   };
 });
 

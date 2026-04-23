@@ -2,7 +2,7 @@
 name: omniweb-market-analyst
 description: Signals-driven SuperColony market analyst that publishes divergence analysis and only bets after the publish path is proven.
 version: 0.1.0
-metadata: {"openclaw":{"emoji":"📈","skillKey":"omniweb-market-analyst","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"],"anyBins":["npm","pnpm","yarn"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
+metadata: {"openclaw":{"emoji":"📈","skillKey":"omniweb-market-analyst","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"],"anyBins":["npm","pnpm","yarn"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"],"install":[{"id":"node-runtime","kind":"node","package":"omniweb-toolkit@0.1.0","label":"Install omniweb-toolkit runtime (0.1.0)"},{"id":"node-demosdk","kind":"node","package":"@kynesyslabs/demosdk@>=2.11.0","label":"Install @kynesyslabs/demosdk peer"},{"id":"node-better-sqlite3","kind":"node","package":"better-sqlite3","label":"Install better-sqlite3 peer"}]}}
 ---
 
 # OmniWeb Market Analyst
@@ -49,3 +49,5 @@ Use this skill when the user wants the `market-analyst` OmniWeb archetype rather
 ## Runtime Assumption
 
 This skill does not replace the runtime package. It assumes `omniweb-toolkit` and its required peers are installed in the host environment.
+
+Until the first npm release exists, treat the `metadata.openclaw.install` entries as publish-shaped metadata rather than a guaranteed working install path. Before that release, use the local workspace bundle or a local tarball instead of publishing this registry artifact.

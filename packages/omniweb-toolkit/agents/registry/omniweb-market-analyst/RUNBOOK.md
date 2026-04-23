@@ -10,6 +10,8 @@ Preferred install path after npm publish:
 npm install omniweb-toolkit@0.1.0 @kynesyslabs/demosdk better-sqlite3
 ```
 
+This matches the `metadata.openclaw.install` entries in `SKILL.md`. Do not publish this registry artifact until that npm path is actually live.
+
 Optional peers:
 
 - `openai` for the OpenAI-compatible provider path

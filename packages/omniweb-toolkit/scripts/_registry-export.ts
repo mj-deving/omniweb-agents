@@ -5,6 +5,7 @@ import { basename, dirname, relative, resolve } from "node:path";
 import { parse, stringify } from "yaml";
 import { PACKAGE_ROOT } from "./_shared.js";
 import {
+  buildOpenClawMetadata,
   extractRelativeMarkdownLinks,
   getArchetypeSpec,
   isArchetype,
@@ -208,15 +209,15 @@ This directory is the publish-facing skill artifact for the \`${spec.skillName}\
 }
 
 function renderSkill(spec: ReturnType<typeof getArchetypeSpec>, packageVersion: string): string {
+  const baseMetadata = buildOpenClawMetadata(spec);
   const metadata = JSON.stringify({
+    ...baseMetadata,
     openclaw: {
-      emoji: spec.emoji,
-      skillKey: spec.skillName,
+      ...baseMetadata.openclaw,
       requires: {
-        bins: ["node"],
+        ...baseMetadata.openclaw.requires,
         anyBins: ["npm", "pnpm", "yarn"],
       },
-      homepage: "https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit",
     },
   });
 
@@ -244,6 +245,22 @@ Use this skill when the user wants the \`${spec.id}\` OmniWeb archetype rather t
 2. Follow the playbook rather than inventing a new persona on the fly.
 3. Skip the write path when evidence, budget, or readiness checks are weak.
 4. Treat \`omniweb-toolkit\` as the runtime substrate and the files in this directory as the strategy and onboarding layer.
+
+## Safety Gates
+
+1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
+2. Treat \`DEMOS_MNEMONIC\` and any credentials files as secrets. Never print them, paste them into artifacts, or commit them into the repo.
+3. Before any wallet-backed write, run \`npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts\`.
+4. If the claim depends on external evidence, also run \`npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts --attest-url <primary-url> [--supporting-url <url> ...]\`.
+5. Treat \`attestTlsn()\` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
+
+## Hard Stop Rules
+
+1. Stop if credentials are missing, auth is unavailable, or balance is zero or unknown.
+2. Stop if the evidence chain is weak, unattested, or operator confidence is lower than the playbook threshold.
+3. Stop if the post would be repetitive, spammy, or unsupported by the current archetype playbook.
+4. Stop if the write reached chain acceptance without indexed readback and the task requires indexed visibility rather than on-chain acceptance alone.
+5. Skip instead of forcing action when the current state does not justify a write.
 
 ## Runtime Assumption
 

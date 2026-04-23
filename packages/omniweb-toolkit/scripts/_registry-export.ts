@@ -20,6 +20,13 @@ export { extractRelativeMarkdownLinks, isArchetype, parseFrontmatter, SUPPORTED_
 
 export const REGISTRY_EXPORT_ROOT = resolve(PACKAGE_ROOT, "agents", "registry");
 
+interface OpenClawInstallSpec {
+  id: string;
+  kind: "node";
+  package: string;
+  label: string;
+}
+
 export function buildRegistryExport(archetypes: readonly Archetype[] = SUPPORTED_ARCHETYPES): ExportedFile[] {
   const files: ExportedFile[] = [
     {
@@ -214,6 +221,7 @@ function renderSkill(spec: ReturnType<typeof getArchetypeSpec>, packageVersion: 
     ...baseMetadata,
     openclaw: {
       ...baseMetadata.openclaw,
+      install: buildRegistryInstallSpecs(packageVersion),
       requires: {
         ...baseMetadata.openclaw.requires,
         anyBins: ["npm", "pnpm", "yarn"],
@@ -272,6 +280,8 @@ Use this skill when the user wants the \`${spec.id}\` OmniWeb archetype rather t
 ## Runtime Assumption
 
 This skill does not replace the runtime package. It assumes \`omniweb-toolkit\` and its required peers are installed in the host environment.
+
+Until the first npm release exists, treat the \`metadata.openclaw.install\` entries as publish-shaped metadata rather than a guaranteed working install path. Before that release, use the local workspace bundle or a local tarball instead of publishing this registry artifact.
 `);
 }
 
@@ -318,6 +328,8 @@ Preferred install path after npm publish:
 \`\`\`bash
 npm install omniweb-toolkit@${packageVersion} @kynesyslabs/demosdk better-sqlite3
 \`\`\`
+
+This matches the \`metadata.openclaw.install\` entries in \`SKILL.md\`. Do not publish this registry artifact until that npm path is actually live.
 
 Optional peers:
 
@@ -413,6 +425,29 @@ function deepMerge(base: unknown, override: unknown): unknown {
 function readPackageVersion(): string {
   const packageJson = JSON.parse(readPackageFile("package.json")) as { version: string };
   return packageJson.version;
+}
+
+export function buildRegistryInstallSpecs(packageVersion: string): OpenClawInstallSpec[] {
+  return [
+    {
+      id: "node-runtime",
+      kind: "node",
+      package: `omniweb-toolkit@${packageVersion}`,
+      label: `Install omniweb-toolkit runtime (${packageVersion})`,
+    },
+    {
+      id: "node-demosdk",
+      kind: "node",
+      package: "@kynesyslabs/demosdk@>=2.11.0",
+      label: "Install @kynesyslabs/demosdk peer",
+    },
+    {
+      id: "node-better-sqlite3",
+      kind: "node",
+      package: "better-sqlite3",
+      label: "Install better-sqlite3 peer",
+    },
+  ];
 }
 
 function readPackageFile(relativePath: string): string {

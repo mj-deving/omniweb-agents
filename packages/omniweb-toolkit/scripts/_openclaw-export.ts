@@ -503,11 +503,28 @@ This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype 
 
 1. From this directory, run \`npm install\`.
 2. Start from \`skills/${spec.skillName}/minimal-agent-starter.mjs\` unless you already know you need the full archetype scaffold.
-3. Start OpenClaw with this folder as the workspace, or copy \`skills/${spec.skillName}\` into an existing workspace's \`skills/\` directory.
-4. Verify the skill is visible with \`openclaw skills list\`.
-5. Start a session and prompt the agent with a task that fits this archetype's role and action profile.
+3. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
+
+   \`\`\`bash
+   openclaw agents add ${spec.id} --workspace "$(pwd)" --model openai-codex/gpt-5.4 --non-interactive
+   \`\`\`
+
+4. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
+5. Run a local smoke turn with an explicit session selector:
+
+   \`\`\`bash
+   openclaw agent --agent ${spec.id} --local --session-id ${spec.id}-smoke --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."
+   \`\`\`
+
+6. Use \`openclaw skills list\` only as a secondary visibility check after the workspace is active. \`openclaw skills search\` is ClawHub-backed discovery and is not the right command for local workspace skills.
 
 The local \`package.json\` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the \`file:../../..\` dependency with a reachable package source.
+
+## Model / Auth Note
+
+- If this machine uses ChatGPT / Codex OAuth, prefer \`openai-codex/gpt-5.4\`.
+- If this machine uses a direct OpenAI Platform API key, use \`openai/gpt-5.4\` and make sure \`OPENAI_API_KEY\` is set.
+- The local smoke command still needs \`--agent\`, \`--session-id\`, or another explicit session selector even when you pass \`--local\`.
 
 ## Validation
 

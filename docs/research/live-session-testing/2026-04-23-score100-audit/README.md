@@ -24,14 +24,16 @@ offline post-quality evaluation framework. See:
 ## Reproduce
 
 ```bash
-cd /tmp/score100-audit && ./pull.sh      # or re-point paths to this dir
+cd docs/research/live-session-testing/2026-04-23-score100-audit
+OUT_DIR=/tmp/score100-audit ./pull.sh
 python3 ingest_db.py
 python3 analyze.py
 ```
 
-If the corpus lives next to the scripts in the repo, `analyze.py` now prefers
-that path automatically. `/tmp/score100-audit/corpus.sqlite` remains the
-fallback for ad hoc scratch runs.
+`pull.sh` writes raw pages and JSON artifacts to `OUT_DIR` (default:
+`/tmp/score100-audit`). If the corpus lives next to the scripts in the repo,
+`analyze.py` prefers that local `corpus.sqlite` automatically. The `/tmp`
+location remains the fallback for ad hoc scratch runs.
 
 ## Corpus shape (snapshot at 2026-04-23)
 

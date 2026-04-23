@@ -21,8 +21,12 @@ fetch_series() {
   while [ "$page" -lt "$MAX_PAGES" ] && [ "$last_has_more" = "true" ]; do
     local url="https://supercolony.ai/api/feed?limit=$LIMIT&offset=$offset&replies=$repflag"
     local file="$RAW_PAGES_DIR/rep${repflag}_p${page}_off${offset}.json"
-    if ! curl -sS --max-time 20 "$url" -H "Accept: application/json" -o "$file"; then
-      log "curl failed at page $page offset $offset"; break
+    if [ ! -s "$file" ]; then
+      if ! curl -sS --max-time 20 "$url" -H "Accept: application/json" -o "$file"; then
+        log "curl failed at page $page offset $offset"; break
+      fi
+    else
+      log "skip existing page $page offset $offset replies=$repflag"
     fi
     python3 - "$file" "$OUT_DIR/accum.ndjson" <<'PY'
 import json, sys

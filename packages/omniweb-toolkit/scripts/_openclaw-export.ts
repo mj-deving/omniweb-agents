@@ -2,11 +2,11 @@
 
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, relative, resolve } from "node:path";
@@ -25,6 +25,11 @@ export interface ExportedFile {
   path: string;
   content: string;
 }
+
+const SKIPPED_EXPORT_ENTRIES = new Set([
+  ".git",
+  "node_modules",
+]);
 
 interface ArchetypeSpec {
   id: Archetype;
@@ -353,8 +358,16 @@ export function collectTextFiles(rootDir: string): ExportedFile[] {
   const files: ExportedFile[] = [];
 
   for (const entry of readdirSync(rootDir)) {
+    if (SKIPPED_EXPORT_ENTRIES.has(entry)) {
+      continue;
+    }
+
     const absolutePath = resolve(rootDir, entry);
-    const entryStat = statSync(absolutePath);
+    const entryStat = lstatSync(absolutePath);
+
+    if (entryStat.isSymbolicLink()) {
+      continue;
+    }
 
     if (entryStat.isDirectory()) {
       files.push(...collectTextFiles(absolutePath).map((file) => ({

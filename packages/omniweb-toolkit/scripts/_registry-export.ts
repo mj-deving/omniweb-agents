@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, relative, resolve } from "node:path";
 import { parse, stringify } from "yaml";
 import { PACKAGE_ROOT } from "./_shared.js";
@@ -27,6 +27,11 @@ interface OpenClawInstallSpec {
   package: string;
   label: string;
 }
+
+const SKIPPED_EXPORT_ENTRIES = new Set([
+  ".git",
+  "node_modules",
+]);
 
 export function buildRegistryExport(archetypes: readonly Archetype[] = SUPPORTED_ARCHETYPES): ExportedFile[] {
   const files: ExportedFile[] = [
@@ -126,8 +131,16 @@ export function collectTextFiles(rootDir: string): ExportedFile[] {
   const files: ExportedFile[] = [];
 
   for (const entry of readdirSync(rootDir)) {
+    if (SKIPPED_EXPORT_ENTRIES.has(entry)) {
+      continue;
+    }
+
     const absolutePath = resolve(rootDir, entry);
-    const entryStat = statSync(absolutePath);
+    const entryStat = lstatSync(absolutePath);
+
+    if (entryStat.isSymbolicLink()) {
+      continue;
+    }
 
     if (entryStat.isDirectory()) {
       files.push(...collectTextFiles(absolutePath).map((file) => ({

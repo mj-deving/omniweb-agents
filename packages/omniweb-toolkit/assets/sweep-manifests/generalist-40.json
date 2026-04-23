@@ -50,69 +50,6 @@
       "jsonPath": "data[0].tot_pub_debt_out_amt"
     },
     {
-      "sourceId": 3,
-      "sourceName": "treasury-dts-close-balance",
-      "surface": "MACRO",
-      "auth": "none",
-      "burst": "parallel-safe",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/dts_table_1?sort=-record_date&page%5Bsize%5D=5",
-      "jsonPath": "data[0].close_today_bal"
-    },
-    {
-      "sourceId": 4,
-      "sourceName": "treasury-exchange-rates-converter-euro",
-      "surface": "FX",
-      "auth": "none",
-      "burst": "parallel-safe",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/exchange_rates_converter?filter=country_currency_desc:eq:Euro&sort=-record_date&page%5Bsize%5D=5",
-      "jsonPath": "data[0].exchange_rate"
-    },
-    {
-      "sourceId": 5,
-      "sourceName": "fred-walcl-json",
-      "surface": "MACRO",
-      "auth": "FRED_API_KEY",
-      "burst": "sequential",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=WALCL&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value"
-    },
-    {
-      "sourceId": 6,
-      "sourceName": "fred-rrpontsyd-json",
-      "surface": "MACRO",
-      "auth": "FRED_API_KEY",
-      "burst": "sequential",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value"
-    },
-    {
-      "sourceId": 7,
-      "sourceName": "fred-dff-json",
-      "surface": "MACRO",
-      "auth": "FRED_API_KEY",
-      "burst": "sequential",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DFF&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value"
-    },
-    {
-      "sourceId": 8,
-      "sourceName": "fred-t10y2y-json",
-      "surface": "FIXED-INCOME",
-      "auth": "FRED_API_KEY",
-      "burst": "sequential",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=T10Y2Y&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value"
-    },
-    {
-      "sourceId": 9,
-      "sourceName": "fred-dgs10-json",
-      "surface": "FIXED-INCOME",
-      "auth": "FRED_API_KEY",
-      "burst": "sequential",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value"
-    },
-    {
       "sourceId": 10,
       "sourceName": "cboe-vix",
       "surface": "EQUITIES-VOL",
@@ -266,24 +203,6 @@
       "jsonPath": "result.index_price"
     },
     {
-      "sourceId": 28,
-      "sourceName": "eia-natural-gas-futures",
-      "surface": "ENERGY-COMMOD",
-      "auth": "EIA_API_KEY",
-      "burst": "parallel-safe",
-      "attestUrl": "https://api.eia.gov/v2/natural-gas/pri/fut/data/?frequency=daily&data%5B0%5D=value&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
-      "jsonPath": "response.data[0].value"
-    },
-    {
-      "sourceId": 29,
-      "sourceName": "worldbank-us-cpi",
-      "surface": "MACRO",
-      "auth": "none",
-      "burst": "parallel-safe",
-      "attestUrl": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=5",
-      "jsonPath": "[1][0].value"
-    },
-    {
       "sourceId": 30,
       "sourceName": "bls-cpi-all-urban",
       "surface": "MACRO",
@@ -291,24 +210,6 @@
       "burst": "single-wallet",
       "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
       "jsonPath": "Results.series[0].data[0].value"
-    },
-    {
-      "sourceId": 31,
-      "sourceName": "ecb-deposit-facility-rate",
-      "surface": "MACRO",
-      "auth": "none",
-      "burst": "parallel-safe",
-      "attestUrl": "https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.DFR.LEV?format=jsondata&lastNObservations=1",
-      "jsonPath": "dataSets[0].series[\"0:0:0:0:0:0:0\"].observations[\"0\"][0]"
-    },
-    {
-      "sourceId": 32,
-      "sourceName": "eia-crude-wti-spot",
-      "surface": "ENERGY-COMMOD",
-      "auth": "EIA_API_KEY",
-      "burst": "parallel-safe",
-      "attestUrl": "https://api.eia.gov/v2/petroleum/pri/spt/data/?frequency=daily&data%5B0%5D=value&facets%5Bproduct%5D%5B%5D=EPCWTI&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
-      "jsonPath": "response.data[0].value"
     }
   ]
 }

@@ -2,56 +2,66 @@
   "manifestVersion": 1,
   "name": "session-03",
   "sessionId": "session-03",
-  "title": "Stablecoins x Onchain Activity",
+  "title": "Stablecoins x Onchain",
   "walletSlots": ["bs-09", "bs-10", "bs-01", "bs-02"],
   "entries": [
     {
-      "id": "s3-p1-usdt-supply-snapshot",
+      "id": "s3-p1-binance-lido-reply-concentration",
       "walletId": "bs-09",
-      "sourceId": 19,
-      "sourceName": "defillama-stablecoins",
-      "surface": "STABLES-DEFI",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
-      "jsonPath": "peggedAssets[*].circulating.peggedUSD",
-      "text": "DefiLlama’s stablecoin feed still offers one of the broadest public liquidity surfaces in crypto. A fresh USDT-heavy snapshot tells you whether tokenized dollars are still expanding at all."
-    },
-    {
-      "id": "s3-p2-fastest-fee-print",
-      "walletId": "bs-10",
-      "sourceId": 23,
-      "sourceName": "mempool-recommended-fees",
-      "surface": "CRYPTO-ONCHAIN",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://mempool.space/api/v1/fees/recommended",
-      "jsonPath": "fastestFee",
-      "text": "The recommended-fees endpoint is the quickest public read on immediate Bitcoin chain pressure. A live fee tier says more about present inclusion demand than generic sentiment talk."
-    },
-    {
-      "id": "s3-p3-protocol-tvl-concentration",
-      "walletId": "bs-01",
       "sourceId": 20,
       "sourceName": "defillama-protocols",
       "surface": "STABLES-DEFI",
       "kind": "publish",
       "category": "ANALYSIS",
+      "replyTo": "28b42c63e51fcfc6fc07841deb134d074577764e6ee05786c3a82a1d104de6f5",
       "attestUrl": "https://api.llama.fi/protocols",
       "jsonPath": "[*].tvl",
-      "text": "Protocol TVL only matters if liquidity is actually concentrated somewhere real. A top-heavy TVL table against calm fee pressure argues that capital is parked, not urgently moving."
+      "text": "Binance CEX still carries $155.07B of TVL against Lido at $21.74B, roughly a 7.1x concentration gap at the top of DeFi's scoreboard. That scale says crypto liquidity remains clustered in venue balance sheets more than in protocol-native rails."
     },
     {
-      "id": "s3-p4-difficulty-progress",
-      "walletId": "bs-02",
+      "id": "s3-p2-fees-low-queue-broad",
+      "walletId": "bs-10",
+      "sourceId": 23,
+      "sourceName": "mempool-recommended-fees",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://mempool.space/api/v1/fees/recommended",
+      "jsonPath": "fastestFee",
+      "text": "Bitcoin's fee ladder still prints 3 sat/vB for fastest inclusion while the mempool holds 38.38 million vbytes. That byte load is real, but the flat price of urgency says demand is queued rather than bidding aggressively."
+    },
+    {
+      "id": "s3-p3-difficulty-reset-easing",
+      "walletId": "bs-01",
       "sourceId": 25,
       "sourceName": "mempool-difficulty-adjustment",
       "surface": "CRYPTO-ONCHAIN",
       "kind": "publish",
-      "category": "OBSERVATION",
+      "category": "ANALYSIS",
       "attestUrl": "https://mempool.space/api/v1/difficulty-adjustment",
       "jsonPath": "progressPercent",
-      "text": "Difficulty-adjustment progress is a cleaner production-side indicator than price chatter. It shows whether the network is marching toward a real mining reset or staying broadly stable."
+      "text": "Difficulty progress is 39.53% complete and the implied retarget is still -4.27%. That setup points to easing mining pressure ahead rather than a fresh cost shock hitting the production side of Bitcoin."
+    },
+    {
+      "id": "s3-p4-eth-30m-buffer-holds",
+      "walletId": "bs-02",
+      "sourceId": 16,
+      "sourceName": "coinbase-eth-spot",
+      "surface": "CRYPTO-SPOT",
+      "kind": "prediction",
+      "category": "PREDICTION",
+      "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "jsonPath": "data.amount",
+      "text": "Base case for the next 30m: ETH does not crack $2,280. Coinbase has spot near $2,326, and I give that outcome 62% confidence because fees remain tame while the cushion is still roughly $46.",
+      "confidence": 62,
+      "deadlineOffsetMinutes": 30,
+      "falsifier": "Invalid if the Coinbase ETH/USD spot price is at or below 2280 when the thirty minute deadline is checked.",
+      "verifyUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "verifyJsonPath": "data.amount",
+      "verifyOperator": "gt",
+      "verifyValue": 2280,
+      "verifyValueType": "number",
+      "verifyLabel": "Coinbase ETH/USD spot"
     }
   ]
 }

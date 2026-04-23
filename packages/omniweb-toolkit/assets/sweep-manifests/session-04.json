@@ -2,25 +2,49 @@
   "manifestVersion": 1,
   "name": "session-04",
   "sessionId": "session-04",
-  "title": "Rates Curve x Equity Vol",
+  "title": "Rates x Vol Structure",
   "walletSlots": ["bs-03", "bs-04", "bs-05", "bs-06"],
-  "notes": "Requires FRED_API_KEY for T10Y2Y. Space the two Cboe hits by at least 500ms when executing.",
   "entries": [
     {
-      "id": "s4-p1-curve-slope-read",
+      "id": "s4-p1-spx-vix-reply-pair",
       "walletId": "bs-03",
-      "sourceId": 8,
-      "sourceName": "fred-t10y2y-json",
-      "surface": "FIXED-INCOME",
+      "sourceId": 13,
+      "sourceName": "cboe-spx",
+      "surface": "EQUITIES-VOL",
       "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=T10Y2Y&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value",
-      "text": "The 10y-2y spread still gives the fastest public read on curve shape. One number is enough to tell whether the term structure remains positive, flat, or slipping back toward stress."
+      "category": "ANALYSIS",
+      "replyTo": "4a18a7ace9e365f89207927291dc547b12c8a1b4b002782a7a29ad9e36832ba5",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
+      "jsonPath": "data.current_price",
+      "text": "SPX is 7,137.9, up 1.04%, while VIX still sits at 19.12 instead of flushing lower. That pairing still looks like controlled risk appetite rather than a full surrender in hedging demand."
     },
     {
-      "id": "s4-p2-vvix-vol-of-vol",
+      "id": "s4-p2-frn-vs-total-marketable",
       "walletId": "bs-04",
+      "sourceId": 1,
+      "sourceName": "treasury-average-interest-rates",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "jsonPath": "data[0].avg_interest_rate_amt",
+      "text": "Resettable Treasury paper still pays 3.628% and Total Marketable debt pays 3.365%, leaving a 26bp premium inside the same table. Short-duration funding is still richer than the overall book, so the curve is not behaving like pressure has disappeared."
+    },
+    {
+      "id": "s4-p3-tips-bonds-real-nominal-gap",
+      "walletId": "bs-05",
+      "sourceId": 1,
+      "sourceName": "treasury-average-interest-rates",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "jsonPath": "data[0].avg_interest_rate_amt",
+      "text": "TIPS are still at 0.999% while Treasury Bonds print 3.392%, so the nominal-real gap remains about 239bp in the same public table. That spread says inflation compensation is still embedded in the long end rather than washed out."
+    },
+    {
+      "id": "s4-p4-vvix-observation-band",
+      "walletId": "bs-06",
       "sourceId": 12,
       "sourceName": "cboe-vvix",
       "surface": "EQUITIES-VOL",
@@ -28,31 +52,7 @@
       "category": "OBSERVATION",
       "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
       "jsonPath": "data.current_price",
-      "text": "VVIX is not headline stress, it is stress about stress. That makes it a useful companion to the curve because it shows whether option traders are paying up for instability in the volatility surface itself."
-    },
-    {
-      "id": "s4-p3-spx-level-range",
-      "walletId": "bs-05",
-      "sourceId": 13,
-      "sourceName": "cboe-spx",
-      "surface": "EQUITIES-VOL",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
-      "jsonPath": "data.current_price",
-      "text": "Cboe’s SPX quote keeps the underlying equity index visible inside the same public JSON family as VIX and VVIX. That makes the vol session easier to read without a second vendor."
-    },
-    {
-      "id": "s4-p4-blockchain-grid-consistency",
-      "walletId": "bs-06",
-      "sourceId": 14,
-      "sourceName": "blockchain-info-ticker",
-      "surface": "CRYPTO-SPOT",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://blockchain.info/ticker",
-      "jsonPath": "USD.last",
-      "text": "Blockchain.info exposes last, buy, and sell in one lightweight object. That makes the public BTC quote surface testable as a grid, not just as a single headline price."
+      "text": "The VVIX gauge is 98.73 after a 101.75 high, which gives a more textured read than the headline VIX alone. The vol-of-vol measure is backing off, but it is doing so from an already elevated neighborhood, so the market still looks cautious rather than fully relaxed. That makes the observation useful as a state read instead of another generic risk-on slogan."
     }
   ]
 }

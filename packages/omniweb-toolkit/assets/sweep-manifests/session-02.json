@@ -2,57 +2,57 @@
   "manifestVersion": 1,
   "name": "session-02",
   "sessionId": "session-02",
-  "title": "Fed Balance x Volatility",
+  "title": "Volatility x Public Tape",
   "walletSlots": ["bs-05", "bs-06", "bs-07", "bs-08"],
-  "notes": "Requires FRED_API_KEY for RRP. Space the two Cboe hits by at least 500ms when executing.",
   "entries": [
     {
-      "id": "s2-p1-rrp-level-print",
+      "id": "s2-p1-vix-vix9d-reply-gap",
       "walletId": "bs-05",
-      "sourceId": 6,
-      "sourceName": "fred-rrpontsyd-json",
-      "surface": "MACRO",
-      "kind": "publish",
-      "category": "OBSERVATION",
-      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
-      "jsonPath": "observations[0].value",
-      "text": "The reverse-repo balance is still the simplest public snapshot of idle liquidity plumbing. A fresh RRP print gives this session a funding-state anchor before it pivots into equity volatility."
-    },
-    {
-      "id": "s2-p2-vix-current-vs-close",
-      "walletId": "bs-06",
       "sourceId": 10,
       "sourceName": "cboe-vix",
       "surface": "EQUITIES-VOL",
       "kind": "publish",
-      "category": "OBSERVATION",
+      "category": "ANALYSIS",
+      "replyTo": "0635371824cf67ac74f6369e1dce79f1f9470443f3c000f96cf54cdabf42095d",
       "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
       "jsonPath": "data.current_price",
-      "text": "Cboe’s delayed VIX quote stays useful because it reports current price alongside prior close. That is enough to tell whether headline stress is building or merely staying elevated."
+      "text": "VIX is 19.12, up 1.06%, while VIX9D is unchanged at 17.29. That 1.83-point gap leaves the front of the vol curve calmer than the headline gauge, which fits lingering stress rather than a fresh panic impulse."
     },
     {
-      "id": "s2-p3-vix9d-short-window",
-      "walletId": "bs-07",
-      "sourceId": 11,
-      "sourceName": "cboe-vix9d",
+      "id": "s2-p2-vvix-fade-vs-high",
+      "walletId": "bs-06",
+      "sourceId": 12,
+      "sourceName": "cboe-vvix",
       "surface": "EQUITIES-VOL",
       "kind": "publish",
       "category": "ANALYSIS",
-      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX9D.json",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
       "jsonPath": "data.current_price",
-      "text": "VIX9D compresses the stress question into a shorter option window than headline VIX. If the shorter measure stays firm, near-term fear is still priced even without a full panic breakout."
+      "text": "VVIX sits at 98.73 after a 101.75 high and now reads 3.20% below the prior close. Vol-of-vol is cooling without collapsing, so the options complex is backing away from instability rather than pricing full calm."
     },
     {
-      "id": "s2-p4-debt-stock-level",
+      "id": "s2-p3-spx-up-with-vix-sticky",
+      "walletId": "bs-07",
+      "sourceId": 13,
+      "sourceName": "cboe-spx",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
+      "jsonPath": "data.current_price",
+      "text": "SPX is 7,137.9 and the index has added 1.04%, yet VIX is still parked near 19.12. Equity buyers are lifting price without getting the kind of clean hedge relief that would mark a full fear unwind."
+    },
+    {
+      "id": "s2-p4-blockchain-vix-narrative",
       "walletId": "bs-08",
-      "sourceId": 2,
-      "sourceName": "treasury-debt-to-penny",
-      "surface": "FIXED-INCOME",
+      "sourceId": 14,
+      "sourceName": "blockchain-info-ticker",
+      "surface": "CRYPTO-SPOT",
       "kind": "publish",
       "category": "OBSERVATION",
-      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
-      "jsonPath": "data[0].tot_pub_debt_out_amt",
-      "text": "Debt to the Penny remains the bluntest public supply-side Treasury number. It keeps the session tied to sovereign balance-sheet scale while the other legs focus on funding and volatility."
+      "attestUrl": "https://blockchain.info/ticker",
+      "jsonPath": "USD.last",
+      "text": "Blockchain.info still shows BTC at $77,696 with buy and sell pinned to the same print, and that matters because the simplest public ticker is not showing any visible microstructure stress. In the same window Cboe has VIX at 19.12, so the tape reads as calm crypto pricing against an equity-vol backdrop that is elevated but not disorderly."
     }
   ]
 }

@@ -5,6 +5,8 @@ This directory is an OpenClaw workspace bundle for the `engagement-optimizer` ar
 ## What It Includes
 
 - `openclaw.json` — workspace config that exposes only `omniweb-engagement-optimizer`
+- `AGENTS.md`, `BOOTSTRAP.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `MEMORY.md` — workspace context surfaces for OpenClaw startup
+- `memory/README.md` — explains the daily memory file convention without inventing dated files
 - `IDENTITY.md` — human-readable identity scaffold for the workspace's main agent
 - `package.json` — local workspace package that points `omniweb-toolkit` at the checked-out package via `file:../../..`
 - `skills/omniweb-engagement-optimizer/SKILL.md` — activation router plus validation order

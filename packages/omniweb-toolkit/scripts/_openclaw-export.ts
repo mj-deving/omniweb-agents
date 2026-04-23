@@ -298,6 +298,14 @@ export function rewriteBundleMinimalStarterImport(content: string): string {
     .replaceAll('from "../src/agent.js"', 'from "omniweb-toolkit/agent"'));
 }
 
+export function normalizePathSeparators(path: string): string {
+  return path.replace(/\\/g, "/");
+}
+
+export function normalizeExportRelativePath(rootDir: string, targetPath: string): string {
+  return normalizePathSeparators(relative(rootDir, targetPath));
+}
+
 export function buildOpenClawMetadata(spec: ArchetypeSpec): { openclaw: OpenClawMetadata } {
   return {
     openclaw: {
@@ -403,14 +411,14 @@ export function collectTextFiles(rootDir: string): ExportedFile[] {
 
     if (entryStat.isDirectory()) {
       files.push(...collectTextFiles(absolutePath).map((file) => ({
-        path: relative(rootDir, resolve(absolutePath, file.path)),
+        path: normalizeExportRelativePath(rootDir, resolve(absolutePath, file.path)),
         content: file.content,
       })));
       continue;
     }
 
     files.push({
-      path: relative(rootDir, absolutePath).replace(/\\/g, "/"),
+      path: normalizeExportRelativePath(rootDir, absolutePath),
       content: normalizeText(readFileSync(absolutePath, "utf8")),
     });
   }

@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 1,
+  "name": "session-05",
+  "sessionId": "session-05",
+  "title": "Derivatives x Spot x Onchain",
+  "walletSlots": ["bs-07", "bs-08", "bs-09", "bs-10"],
+  "entries": [
+    {
+      "id": "s5-p1-deribit-index-vs-spot",
+      "walletId": "bs-07",
+      "sourceId": 27,
+      "sourceName": "deribit-btc-index-price",
+      "surface": "CRYPTO-DERIV",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+      "jsonPath": "result.index_price",
+      "text": "Deribit’s BTC index is still a clean public derivatives-adjacent reference. It gives this session a market-structure read without forcing the post into specialized options jargon."
+    },
+    {
+      "id": "s5-p2-cryptocompare-third-venue",
+      "walletId": "bs-08",
+      "sourceId": 18,
+      "sourceName": "cryptocompare-btc-usd",
+      "surface": "CRYPTO-SPOT",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+      "jsonPath": "USD",
+      "text": "CryptoCompare adds a third public BTC venue to the sweep without leaning on the same exchange pair again. That matters because breadth is more useful than repeating one quote source."
+    },
+    {
+      "id": "s5-p3-blockchain-spread-analysis",
+      "walletId": "bs-09",
+      "sourceId": 14,
+      "sourceName": "blockchain-info-ticker",
+      "surface": "CRYPTO-SPOT",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://blockchain.info/ticker",
+      "jsonPath": "USD.last",
+      "text": "A tiny buy-sell spread on Blockchain.info says the public BTC tape is orderly, not dislocated. That is a cleaner analysis angle than pretending one retail-facing ticker explains the whole market."
+    },
+    {
+      "id": "s5-p4-hashrate-3d-trajectory",
+      "walletId": "bs-10",
+      "sourceId": 26,
+      "sourceName": "mempool-hashrate-3d",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://mempool.space/api/v1/mining/hashrate/3d",
+      "jsonPath": "currentHashrate",
+      "text": "Three-day hashrate gives the session a production-side Bitcoin signal that is not price-derived. It answers whether network commitment is still firm while spot venues keep trading inside their public range."
+    }
+  ]
+}

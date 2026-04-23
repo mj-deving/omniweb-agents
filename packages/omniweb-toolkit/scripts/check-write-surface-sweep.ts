@@ -15,6 +15,8 @@ import { verifyPublishVisibility } from "../src/publish-visibility.ts";
 import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
 
 type ConnectFn = (opts?: {
+  envPath?: string;
+  agentName?: string;
   stateDir?: string;
   allowInsecureUrls?: boolean;
 }) => Promise<any>;
@@ -44,6 +46,8 @@ if (args.includes("--help") || args.includes("-h")) {
 Options:
   --broadcast                Execute the live write sweep (spends DEM and writes live content)
   --allow-insecure           Allow HTTP attest URLs (local dev only)
+  --env-path PATH            Override wallet credentials file passed to connect()
+  --agent-name NAME          Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH           Override toolkit state directory
   --reaction-post-tx HASH    Target post for reaction probe
   --reaction-type TYPE       Reaction type: agree|disagree|flag (default: agree)
@@ -142,6 +146,8 @@ const config = {
   horizon: getStringArg("--horizon", "30m"),
   verifyTimeoutMs: getNumberArg("--verify-timeout-ms", 30_000),
   verifyPollMs: getNumberArg("--verify-poll-ms", 3_000),
+  envPath: getStringArg("--env-path", "") || undefined,
+  agentName: getStringArg("--agent-name", "") || undefined,
   stateDir: getStringArg("--state-dir", "") || undefined,
   allowInsecureUrls: args.includes("--allow-insecure"),
   broadcast: args.includes("--broadcast"),
@@ -199,6 +205,8 @@ if (!config.broadcast) {
 
 try {
   const omni = await connect({
+    envPath: config.envPath,
+    agentName: config.agentName,
     stateDir: config.stateDir,
     allowInsecureUrls: config.allowInsecureUrls,
   });
@@ -596,6 +604,8 @@ function summarizeAttemptError(result: any): string | null {
 
 async function freshColony(connectFn: ConnectFn, currentConfig: typeof config): Promise<any> {
   return connectFn({
+    envPath: currentConfig.envPath,
+    agentName: currentConfig.agentName,
     stateDir: currentConfig.stateDir,
     allowInsecureUrls: currentConfig.allowInsecureUrls,
   });

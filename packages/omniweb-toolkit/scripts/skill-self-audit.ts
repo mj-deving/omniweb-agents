@@ -447,7 +447,8 @@ function extractRelativeLinks(text: string): string[] {
 
 function existsRelative(root: string, relativeTarget: string): boolean {
   try {
-    return statSync(resolve(root, relativeTarget)).isFile();
+    const stat = statSync(resolve(root, relativeTarget));
+    return stat.isFile() || stat.isDirectory();
   } catch {
     return false;
   }
@@ -455,7 +456,8 @@ function existsRelative(root: string, relativeTarget: string): boolean {
 
 function existsFromFile(sourcePath: string, relativeTarget: string): boolean {
   try {
-    return statSync(resolve(sourcePath, "..", relativeTarget)).isFile();
+    const stat = statSync(resolve(sourcePath, "..", relativeTarget));
+    return stat.isFile() || stat.isDirectory();
   } catch {
     return false;
   }

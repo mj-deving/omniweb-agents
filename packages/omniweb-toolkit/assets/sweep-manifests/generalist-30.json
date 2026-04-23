@@ -1,0 +1,308 @@
+{
+  "manifestVersion": 1,
+  "name": "generalist-30",
+  "sourceDoc": "docs/archive/agent-handoffs/json-safe-generalist-source-catalog-2026-04-22.md",
+  "reserveSourceIds": [21, 26],
+  "sources": [
+    {
+      "sourceId": 1,
+      "sourceName": "treasury-average-interest-rates",
+      "surface": "FIXED-INCOME",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "jsonPath": "data[0].avg_interest_rate_amt",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 2,
+      "sourceName": "treasury-debt-to-penny",
+      "surface": "FIXED-INCOME",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].tot_pub_debt_out_amt",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 3,
+      "sourceName": "treasury-dts-close-balance",
+      "surface": "MACRO",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/dts_table_1?sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].close_today_bal",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 4,
+      "sourceName": "treasury-exchange-rates-converter-euro",
+      "surface": "FX",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/exchange_rates_converter?filter=country_currency_desc:eq:Euro&sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].exchange_rate",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 5,
+      "sourceName": "fred-walcl-json",
+      "surface": "MACRO",
+      "auth": "FRED_API_KEY",
+      "burst": "sequential",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=WALCL&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 6,
+      "sourceName": "fred-rrpontsyd-json",
+      "surface": "MACRO",
+      "auth": "FRED_API_KEY",
+      "burst": "sequential",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 7,
+      "sourceName": "fred-dff-json",
+      "surface": "MACRO",
+      "auth": "FRED_API_KEY",
+      "burst": "sequential",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DFF&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 8,
+      "sourceName": "fred-t10y2y-json",
+      "surface": "FIXED-INCOME",
+      "auth": "FRED_API_KEY",
+      "burst": "sequential",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=T10Y2Y&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 9,
+      "sourceName": "fred-dgs10-json",
+      "surface": "FIXED-INCOME",
+      "auth": "FRED_API_KEY",
+      "burst": "sequential",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 10,
+      "sourceName": "cboe-vix",
+      "surface": "EQUITIES-VOL",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+      "jsonPath": "data.current_price",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 11,
+      "sourceName": "cboe-vix9d",
+      "surface": "EQUITIES-VOL",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX9D.json",
+      "jsonPath": "data.current_price",
+      "suggestedCategory": "PREDICTION"
+    },
+    {
+      "sourceId": 12,
+      "sourceName": "cboe-vvix",
+      "surface": "EQUITIES-VOL",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+      "jsonPath": "data.current_price",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 13,
+      "sourceName": "cboe-spx",
+      "surface": "EQUITIES-VOL",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
+      "jsonPath": "data.current_price",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 14,
+      "sourceName": "blockchain-info-ticker",
+      "surface": "CRYPTO-SPOT",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://blockchain.info/ticker",
+      "jsonPath": "USD.last",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 15,
+      "sourceName": "coinbase-btc-spot",
+      "surface": "CRYPTO-SPOT",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+      "jsonPath": "data.amount",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 16,
+      "sourceName": "coinbase-eth-spot",
+      "surface": "CRYPTO-SPOT",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "jsonPath": "data.amount",
+      "suggestedCategory": "PREDICTION"
+    },
+    {
+      "sourceId": 17,
+      "sourceName": "kraken-btc-ticker",
+      "surface": "CRYPTO-SPOT",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.kraken.com/0/public/Ticker?pair=XBTUSD",
+      "jsonPath": "result.XXBTZUSD.c[0]",
+      "suggestedCategory": "PREDICTION"
+    },
+    {
+      "sourceId": 18,
+      "sourceName": "cryptocompare-btc-usd",
+      "surface": "CRYPTO-SPOT",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+      "jsonPath": "USD",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 19,
+      "sourceName": "defillama-stablecoins",
+      "surface": "STABLES-DEFI",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "jsonPath": "peggedAssets[*].circulating.peggedUSD",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 20,
+      "sourceName": "defillama-protocols",
+      "surface": "STABLES-DEFI",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.llama.fi/protocols",
+      "jsonPath": "[*].tvl",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 21,
+      "sourceName": "defillama-chains",
+      "surface": "STABLES-DEFI",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.llama.fi/chains",
+      "jsonPath": "[*].tvl",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 22,
+      "sourceName": "defillama-yield-pools",
+      "surface": "STABLES-DEFI",
+      "auth": "none",
+      "burst": "parallel-safe-cached",
+      "attestUrl": "https://yields.llama.fi/pools",
+      "jsonPath": "data[*].apyBase",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 23,
+      "sourceName": "mempool-recommended-fees",
+      "surface": "CRYPTO-ONCHAIN",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://mempool.space/api/v1/fees/recommended",
+      "jsonPath": "fastestFee",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 24,
+      "sourceName": "mempool-mempool-count",
+      "surface": "CRYPTO-ONCHAIN",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://mempool.space/api/mempool",
+      "jsonPath": "count",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 25,
+      "sourceName": "mempool-difficulty-adjustment",
+      "surface": "CRYPTO-ONCHAIN",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://mempool.space/api/v1/difficulty-adjustment",
+      "jsonPath": "progressPercent",
+      "suggestedCategory": "ANALYSIS"
+    },
+    {
+      "sourceId": 26,
+      "sourceName": "mempool-hashrate-3d",
+      "surface": "CRYPTO-ONCHAIN",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://mempool.space/api/v1/mining/hashrate/3d",
+      "jsonPath": "currentHashrate",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 27,
+      "sourceName": "deribit-btc-index-price",
+      "surface": "CRYPTO-DERIV",
+      "auth": "none",
+      "burst": "sequential",
+      "attestUrl": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+      "jsonPath": "result.index_price",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 28,
+      "sourceName": "eia-natural-gas-futures",
+      "surface": "ENERGY-COMMOD",
+      "auth": "EIA_API_KEY",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.eia.gov/v2/natural-gas/pri/fut/data/?frequency=daily&data%5B0%5D=value&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
+      "jsonPath": "response.data[0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 29,
+      "sourceName": "worldbank-us-cpi",
+      "surface": "MACRO",
+      "auth": "none",
+      "burst": "parallel-safe",
+      "attestUrl": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json&per_page=5",
+      "jsonPath": "[1][0].value",
+      "suggestedCategory": "OBSERVATION"
+    },
+    {
+      "sourceId": 30,
+      "sourceName": "bls-cpi-all-urban",
+      "surface": "MACRO",
+      "auth": "BLS_API_KEY_RECOMMENDED",
+      "burst": "sequential",
+      "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
+      "jsonPath": "Results.series[0].data[0].value",
+      "suggestedCategory": "ANALYSIS"
+    }
+  ]
+}

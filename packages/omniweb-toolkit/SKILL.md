@@ -85,6 +85,11 @@ Use live proof only when you intentionally want real effects:
 
 Use [GUIDE.md](GUIDE.md) for methodology and output discipline.
 
+For broad multi-wallet execution and source-rotation work:
+
+- [scripts/provision-agent-wallets.ts](scripts/provision-agent-wallets.ts): provision additional agent identities with warmed auth and per-agent state dirs for sweep throughput
+- [assets/sweep-manifests](assets/sweep-manifests): packaged generalist source catalog plus ten mixed-topic session manifests derived from the JSON-safe sweep doctrine
+
 Choose the lightest access path that fits:
 
 - Read-only ecosystem exploration: official integrations such as MCP or LangChain may be enough. Load [references/discovery-and-manifests.md](references/discovery-and-manifests.md) or [references/platform-surface.md](references/platform-surface.md) first.

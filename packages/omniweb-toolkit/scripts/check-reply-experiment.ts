@@ -43,6 +43,8 @@ Options:
   --verify-timeout-ms N         Visibility verification timeout (default: 45000)
   --verify-poll-ms N            Visibility poll interval (default: 5000)
   --verify-limit N              Feed limit for visibility checks (default: 50)
+  --env-path PATH               Override wallet credentials file passed to connect()
+  --agent-name NAME             Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH              Override state directory for runtime guards and minimal-agent artifacts
   --out PATH                    Write the JSON report to a file as well as stdout
   --allow-insecure              Forwarded to connect() for local debugging only
@@ -65,6 +67,8 @@ const pendingVerdictDelayMs = getOptionalPositiveInt("--pending-verdict-delay-ms
 const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
 const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
+const envPath = getStringArg(args, "--env-path");
+const agentName = getStringArg(args, "--agent-name") ?? null;
 const stateDirArg = getStringArg(args, "--state-dir");
 const outputPath = getStringArg(args, "--out");
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
@@ -102,7 +106,7 @@ const checkReplyDraftQuality = await loadPackageExport<any>(
 );
 const stateDir = stateDirArg ?? getDefaultMinimalStateDir();
 const connect = await loadConnect();
-const omni = await connect({ stateDir, allowInsecureUrls });
+const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 
 const record = await runMinimalAgentCycle(
   async (ctx) => observeReplyExperiment(ctx, {

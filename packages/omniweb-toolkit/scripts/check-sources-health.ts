@@ -180,7 +180,7 @@ export async function checkSourceHealth(
   const response = await fetchText(parsedUrl.pathname + parsedUrl.search, {
     baseUrl: `${parsedUrl.protocol}//${parsedUrl.host}`,
     accept: "application/json",
-    token: null,
+    token: "",
   });
 
   const contentType = extractContentType(response.body);

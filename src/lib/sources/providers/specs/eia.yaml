@@ -1,0 +1,150 @@
+schemaVersion: 1
+
+provider:
+  name: eia
+  displayName: US Energy Information Administration
+  matches:
+    providers: [eia]
+    hosts: [api.eia.gov]
+    urlPatterns: ["/v2/"]
+  domains: [energy, macro, commodities]
+  rateLimit:
+    bucket: eia
+    maxPerMinute: 60
+    maxPerHour: 9000
+  auth:
+    mode: query-param-env
+    envVar: EIA_API_KEY
+    queryParam: api_key
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  natural-gas-futures:
+    when:
+      sourceAdapterOperation: [natural-gas-futures]
+      urlPatterns: ["/v2/natural-gas/pri/fut/data/"]
+      default: true
+    claimTypes: [metric, price]
+    extractionPath: "$.response.data[0].value"
+    request:
+      method: GET
+      urlTemplate: "https://api.eia.gov/v2/natural-gas/pri/fut/data/"
+      query:
+        frequency: daily
+        "data[0]": value
+        "sort[0][column]": period
+        "sort[0][direction]": desc
+        offset: "0"
+        length: "{length}"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "eia"
+        - "natural gas"
+        - "futures"
+    variables:
+      length:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.response.data[*]"
+      fields:
+        id:
+          template: "eia-ng-{period}"
+          required: true
+        title:
+          template: "EIA natural gas futures ({period})"
+        summary:
+          template: "Natural gas futures: ${value}"
+        bodyText:
+          template: "EIA natural gas futures on {period}: ${value}"
+        topics:
+          template: "energy,commodities,natural-gas"
+        metrics:
+          value:
+            jsonPath: "$.value"
+          period:
+            jsonPath: "$.period"
+        raw:
+          mode: item
+
+  wti-spot:
+    when:
+      sourceAdapterOperation: [wti-spot]
+      urlPatterns: ["/v2/petroleum/pri/spt/data/"]
+    claimTypes: [metric, price]
+    extractionPath: "$.response.data[0].value"
+    request:
+      method: GET
+      urlTemplate: "https://api.eia.gov/v2/petroleum/pri/spt/data/"
+      query:
+        frequency: daily
+        "data[0]": value
+        "facets[product][]": EPCWTI
+        "sort[0][column]": period
+        "sort[0][direction]": desc
+        offset: "0"
+        length: "{length}"
+      estimatedSizeKb:
+        TLSN: 4
+        DAHR: 4
+      matchHints:
+        - "eia"
+        - "wti"
+        - "crude"
+        - "spot"
+    variables:
+      length:
+        sources:
+          - literal: "5"
+        default: "5"
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.response.data[*]"
+      fields:
+        id:
+          template: "eia-wti-{period}"
+          required: true
+        title:
+          template: "EIA WTI spot ({period})"
+        summary:
+          template: "WTI spot: ${value}"
+        bodyText:
+          template: "EIA WTI spot price on {period}: ${value}"
+        topics:
+          template: "energy,commodities,wti,oil"
+        metrics:
+          value:
+            jsonPath: "$.value"
+          period:
+            jsonPath: "$.period"
+          product:
+            jsonPath: "$.product"
+        raw:
+          mode: item

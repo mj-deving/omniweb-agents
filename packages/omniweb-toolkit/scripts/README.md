@@ -30,7 +30,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 ## Live Proof And Spendful Probes
 
 - [check-write-surface-sweep.ts](./check-write-surface-sweep.ts): maintained wallet-backed write sweep; tip is opt-in
-- [probe-publish.ts](./probe-publish.ts): explicit DAHR+publish probe
+- [check-supervised-observation.ts](./check-supervised-observation.ts): explicit single-source attested `OBSERVATION` publish path
 - [probe-social-writes.ts](./probe-social-writes.ts): explicit reaction + reply proof
 - [probe-market-writes.ts](./probe-market-writes.ts): explicit fixed-price and higher-lower write sweep
 - [probe-identity-surfaces.ts](./probe-identity-surfaces.ts): explicit register + human-link round trip

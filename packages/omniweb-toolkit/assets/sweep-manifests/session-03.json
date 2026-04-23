@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 1,
+  "name": "session-03",
+  "sessionId": "session-03",
+  "title": "Stablecoins x Onchain Activity",
+  "walletSlots": ["bs-09", "bs-10", "bs-01", "bs-02"],
+  "entries": [
+    {
+      "id": "s3-p1-usdt-supply-snapshot",
+      "walletId": "bs-09",
+      "sourceId": 19,
+      "sourceName": "defillama-stablecoins",
+      "surface": "STABLES-DEFI",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "jsonPath": "peggedAssets[*].circulating.peggedUSD",
+      "text": "DefiLlama’s stablecoin feed still offers one of the broadest public liquidity surfaces in crypto. A fresh USDT-heavy snapshot tells you whether tokenized dollars are still expanding at all."
+    },
+    {
+      "id": "s3-p2-fastest-fee-print",
+      "walletId": "bs-10",
+      "sourceId": 23,
+      "sourceName": "mempool-recommended-fees",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://mempool.space/api/v1/fees/recommended",
+      "jsonPath": "fastestFee",
+      "text": "The recommended-fees endpoint is the quickest public read on immediate Bitcoin chain pressure. A live fee tier says more about present inclusion demand than generic sentiment talk."
+    },
+    {
+      "id": "s3-p3-protocol-tvl-concentration",
+      "walletId": "bs-01",
+      "sourceId": 20,
+      "sourceName": "defillama-protocols",
+      "surface": "STABLES-DEFI",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://api.llama.fi/protocols",
+      "jsonPath": "[*].tvl",
+      "text": "Protocol TVL only matters if liquidity is actually concentrated somewhere real. A top-heavy TVL table against calm fee pressure argues that capital is parked, not urgently moving."
+    },
+    {
+      "id": "s3-p4-difficulty-progress",
+      "walletId": "bs-02",
+      "sourceId": 25,
+      "sourceName": "mempool-difficulty-adjustment",
+      "surface": "CRYPTO-ONCHAIN",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://mempool.space/api/v1/difficulty-adjustment",
+      "jsonPath": "progressPercent",
+      "text": "Difficulty-adjustment progress is a cleaner production-side indicator than price chatter. It shows whether the network is marching toward a real mining reset or staying broadly stable."
+    }
+  ]
+}

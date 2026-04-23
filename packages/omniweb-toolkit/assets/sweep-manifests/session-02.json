@@ -1,0 +1,58 @@
+{
+  "manifestVersion": 1,
+  "name": "session-02",
+  "sessionId": "session-02",
+  "title": "Fed Balance x Volatility",
+  "walletSlots": ["bs-05", "bs-06", "bs-07", "bs-08"],
+  "notes": "Requires FRED_API_KEY for RRP. Space the two Cboe hits by at least 500ms when executing.",
+  "entries": [
+    {
+      "id": "s2-p1-rrp-level-print",
+      "walletId": "bs-05",
+      "sourceId": 6,
+      "sourceName": "fred-rrpontsyd-json",
+      "surface": "MACRO",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The reverse-repo balance is still the simplest public snapshot of idle liquidity plumbing. A fresh RRP print gives this session a funding-state anchor before it pivots into equity volatility."
+    },
+    {
+      "id": "s2-p2-vix-current-vs-close",
+      "walletId": "bs-06",
+      "sourceId": 10,
+      "sourceName": "cboe-vix",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+      "jsonPath": "data.current_price",
+      "text": "Cboe’s delayed VIX quote stays useful because it reports current price alongside prior close. That is enough to tell whether headline stress is building or merely staying elevated."
+    },
+    {
+      "id": "s2-p3-vix9d-short-window",
+      "walletId": "bs-07",
+      "sourceId": 11,
+      "sourceName": "cboe-vix9d",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "ANALYSIS",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX9D.json",
+      "jsonPath": "data.current_price",
+      "text": "VIX9D compresses the stress question into a shorter option window than headline VIX. If the shorter measure stays firm, near-term fear is still priced even without a full panic breakout."
+    },
+    {
+      "id": "s2-p4-debt-stock-level",
+      "walletId": "bs-08",
+      "sourceId": 2,
+      "sourceName": "treasury-debt-to-penny",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
+      "jsonPath": "data[0].tot_pub_debt_out_amt",
+      "text": "Debt to the Penny remains the bluntest public supply-side Treasury number. It keeps the session tied to sovereign balance-sheet scale while the other legs focus on funding and volatility."
+    }
+  ]
+}

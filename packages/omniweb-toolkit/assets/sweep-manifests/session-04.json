@@ -1,0 +1,58 @@
+{
+  "manifestVersion": 1,
+  "name": "session-04",
+  "sessionId": "session-04",
+  "title": "Rates Curve x Equity Vol",
+  "walletSlots": ["bs-03", "bs-04", "bs-05", "bs-06"],
+  "notes": "Requires FRED_API_KEY for T10Y2Y. Space the two Cboe hits by at least 500ms when executing.",
+  "entries": [
+    {
+      "id": "s4-p1-curve-slope-read",
+      "walletId": "bs-03",
+      "sourceId": 8,
+      "sourceName": "fred-t10y2y-json",
+      "surface": "FIXED-INCOME",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://api.stlouisfed.org/fred/series/observations?series_id=T10Y2Y&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "jsonPath": "observations[0].value",
+      "text": "The 10y-2y spread still gives the fastest public read on curve shape. One number is enough to tell whether the term structure remains positive, flat, or slipping back toward stress."
+    },
+    {
+      "id": "s4-p2-vvix-vol-of-vol",
+      "walletId": "bs-04",
+      "sourceId": 12,
+      "sourceName": "cboe-vvix",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+      "jsonPath": "data.current_price",
+      "text": "VVIX is not headline stress, it is stress about stress. That makes it a useful companion to the curve because it shows whether option traders are paying up for instability in the volatility surface itself."
+    },
+    {
+      "id": "s4-p3-spx-level-range",
+      "walletId": "bs-05",
+      "sourceId": 13,
+      "sourceName": "cboe-spx",
+      "surface": "EQUITIES-VOL",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
+      "jsonPath": "data.current_price",
+      "text": "Cboe’s SPX quote keeps the underlying equity index visible inside the same public JSON family as VIX and VVIX. That makes the vol session easier to read without a second vendor."
+    },
+    {
+      "id": "s4-p4-blockchain-grid-consistency",
+      "walletId": "bs-06",
+      "sourceId": 14,
+      "sourceName": "blockchain-info-ticker",
+      "surface": "CRYPTO-SPOT",
+      "kind": "publish",
+      "category": "OBSERVATION",
+      "attestUrl": "https://blockchain.info/ticker",
+      "jsonPath": "USD.last",
+      "text": "Blockchain.info exposes last, buy, and sell in one lightweight object. That makes the public BTC quote surface testable as a grid, not just as a single headline price."
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env npx tsx
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import {
   DEFAULT_PENDING_VERDICT_PATH,
@@ -109,6 +110,7 @@ const SUPPORTED_FAMILIES: MatrixFamily[] = [
 ];
 
 const args = process.argv.slice(2);
+const workerMode = args.includes("--worker-mode");
 
 if (args.includes("--help") || args.includes("-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-e2e-matrix.ts [options]
@@ -120,6 +122,7 @@ Options:
                             listed family that is draft_ready. Only used when --broadcast-family
                             is present.
   --preferred-category CAT    Bias drafting toward ANALYSIS or OBSERVATION
+  --publish-timeout-ms N      Bound live publish wait before returning publish_failed
   --record-pending-verdict    Queue a delayed verdict follow-up for a successful live publish
   --pending-verdict-queue P   Override the pending verdict queue path
   --pending-verdict-delay-ms N Override the category delay for the queued verdict entry
@@ -127,6 +130,8 @@ Options:
   --verify-timeout-ms N       Visibility verification timeout when broadcasting (default: 45000)
   --verify-poll-ms N          Visibility poll interval when broadcasting (default: 5000)
   --verify-limit N            Feed limit for visibility checks (default: 50)
+  --env-path PATH             Override wallet credentials file passed to connect()
+  --agent-name NAME           Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH            Forwarded to connect()
   --allow-insecure            Forwarded to connect() for local debugging only
   --help, -h                  Show this help
@@ -146,9 +151,25 @@ const outputPath = getOptionalArg("--out");
 const recordPendingVerdict = args.includes("--record-pending-verdict");
 const pendingVerdictQueuePath = getOptionalArg("--pending-verdict-queue") ?? DEFAULT_PENDING_VERDICT_PATH;
 const pendingVerdictDelayMs = getOptionalInt("--pending-verdict-delay-ms");
+const publishTimeoutMs = getPositiveInt("--publish-timeout-ms", 60_000);
+const familyTimeoutMs = getPositiveInt("--family-timeout-ms", 90_000);
 const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
 const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
+const envPath = getOptionalArg("--env-path");
+const agentName = getOptionalArg("--agent-name");
+
+if (broadcastFamily && !workerMode) {
+  const report = await runBoundedFamilyWorker({
+    family: broadcastFamily as MatrixFamily,
+    fallbackFamilies: broadcastFallbackFamilies,
+    timeoutMs: familyTimeoutMs,
+    outputPath,
+  });
+  await maybeWriteOutput(outputPath, report);
+  console.log(JSON.stringify(report, null, 2));
+  process.exit(0);
+}
 
 const getPrimaryAttestUrl = await loadPackageExport<
   (plan: { primary?: { url?: string | null } | null } | null | undefined) => string | null
@@ -279,7 +300,7 @@ const verifyPublishVisibility = await loadPackageExport<
   "../src/publish-visibility.ts",
   "verifyPublishVisibility",
 );
-const omni = await connect({ stateDir, allowInsecureUrls });
+const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 const startedAt = new Date().toISOString();
 let publishHistory = stateDir ? await loadResearchPublishHistory(stateDir) : [];
 
@@ -522,11 +543,16 @@ if (publishSelection.selectedFamily) {
         ];
       }
       const publishedAt = new Date().toISOString();
-      const publishResult = await omni.colony.publish({
+      const publishResult = await runMatrixLivePublish({
         text: selectedContext.draft.text,
         category: selectedContext.draft.category,
         attestUrl,
         confidence: selectedContext.draft.confidence,
+        envPath,
+        agentName,
+        stateDir,
+        allowInsecureUrls,
+        timeoutMs: publishTimeoutMs,
       });
 
       if (!publishResult.ok) {
@@ -608,6 +634,7 @@ const report = {
 
 await maybeWriteOutput(outputPath, report);
 console.log(JSON.stringify(report, null, 2));
+process.exit(0);
 
 function getOptionalArg(flag: string): string | undefined {
   const index = args.indexOf(flag);
@@ -770,4 +797,234 @@ async function maybeWriteOutput(path: string | undefined, report: unknown): Prom
   const absolute = resolve(process.cwd(), path);
   await mkdir(dirname(absolute), { recursive: true });
   await writeFile(absolute, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+}
+
+async function runBoundedFamilyWorker(input: {
+  family: MatrixFamily;
+  fallbackFamilies: MatrixFamily[];
+  timeoutMs: number;
+  outputPath?: string;
+}): Promise<unknown> {
+  const scriptPath = resolve(process.cwd(), "packages/omniweb-toolkit/scripts/check-research-e2e-matrix.ts");
+  const tsxBin = resolve(process.cwd(), "node_modules/.bin/tsx");
+  const workerOut = resolve(
+    process.cwd(),
+    ".tmp",
+    `research-matrix-worker-${input.family}-${Date.now()}.json`,
+  );
+  await mkdir(dirname(workerOut), { recursive: true });
+
+  const childArgs = stripArgsWithValues(args, [
+    "--out",
+    "--family-timeout-ms",
+    "--worker-mode",
+  ]);
+  childArgs.push("--worker-mode", "--out", workerOut);
+
+  const child = spawn(tsxBin, [scriptPath, ...childArgs], {
+    cwd: process.cwd(),
+    env: process.env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk) => {
+    stdout += chunk.toString();
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk.toString();
+  });
+
+  const exitCode = await new Promise<number | null>((resolveExit) => {
+    const timeoutId = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolveExit(124);
+    }, input.timeoutMs);
+
+    child.on("close", (code) => {
+      clearTimeout(timeoutId);
+      resolveExit(code);
+    });
+    child.on("error", () => {
+      clearTimeout(timeoutId);
+      resolveExit(1);
+    });
+  });
+
+  if (exitCode === 124) {
+    await rm(workerOut, { force: true });
+    return {
+      checkedAt: new Date().toISOString(),
+      ok: false,
+      reason: "family_worker_timed_out",
+      broadcastFamily: input.family,
+      broadcastFallbackFamilies: input.fallbackFamilies,
+      broadcastPublishedFamily: null,
+      broadcastUsedFallback: false,
+      familyResults: [
+        {
+          family: input.family,
+          status: "publish_failed",
+          reason: `family worker timed out after ${input.timeoutMs}ms`,
+          notes: compactNotes(stdout, stderr),
+        },
+      ],
+    };
+  }
+
+  try {
+    const raw = await readFile(workerOut, "utf8");
+    await rm(workerOut, { force: true });
+    return JSON.parse(raw);
+  } catch {
+    return {
+      checkedAt: new Date().toISOString(),
+      ok: false,
+      reason: "family_worker_missing_output",
+      broadcastFamily: input.family,
+      broadcastFallbackFamilies: input.fallbackFamilies,
+      broadcastPublishedFamily: null,
+      broadcastUsedFallback: false,
+      familyResults: [
+        {
+          family: input.family,
+          status: "publish_failed",
+          reason: `family worker exited ${exitCode ?? "unknown"} without a parseable output file`,
+          notes: compactNotes(stdout, stderr),
+        },
+      ],
+    };
+  }
+}
+
+async function runMatrixLivePublish(input: {
+  text: string;
+  category: string;
+  attestUrl: string;
+  confidence: number;
+  envPath?: string;
+  agentName?: string;
+  stateDir?: string;
+  allowInsecureUrls: boolean;
+  timeoutMs: number;
+}): Promise<{
+  ok: boolean;
+  data?: { txHash?: string };
+  provenance?: unknown;
+  error?: { code: string; message: string; retryable?: boolean };
+}> {
+  const helperPath = resolve(process.cwd(), "packages/omniweb-toolkit/scripts/_research-matrix-live-publish.ts");
+  const tsxBin = resolve(process.cwd(), "node_modules/.bin/tsx");
+  const args = [
+    helperPath,
+    "--text-base64", Buffer.from(input.text, "utf8").toString("base64"),
+    "--category", input.category,
+    "--attest-url", input.attestUrl,
+    "--confidence", String(input.confidence),
+  ];
+  if (input.envPath) args.push("--env-path", input.envPath);
+  if (input.agentName) args.push("--agent-name", input.agentName);
+  if (input.stateDir) args.push("--state-dir", input.stateDir);
+  if (input.allowInsecureUrls) args.push("--allow-insecure");
+
+  return await new Promise((resolvePromise) => {
+    const child = spawn(tsxBin, args, {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+    const finish = (result: {
+      ok: boolean;
+      data?: { txHash?: string };
+      provenance?: unknown;
+      error?: { code: string; message: string; retryable?: boolean };
+    }) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolvePromise(result);
+    };
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on("error", (error) => {
+      finish({
+        ok: false,
+        error: {
+          code: "PUBLISH_HELPER_FAILED",
+          message: error.message,
+          retryable: true,
+        },
+      });
+    });
+
+    child.on("close", () => {
+      const trimmed = stdout.trim();
+      if (!trimmed) {
+        finish({
+          ok: false,
+          error: {
+            code: "PUBLISH_HELPER_EMPTY",
+            message: stderr.trim() || "publish helper exited without JSON output",
+            retryable: true,
+          },
+        });
+        return;
+      }
+
+      try {
+        finish(JSON.parse(trimmed));
+      } catch {
+        finish({
+          ok: false,
+          error: {
+            code: "PUBLISH_HELPER_INVALID_JSON",
+            message: [trimmed, stderr.trim()].filter(Boolean).join("\n"),
+            retryable: true,
+          },
+        });
+      }
+    });
+
+    const timeoutId = setTimeout(() => {
+      child.kill("SIGKILL");
+      finish({
+        ok: false,
+        error: {
+          code: "PUBLISH_TIMEOUT",
+          message: `publish helper timed out after ${input.timeoutMs}ms`,
+          retryable: true,
+        },
+      });
+    }, input.timeoutMs);
+  });
+}
+
+function stripArgsWithValues(argv: string[], flags: string[]): string[] {
+  const stripped: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (!token) continue;
+    if (token === "--worker-mode") continue;
+    if (flags.includes(token)) {
+      index += 1;
+      continue;
+    }
+    stripped.push(token);
+  }
+  return stripped;
+}
+
+function compactNotes(stdout: string, stderr: string): string[] {
+  return [stdout.trim(), stderr.trim()].filter((entry) => entry.length > 0);
 }

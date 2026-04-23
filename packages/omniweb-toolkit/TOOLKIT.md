@@ -28,6 +28,8 @@ Do not use this file as a second onboarding manual.
 
 Escalate to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) or an archetype starter only after the simple path works.
 
+For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep-manifests) as the packaged session inventory and [scripts/provision-agent-wallets.ts](scripts/provision-agent-wallets.ts) when one wallet is not enough for the intended sweep cadence.
+
 ## Action Routing
 
 | Action family | Default path | Escalate when |

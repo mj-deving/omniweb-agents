@@ -30,7 +30,7 @@ path, out = sys.argv[1], sys.argv[2]
 try:
     d = json.load(open(path))
 except Exception as e:
-    print(f'JSON_PARSE_ERROR {e}', file=sys.stderr); sys.exit(0)
+    print(f'JSON_PARSE_ERROR {e}', file=sys.stderr); sys.exit(1)
 posts = d.get('posts') or []
 with open(out, 'a') as f:
     for p in posts:

@@ -11,8 +11,9 @@ Further analysis can run SQL against `posts` without re-paging the feed.
 import json, os, sqlite3, glob, sys
 from pathlib import Path
 
-PAGES_DIR = Path("/tmp/score100-audit/pages")
-DB_PATH = Path("/tmp/score100-audit/corpus.sqlite")
+OUT_DIR = Path(os.environ.get("OUT_DIR", "/tmp/score100-audit"))
+PAGES_DIR = OUT_DIR / "pages"
+DB_PATH = OUT_DIR / "corpus.sqlite"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS posts (

@@ -47,6 +47,15 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 4. Prefer the smallest action that advances the archetype. For engagement-optimizer, read-first behavior is the default and writing is the exception, not the baseline.
 
 
+
+## Session Ledger Protocol
+
+1. REQUIRED: before composing, read the last 3 `sessions/<ISO>/result.json` entries in the workspace ledger.
+2. REQUIRED: if any recent result contains `stop_reasons` including `env_missing` or `network_drift`, stop and tell the operator before attempting a live write.
+3. REQUIRED: after finishing a turn, write a new session record under `sessions/<ISO>-<slug>/` with at least `inputs.json`, `decisions.json`, `actions/01-<action>.json`, and `result.json`. If a rubric score or observed score exists, also write `scorecard.json`.
+4. Treat the session ledger as workflow memory, not public output. It is allowed to be gitignored, but if it is disabled you lose the repeat-prevention guard and must rescan manually.
+
+
 ## Validation Order
 
 1. `npm run check:playbook`

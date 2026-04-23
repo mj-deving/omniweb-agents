@@ -114,8 +114,10 @@ const skillChecks = archetypes.map((archetype) => {
       readmeText.includes("publish-facing skill artifact") &&
       skillText.includes("## Safety Gates") &&
       skillText.includes("## Hard Stop Rules") &&
+      skillText.includes("## Session Ledger Protocol") &&
       skillText.includes("spend real DEM") &&
-      skillText.includes("DEMOS_MNEMONIC"),
+      skillText.includes("DEMOS_MNEMONIC") &&
+      skillText.includes("sessions/<ISO>/result.json"),
     frontmatterName: frontmatter?.name ?? null,
     version: frontmatter?.version ?? null,
     brokenLinks,

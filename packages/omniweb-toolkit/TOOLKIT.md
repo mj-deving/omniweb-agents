@@ -7,6 +7,8 @@ Use:
 - [README.md](README.md) for the default operator funnel
 - [SKILL.md](SKILL.md) for agent activation routing
 - [GUIDE.md](GUIDE.md) for methodology and post discipline
+- [references/index.md](references/index.md) for the categorized factual reference map
+- [scripts/README.md](scripts/README.md) for the deterministic script catalog
 
 Do not use this file as a second onboarding manual.
 

@@ -96,6 +96,11 @@ const topLevelScriptFiles = listTopLevelFiles(scriptsDir)
   .sort();
 const topLevelAssetFiles = listTopLevelFiles(assetsDir)
   .filter((name) => !name.startsWith("."));
+const hasReferenceIndex = skillLinks.includes("references/index.md");
+const hasScriptIndex = skillLinks.includes("scripts/README.md");
+const hasAssetIndex = skillLinks.includes("assets/README.md")
+  || guideLinks.includes("assets/README.md")
+  || toolkitLinks.includes("assets/README.md");
 const topLevelScriptContents = topLevelScriptFiles.map((name) => ({
   name,
   text: readFileSync(resolve(scriptsDir, name), "utf8"),
@@ -166,15 +171,18 @@ const oneLevelViolations = skillLinks.filter((link) => {
 
 const missingReferenceMentions = topLevelReferenceFiles
   .map((name) => `references/${name}`)
-  .filter((target) => !skillLinks.includes(target));
+  .filter((target) => !skillLinks.includes(target))
+  .filter((target) => !(hasReferenceIndex && target !== "references/index.md"));
 
 const missingScriptMentions = topLevelScriptFiles
   .map((name) => `scripts/${name}`)
-  .filter((target) => !skillLinks.includes(target));
+  .filter((target) => !skillLinks.includes(target))
+  .filter((target) => !(hasScriptIndex && target !== "scripts/README.md"));
 
 const missingAssetMentions = topLevelAssetFiles
   .map((name) => `assets/${name}`)
-  .filter((target) => !skillLinks.includes(target) && !guideLinks.includes(target) && !toolkitLinks.includes(target));
+  .filter((target) => !skillLinks.includes(target) && !guideLinks.includes(target) && !toolkitLinks.includes(target))
+  .filter((target) => !(hasAssetIndex && target !== "assets/README.md"));
 
 const stalePatterns = [
   { label: "stale docs links", ok: !toolkitText.includes("docs/ecosystem-guide.md") && !toolkitText.includes("docs/capabilities-guide.md") && !toolkitText.includes("docs/attestation-pipeline.md") },

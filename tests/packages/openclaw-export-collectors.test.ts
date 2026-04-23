@@ -2,7 +2,11 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { collectTextFiles as collectOpenClawFiles } from "../../packages/omniweb-toolkit/scripts/_openclaw-export.ts";
+import {
+  collectTextFiles as collectOpenClawFiles,
+  normalizeExportRelativePath,
+  normalizePathSeparators,
+} from "../../packages/omniweb-toolkit/scripts/_openclaw-export.ts";
 import { collectTextFiles as collectRegistryFiles } from "../../packages/omniweb-toolkit/scripts/_registry-export.ts";
 
 const tempDirs: string[] = [];
@@ -34,5 +38,13 @@ describe("OpenClaw export collectors", () => {
 
     expect(openclawPaths).toEqual(["skills/demo/SKILL.md"]);
     expect(registryPaths).toEqual(["skills/demo/SKILL.md"]);
+  });
+
+  it("normalizes Windows separators to POSIX separators", () => {
+    expect(normalizePathSeparators("skills\\demo\\nested\\SKILL.md")).toBe("skills/demo/nested/SKILL.md");
+  });
+
+  it("preserves normalized relative paths", () => {
+    expect(normalizeExportRelativePath("skills", join("skills", "demo", "nested", "SKILL.md"))).toBe("demo/nested/SKILL.md");
   });
 });

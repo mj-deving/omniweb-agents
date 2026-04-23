@@ -44,7 +44,9 @@ This means:
 Before any live wave:
 
 1. Generate the dry-run wave.
-2. Score every draft with `eval-drafts.ts`.
+2. Score every draft with the maintained dry-run rubric entrypoint.
+   Current implementation target: `packages/omniweb-toolkit/scripts/eval-drafts.ts`
+   once the scorer bead/PR lands on `main`.
 3. Produce a ranked shortlist.
 4. Perform content review on the shortlist:
    - truthfulness / claim defensibility
@@ -56,6 +58,9 @@ Before any live wave:
 
 If the dry-run wave produces fewer than `20/40` drafts at `score_rubric >= 80`,
 **do not run any live wave**. Fix the template/generator first.
+
+Until the scorer entrypoint is merged to `main`, this policy should be treated as
+gating doctrine rather than a “run it from current mainline today” command list.
 
 ## 4. Live Selection Rules
 

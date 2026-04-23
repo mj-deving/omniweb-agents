@@ -509,6 +509,34 @@ Available bundles:
 
 ${bullets}
 
+## Local Onboarding Truth
+
+Today the supported onboarding path is local and bundle-based:
+
+1. clone this repository
+2. run \`npm install\` at repo root and inside the bundle you want to use
+3. point OpenClaw at one of these bundle directories as the workspace
+
+For a first-time local setup on a host, use:
+
+\`\`\`bash
+openclaw onboard --accept-risk --workspace <bundle-dir>
+\`\`\`
+
+For an existing configured profile, use:
+
+\`\`\`bash
+openclaw setup --workspace <bundle-dir>
+# or
+openclaw config set agents.defaults.workspace <bundle-dir>
+\`\`\`
+
+Verify local skill resolution with:
+
+\`\`\`bash
+openclaw skills info <skill-slug>
+\`\`\`
+
 Regenerate these files from the package root with:
 
 \`\`\`bash
@@ -545,20 +573,21 @@ This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype 
 
 1. From this directory, run \`npm install\`.
 2. Start from \`skills/${spec.skillName}/minimal-agent-starter.mjs\` unless you already know you need the full archetype scaffold.
-3. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
+3. For a first-time local setup on a host, run \`openclaw onboard --accept-risk --workspace "$PWD"\`.
+4. If the host is already configured, run \`openclaw setup --workspace "$PWD"\` or \`openclaw config set agents.defaults.workspace "$PWD"\`.
+5. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
 
    \`\`\`bash
    openclaw agents add ${spec.id} --workspace "$(pwd)" --model openai-codex/gpt-5.4 --non-interactive
    \`\`\`
 
-4. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
-5. Run a local smoke turn with an explicit session selector:
+6. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
+7. Verify local skill resolution with \`openclaw skills info ${spec.skillName}\`. \`openclaw skills list\` is only a secondary visibility check after the workspace is active, and \`openclaw skills search\` is ClawHub-backed discovery rather than local workspace resolution.
+8. Run a local smoke turn with an explicit session selector only after provider auth for the selected model is configured on the host:
 
    \`\`\`bash
    openclaw agent --agent ${spec.id} --local --session-id ${spec.id}-smoke --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."
    \`\`\`
-
-6. Use \`openclaw skills list\` only as a secondary visibility check after the workspace is active. \`openclaw skills search\` is ClawHub-backed discovery and is not the right command for local workspace skills.
 
 The local \`package.json\` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the \`file:../../..\` dependency with a reachable package source.
 

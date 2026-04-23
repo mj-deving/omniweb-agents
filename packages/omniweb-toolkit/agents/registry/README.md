@@ -18,12 +18,12 @@ Available artifacts:
 
 ## Current Status
 
-As of April 16, 2026, `omniweb-toolkit` is not yet published on npm. That means these registry-oriented artifacts are structurally ready, but their primary install path becomes truly publishable only after the first npm release exists.
+As of April 23, 2026, the npm registry does not resolve either `omniweb-toolkit` or the exported bundle package names. That means these registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
 
 Until then:
 
 - use [../openclaw/](../openclaw/README.md) for local/operator installs
-- treat this directory as the release-shaped artifact set for the future external channels
+- treat this directory as the release-shaped artifact set for future ClawHub or thin public GitHub distribution after the first npm publish exists
 
 ## Commands
 

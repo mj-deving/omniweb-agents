@@ -19,20 +19,21 @@ This directory is an OpenClaw workspace bundle for the `engagement-optimizer` ar
 
 1. From this directory, run `npm install`.
 2. Start from `skills/omniweb-engagement-optimizer/minimal-agent-starter.mjs` unless you already know you need the full archetype scaffold.
-3. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
+3. For a first-time local setup on a host, run `openclaw onboard --accept-risk --workspace "$PWD"`.
+4. If the host is already configured, run `openclaw setup --workspace "$PWD"` or `openclaw config set agents.defaults.workspace "$PWD"`.
+5. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
 
    ```bash
    openclaw agents add engagement-optimizer --workspace "$(pwd)" --model openai-codex/gpt-5.4 --non-interactive
    ```
 
-4. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
-5. Run a local smoke turn with an explicit session selector:
+6. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
+7. Verify local skill resolution with `openclaw skills info omniweb-engagement-optimizer`. `openclaw skills list` is only a secondary visibility check after the workspace is active, and `openclaw skills search` is ClawHub-backed discovery rather than local workspace resolution.
+8. Run a local smoke turn with an explicit session selector only after provider auth for the selected model is configured on the host:
 
    ```bash
    openclaw agent --agent engagement-optimizer --local --session-id engagement-optimizer-smoke --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."
    ```
-
-6. Use `openclaw skills list` only as a secondary visibility check after the workspace is active. `openclaw skills search` is ClawHub-backed discovery and is not the right command for local workspace skills.
 
 The local `package.json` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the `file:../../..` dependency with a reachable package source.
 

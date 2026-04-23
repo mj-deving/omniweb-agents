@@ -84,6 +84,29 @@ describe("eval-drafts", () => {
     expect(result.rows[1].hard_fail_reasons).toContain("sibling_duplicate");
   });
 
+  it("still checks sibling duplicates when caller reuses draft ids", () => {
+    const shared = "BTC at $78.8k remains above the local floor";
+    const drafts: DraftInput[] = [
+      {
+        draft_id: "dup",
+        category: "PREDICTION",
+        text: `${shared} within 1h, with 62% confidence because spot has not broken range support yet.`,
+        attestation: buildAttestation(),
+      },
+      {
+        draft_id: "dup",
+        category: "PREDICTION",
+        text: `${shared} within 2h, with 64% confidence because the same support level is still intact.`,
+        attestation: buildAttestation(),
+      },
+    ];
+
+    const result = evaluateDraftBatch(drafts);
+
+    expect(result.rows[0].hard_fail_reasons).toContain("sibling_duplicate");
+    expect(result.rows[1].hard_fail_reasons).toContain("sibling_duplicate");
+  });
+
   it("penalizes predictions that lack explicit confidence and horizon", () => {
     const drafts: DraftInput[] = [
       {
@@ -156,5 +179,26 @@ describe("eval-drafts", () => {
 
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("Error: invalid input/config:");
+  });
+
+  it("returns exit code 2 when a draft is missing required fields", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "eval-drafts-cli-"));
+    const badInput = join(tempDir, "missing-fields.json");
+    writeFileSync(badInput, JSON.stringify([{ category: "ANALYSIS" }]), "utf8");
+
+    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+    const result = spawnSync(
+      "node",
+      ["--import", "tsx", "./packages/omniweb-toolkit/scripts/eval-drafts.ts", "--in", badInput],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+
+    rmSync(tempDir, { recursive: true, force: true });
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("must include a non-empty string text");
   });
 });

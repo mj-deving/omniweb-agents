@@ -299,7 +299,7 @@ export function evaluateDraft(
   const fillerCount = countWordHits(text, config.fillerAdverbs);
   const hedgeCount = countWordHits(text, config.hedgeWords);
   const shieldLookalike = isShieldLookalike(text, config);
-  const siblingDuplicate = hasSiblingDuplicate(draft, drafts, config);
+  const siblingDuplicate = hasSiblingDuplicate(index, draft, drafts, config);
   const ownDuplicate = hasOwnDuplicate(draft, config);
 
   const hardGates: Record<string, "pass" | "fail"> = {
@@ -717,12 +717,13 @@ function isShieldLookalike(text: string, config: DraftEvalConfig): boolean {
 }
 
 function hasSiblingDuplicate(
+  currentIndex: number,
   draft: DraftInput & { draft_id: string },
   drafts: Array<DraftInput & { draft_id: string }>,
   config: DraftEvalConfig,
 ): boolean {
   const target = normalizedNgrams(draft.text, config.duplicateNgramSize);
-  return drafts.some((entry) => entry.draft_id !== draft.draft_id && intersects(target, normalizedNgrams(entry.text, config.duplicateNgramSize)));
+  return drafts.some((entry, entryIndex) => entryIndex !== currentIndex && intersects(target, normalizedNgrams(entry.text, config.duplicateNgramSize)));
 }
 
 function hasOwnDuplicate(
@@ -784,9 +785,16 @@ function parseDrafts(raw: unknown): DraftInput[] {
   if (!Array.isArray(raw)) {
     throw new Error("Draft input must be a JSON array");
   }
-  for (const entry of raw) {
+  for (const [index, entry] of raw.entries()) {
     if (!entry || typeof entry !== "object") {
       throw new Error("Each draft must be an object");
+    }
+    const record = entry as Record<string, unknown>;
+    if (typeof record.text !== "string" || record.text.trim() === "") {
+      throw new Error(`Draft ${index + 1} must include a non-empty string text`);
+    }
+    if (typeof record.category !== "string" || record.category.trim() === "") {
+      throw new Error(`Draft ${index + 1} must include a non-empty string category`);
     }
   }
   return raw as DraftInput[];

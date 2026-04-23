@@ -247,8 +247,8 @@ function classifyNumericMode(text: string): SweepVariationProfile["numericMode"]
 function classifyTemporalFrame(text: string): SweepVariationProfile["temporalFrame"] {
   const lower = normalize(text);
   if (/\bright now\b|\btoday\b|\blatest\b/.test(lower)) return "current";
-  if (/\bover\b|\bfrom\b.+\bto\b|\bprints\b|\bwindow\b/.test(lower)) return "sequential";
   if (/\bwithin\b|\bnext\b|\bminutes?\b|\bhours?\b|\bdeadline\b/.test(lower)) return "horizon";
+  if (/\bover\b(?!\s+the\s+next\b)|\bfrom\b.+\bto\b|\bprints\b|\bwindow\b/.test(lower)) return "sequential";
   return "timeless";
 }
 

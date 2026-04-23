@@ -143,4 +143,19 @@ describe("vary-sweep-prose", () => {
     expect(report.drafts[1].opener).toBe("VIX closes at 79.1.");
     expect(report.pairs[0].reasons).not.toContain("reused_opener");
   });
+
+  it("treats 'over the next' phrasing as a horizon frame", () => {
+    const drafts: SweepDraftInput[] = [
+      {
+        draft_id: "a",
+        source: "cboe",
+        category: "PREDICTION",
+        text: "My short-horizon claim is that VIX stays below 25 over the next thirty minutes if the delayed quote does not break its contained band.",
+      },
+    ];
+
+    const report = analyzeSweepProse(drafts);
+
+    expect(report.drafts[0].profile.temporalFrame).toBe("horizon");
+  });
 });

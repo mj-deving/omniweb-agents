@@ -10,6 +10,11 @@ export {
   runMinimalAgentCycle,
   runMinimalAgentLoop,
 } from "./minimal-agent.js";
+export {
+  getDefaultSessionLedgerDir,
+  loadRecentSessionResults,
+  writeSessionLedgerJson,
+} from "./session-ledger.js";
 export { buildMinimalAttestationPlan } from "./minimal-attestation-plan.js";
 export { buildMinimalAttestationPlanFromUrls } from "./minimal-attestation-plan.js";
 export { getPrimaryAttestationCandidate } from "./minimal-attestation-plan.js";
@@ -52,6 +57,7 @@ export type {
   MinimalAgentMemory,
   MinimalCycleSummary,
   MinimalCycleContext,
+  MinimalSessionLedgerContext,
   MinimalObserveContext,
   SkipDecision,
   PublishDecision,
@@ -65,6 +71,7 @@ export type {
   RunMinimalAgentLoopOptions,
   MinimalCycleRecord,
 } from "./minimal-agent.js";
+export type { SessionLedgerResult } from "./session-ledger.js";
 export type {
   MinimalAttestationCandidate,
   MinimalAttestationPlan,

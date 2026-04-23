@@ -70,8 +70,11 @@ const bundleChecks = archetypes.map((archetype) => {
   const frontmatter = existsSync(skillPath)
     ? parseFrontmatter(readFileSync(skillPath, "utf8"))
     : null;
+  const skillText = existsSync(skillPath)
+    ? readFileSync(skillPath, "utf8")
+    : "";
   const skillLinks = existsSync(skillPath)
-    ? extractRelativeMarkdownLinks(readFileSync(skillPath, "utf8"))
+    ? extractRelativeMarkdownLinks(skillText)
     : [];
   const brokenLinks = skillLinks.filter((link) => !existsSync(resolve(skillDir, link)));
   const configPath = resolve(bundleRoot, "openclaw.json");
@@ -93,6 +96,15 @@ const bundleChecks = archetypes.map((archetype) => {
   const enabledEntry = config?.skills?.entries?.[spec.skillName];
   const bundleScripts = bundlePackage?.scripts ?? {};
   const bundleDependency = bundlePackage?.dependencies?.["omniweb-toolkit"] ?? null;
+  const metadata = parseMetadata(frontmatter?.metadata);
+  const openclaw = metadata?.openclaw && typeof metadata.openclaw === "object"
+    ? metadata.openclaw as Record<string, unknown>
+    : null;
+  const requires = openclaw?.requires && typeof openclaw.requires === "object"
+    ? openclaw.requires as Record<string, unknown>
+    : null;
+  const bins = Array.isArray(requires?.bins) ? requires.bins : [];
+  const env = Array.isArray(requires?.env) ? requires.env : [];
 
   return {
     archetype,
@@ -100,6 +112,11 @@ const bundleChecks = archetypes.map((archetype) => {
     ok: !!frontmatter &&
       frontmatter.name === spec.skillName &&
       typeof frontmatter.description === "string" &&
+      openclaw?.primaryEnv === "DEMOS_MNEMONIC" &&
+      openclaw?.spendsRealMoney === true &&
+      openclaw?.spendToken === "DEM" &&
+      bins.includes("node") &&
+      env.includes("DEMOS_MNEMONIC") &&
       brokenLinks.length === 0 &&
       Array.isArray(allowlist) &&
       allowlist.length === 1 &&
@@ -108,13 +125,22 @@ const bundleChecks = archetypes.map((archetype) => {
       bundleScripts["check:playbook"]?.includes(spec.id) === true &&
       typeof bundleScripts["check:attestation"] === "string" &&
       typeof bundleScripts["check:bundle"] === "string" &&
-      bundleDependency === "file:../../..",
+      bundleDependency === "file:../../.." &&
+      skillText.includes("## Safety Gates") &&
+      skillText.includes("## Hard Stop Rules") &&
+      skillText.includes("spend real DEM") &&
+      skillText.includes("DEMOS_MNEMONIC"),
     frontmatterName: frontmatter?.name ?? null,
     brokenLinks,
     allowlist,
     enabledEntry: enabledEntry ?? null,
     dependency: bundleDependency,
     scripts: bundleScripts,
+    primaryEnv: openclaw?.primaryEnv ?? null,
+    spendsRealMoney: openclaw?.spendsRealMoney ?? null,
+    spendToken: openclaw?.spendToken ?? null,
+    bins,
+    env,
   };
 });
 
@@ -137,3 +163,22 @@ console.log(JSON.stringify({
 }, null, 2));
 
 process.exit(ok ? 0 : 1);
+
+function parseMetadata(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed as Record<string, unknown>
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}

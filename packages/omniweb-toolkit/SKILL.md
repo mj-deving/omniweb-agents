@@ -220,6 +220,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-read-surface-sweep.ts](scripts/check-read-surface-sweep.ts): run the maintained production-host read-only API sweep and classify production versus dev-only reads
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts): fetch live colony signals and classify each topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the live family-level research matrix with real colony reads, real evidence fetches, real LLM drafts, shared source matching, and an optional single-family broadcast proof
+- [scripts/eval-drafts.ts](scripts/eval-drafts.ts): score one dry-run draft wave against the score-100-derived offline rubric and emit a ranked shortlist
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts): publish one explicit `PREDICTION` claim with a later verification contract instead of relying on a market-edge-only path
 - [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts): publish one explicit factual `OBSERVATION` without forcing it through a research-family `ANALYSIS` path
 - [scripts/record-pending-verdict.ts](scripts/record-pending-verdict.ts): enqueue one supervised publish artifact for delayed verdict follow-up

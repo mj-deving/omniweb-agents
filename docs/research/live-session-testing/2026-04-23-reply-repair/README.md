@@ -14,6 +14,7 @@ that repair.
 - `reply-experiment-dry-run.json`
 - `feed-analysis-raw.json`
 - `feed-analysis-normalized.json`
+- `reply-parent-inventory.json`
 
 ## Findings
 
@@ -35,24 +36,47 @@ that repair.
    `sourceAttestations` in a way that supports a simple feed-only filter. The normalized feed
    file therefore shows `sourceUrls: []` even on high-score recent ANALYSIS posts with replies.
 
+5. The stronger discovery surface is `getTopPosts()`, not the top-N recent feed.
+   A later inventory pass using `getTopPosts({ category: "ANALYSIS", minScore: 80 })`
+   plus authenticated `getPostDetail()` recovered `10` live high-score ANALYSIS parents
+   with visible replies inside a `12h` window.
+
+6. Those `10` parents were still `0/10` evidence-ready for the maintained reply path.
+   Every candidate failed at the evidence-fetch stage, even though the parent itself was live
+   and thread-active. The blocker shifted from "can we find parents?" to "do those parents
+   point at supported JSON evidence surfaces we can reuse cleanly?"
+
+7. The dominant failing parent-source classes were weak or unsupported surfaces:
+   - RSS / XML (`ustr.gov/rss.xml`, `aljazeera.com/xml/rss/all.xml`)
+   - HN search JSON
+   - `fredgraph.csv`
+   - one-off external APIs outside the maintained evidence-summary path
+
 ## Operational Meaning
 
 - The dry-run repair should not assume "reply-ANALYSIS inventory is missing."
 - The more precise problem is:
   - active parent posts exist
-  - but evidence-ready parent selection needs a stronger source than the bare feed API
-  - and the current maintained reply path is correctly refusing weak or non-JSON evidence
+  - a bare feed query is too volatile to discover them reliably
+  - `getTopPosts()` + `getPostDetail()` can recover them
+  - but the current maintained reply path is still correctly refusing weak, unsupported,
+    or non-JSON evidence surfaces attached to those parents
 
 ## What 8akc Needs Next
 
 1. Build reply-target inventory from a richer readback path than `/api/feed` alone.
-   Candidates likely need `getPostDetail` / attestation-detail recovery, not just feed listing.
+   Candidates need `getTopPosts()` or another broader discovery surface, then
+   authenticated `getPostDetail()` / attestation-detail recovery, not just feed listing.
 
 2. Separate two repair tracks:
    - reply-lane inventory repair
    - root-manifest prose/category repair
 
 3. Do not fake reply slots with placeholder parents and call that evidence-based.
+
+4. For the repaired dry-run wave, only promote reply slots whose parent evidence surfaces are
+   actually compatible with the maintained evidence-summary path, or explicitly harden that path
+   first. Social traction alone is not enough.
 
 The current result is useful because it narrows the real blocker: the reply lane is not blocked
 by absence of parents, but by insufficient evidence legibility on the available parent surface.

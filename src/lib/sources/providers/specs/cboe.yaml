@@ -1,0 +1,90 @@
+schemaVersion: 1
+
+provider:
+  name: cboe
+  displayName: Cboe
+  matches:
+    providers: [cboe]
+    hosts: [cdn.cboe.com]
+    urlPatterns: ["/api/global/delayed_quotes/quotes/"]
+  domains: [macro, equities, volatility, indices]
+  rateLimit:
+    bucket: cboe
+    maxPerMinute: 20
+  auth:
+    mode: none
+  defaults:
+    responseFormat: json
+    parseFailureMode: empty-entries
+    normalizeJson: true
+
+operations:
+  delayed-quote:
+    when:
+      sourceAdapterOperation: [delayed-quote, vix-quote]
+      urlPatterns: ["/api/global/delayed_quotes/quotes/"]
+      default: true
+    claimTypes: [metric, price]
+    extractionPath: "$.data.current_price"
+    request:
+      method: GET
+      urlTemplate: "https://cdn.cboe.com/api/global/delayed_quotes/quotes/{symbol}.json"
+      estimatedSizeKb:
+        TLSN: 2
+        DAHR: 2
+      matchHints:
+        - "{symbol}"
+        - "cboe"
+        - "vix"
+        - "volatility"
+    variables:
+      symbol:
+        sources: [vars.symbol, vars.asset, "tokens[0]"]
+        default: "_VIX"
+        transforms:
+          - trim
+          - uppercase
+          - map:
+              vix: _VIX
+              vvix: _VVIX
+              spx: _SPX
+    compatibility:
+      responseFormats: [json]
+      tlsn:
+        allowed: true
+        maxResponseKb: 16
+      dahr:
+        allowed: true
+        requireNormalizedJson: true
+    parse:
+      format: json
+      items:
+        mode: json-path
+        jsonPath: "$.data"
+      fields:
+        id:
+          template: "cboe-{symbol}"
+          required: true
+        title:
+          template: "Cboe {symbol} delayed quote"
+        summary:
+          template: "{symbol}: ${current_price}"
+        bodyText:
+          template: "Cboe {symbol} delayed quote — current: ${current_price}, previous close: ${previous_day_close}, change: {change}"
+        topics:
+          template: "macro,volatility,indices,{symbol}"
+        metrics:
+          current_price:
+            jsonPath: "$.current_price"
+          previous_day_close:
+            jsonPath: "$.previous_day_close"
+          change:
+            jsonPath: "$.change"
+          percent_change:
+            jsonPath: "$.percent_change"
+          high:
+            jsonPath: "$.high"
+          low:
+            jsonPath: "$.low"
+        raw:
+          mode: item

@@ -324,6 +324,16 @@ describe("Surgical URL construction", () => {
       expect(result).not.toBeNull();
     });
 
+    it("cboe delayed-quote has claimTypes", () => {
+      const adapter = adapters.get("cboe");
+      const claim = makeClaim({ type: "metric", text: "VIX at 19.39", entities: ["vix"], value: 19.39, unit: "" });
+      const source = makeSource("cboe", "vix-quote");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
+      expect(result).not.toBeNull();
+      expect(result!.url).toContain("_VIX.json");
+      expect(result!.extractionPath).toBe("$.data.current_price");
+    });
+
     it("blockchair stats has claimTypes", () => {
       const adapter = adapters.get("blockchair");
       const claim = makeClaim();
@@ -373,6 +383,14 @@ describe("Surgical URL construction", () => {
       const source = makeSource("fred", "series");
       const result = adapter!.buildSurgicalUrl!(claim, source);
       // Fred uses query-param-env auth — surgical URLs would leak API key on-chain
+      expect(result).toBeNull();
+    });
+
+    it("eia returns null (auth-key leakage guard — query-param-env)", () => {
+      const adapter = adapters.get("eia");
+      const claim = makeClaim({ type: "metric", text: "WTI at $78", entities: ["wti"], value: 78, unit: "USD" });
+      const source = makeSource("eia", "wti-spot");
+      const result = adapter!.buildSurgicalUrl!(claim, source);
       expect(result).toBeNull();
     });
 

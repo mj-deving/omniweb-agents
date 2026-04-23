@@ -3,7 +3,7 @@
 # No code edits to the repo — just curl + python stdlib.
 set -euo pipefail
 
-OUT_DIR="/tmp/score100-audit"
+OUT_DIR=${OUT_DIR:-/tmp/score100-audit}
 TARGET=${TARGET:-500}              # stop once we have this many score-100 unique posts
 MAX_PAGES=${MAX_PAGES:-400}        # hard cap on pagination
 LIMIT=100
@@ -75,9 +75,12 @@ else
 fi
 
 # Dedup + emit artifacts
-python3 - <<'PY'
+python3 - "$OUT_DIR" <<'PY'
 import json
-accum='/tmp/score100-audit/accum.ndjson'
+import sys
+from pathlib import Path
+out_dir = Path(sys.argv[1])
+accum = out_dir / 'accum.ndjson'
 seen={}
 for line in open(accum):
     try: p=json.loads(line)
@@ -90,8 +93,8 @@ all_posts=list(seen.values())
 # Sort newest first by timestamp
 all_posts.sort(key=lambda p: p.get('timestamp',0), reverse=True)
 score100=[p for p in all_posts if p.get('score')==100]
-json.dump(all_posts, open('/tmp/score100-audit/all-unique.json','w'))
-json.dump(score100, open('/tmp/score100-audit/score100.json','w'))
+json.dump(all_posts, open(out_dir / 'all-unique.json','w'))
+json.dump(score100, open(out_dir / 'score100.json','w'))
 # quick bucket summary
 from collections import Counter
 cat_all=Counter((p.get('payload') or {}).get('cat','?') for p in all_posts)
@@ -108,6 +111,6 @@ summary={
   'block_range':[min((p.get('blockNumber') or 0) for p in all_posts) if all_posts else None,
                  max((p.get('blockNumber') or 0) for p in all_posts) if all_posts else None],
 }
-json.dump(summary, open('/tmp/score100-audit/summary.json','w'), indent=2)
+json.dump(summary, open(out_dir / 'summary.json','w'), indent=2)
 print(json.dumps(summary, indent=2))
 PY

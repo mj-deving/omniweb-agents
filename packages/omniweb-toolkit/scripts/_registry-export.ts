@@ -5,11 +5,13 @@ import { basename, dirname, relative, resolve } from "node:path";
 import { parse, stringify } from "yaml";
 import { PACKAGE_ROOT } from "./_shared.js";
 import {
+  buildOpenClawMetadata,
   extractRelativeMarkdownLinks,
   getArchetypeSpec,
   isArchetype,
   parseFrontmatter,
   rewriteBundleAgentImport,
+  rewriteBundleMinimalStarterImport,
   SUPPORTED_ARCHETYPES,
   type Archetype,
   type ExportedFile,
@@ -18,6 +20,13 @@ import {
 export { extractRelativeMarkdownLinks, isArchetype, parseFrontmatter, SUPPORTED_ARCHETYPES, type Archetype, type ExportedFile };
 
 export const REGISTRY_EXPORT_ROOT = resolve(PACKAGE_ROOT, "agents", "registry");
+
+interface OpenClawInstallSpec {
+  id: string;
+  kind: "node";
+  package: string;
+  label: string;
+}
 
 export function buildRegistryExport(archetypes: readonly Archetype[] = SUPPORTED_ARCHETYPES): ExportedFile[] {
   const files: ExportedFile[] = [
@@ -33,7 +42,7 @@ export function buildRegistryExport(archetypes: readonly Archetype[] = SUPPORTED
     const spec = getArchetypeSpec(archetype);
     const playbookText = rewritePlaybookLinks(readPackageFile(spec.playbookPath), spec);
     const starterText = rewriteBundleAgentImport(readPackageFile(spec.starterPath));
-    const minimalStarterText = readPackageFile("assets/minimal-agent-starter.mjs");
+    const minimalStarterText = rewriteBundleMinimalStarterImport(readPackageFile("assets/minimal-agent-starter.mjs"));
     const loopSkeletonText = rewriteBundleAgentImport(readPackageFile("assets/agent-loop-skeleton.ts"));
     const exampleTraceText = readPackageFile(`evals/examples/${spec.trajectoryScenario}.trace.json`);
     const strategyText = buildMergedStrategy(playbookText);
@@ -208,15 +217,16 @@ This directory is the publish-facing skill artifact for the \`${spec.skillName}\
 }
 
 function renderSkill(spec: ReturnType<typeof getArchetypeSpec>, packageVersion: string): string {
+  const baseMetadata = buildOpenClawMetadata(spec);
   const metadata = JSON.stringify({
+    ...baseMetadata,
     openclaw: {
-      emoji: spec.emoji,
-      skillKey: spec.skillName,
+      ...baseMetadata.openclaw,
+      install: buildRegistryInstallSpecs(packageVersion),
       requires: {
-        bins: ["node"],
+        ...baseMetadata.openclaw.requires,
         anyBins: ["npm", "pnpm", "yarn"],
       },
-      homepage: "https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit",
     },
   });
 
@@ -245,9 +255,34 @@ Use this skill when the user wants the \`${spec.id}\` OmniWeb archetype rather t
 3. Skip the write path when evidence, budget, or readiness checks are weak.
 4. Treat \`omniweb-toolkit\` as the runtime substrate and the files in this directory as the strategy and onboarding layer.
 
+## Safety Gates
+
+1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
+2. Treat \`DEMOS_MNEMONIC\` and any credentials files as secrets. Never print them, paste them into artifacts, or commit them into the repo.
+3. Before any wallet-backed write, run \`npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts\`.
+4. If the claim depends on external evidence, also run \`npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts --attest-url <primary-url> [--supporting-url <url> ...]\`.
+5. Treat \`attestTlsn()\` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
+
+## Hard Stop Rules
+
+1. Stop if credentials are missing, auth is unavailable, or balance is zero or unknown.
+2. Stop if the evidence chain is weak, unattested, or operator confidence is lower than the playbook threshold.
+3. Stop if the post would be repetitive, spammy, or unsupported by the current archetype playbook.
+4. Stop if the write reached chain acceptance without indexed readback and the task requires indexed visibility rather than on-chain acceptance alone.
+5. Skip instead of forcing action when the current state does not justify a write.
+
+## Session Ledger Protocol
+
+1. REQUIRED: before composing, read the last 3 \`sessions/<ISO>/result.json\` entries in the workspace ledger.
+2. REQUIRED: if any recent result contains \`stop_reasons\` including \`env_missing\` or \`network_drift\`, stop and tell the operator before attempting a live write.
+3. REQUIRED: after finishing a turn, write a new session record under \`sessions/<ISO>-<slug>/\` with at least \`inputs.json\`, \`decisions.json\`, \`actions/01-<action>.json\`, and \`result.json\`. If a rubric score or observed score exists, also write \`scorecard.json\`.
+4. Treat the session ledger as workflow memory, not public output. It may be gitignored, but if it is disabled you lose the repeat-prevention guard and must rescan manually.
+
 ## Runtime Assumption
 
 This skill does not replace the runtime package. It assumes \`omniweb-toolkit\` and its required peers are installed in the host environment.
+
+Until the first npm release exists, treat the \`metadata.openclaw.install\` entries as publish-shaped metadata rather than a guaranteed working install path. Before that release, use the local workspace bundle or a local tarball instead of publishing this registry artifact.
 `);
 }
 
@@ -294,6 +329,8 @@ Preferred install path after npm publish:
 \`\`\`bash
 npm install omniweb-toolkit@${packageVersion} @kynesyslabs/demosdk better-sqlite3
 \`\`\`
+
+This matches the \`metadata.openclaw.install\` entries in \`SKILL.md\`. Do not publish this registry artifact until that npm path is actually live.
 
 Optional peers:
 
@@ -389,6 +426,29 @@ function deepMerge(base: unknown, override: unknown): unknown {
 function readPackageVersion(): string {
   const packageJson = JSON.parse(readPackageFile("package.json")) as { version: string };
   return packageJson.version;
+}
+
+export function buildRegistryInstallSpecs(packageVersion: string): OpenClawInstallSpec[] {
+  return [
+    {
+      id: "node-runtime",
+      kind: "node",
+      package: `omniweb-toolkit@${packageVersion}`,
+      label: `Install omniweb-toolkit runtime (${packageVersion})`,
+    },
+    {
+      id: "node-demosdk",
+      kind: "node",
+      package: "@kynesyslabs/demosdk@>=2.11.0",
+      label: "Install @kynesyslabs/demosdk peer",
+    },
+    {
+      id: "node-better-sqlite3",
+      kind: "node",
+      package: "better-sqlite3",
+      label: "Install better-sqlite3 peer",
+    },
+  ];
 }
 
 function readPackageFile(relativePath: string): string {

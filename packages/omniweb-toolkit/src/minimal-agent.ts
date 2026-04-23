@@ -7,6 +7,12 @@ import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
 import { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
 import type { PublishVisibilityResult } from "./publish-visibility.js";
 import { verifyPublishVisibility } from "./publish-visibility.js";
+import {
+  getDefaultSessionLedgerDir,
+  loadRecentSessionResults,
+  writeSessionLedgerJson,
+  type SessionLedgerResult,
+} from "./session-ledger.js";
 
 export type MinimalAgentState = Record<string, unknown>;
 export type MinimalAuditSection = Record<string, unknown>;
@@ -46,13 +52,22 @@ export interface MinimalCycleContext {
   iteration: number;
   startedAt: string;
   stateDir: string;
+  sessionId: string;
+  sessionDir: string;
   dryRun: boolean;
+}
+
+export interface MinimalSessionLedgerContext {
+  sessionId: string;
+  sessionDir: string;
+  recentResults: SessionLedgerResult[];
 }
 
 export interface MinimalObserveContext<TState extends MinimalAgentState = MinimalAgentState> {
   omni: OmniWeb;
   cycle: MinimalCycleContext;
   memory: MinimalAgentMemory<TState>;
+  ledger: MinimalSessionLedgerContext;
 }
 
 interface BaseDecision<TState extends MinimalAgentState = MinimalAgentState> {
@@ -107,6 +122,8 @@ interface MinimalRuntimeSharedOptions<TState extends MinimalAgentState = Minimal
   connectOptions?: ConnectOptions;
   connectFn?: (opts?: ConnectOptions) => Promise<OmniWeb>;
   stateDir?: string;
+  sessionLedgerDir?: string;
+  sessionSlug?: string;
   cwd?: string;
   dryRun?: boolean;
   verification?: MinimalVerificationOptions;
@@ -130,12 +147,14 @@ export interface RunMinimalAgentLoopOptions<TState extends MinimalAgentState = M
 export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAgentState> {
   version: 1;
   cycleId: string;
+  sessionId: string;
   iteration: number;
   startedAt: string;
   finishedAt: string;
   durationMs: number;
   dryRun: boolean;
   stateDir: string;
+  sessionDir: string;
   decision: MinimalObserveResult<TState>;
   memoryBefore: MinimalAgentMemory<TState>;
   memoryAfter: MinimalAgentMemory<TState>;
@@ -181,7 +200,9 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
 ): Promise<MinimalCycleRecord<TState>> {
   const now = opts.now ?? Date.now;
   const stateDir = resolveStateDir(opts.stateDir, opts.cwd);
+  const sessionLedgerDir = resolveSessionLedgerDir(opts.sessionLedgerDir, opts.cwd);
   const previous = await loadStoredState<TState>(stateDir);
+  const recentResults = await loadRecentSessionResults(sessionLedgerDir, 3);
   const memoryBefore: MinimalAgentMemory<TState> = {
     state: previous.agentState,
     lastCycle: previous.lastCycle,
@@ -190,11 +211,15 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   const startedAtMs = now();
   const startedAt = new Date(startedAtMs).toISOString();
   const cycleId = opts.cycleId ?? buildCycleId(iteration, startedAtMs);
+  const sessionId = buildSessionId(iteration, startedAtMs, resolveSessionSlug(opts));
+  const sessionDir = resolve(sessionLedgerDir, sessionId);
   const cycle: MinimalCycleContext = {
     id: cycleId,
     iteration,
     startedAt,
     stateDir,
+    sessionId,
+    sessionDir,
     dryRun: opts.dryRun === true,
   };
 
@@ -227,6 +252,11 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       omni,
       cycle,
       memory: memoryBefore,
+      ledger: {
+        sessionId,
+        sessionDir,
+        recentResults,
+      },
     });
   } catch (error) {
     const record = buildFailureRecord({
@@ -497,6 +527,7 @@ async function persistCycleArtifacts<TState extends MinimalAgentState>(
   await writeText(markdownPath, renderCycleSummary(record));
   await writeJson(latestPath, record);
   await writeJson(statePath, storedState);
+  await persistSessionLedger(record);
 }
 
 function buildCompletedRecord<TState extends MinimalAgentState>(args: {
@@ -520,12 +551,14 @@ function buildCompletedRecord<TState extends MinimalAgentState>(args: {
   return {
     version: 1,
     cycleId: args.cycle.id,
+    sessionId: args.cycle.sessionId,
     iteration: args.cycle.iteration,
     startedAt: args.cycle.startedAt,
     finishedAt,
     durationMs: Math.max(0, finishedAtMs - args.startedAtMs),
     dryRun: args.cycle.dryRun,
     stateDir: args.cycle.stateDir,
+    sessionDir: args.cycle.sessionDir,
     decision: args.decision,
     memoryBefore: args.memoryBefore,
     memoryAfter: {
@@ -574,6 +607,8 @@ function summarizeCycle<TState extends MinimalAgentState>(
       iteration: record.iteration,
       startedAt: record.startedAt,
       stateDir: record.stateDir,
+      sessionId: record.sessionId,
+      sessionDir: record.sessionDir,
       dryRun: record.dryRun,
     },
     finishedAt: record.finishedAt,
@@ -691,8 +726,18 @@ function buildCycleId(iteration: number, nowMs: number): string {
   return `${stamp}-i${String(iteration).padStart(4, "0")}`;
 }
 
+function buildSessionId(iteration: number, nowMs: number, slug: string): string {
+  const stamp = new Date(nowMs).toISOString().replace(/[:.]/g, "-");
+  return `${stamp}-${slug}-i${String(iteration).padStart(4, "0")}`;
+}
+
 function stateFilePath(stateDir: string): string {
   return resolve(stateDir, "state", "current.json");
+}
+
+function resolveSessionLedgerDir(sessionLedgerDir: string | undefined, cwd: string | undefined): string {
+  if (sessionLedgerDir) return resolve(sessionLedgerDir);
+  return getDefaultSessionLedgerDir(cwd);
 }
 
 async function writeJson(path: string, value: unknown): Promise<void> {
@@ -780,4 +825,123 @@ function isMissingFile(error: unknown): boolean {
   return Boolean(error)
     && typeof error === "object"
     && candidate?.code === "ENOENT";
+}
+
+function resolveSessionSlug<TState extends MinimalAgentState>(
+  opts: MinimalRuntimeSharedOptions<TState>,
+): string {
+  const raw = opts.sessionSlug
+    ?? opts.connectOptions?.agentName
+    ?? process.env.AGENT_NAME
+    ?? "agent";
+  const normalized = raw.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+  return normalized.length > 0 ? normalized : "agent";
+}
+
+async function persistSessionLedger<TState extends MinimalAgentState>(
+  record: MinimalCycleRecord<TState>,
+): Promise<void> {
+  const inputs = {
+    version: 1,
+    session_id: record.sessionId,
+    cycle_id: record.cycleId,
+    started_at: record.startedAt,
+    dry_run: record.dryRun,
+    state_dir: record.stateDir,
+    session_dir: record.sessionDir,
+    previous_cycle: record.memoryBefore.lastCycle,
+  };
+
+  const decisions = {
+    version: 1,
+    session_id: record.sessionId,
+    kind: record.decision.kind,
+    facts: record.decision.facts ?? {},
+    attestation_plan: record.decision.attestationPlan ?? null,
+    next_state_keys: Object.keys(record.memoryAfter.state ?? {}),
+  };
+
+  const action = {
+    version: 1,
+    session_id: record.sessionId,
+    action: record.decision.kind,
+    status: record.outcome.status,
+    tx_hash: record.outcome.txHash ?? null,
+    dem_spent: record.outcome.demSpendEstimate ?? 0,
+    verification: record.outcome.verification ?? null,
+    error: record.outcome.error ?? null,
+  };
+
+  await writeSessionLedgerJson(record.sessionDir, "inputs.json", inputs);
+  await writeSessionLedgerJson(record.sessionDir, "decisions.json", decisions);
+  await writeSessionLedgerJson(record.sessionDir, `actions/01-${record.decision.kind}.json`, action);
+  const scorecardSummary = buildScorecardSummary(record);
+  if (scorecardSummary) {
+    await writeSessionLedgerJson(record.sessionDir, "scorecard.json", scorecardSummary);
+  }
+  await writeSessionLedgerJson(record.sessionDir, "result.json", buildSessionResult(record, scorecardSummary));
+}
+
+function buildSessionResult<TState extends MinimalAgentState>(
+  record: MinimalCycleRecord<TState>,
+  scorecardSummary: Record<string, unknown> | null,
+): SessionLedgerResult {
+  return {
+    version: 1,
+    session_id: record.sessionId,
+    started_at: record.startedAt,
+    finished_at: record.finishedAt,
+    status: record.outcome.status,
+    actions_taken: [record.decision.kind],
+    dem_spent: record.outcome.demSpendEstimate ?? 0,
+    scorecard_summary: scorecardSummary,
+    stop_reasons: buildStopReasons(record),
+    tx_hash: record.outcome.txHash,
+    indexed_visible: record.outcome.verification?.indexedVisible,
+    verification_path: record.outcome.verification?.verificationPath ?? null,
+  };
+}
+
+function buildScorecardSummary<TState extends MinimalAgentState>(
+  record: MinimalCycleRecord<TState>,
+): Record<string, unknown> | null {
+  if (typeof record.outcome.verification?.observedScore === "number") {
+    return {
+      observed_score: record.outcome.verification.observedScore,
+      indexed_visible: record.outcome.verification.indexedVisible ?? false,
+      verification_path: record.outcome.verification.verificationPath ?? null,
+    };
+  }
+
+  return null;
+}
+
+function buildStopReasons<TState extends MinimalAgentState>(
+  record: MinimalCycleRecord<TState>,
+): string[] {
+  const reasons = new Set<string>();
+  const errorMessage = record.outcome.error?.message?.toLowerCase() ?? "";
+
+  if (record.decision.kind === "skip") {
+    reasons.add(record.decision.reason);
+  }
+  if (errorMessage.includes("no credentials file") || errorMessage.includes("demos_mnemonic")) {
+    reasons.add("env_missing");
+  }
+  if (
+    errorMessage.includes("timeout")
+    || errorMessage.includes("fetch failed")
+    || errorMessage.includes("request failed")
+    || errorMessage.includes("network")
+  ) {
+    reasons.add("network_drift");
+  }
+  if (errorMessage.startsWith("placeholder_attest_url")) {
+    reasons.add("placeholder_attest_url");
+  }
+  if (record.outcome.verification?.visible && !record.outcome.verification.indexedVisible) {
+    reasons.add("indexer_lag");
+  }
+
+  return Array.from(reasons);
 }

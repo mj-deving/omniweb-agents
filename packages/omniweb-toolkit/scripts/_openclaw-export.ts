@@ -47,6 +47,21 @@ interface ArchetypeSpec {
   references: string[];
 }
 
+interface OpenClawMetadata {
+  emoji: string;
+  skillKey: string;
+  homepage: string;
+  requires: {
+    bins: string[];
+    env: string[];
+  };
+  primaryEnv: string;
+  spendsRealMoney: boolean;
+  spendToken: string;
+  secretFiles: string[];
+  writeGuards: string[];
+}
+
 const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
   "research-agent": {
     id: "research-agent",
@@ -188,7 +203,7 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
     const spec = getArchetypeSpec(archetype);
     const playbookText = rewritePlaybookLinks(readPackageFile(spec.playbookPath), spec);
     const starterText = rewriteBundleAgentImport(readPackageFile(spec.starterPath));
-    const minimalStarterText = readPackageFile("assets/minimal-agent-starter.mjs");
+    const minimalStarterText = rewriteBundleMinimalStarterImport(readPackageFile("assets/minimal-agent-starter.mjs"));
     const strategyText = buildMergedStrategy(playbookText);
     const bundleDir = archetype;
     const skillDir = `${bundleDir}/skills/${spec.skillName}`;
@@ -238,6 +253,80 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
 
 export function rewriteBundleAgentImport(content: string): string {
   return normalizeText(content.replaceAll('from "../src/agent.js"', 'from "omniweb-toolkit/agent"'));
+}
+
+export function rewriteBundleMinimalStarterImport(content: string): string {
+  return normalizeText(content
+    .replaceAll('from "../src/index.js"', 'from "omniweb-toolkit"')
+    .replaceAll('from "../src/agent.js"', 'from "omniweb-toolkit/agent"'));
+}
+
+export function buildOpenClawMetadata(spec: ArchetypeSpec): { openclaw: OpenClawMetadata } {
+  return {
+    openclaw: {
+      emoji: spec.emoji,
+      skillKey: spec.skillName,
+      homepage: "https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit",
+      requires: {
+        bins: ["node"],
+        env: [
+          "DEMOS_MNEMONIC",
+          "RPC_URL",
+          "SUPERCOLONY_API",
+        ],
+      },
+      primaryEnv: "DEMOS_MNEMONIC",
+      spendsRealMoney: true,
+      spendToken: "DEM",
+      secretFiles: [
+        "~/.config/demos/credentials",
+        "~/.config/demos/credentials-<agent>",
+        "~/.supercolony-auth.json",
+      ],
+      writeGuards: [
+        "npm run check:publish",
+        "npm run check:attestation -- --attest-url <primary-url>",
+      ],
+    },
+  };
+}
+
+function renderSafetyRules(spec: ArchetypeSpec): string {
+  return `
+## Safety Gates
+
+1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
+2. Treat \`DEMOS_MNEMONIC\` and any credentials files as secrets. Never print them, copy them into artifacts, or write them back into repo files.
+3. Before any wallet-backed write, run \`npm run check:publish\`.
+4. If the claim depends on external evidence, also run \`npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\`.
+5. Treat \`attestTlsn()\` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
+
+## Hard Stop Rules
+
+1. Stop if credentials are missing, auth is unavailable, or balance is zero or unknown.
+2. Stop if the evidence chain is weak, unattested, or operator confidence is lower than the playbook threshold.
+3. Stop if the post would be repetitive, spammy, or unsupported by the current archetype playbook.
+4. Stop if the publish path reaches chain acceptance without indexed readback and the task requires indexed visibility rather than on-chain acceptance alone.
+5. Skip instead of forcing action when the current state does not justify a write.
+
+## Secret And Spend Handling
+
+1. Use per-agent credentials files when available; do not move secrets into tracked workspace files.
+2. Do not paste auth tokens, mnemonic material, or wallet addresses into public issue comments, beads, or generated reports unless the address is already intentionally public.
+3. When a write succeeds, record the tx hash and the readback status separately. On-chain acceptance is not the same thing as indexed colony visibility.
+4. Prefer the smallest action that advances the archetype. For ${spec.id}, read-first behavior is the default and writing is the exception, not the baseline.
+`;
+}
+
+function renderSessionLedgerProtocol(): string {
+  return `
+## Session Ledger Protocol
+
+1. REQUIRED: before composing, read the last 3 \`sessions/<ISO>/result.json\` entries in the workspace ledger.
+2. REQUIRED: if any recent result contains \`stop_reasons\` including \`env_missing\` or \`network_drift\`, stop and tell the operator before attempting a live write.
+3. REQUIRED: after finishing a turn, write a new session record under \`sessions/<ISO>-<slug>/\` with at least \`inputs.json\`, \`decisions.json\`, \`actions/01-<action>.json\`, and \`result.json\`. If a rubric score or observed score exists, also write \`scorecard.json\`.
+4. Treat the session ledger as workflow memory, not public output. It is allowed to be gitignored, but if it is disabled you lose the repeat-prevention guard and must rescan manually.
+`;
 }
 
 export function writeOpenClawExport(
@@ -468,16 +557,7 @@ function renderBundlePackageJson(spec: ArchetypeSpec): string {
 }
 
 function renderSkill(spec: ArchetypeSpec): string {
-  const metadata = JSON.stringify({
-    openclaw: {
-      emoji: spec.emoji,
-      skillKey: spec.skillName,
-      requires: {
-        bins: ["node"],
-      },
-      homepage: "https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit",
-    },
-  });
+  const metadata = JSON.stringify(buildOpenClawMetadata(spec));
 
   return normalizeText(`---
 name: ${spec.skillName}
@@ -502,6 +582,10 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 2. Prefer the smallest action that advances the archetype's job.
 3. Before any wallet-backed write, run \`npm run check:publish\` and then \`npm run check:attestation -- --attest-url <primary-url>\` when the claim depends on external evidence.
 4. If the current state does not justify a publish, skip the write and keep the evidence trail explicit.
+
+${renderSafetyRules(spec)}
+
+${renderSessionLedgerProtocol()}
 
 ## Validation Order
 

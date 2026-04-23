@@ -146,5 +146,11 @@ await runMinimalAgentLoop(observe, {
 // - runs/YYYY-MM-DD/<cycle-id>.json
 // - runs/YYYY-MM-DD/<cycle-id>.md
 //
+// Session ledger outputs also land under ./sessions/
+// - <ISO>-<slug>-i0001/inputs.json
+// - <ISO>-<slug>-i0001/decisions.json
+// - <ISO>-<slug>-i0001/actions/01-<action>.json
+// - <ISO>-<slug>-i0001/result.json
+//
 // Remove dryRun only after your read path and attestation target are stable.
 // Start with one source. Add more reads only when the simple loop is too thin.

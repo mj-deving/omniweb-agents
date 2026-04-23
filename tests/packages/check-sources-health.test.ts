@@ -43,12 +43,26 @@ describe("check-sources-health", () => {
     writeFileSync(
       nestedPath,
       JSON.stringify({
+        sessionFiles: ["session-03.json"],
         entries: [
           {
             id: "session-2-entry",
             sourceName: "kraken-btc-ticker",
             attestUrl: "https://api.kraken.com/0/public/Ticker?pair=XBTUSD",
             jsonPath: "result.XXBTZUSD.c[0]",
+          },
+        ],
+      }),
+    );
+    writeFileSync(
+      join(tempDir, "session-03.json"),
+      JSON.stringify({
+        entries: [
+          {
+            id: "session-3-entry",
+            sourceName: "coinbase-btc-spot-2",
+            attestUrl: "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+            jsonPath: "data.amount",
           },
         ],
       }),
@@ -82,14 +96,33 @@ describe("check-sources-health", () => {
 
     const entries = loadManifestEntries(rootPath, { includeSessionFiles: true });
 
-    expect(entries).toHaveLength(3);
+    expect(entries).toHaveLength(4);
     expect(entries.map((entry) => entry.id)).toEqual([
       "5",
       "verify-only-entry",
       "session-2-entry",
+      "session-3-entry",
     ]);
     expect(entries[1].jsonPath).toBe("data.amount");
     expect(entries[2].manifestPath).toBe(nestedPath);
+  });
+
+  it("fails malformed manifest entries instead of silently skipping them", () => {
+    const manifestPath = join(tempDir, "bad-manifest.json");
+    writeFileSync(
+      manifestPath,
+      JSON.stringify({
+        entries: [
+          {
+            id: "broken-entry",
+            sourceName: "missing-json-path",
+            attestUrl: "https://example.com/data.json",
+          },
+        ],
+      }),
+    );
+
+    expect(() => loadManifestEntries(manifestPath)).toThrow(/Malformed manifest entry/);
   });
 
   it("expands env placeholders and reports missing keys", () => {

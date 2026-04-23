@@ -54,28 +54,40 @@ export function loadManifestEntries(
   manifestPath: string,
   options?: { includeSessionFiles?: boolean },
 ): HealthManifestEntry[] {
-  const resolvedManifest = resolve(manifestPath);
+  return loadManifestEntriesRecursive(resolve(manifestPath), {
+    includeSessionFiles: options?.includeSessionFiles ?? false,
+    visited: new Set<string>(),
+  });
+}
+
+function loadManifestEntriesRecursive(
+  resolvedManifest: string,
+  options: { includeSessionFiles: boolean; visited: Set<string> },
+): HealthManifestEntry[] {
+  if (options.visited.has(resolvedManifest)) {
+    return [];
+  }
+  options.visited.add(resolvedManifest);
+
   const manifest = JSON.parse(readFileSync(resolvedManifest, "utf8")) as ManifestShape;
   const entries: HealthManifestEntry[] = [];
 
   if (Array.isArray(manifest.sources)) {
     for (const entry of manifest.sources) {
-      const normalized = normalizeEntry(entry, resolvedManifest, "sourceId");
-      if (normalized) entries.push(normalized);
+      entries.push(normalizeEntry(entry, resolvedManifest, "sourceId"));
     }
   }
 
   if (Array.isArray(manifest.entries)) {
     for (const entry of manifest.entries) {
-      const normalized = normalizeEntry(entry, resolvedManifest, "id");
-      if (normalized) entries.push(normalized);
+      entries.push(normalizeEntry(entry, resolvedManifest, "id"));
     }
   }
 
-  if (options?.includeSessionFiles && Array.isArray(manifest.sessionFiles)) {
+  if (options.includeSessionFiles && Array.isArray(manifest.sessionFiles)) {
     for (const sessionFile of manifest.sessionFiles) {
       const sessionPath = resolve(dirname(resolvedManifest), sessionFile);
-      entries.push(...loadManifestEntries(sessionPath, { includeSessionFiles: false }));
+      entries.push(...loadManifestEntriesRecursive(sessionPath, options));
     }
   }
 
@@ -86,7 +98,7 @@ function normalizeEntry(
   entry: Record<string, unknown>,
   manifestPath: string,
   idField: "sourceId" | "id",
-): HealthManifestEntry | null {
+): HealthManifestEntry {
   const idValue = entry[idField];
   const sourceName = typeof entry.sourceName === "string" ? entry.sourceName : null;
   const attestUrl = typeof entry.attestUrl === "string" ? entry.attestUrl : null;
@@ -96,7 +108,11 @@ function normalizeEntry(
       ? entry.verifyJsonPath
       : null;
 
-  if (!sourceName || !attestUrl || !jsonPath) return null;
+  if (!sourceName || !attestUrl || !jsonPath) {
+    throw new Error(
+      `Malformed manifest entry in ${manifestPath}: sourceName, attestUrl, and jsonPath/verifyJsonPath are required`,
+    );
+  }
 
   return {
     id: typeof idValue === "number" || typeof idValue === "string"

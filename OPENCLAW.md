@@ -137,16 +137,24 @@ Do not document this repo as pure clone-and-go until all three are proven in one
 
 ## Workspace Mutation
 
-On first wiring, OpenClaw may materialize workspace-local files such as:
+The exported OmniWeb bundles already commit several workspace context files on purpose:
 
 - `AGENTS.md`
-- `TOOLS.md`
+- `BOOTSTRAP.md`
 - `SOUL.md`
 - `USER.md`
+- `TOOLS.md`
 - `HEARTBEAT.md`
+- `MEMORY.md`
+- `memory/README.md`
+
+Keep those files as part of the shipped bundle surface.
+
+On first wiring, OpenClaw may also materialize runtime-local files such as:
+
 - `.openclaw/workspace-state.json`
 
-Treat these as runtime-generated local files unless the export pipeline intentionally starts shipping them.
+Treat the runtime-local files as generated state, not as source-controlled bundle inputs.
 
 ## Future Public Install Path
 

@@ -26,16 +26,30 @@ import {
 
 describe("check-sources-health", () => {
   let tempDir: string;
+  let originalFredApiKey: string | undefined;
+  let originalBlsApiKey: string | undefined;
 
   beforeEach(() => {
     fetchTextMock.mockReset();
     tempDir = mkdtempSync(join(tmpdir(), "check-sources-health-"));
+    originalFredApiKey = process.env.FRED_API_KEY;
+    originalBlsApiKey = process.env.BLS_API_KEY;
     delete process.env.FRED_API_KEY;
+    delete process.env.BLS_API_KEY;
   });
 
   afterEach(() => {
     rmSync(tempDir, { recursive: true, force: true });
-    delete process.env.FRED_API_KEY;
+    if (originalFredApiKey === undefined) {
+      delete process.env.FRED_API_KEY;
+    } else {
+      process.env.FRED_API_KEY = originalFredApiKey;
+    }
+    if (originalBlsApiKey === undefined) {
+      delete process.env.BLS_API_KEY;
+    } else {
+      process.env.BLS_API_KEY = originalBlsApiKey;
+    }
   });
 
   it("loads canonical sources, session entries, and nested session files", () => {

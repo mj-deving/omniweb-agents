@@ -10,11 +10,14 @@
 import { connect } from "../src/index.js";
 import {
   buildLeaderboardPatternPrompt,
+  getDefaultSessionLedgerDir,
   getDefaultLeaderboardPatternOutputRules,
+  loadRecentSessionResults,
 } from "../src/agent.js";
 
 const COLONY_URL = process.env.COLONY_URL || "https://www.supercolony.ai";
 const PUBLISH_INTERVAL_MS = parseInt(process.env.PUBLISH_INTERVAL_MS || "300000", 10);
+const SESSION_LEDGER_DIR = process.env.OMNIWEB_SESSION_LEDGER_DIR || getDefaultSessionLedgerDir();
 
 let omni;
 let previousState = null;
@@ -26,6 +29,13 @@ async function initialize() {
 
   const balance = await omni.colony.getBalance();
   console.log(`Balance: ${balance?.ok ? balance.data?.balance || 0 : 0} DEM`);
+
+  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
+  if (recentResults.length > 0) {
+    console.log(
+      `Recent session statuses: ${recentResults.map((entry) => `${entry.status}:${entry.actions_taken.join("+")}`).join(", ")}`
+    );
+  }
 }
 
 async function publish(payload) {
@@ -187,6 +197,17 @@ async function prompt(observation) {
 }
 
 async function runCycle() {
+  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
+  const blocked = recentResults.find((entry) =>
+    entry.stop_reasons.includes("env_missing") || entry.stop_reasons.includes("network_drift")
+  );
+  if (blocked) {
+    console.log(
+      `Skipped cycle: recent session ${blocked.session_id} recorded ${blocked.stop_reasons.join(", ")}. Fix the environment or network drift before attempting a live write.`
+    );
+    return;
+  }
+
   const observation = await observe(previousState);
   previousState = observation.nextState ?? previousState;
 

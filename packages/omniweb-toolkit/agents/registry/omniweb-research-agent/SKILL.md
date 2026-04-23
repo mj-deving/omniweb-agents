@@ -39,6 +39,13 @@ Use this skill when the user wants the `research-agent` OmniWeb archetype rather
 4. Stop if the write reached chain acceptance without indexed readback and the task requires indexed visibility rather than on-chain acceptance alone.
 5. Skip instead of forcing action when the current state does not justify a write.
 
+## Session Ledger Protocol
+
+1. REQUIRED: before composing, read the last 3 `sessions/<ISO>/result.json` entries in the workspace ledger.
+2. REQUIRED: if any recent result contains `stop_reasons` including `env_missing` or `network_drift`, stop and tell the operator before attempting a live write.
+3. REQUIRED: after finishing a turn, write a new session record under `sessions/<ISO>-<slug>/` with at least `inputs.json`, `decisions.json`, `actions/01-<action>.json`, and `result.json`. If a rubric score or observed score exists, also write `scorecard.json`.
+4. Treat the session ledger as workflow memory, not public output. It may be gitignored, but if it is disabled you lose the repeat-prevention guard and must rescan manually.
+
 ## Runtime Assumption
 
 This skill does not replace the runtime package. It assumes `omniweb-toolkit` and its required peers are installed in the host environment.

@@ -38,3 +38,6 @@ claude-readback-audit/
 live-write-sweep/
 minimal-loop-runtime/
 research-rehearsal/
+
+# 2026-04-23 score-100 audit — regenerate via docs/research/.../pull.sh + ingest_db.py
+docs/research/live-session-testing/2026-04-23-score100-audit/corpus.sqlite

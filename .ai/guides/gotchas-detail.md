@@ -66,19 +66,19 @@ TLSN attestation runs in a Playwright-driven headless Chromium **page main threa
 
 **What the bridge does:**
 - Spins up a local HTTP static server (`startTlsnStaticServer`) that sets `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, and `Cross-Origin-Resource-Policy: same-origin` on every response.
-- Serves a minimal page (`/bridge.html`) that loads `tlsn-js` via `<script src="/lib.js"></script>` in the page's main thread. (Earlier worker-based implementations are gone; the UMD `self.default` / `self.init` quirk no longer applies.)
+- Serves a minimal page (`/bridge.html`) that loads `tlsn-js` via `<script src="/lib.js"></script>` in the page's main thread (no Web Worker).
 - Launches Playwright Chromium with `--no-sandbox --disable-setuid-sandbox` and runs the attestation via `page.evaluate(...)`.
 
-**Call-shape gotchas (current, verified against the bridge):**
-- The Demos node returns the notary URL as `ws://...` / `wss://...`. Convert to `http://...` / `https://...` before use — `Prover.notarize()` uses `fetch` for session init. Implemented at `src/lib/tlsn-playwright-bridge.ts:162-163`.
-- Set Playwright `page.setDefaultTimeout(300_000)` — MPC-TLS steps sum to 190-290s in practice. The earlier 180s timeout was insufficient and produced false-positive hangs (`src/lib/tlsn-playwright-bridge.ts:394`, `:406`).
+**Call-shape gotchas (current, verified line-by-line against the bridge):**
+- The bridge uses the **instance** `Prover` API, not the static `Prover.notarize()`. Sequence: `new w.Prover({ serverDns, maxSentData, maxRecvData })` → `prover.setup(sessionUrl)` → `prover.sendRequest(proxyUrlWithToken, { url, method, headers })` → `prover.transcript()` → `prover.notarize(commitRanges)`. (`src/lib/tlsn-playwright-bridge.ts:425-458`.)
+- **The proxy URL must have `?token=<hostname>` appended** before `prover.sendRequest()`. The static `Prover.notarize()` API does this internally; the instance `sendRequest()` path does NOT. Without the token query param, the proxy accepts the WebSocket upgrade but never routes TLS frames — the call hangs indefinitely with no error. (`src/lib/tlsn-playwright-bridge.ts:437-442`.)
+- **`prover.notarize()` requires explicit `commitRanges`** when using the instance API: `{ sent: [{ start: 0, end: transcript.sent.length }], recv: [{ start: 0, end: transcript.recv.length }] }`. The static API auto-commits; the instance API does not. (`src/lib/tlsn-playwright-bridge.ts:454-458`.)
+- The `tlsn-js` UMD bundle exposes its init function as `default`. Call it as `window.default({ loggingLevel, hardwareConcurrency })` from the page (or `self.default(...)` if you ever reintroduce a Web Worker). (`src/lib/tlsn-playwright-bridge.ts:420-423`.)
+- The Demos node returns the notary URL as `ws://...` / `wss://...`. Convert to `http://...` / `https://...` before use — the notary's `fetch`-based session init requires HTTP scheme. (`src/lib/tlsn-playwright-bridge.ts:162-163`.)
+- Set Playwright `page.setDefaultTimeout(300_000)` — MPC-TLS steps sum to 190-290s in practice. The earlier 180s value was insufficient and produced false-positive hangs (`src/lib/tlsn-playwright-bridge.ts:394`, `:406`).
 - `maxRecvData` is capped at 16384 bytes by the Demos testnet notary (already noted in the TLSN section above). Use query params (`?hitsPerPage=3`, `?fields=name,stars`) to keep responses under 16KB.
 
-**Stale claims removed in this revision** (originally migrated 2026-04-24 from the deleted DEMOS skill, contradicted by current code on the same day's Codex review):
-- "Runs in a Web Worker" — current bridge runs WASM in the page main thread.
-- "`init` is exposed as `self.default`, not `self.init`" — UMD-in-worker quirk gone with the worker.
-- "Do NOT pass `commit` to `Prover.notarize()`" — current bridge does not call `Prover.notarize()` directly; the lib.js bundle abstracts it. Re-verify if you reintroduce a direct call.
-- "Playwright `setDefaultTimeout(180_000)`" — wrong; current code uses `300_000`.
+**History note** (lifted from the deleted DEMOS skill on 2026-04-24, then twice corrected after Codex review): an earlier implementation ran in a Web Worker; the current bridge runs in the page main thread. Both architectures need COOP/COEP because both rely on `SharedArrayBuffer` for `tlsn-js` MPC-TLS WASM. The instance-API + manual-commit + token-on-proxy-URL pattern is current.
 
 ## SDK Call Shapes (Demos)
 

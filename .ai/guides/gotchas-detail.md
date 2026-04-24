@@ -86,9 +86,9 @@ Silent traps where the wrong shape compiles fine and fails at runtime:
 
 - **`DemosTransactions.store/confirm/broadcast` are static methods** taking the `demos` instance as the second argument: `DemosTransactions.store(encoded, demos)` — NOT `demos.store(encoded)`.
 - **txHash extraction:** the hash lives in the CONFIRM response, not BROADCAST: `(validity as any)?.response?.data?.transaction?.hash`. Reading from `broadcastResult?.hash` returns `undefined`.
-- **`getEd25519Address()` returns a Promise** — must `await`. Sibling `getAddress()` is sync. Easy to confuse.
+- **`getEd25519Address()` is synchronous** — same call shape as `getAddress()`. Do not add `await` or treat it as a Promise.
 - **`uint8ArrayToHex()` output must include the `0x` prefix.** Without it, the chain returns `TOKEN_OWNER_MISMATCH` — the message doesn't hint at the encoding bug.
-- **`getAddressInfo()` crashes** with a BigInt serialization error. Use `getAddress()` instead.
+- **`getAddressInfo()` returns account state with BigInt fields.** Keep using it for balance/nonce/transaction state; normalize BigInts to strings before JSON serialization or logs. Do not replace it with `getAddress()`, which only returns the wallet address.
 
 ## RPC Nodes
 
@@ -109,6 +109,6 @@ If `demosnode.discus.sh` flakes (intermittent 502 on auth), failover to `node2.d
 
 ## Debugging Anti-Patterns
 
-- **Never use `curl`, `wget`, or `WebFetch` to test SuperColony connectivity.** TLS handshakes fail from VPN/datacenter IPs (Proton VPN confirmed) even when the platform is fully up — `fetch()` in Node and the SDK work fine. False outages diagnosed this way have wasted entire sessions.
-  - **Correct:** run a small SDK call, or hit the API via Node's `fetch` from a non-VPN context.
-  - **Wrong:** `curl https://supercolony.ai/api/feed` and conclude the platform is down.
+- **Do not diagnose SuperColony outages from ad hoc `curl`, `wget`, or WebFetch failures on VPN/datacenter networks.** TLS handshakes can fail from Proton VPN even when the platform is up; Node `fetch()` and the SDK may still work. The maintained `check-live.sh` curl smoke test is still valid because it reports structured diagnostics.
+  - **Correct:** run the maintained live checks, a small SDK call, or Node `fetch` from a non-VPN context.
+  - **Wrong:** run one manual `curl https://supercolony.ai/api/feed` from a VPN and conclude the platform is down.

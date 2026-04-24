@@ -182,6 +182,19 @@ This is upstream of the merge slot:
 - use `shared additions first` to prevent PR contamination at branch-creation time
 - use the merge slot later when remaining hot files still need serialized landing
 
+## Pre-Commit Checklist
+
+Before any non-trivial commit (anything beyond a typo fix), run the canonical query tools BEFORE writing or editing files. The cost is seconds; the cost of skipping is opening then closing PRs for already-done or redundant work.
+
+1. **Verify branch + sync state explicitly.** `git fetch origin main && git branch --show-current && git log --oneline origin/main..HEAD -3`. Don't trust `bd prime` alone — it doesn't tell you where the working tree is.
+2. **Match branch to task BEFORE editing.** If the current branch's purpose has nothing to do with the task (e.g. you're on `codex/eval-drafts-rubric` and want to fix docs), STOP and create a new worktree off `origin/main` first. Never let "I'm already here" become the reason work lands on the wrong branch.
+3. **Diff dirty files vs `origin/main`, NOT vs branch HEAD.** Phantom-dirty files on diverged branches are common — they look like local work but are actually upstream changes the branch doesn't have. `git diff origin/main -- <file>`. Zero lines = already merged, your branch is just behind.
+4. **Bead-first for non-trivial commits.** Writing `--description`, `--context`, and `--notes` forces "wait, is this already done?" thinking. Cheap insurance against phantom work.
+5. **Search merged PRs, not just open ones.** `gh pr list --state all --search "<keyword>" --limit 10`. Open-PR-only checks miss recently-merged scope.
+6. **Worktree off main for messy parents.** Never `git checkout main` from a dirty/diverged tree. Use `git worktree add -b <new-branch> ../demos-agents-worktrees/<name> origin/main` (the helper script's second arg becomes the new branch name, not the base — pass one arg to base on HEAD or use raw git).
+7. **Stage by specific file, never `-a`/`-A`.** Especially in dirty trees with parallel work you don't own. `git add path/to/file` then `git commit` (no `-a`).
+8. **Meta-rule — query the canonical tool before claiming missing/broken state.** Branch state → `git diff origin/<base>`. Ignore state → `git check-ignore -v <file>`. Code state → `grep`/`Read`. Command state → `<cmd> --help`. PR state → `gh pr list --state all --search`. Memory state → `bd recall <key>` / `bd memories`. The cost of skipping this is the cost of asserting wrong things confidently — see beads `omniweb-agents-t9ck` (created+closed in 86s for already-merged doctrine) and `omniweb-agents-s52c` (PR #276 opened+closed for an already-ignored file) as case studies in violating it.
+
 ## PR-First Merge Model
 
 PRs here are not primarily requests for manual line-by-line human review. They are the merge unit, audit trail, and task boundary.

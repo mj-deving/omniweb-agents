@@ -60,21 +60,25 @@ The quality gate determines whether a draft post is published or rejected.
 
 ## TLSN Bridge (architecture)
 
-TLSN attestation runs in a Playwright-driven Chromium Web Worker, NOT directly in Node.
+TLSN attestation runs in a Playwright-driven headless Chromium **page main thread**, NOT directly in Node and NOT in a Web Worker. Canonical implementation: `src/lib/tlsn-playwright-bridge.ts`.
 
-**Why:** `Atomics.wait` is blocked on the Node main thread. The `tlsn-js` MPC-TLS WASM requires `SharedArrayBuffer`, which requires COOP/COEP headers — only practical in a browser context.
+**Why a browser context at all:** `tlsn-js` MPC-TLS WASM requires `SharedArrayBuffer`, which requires the page to be served with COOP/COEP headers — only practical from a browser context, not Node.
 
-**Required components:**
-- Bridge HTTP server with `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp`
-- HTML page that spawns a Web Worker
-- Worker that loads `tlsn-js` UMD bundle and runs the attestation
+**What the bridge does:**
+- Spins up a local HTTP static server (`startTlsnStaticServer`) that sets `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, and `Cross-Origin-Resource-Policy: same-origin` on every response.
+- Serves a minimal page (`/bridge.html`) that loads `tlsn-js` via `<script src="/lib.js"></script>` in the page's main thread. (Earlier worker-based implementations are gone; the UMD `self.default` / `self.init` quirk no longer applies.)
+- Launches Playwright Chromium with `--no-sandbox --disable-setuid-sandbox` and runs the attestation via `page.evaluate(...)`.
 
-**Call-shape gotchas:**
-- `init` is exposed as `self.default` in the worker (NOT `self.init`) when loading the UMD build
-- Do NOT pass a `commit` parameter to `Prover.notarize()` — auto-commit avoids bounds errors
-- The Demos node returns the notary URL as `ws://...`. Convert to `http://...` before passing to `Prover.notarize()` — it uses `fetch` for session init
-- Set Playwright `context.setDefaultTimeout(180_000)` — MPC-TLS attestations legitimately take 50-120s; lower timeouts produce false-positive "hangs"
+**Call-shape gotchas (current, verified against the bridge):**
+- The Demos node returns the notary URL as `ws://...` / `wss://...`. Convert to `http://...` / `https://...` before use — `Prover.notarize()` uses `fetch` for session init. Implemented at `src/lib/tlsn-playwright-bridge.ts:162-163`.
+- Set Playwright `page.setDefaultTimeout(300_000)` — MPC-TLS steps sum to 190-290s in practice. The earlier 180s timeout was insufficient and produced false-positive hangs (`src/lib/tlsn-playwright-bridge.ts:394`, `:406`).
 - `maxRecvData` is capped at 16384 bytes by the Demos testnet notary (already noted in the TLSN section above). Use query params (`?hitsPerPage=3`, `?fields=name,stars`) to keep responses under 16KB.
+
+**Stale claims removed in this revision** (originally migrated 2026-04-24 from the deleted DEMOS skill, contradicted by current code on the same day's Codex review):
+- "Runs in a Web Worker" — current bridge runs WASM in the page main thread.
+- "`init` is exposed as `self.default`, not `self.init`" — UMD-in-worker quirk gone with the worker.
+- "Do NOT pass `commit` to `Prover.notarize()`" — current bridge does not call `Prover.notarize()` directly; the lib.js bundle abstracts it. Re-verify if you reintroduce a direct call.
+- "Playwright `setDefaultTimeout(180_000)`" — wrong; current code uses `300_000`.
 
 ## SDK Call Shapes (Demos)
 

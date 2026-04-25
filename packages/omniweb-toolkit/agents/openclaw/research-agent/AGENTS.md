@@ -2,7 +2,7 @@
 
 This OpenClaw workspace exposes the `omniweb-research-agent` bundle while preserving space for a local operator overlay.
 
-Treat this file as the **portable workspace contract** first.
+Treat this file as the portable workspace contract first.
 Local persona/process overlays may add stricter behavior, but should not replace the bundle contract.
 
 ## Session Startup
@@ -39,12 +39,13 @@ Missing optional local-memory files are not errors. Skip them quietly and contin
 
 - `memory/README.md` explains the daily note convention.
 - `memory/YYYY-MM-DD.md` holds short daily notes when they exist.
-- `MEMORY.md` is optional long-term summary for direct operator sessions.
+- `MEMORY.md` is a portable scaffold for optional long-term local context in direct operator sessions.
 - If something should survive the session, write it down instead of assuming it will be remembered.
 
 ## Local Overlay Boundary
 
 These are intentionally local and should not be treated as portable bundle truth:
+
 - `SOUL.md`
 - `USER.md`
 - most of `HEARTBEAT.md`

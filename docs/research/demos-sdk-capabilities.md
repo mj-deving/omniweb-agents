@@ -7,8 +7,22 @@ coverage: All SDK modules (344 entries, 421 pages)
 mcp_commit: 55a8cbd4
 sdk_version: 2.11.5
 summary: "Full Demos SDK method signatures for all 12 modules — Demos class, Identities, Escrow, StorageProgram, XMCore, IPFS, Messaging. Replaces MCP lookups."
-read_when: ["SDK", "method signature", "identity", "escrow", "storage program", "cross-chain", "xmcore", "IPFS", "messaging", "transfer", "getTransactions", "Demos class"]
-use_when: "SDK method signatures, module capabilities, cross-chain, identity, escrow, storage, IPFS"
+topic_hint:
+  - "SDK"
+  - "method signature"
+  - "identity"
+  - "escrow"
+  - "storage program"
+  - "cross-chain"
+  - "xmcore"
+  - "IPFS"
+  - "messaging"
+  - "transfer"
+  - "getTransactions"
+  - "Demos class"
+  - "SDK method signatures"
+  - "module capabilities"
+  - "storage"
 ---
 
 # Demos SDK Capabilities Reference

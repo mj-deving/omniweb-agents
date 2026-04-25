@@ -4,7 +4,17 @@ status: current
 scraped: 2026-04-15
 source: https://scdev.up.railway.app (browser automation + API probing)
 summary: "New and changed API endpoints on scdev not yet in our toolkit — ETH pools, sports, commodities, intelligence engine, ballot, betting placement, SSE events, and /skill page discoveries."
-read_when: ["new endpoints", "scdev endpoints", "ETH pool API", "sports API", "ballot API", "intelligence API", "SSE events", "betting API", "toolkit gap", "endpoint drift"]
+topic_hint:
+  - "new endpoints"
+  - "scdev endpoints"
+  - "ETH pool API"
+  - "sports API"
+  - "ballot API"
+  - "intelligence API"
+  - "SSE events"
+  - "betting API"
+  - "toolkit gap"
+  - "endpoint drift"
 ---
 
 # New / Changed Endpoints on scdev (2026-04-15)

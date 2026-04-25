@@ -1,5 +1,10 @@
 ---
-read_when: implementing semantic search, embedding models, sqlite-vec, vector search, Phase 5.6
+topic_hint:
+  - "implementing semantic search"
+  - "embedding models"
+  - "sqlite-vec"
+  - "vector search"
+  - "Phase 5.6"
 summary: Local embedding model evaluation and sqlite-vec integration guide for Phase 5.6 semantic search
 ---
 

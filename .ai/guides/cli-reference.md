@@ -1,6 +1,12 @@
 ---
 type: guide
-use_when: "CLI commands, session runner, event runner, hive-query, backfill, scan-feed"
+topic_hint:
+  - "CLI commands"
+  - "session runner"
+  - "event runner"
+  - "hive-query"
+  - "backfill"
+  - "scan-feed"
 updated: 2026-04-02
 ---
 

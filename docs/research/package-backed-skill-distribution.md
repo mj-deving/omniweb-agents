@@ -1,6 +1,13 @@
 ---
 summary: "Research-backed recommendation for distributing omniweb-toolkit as package-backed skills across OpenClaw, ClawHub, GitHub docs, and community directories without splitting source of truth."
-read_when: ["skill distribution", "package-backed skill", "clawhub publish", "openclaw bundles", "repo structure", "external docs", "community sites"]
+topic_hint:
+  - "skill distribution"
+  - "package-backed skill"
+  - "clawhub publish"
+  - "openclaw bundles"
+  - "repo structure"
+  - "external docs"
+  - "community sites"
 ---
 
 # Package-Backed Skill Distribution

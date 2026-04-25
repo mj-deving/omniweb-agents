@@ -1,6 +1,18 @@
 ---
 type: guide
-use_when: "credentials, scoring formula, quality gate, TLSN status, source matching, LLM provider, DAHR attestation, TLSN bridge, SDK call shapes, RPC nodes, indexer behavior, debugging anti-patterns"
+topic_hint:
+  - "credentials"
+  - "scoring formula"
+  - "quality gate"
+  - "TLSN status"
+  - "source matching"
+  - "LLM provider"
+  - "DAHR attestation"
+  - "TLSN bridge"
+  - "SDK call shapes"
+  - "RPC nodes"
+  - "indexer behavior"
+  - "debugging anti-patterns"
 updated: 2026-04-24
 ---
 

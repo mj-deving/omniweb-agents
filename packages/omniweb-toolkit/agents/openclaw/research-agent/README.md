@@ -2,7 +2,18 @@
 
 This directory is an OpenClaw workspace bundle for the `research-agent` archetype shipped by `omniweb-toolkit`.
 
-For the current alpha boundary between the portable bundle layer, the local operator overlay, and the runtime substrate, see `OMNIWEB_CURRENT_CONTRACT.md`.
+This research-agent bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
+
+## Current Layer Contract
+
+Keep these layers separate:
+
+- portable bundle: `openclaw.json`, `package.json`, `README.md`, `BOOTSTRAP.md`, `memory/README.md`, and `skills/omniweb-research-agent/**`
+- portable scaffolds with local contents: `AGENTS.md`, `IDENTITY.md`, `TOOLS.md`, and `MEMORY.md`
+- local operator overlay: `SOUL.md`, `USER.md`, most of `HEARTBEAT.md`, dated memory files, local checklists, roadmaps, and operator notes
+- runtime substrate: OpenClaw gateway, loopback/WebSocket transport, device auth, provider auth, workspace wiring, and the path needed for a real local turn
+
+The portable bundle can be bundle-valid even when the runtime substrate is not yet execution-proven.
 
 ## What It Includes
 
@@ -19,7 +30,7 @@ For the current alpha boundary between the portable bundle layer, the local oper
 
 ## Local Usage
 
-1. You do **not** need `npm install` just to inspect or point OpenClaw at this bundle.
+1. You do not need `npm install` just to inspect this bundle or point OpenClaw at it.
 2. Start from `skills/omniweb-research-agent/minimal-agent-starter.mjs` unless you already know you need the full archetype scaffold.
 3. For a first-time local setup on a host, run `openclaw onboard --accept-risk --workspace "$PWD"`.
 4. If the host is already configured, run `openclaw setup --workspace "$PWD"` or `openclaw config set agents.defaults.workspace "$PWD"`.
@@ -39,15 +50,12 @@ For the current alpha boundary between the portable bundle layer, the local oper
 
 The local `package.json` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the `file:../../..` dependency with a reachable package source.
 
-## Local operator layer
-
-This workspace can preserve a local operator layer for per-user memory, style, and workflow. Files like `SOUL.md`, `USER.md`, most of `HEARTBEAT.md`, and dated files under `memory/` are intentionally local and should not be confused with the portable skill contract.
-
 ## Runtime Prerequisites
 
 Some runtime paths may need heavier dependencies, but this alpha workspace should not force npm to resolve them up front during routine inspection or dogfooding.
 
 Treat these as documented prerequisites rather than proven clone-and-go installs:
+
 - `@kynesyslabs/demosdk` — needed for full wallet-backed / DEM-integrated flows
 - `better-sqlite3` — needed when a runtime path actually requires sqlite-backed local state
 
@@ -59,6 +67,17 @@ At the moment, neither prerequisite is fully proven clone-and-go in this workspa
 - If this machine uses a direct OpenAI Platform API key, use `openai/gpt-5.4` and make sure `OPENAI_API_KEY` is set.
 - The local smoke command still needs `--agent`, `--session-id`, or another explicit session selector even when you pass `--local`.
 
+## Runtime Execution Proof
+
+This workspace is not execution-proven until all of these succeed together in one path:
+
+1. `openclaw onboard --accept-risk --workspace "$PWD"`, or equivalent workspace activation on an already configured host.
+2. `openclaw skills info omniweb-research-agent` resolves the local skill from this workspace.
+3. The selected provider auth works for the model used by the local smoke command.
+4. The smoke command above completes without hanging or timing out, uses this workspace's skill context, and returns useful dry-run output.
+
+OpenClaw gateway health, ready endpoints, raw WebSocket challenge, device auth files, provider config presence, and default-workspace wiring count as runtime-present evidence. They do not by themselves prove runtime execution.
+
 ## Validation
 
 - `npm run check:playbook` — archetype-specific validation path
@@ -67,9 +86,10 @@ At the moment, neither prerequisite is fully proven clone-and-go in this workspa
 - `npm run score:template` — print a captured-run template for this archetype
 - `npm run check:bundle` — verify this exported bundle still matches the package source
 
-## What still blocks true clone-and-go
+## What Still Blocks True Clone-And-Go
 
 This workspace is not clone-and-go yet.
+
 That claim stays blocked until all three are proven together:
 
 1. onboarding works

@@ -19,8 +19,8 @@ Available bundles:
 Today the supported onboarding path is local and bundle-based:
 
 1. clone this repository
-2. run `npm install` at repo root and inside the bundle you want to use
-3. point OpenClaw at one of these bundle directories as the workspace
+2. point OpenClaw at one of these bundle directories as the workspace
+3. run `npm install` only when you need package-backed validation or runtime scripts
 
 For a first-time local setup on a host, use:
 

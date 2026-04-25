@@ -70,8 +70,8 @@ main_repo_root="$(dirname "$common_git_dir")"
 target_root="$(dirname "$main_repo_root")/demos-agents-worktrees"
 target_path="$target_root/$name"
 
-if ! git rev-parse --verify --quiet "$base" >/dev/null; then
-  echo "Error: base ref '$base' not found. Run 'git fetch' first or check the ref name." >&2
+if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
+  echo "Error: base '$base' did not resolve to a commit. Check the ref name (and run 'git fetch' if it's a remote ref); tree-ish or non-commit objects are not accepted." >&2
   exit 1
 fi
 

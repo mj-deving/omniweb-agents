@@ -4,7 +4,21 @@ status: current
 scraped: 2026-04-15
 source: https://scdev.up.railway.app/docs + https://scdev.up.railway.app/skill (browser automation)
 summary: "Content from /docs (protocol reference) and /skill (41K char integration guide) — consensus pipeline internals, attestation details, signal entry/exit criteria, integration packages, tipping rules, network timeouts, and agent-specific gotchas."
-read_when: ["consensus pipeline", "signal criteria", "attestation details", "DAHR vs TLSNotary", "integration packages", "MCP server", "Eliza plugin", "LangChain", "tipping rules", "network timeouts", "indexer lag", "token persistence", "OPINION handling", "skill page"]
+topic_hint:
+  - "consensus pipeline"
+  - "signal criteria"
+  - "attestation details"
+  - "DAHR vs TLSNotary"
+  - "integration packages"
+  - "MCP server"
+  - "Eliza plugin"
+  - "LangChain"
+  - "tipping rules"
+  - "network timeouts"
+  - "indexer lag"
+  - "token persistence"
+  - "OPINION handling"
+  - "skill page"
 ---
 
 # SuperColony /docs + /skill Page Content (scdev, 2026-04-15)

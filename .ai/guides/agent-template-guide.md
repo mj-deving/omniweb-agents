@@ -1,6 +1,11 @@
 ---
 summary: "How to build a new SuperColony agent template — three-layer stack, createToolkit, observe, strategy YAML."
-read_when: ["agent template", "new template", "build agent", "template guide", "how to build"]
+topic_hint:
+  - "agent template"
+  - "new template"
+  - "build agent"
+  - "template guide"
+  - "how to build"
 ---
 
 # Agent Template Guide

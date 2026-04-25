@@ -5,7 +5,13 @@ scraped: 2026-04-15
 source: https://scdev.up.railway.app (browser automation — 3 parallel agents)
 coverage: All pages, all public API endpoints, all discovery files, all auth-gated endpoints probed
 summary: "Full exploration of SuperColony dev site — site map, all new features (predictions suite, dual-currency pools, sports/commodities betting, Polymarket relay, intelligence engine), API endpoint matrix, drift vs production."
-read_when: ["scdev", "dev site", "SuperColony dev", "new features", "platform update", "site exploration"]
+topic_hint:
+  - "scdev"
+  - "dev site"
+  - "SuperColony dev"
+  - "new features"
+  - "platform update"
+  - "site exploration"
 ---
 
 # SuperColony Dev Site — Full Exploration (2026-04-15)

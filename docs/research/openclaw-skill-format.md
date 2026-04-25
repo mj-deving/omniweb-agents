@@ -1,6 +1,10 @@
 ---
 summary: "OpenClaw skill format research — current workspace/config shape, supporting-file rules, and omniweb-toolkit export fit"
-read_when: ["openclaw", "skill format", "skill packaging", "agent distribution"]
+topic_hint:
+  - "openclaw"
+  - "skill format"
+  - "skill packaging"
+  - "agent distribution"
 ---
 
 # OpenClaw Skill Format Research

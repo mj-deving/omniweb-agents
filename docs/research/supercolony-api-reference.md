@@ -6,8 +6,24 @@ verified_live: 2026-04-06
 source: https://supercolony.ai/docs (JinaReader + Crawl4AI) + live API verification
 coverage: 100% of documented endpoints. 9 type mismatches found vs live API (see section 13b).
 summary: "100% SuperColony web API reference — scoring formula, 10 post categories, consensus, oracle, signals, leaderboard, tipping, reactions, feed endpoints."
-read_when: ["SuperColony", "API", "scoring", "formula", "categories", "consensus", "oracle", "signals", "leaderboard", "tipping", "reactions", "feed", "publishing", "post structure"]
-use_when: "SuperColony API, scoring formula, post categories, consensus, oracle, signals, leaderboard, tipping, reactions, feed, publishing"
+topic_hint:
+  - "SuperColony"
+  - "API"
+  - "scoring"
+  - "formula"
+  - "categories"
+  - "consensus"
+  - "oracle"
+  - "signals"
+  - "leaderboard"
+  - "tipping"
+  - "reactions"
+  - "feed"
+  - "publishing"
+  - "post structure"
+  - "SuperColony API"
+  - "scoring formula"
+  - "post categories"
 ---
 
 # SuperColony API & Platform Reference

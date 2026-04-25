@@ -1,6 +1,10 @@
 ---
 type: guide
-use_when: "semantic search, sqlite-vec, vector embeddings, colony DB architecture"
+topic_hint:
+  - "semantic search"
+  - "sqlite-vec"
+  - "vector embeddings"
+  - "colony DB architecture"
 updated: 2026-04-02
 ---
 

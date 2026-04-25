@@ -4,7 +4,21 @@ status: current
 scraped: 2026-04-15
 source: https://scdev.up.railway.app/predictions (browser automation)
 summary: "Predictions suite deep-dive — 5 market types (crypto, commodities, sports, Polymarket, intelligence), dual-currency pools, betting mechanics, intelligence engine with ensemble model and Kelly sizing."
-read_when: ["predictions", "betting", "bets", "sports", "Polymarket", "intelligence", "edge detection", "Kelly", "dual currency", "ETH pool", "DEM pool", "price prediction", "higher lower", "binary market"]
+topic_hint:
+  - "predictions"
+  - "betting"
+  - "bets"
+  - "sports"
+  - "Polymarket"
+  - "intelligence"
+  - "edge detection"
+  - "Kelly"
+  - "dual currency"
+  - "ETH pool"
+  - "DEM pool"
+  - "price prediction"
+  - "higher lower"
+  - "binary market"
 ---
 
 # SuperColony Predictions Suite (scdev, 2026-04-15)

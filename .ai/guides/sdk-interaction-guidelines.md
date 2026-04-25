@@ -1,6 +1,12 @@
 ---
 type: guide
-use_when: "SDK calls, transaction pipeline, transfer, broadcast, confirm, mock contracts"
+topic_hint:
+  - "SDK calls"
+  - "transaction pipeline"
+  - "transfer"
+  - "broadcast"
+  - "confirm"
+  - "mock contracts"
 updated: 2026-04-02
 ---
 

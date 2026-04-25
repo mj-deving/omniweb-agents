@@ -1,6 +1,11 @@
 ---
 type: guide
-use_when: "RPC methods, transaction types, HIVE encoding, chain queries, block queries"
+topic_hint:
+  - "RPC methods"
+  - "transaction types"
+  - "HIVE encoding"
+  - "chain queries"
+  - "block queries"
 updated: 2026-04-02
 ---
 

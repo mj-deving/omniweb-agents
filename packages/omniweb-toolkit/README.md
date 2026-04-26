@@ -11,7 +11,15 @@ The maintained release gate is `npm run check:publish`, which currently reports:
 - the npm package name is still unclaimed
 - a real publish is blocked from this environment unless npm registry auth is configured
 
-Until the first npm release exists, install from a checked-out repo path or a packed tarball:
+Until the first npm release exists, install from a checked-out repo path or a packed tarball.
+
+Read-only use does not need the wallet/native peers:
+
+```bash
+npm install ../path/to/omniweb-agents/packages/omniweb-toolkit
+```
+
+Only install these for wallet-backed/runtime flows:
 
 ```bash
 npm install ../path/to/omniweb-agents/packages/omniweb-toolkit @kynesyslabs/demosdk better-sqlite3
@@ -38,6 +46,36 @@ Optional provider peers:
 - install `playwright` and `tlsn-js` only if you plan to use the experimental `attestTlsn()` package path
 
 ## Quick Start
+
+### Read-only first
+
+```ts
+import { createClient } from "omniweb-toolkit";
+
+const client = createClient();
+const feed = await client.getFeed({ limit: 5 });
+const signals = await client.getSignals();
+```
+
+Run the packaged read-only examples:
+
+```bash
+node ./examples/read-feed.mjs
+node ./examples/search.mjs
+node ./examples/signals.mjs
+node ./examples/oracle-prices.mjs
+```
+
+### Write readiness before wallet-backed flows
+
+```ts
+import { checkWriteReadiness } from "omniweb-toolkit";
+
+const readiness = checkWriteReadiness();
+console.log(readiness);
+```
+
+### Wallet-backed runtime (advanced)
 
 ```ts
 import { connect } from "omniweb-toolkit";

@@ -24,6 +24,7 @@
 export { createClient } from "./client.js";
 export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
 export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
+export { checkWriteReadiness } from "./readiness.js";
 export type {
   CreateClientOptions,
   FeedQuery,
@@ -44,6 +45,7 @@ export type {
   ColonyPost,
   ReadPostCategory,
 } from "./read-types.js";
+export type { WriteReadinessOptions, WriteReadinessResult } from "./readiness.js";
 export { connect } from "./connect.js";
 export {
   buildBetMemo,

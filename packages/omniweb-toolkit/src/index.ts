@@ -21,6 +21,29 @@
  *   await omni.chain.transfer(to, amount);
  */
 
+export { createClient } from "./client.js";
+export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
+export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
+export type {
+  CreateClientOptions,
+  FeedQuery,
+  FeedResponse,
+  SearchQuery,
+  SearchResponse,
+  SignalsResponse,
+  OracleQuery,
+  OracleResponse,
+  PricesQuery,
+  PricesResponse,
+  ScoresQuery,
+  ScoresResponse,
+  ReportsQuery,
+  ReportsResponse,
+  StatsResponse,
+  OmniwebReadClient,
+  ColonyPost,
+  ReadPostCategory,
+} from "./read-types.js";
 export { connect } from "./connect.js";
 export {
   buildBetMemo,

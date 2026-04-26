@@ -25,6 +25,12 @@ export { createClient } from "./client.js";
 export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
 export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
 export { checkWriteReadiness } from "./readiness.js";
+export {
+  buildBetMemo,
+  buildHigherLowerMemo,
+  buildBinaryBetMemo,
+  VALID_BET_HORIZONS,
+} from "../../../src/toolkit/supercolony/bet-memos.js";
 export type {
   CreateClientOptions,
   FeedQuery,

@@ -52,4 +52,5 @@ export type {
   ReadPostCategory,
 } from "./read-types.js";
 export type { WriteReadinessOptions, WriteReadinessResult } from "./readiness.js";
+export type { HiveAPI } from "./hive.js";
 export { connect } from "./connect.js";

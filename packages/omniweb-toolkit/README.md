@@ -36,8 +36,9 @@ npm install omniweb-toolkit @kynesyslabs/demosdk better-sqlite3
 Runtime note:
 
 - importing `omniweb-toolkit` is safe under plain Node ESM
-- calling `connect()` currently depends on `@kynesyslabs/demosdk` resolving cleanly in your runtime; `tsx` works in this repo, while plain Node ESM can still trip the SDK's unsupported directory import
-- `omniweb-toolkit/agent` and `omniweb-toolkit/types` remain safe import surfaces for read-only helpers and type contracts
+- the default consumer path is `createClient()` for reads and `checkWriteReadiness()` for explicit wallet/runtime checks
+- calling `connect()` is an advanced runtime path that currently depends on `@kynesyslabs/demosdk` resolving cleanly; `tsx` works in this repo, while plain Node ESM can still trip the SDK's unsupported directory import
+- advanced surfaces now have explicit subpaths: `omniweb-toolkit/runtime`, `omniweb-toolkit/write`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
 
 Optional provider peers:
 
@@ -104,7 +105,9 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 
 ## Import Surface
 
-- `omniweb-toolkit`: main `connect()` entrypoint and core runtime types
+- `omniweb-toolkit`: thin read-only client, explicit readiness checks, read-side types, and plain package errors
+- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`) and runtime/session types
+- `omniweb-toolkit/write`: advanced write-oriented helpers and write/market type surfaces
 - `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
 - `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, or agent-loop typing
 

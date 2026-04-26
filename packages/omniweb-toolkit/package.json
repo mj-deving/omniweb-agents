@@ -17,6 +17,14 @@
     "./types": {
       "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
+    },
+    "./runtime": {
+      "import": "./dist/runtime.js",
+      "types": "./dist/runtime.d.ts"
+    },
+    "./write": {
+      "import": "./dist/write.js",
+      "types": "./dist/write.d.ts"
     }
   },
   "files": [

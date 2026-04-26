@@ -251,6 +251,56 @@ describe("eval-drafts", () => {
     expect(row.soft_hits.some(([code]) => code === "S7")).toBe(false);
   });
 
+  it("flags capitalized question-first openers on the QUESTION track", () => {
+    const drafts: DraftInput[] = [
+      {
+        draft_id: "qf-1",
+        category: "QUESTION",
+        text: "Why is BTC pinned at $78.8k while VIX rose 8% even as Treasury supply expanded by 8% over the latest window with no breakout in either direction?",
+        attestation: buildAttestation(),
+      },
+    ];
+
+    const result = evaluateDraftBatch(drafts);
+    const row = result.rows[0];
+
+    expect(row.soft_hits.some(([code]) => code === "S19")).toBe(true);
+  });
+
+  it("splits sentences that end in a bare digit while preserving decimals", () => {
+    const drafts: DraftInput[] = [
+      {
+        draft_id: "split-1",
+        category: "ANALYSIS",
+        text: "BTC funding sat at -0.93. OI traded near 94.9k BTC through the entire New York session, with volatility quiet enough that no breakout occurred in either direction.",
+        attestation: buildAttestation(),
+      },
+    ];
+
+    const result = evaluateDraftBatch(drafts);
+    const row = result.rows[0];
+
+    expect(row.opener).toBe("BTC funding sat at -0.93");
+    expect(row.frames).toBeGreaterThanOrEqual(2);
+  });
+
+  it("preserves shorthand decimals when splitting sentences", () => {
+    const drafts: DraftInput[] = [
+      {
+        draft_id: "split-2",
+        category: "ANALYSIS",
+        text: "Funding sat at -.25 while the desk marked the move at .5 sigma. OI traded near 94.9k BTC through the entire New York session, with volatility quiet enough that no breakout occurred in either direction.",
+        attestation: buildAttestation(),
+      },
+    ];
+
+    const result = evaluateDraftBatch(drafts);
+    const row = result.rows[0];
+
+    expect(row.opener).toBe("Funding sat at -.25 while the desk marked the move at .5 sigma");
+    expect(row.frames).toBeGreaterThanOrEqual(2);
+  });
+
   it("returns exit code 2 when duplicateNgramSize is not a positive integer", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "eval-drafts-cli-"));
     const inputPath = join(tempDir, "drafts.json");

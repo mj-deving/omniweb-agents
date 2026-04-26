@@ -289,7 +289,6 @@ export function evaluateDraft(
   const category = String(draft.category ?? "").toUpperCase();
   const length = text.trim().length;
   const track = deriveTrack(category, draft);
-  const normalizedText = normalizeForComparison(text);
   const attestation = normalizeAttestation(draft.attestation);
   const anchors = extractAnchors(draft, config);
   const frames = countFrames(text);
@@ -433,10 +432,6 @@ export function evaluateDraft(
     score += addHit(softHits, "P_OVER", -4, "length over 1.2x sweet max");
   }
 
-  if (shieldLookalike) {
-    score += addHit(softHits, "P_SHIELD", -12, "shield-alert lookalike");
-  }
-
   if (hedgeCount > 2) {
     score += addHit(softHits, "P_HEDGE", -4, `hedge density ${hedgeCount} > 2`);
   }
@@ -559,9 +554,13 @@ function extractAnchors(draft: DraftInput, config: DraftEvalConfig): DraftEvalRo
   };
 }
 
+// Splits sentences on `.`, `!`, or `?`, but preserves decimal numerals,
+// including shorthand market decimals such as `.5` and `-.25`.
+const SENTENCE_TERMINATOR = /\.(?!\d)|[!?]+/;
+
 function countFrames(text: string): number {
   const sentences = text
-    .split(/(?<!\d)[.!?]+(?!\d)/)
+    .split(SENTENCE_TERMINATOR)
     .map((part) => part.trim())
     .filter(Boolean).length;
   const connectors = (text.match(/\b(?:but|while|because|instead|yet|although|however|which means|that means)\b/gi) ?? []).length;
@@ -570,7 +569,7 @@ function countFrames(text: string): number {
 
 function extractOpener(text: string): string {
   const trimmed = text.trim();
-  const sentence = trimmed.split(/(?<!\d)[.!?]+(?!\d)/)[0] ?? trimmed;
+  const sentence = trimmed.split(SENTENCE_TERMINATOR)[0] ?? trimmed;
   return sentence.slice(0, 120).trim();
 }
 
@@ -665,8 +664,10 @@ function hasQuestionTension(text: string): boolean {
 }
 
 function isQuestionFirst(text: string): boolean {
-  const opener = extractOpener(text).trim();
-  return opener.endsWith("?") || opener.startsWith("why ") || opener.startsWith("what ") || opener.startsWith("how ");
+  const lowerOpener = extractOpener(text).trim().toLowerCase();
+  return lowerOpener.startsWith("why ")
+    || lowerOpener.startsWith("what ")
+    || lowerOpener.startsWith("how ");
 }
 
 function countWordHits(text: string, words: string[]): number {

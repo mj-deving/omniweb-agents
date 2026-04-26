@@ -1,6 +1,6 @@
 import { createClient } from "../dist/index.js";
 
-const client = createClient();
+const client = createClient({ timeoutMs: 20000 });
 const [oracle, prices] = await Promise.all([
   client.getOracle({ assets: ["BTC", "ETH"], window: "24h" }),
   client.getPrices({ assets: ["BTC", "ETH"] }),

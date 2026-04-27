@@ -14,8 +14,9 @@ This file complements:
 
 ## Latest Recorded Run
 
-- Date: April 17, 2026
+- Date: April 27, 2026
 - Command set:
+  - `npm --prefix packages/omniweb-toolkit run check:package-consumer`
   - `npm --prefix packages/omniweb-toolkit run check:playbook:research`
   - `npm --prefix packages/omniweb-toolkit run check:playbook:market`
   - `npm --prefix packages/omniweb-toolkit run check:playbook:engagement`
@@ -27,7 +28,8 @@ This file complements:
 
 - The three shipped archetype paths all pass their maintained journey checks on current live state.
 - The stricter captured-run scorer still passes for all three shipped archetypes.
-- The checked-out package path is credible for an outside operator today.
+- A clean tarball consumer can install the package, import `omniweb-toolkit` by package name, run one safe live read, and receive a clean missing-env write readiness report without spending DEM.
+- The same tarball consumer can also render a deterministic plan-only prompt from the agent subpath without publishing or spending DEM.
 - The first registry install path is not fully launch-ready yet because npm publish is still blocked by missing auth in the publishing environment.
 - The current journey harness is back to green after updating the binary-pool response contract to match the live nullable fields returned by `/api/bets/binary/pools`.
 - The strongest remaining journey blockers are still on the live write/readback side:
@@ -84,6 +86,20 @@ This file complements:
   - `engagement-optimizer.run.json`: `PASS`, score `100`
 - Interpretation:
   - the packaged run examples still represent the intended discipline for all shipped archetypes
+
+### Package Tarball Consumer
+
+- Status: pass
+- Evidence:
+  - `npm run check:package-consumer` builds and packs the package
+  - the packed tarball installs into a clean temporary consumer workspace
+  - the consumer imports `omniweb-toolkit`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types` by package name
+  - the consumer renders a plan-only dry-run prompt with explicit no-publish / no-spend rules
+  - the consumer runs one safe live read through `createClient().getFeed({ limit: 1 })`
+  - `checkWriteReadiness()` reports missing `DEMOS_MNEMONIC` and optional wallet/runtime substrate without spending DEM
+- Interpretation:
+  - the package-first alpha path is no longer only a repo-relative example path
+  - OpenClaw remains distribution/documentation only until a separate runtime execution proof exists
 
 ### First External Consumer Install
 

@@ -89,8 +89,13 @@ const bundleChecks = archetypes.map((archetype) => {
     ? JSON.parse(readFileSync(bundlePackagePath, "utf8")) as {
         scripts?: Record<string, string>;
         dependencies?: Record<string, string>;
+        peerDependencies?: Record<string, string>;
       }
     : null;
+  const readmePath = resolve(bundleRoot, "README.md");
+  const agentsPath = resolve(bundleRoot, "AGENTS.md");
+  const readmeText = existsSync(readmePath) ? readFileSync(readmePath, "utf8") : "";
+  const agentsText = existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "";
 
   const allowlist = config?.agents?.defaults?.skills;
   const enabledEntry = config?.skills?.entries?.[spec.skillName];
@@ -126,6 +131,10 @@ const bundleChecks = archetypes.map((archetype) => {
       typeof bundleScripts["check:attestation"] === "string" &&
       typeof bundleScripts["check:bundle"] === "string" &&
       bundleDependency === "file:../../.." &&
+      !bundlePackage?.peerDependencies &&
+      readmeText.includes("## Current Layer Contract") &&
+      readmeText.includes("## Runtime Execution Proof") &&
+      agentsText.includes("## Local Overlay Boundary") &&
       skillText.includes("## Safety Gates") &&
       skillText.includes("## Hard Stop Rules") &&
       skillText.includes("## Session Ledger Protocol") &&
@@ -137,6 +146,7 @@ const bundleChecks = archetypes.map((archetype) => {
     allowlist,
     enabledEntry: enabledEntry ?? null,
     dependency: bundleDependency,
+    peerDependencies: bundlePackage?.peerDependencies ?? null,
     scripts: bundleScripts,
     primaryEnv: openclaw?.primaryEnv ?? null,
     spendsRealMoney: openclaw?.spendsRealMoney ?? null,

@@ -303,6 +303,7 @@ For trajectory work:
 
 - keep the package as the primary authority for its public surface
 - do not duplicate official platform facts when the package should layer on them
+- follow `docs/rules/doc-frontmatter-standard.md` when adding or generating markdown front-matter
 - keep repo-only research separate from shipped package docs
 - track decision-driving handoffs under `docs/archive/agent-handoffs/` when they change doctrine, priorities, experiment selection, or execution order
 - leave transient JSON artifacts, temporary logs, and one-off scratch notes untracked unless they become part of a maintained validation surface

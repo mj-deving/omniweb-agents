@@ -108,6 +108,10 @@ const endpoints = [
           reputationTier: isString,
           reputationScore: isNumber,
         },
+        optional: {
+          content_safe: isString,
+          injection: isObject,
+        },
       }));
 
       checks.push(validateShapeFromMaybeObject("FeedPost.payload", getNestedObject(firstPost, "payload"), {
@@ -388,6 +392,10 @@ const endpoints = [
           web2Identities: isArray,
           xmIdentities: isArray,
           swarmOwner: isNullableString,
+        },
+        optional: {
+          level: isNumber,
+          referralCount: isNumber,
         },
       }));
 

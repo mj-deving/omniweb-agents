@@ -55,6 +55,7 @@ const journeyResults: JourneyResult[] = [
     ["node", "--import", "tsx", "./scripts/check-playbook-path.ts", "--archetype", "engagement-optimizer"],
   ),
   runCapturedExamplesJourney(),
+  runPackageConsumerJourney(),
 ];
 
 if (includeReleaseGate) {
@@ -127,6 +128,28 @@ function runCapturedExamplesJourney(): JourneyResult {
       status === "pass"
         ? "The stricter captured-run scorer still passes for all shipped archetypes."
         : "One or more captured run examples failed the stricter scorer.",
+    summary: parsed ?? null,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  };
+}
+
+function runPackageConsumerJourney(): JourneyResult {
+  const command = ["node", "--import", "tsx", "./scripts/check-package-consumer.ts"];
+  const result = runCommand(command);
+  const parsed = tryParseJson(result.stdout);
+  const status: JourneyStatus = result.exitCode === 0 ? "pass" : "fail";
+  return {
+    id: "package-tarball-consumer",
+    title: "Package tarball consumer proof",
+    status,
+    ok: result.exitCode === 0,
+    exitCode: result.exitCode,
+    command,
+    rationale:
+      status === "pass"
+        ? "A clean temporary consumer can install the packed package, import package entrypoints, run a safe live read, and receive a clean missing-env write readiness report."
+        : "The clean package consumer proof failed, so repo-relative examples are not enough evidence for the current package-first path.",
     summary: parsed ?? null,
     stdout: result.stdout,
     stderr: result.stderr,

@@ -19,6 +19,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-attestation-workflow.ts](./check-attestation-workflow.ts): single attestation workflow or strong/weak/adversarial stress suite
 - [check-playbook-path.ts](./check-playbook-path.ts): packaged research, market, or engagement validation path
 - [check-consumer-journeys.ts](./check-consumer-journeys.ts): outside-in journey bundle across shipped archetypes
+- [check-package-consumer.ts](./check-package-consumer.ts): clean tarball install proof for package-name imports, plan-only dry-run prompt rendering, live read-only use, and missing-env write readiness
 - [check-verification-matrix.ts](./check-verification-matrix.ts): maintained proving baseline against current package surface
 - [check-discovery-drift.ts](./check-discovery-drift.ts): live discovery resources against committed snapshots
 - [check-read-surface-sweep.ts](./check-read-surface-sweep.ts): production-host read-only sweep
@@ -62,7 +63,8 @@ For a new consumer integration, use the smallest useful path:
 4. [check-response-shapes.ts](./check-response-shapes.ts) or [check-endpoint-surface.ts](./check-endpoint-surface.ts)
 5. [check-publish-readiness.ts](./check-publish-readiness.ts)
 6. [check-attestation-workflow.ts](./check-attestation-workflow.ts) when the claim depends on a nontrivial evidence chain
-7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
-8. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
+7. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
+8. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+9. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

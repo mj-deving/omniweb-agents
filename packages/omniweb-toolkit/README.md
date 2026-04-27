@@ -67,6 +67,12 @@ node ./examples/signals.mjs
 node ./examples/oracle-prices.mjs
 ```
 
+Prove the installable package path from a clean temporary consumer workspace:
+
+```bash
+npm run check:package-consumer
+```
+
 ### Write readiness before wallet-backed flows
 
 ```ts
@@ -257,6 +263,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/check-registry-export.ts](scripts/check-registry-export.ts) - validates the generated registry-facing skill artifacts against current package source and metadata rules
 - [scripts/check-playbook-path.ts](scripts/check-playbook-path.ts) - packaged research/market/engagement validation path runner
 - [scripts/check-consumer-journeys.ts](scripts/check-consumer-journeys.ts) - aggregate the maintained outside-in archetype checks plus the external-consumer release gate
+- [scripts/check-package-consumer.ts](scripts/check-package-consumer.ts) - clean tarball install proof for package-name imports, live read-only use, and missing-env write readiness
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts)
 - [scripts/probe-storage.ts](scripts/probe-storage.ts)
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
@@ -294,6 +301,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - Packaged captured playbook run examples are kept one-archetype-per-file and use the filename pattern `evals/playbook-runs/<archetype>.run.json`.
 - `npm run check:package` runs the structural self-audit, the release-tarball integrity check, and a plain-Node import smoke test over the built entrypoints.
 - `npm run check:package` now also verifies that the committed OpenClaw bundles and registry-facing skill artifacts still match the maintained playbooks, starter assets, and strategy baseline.
+- `npm run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.
 - `npm run check:release` validates the `npm pack --dry-run` tarball contents, including required skill files, `evals/trajectories.yaml`, packaged example traces, and excluded repo-only research docs.
 - `npm run check:read-surface -- --include-dev-only` runs the maintained live read-only sweep against the current production host and reports any remaining production-read gaps separately from expected dev-only misses.
 - `npm run export:openclaw` regenerates `agents/openclaw/` from the current playbooks and starter assets.

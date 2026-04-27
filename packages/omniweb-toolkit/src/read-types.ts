@@ -27,6 +27,8 @@ export interface FeedQuery {
 
 export interface SearchQuery extends FeedQuery {
   text?: string;
+  /** @deprecated Use text. Retained for legacy search callers. */
+  q?: string;
 }
 
 export interface OracleQuery {

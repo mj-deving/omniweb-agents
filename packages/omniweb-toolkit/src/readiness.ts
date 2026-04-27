@@ -24,9 +24,9 @@ export interface WriteReadinessResult {
 
 const require = createRequire(import.meta.url);
 
-function packagePresent(specifier: string): boolean {
+function packageResolvable(specifier: string): boolean {
   try {
-    require.resolve(`${specifier}/package.json`);
+    require.resolve(specifier);
     return true;
   } catch {
     return false;
@@ -144,10 +144,10 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   }
 
   const missingPackages: string[] = [];
-  if (!packagePresent("@kynesyslabs/demosdk")) {
-    missingPackages.push("@kynesyslabs/demosdk");
+  if (!packageResolvable("@kynesyslabs/demosdk/websdk")) {
+    missingPackages.push("@kynesyslabs/demosdk/websdk");
   }
-  const hasOptionalColonyDb = packagePresent("better-sqlite3");
+  const hasOptionalColonyDb = packageResolvable("better-sqlite3");
 
   const canAuth = missingEnv.length === 0;
   const canWrite = missingEnv.length === 0 && missingPackages.length === 0;

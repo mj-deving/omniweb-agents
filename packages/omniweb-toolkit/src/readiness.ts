@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { createRequire } from "node:module";
@@ -6,6 +6,8 @@ import { createRequire } from "node:module";
 export interface WriteReadinessOptions {
   cwd?: string;
   agentName?: string;
+  env?: Record<string, string | undefined>;
+  homeDir?: string;
 }
 
 export interface WriteReadinessResult {
@@ -34,12 +36,48 @@ function filePresent(path: string): boolean {
   return existsSync(path);
 }
 
+function parseConfigValue(content: string, key: string): string | undefined {
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const doubleQuoted = trimmed.match(new RegExp(`^${key}="(.*?)"\\s*(?:#.*)?$`));
+    if (doubleQuoted?.[1]?.trim()) return doubleQuoted[1].trim();
+
+    const singleQuoted = trimmed.match(new RegExp(`^${key}='(.*?)'\\s*(?:#.*)?$`));
+    if (singleQuoted?.[1]?.trim()) return singleQuoted[1].trim();
+
+    const unquoted = trimmed.match(new RegExp(`^${key}=([^#]*)`));
+    const value = unquoted?.[1]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function readConfigFile(path: string): Record<string, string | undefined> {
+  if (!filePresent(path)) return {};
+  const content = readFileSync(path, "utf8");
+  return {
+    DEMOS_MNEMONIC: parseConfigValue(content, "DEMOS_MNEMONIC"),
+    RPC_URL: parseConfigValue(content, "RPC_URL"),
+    DEMOS_RPC_URL: parseConfigValue(content, "DEMOS_RPC_URL"),
+    SUPERCOLONY_API: parseConfigValue(content, "SUPERCOLONY_API"),
+    SUPERCOLONY_API_URL: parseConfigValue(content, "SUPERCOLONY_API_URL"),
+  };
+}
+
+function hasValue(...values: Array<string | undefined>): boolean {
+  return values.some((value) => Boolean(value?.trim()));
+}
+
 export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteReadinessResult {
   const cwd = options.cwd ?? process.cwd();
   const agentName = options.agentName?.trim();
-  const credentialsPath = resolve(homedir(), ".config", "demos", "credentials");
+  const env = options.env ?? process.env;
+  const home = options.homeDir ?? homedir();
+  const credentialsPath = resolve(home, ".config", "demos", "credentials");
   const namedCredentialsPath = agentName
-    ? resolve(homedir(), ".config", "demos", `credentials-${agentName}`)
+    ? resolve(home, ".config", "demos", `credentials-${agentName}`)
     : null;
   const dotEnvPath = resolve(cwd, ".env");
 
@@ -50,20 +88,46 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     dotEnvPath,
   ];
 
-  const hasMnemonicEnv = Boolean(process.env.DEMOS_MNEMONIC);
-  const hasRpcEnv = Boolean(process.env.RPC_URL || process.env.DEMOS_RPC_URL);
-  const hasApiEnv = Boolean(process.env.SUPERCOLONY_API || process.env.SUPERCOLONY_API_URL);
-  const hasCredentialsFile = filePresent(credentialsPath) || (namedCredentialsPath ? filePresent(namedCredentialsPath) : false);
+  const sharedCredentials = readConfigFile(credentialsPath);
+  const namedCredentials = namedCredentialsPath ? readConfigFile(namedCredentialsPath) : {};
+  const dotEnv = readConfigFile(dotEnvPath);
   const hasDotEnv = filePresent(dotEnvPath);
 
+  const hasMnemonicConfig = hasValue(
+    env.DEMOS_MNEMONIC,
+    namedCredentials.DEMOS_MNEMONIC,
+    sharedCredentials.DEMOS_MNEMONIC,
+    dotEnv.DEMOS_MNEMONIC,
+  );
+  const hasRpcConfig = hasValue(
+    env.RPC_URL,
+    env.DEMOS_RPC_URL,
+    namedCredentials.RPC_URL,
+    namedCredentials.DEMOS_RPC_URL,
+    sharedCredentials.RPC_URL,
+    sharedCredentials.DEMOS_RPC_URL,
+    dotEnv.RPC_URL,
+    dotEnv.DEMOS_RPC_URL,
+  );
+  const hasApiConfig = hasValue(
+    env.SUPERCOLONY_API,
+    env.SUPERCOLONY_API_URL,
+    namedCredentials.SUPERCOLONY_API,
+    namedCredentials.SUPERCOLONY_API_URL,
+    sharedCredentials.SUPERCOLONY_API,
+    sharedCredentials.SUPERCOLONY_API_URL,
+    dotEnv.SUPERCOLONY_API,
+    dotEnv.SUPERCOLONY_API_URL,
+  );
+
   const missingEnv: string[] = [];
-  if (!hasMnemonicEnv && !hasCredentialsFile && !hasDotEnv) {
+  if (!hasMnemonicConfig) {
     missingEnv.push("DEMOS_MNEMONIC");
   }
-  if (!hasRpcEnv && !hasDotEnv) {
+  if (!hasRpcConfig) {
     missingEnv.push("RPC_URL");
   }
-  if (!hasApiEnv && !hasDotEnv) {
+  if (!hasApiConfig) {
     missingEnv.push("SUPERCOLONY_API");
   }
 
@@ -83,7 +147,7 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     notes.push("Write flows require optional wallet/runtime dependencies");
   }
   if (hasDotEnv) {
-    notes.push(`Detected .env at ${dotEnvPath}; readiness assumes it may provide write config`);
+    notes.push(`Checked .env at ${dotEnvPath} for explicit write config values`);
   }
 
   return {

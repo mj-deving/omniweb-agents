@@ -26,7 +26,7 @@ export interface FeedQuery {
 }
 
 export interface SearchQuery extends FeedQuery {
-  q?: string;
+  text?: string;
 }
 
 export interface OracleQuery {

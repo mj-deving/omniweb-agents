@@ -9,6 +9,9 @@
  * a module-level mock of the colony's dependency.
  */
 
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 
@@ -120,6 +123,102 @@ vi.mock("../../src/toolkit/supercolony/types.js", () => ({}));
 // ── Tests ────────────────────────────────────────
 
 describe("supercolony-toolkit package", () => {
+  describe("read-only client", () => {
+    it("uses the platform text query key for feed search", async () => {
+      const requests: string[] = [];
+      const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+        requests.push(String(url));
+        return new Response(JSON.stringify({ posts: [] }), { status: 200 });
+      });
+      const { createClient } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const client = createClient({ baseUrl: "https://example.test", fetch: fetchImpl });
+
+      await client.searchFeed({ text: "bitcoin", limit: 2 });
+
+      const url = new URL(requests[0]);
+      expect(url.pathname).toBe("/api/feed/search");
+      expect(url.searchParams.get("text")).toBe("bitcoin");
+      expect(url.searchParams.get("limit")).toBe("2");
+      expect(url.searchParams.has("q")).toBe(false);
+    });
+
+    it("maps legacy q search input to text at runtime", async () => {
+      const requests: string[] = [];
+      const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+        requests.push(String(url));
+        return new Response(JSON.stringify({ posts: [] }), { status: 200 });
+      });
+      const { createClient } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const client = createClient({ baseUrl: "https://example.test", fetch: fetchImpl });
+
+      await client.searchFeed({ q: "bitcoin", limit: 2 } as any);
+
+      const url = new URL(requests[0]);
+      expect(url.searchParams.get("text")).toBe("bitcoin");
+      expect(url.searchParams.has("q")).toBe(false);
+    });
+  });
+
+  describe("write readiness", () => {
+    it("does not treat an empty .env file as write config", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-empty-"));
+      try {
+        writeFileSync(join(dir, ".env"), "# template only\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("reads explicit write config values from .env", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-env-"));
+      try {
+        writeFileSync(join(dir, ".env"), [
+          "DEMOS_MNEMONIC=\"test seed phrase\"",
+          "RPC_URL=https://rpc.test",
+          "SUPERCOLONY_API=https://api.test",
+          "",
+        ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("reads explicit write config values from per-agent credentials", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-creds-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), [
+          "DEMOS_MNEMONIC='test seed phrase'",
+          "RPC_URL=https://rpc.test",
+          "SUPERCOLONY_API=https://api.test",
+          "",
+        ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe("connect()", () => {
     it("creates a Colony instance with toolkit, hive, runtime, and address", async () => {
       const { connect } = await import("../../packages/omniweb-toolkit/src/index.js");

@@ -38,6 +38,16 @@ function assetsParam(assets: string[]): string {
   return assets.join(",");
 }
 
+function searchParams(params?: SearchQuery): Record<string, unknown> | undefined {
+  if (!params) return undefined;
+  const query = { ...params } as Record<string, unknown>;
+  if (query.text === undefined && typeof query.q === "string") {
+    query.text = query.q;
+  }
+  delete query.q;
+  return query;
+}
+
 export function createClient(options: CreateClientOptions = {}): OmniwebReadClient {
   const baseUrl = options.baseUrl ?? SUPERCOLONY_BASE_URL;
   const fetchImpl = options.fetch ?? globalThis.fetch;
@@ -76,7 +86,7 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
     },
 
     searchFeed(params?: SearchQuery): Promise<SearchResponse> {
-      return getJson<SearchResponse>(withQuery(ENDPOINTS.search, params ? { ...params } : undefined));
+      return getJson<SearchResponse>(withQuery(ENDPOINTS.search, searchParams(params)));
     },
 
     getSignals(): Promise<SignalsResponse> {

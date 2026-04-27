@@ -107,7 +107,6 @@ function selectRuntimeConfigSource(sources: ConfigFileRead[]): ConfigFileRead | 
 export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteReadinessResult {
   const cwd = options.cwd ?? process.cwd();
   const agentName = options.agentName?.trim();
-  const env = options.env ?? process.env;
   const home = options.homeDir ?? homedir();
   const credentialsPath = resolve(home, ".config", "demos", "credentials");
   const namedCredentialsPath = agentName
@@ -116,7 +115,6 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   const dotEnvPath = resolve(cwd, ".env");
 
   const credentialSourcesChecked = [
-    "process.env.DEMOS_MNEMONIC",
     credentialsPath,
     ...(namedCredentialsPath ? [namedCredentialsPath] : []),
     dotEnvPath,
@@ -133,19 +131,14 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   ]);
   const runtimeValues = runtimeSource?.readable ? runtimeSource.values : {};
 
-  const hasMnemonicConfig = hasValue(
-    runtimeValues.DEMOS_MNEMONIC,
-    ...(runtimeSource ? [] : [env.DEMOS_MNEMONIC]),
-  );
+  const hasMnemonicConfig = hasValue(runtimeValues.DEMOS_MNEMONIC);
   const hasRpcConfig = hasValue(
     runtimeValues.RPC_URL,
     runtimeValues.DEMOS_RPC_URL,
-    ...(runtimeSource ? [] : [env.RPC_URL, env.DEMOS_RPC_URL]),
   );
   const hasApiConfig = hasValue(
     runtimeValues.SUPERCOLONY_API,
     runtimeValues.SUPERCOLONY_API_URL,
-    ...(runtimeSource ? [] : [env.SUPERCOLONY_API, env.SUPERCOLONY_API_URL]),
   );
 
   const missingEnv: string[] = [];

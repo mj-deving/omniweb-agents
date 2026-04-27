@@ -196,6 +196,29 @@ describe("supercolony-toolkit package", () => {
       }
     });
 
+    it("does not treat process env alone as runtime write config", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-process-env-"));
+      try {
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({
+          cwd: dir,
+          homeDir: dir,
+          env: {
+            DEMOS_MNEMONIC: "test seed phrase",
+            RPC_URL: "https://rpc.test",
+            SUPERCOLONY_API: "https://api.test",
+          },
+        });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     it("reads explicit write config values from per-agent credentials", async () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-creds-"));
       try {

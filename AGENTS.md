@@ -99,6 +99,7 @@ Important commands:
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
 - `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
 - `bd dolt pull` / `bd dolt push` for shared-state sync
+- `scripts/restore-beads-db.sh` to recover a fresh clone or shadow Beads DB from the canonical embedded Dolt database; see `docs/beads-bootstrap.md`
 - if `bd dolt pull` errors with the branch-selection message, repair the embedded Dolt repo once with:
   `(cd .beads/embeddeddolt/omniweb_agents && dolt push --set-upstream origin main)`
 
@@ -106,6 +107,7 @@ Rules:
 
 - always inspect `bd ready` before choosing work
 - when another agent may be active, sync Beads from Dolt before trusting local state and push back after major bead changes
+- never run `bd init` in a fresh clone when you expect this repo's existing `omniweb-agents-*` tasks; run `bd bootstrap` first, and if known IDs are missing use `scripts/restore-beads-db.sh`
 - claim a task before starting implementation
 - if new work is discovered, create or note a follow-up bead
 - create beads with execution context at creation time:

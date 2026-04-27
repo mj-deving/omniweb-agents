@@ -303,22 +303,22 @@ describe("supercolony-toolkit package", () => {
     it("does not treat optional SQLite cache support as a write blocker", async () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-sqlite-"));
       try {
-        vi.resetModules();
-        vi.doMock("node:module", () => ({
-          createRequire: () => ({
-            resolve: (specifier: string) => {
-              if (specifier === "@kynesyslabs/demosdk/websdk") return "/virtual/demosdk/websdk/index.js";
-              if (specifier === "better-sqlite3") throw new Error("missing optional sqlite");
-              return specifier;
-            },
-          }),
-        }));
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
         const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
 
-        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+        const readiness = checkWriteReadiness({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          env: {},
+          packageResolver: (specifier: string) => {
+            if (specifier === "@kynesyslabs/demosdk/websdk") return "/virtual/demosdk/websdk/index.js";
+            if (specifier === "better-sqlite3") throw new Error("missing optional sqlite");
+            return specifier;
+          },
+        });
 
         expect(readiness.missingPackages).toEqual([]);
         expect(readiness.missingEnv).toEqual([]);
@@ -328,8 +328,6 @@ describe("supercolony-toolkit package", () => {
           "Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache",
         );
       } finally {
-        vi.doUnmock("node:module");
-        vi.resetModules();
         rmSync(dir, { recursive: true, force: true });
       }
     });
@@ -337,30 +335,28 @@ describe("supercolony-toolkit package", () => {
     it("requires the Demos SDK websdk subpath to be resolvable for writes", async () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-websdk-"));
       try {
-        vi.resetModules();
-        vi.doMock("node:module", () => ({
-          createRequire: () => ({
-            resolve: (specifier: string) => {
-              if (specifier === "@kynesyslabs/demosdk/websdk") throw new Error("websdk not importable");
-              if (specifier === "better-sqlite3") return "/virtual/better-sqlite3/index.js";
-              return specifier;
-            },
-          }),
-        }));
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
         const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
 
-        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+        const readiness = checkWriteReadiness({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          env: {},
+          packageResolver: (specifier: string) => {
+            if (specifier === "@kynesyslabs/demosdk/websdk") throw new Error("websdk not importable");
+            if (specifier === "better-sqlite3") return "/virtual/better-sqlite3/index.js";
+            return specifier;
+          },
+        });
 
         expect(readiness.missingEnv).toEqual([]);
         expect(readiness.missingPackages).toEqual(["@kynesyslabs/demosdk/websdk"]);
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(false);
       } finally {
-        vi.doUnmock("node:module");
-        vi.resetModules();
         rmSync(dir, { recursive: true, force: true });
       }
     });

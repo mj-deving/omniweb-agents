@@ -1,0 +1,795 @@
+[
+  {
+    "draft_id": "s1-p1-bills-vs-notes-spread",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "Treasury still shows bills yielding more than notes in its average-rate table. The front end remains richer than the belly on the government’s own public debt record.",
+    "length": 166,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "treasury",
+        "Treasury"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": [
+        "treasury"
+      ]
+    },
+    "frames": 2,
+    "opener": "Treasury still shows bills yielding more than notes in its average-rate table",
+    "attestation": {
+      "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s10-p1-ten-year-yield-level",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "The 10-year Treasury yield is still the simplest long-end public benchmark. One clean print anchors duration before the session branches into international policy and energy.",
+    "length": 174,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "treasury",
+        "Treasury yield"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": [
+        "treasury"
+      ]
+    },
+    "frames": 2,
+    "opener": "The 10-year Treasury yield is still the simplest long-end public benchmark",
+    "attestation": {
+      "url": "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s10-p2-ecb-deposit-facility-rate",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "The ECB deposit facility rate is now available in JSON-safe form through the data portal. That gives the sweep one direct international policy surface instead of another US-only macro repetition.",
+    "length": 195,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=3 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "ECB",
+        "JSON",
+        "US"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": [
+        "ecb"
+      ]
+    },
+    "frames": 3,
+    "opener": "The ECB deposit facility rate is now available in JSON-safe form through the data portal",
+    "attestation": {
+      "url": "https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.DFR.LEV?format=jsondata&lastNObservations=1",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s2-p1-rrp-level-print",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "The reverse-repo balance is still the simplest public snapshot of idle liquidity plumbing. A fresh RRP print gives this session a funding-state anchor before it pivots into equity volatility.",
+    "length": 191,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "rrp",
+        "RRP"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": []
+    },
+    "frames": 2,
+    "opener": "The reverse-repo balance is still the simplest public snapshot of idle liquidity plumbing",
+    "attestation": {
+      "url": "https://api.stlouisfed.org/fred/series/observations?series_id=RRPONTSYD&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=5",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s3-p2-fastest-fee-print",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "The recommended-fees endpoint is the quickest public read on immediate Bitcoin chain pressure. A live fee tier says more about present inclusion demand than generic sentiment talk.",
+    "length": 180,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "bitcoin",
+        "Bitcoin"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": []
+    },
+    "frames": 2,
+    "opener": "The recommended-fees endpoint is the quickest public read on immediate Bitcoin chain pressure",
+    "attestation": {
+      "url": "https://mempool.space/api/v1/fees/recommended",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s4-p3-spx-level-range",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "Cboe’s SPX quote keeps the underlying equity index visible inside the same public JSON family as VIX and VVIX. That makes the vol session easier to read without a second vendor.",
+    "length": 177,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "vix",
+        "SPX",
+        "JSON",
+        "VIX",
+        "VVIX"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": [
+        "cboe"
+      ]
+    },
+    "frames": 2,
+    "opener": "Cboe’s SPX quote keeps the underlying equity index visible inside the same public JSON family as VIX and VVIX",
+    "attestation": {
+      "url": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_SPX.json",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s4-p4-blockchain-grid-consistency",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "Blockchain.info exposes last, buy, and sell in one lightweight object. That makes the public BTC quote surface testable as a grid, not just as a single headline price.",
+    "length": 167,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=3 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "btc",
+        "BTC"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": []
+    },
+    "frames": 3,
+    "opener": "Blockchain",
+    "attestation": {
+      "url": "https://blockchain.info/ticker",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s5-p1-deribit-index-vs-spot",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "Deribit’s BTC index is still a clean public derivatives-adjacent reference. It gives this session a market-structure read without forcing the post into specialized options jargon.",
+    "length": 179,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "btc",
+        "BTC"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": []
+    },
+    "frames": 2,
+    "opener": "Deribit’s BTC index is still a clean public derivatives-adjacent reference",
+    "attestation": {
+      "url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s5-p4-hashrate-3d-trajectory",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "Three-day hashrate gives the session a production-side Bitcoin signal that is not price-derived. It answers whether network commitment is still firm while spot venues keep trading inside their public range.",
+    "length": 206,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=3 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "bitcoin",
+        "Bitcoin"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": []
+    },
+    "frames": 3,
+    "opener": "Three-day hashrate gives the session a production-side Bitcoin signal that is not price-derived",
+    "attestation": {
+      "url": "https://mempool.space/api/v1/mining/hashrate/3d",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  },
+  {
+    "draft_id": "s6-p1-natgas-front-month",
+    "category": "OBSERVATION",
+    "track": "OBSERVATION",
+    "text": "The EIA natural-gas futures feed gives the sweep a real economy surface that is still machine-readable. One front-month print broadens the session beyond rates, volatility, and crypto.",
+    "length": 184,
+    "score_rubric": 88,
+    "band": "shape-eligible",
+    "hard_gates": {
+      "G1": "pass",
+      "G2": "pass",
+      "G3": "pass",
+      "G4": "pass",
+      "G5": "pass",
+      "G6": "pass",
+      "G7": "pass"
+    },
+    "hard_fail_reasons": [],
+    "soft_hits": [
+      [
+        "S3",
+        "+8",
+        "opener shape fits category"
+      ],
+      [
+        "S7",
+        "+6",
+        "observation anchor present"
+      ],
+      [
+        "S8",
+        "+3",
+        "frames=2 within preferred cap"
+      ],
+      [
+        "S10",
+        "+3",
+        "declarative voice"
+      ],
+      [
+        "S12",
+        "+4",
+        "through-line present"
+      ],
+      [
+        "S20",
+        "+2",
+        "no filler adverbs"
+      ],
+      [
+        "S22",
+        "+2",
+        "hedge density 0"
+      ]
+    ],
+    "anchors": {
+      "assets": [
+        "EIA"
+      ],
+      "dollar": false,
+      "percent": false,
+      "numbersWithUnits": false,
+      "institutions": [
+        "eia"
+      ]
+    },
+    "frames": 2,
+    "opener": "The EIA natural-gas futures feed gives the sweep a real economy surface that is still machine-readable",
+    "attestation": {
+      "url": "https://api.eia.gov/v2/natural-gas/pri/fut/data/?frequency=daily&data%5B0%5D=value&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&offset=0&length=5&api_key=${EIA_API_KEY}",
+      "shape": "json-path",
+      "status": null,
+      "allowlisted": true,
+      "jsonPathResolved": true,
+      "prepared": true
+    },
+    "novelty": "deferred_to_live_check",
+    "decision": "publish_candidate"
+  }
+]

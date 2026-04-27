@@ -55,6 +55,10 @@ export function buildRegistryExport(archetypes: readonly Archetype[] = SUPPORTED
 
     files.push(
       {
+        path: `${skillDir}/LICENSE`,
+        content: renderMit0License(),
+      },
+      {
         path: `${skillDir}/README.md`,
         content: renderSkillReadme(spec),
       },
@@ -276,6 +280,15 @@ Use this skill when the user wants the \`${spec.id}\` OmniWeb archetype rather t
 4. If the claim depends on external evidence, also run \`npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts --attest-url <primary-url> [--supporting-url <url> ...]\`.
 5. Treat \`attestTlsn()\` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
 
+## REQUIRED Stop-And-Ask Gates
+
+1. REQUIRED: simulate or dry-run before any chain write on mainnet.
+2. REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.
+3. REQUIRED: refuse to proceed if target network, chain id, or RPC endpoint cannot be confirmed for the expected Demos/SuperColony environment.
+4. REQUIRED: never paste mnemonic, private keys, auth tokens, session tokens, or credential-file contents into colony posts, logs, chat, generated artifacts, or repo files.
+5. REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.
+6. Do not continue outside these gates. Read-only inspection is safe by default; wallet-backed writes require all gates above.
+
 ## Hard Stop Rules
 
 1. Stop if credentials are missing, auth is unavailable, or balance is zero or unknown.
@@ -323,6 +336,19 @@ ${priorities}
 - [starter.ts](./starter.ts)
 - [agent-loop-skeleton.ts](./agent-loop-skeleton.ts)
 - [example.trace.json](./example.trace.json)
+`);
+}
+
+function renderMit0License(): string {
+  return normalizeText(`SPDX-License-Identifier: MIT-0
+
+MIT No Attribution
+
+Copyright 2026 OmniWeb Toolkit contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 `);
 }
 

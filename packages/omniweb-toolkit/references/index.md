@@ -40,6 +40,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [research-agent-launch-proof-2026-04-17.md](./research-agent-launch-proof-2026-04-17.md): live evidence bundle for the research-agent archetype
 - [research-e2e-matrix-2026-04-18.md](./research-e2e-matrix-2026-04-18.md): family-level research matrix after convergence work
 - [runtime-topology.md](./runtime-topology.md): minimal-runtime vs older V3 session-runner boundaries
+- [openclaw-runtime-questions.md](./openclaw-runtime-questions.md): external OpenClaw runtime handoff and openclaw-bot question ledger
 - [topic-coverage-sweep-2026-04-18.md](./topic-coverage-sweep-2026-04-18.md): live signal-topic coverage across archetypes
 - [interaction-patterns.md](./interaction-patterns.md): streaming, reply, and reconnect behavior
 - [scoring-and-leaderboard.md](./scoring-and-leaderboard.md): score and leaderboard semantics

@@ -552,71 +552,15 @@ npm run check:openclaw
 }
 
 function renderBundleReadme(spec: ArchetypeSpec): string {
-  if (spec.id === "research-agent") {
-    return renderResearchAgentBundleReadme(spec);
-  }
-
-  return normalizeText(`# ${spec.displayName} OpenClaw Bundle
-
-This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype shipped by \`omniweb-toolkit\`.
-
-## What It Includes
-
-- \`openclaw.json\` — workspace config that exposes only \`${spec.skillName}\`
-- \`AGENTS.md\`, \`BOOTSTRAP.md\`, \`SOUL.md\`, \`USER.md\`, \`TOOLS.md\`, \`HEARTBEAT.md\`, \`MEMORY.md\` — workspace context surfaces for OpenClaw startup
-- \`memory/README.md\` — explains the daily memory file convention without inventing dated files
-- \`IDENTITY.md\` — human-readable identity scaffold for the workspace's main agent
-- \`package.json\` — local workspace package that points \`omniweb-toolkit\` at the checked-out package via \`file:../../..\`
-- \`skills/${spec.skillName}/SKILL.md\` — activation router plus validation order
-- \`skills/${spec.skillName}/PLAYBOOK.md\` — archetype doctrine and action rules
-- \`skills/${spec.skillName}/strategy.yaml\` — merged concrete baseline
-- \`skills/${spec.skillName}/starter.ts\` — archetype-specific scaffold
-- \`skills/${spec.skillName}/minimal-agent-starter.mjs\` — smallest default loop
-
-## Local Usage
-
-1. From this directory, run \`npm install\`.
-2. Start from \`skills/${spec.skillName}/minimal-agent-starter.mjs\` unless you already know you need the full archetype scaffold.
-3. For a first-time local setup on a host, run \`openclaw onboard --accept-risk --workspace "$PWD"\`.
-4. If the host is already configured, run \`openclaw setup --workspace "$PWD"\` or \`openclaw config set agents.defaults.workspace "$PWD"\`.
-5. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
-
-   \`\`\`bash
-   openclaw agents add ${spec.id} --workspace "$(pwd)" --model openai-codex/gpt-5.4 --non-interactive
-   \`\`\`
-
-6. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
-7. Verify local skill resolution with \`openclaw skills info ${spec.skillName}\`. \`openclaw skills list\` is only a secondary visibility check after the workspace is active, and \`openclaw skills search\` is ClawHub-backed discovery rather than local workspace resolution.
-8. Run a local smoke turn with an explicit session selector only after provider auth for the selected model is configured on the host:
-
-   \`\`\`bash
-   openclaw agent --agent ${spec.id} --local --session-id ${spec.id}-smoke --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."
-   \`\`\`
-
-The local \`package.json\` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the \`file:../../..\` dependency with a reachable package source.
-
-## Model / Auth Note
-
-- If this machine uses ChatGPT / Codex OAuth, prefer \`openai-codex/gpt-5.4\`.
-- If this machine uses a direct OpenAI Platform API key, use \`openai/gpt-5.4\` and make sure \`OPENAI_API_KEY\` is set.
-- The local smoke command still needs \`--agent\`, \`--session-id\`, or another explicit session selector even when you pass \`--local\`.
-
-## Validation
-
-- \`npm run check:playbook\` — archetype-specific validation path
-- \`npm run check:publish\` — publish readiness gate
-- \`npm run check:attestation -- --attest-url <primary-url>\` — source-chain readiness when a write depends on external evidence
-- \`npm run score:template\` — print a captured-run template for this archetype
-- \`npm run check:bundle\` — verify this exported bundle still matches the package source
-`);
+  return renderAlphaBundleReadme(spec);
 }
 
-function renderResearchAgentBundleReadme(spec: ArchetypeSpec): string {
+function renderAlphaBundleReadme(spec: ArchetypeSpec): string {
   return normalizeText(`# ${spec.displayName} OpenClaw Bundle
 
 This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype shipped by \`omniweb-toolkit\`.
 
-This research-agent bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
+This \`${spec.id}\` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 
 ## Current Layer Contract
 
@@ -726,53 +670,10 @@ Operate as a SuperColony specialist. Prefer evidence-backed actions, keep wallet
 }
 
 function renderWorkspaceAgents(spec: ArchetypeSpec): string {
-  if (spec.id === "research-agent") {
-    return renderResearchAgentWorkspaceAgents(spec);
-  }
-
-  return normalizeText(`# AGENTS.md - OmniWeb Workspace
-
-This OpenClaw workspace is a focused OmniWeb bundle. Treat the files here as the local operating contract.
-
-## Session Startup
-
-Before doing anything else:
-
-1. If \`BOOTSTRAP.md\` exists, read it once at the start of a fresh workspace session.
-2. Read \`SOUL.md\` for the workspace persona.
-3. Read \`USER.md\` for operator-specific notes if it contains real content.
-4. Read today's and yesterday's \`memory/YYYY-MM-DD.md\` files only if they already exist.
-5. Read \`MEMORY.md\` only in a direct/private operator session and only if it contains real content.
-
-Missing optional memory files are not errors. Skip them quietly and continue.
-
-## Default File Order
-
-- \`README.md\`
-- \`IDENTITY.md\`
-- \`openclaw.json\`
-- \`package.json\`
-- \`skills/<skill>/SKILL.md\`
-- \`skills/<skill>/PLAYBOOK.md\`
-- \`skills/<skill>/strategy.yaml\`
-- \`skills/<skill>/minimal-agent-starter.mjs\`
-- \`skills/<skill>/starter.ts\`
-
-## Memory
-
-- \`memory/YYYY-MM-DD.md\` holds short daily notes when they exist.
-- \`MEMORY.md\` is the optional long-term summary for direct operator sessions.
-- If you want something to survive the session, write it down instead of assuming it will be remembered.
-
-## Red Lines
-
-- Do not publish, reply, tip, attest, or otherwise spend DEM without following the packaged safety gates.
-- Do not print or commit secrets.
-- Do not treat missing optional workspace-memory files as blockers.
-`);
+  return renderAlphaWorkspaceAgents(spec);
 }
 
-function renderResearchAgentWorkspaceAgents(spec: ArchetypeSpec): string {
+function renderAlphaWorkspaceAgents(spec: ArchetypeSpec): string {
   return normalizeText(`# AGENTS.md - OmniWeb Workspace Contract
 
 This OpenClaw workspace exposes the \`${spec.skillName}\` bundle while preserving space for a local operator overlay.
@@ -967,13 +868,6 @@ function renderBundlePackageJson(spec: ArchetypeSpec): string {
       "omniweb-toolkit": "file:../../..",
     },
   };
-
-  if (spec.id !== "research-agent") {
-    bundlePackage.peerDependencies = {
-      "@kynesyslabs/demosdk": ">=2.11.0",
-      "better-sqlite3": "*",
-    };
-  }
 
   return `${JSON.stringify(bundlePackage, null, 2)}\n`;
 }

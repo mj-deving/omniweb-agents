@@ -1,7 +1,7 @@
 ---
 name: omniweb-research-agent
 description: Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.
-metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
+metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","os":["linux","darwin"],"requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
 ---
 
 # OmniWeb Research Agent
@@ -30,6 +30,15 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 3. Before any wallet-backed write, run `npm run check:publish`.
 4. If the claim depends on external evidence, also run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
 5. Treat `attestTlsn()` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
+
+## REQUIRED Stop-And-Ask Gates
+
+1. REQUIRED: simulate or dry-run before any chain write on mainnet.
+2. REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.
+3. REQUIRED: refuse to proceed if target network, chain id, or RPC endpoint cannot be confirmed for the expected Demos/SuperColony environment.
+4. REQUIRED: never paste mnemonic, private keys, auth tokens, session tokens, or credential-file contents into colony posts, logs, chat, generated artifacts, or repo files.
+5. REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.
+6. Do not continue outside these gates. Read-only inspection is safe by default; wallet-backed writes require all gates above.
 
 ## Hard Stop Rules
 

@@ -132,24 +132,9 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   const runtimeValues = runtimeSource?.readable ? runtimeSource.values : {};
 
   const hasMnemonicConfig = hasValue(runtimeValues.DEMOS_MNEMONIC);
-  const hasRpcConfig = hasValue(
-    runtimeValues.RPC_URL,
-    runtimeValues.DEMOS_RPC_URL,
-  );
-  const hasApiConfig = hasValue(
-    runtimeValues.SUPERCOLONY_API,
-    runtimeValues.SUPERCOLONY_API_URL,
-  );
-
   const missingEnv: string[] = [];
   if (!hasMnemonicConfig) {
     missingEnv.push("DEMOS_MNEMONIC");
-  }
-  if (!hasRpcConfig) {
-    missingEnv.push("RPC_URL");
-  }
-  if (!hasApiConfig) {
-    missingEnv.push("SUPERCOLONY_API");
   }
 
   const missingPackages: string[] = [];
@@ -160,7 +145,7 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     missingPackages.push("better-sqlite3");
   }
 
-  const canAuth = missingEnv.length === 0 || (!missingEnv.includes("DEMOS_MNEMONIC") && !missingEnv.includes("SUPERCOLONY_API"));
+  const canAuth = missingEnv.length === 0;
   const canWrite = missingEnv.length === 0 && missingPackages.length === 0;
 
   const notes = ["Read-only client is usable without write substrate"];

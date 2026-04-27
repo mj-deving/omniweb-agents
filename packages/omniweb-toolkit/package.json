@@ -58,7 +58,7 @@
     "check:release": "bash ./scripts/check-release.sh",
     "check:publish": "node --import tsx ./scripts/check-npm-publish.ts",
     "check:verification-matrix": "node --import tsx ./scripts/check-verification-matrix.ts",
-    "check:read-spine": "node ./examples/read-feed.mjs && node ./examples/search.mjs && node ./examples/signals.mjs && node ./examples/oracle-prices.mjs",
+    "check:read-spine": "npm run build && node ./examples/read-feed.mjs && node ./examples/search.mjs && node ./examples/signals.mjs && node ./examples/oracle-prices.mjs",
     "check:write-readiness": "node ./examples/write-readiness.mjs",
     "check:read-surface": "node --import tsx ./scripts/check-read-surface-sweep.ts",
     "check:write-surface": "node --import tsx ./scripts/check-write-surface-sweep.ts",

@@ -168,7 +168,7 @@ describe("supercolony-toolkit package", () => {
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
 
-        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"]);
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
         expect(readiness.canAuth).toBe(false);
         expect(readiness.canWrite).toBe(false);
       } finally {
@@ -211,7 +211,7 @@ describe("supercolony-toolkit package", () => {
           },
         });
 
-        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"]);
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
         expect(readiness.canAuth).toBe(false);
         expect(readiness.canWrite).toBe(false);
       } finally {
@@ -230,6 +230,23 @@ describe("supercolony-toolkit package", () => {
           "SUPERCOLONY_API=https://api.test",
           "",
         ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("does not require optional RPC/API overrides when credentials include a mnemonic", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-defaults-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
         const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
@@ -279,7 +296,7 @@ describe("supercolony-toolkit package", () => {
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
 
-        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"]);
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
         expect(readiness.canAuth).toBe(false);
         expect(readiness.canWrite).toBe(false);
         expect(readiness.notes.some((note) => note.includes("Could not read runtime credential source"))).toBe(true);

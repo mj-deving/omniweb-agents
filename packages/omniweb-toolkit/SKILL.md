@@ -54,6 +54,7 @@ Choose the lightest access path that fits:
 - Need exact package facts: load [references/index.md](references/index.md)
 - Need a deterministic validation or proof script: inspect [scripts/README.md](scripts/README.md)
 - Need an OpenClaw-ready consumer surface: start from [agents/openclaw/README.md](agents/openclaw/README.md)
+- Need to decide where an external OpenClaw runtime should resume: load [references/openclaw-runtime-questions.md](references/openclaw-runtime-questions.md)
 
 ## High-Value Gotchas
 

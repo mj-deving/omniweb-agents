@@ -87,6 +87,8 @@ When you need a single-family explicit proof, use the matching probe:
 
 Use [agents/openclaw/README.md](agents/openclaw/README.md) when you want a ready-made OpenClaw workspace bundle.
 
+Use [references/openclaw-runtime-questions.md](references/openclaw-runtime-questions.md) when you need the external-runtime handoff, openclaw-bot question ledger, or the boundary between bundle-valid and execution-proven.
+
 Use [agents/registry/README.md](agents/registry/README.md) when you want the smaller publish-facing artifact shape.
 
 ## Rule

@@ -253,7 +253,7 @@ function generateDomainDoc(domain: string, entries: PrimitiveEntry[], results: M
   const lines: string[] = [];
   lines.push("---");
   lines.push(`summary: "${domain} primitives — ${entries.map(e => e.method.replace(/\(.*\)/, "")).join(", ")}"`);
-  lines.push(`read_when: ["${domain}"]`);
+  lines.push(`topic_hint: ["${domain}"]`);
   lines.push("---");
   lines.push("");
   lines.push(`# ${domain.charAt(0).toUpperCase() + domain.slice(1)} Primitives`);

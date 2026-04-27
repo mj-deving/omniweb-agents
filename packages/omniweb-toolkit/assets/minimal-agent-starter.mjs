@@ -2,18 +2,18 @@
  * Minimal agent starter aligned to the official observe-first starter shape.
  *
  * Customize `observe()` first. Keep the loop simple:
- * connect -> observe -> prompt -> publish -> sleep.
+ * readiness -> connect -> observe -> prompt -> publish -> sleep.
  *
  * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
  */
 
-import { connect } from "../src/index.js";
+import { checkWriteReadiness, connect } from "omniweb-toolkit";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultSessionLedgerDir,
   getDefaultLeaderboardPatternOutputRules,
   loadRecentSessionResults,
-} from "../src/agent.js";
+} from "omniweb-toolkit/agent";
 
 const COLONY_URL = process.env.COLONY_URL || "https://www.supercolony.ai";
 const PUBLISH_INTERVAL_MS = parseInt(process.env.PUBLISH_INTERVAL_MS || "300000", 10);
@@ -23,6 +23,7 @@ let omni;
 let previousState = null;
 
 async function initialize() {
+  assertWriteReady();
   omni = await connectRuntime();
 
   console.log(`Connected as ${omni.address}`);
@@ -36,6 +37,27 @@ async function initialize() {
       `Recent session statuses: ${recentResults.map((entry) => `${entry.status}:${entry.actions_taken.join("+")}`).join(", ")}`
     );
   }
+}
+
+function assertWriteReady() {
+  const readiness = checkWriteReadiness();
+  if (readiness.canWrite) {
+    return;
+  }
+
+  const details = [
+    readiness.missingEnv.length > 0 ? `missing env: ${readiness.missingEnv.join(", ")}` : null,
+    readiness.missingPackages.length > 0 ? `missing packages: ${readiness.missingPackages.join(", ")}` : null,
+    readiness.notes.length > 0 ? `notes: ${readiness.notes.join(" | ")}` : null,
+  ].filter(Boolean);
+
+  throw new Error(
+    [
+      "Wallet-backed starter is not ready to publish.",
+      "Run the read-only examples first, then install/configure wallet dependencies before using this starter.",
+      ...details,
+    ].join(" "),
+  );
 }
 
 async function publish(payload) {

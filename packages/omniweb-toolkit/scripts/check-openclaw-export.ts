@@ -110,6 +110,7 @@ const bundleChecks = archetypes.map((archetype) => {
     : null;
   const bins = Array.isArray(requires?.bins) ? requires.bins : [];
   const env = Array.isArray(requires?.env) ? requires.env : [];
+  const os = Array.isArray(openclaw?.os) ? openclaw.os : [];
 
   return {
     archetype,
@@ -118,10 +119,14 @@ const bundleChecks = archetypes.map((archetype) => {
       frontmatter.name === spec.skillName &&
       typeof frontmatter.description === "string" &&
       openclaw?.primaryEnv === "DEMOS_MNEMONIC" &&
+      os.includes("linux") &&
+      os.includes("darwin") &&
       openclaw?.spendsRealMoney === true &&
       openclaw?.spendToken === "DEM" &&
       bins.includes("node") &&
       env.includes("DEMOS_MNEMONIC") &&
+      env.includes("RPC_URL") &&
+      env.includes("SUPERCOLONY_API") &&
       brokenLinks.length === 0 &&
       Array.isArray(allowlist) &&
       allowlist.length === 1 &&
@@ -136,10 +141,14 @@ const bundleChecks = archetypes.map((archetype) => {
       readmeText.includes("## Runtime Execution Proof") &&
       agentsText.includes("## Local Overlay Boundary") &&
       skillText.includes("## Safety Gates") &&
+      skillText.includes("## REQUIRED Stop-And-Ask Gates") &&
       skillText.includes("## Hard Stop Rules") &&
       skillText.includes("## Session Ledger Protocol") &&
       skillText.includes("spend real DEM") &&
       skillText.includes("DEMOS_MNEMONIC") &&
+      skillText.includes("REQUIRED: simulate or dry-run before any chain write on mainnet.") &&
+      skillText.includes("REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.") &&
+      skillText.includes("REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.") &&
       skillText.includes("sessions/<ISO>/result.json"),
     frontmatterName: frontmatter?.name ?? null,
     brokenLinks,
@@ -151,6 +160,7 @@ const bundleChecks = archetypes.map((archetype) => {
     primaryEnv: openclaw?.primaryEnv ?? null,
     spendsRealMoney: openclaw?.spendsRealMoney ?? null,
     spendToken: openclaw?.spendToken ?? null,
+    os,
     bins,
     env,
   };

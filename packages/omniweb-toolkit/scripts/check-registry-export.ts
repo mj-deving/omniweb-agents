@@ -63,6 +63,7 @@ const skillChecks = archetypes.map((archetype) => {
   const spec = getArchetypeSpec(archetype);
   const skillDir = resolve(outputDir, spec.skillName);
   const skillPath = resolve(skillDir, "SKILL.md");
+  const licensePath = resolve(skillDir, "LICENSE");
   const runbookPath = resolve(skillDir, "RUNBOOK.md");
   const readmePath = resolve(skillDir, "README.md");
   const frontmatter = existsSync(skillPath)
@@ -85,6 +86,9 @@ const skillChecks = archetypes.map((archetype) => {
   const readmeText = existsSync(readmePath)
     ? readFileSync(readmePath, "utf8")
     : "";
+  const licenseText = existsSync(licensePath)
+    ? readFileSync(licensePath, "utf8")
+    : "";
   const metadata = parseMetadata(frontmatter?.metadata);
   const openclaw = metadata && isRecord(metadata.openclaw) ? metadata.openclaw : null;
   const requires = openclaw && isRecord(openclaw.requires) ? openclaw.requires : null;
@@ -92,6 +96,7 @@ const skillChecks = archetypes.map((archetype) => {
   const bins = Array.isArray(requires?.bins) ? requires.bins : [];
   const anyBins = Array.isArray(requires?.anyBins) ? requires.anyBins : [];
   const env = Array.isArray(requires?.env) ? requires.env : [];
+  const os = Array.isArray(openclaw?.os) ? openclaw.os : [];
   const expectedInstall = typeof frontmatter?.version === "string"
     ? buildRegistryInstallSpecs(frontmatter.version)
     : [];
@@ -108,30 +113,43 @@ const skillChecks = archetypes.map((archetype) => {
       typeof openclaw.homepage === "string" &&
       openclaw.homepage.includes("omniweb-agents") &&
       openclaw.primaryEnv === "DEMOS_MNEMONIC" &&
+      os.includes("linux") &&
+      os.includes("darwin") &&
       openclaw.spendsRealMoney === true &&
       openclaw.spendToken === "DEM" &&
       JSON.stringify(install) === JSON.stringify(expectedInstall) &&
       bins.includes("node") &&
       anyBins.some((value) => value === "npm" || value === "pnpm" || value === "yarn") &&
       env.includes("DEMOS_MNEMONIC") &&
+      env.includes("RPC_URL") &&
+      env.includes("SUPERCOLONY_API") &&
       brokenLinks.length === 0 &&
+      licenseText.includes("SPDX-License-Identifier: MIT-0") &&
+      licenseText.includes("MIT No Attribution") &&
+      licenseText.includes("THE SOFTWARE IS PROVIDED \"AS IS\"") &&
       runbookText.includes("npm install omniweb-toolkit@") &&
       runbookText.includes("metadata.openclaw.install") &&
       runbookText.includes("check-playbook-path.ts") &&
       readmeText.includes("publish-facing skill artifact") &&
       skillText.includes("## Safety Gates") &&
+      skillText.includes("## REQUIRED Stop-And-Ask Gates") &&
       skillText.includes("## Hard Stop Rules") &&
       skillText.includes("## Session Ledger Protocol") &&
       skillText.includes("spend real DEM") &&
       skillText.includes("DEMOS_MNEMONIC") &&
+      skillText.includes("REQUIRED: simulate or dry-run before any chain write on mainnet.") &&
+      skillText.includes("REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.") &&
+      skillText.includes("REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.") &&
       skillText.includes("sessions/<ISO>/result.json"),
     frontmatterName: frontmatter?.name ?? null,
     version: frontmatter?.version ?? null,
     brokenLinks,
     homepage: typeof openclaw?.homepage === "string" ? openclaw.homepage : null,
+    license: existsSync(licensePath) ? "present" : null,
     bins,
     anyBins,
     env,
+    os,
     primaryEnv: openclaw?.primaryEnv ?? null,
     spendsRealMoney: openclaw?.spendsRealMoney ?? null,
     spendToken: openclaw?.spendToken ?? null,

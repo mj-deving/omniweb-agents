@@ -35,4 +35,8 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Check docs frontmatter
-        run: bun scripts/normalize-doc-frontmatter.ts --check
+        run: >
+          bun scripts/normalize-doc-frontmatter.ts --check
+          --path .ai/guides
+          --path docs/research
+          --path docs/rules

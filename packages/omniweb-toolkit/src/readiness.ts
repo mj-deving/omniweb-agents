@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 export interface WriteReadinessOptions {
   cwd?: string;
   agentName?: string;
+  envPath?: string;
   env?: Record<string, string | undefined>;
   homeDir?: string;
 }
@@ -108,27 +109,32 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   const cwd = options.cwd ?? process.cwd();
   const agentName = options.agentName?.trim();
   const home = options.homeDir ?? homedir();
+  const requestedEnvPath = options.envPath?.trim() || ".env";
+  const envPath = resolve(cwd, requestedEnvPath.replace(/^~/, home));
+  const hasExplicitEnvPath = requestedEnvPath !== ".env" && filePresent(envPath);
   const credentialsPath = resolve(home, ".config", "demos", "credentials");
   const namedCredentialsPath = agentName
     ? resolve(home, ".config", "demos", `credentials-${agentName}`)
     : null;
-  const dotEnvPath = resolve(cwd, ".env");
 
   const credentialSourcesChecked = [
-    credentialsPath,
-    ...(namedCredentialsPath ? [namedCredentialsPath] : []),
-    dotEnvPath,
+    ...(hasExplicitEnvPath ? [envPath] : []),
+    ...(hasExplicitEnvPath ? [] : namedCredentialsPath ? [namedCredentialsPath] : []),
+    ...(hasExplicitEnvPath ? [] : [credentialsPath]),
+    ...(hasExplicitEnvPath ? [] : [envPath]),
   ];
 
   const namedCredentials = namedCredentialsPath ? readConfigFile(namedCredentialsPath) : null;
   const sharedCredentials = readConfigFile(credentialsPath);
-  const dotEnv = readConfigFile(dotEnvPath);
-  const hasDotEnv = filePresent(dotEnvPath);
-  const runtimeSource = selectRuntimeConfigSource([
-    ...(namedCredentials ? [namedCredentials] : []),
-    sharedCredentials,
-    dotEnv,
-  ]);
+  const legacyEnv = readConfigFile(envPath);
+  const runtimeSources = hasExplicitEnvPath
+    ? [legacyEnv]
+    : [
+        ...(namedCredentials ? [namedCredentials] : []),
+        sharedCredentials,
+        legacyEnv,
+      ];
+  const runtimeSource = selectRuntimeConfigSource(runtimeSources);
   const runtimeValues = runtimeSource?.readable ? runtimeSource.values : {};
 
   const hasMnemonicConfig = hasValue(runtimeValues.DEMOS_MNEMONIC);
@@ -152,8 +158,8 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   if (missingPackages.length > 0) {
     notes.push("Write flows require optional wallet/runtime dependencies");
   }
-  if (hasDotEnv) {
-    notes.push(`Checked .env at ${dotEnvPath} for explicit write config values`);
+  if (legacyEnv.present) {
+    notes.push(`Checked env file at ${envPath} for explicit write config values`);
   }
   if (runtimeSource?.present) {
     notes.push(`Runtime credential source: ${runtimeSource.path}`);

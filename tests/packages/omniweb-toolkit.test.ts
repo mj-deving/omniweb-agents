@@ -256,6 +256,33 @@ describe("supercolony-toolkit package", () => {
       }
     });
 
+    it("honors explicit envPath before per-agent credentials", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-explicit-env-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "RPC_URL=https://rpc.from-creds.test\n");
+        const explicitEnvPath = join(dir, "custom.env");
+        writeFileSync(explicitEnvPath, "DEMOS_MNEMONIC='test seed phrase'\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          envPath: explicitEnvPath,
+          env: {},
+        });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+        expect(readiness.credentialSourcesChecked).toEqual([explicitEnvPath]);
+        expect(readiness.notes).toContain(`Runtime credential source: ${explicitEnvPath}`);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     it("does not require optional RPC/API overrides when credentials include a mnemonic", async () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-defaults-"));
       try {

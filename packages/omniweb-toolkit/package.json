@@ -17,12 +17,21 @@
     "./types": {
       "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
+    },
+    "./runtime": {
+      "import": "./dist/runtime.js",
+      "types": "./dist/runtime.d.ts"
+    },
+    "./write": {
+      "import": "./dist/write.js",
+      "types": "./dist/write.d.ts"
     }
   },
   "files": [
     "dist/",
     "README.md",
     "TOOLKIT.md",
+    "examples/",
     "SKILL.md",
     "GUIDE.md",
     "agents/",
@@ -49,6 +58,8 @@
     "check:release": "bash ./scripts/check-release.sh",
     "check:publish": "node --import tsx ./scripts/check-npm-publish.ts",
     "check:verification-matrix": "node --import tsx ./scripts/check-verification-matrix.ts",
+    "check:read-spine": "npm run build && node ./examples/read-feed.mjs && node ./examples/search.mjs && node ./examples/signals.mjs && node ./examples/oracle-prices.mjs",
+    "check:write-readiness": "npm run build && node ./examples/write-readiness.mjs",
     "check:read-surface": "node --import tsx ./scripts/check-read-surface-sweep.ts",
     "check:write-surface": "node --import tsx ./scripts/check-write-surface-sweep.ts",
     "check:reply": "node --import tsx ./scripts/check-supervised-reply.ts",
@@ -98,6 +109,9 @@
       "optional": true
     },
     "openai": {
+      "optional": true
+    },
+    "better-sqlite3": {
       "optional": true
     }
   },

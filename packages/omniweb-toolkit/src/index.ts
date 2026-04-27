@@ -21,72 +21,36 @@
  *   await omni.chain.transfer(to, amount);
  */
 
-export { connect } from "./connect.js";
+export { createClient } from "./client.js";
+export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
+export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
+export { checkWriteReadiness } from "./readiness.js";
 export {
   buildBetMemo,
   buildHigherLowerMemo,
   buildBinaryBetMemo,
   VALID_BET_HORIZONS,
 } from "../../../src/toolkit/supercolony/bet-memos.js";
-export type { OmniWeb, Colony, ConnectOptions } from "./colony.js";
+export type {
+  CreateClientOptions,
+  FeedQuery,
+  FeedResponse,
+  SearchQuery,
+  SearchResponse,
+  SignalsResponse,
+  OracleQuery,
+  OracleResponse,
+  PricesQuery,
+  PricesResponse,
+  ScoresQuery,
+  ScoresResponse,
+  ReportsQuery,
+  ReportsResponse,
+  StatsResponse,
+  OmniwebReadClient,
+  ColonyPost,
+  ReadPostCategory,
+} from "./read-types.js";
+export type { WriteReadinessOptions, WriteReadinessResult } from "./readiness.js";
 export type { HiveAPI } from "./hive.js";
-export type { IdentityAPI } from "./identity-api.js";
-export type { EscrowAPI } from "./escrow-api.js";
-export type { StorageAPI } from "./storage-api.js";
-export type { IPFSAPI } from "./ipfs-api.js";
-export type { ChainAPI } from "./chain-api.js";
-export type { Toolkit } from "../../../src/toolkit/primitives/types.js";
-export type {
-  PublishDraft,
-  ReplyOptions,
-  AttestOptions,
-  ToolResult,
-  PublishResult,
-  AttestResult,
-} from "../../../src/toolkit/types.js";
-export type {
-  Prediction,
-  PredictionLeaderboardAgent,
-  PredictionLeaderboardResult,
-  PredictionMarket,
-  PredictionScoreBreakdown,
-  PredictionScoreResult,
-  PredictionIntelligenceScore,
-  PredictionWeightStat,
-  PredictionIntelligenceWeights,
-  PredictionIntelligenceStats,
-  PredictionIntelligenceResponse,
-  PredictionRecommendationBetPayload,
-  PredictionRecommendation,
-  PredictionRecommendationsResponse,
-  ConvergenceResponse,
-  TopPostsResult,
-  ReportResponse,
-  AgentLinkChallengeResponse,
-  AgentLinkClaimResponse,
-  LinkedAgent,
-  HigherLowerPool,
-  BinaryPool,
-  EthBettingPool,
-  EthWinner,
-  EthWinnersResponse,
-  EthHigherLowerPool,
-  EthBinaryPool,
-  EthBinaryPoolsResponse,
-  SportsFixture,
-  SportsWinnerPool,
-  SportsScorePool,
-  SportsMarket,
-  SportsMarketsResponse,
-  SportsPool,
-  SportsWinner,
-  SportsWinnersResponse,
-  CommodityPool,
-  BettingHorizon,
-  BetWriteDirection,
-  BetBinaryPosition,
-  BetRegistrationResponse,
-  HigherLowerRegistrationResponse,
-  EthBinaryRegistrationResponse,
-  RegisteredTransferResult,
-} from "../../../src/toolkit/supercolony/types.js";
+export { connect } from "./connect.js";

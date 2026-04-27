@@ -9,6 +9,9 @@
  * a module-level mock of the colony's dependency.
  */
 
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Toolkit } from "../../src/toolkit/primitives/types.js";
 
@@ -120,6 +123,296 @@ vi.mock("../../src/toolkit/supercolony/types.js", () => ({}));
 // ── Tests ────────────────────────────────────────
 
 describe("supercolony-toolkit package", () => {
+  describe("read-only client", () => {
+    it("uses the platform text query key for feed search", async () => {
+      const requests: string[] = [];
+      const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+        requests.push(String(url));
+        return new Response(JSON.stringify({ posts: [] }), { status: 200 });
+      });
+      const { createClient } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const client = createClient({ baseUrl: "https://example.test", fetch: fetchImpl });
+
+      await client.searchFeed({ text: "bitcoin", limit: 2 });
+
+      const url = new URL(requests[0]);
+      expect(url.pathname).toBe("/api/feed/search");
+      expect(url.searchParams.get("text")).toBe("bitcoin");
+      expect(url.searchParams.get("limit")).toBe("2");
+      expect(url.searchParams.has("q")).toBe(false);
+    });
+
+    it("maps legacy q search input to text at runtime", async () => {
+      const requests: string[] = [];
+      const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+        requests.push(String(url));
+        return new Response(JSON.stringify({ posts: [] }), { status: 200 });
+      });
+      const { createClient } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const client = createClient({ baseUrl: "https://example.test", fetch: fetchImpl });
+
+      await client.searchFeed({ q: "bitcoin", limit: 2 });
+
+      const url = new URL(requests[0]);
+      expect(url.searchParams.get("text")).toBe("bitcoin");
+      expect(url.searchParams.has("q")).toBe(false);
+    });
+
+    it("classifies non-json HTTP failures as HttpError", async () => {
+      const fetchImpl = vi.fn(async () => new Response("<html>bad gateway</html>", { status: 502 }));
+      const { createClient, HttpError } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const client = createClient({ baseUrl: "https://example.test", fetch: fetchImpl });
+
+      const request = client.getFeed();
+
+      await expect(request).rejects.toBeInstanceOf(HttpError);
+      await expect(request).rejects.toMatchObject({
+        status: 502,
+        url: "https://example.test/api/feed",
+        body: "<html>bad gateway</html>",
+      });
+    });
+  });
+
+  describe("write readiness", () => {
+    it("does not treat an empty .env file as write config", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-empty-"));
+      try {
+        writeFileSync(join(dir, ".env"), "# template only\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("reads explicit write config values from .env", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-env-"));
+      try {
+        writeFileSync(join(dir, ".env"), [
+          "DEMOS_MNEMONIC=\"test seed phrase\"",
+          "RPC_URL=https://rpc.test",
+          "SUPERCOLONY_API=https://api.test",
+          "",
+        ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("does not treat process env alone as runtime write config", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-process-env-"));
+      try {
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({
+          cwd: dir,
+          homeDir: dir,
+          env: {
+            DEMOS_MNEMONIC: "test seed phrase",
+            RPC_URL: "https://rpc.test",
+            SUPERCOLONY_API: "https://api.test",
+          },
+        });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("reads explicit write config values from per-agent credentials", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-creds-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), [
+          "DEMOS_MNEMONIC='test seed phrase'",
+          "RPC_URL=https://rpc.test",
+          "SUPERCOLONY_API=https://api.test",
+          "",
+        ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("honors explicit envPath before per-agent credentials", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-explicit-env-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "RPC_URL=https://rpc.from-creds.test\n");
+        const explicitEnvPath = join(dir, "custom.env");
+        writeFileSync(explicitEnvPath, "DEMOS_MNEMONIC='test seed phrase'\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          envPath: explicitEnvPath,
+          env: {},
+        });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+        expect(readiness.credentialSourcesChecked).toEqual([explicitEnvPath]);
+        expect(readiness.notes).toContain(`Runtime credential source: ${explicitEnvPath}`);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("does not require optional RPC/API overrides when credentials include a mnemonic", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-defaults-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("does not treat optional SQLite cache support as a write blocker", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-sqlite-"));
+      try {
+        vi.resetModules();
+        vi.doMock("node:module", () => ({
+          createRequire: () => ({
+            resolve: (specifier: string) => {
+              if (specifier === "@kynesyslabs/demosdk/websdk") return "/virtual/demosdk/websdk/index.js";
+              if (specifier === "better-sqlite3") throw new Error("missing optional sqlite");
+              return specifier;
+            },
+          }),
+        }));
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingPackages).toEqual([]);
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+        expect(readiness.canWrite).toBe(true);
+        expect(readiness.notes).toContain(
+          "Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache",
+        );
+      } finally {
+        vi.doUnmock("node:module");
+        vi.resetModules();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("requires the Demos SDK websdk subpath to be resolvable for writes", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-websdk-"));
+      try {
+        vi.resetModules();
+        vi.doMock("node:module", () => ({
+          createRequire: () => ({
+            resolve: (specifier: string) => {
+              if (specifier === "@kynesyslabs/demosdk/websdk") throw new Error("websdk not importable");
+              if (specifier === "better-sqlite3") return "/virtual/better-sqlite3/index.js";
+              return specifier;
+            },
+          }),
+        }));
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.missingPackages).toEqual(["@kynesyslabs/demosdk/websdk"]);
+        expect(readiness.canAuth).toBe(true);
+        expect(readiness.canWrite).toBe(false);
+      } finally {
+        vi.doUnmock("node:module");
+        vi.resetModules();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("uses runtime credential precedence instead of mixing lower-priority .env values", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-precedence-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), [
+          "RPC_URL=https://rpc.from-creds.test",
+          "SUPERCOLONY_API=https://api.from-creds.test",
+          "",
+        ].join("\n"));
+        writeFileSync(join(dir, ".env"), [
+          "DEMOS_MNEMONIC=\"test seed phrase\"",
+          "RPC_URL=https://rpc.from-env.test",
+          "SUPERCOLONY_API=https://api.from-env.test",
+          "",
+        ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+        expect(readiness.notes.some((note) => note.includes(join(credentialsDir, "credentials-research")))).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("reports unreadable credential paths without throwing", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-unreadable-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(join(credentialsDir, "credentials-research"), { recursive: true });
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+        expect(readiness.notes.some((note) => note.includes("Could not read runtime credential source"))).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe("connect()", () => {
     it("creates a Colony instance with toolkit, hive, runtime, and address", async () => {
       const { connect } = await import("../../packages/omniweb-toolkit/src/index.js");

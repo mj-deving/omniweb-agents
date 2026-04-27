@@ -99,6 +99,9 @@
     "tlsn-js": "*"
   },
   "peerDependenciesMeta": {
+    "@kynesyslabs/demosdk": {
+      "optional": true
+    },
     "@anthropic-ai/sdk": {
       "optional": true
     },

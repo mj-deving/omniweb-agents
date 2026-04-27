@@ -9,6 +9,7 @@ export interface WriteReadinessOptions {
   envPath?: string;
   env?: Record<string, string | undefined>;
   homeDir?: string;
+  packageResolver?: (specifier: string) => string;
 }
 
 export interface WriteReadinessResult {
@@ -24,9 +25,9 @@ export interface WriteReadinessResult {
 
 const require = createRequire(import.meta.url);
 
-function packageResolvable(specifier: string): boolean {
+function packageResolvable(specifier: string, resolver: (specifier: string) => string): boolean {
   try {
-    require.resolve(specifier);
+    resolver(specifier);
     return true;
   } catch {
     return false;
@@ -109,6 +110,7 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   const cwd = options.cwd ?? process.cwd();
   const agentName = options.agentName?.trim();
   const home = options.homeDir ?? homedir();
+  const resolvePackage = options.packageResolver ?? ((specifier: string) => require.resolve(specifier));
   const requestedEnvPath = options.envPath?.trim() || ".env";
   const envPath = resolve(cwd, requestedEnvPath.replace(/^~/, home));
   const hasExplicitEnvPath = requestedEnvPath !== ".env" && filePresent(envPath);
@@ -144,10 +146,10 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   }
 
   const missingPackages: string[] = [];
-  if (!packageResolvable("@kynesyslabs/demosdk/websdk")) {
+  if (!packageResolvable("@kynesyslabs/demosdk/websdk", resolvePackage)) {
     missingPackages.push("@kynesyslabs/demosdk/websdk");
   }
-  const hasOptionalColonyDb = packageResolvable("better-sqlite3");
+  const hasOptionalColonyDb = packageResolvable("better-sqlite3", resolvePackage);
 
   const canAuth = missingEnv.length === 0;
   const canWrite = missingEnv.length === 0 && missingPackages.length === 0;

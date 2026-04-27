@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { createRequire } from "node:module";
@@ -36,6 +36,14 @@ function filePresent(path: string): boolean {
   return existsSync(path);
 }
 
+interface ConfigFileRead {
+  path: string;
+  present: boolean;
+  readable: boolean;
+  values: Record<string, string | undefined>;
+  error?: string;
+}
+
 function parseConfigValue(content: string, key: string): string | undefined {
   for (const line of content.split("\n")) {
     const trimmed = line.trim();
@@ -54,20 +62,46 @@ function parseConfigValue(content: string, key: string): string | undefined {
   return undefined;
 }
 
-function readConfigFile(path: string): Record<string, string | undefined> {
-  if (!filePresent(path)) return {};
-  const content = readFileSync(path, "utf8");
-  return {
-    DEMOS_MNEMONIC: parseConfigValue(content, "DEMOS_MNEMONIC"),
-    RPC_URL: parseConfigValue(content, "RPC_URL"),
-    DEMOS_RPC_URL: parseConfigValue(content, "DEMOS_RPC_URL"),
-    SUPERCOLONY_API: parseConfigValue(content, "SUPERCOLONY_API"),
-    SUPERCOLONY_API_URL: parseConfigValue(content, "SUPERCOLONY_API_URL"),
-  };
+function readConfigFile(path: string): ConfigFileRead {
+  if (!filePresent(path)) {
+    return { path, present: false, readable: false, values: {} };
+  }
+
+  try {
+    if (!statSync(path).isFile()) {
+      return { path, present: true, readable: false, values: {}, error: "not a regular file" };
+    }
+
+    const content = readFileSync(path, "utf8");
+    return {
+      path,
+      present: true,
+      readable: true,
+      values: {
+        DEMOS_MNEMONIC: parseConfigValue(content, "DEMOS_MNEMONIC"),
+        RPC_URL: parseConfigValue(content, "RPC_URL"),
+        DEMOS_RPC_URL: parseConfigValue(content, "DEMOS_RPC_URL"),
+        SUPERCOLONY_API: parseConfigValue(content, "SUPERCOLONY_API"),
+        SUPERCOLONY_API_URL: parseConfigValue(content, "SUPERCOLONY_API_URL"),
+      },
+    };
+  } catch (error) {
+    return {
+      path,
+      present: true,
+      readable: false,
+      values: {},
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 function hasValue(...values: Array<string | undefined>): boolean {
   return values.some((value) => Boolean(value?.trim()));
+}
+
+function selectRuntimeConfigSource(sources: ConfigFileRead[]): ConfigFileRead | undefined {
+  return sources.find((source) => source.present);
 }
 
 export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteReadinessResult {
@@ -88,36 +122,30 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     dotEnvPath,
   ];
 
+  const namedCredentials = namedCredentialsPath ? readConfigFile(namedCredentialsPath) : null;
   const sharedCredentials = readConfigFile(credentialsPath);
-  const namedCredentials = namedCredentialsPath ? readConfigFile(namedCredentialsPath) : {};
   const dotEnv = readConfigFile(dotEnvPath);
   const hasDotEnv = filePresent(dotEnvPath);
+  const runtimeSource = selectRuntimeConfigSource([
+    ...(namedCredentials ? [namedCredentials] : []),
+    sharedCredentials,
+    dotEnv,
+  ]);
+  const runtimeValues = runtimeSource?.readable ? runtimeSource.values : {};
 
   const hasMnemonicConfig = hasValue(
-    env.DEMOS_MNEMONIC,
-    namedCredentials.DEMOS_MNEMONIC,
-    sharedCredentials.DEMOS_MNEMONIC,
-    dotEnv.DEMOS_MNEMONIC,
+    runtimeValues.DEMOS_MNEMONIC,
+    ...(runtimeSource ? [] : [env.DEMOS_MNEMONIC]),
   );
   const hasRpcConfig = hasValue(
-    env.RPC_URL,
-    env.DEMOS_RPC_URL,
-    namedCredentials.RPC_URL,
-    namedCredentials.DEMOS_RPC_URL,
-    sharedCredentials.RPC_URL,
-    sharedCredentials.DEMOS_RPC_URL,
-    dotEnv.RPC_URL,
-    dotEnv.DEMOS_RPC_URL,
+    runtimeValues.RPC_URL,
+    runtimeValues.DEMOS_RPC_URL,
+    ...(runtimeSource ? [] : [env.RPC_URL, env.DEMOS_RPC_URL]),
   );
   const hasApiConfig = hasValue(
-    env.SUPERCOLONY_API,
-    env.SUPERCOLONY_API_URL,
-    namedCredentials.SUPERCOLONY_API,
-    namedCredentials.SUPERCOLONY_API_URL,
-    sharedCredentials.SUPERCOLONY_API,
-    sharedCredentials.SUPERCOLONY_API_URL,
-    dotEnv.SUPERCOLONY_API,
-    dotEnv.SUPERCOLONY_API_URL,
+    runtimeValues.SUPERCOLONY_API,
+    runtimeValues.SUPERCOLONY_API_URL,
+    ...(runtimeSource ? [] : [env.SUPERCOLONY_API, env.SUPERCOLONY_API_URL]),
   );
 
   const missingEnv: string[] = [];
@@ -148,6 +176,12 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   }
   if (hasDotEnv) {
     notes.push(`Checked .env at ${dotEnvPath} for explicit write config values`);
+  }
+  if (runtimeSource?.present) {
+    notes.push(`Runtime credential source: ${runtimeSource.path}`);
+  }
+  if (runtimeSource?.present && !runtimeSource.readable) {
+    notes.push(`Could not read runtime credential source ${runtimeSource.path}: ${runtimeSource.error ?? "unreadable"}`);
   }
 
   return {

@@ -217,6 +217,53 @@ describe("supercolony-toolkit package", () => {
         rmSync(dir, { recursive: true, force: true });
       }
     });
+
+    it("uses runtime credential precedence instead of mixing lower-priority .env values", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-precedence-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), [
+          "RPC_URL=https://rpc.from-creds.test",
+          "SUPERCOLONY_API=https://api.from-creds.test",
+          "",
+        ].join("\n"));
+        writeFileSync(join(dir, ".env"), [
+          "DEMOS_MNEMONIC=\"test seed phrase\"",
+          "RPC_URL=https://rpc.from-env.test",
+          "SUPERCOLONY_API=https://api.from-env.test",
+          "",
+        ].join("\n"));
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+        expect(readiness.notes.some((note) => note.includes(join(credentialsDir, "credentials-research")))).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("reports unreadable credential paths without throwing", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-unreadable-"));
+      try {
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(join(credentialsDir, "credentials-research"), { recursive: true });
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"]);
+        expect(readiness.canAuth).toBe(false);
+        expect(readiness.canWrite).toBe(false);
+        expect(readiness.notes.some((note) => note.includes("Could not read runtime credential source"))).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 
   describe("connect()", () => {

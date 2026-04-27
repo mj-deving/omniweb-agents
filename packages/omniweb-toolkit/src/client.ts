@@ -62,10 +62,17 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
     const response = await fetchWithTimeout(fetchImpl, url, timeoutMs);
     const text = await response.text();
 
-    let data: unknown;
+    let data: unknown = {};
     try {
       data = text ? JSON.parse(text) : {};
     } catch {
+      if (!response.ok) {
+        throw new HttpError(`HTTP ${response.status} for ${url}`, {
+          status: response.status,
+          url,
+          body: text,
+        });
+      }
       throw new ParseError(`Failed to parse JSON from ${url}`, { url, bodyText: text });
     }
 

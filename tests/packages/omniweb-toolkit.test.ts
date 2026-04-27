@@ -157,6 +157,21 @@ describe("supercolony-toolkit package", () => {
       expect(url.searchParams.get("text")).toBe("bitcoin");
       expect(url.searchParams.has("q")).toBe(false);
     });
+
+    it("classifies non-json HTTP failures as HttpError", async () => {
+      const fetchImpl = vi.fn(async () => new Response("<html>bad gateway</html>", { status: 502 }));
+      const { createClient, HttpError } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const client = createClient({ baseUrl: "https://example.test", fetch: fetchImpl });
+
+      const request = client.getFeed();
+
+      await expect(request).rejects.toBeInstanceOf(HttpError);
+      await expect(request).rejects.toMatchObject({
+        status: 502,
+        url: "https://example.test/api/feed",
+        body: "<html>bad gateway</html>",
+      });
+    });
   });
 
   describe("write readiness", () => {

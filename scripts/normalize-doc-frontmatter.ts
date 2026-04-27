@@ -220,6 +220,7 @@ function normalizeFile(path: string): { changed: boolean; content?: string; reas
     i += parsed.consumed - 1;
   }
 
+  if ([...removedFields].every((field) => field === targetField)) return { changed: false };
   if (!removedFields.has('use_when') && !removedFields.has('read_when')) return { changed: false };
 
   const hints = mergeHints(...hintValues);

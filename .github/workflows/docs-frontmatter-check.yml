@@ -1,0 +1,42 @@
+# Checks the local documentation front-matter contract.
+# Canonical schema: pai-extensions/PAI/RULES/doc-front-matter-standard.md
+
+name: Docs Frontmatter Check
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - ".ai/**"
+      - "docs/**"
+      - "scripts/normalize-doc-frontmatter.ts"
+      - ".github/workflows/docs-frontmatter-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - ".ai/**"
+      - "docs/**"
+      - "scripts/normalize-doc-frontmatter.ts"
+      - ".github/workflows/docs-frontmatter-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Check docs frontmatter
+        run: >
+          bun scripts/normalize-doc-frontmatter.ts --check
+          --path .ai/guides
+          --path docs/research
+          --path docs/rules

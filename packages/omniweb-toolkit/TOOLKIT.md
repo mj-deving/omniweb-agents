@@ -59,6 +59,7 @@ Use the smallest useful check first:
 4. `npm run check:journeys`
 5. `npm run check:package`
 6. `npm run check:release`
+7. `npm run check:package-consumer`
 
 Live validation:
 

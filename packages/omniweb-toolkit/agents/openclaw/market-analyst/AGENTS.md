@@ -1,18 +1,27 @@
-# AGENTS.md - OmniWeb Workspace
+# AGENTS.md - OmniWeb Workspace Contract
 
-This OpenClaw workspace is a focused OmniWeb bundle. Treat the files here as the local operating contract.
+This OpenClaw workspace exposes the `omniweb-market-analyst` bundle while preserving space for a local operator overlay.
+
+Treat this file as the portable workspace contract first.
+Local persona/process overlays may add stricter behavior, but should not replace the bundle contract.
 
 ## Session Startup
 
 Before doing anything else:
 
-1. If `BOOTSTRAP.md` exists, read it once at the start of a fresh workspace session.
-2. Read `SOUL.md` for the workspace persona.
-3. Read `USER.md` for operator-specific notes if it contains real content.
-4. Read today's and yesterday's `memory/YYYY-MM-DD.md` files only if they already exist.
-5. Read `MEMORY.md` only in a direct/private operator session and only if it contains real content.
+1. Read `README.md` for the bundle contract and local run path.
+2. If `BOOTSTRAP.md` exists, read it once at the start of a fresh workspace session.
+3. Read `IDENTITY.md` for the workspace identity surface.
+4. Read `openclaw.json` and `package.json` for the active bundle/config contract.
+5. Read `skills/omniweb-market-analyst/SKILL.md` and `PLAYBOOK.md`.
+6. Load `skills/omniweb-market-analyst/strategy.yaml` as the concrete baseline.
+7. Read local overlay files when they contain relevant real content:
+   - `SOUL.md` for local operating style
+   - `USER.md` for operator-specific notes
+   - today's and yesterday's `memory/YYYY-MM-DD.md` files when they already exist
+   - `MEMORY.md` for durable local context in direct operator sessions
 
-Missing optional memory files are not errors. Skip them quietly and continue.
+Missing optional local-memory files are not errors. Skip them quietly and continue.
 
 ## Default File Order
 
@@ -20,17 +29,28 @@ Missing optional memory files are not errors. Skip them quietly and continue.
 - `IDENTITY.md`
 - `openclaw.json`
 - `package.json`
-- `skills/<skill>/SKILL.md`
-- `skills/<skill>/PLAYBOOK.md`
-- `skills/<skill>/strategy.yaml`
-- `skills/<skill>/minimal-agent-starter.mjs`
-- `skills/<skill>/starter.ts`
+- `skills/omniweb-market-analyst/SKILL.md`
+- `skills/omniweb-market-analyst/PLAYBOOK.md`
+- `skills/omniweb-market-analyst/strategy.yaml`
+- `skills/omniweb-market-analyst/minimal-agent-starter.mjs`
+- `skills/omniweb-market-analyst/starter.ts`
 
-## Memory
+## Memory Surfaces
 
+- `memory/README.md` explains the daily note convention.
 - `memory/YYYY-MM-DD.md` holds short daily notes when they exist.
-- `MEMORY.md` is the optional long-term summary for direct operator sessions.
-- If you want something to survive the session, write it down instead of assuming it will be remembered.
+- `MEMORY.md` is a portable scaffold for optional long-term local context in direct operator sessions.
+- If something should survive the session, write it down instead of assuming it will be remembered.
+
+## Local Overlay Boundary
+
+These are intentionally local and should not be treated as portable bundle truth:
+
+- `SOUL.md`
+- `USER.md`
+- most of `HEARTBEAT.md`
+- dated daily memory files
+- local checklists, roadmaps, and operator notes
 
 ## Red Lines
 

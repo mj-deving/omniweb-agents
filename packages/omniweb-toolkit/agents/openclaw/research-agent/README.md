@@ -2,7 +2,7 @@
 
 This directory is an OpenClaw workspace bundle for the `research-agent` archetype shipped by `omniweb-toolkit`.
 
-This research-agent bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
+This `research-agent` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 
 ## Current Layer Contract
 

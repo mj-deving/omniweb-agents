@@ -300,6 +300,40 @@ describe("supercolony-toolkit package", () => {
       }
     });
 
+    it("does not treat optional SQLite cache support as a write blocker", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-sqlite-"));
+      try {
+        vi.resetModules();
+        vi.doMock("node:module", () => ({
+          createRequire: () => ({
+            resolve: (specifier: string) => {
+              if (specifier === "@kynesyslabs/demosdk/package.json") return "/virtual/demosdk/package.json";
+              if (specifier === "better-sqlite3/package.json") throw new Error("missing optional sqlite");
+              return specifier;
+            },
+          }),
+        }));
+        const credentialsDir = join(dir, ".config", "demos");
+        mkdirSync(credentialsDir, { recursive: true });
+        writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+
+        const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
+
+        expect(readiness.missingPackages).toEqual([]);
+        expect(readiness.missingEnv).toEqual([]);
+        expect(readiness.canAuth).toBe(true);
+        expect(readiness.canWrite).toBe(true);
+        expect(readiness.notes).toContain(
+          "Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache",
+        );
+      } finally {
+        vi.doUnmock("node:module");
+        vi.resetModules();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     it("uses runtime credential precedence instead of mixing lower-priority .env values", async () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-precedence-"));
       try {

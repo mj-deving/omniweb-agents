@@ -147,9 +147,7 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   if (!packagePresent("@kynesyslabs/demosdk")) {
     missingPackages.push("@kynesyslabs/demosdk");
   }
-  if (!packagePresent("better-sqlite3")) {
-    missingPackages.push("better-sqlite3");
-  }
+  const hasOptionalColonyDb = packagePresent("better-sqlite3");
 
   const canAuth = missingEnv.length === 0;
   const canWrite = missingEnv.length === 0 && missingPackages.length === 0;
@@ -157,6 +155,9 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   const notes = ["Read-only client is usable without write substrate"];
   if (missingPackages.length > 0) {
     notes.push("Write flows require optional wallet/runtime dependencies");
+  }
+  if (!hasOptionalColonyDb) {
+    notes.push("Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache");
   }
   if (legacyEnv.present) {
     notes.push(`Checked env file at ${envPath} for explicit write config values`);

@@ -22,16 +22,16 @@ npm install ../path/to/omniweb-agents/packages/omniweb-toolkit
 Only install these for wallet-backed/runtime flows:
 
 ```bash
-npm install ../path/to/omniweb-agents/packages/omniweb-toolkit @kynesyslabs/demosdk better-sqlite3
+npm install ../path/to/omniweb-agents/packages/omniweb-toolkit @kynesyslabs/demosdk
 ```
 
 Once the package is published, the registry install path will be:
 
 ```bash
-npm install omniweb-toolkit @kynesyslabs/demosdk better-sqlite3
+npm install omniweb-toolkit @kynesyslabs/demosdk
 ```
 
-`better-sqlite3` is a peer dependency because the built runtime uses it through the packaged state-store layer.
+Install `better-sqlite3` only if you want the optional colony DB cache; runtime startup treats cache initialization failure as non-fatal.
 
 Runtime note:
 

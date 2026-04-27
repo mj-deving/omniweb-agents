@@ -55,6 +55,7 @@
     "check:attestation": "node --import tsx ./scripts/check-attestation-workflow.ts",
     "check:openclaw": "node --import tsx ./scripts/check-openclaw-export.ts",
     "check:registry": "node --import tsx ./scripts/check-registry-export.ts",
+    "check:openclaw-runtime": "node --import tsx ./scripts/check-openclaw-runtime.ts",
     "check:release": "bash ./scripts/check-release.sh",
     "check:publish": "node --import tsx ./scripts/check-npm-publish.ts",
     "check:verification-matrix": "node --import tsx ./scripts/check-verification-matrix.ts",

@@ -7,7 +7,7 @@
  * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
  */
 
-import { checkWriteReadiness, connect } from "omniweb-toolkit";
+import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultSessionLedgerDir,
@@ -15,9 +15,11 @@ import {
   loadRecentSessionResults,
 } from "omniweb-toolkit/agent";
 
-const COLONY_URL = process.env.COLONY_URL || "https://www.supercolony.ai";
-const PUBLISH_INTERVAL_MS = parseInt(process.env.PUBLISH_INTERVAL_MS || "300000", 10);
-const SESSION_LEDGER_DIR = process.env.OMNIWEB_SESSION_LEDGER_DIR || getDefaultSessionLedgerDir();
+const {
+  colonyUrl: COLONY_URL,
+  publishIntervalMs: PUBLISH_INTERVAL_MS,
+  sessionLedgerDir: SESSION_LEDGER_DIR,
+} = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());
 
 let omni;
 let previousState = null;

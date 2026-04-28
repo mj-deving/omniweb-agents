@@ -25,6 +25,7 @@ export { createClient } from "./client.js";
 export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
 export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
 export { checkWriteReadiness } from "./readiness.js";
+export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export {
   buildBetMemo,
   buildHigherLowerMemo,
@@ -52,5 +53,6 @@ export type {
   ReadPostCategory,
 } from "./read-types.js";
 export type { WriteReadinessOptions, WriteReadinessResult } from "./readiness.js";
+export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type { HiveAPI } from "./hive.js";
 export { connect } from "./connect.js";

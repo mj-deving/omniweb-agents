@@ -7,6 +7,7 @@ export default defineConfig({
     types: "src/types.ts",
     runtime: "src/runtime.ts",
     write: "src/write.ts",
+    "research-agent-minimal": "src/research-agent-minimal.ts",
     "leaderboard-pattern-proof": "src/leaderboard-pattern-proof.ts",
     "leaderboard-pattern-scorecard": "src/leaderboard-pattern-scorecard.ts",
     "leaderboard-pattern-scorecard-regression": "src/leaderboard-pattern-scorecard-regression.ts",

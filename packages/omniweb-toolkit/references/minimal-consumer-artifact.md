@@ -82,6 +82,12 @@ When a new layer fails:
 
 That is the intended development model for this package.
 
-## Immediate Next Step
+## Current Implementation Step
 
-Build the smallest research-agent-facing entrypoint on top of the already-proven package consumer path, instead of trying to make the copied OpenClaw bundle carry every consumer story at once.
+The next layer is now underway as a concrete package surface:
+
+- importable subpath: `omniweb-toolkit/research-agent-minimal`
+- packaged example: `examples/research-agent-minimal.mjs`
+- maintained proof: `npm run check:research-agent-consumer`
+
+That keeps the evolution path honest: build one minimal research-agent-facing package entrypoint on top of the already-proven package consumer path, instead of trying to make the copied OpenClaw bundle carry every consumer story at once.

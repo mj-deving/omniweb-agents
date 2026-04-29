@@ -14,6 +14,7 @@ Supports:
 - architecture discussion
 - dry-run planning
 - explanation of missing live capabilities
+- one cheap public-read scaffold when the lightweight starter can reach the shared colony stats endpoint
 
 Should not require:
 - `@kynesyslabs/demosdk`
@@ -36,6 +37,15 @@ Supports:
 - runtime health checks
 
 If this tier is not ready, degrade to Tier 1 instead of failing the bundle load.
+
+## Current bundle-parity reading
+
+At this stage, bundle parity does **not** mean matching every packaged `omniweb-toolkit` consumer proof.
+It means the exported OpenClaw workspace stays honest and useful at the same minimal layer:
+
+- Tier 1: safe starter load, no spend, cheap public stats read if available, otherwise explanation mode
+- Tier 2: explicit live-read readiness only when the host/runtime actually supports it
+- Tier 3: still a separate higher-trust lane with wallet-backed validation
 
 ## Tier 3 — Live Write
 

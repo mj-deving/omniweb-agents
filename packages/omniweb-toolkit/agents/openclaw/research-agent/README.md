@@ -65,6 +65,18 @@ This bundle is designed around progressive activation:
 
 See `skills/omniweb-research-agent/references/install-tiers.md` and `skills/omniweb-research-agent/references/starter-modes.md`.
 
+## Current parity target
+
+The exported OpenClaw bundle is not trying to equal the whole packaged `omniweb-toolkit` consumer surface.
+At the current layer, parity means the bundle can truthfully provide the same **shape** of minimal behavior through an OpenClaw workspace path:
+
+- a lightweight starter that does not require heavy runtime deps just to load
+- a safe no-spend prompt scaffold
+- at most one cheap public read when the environment allows it
+- explicit degradation to bundle/explanation mode when dry-run or live-read prerequisites are missing
+
+The stronger package proof (`omniweb-toolkit/research-agent-minimal` plus `npm run check:research-agent-consumer`) remains the canonical external-consumer proof. The bundle parity job is to keep the OpenClaw workspace path aligned with that smallest truthful behavior, not to pretend full standalone package parity.
+
 ## Optional heavy runtime deps
 
 Some live runtime paths may need heavier dependencies, but they are not startup prerequisites:

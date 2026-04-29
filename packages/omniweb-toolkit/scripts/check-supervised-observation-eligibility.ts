@@ -12,6 +12,7 @@ import {
 } from "./_shared.ts";
 
 const SUPPORTED_DRAFT_TEMPLATES = ["ticker-spot-observation"] as const;
+const TICKER_TEMPLATE_FIXED_SYMBOL = "BTC";
 type DraftTemplate = typeof SUPPORTED_DRAFT_TEMPLATES[number];
 
 type CommandResult = {
@@ -74,7 +75,7 @@ It answers whether the first wallet-backed publish attempt is currently eligible
 Options:
   --text TEXT                  Factual OBSERVATION draft body (optional when using --draft-template)
   --draft-template NAME        Deterministic draft builder (supported: ${SUPPORTED_DRAFT_TEMPLATES.join(", ")})
-  --ticker-symbol SYMBOL       Quote symbol for ticker template (default: BTC)
+  --ticker-symbol SYMBOL       Quote symbol for ticker template (default/fixed: BTC for ticker-spot-observation)
   --ticker-currency CODE       Quote currency for ticker template (default: USD)
   --attest-url URL             Primary attestation URL (default: Blockchain.info ticker JSON)
   --confidence N               Confidence value for draft preflight (default: 60)
@@ -100,7 +101,7 @@ const sourceName = getStringArg(args, "--source-name") ?? null;
 const envPath = getStringArg(args, "--env-path");
 const agentName = getStringArg(args, "--agent-name") ?? null;
 const allowInsecure = hasFlag(args, "--allow-insecure");
-const tickerSymbol = (getStringArg(args, "--ticker-symbol") ?? "BTC").trim().toUpperCase();
+const tickerSymbol = (getStringArg(args, "--ticker-symbol") ?? TICKER_TEMPLATE_FIXED_SYMBOL).trim().toUpperCase();
 const tickerCurrency = (getStringArg(args, "--ticker-currency") ?? "USD").trim().toUpperCase();
 
 if (textArg && draftTemplate) {
@@ -109,6 +110,12 @@ if (textArg && draftTemplate) {
 }
 if (!textArg && !draftTemplate) {
   console.error("Error: provide --text or --draft-template");
+  process.exit(2);
+}
+if (draftTemplate === "ticker-spot-observation" && tickerSymbol !== TICKER_TEMPLATE_FIXED_SYMBOL) {
+  console.error(
+    `Error: --draft-template ticker-spot-observation only supports --ticker-symbol ${TICKER_TEMPLATE_FIXED_SYMBOL} because https://blockchain.info/ticker is a BTC spot feed`,
+  );
   process.exit(2);
 }
 

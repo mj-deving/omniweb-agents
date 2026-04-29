@@ -130,6 +130,10 @@ const referenceFrontmatterChecks = topLevelReferenceFiles.map((name) => {
 const declaredRuntimeModules = new Set([
   ...Object.keys(packageJson.dependencies ?? {}),
   ...Object.keys(packageJson.peerDependencies ?? {}),
+  packageJson.name,
+  ...Object.keys(packageJson.exports ?? {})
+    .filter((subpath) => subpath !== ".")
+    .map((subpath) => `${packageJson.name}/${subpath.replace(/^\.\//, "")}`),
 ]);
 const scriptRuntimeImports = [...topLevelScriptContents, ...evalScriptContents].flatMap(({ name, text }) =>
   collectExternalImportsFromText(text).map((specifier) => ({

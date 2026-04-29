@@ -11,6 +11,7 @@ This file complements:
 
 - [launch-proving-matrix.md](./launch-proving-matrix.md) for the maintained proving plan
 - [verification-matrix.md](./verification-matrix.md) for method-level proof state
+- [minimal-consumer-artifact.md](./minimal-consumer-artifact.md) for the explicit v0 outside-in artifact contract and expansion order
 
 ## Latest Recorded Run
 

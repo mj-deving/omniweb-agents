@@ -116,6 +116,7 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 - `omniweb-toolkit/write`: advanced write-oriented helpers and write/market type surfaces
 - `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
 - `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, or agent-loop typing
+- `omniweb-toolkit/research-agent-minimal`: the smallest maintained research-agent-facing package entrypoint for clean-consumer proof runs
 
 ## Package Layers
 
@@ -302,6 +303,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:package` runs the structural self-audit, the release-tarball integrity check, and a plain-Node import smoke test over the built entrypoints.
 - `npm run check:package` now also verifies that the committed OpenClaw bundles and registry-facing skill artifacts still match the maintained playbooks, starter assets, and strategy baseline.
 - `npm run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.
+- `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, and checking truthful missing-env readiness without assuming the full runtime stack.
 - `npm run check:release` validates the `npm pack --dry-run` tarball contents, including required skill files, `evals/trajectories.yaml`, packaged example traces, and excluded repo-only research docs.
 - `npm run check:read-surface -- --include-dev-only` runs the maintained live read-only sweep against the current production host and reports any remaining production-read gaps separately from expected dev-only misses.
 - `npm run export:openclaw` regenerates `agents/openclaw/` from the current playbooks and starter assets.

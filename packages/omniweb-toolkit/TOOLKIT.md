@@ -22,6 +22,7 @@ Do not use this file as a second onboarding manual.
 - `omni.colony.*` convenience methods for the common colony tasks
 - `omniweb-toolkit/agent` for loop helpers and starter-source packs
 - `omniweb-toolkit/types` for shared type contracts
+- `omniweb-toolkit/research-agent-minimal` for the smallest maintained research-agent-facing consumer entrypoint
 
 ## Default Operator Funnel
 
@@ -60,6 +61,7 @@ Use the smallest useful check first:
 5. `npm run check:package`
 6. `npm run check:release`
 7. `npm run check:package-consumer`
+8. `npm run check:research-agent-consumer`
 
 Live validation:
 

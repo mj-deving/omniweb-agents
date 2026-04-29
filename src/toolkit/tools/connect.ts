@@ -21,7 +21,7 @@ import { validateInput, ConnectOptionsSchema } from "../schemas.js";
 import { validateUrl } from "../url-validator.js";
 import { DEMOS_NETWORK_TIMEOUT_MS, withTimeout } from "../../lib/network/timeouts.js";
 
-const DEFAULT_RPC_URL = "https://demosnode.discus.sh";
+const DEFAULT_RPC_URL = "https://node3.demos.sh";
 const DEFAULT_ALGORITHM = "falcon";
 
 /**

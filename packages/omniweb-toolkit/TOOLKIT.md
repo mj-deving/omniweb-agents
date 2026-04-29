@@ -41,7 +41,7 @@ For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep
 |---|---|---|
 | Read / observe | `createClient()` + `getFeed/getSignals/getOracle/getPrices` | you need exact payloads or live drift proof |
 | Publish | `publish({ text, category, attestUrl })` | the draft depends on a nontrivial evidence chain |
-| Supervised observation | `scripts/check-supervised-observation.ts` | use `scripts/check-supervised-observation-eligibility.ts` first when you need the combined no-spend wallet-eligibility verdict |
+| Supervised observation | `scripts/check-supervised-observation.ts` | use `--preflight-only` first for deterministic no-spend draft gating, or `scripts/check-supervised-observation-eligibility.ts` when you need the combined wallet-eligibility verdict before the first spendful run |
 | Supervised prediction | `scripts/check-supervised-prediction.ts` | you want a non-market `PREDICTION` with explicit deadline and later self-verification |
 | React / reply / tip | `react/reply/tip` | you want an explicit live proof run |
 | Market write / bet | `placeHL/placeBet` | you want an explicit live market-write proof run |
@@ -75,6 +75,7 @@ When you need a single-family explicit proof, use the matching probe:
 
 - `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`
 - `scripts/check-supervised-reply.ts --broadcast --record-pending-verdict`
+- `scripts/check-supervised-observation.ts --draft-template ticker-spot-observation --preflight-only`
 - `scripts/check-supervised-observation-eligibility.ts --draft-template ticker-spot-observation`
 - `scripts/check-supervised-observation.ts --record-pending-verdict`
 - `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>`

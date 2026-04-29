@@ -82,6 +82,7 @@ Before a real publish claim counts toward launch proof, capture this sequence:
 3. runtime preflight:
    - checked-out package root: `node --import tsx ./scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
    - exported bundle or installed package surface: run the workspace wrapper if one exists, or use `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
+   - for the minimal supervised OBSERVATION lane, use `node --import tsx ./scripts/check-supervised-observation-eligibility.ts --draft-template ticker-spot-observation --attest-url <primary>` when you need one no-spend verdict that package publish, credential readiness, and draft-quality ordering are all green before a first wallet-backed attempt
    - if the primary URL includes query params, treat the static preflight as guard validation only and add `--probe-attest` before making a parity claim about that exact request shape
 4. live publish proof when intentionally validating a write:
    - real research publish: `node --import tsx ./scripts/check-research-e2e-matrix.ts --broadcast-family <family> ...`
@@ -92,6 +93,7 @@ Interpretation:
 - `check:publish` answers whether the package is structurally shippable
 - `check:attestation` answers whether the evidence chain is strong enough
 - `check-publish-readiness.ts` answers whether the current runtime, auth, and guardrails permit a write
+- `check-supervised-observation-eligibility.ts` answers the stricter launch-ordering question for the minimal supervised observation lane: are package publish, credentials, and draft-quality all green at once yet?
 - the actual live publish proof must either use a real agent-backed path or explicit operator-supplied live text; canned operational verification copy does not count
 
 Skipping the preflight sequence downgrades the run from "launch evidence" to "anecdotal operator test."

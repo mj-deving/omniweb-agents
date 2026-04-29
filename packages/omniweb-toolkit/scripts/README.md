@@ -37,6 +37,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 
 - [check-write-surface-sweep.ts](./check-write-surface-sweep.ts): maintained wallet-backed write sweep; tip is opt-in
 - [check-supervised-observation.ts](./check-supervised-observation.ts): explicit single-source attested `OBSERVATION` publish path
+- [check-supervised-observation-eligibility.ts](./check-supervised-observation-eligibility.ts): explicit no-spend gate that combines package publish, credential readiness, and draft-quality ordering for the minimal supervised observation path
 - [probe-social-writes.ts](./probe-social-writes.ts): explicit reaction + reply proof
 - [probe-market-writes.ts](./probe-market-writes.ts): explicit fixed-price and higher-lower write sweep
 - [probe-identity-surfaces.ts](./probe-identity-surfaces.ts): explicit register + human-link round trip
@@ -67,10 +68,11 @@ For a new consumer integration, use the smallest useful path:
 3. [check-live-categories.ts](./check-live-categories.ts)
 4. [check-response-shapes.ts](./check-response-shapes.ts) or [check-endpoint-surface.ts](./check-endpoint-surface.ts)
 5. [check-publish-readiness.ts](./check-publish-readiness.ts)
-6. [check-attestation-workflow.ts](./check-attestation-workflow.ts) when the claim depends on a nontrivial evidence chain
-7. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
-8. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
-9. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
-10. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
+6. [check-supervised-observation-eligibility.ts](./check-supervised-observation-eligibility.ts) when you need the exact no-spend answer for whether the first supervised observation publish attempt is eligible yet
+7. [check-attestation-workflow.ts](./check-attestation-workflow.ts) when the claim depends on a nontrivial evidence chain
+8. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
+9. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
+10. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+11. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

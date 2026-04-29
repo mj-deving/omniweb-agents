@@ -205,7 +205,7 @@ Use one default path per action family:
 | Supervised observation | `scripts/check-supervised-observation.ts` | use `scripts/check-supervised-observation-eligibility.ts` first when you need the no-spend package+credential+draft ordering verdict before a first wallet-backed attempt |
 | React / reply / tip | `omni.colony.react/reply/tip` | use `scripts/probe-social-writes.ts` only when intentionally proving live social writes |
 | Market write / bet | `omni.colony.placeHL/placeBet` | use `scripts/check-market-action-bet.ts` for the maintained fixed-price ACTION-on-bet path, or `scripts/probe-market-writes.ts` when intentionally proving the raw write surface |
-| Attestation / readiness | `scripts/check-publish-readiness.ts` first | add `scripts/check-attestation-workflow.ts` when the evidence chain is nontrivial |
+| Attestation / readiness | `scripts/check-publish-readiness.ts` first | add `scripts/check-attestation-workflow.ts` when the evidence chain is nontrivial; use `--env-path` or `--agent-name` when you need the preflight to report a specific credential source |
 | Playbook validation | `npm run check:playbook:research|market|engagement` | use the individual scripts only when debugging a failed path |
 | Live proof | `npm run check:write-surface -- --broadcast` or the matching `probe-*` script | use `references/publish-proof-protocol.md` when making launch-grade claims |
 

@@ -6,18 +6,8 @@ import { PACKAGE_ROOT, hasFlag } from "./_shared.js";
 
 const args = process.argv.slice(2);
 const keepStdout = hasFlag(args, "--stdout");
-const allowedArgs = new Set(["--stdout", "--help", "-h"]);
-
-const buildResult = spawnSync("npm", ["run", "build"], {
-  cwd: PACKAGE_ROOT,
-  encoding: "utf8",
-  env: process.env,
-});
-
-if ((buildResult.status ?? 1) !== 0) {
-  console.error(buildResult.stderr ?? buildResult.stdout ?? "npm run build failed");
-  process.exit(buildResult.status ?? 1);
-}
+const skipPrepare = hasFlag(args, "--skip-prepare");
+const allowedArgs = new Set(["--stdout", "--skip-prepare", "--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-agent-live-read.ts [options]
@@ -25,8 +15,9 @@ if (hasFlag(args, "--help", "-h")) {
 Run the exported OpenClaw research-agent minimal starter in explicit live-read mode from the source workspace and assert the read-only runtime path.
 
 Options:
-  --stdout   Print the full starter stdout after the JSON summary
-  --help, -h Show this help
+  --stdout         Print the full starter stdout after the JSON summary
+  --skip-prepare   Reuse existing dist artifacts instead of refreshing JS runtime build first
+  --help, -h       Show this help
 
 Output: JSON live-read proof summary
 Exit codes: 0 = proof passed, 1 = proof failed, 2 = invalid args`);
@@ -37,6 +28,19 @@ const unsupportedArgs = args.filter((arg) => !allowedArgs.has(arg));
 if (unsupportedArgs.length > 0) {
   console.error(`Error: unsupported arguments: ${unsupportedArgs.join(" ")}`);
   process.exit(2);
+}
+
+if (!skipPrepare) {
+  const prepareResult = spawnSync("node", ["./scripts/prepare-runtime-proof-build.mjs"], {
+    cwd: PACKAGE_ROOT,
+    encoding: "utf8",
+    env: process.env,
+  });
+
+  if ((prepareResult.status ?? 1) !== 0) {
+    console.error(prepareResult.stderr ?? prepareResult.stdout ?? "runtime proof build prep failed");
+    process.exit(prepareResult.status ?? 1);
+  }
 }
 
 const bundleRoot = resolve(PACKAGE_ROOT, "agents/openclaw/research-agent");
@@ -72,6 +76,7 @@ const summary = {
   ok,
   bundleRoot,
   command,
+  preparedRuntimeBuild: !skipPrepare,
   exitCode,
   durationMs: Date.now() - started,
   checks,

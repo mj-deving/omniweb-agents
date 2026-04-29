@@ -81,12 +81,17 @@ Treat these as optional capability deps. If they are missing, the bundle should 
 
 ## Validation intent
 
+From a copied standalone bundle, the only maintained local package script is:
+
 - `npm run check:starter-smoke` — no-deps reviewer smoke path for the lightweight starter
-- `npm run check:playbook` — archetype-specific validation intent
-- `npm run check:publish` — publish-readiness intent
-- `npm run check:attestation -- --attest-url <primary-url>` — source-chain readiness for evidence-backed writes
-- `npm run score:template` — captured-run template intent
-- `npm run check:bundle` — bundle/source alignment intent
+
+Deeper validation (`check:playbook`, publish/attestation checks, template scoring, export alignment) belongs to the source `packages/omniweb-toolkit` workspace, not to a copied exported bundle. This bundle is intentionally truthful as a lightweight OpenClaw workspace first, not as a standalone npm consumer package.
+
+## Standalone install note
+
+A copied exported bundle is meant to work as an OpenClaw workspace with no-install lightweight startup.
+It is **not** yet a full standalone npm-install consumer artifact for the deeper toolkit validation scripts.
+If you need package-name imports, packed installs, or the broader validation suite, use the source `packages/omniweb-toolkit` workspace and its package-consumer checks.
 
 ## Clone-and-go status
 

@@ -3,14 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check:starter-smoke": "node skills/omniweb-research-agent/minimal-agent-starter.mjs",
-    "check:playbook": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-playbook-path.ts --archetype research-agent",
-    "check:publish": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts",
-    "check:attestation": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts",
-    "score:template": "node --import tsx ./node_modules/omniweb-toolkit/evals/score-playbook-run.ts --template research-agent",
-    "check:bundle": "node --import tsx ../../../scripts/check-openclaw-export.ts --archetype research-agent"
-  },
-  "dependencies": {
-    "omniweb-toolkit": "file:../../.."
+    "check:starter-smoke": "node skills/omniweb-research-agent/minimal-agent-starter.mjs"
   }
 }

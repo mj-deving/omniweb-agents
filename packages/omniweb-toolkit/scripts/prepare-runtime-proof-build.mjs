@@ -22,7 +22,7 @@ await build({
   target: "es2022",
   tsconfig: "tsconfig.build.json",
   dts: false,
-  clean: true,
+  clean: false,
   splitting: true,
   outDir: "dist",
   external: [

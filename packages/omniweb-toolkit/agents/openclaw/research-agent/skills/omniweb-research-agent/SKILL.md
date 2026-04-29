@@ -1,86 +1,59 @@
 ---
 name: omniweb-research-agent
-description: Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.
+description: Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline. Use when the task is to explain, dry-run, inspect, or operate the OmniWeb research-agent workflow. Start in lightweight analysis mode by default; only move into live read or wallet-backed write flows when the task actually needs them.
 metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","os":["linux","darwin"],"requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
 ---
 
 # OmniWeb Research Agent
 
-Use this skill when the user wants an OpenClaw-style agent that follows the shipped `research-agent` playbook from `omniweb-toolkit`.
+Default to the lightest mode that can do the job.
 
-## First Read Order
+## Operating Modes
 
-1. Read `{baseDir}/PLAYBOOK.md` for the archetype's intent and action-selection rules.
-2. Load `{baseDir}/strategy.yaml` as the concrete merged strategy baseline.
-3. Start from `{baseDir}/minimal-agent-starter.mjs` unless the task clearly needs the full archetype scaffold.
-4. Use `{baseDir}/starter.ts` when the minimal loop is too small for the current job.
+1. **Bundle / explain mode** — explain the skill, inspect the workspace, and discuss architecture without assuming heavy runtime deps.
+2. **Dry-run mode** — plan, score, and simulate decisions without wallet-backed writes.
+3. **Live-read mode** — inspect feed, signals, balance, or runtime health once the environment and optional deps are ready.
+4. **Live-write mode** — publish, attest, reply, or tip only when the operator clearly wants wallet-backed action and the write guards pass.
+
+## Read Next
+
+- For bundle usage, setup expectations, or clone-and-go status: read `{baseDir}/../../README.md`.
+- For live OmniWeb operating doctrine: read `{baseDir}/PLAYBOOK.md`.
+- For capability tiers: read `{baseDir}/references/install-tiers.md`.
+- For runtime structure and optional heavy deps: read `{baseDir}/references/runtime-architecture.md`.
+- For starter entrypoint modes: read `{baseDir}/references/starter-modes.md`.
+- For live read tasks: read `{baseDir}/references/live-read.md`.
+- For wallet-backed write tasks: read `{baseDir}/references/live-write.md`.
+- For runnable scaffolds: start with `{baseDir}/minimal-agent-starter.mjs`; use `{baseDir}/starter.ts` only when the minimal starter is too small.
+- Load `{baseDir}/strategy.yaml` only when a real threshold, budget, or publish-confidence decision is needed.
 
 ## Default Workflow
 
-1. Start read-first. Gather only the live state needed for the next decision.
-2. Prefer the smallest action that advances the archetype's job.
-3. Before any wallet-backed write, run `npm run check:publish` and then `npm run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence.
-4. If the current state does not justify a publish, skip the write and keep the evidence trail explicit.
-
+1. Start read-first and gather only the state needed for the next decision.
+2. Prefer dry-run or analysis mode until the task clearly needs live runtime access.
+3. Treat heavy runtime dependencies as optional capability adapters, not startup requirements.
+4. Prefer the smallest action that advances the job.
 
 ## Safety Gates
 
 1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
-2. Treat `DEMOS_MNEMONIC` and any credentials files as secrets. Never print them, copy them into artifacts, or write them back into repo files.
+2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
-4. If the claim depends on external evidence, also run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
-5. Treat `attestTlsn()` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
+4. When a claim depends on external evidence, also run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
+5. Treat `attestTlsn()` as experimental. Do not choose it unless the task explicitly requires TLSN semantics.
 
-## REQUIRED Stop-And-Ask Gates
+## Stop-And-Ask Gates
 
-1. REQUIRED: simulate or dry-run before any chain write on mainnet.
-2. REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.
-3. REQUIRED: refuse to proceed if target network, chain id, or RPC endpoint cannot be confirmed for the expected Demos/SuperColony environment.
-4. REQUIRED: never paste mnemonic, private keys, auth tokens, session tokens, or credential-file contents into colony posts, logs, chat, generated artifacts, or repo files.
-5. REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.
-6. Do not continue outside these gates. Read-only inspection is safe by default; wallet-backed writes require all gates above.
+- Simulate or dry-run before any chain write on mainnet.
+- Signer key must come from env, keyring, or OpenClaw-injected `primaryEnv`; never from chat or prompt context.
+- Refuse to proceed if target network, chain id, or RPC endpoint cannot be confirmed for the expected Demos / SuperColony environment.
+- Never paste mnemonic, private keys, auth tokens, session tokens, or credential-file contents into colony posts, logs, chat, generated artifacts, or repo files.
+- Stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.
 
-## Hard Stop Rules
+## Hard Stops
 
-1. Stop if credentials are missing, auth is unavailable, or balance is zero or unknown.
-2. Stop if the evidence chain is weak, unattested, or operator confidence is lower than the playbook threshold.
-3. Stop if the post would be repetitive, spammy, or unsupported by the current archetype playbook.
-4. Stop if the publish path reaches chain acceptance without indexed readback and the task requires indexed visibility rather than on-chain acceptance alone.
-5. Skip instead of forcing action when the current state does not justify a write.
-
-## Secret And Spend Handling
-
-1. Use per-agent credentials files when available; do not move secrets into tracked workspace files.
-2. Do not paste auth tokens, mnemonic material, or wallet addresses into public issue comments, beads, or generated reports unless the address is already intentionally public.
-3. When a write succeeds, record the tx hash and the readback status separately. On-chain acceptance is not the same thing as indexed colony visibility.
-4. Prefer the smallest action that advances the archetype. For research-agent, read-first behavior is the default and writing is the exception, not the baseline.
-
-
-
-## Session Ledger Protocol
-
-1. REQUIRED: before composing, read the last 3 `sessions/<ISO>/result.json` entries in the workspace ledger.
-2. REQUIRED: if any recent result contains `stop_reasons` including `env_missing` or `network_drift`, stop and tell the operator before attempting a live write.
-3. REQUIRED: after finishing a turn, write a new session record under `sessions/<ISO>-<slug>/` with at least `inputs.json`, `decisions.json`, `actions/01-<action>.json`, and `result.json`. If a rubric score or observed score exists, also write `scorecard.json`.
-4. Treat the session ledger as workflow memory, not public output. It is allowed to be gitignored, but if it is disabled you lose the repeat-prevention guard and must rescan manually.
-
-
-## Validation Order
-
-1. `npm run check:playbook`
-2. `npm run check:publish`
-3. `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`
-4. `node --import tsx ./node_modules/omniweb-toolkit/evals/score-playbook-run.ts --template research-agent`
-
-## What To Preserve
-
-- The playbook, not generic vibes, decides what counts as a good action.
-- The merged `strategy.yaml` is the concrete baseline; do not silently invent thresholds.
-- The starter scaffold is intentionally conservative. Extend it only after the packaged checks pass.
-- When a publish depends on external evidence, treat `check-attestation-workflow.ts` as part of the loop rather than optional polish.
-
-## Workspace Defaults
-
-- This skill assumes the workspace package has already installed `omniweb-toolkit` plus its required peers.
-- Run commands from the workspace root.
-- Treat this directory as the default surface; use the installed package docs under `node_modules/omniweb-toolkit/` only when you need deeper detail.
+- Stop if credentials are missing, auth is unavailable, or balance is zero or unknown for a live write.
+- Stop if the evidence chain is weak, unattested, or below the playbook threshold.
+- Stop if the post would be repetitive, spammy, or unsupported by the playbook.
+- Stop if indexed visibility is required but the path only proves chain acceptance.
+- Skip instead of forcing action when the current state does not justify a write.

@@ -7,33 +7,35 @@ Local persona/process overlays may add stricter behavior, but should not replace
 
 ## Session Startup
 
-Before doing anything else:
+Default startup should stay lightweight.
 
-1. Read `README.md` for the bundle contract and local run path.
-2. If `BOOTSTRAP.md` exists, read it once at the start of a fresh workspace session.
-3. Read `IDENTITY.md` for the workspace identity surface.
-4. Read `openclaw.json` and `package.json` for the active bundle/config contract.
-5. Read `skills/omniweb-research-agent/SKILL.md` and `PLAYBOOK.md`.
-6. Load `skills/omniweb-research-agent/strategy.yaml` as the concrete baseline.
-7. Read local overlay files when they contain relevant real content:
-   - `SOUL.md` for local operating style
-   - `USER.md` for operator-specific notes
-   - today's and yesterday's `memory/YYYY-MM-DD.md` files when they already exist
-   - `MEMORY.md` for durable local context in direct operator sessions
+Read in this order:
+1. `IDENTITY.md` for the workspace identity surface.
+2. `openclaw.json` for the active skill/config contract.
+3. `skills/omniweb-research-agent/SKILL.md` for routing, modes, and safety gates.
+4. `SOUL.md` when the local voice matters.
+5. `USER.md`, `MEMORY.md`, and today's/yesterday's `memory/YYYY-MM-DD.md` files only when they contain relevant local operator context.
+
+Read deeper files only when needed:
+- `README.md` for bundle usage, setup paths, and clone-and-go status
+- `skills/omniweb-research-agent/PLAYBOOK.md` when the task enters OmniWeb operating mode
+- `skills/omniweb-research-agent/strategy.yaml` when a real threshold or budget decision is needed
+- `package.json` when validating scripts or package-level claims
+- `skills/omniweb-research-agent/minimal-agent-starter.mjs` or `starter.ts` when inspecting runnable scaffolds
 
 Missing optional local-memory files are not errors. Skip them quietly and continue.
 
 ## Default File Order
 
-- `README.md`
 - `IDENTITY.md`
 - `openclaw.json`
-- `package.json`
 - `skills/omniweb-research-agent/SKILL.md`
-- `skills/omniweb-research-agent/PLAYBOOK.md`
-- `skills/omniweb-research-agent/strategy.yaml`
-- `skills/omniweb-research-agent/minimal-agent-starter.mjs`
-- `skills/omniweb-research-agent/starter.ts`
+- `SOUL.md` when local tone matters
+- `README.md` only when bundle usage/setup details are needed
+- `skills/omniweb-research-agent/PLAYBOOK.md` only for active OmniWeb task execution
+- `skills/omniweb-research-agent/strategy.yaml` only for threshold/budget decisions
+- `skills/omniweb-research-agent/minimal-agent-starter.mjs` only for runnable starter inspection
+- `skills/omniweb-research-agent/starter.ts` only for the fuller research scaffold
 
 ## Memory Surfaces
 

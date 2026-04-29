@@ -50,6 +50,7 @@ interface ArchetypeSpec {
   observeFocus: string[];
   actionPriorities: string[];
   references: string[];
+  checkedInBundleFiles?: string[];
 }
 
 interface OpenClawMetadata {
@@ -112,6 +113,24 @@ const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
       "references/write-surface-sweep.md",
       "references/toolkit-guardrails.md",
       "references/categories.md",
+    ],
+    checkedInBundleFiles: [
+      "AGENTS.md",
+      "README.md",
+      "package.json",
+      "skills/omniweb-research-agent/SKILL.md",
+      "skills/omniweb-research-agent/PLAYBOOK.md",
+      "skills/omniweb-research-agent/minimal-agent-starter.mjs",
+      "skills/omniweb-research-agent/starter.ts",
+      "skills/omniweb-research-agent/references/install-tiers.md",
+      "skills/omniweb-research-agent/references/live-read.md",
+      "skills/omniweb-research-agent/references/live-write.md",
+      "skills/omniweb-research-agent/references/runtime-architecture.md",
+      "skills/omniweb-research-agent/references/starter-modes.md",
+      "skills/omniweb-research-agent/runtime/capability-detect.mjs",
+      "skills/omniweb-research-agent/runtime/live-research-starter.ts",
+      "skills/omniweb-research-agent/runtime/minimal-dry-run-starter.mjs",
+      "skills/omniweb-research-agent/runtime/minimal-live-starter.mjs",
     ],
   },
   "market-analyst": {
@@ -213,15 +232,27 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
     const strategyText = buildMergedStrategy(playbookText);
     const bundleDir = archetype;
     const skillDir = `${bundleDir}/skills/${spec.skillName}`;
+    const checkedInBundleFiles = new Set(spec.checkedInBundleFiles ?? []);
+    const bundleFileContent = (relativePath: string): string =>
+      readPackageFile(`agents/openclaw/${bundleDir}/${relativePath}`);
+    const handledBundleFiles = new Set([
+      "AGENTS.md",
+      "README.md",
+      "package.json",
+      `skills/${spec.skillName}/SKILL.md`,
+      `skills/${spec.skillName}/PLAYBOOK.md`,
+      `skills/${spec.skillName}/minimal-agent-starter.mjs`,
+      `skills/${spec.skillName}/starter.ts`,
+    ]);
 
     files.push(
       {
         path: `${bundleDir}/README.md`,
-        content: renderBundleReadme(spec),
+        content: checkedInBundleFiles.has("README.md") ? bundleFileContent("README.md") : renderBundleReadme(spec),
       },
       {
         path: `${bundleDir}/AGENTS.md`,
-        content: renderWorkspaceAgents(spec),
+        content: checkedInBundleFiles.has("AGENTS.md") ? bundleFileContent("AGENTS.md") : renderWorkspaceAgents(spec),
       },
       {
         path: `${bundleDir}/BOOTSTRAP.md`,
@@ -261,15 +292,15 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
       },
       {
         path: `${bundleDir}/package.json`,
-        content: renderBundlePackageJson(spec),
+        content: checkedInBundleFiles.has("package.json") ? bundleFileContent("package.json") : renderBundlePackageJson(spec),
       },
       {
         path: `${skillDir}/SKILL.md`,
-        content: renderSkill(spec),
+        content: checkedInBundleFiles.has(`skills/${spec.skillName}/SKILL.md`) ? bundleFileContent(`skills/${spec.skillName}/SKILL.md`) : renderSkill(spec),
       },
       {
         path: `${skillDir}/PLAYBOOK.md`,
-        content: playbookText,
+        content: checkedInBundleFiles.has(`skills/${spec.skillName}/PLAYBOOK.md`) ? bundleFileContent(`skills/${spec.skillName}/PLAYBOOK.md`) : playbookText,
       },
       {
         path: `${skillDir}/strategy.yaml`,
@@ -277,13 +308,21 @@ export function buildOpenClawExport(archetypes: readonly Archetype[] = SUPPORTED
       },
       {
         path: `${skillDir}/minimal-agent-starter.mjs`,
-        content: normalizeText(minimalStarterText),
+        content: checkedInBundleFiles.has(`skills/${spec.skillName}/minimal-agent-starter.mjs`) ? bundleFileContent(`skills/${spec.skillName}/minimal-agent-starter.mjs`) : normalizeText(minimalStarterText),
       },
       {
         path: `${skillDir}/starter.ts`,
-        content: normalizeText(starterText),
+        content: checkedInBundleFiles.has(`skills/${spec.skillName}/starter.ts`) ? bundleFileContent(`skills/${spec.skillName}/starter.ts`) : normalizeText(starterText),
       },
     );
+
+    for (const relativePath of checkedInBundleFiles) {
+      if (handledBundleFiles.has(relativePath)) continue;
+      files.push({
+        path: `${bundleDir}/${relativePath}`,
+        content: bundleFileContent(relativePath),
+      });
+    }
   }
 
   return files.sort((left, right) => left.path.localeCompare(right.path));
@@ -869,6 +908,9 @@ function renderBundlePackageJson(spec: ArchetypeSpec): string {
     private: true,
     type: "module",
     scripts: {
+      ...(spec.id === "research-agent"
+        ? { "check:starter-smoke": "node skills/omniweb-research-agent/minimal-agent-starter.mjs" }
+        : {}),
       "check:playbook": `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-playbook-path.ts --archetype ${spec.id}`,
       "check:publish": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts",
       "check:attestation": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts",

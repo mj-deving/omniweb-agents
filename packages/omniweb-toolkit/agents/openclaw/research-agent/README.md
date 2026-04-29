@@ -61,7 +61,7 @@ This bundle is designed around progressive activation:
 
 1. **Tier 1 — bundle / dry-run**: no heavy OmniWeb runtime assumptions
 2. **Tier 2 — live read**: environment and optional adapters ready for feed/signal/balance inspection
-3. **Tier 3 — live write**: wallet-backed publish/attest/reply/tip path validated
+3. **Tier 3 — live write**: wallet-backed publish/attest/reply/tip path entered only after explicit write gates, then validated separately
 
 See `skills/omniweb-research-agent/references/install-tiers.md` and `skills/omniweb-research-agent/references/starter-modes.md`.
 
@@ -84,6 +84,8 @@ Some live runtime paths may need heavier dependencies, but they are not startup 
 - `better-sqlite3` — sqlite-backed local state when a runtime path actually uses it
 
 Treat these as optional capability deps. If they are missing, the bundle should degrade to dry-run or explanation mode rather than failing at startup.
+
+Even when they are present, the starter should not be treated as direct publish proof by itself. Real wallet-backed starter usage must pass `npm run check:publish` first, and evidence-backed publish claims must also pass `npm run check:attestation -- --attest-url <primary-url>` before any spend lane is considered ready.
 
 ## Model / auth note
 

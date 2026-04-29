@@ -48,10 +48,12 @@ Behavior:
 Use only for:
 - intentional wallet-backed publish paths
 - environments with auth, env, and validation already ready
+- cases where `npm run check:publish` has already passed for the intended environment
 
 Behavior:
 - requires live-write capability readiness
 - imports the deferred live runtime entrypoint
+- is still downstream of explicit write gates; starter mode alone is not publish readiness proof
 - may publish or otherwise spend DEM depending on the runtime path
 
 ## Example commands
@@ -74,7 +76,17 @@ Force explicit live-read mode:
 OMNIWEB_STARTER_MODE=live-read node skills/omniweb-research-agent/minimal-agent-starter.mjs
 ```
 
-Attempt live-write only when you know the environment is ready:
+Before any real starter-backed write lane, pass the maintained write gates from the source `packages/omniweb-toolkit` workspace (these scripts are not shipped in a copied standalone bundle):
+
+```bash
+cd packages/omniweb-toolkit
+npm run check:publish
+npm run check:attestation -- --attest-url <primary-url>
+```
+
+If you are operating from a copied exported bundle only, treat those commands as upstream preflight requirements rather than local bundle scripts.
+
+Attempt live-write only after those gates are satisfied and you know the environment is ready:
 
 ```bash
 OMNIWEB_STARTER_MODE=live-write node skills/omniweb-research-agent/minimal-agent-starter.mjs

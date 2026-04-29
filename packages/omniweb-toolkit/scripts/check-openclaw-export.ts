@@ -133,14 +133,15 @@ const bundleChecks = archetypes.map((archetype) => {
       allowlist.length === 1 &&
       allowlist[0] === spec.skillName &&
       enabledEntry?.enabled === true &&
-      bundleScripts["check:playbook"]?.includes(spec.id) === true &&
-      typeof bundleScripts["check:attestation"] === "string" &&
-      typeof bundleScripts["check:bundle"] === "string" &&
-      (expectsLightweightBundle ? typeof bundleScripts["check:starter-smoke"] === "string" : true) &&
-      bundleDependency === "file:../../.." &&
+      (expectsLightweightBundle
+        ? Object.keys(bundleScripts).length === 1 && typeof bundleScripts["check:starter-smoke"] === "string"
+        : bundleScripts["check:playbook"]?.includes(spec.id) === true &&
+          typeof bundleScripts["check:attestation"] === "string" &&
+          typeof bundleScripts["check:bundle"] === "string") &&
+      (expectsLightweightBundle ? bundleDependency === null : bundleDependency === "file:../../..") &&
       !bundlePackage?.peerDependencies &&
       (expectsLightweightBundle
-        ? readmeText.includes("## Capability tiers") && readmeText.includes("## Clone-and-go status")
+        ? readmeText.includes("## Capability tiers") && readmeText.includes("## Standalone install note") && readmeText.includes("## Clone-and-go status")
         : readmeText.includes("## Current Layer Contract") && readmeText.includes("## Runtime Execution Proof")) &&
       agentsText.includes("## Local Overlay Boundary") &&
       skillText.includes("## Safety Gates") &&

@@ -69,6 +69,7 @@
     "check:research-agent-consumer": "node --import tsx ./scripts/check-research-agent-consumer.ts",
     "check:research-agent-dry-run": "npm run build && node --import tsx ./scripts/check-research-agent-dry-run.ts",
     "check:research-agent-live-read": "node --import tsx ./scripts/check-research-agent-live-read.ts",
+    "check:research-agent-live-write-gate": "node --import tsx ./scripts/check-research-agent-live-write-gate.ts",
     "check:read-surface": "node --import tsx ./scripts/check-read-surface-sweep.ts",
     "check:write-surface": "node --import tsx ./scripts/check-write-surface-sweep.ts",
     "check:reply": "node --import tsx ./scripts/check-supervised-reply.ts",

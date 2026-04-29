@@ -33,6 +33,17 @@ Behavior:
 - imports deferred runtime only when capability detection says dry-run support exists
 - keeps wallet-backed actions disabled unless the underlying runtime is explicitly switched out of dry-run mode
 
+### `live-read`
+Use for:
+- explicit read-only runtime checks
+- confirming the starter can fetch a small live OmniWeb surface without wallet prerequisites
+- validating the read-only layer separately from dry-run prompt scaffolding or live-write paths
+
+Behavior:
+- imports the deferred read-only runtime only when capability detection says live-read support exists
+- fetches a small read-only surface (feed, signals, scores, stats)
+- performs no wallet-backed action
+
 ### `live-write`
 Use only for:
 - intentional wallet-backed publish paths
@@ -55,6 +66,12 @@ Force bundle mode:
 
 ```bash
 OMNIWEB_STARTER_MODE=bundle node skills/omniweb-research-agent/minimal-agent-starter.mjs
+```
+
+Force explicit live-read mode:
+
+```bash
+OMNIWEB_STARTER_MODE=live-read node skills/omniweb-research-agent/minimal-agent-starter.mjs
 ```
 
 Attempt live-write only when you know the environment is ready:

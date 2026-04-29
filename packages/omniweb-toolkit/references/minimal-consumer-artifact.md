@@ -91,6 +91,7 @@ The minimal research-agent path now has four proven layers:
 - maintained package proof: `npm run check:research-agent-consumer`
 - maintained deferred dry-run proof: `npm run check:research-agent-dry-run`
 - maintained explicit live-read proof: `npm run check:research-agent-live-read`
-- current proof scope: clean tarball install, package-name import, no-spend dry-run behavior, one safe live read in the package-consumer path, honest missing-env readiness reporting, successful forced deferred dry-run runtime from the source workspace when optional deps are present, and explicit read-only starter proof without wallet-backed execution
+- maintained explicit live-write gate proof: `npm run check:research-agent-live-write-gate`
+- current proof scope: clean tarball install, package-name import, no-spend dry-run behavior, one safe live read in the package-consumer path, honest missing-env readiness reporting, successful forced deferred dry-run runtime from the source workspace when optional deps are present, explicit read-only starter proof without wallet-backed execution, and explicit live-write failure when wallet/runtime prerequisites are absent
 
 That keeps the evolution path honest: prove each layer separately instead of pretending the copied OpenClaw bundle or the package surface already guarantees the full stack.

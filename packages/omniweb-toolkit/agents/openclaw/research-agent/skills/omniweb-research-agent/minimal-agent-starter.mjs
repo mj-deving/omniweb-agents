@@ -63,7 +63,7 @@ async function main() {
 
   if (mode === "live-write") {
     if (!capabilities.ready.liveWrite) {
-      throw new Error("live-write mode requested, but runtime/write prerequisites are not ready");
+      throw new Error("live-write mode requested, but runtime/write prerequisites are not ready; no wallet-backed action attempted");
     }
     const liveModule = await import("./runtime/minimal-live-starter.mjs");
     await liveModule.main();

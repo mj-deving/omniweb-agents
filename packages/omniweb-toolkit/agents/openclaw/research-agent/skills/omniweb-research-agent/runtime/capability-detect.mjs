@@ -12,22 +12,26 @@ export async function canImport(specifier) {
 }
 
 export async function detectCapabilities() {
-  const [toolkitCore, toolkitAgent] = await Promise.all([
-    canImport("omniweb-toolkit"),
+  const [toolkitModule, toolkitAgent] = await Promise.all([
+    import("omniweb-toolkit").catch(() => null),
     canImport("omniweb-toolkit/agent"),
   ]);
 
+  const toolkitCore = Boolean(toolkitModule);
+
   const env = Object.fromEntries(REQUIRED_ENV.map((key) => [key, Boolean(process.env[key])]));
+  const writeReadiness = toolkitModule?.checkWriteReadiness ? toolkitModule.checkWriteReadiness() : null;
 
   return {
     toolkitCore,
     toolkitAgent,
     env,
+    writeReadiness,
     ready: {
       bundle: true,
       dryRun: toolkitCore && toolkitAgent,
-      liveRead: toolkitCore && toolkitAgent && env.RPC_URL && env.SUPERCOLONY_API,
-      liveWrite: toolkitCore && toolkitAgent && env.DEMOS_MNEMONIC && env.RPC_URL && env.SUPERCOLONY_API,
+      liveRead: toolkitCore && toolkitAgent,
+      liveWrite: toolkitCore && toolkitAgent && Boolean(writeReadiness?.canWrite),
     },
   };
 }
@@ -43,11 +47,15 @@ export function summarizeCapabilities(capabilities) {
   const envSummary = Object.entries(capabilities.env)
     .map(([key, value]) => `${key}=${value ? "yes" : "no"}`)
     .join(", ");
+  const readinessSummary = capabilities.writeReadiness
+    ? `writeReady=${capabilities.writeReadiness.canWrite ? "yes" : "no"}`
+    : "writeReady=unknown";
 
   return [
     `toolkitCore=${capabilities.toolkitCore ? "yes" : "no"}`,
     `toolkitAgent=${capabilities.toolkitAgent ? "yes" : "no"}`,
     envSummary,
+    readinessSummary,
     `ready(bundle=${capabilities.ready.bundle ? "yes" : "no"}, dryRun=${capabilities.ready.dryRun ? "yes" : "no"}, liveRead=${capabilities.ready.liveRead ? "yes" : "no"}, liveWrite=${capabilities.ready.liveWrite ? "yes" : "no"})`,
   ].join(" | ");
 }

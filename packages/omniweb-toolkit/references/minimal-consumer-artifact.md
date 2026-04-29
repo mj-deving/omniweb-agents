@@ -84,12 +84,14 @@ That is the intended development model for this package.
 
 ## Current Implementation Step
 
-The minimal research-agent path now has three proven layers:
+The minimal research-agent path now has four proven layers:
 
 - importable subpath: `omniweb-toolkit/research-agent-minimal`
 - packaged example: `examples/research-agent-minimal.mjs`
 - maintained package proof: `npm run check:research-agent-consumer`
 - maintained deferred dry-run proof: `npm run check:research-agent-dry-run`
-- current proof scope: clean tarball install, package-name import, no-spend dry-run behavior, one safe live read, honest missing-env readiness reporting, and successful forced deferred dry-run runtime from the source workspace when optional deps are present
+- maintained explicit live-read proof: `npm run check:research-agent-live-read`
+- maintained explicit live-write gate proof: `npm run check:research-agent-live-write-gate`
+- current proof scope: clean tarball install, package-name import, no-spend dry-run behavior, one safe live read in the package-consumer path, honest missing-env readiness reporting, successful forced deferred dry-run runtime from the source workspace when optional deps are present, explicit read-only starter proof without wallet-backed execution, and explicit live-write failure when wallet/runtime prerequisites are absent
 
 That keeps the evolution path honest: prove each layer separately instead of pretending the copied OpenClaw bundle or the package surface already guarantees the full stack.

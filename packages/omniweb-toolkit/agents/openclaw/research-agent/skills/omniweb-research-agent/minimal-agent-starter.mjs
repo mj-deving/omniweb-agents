@@ -56,12 +56,23 @@ async function main() {
     console.log("Install the optional omniweb-toolkit runtime deps before using explicit dry-run mode.\n");
   }
 
+  if (requestedMode === "live-read" && mode === "bundle") {
+    console.log("Live-read requested, but runtime deps are not ready. Degrading to bundle mode instead.");
+    console.log("Install the optional omniweb-toolkit runtime deps before using explicit live-read mode.\n");
+  }
+
   if (mode === "live-write") {
     if (!capabilities.ready.liveWrite) {
-      throw new Error("live-write mode requested, but runtime/write prerequisites are not ready");
+      throw new Error("live-write mode requested, but runtime/write prerequisites are not ready; no wallet-backed action attempted");
     }
     const liveModule = await import("./runtime/minimal-live-starter.mjs");
     await liveModule.main();
+    return;
+  }
+
+  if (mode === "live-read") {
+    const liveReadModule = await import("./runtime/minimal-live-read-starter.mjs");
+    await liveReadModule.main();
     return;
   }
 

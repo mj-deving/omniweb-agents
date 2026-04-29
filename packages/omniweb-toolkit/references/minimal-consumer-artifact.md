@@ -84,10 +84,11 @@ That is the intended development model for this package.
 
 ## Current Implementation Step
 
-The next layer is now underway as a concrete package surface:
+The next layer is now proven as a concrete package surface:
 
 - importable subpath: `omniweb-toolkit/research-agent-minimal`
 - packaged example: `examples/research-agent-minimal.mjs`
 - maintained proof: `npm run check:research-agent-consumer`
+- current proof scope: clean tarball install, package-name import, no-spend dry-run behavior, one safe live read, and honest missing-env readiness reporting
 
 That keeps the evolution path honest: build one minimal research-agent-facing package entrypoint on top of the already-proven package consumer path, instead of trying to make the copied OpenClaw bundle carry every consumer story at once.

@@ -8,6 +8,17 @@ const args = process.argv.slice(2);
 const keepStdout = hasFlag(args, "--stdout");
 const allowedArgs = new Set(["--stdout", "--help", "-h"]);
 
+const buildResult = spawnSync("npm", ["run", "build"], {
+  cwd: PACKAGE_ROOT,
+  encoding: "utf8",
+  env: process.env,
+});
+
+if ((buildResult.status ?? 1) !== 0) {
+  console.error(buildResult.stderr ?? buildResult.stdout ?? "npm run build failed");
+  process.exit(buildResult.status ?? 1);
+}
+
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-agent-live-read.ts [options]
 

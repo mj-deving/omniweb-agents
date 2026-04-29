@@ -323,6 +323,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:publish` currently returns `blocked_npm_auth_missing`: package checks pass, the package name is still available, and the only external blocker is npm registry auth in the publishing environment.
 - `npm run check:playbook:research`, `npm run check:playbook:market`, and `npm run check:playbook:engagement` each run the shipped live/readiness/trajectory path for one archetype.
 - `npm run check:attestation -- --attest-url <url> [--supporting-url <url> ...]` scores the source choice, evidence-chain quality, and draft quality for a planned publish workflow before you spend DEM.
+- For evidence-backed starter publish claims, `check:attestation` is a maintained gate, not optional polish.
 - `npm run check:attestation -- --stress-suite` runs the maintained strong/weak/adversarial source-chain baseline before you rely on a new evidence pattern.
 - `npm run check:imports` verifies that `dist/index.js`, `dist/agent.js`, and `dist/types.js` can be imported by plain Node ESM without a custom loader.
 - `npm run check:live` runs a shell-curl live smoke test for discovery resources, endpoint availability, and category presence.

@@ -20,7 +20,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-playbook-path.ts](./check-playbook-path.ts): packaged research, market, or engagement validation path
 - [check-consumer-journeys.ts](./check-consumer-journeys.ts): outside-in journey bundle across shipped archetypes
 - [check-package-consumer.ts](./check-package-consumer.ts): clean tarball install proof for package-name imports, plan-only dry-run prompt rendering, live read-only use, and missing-env write readiness
-- [check-research-agent-consumer.ts](./check-research-agent-consumer.ts): clean tarball install proof for the smallest research-agent-facing package entrypoint by package name
+- [check-research-agent-consumer.ts](./check-research-agent-consumer.ts): clean tarball install proof for the smallest research-agent-facing package entrypoint by package name, including one safe live read
 - [check-verification-matrix.ts](./check-verification-matrix.ts): maintained proving baseline against current package surface
 - [check-discovery-drift.ts](./check-discovery-drift.ts): live discovery resources against committed snapshots
 - [check-read-surface-sweep.ts](./check-read-surface-sweep.ts): production-host read-only sweep

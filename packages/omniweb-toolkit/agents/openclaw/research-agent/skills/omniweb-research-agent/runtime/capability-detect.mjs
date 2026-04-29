@@ -54,6 +54,8 @@ export async function resolveSharedColonyUrl(capabilities) {
 export function resolveStarterMode(explicitMode, capabilities, defaults = {}) {
   const mode = explicitMode || defaults.defaultMode || "auto";
   if (mode === "dry-run" && !capabilities.ready.dryRun) return "bundle";
+  if (mode === "live-read" && !capabilities.ready.liveRead) return "bundle";
+  if (mode === "live-write" && !capabilities.ready.liveWrite) return mode;
   if (mode !== "auto") return mode;
   if (!capabilities.ready.dryRun) return "bundle";
   return defaults.autoWhenDryRunReady || "dry-run";

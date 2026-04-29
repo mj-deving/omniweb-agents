@@ -22,6 +22,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-package-consumer.ts](./check-package-consumer.ts): clean tarball install proof for package-name imports, plan-only dry-run prompt rendering, live read-only use, and missing-env write readiness
 - [check-research-agent-consumer.ts](./check-research-agent-consumer.ts): clean tarball install proof for the smallest research-agent-facing package entrypoint by package name, including one safe live read
 - [check-research-agent-dry-run.ts](./check-research-agent-dry-run.ts): maintained forced-dry-run proof for the exported OpenClaw research-agent minimal starter from the source workspace
+- [check-research-agent-live-read.ts](./check-research-agent-live-read.ts): maintained explicit live-read proof for the exported OpenClaw research-agent minimal starter from the source workspace
 - [check-verification-matrix.ts](./check-verification-matrix.ts): maintained proving baseline against current package surface
 - [check-discovery-drift.ts](./check-discovery-drift.ts): live discovery resources against committed snapshots
 - [check-read-surface-sweep.ts](./check-read-surface-sweep.ts): production-host read-only sweep

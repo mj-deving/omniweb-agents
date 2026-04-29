@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check:starter-smoke": "node skills/omniweb-research-agent/minimal-agent-starter.mjs",
     "check:playbook": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-playbook-path.ts --archetype research-agent",
     "check:publish": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts",
     "check:attestation": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts",

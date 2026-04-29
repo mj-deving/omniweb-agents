@@ -111,6 +111,7 @@ const bundleChecks = archetypes.map((archetype) => {
   const bins = Array.isArray(requires?.bins) ? requires.bins : [];
   const env = Array.isArray(requires?.env) ? requires.env : [];
   const os = Array.isArray(openclaw?.os) ? openclaw.os : [];
+  const expectsLightweightBundle = archetype === "research-agent";
 
   return {
     archetype,
@@ -135,21 +136,27 @@ const bundleChecks = archetypes.map((archetype) => {
       bundleScripts["check:playbook"]?.includes(spec.id) === true &&
       typeof bundleScripts["check:attestation"] === "string" &&
       typeof bundleScripts["check:bundle"] === "string" &&
+      (expectsLightweightBundle ? typeof bundleScripts["check:starter-smoke"] === "string" : true) &&
       bundleDependency === "file:../../.." &&
       !bundlePackage?.peerDependencies &&
-      readmeText.includes("## Current Layer Contract") &&
-      readmeText.includes("## Runtime Execution Proof") &&
+      (expectsLightweightBundle
+        ? readmeText.includes("## Capability tiers") && readmeText.includes("## Clone-and-go status")
+        : readmeText.includes("## Current Layer Contract") && readmeText.includes("## Runtime Execution Proof")) &&
       agentsText.includes("## Local Overlay Boundary") &&
       skillText.includes("## Safety Gates") &&
-      skillText.includes("## REQUIRED Stop-And-Ask Gates") &&
-      skillText.includes("## Hard Stop Rules") &&
-      skillText.includes("## Session Ledger Protocol") &&
+      (expectsLightweightBundle
+        ? skillText.includes("## Stop-And-Ask Gates") && skillText.includes("## Hard Stops")
+        : skillText.includes("## REQUIRED Stop-And-Ask Gates") && skillText.includes("## Hard Stop Rules") && skillText.includes("## Session Ledger Protocol")) &&
       skillText.includes("spend real DEM") &&
       skillText.includes("DEMOS_MNEMONIC") &&
-      skillText.includes("REQUIRED: simulate or dry-run before any chain write on mainnet.") &&
-      skillText.includes("REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.") &&
-      skillText.includes("REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.") &&
-      skillText.includes("sessions/<ISO>/result.json"),
+      (expectsLightweightBundle
+        ? skillText.includes("Simulate or dry-run before any chain write on mainnet.") &&
+          skillText.includes("Signer key must come from env, keyring, or OpenClaw-injected `primaryEnv`") &&
+          skillText.includes("Stop and ask the operator before spending DEM")
+        : skillText.includes("REQUIRED: simulate or dry-run before any chain write on mainnet.") &&
+          skillText.includes("REQUIRED: signer key must come from env, keyring, or OpenClaw-injected primaryEnv; never from chat or prompt context.") &&
+          skillText.includes("REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.") &&
+          skillText.includes("sessions/<ISO>/result.json")),
     frontmatterName: frontmatter?.name ?? null,
     brokenLinks,
     allowlist,

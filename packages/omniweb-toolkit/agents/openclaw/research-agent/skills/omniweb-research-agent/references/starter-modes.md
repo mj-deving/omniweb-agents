@@ -1,0 +1,64 @@
+# Starter Modes
+
+The bundle-first starter wrappers support progressive activation through `OMNIWEB_STARTER_MODE`.
+
+## Default behavior
+
+If `OMNIWEB_STARTER_MODE` is unset:
+- `minimal-agent-starter.mjs` detects capabilities first
+- if optional OmniWeb runtime deps are missing, it stays in **bundle** mode
+- if dry-run runtime deps are available, it still defaults to a safe **dry-run** path
+
+## Modes
+
+### `bundle`
+Use for:
+- skill inspection
+- architecture review
+- reviewer smoke checks
+- confirming the bundle does not hard-require heavy runtime deps
+
+Behavior:
+- no live-runtime import
+- no wallet-backed action
+- may still try a cheap public stats read in the minimal starter
+
+### `dry-run`
+Use for:
+- loading the deferred runtime without writing
+- testing read/decision flow safely
+- reviewing the fuller starter shape without publishing
+
+Behavior:
+- imports deferred runtime only when capability detection says dry-run support exists
+- keeps wallet-backed actions disabled unless the underlying runtime is explicitly switched out of dry-run mode
+
+### `live-write`
+Use only for:
+- intentional wallet-backed publish paths
+- environments with auth, env, and validation already ready
+
+Behavior:
+- requires live-write capability readiness
+- imports the deferred live runtime entrypoint
+- may publish or otherwise spend DEM depending on the runtime path
+
+## Example commands
+
+Minimal starter, reviewer-safe:
+
+```bash
+node skills/omniweb-research-agent/minimal-agent-starter.mjs
+```
+
+Force bundle mode:
+
+```bash
+OMNIWEB_STARTER_MODE=bundle node skills/omniweb-research-agent/minimal-agent-starter.mjs
+```
+
+Attempt live-write only when you know the environment is ready:
+
+```bash
+OMNIWEB_STARTER_MODE=live-write node skills/omniweb-research-agent/minimal-agent-starter.mjs
+```

@@ -2,98 +2,99 @@
 
 This directory is an OpenClaw workspace bundle for the `research-agent` archetype shipped by `omniweb-toolkit`.
 
-This `research-agent` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
+The key design goal is simple: keep bundle startup lightweight, and only pay for heavier OmniWeb runtime paths when the task actually needs them.
 
-## Current Layer Contract
+## What works without heavy runtime deps
 
-Keep these layers separate:
+You do **not** need `npm install` just to inspect this bundle, point OpenClaw at it, or run dry-run reasoning about the skill.
 
-- portable bundle: `openclaw.json`, `package.json`, `README.md`, `BOOTSTRAP.md`, `memory/README.md`, and `skills/omniweb-research-agent/**`
-- portable scaffolds with local contents: `AGENTS.md`, `IDENTITY.md`, `TOOLS.md`, and `MEMORY.md`
-- local operator overlay: `SOUL.md`, `USER.md`, most of `HEARTBEAT.md`, dated memory files, local checklists, roadmaps, and operator notes
-- runtime substrate: OpenClaw gateway, loopback/WebSocket transport, device auth, provider auth, workspace wiring, and the path needed for a real local turn
+The lightweight path should support:
+- skill loading
+- workspace inspection
+- architecture discussion
+- dry-run planning
+- explanation of what live OmniWeb mode would require
 
-The portable bundle can be bundle-valid even when the runtime substrate is not yet execution-proven.
+## Bundle contents
 
-## What It Includes
+- `openclaw.json` — workspace config exposing `omniweb-research-agent`
+- `AGENTS.md` — lightweight startup contract
+- `IDENTITY.md` — workspace identity surface
+- `SOUL.md`, `USER.md`, `TOOLS.md`, `MEMORY.md`, `HEARTBEAT.md` — local overlay files
+- `skills/omniweb-research-agent/SKILL.md` — lightweight router and safety gates
+- `skills/omniweb-research-agent/PLAYBOOK.md` — short active-operations doctrine
+- `skills/omniweb-research-agent/strategy.yaml` — threshold/budget baseline
+- `skills/omniweb-research-agent/references/` — deeper runtime and capability docs loaded only as needed
+- `skills/omniweb-research-agent/runtime/` — capability detection plus deferred live-runtime entrypoints
+- `skills/omniweb-research-agent/minimal-agent-starter.mjs` — smallest bundle-first starter path
+- `skills/omniweb-research-agent/starter.ts` — bundle-first wrapper for the fuller research starter scaffold
 
-- `openclaw.json` — workspace config that exposes only `omniweb-research-agent`
-- `AGENTS.md`, `BOOTSTRAP.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `MEMORY.md` — workspace context surfaces for OpenClaw startup
-- `memory/README.md` — explains the daily memory file convention without inventing dated files
-- `IDENTITY.md` — human-readable identity scaffold for the workspace's main agent
-- `package.json` — local workspace package describing validation intent and bundle expectations
-- `skills/omniweb-research-agent/SKILL.md` — activation router plus validation order
-- `skills/omniweb-research-agent/PLAYBOOK.md` — archetype doctrine and action rules
-- `skills/omniweb-research-agent/strategy.yaml` — merged concrete baseline
-- `skills/omniweb-research-agent/starter.ts` — archetype-specific scaffold
-- `skills/omniweb-research-agent/minimal-agent-starter.mjs` — smallest default loop
+## Local usage
 
-## Local Usage
+1. Point OpenClaw at this workspace.
+2. Start in dry-run or explanation mode first.
+3. Only move into live OmniWeb reads or writes when the task actually needs them.
 
-1. You do not need `npm install` just to inspect this bundle or point OpenClaw at it.
-2. Start from `skills/omniweb-research-agent/minimal-agent-starter.mjs` unless you already know you need the full archetype scaffold.
-3. For a first-time local setup on a host, run `openclaw onboard --accept-risk --workspace "$PWD"`.
-4. If the host is already configured, run `openclaw setup --workspace "$PWD"` or `openclaw config set agents.defaults.workspace "$PWD"`.
-5. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
+If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
 
-   ```bash
-   openclaw agents add research-agent --workspace "$(pwd)" --model openai-codex/gpt-5.4 --non-interactive
-   ```
+```bash
+openclaw agents add research-agent --workspace "$(pwd)" --model openai-codex/gpt-5.4 --non-interactive
+```
 
-6. Start a new session or restart the gateway so OpenClaw reloads the workspace skills.
-7. Verify local skill resolution with `openclaw skills info omniweb-research-agent`. `openclaw skills list` is only a secondary visibility check after the workspace is active, and `openclaw skills search` is ClawHub-backed discovery rather than local workspace resolution.
-8. Run a local smoke turn with an explicit session selector only after provider auth for the selected model is configured on the host:
+Then restart the gateway or open a fresh session so OpenClaw reloads the workspace skills.
 
-   ```bash
-   openclaw agent --agent research-agent --local --session-id research-agent-smoke --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."
-   ```
+Verify local skill resolution with:
 
-The local `package.json` assumes this bundle stays inside the checked-out repository. If you copy it elsewhere before the first npm publish, replace the `file:../../..` dependency with a reachable package source.
+```bash
+openclaw skills info omniweb-research-agent
+```
 
-## Runtime Prerequisites
+A local smoke turn should stay dry-run first:
 
-Some runtime paths may need heavier dependencies, but this alpha workspace should not force npm to resolve them up front during routine inspection or dogfooding.
+```bash
+openclaw agent --agent research-agent --local --session-id research-agent-smoke --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."
+```
 
-Treat these as documented prerequisites rather than proven clone-and-go installs:
+## Capability tiers
 
-- `@kynesyslabs/demosdk` — needed for full wallet-backed / DEM-integrated flows
-- `better-sqlite3` — needed when a runtime path actually requires sqlite-backed local state
+This bundle is designed around progressive activation:
 
-At the moment, neither prerequisite is fully proven clone-and-go in this workspace.
+1. **Tier 1 — bundle / dry-run**: no heavy OmniWeb runtime assumptions
+2. **Tier 2 — live read**: environment and optional adapters ready for feed/signal/balance inspection
+3. **Tier 3 — live write**: wallet-backed publish/attest/reply/tip path validated
 
-## Model / Auth Note
+See `skills/omniweb-research-agent/references/install-tiers.md` and `skills/omniweb-research-agent/references/starter-modes.md`.
+
+## Optional heavy runtime deps
+
+Some live runtime paths may need heavier dependencies, but they are not startup prerequisites:
+- `@kynesyslabs/demosdk` — wallet-backed / DEM-integrated flows
+- `better-sqlite3` — sqlite-backed local state when a runtime path actually uses it
+
+Treat these as optional capability deps. If they are missing, the bundle should degrade to dry-run or explanation mode rather than failing at startup.
+
+## Model / auth note
 
 - If this machine uses ChatGPT / Codex OAuth, prefer `openai-codex/gpt-5.4`.
 - If this machine uses a direct OpenAI Platform API key, use `openai/gpt-5.4` and make sure `OPENAI_API_KEY` is set.
-- The local smoke command still needs `--agent`, `--session-id`, or another explicit session selector even when you pass `--local`.
+- Live OmniWeb modes still need the relevant environment and auth configured on the host.
 
-## Runtime Execution Proof
+## Validation intent
 
-This workspace is not execution-proven until all of these succeed together in one path:
+- `npm run check:starter-smoke` — no-deps reviewer smoke path for the lightweight starter
+- `npm run check:playbook` — archetype-specific validation intent
+- `npm run check:publish` — publish-readiness intent
+- `npm run check:attestation -- --attest-url <primary-url>` — source-chain readiness for evidence-backed writes
+- `npm run score:template` — captured-run template intent
+- `npm run check:bundle` — bundle/source alignment intent
 
-1. `openclaw onboard --accept-risk --workspace "$PWD"`, or equivalent workspace activation on an already configured host.
-2. `openclaw skills info omniweb-research-agent` resolves the local skill from this workspace.
-3. The selected provider auth works for the model used by the local smoke command.
-4. The smoke command above completes without hanging or timing out, uses this workspace's skill context, and returns useful dry-run output.
+## Clone-and-go status
 
-OpenClaw gateway health, ready endpoints, raw WebSocket challenge, device auth files, provider config presence, and default-workspace wiring count as runtime-present evidence. They do not by themselves prove runtime execution.
-
-## Validation
-
-- `npm run check:playbook` — archetype-specific validation path
-- `npm run check:publish` — publish readiness gate
-- `npm run check:attestation -- --attest-url <primary-url>` — source-chain readiness when a write depends on external evidence
-- `npm run score:template` — print a captured-run template for this archetype
-- `npm run check:bundle` — verify this exported bundle still matches the package source
-
-## What Still Blocks True Clone-And-Go
-
-This workspace is not clone-and-go yet.
-
-That claim stays blocked until all three are proven together:
+This workspace is still not true clone-and-go for full live OmniWeb mode.
+That remains blocked until all three are proven together:
 
 1. onboarding works
-2. provider auth is configured and usable
+2. provider auth is configured
 3. a real local turn succeeds
 
-Heavy runtime prerequisites are documented above, but their installability and end-to-end use are still part of the alpha validation story rather than a solved portability guarantee.
+That is fine. The important thing is that lightweight bundle usage works now, and heavy runtime capability is treated as an explicit next step instead of a hidden startup requirement.

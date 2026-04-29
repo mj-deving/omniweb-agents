@@ -15,9 +15,11 @@ This file complements:
 
 ## Latest Recorded Run
 
-- Date: April 27, 2026
+- Date: April 29, 2026
 - Command set:
   - `npm --prefix packages/omniweb-toolkit run check:package-consumer`
+  - `npm --prefix packages/omniweb-toolkit run check:research-agent-consumer`
+  - copied `agents/openclaw/research-agent/` bundle to `/tmp`, then `npm install` and `npm run check:starter-smoke`
   - `npm --prefix packages/omniweb-toolkit run check:playbook:research`
   - `npm --prefix packages/omniweb-toolkit run check:playbook:market`
   - `npm --prefix packages/omniweb-toolkit run check:playbook:engagement`
@@ -27,12 +29,12 @@ This file complements:
 
 ## Current Verdict
 
-- The three shipped archetype paths all pass their maintained journey checks on current live state.
+- The three shipped archetype paths still pass their maintained journey checks on current live state.
 - The stricter captured-run scorer still passes for all three shipped archetypes.
 - A clean tarball consumer can install the package, import `omniweb-toolkit` by package name, run one safe live read, and receive a clean missing-env write readiness report without spending DEM.
-- The same tarball consumer can also render a deterministic plan-only prompt from the agent subpath without publishing or spending DEM.
-- The first registry install path is not fully launch-ready yet because npm publish is still blocked by missing auth in the publishing environment.
-- The current journey harness is back to green after updating the binary-pool response contract to match the live nullable fields returned by `/api/bets/binary/pools`.
+- A fresh consumer can now also import the smallest research-agent-facing path via `omniweb-toolkit/research-agent-minimal`, preserve no-spend dry-run behavior, perform one safe live read, and still fail honestly on missing write/runtime env.
+- The exported OpenClaw research-agent bundle now has an explicit lightweight parity contract at this same minimal layer: no heavy deps required just to load, one cheap public-read scaffold when available, no-spend starter behavior, and honest degradation when dry-run/live-read prerequisites are absent.
+- The first registry install path is still not fully launch-ready because npm publish remains blocked by missing auth in the publishing environment.
 - The strongest remaining journey blockers are still on the live write/readback side:
   - publish emits tx hashes but visibility is still inconsistent
   - reply emits tx hashes but direct post lookup still returns `404`
@@ -102,6 +104,31 @@ This file complements:
   - the package-first alpha path is no longer only a repo-relative example path
   - OpenClaw remains distribution/documentation only until a separate runtime execution proof exists
 
+### Research-Agent Minimal Package Consumer
+
+- Status: pass
+- Evidence:
+  - `npm run check:research-agent-consumer` installs the packed tarball into a clean temporary consumer workspace
+  - the consumer imports `omniweb-toolkit/research-agent-minimal` by package name
+  - the path preserves no-spend dry-run behavior
+  - the path performs one safe live read
+  - missing `DEMOS_MNEMONIC` and optional write substrate are still reported honestly
+- Interpretation:
+  - the repo now has a research-agent-specific minimal package consumer proof, not just a generic package proof
+  - this is still intentionally below full runtime and live-write scope
+
+### Lightweight OpenClaw Bundle Parity
+
+- Status: pass at the minimal layer
+- Evidence:
+  - a copied `agents/openclaw/research-agent/` bundle installs cleanly in a standalone temp workspace
+  - `npm run check:starter-smoke` selects `bundle` mode when runtime deps are absent
+  - the starter performs one cheap public stats read and emits a no-spend prompt scaffold
+  - the bundle degrades honestly instead of pretending dry-run or live-read readiness
+- Interpretation:
+  - the exported OpenClaw workspace path is now aligned with the smallest truthful behavior layer proved on the package side
+  - this is parity of behavior shape, not full standalone-package or full-runtime equivalence
+
 ### First External Consumer Install
 
 - Status: degraded
@@ -119,4 +146,4 @@ This file complements:
 2. publish visibility must converge with the returned tx hash
 3. reply visibility must converge with the returned tx hash
 4. tip spend must show up reliably in readback
-5. outside docs should point directly at these current journey truths instead of implying all live writes are equally strong
+5. outside docs should keep pointing directly at these current journey truths instead of implying all live writes are equally strong

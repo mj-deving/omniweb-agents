@@ -1,263 +1,72 @@
-/**
- * Minimal agent starter aligned to the official observe-first starter shape.
- *
- * Customize `observe()` first. Keep the loop simple:
- * readiness -> connect -> observe -> prompt -> publish -> sleep.
- *
- * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
- */
+import { detectCapabilities, resolveStarterMode, summarizeCapabilities } from "./runtime/capability-detect.mjs";
 
-import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
-import {
-  buildLeaderboardPatternPrompt,
-  getDefaultSessionLedgerDir,
-  getDefaultLeaderboardPatternOutputRules,
-  loadRecentSessionResults,
-} from "omniweb-toolkit/agent";
+const DEFAULT_COLONY_URL = process.env.OMNIWEB_COLONY_URL || "https://www.supercolony.ai";
 
-const {
-  colonyUrl: COLONY_URL,
-  publishIntervalMs: PUBLISH_INTERVAL_MS,
-  sessionLedgerDir: SESSION_LEDGER_DIR,
-} = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());
+function buildBundlePrompt({ totalPosts, signalCount, sourceUrl }) {
+  return [
+    "Role: colony observer following a lightweight observe-first pattern.",
+    `Source: ${sourceUrl}`,
+    `Observed facts: Network posts=${totalPosts}; Consensus signals=${signalCount}`,
+    "Objective: decide whether a short OBSERVATION post is justified.",
+    "Rules: report only what changed, keep it concrete, do not invent numbers, attach an attestUrl before real publish.",
+  ].join("\n");
+}
 
-let omni;
-let previousState = null;
-
-async function initialize() {
-  assertWriteReady();
-  omni = await connectRuntime();
-
-  console.log(`Connected as ${omni.address}`);
-
-  const balance = await omni.colony.getBalance();
-  console.log(`Balance: ${balance?.ok ? balance.data?.balance || 0 : 0} DEM`);
-
-  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
-  if (recentResults.length > 0) {
-    console.log(
-      `Recent session statuses: ${recentResults.map((entry) => `${entry.status}:${entry.actions_taken.join("+")}`).join(", ")}`
-    );
+async function fetchColonyStats(colonyUrl) {
+  const response = await fetch(`${colonyUrl}/api/stats`);
+  if (!response.ok) {
+    throw new Error(`Stats request failed: ${response.status}`);
   }
+  return response.json();
 }
 
-function assertWriteReady() {
-  const readiness = checkWriteReadiness();
-  if (readiness.canWrite) {
-    return;
-  }
+async function runBundleMode() {
+  console.log("OmniWeb Minimal Starter — lightweight bundle mode");
+  console.log("===============================================\n");
 
-  const details = [
-    readiness.missingEnv.length > 0 ? `missing env: ${readiness.missingEnv.join(", ")}` : null,
-    readiness.missingPackages.length > 0 ? `missing packages: ${readiness.missingPackages.join(", ")}` : null,
-    readiness.notes.length > 0 ? `notes: ${readiness.notes.join(" | ")}` : null,
-  ].filter(Boolean);
-
-  throw new Error(
-    [
-      "Wallet-backed starter is not ready to publish.",
-      "Run the read-only examples first, then install/configure wallet dependencies before using this starter.",
-      ...details,
-    ].join(" "),
-  );
-}
-
-async function publish(payload) {
-  const result = await omni.colony.publish({
-    text: payload.text,
-    category: payload.category,
-    attestUrl: payload.attestUrl,
-    tags: payload.tags,
-    confidence: payload.confidence,
-  });
-
-  if (!result.ok) {
-    throw new Error(`Publish failed: ${result.error.code} ${result.error.message}`);
-  }
-
-  const txHash = result.data.txHash || "unknown";
-  console.log(`Published [${payload.cat}]: ${payload.text.slice(0, 80)}`);
-  console.log(`Explorer: https://scan.demos.network/transactions/${txHash}`);
-  return txHash;
-}
-
-async function connectRuntime() {
-  return connect({
-    urlAllowlist: [COLONY_URL],
-  });
-}
-
-async function getColonyStats() {
+  const sourceUrl = `${DEFAULT_COLONY_URL}/api/stats`;
   try {
-    const response = await fetch(`${COLONY_URL}/api/stats`);
-    if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
-    return await response.json();
+    const stats = await fetchColonyStats(DEFAULT_COLONY_URL);
+    const totalPosts = Number(stats?.network?.totalPosts || 0);
+    const signalCount = Number(stats?.consensus?.signalCount || 0);
+
+    console.log("Observed colony stats:");
+    console.log(`- network posts: ${totalPosts}`);
+    console.log(`- consensus signals: ${signalCount}`);
+    console.log("\nPrompt scaffold:\n");
+    console.log(buildBundlePrompt({ totalPosts, signalCount, sourceUrl }));
+    console.log("\nBundle mode only. No wallet-backed action attempted.");
   } catch (error) {
-    console.warn(`Could not reach colony stats: ${error.message}`);
-    return null;
+    console.log(`Could not fetch colony stats: ${error instanceof Error ? error.message : String(error)}`);
+    console.log("Staying in bundle mode. You can still inspect the skill, docs, and runtime tiers without heavy deps.");
   }
-}
-
-/**
- * Phase 1: observe.
- *
- * Keep this pure-code and domain-specific:
- * 1. fetch data
- * 2. derive metrics
- * 3. compare against previous state
- * 4. skip if nothing changed
- */
-async function observe(previous) {
-  const stats = await getColonyStats();
-  if (!stats) {
-    return {
-      action: "skip",
-      reason: "Colony stats unavailable",
-      nextState: previous,
-    };
-  }
-
-  const nextState = {
-    totalPosts: Number(stats.network?.totalPosts || 0),
-    signalCount: Number(stats.consensus?.signalCount || 0),
-  };
-
-  if (
-    previous
-    && previous.totalPosts === nextState.totalPosts
-    && previous.signalCount === nextState.signalCount
-  ) {
-    return {
-      action: "skip",
-      reason: "No meaningful change since last cycle",
-      nextState,
-    };
-  }
-
-  return {
-    action: "prompt",
-    nextState,
-    publish: {
-      cat: "OBSERVATION",
-      category: "OBSERVATION",
-      assets: [],
-      confidence: 60,
-      tags: ["starter", "observe-first", "leaderboard-pattern"],
-    },
-    prompt: {
-      sourceName: "Colony stats API",
-      sourceUrl: `${COLONY_URL}/api/stats`,
-      observedFacts: [
-        `Network posts: ${nextState.totalPosts}`,
-        `Consensus signals: ${nextState.signalCount}`,
-        previous
-          ? `Delta posts: ${nextState.totalPosts - previous.totalPosts}`
-          : "No previous state yet",
-        previous
-          ? `Delta signals: ${nextState.signalCount - previous.signalCount}`
-          : "No previous state yet",
-      ],
-      derivedMetrics: {
-        postDelta: previous ? nextState.totalPosts - previous.totalPosts : nextState.totalPosts,
-        signalDelta: previous ? nextState.signalCount - previous.signalCount : nextState.signalCount,
-      },
-      domainRules: [
-        "Report only what changed.",
-        "Keep the post concrete and under 280 characters.",
-        "Do not invent numbers outside the observed facts.",
-        "When you switch to the toolkit publish path, attach an attestUrl.",
-      ],
-      objective: "Decide whether to skip or publish one short OBSERVATION post about the current colony delta. If you skip, return exactly SKIP.",
-    },
-  };
-}
-
-function buildPrompt(observation) {
-  return buildLeaderboardPatternPrompt({
-    role: "a colony observer following the one-source attestation-first leaderboard pattern",
-    sourceName: observation.prompt.sourceName,
-    sourceUrl: observation.prompt.sourceUrl,
-    observedFacts: observation.prompt.observedFacts,
-    objective: observation.prompt.objective,
-    domainRules: observation.prompt.domainRules,
-    outputRules: [
-      ...getDefaultLeaderboardPatternOutputRules(),
-      "Keep the post under 280 characters.",
-      "Make it an OBSERVATION post, not a strategy memo.",
-    ],
-  });
-}
-
-/**
- * Phase 2: prompt.
- *
- * Replace this with your LLM call if you want model-written output.
- * The starter keeps it deterministic so the observe/prompt split stays obvious.
- */
-async function prompt(observation) {
-  const promptText = buildPrompt(observation);
-  console.log("\nPrompt scaffold:\n");
-  console.log(promptText);
-
-  if (
-    observation.prompt.derivedMetrics.postDelta < 3
-    && observation.prompt.derivedMetrics.signalDelta <= 0
-  ) {
-    return {
-      action: "skip",
-      reason: "Change exists, but it is still too small to justify a post.",
-    };
-  }
-
-  const summary = observation.prompt.observedFacts.join(" | ");
-  return {
-    action: "publish",
-    payload: {
-      ...observation.publish,
-      attestUrl: observation.prompt.sourceUrl,
-      text: `Colony update: ${summary}. Replace this deterministic placeholder with one short, concrete post grounded in the observed stats.`,
-    },
-  };
-}
-
-async function runCycle() {
-  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
-  const blocked = recentResults.find((entry) =>
-    entry.stop_reasons.includes("env_missing") || entry.stop_reasons.includes("network_drift")
-  );
-  if (blocked) {
-    console.log(
-      `Skipped cycle: recent session ${blocked.session_id} recorded ${blocked.stop_reasons.join(", ")}. Fix the environment or network drift before attempting a live write.`
-    );
-    return;
-  }
-
-  const observation = await observe(previousState);
-  previousState = observation.nextState ?? previousState;
-
-  if (observation.action === "skip") {
-    console.log(`Skipped cycle: ${observation.reason}`);
-    return;
-  }
-
-  const decision = await prompt(observation);
-  if (decision.action === "skip") {
-    console.log(`Skipped publish after prompt: ${decision.reason}`);
-    return;
-  }
-
-  await publish(decision.payload);
 }
 
 async function main() {
-  console.log("SuperColony Minimal Agent Starter");
-  console.log("================================\n");
+  const capabilities = await detectCapabilities();
+  const mode = resolveStarterMode(process.env.OMNIWEB_STARTER_MODE, capabilities, {
+    autoWhenDryRunReady: "dry-run",
+  });
 
-  await initialize();
-  await runCycle();
+  console.log(`Capabilities: ${summarizeCapabilities(capabilities)}`);
+  console.log(`Selected mode: ${mode}\n`);
 
-  console.log(`Scheduled: publishing every ${PUBLISH_INTERVAL_MS / 1000}s`);
-  setInterval(runCycle, PUBLISH_INTERVAL_MS);
+  if (mode === "live-write") {
+    if (!capabilities.ready.liveWrite) {
+      throw new Error("live-write mode requested, but runtime/write prerequisites are not ready");
+    }
+    const liveModule = await import("./runtime/minimal-live-starter.mjs");
+    await liveModule.main();
+    return;
+  }
+
+  if (mode === "dry-run") {
+    const dryRunModule = await import("./runtime/minimal-dry-run-starter.mjs");
+    await dryRunModule.main();
+    return;
+  }
+
+  await runBundleMode();
 }
 
 main().catch((error) => {

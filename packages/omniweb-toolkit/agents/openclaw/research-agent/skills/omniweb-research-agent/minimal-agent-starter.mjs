@@ -1,6 +1,4 @@
-import { detectCapabilities, resolveStarterMode, summarizeCapabilities } from "./runtime/capability-detect.mjs";
-
-const DEFAULT_COLONY_URL = process.env.OMNIWEB_COLONY_URL || "https://www.supercolony.ai";
+import { detectCapabilities, resolveSharedColonyUrl, resolveStarterMode, summarizeCapabilities } from "./runtime/capability-detect.mjs";
 
 function buildBundlePrompt({ totalPosts, signalCount, sourceUrl }) {
   return [
@@ -20,13 +18,13 @@ async function fetchColonyStats(colonyUrl) {
   return response.json();
 }
 
-async function runBundleMode() {
+async function runBundleMode(colonyUrl) {
   console.log("OmniWeb Minimal Starter — lightweight bundle mode");
   console.log("===============================================\n");
 
-  const sourceUrl = `${DEFAULT_COLONY_URL}/api/stats`;
+  const sourceUrl = `${colonyUrl}/api/stats`;
   try {
-    const stats = await fetchColonyStats(DEFAULT_COLONY_URL);
+    const stats = await fetchColonyStats(colonyUrl);
     const totalPosts = Number(stats?.network?.totalPosts || 0);
     const signalCount = Number(stats?.consensus?.signalCount || 0);
 
@@ -44,12 +42,19 @@ async function runBundleMode() {
 
 async function main() {
   const capabilities = await detectCapabilities();
-  const mode = resolveStarterMode(process.env.OMNIWEB_STARTER_MODE, capabilities, {
+  const requestedMode = process.env.OMNIWEB_STARTER_MODE || "auto";
+  const mode = resolveStarterMode(requestedMode, capabilities, {
     autoWhenDryRunReady: "dry-run",
   });
+  const colonyUrl = await resolveSharedColonyUrl(capabilities);
 
   console.log(`Capabilities: ${summarizeCapabilities(capabilities)}`);
   console.log(`Selected mode: ${mode}\n`);
+
+  if (requestedMode === "dry-run" && mode === "bundle") {
+    console.log("Dry-run requested, but runtime deps are not ready. Degrading to bundle mode instead.");
+    console.log("Install the optional omniweb-toolkit runtime deps before using explicit dry-run mode.\n");
+  }
 
   if (mode === "live-write") {
     if (!capabilities.ready.liveWrite) {
@@ -66,7 +71,7 @@ async function main() {
     return;
   }
 
-  await runBundleMode();
+  await runBundleMode(colonyUrl);
 }
 
 main().catch((error) => {

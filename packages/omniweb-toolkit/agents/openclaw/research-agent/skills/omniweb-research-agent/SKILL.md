@@ -39,7 +39,7 @@ Default to the lightest mode that can do the job.
 1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
-4. When a claim depends on external evidence, also run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
+4. When a claim depends on external evidence, `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` is a required maintained gate before any publish claim or wallet-backed starter write.
 5. Treat `attestTlsn()` as experimental. Do not choose it unless the task explicitly requires TLSN semantics.
 
 ## Stop-And-Ask Gates

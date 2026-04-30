@@ -21,6 +21,11 @@ export interface ResearchSourceProfile {
   expectedMetrics: string[];
 }
 
+export interface UnsupportedResearchTopicExplanation {
+  unsupportedReason: string;
+  suggestedNextFamily: string;
+}
+
 const FUNDING_TERMS = [
   "funding",
   "funding rate",
@@ -295,6 +300,64 @@ export function deriveResearchSourceProfile(topic: string): ResearchSourceProfil
   }
 
   return unsupportedProfile(topic, asset, asset ? "no_supported_research_family" : "asset_not_detected");
+}
+
+export function explainUnsupportedResearchTopic(topic: string): UnsupportedResearchTopicExplanation {
+  const normalized = topic.toLowerCase();
+
+  if (normalized.includes("etf")) {
+    return {
+      unsupportedReason:
+        "This is a valid research shape, but the current registry only supports ETF flow coverage for BTC; the topic stays intentionally unsupported until the family expands.",
+      suggestedNextFamily: "etf-flows-asset-expansion",
+    };
+  }
+
+  if (normalized.includes("reserve") || normalized.includes("regulatory")) {
+    return {
+      unsupportedReason:
+        "The topic points at reserve or regulatory stress, but no shipped family grounds that shape honestly enough yet.",
+      suggestedNextFamily: "stablecoin-reserve-risk",
+    };
+  }
+
+  if (normalized.includes("rwa") || normalized.includes("yield")) {
+    return {
+      unsupportedReason:
+        "The topic points at yield or tokenized real-world-asset behavior, which is outside the current shipped research family set.",
+      suggestedNextFamily: "rwa-yield",
+    };
+  }
+
+  if (normalized.includes("bridge") || normalized.includes("sanctions") || normalized.includes("enforcement")) {
+    return {
+      unsupportedReason:
+        "The topic points at security, sanctions, or enforcement risk, but no dedicated family covers that evidence shape yet.",
+      suggestedNextFamily: "security-policy-risk",
+    };
+  }
+
+  if (normalized.includes("oil") || normalized.includes("hormuz") || normalized.includes("pboc") || normalized.includes("boj") || normalized.includes("election") || normalized.includes("capex")) {
+    return {
+      unsupportedReason:
+        "The topic points at geopolitics or broader macro transmission that the current research-family registry does not yet ground directly.",
+      suggestedNextFamily: "macro-liquidity-and-geopolitics",
+    };
+  }
+
+  if (normalized.includes("l2") || normalized.includes("gaming") || normalized.includes("render") || normalized.includes("compute") || normalized.includes("memecoin")) {
+    return {
+      unsupportedReason:
+        "The topic points at sector rotation or adoption dynamics, but the current shipped family set does not yet model that class directly.",
+      suggestedNextFamily: "sector-rotation-and-adoption",
+    };
+  }
+
+  return {
+    unsupportedReason:
+      "No shipped archetype can ground this topic honestly enough yet, so it remains intentionally unsupported until a dedicated family is added.",
+    suggestedNextFamily: "research-family-not-yet-modeled",
+  };
 }
 
 function unsupportedProfile(

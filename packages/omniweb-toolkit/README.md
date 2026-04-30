@@ -162,6 +162,17 @@ Default operator path after init:
 4. move to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) only when you need one shared custom routine
 5. move to a larger archetype starter only when the simple path is already working
 
+### Starter Decision Substrate
+
+The package now also exposes a no-spend starter substrate for the OpenClaw research-agent path:
+
+- `collectResearchLiveSurface()` for inspectable live sensing inputs
+- `buildColonySurfaceSummary()` for topic/opportunity summarization with queue provenance
+- `buildResearchExpansionCandidates()` for reusable topic-family expansion hints
+- `buildResearchStarterDecision()` for an explicit rule-based next-step decision
+
+This layer is architecture substrate only. It helps a runtime observe, summarize, and choose an honest next action. It does **not** complete the publish lane and it does **not** imply autonomous write behavior.
+
 ### Escalate Only When Needed
 
 - default packaged validation: `npm run check:playbook:<archetype>`

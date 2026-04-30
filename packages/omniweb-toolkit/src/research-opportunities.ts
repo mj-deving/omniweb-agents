@@ -96,6 +96,18 @@ export interface ResearchOpportunity {
   attestationPlan: MinimalAttestationPlan;
 }
 
+export interface LiveResearchTopic {
+  kind: "coverage_gap" | "contradiction" | "stale_topic" | "active_topic";
+  topic: string;
+  score: number;
+  rationale: string;
+  sourceProfile: ResearchSourceProfile;
+  matchedSignal: ResearchSignalInput;
+  matchingFeedPosts: ResearchPostInput[];
+  lastSeenAt: number | null;
+  contradictionSignals?: string[];
+}
+
 const DEFAULT_STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 const DEFAULT_MIN_CONFIDENCE = 70;
 const DEFAULT_RECENT_COVERAGE_PENALTY = 15;
@@ -204,6 +216,105 @@ export function deriveResearchOpportunities(
 
   opportunities.sort((left, right) => right.score - left.score);
   return opportunities;
+}
+
+export function rankLiveResearchTopics(
+  opts: DeriveResearchOpportunitiesOptions,
+): LiveResearchTopic[] {
+  const nowMs = opts.nowMs ?? Date.now();
+  const staleAfterMs = opts.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
+  const minConfidence = opts.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
+  const lastCoverageTopic = normalize(opts.lastCoverageTopic);
+  const recentCoverageTopics = new Set((opts.recentCoverageTopics ?? []).map(normalize).filter(Boolean));
+  const recentCoverageFamilies = new Set((opts.recentCoverageFamilies ?? []).map(normalize).filter(Boolean));
+  const recentCoveragePenalty = opts.recentCoveragePenalty ?? DEFAULT_RECENT_COVERAGE_PENALTY;
+  const recentFamilyCoveragePenalty = opts.recentFamilyCoveragePenalty ?? DEFAULT_RECENT_FAMILY_COVERAGE_PENALTY;
+  const topics: LiveResearchTopic[] = [];
+
+  for (const signal of opts.signals) {
+    const topic = normalize(signal.topic);
+    if (!topic || topic === lastCoverageTopic) continue;
+    const confidence = signal.confidence ?? 0;
+    if (confidence < minConfidence) continue;
+
+    const sourceProfile = deriveResearchSourceProfile(topic);
+    const matchingFeedPosts = opts.posts.filter((post) => includesNormalized(post.text, topic));
+    const lastSeenAt = matchingFeedPosts.reduce<number | null>((latest, post) => {
+      if (typeof post.timestamp !== "number") return latest;
+      return latest == null || post.timestamp > latest ? post.timestamp : latest;
+    }, null);
+
+    const contradictionSignals = detectContradictionSignals(matchingFeedPosts);
+    const repeatedTopicPenalty = recentCoverageTopics.has(topic) ? recentCoveragePenalty : 0;
+    const repeatedFamilyPenalty = recentCoverageFamilies.has(normalize(sourceProfile.family))
+      ? recentFamilyCoveragePenalty
+      : 0;
+    const signalRichnessBonus = computeSignalRichnessBonus(signal);
+    const supportPenalty = sourceProfile.supported ? 0 : 10;
+    const baseScore = confidence + signalRichnessBonus - repeatedTopicPenalty - repeatedFamilyPenalty - supportPenalty;
+
+    if (matchingFeedPosts.length === 0) {
+      topics.push({
+        kind: "coverage_gap",
+        topic,
+        score: baseScore + 20,
+        rationale: sourceProfile.supported
+          ? "High-confidence signal is not covered in the recent feed."
+          : "High-confidence signal is not covered in the recent feed, even though it is outside the current supported-family map.",
+        sourceProfile,
+        matchedSignal: signal,
+        matchingFeedPosts,
+        lastSeenAt: null,
+        contradictionSignals: [],
+      });
+      continue;
+    }
+
+    if (contradictionSignals.length > 0) {
+      topics.push({
+        kind: "contradiction",
+        topic,
+        score: baseScore + 25,
+        rationale: "Recent matching feed posts point in conflicting directions and need a fresh synthesis.",
+        sourceProfile,
+        matchedSignal: signal,
+        matchingFeedPosts,
+        lastSeenAt,
+        contradictionSignals,
+      });
+      continue;
+    }
+
+    if (lastSeenAt != null && nowMs - lastSeenAt > staleAfterMs) {
+      topics.push({
+        kind: "stale_topic",
+        topic,
+        score: baseScore + 10,
+        rationale: "Signal remains active but the most recent matching feed post is stale.",
+        sourceProfile,
+        matchedSignal: signal,
+        matchingFeedPosts,
+        lastSeenAt,
+        contradictionSignals: [],
+      });
+      continue;
+    }
+
+    topics.push({
+      kind: "active_topic",
+      topic,
+      score: baseScore,
+      rationale: "Signal is already active in the feed and still worth runtime review.",
+      sourceProfile,
+      matchedSignal: signal,
+      matchingFeedPosts,
+      lastSeenAt,
+      contradictionSignals,
+    });
+  }
+
+  topics.sort((left, right) => right.score - left.score);
+  return topics;
 }
 
 function includesNormalized(text: string, topic: string): boolean {

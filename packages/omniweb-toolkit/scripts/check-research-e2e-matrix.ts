@@ -1,7 +1,9 @@
 #!/usr/bin/env npx tsx
 
+import { existsSync, readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import {
   DEFAULT_PENDING_VERDICT_PATH,
@@ -27,19 +29,19 @@ type MatrixFamily =
 
 type MatrixDraftCategory = "ANALYSIS" | "OBSERVATION";
 
-interface FeedSample {
+type FeedSample = {
   txHash: string | null;
   category: string | null;
   text: string;
   author: string | null;
   timestamp: number | null;
-}
+};
 
-interface SignalSample {
+type SignalSample = {
   topic: string | null;
   confidence: number | null;
   direction: string | null;
-}
+};
 
 interface MatrixFamilyResult {
   family: MatrixFamily;
@@ -47,6 +49,7 @@ interface MatrixFamilyResult {
     | "no_live_candidate"
     | "attestation_plan_not_ready"
     | "evidence_not_ready"
+    | "composition_packet_ready"
     | "draft_rejected"
     | "match_failed"
     | "draft_ready"
@@ -64,6 +67,7 @@ interface MatrixFamilyResult {
     category: string;
     confidence: number;
   };
+  compositionPacket?: unknown;
   qualityGate?: unknown;
   match?: unknown;
   verification?: unknown;
@@ -80,6 +84,15 @@ interface MatrixFamilyResult {
     inserted: boolean;
   };
   notes?: string[];
+}
+
+interface MatrixReadyDraft {
+  text: string;
+  category: MatrixDraftCategory;
+  confidence: number;
+  tags: string[];
+  qualityGate: unknown;
+  draftSource: "llm" | "external";
 }
 
 interface ResearchOpportunityLike {
@@ -133,6 +146,11 @@ Options:
   --env-path PATH             Override wallet credentials file passed to connect()
   --agent-name NAME           Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH            Forwarded to connect()
+  --draft-text TEXT           Use externally composed text for the broadcast family instead of internal LLM drafting
+  --draft-category CAT        Optional category hint for --draft-text (ANALYSIS or OBSERVATION)
+  --emit-composition-packet   Emit the structured composition packet for the broadcast family without requiring internal LLM drafting
+  --emit-surface-summary      Emit a family-agnostic live colony surface summary before any family-specific drafting/publish logic
+  --allow-llm-autodetect      Allow implicit LLM CLI autodetect instead of failing fast
   --allow-insecure            Forwarded to connect() for local debugging only
   --help, -h                  Show this help
 `);
@@ -158,6 +176,47 @@ const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
 const envPath = getOptionalArg("--env-path");
 const agentName = getOptionalArg("--agent-name");
+const externalDraftText = getOptionalArg("--draft-text");
+const externalDraftCategory = getOptionalCategory("--draft-category");
+const emitCompositionPacket = args.includes("--emit-composition-packet");
+const emitSurfaceSummary = args.includes("--emit-surface-summary");
+const allowLlmAutodetect = args.includes("--allow-llm-autodetect");
+
+if (externalDraftText && !broadcastFamily) {
+  console.error("--draft-text requires --broadcast-family so the external composition target is explicit.");
+  process.exit(2);
+}
+
+if (externalDraftText && broadcastFallbackFamilies.length > 0) {
+  console.error("--draft-text cannot be combined with --broadcast-fallback-families; external composition must target one explicit family.");
+  process.exit(2);
+}
+
+if (emitCompositionPacket && !broadcastFamily) {
+  console.error("--emit-composition-packet requires --broadcast-family so the packet target is explicit.");
+  process.exit(2);
+}
+
+if (emitCompositionPacket && broadcastFallbackFamilies.length > 0) {
+  console.error("--emit-composition-packet cannot be combined with --broadcast-fallback-families; packet extraction must target one explicit family.");
+  process.exit(2);
+}
+
+const llmResolution = detectExplicitLlmResolution(envPath ?? ".env");
+
+if (!externalDraftText && !emitCompositionPacket && !emitSurfaceSummary && !allowLlmAutodetect && llmResolution.mode === "autodetect") {
+  const failure = {
+    checkedAt: new Date().toISOString(),
+    ok: false,
+    reason: "llm_provider_unpinned",
+    message:
+      "No explicit LLM provider configuration found. Pin LLM_PROVIDER or LLM_CLI_COMMAND (or provide a direct API-key-backed provider config) before using the maintained research matrix path. Use --allow-llm-autodetect only for intentional experiments.",
+    llmResolution,
+  };
+  await maybeWriteOutput(outputPath, failure);
+  console.log(JSON.stringify(failure, null, 2));
+  process.exit(1);
+}
 
 if (broadcastFamily && !workerMode) {
   const report = await runBoundedFamilyWorker({
@@ -197,6 +256,55 @@ const deriveResearchOpportunities = await loadPackageExport<
   "../src/agent.ts",
   "deriveResearchOpportunities",
 );
+const rankLiveResearchTopics = await loadPackageExport<
+  (opts: { signals: SignalSample[]; posts: FeedSample[] }) => Array<ResearchOpportunityLike & { kind: string }>
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "rankLiveResearchTopics",
+);
+const buildColonySurfaceSummary = await loadPackageExport<
+  (input: {
+    checkedAt: string;
+    posts: FeedSample[];
+    signals: SignalSample[];
+    leaderboardAgents: string[];
+    availableBalance: number;
+    opportunities: ResearchOpportunityLike[];
+    maxTopics?: number;
+  }) => unknown
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "buildColonySurfaceSummary",
+);
+const collectResearchLiveSurface = await loadPackageExport<
+  (opts: {
+    colony: {
+      getFeed(args?: { limit?: number }): Promise<unknown>;
+      getSignals(): Promise<unknown>;
+      getLeaderboard(args?: { limit?: number }): Promise<unknown>;
+      getBalance(): Promise<unknown>;
+    };
+    feedLimit?: number;
+    leaderboardLimit?: number;
+  }) => Promise<{
+    posts: FeedSample[];
+    signals: SignalSample[];
+    leaderboardAgents: unknown[];
+    availableBalance: number;
+    readStatus: {
+      feed: { ok: boolean; error: string | null };
+      signals: { ok: boolean; error: string | null };
+      leaderboard: { ok: boolean; error: string | null };
+      balance: { ok: boolean; error: string | null };
+    };
+  }>
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "collectResearchLiveSurface",
+);
 const fetchResearchEvidenceSummary = await loadPackageExport<
   (opts: { source: any; topic: string }) => Promise<any>
 >(
@@ -220,6 +328,45 @@ const buildResearchDraft = await loadPackageExport<
   "../dist/agent.js",
   "../src/agent.ts",
   "buildResearchDraft",
+);
+const buildResearchCompositionPacket = await loadPackageExport<
+  (opts: {
+    opportunity: ResearchOpportunityLike;
+    feedCount: number;
+    leaderboardCount: number;
+    availableBalance: number;
+    evidenceSummary: any;
+    supportingEvidenceSummaries?: any[];
+    selfHistory?: unknown;
+    preferredCategory?: MatrixDraftCategory | null;
+    llmProvider?: unknown;
+    minTextLength?: number;
+  }) => unknown
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "buildResearchCompositionPacket",
+);
+const validateResearchComposition = await loadPackageExport<
+  (opts: {
+    text: string;
+    opportunity: ResearchOpportunityLike;
+    evidenceSummary: any;
+    supportingEvidenceSummaries?: any[];
+    selfHistory?: unknown;
+    preferredCategory?: MatrixDraftCategory | null;
+    minTextLength?: number;
+  }) => {
+    pass: boolean;
+    category: MatrixDraftCategory;
+    confidence: number;
+    tags: string[];
+    qualityGate: unknown;
+  }
+>(
+  "../dist/agent.js",
+  "../src/agent.ts",
+  "validateResearchComposition",
 );
 const buildResearchSelfHistory = await loadPackageExport<
   (opts: {
@@ -303,31 +450,58 @@ const verifyPublishVisibility = await loadPackageExport<
 const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 const startedAt = new Date().toISOString();
 let publishHistory = stateDir ? await loadResearchPublishHistory(stateDir) : [];
-
-const [feedRead, signalsRead, leaderboardRead, balanceRead] = await Promise.allSettled([
-  omni.colony.getFeed({ limit: 30 }),
-  omni.colony.getSignals(),
-  omni.colony.getLeaderboard({ limit: 10 }),
-  omni.colony.getBalance(),
-]);
-
-const reads = {
-  feed: unwrap(feedRead),
-  signals: unwrap(signalsRead),
-  leaderboard: unwrap(leaderboardRead),
-  balance: unwrap(balanceRead),
-};
+const liveSurface = await collectResearchLiveSurface({
+  colony: omni.colony,
+  feedLimit: 30,
+  leaderboardLimit: 10,
+});
+const reads = liveSurface.readStatus;
 
 if (!reads.feed.ok || !reads.signals.ok || !reads.balance.ok) {
+  if (emitSurfaceSummary) {
+    const partialOpportunities = reads.feed.ok && reads.signals.ok
+      ? deriveResearchOpportunities({ signals: liveSurface.signals, posts: liveSurface.posts })
+      : [];
+    const partialLiveTopics = reads.feed.ok && reads.signals.ok
+      ? rankLiveResearchTopics({ signals: liveSurface.signals, posts: liveSurface.posts })
+      : [];
+    const degradedReport = {
+      checkedAt: startedAt,
+      ok: false,
+      reason: "surface_summary_partial_reads",
+      surfaceSummary: buildColonySurfaceSummary({
+        checkedAt: startedAt,
+        posts: liveSurface.posts,
+        signals: liveSurface.signals,
+        leaderboardAgents: liveSurface.leaderboardAgents as string[],
+        availableBalance: liveSurface.availableBalance,
+        opportunities: partialOpportunities,
+        liveTopics: partialLiveTopics,
+        expansionCandidateSource: partialLiveTopics.length > 0 ? "partial_live_topic_ranker" : "none",
+      }),
+      readStatus: {
+        feed: reads.feed,
+        signals: reads.signals,
+        leaderboard: reads.leaderboard,
+        balance: reads.balance,
+      },
+      opportunitiesConsidered: partialOpportunities.length,
+      familyResults: [],
+    };
+    await maybeWriteOutput(outputPath, degradedReport);
+    console.log(JSON.stringify(degradedReport, null, 2));
+    process.exit(0);
+  }
+
   const failure = {
     checkedAt: startedAt,
     ok: false,
     reason: "core_reads_failed",
     readStatus: {
-      feed: describeRead(reads.feed),
-      signals: describeRead(reads.signals),
-      leaderboard: describeRead(reads.leaderboard),
-      balance: describeRead(reads.balance),
+      feed: reads.feed,
+      signals: reads.signals,
+      leaderboard: reads.leaderboard,
+      balance: reads.balance,
     },
   };
   await maybeWriteOutput(outputPath, failure);
@@ -335,14 +509,53 @@ if (!reads.feed.ok || !reads.signals.ok || !reads.balance.ok) {
   process.exit(1);
 }
 
-const posts = extractFeedPosts(reads.feed.data);
-const signals = extractSignals(reads.signals.data);
-const leaderboardAgents = extractLeaderboardAgents(reads.leaderboard.data);
-const availableBalance = extractAvailableBalance(reads.balance.data);
+const posts = liveSurface.posts;
+const signals = liveSurface.signals;
+const leaderboardAgents = liveSurface.leaderboardAgents;
+const availableBalance = liveSurface.availableBalance;
 const opportunities = deriveResearchOpportunities({
   signals,
   posts,
 });
+const liveTopics = rankLiveResearchTopics({
+  signals,
+  posts,
+});
+
+const surfaceSummary = buildColonySurfaceSummary({
+  checkedAt: startedAt,
+  posts,
+  signals,
+  leaderboardAgents,
+  availableBalance,
+  opportunities,
+  liveTopics,
+  expansionCandidateSource: "live_topic_ranker",
+});
+
+if (emitSurfaceSummary && !broadcastFamily) {
+  const report = {
+    checkedAt: startedAt,
+    ok: true,
+    surfaceSummary,
+    broadcastFamily: null,
+    broadcastFallbackFamilies,
+    broadcastPublishedFamily: null,
+    broadcastUsedFallback: false,
+    availableBalance,
+    readStatus: {
+      feed: reads.feed,
+      signals: reads.signals,
+      leaderboard: reads.leaderboard,
+      balance: reads.balance,
+    },
+    opportunitiesConsidered: opportunities.length,
+    familyResults: [],
+  };
+  await maybeWriteOutput(outputPath, report);
+  console.log(JSON.stringify(report, null, 2));
+  process.exit(0);
+}
 
 const evaluationFamilies = buildResearchMatrixEvaluationFamilies({
   requestedFamily: broadcastFamily ? broadcastFamily as MatrixFamily : null,
@@ -362,7 +575,7 @@ for (const family of evaluationFamilies) {
 
 const familyResults: MatrixFamilyResult[] = [];
 const readyPublishContexts = new Map<MatrixFamily, {
-  draft: Awaited<ReturnType<typeof buildResearchDraft>> & { ok: true };
+  draft: MatrixReadyDraft;
   opportunity: ResearchOpportunityLike;
   evidenceValues: Record<string, string>;
 }>();
@@ -432,7 +645,7 @@ for (const family of evaluationFamilies) {
   });
   const prefetchResults = evidenceReads.flatMap((entry) =>
     entry.status === "fulfilled" ? [entry.value] : []);
-  const draft = await buildResearchDraft({
+  const compositionPacket = buildResearchCompositionPacket({
     opportunity,
     feedCount: posts.length,
     leaderboardCount: leaderboardAgents.length,
@@ -445,17 +658,111 @@ for (const family of evaluationFamilies) {
     minTextLength: 200,
   });
 
-  if (!draft.ok) {
+  if (emitCompositionPacket && family === broadcastFamily && !externalDraftText) {
+    familyResults.push({
+      family,
+      status: "composition_packet_ready",
+      topic: opportunity.topic,
+      opportunityKind: opportunity.kind,
+      rationale: opportunity.rationale,
+      evidenceSource: primaryEvidence.value.summary.source,
+      supportingSources: supportingSummaries.map((entry) => entry.source),
+      promptProvider: null,
+      compositionPacket,
+      notes: supportingNotes,
+    });
+    continue;
+  }
+
+  const useExternalDraft = Boolean(externalDraftText) && family === broadcastFamily;
+  let draft: MatrixReadyDraft | null = null;
+
+  if (useExternalDraft) {
+    const normalizedExternalDraft = externalDraftText.replace(/\s+/g, " ").trim();
+    const validation = validateResearchComposition({
+      text: normalizedExternalDraft,
+      opportunity,
+      evidenceSummary: primaryEvidence.value.summary,
+      supportingEvidenceSummaries: supportingSummaries,
+      selfHistory,
+      preferredCategory: externalDraftCategory ?? preferredCategory,
+      minTextLength: 200,
+    });
+    if (!validation.pass) {
+      familyResults.push({
+        family,
+        status: "draft_rejected",
+        topic: opportunity.topic,
+        opportunityKind: opportunity.kind,
+        rationale: opportunity.rationale,
+        reason: "external_draft_quality_gate_failed",
+        compositionPacket: emitCompositionPacket && family === broadcastFamily ? compositionPacket : undefined,
+        qualityGate: validation.qualityGate,
+        promptProvider: null,
+        notes: [...supportingNotes, `external_draft_preview: ${normalizedExternalDraft.slice(0, 220)}`],
+      });
+      continue;
+    }
+    draft = {
+      text: normalizedExternalDraft,
+      category: validation.category,
+      confidence: validation.confidence,
+      tags: validation.tags,
+      qualityGate: validation.qualityGate,
+      draftSource: "external",
+    };
+  } else {
+    const generatedDraft = await buildResearchDraft({
+      opportunity,
+      feedCount: posts.length,
+      leaderboardCount: leaderboardAgents.length,
+      availableBalance,
+      evidenceSummary: primaryEvidence.value.summary,
+      supportingEvidenceSummaries: supportingSummaries,
+      selfHistory,
+      preferredCategory,
+      llmProvider: omni.runtime.llmProvider,
+      minTextLength: 200,
+    });
+
+    if (!generatedDraft.ok) {
+      familyResults.push({
+        family,
+        status: "draft_rejected",
+        topic: opportunity.topic,
+        opportunityKind: opportunity.kind,
+        rationale: opportunity.rationale,
+        reason: generatedDraft.reason,
+        compositionPacket: emitCompositionPacket && family === broadcastFamily ? compositionPacket : undefined,
+        qualityGate: generatedDraft.qualityGate,
+        promptProvider: omni.runtime.llmProvider?.name ?? null,
+        notes: generatedDraft.notes,
+      });
+      continue;
+    }
+
+    draft = {
+      text: generatedDraft.text,
+      category: generatedDraft.category,
+      confidence: generatedDraft.confidence,
+      tags: generatedDraft.tags,
+      qualityGate: generatedDraft.qualityGate,
+      draftSource: "llm",
+    };
+  }
+
+  if (!draft) {
     familyResults.push({
       family,
       status: "draft_rejected",
       topic: opportunity.topic,
       opportunityKind: opportunity.kind,
       rationale: opportunity.rationale,
-      reason: draft.reason,
-      qualityGate: draft.qualityGate,
-      promptProvider: omni.runtime.llmProvider?.name ?? null,
-      notes: draft.notes,
+      reason: "draft_missing_after_selection",
+      compositionPacket: emitCompositionPacket && family === broadcastFamily ? compositionPacket : undefined,
+      qualityGate: null,
+      promptProvider: null,
+      notes: supportingNotes,
     });
     continue;
   }
@@ -478,6 +785,7 @@ for (const family of evaluationFamilies) {
       reason: match.reason,
       evidenceSource: primaryEvidence.value.summary.source,
       supportingSources: supportingSummaries.map((entry) => entry.source),
+      compositionPacket: emitCompositionPacket && family === broadcastFamily ? compositionPacket : undefined,
       draft: {
         text: draft.text,
         category: draft.category,
@@ -498,7 +806,8 @@ for (const family of evaluationFamilies) {
     rationale: opportunity.rationale,
     evidenceSource: primaryEvidence.value.summary.source,
     supportingSources: supportingSummaries.map((entry) => entry.source),
-    promptProvider: omni.runtime.llmProvider?.name ?? null,
+    promptProvider: draft.draftSource === "external" ? "external" : (omni.runtime.llmProvider?.name ?? null),
+    compositionPacket: emitCompositionPacket && family === broadcastFamily ? compositionPacket : undefined,
     draft: {
       text: draft.text,
       category: draft.category,
@@ -617,16 +926,17 @@ if (publishSelection.selectedFamily) {
 const report = {
   checkedAt: startedAt,
   ok: true,
+  surfaceSummary: emitSurfaceSummary ? surfaceSummary : undefined,
   broadcastFamily: broadcastFamily ?? null,
   broadcastFallbackFamilies,
   broadcastPublishedFamily: publishSelection.selectedFamily,
   broadcastUsedFallback: publishSelection.usedFallback,
   availableBalance,
   readStatus: {
-    feed: describeRead(reads.feed),
-    signals: describeRead(reads.signals),
-    leaderboard: describeRead(reads.leaderboard),
-    balance: describeRead(reads.balance),
+    feed: reads.feed,
+    signals: reads.signals,
+    leaderboard: reads.leaderboard,
+    balance: reads.balance,
   },
   opportunitiesConsidered: opportunities.length,
   familyResults,
@@ -680,74 +990,49 @@ function getOptionalCategory(flag: string): MatrixDraftCategory | null {
   process.exit(2);
 }
 
-function unwrap<T extends { ok?: boolean }>(
-  result: PromiseSettledResult<T>,
-): { ok: boolean; data: T | null; error: string | null } {
-  if (result.status === "rejected") {
-    return {
-      ok: false,
-      data: null,
-      error: result.reason instanceof Error ? result.reason.message : String(result.reason),
-    };
+type LlmResolutionMode = "explicit-provider" | "explicit-cli-command" | "api-key" | "autodetect";
+
+function detectExplicitLlmResolution(envPath: string): {
+  mode: LlmResolutionMode;
+  envPath: string;
+  explicitProvider: boolean;
+  explicitCliCommand: boolean;
+  anthropicKey: boolean;
+  openaiKey: boolean;
+} {
+  const explicitProvider = Boolean(readEnvLikeKey("LLM_PROVIDER", envPath));
+  const explicitCliCommand = Boolean(readEnvLikeKey("LLM_CLI_COMMAND", envPath));
+  const anthropicKey = Boolean(readEnvLikeKey("ANTHROPIC_API_KEY", envPath));
+  const openaiKey = Boolean(readEnvLikeKey("OPENAI_API_KEY", envPath));
+
+  let mode: LlmResolutionMode = "autodetect";
+  if (explicitProvider) mode = "explicit-provider";
+  else if (explicitCliCommand) mode = "explicit-cli-command";
+  else if (anthropicKey || openaiKey) mode = "api-key";
+
+  return {
+    mode,
+    envPath,
+    explicitProvider,
+    explicitCliCommand,
+    anthropicKey,
+    openaiKey,
+  };
+}
+
+function readEnvLikeKey(key: string, envPath: string): string | undefined {
+  if (process.env[key]) return process.env[key];
+
+  try {
+    const resolved = resolve(envPath.replace(/^~/, homedir()));
+    if (!existsSync(resolved)) return undefined;
+    const content = readFileSync(resolved, "utf-8");
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = content.match(new RegExp(`(?:^|\\n)\\s*(?:export\\s+)?${escapedKey}\\s*=\\s*"?([^"\\n]+)"?`, "m"));
+    return match?.[1]?.trim();
+  } catch {
+    return undefined;
   }
-  if (result.value?.ok !== true) {
-    return {
-      ok: false,
-      data: result.value,
-      error: "api_not_ok",
-    };
-  }
-  return { ok: true, data: result.value, error: null };
-}
-
-function describeRead(result: { ok: boolean; error: string | null }): { ok: boolean; error: string | null } {
-  return { ok: result.ok, error: result.error };
-}
-
-function extractFeedPosts(feed: unknown): FeedSample[] {
-  if (!feed || typeof feed !== "object") return [];
-  const posts = (feed as { data?: { posts?: unknown } }).data?.posts;
-  if (!Array.isArray(posts)) return [];
-  return posts.map((post) => samplePost(post));
-}
-
-function extractSignals(signals: unknown): SignalSample[] {
-  if (!signals || typeof signals !== "object") return [];
-  const list = (signals as { data?: unknown }).data;
-  if (!Array.isArray(list)) return [];
-  return list.map((signal) => ({
-    topic: signalTopic(signal),
-    confidence: signalConfidence(signal),
-    direction:
-      signal && typeof signal === "object" && typeof (signal as { direction?: unknown }).direction === "string"
-        ? (signal as { direction: string }).direction
-        : null,
-  }));
-}
-
-function extractLeaderboardAgents(leaderboard: unknown): unknown[] {
-  if (!leaderboard || typeof leaderboard !== "object") return [];
-  const data = (leaderboard as { data?: unknown }).data;
-  if (Array.isArray(data)) return data;
-  const agents = (data as { agents?: unknown } | undefined)?.agents;
-  return Array.isArray(agents) ? agents : [];
-}
-
-function extractAvailableBalance(balance: unknown): number {
-  if (!balance || typeof balance !== "object") return 0;
-  const direct = (balance as { balance?: unknown }).balance;
-  if (typeof direct === "number") return direct;
-  if (typeof direct === "string") {
-    const parsed = Number.parseFloat(direct.replace(/,/g, ""));
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  const nested = (balance as { data?: { balance?: unknown } }).data?.balance;
-  if (typeof nested === "number") return nested;
-  if (typeof nested === "string") {
-    const parsed = Number.parseFloat(nested.replace(/,/g, ""));
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
 }
 
 function signalTopic(signal: unknown): string | null {

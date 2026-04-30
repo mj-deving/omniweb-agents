@@ -1027,8 +1027,9 @@ function readEnvLikeKey(key: string, envPath: string): string | undefined {
     const resolved = resolve(envPath.replace(/^~/, homedir()));
     if (!existsSync(resolved)) return undefined;
     const content = readFileSync(resolved, "utf-8");
-    const match = content.match(new RegExp(`^${key}="?([^"\\n]+)"?$`, "m"));
-    return match?.[1];
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = content.match(new RegExp(`(?:^|\\n)\\s*(?:export\\s+)?${escapedKey}\\s*=\\s*"?([^"\\n]+)"?`, "m"));
+    return match?.[1]?.trim();
   } catch {
     return undefined;
   }

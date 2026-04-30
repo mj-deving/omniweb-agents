@@ -222,6 +222,27 @@ describe("ChainTransaction bridge methods", () => {
     expect(result!.from).toBe("demos1ipfs");
   });
 
+  it("verifyTransaction falls back to mempool when transaction is pending there", async () => {
+    const demos = mockDemos({
+      getTxByHash: vi.fn(async () => "error"),
+      getTransactions: vi.fn(async () => []),
+      getMempool: vi.fn(async () => [
+        {
+          hash: "0xpending-mempool",
+          blockNumber: 2183911,
+          status: "",
+          content: { from: "demos1pending", to: "demos1pending", type: "storage", data: null, timestamp: 1700000000 },
+        },
+      ]),
+    });
+    const bridge = createSdkBridge(demos as any, undefined, AUTH_PENDING_TOKEN, undefined, mockTxModule);
+    const result = await bridge.verifyTransaction("0xpending-mempool");
+    expect(result).not.toBeNull();
+    expect(result!.confirmed).toBe(false);
+    expect(result!.blockNumber).toBe(2183911);
+    expect(result!.from).toBe("demos1pending");
+  });
+
   it("resolvePostAuthor returns null when getTxByHash not available", async () => {
     const demos = mockDemos({ getTxByHash: undefined });
     const bridge = createSdkBridge(demos as any, undefined, AUTH_PENDING_TOKEN, undefined, mockTxModule);

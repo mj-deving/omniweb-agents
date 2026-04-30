@@ -100,12 +100,42 @@ export async function verifyTransaction(
   }
 
   const fallback = await findRecentTransactionByHash(rpc, txHash);
-  if (!fallback) return { confirmed: false };
-  const confirmed = fallback.blockNumber > 0 && fallback.status === "confirmed";
+  if (fallback) {
+    const confirmed = fallback.blockNumber > 0 && fallback.status === "confirmed";
+    return {
+      confirmed,
+      blockNumber: fallback.blockNumber,
+      from: fallback.from,
+    };
+  }
+
+  const pending = await findMempoolTransactionByHash(rpc, txHash);
+  if (pending) {
+    return {
+      confirmed: false,
+      blockNumber: pending.blockNumber,
+      from: pending.from,
+    };
+  }
+
+  return { confirmed: false };
+}
+
+async function findMempoolTransactionByHash(
+  rpc: ChainReaderRpc,
+  txHash: string,
+): Promise<{ blockNumber?: number; from?: string } | null> {
+  if (!rpc.getMempool) return null;
+
+  const mempool = await rpc.getMempool();
+  if (!Array.isArray(mempool)) return null;
+
+  const match = mempool.find((tx) => tx?.hash === txHash);
+  if (!match) return null;
+
   return {
-    confirmed,
-    blockNumber: fallback.blockNumber,
-    from: fallback.from,
+    blockNumber: match.blockNumber,
+    from: match.content?.from,
   };
 }
 

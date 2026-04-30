@@ -3,6 +3,7 @@ import { dirname, resolve } from "node:path";
 import type { PublishResult, ToolResult } from "../../../src/toolkit/types.js";
 import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
+import { runDirectAttestedWrite } from "./direct-attested-write.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
 import { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
 import type { PublishVisibilityResult } from "./publish-visibility.js";
@@ -333,38 +334,34 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  let publishResult: ToolResult<PublishResult>;
-  try {
-    publishResult = decision.kind === "publish"
-      ? await omni.colony.publish({
+  const directWrite = await runDirectAttestedWrite({
+    omni,
+    kind: decision.kind,
+    draft: decision.kind === "publish"
+      ? {
           text: decision.text,
           category: decision.category,
           attestUrl: decision.attestUrl,
           tags: decision.tags,
           confidence: decision.confidence,
-        })
-      : await omni.colony.reply({
+        }
+      : {
           parentTxHash: decision.parentTxHash,
           text: decision.text,
           attestUrl: decision.attestUrl,
           category: decision.category,
-        });
-  } catch (error) {
-    const record = buildFailureRecord({
-      cycle,
-      startedAtMs,
-      now,
-      memoryBefore,
-      decision,
-      error,
-      stage: "execute",
-      nextState: decision.nextState ?? memoryBefore.state,
-    });
-    await persistCycleArtifacts(stateDir, record);
-    return record;
-  }
+        },
+    verifyPublishVisibility,
+    verification: {
+      timeoutMs: opts.verification?.timeoutMs ?? DEFAULT_VERIFICATION_TIMEOUT_MS,
+      pollMs: opts.verification?.pollMs ?? DEFAULT_VERIFICATION_POLL_MS,
+      limit: opts.verification?.limit ?? DEFAULT_VERIFICATION_LIMIT,
+    },
+  });
 
-  if (!publishResult.ok) {
+  const publishResult = directWrite.result;
+
+  if (!directWrite.accepted || !publishResult?.ok) {
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -378,9 +375,9 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
         demSpendEstimate: 0,
         error: {
           stage: "execute",
-          message: publishResult.error?.message ?? "publish_failed",
-          code: publishResult.error?.code,
-          retryable: publishResult.error?.retryable,
+          message: publishResult?.error?.message ?? directWrite.error?.message ?? "publish_failed",
+          code: publishResult?.error?.code ?? directWrite.error?.code,
+          retryable: publishResult?.error?.retryable ?? directWrite.error?.retryable,
         },
       },
     });
@@ -388,32 +385,10 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  const txHash = publishResult.data?.txHash;
-  const attestationTxHash = publishResult.provenance.attestation?.txHash;
-  const attestationResponseHash = publishResult.provenance.attestation?.responseHash;
-  let verification: PublishVisibilityResult | undefined;
-  try {
-    verification = await verifyPublishVisibility(
-      omni,
-      txHash,
-      decision.text,
-      {
-        timeoutMs: opts.verification?.timeoutMs ?? DEFAULT_VERIFICATION_TIMEOUT_MS,
-        pollMs: opts.verification?.pollMs ?? DEFAULT_VERIFICATION_POLL_MS,
-        limit: opts.verification?.limit ?? DEFAULT_VERIFICATION_LIMIT,
-      },
-    );
-  } catch (error) {
-    verification = {
-      attempted: true,
-      visible: false,
-      indexedVisible: false,
-      polls: 0,
-      elapsedMs: 0,
-      txHash,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  const txHash = directWrite.txHash;
+  const attestationTxHash = directWrite.attestationTxHash;
+  const attestationResponseHash = directWrite.attestationResponseHash;
+  const verification = directWrite.visibility as PublishVisibilityResult | undefined;
 
   const record = buildCompletedRecord({
     cycle,

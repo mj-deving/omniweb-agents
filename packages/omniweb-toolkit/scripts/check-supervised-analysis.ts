@@ -155,8 +155,10 @@ const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 const session = await createSessionFromRuntime(omni.runtime, { stateDir, allowInsecureUrls });
 const authToken = await omni.runtime.getToken();
 const balanceResult = await omni.colony.getBalance();
+const chainBalanceResult = await omni.chain.getBalance(omni.address);
 const feedResult = await omni.colony.getFeed({ limit: 3 });
 const balanceOk = balanceResult?.ok === true;
+const chainBalanceOk = chainBalanceResult?.ok === true;
 const feedOk = feedResult?.ok === true;
 const schemaError = validateInput(PublishDraftSchema, {
   text,
@@ -170,14 +172,17 @@ const dedupError = await checkAndRecordDedup(session.stateStore, session.walletA
 const warnings = buildAttestUrlWarnings(attestUrlDiagnostics);
 
 const balanceData = balanceOk
-  ? balanceResult.data as { balance?: number; available?: number }
+  ? balanceResult.data as { balance?: number; available?: number; cached?: boolean }
   : null;
-const balance = Number(balanceData?.balance ?? balanceData?.available ?? 0);
+const colonyBalance = Number(balanceData?.balance ?? balanceData?.available ?? 0);
+const chainBalance = Number(chainBalanceResult?.balance ?? 0);
+const useChainBalance = chainBalanceOk && chainBalance > 0 && (!balanceOk || colonyBalance <= 0);
+const effectiveBalance = useChainBalance ? chainBalance : colonyBalance;
 
 const publishReadinessBlockers: string[] = [];
 if (!authToken) publishReadinessBlockers.push("token_unavailable");
-if (!balanceOk) publishReadinessBlockers.push("balance_unavailable");
-if (balanceOk && balance <= 0) publishReadinessBlockers.push("insufficient_dem");
+if (!balanceOk && !chainBalanceOk) publishReadinessBlockers.push("balance_unavailable");
+if (effectiveBalance <= 0) publishReadinessBlockers.push("insufficient_dem");
 if (!feedOk) publishReadinessBlockers.push("feed_unavailable");
 if (schemaError) publishReadinessBlockers.push("draft_invalid");
 if (!urlCheck.valid) publishReadinessBlockers.push("attest_url_blocked");
@@ -203,9 +208,20 @@ const publishReadiness = {
     connect: true,
     tokenAvailable: !!authToken,
     balance: {
-      ok: balanceOk,
-      dem: balance,
-      error: balanceOk ? undefined : balanceResult?.error ?? { code: "UNAVAILABLE", message: "Balance result unavailable" },
+      ok: balanceOk || chainBalanceOk,
+      dem: effectiveBalance,
+      source: useChainBalance ? "chain_fallback" : "colony",
+      colony: {
+        ok: balanceOk,
+        dem: colonyBalance,
+        cached: balanceData?.cached,
+        error: balanceOk ? undefined : balanceResult?.error ?? { code: "UNAVAILABLE", message: "Balance result unavailable" },
+      },
+      chain: {
+        ok: chainBalanceOk,
+        dem: chainBalance,
+        error: chainBalanceOk ? undefined : chainBalanceResult?.error ?? { code: "UNAVAILABLE", message: "Chain balance unavailable" },
+      },
     },
     feedRead: {
       ok: feedOk,

@@ -22,6 +22,7 @@ Options:
   --verify-timeout-ms N       Visibility verification timeout (default: 45000)
   --verify-poll-ms N          Visibility poll interval (default: 5000)
   --verify-limit N            Feed limit for visibility checks (default: 50)
+  --defer-lag-ms N            Requeue delayed verdicts when indexing still lags (default: 3600000)
   --help, -h                  Show this help
 `);
   process.exit(0);
@@ -34,6 +35,7 @@ const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
 const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
+const deferLagMs = getPositiveInt("--defer-lag-ms", 60 * 60 * 1000);
 
 const connect = await loadConnect();
 const verifyPublishVisibility = await loadPackageExport<
@@ -72,9 +74,17 @@ const result = await resolveDuePendingVerdicts({
     const predictionCheck = entry.predictionCheck
       ? await resolvePredictionCheck(entry.predictionCheck)
       : null;
+    const checkedAt = new Date().toISOString();
+
+    if (verification?.indexedVisible !== true) {
+      return {
+        checkedAt,
+        deferByMs: deferLagMs,
+      };
+    }
 
     return {
-      checkedAt: new Date().toISOString(),
+      checkedAt,
       verdict: {
         verification,
         post: postRecord ? {

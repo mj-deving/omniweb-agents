@@ -7,6 +7,7 @@ import {
   DEFAULT_PENDING_VERDICT_PATH,
   enqueuePendingVerdict,
 } from "./_supervised-verdict-queue.ts";
+import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageExport } from "./_shared.ts";
 import {
@@ -234,24 +235,30 @@ if (!attestationPlan.ready) {
   process.exit(1);
 }
 
-const publishResult = await omni.colony.publish({
-  text: actionDraft.text,
-  category: actionDraft.category,
-  attestUrl,
-  tags: actionDraft.tags,
+const directWrite = await runDirectAttestedWrite({
+  omni,
+  kind: "publish",
+  draft: {
+    text: actionDraft.text,
+    category: actionDraft.category,
+    attestUrl,
+    tags: actionDraft.tags,
+  },
+  verifyPublishVisibility,
+  verification: {
+    timeoutMs: verifyTimeoutMs,
+    pollMs: verifyPollMs,
+    limit: verifyLimit,
+  },
 });
 
-const publishVerification = publishResult.ok
-  ? await verifyPublishVisibility(
-    omni,
-    publishResult.data?.txHash,
-    actionDraft.text,
-    {
-      timeoutMs: verifyTimeoutMs,
-      pollMs: verifyPollMs,
-      limit: verifyLimit,
-    },
-  )
+const publishResult = directWrite.result ?? {
+  ok: false,
+  error: directWrite.error,
+};
+
+const publishVerification = directWrite.accepted
+  ? directWrite.visibility
   : null;
 
 let pendingVerdict: {
@@ -261,10 +268,10 @@ let pendingVerdict: {
   inserted: boolean;
 } | null = null;
 
-if (recordPendingVerdict && publishResult.ok && publishResult.data?.txHash) {
+if (recordPendingVerdict && directWrite.accepted && directWrite.txHash) {
   const queued = await enqueuePendingVerdict(
     buildPendingVerdictEntry({
-      txHash: publishResult.data.txHash,
+      txHash: directWrite.txHash,
       category: actionDraft.category,
       text: actionDraft.text,
       startedAt: new Date().toISOString(),

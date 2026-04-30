@@ -54,13 +54,20 @@ type SourceView = {
   sources: SourceRecord[];
 };
 
+type WorkflowCheckResult = {
+  name: string;
+  pass: boolean;
+  severity: "blocker" | "warning" | "info";
+  detail: string;
+};
+
 type AttestationWorkflowReport = {
   ok: boolean;
   sourceCatalog: {
     sourceCount: number;
   };
-  blockers?: string[];
-  warnings?: string[];
+  blockers?: WorkflowCheckResult[];
+  warnings?: WorkflowCheckResult[];
   [key: string]: unknown;
 };
 
@@ -277,7 +284,7 @@ if (!publishReadiness.ok || !attestationWorkflow.ok) {
     attestationWorkflow,
     blockers: [
       ...publishReadiness.blockers,
-      ...((attestationWorkflow.blockers ?? []) as string[]),
+      ...normalizeWorkflowBlockers(attestationWorkflow.blockers ?? []),
     ],
   };
 
@@ -419,6 +426,10 @@ function getMultiStringArgs(flag: string): string[] {
 
 function parseSourceAgent(value: string): SourceAgent | null {
   return (SUPPORTED_SOURCE_AGENTS as readonly string[]).includes(value) ? value as SourceAgent : null;
+}
+
+function normalizeWorkflowBlockers(blockers: WorkflowCheckResult[]): string[] {
+  return blockers.map((blocker) => blocker.name);
 }
 
 async function maybeWriteOutput(path: string | undefined, report: unknown): Promise<void> {

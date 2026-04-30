@@ -2,7 +2,8 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { getStringArg, hasFlag, loadPackageExport } from "./_shared.ts";
+import { getStringArg, hasFlag, loadConnect, loadPackageExport } from "./_shared.ts";
+import { runDirectSupervisedPublish } from "./_supervised-direct-publish.ts";
 import {
   buildPendingVerdictEntry,
   DEFAULT_PENDING_VERDICT_PATH,
@@ -64,38 +65,15 @@ const buildMinimalAttestationPlanFromUrls = await loadPackageExport<
   "buildMinimalAttestationPlanFromUrls",
 );
 
-const runMinimalAgentCycle = await loadPackageExport<
-  (observe: () => Promise<{
-    kind: "publish";
-    category: string;
-    text: string;
-    attestUrl: string;
-    confidence: number;
-    attestationPlan: unknown;
-    facts: Record<string, unknown>;
-    audit: {
-      promptPacket: Record<string, unknown>;
-    };
-  }>, opts: {
-    stateDir?: string;
-    dryRun?: boolean;
-    connectOptions?: {
-      envPath?: string;
-      agentName?: string;
-      stateDir?: string;
-      allowInsecureUrls?: boolean;
-    };
-    verification?: {
-      timeoutMs: number;
-      pollMs: number;
-      limit: number;
-    };
-  }) => Promise<any>
->(
-  "../dist/agent.js",
-  "../src/agent.ts",
-  "runMinimalAgentCycle",
-);
+const verifyPublishVisibility = await loadPackageExport<
+  (omni: unknown, txHash: string | undefined, text: string, opts: {
+    timeoutMs: number;
+    pollMs: number;
+    limit: number;
+  }) => Promise<unknown>
+>("../dist/publish-visibility.js", "../src/publish-visibility.ts", "verifyPublishVisibility");
+const connect = await loadConnect();
+const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 
 const attestationPlan = buildMinimalAttestationPlanFromUrls({
   topic: "supervised-observation",
@@ -103,41 +81,37 @@ const attestationPlan = buildMinimalAttestationPlanFromUrls({
   urls: [attestUrl],
 });
 
-const record = await runMinimalAgentCycle(
-  async () => ({
-    kind: "publish",
-    category: "OBSERVATION",
-    text,
-    attestUrl,
-    confidence,
-    attestationPlan,
-    facts: {
-      observationSourceName: sourceName,
-    },
-    audit: {
-      promptPacket: {
-        objective: "Publish one supervised factual OBSERVATION post from a single attested source.",
-        sourceName,
-        confidence,
-      },
-    },
-  }),
-  {
-    stateDir,
-    dryRun,
-    connectOptions: {
-      envPath,
-      agentName,
-      stateDir,
-      allowInsecureUrls,
-    },
-    verification: {
-      timeoutMs: verifyTimeoutMs,
-      pollMs: verifyPollMs,
-      limit: verifyLimit,
+const decision = {
+  kind: "publish",
+  category: "OBSERVATION",
+  text,
+  attestUrl,
+  confidence,
+  attestationPlan,
+  facts: {
+    observationSourceName: sourceName,
+  },
+  audit: {
+    promptPacket: {
+      objective: "Publish one supervised factual OBSERVATION post from a single attested source.",
+      sourceName,
+      confidence,
     },
   },
-);
+} as const;
+
+const record = await runDirectSupervisedPublish({
+  omni,
+  dryRun,
+  stateDir,
+  decision,
+  verifyPublishVisibility,
+  verification: {
+    timeoutMs: verifyTimeoutMs,
+    pollMs: verifyPollMs,
+    limit: verifyLimit,
+  },
+});
 
 const verdictSchedule = scheduleSupervisedVerdict("OBSERVATION", record.startedAt);
 let pendingVerdict: {

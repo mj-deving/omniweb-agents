@@ -76,6 +76,7 @@
     "check:reply": "node --import tsx ./scripts/check-supervised-reply.ts",
     "check:observation": "node --import tsx ./scripts/check-supervised-observation.ts",
     "check:observation:eligibility": "node --import tsx ./scripts/check-supervised-observation-eligibility.ts",
+    "check:analysis": "node --import tsx ./scripts/check-supervised-analysis.ts",
     "check:prediction": "node --import tsx ./scripts/check-supervised-prediction.ts",
     "check:market-action": "node --import tsx ./scripts/check-market-action-bet.ts",
     "check:playbook:research": "node --import tsx ./scripts/check-playbook-path.ts --archetype research-agent",

@@ -87,6 +87,8 @@ Treat these as optional capability deps. If they are missing, the bundle should 
 
 Even when they are present, the starter should not be treated as direct publish proof by itself. Real wallet-backed starter usage must pass `npm run check:publish` first, and evidence-backed publish claims must also pass `npm run check:attestation -- --attest-url <primary-url>` before any spend lane is considered ready.
 
+The source package now also exposes a starter-decision substrate for this path: live sensing, summary/provenance, expansion candidates, and a rule-based `buildResearchStarterDecision()` result. Treat that as no-spend runtime architecture only — useful for inspectable next-step selection, not as proof that the publish lane is complete.
+
 ## Model / auth note
 
 - If this machine uses ChatGPT / Codex OAuth, prefer `openai-codex/gpt-5.4`.

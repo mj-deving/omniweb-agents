@@ -31,7 +31,13 @@ export { buildMarketDraft } from "./market-draft.js";
 export { buildMarketActionDraft } from "./market-action.js";
 export { getMarketTopicFamilyContract, ORACLE_DIVERGENCE_CONTRACT } from "./market-family-contracts.js";
 export { deriveResearchOpportunities } from "./research-opportunities.js";
+export { rankLiveResearchTopics } from "./research-opportunities.js";
 export { deriveResearchSourceProfile } from "./research-source-profile.js";
+export { explainUnsupportedResearchTopic } from "./research-source-profile.js";
+export { buildResearchExpansionCandidates } from "./research-expansion-candidates.js";
+export { buildResearchStarterDecision } from "./research-starter-decision.js";
+export { collectResearchLiveSurface } from "./research-live-surface.js";
+export { buildColonySurfaceSummary } from "./research-surface-summary.js";
 export {
   createTopicFamilyRegistry,
   defineTopicFamilyContract,
@@ -52,7 +58,9 @@ export {
 } from "./research-self-history-store.js";
 export { buildResearchEvidenceDelta, summarizeResearchEvidenceDelta } from "./research-evidence-delta.js";
 export { defineResearchTopicFamilyContract } from "./research-family-contracts.js";
+export { buildResearchCompositionPacket } from "./research-draft.js";
 export { buildResearchDraft } from "./research-draft.js";
+export { validateResearchComposition } from "./research-draft.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";
 export { matchResearchDraftToPlan } from "./research-source-match.js";
@@ -164,7 +172,33 @@ export type {
   ResearchSignalDivergence,
   DeriveResearchOpportunitiesOptions,
   ResearchOpportunity,
+  LiveResearchTopic,
 } from "./research-opportunities.js";
+export type {
+  ResearchSurfaceFeedSample,
+  ResearchSurfaceSignalSample,
+  ResearchSurfaceReadStatus,
+  ResearchLiveSurfaceSnapshot,
+  CollectResearchLiveSurfaceOptions,
+} from "./research-live-surface.js";
+export type {
+  ResearchExpansionSeed,
+  ResearchExpansionCandidate,
+} from "./research-expansion-candidates.js";
+export type {
+  ResearchStarterRecommendedAction,
+  ResearchStarterEvidencePosture,
+  ResearchStarterRiskPosture,
+  ResearchStarterDecision,
+  BuildResearchStarterDecisionOptions,
+} from "./research-starter-decision.js";
+export type {
+  ColonySurfaceSummary,
+  ColonySurfaceSummaryTopic,
+  ColonySurfaceExpansionCandidate,
+  ColonySurfaceExpansionCandidateSource,
+  BuildColonySurfaceSummaryOptions,
+} from "./research-surface-summary.js";
 export type {
   ResearchColonySignalSummary,
   ResearchColonyTake,
@@ -175,6 +209,7 @@ export type {
 export type {
   ResearchTopicFamily,
   ResearchSourceProfile,
+  UnsupportedResearchTopicExplanation,
 } from "./research-source-profile.js";
 export type {
   TopicMetricSemantic,
@@ -193,6 +228,9 @@ export type {
 } from "./research-family-contracts.js";
 export type {
   BuildResearchDraftOptions,
+  ValidateResearchCompositionOptions,
+  ResearchCompositionValidationResult,
+  ResearchPromptInput,
   ResearchPromptPacket,
   ResearchDraftSuccess,
   ResearchDraftFailure,

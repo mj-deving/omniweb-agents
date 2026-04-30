@@ -28,8 +28,8 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-verification-matrix.ts](./check-verification-matrix.ts): maintained proving baseline against current package surface
 - [check-discovery-drift.ts](./check-discovery-drift.ts): live discovery resources against committed snapshots
 - [check-read-surface-sweep.ts](./check-read-surface-sweep.ts): production-host read-only sweep
-- [check-topic-coverage.ts](./check-topic-coverage.ts): topic support map across archetypes
-- [check-research-e2e-matrix.ts](./check-research-e2e-matrix.ts): family-level research matrix with real reads, fetches, and optional single-family proof
+- [check-topic-coverage.ts](./check-topic-coverage.ts): topic support map across archetypes plus starter-surface support/coverage diagnostics
+- [check-research-e2e-matrix.ts](./check-research-e2e-matrix.ts): family-level research matrix with real reads, fetches, optional single-family proof, and starter-surface/decision output for the no-spend architecture substrate
 - [check-publish-visibility.ts](./check-publish-visibility.ts): repeated publish/reply visibility harness
 - [check-indexing-miss-probe.ts](./check-indexing-miss-probe.ts): raw-SDK versus indexed-readback comparison
 

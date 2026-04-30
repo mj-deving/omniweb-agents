@@ -9,7 +9,7 @@
 import type { FrameworkPlugin, DataProvider, ProviderResult } from "../types.js";
 
 export interface SdkSetupPluginConfig {
-  /** RPC URL to validate (e.g., "https://demosnode.discus.sh") */
+  /** RPC URL to validate (e.g., "https://node3.demos.sh") */
   rpcUrl: string;
   /** Optional: agent address to check balance for */
   agentAddress?: string;

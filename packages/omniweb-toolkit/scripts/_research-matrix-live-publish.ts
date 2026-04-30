@@ -1,5 +1,6 @@
 #!/usr/bin/env npx tsx
 
+import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { loadConnect } from "./_shared.ts";
 
 const args = process.argv.slice(2);
@@ -30,14 +31,27 @@ const text = Buffer.from(textBase64, "base64").toString("utf8");
 try {
   const connect = await loadConnect();
   const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
-  const result = await omni.colony.publish({
-    text,
-    category,
-    attestUrl,
-    confidence,
+  const write = await runDirectAttestedWrite({
+    omni,
+    kind: "publish",
+    draft: {
+      text,
+      category,
+      attestUrl,
+      confidence,
+    },
   });
-  process.stdout.write(`${JSON.stringify(result)}\n`);
-  process.exit(0);
+  process.stdout.write(`${JSON.stringify(
+    write.result ?? {
+      ok: false,
+      error: write.error ?? {
+        code: "PUBLISH_HELPER_EMPTY",
+        message: "publish helper returned no result",
+        retryable: true,
+      },
+    },
+  )}\n`);
+  process.exit(write.accepted ? 0 : 1);
 } catch (error) {
   process.stdout.write(`${JSON.stringify({
     ok: false,

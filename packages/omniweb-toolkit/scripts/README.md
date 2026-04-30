@@ -24,6 +24,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-research-agent-dry-run.ts](./check-research-agent-dry-run.ts): maintained forced-dry-run proof for the exported OpenClaw research-agent minimal starter from the source workspace
 - [check-research-agent-live-read.ts](./check-research-agent-live-read.ts): maintained explicit live-read proof for the exported OpenClaw research-agent minimal starter from the source workspace, with a JS-only runtime prep step by default
 - [check-research-agent-live-write-gate.ts](./check-research-agent-live-write-gate.ts): maintained explicit live-write gate proof for the exported OpenClaw research-agent minimal starter; it must fail early and clearly when wallet/runtime prerequisites are absent
+- [check-research-starter-loop.ts](./check-research-starter-loop.ts): maintained no-spend starter-loop artifact that emits `{ surface, summary, decision, nextStep }` from the runtime sensing substrate
 - [prepare-runtime-proof-build.mjs](./prepare-runtime-proof-build.mjs): JS-only dist refresh for starter-proof scripts that need fresh runtime exports without full DTS/release build coupling
 - [check-verification-matrix.ts](./check-verification-matrix.ts): maintained proving baseline against current package surface
 - [check-discovery-drift.ts](./check-discovery-drift.ts): live discovery resources against committed snapshots

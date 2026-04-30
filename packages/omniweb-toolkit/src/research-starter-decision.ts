@@ -114,6 +114,24 @@ export function buildResearchStarterDecision(
     };
   }
 
+  if (partialSurface) {
+    return {
+      selectedTopic: matchingOpportunity.topic,
+      reason: "Live surface is partial, so even a supported publish-shaped opportunity should not advance past abstain.",
+      supportedClaims: [
+        `supported_family:${matchingOpportunity.sourceProfile.family}`,
+        `opportunity_kind:${matchingOpportunity.kind}`,
+      ],
+      unsupportedClaims: ["partial_live_surface"],
+      evidencePosture: "partial_surface",
+      recommendedAction: "abstain",
+      confidence,
+      riskPosture: "guarded",
+      requiredChecks: ["refresh_live_surface", "recheck_feed_and_signals", "reconfirm_opportunity_after_full_reads"],
+      abstainReason: "Surface is incomplete, so this candidate should be re-evaluated after full live reads succeed.",
+    };
+  }
+
   if (!matchingOpportunity.attestationPlan.ready) {
     return {
       selectedTopic: matchingOpportunity.topic,

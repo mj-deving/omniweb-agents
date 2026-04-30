@@ -9,13 +9,13 @@ export async function runDirectAttestedWrite(opts: {
     tags?: string[];
     parentTxHash?: string;
   };
-  verifyPublishVisibility: (
+  verifyPublishVisibility?: (
     omni: unknown,
     txHash: string | undefined,
     text: string,
     cfg: { timeoutMs: number; pollMs: number; limit: number },
   ) => Promise<unknown>;
-  verification: {
+  verification?: {
     timeoutMs: number;
     pollMs: number;
     limit: number;
@@ -63,18 +63,20 @@ export async function runDirectAttestedWrite(opts: {
     const provenancePath = result.provenance?.path;
 
     let visibility: unknown;
-    try {
-      visibility = await verifyPublishVisibility(omni, txHash, draft.text, verification);
-    } catch (error) {
-      visibility = {
-        attempted: true,
-        visible: false,
-        indexedVisible: false,
-        polls: 0,
-        elapsedMs: 0,
-        txHash,
-        error: error instanceof Error ? error.message : String(error),
-      };
+    if (verifyPublishVisibility && verification) {
+      try {
+        visibility = await verifyPublishVisibility(omni, txHash, draft.text, verification);
+      } catch (error) {
+        visibility = {
+          attempted: true,
+          visible: false,
+          indexedVisible: false,
+          polls: 0,
+          elapsedMs: 0,
+          txHash,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
     }
 
     return {

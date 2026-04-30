@@ -2,7 +2,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { getStringArg, hasFlag, loadPackageExport } from "./_shared.ts";
+import { getStringArg, hasFlag, loadConnect, loadPackageExport } from "./_shared.ts";
 import {
   parsePredictionCheckValueType,
   parsePredictionExpectedValue,
@@ -14,6 +14,7 @@ import {
   DEFAULT_PENDING_VERDICT_PATH,
   enqueuePendingVerdict,
 } from "./_supervised-verdict-queue.ts";
+import { runDirectSupervisedPublish } from "./_supervised-direct-publish.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 
 const args = process.argv.slice(2);
@@ -86,38 +87,15 @@ const buildMinimalAttestationPlanFromUrls = await loadPackageExport<
   "buildMinimalAttestationPlanFromUrls",
 );
 
-const runMinimalAgentCycle = await loadPackageExport<
-  (observe: () => Promise<{
-    kind: "publish";
-    category: string;
-    text: string;
-    attestUrl: string;
-    confidence: number;
-    attestationPlan: unknown;
-    facts: Record<string, unknown>;
-    audit: {
-      promptPacket: Record<string, unknown>;
-    };
-  }>, opts: {
-    stateDir?: string;
-    dryRun?: boolean;
-    connectOptions?: {
-      envPath?: string;
-      agentName?: string;
-      stateDir?: string;
-      allowInsecureUrls?: boolean;
-    };
-    verification?: {
-      timeoutMs: number;
-      pollMs: number;
-      limit: number;
-    };
-  }) => Promise<any>
->(
-  "../dist/agent.js",
-  "../src/agent.ts",
-  "runMinimalAgentCycle",
-);
+const verifyPublishVisibility = await loadPackageExport<
+  (omni: unknown, txHash: string | undefined, text: string, opts: {
+    timeoutMs: number;
+    pollMs: number;
+    limit: number;
+  }) => Promise<unknown>
+>("../dist/publish-visibility.js", "../src/publish-visibility.ts", "verifyPublishVisibility");
+const connect = await loadConnect();
+const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
 
 if (!Number.isFinite(Date.parse(deadlineAt))) {
   throw new Error(`Invalid --deadline-at value: ${deadlineAt}`);
@@ -143,45 +121,41 @@ const attestationPlan = buildMinimalAttestationPlanFromUrls({
   urls: [attestUrl],
 });
 
-const record = await runMinimalAgentCycle(
-  async () => ({
-    kind: "publish",
-    category: "PREDICTION",
-    text,
-    attestUrl,
-    confidence,
-    attestationPlan,
-    facts: {
+const decision = {
+  kind: "publish",
+  category: "PREDICTION",
+  text,
+  attestUrl,
+  confidence,
+  attestationPlan,
+  facts: {
+    predictionCheck,
+    predictionDeadlineAt: deadlineAt,
+    predictionFalsifier: falsifier,
+  },
+  audit: {
+    promptPacket: {
+      objective: "Publish one supervised non-market prediction with explicit deadline, confidence, falsifier, and later self-verification metadata.",
+      deadlineAt,
+      confidence,
+      falsifier,
       predictionCheck,
-      predictionDeadlineAt: deadlineAt,
-      predictionFalsifier: falsifier,
-    },
-    audit: {
-      promptPacket: {
-        objective: "Publish one supervised non-market prediction with explicit deadline, confidence, falsifier, and later self-verification metadata.",
-        deadlineAt,
-        confidence,
-        falsifier,
-        predictionCheck,
-      },
-    },
-  }),
-  {
-    stateDir,
-    dryRun,
-    connectOptions: {
-      envPath,
-      agentName,
-      stateDir,
-      allowInsecureUrls,
-    },
-    verification: {
-      timeoutMs: verifyTimeoutMs,
-      pollMs: verifyPollMs,
-      limit: verifyLimit,
     },
   },
-);
+} as const;
+
+const record = await runDirectSupervisedPublish({
+  omni,
+  dryRun,
+  stateDir,
+  decision,
+  verifyPublishVisibility,
+  verification: {
+    timeoutMs: verifyTimeoutMs,
+    pollMs: verifyPollMs,
+    limit: verifyLimit,
+  },
+});
 
 let pendingVerdict: {
   id: string;

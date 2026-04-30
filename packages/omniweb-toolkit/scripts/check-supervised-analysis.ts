@@ -19,6 +19,7 @@ import {
   analyzeAttestUrlDiagnostics,
   buildAttestUrlWarnings,
 } from "./_publish-readiness-shared.js";
+import { runDirectSupervisedPublish } from "./_supervised-direct-publish.ts";
 import {
   buildPendingVerdictEntry,
   DEFAULT_PENDING_VERDICT_PATH,
@@ -140,11 +141,13 @@ const buildMinimalAttestationPlanFromUrls = await loadPackageExport<
     urls: string[];
   }) => unknown
 >("../dist/agent.js", "../src/agent.ts", "buildMinimalAttestationPlanFromUrls");
-const runMinimalAgentCycle = await loadPackageExport<any>(
-  "../dist/agent.js",
-  "../src/agent.ts",
-  "runMinimalAgentCycle",
-);
+const verifyPublishVisibility = await loadPackageExport<
+  (omni: unknown, txHash: string | undefined, text: string, opts: {
+    timeoutMs: number;
+    pollMs: number;
+    limit: number;
+  }) => Promise<unknown>
+>("../dist/publish-visibility.js", "../src/publish-visibility.ts", "verifyPublishVisibility");
 
 const createSessionFromRuntime = await loadPackageExport<
   (runtime: unknown, options: { stateDir?: string; allowInsecureUrls?: boolean }) => Promise<any>
@@ -289,51 +292,46 @@ const attestationPlan = buildMinimalAttestationPlanFromUrls({
   urls: [attestUrl, ...supportingUrls],
 });
 
-const record = await runMinimalAgentCycle(
-  async () => ({
-    kind: "publish",
-    category: DEFAULT_CATEGORY,
-    text,
-    attestUrl,
-    confidence,
-    attestationPlan,
-    facts: {
+const decision = {
+  kind: "publish",
+  category: DEFAULT_CATEGORY,
+  text,
+  attestUrl,
+  confidence,
+  attestationPlan,
+  facts: {
+    sourceName,
+    primaryAttestUrl: attestUrl,
+    supportingUrls,
+    attestationWorkflow,
+    publishReadiness,
+  },
+  audit: {
+    promptPacket: {
+      objective: "Publish one supervised multi-source ANALYSIS post with explicit primary and supporting evidence readiness.",
+      topic,
+      confidence,
       sourceName,
       primaryAttestUrl: attestUrl,
       supportingUrls,
       attestationWorkflow,
       publishReadiness,
     },
-    audit: {
-      promptPacket: {
-        objective: "Publish one supervised multi-source ANALYSIS post with explicit primary and supporting evidence readiness.",
-        topic,
-        confidence,
-        sourceName,
-        primaryAttestUrl: attestUrl,
-        supportingUrls,
-        attestationWorkflow,
-        publishReadiness,
-      },
-    },
-  }),
-  {
-    omni,
-    stateDir,
-    dryRun,
-    connectOptions: {
-      envPath,
-      agentName,
-      stateDir,
-      allowInsecureUrls,
-    },
-    verification: {
-      timeoutMs: verifyTimeoutMs,
-      pollMs: verifyPollMs,
-      limit: verifyLimit,
-    },
   },
-);
+} as const;
+
+const record = await runDirectSupervisedPublish({
+  omni,
+  dryRun,
+  stateDir,
+  decision,
+  verifyPublishVisibility,
+  verification: {
+    timeoutMs: verifyTimeoutMs,
+    pollMs: verifyPollMs,
+    limit: verifyLimit,
+  },
+});
 
 let pendingVerdict: {
   id: string;

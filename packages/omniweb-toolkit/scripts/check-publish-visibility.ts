@@ -14,6 +14,7 @@
  */
 
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.ts";
+import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
@@ -285,35 +286,29 @@ async function executePublishAttempt(
   draft: { text: string; category: string; attestUrl: string },
 ): Promise<ProbeAttempt> {
   const verifyPublishVisibility = await loadVerifyPublishVisibility();
-  const startedAt = Date.now();
-  const result = await omni.colony.publish(draft);
-  const publishLatencyMs = Date.now() - startedAt;
-
-  if (!result?.ok) {
-    return {
-      kind: "publish",
-      run,
-      draft,
-      accepted: false,
-      publishLatencyMs,
-      error: normalizeError(result?.error, "UNKNOWN", "Unknown publish failure"),
-    };
-  }
+  const write = await runDirectAttestedWrite({
+    omni,
+    kind: "publish",
+    draft,
+    verifyPublishVisibility,
+    verification: {
+      timeoutMs: feedTimeoutMs,
+      pollMs: feedPollMs,
+      limit: feedLimit,
+    },
+  });
 
   return {
     kind: "publish",
     run,
     draft,
-    accepted: true,
-    publishLatencyMs,
-    txHash: result.data?.txHash,
-    attestationTxHash: result.provenance?.attestation?.txHash,
-    provenancePath: result.provenance?.path,
-    visibility: await verifyPublishVisibility(omni, result.data?.txHash, draft.text, {
-      timeoutMs: feedTimeoutMs,
-      pollMs: feedPollMs,
-      limit: feedLimit,
-    }),
+    accepted: write.accepted,
+    publishLatencyMs: write.publishLatencyMs,
+    txHash: write.txHash,
+    attestationTxHash: write.attestationTxHash,
+    provenancePath: write.provenancePath,
+    visibility: write.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>> | undefined,
+    error: write.accepted ? undefined : normalizeError(write.error, "UNKNOWN", "Unknown publish failure"),
   };
 }
 
@@ -323,35 +318,29 @@ async function executeReplyAttempt(
   draft: { text: string; category: string; attestUrl: string; parentTxHash: string },
 ): Promise<ProbeAttempt> {
   const verifyPublishVisibility = await loadVerifyPublishVisibility();
-  const startedAt = Date.now();
-  const result = await omni.colony.reply(draft);
-  const publishLatencyMs = Date.now() - startedAt;
-
-  if (!result?.ok) {
-    return {
-      kind: "reply",
-      run,
-      draft,
-      accepted: false,
-      publishLatencyMs,
-      error: normalizeError(result?.error, "UNKNOWN", "Unknown reply failure"),
-    };
-  }
+  const write = await runDirectAttestedWrite({
+    omni,
+    kind: "reply",
+    draft,
+    verifyPublishVisibility,
+    verification: {
+      timeoutMs: feedTimeoutMs,
+      pollMs: feedPollMs,
+      limit: feedLimit,
+    },
+  });
 
   return {
     kind: "reply",
     run,
     draft,
-    accepted: true,
-    publishLatencyMs,
-    txHash: result.data?.txHash,
-    attestationTxHash: result.provenance?.attestation?.txHash,
-    provenancePath: result.provenance?.path,
-    visibility: await verifyPublishVisibility(omni, result.data?.txHash, draft.text, {
-      timeoutMs: feedTimeoutMs,
-      pollMs: feedPollMs,
-      limit: feedLimit,
-    }),
+    accepted: write.accepted,
+    publishLatencyMs: write.publishLatencyMs,
+    txHash: write.txHash,
+    attestationTxHash: write.attestationTxHash,
+    provenancePath: write.provenancePath,
+    visibility: write.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>> | undefined,
+    error: write.accepted ? undefined : normalizeError(write.error, "UNKNOWN", "Unknown reply failure"),
   };
 }
 

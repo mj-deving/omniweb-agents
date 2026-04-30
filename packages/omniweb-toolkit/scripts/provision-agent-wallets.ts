@@ -19,7 +19,7 @@ Options:
   --prefix NAME            Agent-name prefix (default: sweep)
   --count N                Number of identities to create (default: 3)
   --start-index N          Starting numeric suffix (default: 1)
-  --rpc-url URL            Override RPC URL (default: https://demosnode.discus.sh/)
+  --rpc-url URL            Override RPC URL (default: https://node3.demos.sh/)
   --state-root PATH        Root directory for per-agent state dirs
   --out PATH               Write JSON inventory to file as well as stdout
   --skip-faucet            Do not request faucet funding
@@ -33,7 +33,7 @@ Options:
 const prefix = getStringArg(args, "--prefix") ?? "sweep";
 const count = getPositiveInt("--count", 3);
 const startIndex = getPositiveInt("--start-index", 1);
-const rpcUrl = getStringArg(args, "--rpc-url") ?? "https://demosnode.discus.sh/";
+const rpcUrl = getStringArg(args, "--rpc-url") ?? "https://node3.demos.sh/";
 const stateRoot = resolve(getStringArg(args, "--state-root") ?? resolve(process.cwd(), "tmp", "multi-agent-state"));
 const outputPath = getStringArg(args, "--out");
 const skipFaucet = hasFlag(args, "--skip-faucet");

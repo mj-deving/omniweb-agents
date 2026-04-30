@@ -17,7 +17,7 @@ function mockStateStore(): StateStore {
 function createSession(overrides?: Partial<ConstructorParameters<typeof DemosSession>[0]>) {
   return new DemosSession({
     walletAddress: "demos1abc123",
-    rpcUrl: "https://demosnode.discus.sh",
+    rpcUrl: "https://node3.demos.sh",
     algorithm: "falcon",
     authToken: "secret-token-123",
     signingHandle: { privateKey: "secret" },
@@ -34,7 +34,7 @@ describe("DemosSession", () => {
 
       expect(json).toEqual({
         walletAddress: "demos1abc123",
-        rpcUrl: "https://demosnode.discus.sh",
+        rpcUrl: "https://node3.demos.sh",
         algorithm: "falcon",
       });
 
@@ -100,7 +100,7 @@ describe("DemosSession", () => {
     it("walletAddress, rpcUrl, algorithm are readonly", () => {
       const session = createSession();
       expect(session.walletAddress).toBe("demos1abc123");
-      expect(session.rpcUrl).toBe("https://demosnode.discus.sh");
+      expect(session.rpcUrl).toBe("https://node3.demos.sh");
       expect(session.algorithm).toBe("falcon");
     });
   });

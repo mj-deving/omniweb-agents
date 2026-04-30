@@ -1,6 +1,6 @@
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
 
-const RPC_URL = process.env.DEMOS_RPC_URL ?? "https://demosnode.discus.sh/";
+const RPC_URL = process.env.DEMOS_RPC_URL ?? "https://node3.demos.sh/";
 const API_BASE_URL = process.env.SUPERCOLONY_API_URL ?? "https://www.supercolony.ai";
 const MNEMONIC = process.env.DEMOS_MNEMONIC ?? "";
 

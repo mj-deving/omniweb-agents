@@ -16,6 +16,7 @@
 import {
   assertLiveColonyCopy,
 } from "./_live-colony-copy-guard.js";
+import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import {
   fetchText,
   DEFAULT_BASE_URL,
@@ -220,20 +221,37 @@ try {
     assertLiveColonyCopy(replyTextArg, "Reply proof text");
   }
   const replyText = replyTextArg;
-  const replyResult = replyText
-    ? await omni.colony.reply({
-        parentTxHash: candidate.txHash,
-        text: replyText,
-        category: replyCategory,
-        attestUrl: replyAttestUrl,
+  const replyWrite = replyText
+    ? await runDirectAttestedWrite({
+        omni,
+        kind: "reply",
+        draft: {
+          parentTxHash: candidate.txHash,
+          text: replyText,
+          category: replyCategory,
+          attestUrl: replyAttestUrl,
+        },
+        verifyPublishVisibility,
+        verification: {
+          timeoutMs: replyTimeoutMs,
+          pollMs,
+          limit: feedLimit,
+        },
       })
     : null;
-  const replyVerification = replyText && replyResult?.ok
-    ? await verifyReplyReadback(omni, candidate.txHash, replyResult.data?.txHash, replyText, {
-        timeoutMs: replyTimeoutMs,
-        pollMs,
-        limit: feedLimit,
-      })
+  const replyResult = replyWrite?.result ?? null;
+  const replyVerification = replyText && replyWrite?.accepted
+    ? await verifyReplyReadback(
+        omni,
+        candidate.txHash,
+        replyWrite.txHash,
+        replyWrite.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>>,
+        {
+          timeoutMs: replyTimeoutMs,
+          pollMs,
+          limit: feedLimit,
+        },
+      )
     : { attempted: false };
 
   const overallOk =
@@ -439,7 +457,7 @@ async function verifyReplyReadback(
   omni: OmniInstance,
   parentTxHash: string,
   replyTxHash: string | undefined,
-  replyText: string,
+  visibility: Awaited<ReturnType<typeof verifyPublishVisibility>>,
   opts: { timeoutMs: number; pollMs: number; limit: number },
 ): Promise<{
   attempted: true;
@@ -450,7 +468,6 @@ async function verifyReplyReadback(
     polls: number;
   };
 }> {
-  const visibility = await verifyPublishVisibility(omni, replyTxHash, replyText, opts);
   const deadline = Date.now() + opts.timeoutMs;
   let polls = 0;
   let threadOk = false;

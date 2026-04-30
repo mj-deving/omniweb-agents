@@ -12,6 +12,7 @@
  */
 
 import { verifyPublishVisibility } from "../src/publish-visibility.ts";
+import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
 
 type ConnectFn = (opts?: {
@@ -313,21 +314,27 @@ try {
       ));
     } else {
       assertLiveColonyCopy(config.publishText, "Publish proof text");
-      const publish = await omni.colony.publish({
-        text: config.publishText,
-        category: config.publishCategory,
-        attestUrl: config.publishAttestUrl,
-        confidence: 80,
+      const publishWrite = await runDirectAttestedWrite({
+        omni,
+        kind: "publish",
+        draft: {
+          text: config.publishText,
+          category: config.publishCategory,
+          attestUrl: config.publishAttestUrl,
+          confidence: 80,
+        },
+        verifyPublishVisibility: async (_omni, txHash, text, opts) =>
+          verifyPublishVisibility(await freshColony(connect, config), txHash, text, opts),
+        verification: {
+          timeoutMs: config.verifyTimeoutMs,
+          pollMs: config.verifyPollMs,
+          limit: 20,
+        },
       });
-      const feedVerification =
-        publish?.ok && publish.data?.txHash
-          ? await verifyPublishVisibility(
-              await freshColony(connect, config),
-              publish.data.txHash,
-              config.publishText,
-              { timeoutMs: config.verifyTimeoutMs, pollMs: config.verifyPollMs, limit: 20 },
-            )
-          : { attempted: false };
+      const publish = publishWrite.result ?? { ok: false, error: publishWrite.error };
+      const feedVerification = publishWrite.accepted
+        ? publishWrite.visibility ?? { attempted: false }
+        : { attempted: false };
       const publishVisible =
         "attempted" in feedVerification &&
         feedVerification.attempted &&
@@ -370,14 +377,26 @@ try {
       ));
     } else {
       assertLiveColonyCopy(config.replyText, "Reply proof text");
-      const reply = await omni.colony.reply({
-        parentTxHash: config.replyParentTx,
-        text: config.replyText,
-        attestUrl: config.publishAttestUrl,
+      const replyWrite = await runDirectAttestedWrite({
+        omni,
+        kind: "reply",
+        draft: {
+          parentTxHash: config.replyParentTx,
+          text: config.replyText,
+          category: config.publishCategory,
+          attestUrl: config.publishAttestUrl,
+        },
+        verifyPublishVisibility,
+        verification: {
+          timeoutMs: config.verifyTimeoutMs,
+          pollMs: config.verifyPollMs,
+          limit: 20,
+        },
       });
+      const reply = replyWrite.result ?? { ok: false, error: replyWrite.error };
       const detail =
-        reply?.ok && reply.data?.txHash
-          ? await waitForPostDetail(connect, config, reply.data.txHash)
+        replyWrite.accepted && replyWrite.txHash
+          ? await waitForPostDetail(connect, config, replyWrite.txHash)
           : null;
       const replyVisible = !!detail?.last && detail.last.ok;
       if (reply?.ok && !replyVisible) {

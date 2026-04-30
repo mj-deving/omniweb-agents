@@ -1,3 +1,5 @@
+import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
+
 export async function runDirectSupervisedPublish(opts: {
   omni: any;
   dryRun: boolean;
@@ -21,8 +23,8 @@ export async function runDirectSupervisedPublish(opts: {
     limit: number;
   };
 }) {
+  const { dryRun, stateDir, decision } = opts;
   const startedAt = new Date().toISOString();
-  const { omni, dryRun, stateDir, decision, verifyPublishVisibility, verification } = opts;
 
   if (dryRun) {
     return {
@@ -36,79 +38,50 @@ export async function runDirectSupervisedPublish(opts: {
     };
   }
 
-  try {
-    const publishResult = await omni.colony.publish({
+  const write = await runDirectAttestedWrite({
+    omni: opts.omni,
+    kind: "publish",
+    draft: {
       text: decision.text,
       category: decision.category,
       attestUrl: decision.attestUrl,
       confidence: decision.confidence,
-    });
+    },
+    verifyPublishVisibility: opts.verifyPublishVisibility,
+    verification: opts.verification,
+  });
 
-    if (!publishResult.ok) {
-      return {
-        startedAt,
-        stateDir: stateDir ?? null,
-        decision,
-        outcome: {
-          status: "failed",
-          demSpendEstimate: 0,
-          publishResult,
-          error: {
-            stage: "execute",
-            message: publishResult.error?.message ?? "publish_failed",
-            code: publishResult.error?.code,
-            retryable: publishResult.error?.retryable,
-          },
-        },
-      };
-    }
-
-    const txHash = publishResult.data?.txHash;
-    const attestationTxHash = publishResult.provenance.attestation?.txHash;
-    const attestationResponseHash = publishResult.provenance.attestation?.responseHash;
-    let verificationResult: unknown;
-    try {
-      verificationResult = await verifyPublishVisibility(omni, txHash, decision.text, verification);
-    } catch (error) {
-      verificationResult = {
-        attempted: true,
-        visible: false,
-        indexedVisible: false,
-        polls: 0,
-        elapsedMs: 0,
-        txHash,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-
+  if (!write.accepted) {
     return {
-      startedAt,
-      stateDir: stateDir ?? null,
-      decision,
-      outcome: {
-        status: "published",
-        txHash,
-        attestationTxHash,
-        attestationResponseHash,
-        demSpendEstimate: 1,
-        publishResult,
-        verification: verificationResult,
-      },
-    };
-  } catch (error) {
-    return {
-      startedAt,
+      startedAt: write.startedAt,
       stateDir: stateDir ?? null,
       decision,
       outcome: {
         status: "failed",
         demSpendEstimate: 0,
+        publishResult: write.result,
         error: {
           stage: "execute",
-          message: error instanceof Error ? error.message : String(error),
-          retryable: false,
+          message: write.error?.message ?? "publish_failed",
+          code: write.error?.code,
+          retryable: write.error?.retryable,
         },
       },
     };
   }
+
+  return {
+    startedAt: write.startedAt,
+    stateDir: stateDir ?? null,
+    decision,
+    outcome: {
+      status: "published",
+      txHash: write.txHash,
+      attestationTxHash: write.attestationTxHash,
+      attestationResponseHash: write.attestationResponseHash,
+      demSpendEstimate: 1,
+      publishResult: write.result,
+      verification: write.visibility,
+    },
+  };
 }

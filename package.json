@@ -1,7 +1,7 @@
 {
   "name": "omniweb-agents",
   "version": "1.0.0",
-  "description": "Demos Network agent definitions, strategies, and operational tooling",
+  "description": "Package-first OmniWeb toolkit and lightweight OpenClaw agent bundle workbench for Demos/SuperColony",
   "private": true,
   "type": "module",
   "workspaces": [

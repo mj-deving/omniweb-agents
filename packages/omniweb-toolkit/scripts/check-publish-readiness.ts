@@ -39,6 +39,8 @@ Options:
   --attest-url URL     Attestation URL to validate (default: Blockchain.info ticker JSON)
   --text TEXT          Draft text to check against publish guards
   --category CAT       Draft category (default: ANALYSIS)
+  --env-path PATH      Explicit credential/env file to use instead of default resolution
+  --agent-name NAME    Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH     Override state directory for guard persistence
   --probe-attest       Run a real standalone DAHR attestation probe (spends DEM)
   --allow-insecure     Allow HTTP attest URLs (local dev only)
@@ -58,11 +60,13 @@ function getStringArg(flag: string, fallback: string): string {
 const attestUrl = getStringArg("--attest-url", DEFAULT_ATTEST_URL);
 const text = getStringArg("--text", DEFAULT_TEXT);
 const category = getStringArg("--category", DEFAULT_CATEGORY);
+const envPathArg = getStringArg("--env-path", "");
+const agentNameArg = getStringArg("--agent-name", "");
 const stateDirArg = getStringArg("--state-dir", "");
 const allowInsecureUrls = args.includes("--allow-insecure");
 const probeAttest = args.includes("--probe-attest");
 
-for (const flag of ["--attest-url", "--text", "--category", "--state-dir"]) {
+for (const flag of ["--attest-url", "--text", "--category", "--env-path", "--agent-name", "--state-dir"]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
     console.error(`Error: ${flag} requires a value`);
@@ -70,11 +74,78 @@ for (const flag of ["--attest-url", "--text", "--category", "--state-dir"]) {
   }
 }
 
+const envPath = envPathArg || undefined;
+const agentName = agentNameArg || undefined;
 const stateDir = stateDirArg || undefined;
+const schemaError = validateInput(PublishDraftSchema, {
+  text,
+  category,
+  attestUrl,
+});
+const urlCheck = await validateUrl(attestUrl, { allowInsecure: allowInsecureUrls });
+const attestUrlDiagnostics = analyzeAttestUrlDiagnostics(attestUrl, { probeAttest });
+const warnings = buildAttestUrlWarnings(attestUrlDiagnostics);
+const checkWriteReadiness = await loadCheckWriteReadiness();
+const credentialReadiness = checkWriteReadiness({
+  cwd: process.cwd(),
+  envPath,
+  agentName,
+});
+
+const preflightBase = {
+  checkedAt: new Date().toISOString(),
+  stateDir: stateDir ?? "(default)",
+  credentialResolution: {
+    envPath: envPath ?? ".env",
+    agentName: agentName ?? null,
+    credentialSourcesChecked: credentialReadiness.credentialSourcesChecked,
+  },
+  draft: {
+    category,
+    textLength: text.length,
+    attestUrl,
+  },
+  warnings,
+};
+
+if (!credentialReadiness.canAuth) {
+  const blockers: string[] = ["missing_credentials"];
+  if (schemaError) blockers.push("draft_invalid");
+  if (!urlCheck.valid) blockers.push("attest_url_blocked");
+
+  console.log(
+    JSON.stringify(
+      {
+        ok: false,
+        ...preflightBase,
+        auth: {
+          tokenAvailable: false,
+          sdkBridgeApiAccess: false,
+        },
+        checks: {
+          connect: false,
+          credentialReadiness,
+          draftSchema: schemaError
+            ? { ok: false, code: schemaError.code, message: schemaError.message }
+            : { ok: true },
+          urlValidation: urlCheck.valid
+            ? { ok: true }
+            : { ok: false, reason: urlCheck.reason ?? "unknown" },
+          attestUrlDiagnostics,
+        },
+        blockers,
+        message: "Credential preflight failed before wallet/runtime connect. No wallet-backed code was attempted.",
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(1);
+}
 
 try {
   const connect = await loadConnect();
-  const omni = await connect({ stateDir, allowInsecureUrls });
+  const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
   const session = await createSessionFromRuntime(omni.runtime, { stateDir, allowInsecureUrls });
   const authToken = await omni.runtime.getToken();
 
@@ -84,16 +155,8 @@ try {
   const balanceOk = balanceResult?.ok === true;
   const chainBalanceOk = chainBalanceResult?.ok === true;
   const feedOk = feedResult?.ok === true;
-  const schemaError = validateInput(PublishDraftSchema, {
-    text,
-    category,
-    attestUrl,
-  });
-  const urlCheck = await validateUrl(attestUrl, { allowInsecure: allowInsecureUrls });
-  const attestUrlDiagnostics = analyzeAttestUrlDiagnostics(attestUrl, { probeAttest });
   const writeRate = await getWriteRateRemaining(session.stateStore, session.walletAddress);
   const dedupError = await checkAndRecordDedup(session.stateStore, session.walletAddress, text, false);
-  const warnings = buildAttestUrlWarnings(attestUrlDiagnostics);
 
   let attestProbe:
     | {
@@ -152,20 +215,15 @@ try {
     JSON.stringify(
       {
         ok: blockers.length === 0,
+        ...preflightBase,
         address: omni.address,
-        stateDir: stateDir ?? "(default)",
         auth: {
           tokenAvailable: !!authToken,
           sdkBridgeApiAccess: omni.runtime.sdkBridge.apiAccess,
         },
-        draft: {
-          category,
-          textLength: text.length,
-          attestUrl,
-        },
-        warnings,
         checks: {
           connect: true,
+          credentialReadiness,
           tokenAvailable: !!authToken,
           balance: {
             ok: balanceOk || chainBalanceOk,
@@ -216,7 +274,27 @@ try {
   process.exit(1);
 }
 
+type CheckWriteReadinessFn = (opts?: {
+  cwd?: string;
+  agentName?: string;
+  envPath?: string;
+  env?: Record<string, string | undefined>;
+  homeDir?: string;
+  packageResolver?: (specifier: string) => string;
+}) => {
+  ok: boolean;
+  canRead: true;
+  canAuth: boolean;
+  canWrite: boolean;
+  missingEnv: string[];
+  missingPackages: string[];
+  credentialSourcesChecked: string[];
+  notes: string[];
+};
+
 async function loadConnect(): Promise<(opts?: {
+  envPath?: string;
+  agentName?: string;
   stateDir?: string;
   allowInsecureUrls?: boolean;
 }) => Promise<any>> {
@@ -234,4 +312,21 @@ async function loadConnect(): Promise<(opts?: {
     throw new Error("connect() export not found in dist/index.js or src/index.ts");
   }
   return mod.connect;
+}
+
+async function loadCheckWriteReadiness(): Promise<CheckWriteReadinessFn> {
+  try {
+    const mod = await import("../dist/index.js");
+    if (typeof mod.checkWriteReadiness === "function") {
+      return mod.checkWriteReadiness as CheckWriteReadinessFn;
+    }
+  } catch {
+    // Fall back to source during local development before build output exists.
+  }
+
+  const mod = await import("../src/index.ts");
+  if (typeof mod.checkWriteReadiness !== "function") {
+    throw new Error("checkWriteReadiness() export not found in dist/index.js or src/index.ts");
+  }
+  return mod.checkWriteReadiness as CheckWriteReadinessFn;
 }

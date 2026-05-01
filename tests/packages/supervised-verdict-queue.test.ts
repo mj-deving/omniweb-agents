@@ -187,6 +187,38 @@ describe("supervised verdict queue", () => {
     expect(queue).toHaveLength(1);
   });
 
+  it("requeues due entries when resolution asks to defer verdict capture", async () => {
+    const dir = await makeTempDir();
+    const queuePath = join(dir, "pending.json");
+    const logPath = join(dir, "verdicts.jsonl");
+    const entry = buildPendingVerdictEntry({
+      txHash: "0xdefer",
+      category: "ANALYSIS",
+      text: "Indexer still catching up",
+      startedAt: "2026-04-21T10:00:00.000Z",
+    });
+    await enqueuePendingVerdict(entry, queuePath);
+
+    const result = await resolveDuePendingVerdicts({
+      queuePath,
+      logPath,
+      now: () => Date.parse("2026-04-21T12:30:00.000Z"),
+      resolveEntry: async () => ({
+        checkedAt: "2026-04-21T12:30:05.000Z",
+        deferByMs: 60 * 60 * 1000,
+      }),
+    });
+
+    const queue = await loadPendingVerdicts(queuePath);
+
+    expect(result.resolved).toHaveLength(0);
+    expect(result.remaining).toHaveLength(1);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.failures).toHaveLength(0);
+    expect(result.remaining[0]?.checkAt).toBe("2026-04-21T13:30:00.000Z");
+    expect(queue[0]?.checkAt).toBe("2026-04-21T13:30:00.000Z");
+  });
+
   it("preserves entries enqueued while due verdicts are resolving", async () => {
     const dir = await makeTempDir();
     const queuePath = join(dir, "pending.json");

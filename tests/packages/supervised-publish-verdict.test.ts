@@ -6,6 +6,7 @@ import {
   getSupervisedVerdictPolicy,
   scheduleSupervisedVerdict,
 } from "../../packages/omniweb-toolkit/scripts/_supervised-publish-verdict";
+import { decideIndexingLagOutcome } from "../../packages/omniweb-toolkit/scripts/_pending-verdict-indexing-policy";
 
 describe("supervised publish verdict policy", () => {
   it("uses a two-hour fixed window for analysis", () => {
@@ -78,6 +79,35 @@ describe("supervised publish verdict policy", () => {
         flag: 3,
       },
       reactionTotal: 4,
+    });
+  });
+});
+
+
+describe("pending verdict indexing lag policy", () => {
+  it("defers non-indexed entries while they are still within the lag window", () => {
+    expect(
+      decideIndexingLagOutcome({
+        entryAgeMs: 6 * 60 * 60 * 1000,
+        maxIndexingLagMs: 24 * 60 * 60 * 1000,
+        deferLagMs: 60 * 60 * 1000,
+      }),
+    ).toEqual({
+      kind: "defer",
+      deferByMs: 60 * 60 * 1000,
+    });
+  });
+
+  it("records a terminal negative verdict after the indexing lag ceiling", () => {
+    expect(
+      decideIndexingLagOutcome({
+        entryAgeMs: 25 * 60 * 60 * 1000,
+        maxIndexingLagMs: 24 * 60 * 60 * 1000,
+        deferLagMs: 60 * 60 * 1000,
+      }),
+    ).toEqual({
+      kind: "terminal",
+      indexingLagMs: 25 * 60 * 60 * 1000,
     });
   });
 });

@@ -21,11 +21,16 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-consumer-journeys.ts](./check-consumer-journeys.ts): outside-in journey bundle across shipped archetypes
 - [check-package-consumer.ts](./check-package-consumer.ts): clean tarball install proof for package-name imports, plan-only dry-run prompt rendering, live read-only use, and missing-env write readiness
 - [check-research-agent-consumer.ts](./check-research-agent-consumer.ts): clean tarball install proof for the smallest research-agent-facing package entrypoint by package name, including one safe live read
+- [check-research-agent-dry-run.ts](./check-research-agent-dry-run.ts): maintained forced-dry-run proof for the exported OpenClaw research-agent minimal starter from the source workspace
+- [check-research-agent-live-read.ts](./check-research-agent-live-read.ts): maintained explicit live-read proof for the exported OpenClaw research-agent minimal starter from the source workspace, with a JS-only runtime prep step by default
+- [check-research-agent-live-write-gate.ts](./check-research-agent-live-write-gate.ts): maintained explicit live-write gate proof for the exported OpenClaw research-agent minimal starter; it must fail early and clearly when wallet/runtime prerequisites are absent
+- [check-research-starter-loop.ts](./check-research-starter-loop.ts): maintained no-spend starter-loop artifact that emits `{ surface, summary, decision, nextStep }` from the runtime sensing substrate
+- [prepare-runtime-proof-build.mjs](./prepare-runtime-proof-build.mjs): JS-only dist refresh for starter-proof scripts that need fresh runtime exports without full DTS/release build coupling
 - [check-verification-matrix.ts](./check-verification-matrix.ts): maintained proving baseline against current package surface
 - [check-discovery-drift.ts](./check-discovery-drift.ts): live discovery resources against committed snapshots
 - [check-read-surface-sweep.ts](./check-read-surface-sweep.ts): production-host read-only sweep
-- [check-topic-coverage.ts](./check-topic-coverage.ts): topic support map across archetypes
-- [check-research-e2e-matrix.ts](./check-research-e2e-matrix.ts): family-level research matrix with real reads, fetches, and optional single-family proof
+- [check-topic-coverage.ts](./check-topic-coverage.ts): topic support map across archetypes plus starter-surface support/coverage diagnostics
+- [check-research-e2e-matrix.ts](./check-research-e2e-matrix.ts): family-level research matrix with real reads, fetches, optional single-family proof, and starter-surface/decision output for the no-spend architecture substrate
 - [check-publish-visibility.ts](./check-publish-visibility.ts): repeated publish/reply visibility harness
 - [check-indexing-miss-probe.ts](./check-indexing-miss-probe.ts): raw-SDK versus indexed-readback comparison
 
@@ -33,6 +38,8 @@ All scripts are non-interactive, print structured output, and support `--help`.
 
 - [check-write-surface-sweep.ts](./check-write-surface-sweep.ts): maintained wallet-backed write sweep; tip is opt-in
 - [check-supervised-observation.ts](./check-supervised-observation.ts): explicit single-source attested `OBSERVATION` publish path
+- [check-supervised-observation-eligibility.ts](./check-supervised-observation-eligibility.ts): explicit no-spend gate that combines package publish, credential readiness, and draft-quality ordering for the minimal supervised observation path
+- [check-supervised-analysis.ts](./check-supervised-analysis.ts): explicit multi-source `ANALYSIS` publish path that captures publish-readiness and attestation-workflow preflights before the live publish/visibility record
 - [probe-social-writes.ts](./probe-social-writes.ts): explicit reaction + reply proof
 - [probe-market-writes.ts](./probe-market-writes.ts): explicit fixed-price and higher-lower write sweep
 - [probe-identity-surfaces.ts](./probe-identity-surfaces.ts): explicit register + human-link round trip
@@ -63,10 +70,11 @@ For a new consumer integration, use the smallest useful path:
 3. [check-live-categories.ts](./check-live-categories.ts)
 4. [check-response-shapes.ts](./check-response-shapes.ts) or [check-endpoint-surface.ts](./check-endpoint-surface.ts)
 5. [check-publish-readiness.ts](./check-publish-readiness.ts)
-6. [check-attestation-workflow.ts](./check-attestation-workflow.ts) when the claim depends on a nontrivial evidence chain
-7. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
-8. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
-9. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
-10. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
+6. [check-supervised-observation-eligibility.ts](./check-supervised-observation-eligibility.ts) when you need the exact no-spend answer for whether the first supervised observation publish attempt is eligible yet
+7. [check-attestation-workflow.ts](./check-attestation-workflow.ts) when the claim depends on a nontrivial evidence chain
+8. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
+9. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
+10. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+11. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

@@ -88,11 +88,11 @@ try {
 
   const createTx = await submitStorageTransaction(omni.runtime.demos, address, storageAddress, createPayload);
   await sleep(5000);
-  const readAfterCreate = await StorageProgram.getByAddress("https://demosnode.discus.sh", storageAddress, address);
+  const readAfterCreate = await StorageProgram.getByAddress("https://node3.demos.sh", storageAddress, address);
 
   const setTx = await submitStorageTransaction(omni.runtime.demos, address, storageAddress, setPayload);
   await sleep(3000);
-  const fieldAfterSet = await StorageProgram.getValue("https://demosnode.discus.sh", storageAddress, "lastProbe", address);
+  const fieldAfterSet = await StorageProgram.getValue("https://node3.demos.sh", storageAddress, "lastProbe", address);
 
   console.log(JSON.stringify({
     attempted: true,

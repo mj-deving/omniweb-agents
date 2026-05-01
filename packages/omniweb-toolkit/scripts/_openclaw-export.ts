@@ -130,6 +130,7 @@ const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
       "skills/omniweb-research-agent/runtime/capability-detect.mjs",
       "skills/omniweb-research-agent/runtime/live-research-starter.ts",
       "skills/omniweb-research-agent/runtime/minimal-dry-run-starter.mjs",
+      "skills/omniweb-research-agent/runtime/minimal-live-read-starter.mjs",
       "skills/omniweb-research-agent/runtime/minimal-live-starter.mjs",
     ],
   },

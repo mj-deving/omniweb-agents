@@ -37,7 +37,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 ## Live Proof And Spendful Probes
 
 - [check-write-surface-sweep.ts](./check-write-surface-sweep.ts): maintained wallet-backed write sweep; tip is opt-in
-- [check-supervised-observation.ts](./check-supervised-observation.ts): explicit single-source attested `OBSERVATION` publish path
+- [check-supervised-observation.ts](./check-supervised-observation.ts): explicit single-source attested `OBSERVATION` publish path, now with deterministic `--draft-template` + `--preflight-only` no-spend gating
 - [check-supervised-observation-eligibility.ts](./check-supervised-observation-eligibility.ts): explicit no-spend gate that combines package publish, credential readiness, and draft-quality ordering for the minimal supervised observation path
 - [check-supervised-analysis.ts](./check-supervised-analysis.ts): explicit multi-source `ANALYSIS` publish path that captures publish-readiness and attestation-workflow preflights before the live publish/visibility record
 - [probe-social-writes.ts](./probe-social-writes.ts): explicit reaction + reply proof

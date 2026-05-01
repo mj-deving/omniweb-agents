@@ -2,6 +2,22 @@
   "checkedAt": "2026-05-01T11:24:14.113Z",
   "wave_id": "2026-04-23-dry-run-40-rerun",
   "policy": "root_biased_first_live_wave",
+  "recommendedCleanSix": [
+    "s6-p3-usdt-weekly-step-up",
+    "s5-p2-cryptocompare-coinbase-btc-sync",
+    "s3-p2-fees-low-queue-broad",
+    "s9-p3-lido-vs-wbeth-yield-scale",
+    "s5-p3-deribit-blockchain-tight-basis",
+    "s4-p4-vvix-observation-band"
+  ],
+  "demotedOriginalPrimaries": {
+    "s4-p3-tips-bonds-real-nominal-gap": "source healthy but publish-readiness currently blocks on feed_unavailable",
+    "s9-p4-vix-spx-fragile-risk-question": "source healthy but publish-readiness currently fails with a 502"
+  },
+  "promotedReserves": {
+    "s5-p3-deribit-blockchain-tight-basis": "publish-readiness passes and preserves cross-venue market structure coverage",
+    "s4-p4-vvix-observation-band": "publish-readiness passes and preserves volatility surface coverage"
+  },
   "candidates": [
     {
       "draft_id": "s4-p3-tips-bonds-real-nominal-gap",

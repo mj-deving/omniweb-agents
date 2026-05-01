@@ -54,5 +54,16 @@ Checked at: 2026-05-01T11:24:14.113Z
 
 ## Summary
 
-- all six publish-readiness checks passing: no
-- remaining inflection point: whether to repair the remaining technical blockers before broadcast
+- original six all passing publish-readiness: no
+- clean substitutes found in reserve set: yes
+- recommended clean six for first live confirmation wave:
+  1. `s6-p3-usdt-weekly-step-up`
+  2. `s5-p2-cryptocompare-coinbase-btc-sync`
+  3. `s3-p2-fees-low-queue-broad`
+  4. `s9-p3-lido-vs-wbeth-yield-scale`
+  5. `s5-p3-deribit-blockchain-tight-basis` (reserve promoted)
+  6. `s4-p4-vvix-observation-band` (reserve promoted)
+- demoted from the original primary set:
+  - `s4-p3-tips-bonds-real-nominal-gap` — source healthy, but publish-readiness currently blocks on `feed_unavailable`
+  - `s9-p4-vix-spx-fragile-risk-question` — source healthy, but publish-readiness currently fails with a `502`
+- remaining inflection point: whether to actually broadcast the now-clean six-candidate first live wave

@@ -6,6 +6,7 @@ import {
   resolveDuePendingVerdicts,
 } from "./_supervised-verdict-queue.ts";
 import { resolvePredictionCheck } from "./_prediction-check.ts";
+import { decideIndexingLagOutcome } from "./_pending-verdict-indexing-policy.ts";
 import { extractSupervisedVerdictMetrics } from "./_supervised-publish-verdict.js";
 import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageExport } from "./_shared.ts";
 
@@ -23,6 +24,7 @@ Options:
   --verify-poll-ms N          Visibility poll interval (default: 5000)
   --verify-limit N            Feed limit for visibility checks (default: 50)
   --defer-lag-ms N            Requeue delayed verdicts when indexing still lags (default: 3600000)
+  --max-indexing-lag-ms N     Stop requeueing after this much age and record a terminal negative verdict (default: 86400000)
   --help, -h                  Show this help
 `);
   process.exit(0);
@@ -36,6 +38,8 @@ const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
 const verifyPollMs = getPositiveInt("--verify-poll-ms", 5_000);
 const verifyLimit = getPositiveInt("--verify-limit", 50);
 const deferLagMs = getPositiveInt("--defer-lag-ms", 60 * 60 * 1000);
+const maxIndexingLagMs = getPositiveInt("--max-indexing-lag-ms", 24 * 60 * 60 * 1000);
+const now = Date.now;
 
 const connect = await loadConnect();
 const verifyPublishVisibility = await loadPackageExport<
@@ -77,9 +81,36 @@ const result = await resolveDuePendingVerdicts({
     const checkedAt = new Date().toISOString();
 
     if (verification?.indexedVisible !== true) {
+      const entryAgeMs = now() - Date.parse(entry.startedAt);
+      const indexingDecision = decideIndexingLagOutcome({
+        entryAgeMs,
+        maxIndexingLagMs,
+        deferLagMs,
+      });
+
+      if (indexingDecision.kind === "defer") {
+        return {
+          checkedAt,
+          deferByMs: indexingDecision.deferByMs,
+        };
+      }
+
       return {
         checkedAt,
-        deferByMs: deferLagMs,
+        verdict: {
+          verification,
+          post: postRecord ? {
+            txHash: readString(postRecord.txHash ?? postRecord.tx_hash),
+            blockNumber: readNumber(postRecord.blockNumber ?? postRecord.block_number),
+            timestamp: readNumber(postRecord.timestamp),
+            category: readString(postRecord.category ?? (postRecord.payload as { cat?: unknown } | undefined)?.cat),
+            text: readString(postRecord.text ?? (postRecord.payload as { text?: unknown } | undefined)?.text),
+          } : null,
+          metrics,
+          predictionCheck,
+          terminalReason: "indexing_visibility_timeout",
+          indexingLagMs: indexingDecision.indexingLagMs,
+        },
       };
     }
 
@@ -154,3 +185,4 @@ function readNumber(value: unknown): number | null {
   }
   return null;
 }
+

@@ -1,6 +1,6 @@
 # Broad Low-Friction Proof Wave Preflight
 
-Checked at: 2026-05-01T15:06:30.738Z
+Checked at: 2026-05-01T15:22:11.436Z
 
 ## s6-p3-usdt-weekly-step-up
 - tier: primary
@@ -73,8 +73,8 @@ Checked at: 2026-05-01T15:06:30.738Z
 - score: 90
 - source family: coinbase
 - topic family: crypto-vs-macro-question
-- publish-readiness ok: no
-- publish-readiness issue: draft_invalid
+- publish-readiness ok: yes
+- publish-readiness issue: none
 - primary source fetch ok: yes
 - primary source status: 200
 - evidence urls checked: 2
@@ -121,7 +121,7 @@ Checked at: 2026-05-01T15:06:30.738Z
 
 ## Summary
 
-- original six all passing publish-readiness: no
+- original six all passing publish-readiness: yes
 - executable wave size right now: 6
 - recommended executable wave:
   1. `s6-p3-usdt-weekly-step-up`
@@ -129,9 +129,5 @@ Checked at: 2026-05-01T15:06:30.738Z
   3. `s3-p2-fees-low-queue-broad`
   4. `s9-p3-lido-vs-wbeth-yield-scale`
   5. `s4-p4-vvix-observation-band`
-  6. `s10-p2-top-three-tvl-cluster`
-- demoted primaries:
-  - `s10-p4-eth-inflation-question` — draft_invalid
-- promoted reserves:
-  - `s10-p2-top-three-tvl-cluster` — promoted because s10-p4 failed preflight
+  6. `s10-p4-eth-inflation-question`
 - remaining inflection point: whether to actually broadcast the currently executable wave after this no-spend preflight

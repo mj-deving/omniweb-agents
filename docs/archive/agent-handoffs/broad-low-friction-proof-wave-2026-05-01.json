@@ -212,5 +212,22 @@
     "rerun_source_health": "docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/source-health.json",
     "shortlist_basis": "docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/root-biased-live-shortlist.json",
     "shortlist_preflight": "docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/root-biased-live-shortlist-preflight.json"
-  }
+  },
+  "replacementOrder": [
+    {
+      "when": "s10-p4 fails preflight",
+      "promote": "s10-p2",
+      "reason": "preserve QUESTION + macro linkage breadth without making the wave more BTC-heavy"
+    },
+    {
+      "when": "a BTC candidate fails preflight",
+      "promote": "s5-p3",
+      "reason": "use BTC derivatives/cash basis reserve when a BTC slot needs replacement"
+    },
+    {
+      "when": "macro/rates breadth is needed and preflight clears",
+      "promote": "s4-p3",
+      "reason": "restore treasury/rates breadth when it is operationally available"
+    }
+  ]
 }

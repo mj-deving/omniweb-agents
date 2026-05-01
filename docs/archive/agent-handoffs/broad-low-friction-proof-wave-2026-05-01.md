@@ -94,6 +94,16 @@ A candidate belongs in this first wave only if it meets all of the following:
 
 Even though the packet evidence is now durable, **publish-readiness must still be rechecked immediately before live execution** because feed/indexing readiness is mutable.
 
+## Explicit replacement order
+
+If a primary candidate fails immediate preflight, replace it in this order so the wave keeps its intended breadth:
+
+1. if `s10-p4` fails preflight → promote `s10-p2`
+2. if a BTC candidate fails preflight → promote `s5-p3`
+3. if macro/rates breadth is needed and preflight clears → promote `s4-p3`
+
+This keeps reserve choice deliberate instead of ad hoc.
+
 ## Promotion gates
 
 - **reply** only after this wave has durable publish+attest proofs plus maintained replayability

@@ -28,7 +28,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://mempool.space/api/mempool",
       "jsonPath": "count",
-      "text": "The mempool is holding 69,450 transactions and 38.38 million vbytes even though the fastest inclusion price is only 3 sat/vB. That split says backlog size alone is not translating into urgent fee pressure."
+      "text": "Bitcoin's queue holds 69,450 transactions and 38.38 million vbytes even though the top advertised inclusion price is still only 3 sat/vB. The useful contrast here is storage load versus urgency pricing, not mempool size by itself."
     },
     {
       "id": "s6-p3-usdt-weekly-step-up",

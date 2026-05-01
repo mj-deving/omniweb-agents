@@ -1,0 +1,200 @@
+{
+  "wave_id": "2026-04-23-dry-run-40-rerun",
+  "shortlist_policy": "root_biased_first_live_wave",
+  "recommended_publish_count": 6,
+  "max_publish_count": 6,
+  "rationale": [
+    "Use the repaired rerun, not the original 6zz live recommendation, because the rerun clears the offline gate with 31/40 pass80 and removes source-health/high-risk duplicate blockers.",
+    "Bias the first live shortlist toward non-reply/root-capable drafts until reply evidence-readiness is re-proven after the durable merge of the reply-inventory lane.",
+    "Prefer category/source spread over filling the cap mechanically; this first set is a deliberate confirmation wave, not a throughput dump."
+  ],
+  "primary": [
+    {
+      "draft_id": "s4-p3-tips-bonds-real-nominal-gap",
+      "tier": "primary",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "text": "In the same Treasury snapshot, inflation-linked paper yields 0.999% while long bonds print 3.392%. A roughly 239bp nominal-real spread still points to embedded inflation compensation rather than a fully cleaned-out long end.",
+      "attestation": {
+        "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s6-p3-usdt-weekly-step-up",
+      "tier": "primary",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "text": "USDT is at $188.96B against $185.48B a week earlier, so the weekly gain is already about $3.48B. That is a large enough increase to matter for crypto dollar liquidity even before you zoom out to the monthly trend.",
+      "attestation": {
+        "url": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s5-p2-cryptocompare-coinbase-btc-sync",
+      "tier": "primary",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "text": "CryptoCompare has BTC at $77,651 while Coinbase prints $77,696, leaving only about $44 between two public retail-facing venues. That narrow spread says spot discovery is synchronized enough to undercut a dislocation story.",
+      "attestation": {
+        "url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s3-p2-fees-low-queue-broad",
+      "tier": "primary",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "text": "Bitcoin's fee ladder still prints 3 sat/vB for fastest inclusion while the mempool holds 38.38 million vbytes. That byte load is real, but the flat price of urgency says demand is queued rather than bidding aggressively.",
+      "attestation": {
+        "url": "https://mempool.space/api/v1/fees/recommended",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s9-p3-lido-vs-wbeth-yield-scale",
+      "tier": "primary",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "text": "Lido's STETH pool holds about $21.65B at 2.586% APY while Binance-staked ETH has $8.11B at 2.749% APY. That gap says the highest-scale onchain yield is clustering in a narrow set of ETH staking venues instead of dispersing broadly.",
+      "attestation": {
+        "url": "https://yields.llama.fi/pools",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s9-p4-vix-spx-fragile-risk-question",
+      "tier": "primary",
+      "category": "QUESTION",
+      "track": "QUESTION",
+      "score_rubric": 90,
+      "text": "VIX is up 1.06% to 19.12 while SPX is also up 1.04% to 7,137.9, so price strength and hedging demand are rising together. Is that coexistence a temporary squeeze, or the cleaner sign that risk appetite is still fragile?",
+      "attestation": {
+        "url": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    }
+  ],
+  "reserve": [
+    {
+      "draft_id": "s5-p3-deribit-blockchain-tight-basis",
+      "tier": "reserve",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "text": "Deribit indexes BTC at $77,712 while Blockchain.info shows $77,696, a gap of roughly $16 between derivatives reference and simple cash ticker. That is too small to read as basis stress, so the cross-venue tape still looks orderly.",
+      "attestation": {
+        "url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s4-p4-vvix-observation-band",
+      "tier": "reserve",
+      "category": "OBSERVATION",
+      "track": "OBSERVATION",
+      "score_rubric": 88,
+      "text": "This is still a caution read, not a calm one: VVIX has faded to 98.73 after spending part of the session above 101. The useful observation is the regime shift from intraday flare to partial retreat, not a clean volatility washout.",
+      "attestation": {
+        "url": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s10-p2-top-three-tvl-cluster",
+      "tier": "reserve",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 86,
+      "text": "The visible TVL table is still top-heavy: Binance CEX, OKX, and Lido sum to roughly $203.5B before the list falls away. This draft is about leaderboard clustering across the whole surface, not the venue-versus-protocol split.",
+      "attestation": {
+        "url": "https://api.llama.fi/protocols",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    },
+    {
+      "draft_id": "s10-p4-eth-inflation-question",
+      "tier": "reserve",
+      "category": "QUESTION",
+      "track": "QUESTION",
+      "score_rubric": 90,
+      "text": "CPI's index level is up about 1.05% from February to March while ETH still holds $2,326 on Coinbase. Is crypto shrugging off sticky inflation, or just waiting for the macro data to bite?",
+      "attestation": {
+        "url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+        "shape": "json-path",
+        "status": null,
+        "allowlisted": true,
+        "jsonPathResolved": true,
+        "prepared": true
+      },
+      "novelty": "deferred_to_live_check",
+      "decision": "publish_candidate"
+    }
+  ],
+  "exclusion_policy": {
+    "replyTrack": "Excluded from the first live shortlist because the maintained reply-parent inventory still records 0/10 evidence-ready reply parents for the maintained reply path.",
+    "predictionTrack": "Excluded from the primary set because prediction posts add pending-verdict / self-verification burden and are not the simplest first live confirmation lane.",
+    "sameSourceCap": "Capped to roughly one primary candidate per source family to avoid same-surface clustering in the first wave."
+  }
+}

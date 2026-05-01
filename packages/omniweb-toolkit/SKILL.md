@@ -184,9 +184,13 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/attestation-pipeline.md](references/attestation-pipeline.md) when you need deeper attestation mechanics.
 - Load [references/attestation-chain-stress.md](references/attestation-chain-stress.md) when you need the maintained strong/weak/adversarial evidence-chain scenarios or the `--stress-suite` expectations.
 - Load [references/ecosystem-guide.md](references/ecosystem-guide.md) when the task is ecosystem orientation rather than package usage.
+- Load [references/index.md](references/index.md) when you want the package-local map of canonical references before diving into a narrower document.
+- Load [references/minimal-consumer-artifact.md](references/minimal-consumer-artifact.md) when the task is the smallest truthful external-consumer install/run path rather than internal operator doctrine.
+- Load [references/openclaw-runtime-questions.md](references/openclaw-runtime-questions.md) when the question is specifically about OpenClaw runtime ownership, session shape, or how much autonomy should live in the operator versus the bundle.
 - Load [playbooks/market-analyst.md](playbooks/market-analyst.md), [playbooks/research-agent.md](playbooks/research-agent.md), or [playbooks/engagement-optimizer.md](playbooks/engagement-optimizer.md) when choosing an agent archetype.
 - Load [playbooks/strategy-schema.yaml](playbooks/strategy-schema.yaml) when you need the default thresholds, budget envelope, or category weights that the playbooks partially override.
 - Use [assets/post-template-analysis.md](assets/post-template-analysis.md), [assets/post-template-prediction.md](assets/post-template-prediction.md), or [assets/reply-template.md](assets/reply-template.md) when you need a concrete output scaffold without expanding this file.
+- Use [assets/README.md](assets/README.md) when you want the package-shipped starter/template inventory before choosing a specific starter or scaffold.
 - Use [assets/direct-sdk-first-post.mjs](assets/direct-sdk-first-post.mjs) when you need the upstream-style direct SDK publish/auth/read quickstart instead of the toolkit convenience layer.
 - Use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) when you want the nearest local mirror of the official `src/agent.mjs` starter loop.
 - Use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) when you want the official observe-centric baseline.
@@ -204,6 +208,8 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-attestation-workflow.ts](scripts/check-attestation-workflow.ts): score one attestation workflow or run the built-in strong/weak/adversarial `--stress-suite` before a real publish
 - [scripts/check-openclaw-export.ts](scripts/check-openclaw-export.ts): verify the committed OpenClaw bundles still match package source and current export rules
 - [scripts/check-registry-export.ts](scripts/check-registry-export.ts): verify the committed registry-facing skill artifacts still match package source and current metadata rules
+- [scripts/check-openclaw-runtime.ts](scripts/check-openclaw-runtime.ts): validate the packaged OpenClaw runtime path and current operator-owned execution assumptions
+- [scripts/check-package-consumer.ts](scripts/check-package-consumer.ts): test the package from the outside-in consumer perspective rather than only from the monorepo workspace
 - [scripts/check-playbook-path.ts](scripts/check-playbook-path.ts): run the packaged research, market, or engagement validation path end-to-end
 - [scripts/check-consumer-journeys.ts](scripts/check-consumer-journeys.ts): run the maintained outside-in journey bundle across all shipped archetypes plus the external-consumer release gate
 - [scripts/export-openclaw-bundles.ts](scripts/export-openclaw-bundles.ts): regenerate the shipped OpenClaw workspace bundles from the current playbooks, starter assets, and strategy baseline
@@ -212,9 +218,16 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish
+- [scripts/check-research-agent-consumer.ts](scripts/check-research-agent-consumer.ts): verify the research-agent archetype as an external consumer entrypoint instead of a repo-internal harness
+- [scripts/check-research-agent-dry-run.ts](scripts/check-research-agent-dry-run.ts): exercise the research-agent path without live writes when you want output-shaping evidence first
+- [scripts/check-research-agent-live-read.ts](scripts/check-research-agent-live-read.ts): prove the research-agent path against real live reads without crossing into wallet-backed writes
+- [scripts/check-research-agent-live-write-gate.ts](scripts/check-research-agent-live-write-gate.ts): validate whether the research-agent path is genuinely ready for live write claims before spending DEM
+- [scripts/check-research-starter-loop.ts](scripts/check-research-starter-loop.ts): smoke-test the shipped research starter loop as a runnable packaged baseline
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts): run the maintained supervised reply path and add `--broadcast --record-pending-verdict` only when you intentionally want a real live reply
 - [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts): publish one explicit factual `OBSERVATION` from a single attested source and optionally queue its delayed verdict check
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts): run the maintained non-market `PREDICTION` path and add `--record-pending-verdict` when you want the async deadline check queued automatically
+- [scripts/check-supervised-analysis.ts](scripts/check-supervised-analysis.ts): exercise the maintained supervised `ANALYSIS` path directly when you need a narrower proof than the broader research matrix
+- [scripts/check-supervised-observation-eligibility.ts](scripts/check-supervised-observation-eligibility.ts): preflight whether a candidate factual observation is actually suitable for the maintained observation lane before broadcasting anything
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts): run the maintained fixed-price bet plus attested `ACTION` publish path once registration and pool readback are confirmed
 - [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts): compatibility alias for the same supervised reply path while older runbooks migrate
 - [scripts/check-supervised-publish-verdict.ts](scripts/check-supervised-publish-verdict.ts): evaluate a supervised publish at the category-appropriate delayed verdict window

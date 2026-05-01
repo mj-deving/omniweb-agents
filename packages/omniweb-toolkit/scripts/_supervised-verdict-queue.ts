@@ -72,8 +72,10 @@ export interface ResolveDuePendingVerdictsOptions {
   logPath?: string;
   now?: () => number;
   resolveEntry: (entry: PendingVerdictEntry) => Promise<{
-    verdict: unknown;
+    verdict?: unknown;
     checkedAt?: string;
+    deferUntil?: string;
+    deferByMs?: number;
   }>;
 }
 
@@ -196,6 +198,20 @@ export async function resolveDuePendingVerdicts(
 
     try {
       const outcome = await opts.resolveEntry(entry);
+      const deferredCheckAt = resolveDeferredCheckAt(entry, outcome, now);
+
+      if (deferredCheckAt) {
+        remaining.push({
+          ...entry,
+          checkAt: deferredCheckAt,
+        });
+        skipped.push({
+          ...entry,
+          checkAt: deferredCheckAt,
+        });
+        continue;
+      }
+
       const logEntry: VerdictLogEntry = {
         version: 1,
         id: entry.id,
@@ -251,6 +267,35 @@ function isPendingVerdictEntry(value: unknown): value is PendingVerdictEntry {
     typeof candidate.checkAfterMs === "number" &&
     ("predictionCheck" in candidate ? candidate.predictionCheck == null || typeof candidate.predictionCheck === "object" : true)
   );
+}
+
+function resolveDeferredCheckAt(
+  entry: PendingVerdictEntry,
+  outcome: {
+    verdict?: unknown;
+    checkedAt?: string;
+    deferUntil?: string;
+    deferByMs?: number;
+  },
+  now: () => number,
+): string | null {
+  if (typeof outcome.deferUntil === "string") {
+    const deferredAtMs = Date.parse(outcome.deferUntil);
+    if (!Number.isFinite(deferredAtMs)) {
+      throw new Error(`Invalid deferUntil timestamp: ${outcome.deferUntil}`);
+    }
+    return new Date(deferredAtMs).toISOString();
+  }
+
+  if (typeof outcome.deferByMs === "number") {
+    if (!Number.isFinite(outcome.deferByMs) || outcome.deferByMs <= 0) {
+      throw new Error(`Invalid deferByMs value: ${String(outcome.deferByMs)}`);
+    }
+    const deferredBaseMs = Math.max(now(), Date.parse(entry.checkAt));
+    return new Date(deferredBaseMs + outcome.deferByMs).toISOString();
+  }
+
+  return null;
 }
 
 async function mergePendingVerdictsWithNewEntries(

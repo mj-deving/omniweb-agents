@@ -1,0 +1,558 @@
+{
+  "checkedAt": "2026-05-01T11:24:14.113Z",
+  "wave_id": "2026-04-23-dry-run-40-rerun",
+  "policy": "root_biased_first_live_wave",
+  "recommendedCleanSix": [
+    "s6-p3-usdt-weekly-step-up",
+    "s5-p2-cryptocompare-coinbase-btc-sync",
+    "s3-p2-fees-low-queue-broad",
+    "s9-p3-lido-vs-wbeth-yield-scale",
+    "s5-p3-deribit-blockchain-tight-basis",
+    "s4-p4-vvix-observation-band"
+  ],
+  "demotedOriginalPrimaries": {
+    "s4-p3-tips-bonds-real-nominal-gap": "source healthy but publish-readiness currently blocks on feed_unavailable",
+    "s9-p4-vix-spx-fragile-risk-question": "source healthy but publish-readiness currently fails with a 502"
+  },
+  "promotedReserves": {
+    "s5-p3-deribit-blockchain-tight-basis": "publish-readiness passes and preserves cross-venue market structure coverage",
+    "s4-p4-vvix-observation-band": "publish-readiness passes and preserves volatility surface coverage"
+  },
+  "candidates": [
+    {
+      "draft_id": "s4-p3-tips-bonds-real-nominal-gap",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "attest_url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "readiness": {
+        "ok": false,
+        "checkedAt": "2026-05-01T11:24:14.825Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y3-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 224,
+          "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y3-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": false,
+              "dem": 0,
+              "error": ""
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": false,
+            "count": 0,
+            "error": ""
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "page[size]",
+              "sort"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": [
+          "feed_unavailable"
+        ]
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"data\":[{\"record_date\":\"2026-03-31\",\"security_type_desc\":\"Marketable\",\"security_desc\":\"Treasury Bills\",\"avg_interest_rate_amt\":\"3.702\",\"src_line_nbr\":\"1\",\"reco"
+      }
+    },
+    {
+      "draft_id": "s6-p3-usdt-weekly-step-up",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "attest_url": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T11:25:02.770Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y3-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 213,
+          "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y3-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": false,
+              "dem": 0,
+              "error": ""
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "includePrices"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"peggedAssets\":[{\"id\":\"1\",\"name\":\"Tether\",\"symbol\":\"USDT\",\"gecko_id\":\"tether\",\"pegType\":\"peggedUSD\",\"priceSource\":\"defillama\",\"pegMechanism\":\"fiat-backed\",\"cir"
+      }
+    },
+    {
+      "draft_id": "s5-p2-cryptocompare-coinbase-btc-sync",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "attest_url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T11:25:43.893Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y3-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 222,
+          "attestUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y3-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "fsym",
+              "tsyms"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json; charset=UTF-8",
+        "sample": "{\"USD\":77393.39}"
+      }
+    },
+    {
+      "draft_id": "s3-p2-fees-low-queue-broad",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "attest_url": "https://mempool.space/api/v1/fees/recommended",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T11:26:02.363Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y3-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 220,
+          "attestUrl": "https://mempool.space/api/v1/fees/recommended"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y3-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://mempool.space/api/v1/fees/recommended",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "sample": "{\"fastestFee\":7,\"halfHourFee\":6,\"hourFee\":5,\"economyFee\":2,\"minimumFee\":1}"
+      }
+    },
+    {
+      "draft_id": "s9-p3-lido-vs-wbeth-yield-scale",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "attest_url": "https://yields.llama.fi/pools",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T11:26:21.916Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y3-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 231,
+          "attestUrl": "https://yields.llama.fi/pools"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y3-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": false,
+              "dem": 0,
+              "error": ""
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://yields.llama.fi/pools",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "sample": "{\"status\":\"success\",\"data\":[{\"chain\":\"Ethereum\",\"project\":\"lido\",\"symbol\":\"STETH\",\"tvlUsd\":20805020404,\"apyBase\":2.674,\"apyReward\":null,\"apy\":2.674,\"rewardToken"
+      }
+    },
+    {
+      "draft_id": "s9-p4-vix-spx-fragile-risk-question",
+      "category": "QUESTION",
+      "track": "QUESTION",
+      "score_rubric": 90,
+      "attest_url": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json",
+      "readiness": {
+        "ok": false,
+        "error": "Error: Request failed with status code 502\n",
+        "stdout": ""
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"timestamp\": \"2026-05-01 11:26:20\", \"data\": {\"symbol\": \"^VIX\", \"security_type\": \"index\", \"exchange_id\": 5, \"current_price\": 17.1, \"price_change\": 0.21, \"price_"
+      }
+    }
+  ]
+}

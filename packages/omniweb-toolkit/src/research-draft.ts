@@ -92,6 +92,24 @@ export interface ResearchDraftFailure {
 
 export type ResearchDraftResult = ResearchDraftSuccess | ResearchDraftFailure;
 
+export interface ValidateResearchCompositionOptions {
+  text: string;
+  opportunity: ResearchOpportunity;
+  evidenceSummary: ResearchEvidenceSummary;
+  supportingEvidenceSummaries?: ResearchEvidenceSummary[];
+  selfHistory?: ResearchSelfHistorySummary | null;
+  preferredCategory?: ResearchDraftCategory | null;
+  minTextLength?: number;
+}
+
+export interface ResearchCompositionValidationResult {
+  pass: boolean;
+  category: ResearchDraftCategory;
+  confidence: number;
+  tags: string[];
+  qualityGate: QualityGateResult;
+}
+
 const DEFAULT_MIN_TEXT_LENGTH = 200;
 const DEFAULT_MAX_TEXT_LENGTH = 320;
 const SELF_REDUNDANCY_TOKEN_STOPWORDS = new Set([
@@ -323,7 +341,7 @@ const VIX_CREDIT_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string
 export async function buildResearchDraft(
   opts: BuildResearchDraftOptions,
 ): Promise<ResearchDraftResult> {
-  const promptPacket = buildResearchPromptPacket(opts);
+  const promptPacket = buildResearchCompositionPacket(opts);
   const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
   const preferredCategory = opts.preferredCategory ?? null;
   let llmText = await generateViaProvider(opts.llmProvider, promptPacket);
@@ -380,24 +398,24 @@ export async function buildResearchDraft(
     };
   }
 
-  const preferredGate = checkResearchDraftQuality(
-    llmText,
-    draftCategory,
+  const validation = validateResearchComposition({
+    text: llmText,
+    opportunity: opts.opportunity,
+    evidenceSummary: opts.evidenceSummary,
+    supportingEvidenceSummaries: opts.supportingEvidenceSummaries ?? [],
+    selfHistory: opts.selfHistory ?? null,
+    preferredCategory,
     minTextLength,
-    opts.opportunity,
-    opts.evidenceSummary,
-    opts.supportingEvidenceSummaries ?? [],
-    opts.selfHistory ?? null,
-  );
-  if (preferredGate.pass) {
+  });
+  if (validation.pass) {
     return {
       ok: true,
-      category: draftCategory,
+      category: validation.category,
       text: llmText,
-      confidence: clampConfidence(opts.opportunity.matchedSignal.confidence),
-      tags: buildTags(opts.opportunity),
+      confidence: validation.confidence,
+      tags: validation.tags,
       promptPacket,
-      qualityGate: preferredGate,
+      qualityGate: validation.qualityGate,
       draftSource: "llm",
     };
   }
@@ -406,15 +424,55 @@ export async function buildResearchDraft(
     ok: false,
     reason: "draft_quality_gate_failed",
     promptPacket,
-    qualityGate: preferredGate,
+    qualityGate: validation.qualityGate,
     notes: [
-      `llm_output_failed: ${preferredGate.reason ?? "unknown"}`,
+      `llm_output_failed: ${validation.qualityGate.reason ?? "unknown"}`,
       `llm_output_preview: ${llmText.slice(0, 220)}`,
     ],
   };
 }
 
-function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPromptPacket {
+/**
+ * Validate externally composed research text against the same category inference,
+ * confidence, tag, and quality-gate rules used by the internal draft helper.
+ */
+export function validateResearchComposition(
+  opts: ValidateResearchCompositionOptions,
+): ResearchCompositionValidationResult {
+  const minTextLength = opts.minTextLength ?? DEFAULT_MIN_TEXT_LENGTH;
+  const preferredCategory = opts.preferredCategory ?? null;
+  const normalizedText = normalizeDraftText(opts.text);
+  const category = inferResearchDraftCategory(
+    normalizedText,
+    opts.opportunity,
+    preferredCategory,
+  ) satisfies ResearchDraftCategory;
+  const qualityGate = checkResearchDraftQuality(
+    normalizedText,
+    category,
+    minTextLength,
+    opts.opportunity,
+    opts.evidenceSummary,
+    opts.supportingEvidenceSummaries ?? [],
+    opts.selfHistory ?? null,
+  );
+
+  return {
+    pass: qualityGate.pass,
+    category,
+    confidence: clampConfidence(opts.opportunity.matchedSignal.confidence),
+    tags: buildTags(opts.opportunity),
+    qualityGate,
+  };
+}
+
+/**
+ * Build the fully structured research composition packet without invoking an LLM.
+ *
+ * Use this when the outer runtime wants to own thesis formation / wording while still
+ * reusing the toolkit's evidence shaping, colony substrate, and prompt doctrine.
+ */
+export function buildResearchCompositionPacket(opts: BuildResearchDraftOptions): ResearchPromptPacket {
   const preferredCategory = opts.preferredCategory ?? null;
   const colonySubstrate = opts.colonySubstrate ?? buildResearchColonySubstrate({
     opportunity: opts.opportunity,
@@ -538,6 +596,11 @@ function buildResearchPromptPacket(opts: BuildResearchDraftOptions): ResearchPro
     },
   };
 }
+
+/**
+ * Backward-compatible alias for existing call sites that think in prompt-packet terms.
+ */
+export const buildResearchPromptPacket = buildResearchCompositionPacket;
 
 async function generateViaProvider(
   provider: PromptCapableProvider | null | undefined,

@@ -66,8 +66,8 @@ afterEach(() => {
 // ── Constants ──────────────────────────────────────
 
 describe("config getters", () => {
-  it("getRpcUrl returns the default demosnode URL", () => {
-    expect(getRpcUrl()).toBe("https://demosnode.discus.sh/");
+  it("getRpcUrl returns the default node3 URL", () => {
+    expect(getRpcUrl()).toBe("https://node3.demos.sh/");
   });
 
   it("getApiUrl returns the default SuperColony URL", () => {

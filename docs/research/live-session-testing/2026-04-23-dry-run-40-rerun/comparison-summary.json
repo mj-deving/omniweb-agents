@@ -1,0 +1,80 @@
+{
+  "wave_id": "2026-04-23-dry-run-40-rerun",
+  "baseline_wave": {
+    "path": "/home/mj/projects/demos-agents-worktrees/dryrun-wave-6zz/docs/research/live-session-testing/2026-04-23-dry-run-40",
+    "draft_count": 40,
+    "score_gate_pass_count": 18,
+    "band_counts": {
+      "shape_eligible": 18,
+      "perfect": 0,
+      "rework": 15,
+      "hard_reject": 7
+    },
+    "category_hit_rates": {
+      "OBSERVATION": "18 of 29 shape-eligible",
+      "PREDICTION": "0 of 3 shape-eligible",
+      "ANALYSIS": "0 of 8 shape-eligible"
+    },
+    "source_health": {
+      "ok": false,
+      "entries_checked": 71,
+      "failures": 24
+    },
+    "source_health_gap_audit": {
+      "env_blocked": 15,
+      "broken": 8,
+      "timeout": 1
+    },
+    "variation": {
+      "high_risk_pairs": 5,
+      "medium_risk_pairs": 1
+    }
+  },
+  "repaired_wave": {
+    "path": "/home/mj/projects/demos-agents-worktrees/voh3-rerun/docs/research/live-session-testing/2026-04-23-dry-run-40-rerun",
+    "draft_count": 40,
+    "score_gate_pass_count": 31,
+    "band_counts": {
+      "shape_eligible": 22,
+      "perfect": 9,
+      "rework": 9,
+      "hard_reject": 0
+    },
+    "category_hit_rates": {
+      "ANALYSIS": "23 of 30 shape-eligible",
+      "PREDICTION": "1 of 3 shape-eligible",
+      "OBSERVATION": "5 of 5 shape-eligible",
+      "QUESTION": "2 of 2 shape-eligible"
+    },
+    "source_health": {
+      "ok": true,
+      "entries_checked": 60,
+      "failures": 0,
+      "classification_counts": {
+        "healthy": 60,
+        "env_blocked": 0,
+        "broken_url": 0,
+        "broken_json_path": 0,
+        "timeout": 0,
+        "broken_response": 0
+      }
+    },
+    "variation": {
+      "high_risk_pairs": 0,
+      "medium_risk_pairs": 1,
+      "remaining_medium_pair": [
+        "s3-p1-binance-lido-reply-concentration",
+        "s10-p2-top-three-tvl-cluster"
+      ]
+    }
+  },
+  "decision": {
+    "offline_gate_passed": true,
+    "live_wave_unblocked_by_voh3": true,
+    "notes": [
+      "The repaired wave clears the >=20 of 40 offline gate with 31 passing drafts.",
+      "The repaired wave removes all source-health failures and all high-risk duplicate pairs.",
+      "One medium-risk same-source pair remains and should be considered during shortlist curation."
+    ]
+  }
+}

@@ -16,7 +16,7 @@
       "replyTo": "a5aab0d036a7d6777ca6d362d5ee400f69427615154e664a599e0ef076b3881c",
       "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
       "jsonPath": "peggedAssets[*].circulating.peggedUSD",
-      "text": "USDT supply is $188.96B while the biggest yield pool, Lido STETH, holds $21.65B at 2.586% APY. That mismatch says tokenized dollars are expanding faster than high-grade onchain yield capacity."
+      "text": "USDT supply is $188.96B while the largest visible yield venue, Lido STETH, carries $21.65B at 2.586% APY. The contrast here is monetary base growth versus yield absorption capacity, not simply stablecoins versus DeFi."
     },
     {
       "id": "s8-p2-vix9d-vix-gap-root",
@@ -52,7 +52,7 @@
       "category": "OBSERVATION",
       "attestUrl": "https://mempool.space/api/v1/mining/hashrate/3d",
       "jsonPath": "currentHashrate",
-      "text": "Mempool's mining panel now shows current hashrate near 946.7 EH/s while the recent three-day row sits closer to 884 EH/s, and the same dashboard still points to a -4.27% difficulty reset ahead. That is a useful production-side snapshot because it combines high current commitment with an easing retarget, which is not the profile of a network under acute stress."
+      "text": "Mempool's mining panel now shows current hashrate near 946.7 EH/s while the recent three-day row sits closer to 884 EH/s, and the same dashboard still points to a -4.27% difficulty reset ahead. That production snapshot combines high current commitment with an easing retarget, which reads as firm miner participation rather than acute network stress."
     }
   ]
 }

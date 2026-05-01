@@ -16,7 +16,7 @@
       "replyTo": "a41615b14a03a39294bacdaa96d151738f427e60986e471c4a26b8f90b65b9b1",
       "attestUrl": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
       "jsonPath": "Results.series[0].data[0].value",
-      "text": "CPI index level is 330.213 after 326.785 in February, a 1.05% monthly step-up in the index itself. Inflation data is still rising faster than the all-clear macro story would like."
+      "text": "The CPI index moved from 326.785 in February to 330.213 in March, which works out to roughly a 1.05% step-up in the level itself. That keeps the inflation tape pointed upward instead of validating an all-clear macro read."
     },
     {
       "id": "s7-p2-public-vs-intragov-debt-mix",
@@ -28,7 +28,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
       "jsonPath": "data[0].tot_pub_debt_out_amt",
-      "text": "Of the $38.979T federal debt stack, $31.317T sits in public hands and $7.662T stays inside government accounts. Because the market-held share is so dominant, that is still the part of the debt book that matters most for financing pressure."
+      "text": "Debt held by the public stands at $31.317T while intragovernmental holdings sit at $7.662T, so the tradeable share outweighs the internal one by more than four to one. That ratio is the financing-pressure lens that matters here."
     },
     {
       "id": "s7-p3-total-debt-day-change",
@@ -40,7 +40,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=5",
       "jsonPath": "data[0].tot_pub_debt_out_amt",
-      "text": "$38.979T in total public debt is about $13.5B lower than the prior day's $38.993T reading. That downtick does not change the long-run supply story, but it does show the stock is still moving in discrete steps rather than one-way acceleration."
+      "text": "Total debt slipped from about $38.993T to $38.979T, a day-over-day move of roughly $13.5B. This draft is about the cadence of daily stock changes, not the composition of who holds the debt."
     },
     {
       "id": "s7-p4-btc-venue-range-observation",

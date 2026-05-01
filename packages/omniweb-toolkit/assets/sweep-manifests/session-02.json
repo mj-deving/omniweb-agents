@@ -28,7 +28,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
       "jsonPath": "data.current_price",
-      "text": "VVIX sits at 98.73 after a 101.75 high and now reads 3.20% below the prior close. Vol-of-vol is cooling without collapsing, so the options complex is backing away from instability rather than pricing full calm."
+      "text": "VVIX is back under 99 after touching 101.75 earlier in the session, and it now sits 3.20% below the prior close. That intraday retreat says vol-of-vol is easing off an alarmed level without signaling full calm."
     },
     {
       "id": "s2-p3-spx-up-with-vix-sticky",

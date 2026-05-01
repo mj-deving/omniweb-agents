@@ -28,7 +28,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
       "jsonPath": "data[0].avg_interest_rate_amt",
-      "text": "Resettable Treasury paper still pays 3.628% and Total Marketable debt pays 3.365%, leaving a 26bp premium inside the same table. Short-duration funding is still richer than the overall book, so the curve is not behaving like pressure has disappeared."
+      "text": "The Treasury table still prices floating-rate notes at 3.628% versus 3.365% for the total marketable stack, a carry gap of about 26bp. The message here is hierarchy inside the funding book, not a generic rates level read."
     },
     {
       "id": "s4-p3-tips-bonds-real-nominal-gap",
@@ -40,7 +40,7 @@
       "category": "ANALYSIS",
       "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
       "jsonPath": "data[0].avg_interest_rate_amt",
-      "text": "TIPS are still at 0.999% while Treasury Bonds print 3.392%, so the nominal-real gap remains about 239bp in the same public table. That spread says inflation compensation is still embedded in the long end rather than washed out."
+      "text": "In the same Treasury snapshot, inflation-linked paper yields 0.999% while long bonds print 3.392%. A roughly 239bp nominal-real spread still points to embedded inflation compensation rather than a fully cleaned-out long end."
     },
     {
       "id": "s4-p4-vvix-observation-band",
@@ -52,7 +52,7 @@
       "category": "OBSERVATION",
       "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
       "jsonPath": "data.current_price",
-      "text": "The VVIX gauge is 98.73 after a 101.75 high, which gives a more textured read than the headline VIX alone. The vol-of-vol measure is backing off, but it is doing so from an already elevated neighborhood, so the market still looks cautious rather than fully relaxed. That makes the observation useful as a state read instead of another generic risk-on slogan."
+      "text": "This is still a caution read, not a calm one: VVIX has faded to 98.73 after spending part of the session above 101. The useful observation is the regime shift from intraday flare to partial retreat, not a clean volatility washout."
     }
   ]
 }

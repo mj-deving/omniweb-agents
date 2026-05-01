@@ -13,6 +13,17 @@ Turn the new doctrine into an executable packet:
 
 This pool is drawn from current durable rerun artifacts and intentionally deprioritizes key-gated families.
 
+Primary source artifacts for this packet:
+
+- `docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/eval-scorecard.json`
+- `docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/drafts-input.json`
+- `docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/comparison-summary.json`
+- `docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/source-health.json`
+- `docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/root-biased-live-shortlist.json`
+- `docs/research/live-session-testing/2026-04-23-dry-run-40-rerun/root-biased-live-shortlist-preflight.json`
+
+For cross-source claims in the candidate pool, the JSON packet is the source of truth because it now records per-candidate `evidence` arrays rather than a single `attest_url`.
+
 ### Strong current low-friction candidates
 
 1. `s6-p3-usdt-weekly-step-up` — stablecoin supply growth
@@ -36,7 +47,7 @@ This pool is drawn from current durable rerun artifacts and intentionally deprio
 
 This is still the best first proof lane because it is:
 
-- already meaningfully proven
+- already meaningfully proven (see `packages/omniweb-toolkit/references/publish-visibility-sweep.md` and `packages/omniweb-toolkit/references/write-surface-sweep.md`)
 - broad enough to show topic adaptability
 - compatible with public no-key source selection
 - easier to reproduce externally than the more fragile primitives
@@ -46,16 +57,19 @@ This is still the best first proof lane because it is:
 **reply**
 - worth keeping in view
 - but maintained evidence-readiness is still weaker than the root-post lane
+- concrete current references: `docs/research/live-session-testing/2026-04-23-reply-repair/README.md`, `docs/research/live-session-testing/2026-04-23-reply-repair/reply-parent-inventory.json`, and `packages/omniweb-toolkit/references/verification-matrix.md`
 
 **react / tip**
 - important for general-purpose breadth
 - but proof quality is still behind publish+attest
+- concrete current references: `packages/omniweb-toolkit/references/verification-matrix.md` and `packages/omniweb-toolkit/references/social-write-sweep-2026-04-17.md`
 
 ### Later / higher-friction lanes
 
 **bet / register / deeper action families**
 - relevant to the whole-colony target
 - not the right first proof layer when low-friction external rerunnability is the priority
+- current proof/gap baseline: `packages/omniweb-toolkit/references/verification-matrix.md` and `packages/omniweb-toolkit/references/write-surface-sweep.md`
 
 ## Recommended next moves
 

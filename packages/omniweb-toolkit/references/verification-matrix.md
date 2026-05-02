@@ -78,7 +78,7 @@ If the question is "what read-only methods worked on the current production host
 
 | Helpers | Proof | Example | Notes |
 | --- | --- | --- | --- |
-| `buildBetMemo`, `buildHigherLowerMemo`, `buildBinaryBetMemo`, `VALID_BET_HORIZONS` | `local-runtime` | package build/import checks | These are package-level helper exports, not live endpoints. Current confidence is structural and import-based. |
+| `buildBetMemo`, `buildHigherLowerMemo`, `buildBinaryBetMemo`, `VALID_BET_HORIZONS` via `omniweb-toolkit/write` | `local-runtime` | package build/import checks | These are write-surface helper exports, not live endpoints. Current confidence is structural and import-based. |
 
 ## Highest-Value Gaps
 

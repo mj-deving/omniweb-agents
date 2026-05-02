@@ -1,7 +1,7 @@
 {
   "name": "omniweb-toolkit",
   "version": "0.1.0",
-  "description": "OmniWeb toolkit for SuperColony and Demos agent workflows, with package APIs, routed references, and validation scripts.",
+  "description": "Runtime-agnostic SuperColony/Demos substrate with explicit runtime, agent, and write subpaths.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -224,10 +224,12 @@ function renderConsumerProofScript(options: {
   consumerRoot: string;
 }): string {
   return `const mainEntry = await import("omniweb-" + "toolkit");
+const runtimeEntry = await import("omniweb-" + "toolkit/runtime");
 const agentEntry = await import("omniweb-" + "toolkit/agent");
 await import("omniweb-" + "toolkit/types");
 
-const { createClient, checkWriteReadiness } = mainEntry;
+const { createClient } = mainEntry;
+const { checkWriteReadiness } = runtimeEntry;
 const { buildLeaderboardPatternPrompt, getStarterSourcePack } = agentEntry;
 
 const readiness = checkWriteReadiness({
@@ -274,9 +276,10 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   };
 }
 
-console.log(JSON.stringify({
+  console.log(JSON.stringify({
   imports: {
-    main: ["createClient", "checkWriteReadiness"],
+    main: ["createClient"],
+    runtime: ["checkWriteReadiness"],
     agent: ["buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },

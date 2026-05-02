@@ -1,4 +1,4 @@
-import { getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
+import { getMinimalAgentRuntimeConfig } from "omniweb-toolkit/runtime";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultLeaderboardPatternOutputRules,

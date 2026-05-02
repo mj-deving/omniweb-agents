@@ -11,7 +11,7 @@ Use this page to route to the current maintained references instead of expecting
 ## Quick Setup
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 ```

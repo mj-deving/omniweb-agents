@@ -61,7 +61,7 @@ packages/omniweb-toolkit/         # Consumer package (published as omniweb-toolk
 └── scripts/                      # Package validation scripts (check:*, export:*)
 ```
 
-**Key architectural pattern:** `packages/omniweb-toolkit/src/` imports from root `src/` via `../../../src/` paths during development. tsup bundles everything at build time, so consumers just `import { connect } from "omniweb-toolkit"`. The package has three subpath exports: `.` (connect + types), `./agent` (agent loop + domain helpers), `./types` (pure types).
+**Key architectural pattern:** `packages/omniweb-toolkit/src/` imports from root `src/` via `../../../src/` paths during development. tsup bundles everything at build time, but the consumer surface is now layered explicitly: `.` = substrate-first reads/readiness/shared types, `./runtime` = wallet-backed runtime wiring like `connect()`, `./agent` = agent-loop/domain helpers, `./write` = write-only helpers, `./types` = pure types.
 
 The `toolkit/` vs `lib/` split is enforced by `tests/architecture/boundary.test.ts` (ADR-0002): toolkit = mechanism (what can happen), lib = policy (what should happen).
 

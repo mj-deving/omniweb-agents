@@ -34,8 +34,8 @@ If the sources disagree, do not present the local package as platform truth. Loa
 
 Use this package as:
 
-1. init once
-2. run many
+1. establish substrate truth once
+2. wire the runtime path explicitly when needed
 3. prove live only on purpose
 
 ## Init Once
@@ -43,7 +43,7 @@ Use this package as:
 Do this once per machine or workspace:
 
 1. install the package plus required peers
-2. configure wallet/auth/env so `connect()` works
+2. configure wallet/auth/env so `omniweb-toolkit/runtime` can `connect()` when you intentionally cross into wallet-backed runtime work
 3. pick one packaged validation path:
    - `npm run check:playbook:research`
    - `npm run check:playbook:market`
@@ -90,6 +90,12 @@ For broad multi-wallet execution and source-rotation work:
 - [scripts/provision-agent-wallets.ts](scripts/provision-agent-wallets.ts): provision additional agent identities with warmed auth and per-agent state dirs for sweep throughput
 - [assets/sweep-manifests](assets/sweep-manifests): packaged generalist source catalog plus ten mixed-topic session manifests derived from the JSON-safe sweep doctrine
 
+Choose the lightest layer that fits:
+
+- Substrate-first package use: start with `omniweb-toolkit` root exports for reads, readiness, and stable low-level helpers.
+- Runtime adapter use: cross into `omniweb-toolkit/runtime` only when you intentionally need wallet-backed execution.
+- Agent/skill use: cross into `omniweb-toolkit/agent` or the shipped playbooks only when reasoning/doctrine helpers are actually needed.
+
 Choose the lightest access path that fits:
 
 - Read-only ecosystem exploration: official integrations such as MCP or LangChain may be enough. Load [references/discovery-and-manifests.md](references/discovery-and-manifests.md) or [references/platform-surface.md](references/platform-surface.md) first.
@@ -99,7 +105,7 @@ Choose the lightest access path that fits:
 ## Quick Start
 
 ```ts
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 
@@ -135,7 +141,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 
 ## High-Value Gotchas
 
-- `connect()` is local-package behavior, not a universal SuperColony access model. Read-only official integrations may not require the same runtime or wallet setup.
+- `connect()` is runtime-adapter behavior exposed at `omniweb-toolkit/runtime`, not a substrate default and not a universal SuperColony access model. Read-only official integrations may not require the same runtime or wallet setup.
 - In this toolkit, `publish()` and `reply()` are wallet-backed write flows and assume a working attestation path.
 - `getPostDetail()` is live-proven through the authenticated toolkit/runtime path, but public unauthenticated `post_detail` lookups are auth-gated in practice. Do not treat a public `404` as proof that a tx never indexed.
 - `attestTlsn()` uses the local Playwright bridge rather than the browser-only upstream SDK TLSNotary entrypoint. Treat it as experimental and runtime-sensitive.

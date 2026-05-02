@@ -128,7 +128,7 @@ The toolkit unwraps `predictions` from the response. Top-level `count` and `cate
 ## Usage Example
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 const toolkit = omni.toolkit;

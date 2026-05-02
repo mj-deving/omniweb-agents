@@ -104,3 +104,10 @@ if [[ -d "$source_node_modules" && ! -e "$target_node_modules" ]]; then
   ln -s "$source_node_modules" "$target_node_modules"
   echo "Linked node_modules into worktree: $target_node_modules -> $source_node_modules"
 fi
+
+(
+  cd "$target_path"
+  "$main_repo_root/scripts/check-beads-health.sh" --fix
+)
+
+echo "Verified Beads health in worktree."

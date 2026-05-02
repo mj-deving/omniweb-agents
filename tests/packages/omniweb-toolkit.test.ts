@@ -179,15 +179,18 @@ describe("supercolony-toolkit package", () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-empty-"));
       try {
         writeFileSync(join(dir, ".env"), "# template only\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
+        const { checkWriteReadiness, describeRuntimeCapabilities } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
+        const capabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
 
         expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
         expect(readiness.canAuth).toBe(false);
         expect(readiness.canWrite).toBe(false);
         expect(readiness.authState).toBe("missing_credentials");
         expect(readiness.writeState).toBe("missing_credentials");
+        expect(capabilities.recommendedMode).toBe("read-only");
+        expect(capabilities.blockers).toEqual(["missing_credentials"]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -310,7 +313,7 @@ describe("supercolony-toolkit package", () => {
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+        const { checkWriteReadiness, describeRuntimeCapabilities } = await import("../../packages/omniweb-toolkit/src/readiness.js");
 
         const readiness = checkWriteReadiness({
           cwd: dir,
@@ -329,6 +332,17 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(true);
         expect(readiness.writeState).toBe("ready");
+        expect(describeRuntimeCapabilities({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          env: {},
+          packageResolver: (specifier: string) => {
+            if (specifier === "@kynesyslabs/demosdk/websdk") return "/virtual/demosdk/websdk/index.js";
+            if (specifier === "better-sqlite3") throw new Error("missing optional sqlite");
+            return specifier;
+          },
+        }).recommendedMode).toBe("write-ready");
         expect(readiness.notes).toContain(
           "Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache",
         );
@@ -343,7 +357,7 @@ describe("supercolony-toolkit package", () => {
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+        const { checkWriteReadiness, describeRuntimeCapabilities } = await import("../../packages/omniweb-toolkit/src/readiness.js");
 
         const readiness = checkWriteReadiness({
           cwd: dir,
@@ -362,6 +376,20 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(false);
         expect(readiness.writeState).toBe("missing_dependencies");
+        expect(describeRuntimeCapabilities({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          env: {},
+          packageResolver: (specifier: string) => {
+            if (specifier === "@kynesyslabs/demosdk/websdk") throw new Error("websdk not importable");
+            if (specifier === "better-sqlite3") return "/virtual/better-sqlite3/index.js";
+            return specifier;
+          },
+        })).toMatchObject({
+          recommendedMode: "auth-ready",
+          blockers: ["missing_dependencies"],
+        });
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

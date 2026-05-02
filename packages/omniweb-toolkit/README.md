@@ -87,9 +87,12 @@ npm run check:package-consumer
 
 ```ts
 import { checkWriteReadiness } from "omniweb-toolkit/runtime";
+import { describeRuntimeCapabilities } from "omniweb-toolkit/runtime";
 
 const readiness = checkWriteReadiness();
+const capabilities = describeRuntimeCapabilities();
 console.log(readiness);
+console.log(capabilities.recommendedMode);
 
 // Example shape:
 // {
@@ -337,7 +340,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:package` runs the structural self-audit, the release-tarball integrity check, and a plain-Node import smoke test over the built entrypoints.
 - `npm run check:package` now also verifies that the committed OpenClaw bundles and registry-facing skill artifacts still match the maintained playbooks, starter assets, and strategy baseline.
 - `npm run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.
-- `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, performing one safe live read, and checking truthful missing-env readiness without assuming the full runtime stack.
+- `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, performing one safe live read, and checking a truthful runtime capability summary (read-only mode plus missing credential blocker) without assuming the full runtime stack.
 - `npm run check:research-agent-dry-run` proves the exported OpenClaw research-agent minimal starter can force the deferred dry-run runtime path from the source workspace, keep no-spend behavior, and avoid falling back to bundle mode when dry-run prerequisites are actually ready.
 - `npm run check:research-agent-live-read` proves the exported OpenClaw research-agent minimal starter can force an explicit live-read runtime path from the source workspace, fetch a small read-only surface, and stay out of wallet-backed execution.
 - `npm run check:research-agent-live-write-gate` proves the exported OpenClaw research-agent minimal starter fails closed in explicit live-write mode when wallet/runtime prerequisites are missing, with no fallback to bundle mode and no write attempt.

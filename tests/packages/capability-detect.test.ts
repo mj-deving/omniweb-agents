@@ -56,6 +56,10 @@ describe("research-agent capability detection helpers", () => {
       toolkitRuntime: true,
       toolkitAgent: true,
       env: { DEMOS_MNEMONIC: false, RPC_URL: true, SUPERCOLONY_API: true },
+      runtimeCapabilities: {
+        recommendedMode: "read-only",
+        blockers: ["missing_credentials"],
+      },
       writeReadiness: {
         authState: "missing_credentials",
         writeState: "missing_credentials",
@@ -68,6 +72,6 @@ describe("research-agent capability detection helpers", () => {
       },
     });
 
-    expect(summary).toContain("auth=missing_credentials, write=missing_credentials");
+    expect(summary).toContain("mode=read-only, blockers=missing_credentials");
   });
 });

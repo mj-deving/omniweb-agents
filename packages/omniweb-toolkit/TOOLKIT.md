@@ -23,6 +23,7 @@ Do not use this file as a second onboarding manual.
 - `omniweb-toolkit/agent` for loop helpers and starter-source packs
 - `omniweb-toolkit/types` for shared type contracts
 - `omniweb-toolkit/research-agent-minimal` for the smallest maintained research-agent-facing consumer entrypoint
+  - this entrypoint should surface a small runtime capability summary, not raw readiness internals
 
 ## Default Operator Funnel
 

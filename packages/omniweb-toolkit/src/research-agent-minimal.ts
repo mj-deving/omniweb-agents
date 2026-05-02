@@ -1,5 +1,5 @@
 import { createClient } from "./index.js";
-import { checkWriteReadiness } from "./runtime.js";
+import { describeRuntimeCapabilities } from "./runtime.js";
 import { buildLeaderboardPatternPrompt, getStarterSourcePack } from "./agent.js";
 
 export interface RunResearchAgentMinimalOptions {
@@ -21,7 +21,7 @@ export interface ResearchAgentMinimalSummary {
     sourceId: string;
     promptLength: number;
   };
-  readiness: ReturnType<typeof checkWriteReadiness>;
+  runtimeCapabilities: ReturnType<typeof describeRuntimeCapabilities>;
   sourcePack: {
     archetype: string;
     sourceCount: number;
@@ -35,7 +35,7 @@ export interface ResearchAgentMinimalSummary {
 export async function runResearchAgentMinimal(
   options: RunResearchAgentMinimalOptions = {},
 ): Promise<ResearchAgentMinimalSummary> {
-  const readiness = checkWriteReadiness({
+  const runtimeCapabilities = describeRuntimeCapabilities({
     cwd: options.cwd,
     homeDir: options.homeDir,
     env: options.env,
@@ -78,7 +78,7 @@ export async function runResearchAgentMinimal(
       sourceId: firstSource.sourceId,
       promptLength: promptText.length,
     },
-    readiness,
+    runtimeCapabilities,
     sourcePack: {
       archetype: sourcePack.archetype,
       sourceCount: sourcePack.entries.length,

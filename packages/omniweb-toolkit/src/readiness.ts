@@ -26,6 +26,15 @@ export interface WriteReadinessResult {
   notes: string[];
 }
 
+export interface RuntimeCapabilityResult {
+  canRead: true;
+  authReady: boolean;
+  writeReady: boolean;
+  recommendedMode: "read-only" | "auth-ready" | "write-ready";
+  blockers: Array<"missing_credentials" | "missing_dependencies">;
+  readiness: WriteReadinessResult;
+}
+
 const require = createRequire(import.meta.url);
 
 function packageResolvable(specifier: string, resolver: (specifier: string) => string): boolean {
@@ -192,5 +201,29 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     credentialSourcesChecked,
     runtimeCredentialSource: runtimeSource?.present ? runtimeSource.path : null,
     notes,
+  };
+}
+
+export function describeRuntimeCapabilities(options: WriteReadinessOptions = {}): RuntimeCapabilityResult {
+  const readiness = checkWriteReadiness(options);
+  const blockers: RuntimeCapabilityResult["blockers"] = [];
+  if (readiness.authState === "missing_credentials") {
+    blockers.push("missing_credentials");
+  }
+  if (readiness.writeState === "missing_dependencies") {
+    blockers.push("missing_dependencies");
+  }
+
+  return {
+    canRead: true,
+    authReady: readiness.canAuth,
+    writeReady: readiness.canWrite,
+    recommendedMode: readiness.canWrite
+      ? "write-ready"
+      : readiness.canAuth
+        ? "auth-ready"
+        : "read-only",
+    blockers,
+    readiness,
   };
 }

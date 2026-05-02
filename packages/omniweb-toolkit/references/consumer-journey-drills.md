@@ -32,7 +32,7 @@ This file complements:
 - The three shipped archetype paths still pass their maintained journey checks on current live state.
 - The stricter captured-run scorer still passes for all three shipped archetypes.
 - A clean tarball consumer can install the package, import `omniweb-toolkit` by package name, run one safe live read, and receive a clean missing-env write readiness report without spending DEM.
-- A fresh consumer can now also import the smallest research-agent-facing path via `omniweb-toolkit/research-agent-minimal`, preserve no-spend dry-run behavior, perform one safe live read, and still fail honestly on missing write/runtime env.
+- A fresh consumer can now also import the smallest research-agent-facing path via `omniweb-toolkit/research-agent-minimal`, preserve no-spend dry-run behavior, perform one safe live read, and still report an honest runtime capability summary when write/runtime prerequisites are missing.
 - The exported OpenClaw research-agent bundle now has an explicit lightweight parity contract at this same minimal layer: no heavy deps required just to load, one cheap public-read scaffold when available, no-spend starter behavior, and honest degradation when dry-run/live-read prerequisites are absent.
 - The first registry install path is still not fully launch-ready because npm publish remains blocked by missing auth in the publishing environment.
 - The strongest remaining journey blockers are still on the live write/readback side:

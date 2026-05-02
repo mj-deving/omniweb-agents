@@ -28,7 +28,11 @@ export async function detectCapabilities() {
   const toolkitAgent = Boolean(toolkitAgentModule);
 
   const env = Object.fromEntries(REQUIRED_ENV.map((key) => [key, Boolean(process.env[key])]));
-  const writeReadiness = toolkitRuntimeModule?.checkWriteReadiness ? toolkitRuntimeModule.checkWriteReadiness() : null;
+  const runtimeCapabilities = toolkitRuntimeModule?.describeRuntimeCapabilities
+    ? toolkitRuntimeModule.describeRuntimeCapabilities()
+    : null;
+  const writeReadiness = runtimeCapabilities?.readiness
+    ?? (toolkitRuntimeModule?.checkWriteReadiness ? toolkitRuntimeModule.checkWriteReadiness() : null);
   const runtimeConfig = toolkitRuntimeModule?.getMinimalAgentRuntimeConfig && toolkitAgentModule?.getDefaultSessionLedgerDir
     ? toolkitRuntimeModule.getMinimalAgentRuntimeConfig(toolkitAgentModule.getDefaultSessionLedgerDir())
     : null;
@@ -38,6 +42,7 @@ export async function detectCapabilities() {
     toolkitRuntime,
     toolkitAgent,
     env,
+    runtimeCapabilities,
     writeReadiness,
     runtimeConfig,
     colonyUrl: runtimeConfig?.colonyUrl || fallbackColonyUrl(),
@@ -45,7 +50,7 @@ export async function detectCapabilities() {
       bundle: true,
       dryRun: toolkitCore && toolkitAgent,
       liveRead: toolkitCore && toolkitAgent,
-      liveWrite: toolkitCore && toolkitAgent && Boolean(writeReadiness?.canWrite),
+      liveWrite: toolkitCore && toolkitAgent && Boolean(runtimeCapabilities?.writeReady ?? writeReadiness?.canWrite),
     },
   };
 }
@@ -68,9 +73,11 @@ export function summarizeCapabilities(capabilities) {
   const envSummary = Object.entries(capabilities.env)
     .map(([key, value]) => `${key}=${value ? "yes" : "no"}`)
     .join(", ");
-  const readinessSummary = capabilities.writeReadiness
-    ? `auth=${capabilities.writeReadiness.authState}, write=${capabilities.writeReadiness.writeState}`
-    : "auth=unknown, write=unknown";
+  const readinessSummary = capabilities.runtimeCapabilities
+    ? `mode=${capabilities.runtimeCapabilities.recommendedMode}, blockers=${capabilities.runtimeCapabilities.blockers.join(",") || "none"}`
+    : capabilities.writeReadiness
+      ? `auth=${capabilities.writeReadiness.authState}, write=${capabilities.writeReadiness.writeState}`
+      : "auth=unknown, write=unknown";
 
   return [
     `toolkitCore=${capabilities.toolkitCore ? "yes" : "no"}`,

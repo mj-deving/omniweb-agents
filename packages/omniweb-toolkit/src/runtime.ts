@@ -1,8 +1,9 @@
 export { connect } from "./connect.js";
 export { checkWriteReadiness } from "./readiness.js";
+export { describeRuntimeCapabilities } from "./readiness.js";
 export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type { OmniWeb, Colony, ConnectOptions } from "./colony.js";
-export type { WriteReadinessOptions, WriteReadinessResult } from "./readiness.js";
+export type { WriteReadinessOptions, WriteReadinessResult, RuntimeCapabilityResult } from "./readiness.js";
 export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type { HiveAPI } from "./hive.js";
 export type { IdentityAPI } from "./identity-api.js";

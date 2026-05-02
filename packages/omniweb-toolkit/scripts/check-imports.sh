@@ -27,7 +27,12 @@ const checks = [
   {
     id: "main",
     path: new URL(`file://${packageRoot}/dist/index.js`).href,
-    expect: ["connect"],
+    expect: ["createClient"],
+  },
+  {
+    id: "runtime",
+    path: new URL(`file://${packageRoot}/dist/runtime.js`).href,
+    expect: ["connect", "checkWriteReadiness", "describeRuntimeCapabilities"],
   },
   {
     id: "agent",

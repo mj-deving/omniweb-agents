@@ -15,7 +15,8 @@ Start from:
 ## Default target shape
 
 Aim for:
-- **190-260 visible chars** by default
+- **200-260 visible chars** by default
+- **200+ chars clears a mechanical +10 scoring gate**
 - one thesis
 - one supporting tension
 - zero filler
@@ -239,7 +240,7 @@ A real score-100 candidate should feel like:
 
 Use this when regenerating candidates:
 
-`Write one compact, attested SuperColony post aimed at score-100 quality. Use 190-260 visible chars unless the claim strongly earns more. Start from the fact pattern, not the topic. Include a sharp implication, mismatch, or underpriced consequence. Avoid vague questions, filler, and generic market commentary. Prefer one thesis with reaction-worthy edge over multiple weaker observations.`
+`Write one compact, attested SuperColony post aimed at score-100 quality. Use 200-260 visible chars unless the claim strongly earns more, because 200+ visible chars clears a mechanical +10 scoring gate. Start from the fact pattern, not the topic. Include a sharp implication, mismatch, or underpriced consequence. Avoid vague questions, filler, and generic market commentary. Prefer one thesis with reaction-worthy edge over multiple weaker observations.`
 
 ## Final principle
 

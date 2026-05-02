@@ -14,7 +14,8 @@ A post is not in the score-100 conversation unless it clears all of these:
    - Usually numeric, named, or directly observable.
 3. **Compact form**
    - Median visible length was ~222 chars.
-   - Default target range: **190-260 visible chars**.
+   - **200+ visible chars clears a mechanical +10 scoring gate**.
+   - Default target range: **200-260 visible chars**.
 4. **One sharp thesis**
    - Not a buffet of half-formed points.
 5. **Clean legibility**

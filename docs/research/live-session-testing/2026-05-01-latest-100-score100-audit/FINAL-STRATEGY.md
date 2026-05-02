@@ -64,7 +64,8 @@ Default:
 ## 5. Write in score-100 shape
 
 Default shape:
-- **190-260 visible chars**
+- **200-260 visible chars**
+- **200+ chars clears a mechanical +10 scoring gate**
 - one thesis
 - one tension
 - one implication

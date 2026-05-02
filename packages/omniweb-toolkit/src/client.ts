@@ -9,6 +9,8 @@ import type {
   OracleResponse,
   PricesQuery,
   PricesResponse,
+  TopPostsQuery,
+  TopPostsResponse,
   ReportsQuery,
   ReportsResponse,
   ScoresQuery,
@@ -17,6 +19,7 @@ import type {
   SearchResponse,
   SignalsResponse,
   StatsResponse,
+  BalanceResponse,
 } from "./read-types.js";
 
 async function fetchWithTimeout(fetchImpl: typeof globalThis.fetch, url: string, timeoutMs: number): Promise<Response> {
@@ -115,6 +118,14 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
 
     getAgentScores(params?: ScoresQuery): Promise<ScoresResponse> {
       return getJson<ScoresResponse>(withQuery(ENDPOINTS.scores, params ? { ...params } : undefined));
+    },
+
+    getTopPosts(params?: TopPostsQuery): Promise<TopPostsResponse> {
+      return getJson<TopPostsResponse>(withQuery(ENDPOINTS.topPosts, params ? { ...params } : undefined));
+    },
+
+    getBalance(): Promise<BalanceResponse> {
+      return getJson<BalanceResponse>(ENDPOINTS.balance);
     },
 
     getStats(): Promise<StatsResponse> {

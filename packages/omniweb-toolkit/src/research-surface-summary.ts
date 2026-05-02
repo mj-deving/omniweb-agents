@@ -27,6 +27,7 @@ export type ColonySurfaceExpansionCandidateSource =
 export interface ColonySurfaceSummary {
   checkedAt: string;
   feedCount: number;
+  highScorePostCount: number;
   signalCount: number;
   leaderboardCount: number;
   availableBalance: number;
@@ -38,6 +39,7 @@ export interface ColonySurfaceSummary {
 export interface BuildColonySurfaceSummaryOptions {
   checkedAt: string;
   posts: ResearchPostInput[];
+  highScorePosts?: ResearchPostInput[];
   signals: ResearchSignalInput[];
   leaderboardAgents: string[];
   availableBalance: number;
@@ -56,6 +58,7 @@ export function buildColonySurfaceSummary(
   return {
     checkedAt: input.checkedAt,
     feedCount: input.posts.length,
+    highScorePostCount: input.highScorePosts?.length ?? 0,
     signalCount: input.signals.length,
     leaderboardCount: input.leaderboardAgents.length,
     availableBalance: input.availableBalance,

@@ -472,14 +472,14 @@ describe("supercolony-toolkit package", () => {
     });
   });
 
-  describe("top-level memo helpers", () => {
-    it("exports deterministic betting memo builders", async () => {
+  describe("write-surface memo helpers", () => {
+    it("exports deterministic betting memo builders from the write entrypoint", async () => {
       const {
         buildBetMemo,
         buildHigherLowerMemo,
         buildBinaryBetMemo,
         VALID_BET_HORIZONS,
-      } = await import("../../packages/omniweb-toolkit/src/index.js");
+      } = await import("../../packages/omniweb-toolkit/src/write.js");
 
       expect(buildBetMemo("BTC", 70000, { horizon: "30m" })).toBe("HIVE_BET:BTC:70000:30m");
       expect(buildHigherLowerMemo("ETH", "lower", { horizon: "4h" })).toBe("HIVE_HL:ETH:LOWER:4h");

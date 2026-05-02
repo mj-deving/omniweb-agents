@@ -12,15 +12,22 @@ export interface ResearchSurfaceSignalSample {
   direction: string | null;
 }
 
+export type ResearchSurfaceLikelyCause =
+  | "upstream_api"
+  | "base_url_or_path"
+  | "auth_or_wallet"
+  | "runtime_or_network"
+  | "unknown";
+
 export interface ResearchSurfaceReadStatus {
   ok: boolean;
   error: string | null;
   status?: number | null;
   detail?: string | null;
-  likelyCause?: "upstream_api" | "base_url_or_path" | "auth_or_wallet" | "runtime_or_network" | "unknown";
+  likelyCause?: ResearchSurfaceLikelyCause | null;
 }
 
-interface ReadEnvelope {
+interface ApiReadShape {
   ok?: boolean;
   status?: unknown;
   error?: unknown;
@@ -28,7 +35,7 @@ interface ReadEnvelope {
   data?: unknown;
 }
 
-interface UnwrappedRead<T extends ReadEnvelope> {
+interface UnwrappedRead<T> {
   ok: boolean;
   data: T | null;
   error: string | null;
@@ -39,11 +46,13 @@ interface UnwrappedRead<T extends ReadEnvelope> {
 
 export interface ResearchLiveSurfaceSnapshot {
   posts: ResearchSurfaceFeedSample[];
+  highScorePosts: ResearchSurfaceFeedSample[];
   signals: ResearchSurfaceSignalSample[];
   leaderboardAgents: unknown[];
   availableBalance: number;
   readStatus: {
     feed: ResearchSurfaceReadStatus;
+    topPosts: ResearchSurfaceReadStatus;
     signals: ResearchSurfaceReadStatus;
     leaderboard: ResearchSurfaceReadStatus;
     balance: ResearchSurfaceReadStatus;
@@ -52,39 +61,49 @@ export interface ResearchLiveSurfaceSnapshot {
 
 export interface CollectResearchLiveSurfaceOptions {
   colony: {
-    getFeed(args?: { limit?: number }): Promise<ReadEnvelope>;
-    getSignals(): Promise<ReadEnvelope>;
-    getLeaderboard(args?: { limit?: number }): Promise<ReadEnvelope>;
-    getBalance(): Promise<ReadEnvelope>;
+    getFeed(args?: { limit?: number }): Promise<unknown>;
+    getTopPosts?(args?: { category?: string; minScore?: number; limit?: number }): Promise<unknown>;
+    getSignals(): Promise<unknown>;
+    getLeaderboard(args?: { limit?: number }): Promise<unknown>;
+    getBalance(): Promise<unknown>;
   };
   feedLimit?: number;
+  topPostsLimit?: number;
   leaderboardLimit?: number;
 }
 
 export async function collectResearchLiveSurface(
   opts: CollectResearchLiveSurfaceOptions,
 ): Promise<ResearchLiveSurfaceSnapshot> {
-  const [feedRead, signalsRead, leaderboardRead, balanceRead] = await Promise.all([
-    settled(opts.colony.getFeed({ limit: opts.feedLimit ?? 30 })),
-    settled(opts.colony.getSignals()),
-    settled(opts.colony.getLeaderboard({ limit: opts.leaderboardLimit ?? 10 })),
-    settled(opts.colony.getBalance()),
+  const topPostsPromise = opts.colony.getTopPosts
+    ? opts.colony.getTopPosts({ minScore: 100, limit: opts.topPostsLimit ?? 10 })
+    : Promise.resolve({ ok: false, error: "top_posts_unavailable" });
+
+  const [feedRead, topPostsRead, signalsRead, leaderboardRead, balanceRead] = await Promise.allSettled([
+    opts.colony.getFeed({ limit: opts.feedLimit ?? 50 }),
+    topPostsPromise,
+    opts.colony.getSignals(),
+    opts.colony.getLeaderboard({ limit: opts.leaderboardLimit ?? 10 }),
+    opts.colony.getBalance(),
   ]);
 
   const reads = {
-    feed: unwrap(feedRead),
-    signals: unwrap(signalsRead),
-    leaderboard: unwrap(leaderboardRead),
-    balance: unwrap(balanceRead),
+    feed: unwrap(feedRead as PromiseSettledResult<ApiReadShape>),
+    topPosts: unwrap(topPostsRead as PromiseSettledResult<ApiReadShape>),
+    signals: unwrap(signalsRead as PromiseSettledResult<ApiReadShape>),
+    leaderboard: unwrap(leaderboardRead as PromiseSettledResult<ApiReadShape>),
+    balance: unwrap(balanceRead as PromiseSettledResult<ApiReadShape>),
   };
 
   return {
     posts: reads.feed.ok ? extractFeedPosts(reads.feed.data) : [],
+    highScorePosts: reads.topPosts.ok ? extractFeedPosts(reads.topPosts.data) : [],
     signals: reads.signals.ok ? extractSignals(reads.signals.data) : [],
     leaderboardAgents: reads.leaderboard.ok ? extractLeaderboardAgents(reads.leaderboard.data) : [],
     availableBalance: reads.balance.ok ? extractAvailableBalance(reads.balance.data) : 0,
     readStatus: {
       feed: describeRead(reads.feed),
+      topPosts: describeRead(reads.topPosts),
       signals: describeRead(reads.signals),
       leaderboard: describeRead(reads.leaderboard),
       balance: describeRead(reads.balance),
@@ -92,14 +111,7 @@ export async function collectResearchLiveSurface(
   };
 }
 
-function settled<T extends ReadEnvelope>(promise: Promise<T>): Promise<PromiseSettledResult<T>> {
-  return promise.then(
-    (value) => ({ status: "fulfilled", value } as PromiseFulfilledResult<T>),
-    (reason) => ({ status: "rejected", reason } as PromiseRejectedResult),
-  );
-}
-
-function unwrap<T extends ReadEnvelope>(
+function unwrap<T extends ApiReadShape>(
   result: PromiseSettledResult<T>,
 ): UnwrappedRead<T> {
   if (result.status === "rejected") {
@@ -132,11 +144,11 @@ function unwrap<T extends ReadEnvelope>(
     error: null,
     status: typeof result.value?.status === "number" ? result.value.status : null,
     detail: null,
-    likelyCause: undefined,
+    likelyCause: null,
   };
 }
 
-function describeRead(result: UnwrappedRead<ReadEnvelope>): ResearchSurfaceReadStatus {
+function describeRead(result: UnwrappedRead<ApiReadShape>): ResearchSurfaceReadStatus {
   return {
     ok: result.ok,
     error: result.error,
@@ -171,7 +183,7 @@ function classifyLikelyCause(opts: {
   status: number | null;
   error: string | null;
   detail: string | null;
-}): ResearchSurfaceReadStatus["likelyCause"] {
+}): ResearchSurfaceLikelyCause {
   const haystack = `${opts.error ?? ""} ${opts.detail ?? ""}`.toLowerCase();
   if (opts.status === 401 || opts.status === 403 || haystack.includes("unauthorized") || haystack.includes("forbidden")) {
     return "auth_or_wallet";

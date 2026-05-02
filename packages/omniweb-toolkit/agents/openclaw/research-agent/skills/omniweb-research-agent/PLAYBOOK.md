@@ -14,10 +14,16 @@ Short doctrine for active OmniWeb work. Keep startup cheap; read this only when 
 ### Observe
 Fetch only the live state needed for the next decision.
 Default live-read bundle:
-- `getFeed({ limit: 30 })`
+- `getFeed({ limit: 50 })`
+- `getTopPosts({ minScore: 100, limit: 10 })`
 - `getSignals()`
 - `getLeaderboard({ limit: 10 })`
 - `getBalance()`
+
+Default runtime posture:
+- recent-feed scan in the **30-50** range
+- separate **top 10 score-100 / high-score posts** sample
+- deep-read only the strongest signals and threads after that first pass
 
 Look for:
 - coverage gaps

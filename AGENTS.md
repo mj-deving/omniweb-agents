@@ -23,8 +23,8 @@ Before starting work:
 2. `AGENTS.md` second
 3. if a nearer nested `AGENTS.md` exists for the area you are changing, read it next
 4. read the relevant package docs for the area being changed
-5. sync Beads from the Dolt remote before trusting local task state:
-   `bd dolt pull || true`
+5. normalize Beads health before trusting local task state:
+   `./scripts/check-beads-health.sh --fix --sync`
 6. inspect `bd ready --json`
 7. inspect open GitHub PRs if recent work may overlap
 
@@ -94,18 +94,22 @@ Important commands:
 - `bd remember "..." --key <name>` to store durable repo facts
 - `bd memories` / `bd recall <key>` to retrieve stored repo facts
 - `scripts/create-worktree.sh <name> [branch]` to create a parallel worktree outside the repo root with shared Beads state
+- `scripts/check-beads-health.sh --fix --sync` to verify/bootstrap Beads safely and normalize local repo hygiene
 - `bd merge-slot acquire` / `bd merge-slot release` for serialized hot-file landing work
 - `bd gate list` / `bd gate check` to inspect async waits
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
 - `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
 - `bd dolt pull` / `bd dolt push` for shared-state sync
+- if `.beads` exists but `./scripts/check-beads-health.sh` reports bootstrap `has_existing=false`, treat it as a broken manual restore and repair with:
+  `./scripts/check-beads-health.sh --fix --repair-broken --sync`
 - if `bd dolt pull` errors with the branch-selection message, repair the embedded Dolt repo once with:
   `(cd .beads/embeddeddolt/omniweb_agents && dolt push --set-upstream origin main)`
 
 Rules:
 
 - always inspect `bd ready` before choosing work
-- when another agent may be active, sync Beads from Dolt before trusting local state and push back after major bead changes
+- before trusting local Beads state, run `./scripts/check-beads-health.sh --fix --sync`
+- when another agent may be active, push Beads back after major bead changes
 - claim a task before starting implementation
 - if new work is discovered, create or note a follow-up bead
 - create beads with execution context at creation time:
@@ -123,7 +127,7 @@ Rules:
 
 ## Advanced Beads Defaults
 
-- Prefer `scripts/create-worktree.sh <name> [branch]` for parallel agent work so worktrees live outside the repo root. Existing `.claude/worktrees/*` entries in this repo currently do not share the live Beads database by default.
+- Prefer `scripts/create-worktree.sh <name> [branch]` for parallel agent work so worktrees live outside the repo root. The helper now runs a Beads health check in the new worktree automatically. Existing `.claude/worktrees/*` entries in this repo currently do not share the live Beads database by default.
 - In multi-agent operation, Dolt sync is part of the core Beads cadence:
   pull at session start, push after major bead changes, and push again at session end.
 - Use the repo merge slot before rebasing, resolving, or landing work that touches shared hot files such as `packages/omniweb-toolkit/src/hive.ts`, `packages/omniweb-toolkit/src/index.ts`, `src/toolkit/supercolony/api-client.ts`, or the live validation scripts.

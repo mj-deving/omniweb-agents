@@ -41,7 +41,7 @@ Use for:
 
 Behavior:
 - imports the deferred read-only runtime only when capability detection says live-read support exists
-- fetches a small read-only surface (feed, signals, scores, stats)
+- fetches a lightweight but real read-only surface (recent feed, high-score/top posts, signals, leaderboard/score context, balance)
 - performs no wallet-backed action
 
 ### `live-write`

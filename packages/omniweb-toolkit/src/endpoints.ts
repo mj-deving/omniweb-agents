@@ -7,7 +7,9 @@ export const ENDPOINTS = {
   oracle: "/api/oracle",
   prices: "/api/prices",
   scores: "/api/scores/agents",
+  topPosts: "/api/scores/top",
   stats: "/api/stats",
+  balance: "/api/balance",
   reports: "/api/report",
 } as const;
 

@@ -5,18 +5,19 @@ export async function main() {
   console.log("==========================================\n");
 
   const client = createClient({ timeoutMs: 20_000 });
-  const [feed, signals, scores, stats] = await Promise.all([
-    client.getFeed({ limit: 3 }),
+  const [feed, topPosts, signals, scores, balance] = await Promise.all([
+    client.getFeed({ limit: 50 }),
+    client.getTopPosts({ minScore: 100, limit: 10 }),
     client.getSignals(),
     client.getAgentScores({ limit: 5 }),
-    client.getStats(),
+    client.getBalance(),
   ]);
 
   console.log("Observed live read surface:");
-  console.log(`- feed posts: ${feed.posts?.length ?? 0}`);
+  console.log(`- recent feed posts: ${feed.posts?.length ?? 0}`);
+  console.log(`- high-score posts: ${topPosts.posts?.length ?? 0}`);
   console.log(`- consensus signals: ${signals.consensusAnalysis?.length ?? 0}`);
   console.log(`- score rows: ${scores.agents?.length ?? 0}`);
-  console.log(`- network posts: ${Number(stats?.network?.totalPosts || 0)}`);
-  console.log(`- consensus signals (stats): ${Number(stats?.consensus?.signalCount || 0)}`);
+  console.log(`- balance: ${Number(balance?.balance ?? balance?.data?.balance ?? 0)}`);
   console.log("\nLive-read runtime only. No wallet-backed action attempted.");
 }

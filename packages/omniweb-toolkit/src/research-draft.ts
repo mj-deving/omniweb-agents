@@ -111,6 +111,7 @@ export interface ResearchCompositionValidationResult {
 }
 
 const DEFAULT_MIN_TEXT_LENGTH = 200;
+const DEFAULT_TARGET_MAX_TEXT_LENGTH = 260;
 const DEFAULT_MAX_TEXT_LENGTH = 320;
 const SELF_REDUNDANCY_TOKEN_STOPWORDS = new Set([
   "about",
@@ -549,11 +550,11 @@ export function buildResearchCompositionPacket(opts: BuildResearchDraftOptions):
       },
     },
     instruction: preferredCategory === "OBSERVATION"
-      ? "Write one compact standalone OBSERVATION post grounded in the input evidence and colony context. Stay factual, report what the data says now, and do not add a watcher, invalidation clause, or causal thesis unless the evidence strictly requires it. Keep the finished post in the 200-320 character band whenever possible."
-      : "Write one compact standalone colony post grounded in the input evidence and colony context. If the packet only supports a factual report, write an OBSERVATION. If it supports an interpretive claim with a watcher or invalidation condition, write an ANALYSIS. Keep the finished post in the 200-320 character band whenever possible. When you choose ANALYSIS, lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo.",
+      ? "Write one compact standalone OBSERVATION post grounded in the input evidence and colony context. Stay factual, report what the data says now, and do not add a watcher, invalidation clause, or causal thesis unless the evidence strictly requires it. Aim for the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate; only exceed that when the claim clearly earns more space."
+      : "Write one compact standalone colony post grounded in the input evidence and colony context. If the packet only supports a factual report, write an OBSERVATION. If it supports an interpretive claim with a watcher or invalidation condition, write an ANALYSIS. Aim for the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate; only exceed that when the claim clearly earns more space. When you choose ANALYSIS, lead with the thesis, then explain the mechanism, then say what would confirm or invalidate the view. Use the colony substrate to explain what the colony is actually seeing, where agents agree, and where the key disagreement or lag sits. If the discourse context is active, make the post feel like a useful intervention in that live discussion rather than an isolated memo.",
     constraints: [
       "Make the post fully legible to a human reader who never saw the agent's internal reasoning or the prompt packet.",
-      "Keep the finished post compact: 2-3 short sentences, 200+ characters, and no sprawling explanatory paragraphs.",
+      "Keep the finished post compact: 2-3 short sentences, at least 200 visible characters to clear the mechanical +10 scoring gate, and usually no more than 260 unless the claim clearly earns more space.",
       "Do not mention internal scoring, confidence numbers, coverage gaps, feed sampling, matching-post counts, or why the agent decided to post.",
       "Do not narrate the attestation pipeline, source ranking, supporting-source bookkeeping, or any source-selection process.",
       "Use the concrete evidence values and derived metrics in the packet; do not write a research post that never cites the fetched data.",
@@ -612,8 +613,8 @@ async function generateViaProvider(
 
   const completion = await provider.complete(prompt, {
     system: packet.output.category === "OBSERVATION"
-      ? "You write compact, evidence-bound colony OBSERVATION posts for human readers. Stay factual, keep the finished post in roughly the 200-320 character band, mention only what the evidence directly supports, and never leak internal scoring, feed coverage, or attestation workflow details."
-      : "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, keep the finished post in roughly the 200-320 character band, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
+      ? "You write compact, evidence-bound colony OBSERVATION posts for human readers. Stay factual, target roughly the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate, mention only what the evidence directly supports, and never leak internal scoring, feed coverage, or attestation workflow details."
+      : "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, target roughly the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
     maxTokens: 110,
     modelTier: "standard",
   });
@@ -628,7 +629,7 @@ async function rewriteAsObservation(
     [
       "Rewrite this into one compact OBSERVATION post.",
       "Rules:",
-      "- 200-320 chars",
+      "- 200-260 chars by default; exceed only when the claim clearly earns more space",
       "- factual only",
       "- keep the concrete numbers",
       "- no thesis, no watcher, no invalidation, no causal language",
@@ -657,7 +658,7 @@ async function rewriteCompactAnalysis(
     [
       "Rewrite this into one compact ANALYSIS post.",
       "Rules:",
-      "- 200-320 chars",
+      "- 200-260 chars by default; exceed only when the claim clearly earns more space",
       familyRule,
       "- name the mismatch directly",
       "- no watcher unless it is required to keep the thesis truthful",
@@ -728,9 +729,11 @@ function checkResearchDraftQuality(
     {
       name: "compact-claim-length",
       pass: text.length <= DEFAULT_MAX_TEXT_LENGTH,
-      detail: text.length <= DEFAULT_MAX_TEXT_LENGTH
-        ? `${text.length}/${DEFAULT_MAX_TEXT_LENGTH} chars`
-        : `${text.length}/${DEFAULT_MAX_TEXT_LENGTH} chars — too long for the compact interpretive-claim format`,
+      detail: text.length <= DEFAULT_TARGET_MAX_TEXT_LENGTH
+        ? `${text.length}/${DEFAULT_TARGET_MAX_TEXT_LENGTH} target chars`
+        : text.length <= DEFAULT_MAX_TEXT_LENGTH
+          ? `${text.length}/${DEFAULT_TARGET_MAX_TEXT_LENGTH} target chars — above default target but still within hard ceiling ${DEFAULT_MAX_TEXT_LENGTH}`
+          : `${text.length}/${DEFAULT_MAX_TEXT_LENGTH} chars — too long for the compact interpretive-claim format`,
     },
     {
       name: "no-internal-reasoning-leak",

@@ -33,8 +33,8 @@ export async function detectCapabilities() {
     : null;
   const writeReadiness = runtimeCapabilities?.readiness
     ?? (toolkitRuntimeModule?.checkWriteReadiness ? toolkitRuntimeModule.checkWriteReadiness() : null);
-  const runtimeConfig = toolkitRuntimeModule?.getMinimalAgentRuntimeConfig && toolkitAgentModule?.getDefaultSessionLedgerDir
-    ? toolkitRuntimeModule.getMinimalAgentRuntimeConfig(toolkitAgentModule.getDefaultSessionLedgerDir())
+  const runtimeConfig = toolkitAgentModule?.getMinimalAgentRuntimeConfig && toolkitAgentModule?.getDefaultSessionLedgerDir
+    ? toolkitAgentModule.getMinimalAgentRuntimeConfig(toolkitAgentModule.getDefaultSessionLedgerDir())
     : null;
 
   return {

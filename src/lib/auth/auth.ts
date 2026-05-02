@@ -36,6 +36,29 @@ interface AuthVerifyResponse {
   expiresAt?: string | number;
 }
 
+export type AuthStateKind =
+  | "authenticated"
+  | "unavailable_upstream"
+  | "challenge_failed"
+  | "invalid_challenge_response"
+  | "verify_failed";
+
+export interface AuthState {
+  ok: boolean;
+  state: AuthStateKind;
+  token: string | null;
+  address: string;
+  expiresAt: string | null;
+  source: "cache" | "refresh" | "none";
+  detail?: string;
+}
+
+export interface AuthSession {
+  getToken: (opts?: { forceRefresh?: boolean }) => Promise<string | null>;
+  refresh: (opts?: { forceRefresh?: boolean }) => Promise<AuthState>;
+  getState: () => AuthState | null;
+}
+
 function getErrorDetail(err: unknown): string {
   if (err instanceof Error && typeof err.cause === "object" && err.cause !== null) {
     const cause = err.cause as Record<string, unknown>;
@@ -119,6 +142,17 @@ export function loadAuthCache(address?: string): { token: string; expiresAt: str
   }
 }
 
+function authStateFromCache(address: string, cached: { token: string; expiresAt: string; address: string }): AuthState {
+  return {
+    ok: true,
+    state: "authenticated",
+    token: cached.token,
+    address,
+    expiresAt: cached.expiresAt,
+    source: "cache",
+  };
+}
+
 function saveAuthCache(address: string, token: string, expiresAt: string | number): void {
   const normalizedExpiresAt = normalizeExpiresAt(expiresAt);
   if (!normalizedExpiresAt) {
@@ -177,11 +211,20 @@ export async function ensureAuth(
   address: string,
   forceRefresh = false
 ): Promise<string | null> {
+  const result = await ensureAuthState(demos, address, forceRefresh);
+  return result.token;
+}
+
+export async function ensureAuthState(
+  demos: Demos,
+  address: string,
+  forceRefresh = false,
+): Promise<AuthState> {
   if (!forceRefresh) {
     const cached = loadAuthCache(address);
     if (cached) {
       info(`Using cached token (expires: ${cached.expiresAt})`);
-      return cached.token;
+      return authStateFromCache(address, cached);
     }
   }
 
@@ -194,17 +237,40 @@ export async function ensureAuth(
   } catch (err: unknown) {
     // Network-level failure (DNS, timeout, connection refused)
     info(`API unreachable (${getErrorDetail(err)}) — continuing in chain-only mode`);
-    return null;
+    return {
+      ok: false,
+      state: "unavailable_upstream",
+      token: null,
+      address,
+      expiresAt: null,
+      source: "none",
+      detail: getErrorDetail(err),
+    };
   }
   if (!challengeRes.ok) {
     info(`Auth challenge failed (${challengeRes.status}) — continuing in chain-only mode`);
-    return null;
+    return {
+      ok: false,
+      state: "challenge_failed",
+      token: null,
+      address,
+      expiresAt: null,
+      source: "none",
+      detail: String(challengeRes.status),
+    };
   }
 
   const { challenge, message } = challengeRes.data;
   if (typeof challenge !== "string" || typeof message !== "string") {
     info("Auth challenge response missing challenge/message — continuing in chain-only mode");
-    return null;
+    return {
+      ok: false,
+      state: "invalid_challenge_response",
+      token: null,
+      address,
+      expiresAt: null,
+      source: "none",
+    };
   }
 
   // Sign
@@ -224,12 +290,28 @@ export async function ensureAuth(
     });
   } catch (err: unknown) {
     info(`Auth verify unreachable (${getErrorDetail(err)}) — continuing in chain-only mode`);
-    return null;
+    return {
+      ok: false,
+      state: "unavailable_upstream",
+      token: null,
+      address,
+      expiresAt: null,
+      source: "none",
+      detail: getErrorDetail(err),
+    };
   }
 
   if (!verifyRes.ok || !verifyRes.data.token) {
     info(`Auth verify failed (${verifyRes.status}) — continuing in chain-only mode`);
-    return null;
+    return {
+      ok: false,
+      state: "verify_failed",
+      token: null,
+      address,
+      expiresAt: null,
+      source: "none",
+      detail: String(verifyRes.status),
+    };
   }
 
   const token = verifyRes.data.token;
@@ -239,5 +321,53 @@ export async function ensureAuth(
   const normalizedExpiresAt = normalizeExpiresAt(expiresAt) ?? String(expiresAt);
   info(`Authenticated. Token expires: ${normalizedExpiresAt}`);
 
-  return token;
+  return {
+    ok: true,
+    state: "authenticated",
+    token,
+    address,
+    expiresAt: normalizedExpiresAt,
+    source: "refresh",
+  };
+}
+
+export function createAuthSession(demos: Demos, address: string): AuthSession {
+  let inFlight: Promise<AuthState> | null = null;
+  let lastState: AuthState | null = null;
+
+  const refresh = async (opts: { forceRefresh?: boolean } = {}): Promise<AuthState> => {
+    const forceRefresh = opts.forceRefresh === true;
+
+    if (!forceRefresh) {
+      const cached = loadAuthCache(address);
+      if (cached) {
+        lastState = authStateFromCache(address, cached);
+        return lastState;
+      }
+    }
+
+    if (inFlight) {
+      return inFlight;
+    }
+
+    inFlight = (async () => {
+      try {
+        lastState = await ensureAuthState(demos, address, forceRefresh);
+        return lastState;
+      } finally {
+        inFlight = null;
+      }
+    })();
+
+    return inFlight;
+  };
+
+  return {
+    getToken: async (opts = {}) => {
+      const state = await refresh(opts);
+      return state.token;
+    },
+    refresh,
+    getState: () => lastState,
+  };
 }

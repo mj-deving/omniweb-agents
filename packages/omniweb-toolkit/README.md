@@ -1,6 +1,14 @@
 # omniweb-toolkit
 
-The local OmniWeb toolkit package for SuperColony and broader Demos workflows. It exposes a convenience API for common agent actions plus the full underlying toolkit surface for lower-level access.
+`omniweb-toolkit` is the runtime-agnostic SuperColony/Demos substrate for this repo.
+
+Treat the package in three layers:
+
+- `omniweb-toolkit` — substrate-first reads, shared types, and stable capability-facing helpers
+- `omniweb-toolkit/runtime` — wallet-backed runtime wiring and heavy environment-dependent entrypoints
+- `omniweb-toolkit/agent` — agent-loop and doctrine-adjacent helpers that sit above the substrate
+
+OpenClaw is one consumer of that substrate, not the architectural center.
 
 ## Install
 
@@ -36,9 +44,11 @@ Install `better-sqlite3` only if you want the optional colony DB cache; runtime 
 Runtime note:
 
 - importing `omniweb-toolkit` is safe under plain Node ESM
-- the default consumer path is `createClient()` for reads and `checkWriteReadiness()` for explicit wallet/runtime checks
-- calling `connect()` is an advanced runtime path that currently depends on `@kynesyslabs/demosdk` resolving cleanly; `tsx` works in this repo, while plain Node ESM can still trip the SDK's unsupported directory import
-- advanced surfaces now have explicit subpaths: `omniweb-toolkit/runtime`, `omniweb-toolkit/write`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
+- the default substrate path is `createClient()` for reads
+- explicit wallet/runtime preflight now lives at `omniweb-toolkit/runtime` via `checkWriteReadiness()`
+- `connect()` now lives under `omniweb-toolkit/runtime` because it is an advanced runtime path, not part of the substrate-first barrel
+- `connect()` currently depends on `@kynesyslabs/demosdk` resolving cleanly; `tsx` works in this repo, while plain Node ESM can still trip the SDK's unsupported directory import
+- advanced surfaces have explicit subpaths: `omniweb-toolkit/runtime`, `omniweb-toolkit/write`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
 
 Optional provider peers:
 
@@ -76,16 +86,25 @@ npm run check:package-consumer
 ### Write readiness before wallet-backed flows
 
 ```ts
-import { checkWriteReadiness } from "omniweb-toolkit";
+import { checkWriteReadiness } from "omniweb-toolkit/runtime";
 
 const readiness = checkWriteReadiness();
 console.log(readiness);
+
+// Example shape:
+// {
+//   canRead: true,
+//   canAuth: false,
+//   canWrite: false,
+//   authState: "missing_credentials",
+//   writeState: "missing_dependencies"
+// }
 ```
 
 ### Wallet-backed runtime (advanced)
 
 ```ts
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 const reportUrl = "https://example.com/report";
@@ -111,8 +130,8 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 
 ## Import Surface
 
-- `omniweb-toolkit`: thin read-only client, explicit readiness checks, read-side types, and plain package errors
-- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`) and runtime/session types
+- `omniweb-toolkit`: substrate-first client, read-side types, and plain package errors
+- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`), runtime/session types, and explicit readiness/runtime config helpers
 - `omniweb-toolkit/write`: advanced write-oriented helpers and write/market type surfaces
 - `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
 - `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, or agent-loop typing
@@ -120,6 +139,9 @@ For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigh
 
 ## Package Layers
 
+- substrate: package root exports, read client, readiness, shared low-level helpers
+- runtime adapters: `runtime`, `write`, shipped runtime starters, and environment-owned wiring
+- agent/skill layer: `agent`, `SKILL.md`, `GUIDE.md`, playbooks, and exported workspace bundles
 - `SKILL.md`: activation-time router for the skill
 - `GUIDE.md`: agent methodology and output-quality guidance
 - `references/`: platform facts loaded on demand

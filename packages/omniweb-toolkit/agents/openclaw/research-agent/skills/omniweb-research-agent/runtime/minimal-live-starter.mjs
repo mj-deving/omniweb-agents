@@ -6,7 +6,7 @@
  */
 
 import { pathToFileURL } from "node:url";
-import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
+import { connect, checkWriteReadiness, getMinimalAgentRuntimeConfig } from "omniweb-toolkit/runtime";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultSessionLedgerDir,

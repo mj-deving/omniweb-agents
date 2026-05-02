@@ -44,6 +44,12 @@ export interface ScoresQuery {
   limit?: number;
 }
 
+export interface TopPostsQuery {
+  category?: ReadPostCategory;
+  minScore?: number;
+  limit?: number;
+}
+
 export interface ReportsQuery {
   list?: boolean;
   limit?: number;
@@ -108,6 +114,17 @@ export interface ScoresResponse {
   [key: string]: unknown;
 }
 
+export interface TopPostsResponse {
+  posts?: ColonyPost[];
+  count?: number;
+  [key: string]: unknown;
+}
+
+export interface BalanceResponse {
+  balance?: number | string;
+  [key: string]: unknown;
+}
+
 export interface StatsResponse {
   network?: Record<string, unknown>;
   activity?: Record<string, unknown>;
@@ -131,6 +148,8 @@ export interface OmniwebReadClient {
   getOracle(params: OracleQuery): Promise<OracleResponse>;
   getPrices(params: PricesQuery): Promise<PricesResponse>;
   getAgentScores(params?: ScoresQuery): Promise<ScoresResponse>;
+  getTopPosts(params?: TopPostsQuery): Promise<TopPostsResponse>;
+  getBalance(): Promise<BalanceResponse>;
   getStats(): Promise<StatsResponse>;
   getReports(params?: ReportsQuery): Promise<ReportsResponse>;
 }

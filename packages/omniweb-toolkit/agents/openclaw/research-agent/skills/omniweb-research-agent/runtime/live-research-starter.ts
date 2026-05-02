@@ -54,6 +54,7 @@ function buildStarterPromptText(params: {
   opportunityKind: string;
   score: number;
   feedCount: number;
+  highScorePostCount: number;
   signalCount: number;
   attestUrl: string;
 }): string {
@@ -66,6 +67,7 @@ function buildStarterPromptText(params: {
       `Opportunity kind: ${params.opportunityKind}.`,
       `Opportunity score: ${params.score}.`,
       `Feed sample size: ${params.feedCount}.`,
+      `High-score sample size: ${params.highScorePostCount}.`,
       `Signal sample size: ${params.signalCount}.`,
     ],
     domainRules: [
@@ -225,19 +227,22 @@ function sampleSignal(signal: unknown): ResearchSignalInput {
 export async function observe(
   ctx: MinimalObserveContext<ResearchState>,
 ): Promise<MinimalObserveResult<ResearchState>> {
-  const [feed, signals, leaderboard, balance] = await Promise.allSettled([
-    ctx.omni.colony.getFeed({ limit: 30 }),
+  const [feed, topPosts, signals, leaderboard, balance] = await Promise.allSettled([
+    ctx.omni.colony.getFeed({ limit: 50 }),
+    ctx.omni.colony.getTopPosts({ minScore: 100, limit: 10 }),
     ctx.omni.colony.getSignals(),
     ctx.omni.colony.getLeaderboard({ limit: 10 }),
     ctx.omni.colony.getBalance(),
   ]);
 
   const feedRead = unwrapReadResult(feed);
+  const topPostsRead = unwrapReadResult(topPosts);
   const signalsRead = unwrapReadResult(signals);
   const leaderboardRead = unwrapReadResult(leaderboard);
   const balanceRead = unwrapReadResult(balance);
   const readStatus = {
     feed: describeReadStatus(feedRead),
+    topPosts: describeReadStatus(topPostsRead),
     signals: describeReadStatus(signalsRead),
     leaderboard: describeReadStatus(leaderboardRead),
     balance: describeReadStatus(balanceRead),
@@ -259,10 +264,13 @@ export async function observe(
   }
 
   const posts = extractFeedPosts(feedRead.data);
+  const highScorePosts = topPostsRead.ok ? extractFeedPosts(topPostsRead.data) : [];
+  const surfacePosts = mergeUniquePosts(posts, highScorePosts);
   const signalEntries = extractSignalList(signalsRead.data).map(sampleSignal);
   const leaderboardAgents = extractLeaderboardAgents(leaderboardRead.data);
   const availableBalance = extractAvailableBalance(balanceRead.data);
   const feedSample = posts.slice(0, 10);
+  const highScoreSample = highScorePosts.slice(0, 10);
   const signalSample = signalEntries.slice(0, 10).map((signal) => ({
     topic: signal.topic,
     shortTopic: signal.shortTopic ?? null,
@@ -282,11 +290,13 @@ export async function observe(
         availableBalance,
         signalCount: signalEntries.length,
         feedCount: posts.length,
+        highScorePostCount: highScorePosts.length,
         ...readStatus,
       },
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -302,7 +312,7 @@ export async function observe(
 
   const opportunities = deriveResearchOpportunities({
     signals: signalEntries,
-    posts,
+    posts: surfacePosts,
     lastCoverageTopic: ctx.memory.state?.lastCoverageTopic ?? null,
     recentCoverageTopics: (ctx.memory.state?.topicHistory ?? []).map((entry) => entry.topic),
     recentCoverageFamilies: (ctx.memory.state?.publishHistory ?? [])
@@ -323,11 +333,13 @@ export async function observe(
       facts: {
         signalCount: signalEntries.length,
         feedCount: posts.length,
+        highScorePostCount: highScorePosts.length,
         ...readStatus,
       },
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -357,6 +369,7 @@ export async function observe(
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -389,6 +402,7 @@ export async function observe(
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -422,6 +436,7 @@ export async function observe(
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -500,6 +515,7 @@ export async function observe(
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -573,6 +589,7 @@ export async function observe(
   const draft = await buildResearchDraft({
     opportunity: chosenOpportunity,
     feedCount: posts.length,
+    highScorePostCount: highScorePosts.length,
     leaderboardCount: leaderboardAgents.length,
     availableBalance,
     colonySubstrate,
@@ -597,6 +614,7 @@ export async function observe(
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -641,6 +659,7 @@ export async function observe(
       audit: {
         inputs: {
           feedSample,
+          highScoreSample,
           signalSample,
           leaderboardSample: leaderboardAgents.slice(0, 5),
         },
@@ -670,6 +689,7 @@ export async function observe(
     opportunityKind: chosenOpportunity.kind,
     score: chosenOpportunity.score,
     feedCount: posts.length,
+    highScorePostCount: highScorePosts.length,
     signalCount: signalEntries.length,
     attestUrl: chosenOpportunity.attestationPlan.primary.url,
   });
@@ -692,11 +712,12 @@ export async function observe(
     },
     attestationPlan: chosenOpportunity.attestationPlan,
     audit: {
-      inputs: {
-        feedSample,
-        signalSample,
-        leaderboardSample: leaderboardAgents.slice(0, 5),
-      },
+        inputs: {
+          feedSample,
+          highScoreSample,
+          signalSample,
+          leaderboardSample: leaderboardAgents.slice(0, 5),
+        },
       selectedEvidence: {
         matchedSignal: chosenOpportunity.matchedSignal,
         feedMentions: chosenOpportunity.matchingFeedPosts,
@@ -777,6 +798,20 @@ function extractFeedPosts(feed: unknown): FeedSample[] {
   if (!feed || typeof feed !== "object") return [];
   const candidate = (feed as { data?: { posts?: unknown } }).data?.posts;
   return Array.isArray(candidate) ? candidate.map(samplePost) : [];
+}
+
+function mergeUniquePosts(primary: FeedSample[], secondary: FeedSample[]): FeedSample[] {
+  const merged: FeedSample[] = [];
+  const seen = new Set<string>();
+
+  for (const post of [...primary, ...secondary]) {
+    const key = post.txHash ?? `${post.author ?? "unknown"}:${post.timestamp ?? "unknown"}:${post.text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(post);
+  }
+
+  return merged;
 }
 
 function extractSignalList(signals: unknown): unknown[] {

@@ -1,5 +1,4 @@
-import { createClient } from "./index.js";
-import { checkWriteReadiness } from "./runtime.js";
+import { createClient, checkWriteReadiness } from "./index.js";
 import { buildLeaderboardPatternPrompt, getStarterSourcePack } from "./agent.js";
 
 export interface RunResearchAgentMinimalOptions {
@@ -69,7 +68,7 @@ export async function runResearchAgentMinimal(
 
   return {
     imports: {
-      main: ["createClient"],
+      main: ["createClient", "checkWriteReadiness"],
       agent: ["buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     },
     dryRun: {

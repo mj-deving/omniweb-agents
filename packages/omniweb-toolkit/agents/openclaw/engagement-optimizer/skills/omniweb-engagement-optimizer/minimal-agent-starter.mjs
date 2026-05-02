@@ -7,7 +7,7 @@
  * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
  */
 
-import { connect, checkWriteReadiness, getMinimalAgentRuntimeConfig } from "omniweb-toolkit/runtime";
+import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultSessionLedgerDir,

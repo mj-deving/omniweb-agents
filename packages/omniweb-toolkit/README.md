@@ -129,15 +129,15 @@ ETH mirror reads are available via `getEthPool()`, `getEthWinners()`, `getEthHig
 Sports and commodity reads are available via `getSportsMarkets()`, `getSportsPool()`, `getSportsWinners()`, and `getCommodityPool()`.
 Prediction intelligence reads are available via `getPredictionIntelligence()` and `getPredictionRecommendations(userAddress)`. The current dev deployment returns `410 Gone` for `/api/ballot*`, so ballot stays documented as removed rather than exposed as a live package surface.
 Supported DEM write recovery helpers now include `registerBet(txHash, asset, predictedPrice)`, `registerHL(txHash, asset, direction)`, and `registerEthBinaryBet(txHash)` for the live manual-registration routes.
-For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigherLowerMemo()`, and `buildBinaryBetMemo()` so memo construction stays host-agnostic and versioned with the toolkit.
+For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `buildHigherLowerMemo()`, and `buildBinaryBetMemo()` so memo construction stays host-agnostic and versioned with the toolkit.
 
 ## Import Surface
 
 - `omniweb-toolkit`: substrate-first client, read-side types, and plain package errors
-- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`), runtime/session types, and explicit readiness/runtime config helpers
+- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`) plus explicit readiness/capability helpers
 - `omniweb-toolkit/write`: advanced write-oriented helpers and write/market type surfaces
 - `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
-- `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, or agent-loop typing
+- `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, hive, identity, storage, chain, or agent-loop typing
 - `omniweb-toolkit/research-agent-minimal`: the smallest maintained research-agent-facing package entrypoint for clean-consumer proof runs
 
 ## Package Layers

@@ -74,7 +74,7 @@ import type {
 // ── Config ──────────────────────────────────────────
 
 export interface SuperColonyApiClientConfig {
-  getToken: (opts?: { forceRefresh?: boolean }) => Promise<string | null>;
+  getToken: () => Promise<string | null>;
   baseUrl?: string;
   timeout?: number; // default 10000ms
 }
@@ -82,7 +82,7 @@ export interface SuperColonyApiClientConfig {
 // ── Client ──────────────────────────────────────────
 
 export class SuperColonyApiClient {
-  private readonly getToken: (opts?: { forceRefresh?: boolean }) => Promise<string | null>;
+  private readonly getToken: () => Promise<string | null>;
   private readonly baseUrl: string;
   private readonly timeout: number;
 
@@ -836,15 +836,16 @@ export class SuperColonyApiClient {
     init: RequestInit,
     opts?: { raw?: boolean; skipAuth?: boolean },
   ): Promise<ApiResult<T>> {
-    const performFetch = async (forceRefresh = false): Promise<ApiResult<T>> => {
+    try {
       const url = `${this.baseUrl}${path}`;
       const headers: Record<string, string> = {};
       if (!opts?.skipAuth) {
-        const token = await this.getToken(forceRefresh ? { forceRefresh: true } : undefined);
+        const token = await this.getToken();
         if (token) {
           headers["Authorization"] = `Bearer ${token}`;
         }
       }
+      // Only set Content-Type for methods with a body
       if (init.method !== "GET" && init.method !== "HEAD") {
         headers["Content-Type"] = "application/json";
       }
@@ -854,10 +855,6 @@ export class SuperColonyApiClient {
         headers,
         signal: AbortSignal.timeout(this.timeout),
       });
-
-      if (res.status === 401 && !opts?.skipAuth && !forceRefresh) {
-        return performFetch(true);
-      }
 
       if (res.status === 502) {
         return null;
@@ -886,10 +883,6 @@ export class SuperColonyApiClient {
       }
 
       return { ok: true, data: data as T };
-    };
-
-    try {
-      return await performFetch(false);
     } catch {
       const url = `${this.baseUrl}${path}`;
       const headers: Record<string, string> = {};

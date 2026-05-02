@@ -17,12 +17,9 @@ export interface WriteReadinessResult {
   canRead: true;
   canAuth: boolean;
   canWrite: boolean;
-  authState: "ready" | "missing_credentials";
-  writeState: "ready" | "missing_credentials" | "missing_dependencies";
   missingEnv: string[];
   missingPackages: string[];
   credentialSourcesChecked: string[];
-  runtimeCredentialSource: string | null;
   notes: string[];
 }
 
@@ -156,12 +153,6 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
 
   const canAuth = missingEnv.length === 0;
   const canWrite = missingEnv.length === 0 && missingPackages.length === 0;
-  const authState: WriteReadinessResult["authState"] = canAuth ? "ready" : "missing_credentials";
-  const writeState: WriteReadinessResult["writeState"] = !canAuth
-    ? "missing_credentials"
-    : missingPackages.length > 0
-      ? "missing_dependencies"
-      : "ready";
 
   const notes = ["Read-only client is usable without write substrate"];
   if (missingPackages.length > 0) {
@@ -185,12 +176,9 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     canRead: true,
     canAuth,
     canWrite,
-    authState,
-    writeState,
     missingEnv,
     missingPackages,
     credentialSourcesChecked,
-    runtimeCredentialSource: runtimeSource?.present ? runtimeSource.path : null,
     notes,
   };
 }

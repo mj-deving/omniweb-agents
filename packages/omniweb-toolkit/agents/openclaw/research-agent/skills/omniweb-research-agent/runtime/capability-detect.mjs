@@ -17,25 +17,22 @@ export function fallbackColonyUrl() {
 }
 
 export async function detectCapabilities() {
-  const [toolkitModule, toolkitRuntimeModule, toolkitAgentModule] = await Promise.all([
+  const [toolkitModule, toolkitAgentModule] = await Promise.all([
     import("omniweb-toolkit").catch(() => null),
-    import("omniweb-toolkit/runtime").catch(() => null),
     import("omniweb-toolkit/agent").catch(() => null),
   ]);
 
   const toolkitCore = Boolean(toolkitModule);
-  const toolkitRuntime = Boolean(toolkitRuntimeModule);
   const toolkitAgent = Boolean(toolkitAgentModule);
 
   const env = Object.fromEntries(REQUIRED_ENV.map((key) => [key, Boolean(process.env[key])]));
-  const writeReadiness = toolkitRuntimeModule?.checkWriteReadiness ? toolkitRuntimeModule.checkWriteReadiness() : null;
-  const runtimeConfig = toolkitRuntimeModule?.getMinimalAgentRuntimeConfig && toolkitAgentModule?.getDefaultSessionLedgerDir
-    ? toolkitRuntimeModule.getMinimalAgentRuntimeConfig(toolkitAgentModule.getDefaultSessionLedgerDir())
+  const writeReadiness = toolkitModule?.checkWriteReadiness ? toolkitModule.checkWriteReadiness() : null;
+  const runtimeConfig = toolkitModule?.getMinimalAgentRuntimeConfig && toolkitAgentModule?.getDefaultSessionLedgerDir
+    ? toolkitModule.getMinimalAgentRuntimeConfig(toolkitAgentModule.getDefaultSessionLedgerDir())
     : null;
 
   return {
     toolkitCore,
-    toolkitRuntime,
     toolkitAgent,
     env,
     writeReadiness,
@@ -69,12 +66,11 @@ export function summarizeCapabilities(capabilities) {
     .map(([key, value]) => `${key}=${value ? "yes" : "no"}`)
     .join(", ");
   const readinessSummary = capabilities.writeReadiness
-    ? `auth=${capabilities.writeReadiness.authState}, write=${capabilities.writeReadiness.writeState}`
-    : "auth=unknown, write=unknown";
+    ? `writeReady=${capabilities.writeReadiness.canWrite ? "yes" : "no"}`
+    : "writeReady=unknown";
 
   return [
     `toolkitCore=${capabilities.toolkitCore ? "yes" : "no"}`,
-    `toolkitRuntime=${capabilities.toolkitRuntime ? "yes" : "no"}`,
     `toolkitAgent=${capabilities.toolkitAgent ? "yes" : "no"}`,
     envSummary,
     readinessSummary,

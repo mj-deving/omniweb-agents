@@ -318,7 +318,7 @@ async function runDraftPreflight(opts: {
 
 async function loadWriteReadiness(): Promise<WriteReadinessFn> {
   try {
-    const mod = await import("../dist/runtime.js");
+    const mod = await import("../dist/index.js");
     if (typeof mod.checkWriteReadiness === "function") {
       return mod.checkWriteReadiness as WriteReadinessFn;
     }
@@ -326,9 +326,9 @@ async function loadWriteReadiness(): Promise<WriteReadinessFn> {
     // fall back to source
   }
 
-  const mod = await import("../src/runtime.ts");
+  const mod = await import("../src/index.ts");
   if (typeof mod.checkWriteReadiness !== "function") {
-    throw new Error("checkWriteReadiness export not found in dist/runtime.js or src/runtime.ts");
+    throw new Error("checkWriteReadiness export not found in dist/index.js or src/index.ts");
   }
   return mod.checkWriteReadiness as WriteReadinessFn;
 }

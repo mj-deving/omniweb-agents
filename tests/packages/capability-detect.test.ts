@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   fallbackColonyUrl,
   resolveStarterMode,
-  summarizeCapabilities,
 } from "../../packages/omniweb-toolkit/agents/openclaw/research-agent/skills/omniweb-research-agent/runtime/capability-detect.mjs";
 
 describe("research-agent capability detection helpers", () => {
@@ -48,26 +47,5 @@ describe("research-agent capability detection helpers", () => {
       if (previousOmniwebColonyUrl === undefined) delete process.env.OMNIWEB_COLONY_URL;
       else process.env.OMNIWEB_COLONY_URL = previousOmniwebColonyUrl;
     }
-  });
-
-  it("summarizes auth and write capability states explicitly", () => {
-    const summary = summarizeCapabilities({
-      toolkitCore: true,
-      toolkitRuntime: true,
-      toolkitAgent: true,
-      env: { DEMOS_MNEMONIC: false, RPC_URL: true, SUPERCOLONY_API: true },
-      writeReadiness: {
-        authState: "missing_credentials",
-        writeState: "missing_credentials",
-      },
-      ready: {
-        bundle: true,
-        dryRun: true,
-        liveRead: true,
-        liveWrite: false,
-      },
-    });
-
-    expect(summary).toContain("auth=missing_credentials, write=missing_credentials");
   });
 });

@@ -8,7 +8,7 @@ describe("minimal-agent starter asset", () => {
       "utf8",
     );
 
-    expect(asset).toContain('import { connect, checkWriteReadiness, getMinimalAgentRuntimeConfig } from "omniweb-toolkit/runtime"');
+    expect(asset).toContain('import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit"');
     expect(asset).toContain('from "omniweb-toolkit/agent"');
     expect(asset).toContain("getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir())");
     expect(asset).toContain("const readiness = checkWriteReadiness();");

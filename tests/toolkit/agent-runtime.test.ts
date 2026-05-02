@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const FAKE_ADDRESS = "0xfakeaddress1234567890";
 const FAKE_TOKEN = "test-auth-token-123";
 
-const { fakeDemos, mockSdkBridge, mockConnectWallet, mockEnsureAuth, mockLoadAuthCache, mockApiCall, mockResolveProvider } = vi.hoisted(() => {
+const { fakeDemos, mockSdkBridge, mockConnectWallet, mockCreateAuthSession, mockApiCall, mockResolveProvider } = vi.hoisted(() => {
   const fakeDemos = {
     connect: vi.fn(),
     connectWallet: vi.fn(),
@@ -44,8 +44,11 @@ const { fakeDemos, mockSdkBridge, mockConnectWallet, mockEnsureAuth, mockLoadAut
       rpcUrl: "https://rpc.test",
       algorithm: "ed25519",
     }),
-    mockEnsureAuth: vi.fn().mockResolvedValue("test-auth-token-123"),
-    mockLoadAuthCache: vi.fn().mockReturnValue({ token: "test-auth-token-123", expiresAt: "2099-01-01", address: "0xfakeaddress1234567890" }),
+    mockCreateAuthSession: vi.fn().mockImplementation(() => ({
+      getToken: vi.fn().mockResolvedValue("test-auth-token-123"),
+      refresh: vi.fn().mockResolvedValue({ ok: true, state: "authenticated", token: "test-auth-token-123" }),
+      getState: vi.fn().mockReturnValue({ ok: true, state: "authenticated", token: "test-auth-token-123" }),
+    })),
     mockApiCall: vi.fn().mockResolvedValue({ ok: true, status: 200, data: {} }),
     mockResolveProvider: vi.fn().mockReturnValue({ name: "mock-provider", generate: vi.fn().mockResolvedValue("mock response") }),
   };
@@ -57,8 +60,7 @@ vi.mock("../../src/lib/network/sdk.js", () => ({
 }));
 
 vi.mock("../../src/lib/auth/auth.js", () => ({
-  ensureAuth: mockEnsureAuth,
-  loadAuthCache: mockLoadAuthCache,
+  createAuthSession: mockCreateAuthSession,
 }));
 
 vi.mock("../../src/toolkit/sdk-bridge.js", () => ({
@@ -91,8 +93,11 @@ describe("createAgentRuntime", () => {
       rpcUrl: "https://rpc.test",
       algorithm: "ed25519",
     });
-    mockEnsureAuth.mockResolvedValue(FAKE_TOKEN);
-    mockLoadAuthCache.mockReturnValue({ token: FAKE_TOKEN, expiresAt: "2099-01-01", address: FAKE_ADDRESS });
+    mockCreateAuthSession.mockImplementation(() => ({
+      getToken: vi.fn().mockResolvedValue(FAKE_TOKEN),
+      refresh: vi.fn().mockResolvedValue({ ok: true, state: "authenticated", token: FAKE_TOKEN }),
+      getState: vi.fn().mockReturnValue({ ok: true, state: "authenticated", token: FAKE_TOKEN }),
+    }));
     mockApiCall.mockResolvedValue({ ok: true, status: 200, data: {} });
     mockResolveProvider.mockReturnValue({ name: "mock-provider", generate: vi.fn() });
   });
@@ -141,9 +146,9 @@ describe("createAgentRuntime", () => {
     expect(createSdkBridge).toHaveBeenCalledWith(fakeDemos, "https://custom.api.com", "__AUTH_PENDING__");
   });
 
-  it("calls ensureAuth with demos and address", async () => {
+  it("creates a shared auth session with demos and address", async () => {
     await createAgentRuntime();
-    expect(mockEnsureAuth).toHaveBeenCalledWith(fakeDemos, FAKE_ADDRESS);
+    expect(mockCreateAuthSession).toHaveBeenCalledWith(fakeDemos, FAKE_ADDRESS);
   });
 
   it("toolkit has all 15 domains", async () => {
@@ -172,24 +177,37 @@ describe("createAgentRuntime", () => {
   });
 
   describe("graceful auth degradation", () => {
-    it("continues when ensureAuth throws", async () => {
-      mockEnsureAuth.mockRejectedValueOnce(new Error("Auth server down"));
+    it("continues when auth session getToken throws", async () => {
+      mockCreateAuthSession.mockImplementationOnce(() => ({
+        getToken: vi.fn().mockRejectedValue(new Error("Auth server down")),
+        refresh: vi.fn(),
+        getState: vi.fn().mockReturnValue(null),
+      }));
       const runtime = await createAgentRuntime();
 
       expect(runtime.address).toBe(FAKE_ADDRESS);
       expect(runtime.toolkit).toBeDefined();
     });
 
-    it("getToken falls back to loadAuthCache on auth failure", async () => {
-      mockEnsureAuth.mockRejectedValueOnce(new Error("Auth failed"));
+    it("getToken returns the auth-session token after initial auth failure", async () => {
+      mockCreateAuthSession.mockImplementationOnce(() => {
+        const getToken = vi.fn()
+          .mockRejectedValueOnce(new Error("Auth failed"))
+          .mockResolvedValueOnce(FAKE_TOKEN);
+        return { getToken, refresh: vi.fn(), getState: vi.fn().mockReturnValue(null) };
+      });
       const runtime = await createAgentRuntime();
       const token = await runtime.getToken();
       expect(token).toBe(FAKE_TOKEN);
     });
 
-    it("getToken returns null when auth fails and no cache exists", async () => {
-      mockEnsureAuth.mockRejectedValueOnce(new Error("Auth failed"));
-      mockLoadAuthCache.mockReturnValue(null);
+    it("getToken returns null when auth session cannot provide a token", async () => {
+      mockCreateAuthSession.mockImplementationOnce(() => {
+        const getToken = vi.fn()
+          .mockRejectedValueOnce(new Error("Auth failed"))
+          .mockResolvedValueOnce(null);
+        return { getToken, refresh: vi.fn(), getState: vi.fn().mockReturnValue(null) };
+      });
       const runtime = await createAgentRuntime();
       const token = await runtime.getToken();
       expect(token).toBeNull();

@@ -17,7 +17,7 @@ Do not use this file as a second onboarding manual.
 `omniweb-toolkit` gives you:
 
 - `createClient()` as the thin read-only SuperColony client
-- `checkWriteReadiness()` as the explicit wallet/runtime preflight
+- `checkWriteReadiness()` through `omniweb-toolkit/runtime` as the explicit wallet/runtime preflight
 - `connect()` through the advanced wallet-backed runtime surface
 - `omni.colony.*` convenience methods for the common colony tasks
 - `omniweb-toolkit/agent` for loop helpers and starter-source packs

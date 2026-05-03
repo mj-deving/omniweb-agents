@@ -93,7 +93,7 @@ Important commands:
 - `bd close <id> --reason "..."` when work is complete
 - `bd remember "..." --key <name>` to store durable repo facts
 - `bd memories` / `bd recall <key>` to retrieve stored repo facts
-- `scripts/create-worktree.sh <name> [branch]` to create a parallel worktree outside the repo root with shared Beads state
+- `scripts/create-worktree.sh <name> [branch]` to create a parallel worktree outside the repo root with shared Beads state (defaults to `origin/main`; use `--base <ref>` for a non-main base)
 - `scripts/check-beads-health.sh --fix --sync` to verify/bootstrap Beads safely and normalize local repo hygiene
 - `bd merge-slot acquire` / `bd merge-slot release` for serialized hot-file landing work
 - `bd gate list` / `bd gate check` to inspect async waits
@@ -127,7 +127,7 @@ Rules:
 
 ## Advanced Beads Defaults
 
-- Prefer `scripts/create-worktree.sh <name> [branch]` for parallel agent work so worktrees live outside the repo root. The helper now runs a Beads health check in the new worktree automatically. Existing `.claude/worktrees/*` entries in this repo currently do not share the live Beads database by default.
+- Prefer `scripts/create-worktree.sh <name>` for parallel agent work so worktrees live outside the repo root. The helper defaults to `origin/main`, wires shared Beads, and runs a Beads health check in the new worktree automatically; use `--base <ref>` when you intentionally need a non-main base. Existing `.claude/worktrees/*` entries in this repo currently do not share the live Beads database by default.
 - In multi-agent operation, Dolt sync is part of the core Beads cadence:
   pull at session start, push after major bead changes, and push again at session end.
 - Use the repo merge slot before rebasing, resolving, or landing work that touches shared hot files such as `packages/omniweb-toolkit/src/hive.ts`, `packages/omniweb-toolkit/src/index.ts`, `src/toolkit/supercolony/api-client.ts`, or the live validation scripts.

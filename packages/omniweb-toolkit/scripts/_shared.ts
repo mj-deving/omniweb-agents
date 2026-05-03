@@ -109,7 +109,7 @@ export async function loadConnect(): Promise<(opts?: {
   stateDir?: string;
   allowInsecureUrls?: boolean;
 }) => Promise<any>> {
-  return loadPackageExport("../dist/index.js", "../src/index.ts", "connect");
+  return loadPackageExport("../dist/runtime.js", "../src/runtime.ts", "connect");
 }
 
 export function loadToken(): string | null {

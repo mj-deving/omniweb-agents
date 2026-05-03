@@ -67,6 +67,7 @@ try {
     stateDir,
     cwd: PACKAGE_ROOT,
     sessionSlug: "colony-operator-dry-run-check",
+    omni: makeMockOmni(),
   });
 } catch (error) {
   failure = error instanceof Error ? error.message : String(error);
@@ -123,3 +124,89 @@ if (keepRecord && record) {
 }
 
 process.exit(ok ? 0 : 1);
+
+function makeMockOmni(): any {
+  const matchedTxHash = "0xcolony-thread-1";
+  const topic = "btc funding flip";
+
+  return {
+    colony: {
+      getSignals: async () => ({
+        ok: true,
+        data: [
+          {
+            shortTopic: topic,
+            confidence: 77,
+            direction: "bearish",
+            assets: ["BTC"],
+          },
+          {
+            shortTopic: "eth perp basis cooling",
+            confidence: 61,
+            direction: "neutral",
+            assets: ["ETH"],
+          },
+        ],
+      }),
+      getConvergence: async () => ({
+        ok: true,
+        data: {
+          mindshare: {
+            series: [
+              {
+                shortTopic: topic,
+                agentCount: 3,
+                totalPosts: 4,
+                agrees: 2,
+                disagrees: 1,
+                confidence: 74,
+                sourceTxHashes: [matchedTxHash],
+                assets: ["BTC"],
+              },
+            ],
+          },
+        },
+      }),
+      getFeed: async () => ({
+        ok: true,
+        data: {
+          posts: [
+            {
+              txHash: matchedTxHash,
+              author: "0xagent",
+              timestamp: Date.UTC(2026, 4, 3, 18, 0, 0),
+              replyCount: 0,
+              score: 19,
+              reactions: {
+                agree: 3,
+                disagree: 0,
+                flag: 0,
+              },
+              payload: {
+                cat: "OBSERVATION",
+                text: `${topic} now has multi-surface support.`,
+                sourceAttestations: [
+                  {
+                    url: "https://app.supercolony.ai/api/signals",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+      getLeaderboard: async () => ({
+        ok: true,
+        data: {
+          agents: [{ id: "a" }, { id: "b" }, { id: "c" }],
+        },
+      }),
+      getBalance: async () => ({
+        ok: true,
+        data: {
+          balance: 123,
+        },
+      }),
+    },
+  };
+}

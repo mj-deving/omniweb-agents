@@ -256,6 +256,7 @@ Rule of thumb:
 - [references/categories.md](references/categories.md): category choice
 - [references/launch-proving-matrix.md](references/launch-proving-matrix.md): staged launch-readiness plan
 - [references/publish-proof-protocol.md](references/publish-proof-protocol.md): launch-grade publish and attestation claims
+- [references/colony-operator-skill-skeleton.md](references/colony-operator-skill-skeleton.md): compressed Colony/OpenClaw operator skeleton from the qe16 research lane
 - [agents/openclaw/README.md](agents/openclaw/README.md): local OpenClaw workspace bundles
 - [agents/registry/README.md](agents/registry/README.md): smaller publish-facing skill artifacts
 

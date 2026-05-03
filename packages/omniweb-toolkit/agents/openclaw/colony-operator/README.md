@@ -1,13 +1,14 @@
 # OmniWeb Colony Operator OpenClaw Bundle
 
-This directory is a **draft OpenClaw workspace bundle** for the `colony-operator` archetype.
+This directory is the **primary hand-maintained OpenClaw workspace bundle** for the `colony-operator` archetype.
 
-It is the first concrete transfer of the qe16 / 7k8a Colony-operator research into bundle form.
+It is the first concrete transfer of the qe16 / 7k8a Colony-operator research into bundle form and now ships through the maintained OpenClaw export/check flow.
 
 ## Status
 
-- draft, not yet wired into the formal export scripts
-- intended for review, iteration, and local dogfooding first
+- primary local/operator bundle for the current rebuild
+- hand-maintained and still evolving, not yet generator-owned
+- intended for iteration, local dogfooding, and honest runtime validation
 - canonical behavior skeleton lives at `../../../references/colony-operator-skill-skeleton.md`
 
 ## What this bundle is for
@@ -22,12 +23,12 @@ The core distinction from the existing archetypes is that this bundle is **colon
 
 ## Current scope
 
-This draft is primarily a skill-surface and doctrine checkpoint:
+This bundle is now the primary skill-surface and doctrine checkpoint for the rebuild:
 - `SKILL.md` defines startup/read order, action heuristics, and stop gates
 - `PLAYBOOK.md` defines the operating doctrine
 - `strategy.yaml` pins a conservative default
-- `starter.ts` is a lightweight scaffold, not yet a full maintained runtime
+- `starter.ts` carries the maintained colony-operator MVP runtime spine, with room for further hardening
 
 ## PR fit
 
-This bundle is the kind of slice that should usually land in the same PR as the canonical reference and routing work, because together they form one reviewable checkpoint: “the first real Colony operator surface exists.”
+This bundle should usually land beside the canonical reference, routing, and validation work that keeps the primary colony-operator path honest.

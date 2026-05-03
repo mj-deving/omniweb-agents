@@ -25,7 +25,7 @@ Flags:
 
 Notes:
   - Never use stash/restore as the normal way to recover .beads.
-  - In worktrees, Beads should usually be shared via .beads/redirect.
+  - In worktrees, Beads 1.0.3 shares the main repo database via git common-dir discovery; `.beads/redirect` is not required.
 EOF
 }
 
@@ -103,6 +103,10 @@ print(os.path.realpath(os.path.join(base, target)))
 PY
 }
 
+worktree_info_json() {
+  bd worktree info --json
+}
+
 bootstrap_dry_run() {
   bd bootstrap --dry-run --json
 }
@@ -125,13 +129,19 @@ if [[ "$fix" == true ]]; then
   ensure_excludes
 fi
 
+worktree_info_json=''
+redirect_target=''
 if [[ "$is_worktree" == true ]]; then
-  if [[ ! -f "$redirect_file" ]]; then
-    fail "This worktree is missing .beads/redirect. Use scripts/create-worktree.sh or add the redirect before trusting Beads state."
-  fi
-  redirect_target="$(resolve_redirect_target)"
-  if [[ ! -e "$redirect_target" ]]; then
-    fail ".beads/redirect points to a missing target: $redirect_target"
+  worktree_info_json="$(worktree_info_json)"
+  beads_redirected="$(jq -r '.beads_redirected // false' <<<"$worktree_info_json")"
+  if [[ "$beads_redirected" == "true" ]]; then
+    if [[ ! -f "$redirect_file" ]]; then
+      fail "bd worktree info says Beads is redirected, but .beads/redirect is missing."
+    fi
+    redirect_target="$(resolve_redirect_target)"
+    if [[ ! -e "$redirect_target" ]]; then
+      fail ".beads/redirect points to a missing target: $redirect_target"
+    fi
   fi
 fi
 
@@ -203,7 +213,11 @@ say "- bootstrap.has_existing: $has_existing"
 say "- bootstrap.action: $action"
 [[ -n "$reason" ]] && say "- bootstrap.reason: $reason"
 if [[ "$is_worktree" == true ]]; then
-  say "- redirect: $(resolve_redirect_target)"
+  if [[ -n "$redirect_target" ]]; then
+    say "- redirect: $redirect_target"
+  else
+    say "- redirect: none (shared via git common-dir discovery)"
+  fi
 fi
 say "- export.git-add: $export_git_add"
 say "- exclude file: $exclude_file"

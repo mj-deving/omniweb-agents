@@ -11,8 +11,10 @@ explicit branch name is provided as the second positional argument.
 
 Always produces a worktree with BOTH:
   (a) the requested base ref as starting commit
-  (b) a .beads/redirect file so it shares the parent's Beads database
-      (verify with: cd <path> && bd worktree info)
+  (b) healthy shared Beads access, verified with: cd <path> && bd worktree info
+
+Beads 1.0.3 worktrees share the main repo database via git common-dir discovery;
+`.beads/redirect` may be absent and is not required for a healthy worktree.
 
 Examples:
   scripts/create-worktree.sh research-pass
@@ -26,6 +28,8 @@ Examples:
 EOF
   exit 1
 }
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 base="origin/main"
 positional=()
@@ -90,8 +94,8 @@ bd worktree create "$target_path" --branch "$branch"
 
 # bd worktree create inherits the parent's HEAD as the new branch's starting
 # commit. The parent's HEAD is routinely an incidental/stale branch in this
-# 100-worktree repo, so we lock the base explicitly. Reset is safe: the
-# branch was just created with no work yet.
+# repo, so we lock the base explicitly. Reset is safe: the branch was just
+# created with no work yet.
 if [[ "$(git -C "$target_path" rev-parse HEAD)" != "$(git rev-parse "$base")" ]]; then
   echo "Resetting worktree to $base..."
   git -C "$target_path" reset --hard "$base"
@@ -107,7 +111,7 @@ fi
 
 (
   cd "$target_path"
-  "$main_repo_root/scripts/check-beads-health.sh" --fix
+  "$script_dir/check-beads-health.sh" --fix
 )
 
 echo "Verified Beads health in worktree."

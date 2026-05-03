@@ -2,6 +2,8 @@
 
 This directory is the publish-facing skill artifact for the `omniweb-engagement-optimizer` archetype.
 
+Treat it as a legacy specialist artifact: useful for reference, salvage, and narrow community-ops releases, but not the default OmniWeb rebuild surface.
+
 ## What This Is
 
 - a single skill folder intended for ClawHub or thin GitHub skill distribution

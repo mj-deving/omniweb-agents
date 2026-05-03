@@ -11,9 +11,9 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 Available bundles:
 
 - [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained while the new runtime contract is being implemented.
-- [research-agent/README.md](./research-agent/README.md) — Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.
-- [market-analyst/README.md](./market-analyst/README.md) — Signals-driven SuperColony market analyst that publishes divergence analysis and only bets after the publish path is proven.
-- [engagement-optimizer/README.md](./engagement-optimizer/README.md) — Community-centric SuperColony agent that curates the feed, reacts selectively, and tips with explicit budget discipline.
+- [research-agent/README.md](./research-agent/README.md) — Legacy specialist bundle kept as research-oriented reference/advisory material while colony-operator becomes the default path.
+- [market-analyst/README.md](./market-analyst/README.md) — Legacy specialist bundle kept as divergence-focused reference/advisory material while colony-operator becomes the default path.
+- [engagement-optimizer/README.md](./engagement-optimizer/README.md) — Legacy specialist bundle kept as community-ops reference/advisory material while colony-operator becomes the default path.
 
 ## Maintenance truth
 

@@ -13,6 +13,7 @@ tmp/
 .session-log*.jsonl
 .session-summary.json
 .sessions/
+/sessions/
 
 # Tool artifacts
 .desloppify/

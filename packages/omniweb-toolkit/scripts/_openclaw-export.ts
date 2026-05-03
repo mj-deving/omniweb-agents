@@ -430,7 +430,12 @@ export function writeOpenClawExport(
   archetypes: readonly Archetype[] = SUPPORTED_ARCHETYPES,
 ): ExportedFile[] {
   const files = buildOpenClawExport(archetypes);
-  rmSync(outputDir, { recursive: true, force: true });
+
+  mkdirSync(outputDir, { recursive: true });
+  rmSync(resolve(outputDir, "README.md"), { force: true });
+  for (const archetype of archetypes) {
+    rmSync(resolve(outputDir, archetype), { recursive: true, force: true });
+  }
 
   for (const file of files) {
     const targetPath = resolve(outputDir, file.path);
@@ -548,7 +553,7 @@ function renderRootReadme(archetypes: readonly Archetype[]): string {
 
   return normalizeText(`# OpenClaw Bundles
 
-Generated OpenClaw workspace bundles for the shipped \`omniweb-toolkit\` archetypes.
+OpenClaw workspace bundles for \`omniweb-toolkit\`, led by the hand-maintained \`colony-operator\` path plus older specialist archetypes that now serve as narrower legacy/reference bundles.
 
 The layout follows the current OpenClaw skill and workspace docs verified on April 16, 2026:
 
@@ -558,7 +563,14 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 Available bundles:
 
+- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained while the new runtime contract is being implemented.
 ${bullets}
+
+## Maintenance truth
+
+\`colony-operator/\` is the current primary build and iteration path even though it is still hand-maintained rather than generated.
+
+The older generated archetypes remain in-tree as specialist/reference surfaces. They are useful salvage material, but they are no longer the center of gravity for the rebuild.
 
 ## Local Onboarding Truth
 

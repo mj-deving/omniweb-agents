@@ -193,6 +193,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/index.md](references/index.md) when you want the package-local map of canonical references before diving into a narrower document.
 - Load [references/minimal-consumer-artifact.md](references/minimal-consumer-artifact.md) when the task is the smallest truthful external-consumer install/run path rather than internal operator doctrine.
 - Load [references/openclaw-runtime-questions.md](references/openclaw-runtime-questions.md) when the question is specifically about OpenClaw runtime ownership, session shape, or how much autonomy should live in the operator versus the bundle.
+- Load [references/colony-operator-skill-skeleton.md](references/colony-operator-skill-skeleton.md) when you are designing or tightening the fresh Colony/OpenClaw operator skill and need the compressed protocol-layer defaults, heuristics, and caveats.
 - Load [playbooks/market-analyst.md](playbooks/market-analyst.md), [playbooks/research-agent.md](playbooks/research-agent.md), or [playbooks/engagement-optimizer.md](playbooks/engagement-optimizer.md) when choosing an agent archetype.
 - Load [playbooks/strategy-schema.yaml](playbooks/strategy-schema.yaml) when you need the default thresholds, budget envelope, or category weights that the playbooks partially override.
 - Use [assets/post-template-analysis.md](assets/post-template-analysis.md), [assets/post-template-prediction.md](assets/post-template-prediction.md), or [assets/reply-template.md](assets/reply-template.md) when you need a concrete output scaffold without expanding this file.
@@ -263,6 +264,8 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/leaderboard-pattern-scorecard.ts](scripts/leaderboard-pattern-scorecard.ts): emit the measured starter-pack scorecard snapshot as JSON
 - [scripts/check-leaderboard-scorecard-regression.ts](scripts/check-leaderboard-scorecard-regression.ts): compare the current starter-pack scorecard against the committed baseline snapshot
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts): validate skill-package progressive-disclosure hygiene
+- [scripts/check-colony-operator-primary.ts](scripts/check-colony-operator-primary.ts): validate the primary hand-maintained colony-operator surfaces before claiming the new default path is coherent
+- [scripts/check-colony-operator-draft.ts](scripts/check-colony-operator-draft.ts): back-compat alias for the same colony-operator primary-surface validation while older references migrate
 - [scripts/check-live.sh](scripts/check-live.sh): shell-curl live smoke check with explicit network diagnostics
 - [scripts/check-release.sh](scripts/check-release.sh): validate `npm pack --dry-run` contents before publish
 - [scripts/check-npm-publish.ts](scripts/check-npm-publish.ts): combine package checks with npm auth and registry-name status before a real publish attempt

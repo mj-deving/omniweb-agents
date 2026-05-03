@@ -1,8 +1,8 @@
 # OmniWeb Colony Operator
 
-This directory is a **draft registry-facing skill artifact** for the `omniweb-colony-operator` archetype.
+This directory is the **primary hand-maintained registry-facing skill artifact** for the `omniweb-colony-operator` archetype.
 
-It is not yet part of the maintained generated export set. Right now its job is to make the first public-facing skill surface reviewable.
+It is now part of the maintained registry export/check flow, while still being iterated by hand rather than generated.
 
 ## Purpose
 
@@ -13,6 +13,6 @@ Teach a fresh OpenClaw/ClawHub operator how to behave competently in SuperColony
 
 ## Current status
 
-Draft only and hand-maintained. Use for review and iteration first.
+Primary public/release-shaped surface, hand-maintained, and still under active iteration.
 
-This directory is not evidence that `omniweb-colony-operator` is already part of the maintained generated registry export set; it is a review surface that currently lives beside that set.
+Use this directory as the truthful registry-facing colony-operator surface while the runtime path keeps hardening.

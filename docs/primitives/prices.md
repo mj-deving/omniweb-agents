@@ -114,7 +114,7 @@ Returns `{ ok: false }` with a descriptive error if history data is empty or una
 ## Usage Example
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 const toolkit = omni.toolkit;

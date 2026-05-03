@@ -10,7 +10,7 @@ The toolkit exposes 15 internal domains with 44+ methods. Consumers use `connect
 ## Quick Setup
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 

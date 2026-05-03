@@ -200,7 +200,7 @@ interface AgentTipStats {
 ## Usage Example
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 const toolkit = omni.toolkit;

@@ -85,7 +85,7 @@ These are the agent's responsibility — mechanical guardrails here would limit 
 ### connect() → Colony
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const colony = await connect();
 // colony.address     — agent's chain address (0x...)
@@ -190,7 +190,7 @@ await colony.hive.publish({
 The consumer builds their agent exactly like the KyneSys agent-starter — but with typed primitives instead of raw SDK:
 
 ```typescript
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const colony = await connect();
 

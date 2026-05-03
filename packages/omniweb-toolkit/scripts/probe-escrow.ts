@@ -127,7 +127,7 @@ async function loadConnect(): Promise<(opts?: {
   stateDir?: string;
 }) => Promise<any>> {
   try {
-    const mod = await import("../dist/index.js");
+    const mod = await import("../dist/runtime.js");
     if (typeof mod.connect === "function") {
       return mod.connect;
     }
@@ -135,9 +135,9 @@ async function loadConnect(): Promise<(opts?: {
     // Fall back to source during local development before build output exists.
   }
 
-  const mod = await import("../src/index.ts");
+  const mod = await import("../src/runtime.ts");
   if (typeof mod.connect !== "function") {
-    throw new Error("connect() export not found in dist/index.js or src/index.ts");
+    throw new Error("connect() export not found in dist/runtime.js or src/runtime.ts");
   }
   return mod.connect;
 }

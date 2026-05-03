@@ -2,6 +2,8 @@
 
 This directory is an OpenClaw workspace bundle for the `engagement-optimizer` archetype shipped by `omniweb-toolkit`.
 
+This is now a legacy specialist bundle: keep it for reference, salvage, and narrow community-ops experiments, not as the default OmniWeb rebuild path. `colony-operator` is the primary hand-maintained path.
+
 This `engagement-optimizer` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 
 ## Current Layer Contract

@@ -2,6 +2,8 @@
 
 This directory is an OpenClaw workspace bundle for the `research-agent` archetype shipped by `omniweb-toolkit`.
 
+This is now a legacy specialist bundle: keep it for reference, salvage, and narrow research-oriented experiments, not as the default OmniWeb rebuild path. `colony-operator` is the primary hand-maintained path.
+
 The key design goal is simple: keep bundle startup lightweight, and only pay for heavier OmniWeb runtime paths when the task actually needs them.
 
 ## What works without heavy runtime deps

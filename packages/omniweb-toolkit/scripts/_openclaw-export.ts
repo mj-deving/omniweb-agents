@@ -38,6 +38,8 @@ interface ArchetypeSpec {
   emoji: string;
   theme: string;
   summary: string;
+  legacySummary: string;
+  legacyBundleNote: string;
   bundlePackageName: string;
   playbookPath: string;
   starterPath: string;
@@ -77,6 +79,8 @@ const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
     emoji: "🔬",
     theme: "Evidence-led SuperColony researcher who values depth over speed.",
     summary: "Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.",
+    legacySummary: "Legacy specialist bundle kept as research-oriented reference/advisory material while colony-operator becomes the default path.",
+    legacyBundleNote: "This is now a legacy specialist bundle: keep it for reference, salvage, and narrow research-oriented experiments, not as the default OmniWeb rebuild path. `colony-operator` is the primary hand-maintained path.",
     bundlePackageName: "@omniweb-toolkit/openclaw-research-agent-bundle",
     playbookPath: "playbooks/research-agent.md",
     starterPath: "assets/research-agent-starter.ts",
@@ -141,6 +145,8 @@ const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
     emoji: "📈",
     theme: "Fast SuperColony market analyst focused on divergences, signals, and disciplined conviction.",
     summary: "Signals-driven SuperColony market analyst that publishes divergence analysis and only bets after the publish path is proven.",
+    legacySummary: "Legacy specialist bundle kept as divergence-focused reference/advisory material while colony-operator becomes the default path.",
+    legacyBundleNote: "This is now a legacy specialist bundle: keep it for reference, salvage, and narrow divergence-oriented experiments, not as the default OmniWeb rebuild path. `colony-operator` is the primary hand-maintained path.",
     bundlePackageName: "@omniweb-toolkit/openclaw-market-analyst-bundle",
     playbookPath: "playbooks/market-analyst.md",
     starterPath: "assets/market-analyst-starter.ts",
@@ -178,6 +184,8 @@ const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
     emoji: "🤝",
     theme: "Community-focused SuperColony curator who rewards quality and avoids spammy engagement loops.",
     summary: "Community-centric SuperColony agent that curates the feed, reacts selectively, and tips with explicit budget discipline.",
+    legacySummary: "Legacy specialist bundle kept as community-ops reference/advisory material while colony-operator becomes the default path.",
+    legacyBundleNote: "This is now a legacy specialist bundle: keep it for reference, salvage, and narrow community-ops experiments, not as the default OmniWeb rebuild path. `colony-operator` is the primary hand-maintained path.",
     bundlePackageName: "@omniweb-toolkit/openclaw-engagement-optimizer-bundle",
     playbookPath: "playbooks/engagement-optimizer.md",
     starterPath: "assets/engagement-optimizer-starter.ts",
@@ -547,7 +555,7 @@ function renderRootReadme(archetypes: readonly Archetype[]): string {
   const bullets = archetypes
     .map((archetype) => {
       const spec = getArchetypeSpec(archetype);
-      return `- [${archetype}/README.md](./${archetype}/README.md) — ${spec.summary}`;
+      return `- [${archetype}/README.md](./${archetype}/README.md) — ${spec.legacySummary}`;
     })
     .join("\n");
 
@@ -622,6 +630,8 @@ function renderAlphaBundleReadme(spec: ArchetypeSpec): string {
   return normalizeText(`# ${spec.displayName} OpenClaw Bundle
 
 This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype shipped by \`omniweb-toolkit\`.
+
+${spec.legacyBundleNote}
 
 This \`${spec.id}\` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 

@@ -39,6 +39,7 @@ if (args.some((arg) => !["--skip-release-gate", "--help", "-h"].includes(arg))) 
 }
 
 const journeyResults: JourneyResult[] = [
+  runColonyOperatorJourney(),
   runPlaybookJourney(
     "research-agent",
     "Research agent publish journey",
@@ -86,6 +87,28 @@ console.log(JSON.stringify({
 }, null, 2));
 
 process.exit(ok ? 0 : 1);
+
+function runColonyOperatorJourney(): JourneyResult {
+  const command = ["node", "--import", "tsx", "./scripts/check-colony-operator-dry-run.ts"];
+  const result = runCommand(command);
+  const parsed = tryParseJson(result.stdout);
+  const status: JourneyStatus = result.exitCode === 0 ? "pass" : "fail";
+  return {
+    id: "colony-operator-mvp",
+    title: "Colony operator MVP dry-run journey",
+    status,
+    ok: result.exitCode === 0,
+    exitCode: result.exitCode,
+    command,
+    rationale:
+      status === "pass"
+        ? "The new default colony-operator starter completed a maintained no-spend runtime cycle instead of only passing doc-shape checks."
+        : "The new default colony-operator starter failed its maintained no-spend runtime proof, so the claimed MVP path is not yet honestly validated.",
+    summary: parsed ?? null,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  };
+}
 
 function runPlaybookJourney(
   id: string,

@@ -60,6 +60,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [leaderboard-pattern-scorecard.ts](./leaderboard-pattern-scorecard.ts): measured starter-pack scorecard snapshot as JSON
 - [check-leaderboard-scorecard-regression.ts](./check-leaderboard-scorecard-regression.ts): compare current scorecard against committed baseline
 - [skill-self-audit.ts](./skill-self-audit.ts): progressive-disclosure hygiene check for the skill package
+- [check-colony-operator-draft.ts](./check-colony-operator-draft.ts): hand-maintained draft-surface check for the colony-operator bundle and registry skill
 
 ## Safe Default Progression
 

@@ -13,6 +13,7 @@ import {
  */
 
 interface SkeletonState {
+  [key: string]: unknown;
   lastTopic?: string;
   lastPublishedAt?: string;
 }
@@ -33,7 +34,7 @@ async function perceive(ctx: MinimalObserveContext<SkeletonState>): Promise<Perc
       shouldSkip: true,
       reason: "read_failed",
       facts: {
-        signalsOk: signals?.ok === true,
+        signalsOk: Boolean(signals?.ok),
       },
     };
   }
@@ -112,7 +113,7 @@ function prompt(
     text: [
       `${perception.topic} is emerging in colony signals.`,
       `Current signal sample: ${perception.signalCount ?? 0} topics.`,
-      "Replace this placeholder text by running the shared leaderboard-pattern prompt scaffold.",
+      "Replace this placeholder text by running the shared source-grounded prompt scaffold.",
     ].join(" "),
     attestUrl: "https://example.com/report",
     tags: ["starter", "analysis"],

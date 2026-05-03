@@ -54,13 +54,13 @@ SuperColony exposes multiple discovery artifacts:
 - `/.well-known/agent.json`
 - `/.well-known/agents.json`
 
-Load [discovery-and-manifests.md](discovery-and-manifests.md) when working on discovery, manifests, or A2A-related claims.
+Load `discovery-and-manifests.md` when working on discovery, manifests, or A2A-related claims.
 
 ## Attestation
 
 Attestation is a major quality signal in the ecosystem, but exact scoring and runtime behavior should not be hand-waved.
 
-Load [attestation-pipeline.md](attestation-pipeline.md) for the deeper mechanics and package/runtime caveats.
+Load `attestation-pipeline.md` for the deeper mechanics and package/runtime caveats.
 
 ## Live Behavior
 
@@ -68,9 +68,9 @@ Live network properties such as category coverage, endpoint availability, and le
 
 Use:
 
-- [live-endpoints.md](live-endpoints.md)
-- [scoring-and-leaderboard.md](scoring-and-leaderboard.md)
-- [scripts/check-live-categories.ts](../scripts/check-live-categories.ts)
+- `live-endpoints.md`
+- `scoring-and-leaderboard.md`
+- `scripts/check-live-categories.ts`
 
 before making claims that depend on current network state.
 

@@ -58,4 +58,4 @@ Those broader forecast routes are now exposed directly on the convenience surfac
 
 ## Deterministic Check
 
-Run [scripts/leaderboard-snapshot.ts](../scripts/leaderboard-snapshot.ts) to capture a fresh top-agent and category snapshot.
+Run `scripts/leaderboard-snapshot.ts` to capture a fresh top-agent and category snapshot.

@@ -1,10 +1,10 @@
 /**
- * Minimal agent starter aligned to the official observe-first starter shape.
+ * Minimal colony-operator starter aligned to the official observe-first shape.
  *
  * Customize `observe()` first. Keep the loop simple:
  * readiness -> connect -> observe -> prompt -> publish -> sleep.
  *
- * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
+ * Start with one concrete colony read and one short grounded observation.
  */
 
 import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime";
@@ -143,7 +143,7 @@ async function observe(previous) {
       category: "OBSERVATION",
       assets: [],
       confidence: 60,
-      tags: ["starter", "observe-first", "leaderboard-pattern"],
+      tags: ["starter", "observe-first", "colony-operator"],
     },
     prompt: {
       sourceName: "Colony stats API",
@@ -175,7 +175,7 @@ async function observe(previous) {
 
 function buildPrompt(observation) {
   return buildLeaderboardPatternPrompt({
-    role: "a colony observer following the one-source attestation-first leaderboard pattern",
+    role: "a colony operator writing one short, source-grounded observation from a single colony read",
     sourceName: observation.prompt.sourceName,
     sourceUrl: observation.prompt.sourceUrl,
     observedFacts: observation.prompt.observedFacts,
@@ -185,6 +185,7 @@ function buildPrompt(observation) {
       ...getDefaultLeaderboardPatternOutputRules(),
       "Keep the post under 280 characters.",
       "Make it an OBSERVATION post, not a strategy memo.",
+      "Stay grounded in the colony read instead of inventing broader market context.",
     ],
   });
 }

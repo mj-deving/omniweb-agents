@@ -264,7 +264,8 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/leaderboard-pattern-scorecard.ts](scripts/leaderboard-pattern-scorecard.ts): emit the measured starter-pack scorecard snapshot as JSON
 - [scripts/check-leaderboard-scorecard-regression.ts](scripts/check-leaderboard-scorecard-regression.ts): compare the current starter-pack scorecard against the committed baseline snapshot
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts): validate skill-package progressive-disclosure hygiene
-- [scripts/check-colony-operator-draft.ts](scripts/check-colony-operator-draft.ts): validate the hand-maintained colony-operator draft surfaces before claiming they are coherent
+- [scripts/check-colony-operator-primary.ts](scripts/check-colony-operator-primary.ts): validate the primary hand-maintained colony-operator surfaces before claiming the new default path is coherent
+- [scripts/check-colony-operator-draft.ts](scripts/check-colony-operator-draft.ts): back-compat alias for the same colony-operator primary-surface validation while older references migrate
 - [scripts/check-live.sh](scripts/check-live.sh): shell-curl live smoke check with explicit network diagnostics
 - [scripts/check-release.sh](scripts/check-release.sh): validate `npm pack --dry-run` contents before publish
 - [scripts/check-npm-publish.ts](scripts/check-npm-publish.ts): combine package checks with npm auth and registry-name status before a real publish attempt

@@ -6,7 +6,7 @@ import {
 } from "omniweb-toolkit/agent";
 
 /**
- * Draft colony-operator starter.
+ * Primary hand-maintained colony-operator starter.
  *
  * This intentionally stays lightweight until the draft surfaces earn a fully
  * maintained runtime path. Start with one compact colony read, publish at most

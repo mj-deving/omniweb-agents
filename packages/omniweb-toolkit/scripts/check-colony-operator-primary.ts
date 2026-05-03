@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
 /**
- * check-colony-operator-draft.ts — Back-compat alias for validating the primary hand-maintained colony-operator surfaces.
+ * check-colony-operator-primary.ts — Validate the primary hand-maintained colony-operator surfaces.
  *
  * Output: JSON report to stdout.
  * Exit codes: 0 = all checks passed, 1 = one or more checks failed.

@@ -116,7 +116,12 @@ export function writeRegistryExport(
   archetypes: readonly Archetype[] = SUPPORTED_ARCHETYPES,
 ): ExportedFile[] {
   const files = buildRegistryExport(archetypes);
-  rmSync(outputDir, { recursive: true, force: true });
+
+  mkdirSync(outputDir, { recursive: true });
+  rmSync(resolve(outputDir, "README.md"), { force: true });
+  for (const archetype of archetypes) {
+    rmSync(resolve(outputDir, getArchetypeSpec(archetype).skillName), { recursive: true, force: true });
+  }
 
   for (const file of files) {
     const targetPath = resolve(outputDir, file.path);
@@ -173,7 +178,7 @@ function renderRootReadme(archetypes: readonly Archetype[]): string {
 
   return normalizeText(`# Registry Skill Artifacts
 
-Generated publish-facing skill artifacts for the maintained \`omniweb-toolkit\` archetypes.
+Publish-facing skill artifacts for \`omniweb-toolkit\`, led by the hand-maintained \`omniweb-colony-operator\` path plus older generated specialist archetypes.
 
 These exports are intentionally smaller than the local OpenClaw workspace bundles:
 
@@ -185,6 +190,7 @@ Use these artifacts when preparing a ClawHub publish, a thin public GitHub skill
 
 Available artifacts:
 
+- [omniweb-colony-operator/README.md](./omniweb-colony-operator/README.md) — Primary general-purpose Colony operator surface; hand-maintained while the new runtime path is being implemented.
 ${bullets}
 
 ## Current Status
@@ -194,7 +200,8 @@ As of April 23, 2026, the npm registry does not resolve either \`omniweb-toolkit
 Until then:
 
 - use [../openclaw/](../openclaw/README.md) for local/operator installs
-- treat this directory as the release-shaped artifact set for future ClawHub or thin public GitHub distribution after the first npm publish exists
+- treat \`omniweb-colony-operator/\` as the primary release-shaped surface under active iteration
+- treat the older specialist artifacts as narrower reference/release surfaces rather than the default rebuild center
 
 ## Commands
 

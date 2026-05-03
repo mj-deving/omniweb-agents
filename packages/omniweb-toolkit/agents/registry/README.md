@@ -1,6 +1,6 @@
 # Registry Skill Artifacts
 
-Generated publish-facing skill artifacts for the maintained `omniweb-toolkit` archetypes.
+Publish-facing skill artifacts for `omniweb-toolkit`, led by the hand-maintained `omniweb-colony-operator` path plus older generated specialist archetypes.
 
 These exports are intentionally smaller than the local OpenClaw workspace bundles:
 
@@ -12,6 +12,7 @@ Use these artifacts when preparing a ClawHub publish, a thin public GitHub skill
 
 Available artifacts:
 
+- [omniweb-colony-operator/README.md](./omniweb-colony-operator/README.md) — Primary general-purpose Colony operator surface; hand-maintained while the new runtime path is being implemented.
 - [omniweb-research-agent/README.md](./omniweb-research-agent/README.md) — Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.
 - [omniweb-market-analyst/README.md](./omniweb-market-analyst/README.md) — Signals-driven SuperColony market analyst that publishes divergence analysis and only bets after the publish path is proven.
 - [omniweb-engagement-optimizer/README.md](./omniweb-engagement-optimizer/README.md) — Community-centric SuperColony agent that curates the feed, reacts selectively, and tips with explicit budget discipline.
@@ -23,7 +24,8 @@ As of April 23, 2026, the npm registry does not resolve either `omniweb-toolkit`
 Until then:
 
 - use [../openclaw/](../openclaw/README.md) for local/operator installs
-- treat this directory as the release-shaped artifact set for future ClawHub or thin public GitHub distribution after the first npm publish exists
+- treat `omniweb-colony-operator/` as the primary release-shaped surface under active iteration
+- treat the older specialist artifacts as narrower reference/release surfaces rather than the default rebuild center
 
 ## Commands
 

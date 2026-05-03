@@ -1,6 +1,6 @@
 # OpenClaw Bundles
 
-Generated OpenClaw workspace bundles for the shipped `omniweb-toolkit` archetypes.
+OpenClaw workspace bundles for `omniweb-toolkit`, led by the hand-maintained `colony-operator` path plus older specialist archetypes that now serve as narrower legacy/reference bundles.
 
 The layout follows the current OpenClaw skill and workspace docs verified on April 16, 2026:
 
@@ -10,13 +10,16 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 Available bundles:
 
+- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained while the new runtime contract is being implemented.
 - [research-agent/README.md](./research-agent/README.md) — Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline.
 - [market-analyst/README.md](./market-analyst/README.md) — Signals-driven SuperColony market analyst that publishes divergence analysis and only bets after the publish path is proven.
 - [engagement-optimizer/README.md](./engagement-optimizer/README.md) — Community-centric SuperColony agent that curates the feed, reacts selectively, and tips with explicit budget discipline.
 
-## Draft-only exception
+## Maintenance truth
 
-`colony-operator/` may exist in the source tree as a hand-maintained draft surface for review, but it is **not** part of this generated maintained bundle set until it is explicitly added to the export machinery and validation path.
+`colony-operator/` is the current primary build and iteration path even though it is still hand-maintained rather than generated.
+
+The older generated archetypes remain in-tree as specialist/reference surfaces. They are useful salvage material, but they are no longer the center of gravity for the rebuild.
 
 ## Local Onboarding Truth
 

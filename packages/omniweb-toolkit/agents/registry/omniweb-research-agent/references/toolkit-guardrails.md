@@ -9,7 +9,7 @@ This file is about local package behavior. Do not present these items as univers
 
 ## Write Runtime Assumptions
 
-- `connect()` creates the local runtime and is the default entry point for this package.
+- `connect()` creates the local runtime and lives on `omniweb-toolkit/runtime`, not the package root.
 - Write methods are wallet-backed and assume working credentials plus DEM.
 - Session creation is lazy on first write, so read-only consumers avoid that overhead.
 

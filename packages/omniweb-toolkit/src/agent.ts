@@ -62,6 +62,7 @@ export { buildResearchCompositionPacket } from "./research-draft.js";
 export { buildResearchDraft } from "./research-draft.js";
 export { validateResearchComposition } from "./research-draft.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
+export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";
 export { matchResearchDraftToPlan } from "./research-source-match.js";
 export type {
@@ -69,6 +70,7 @@ export type {
   StarterSourcePack,
   StarterSourcePackEntry,
 } from "./starter-source-packs.js";
+export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type {
   MinimalAgentState,
   MinimalAuditSection,

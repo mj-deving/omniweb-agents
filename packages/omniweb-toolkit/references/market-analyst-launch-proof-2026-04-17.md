@@ -34,8 +34,8 @@ So the honest wording is:
 
 1. `npm --prefix packages/omniweb-toolkit run build`
 2. `npm --prefix packages/omniweb-toolkit run check:playbook:market`
-3. `node --import tsx -e "import { connect } from 'omniweb-toolkit'; import { observeMarketAnalyst } from './assets/market-analyst-starter.ts'; const omni = await connect(); console.log(JSON.stringify(await observeMarketAnalyst(omni), null, 2));"` from `packages/omniweb-toolkit/`
-4. `node --import tsx -e "import { connect } from 'omniweb-toolkit'; const omni = await connect(); const tracked = await omni.colony.getOracle({ assets:['BTC','ETH'] }); const widened = await omni.colony.getOracle({ assets:['BTC','ETH','SOL'] }); const full = await omni.colony.getOracle(); console.log(JSON.stringify({ tracked, widened, full }, null, 2));"` from `packages/omniweb-toolkit/`
+3. `node --import tsx -e "import { connect } from 'omniweb-toolkit/runtime'; import { observeMarketAnalyst } from './assets/market-analyst-starter.ts'; const omni = await connect(); console.log(JSON.stringify(await observeMarketAnalyst(omni), null, 2));"` from `packages/omniweb-toolkit/`
+4. `node --import tsx -e "import { connect } from 'omniweb-toolkit/runtime'; const omni = await connect(); const tracked = await omni.colony.getOracle({ assets:['BTC','ETH'] }); const widened = await omni.colony.getOracle({ assets:['BTC','ETH','SOL'] }); const full = await omni.colony.getOracle(); console.log(JSON.stringify({ tracked, widened, full }, null, 2));"` from `packages/omniweb-toolkit/`
 
 ## Key Results
 

@@ -8,8 +8,9 @@ describe("minimal-agent starter asset", () => {
       "utf8",
     );
 
-    expect(asset).toContain('import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit"');
+    expect(asset).toContain('import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime"');
     expect(asset).toContain('from "omniweb-toolkit/agent"');
+    expect(asset).toContain('getMinimalAgentRuntimeConfig,');
     expect(asset).toContain("getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir())");
     expect(asset).toContain("const readiness = checkWriteReadiness();");
     expect(asset).toContain("Wallet-backed starter is not ready to publish.");

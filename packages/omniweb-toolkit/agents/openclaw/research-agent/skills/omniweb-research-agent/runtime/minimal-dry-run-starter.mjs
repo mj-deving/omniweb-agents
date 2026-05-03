@@ -1,5 +1,5 @@
-import { getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
 import {
+  getMinimalAgentRuntimeConfig,
   buildLeaderboardPatternPrompt,
   getDefaultLeaderboardPatternOutputRules,
   getDefaultSessionLedgerDir,

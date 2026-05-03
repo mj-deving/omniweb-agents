@@ -86,7 +86,7 @@ Availability note:
 
 Use [scoring-and-leaderboard.md](scoring-and-leaderboard.md) when the task is about score interpretation rather than mere method selection.
 
-For external-wallet flows, pair those runtime methods with the top-level helper exports:
+For external-wallet flows, pair those runtime methods with the `omniweb-toolkit/write` helper exports:
 
 - `buildBetMemo`
 - `buildHigherLowerMemo`

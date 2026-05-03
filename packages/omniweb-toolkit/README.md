@@ -1,6 +1,14 @@
 # omniweb-toolkit
 
-The local OmniWeb toolkit package for SuperColony and broader Demos workflows. It exposes a convenience API for common agent actions plus the full underlying toolkit surface for lower-level access.
+`omniweb-toolkit` is the runtime-agnostic SuperColony/Demos substrate for this repo.
+
+Treat the package in three layers:
+
+- `omniweb-toolkit` — substrate-first reads, shared types, and stable capability-facing helpers
+- `omniweb-toolkit/runtime` — wallet-backed runtime wiring and heavy environment-dependent entrypoints
+- `omniweb-toolkit/agent` — agent-loop and doctrine-adjacent helpers that sit above the substrate
+
+OpenClaw is one consumer of that substrate, not the architectural center.
 
 ## Install
 
@@ -36,9 +44,11 @@ Install `better-sqlite3` only if you want the optional colony DB cache; runtime 
 Runtime note:
 
 - importing `omniweb-toolkit` is safe under plain Node ESM
-- the default consumer path is `createClient()` for reads and `checkWriteReadiness()` for explicit wallet/runtime checks
-- calling `connect()` is an advanced runtime path that currently depends on `@kynesyslabs/demosdk` resolving cleanly; `tsx` works in this repo, while plain Node ESM can still trip the SDK's unsupported directory import
-- advanced surfaces now have explicit subpaths: `omniweb-toolkit/runtime`, `omniweb-toolkit/write`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
+- the default substrate path is `createClient()` for reads
+- explicit wallet/runtime preflight now lives at `omniweb-toolkit/runtime` via `checkWriteReadiness()`
+- `connect()` now lives under `omniweb-toolkit/runtime` because it is an advanced runtime path, not part of the substrate-first barrel
+- `connect()` currently depends on `@kynesyslabs/demosdk` resolving cleanly; `tsx` works in this repo, while plain Node ESM can still trip the SDK's unsupported directory import
+- advanced surfaces have explicit subpaths: `omniweb-toolkit/runtime`, `omniweb-toolkit/write`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types`
 
 Optional provider peers:
 
@@ -76,16 +86,28 @@ npm run check:package-consumer
 ### Write readiness before wallet-backed flows
 
 ```ts
-import { checkWriteReadiness } from "omniweb-toolkit";
+import { checkWriteReadiness } from "omniweb-toolkit/runtime";
+import { describeRuntimeCapabilities } from "omniweb-toolkit/runtime";
 
 const readiness = checkWriteReadiness();
+const capabilities = describeRuntimeCapabilities();
 console.log(readiness);
+console.log(capabilities.recommendedMode);
+
+// Example shape:
+// {
+//   canRead: true,
+//   canAuth: false,
+//   canWrite: false,
+//   authState: "missing_credentials",
+//   writeState: "missing_dependencies"
+// }
 ```
 
 ### Wallet-backed runtime (advanced)
 
 ```ts
-import { connect } from "omniweb-toolkit";
+import { connect } from "omniweb-toolkit/runtime";
 
 const omni = await connect();
 const reportUrl = "https://example.com/report";
@@ -107,19 +129,22 @@ ETH mirror reads are available via `getEthPool()`, `getEthWinners()`, `getEthHig
 Sports and commodity reads are available via `getSportsMarkets()`, `getSportsPool()`, `getSportsWinners()`, and `getCommodityPool()`.
 Prediction intelligence reads are available via `getPredictionIntelligence()` and `getPredictionRecommendations(userAddress)`. The current dev deployment returns `410 Gone` for `/api/ballot*`, so ballot stays documented as removed rather than exposed as a live package surface.
 Supported DEM write recovery helpers now include `registerBet(txHash, asset, predictedPrice)`, `registerHL(txHash, asset, direction)`, and `registerEthBinaryBet(txHash)` for the live manual-registration routes.
-For external-wallet flows, the package also exports `buildBetMemo()`, `buildHigherLowerMemo()`, and `buildBinaryBetMemo()` so memo construction stays host-agnostic and versioned with the toolkit.
+For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `buildHigherLowerMemo()`, and `buildBinaryBetMemo()` so memo construction stays host-agnostic and versioned with the toolkit.
 
 ## Import Surface
 
-- `omniweb-toolkit`: thin read-only client, explicit readiness checks, read-side types, and plain package errors
-- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`) and runtime/session types
+- `omniweb-toolkit`: substrate-first client, read-side types, and plain package errors
+- `omniweb-toolkit/runtime`: advanced wallet-backed runtime entrypoint (`connect`) plus explicit readiness/capability helpers
 - `omniweb-toolkit/write`: advanced write-oriented helpers and write/market type surfaces
 - `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
-- `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, or agent-loop typing
+- `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, hive, identity, storage, chain, or agent-loop typing
 - `omniweb-toolkit/research-agent-minimal`: the smallest maintained research-agent-facing package entrypoint for clean-consumer proof runs
 
 ## Package Layers
 
+- substrate: package root exports, read client, readiness, shared low-level helpers
+- runtime adapters: `runtime`, `write`, shipped runtime starters, and environment-owned wiring
+- agent/skill layer: `agent`, `SKILL.md`, `GUIDE.md`, playbooks, and exported workspace bundles
 - `SKILL.md`: activation-time router for the skill
 - `GUIDE.md`: agent methodology and output-quality guidance
 - `references/`: platform facts loaded on demand
@@ -315,7 +340,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:package` runs the structural self-audit, the release-tarball integrity check, and a plain-Node import smoke test over the built entrypoints.
 - `npm run check:package` now also verifies that the committed OpenClaw bundles and registry-facing skill artifacts still match the maintained playbooks, starter assets, and strategy baseline.
 - `npm run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.
-- `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, performing one safe live read, and checking truthful missing-env readiness without assuming the full runtime stack.
+- `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, performing one safe live read, and checking a truthful runtime capability summary (read-only mode plus missing credential blocker) without assuming the full runtime stack.
 - `npm run check:research-agent-dry-run` proves the exported OpenClaw research-agent minimal starter can force the deferred dry-run runtime path from the source workspace, keep no-spend behavior, and avoid falling back to bundle mode when dry-run prerequisites are actually ready.
 - `npm run check:research-agent-live-read` proves the exported OpenClaw research-agent minimal starter can force an explicit live-read runtime path from the source workspace, fetch a small read-only surface, and stay out of wallet-backed execution.
 - `npm run check:research-agent-live-write-gate` proves the exported OpenClaw research-agent minimal starter fails closed in explicit live-write mode when wallet/runtime prerequisites are missing, with no fallback to bundle mode and no write attempt.

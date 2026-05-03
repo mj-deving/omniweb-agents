@@ -1,37 +1,20 @@
 /**
- * omniweb-toolkit — main entry point.
+ * omniweb-toolkit — substrate-first main entry point.
  *
  * Usage:
- *   import { connect } from "omniweb-toolkit";
- *   const omni = await connect();
+ *   import { createClient } from "omniweb-toolkit";
+ *   import { checkWriteReadiness } from "omniweb-toolkit/runtime";
  *
- *   // SuperColony social layer
- *   const feed = await omni.colony.getFeed({ limit: 10 });
+ *   const client = createClient();
+ *   const feed = await client.getFeed({ limit: 10 });
+ *   const readiness = checkWriteReadiness();
  *
- *   // Demos identity
- *   await omni.identity.link("twitter", tweetUrl);
- *
- *   // Escrow (tip by social handle)
- *   await omni.escrow.sendToIdentity("twitter", "alice", 5);
- *
- *   // On-chain storage
- *   const data = await omni.storage.read(addr);
- *
- *   // Chain core
- *   await omni.chain.transfer(to, amount);
+ * Runtime-heavy wallet-backed flows live under `omniweb-toolkit/runtime`.
  */
 
 export { createClient } from "./client.js";
 export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
 export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
-export { checkWriteReadiness } from "./readiness.js";
-export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
-export {
-  buildBetMemo,
-  buildHigherLowerMemo,
-  buildBinaryBetMemo,
-  VALID_BET_HORIZONS,
-} from "../../../src/toolkit/supercolony/bet-memos.js";
 export type {
   CreateClientOptions,
   FeedQuery,
@@ -52,7 +35,4 @@ export type {
   ColonyPost,
   ReadPostCategory,
 } from "./read-types.js";
-export type { WriteReadinessOptions, WriteReadinessResult } from "./readiness.js";
-export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type { HiveAPI } from "./hive.js";
-export { connect } from "./connect.js";

@@ -14,7 +14,7 @@ import { mkdirSync } from "node:fs";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 import { connectWallet } from "../lib/network/sdk.js";
 import type { SigningAlgorithm } from "../lib/network/sdk.js";
-import { ensureAuth, loadAuthCache } from "../lib/auth/auth.js";
+import { createAuthSession } from "../lib/auth/auth.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "./sdk-bridge.js";
 import type { SdkBridge } from "./sdk-bridge.js";
 import { SuperColonyApiClient } from "./supercolony/api-client.js";
@@ -31,7 +31,7 @@ export interface AgentRuntime {
   address: string;
   rpcUrl: string;
   algorithm: SigningAlgorithm;
-  getToken: () => Promise<string | null>;
+  getToken: (opts?: { forceRefresh?: boolean }) => Promise<string | null>;
   demos: Demos;
   /** Authenticated API call wrapper — sdkBridge captures AUTH_PENDING_TOKEN at
    *  construction and never updates. Same pattern as v3-loop.ts:89-95. */
@@ -68,15 +68,18 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   const sdkBridge = createSdkBridge(demos, opts?.apiBaseUrl, AUTH_PENDING_TOKEN);
 
   // Step 3: Authenticate (graceful degradation — chain-only on failure)
-  let authToken: string | null = null;
+  const authSession = createAuthSession(demos, address);
+
   try {
-    authToken = await ensureAuth(demos, address);
+    await authSession.getToken();
   } catch {
     console.warn("[agent-runtime] Auth failed — continuing in chain-only mode");
   }
 
-  // Step 4: Create API client with lazy token refresh
-  const getToken = async () => authToken ?? loadAuthCache(address)?.token ?? null;
+  // Step 4: Create API client with real lazy token refresh.
+  // loadAuthCache() already treats tokens with <1h remaining as stale,
+  // so this path will proactively re-authenticate on longer runs.
+  const getToken = async (opts: { forceRefresh?: boolean } = {}) => authSession.getToken(opts);
   const apiClient = new SuperColonyApiClient({ getToken });
 
   // Step 5: Create data source (API-first, chain fallback)

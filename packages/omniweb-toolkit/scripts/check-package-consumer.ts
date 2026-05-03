@@ -224,13 +224,20 @@ function renderConsumerProofScript(options: {
   consumerRoot: string;
 }): string {
   return `const mainEntry = await import("omniweb-" + "toolkit");
+const runtimeEntry = await import("omniweb-" + "toolkit/runtime");
 const agentEntry = await import("omniweb-" + "toolkit/agent");
 await import("omniweb-" + "toolkit/types");
 
-const { createClient, checkWriteReadiness } = mainEntry;
+const { createClient } = mainEntry;
+const { checkWriteReadiness, describeRuntimeCapabilities } = runtimeEntry;
 const { buildLeaderboardPatternPrompt, getStarterSourcePack } = agentEntry;
 
 const readiness = checkWriteReadiness({
+  cwd: ${JSON.stringify(options.consumerRoot)},
+  homeDir: ${JSON.stringify(options.consumerRoot)},
+  env: {},
+});
+const capabilities = describeRuntimeCapabilities({
   cwd: ${JSON.stringify(options.consumerRoot)},
   homeDir: ${JSON.stringify(options.consumerRoot)},
   env: {},
@@ -274,9 +281,10 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   };
 }
 
-console.log(JSON.stringify({
+  console.log(JSON.stringify({
   imports: {
-    main: ["createClient", "checkWriteReadiness"],
+    main: ["createClient"],
+    runtime: ["checkWriteReadiness", "describeRuntimeCapabilities"],
     agent: ["buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
@@ -287,6 +295,7 @@ console.log(JSON.stringify({
     promptLength: promptText.length,
   },
   readiness,
+  capabilities,
   sourcePack: {
     archetype: sourcePack.archetype,
     sourceCount: sourcePack.entries.length,

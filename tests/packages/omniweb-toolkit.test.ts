@@ -179,13 +179,18 @@ describe("supercolony-toolkit package", () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-empty-"));
       try {
         writeFileSync(join(dir, ".env"), "# template only\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness, describeRuntimeCapabilities } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
+        const capabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
 
         expect(readiness.missingEnv).toEqual(["DEMOS_MNEMONIC"]);
         expect(readiness.canAuth).toBe(false);
         expect(readiness.canWrite).toBe(false);
+        expect(readiness.authState).toBe("missing_credentials");
+        expect(readiness.writeState).toBe("missing_credentials");
+        expect(capabilities.recommendedMode).toBe("read-only");
+        expect(capabilities.blockers).toEqual(["missing_credentials"]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -200,12 +205,14 @@ describe("supercolony-toolkit package", () => {
           "SUPERCOLONY_API=https://api.test",
           "",
         ].join("\n"));
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, env: {} });
 
         expect(readiness.missingEnv).toEqual([]);
         expect(readiness.canAuth).toBe(true);
+        expect(readiness.authState).toBe("ready");
+        expect(readiness.runtimeCredentialSource).toBe(join(dir, ".env"));
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -214,7 +221,7 @@ describe("supercolony-toolkit package", () => {
     it("does not treat process env alone as runtime write config", async () => {
       const dir = mkdtempSync(join(tmpdir(), "omniweb-readiness-process-env-"));
       try {
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({
           cwd: dir,
@@ -245,7 +252,7 @@ describe("supercolony-toolkit package", () => {
           "SUPERCOLONY_API=https://api.test",
           "",
         ].join("\n"));
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
 
@@ -264,7 +271,7 @@ describe("supercolony-toolkit package", () => {
         writeFileSync(join(credentialsDir, "credentials-research"), "RPC_URL=https://rpc.from-creds.test\n");
         const explicitEnvPath = join(dir, "custom.env");
         writeFileSync(explicitEnvPath, "DEMOS_MNEMONIC='test seed phrase'\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({
           cwd: dir,
@@ -289,7 +296,7 @@ describe("supercolony-toolkit package", () => {
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
 
@@ -306,7 +313,7 @@ describe("supercolony-toolkit package", () => {
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+        const { checkWriteReadiness, describeRuntimeCapabilities } = await import("../../packages/omniweb-toolkit/src/readiness.js");
 
         const readiness = checkWriteReadiness({
           cwd: dir,
@@ -324,6 +331,18 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.missingEnv).toEqual([]);
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(true);
+        expect(readiness.writeState).toBe("ready");
+        expect(describeRuntimeCapabilities({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          env: {},
+          packageResolver: (specifier: string) => {
+            if (specifier === "@kynesyslabs/demosdk/websdk") return "/virtual/demosdk/websdk/index.js";
+            if (specifier === "better-sqlite3") throw new Error("missing optional sqlite");
+            return specifier;
+          },
+        }).recommendedMode).toBe("write-ready");
         expect(readiness.notes).toContain(
           "Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache",
         );
@@ -338,7 +357,7 @@ describe("supercolony-toolkit package", () => {
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(credentialsDir, { recursive: true });
         writeFileSync(join(credentialsDir, "credentials-research"), "DEMOS_MNEMONIC='test seed phrase'\n");
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/readiness.js");
+        const { checkWriteReadiness, describeRuntimeCapabilities } = await import("../../packages/omniweb-toolkit/src/readiness.js");
 
         const readiness = checkWriteReadiness({
           cwd: dir,
@@ -356,6 +375,21 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.missingPackages).toEqual(["@kynesyslabs/demosdk/websdk"]);
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(false);
+        expect(readiness.writeState).toBe("missing_dependencies");
+        expect(describeRuntimeCapabilities({
+          cwd: dir,
+          homeDir: dir,
+          agentName: "research",
+          env: {},
+          packageResolver: (specifier: string) => {
+            if (specifier === "@kynesyslabs/demosdk/websdk") throw new Error("websdk not importable");
+            if (specifier === "better-sqlite3") return "/virtual/better-sqlite3/index.js";
+            return specifier;
+          },
+        })).toMatchObject({
+          recommendedMode: "auth-ready",
+          blockers: ["missing_dependencies"],
+        });
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -377,7 +411,7 @@ describe("supercolony-toolkit package", () => {
           "SUPERCOLONY_API=https://api.from-env.test",
           "",
         ].join("\n"));
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
 
@@ -395,7 +429,7 @@ describe("supercolony-toolkit package", () => {
       try {
         const credentialsDir = join(dir, ".config", "demos");
         mkdirSync(join(credentialsDir, "credentials-research"), { recursive: true });
-        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/index.js");
+        const { checkWriteReadiness } = await import("../../packages/omniweb-toolkit/src/runtime.js");
 
         const readiness = checkWriteReadiness({ cwd: dir, homeDir: dir, agentName: "research", env: {} });
 
@@ -411,7 +445,7 @@ describe("supercolony-toolkit package", () => {
 
   describe("connect()", () => {
     it("creates a Colony instance with toolkit, hive, runtime, and address", async () => {
-      const { connect } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const { connect } = await import("../../packages/omniweb-toolkit/src/runtime.js");
       const colony = await connect();
 
       expect(colony).toBeDefined();
@@ -422,7 +456,7 @@ describe("supercolony-toolkit package", () => {
     });
 
     it("passes options through to createAgentRuntime", async () => {
-      const { connect } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const { connect } = await import("../../packages/omniweb-toolkit/src/runtime.js");
       // Access the mock via the colony module's internal import (same module identity)
       const { createAgentRuntime } = await import("../../packages/omniweb-toolkit/src/colony.js") as any;
       // colony.ts re-exports nothing, so we verify via the mocked module.
@@ -438,14 +472,14 @@ describe("supercolony-toolkit package", () => {
     });
   });
 
-  describe("top-level memo helpers", () => {
-    it("exports deterministic betting memo builders", async () => {
+  describe("write-surface memo helpers", () => {
+    it("exports deterministic betting memo builders from the write entrypoint", async () => {
       const {
         buildBetMemo,
         buildHigherLowerMemo,
         buildBinaryBetMemo,
         VALID_BET_HORIZONS,
-      } = await import("../../packages/omniweb-toolkit/src/index.js");
+      } = await import("../../packages/omniweb-toolkit/src/write.js");
 
       expect(buildBetMemo("BTC", 70000, { horizon: "30m" })).toBe("HIVE_BET:BTC:70000:30m");
       expect(buildHigherLowerMemo("ETH", "lower", { horizon: "4h" })).toBe("HIVE_HL:ETH:LOWER:4h");
@@ -456,7 +490,7 @@ describe("supercolony-toolkit package", () => {
 
   describe("Colony.toolkit — 15 domains", () => {
     it("exposes all 15 toolkit domains", async () => {
-      const { connect } = await import("../../packages/omniweb-toolkit/src/index.js");
+      const { connect } = await import("../../packages/omniweb-toolkit/src/runtime.js");
       const colony = await connect();
       const domains = [
         "feed", "intelligence", "scores", "agents", "actions",

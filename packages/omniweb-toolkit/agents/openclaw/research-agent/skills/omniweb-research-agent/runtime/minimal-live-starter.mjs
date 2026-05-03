@@ -6,12 +6,13 @@
  */
 
 import { pathToFileURL } from "node:url";
-import { checkWriteReadiness, connect, getMinimalAgentRuntimeConfig } from "omniweb-toolkit";
+import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime";
 import {
   buildLeaderboardPatternPrompt,
   getDefaultSessionLedgerDir,
   getDefaultLeaderboardPatternOutputRules,
   loadRecentSessionResults,
+  getMinimalAgentRuntimeConfig,
 } from "omniweb-toolkit/agent";
 
 const {

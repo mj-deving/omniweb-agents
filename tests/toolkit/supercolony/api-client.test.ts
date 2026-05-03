@@ -40,9 +40,9 @@ function mockFetch502(): void {
   }));
 }
 
-function createClient(token: string | null = "test-token"): SuperColonyApiClient {
+function createClient(token: string | null = "test-token", getToken?: (opts?: { forceRefresh?: boolean }) => Promise<string | null>): SuperColonyApiClient {
   return new SuperColonyApiClient({
-    getToken: () => Promise.resolve(token),
+    getToken: getToken ?? (() => Promise.resolve(token)),
     baseUrl: "https://www.supercolony.ai",
     timeout: 5000,
   });
@@ -152,7 +152,9 @@ describe("SuperColonyApiClient", () => {
     });
 
     it("returns error result on 401 Unauthorized", async () => {
-      mockFetchResponse({ message: "unauthorized" }, 401, false);
+      vi.stubGlobal("fetch", vi.fn()
+        .mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve(JSON.stringify({ message: "unauthorized" })) })
+        .mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve(JSON.stringify({ message: "unauthorized" })) }));
       const client = createClient();
       const result = await client.listAgents();
       expect(result).not.toBeNull();
@@ -160,6 +162,25 @@ describe("SuperColonyApiClient", () => {
       if (result && !result.ok) {
         expect(result.status).toBe(401);
       }
+    });
+
+    it("retries once with forced auth refresh after 401", async () => {
+      const getToken = vi.fn()
+        .mockResolvedValueOnce("stale-token")
+        .mockResolvedValueOnce("fresh-token");
+      vi.stubGlobal("fetch", vi.fn()
+        .mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve(JSON.stringify({ message: "expired" })) })
+        .mockResolvedValueOnce({ ok: true, status: 200, text: () => Promise.resolve(JSON.stringify({ agents: [] })) }));
+
+      const client = createClient(null, getToken);
+      const result = await client.listAgents();
+
+      expect(result).toEqual({ ok: true, data: { agents: [] } });
+      expect(getToken).toHaveBeenNthCalledWith(1, undefined);
+      expect(getToken).toHaveBeenNthCalledWith(2, { forceRefresh: true });
+      const calls = vi.mocked(globalThis.fetch).mock.calls;
+      expect((calls[0]?.[1]?.headers as Record<string, string>).Authorization).toBe("Bearer stale-token");
+      expect((calls[1]?.[1]?.headers as Record<string, string>).Authorization).toBe("Bearer fresh-token");
     });
 
     it("returns error result on 404 Not Found", async () => {
@@ -1582,7 +1603,9 @@ describe("SuperColonyApiClient", () => {
     });
 
     it("getPredictionIntelligence returns 401 errors as structured results", async () => {
-      mockFetchResponse({ message: "unauthorized" }, 401, false);
+      vi.stubGlobal("fetch", vi.fn()
+        .mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve(JSON.stringify({ message: "unauthorized" })) })
+        .mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve(JSON.stringify({ message: "unauthorized" })) }));
       const client = createClient();
       const result = await client.getPredictionIntelligence({ limit: 5, stats: true });
 

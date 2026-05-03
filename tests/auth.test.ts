@@ -26,7 +26,7 @@ vi.mock("@kynesyslabs/demosdk/websdk", () => ({
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { apiCall, info } from "../src/lib/network/sdk.js";
-import { loadAuthCache, ensureAuth } from "../src/lib/auth/auth.js";
+import { loadAuthCache, ensureAuth, ensureAuthState, createAuthSession } from "../src/lib/auth/auth.js";
 
 const AUTH_CACHE_PATH = resolve(homedir(), ".supercolony-auth.json");
 const TEST_ADDRESS = "0xTestAddress123";
@@ -434,5 +434,55 @@ describe("ensureAuth", () => {
       signature: "0xSignatureData",
       algorithm: "secp256k1",
     });
+  });
+});
+
+describe("ensureAuthState", () => {
+  it("returns structured cache state when cached auth is valid", async () => {
+    const expiry = futureExpiry(90);
+    const cache = namespacedCache(TEST_ADDRESS, "cached-tok", expiry);
+
+    vi.mocked(existsSync).mockReturnValue(true);
+    vi.mocked(readFileSync).mockReturnValue(JSON.stringify(cache));
+
+    const result = await ensureAuthState({ signMessage: vi.fn() } as any, TEST_ADDRESS);
+
+    expect(result).toMatchObject({
+      ok: true,
+      state: "authenticated",
+      token: "cached-tok",
+      source: "cache",
+      address: TEST_ADDRESS,
+      expiresAt: expiry,
+    });
+  });
+});
+
+describe("createAuthSession", () => {
+  it("deduplicates in-flight refreshes", async () => {
+    vi.mocked(existsSync).mockReturnValue(false);
+    vi.mocked(apiCall)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { challenge: "challenge-id", message: "Sign this message" },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { token: "session-token", expiresAt: futureExpiry(1440) },
+      });
+
+    const session = createAuthSession({
+      signMessage: vi.fn().mockResolvedValue({
+        data: "0xSignatureData",
+        type: "secp256k1",
+      }),
+    } as any, TEST_ADDRESS);
+    const [a, b] = await Promise.all([session.getToken(), session.getToken()]);
+
+    expect(a).toBe("session-token");
+    expect(b).toBe("session-token");
+    expect(apiCall).toHaveBeenCalledTimes(2);
   });
 });

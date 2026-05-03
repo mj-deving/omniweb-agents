@@ -215,8 +215,8 @@ function summarizeCommand(result: CommandResult | null): unknown {
 
 function hasExpectedMissingEnv(summary: unknown): boolean {
   if (!summary || typeof summary !== "object") return false;
-  const readiness = (summary as { readiness?: { missingEnv?: unknown } }).readiness;
-  return Array.isArray(readiness?.missingEnv) && readiness.missingEnv.includes("DEMOS_MNEMONIC");
+  const capabilities = (summary as { runtimeCapabilities?: { readiness?: { missingEnv?: unknown } } }).runtimeCapabilities;
+  return Array.isArray(capabilities?.readiness?.missingEnv) && capabilities.readiness.missingEnv.includes("DEMOS_MNEMONIC");
 }
 
 function assertConsumerSummary(summary: unknown, options: { skipLiveRead: boolean }): void {
@@ -226,7 +226,13 @@ function assertConsumerSummary(summary: unknown, options: { skipLiveRead: boolea
 
   const record = summary as {
     dryRun?: { spendsDem?: boolean; promptLength?: number };
-    readiness?: { canRead?: boolean; canWrite?: boolean; missingEnv?: unknown };
+    runtimeCapabilities?: {
+      canRead?: boolean;
+      writeReady?: boolean;
+      recommendedMode?: unknown;
+      blockers?: unknown;
+      readiness?: { missingEnv?: unknown };
+    };
     sourcePack?: { sourceCount?: number };
     liveRead?: unknown;
   };
@@ -237,14 +243,20 @@ function assertConsumerSummary(summary: unknown, options: { skipLiveRead: boolea
   if ((record.dryRun?.promptLength ?? 0) <= 0) {
     throw new Error("research-agent minimal entrypoint did not build a prompt");
   }
-  if (record.readiness?.canRead !== true) {
-    throw new Error("readiness unexpectedly reports read path unavailable");
+  if (record.runtimeCapabilities?.canRead !== true) {
+    throw new Error("runtime capabilities unexpectedly report read path unavailable");
   }
-  if (record.readiness?.canWrite === true) {
-    throw new Error("readiness unexpectedly reports write path available without credentials");
+  if (record.runtimeCapabilities?.writeReady === true) {
+    throw new Error("runtime capabilities unexpectedly report write path available without credentials");
   }
-  if (!Array.isArray(record.readiness?.missingEnv) || !record.readiness?.missingEnv.includes("DEMOS_MNEMONIC")) {
-    throw new Error("readiness did not report missing DEMOS_MNEMONIC");
+  if (record.runtimeCapabilities?.recommendedMode !== "read-only") {
+    throw new Error("runtime capabilities did not recommend read-only mode for no-credential consumer");
+  }
+  if (!Array.isArray(record.runtimeCapabilities?.blockers) || !record.runtimeCapabilities.blockers.includes("missing_credentials")) {
+    throw new Error("runtime capabilities did not report missing credential blocker");
+  }
+  if (!Array.isArray(record.runtimeCapabilities?.readiness?.missingEnv) || !record.runtimeCapabilities.readiness.missingEnv.includes("DEMOS_MNEMONIC")) {
+    throw new Error("runtime capability readiness did not report missing DEMOS_MNEMONIC");
   }
   if ((record.sourcePack?.sourceCount ?? 0) <= 0) {
     throw new Error("research-agent starter source pack was empty");

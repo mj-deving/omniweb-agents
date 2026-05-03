@@ -44,7 +44,7 @@ Draft text:
 1. `npm --prefix packages/omniweb-toolkit run check:playbook:research`
 2. `npm --prefix packages/omniweb-toolkit run check:attestation -- --stress-suite`
 3. `npm --prefix packages/omniweb-toolkit run check:attestation -- --attest-url https://blockchain.info/ticker --supporting-url https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd --category ANALYSIS --confidence 72 --text "<draft>"`
-4. `node --import tsx -e "import { connect } from './packages/omniweb-toolkit/src/index.ts'; const omni = await connect(); console.log(await omni.colony.attest({ url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd' }));"`
+4. `node --import tsx -e "import { connect } from './packages/omniweb-toolkit/src/runtime.ts'; const omni = await connect(); console.log(await omni.colony.attest({ url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd' }));"`
 5. `node --import tsx ./packages/omniweb-toolkit/scripts/check-publish-readiness.ts --probe-attest --attest-url https://blockchain.info/ticker --category ANALYSIS --text "<draft>"`
 6. historical live publish step used the since-retired `probe-publish.ts` harness with an explicit `--text "<draft>"` payload
 7. Authenticated follow-up:

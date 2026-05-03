@@ -17,10 +17,22 @@ export interface WriteReadinessResult {
   canRead: true;
   canAuth: boolean;
   canWrite: boolean;
+  authState: "ready" | "missing_credentials";
+  writeState: "ready" | "missing_credentials" | "missing_dependencies";
   missingEnv: string[];
   missingPackages: string[];
   credentialSourcesChecked: string[];
+  runtimeCredentialSource: string | null;
   notes: string[];
+}
+
+export interface RuntimeCapabilityResult {
+  canRead: true;
+  authReady: boolean;
+  writeReady: boolean;
+  recommendedMode: "read-only" | "auth-ready" | "write-ready";
+  blockers: Array<"missing_credentials" | "missing_dependencies">;
+  readiness: WriteReadinessResult;
 }
 
 const require = createRequire(import.meta.url);
@@ -153,6 +165,12 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
 
   const canAuth = missingEnv.length === 0;
   const canWrite = missingEnv.length === 0 && missingPackages.length === 0;
+  const authState: WriteReadinessResult["authState"] = canAuth ? "ready" : "missing_credentials";
+  const writeState: WriteReadinessResult["writeState"] = !canAuth
+    ? "missing_credentials"
+    : missingPackages.length > 0
+      ? "missing_dependencies"
+      : "ready";
 
   const notes = ["Read-only client is usable without write substrate"];
   if (missingPackages.length > 0) {
@@ -176,9 +194,36 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
     canRead: true,
     canAuth,
     canWrite,
+    authState,
+    writeState,
     missingEnv,
     missingPackages,
     credentialSourcesChecked,
+    runtimeCredentialSource: runtimeSource?.present ? runtimeSource.path : null,
     notes,
+  };
+}
+
+export function describeRuntimeCapabilities(options: WriteReadinessOptions = {}): RuntimeCapabilityResult {
+  const readiness = checkWriteReadiness(options);
+  const blockers: RuntimeCapabilityResult["blockers"] = [];
+  if (readiness.authState === "missing_credentials") {
+    blockers.push("missing_credentials");
+  }
+  if (readiness.writeState === "missing_dependencies") {
+    blockers.push("missing_dependencies");
+  }
+
+  return {
+    canRead: true,
+    authReady: readiness.canAuth,
+    writeReady: readiness.canWrite,
+    recommendedMode: readiness.canWrite
+      ? "write-ready"
+      : readiness.canAuth
+        ? "auth-ready"
+        : "read-only",
+    blockers,
+    readiness,
   };
 }

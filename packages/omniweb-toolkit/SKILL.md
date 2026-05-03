@@ -265,6 +265,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-leaderboard-scorecard-regression.ts](scripts/check-leaderboard-scorecard-regression.ts): compare the current starter-pack scorecard against the committed baseline snapshot
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts): validate skill-package progressive-disclosure hygiene
 - [scripts/check-colony-operator-primary.ts](scripts/check-colony-operator-primary.ts): validate the primary hand-maintained colony-operator surfaces before claiming the new default path is coherent
+- [scripts/check-colony-operator-dry-run.ts](scripts/check-colony-operator-dry-run.ts): prove one maintained no-spend colony-operator MVP cycle so validation covers the actual runtime path instead of docs alone
 - [scripts/check-colony-operator-draft.ts](scripts/check-colony-operator-draft.ts): back-compat alias for the same colony-operator primary-surface validation while older references migrate
 - [scripts/check-live.sh](scripts/check-live.sh): shell-curl live smoke check with explicit network diagnostics
 - [scripts/check-release.sh](scripts/check-release.sh): validate `npm pack --dry-run` contents before publish

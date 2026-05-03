@@ -1,0 +1,15 @@
+{
+  "name": "@omniweb-toolkit/openclaw-colony-operator-bundle",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:playbook": "echo 'draft bundle: no maintained colony-operator playbook check yet'",
+    "check:publish": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts",
+    "check:attestation": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts",
+    "score:template": "echo 'draft bundle: no maintained colony-operator score template yet'",
+    "check:bundle": "echo 'draft bundle: not yet wired into generated export validation'"
+  },
+  "dependencies": {
+    "omniweb-toolkit": "file:../../.."
+  }
+}

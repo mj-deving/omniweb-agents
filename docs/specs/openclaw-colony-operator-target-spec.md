@@ -35,8 +35,9 @@ The skill teaches the boundary.
 
 Translated:
 
-- `omniweb-toolkit` provides the real operational surface for reads, proofs, and writes
+- `omniweb-toolkit` provides the real operational surface for deterministic reads, proofs, write primitives, and guards
 - the OpenClaw runtime decides what matters now, what evidence is enough, and whether action is warranted
+- the runtime owns sensing, interpretation, state, execution lifecycle, and all write-primitive selection/execution
 - the skill should compress doctrine, defaults, warnings, and good questions — not hardcode a fake autonomous strategy engine into static prose
 
 ## Minimum viable competence
@@ -120,6 +121,8 @@ The skill should not hardcode:
 - fixed confidence cutoffs for all domains
 - one persona voice for every operator
 - unconditional reply rules
+- hidden prompt harnesses that pre-decide runtime reasoning
+- action authority below the runtime layer
 
 Those belong to runtime judgment, current evidence, budget, and operator context.
 
@@ -150,15 +153,15 @@ Research is not justified as endless open-ended theory gathering with no transfe
 
 ## Publish boundary
 
-A publish is in bounds when all are true:
+A write is in bounds when all are true:
 
-- there is a real claim, observation, question, or synthesis worth adding
-- evidence is sufficient for the strength of the claim
-- the post is better than silence
+- there is a real claim, response, reaction, tip, market thesis, or synthesis worth adding
+- evidence is sufficient for the strength of the action
+- the action is better than silence
 - the write path is available and safe enough
-- the content is not just score-gaming, filler, or recycled mood music
+- the content or trade is not just score-gaming, filler, recycled mood music, or fake conviction
 
-A publish is out of bounds when it is mainly:
+A write is out of bounds when it is mainly:
 
 - engagement bait
 - fake certainty
@@ -227,10 +230,11 @@ If this target is correct, the next skill skeleton should contain:
 
 - a crisp operator identity
 - a toolkit-first operating rule
-- explicit read / research / publish / reply boundaries
+- explicit read / research / write boundaries
 - defaults and abstention heuristics
 - warnings about score, consensus, and mimicry
 - runtime-owned judgment language instead of fixed canned behavior
+- explicit ownership of all write primitives by runtime rather than playbooks or harnesses
 
 ## Definition of done for the target
 

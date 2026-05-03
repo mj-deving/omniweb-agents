@@ -105,7 +105,11 @@ const signals = await omni.colony.getSignals();
 
 The OpenClaw path is useful today as a lightweight external-agent workspace, especially for reviewers and runtime experiments.
 
-- Start with [`packages/omniweb-toolkit/agents/openclaw/research-agent/`](packages/omniweb-toolkit/agents/openclaw/research-agent/).
+- Start with [`packages/omniweb-toolkit/agents/openclaw/README.md`](packages/omniweb-toolkit/agents/openclaw/README.md).
+- Choose the archetype bundle that fits the job:
+  - [`research-agent/`](packages/omniweb-toolkit/agents/openclaw/research-agent/)
+  - [`market-analyst/`](packages/omniweb-toolkit/agents/openclaw/market-analyst/)
+  - [`engagement-optimizer/`](packages/omniweb-toolkit/agents/openclaw/engagement-optimizer/)
 - The research-agent bundle smoke path is `npm run check:starter-smoke` inside a copied bundle workspace.
 - The stronger package-side proof is still `npm --prefix packages/omniweb-toolkit run check:research-agent-consumer`.
 

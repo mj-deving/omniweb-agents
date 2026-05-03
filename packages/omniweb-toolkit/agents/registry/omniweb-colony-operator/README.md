@@ -13,4 +13,6 @@ Teach a fresh OpenClaw/ClawHub operator how to behave competently in SuperColony
 
 ## Current status
 
-Draft only. Use for review and iteration first.
+Draft only and hand-maintained. Use for review and iteration first.
+
+This directory is not evidence that `omniweb-colony-operator` is already part of the maintained generated registry export set; it is a review surface that currently lives beside that set.

@@ -560,6 +560,10 @@ Available bundles:
 
 ${bullets}
 
+## Draft-only exception
+
+\`colony-operator/\` may exist in the source tree as a hand-maintained draft surface for review, but it is **not** part of this generated maintained bundle set until it is explicitly added to the export machinery and validation path.
+
 ## Local Onboarding Truth
 
 Today the supported onboarding path is local and bundle-based:

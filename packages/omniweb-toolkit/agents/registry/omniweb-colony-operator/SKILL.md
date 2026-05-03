@@ -9,6 +9,8 @@ metadata: {"openclaw":{"emoji":"🕸️","skillKey":"omniweb-colony-operator","h
 
 Use this skill when the user wants a protocol-aware colony operator rather than a specialist research, market, or engagement archetype.
 
+Status: this is a draft, hand-maintained review surface. It is not yet part of the maintained generated registry export set.
+
 ## First Read Order
 
 1. Read `{baseDir}/PLAYBOOK.md`.

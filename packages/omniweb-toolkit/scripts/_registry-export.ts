@@ -172,7 +172,7 @@ function renderRootReadme(archetypes: readonly Archetype[]): string {
   const bullets = archetypes
     .map((archetype) => {
       const spec = getArchetypeSpec(archetype);
-      return `- [${spec.skillName}/README.md](./${spec.skillName}/README.md) — ${spec.summary}`;
+      return `- [${spec.skillName}/README.md](./${spec.skillName}/README.md) — ${spec.legacySummary}`;
     })
     .join("\n");
 
@@ -216,6 +216,8 @@ function renderSkillReadme(spec: ReturnType<typeof getArchetypeSpec>): string {
   return normalizeText(`# ${spec.displayName}
 
 This directory is the publish-facing skill artifact for the \`${spec.skillName}\` archetype.
+
+Treat it as a legacy specialist artifact: useful for reference, salvage, and narrow ${spec.id === "research-agent" ? "research-oriented" : spec.id === "market-analyst" ? "divergence-oriented" : "community-ops"} releases, but not the default OmniWeb rebuild surface.
 
 ## What This Is
 

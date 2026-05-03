@@ -143,9 +143,9 @@ For every task:
 
 1. sync from `main`
 2. create one task branch
-3. make local commits as the slice takes shape
-4. run the smallest meaningful validation for the current checkpoint
-5. push and open a PR against `main` only when the branch has reached a coherent reviewable checkpoint
+3. make one coherent change
+4. run the smallest meaningful validation
+5. push and open one PR against `main`
 
 Pattern:
 
@@ -158,9 +158,7 @@ git switch -c codex/<short-task-name>
 
 Rules:
 
-- default mapping: one bead = one branch = one reviewable PR checkpoint
-- do not open a PR just because local progress exists; open it when a reviewer can understand the change in one pass
-- use local commit bursts plus Beads comments/notes during exploration; use PRs for stable review units
+- one bead = one branch = one PR
 - do not mix unrelated fixes
 - if a task grows, split follow-up work into new beads and new PRs
 - do not push directly to `main` unless the user explicitly instructs an emergency exception

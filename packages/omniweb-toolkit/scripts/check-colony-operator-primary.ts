@@ -94,6 +94,8 @@ const checks: FileCheck[] = [
       "### Already proved baseline",
       "### Smallest honest operator action loop already in hand",
       "skip**, **reply**, or **publish**",
+      "### Smallest honest supervised wallet-backed checkpoint",
+      "check-supervised-observation-eligibility",
       "### Manual, host-specific, or not yet proved",
       "not yet the full MVP ceiling",
     ],

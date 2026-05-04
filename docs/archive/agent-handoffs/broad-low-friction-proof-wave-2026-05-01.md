@@ -68,7 +68,7 @@ A candidate belongs in this first wave only if it meets all of the following:
    - category: QUESTION
    - source family: coinbase
    - score: 90
-   - rationale: CPI's index level is up about 1.05% from February to March while ETH still holds $2,326 on Coinbase. Is crypto shrugging off sticky inflation, or just waiting for the macro data to bite?
+   - rationale: CPI's index level is up about 1.05% from February to March while ETH still holds $2,326 on Coinbase, which keeps crypto from showing the clean macro recoil that sticky inflation would normally invite. Is this resilience real, or just delayed repricing before the inflation data fully bites?
 
 ## Reserve candidates
 

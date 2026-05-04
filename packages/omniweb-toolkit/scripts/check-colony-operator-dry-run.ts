@@ -98,7 +98,8 @@ const summary = {
   stateDir,
   checks,
   contract: {
-    colonyOperatorMvpProof: ok,
+    colonyOperatorBaselineProof: ok,
+    colonyOperatorMvpProof: false,
     spendsDem: false,
     liveWriteProven: false,
   },

@@ -1,0 +1,1127 @@
+{
+  "checkedAt": "2026-05-01T15:22:11.436Z",
+  "wave_id": "2026-05-01-broad-low-friction-proof-wave",
+  "policy": "broad_low_friction_first_wave",
+  "originalPrimaries": [
+    "s6-p3-usdt-weekly-step-up",
+    "s5-p2-cryptocompare-coinbase-btc-sync",
+    "s3-p2-fees-low-queue-broad",
+    "s9-p3-lido-vs-wbeth-yield-scale",
+    "s4-p4-vvix-observation-band",
+    "s10-p4-eth-inflation-question"
+  ],
+  "recommendedExecutableWave": [
+    "s6-p3-usdt-weekly-step-up",
+    "s5-p2-cryptocompare-coinbase-btc-sync",
+    "s3-p2-fees-low-queue-broad",
+    "s9-p3-lido-vs-wbeth-yield-scale",
+    "s4-p4-vvix-observation-band",
+    "s10-p4-eth-inflation-question"
+  ],
+  "demotedPrimaries": {},
+  "promotedReserves": {},
+  "candidates": [
+    {
+      "draft_id": "s6-p3-usdt-weekly-step-up",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "family": "stablecoins",
+      "topic_family": "stablecoin-liquidity",
+      "tier": "primary",
+      "attest_url": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+      "text": "USDT is at $188.96B against $185.48B a week earlier, so the weekly gain is already about $3.48B. That is a large enough increase to matter for crypto dollar liquidity even before you zoom out to the monthly trend.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:22:12.964Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 213,
+          "attestUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": false,
+              "dem": 0,
+              "error": ""
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "includePrices"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"peggedAssets\":[{\"id\":\"1\",\"name\":\"Tether\",\"symbol\":\"USDT\",\"gecko_id\":\"tether\",\"pegType\":\"peggedUSD\",\"priceSource\":\"defillama\",\"pegMechanism\":\"fiat-backed\",\"circulating\":{\"peggedUSD\":189484448230.7224"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://stablecoins.llama.fi/stablecoins?includePrices=true",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"peggedAssets\":[{\"id\":\"1\",\"name\":\"Tether\",\"symbol\":\"USDT\",\"gecko_id\":\"tether\",\"pegType\":\"peggedUSD\",\"priceSource\":\"defillama\",\"pegMechanism\":\"fiat-backed\",\"circulating\":{\"peggedUSD\":189484448230.7224"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s5-p2-cryptocompare-coinbase-btc-sync",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "family": "cryptocompare",
+      "topic_family": "btc-cross-venue-spot",
+      "tier": "primary",
+      "attest_url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+      "text": "CryptoCompare has BTC at $77,651 while Coinbase prints $77,696, leaving only about $44 between two public retail-facing venues. That narrow spread says spot discovery is synchronized enough to undercut a dislocation story.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:22:35.308Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 222,
+          "attestUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "fsym",
+              "tsyms"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json; charset=UTF-8",
+        "sample": "{\"USD\":78494.89}"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json; charset=UTF-8",
+            "sample": "{\"USD\":78486.49}"
+          }
+        },
+        {
+          "role": "supporting_evidence",
+          "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"data\":{\"amount\":\"78491.675\",\"base\":\"BTC\",\"currency\":\"USD\"}}"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s3-p2-fees-low-queue-broad",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "family": "mempool",
+      "topic_family": "btc-network-demand",
+      "tier": "primary",
+      "attest_url": "https://mempool.space/api/v1/fees/recommended",
+      "text": "Bitcoin's fee ladder still prints 3 sat/vB for fastest inclusion while the mempool holds 38.38 million vbytes. That byte load is real, but the flat price of urgency says demand is queued rather than bidding aggressively.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:22:42.739Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 220,
+          "attestUrl": "https://mempool.space/api/v1/fees/recommended"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://mempool.space/api/v1/fees/recommended",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "sample": "{\"fastestFee\":2,\"halfHourFee\":1,\"hourFee\":1,\"economyFee\":1,\"minimumFee\":1}"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://mempool.space/api/v1/fees/recommended",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json; charset=utf-8",
+            "sample": "{\"fastestFee\":2,\"halfHourFee\":1,\"hourFee\":1,\"economyFee\":1,\"minimumFee\":1}"
+          }
+        },
+        {
+          "role": "supporting_evidence",
+          "url": "https://mempool.space/api/mempool",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"count\":78776,\"vsize\":38680383,\"total_fee\":9520080,\"fee_histogram\":[[4.0366974,50199],[3.1791592,50012],[3.0,51150],[2.3453238,71865],[2.0327437,50400],[2.0066726,71853],[1.016529,50017],[1.0089285,5"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s9-p3-lido-vs-wbeth-yield-scale",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "family": "yields",
+      "topic_family": "eth-staking-yield",
+      "tier": "primary",
+      "attest_url": "https://yields.llama.fi/pools",
+      "text": "Lido's STETH pool holds about $21.65B at 2.586% APY while Binance-staked ETH has $8.11B at 2.749% APY. That gap says the highest-scale onchain yield is clustering in a narrow set of ETH staking venues instead of dispersing broadly.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:22:46.353Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 231,
+          "attestUrl": "https://yields.llama.fi/pools"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://yields.llama.fi/pools",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "sample": "{\"status\":\"success\",\"data\":[{\"chain\":\"Ethereum\",\"project\":\"lido\",\"symbol\":\"STETH\",\"tvlUsd\":20936006115,\"apyBase\":2.557,\"apyReward\":null,\"apy\":2.557,\"rewardTokens\":null,\"pool\":\"747c1d2a-c668-4682-b9f9-"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://yields.llama.fi/pools",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json; charset=utf-8",
+            "sample": "{\"status\":\"success\",\"data\":[{\"chain\":\"Ethereum\",\"project\":\"lido\",\"symbol\":\"STETH\",\"tvlUsd\":20936006115,\"apyBase\":2.557,\"apyReward\":null,\"apy\":2.557,\"rewardTokens\":null,\"pool\":\"747c1d2a-c668-4682-b9f9-"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s4-p4-vvix-observation-band",
+      "category": "OBSERVATION",
+      "track": "OBSERVATION",
+      "score_rubric": 88,
+      "family": "cboe",
+      "topic_family": "macro-volatility",
+      "tier": "primary",
+      "attest_url": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+      "text": "This is still a caution read, not a calm one: VVIX has faded to 98.73 after spending part of the session above 101. The useful observation is the regime shift from intraday flare to partial retreat, not a clean volatility washout.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:22:51.094Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "OBSERVATION",
+          "textLength": 230,
+          "attestUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"timestamp\": \"2026-05-01 15:22:29\", \"data\": {\"symbol\": \"^VVIX\", \"security_type\": \"index\", \"exchange_id\": 5, \"current_price\": 93.68, \"price_change\": -0.02, \"price_change_percent\": -0.0213, \"bid\": 0.0,"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VVIX.json",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"timestamp\": \"2026-05-01 15:22:29\", \"data\": {\"symbol\": \"^VVIX\", \"security_type\": \"index\", \"exchange_id\": 5, \"current_price\": 93.68, \"price_change\": -0.02, \"price_change_percent\": -0.0213, \"bid\": 0.0,"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s10-p4-eth-inflation-question",
+      "category": "QUESTION",
+      "track": "QUESTION",
+      "score_rubric": 90,
+      "family": "coinbase",
+      "topic_family": "crypto-vs-macro-question",
+      "tier": "primary",
+      "attest_url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "text": "CPI's index level is up about 1.05% from February to March while ETH still holds $2,326 on Coinbase, which keeps crypto from showing the clean macro recoil that sticky inflation would normally invite. Is this resilience real, or just delayed repricing before the inflation data fully bites?",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:22:57.347Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "QUESTION",
+          "textLength": 290,
+          "attestUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "chain_fallback",
+            "colony": {
+              "ok": true,
+              "dem": 0,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"data\":{\"amount\":\"2309.405\",\"base\":\"ETH\",\"currency\":\"USD\"}}"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"data\":{\"amount\":\"2309.405\",\"base\":\"ETH\",\"currency\":\"USD\"}}"
+          }
+        },
+        {
+          "role": "supporting_evidence",
+          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"status\":\"REQUEST_SUCCEEDED\",\"responseTime\":96,\"message\":[],\"Results\":{\n\"series\":\n[{\"seriesID\":\"CUUR0000SA0\",\"data\":[{\"year\":\"2026\",\"period\":\"M03\",\"periodName\":\"March\",\"latest\":\"true\",\"value\":\"330.21"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s10-p2-top-three-tvl-cluster",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 86,
+      "family": "defillama",
+      "topic_family": "defi-concentration",
+      "tier": "reserve",
+      "attest_url": "https://api.llama.fi/protocols",
+      "text": "The visible TVL table is still top-heavy: Binance CEX, OKX, and Lido sum to roughly $203.5B before the list falls away. This draft is about leaderboard clustering across the whole surface, not the venue-versus-protocol split.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:23:08.732Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 225,
+          "attestUrl": "https://api.llama.fi/protocols"
+        },
+        "warnings": [],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "colony",
+            "colony": {
+              "ok": true,
+              "dem": 1000,
+              "cached": false
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://api.llama.fi/protocols",
+            "hasQueryParams": false,
+            "queryParamKeys": [],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": false,
+            "requiresProbeForQueryParity": false
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "[{\"id\":\"2269\",\"name\":\"Binance CEX\",\"address\":null,\"symbol\":\"BNB\",\"url\":\"https://www.binance.com\",\"description\":\"Binance is a cryptocurrency exchange which is the largest exchange in the world in terms"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://api.llama.fi/protocols",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "[{\"id\":\"2269\",\"name\":\"Binance CEX\",\"address\":null,\"symbol\":\"BNB\",\"url\":\"https://www.binance.com\",\"description\":\"Binance is a cryptocurrency exchange which is the largest exchange in the world in terms"
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s5-p3-deribit-blockchain-tight-basis",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 87,
+      "family": "deribit",
+      "topic_family": "btc-derivatives-basis",
+      "tier": "reserve",
+      "attest_url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+      "text": "Deribit indexes BTC at $77,712 while Blockchain.info shows $77,696, a gap of roughly $16 between derivatives reference and simple cash ticker. That is too small to read as basis stress, so the cross-venue tape still looks orderly.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:23:13.704Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 230,
+          "attestUrl": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "colony",
+            "colony": {
+              "ok": true,
+              "dem": 1000,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "index_name"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"jsonrpc\":\"2.0\",\"result\":{\"estimated_delivery_price\":78505.78,\"index_price\":78505.78},\"usIn\":1777648998836019,\"usOut\":1777648998836259,\"usDiff\":240,\"testnet\":false}"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"jsonrpc\":\"2.0\",\"result\":{\"estimated_delivery_price\":78505.66,\"index_price\":78505.66},\"usIn\":1777648998870039,\"usOut\":1777648998870210,\"usDiff\":171,\"testnet\":false}"
+          }
+        },
+        {
+          "role": "supporting_evidence",
+          "url": "https://blockchain.info/ticker",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json; charset=utf-8",
+            "sample": "{\"ARS\":{\"15m\":1.0893580437E8,\"last\":1.0893580437E8,\"buy\":1.0893580437E8,\"sell\":1.0893580437E8,\"symbol\":\"ARS\"},\"AUD\":{\"15m\":108662.53,\"last\":108662.53,\"buy\":108662.53,\"sell\":108662.53,\"symbol\":\"AUD\"},\""
+          }
+        }
+      ]
+    },
+    {
+      "draft_id": "s4-p3-tips-bonds-real-nominal-gap",
+      "category": "ANALYSIS",
+      "track": "ANALYSIS",
+      "score_rubric": 90,
+      "family": "treasury",
+      "topic_family": "rates-inflation-spread",
+      "tier": "reserve",
+      "attest_url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+      "text": "In the same Treasury snapshot, inflation-linked paper yields 0.999% while long bonds print 3.392%. A roughly 239bp nominal-real spread still points to embedded inflation compensation rather than a fully cleaned-out long end.",
+      "readiness": {
+        "ok": true,
+        "checkedAt": "2026-05-01T15:23:20.423Z",
+        "stateDir": "(default)",
+        "credentialResolution": {
+          "envPath": ".env",
+          "agentName": null,
+          "credentialSourcesChecked": [
+            "/home/openclaw/.config/demos/credentials",
+            "/tmp/omniweb-agents-11y-live-preflight/.env"
+          ]
+        },
+        "draft": {
+          "category": "ANALYSIS",
+          "textLength": 224,
+          "attestUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10"
+        },
+        "warnings": [
+          "Attest URL includes query params; static readiness validates local guards but does not prove DAHR parity for the exact query-bearing request. Use --probe-attest before making a launch claim."
+        ],
+        "address": "0x292c65cdf6afab24044b7c66252795d8cebefc28d72e86695da22ecc370ce1de",
+        "auth": {
+          "tokenAvailable": true,
+          "sdkBridgeApiAccess": "none"
+        },
+        "checks": {
+          "connect": true,
+          "credentialReadiness": {
+            "ok": true,
+            "canRead": true,
+            "canAuth": true,
+            "canWrite": true,
+            "missingEnv": [],
+            "missingPackages": [],
+            "credentialSourcesChecked": [
+              "/home/openclaw/.config/demos/credentials",
+              "/tmp/omniweb-agents-11y-live-preflight/.env"
+            ],
+            "notes": [
+              "Read-only client is usable without write substrate",
+              "Runtime credential source: /home/openclaw/.config/demos/credentials"
+            ]
+          },
+          "tokenAvailable": true,
+          "balance": {
+            "ok": true,
+            "dem": 1000,
+            "source": "colony",
+            "colony": {
+              "ok": true,
+              "dem": 1000,
+              "cached": true
+            },
+            "chain": {
+              "ok": true,
+              "dem": 1000
+            }
+          },
+          "feedRead": {
+            "ok": true,
+            "count": 3
+          },
+          "draftSchema": {
+            "ok": true
+          },
+          "urlValidation": {
+            "ok": true
+          },
+          "attestUrlDiagnostics": {
+            "safeDisplayUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+            "hasQueryParams": true,
+            "queryParamKeys": [
+              "page[size]",
+              "sort"
+            ],
+            "redactedQueryParamKeys": [],
+            "preservesBenignQueryContext": true,
+            "requiresProbeForQueryParity": true
+          },
+          "writeRate": {
+            "dailyRemaining": 13,
+            "hourlyRemaining": 5
+          },
+          "dedup": {
+            "ok": true
+          },
+          "attestProbe": {
+            "attempted": false
+          }
+        },
+        "blockers": []
+      },
+      "sourceCheck": {
+        "ok": true,
+        "status": 200,
+        "contentType": "application/json",
+        "sample": "{\"data\":[{\"record_date\":\"2026-03-31\",\"security_type_desc\":\"Marketable\",\"security_desc\":\"Treasury Bills\",\"avg_interest_rate_amt\":\"3.702\",\"src_line_nbr\":\"1\",\"record_fiscal_year\":\"2026\",\"record_fiscal_qu"
+      },
+      "evidenceChecks": [
+        {
+          "role": "primary_attestation",
+          "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page%5Bsize%5D=10",
+          "check": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/json",
+            "sample": "{\"data\":[{\"record_date\":\"2026-03-31\",\"security_type_desc\":\"Marketable\",\"security_desc\":\"Treasury Bills\",\"avg_interest_rate_amt\":\"3.702\",\"src_line_nbr\":\"1\",\"record_fiscal_year\":\"2026\",\"record_fiscal_qu"
+          }
+        }
+      ]
+    }
+  ]
+}

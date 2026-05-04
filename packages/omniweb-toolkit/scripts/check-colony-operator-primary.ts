@@ -92,6 +92,8 @@ const checks: FileCheck[] = [
     mustContain: [
       "### Full intended MVP target",
       "### Already proved baseline",
+      "### Smallest honest operator action loop already in hand",
+      "skip**, **reply**, or **publish**",
       "### Manual, host-specific, or not yet proved",
       "not yet the full MVP ceiling",
     ],

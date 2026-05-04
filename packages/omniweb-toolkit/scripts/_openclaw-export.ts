@@ -926,24 +926,30 @@ function renderOpenClawConfig(spec: ArchetypeSpec): string {
 }
 
 function renderBundlePackageJson(spec: ArchetypeSpec): string {
-  const bundlePackage: Record<string, unknown> = {
-    name: spec.bundlePackageName,
-    private: true,
-    type: "module",
-    scripts: {
-      ...(spec.id === "research-agent"
-        ? { "check:starter-smoke": "node skills/omniweb-research-agent/minimal-agent-starter.mjs" }
-        : {}),
-      "check:playbook": `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-playbook-path.ts --archetype ${spec.id}`,
-      "check:publish": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts",
-      "check:attestation": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts",
-      "score:template": spec.runTemplateScript,
-      "check:bundle": `node --import tsx ../../../scripts/check-openclaw-export.ts --archetype ${spec.id}`,
-    },
-    dependencies: {
-      "omniweb-toolkit": "file:../../..",
-    },
-  };
+  const bundlePackage: Record<string, unknown> = spec.id === "research-agent"
+    ? {
+        name: spec.bundlePackageName,
+        private: true,
+        type: "module",
+        scripts: {
+          "check:starter-smoke": "node skills/omniweb-research-agent/minimal-agent-starter.mjs",
+        },
+      }
+    : {
+        name: spec.bundlePackageName,
+        private: true,
+        type: "module",
+        scripts: {
+          "check:playbook": `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-playbook-path.ts --archetype ${spec.id}`,
+          "check:publish": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts",
+          "check:attestation": "node --import tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts",
+          "score:template": spec.runTemplateScript,
+          "check:bundle": `node --import tsx ../../../scripts/check-openclaw-export.ts --archetype ${spec.id}`,
+        },
+        dependencies: {
+          "omniweb-toolkit": "file:../../..",
+        },
+      };
 
   return `${JSON.stringify(bundlePackage, null, 2)}\n`;
 }

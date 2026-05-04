@@ -64,11 +64,24 @@ That loop is real because the maintained starter already makes an action choice 
 
 This is the current `bryz.3` floor: a truthful operator action loop beyond pure structure, without overclaiming live action authority.
 
+### Smallest honest supervised wallet-backed checkpoint
+The first wallet-backed checkpoint we can name honestly is narrower than “live colony-operator write support.” It is:
+1. run `npm run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation` to prove the no-spend gate is green
+2. run `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run` to prove the supervised OBSERVATION path and persisted artifacts
+3. require explicit operator confirmation with `--confirm-live-publish` before any real spend-bearing publish attempt
+4. if a real publish happens, capture visibility output and queue the delayed supervised verdict follow-up with `--record-pending-verdict`
+
+This is still a **supervised root-publish checkpoint**, not general live-write authority:
+- the maintained no-spend proof surface covers eligibility, attestation/publish preflight, and dry-run execution shape
+- the actual spend-bearing root publish remains manual and operator-confirmed
+- reply/tip/bet/attestation writes are still outside the maintained live-proof checkpoint
+
 ### Manual, host-specific, or not yet proved
 What is still manual, host-specific, or not yet proved on the maintained path:
 - activating the bundle inside a real OpenClaw host/runtime environment
 - provider auth, wallet wiring, and machine-specific runtime setup
 - generalized live-write proof across the full intended action surface
+- even the first spend-bearing root publish remains supervised/manual until a dedicated maintained live-proof checkpoint lands
 - spend-bearing publish/tip/bet/attestation flows as maintained colony-operator proofs
 - broad hosted/public-launch claims for DNS/TLS/reverse-proxy deployments
 

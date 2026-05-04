@@ -13,6 +13,7 @@
 - One bead = one branch = one PR.
 - If multiple agents need the same shared additions, land those first in one small PR and branch the parallel follow-up work from the merged base.
 - Claim the bead before implementation: `bd update <id> --claim`.
+- Fresh clones must use the existing Beads DB, not `bd init`. Run `bd bootstrap`; if known `omniweb-agents-*` IDs are missing, run `scripts/restore-beads-db.sh` and see `docs/beads-bootstrap.md`.
 - Prefer `scripts/create-worktree.sh <name> [branch]` for parallel agent work so shared worktrees land in `../demos-agents-worktrees/` instead of cluttering the repo root. Existing `.claude/worktrees/*` in this repo do not share the live Beads database by default.
 - Use `bd remember` for durable repo facts. Do not rely on chat memory for constraints future agents will need.
 - Use `bd gate` for real async waits such as CI, PR merge, another bead, or a human decision.

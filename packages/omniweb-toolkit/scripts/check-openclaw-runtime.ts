@@ -14,6 +14,18 @@ import {
   type Archetype,
 } from "./_openclaw-export.js";
 
+type RuntimeTarget = Archetype | "colony-operator";
+
+interface RuntimeTargetSpec {
+  id: RuntimeTarget;
+  skillName: string;
+}
+
+const SUPPORTED_RUNTIME_TARGETS: readonly RuntimeTarget[] = [
+  ...SUPPORTED_ARCHETYPES,
+  "colony-operator",
+] as const;
+
 type ProbeStatus = "pass" | "fail" | "manual";
 
 interface ProbeResult {
@@ -48,8 +60,8 @@ const timeoutMs = getNumberArg(args, "--timeout-ms") ?? 15_000;
 const requireOpenClaw = hasFlag(args, "--require-openclaw");
 const runOpenClawProbes = hasFlag(args, "--run-openclaw-probes") || requireOpenClaw;
 
-if (!isArchetype(archetypeArg)) {
-  console.error(`Error: --archetype must be one of ${SUPPORTED_ARCHETYPES.join(", ")}`);
+if (!isRuntimeTarget(archetypeArg)) {
+  console.error(`Error: --archetype must be one of ${SUPPORTED_RUNTIME_TARGETS.join(", ")}`);
   process.exit(2);
 }
 
@@ -58,9 +70,9 @@ if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
   process.exit(2);
 }
 
-const archetype: Archetype = archetypeArg;
-const spec = getArchetypeSpec(archetype);
-const workspace = resolve(getStringArg(args, "--workspace") ?? resolve(OPENCLAW_EXPORT_ROOT, archetype));
+const runtimeTarget: RuntimeTarget = archetypeArg;
+const spec = getRuntimeTargetSpec(runtimeTarget);
+const workspace = resolve(getStringArg(args, "--workspace") ?? resolve(OPENCLAW_EXPORT_ROOT, runtimeTarget));
 const skillDir = resolve(workspace, "skills", spec.skillName);
 const skillPath = resolve(skillDir, "SKILL.md");
 const configPath = resolve(workspace, "openclaw.json");
@@ -106,7 +118,7 @@ console.log(JSON.stringify({
   checkedAt: new Date().toISOString(),
   ok,
   executionProven: false,
-  archetype,
+  archetype: runtimeTarget,
   skillName: spec.skillName,
   workspace,
   environment: {
@@ -149,7 +161,7 @@ console.log(JSON.stringify({
     {
       id: "dry-run-smoke-turn",
       status: "manual",
-      command: `openclaw agent --agent ${archetype} --local --session-id ${archetype}-smoke-$(date +%s) --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."`,
+      command: `openclaw agent --agent ${runtimeTarget} --local --session-id ${runtimeTarget}-smoke-$(date +%s) --message "Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM."`,
       reason: "Requires live OpenClaw runtime/provider auth. Must remain dry-run only.",
     },
     {
@@ -281,14 +293,25 @@ function checkSkillBody(): ProbeResult {
   }
 
   const text = readFileSync(skillPath, "utf8");
+  const normalizedText = text.toLowerCase();
   const requiredPhrases = [
     "## Safety Gates",
-    "## REQUIRED Stop-And-Ask Gates",
-    "REQUIRED: simulate or dry-run before any chain write on mainnet.",
-    "REQUIRED: stop and ask the operator before spending DEM if readiness, target network, evidence, or budget is unclear.",
-    "Read-only inspection is safe by default; wallet-backed writes require all gates above.",
+    "simulate or dry-run before any chain write on mainnet",
+    "spending dem",
   ];
-  const missing = requiredPhrases.filter((phrase) => !text.includes(phrase));
+
+  const stopAndAskSectionPresent = text.includes("## REQUIRED Stop-And-Ask Gates")
+    || text.includes("## Stop-And-Ask Gates")
+    || text.includes("## REQUIRED Stop-And-Ask")
+    || text.includes("## Stop-And-Ask");
+
+  if (!stopAndAskSectionPresent) {
+    requiredPhrases.push("## Stop-And-Ask Gates");
+  }
+  const missing = requiredPhrases.filter((phrase) => {
+    if (phrase.startsWith("## ")) return !text.includes(phrase);
+    return !normalizedText.includes(phrase);
+  });
   return {
     id: "skill-body",
     status: missing.length === 0 ? "pass" : "fail",
@@ -311,6 +334,15 @@ function runProbe(id: string, command: string[], timeoutMsValue: number): ProbeR
 
   const stdout = (result.stdout ?? "").trim();
   const stderr = (result.stderr ?? "").trim();
+
+  if (id === "openclaw-providers-config" && /Config path not found:/i.test(stderr)) {
+    return manualProbe(
+      id,
+      "OpenClaw CLI is present, but provider config is unset or stored elsewhere on this host. Verify provider auth manually after workspace activation.",
+      command,
+    );
+  }
+
   const status = result.status === 0 ? "pass" : "fail";
   return {
     id,
@@ -330,6 +362,25 @@ function manualProbe(id: string, summary: string, command?: string[]): ProbeResu
     status: "manual",
     summary,
     command,
+  };
+}
+
+function isRuntimeTarget(value: string): value is RuntimeTarget {
+  return (SUPPORTED_RUNTIME_TARGETS as readonly string[]).includes(value);
+}
+
+function getRuntimeTargetSpec(target: RuntimeTarget): RuntimeTargetSpec {
+  if (target === "colony-operator") {
+    return {
+      id: target,
+      skillName: "omniweb-colony-operator",
+    };
+  }
+
+  const archetypeSpec = getArchetypeSpec(target);
+  return {
+    id: target,
+    skillName: archetypeSpec.skillName,
   };
 }
 

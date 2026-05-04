@@ -225,15 +225,18 @@ function checkWorkspacePackage(): ProbeResult {
       scripts?: Record<string, string>;
     };
     const dependency = bundlePackage.dependencies?.["omniweb-toolkit"];
-    const ok = dependency === "file:../../.." &&
+    const usesLocalToolkitDependency = typeof dependency === "string" && dependency.startsWith("file:");
+    const ok = usesLocalToolkitDependency &&
       !bundlePackage.peerDependencies &&
       typeof bundlePackage.scripts?.["check:bundle"] === "string";
     return {
       id: "workspace-package",
       status: ok ? "pass" : "fail",
       summary: ok
-        ? "package.json keeps the alpha local file dependency and bundle check contract."
-        : "package.json must use omniweb-toolkit file:../../.., omit peerDependencies, and expose check:bundle.",
+        ? dependency === "file:../../.."
+          ? "package.json keeps the alpha local file dependency and bundle check contract."
+          : `package.json keeps a local omniweb-toolkit file dependency (${dependency}) and the bundle check contract, which is acceptable for copied-bundle consumer proof.`
+        : "package.json must use a local omniweb-toolkit file dependency, omit peerDependencies, and expose check:bundle.",
     };
   } catch (error) {
     return {

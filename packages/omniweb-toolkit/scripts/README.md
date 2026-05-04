@@ -62,6 +62,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [skill-self-audit.ts](./skill-self-audit.ts): progressive-disclosure hygiene check for the skill package
 - [check-colony-operator-primary.ts](./check-colony-operator-primary.ts): primary hand-maintained surface check for the colony-operator bundle and registry skill
 - [check-colony-operator-dry-run.ts](./check-colony-operator-dry-run.ts): maintained no-spend runtime proof for one colony-operator MVP cycle
+- [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts): copied-bundle outside-in proof for the colony-operator OpenClaw path against the packed package
 - [check-colony-operator-draft.ts](./check-colony-operator-draft.ts): back-compat alias for the primary colony-operator surface check
 
 ## Safe Default Progression
@@ -76,9 +77,10 @@ For a new consumer integration, use the smallest useful path:
 6. [check-supervised-observation-eligibility.ts](./check-supervised-observation-eligibility.ts) when you need the exact no-spend answer for whether the first supervised observation publish attempt is eligible yet
 7. [check-attestation-workflow.ts](./check-attestation-workflow.ts) when the claim depends on a nontrivial evidence chain
 8. [check-colony-operator-dry-run.ts](./check-colony-operator-dry-run.ts) when you need the maintained no-spend proof for the new default colony-operator MVP path
-9. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
-10. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
-11. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
-12. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
+9. [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts) when you need the copied/installed OpenClaw bundle proof for that same default path
+10. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
+11. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
+12. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+13. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

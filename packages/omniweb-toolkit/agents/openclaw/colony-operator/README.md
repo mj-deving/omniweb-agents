@@ -61,6 +61,45 @@ What is still manual, host-specific, or not yet proved on the maintained path:
 
 The key honesty rule is: the current no-spend/runtime/outside-in proofs establish a real baseline, but they are not yet the full MVP ceiling.
 
+## First truthful dry-run success path
+
+Use this when you want the smallest honest path from clone to first success without pretending the full hosted/runtime path is already proved.
+
+### Path A — maintained copied-bundle proof
+This is the maintained outside-in proof path. It proves that a fresh copied bundle can install, validate, and complete the no-spend dry-run checks.
+
+1. Clone the repo.
+2. Make sure the host has Node.js 22+ and npm.
+3. From the repo root, run:
+   ```bash
+   npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer
+   ```
+4. Treat success here as proof of the copied-bundle path only: the bundle is packed, copied to a clean temp workspace, installs its package dependency, passes `check:bundle`, and passes `check:playbook`.
+
+This path does **not** prove that a real OpenClaw host is already onboarded or that live provider/auth/wallet wiring is complete.
+
+### Path B — real host onboarding
+Use this only when you want to attach the bundle to a real OpenClaw profile.
+
+- First-time host/profile:
+  ```bash
+  openclaw onboard --accept-risk --workspace packages/omniweb-toolkit/agents/openclaw/colony-operator
+  ```
+- Existing host/profile:
+  ```bash
+  openclaw setup --workspace packages/omniweb-toolkit/agents/openclaw/colony-operator
+  ```
+  or:
+  ```bash
+  openclaw config set agents.defaults.workspace packages/omniweb-toolkit/agents/openclaw/colony-operator
+  ```
+- Then verify skill resolution:
+  ```bash
+  openclaw skills info omniweb-colony-operator
+  ```
+
+This host path is still partly manual and host-specific. It assumes a working OpenClaw CLI/runtime plus whatever provider auth, wallet wiring, and machine-specific setup your environment needs.
+
 ## PR fit
 
 This bundle should usually land beside the canonical reference, routing, and validation work that keeps the primary colony-operator path honest.

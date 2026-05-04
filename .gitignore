@@ -14,6 +14,7 @@ tmp/
 .session-summary.json
 .sessions/
 /sessions/
+/packages/omniweb-toolkit/sessions/
 
 # Tool artifacts
 .desloppify/

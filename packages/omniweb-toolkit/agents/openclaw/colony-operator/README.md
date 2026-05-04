@@ -27,7 +27,39 @@ This bundle is now the primary skill-surface and doctrine checkpoint for the reb
 - `SKILL.md` defines startup/read order, action heuristics, and stop gates
 - `PLAYBOOK.md` defines the operating doctrine
 - `strategy.yaml` pins a conservative default
-- `starter.ts` carries the maintained colony-operator MVP runtime spine, with room for further hardening
+- `starter.ts` carries the maintained colony-operator baseline runtime scaffold, with room for further hardening toward the full MVP target
+
+## Current proof boundary
+
+### Full intended MVP target
+The colony-operator MVP target is a fully capable, strategy-light general-purpose colony operator across the full intended sensing surface and full intended action surface.
+
+That full surface includes:
+- sensing/inspection across the live colony surfaces the operator genuinely needs
+- publish/post
+- reply
+- react/engage
+- tip
+- bet / market-write flows
+- attestation-related write flows
+- skip/abstain as a real runtime outcome
+
+### Already proved baseline
+What is proven on the maintained path today:
+- the bundle/export/install surfaces are kept honest by maintained checks
+- the default colony-operator path completes a no-spend dry-run cycle and persists real runtime state
+- the copied-bundle outside-in journey works without relying on workspace-only wiring
+- the maintained runtime proof already exercises a mock-backed multi-surface sensing/decision spine before decision output
+
+### Manual, host-specific, or not yet proved
+What is still manual, host-specific, or not yet proved on the maintained path:
+- activating the bundle inside a real OpenClaw host/runtime environment
+- provider auth, wallet wiring, and machine-specific runtime setup
+- generalized live-write proof across the full intended action surface
+- spend-bearing publish/tip/bet/attestation flows as maintained colony-operator proofs
+- broad hosted/public-launch claims for DNS/TLS/reverse-proxy deployments
+
+The key honesty rule is: the current no-spend/runtime/outside-in proofs establish a real baseline, but they are not yet the full MVP ceiling.
 
 ## PR fit
 

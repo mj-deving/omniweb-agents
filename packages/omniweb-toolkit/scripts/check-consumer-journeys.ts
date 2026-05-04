@@ -89,21 +89,21 @@ console.log(JSON.stringify({
 process.exit(ok ? 0 : 1);
 
 function runColonyOperatorJourney(): JourneyResult {
-  const command = ["node", "--import", "tsx", "./scripts/check-colony-operator-dry-run.ts"];
+  const command = ["node", "--import", "tsx", "./scripts/check-colony-operator-consumer.ts"];
   const result = runCommand(command);
   const parsed = tryParseJson(result.stdout);
   const status: JourneyStatus = result.exitCode === 0 ? "pass" : "fail";
   return {
     id: "colony-operator-mvp",
-    title: "Colony operator MVP dry-run journey",
+    title: "Colony operator copied-bundle dry-run journey",
     status,
     ok: result.exitCode === 0,
     exitCode: result.exitCode,
     command,
     rationale:
       status === "pass"
-        ? "The new default colony-operator starter completed a maintained no-spend runtime cycle instead of only passing doc-shape checks."
-        : "The new default colony-operator starter failed its maintained no-spend runtime proof, so the claimed MVP path is not yet honestly validated.",
+        ? "The new default colony-operator bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete the maintained no-spend dry-run proof."
+        : "The copied colony-operator bundle failed its maintained outside-in dry-run proof, so the claimed default bundle path is not yet honestly validated.",
     summary: parsed ?? null,
     stdout: result.stdout,
     stderr: result.stderr,

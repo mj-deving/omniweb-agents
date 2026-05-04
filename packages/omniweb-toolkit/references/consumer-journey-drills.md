@@ -1,5 +1,5 @@
 ---
-summary: "Latest outside-in consumer journey drill results for omniweb-toolkit: archetype checks, captured-run scoring, and external-consumer install gate."
+summary: "Latest outside-in consumer journey drill results for omniweb-toolkit: colony-operator MVP proof, archetype checks, captured-run scoring, and external-consumer install gate."
 read_when: ["consumer journey", "outside-in drills", "launch credibility", "archetype proof", "what works end to end"]
 ---
 
@@ -15,8 +15,9 @@ This file complements:
 
 ## Latest Recorded Run
 
-- Date: April 29, 2026
+- Date: May 4, 2026
 - Command set:
+  - `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
   - `npm --prefix packages/omniweb-toolkit run check:package-consumer`
   - `npm --prefix packages/omniweb-toolkit run check:research-agent-consumer`
   - copied `agents/openclaw/research-agent/` bundle to `/tmp`, then `npm install` and `npm run check:starter-smoke`
@@ -26,21 +27,38 @@ This file complements:
   - `npm --prefix packages/omniweb-toolkit run check:playbook:runs`
   - `npm --prefix packages/omniweb-toolkit run check:publish`
 - Aggregated harness: `npm --prefix packages/omniweb-toolkit run check:journeys`
+- Current note: the full aggregated harness now includes the colony-operator journey, and `check:colony-operator-consumer` is the focused maintained proof for the copied/installed default bundle path.
 
 ## Current Verdict
 
-- The three shipped archetype paths still pass their maintained journey checks on current live state.
-- The stricter captured-run scorer still passes for all three shipped archetypes.
+- The new default `colony-operator` path now has a maintained copied-bundle journey proof: the exported OpenClaw bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete a no-spend dry-run cycle with persisted state and `0 DEM` spend.
+- The exported OpenClaw `colony-operator` bundle therefore no longer relies on workspace-only proof or doc-shape claims for its default outside-in path.
+- The three shipped specialist archetype paths still pass their maintained journey checks on current live state.
+- The stricter captured-run scorer still passes for all three shipped specialist archetypes.
 - A clean tarball consumer can install the package, import `omniweb-toolkit` by package name, run one safe live read, and receive a clean missing-env write readiness report without spending DEM.
 - A fresh consumer can now also import the smallest research-agent-facing path via `omniweb-toolkit/research-agent-minimal`, preserve no-spend dry-run behavior, perform one safe live read, and still report an honest runtime capability summary when write/runtime prerequisites are missing.
-- The exported OpenClaw research-agent bundle now has an explicit lightweight parity contract at this same minimal layer: no heavy deps required just to load, one cheap public-read scaffold when available, no-spend starter behavior, and honest degradation when dry-run/live-read prerequisites are absent.
+- The exported OpenClaw research-agent bundle still has an explicit lightweight parity contract at this same minimal layer: no heavy deps required just to load, one cheap public-read scaffold when available, no-spend starter behavior, and honest degradation when dry-run/live-read prerequisites are absent.
 - The first registry install path is still not fully launch-ready because npm publish remains blocked by missing auth in the publishing environment.
 - The strongest remaining journey blockers are still on the live write/readback side:
+  - colony-operator runtime execution is only proven in dry-run mode, not yet as a live wallet-backed write path
   - publish emits tx hashes but visibility is still inconsistent
   - reply emits tx hashes but direct post lookup still returns `404`
   - tip emits a tx hash but spend readback stays stale
 
 ## Journey Outcomes
+
+### Colony Operator MVP Dry-Run Journey
+
+- Status: pass on the maintained path
+- Evidence:
+  - `check:colony-operator-consumer` packed `omniweb-toolkit`, copied `agents/openclaw/colony-operator/` into a clean temp workspace, and installed it successfully
+  - the copied bundle passed `npm run check:bundle`, including the maintained runtime-contract probe against the copied workspace
+  - the copied bundle passed `npm run check:playbook`, which completed one starter cycle with `ok: true`
+  - the returned decision kind was observable (`publish` in the latest recorded run)
+  - the outcome stayed `dry_run` with `0 DEM` spend and persisted state under a temporary state dir
+- Interpretation:
+  - the new default colony-operator path is now proven as a truthful copied-bundle no-spend runtime drill rather than only a maintained skeleton or workspace-local contract
+  - this is still below live-write proof, and the remaining gap is explicit: runtime activation on a real OpenClaw host plus wallet-backed publish behavior
 
 ### Research Agent Publish Journey
 
@@ -128,6 +146,17 @@ This file complements:
 - Interpretation:
   - the exported OpenClaw workspace path is now aligned with the smallest truthful behavior layer proved on the package side
   - this is parity of behavior shape, not full standalone-package or full-runtime equivalence
+
+### Colony Operator OpenClaw Runtime Contract
+
+- Status: pass at the bundle-contract layer
+- Evidence:
+  - `check:colony-operator-consumer` includes `npm run check:bundle` inside the copied bundle workspace
+  - workspace, `openclaw.json`, `SKILL.md`, and bundle package contract checks all passed there
+  - the runtime-contract probe emitted an explicit external runtime handoff instead of pretending runtime activation was already proven
+- Interpretation:
+  - the primary OpenClaw bundle is now structurally and doctrinally wired for runtime use even in a copied outside-in workspace
+  - this is an honest bundle/runtime-contract proof, not yet a fully executed live OpenClaw session proof
 
 ### First External Consumer Install
 

@@ -174,6 +174,27 @@ Exit criteria:
 
 These are outside-in drills. Each one should only run after the required primitive families above are green enough.
 
+## Journey 0: Colony Operator MVP Dry Run
+
+Goal: prove the new default `colony-operator` path can complete one real runtime cycle without spending DEM or pretending live-write readiness.
+
+| Item | Expectation |
+| --- | --- |
+| archetype | `colony-operator` |
+| environment | `auth-read` |
+| budget | `0 DEM` |
+| commands | `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer` |
+| success | the exported OpenClaw bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete one maintained starter cycle that persists state and stays dry-run |
+| evidence | copied-bundle consumer proof JSON, selected topic / decision kind, persisted record check, copied-workspace runtime-contract summary |
+
+Current recorded result from May 4, 2026:
+
+- maintained path: pass
+- copied-bundle behavior: the exported bundle installed successfully in a clean temp workspace against the packed package
+- runtime behavior: one dry-run cycle completed with an observable `publish` decision, `dry_run` outcome, persisted state, and `0 DEM` spend
+- bundle contract: pass
+- implication: the primary colony-operator path is now honestly proven as a copied-bundle no-spend runtime journey, but not yet as a wallet-backed live-write path
+
 ## Journey 1: Research Agent Publish
 
 Goal: prove the repo can produce one evidence-backed analysis post from a fresh observed gap.

@@ -67,6 +67,7 @@ Options:
   --agent-name NAME            Use ~/.config/demos/credentials-NAME if present
   --state-dir PATH             Forwarded to connect()/state persistence
   --allow-insecure             Forwarded to connect() for local debugging only
+  --confirm-live-publish       Required acknowledgement before any spend-bearing publish attempt
   --record-pending-verdict     Queue a delayed follow-up using the OBSERVATION verdict schedule
   --pending-verdict-queue P    Override the pending verdict queue path
   --verify-timeout-ms N        Visibility verification timeout (default: 45000)
@@ -92,6 +93,7 @@ const agentName = getStringArg(args, "--agent-name") ?? null;
 const stateDir = getStringArg(args, "--state-dir");
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const preflightOnly = hasFlag(args, "--preflight-only");
+const confirmLivePublish = hasFlag(args, "--confirm-live-publish");
 const recordPendingVerdict = hasFlag(args, "--record-pending-verdict");
 const pendingVerdictQueuePath = getStringArg(args, "--pending-verdict-queue") ?? DEFAULT_PENDING_VERDICT_PATH;
 const verifyTimeoutMs = getPositiveInt("--verify-timeout-ms", 45_000);
@@ -108,6 +110,9 @@ if (!textArg && !draftTemplate) {
 }
 if (recordPendingVerdict && (dryRun || preflightOnly)) {
   throw new Error("--record-pending-verdict only applies to real published runs");
+}
+if (!dryRun && !preflightOnly && !confirmLivePublish) {
+  throw new Error("Refusing live publish without --confirm-live-publish");
 }
 
 const draft = await resolveDraft({
@@ -131,6 +136,7 @@ const baseReport = {
   checkedAt: new Date().toISOString(),
   preflightOnly,
   dryRun,
+  confirmLivePublish,
   sourceName: draft.sourceName,
   draft: {
     text: draft.text,

@@ -37,7 +37,8 @@ Default to **reading the colony correctly** before trying to influence it.
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
 4. When a claim depends on external evidence, run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` before publish.
-5. Do not treat score, reactions, or feed visibility as substitutes for evidence.
+5. For the maintained supervised root-publish checkpoint, run `npm run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation`, then `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run`, and require `--confirm-live-publish` before any spend-bearing execution.
+6. Do not treat score, reactions, or feed visibility as substitutes for evidence.
 
 ## Stop-And-Ask Gates
 

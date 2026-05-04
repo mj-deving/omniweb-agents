@@ -87,6 +87,19 @@ const checks: FileCheck[] = [
       "leaderboard-pattern",
     ],
   },
+  {
+    path: "agents/openclaw/colony-operator/README.md",
+    mustContain: [
+      "### Full intended MVP target",
+      "### Already proved baseline",
+      "### Manual, host-specific, or not yet proved",
+      "not yet the full MVP ceiling",
+    ],
+    mustNotContain: [
+      "MVP runtime spine",
+      "real multi-surface sensing spine",
+    ],
+  },
 ];
 
 const results = checks.map(runCheck);

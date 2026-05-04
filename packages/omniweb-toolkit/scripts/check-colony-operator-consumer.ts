@@ -275,15 +275,18 @@ function assertPlaybookSummary(summary: unknown): void {
 
   const record = summary as {
     ok?: boolean;
-    contract?: { colonyOperatorMvpProof?: boolean; spendsDem?: boolean; liveWriteProven?: boolean };
+    contract?: { colonyOperatorBaselineProof?: boolean; colonyOperatorMvpProof?: boolean; spendsDem?: boolean; liveWriteProven?: boolean };
     result?: { outcomeStatus?: unknown };
   };
 
   if (record.ok !== true) {
     throw new Error("copied bundle dry-run proof did not pass");
   }
-  if (record.contract?.colonyOperatorMvpProof !== true) {
-    throw new Error("copied bundle dry-run proof did not report MVP proof success");
+  if (record.contract?.colonyOperatorBaselineProof !== true) {
+    throw new Error("copied bundle dry-run proof did not report baseline proof success");
+  }
+  if (record.contract?.colonyOperatorMvpProof !== false) {
+    throw new Error("copied bundle dry-run proof should not claim full MVP proof");
   }
   if (record.contract?.spendsDem !== false) {
     throw new Error("copied bundle dry-run proof unexpectedly spent DEM");

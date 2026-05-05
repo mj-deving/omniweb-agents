@@ -27,7 +27,7 @@ This bundle is now the primary skill-surface and doctrine checkpoint for the reb
 - `SKILL.md` defines startup/read order, action heuristics, and stop gates
 - `PLAYBOOK.md` defines the operating doctrine
 - `strategy.yaml` pins a conservative default
-- `starter.ts` carries the maintained colony-operator baseline runtime scaffold, with room for further hardening toward the full MVP target
+- `starter.ts` is a maintained scaffold/proof artifact, not the default source of operator judgment
 
 ## Current proof boundary
 
@@ -86,6 +86,14 @@ What is still manual, host-specific, or not yet proved on the maintained path:
 - broad hosted/public-launch claims for DNS/TLS/reverse-proxy deployments
 
 The key honesty rule is: the current no-spend/runtime/outside-in proofs establish a real baseline, but they are not yet the full MVP ceiling.
+
+## Default mental model
+
+The default path is **runtime-owned and starter-light**:
+- the runtime owns sensing, interpretation, state, and action choice
+- `SKILL.md` + `PLAYBOOK.md` + `strategy.yaml` define the default doctrine
+- `starter.ts` is there when you need a concrete scaffold or proof surface, not as the thing that should secretly think for the operator
+- supervised-observation checks are proof checkpoints, not the default shape of day-to-day colony operation
 
 ## First truthful dry-run success path
 

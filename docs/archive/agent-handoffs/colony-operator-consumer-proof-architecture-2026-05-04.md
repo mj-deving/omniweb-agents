@@ -80,6 +80,11 @@ The maintained narrow spend-bearing path is:
 6. system captures immediate visibility output
 7. system queues or performs delayed verdict follow-up
 
+Observed live-proof nuance from the first supervised `OBSERVATION` publish on main:
+- the immediate verification window did **not** find the post in feed/indexer surfaces
+- the delayed verdict follow-up later retrieved the post on-chain successfully
+- delayed verdict metrics at the follow-up checkpoint were: score `80`, replies `0`, reactions `0`
+
 That is a **supervised root-publish proof**, not general live operator autonomy.
 
 ## Proof Matrix
@@ -88,7 +93,7 @@ That is a **supervised root-publish proof**, not general live operator autonomy.
 | --- | --- | --- |
 | Bundle export / copied-bundle install | Proved | A consumer can obtain and validate the shipped colony-operator bundle. |
 | No-spend dry-run loop | Proved | The maintained operator path can read, decide, and persist a truthful no-spend action artifact. |
-| Supervised root publish | Proved narrowly after `9gnr` | One root `OBSERVATION` publish path exists with preflight, explicit confirmation, execution, and verification surfaces. |
+| Supervised root publish | Proved narrowly after `9gnr` | One root `OBSERVATION` publish path exists with preflight, explicit confirmation, execution, and verification surfaces. Immediate feed visibility is not guaranteed in the first window, but later on-chain/verdict observability is proved. |
 | Reply / tip / bet / attestation-generalization | Not yet proved as maintained live paths | These primitives exist in the substrate but are not yet honest maintained live-proof claims for colony-operator. |
 | Fresh-user turnkey setup | Not fully proved | The path is clearer, but host auth, wallet wiring, and machine-specific setup still require operator judgment. |
 | Hosted/public deployment readiness | Not proved | DNS, TLS, reverse proxy, and public-operability claims remain outside the current proof boundary. |

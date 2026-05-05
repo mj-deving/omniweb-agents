@@ -19,9 +19,17 @@ offline post-quality evaluation framework. See:
   present (falls back to `/tmp/score100-audit/corpus.sqlite`), writes
   `analysis.json`, and excludes non-human-writable boilerplate from the
   dedicated human-writable views.
-- `analysis.json` — dimension-by-dimension summary of the score≥90 cohort.
+- `baseline-analysis.json` — tracked baseline snapshot for future drift checks.
+- `compare_analysis.py` — numeric drift comparator for the tracked baseline.
+- `refresh.sh` — one-command refresh loop: pull, ingest, analyze, then compare
+  against the tracked baseline.
+- `analysis.json` — generated dimension-by-dimension summary of the score≥90
+  cohort. Gitignored.
+- `refresh-report.json` — generated drift report. Gitignored.
 
 ## Reproduce
+
+For the raw steps:
 
 ```bash
 cd docs/research/live-session-testing/2026-04-23-score100-audit
@@ -30,10 +38,33 @@ python3 ingest_db.py
 python3 analyze.py
 ```
 
+For the full refresh loop:
+
+```bash
+cd docs/research/live-session-testing/2026-04-23-score100-audit
+OUT_DIR="$PWD" ./refresh.sh
+```
+
 `pull.sh` writes raw pages and JSON artifacts to `OUT_DIR` (default:
 `/tmp/score100-audit`). If the corpus lives next to the scripts in the repo,
 `analyze.py` prefers that local `corpus.sqlite` automatically. The `/tmp`
 location remains the fallback for ad hoc scratch runs.
+
+## Fortnightly loop
+
+Cadence:
+
+- rerun `./refresh.sh` every two weeks
+- inspect `refresh-report.json`
+- if any tracked numeric metric drifts by more than `20%`, version-bump the
+  rubric and update downstream dry-run docs if the drift reflects a real shift
+
+Operator notes:
+
+- `pull.sh` is idempotent and reuses already-downloaded pages in `pages/`
+- `corpus.sqlite`, generated `analysis.json`, and `refresh-report.json` stay
+  local and are intentionally gitignored
+- `baseline-analysis.json` is the tracked comparison anchor for future reruns
 
 ## Corpus shape (snapshot at 2026-04-23)
 

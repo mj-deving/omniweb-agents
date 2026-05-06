@@ -31,6 +31,7 @@ export interface MinimalCycleSummary {
   startedAt: string;
   finishedAt: string;
   decisionKind: MinimalObserveResult["kind"];
+  actionType?: MinimalActionType | "skip";
   status: MinimalCycleStatus;
   txHash?: string;
   attestationTxHash?: string;
@@ -78,6 +79,34 @@ interface BaseDecision<TState extends MinimalAgentState = MinimalAgentState> {
   nextState?: TState;
 }
 
+export type MinimalActionType = "publish" | "reply" | "react" | "tip" | "bet";
+
+export interface MinimalActionIntent {
+  type: MinimalActionType;
+  category?: string;
+  text?: string;
+  attestUrl?: string;
+  tags?: string[];
+  confidence?: number;
+  parentTxHash?: string;
+  targetTxHash?: string;
+  amount?: number;
+  marketId?: string;
+}
+
+export interface MinimalActionReadiness {
+  requiresWallet?: boolean;
+  requiresAttestation?: boolean;
+  requiresTargetPost?: boolean;
+  requiresMarketContext?: boolean;
+}
+
+export interface ActionIntentDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
+  kind: "action";
+  action: MinimalActionIntent;
+  readiness?: MinimalActionReadiness;
+}
+
 export interface SkipDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
   kind: "skip";
   reason: string;
@@ -103,7 +132,8 @@ export interface ReplyDecision<TState extends MinimalAgentState = MinimalAgentSt
 export type MinimalObserveResult<TState extends MinimalAgentState = MinimalAgentState> =
   | SkipDecision<TState>
   | PublishDecision<TState>
-  | ReplyDecision<TState>;
+  | ReplyDecision<TState>
+  | ActionIntentDecision<TState>;
 
 export type MinimalObserveFn<TState extends MinimalAgentState = MinimalAgentState> = (
   ctx: MinimalObserveContext<TState>,
@@ -190,6 +220,58 @@ const DEFAULT_VERIFICATION_TIMEOUT_MS = 45_000;
 const DEFAULT_VERIFICATION_POLL_MS = 5_000;
 const DEFAULT_VERIFICATION_LIMIT = 50;
 const PLACEHOLDER_ATTEST_HOSTS = new Set(["example.com", "www.example.com"]);
+
+export function normalizeDecisionToActionIntent<TState extends MinimalAgentState = MinimalAgentState>(
+  decision: MinimalObserveResult<TState>,
+): ActionIntentDecision<TState> | null {
+  if (decision.kind === "skip") return null;
+
+  if (decision.kind === "action") {
+    return decision;
+  }
+
+  if (decision.kind === "publish") {
+    return {
+      kind: "action",
+      action: {
+        type: "publish",
+        category: decision.category,
+        text: decision.text,
+        attestUrl: decision.attestUrl,
+        tags: decision.tags,
+        confidence: decision.confidence,
+      },
+      facts: decision.facts,
+      audit: decision.audit,
+      attestationPlan: decision.attestationPlan,
+      nextState: decision.nextState,
+      readiness: {
+        requiresWallet: true,
+        requiresAttestation: true,
+      },
+    };
+  }
+
+  return {
+    kind: "action",
+    action: {
+      type: "reply",
+      parentTxHash: decision.parentTxHash,
+      text: decision.text,
+      attestUrl: decision.attestUrl,
+      category: decision.category,
+    },
+    facts: decision.facts,
+    audit: decision.audit,
+    attestationPlan: decision.attestationPlan,
+    nextState: decision.nextState,
+    readiness: {
+      requiresWallet: true,
+      requiresAttestation: true,
+      requiresTargetPost: true,
+    },
+  };
+}
 
 export function getDefaultMinimalStateDir(cwd?: string): string {
   return resolve(cwd ?? process.cwd(), DEFAULT_STATE_DIR);
@@ -311,6 +393,8 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
+  const actionDecision = normalizeDecisionToActionIntent(decision);
+
   const attestationGuardError = validateAttestationDecision(decision);
   if (attestationGuardError) {
     const record = buildCompletedRecord({
@@ -334,22 +418,44 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
+  if (!actionDecision || (actionDecision.action.type !== "publish" && actionDecision.action.type !== "reply")) {
+    const record = buildCompletedRecord({
+      cycle,
+      startedAtMs,
+      now,
+      memoryBefore,
+      nextState: decision.nextState ?? memoryBefore.state,
+      decision,
+      outcome: {
+        status: "failed",
+        demSpendEstimate: 0,
+        error: {
+          stage: "execute",
+          message: `unsupported_action_type:${actionDecision?.action.type ?? "unknown"}`,
+          retryable: false,
+        },
+      },
+    });
+    await persistCycleArtifacts(stateDir, record);
+    return record;
+  }
+
   const directWrite = await runDirectAttestedWrite({
     omni,
-    kind: decision.kind,
-    draft: decision.kind === "publish"
+    kind: actionDecision.action.type,
+    draft: actionDecision.action.type === "publish"
       ? {
-          text: decision.text,
-          category: decision.category,
-          attestUrl: decision.attestUrl,
-          tags: decision.tags,
-          confidence: decision.confidence,
+          text: actionDecision.action.text ?? "",
+          category: actionDecision.action.category,
+          attestUrl: actionDecision.action.attestUrl ?? "",
+          tags: actionDecision.action.tags,
+          confidence: actionDecision.action.confidence,
         }
       : {
-          parentTxHash: decision.parentTxHash,
-          text: decision.text,
-          attestUrl: decision.attestUrl,
-          category: decision.category,
+          parentTxHash: actionDecision.action.parentTxHash,
+          text: actionDecision.action.text ?? "",
+          attestUrl: actionDecision.action.attestUrl ?? "",
+          category: actionDecision.action.category,
         },
     verifyPublishVisibility,
     verification: {
@@ -398,7 +504,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     nextState: decision.nextState ?? memoryBefore.state,
     decision,
     outcome: {
-      status: decision.kind === "publish" ? "published" : "replied",
+      status: actionDecision.action.type === "publish" ? "published" : "replied",
       txHash,
       attestationTxHash,
       attestationResponseHash,
@@ -604,6 +710,7 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
     startedAt: args.cycle.startedAt,
     finishedAt: args.finishedAt,
     decisionKind: args.decision.kind,
+    actionType: getDecisionActionType(args.decision),
     status: args.outcome.status,
     txHash: args.outcome.txHash,
     attestationTxHash: args.outcome.attestationTxHash,
@@ -627,13 +734,21 @@ function renderCycleSummary<TState extends MinimalAgentState>(
     `- Started: ${record.startedAt}`,
     `- Finished: ${record.finishedAt}`,
     `- DurationMs: ${record.durationMs}`,
-    `- Decision: ${record.decision.kind}`,
+    `- DecisionKind: ${record.decision.kind}`,
+    `- ActionType: ${getDecisionActionType(record.decision)}`,
     `- Outcome: ${record.outcome.status}`,
     `- DryRun: ${record.dryRun}`,
   ];
 
   if (record.decision.kind === "skip") {
     lines.push(`- SkipReason: ${record.decision.reason}`);
+  } else if (record.decision.kind === "action") {
+    if (typeof record.decision.action.text === "string") {
+      lines.push(`- Text: ${truncate(record.decision.action.text, 180)}`);
+    }
+    if (typeof record.decision.action.category === "string") {
+      lines.push(`- Category: ${record.decision.action.category}`);
+    }
   } else {
     lines.push(`- Text: ${truncate(record.decision.text, 180)}`);
     if ("category" in record.decision && typeof record.decision.category === "string") {
@@ -772,7 +887,26 @@ function validateAttestationDecision<TState extends MinimalAgentState>(
     }
   }
 
+  if (decision.kind === "action" && decision.action.attestUrl) {
+    if (isPlaceholderAttestUrl(decision.action.attestUrl)) {
+      return `placeholder_attest_url:${decision.action.attestUrl}`;
+    }
+
+    const plannedUrl = getPrimaryAttestUrl(plan);
+    if (plannedUrl && plannedUrl !== decision.action.attestUrl) {
+      return `attest_url_mismatch:${decision.action.attestUrl}`;
+    }
+  }
+
   return null;
+}
+
+function getDecisionActionType<TState extends MinimalAgentState>(
+  decision: MinimalObserveResult<TState>,
+): MinimalActionType | "skip" {
+  if (decision.kind === "skip") return "skip";
+  if (decision.kind === "action") return decision.action.type;
+  return decision.kind;
 }
 
 function isPlaceholderAttestUrl(url: string): boolean {
@@ -827,10 +961,15 @@ async function persistSessionLedger<TState extends MinimalAgentState>(
     previous_cycle: record.memoryBefore.lastCycle,
   };
 
+  const actionType = record.decision.kind === "action"
+    ? record.decision.action.type
+    : record.decision.kind;
+
   const decisions = {
     version: 1,
     session_id: record.sessionId,
     kind: record.decision.kind,
+    action_type: actionType,
     facts: record.decision.facts ?? {},
     attestation_plan: record.decision.attestationPlan ?? null,
     next_state_keys: Object.keys(record.memoryAfter.state ?? {}),
@@ -839,7 +978,7 @@ async function persistSessionLedger<TState extends MinimalAgentState>(
   const action = {
     version: 1,
     session_id: record.sessionId,
-    action: record.decision.kind,
+    action: actionType,
     status: record.outcome.status,
     tx_hash: record.outcome.txHash ?? null,
     dem_spent: record.outcome.demSpendEstimate ?? 0,
@@ -849,7 +988,7 @@ async function persistSessionLedger<TState extends MinimalAgentState>(
 
   await writeSessionLedgerJson(record.sessionDir, "inputs.json", inputs);
   await writeSessionLedgerJson(record.sessionDir, "decisions.json", decisions);
-  await writeSessionLedgerJson(record.sessionDir, `actions/01-${record.decision.kind}.json`, action);
+  await writeSessionLedgerJson(record.sessionDir, `actions/01-${actionType}.json`, action);
   const scorecardSummary = buildScorecardSummary(record);
   if (scorecardSummary) {
     await writeSessionLedgerJson(record.sessionDir, "scorecard.json", scorecardSummary);

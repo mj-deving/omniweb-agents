@@ -1,3 +1,8 @@
+---
+summary: Short durable statement of the runtime-owned colony-operator baseline, proof tiers, and toolkit role.
+read_when: You need the fastest truthful description of what the rebuild is aiming at and what counts as honest proof.
+---
+
 # Colony Operator Baseline
 
 Use this note when you need the shortest durable statement of what the rebuild is actually aiming at.

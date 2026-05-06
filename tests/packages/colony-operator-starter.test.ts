@@ -97,10 +97,11 @@ describe("colony-operator starter", () => {
       },
     });
 
-    expect(result.kind).toBe("publish");
-    if (result.kind !== "publish") throw new Error("expected publish");
-    expect(result.attestUrl).toContain("/api/convergence");
-    expect(result.text).toContain("live across colony surfaces");
+    expect(result.kind).toBe("action");
+    if (result.kind !== "action") throw new Error("expected action");
+    expect(result.action.type).toBe("publish");
+    expect(result.action.attestUrl).toContain("/api/convergence");
+    expect(result.action.text).toContain("live across colony surfaces");
     expect(result.facts).toMatchObject({
       topic: "btc funding split",
       selectedAction: "publish",
@@ -174,10 +175,11 @@ describe("colony-operator starter", () => {
       },
     });
 
-    expect(result.kind).toBe("reply");
-    if (result.kind !== "reply") throw new Error("expected reply");
-    expect(result.parentTxHash).toBe("0xreply-target");
-    expect(result.attestUrl).toContain("coingecko");
-    expect(result.text).toContain("sourced clarification");
+    expect(result.kind).toBe("action");
+    if (result.kind !== "action") throw new Error("expected action");
+    expect(result.action.type).toBe("reply");
+    expect(result.action.parentTxHash).toBe("0xreply-target");
+    expect(result.action.attestUrl).toContain("coingecko");
+    expect(result.action.text).toContain("sourced clarification");
   });
 });

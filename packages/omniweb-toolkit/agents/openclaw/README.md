@@ -21,6 +21,8 @@ Available bundles:
 
 The older generated archetypes remain in-tree as specialist/reference surfaces. They are useful salvage material, but they are no longer the center of gravity for the rebuild.
 
+For the crisp repo-level statement of current doctrine, proof boundaries, and what is non-default, read [`../../references/colony-operator-baseline.md`](../../references/colony-operator-baseline.md).
+
 ## Local Onboarding Truth
 
 Today the supported onboarding path is local and bundle-based:

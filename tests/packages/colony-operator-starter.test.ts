@@ -81,6 +81,80 @@ function makeOmni(): any {
 }
 
 describe("colony-operator starter", () => {
+  it("chooses react when a fresh attested thread already has clean agreement", async () => {
+    const omni = makeOmni();
+    omni.colony.getFeed = async () => ({
+      ok: true,
+      data: {
+        posts: [
+          {
+            txHash: "0xreact-target",
+            payload: {
+              cat: "ANALYSIS",
+              text: "BTC funding split already has a clean attested thread.",
+              sourceAttestations: [
+                {
+                  url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+                },
+              ],
+            },
+            author: "0xauthor1",
+            timestamp: Date.UTC(2026, 4, 3, 16, 58, 0),
+            replyCount: 0,
+            score: 84,
+            reactions: { agree: 3, disagree: 0, flag: 0 },
+          },
+        ],
+      },
+    });
+    omni.colony.getConvergence = async () => ({
+      ok: true,
+      data: {
+        mindshare: {
+          series: [
+            {
+              shortTopic: "BTC funding split",
+              direction: "bearish",
+              agentCount: 4,
+              totalAgents: 5,
+              totalPosts: 6,
+              agrees: 3,
+              disagrees: 0,
+              counts: [],
+              sourceTxHashes: ["0xreact-target"],
+              assets: ["BTC"],
+              confidence: 74,
+            },
+          ],
+        },
+      },
+    });
+
+    const result = await observe({
+      omni,
+      cycle: {
+        id: "cycle-react",
+        iteration: 1,
+        startedAt: "2026-05-03T17:02:00.000Z",
+        stateDir: "/tmp/colony-operator-starter-test",
+        dryRun: true,
+      },
+      memory: {
+        state: {},
+        lastCycle: null,
+      },
+    });
+
+    expect(result.kind).toBe("react");
+    if (result.kind !== "react") throw new Error("expected react");
+    expect(result.targetTxHash).toBe("0xreact-target");
+    expect(result.reaction).toBe("agree");
+    expect(result.facts).toMatchObject({
+      topic: "btc funding split",
+      selectedAction: "react",
+    });
+  });
+
   it("publishes from a multi-surface colony read instead of a single recycled signal check", async () => {
     const result = await observe({
       omni: makeOmni(),
@@ -181,5 +255,35 @@ describe("colony-operator starter", () => {
     expect(result.action.parentTxHash).toBe("0xreply-target");
     expect(result.action.attestUrl).toContain("coingecko");
     expect(result.action.text).toContain("sourced clarification");
+  });
+
+  it("treats the cooldown as a generic recent-action gate, not a publish-only gate", async () => {
+    const result = await observe({
+      omni: makeOmni(),
+      cycle: {
+        id: "cycle-cooldown",
+        iteration: 2,
+        startedAt: "2026-05-03T17:20:00.000Z",
+        stateDir: "/tmp/colony-operator-starter-test",
+        dryRun: true,
+      },
+      memory: {
+        state: {
+          lastTopic: "btc funding split",
+          lastActionKind: "react",
+          lastActionAt: "2026-05-03T17:02:00.000Z",
+          lastHandledTxHash: "0xreact-target",
+        },
+        lastCycle: null,
+      },
+    });
+
+    expect(result.kind).toBe("skip");
+    if (result.kind !== "skip") throw new Error("expected skip");
+    expect(result.reason).toBe("acted_within_last_30m");
+    expect(result.facts).toMatchObject({
+      topic: "btc funding split",
+      lastActionKind: "react",
+    });
   });
 });

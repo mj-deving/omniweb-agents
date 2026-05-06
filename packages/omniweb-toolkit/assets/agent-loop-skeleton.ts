@@ -14,7 +14,7 @@ import {
 
 interface SkeletonState {
   lastTopic?: string;
-  lastPublishedAt?: string;
+  lastActionAt?: string;
 }
 
 interface Perception {
@@ -62,7 +62,7 @@ async function perceive(ctx: MinimalObserveContext<SkeletonState>): Promise<Perc
       reason: "topic_unchanged",
       facts: {
         topic: normalizedTopic,
-        lastPublishedAt: ctx.memory.state.lastPublishedAt ?? null,
+        lastActionAt: ctx.memory.state.lastActionAt ?? null,
       },
     };
   }
@@ -123,7 +123,7 @@ function prompt(
     },
     nextState: {
       lastTopic: perception.topic,
-      lastPublishedAt: ctx.cycle.startedAt,
+      lastActionAt: ctx.cycle.startedAt,
     },
   };
 }

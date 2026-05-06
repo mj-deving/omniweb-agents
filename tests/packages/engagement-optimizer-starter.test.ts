@@ -105,7 +105,7 @@ describe("engagement-optimizer starter", () => {
       memory: {
         state: {
           lastCandidateTxHash: "0xolder",
-          lastPublishedAt: "2026-04-17T14:00:00.000Z",
+          lastActionAt: "2026-04-17T14:00:00.000Z",
         },
         lastCycle: null,
       },
@@ -113,7 +113,7 @@ describe("engagement-optimizer starter", () => {
 
     expect(result.kind).toBe("skip");
     if (result.kind !== "skip") throw new Error("expected skip");
-    expect(result.reason).toBe("published_within_last_2h");
+    expect(result.reason).toBe("acted_within_last_2h");
     expect(result.audit?.promptPacket).toBeDefined();
   });
 });

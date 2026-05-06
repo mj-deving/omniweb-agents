@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-04-20
+updated: 2026-05-06
 completed_phases: 22
-tests: 3449
+tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "Phases 21-22 complete. The attestation-first reset and leaderboard-pattern moat are now on main, all shipped archetypes align to one-source short-post defaults, and the ready queue is currently empty."
+summary: "Phases 21-22 remain complete. The repo doctrine is now being tightened around a substrate-first package with skills/playbooks above it, while the ready queue remains intentionally empty until the next band is chosen deliberately."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern"]
 ---
 
@@ -20,8 +20,8 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 
 | Metric | Value |
 |--------|-------|
-| Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (verified 2026-04-20) |
-| Current direction | Attestation-first runtime simplification complete (`omniweb-agents-bgo`) |
+| Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
+| Current direction | Substrate-first package/doctrine cleanup on top of the attestation-first runtime simplification baseline (`omniweb-agents-bgo`) |
 | Shipped moat | Leaderboard-pattern rollout complete (`omniweb-agents-ez4`) with one-source starter packs, shared scaffold, attestation-first minimal starter, and scorecard regression gate |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
 | Doctrine | Research family doctrine, oracle-divergence doctrine, and research metric semantics now live in flat YAML rather than only TypeScript |
@@ -29,12 +29,14 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 | Beads | `bd ready` is empty; old contract/prompt/family expansion epics are explicitly blocked, not active |
 | Remaining external edges | generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
 
-**North star:** `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
+**North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
 
-**Core principle:** Don't duplicate what supercolony.ai provides. Reference `llms-full.txt` for raw API. Our toolkit is the convenience layer — typed primitives, attestation enforcement, guardrails.
+**Core principle:** Don't duplicate what supercolony.ai provides. Reference `llms-full.txt` for raw API. `omniweb-toolkit` should be the shared substrate — typed primitives, auth handling, attestation enforcement, guardrails, spend safety, and capability truth — while skills stay above it as consumer-facing playbooks.
 
 **Philosophy:** Hard gates where they matter, but keep the winning loop simple: source -> attest -> interpret -> publish.
+
+**Architectural rule:** the substrate owns the hard parts of real operation; the skill owns instructions, best practices, and thin scaffolding. If an agent has to manually reason about auth ceremony, credential lifecycle, or spend-safety plumbing in prompt-space, the boundary is wrong.
 
 ---
 

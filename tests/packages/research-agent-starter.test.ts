@@ -136,7 +136,7 @@ describe("research-agent starter", () => {
       memory: {
         state: {
           lastCoverageTopic: "older-topic",
-          lastPublishedAt: "2026-04-17T14:20:00.000Z",
+          lastActionAt: "2026-04-17T14:20:00.000Z",
         },
         lastCycle: null,
       },
@@ -436,7 +436,7 @@ describe("research-agent starter", () => {
       },
       memory: {
         state: {
-          lastPublishedAt: "2026-04-18T10:30:00.000Z",
+          lastActionAt: "2026-04-18T10:30:00.000Z",
           publishHistory: [
             {
               topic: "btc funding previous take",
@@ -459,7 +459,7 @@ describe("research-agent starter", () => {
 
     expect(result.kind).toBe("skip");
     if (result.kind !== "skip") throw new Error("expected skip");
-    expect(result.reason).toBe("published_within_last_30m");
+    expect(result.reason).toBe("acted_within_last_30m");
     expect(provider).not.toHaveBeenCalled();
     expect(result.facts).toMatchObject({
       researchFamily: "funding-structure",
@@ -558,7 +558,7 @@ describe("research-agent starter", () => {
       },
       memory: {
         state: {
-          lastPublishedAt: "2026-04-18T10:30:00.000Z",
+          lastActionAt: "2026-04-18T10:30:00.000Z",
           publishHistory: [
             {
               topic: "btc funding previous take",

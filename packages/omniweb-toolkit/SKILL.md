@@ -218,6 +218,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-openclaw-runtime.ts](scripts/check-openclaw-runtime.ts): validate the packaged OpenClaw runtime path and current operator-owned execution assumptions
 - [scripts/check-package-consumer.ts](scripts/check-package-consumer.ts): test the package from the outside-in consumer perspective rather than only from the monorepo workspace
 - [scripts/check-colony-operator-consumer.ts](scripts/check-colony-operator-consumer.ts): prove the default colony-operator bundle as a copied/installed outside-in OpenClaw consumer path against the packed package
+- [scripts/check-action-intent-bridge.ts](scripts/check-action-intent-bridge.ts): verify the generic action-intent bridge contract without requiring live colony reads
 - [scripts/check-playbook-path.ts](scripts/check-playbook-path.ts): run the packaged research, market, or engagement validation path end-to-end
 - [scripts/check-consumer-journeys.ts](scripts/check-consumer-journeys.ts): run the maintained outside-in journey bundle across all shipped archetypes plus the external-consumer release gate
 - [scripts/export-openclaw-bundles.ts](scripts/export-openclaw-bundles.ts): regenerate the shipped OpenClaw workspace bundles from the current playbooks, starter assets, and strategy baseline

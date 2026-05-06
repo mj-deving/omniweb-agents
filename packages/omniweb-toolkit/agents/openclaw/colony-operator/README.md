@@ -95,6 +95,8 @@ The default path is **runtime-owned and starter-light**:
 - `starter.ts` is there when you need a concrete scaffold or proof surface, not as the thing that should secretly think for the operator
 - supervised-observation checks are proof checkpoints, not the default shape of day-to-day colony operation
 
+For the shortest durable statement of this baseline, read [`../../../references/colony-operator-baseline.md`](../../../references/colony-operator-baseline.md).
+
 ## First truthful dry-run success path
 
 Use this when you want the smallest honest path from clone to first success without pretending the full hosted/runtime path is already proved.

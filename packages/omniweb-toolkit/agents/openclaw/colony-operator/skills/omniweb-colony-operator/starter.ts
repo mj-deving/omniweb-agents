@@ -73,6 +73,14 @@ interface ReadSnapshot {
   freshestMatchedPost: FeedSample | null;
 }
 
+interface RoutingOpportunity {
+  topic: string;
+  normalizedTopic: string;
+  preferredKind: "reply" | "publish";
+  parentTxHash: string | null;
+  attestUrl: string | null;
+}
+
 function normalizeTopic(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim().replace(/\s+/g, " ").toLowerCase();
@@ -221,7 +229,47 @@ function buildHandledTxHistory(previous: string[] | undefined, nextTxHash: strin
   return nextTxHash ? [nextTxHash, ...deduped].slice(0, MAX_HANDLED_TX_HISTORY) : deduped.slice(0, MAX_HANDLED_TX_HISTORY);
 }
 
-function buildPromptPacket(snapshot: ReadSnapshot): Record<string, unknown> {
+function chooseRoutingOpportunity(
+  snapshot: ReadSnapshot,
+  handledTxHistory: string[] | undefined,
+  lastHandledTxHash: string | undefined,
+): RoutingOpportunity | null {
+  const { topSignal, matchingConvergence, freshestMatchedPost } = snapshot;
+  if (!topSignal) return null;
+
+  const freshestHandled = freshestMatchedPost?.txHash ?? null;
+  const alreadyHandled = freshestHandled != null
+    && ((handledTxHistory ?? []).includes(freshestHandled) || lastHandledTxHash === freshestHandled);
+
+  if (freshestMatchedPost && !alreadyHandled && freshestMatchedPost.sourceAttestationUrls.length > 0) {
+    const attestationPlan = buildMinimalAttestationPlanFromUrls({
+      topic: topSignal.topic,
+      urls: freshestMatchedPost.sourceAttestationUrls,
+      minSupportingSources: 0,
+      agent: "colony-operator",
+    });
+    const attestUrl = getPrimaryAttestUrl(attestationPlan);
+    if (attestUrl) {
+      return {
+        topic: topSignal.topic,
+        normalizedTopic: topSignal.normalizedTopic,
+        preferredKind: "reply",
+        parentTxHash: freshestMatchedPost.txHash,
+        attestUrl,
+      };
+    }
+  }
+
+  return {
+    topic: topSignal.topic,
+    normalizedTopic: topSignal.normalizedTopic,
+    preferredKind: "publish",
+    parentTxHash: null,
+    attestUrl: matchingConvergence ? `${COLONY_URL}/api/convergence` : `${COLONY_URL}/api/signals`,
+  };
+}
+
+function buildPromptPacket(snapshot: ReadSnapshot, opportunity: RoutingOpportunity | null): Record<string, unknown> {
   return {
     objective: "Summarize the observed colony surface and the starter's proof-oriented routing context.",
     observedFacts: [
@@ -233,6 +281,9 @@ function buildPromptPacket(snapshot: ReadSnapshot): Record<string, unknown> {
       `Matched feed posts: ${snapshot.matchedPosts.length}.`,
       `Leaderboard sample size: ${snapshot.leaderboardCount}.`,
       `Available balance: ${snapshot.availableBalance}.`,
+      opportunity
+        ? `Starter routing hint: ${opportunity.preferredKind}${opportunity.parentTxHash ? ` via ${opportunity.parentTxHash}` : " as root"}.`
+        : "No routing hint selected.",
     ],
     auditQuestions: [
       "Is the topic live across more than one surface?",
@@ -290,7 +341,12 @@ export async function observe(
     matchedPosts,
     freshestMatchedPost,
   };
-  const promptPacket = buildPromptPacket(snapshot);
+  const opportunity = chooseRoutingOpportunity(
+    snapshot,
+    ctx.memory.state?.handledTxHistory,
+    ctx.memory.state?.lastHandledTxHash,
+  );
+  const promptPacket = buildPromptPacket(snapshot, opportunity);
 
   if (!topSignal) {
     return {
@@ -380,78 +436,59 @@ export async function observe(
   }
 
   const freshestHandled = freshestMatchedPost?.txHash ?? null;
-  const alreadyHandled = freshestHandled != null
-    && ((ctx.memory.state?.handledTxHistory ?? []).includes(freshestHandled)
-      || ctx.memory.state?.lastHandledTxHash === freshestHandled);
-
-  const canReply = freshestMatchedPost
-    && !alreadyHandled
-    && freshestMatchedPost.sourceAttestationUrls.length > 0;
-
-  if (canReply && freshestMatchedPost) {
-    const attestationPlan = buildMinimalAttestationPlanFromUrls({
-      topic: topSignal.topic,
-      urls: freshestMatchedPost.sourceAttestationUrls,
-      minSupportingSources: 0,
-      agent: "colony-operator",
-    });
-    const attestUrl = getPrimaryAttestUrl(attestationPlan);
-
-    if (attestUrl) {
-      return {
-        kind: "reply",
-        parentTxHash: freshestMatchedPost.txHash,
-        text: `Starter reply scaffold for ${topSignal.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
-        attestUrl,
-        category: "OBSERVATION",
-        facts: {
-          topic: topSignal.normalizedTopic,
-          selectedAction: "reply",
-          replyTargetTxHash: freshestMatchedPost.txHash,
-          disagreementCount: freshestMatchedPost.reactions.disagree,
-          replyCount: freshestMatchedPost.replyCount,
-          convergenceAgents: matchingConvergence?.agentCount ?? 0,
-        },
-        attestationPlan,
-        audit: {
-          inputs: {
-            topSignal,
-            matchingConvergence,
-            matchedPosts: matchedPosts.slice(0, 3),
-          },
-          selectedEvidence: {
-            post: freshestMatchedPost,
-          },
-          promptPacket,
-          notes: [
-            "This colony-operator starter deliberately reads multiple colony surfaces before emitting a proof-oriented action intent.",
-            "Reply routing here is intentionally minimal scaffold behavior, not the full runtime's authored thread strategy.",
-          ],
-        },
-        nextState: {
-          ...ctx.memory.state,
-          lastTopic: topSignal.normalizedTopic,
-          lastActionKind: "reply",
-          lastPublishedAt: ctx.cycle.startedAt,
-          lastHandledTxHash: freshestMatchedPost.txHash,
-          handledTxHistory: buildHandledTxHistory(ctx.memory.state?.handledTxHistory, freshestMatchedPost.txHash),
-        },
-      };
-    }
-  }
-
   const totalPosts = matchingConvergence?.totalPosts ?? matchedPosts.length;
-  const attestUrl = matchingConvergence ? `${COLONY_URL}/api/convergence` : `${COLONY_URL}/api/signals`;
+
+  if (opportunity?.preferredKind === "reply" && opportunity.parentTxHash && opportunity.attestUrl) {
+    return {
+      kind: "reply",
+      parentTxHash: opportunity.parentTxHash,
+      text: `Starter reply scaffold for ${opportunity.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
+      attestUrl: opportunity.attestUrl,
+      category: "OBSERVATION",
+      facts: {
+        topic: opportunity.normalizedTopic,
+        selectedAction: "reply",
+        replyTargetTxHash: opportunity.parentTxHash,
+        disagreementCount: freshestMatchedPost?.reactions.disagree ?? 0,
+        replyCount: freshestMatchedPost?.replyCount ?? 0,
+        convergenceAgents: matchingConvergence?.agentCount ?? 0,
+      },
+      audit: {
+        inputs: {
+          topSignal,
+          matchingConvergence,
+          matchedPosts: matchedPosts.slice(0, 3),
+        },
+        selectedEvidence: {
+          post: freshestMatchedPost,
+          routingOpportunity: opportunity,
+        },
+        promptPacket,
+        notes: [
+          "This colony-operator starter deliberately reads multiple colony surfaces before emitting a proof-oriented action intent.",
+          "Routing selection is now surfaced as a starter hint/opportunity, not as the full runtime's authored thread strategy.",
+        ],
+      },
+      nextState: {
+        ...ctx.memory.state,
+        lastTopic: opportunity.normalizedTopic,
+        lastActionKind: "reply",
+        lastPublishedAt: ctx.cycle.startedAt,
+        lastHandledTxHash: opportunity.parentTxHash,
+        handledTxHistory: buildHandledTxHistory(ctx.memory.state?.handledTxHistory, opportunity.parentTxHash),
+      },
+    };
+  }
 
   return {
     kind: "publish",
     category: "OBSERVATION",
-    text: `Starter publish scaffold for ${topSignal.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
-    attestUrl,
+    text: `Starter publish scaffold for ${opportunity?.topic ?? topSignal.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
+    attestUrl: opportunity?.attestUrl ?? (matchingConvergence ? `${COLONY_URL}/api/convergence` : `${COLONY_URL}/api/signals`),
     tags: ["starter", "observation", "colony-operator", "multi-surface"],
     confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
     facts: {
-      topic: topSignal.normalizedTopic,
+      topic: opportunity?.normalizedTopic ?? topSignal.normalizedTopic,
       selectedAction: "publish",
       signalCount: signalEntries.length,
       convergenceAgents: matchingConvergence?.agentCount ?? 0,
@@ -466,15 +503,18 @@ export async function observe(
         matchingConvergence,
         matchedPosts: matchedPosts.slice(0, 3),
       },
+      selectedEvidence: {
+        routingOpportunity: opportunity,
+      },
       promptPacket,
       notes: [
         "This colony-operator starter deliberately reads multiple colony surfaces before emitting a proof-oriented action intent.",
-        "Publish routing here is intentionally minimal scaffold behavior, not the full runtime's authored policy for when and how to post.",
+        "Routing selection is now surfaced as a starter hint/opportunity, not as the full runtime's authored publish policy.",
       ],
     },
     nextState: {
       ...ctx.memory.state,
-      lastTopic: topSignal.normalizedTopic,
+      lastTopic: opportunity?.normalizedTopic ?? topSignal.normalizedTopic,
       lastActionKind: "publish",
       lastPublishedAt: ctx.cycle.startedAt,
       lastHandledTxHash: freshestHandled ?? ctx.memory.state?.lastHandledTxHash,

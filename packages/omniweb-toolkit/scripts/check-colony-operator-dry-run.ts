@@ -11,8 +11,13 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   iteration: number;
   dryRun: boolean;
   decision: {
-    kind: "skip" | "reply" | "publish";
+    kind: "skip" | "reply" | "publish" | "action";
     reason?: string | null;
+    action?: {
+      type?: "publish" | "reply" | "react" | "tip" | "bet";
+      text?: string;
+      category?: string;
+    };
     facts?: Record<string, unknown>;
   };
   memoryAfter: Record<string, unknown>;
@@ -29,7 +34,7 @@ const allowedArgs = new Set(["--record", "-r", "--help", "-h"]);
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-dry-run.ts [options]
 
-Run one dry-run cycle of the primary colony-operator starter and assert that the maintained MVP path stays no-spend while producing a real runtime artifact.
+Run one dry-run cycle of the primary colony-operator starter and assert that the maintained MVP path stays no-spend while producing a real runtime artifact. Also assert that the current starter/runtime seam can surface a generic action intent in dry-run mode.
 
 Options:
   --record, -r   Print the full cycle record after the JSON summary
@@ -84,7 +89,10 @@ const checks = {
   dryRunFlag: record?.dryRun === true,
   noSpendEstimate: (record?.outcome.demSpendEstimate ?? -1) === 0,
   outcomeIsSafe: record?.outcome.status === "dry_run" || record?.outcome.status === "skipped",
-  decisionIsObservable: record?.decision.kind === "skip" || record?.decision.kind === "reply" || record?.decision.kind === "publish",
+  decisionIsObservable: record?.decision.kind === "skip" || record?.decision.kind === "reply" || record?.decision.kind === "publish" || record?.decision.kind === "action",
+  actionShapeSupported: record?.decision.kind !== "action"
+    || record.decision.action?.type === "publish"
+    || record.decision.action?.type === "reply",
   persistedLatestRecord: persistedRecord?.cycleId === record?.cycleId,
   stateRecorded: persistedRecord?.memoryAfter != null,
 };
@@ -108,6 +116,7 @@ const summary = {
         cycleId: record.cycleId,
         iteration: record.iteration,
         decisionKind: record.decision.kind,
+        actionType: record.decision.kind === "action" ? record.decision.action?.type ?? null : null,
         decisionReason: record.decision.reason ?? null,
         outcomeStatus: record.outcome.status,
         selectedTopic: record.decision.facts && typeof record.decision.facts === "object" && "topic" in record.decision.facts

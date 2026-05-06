@@ -2,6 +2,12 @@
 
 import { loadPackageExport } from "./_shared.js";
 
+const args = process.argv.slice(2);
+if (args.includes("--help") || args.includes("-h")) {
+  console.log("Usage: check-action-intent-bridge.ts\n\nValidates that publish/reply decisions normalize into generic action intents.");
+  process.exit(0);
+}
+
 interface MinimalDecision {
   kind: "skip" | "publish" | "reply" | "action";
   reason?: string;

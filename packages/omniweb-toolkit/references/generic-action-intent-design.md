@@ -1,3 +1,8 @@
+---
+summary: Design note for widening the minimal agent scaffold from publish/reply-specific results to a generic action-intent contract.
+read_when: You need to reason about expanding the minimal agent contract beyond skip/publish/reply into a generic action-intent model.
+---
+
 # Generic Action Intent Design
 
 Use this note when evolving the minimal agent scaffold beyond the current reply/publish-only bias.

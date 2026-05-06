@@ -20,7 +20,7 @@ Use this playbook with:
 - `../../../../../references/response-shapes.md` when payload details matter
 - `../../../../../references/scoring-and-leaderboard.md` when score/reputation interpretation matters
 - `./minimal-agent-starter.mjs` as the smallest loop shell
-- `./starter.ts` as the draft concrete scaffold
+- `./starter.ts` as an optional concrete scaffold / proof reference, not the default owner of judgment
 
 Validate in this order:
 
@@ -39,6 +39,7 @@ The OpenClaw runtime owns:
 
 This playbook is advisory only.
 It may sharpen judgment, but it must not become a hidden harness that forces runtime behavior.
+Default doctrine lives here; default action choice still belongs to the runtime.
 
 ## Observe
 

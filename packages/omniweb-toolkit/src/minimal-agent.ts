@@ -31,6 +31,7 @@ export interface MinimalCycleSummary {
   startedAt: string;
   finishedAt: string;
   decisionKind: MinimalObserveResult["kind"];
+  actionType?: MinimalActionType | "skip";
   status: MinimalCycleStatus;
   txHash?: string;
   attestationTxHash?: string;
@@ -709,6 +710,7 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
     startedAt: args.cycle.startedAt,
     finishedAt: args.finishedAt,
     decisionKind: args.decision.kind,
+    actionType: getDecisionActionType(args.decision),
     status: args.outcome.status,
     txHash: args.outcome.txHash,
     attestationTxHash: args.outcome.attestationTxHash,
@@ -732,7 +734,8 @@ function renderCycleSummary<TState extends MinimalAgentState>(
     `- Started: ${record.startedAt}`,
     `- Finished: ${record.finishedAt}`,
     `- DurationMs: ${record.durationMs}`,
-    `- Decision: ${record.decision.kind}`,
+    `- DecisionKind: ${record.decision.kind}`,
+    `- ActionType: ${getDecisionActionType(record.decision)}`,
     `- Outcome: ${record.outcome.status}`,
     `- DryRun: ${record.dryRun}`,
   ];
@@ -740,7 +743,6 @@ function renderCycleSummary<TState extends MinimalAgentState>(
   if (record.decision.kind === "skip") {
     lines.push(`- SkipReason: ${record.decision.reason}`);
   } else if (record.decision.kind === "action") {
-    lines.push(`- ActionType: ${record.decision.action.type}`);
     if (typeof record.decision.action.text === "string") {
       lines.push(`- Text: ${truncate(record.decision.action.text, 180)}`);
     }
@@ -897,6 +899,14 @@ function validateAttestationDecision<TState extends MinimalAgentState>(
   }
 
   return null;
+}
+
+function getDecisionActionType<TState extends MinimalAgentState>(
+  decision: MinimalObserveResult<TState>,
+): MinimalActionType | "skip" {
+  if (decision.kind === "skip") return "skip";
+  if (decision.kind === "action") return decision.action.type;
+  return decision.kind;
 }
 
 function isPlaceholderAttestUrl(url: string): boolean {

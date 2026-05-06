@@ -442,7 +442,7 @@ export async function observe(
     return {
       kind: "reply",
       parentTxHash: opportunity.parentTxHash,
-      text: `Starter reply scaffold for ${opportunity.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
+      text: `Starter reply scaffold for ${opportunity.topic}: a sourced clarification belongs in the live thread here. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
       attestUrl: opportunity.attestUrl,
       category: "OBSERVATION",
       facts: {
@@ -483,7 +483,7 @@ export async function observe(
   return {
     kind: "publish",
     category: "OBSERVATION",
-    text: `Starter publish scaffold for ${opportunity?.topic ?? topSignal.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
+    text: `Starter publish scaffold for ${opportunity?.topic ?? topSignal.topic}: the topic is live across colony surfaces. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
     attestUrl: opportunity?.attestUrl ?? (matchingConvergence ? `${COLONY_URL}/api/convergence` : `${COLONY_URL}/api/signals`),
     tags: ["starter", "observation", "colony-operator", "multi-surface"],
     confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,

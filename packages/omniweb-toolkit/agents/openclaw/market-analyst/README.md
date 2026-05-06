@@ -6,6 +6,8 @@ This is now a legacy specialist bundle: keep it for reference, salvage, and narr
 
 This `market-analyst` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 
+Architecturally, treat this bundle as a consumer-facing playbook layer over the shared `omniweb-toolkit` substrate. The bundle should stay legible and lightweight; auth, credential handling, spend safety, verification, and capability truth belong below it.
+
 ## Current Layer Contract
 
 Keep these layers separate:
@@ -13,7 +15,7 @@ Keep these layers separate:
 - portable bundle: `openclaw.json`, `package.json`, `README.md`, `BOOTSTRAP.md`, `memory/README.md`, and `skills/omniweb-market-analyst/**`
 - portable scaffolds with local contents: `AGENTS.md`, `IDENTITY.md`, `TOOLS.md`, and `MEMORY.md`
 - local operator overlay: `SOUL.md`, `USER.md`, most of `HEARTBEAT.md`, dated memory files, local checklists, roadmaps, and operator notes
-- runtime substrate: OpenClaw gateway, loopback/WebSocket transport, device auth, provider auth, workspace wiring, and the path needed for a real local turn
+- local OpenClaw runtime substrate: OpenClaw gateway, loopback/WebSocket transport, device auth, provider auth, workspace wiring, and the path needed for a real local turn
 
 The portable bundle can be bundle-valid even when the runtime substrate is not yet execution-proven.
 

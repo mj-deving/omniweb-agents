@@ -30,7 +30,7 @@ import {
 
 interface ResearchState {
   lastCoverageTopic?: string;
-  lastPublishedAt?: string;
+  lastActionAt?: string;
   lastResearchSnapshot?: {
     topic: string;
     observedAt: string;
@@ -61,7 +61,7 @@ interface ReadResult<T> {
 
 const MAX_TOPIC_HISTORY = 5;
 const RESEARCH_FRONTIER_SIZE = 4;
-const PUBLISH_COOLDOWN_MS = 30 * 60 * 1000;
+const ACTION_COOLDOWN_MS = 30 * 60 * 1000;
 const CROSS_FAMILY_COOLDOWN_OVERRIDE_SCORE = 130;
 
 interface RankedResearchOpportunity extends ResearchOpportunity {
@@ -528,7 +528,7 @@ export async function observe(
     ctx.memory.state,
     ctx.cycle.startedAt,
   );
-  const publishedAtMs = parseTimestamp(ctx.memory.state?.lastPublishedAt);
+  const lastActionAtMs = parseTimestamp(ctx.memory.state?.lastActionAt);
   const mostRecentPublishFamily = normalizeTopic(ctx.memory.state?.publishHistory?.[0]?.family ?? null);
   const derivedMetrics = {
     highConfidenceSignalCount: highConfidenceSignals.length,
@@ -591,21 +591,21 @@ export async function observe(
       allPosts: posts,
     });
     const sameFamilyAsRecentPublish = normalizeTopic(sourceProfile.family) === mostRecentPublishFamily;
-    const cooldownOverrideAllowed = publishedAtMs != null
-      && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS
+    const cooldownOverrideAllowed = lastActionAtMs != null
+      && Date.parse(ctx.cycle.startedAt) - lastActionAtMs < ACTION_COOLDOWN_MS
       && mostRecentPublishFamily != null
       && !sameFamilyAsRecentPublish
       && chosenOpportunity.portfolioScore >= CROSS_FAMILY_COOLDOWN_OVERRIDE_SCORE;
 
     if (
-      publishedAtMs != null
+      lastActionAtMs != null
       && mostRecentPublishFamily != null
-      && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS
+      && Date.parse(ctx.cycle.startedAt) - lastActionAtMs < ACTION_COOLDOWN_MS
       && !cooldownOverrideAllowed
     ) {
       deferredCooldownSkip ??= {
         kind: "skip",
-        reason: "published_within_last_30m",
+        reason: "acted_within_last_30m",
         facts: {
           topic,
           researchFamily: sourceProfile.family,
@@ -615,8 +615,8 @@ export async function observe(
           opportunityKind: chosenOpportunity.kind,
           opportunityScore: chosenOpportunity.score,
           portfolioScore: chosenOpportunity.portfolioScore,
-          lastPublishedAt: ctx.memory.state?.lastPublishedAt ?? null,
-          cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
+          lastActionAt: ctx.memory.state?.lastActionAt ?? null,
+          cooldownMsRemaining: ACTION_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - lastActionAtMs),
           sameFamilyAsRecentPublish,
           ...derivedMetrics,
           ...readStatus,
@@ -1133,7 +1133,7 @@ export async function observe(
       },
       nextState: {
         lastCoverageTopic: topic,
-        lastPublishedAt: ctx.cycle.startedAt,
+        lastActionAt: ctx.cycle.startedAt,
         topicHistory: buildNextTopicHistory(ctx.memory.state?.topicHistory ?? [], {
           topic,
           publishedAt: ctx.cycle.startedAt,

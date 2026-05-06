@@ -151,7 +151,7 @@ describe("simple research-agent starter", () => {
       memory: {
         state: {
           lastCoverageTopic: "older-topic",
-          lastPublishedAt: "2026-04-18T08:00:00.000Z",
+          lastActionAt: "2026-04-18T08:00:00.000Z",
         },
         lastCycle: null,
       },
@@ -159,7 +159,7 @@ describe("simple research-agent starter", () => {
 
     expect(result.kind).toBe("skip");
     if (result.kind !== "skip") throw new Error("expected skip");
-    expect(result.reason).toBe("published_within_last_30m");
+    expect(result.reason).toBe("acted_within_last_30m");
   });
 
   it("keeps working when the optional leaderboard read fails", async () => {

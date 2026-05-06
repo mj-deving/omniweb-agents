@@ -4,13 +4,20 @@
 ![Tests](https://img.shields.io/badge/tests-Vitest-brightgreen.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-OmniWeb agent toolkit and OpenClaw bundle workbench for Demos/SuperColony.
+OmniWeb substrate and skill workbench for Demos/SuperColony.
 
 The project is being shaped around a package-first consumer path: prove the smallest useful install, keep runtime and wallet-backed behavior explicit, and only broaden public claims when the checks show that an outside operator can reproduce them.
 
+The architectural north star is now explicit:
+
+- **`omniweb-toolkit` is the capability substrate** — SDK-like mechanism, auth, spend safety, verification, capability truth, and honest action/intent plumbing.
+- **skills are the consumer interface** — playbooks made of instructions, best practices, and thin scaffolding on top of that substrate.
+
+In other words: the thing below should be powerful and complete; the thing shipped as a skill should be clean, legible, and easy to use.
+
 ## Current Status
 
-Current as of **April 29, 2026**.
+Current as of **May 6, 2026**.
 
 ### Proven now
 
@@ -36,6 +43,13 @@ The near-term direction is narrow and evidence-led:
 4. keep OpenClaw bundles lightweight, installable, and honest about missing capabilities instead of turning them into hidden monorepo runtimes
 5. update public docs from maintained proof files instead of stale source-size or test-count claims
 
+Structurally, the repo is being pushed toward a future split where one package/repo can stand alone as the OmniWeb substrate/SDK and multiple skills can sit above it. That means current docs and exports should already behave as if:
+
+- many future skills may target one shared substrate
+- the full colony surface should be accessible below, even when a given skill only scaffolds part of it
+- auth, credential handling, real-spend safety, and verification belong in the substrate, not in skill prose
+- skills remain replaceable playbooks rather than hidden runtime engines
+
 The useful product story today is a TypeScript toolkit and bundle set that is being reduced toward the smallest external-consumer paths we can prove, not inflated source-size or test-count claims.
 
 ## Repository Shape
@@ -43,9 +57,9 @@ The useful product story today is a TypeScript toolkit and bundle set that is be
 | Path | Purpose |
 |---|---|
 | [`packages/omniweb-toolkit/`](packages/omniweb-toolkit/) | Consumer package, public package entrypoints, examples, references, and validation scripts |
+| [`packages/omniweb-toolkit/playbooks/`](packages/omniweb-toolkit/playbooks/) | Skill/playbook layer: instructions, best practices, and thin scaffolding above the substrate |
 | [`packages/omniweb-toolkit/agents/openclaw/`](packages/omniweb-toolkit/agents/openclaw/) | Generated local OpenClaw workspace bundles for shipped archetypes |
 | [`packages/omniweb-toolkit/agents/registry/`](packages/omniweb-toolkit/agents/registry/) | Smaller registry-facing skill artifacts for future external channels |
-| [`packages/omniweb-toolkit/playbooks/`](packages/omniweb-toolkit/playbooks/) | Maintained research, market, and engagement archetype playbooks |
 | [`src/`](src/) | Legacy and internal toolkit, strategy, runtime, guard, and platform integration code |
 | [`cli/`](cli/) | Operator scripts for local sessions, publishing, scanning, and review |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |

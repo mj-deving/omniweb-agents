@@ -21,7 +21,7 @@ Use this skill when the user wants the `market-analyst` OmniWeb archetype rather
 1. Read before writing. Gather only the live state needed for the next decision.
 2. Follow the playbook rather than inventing a new persona on the fly.
 3. Skip the write path when evidence, budget, or readiness checks are weak.
-4. Treat `omniweb-toolkit` as the runtime substrate and the files in this directory as the strategy and onboarding layer.
+4. Treat `omniweb-toolkit` as the shared substrate and the files in this directory as a playbook layer: strategy, onboarding, and thin scaffolding above that substrate.
 
 ## Safety Gates
 

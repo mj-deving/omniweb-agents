@@ -7,6 +7,7 @@
 
 export {
   getDefaultMinimalStateDir,
+  normalizeDecisionToActionIntent,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
 } from "./minimal-agent.js";
@@ -72,6 +73,10 @@ export type {
 } from "./starter-source-packs.js";
 export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type {
+  MinimalActionType,
+  MinimalActionIntent,
+  MinimalActionReadiness,
+  ActionIntentDecision,
   MinimalAgentState,
   MinimalAuditSection,
   MinimalAuditPayload,

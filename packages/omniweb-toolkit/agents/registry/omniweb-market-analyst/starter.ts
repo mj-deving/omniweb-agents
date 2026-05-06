@@ -17,7 +17,7 @@ import {
 interface MarketState {
   lastAsset?: string;
   lastOpportunityKind?: string;
-  lastPublishedAt?: string;
+  lastActionAt?: string;
   preferredCategory?: "ANALYSIS" | "PREDICTION";
   assetHistory?: Array<{
     asset: string;
@@ -35,7 +35,7 @@ interface FeedSample {
 }
 
 const TRACKED_ASSETS = ["BTC", "ETH", "SOL"];
-const PUBLISH_COOLDOWN_MS = 30 * 60 * 1000;
+const ACTION_COOLDOWN_MS = 30 * 60 * 1000;
 const MAX_ASSET_HISTORY = 5;
 const DEFAULT_PREDICTION_HORIZON = "30m";
 
@@ -227,7 +227,7 @@ export async function observe(
     };
   }
 
-  const publishedAtMs = parseIsoMs(ctx.memory.state?.lastPublishedAt);
+  const lastActionAtMs = parseIsoMs(ctx.memory.state?.lastActionAt);
   if (
     ctx.memory.state?.lastAsset === chosenOpportunity.asset
     && ctx.memory.state?.lastOpportunityKind === chosenOpportunity.kind
@@ -238,7 +238,7 @@ export async function observe(
       facts: {
         asset: chosenOpportunity.asset,
         opportunityKind: chosenOpportunity.kind,
-        lastPublishedAt: ctx.memory.state?.lastPublishedAt ?? null,
+        lastActionAt: ctx.memory.state?.lastActionAt ?? null,
       },
       attestationPlan: chosenOpportunity.attestationPlan,
       audit: {
@@ -267,15 +267,15 @@ export async function observe(
     };
   }
 
-  if (publishedAtMs != null && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS) {
+  if (lastActionAtMs != null && Date.parse(ctx.cycle.startedAt) - lastActionAtMs < ACTION_COOLDOWN_MS) {
     return {
       kind: "skip",
-      reason: "published_within_last_30m",
+      reason: "acted_within_last_30m",
       facts: {
         asset: chosenOpportunity.asset,
         opportunityKind: chosenOpportunity.kind,
-        lastPublishedAt: ctx.memory.state?.lastPublishedAt ?? null,
-        cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
+        lastActionAt: ctx.memory.state?.lastActionAt ?? null,
+        cooldownMsRemaining: ACTION_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - lastActionAtMs),
       },
       attestationPlan: chosenOpportunity.attestationPlan,
       audit: {
@@ -293,7 +293,7 @@ export async function observe(
           matchedSignal: chosenOpportunity.matchedSignal,
         },
         promptPacket: {
-          objective: "Skip repeated market publishes until the 30-minute cooldown expires.",
+          objective: "Skip repeated market actions until the 30-minute cooldown expires.",
           asset: chosenOpportunity.asset,
           opportunityKind: chosenOpportunity.kind,
           result: "skip",
@@ -454,7 +454,7 @@ export async function observe(
     nextState: {
       lastAsset: chosenOpportunity.asset,
       lastOpportunityKind: chosenOpportunity.kind,
-      lastPublishedAt: ctx.cycle.startedAt,
+      lastActionAt: ctx.cycle.startedAt,
       preferredCategory: ctx.memory.state?.preferredCategory,
       assetHistory: buildNextAssetHistory(ctx.memory.state?.assetHistory ?? [], {
         asset: chosenOpportunity.asset,

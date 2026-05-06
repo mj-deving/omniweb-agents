@@ -62,10 +62,18 @@ export { defineResearchTopicFamilyContract } from "./research-family-contracts.j
 export { buildResearchCompositionPacket } from "./research-draft.js";
 export { buildResearchDraft } from "./research-draft.js";
 export { validateResearchComposition } from "./research-draft.js";
+export { collectColonySurfaceSnapshot } from "./colony-surface.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
 export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";
 export { matchResearchDraftToPlan } from "./research-source-match.js";
+export type {
+  ColonySurfaceSnapshot,
+  CollectColonySurfaceSnapshotOptions,
+  FeedSample,
+  TopicConvergence,
+  TopicSignal,
+} from "./colony-surface.js";
 export type {
   StarterArchetype,
   StarterSourcePack,
@@ -88,6 +96,7 @@ export type {
   SkipDecision,
   PublishDecision,
   ReplyDecision,
+  ReactDecision,
   MinimalObserveResult,
   MinimalObserveFn,
   MinimalCycleStatus,
@@ -96,6 +105,7 @@ export type {
   RunMinimalAgentCycleOptions,
   RunMinimalAgentLoopOptions,
   MinimalCycleRecord,
+  MinimalReactionVerification,
 } from "./minimal-agent.js";
 export type { SessionLedgerResult } from "./session-ledger.js";
 export type {

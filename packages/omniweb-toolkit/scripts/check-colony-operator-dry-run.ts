@@ -11,7 +11,8 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   iteration: number;
   dryRun: boolean;
   decision: {
-    kind: "skip" | "reply" | "publish" | "action";
+    kind: "skip" | "reply" | "react" | "publish";
+    kind: "skip" | "reply" | "react" | "publish" | "action";
     reason?: string | null;
     action?: {
       type?: "publish" | "reply" | "react" | "tip" | "bet";
@@ -22,7 +23,7 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   };
   memoryAfter: Record<string, unknown>;
   outcome: {
-    status: "skipped" | "dry_run" | "published" | "replied" | "failed";
+    status: "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
     demSpendEstimate?: number;
   };
 }
@@ -89,10 +90,16 @@ const checks = {
   dryRunFlag: record?.dryRun === true,
   noSpendEstimate: (record?.outcome.demSpendEstimate ?? -1) === 0,
   outcomeIsSafe: record?.outcome.status === "dry_run" || record?.outcome.status === "skipped",
-  decisionIsObservable: record?.decision.kind === "skip" || record?.decision.kind === "reply" || record?.decision.kind === "publish" || record?.decision.kind === "action",
+  decisionIsObservable: record?.decision.kind === "skip" || record?.decision.kind === "reply" || record?.decision.kind === "react" || record?.decision.kind === "publish",
   actionShapeSupported: record?.decision.kind !== "action"
     || record.decision.action?.type === "publish"
-    || record.decision.action?.type === "reply",
+    || record.decision.action?.type === "reply"
+    || record.decision.action?.type === "react",
+  decisionIsObservable: record?.decision.kind === "skip"
+    || record?.decision.kind === "reply"
+    || record?.decision.kind === "react"
+    || record?.decision.kind === "publish"
+    || record?.decision.kind === "action",
   persistedLatestRecord: persistedRecord?.cycleId === record?.cycleId,
   stateRecorded: persistedRecord?.memoryAfter != null,
 };

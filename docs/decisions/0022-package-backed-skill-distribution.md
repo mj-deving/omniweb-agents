@@ -38,7 +38,7 @@ Adopt the following external distribution model:
    The runtime package, playbooks, starters, generated exports, checks, and public docs source remain in this repo.
 
 2. **Keep `omniweb-toolkit` as the executable runtime package.**
-   Skills wrap and instruct around the package; they do not replace or duplicate it.
+   Skills wrap and instruct around the package; they do not replace or duplicate it. A skill is a playbook: instructions, best practices, and thin scaffolding that gives consumers a clean way to interact with the substrate.
 
 3. **Distribute public skills per archetype, not as one omnibus skill.**
    The external skill units are the maintained archetypes:

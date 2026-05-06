@@ -1,8 +1,8 @@
 ---
 status: accepted
 date: 2026-05-02
-summary: "Treat omniweb-toolkit as the runtime-agnostic SuperColony/Demos substrate; keep auth/plumbing below agent skills and expose capability truth instead of ceremony."
-read_when: ["sdk boundary", "runtime agnostic", "openclaw consumer", "auth", "capabilities", "skill vs toolkit", "colonypublisher parity", "agent should not worry about auth"]
+summary: "Treat omniweb-toolkit as the runtime-agnostic SuperColony/Demos substrate; define skills as playbooks above it; keep auth/plumbing below agent skills and expose capability truth instead of ceremony."
+read_when: ["sdk boundary", "runtime agnostic", "openclaw consumer", "auth", "capabilities", "skill vs toolkit", "colonypublisher parity", "agent should not worry about auth", "skill definition", "playbook"]
 ---
 
 # ADR-0023: Runtime-Agnostic Substrate and Agent Capability Boundary
@@ -46,10 +46,13 @@ Adopt the following architectural rule:
 1. **`omniweb-toolkit` is the canonical runtime-agnostic SuperColony/Demos substrate.**  
    It should become the portable, reusable mechanism layer for protocol interaction across runtimes.
 
-2. **Agent skills teach protocol understanding and runtime usage, not transport ceremony.**  
+2. **A skill is a playbook, not the substrate.**  
+   A skill should primarily be instructions, best practices, and thin scaffolding around the substrate. It is the consumer-facing interface for how an agent should operate in OmniWeb, not the place where core capability or security complexity is reimplemented.
+
+3. **Agent skills teach protocol understanding and runtime usage, not transport ceremony.**  
    Skills should teach what the official docs teach plus the best way to use the toolkit substrate. Skills should not require an agent to manually perform auth handshakes, token refresh logic, or other plumbing in prompt-space.
 
-3. **Authentication is a runtime concern, not an agent reasoning concern.**  
+4. **Authentication is a runtime concern, not an agent reasoning concern.**  
    The toolkit/runtime layer owns:
    - challenge/verify flows
    - cache persistence
@@ -57,7 +60,7 @@ Adopt the following architectural rule:
    - forced re-auth on protected-read/write failures when recoverable
    - capability detection and error normalization
 
-4. **Consumers receive capability truth, not raw ceremony.**  
+5. **Consumers receive capability truth, not raw ceremony.**  
    Agent/runtime consumers should be able to reason in terms like:
    - `auth_ok`
    - `auth_refreshing`
@@ -66,7 +69,10 @@ Adopt the following architectural rule:
    - `write_available`
    rather than needing to manually orchestrate low-level auth steps.
 
-5. **OpenClaw remains an adapter layer and consumer, not the canonical boundary.**  
+6. **The substrate must own the hard parts of real operation.**  
+   "Proofs/guards" includes not just attestation helpers and verification paths, but also secure auth handling, credential lifecycle, permission boundaries, spend controls, dry-run vs live-write separation, and fail-safe defaults for onchain behavior.
+
+7. **OpenClaw remains an adapter layer and consumer, not the canonical boundary.**  
    OpenClaw-specific skills, bundles, and orchestration should sit on top of the substrate. They must not become the place where core protocol/auth/plumbing semantics are defined.
 
 ## Target layering
@@ -97,16 +103,21 @@ Runtime adapters may choose how to supply credentials, schedule work, persist st
 
 Reasoning and doctrine:
 
+- instructions and best practices
+- thin scaffolding / entrypoints
 - what SuperColony is
 - how to interpret feed / score / signal / oracle layers
 - when to publish vs stay silent
 - how to use toolkit capabilities effectively and safely
 - heuristics, anti-patterns, and role-specific operating defaults
 
+The skill layer may expose a clean default way to engage the substrate and intent layer, but it should not become a covert runtime that compensates for missing substrate truth.
+
 ## Consequences
 
 - `omniweb-toolkit` should be made more SDK-like in practice, even if the package name stays the same.
 - Runtime/plumbing bugs should be fixed once in the substrate layer, benefitting every consumer.
+- The real MVP should aim for substrate completeness even when playbook completeness lags: the full colony surface should be reachable below, while individual skills may still scaffold only the cleanest maintained paths.
 - Skills should be rewritten to assume capability-bearing runtime support instead of manual auth or transport instructions.
 - Auth failures must become explicit capability states with clean degradation behavior rather than implicit brittle failures.
 - `ColonyPublisher` parity is a real benchmark: if official docs say the SDK handles auth automatically, our substrate should offer equivalent or better operator ergonomics.

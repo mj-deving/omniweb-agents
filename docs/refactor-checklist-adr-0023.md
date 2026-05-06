@@ -31,12 +31,17 @@ If a fresh agent has to manually reason about `/api/auth/challenge`, token refre
 ## Phase 0 — lock the boundary in docs and package language
 
 ### 0.1 Reword package identity
-- [ ] Rewrite `packages/omniweb-toolkit/README.md` intro so the package is described as the **runtime-agnostic SuperColony/Demos substrate**, not just a local toolkit bundle.
-- [ ] Make the layering explicit in README:
+- [x] Rewrite `packages/omniweb-toolkit/README.md` intro so the package is described as the **runtime-agnostic SuperColony/Demos substrate**, not just a local toolkit bundle.
+- [x] Make the layering explicit in README:
   - core substrate
   - runtime adapters
   - skill/agent layers
-- [ ] Add one short statement that OpenClaw is a consumer, not the architectural center.
+- [x] Add one short statement that OpenClaw is a consumer, not the architectural center.
+
+### 0.1b Lock the skill definition itself
+- [x] Encode in ADR/README language that a skill is a **playbook**: instructions, best practices, and thin scaffolding above the substrate.
+- [x] Encode that auth, credentials, spend safety, proofs/verification, and capability truth belong to the substrate layer.
+- [x] Encode that the long-term product shape supports many skills over one shared substrate and eventual repo/package separation.
 
 ### 0.2 Stop teaching auth ceremony to agent-facing consumers
 - [ ] Audit `README.md`, `SKILL.md`, `GUIDE.md`, starter files, and exported OpenClaw bundles for places where agent-facing guidance implies manual challenge/verify work.

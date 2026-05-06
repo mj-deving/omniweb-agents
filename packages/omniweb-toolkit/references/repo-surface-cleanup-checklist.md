@@ -1,3 +1,8 @@
+---
+summary: Checklist for keeping the baseline colony-operator path central while demoting or archiving stale specialist and mixed-era surfaces.
+read_when: You are cleaning the repo front path or deciding what stays first-class versus supporting or archival.
+---
+
 # Repo Surface Cleanup Checklist
 
 Use this checklist to move the repo toward a cleaner front path around the runtime-owned colony-operator baseline.

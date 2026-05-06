@@ -1,3 +1,8 @@
+---
+summary: Classification rule for what belongs on the repo front path versus supporting or archival status.
+read_when: You need to decide whether a doc, proof surface, starter, or bundle should stay central, be demoted, or be archived.
+---
+
 # Repo Surface Policy
 
 Use this note when deciding what should stay on the repo's front path versus what should move to supporting or archival status.

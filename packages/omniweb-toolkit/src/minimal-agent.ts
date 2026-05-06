@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import type { PublishResult, ToolResult } from "../../../src/toolkit/types.js";
+import type { PublishResult, ReactionType, ToolResult } from "../../../src/toolkit/types.js";
 import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
 import { runDirectAttestedWrite } from "./direct-attested-write.js";
@@ -36,7 +36,7 @@ export interface MinimalCycleSummary {
   txHash?: string;
   attestationTxHash?: string;
   attestationResponseHash?: string;
-  verificationPath?: PublishVisibilityResult["verificationPath"];
+  verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"];
   visible?: boolean;
   indexedVisible?: boolean;
   observedScore?: number;
@@ -90,6 +90,7 @@ export interface MinimalActionIntent {
   confidence?: number;
   parentTxHash?: string;
   targetTxHash?: string;
+  reaction?: Exclude<ReactionType, null>;
   amount?: number;
   marketId?: string;
 }
@@ -129,17 +130,48 @@ export interface ReplyDecision<TState extends MinimalAgentState = MinimalAgentSt
   category?: string;
 }
 
+export interface ReactDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
+  kind: "react";
+  targetTxHash: string;
+  reaction: Exclude<ReactionType, null>;
+}
+
 export type MinimalObserveResult<TState extends MinimalAgentState = MinimalAgentState> =
   | SkipDecision<TState>
   | PublishDecision<TState>
   | ReplyDecision<TState>
+  | ReactDecision<TState>
   | ActionIntentDecision<TState>;
 
 export type MinimalObserveFn<TState extends MinimalAgentState = MinimalAgentState> = (
   ctx: MinimalObserveContext<TState>,
 ) => Promise<MinimalObserveResult<TState>>;
 
-export type MinimalCycleStatus = "skipped" | "dry_run" | "published" | "replied" | "failed";
+export type MinimalCycleStatus = "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
+
+export interface MinimalReactionVerification {
+  attempted: boolean;
+  visible: boolean;
+  indexedVisible: boolean;
+  polls: number;
+  elapsedMs: number;
+  txHash: string;
+  verificationPath: "reaction_counts";
+  reactionType: Exclude<ReactionType, null>;
+  before: {
+    agree: number;
+    disagree: number;
+    flag: number;
+    myReaction?: string | null;
+  } | null;
+  after: {
+    agree: number;
+    disagree: number;
+    flag: number;
+    myReaction?: string | null;
+  } | null;
+  error?: string;
+}
 
 export type MinimalErrorStage = "connect" | "observe" | "execute" | "verify";
 
@@ -195,8 +227,9 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
     attestationTxHash?: string;
     attestationResponseHash?: string;
     demSpendEstimate?: number;
-    verification?: PublishVisibilityResult;
+    verification?: PublishVisibilityResult | MinimalReactionVerification;
     publishResult?: ToolResult<PublishResult>;
+    reactionResult?: { ok: boolean; error?: unknown };
     error?: {
       stage: MinimalErrorStage;
       message: string;
@@ -205,6 +238,8 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
     };
   };
 }
+
+type MinimalVerificationResult = NonNullable<MinimalCycleRecord["outcome"]["verification"]>;
 
 interface StoredMinimalState<TState extends MinimalAgentState = MinimalAgentState> {
   version: 1;
@@ -228,6 +263,10 @@ export function normalizeDecisionToActionIntent<TState extends MinimalAgentState
 
   if (decision.kind === "action") {
     return decision;
+  }
+
+  if (decision.kind === "react") {
+    return null;
   }
 
   if (decision.kind === "publish") {
@@ -412,6 +451,101 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
           message: attestationGuardError,
           retryable: false,
         },
+      },
+    });
+    await persistCycleArtifacts(stateDir, record);
+    return record;
+  }
+
+  if (decision.kind === "react" || actionDecision?.action.type === "react") {
+    const targetTxHash = decision.kind === "react"
+      ? decision.targetTxHash
+      : actionDecision!.action.targetTxHash;
+    const reactionType = decision.kind === "react"
+      ? decision.reaction
+      : actionDecision!.action.reaction ?? "agree";
+
+    if (!targetTxHash) {
+      const record = buildCompletedRecord({
+        cycle,
+        startedAtMs,
+        now,
+        memoryBefore,
+        nextState: decision.nextState ?? memoryBefore.state,
+        decision,
+        outcome: {
+          status: "failed",
+          demSpendEstimate: 0,
+          error: {
+            stage: "execute",
+            message: "missing_reaction_target",
+            retryable: false,
+          },
+        },
+      });
+      await persistCycleArtifacts(stateDir, record);
+      return record;
+    }
+
+    const beforeResult = await omni.colony.getReactions(targetTxHash);
+    const before = normalizeReactionEnvelope(beforeResult?.ok === true ? beforeResult.data : undefined);
+    const reactionResult = await omni.colony.react(targetTxHash, reactionType);
+    const afterResult = await omni.colony.getReactions(targetTxHash);
+    const after = normalizeReactionEnvelope(afterResult?.ok === true ? afterResult.data : undefined);
+    const verification: MinimalReactionVerification = {
+      attempted: true,
+      visible: reactionResult?.ok === true,
+      indexedVisible: reactionResult?.ok === true,
+      polls: 1,
+      elapsedMs: 0,
+      txHash: targetTxHash,
+      verificationPath: "reaction_counts",
+      reactionType,
+      before,
+      after,
+      error: reactionReadbackSatisfied(before, after, reactionType)
+        ? undefined
+        : reactionResult?.ok === true
+          ? "reaction_readback_unconfirmed"
+          : readApiErrorMessage(reactionResult?.error) ?? "reaction_failed",
+    };
+
+    if (reactionResult?.ok !== true) {
+      const record = buildCompletedRecord({
+        cycle,
+        startedAtMs,
+        now,
+        memoryBefore,
+        nextState: decision.nextState ?? memoryBefore.state,
+        decision,
+        outcome: {
+          status: "failed",
+          demSpendEstimate: 0,
+          reactionResult: { ok: false, error: reactionResult?.error },
+          verification,
+          error: {
+            stage: "execute",
+            message: readApiErrorMessage(reactionResult?.error) ?? "reaction_failed",
+            retryable: true,
+          },
+        },
+      });
+      await persistCycleArtifacts(stateDir, record);
+      return record;
+    }
+
+    const record = buildCompletedRecord({
+      cycle,
+      startedAtMs,
+      now,
+      memoryBefore,
+      nextState: decision.nextState ?? memoryBefore.state,
+      decision,
+      outcome: {
+        status: "reacted",
+        demSpendEstimate: 0,
+        reactionResult: { ok: true },
+        verification,
       },
     });
     await persistCycleArtifacts(stateDir, record);
@@ -718,7 +852,7 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
     verificationPath: args.outcome.verification?.verificationPath,
     visible: args.outcome.verification?.visible,
     indexedVisible: args.outcome.verification?.indexedVisible,
-    observedScore: args.outcome.verification?.observedScore,
+    observedScore: getObservedScore(args.outcome.verification),
     errorStage: args.outcome.error?.stage,
     errorMessage: args.outcome.error?.message,
   };
@@ -743,12 +877,24 @@ function renderCycleSummary<TState extends MinimalAgentState>(
   if (record.decision.kind === "skip") {
     lines.push(`- SkipReason: ${record.decision.reason}`);
   } else if (record.decision.kind === "action") {
-    if (typeof record.decision.action.text === "string") {
-      lines.push(`- Text: ${truncate(record.decision.action.text, 180)}`);
+    if (record.decision.action.type === "react") {
+      if (record.decision.action.targetTxHash) {
+        lines.push(`- TargetTxHash: ${record.decision.action.targetTxHash}`);
+      }
+      if (record.decision.action.reaction) {
+        lines.push(`- Reaction: ${record.decision.action.reaction}`);
+      }
+    } else {
+      if (typeof record.decision.action.text === "string") {
+        lines.push(`- Text: ${truncate(record.decision.action.text, 180)}`);
+      }
+      if (typeof record.decision.action.category === "string") {
+        lines.push(`- Category: ${record.decision.action.category}`);
+      }
     }
-    if (typeof record.decision.action.category === "string") {
-      lines.push(`- Category: ${record.decision.action.category}`);
-    }
+  } else if (record.decision.kind === "react") {
+    lines.push(`- TargetTxHash: ${record.decision.targetTxHash}`);
+    lines.push(`- Reaction: ${record.decision.reaction}`);
   } else {
     lines.push(`- Text: ${truncate(record.decision.text, 180)}`);
     if ("category" in record.decision && typeof record.decision.category === "string") {
@@ -773,8 +919,9 @@ function renderCycleSummary<TState extends MinimalAgentState>(
     lines.push(`- IndexedVisible: ${record.outcome.verification.indexedVisible}`);
     lines.push(`- VerificationPath: ${record.outcome.verification.verificationPath ?? "none"}`);
     lines.push(`- VerificationPolls: ${record.outcome.verification.polls}`);
-    if (typeof record.outcome.verification.observedScore === "number") {
-      lines.push(`- ObservedScore: ${record.outcome.verification.observedScore}`);
+    const observedScore = getObservedScore(record.outcome.verification);
+    if (typeof observedScore === "number") {
+      lines.push(`- ObservedScore: ${observedScore}`);
     }
     if (record.outcome.verification.error) {
       lines.push(`- VerificationNote: ${record.outcome.verification.error}`);
@@ -866,6 +1013,38 @@ function collectAuditSections(audit: MinimalAuditPayload | undefined): string[] 
 function hasKeys(value: Record<string, unknown> | undefined): boolean {
   if (!value) return false;
   return Object.keys(value).length > 0;
+}
+
+function normalizeReactionEnvelope(value: unknown): MinimalReactionVerification["before"] {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  return {
+    agree: typeof record.agree === "number" ? record.agree : 0,
+    disagree: typeof record.disagree === "number" ? record.disagree : 0,
+    flag: typeof record.flag === "number" ? record.flag : 0,
+    myReaction: typeof record.myReaction === "string" ? record.myReaction : null,
+  };
+}
+
+function getObservedScore(verification?: MinimalVerificationResult): number | undefined {
+  if (!verification || !("observedScore" in verification)) return undefined;
+  return typeof verification.observedScore === "number" ? verification.observedScore : undefined;
+}
+
+function reactionReadbackSatisfied(
+  before: MinimalReactionVerification["before"],
+  after: MinimalReactionVerification["after"],
+  expectedType: Exclude<ReactionType, null>,
+): boolean {
+  if (!after) return false;
+  if (after.myReaction === expectedType) return true;
+  return after[expectedType] > (before?.[expectedType] ?? 0);
+}
+
+function readApiErrorMessage(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const message = (value as { message?: unknown }).message;
+  return typeof message === "string" && message.length > 0 ? message : null;
 }
 
 function validateAttestationDecision<TState extends MinimalAgentState>(
@@ -981,6 +1160,11 @@ async function persistSessionLedger<TState extends MinimalAgentState>(
     action: actionType,
     status: record.outcome.status,
     tx_hash: record.outcome.txHash ?? null,
+    target_tx_hash: record.decision.kind === "react"
+      ? record.decision.targetTxHash
+      : record.decision.kind === "action" && record.decision.action.type === "react"
+        ? record.decision.action.targetTxHash ?? null
+        : null,
     dem_spent: record.outcome.demSpendEstimate ?? 0,
     verification: record.outcome.verification ?? null,
     error: record.outcome.error ?? null,
@@ -1019,11 +1203,13 @@ function buildSessionResult<TState extends MinimalAgentState>(
 function buildScorecardSummary<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
 ): Record<string, unknown> | null {
-  if (typeof record.outcome.verification?.observedScore === "number") {
+  const verification = record.outcome.verification;
+  const observedScore = getObservedScore(verification);
+  if (typeof observedScore === "number") {
     return {
-      observed_score: record.outcome.verification.observedScore,
-      indexed_visible: record.outcome.verification.indexedVisible ?? false,
-      verification_path: record.outcome.verification.verificationPath ?? null,
+      observed_score: observedScore,
+      indexed_visible: verification?.indexedVisible ?? false,
+      verification_path: verification?.verificationPath ?? null,
     };
   }
 

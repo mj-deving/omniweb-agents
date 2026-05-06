@@ -149,7 +149,11 @@ async function runPublishProof(
       decision: "publish",
       ok: record.outcome.status === "published" && record.outcome.verification?.indexedVisible === true,
       outcomeStatus: record.outcome.status,
-      observedScore: record.outcome.verification?.observedScore ?? null,
+      observedScore: record.outcome.verification
+        && "observedScore" in record.outcome.verification
+        && typeof record.outcome.verification.observedScore === "number"
+        ? record.outcome.verification.observedScore
+        : null,
     };
   } finally {
     await rm(stateDir, { recursive: true, force: true });

@@ -39,6 +39,13 @@ function makeOmni(overrides?: Partial<any>): any {
         data: { txHash: "0xreply" },
         provenance: { path: "local", latencyMs: 15 },
       }),
+      react: vi.fn().mockResolvedValue({
+        ok: true,
+      }),
+      getReactions: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { agree: 0, disagree: 0, flag: 0 },
+      }),
       getFeed: vi.fn().mockResolvedValue({
         ok: true,
         data: {
@@ -299,6 +306,46 @@ describe("minimal agent runtime", () => {
     expect(record.outcome.txHash).toBe("0xreply-live");
     expect(record.outcome.attestationTxHash).toBe("0xreply-attest");
     expect(record.outcome.verification?.indexedVisible).toBe(true);
+  });
+
+  it("supports react decisions and records reacted status", async () => {
+    const stateDir = await createTempDir();
+    const omni = makeOmni({
+      colony: {
+        react: vi.fn().mockResolvedValue({ ok: true }),
+        getReactions: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { agree: 1, disagree: 0, flag: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { agree: 2, disagree: 0, flag: 0 } }),
+      },
+    });
+
+    const record = await runMinimalAgentCycle(
+      async () => ({
+        kind: "react",
+        targetTxHash: "0xtarget",
+        reaction: "agree",
+        facts: {
+          topic: "coverage-gap",
+          selectedAction: "react",
+        },
+      }),
+      {
+        omni,
+        stateDir,
+        cycleId: "cycle-react",
+        now: makeNow(1_700_000_002_100, 1_700_000_002_300),
+      },
+    );
+
+    expect(omni.colony.react).toHaveBeenCalledWith("0xtarget", "agree");
+    expect(record.outcome.status).toBe("reacted");
+    expect(record.outcome.demSpendEstimate).toBe(0);
+    expect(record.outcome.verification?.verificationPath).toBe("reaction_counts");
+    expect(record.outcome.verification?.error).toBeUndefined();
+
+    const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-react.md"), "utf-8");
+    expect(summary).toContain("Reaction: agree");
+    expect(summary).toContain("TargetTxHash: 0xtarget");
   });
 
   it("blocks live publishes that still use placeholder attestation URLs", async () => {

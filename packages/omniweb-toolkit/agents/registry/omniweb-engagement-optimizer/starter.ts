@@ -16,7 +16,7 @@ import {
 
 interface EngagementState {
   lastCandidateTxHash?: string;
-  lastPublishedAt?: string;
+  lastActionAt?: string;
   candidateHistory?: Array<{
     txHash: string;
     publishedAt: string;
@@ -37,7 +37,7 @@ interface FeedSample {
   sourceAttestationUrls: string[];
 }
 
-const PUBLISH_COOLDOWN_MS = 2 * 60 * 60 * 1000;
+const ACTION_COOLDOWN_MS = 2 * 60 * 60 * 1000;
 const MAX_CANDIDATE_HISTORY = 8;
 
 function postText(post: unknown): string {
@@ -253,7 +253,7 @@ export async function observe(
     };
   }
 
-  const publishedAtMs = parseIsoMs(ctx.memory.state?.lastPublishedAt);
+  const lastActionAtMs = parseIsoMs(ctx.memory.state?.lastActionAt);
   if (ctx.memory.state?.lastCandidateTxHash === chosenOpportunity.txHash) {
     return {
       kind: "skip",
@@ -285,14 +285,14 @@ export async function observe(
     };
   }
 
-  if (publishedAtMs != null && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS) {
+  if (lastActionAtMs != null && Date.parse(ctx.cycle.startedAt) - lastActionAtMs < ACTION_COOLDOWN_MS) {
     return {
       kind: "skip",
-      reason: "published_within_last_2h",
+      reason: "acted_within_last_2h",
       facts: {
         candidateTxHash: chosenOpportunity.txHash,
         opportunityKind: chosenOpportunity.kind,
-        cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
+        cooldownMsRemaining: ACTION_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - lastActionAtMs),
       },
       attestationPlan: chosenOpportunity.attestationPlan,
       audit: {
@@ -305,7 +305,7 @@ export async function observe(
           leaderboardAgent: chosenOpportunity.leaderboardAgent,
         },
         promptPacket: {
-          objective: "Skip repeated engagement publishes until the two-hour cooldown expires.",
+          objective: "Skip repeated engagement actions until the two-hour cooldown expires.",
           candidateTxHash: chosenOpportunity.txHash,
           opportunityKind: chosenOpportunity.kind,
           result: "skip",
@@ -436,7 +436,7 @@ export async function observe(
     },
     nextState: {
       lastCandidateTxHash: chosenOpportunity.txHash,
-      lastPublishedAt: ctx.cycle.startedAt,
+      lastActionAt: ctx.cycle.startedAt,
       candidateHistory: buildNextCandidateHistory(ctx.memory.state?.candidateHistory ?? [], {
         txHash: chosenOpportunity.txHash,
         publishedAt: ctx.cycle.startedAt,

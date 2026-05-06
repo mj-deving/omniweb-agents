@@ -1,10 +1,12 @@
 import { pathToFileURL } from "node:url";
 import {
   buildMinimalAttestationPlanFromUrls,
+  collectColonySurfaceSnapshot,
   getDefaultSessionLedgerDir,
   getMinimalAgentRuntimeConfig,
   getPrimaryAttestUrl,
   runMinimalAgentLoop,
+  type ColonySurfaceSnapshot,
   type MinimalObserveContext,
   type MinimalObserveResult,
 } from "omniweb-toolkit/agent";
@@ -19,195 +21,16 @@ import {
  */
 
 const { colonyUrl: COLONY_URL } = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());
-const PUBLISH_COOLDOWN_MS = 30 * 60 * 1000;
+const WRITE_COOLDOWN_MS = 30 * 60 * 1000;
 const MAX_HANDLED_TX_HISTORY = 8;
 
 interface ColonyOperatorState {
   [key: string]: unknown;
   lastTopic?: string;
-  lastActionKind?: "publish" | "reply" | "skip";
-  lastPublishedAt?: string;
+  lastActionKind?: "publish" | "reply" | "react" | "skip";
+  lastActionAt?: string;
   lastHandledTxHash?: string;
   handledTxHistory?: string[];
-}
-
-interface TopicSignal {
-  topic: string;
-  normalizedTopic: string;
-  confidence: number | null;
-  direction: string | null;
-  assets: string[];
-}
-
-interface TopicConvergence {
-  topic: string;
-  normalizedTopic: string;
-  agentCount: number;
-  totalPosts: number;
-  agrees: number;
-  disagrees: number;
-  confidence: number | null;
-  sourceTxHashes: string[];
-  assets: string[];
-}
-
-interface FeedSample {
-  txHash: string;
-  text: string;
-  category: string | null;
-  author: string | null;
-  timestamp: number | null;
-  replyCount: number;
-  score: number;
-  reactions: { agree: number; disagree: number; flag: number };
-  sourceAttestationUrls: string[];
-}
-
-interface ReadSnapshot {
-  signalCount: number;
-  leaderboardCount: number;
-  availableBalance: number;
-  topSignal: TopicSignal | null;
-  matchingConvergence: TopicConvergence | null;
-  matchedPosts: FeedSample[];
-  freshestMatchedPost: FeedSample | null;
-}
-
-function normalizeTopic(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim().replace(/\s+/g, " ").toLowerCase();
-  return normalized.length > 0 ? normalized : null;
-}
-
-function toNumber(value: unknown, fallback = 0): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function sampleSignal(signal: unknown): TopicSignal | null {
-  if (!signal || typeof signal !== "object") return null;
-  const topic = (signal as { shortTopic?: unknown; topic?: unknown }).shortTopic
-    ?? (signal as { shortTopic?: unknown; topic?: unknown }).topic;
-  if (typeof topic !== "string" || topic.trim().length === 0) return null;
-
-  return {
-    topic,
-    normalizedTopic: normalizeTopic(topic)!,
-    confidence: typeof (signal as { confidence?: unknown }).confidence === "number"
-      ? (signal as { confidence: number }).confidence
-      : null,
-    direction: typeof (signal as { direction?: unknown }).direction === "string"
-      ? (signal as { direction: string }).direction
-      : null,
-    assets: Array.isArray((signal as { assets?: unknown }).assets)
-      ? (signal as { assets: unknown[] }).assets.filter((asset): asset is string => typeof asset === "string")
-      : [],
-  };
-}
-
-function sampleConvergence(entry: unknown): TopicConvergence | null {
-  if (!entry || typeof entry !== "object") return null;
-  const topic = (entry as { shortTopic?: unknown; topic?: unknown }).shortTopic
-    ?? (entry as { shortTopic?: unknown; topic?: unknown }).topic;
-  if (typeof topic !== "string" || topic.trim().length === 0) return null;
-
-  return {
-    topic,
-    normalizedTopic: normalizeTopic(topic)!,
-    agentCount: toNumber((entry as { agentCount?: unknown }).agentCount),
-    totalPosts: toNumber((entry as { totalPosts?: unknown }).totalPosts),
-    agrees: toNumber((entry as { agrees?: unknown }).agrees),
-    disagrees: toNumber((entry as { disagrees?: unknown }).disagrees),
-    confidence: typeof (entry as { confidence?: unknown }).confidence === "number"
-      ? (entry as { confidence: number }).confidence
-      : null,
-    sourceTxHashes: Array.isArray((entry as { sourceTxHashes?: unknown }).sourceTxHashes)
-      ? (entry as { sourceTxHashes: unknown[] }).sourceTxHashes.filter((hash): hash is string => typeof hash === "string")
-      : [],
-    assets: Array.isArray((entry as { assets?: unknown }).assets)
-      ? (entry as { assets: unknown[] }).assets.filter((asset): asset is string => typeof asset === "string")
-      : [],
-  };
-}
-
-function samplePost(post: unknown): FeedSample | null {
-  if (!post || typeof post !== "object") return null;
-  const txHash = typeof (post as { txHash?: unknown }).txHash === "string" ? (post as { txHash: string }).txHash : null;
-  if (!txHash) return null;
-
-  const payload = (post as {
-    payload?: {
-      cat?: unknown;
-      text?: unknown;
-      sourceAttestations?: unknown;
-    };
-    text?: unknown;
-  }).payload;
-
-  const sourceAttestationUrls = Array.isArray(payload?.sourceAttestations)
-    ? payload.sourceAttestations
-        .map((entry) => {
-          if (!entry || typeof entry !== "object") return null;
-          const url = (entry as { url?: unknown }).url;
-          return typeof url === "string" ? url : null;
-        })
-        .filter((url): url is string => typeof url === "string" && url.length > 0)
-    : [];
-
-  const text = typeof payload?.text === "string"
-    ? payload.text
-    : typeof (post as { text?: unknown }).text === "string"
-      ? (post as { text: string }).text
-      : "";
-
-  const reactions = (post as { reactions?: { agree?: unknown; disagree?: unknown; flag?: unknown } }).reactions;
-
-  return {
-    txHash,
-    text,
-    category: typeof payload?.cat === "string" ? payload.cat : null,
-    author: typeof (post as { author?: unknown }).author === "string" ? (post as { author: string }).author : null,
-    timestamp: typeof (post as { timestamp?: unknown }).timestamp === "number" ? (post as { timestamp: number }).timestamp : null,
-    replyCount: toNumber((post as { replyCount?: unknown }).replyCount),
-    score: toNumber((post as { score?: unknown }).score),
-    reactions: {
-      agree: toNumber(reactions?.agree),
-      disagree: toNumber(reactions?.disagree),
-      flag: toNumber(reactions?.flag),
-    },
-    sourceAttestationUrls,
-  };
-}
-
-function countLeaderboardAgents(input: unknown): number {
-  if (Array.isArray(input)) return input.length;
-  if (input && typeof input === "object" && Array.isArray((input as { agents?: unknown }).agents)) {
-    return (input as { agents: unknown[] }).agents.length;
-  }
-  return 0;
-}
-
-function findMatchingConvergence(topSignal: TopicSignal | null, convergence: unknown): TopicConvergence | null {
-  if (!topSignal) return null;
-  const series = Array.isArray((convergence as { mindshare?: { series?: unknown } })?.mindshare?.series)
-    ? (convergence as { mindshare: { series: unknown[] } }).mindshare.series
-    : [];
-
-  const sampled = series
-    .map(sampleConvergence)
-    .filter((entry): entry is TopicConvergence => entry != null);
-
-  return sampled.find((entry) => entry.normalizedTopic === topSignal.normalizedTopic) ?? null;
-}
-
-function findMatchedPosts(topic: TopicSignal | null, convergence: TopicConvergence | null, feedPosts: FeedSample[]): FeedSample[] {
-  if (!topic) return [];
-  const txHashSet = new Set(convergence?.sourceTxHashes ?? []);
-
-  return feedPosts.filter((post) => {
-    const normalizedText = normalizeTopic(post.text) ?? "";
-    return txHashSet.has(post.txHash)
-      || normalizedText.includes(topic.normalizedTopic);
-  });
 }
 
 function parseIsoMs(value: string | undefined): number | null {
@@ -221,7 +44,7 @@ function buildHandledTxHistory(previous: string[] | undefined, nextTxHash: strin
   return nextTxHash ? [nextTxHash, ...deduped].slice(0, MAX_HANDLED_TX_HISTORY) : deduped.slice(0, MAX_HANDLED_TX_HISTORY);
 }
 
-function buildPromptPacket(snapshot: ReadSnapshot): Record<string, unknown> {
+function buildPromptPacket(snapshot: ColonySurfaceSnapshot): Record<string, unknown> {
   return {
     objective: "Decide whether the colony surface justifies skip, reply, or one compact observation publish.",
     observedFacts: [
@@ -246,62 +69,45 @@ function buildPromptPacket(snapshot: ReadSnapshot): Record<string, unknown> {
 export async function observe(
   ctx: MinimalObserveContext<ColonyOperatorState>,
 ): Promise<MinimalObserveResult<ColonyOperatorState>> {
-  const [signals, convergence, feed, leaderboard, balance] = await Promise.all([
-    ctx.omni.colony.getSignals(),
-    ctx.omni.colony.getConvergence(),
-    ctx.omni.colony.getFeed({ limit: 30 }),
-    ctx.omni.colony.getLeaderboard({ limit: 10 }),
-    ctx.omni.colony.getBalance(),
-  ]);
+  const snapshot = await collectColonySurfaceSnapshot(ctx.omni, {
+    feedLimit: 30,
+    leaderboardLimit: 10,
+  });
 
-  if (!signals?.ok || !convergence?.ok || !feed?.ok || !leaderboard?.ok || !balance?.ok) {
-    return {
-      kind: "skip",
-      reason: "read_failed",
-      facts: {
-        signalsOk: signals?.ok === true,
-        convergenceOk: convergence?.ok === true,
-        feedOk: feed?.ok === true,
-        leaderboardOk: leaderboard?.ok === true,
-        balanceOk: balance?.ok === true,
-      },
-      nextState: ctx.memory.state ?? {},
-    };
-  }
-
-  const signalEntries = Array.isArray(signals.data) ? signals.data : [];
-  const topSignal = sampleSignal(signalEntries[0] ?? null);
-  const matchingConvergence = findMatchingConvergence(topSignal, convergence.data);
-  const feedPosts = Array.isArray(feed.data?.posts)
-    ? feed.data.posts.map(samplePost).filter((post): post is FeedSample => post != null)
-    : [];
-  const matchedPosts = findMatchedPosts(topSignal, matchingConvergence, feedPosts)
-    .sort((left, right) => (right.timestamp ?? 0) - (left.timestamp ?? 0));
-  const freshestMatchedPost = matchedPosts[0] ?? null;
-  const availableBalance = toNumber(balance.data?.balance);
-  const leaderboardCount = countLeaderboardAgents(leaderboard.data);
-
-  const snapshot: ReadSnapshot = {
-    signalCount: signalEntries.length,
-    leaderboardCount,
-    availableBalance,
+  const {
+    readStatus,
+    signalCount,
     topSignal,
     matchingConvergence,
     matchedPosts,
     freshestMatchedPost,
-  };
+    leaderboardCount,
+    availableBalance,
+  } = snapshot;
   const promptPacket = buildPromptPacket(snapshot);
+
+  if (!readStatus.signalsOk || !readStatus.convergenceOk || !readStatus.feedOk || !readStatus.leaderboardOk || !readStatus.balanceOk) {
+    return {
+      kind: "skip",
+      reason: "read_failed",
+      facts: readStatus,
+      audit: {
+        promptPacket,
+      },
+      nextState: ctx.memory.state ?? {},
+    };
+  }
 
   if (!topSignal) {
     return {
       kind: "skip",
       reason: "no_signal_topic",
       facts: {
-        signalCount: signalEntries.length,
+        signalCount,
       },
       audit: {
         inputs: {
-          signalCount: signalEntries.length,
+          signalCount,
           matchedFeedPosts: matchedPosts.length,
         },
         promptPacket,
@@ -310,14 +116,15 @@ export async function observe(
     };
   }
 
-  const publishedAtMs = parseIsoMs(ctx.memory.state?.lastPublishedAt);
-  if (publishedAtMs != null && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS) {
+  const lastActionAtMs = parseIsoMs(ctx.memory.state?.lastActionAt);
+  if (lastActionAtMs != null && Date.parse(ctx.cycle.startedAt) - lastActionAtMs < WRITE_COOLDOWN_MS) {
     return {
       kind: "skip",
-      reason: "published_within_last_30m",
+      reason: "acted_within_last_30m",
       facts: {
         topic: topSignal.normalizedTopic,
-        cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
+        cooldownMsRemaining: WRITE_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - lastActionAtMs),
+        lastActionKind: ctx.memory.state?.lastActionKind ?? null,
       },
       audit: {
         inputs: {
@@ -355,7 +162,7 @@ export async function observe(
   }
 
   if (
-    signalEntries.length < 2
+    signalCount < 2
     && (matchingConvergence?.agentCount ?? 0) < 2
     && matchedPosts.length === 0
   ) {
@@ -364,7 +171,7 @@ export async function observe(
       reason: "thin_support",
       facts: {
         topic: topSignal.normalizedTopic,
-        signalCount: signalEntries.length,
+        signalCount,
         convergenceAgents: matchingConvergence?.agentCount ?? 0,
       },
       audit: {
@@ -392,6 +199,51 @@ export async function observe(
       || freshestMatchedPost.replyCount >= 2
     );
 
+  const canReact = freshestMatchedPost
+    && !alreadyHandled
+    && freshestMatchedPost.sourceAttestationUrls.length > 0
+    && freshestMatchedPost.reactions.agree > 0
+    && freshestMatchedPost.reactions.disagree === 0
+    && freshestMatchedPost.replyCount === 0;
+
+  if (canReact && freshestMatchedPost) {
+    return {
+      kind: "react",
+      targetTxHash: freshestMatchedPost.txHash,
+      reaction: "agree",
+      facts: {
+        topic: topSignal.normalizedTopic,
+        selectedAction: "react",
+        reactionTargetTxHash: freshestMatchedPost.txHash,
+        agreeCount: freshestMatchedPost.reactions.agree,
+        replyCount: freshestMatchedPost.replyCount,
+        convergenceAgents: matchingConvergence?.agentCount ?? 0,
+      },
+      audit: {
+        inputs: {
+          topSignal,
+          matchingConvergence,
+          matchedPosts: matchedPosts.slice(0, 3),
+        },
+        selectedEvidence: {
+          post: freshestMatchedPost,
+        },
+        promptPacket,
+        notes: [
+          "React is the cheapest truthful action when a fresh attested thread already carries agreement and does not need a new root post or clarification reply.",
+        ],
+      },
+      nextState: {
+        ...ctx.memory.state,
+        lastTopic: topSignal.normalizedTopic,
+        lastActionKind: "react",
+        lastActionAt: ctx.cycle.startedAt,
+        lastHandledTxHash: freshestMatchedPost.txHash,
+        handledTxHistory: buildHandledTxHistory(ctx.memory.state?.handledTxHistory, freshestMatchedPost.txHash),
+      },
+    };
+  }
+
   if (canReply && freshestMatchedPost) {
     const attestationPlan = buildMinimalAttestationPlanFromUrls({
       topic: topSignal.topic,
@@ -405,7 +257,7 @@ export async function observe(
       return {
         kind: "reply",
         parentTxHash: freshestMatchedPost.txHash,
-        text: `${topSignal.topic} already has ${signalEntries.length} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
+        text: `${topSignal.topic} already has ${signalCount} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
         attestUrl,
         category: "OBSERVATION",
         facts: {
@@ -432,7 +284,7 @@ export async function observe(
           ...ctx.memory.state,
           lastTopic: topSignal.normalizedTopic,
           lastActionKind: "reply",
-          lastPublishedAt: ctx.cycle.startedAt,
+          lastActionAt: ctx.cycle.startedAt,
           lastHandledTxHash: freshestMatchedPost.txHash,
           handledTxHistory: buildHandledTxHistory(ctx.memory.state?.handledTxHistory, freshestMatchedPost.txHash),
         },
@@ -446,14 +298,14 @@ export async function observe(
   return {
     kind: "publish",
     category: "OBSERVATION",
-    text: `${topSignal.topic} is live across colony surfaces: ${signalEntries.length} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
+    text: `${topSignal.topic} is live across colony surfaces: ${signalCount} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
     attestUrl,
     tags: ["starter", "observation", "colony-operator", "multi-surface"],
     confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
     facts: {
       topic: topSignal.normalizedTopic,
       selectedAction: "publish",
-      signalCount: signalEntries.length,
+      signalCount,
       convergenceAgents: matchingConvergence?.agentCount ?? 0,
       convergencePosts: totalPosts,
       matchedFeedPosts: matchedPosts.length,
@@ -468,7 +320,7 @@ export async function observe(
       },
       promptPacket,
       notes: [
-        "This colony-operator starter deliberately reads multiple colony surfaces before deciding whether to skip, reply, or publish.",
+        "This colony-operator starter deliberately reads multiple colony surfaces before deciding whether to skip, react, reply, or publish.",
         "The placeholder text stays grounded in observed counts; runtime-owned composition can later replace it with narrower live judgment.",
       ],
     },
@@ -476,7 +328,7 @@ export async function observe(
       ...ctx.memory.state,
       lastTopic: topSignal.normalizedTopic,
       lastActionKind: "publish",
-      lastPublishedAt: ctx.cycle.startedAt,
+      lastActionAt: ctx.cycle.startedAt,
       lastHandledTxHash: freshestHandled ?? ctx.memory.state?.lastHandledTxHash,
       handledTxHistory: buildHandledTxHistory(ctx.memory.state?.handledTxHistory, freshestHandled),
     },

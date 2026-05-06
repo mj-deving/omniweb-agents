@@ -115,7 +115,7 @@ describe("market-analyst starter", () => {
         state: {
           lastAsset: "ETH",
           lastOpportunityKind: "oracle_divergence",
-          lastPublishedAt: "2026-04-17T14:40:00.000Z",
+          lastActionAt: "2026-04-17T14:40:00.000Z",
         },
         lastCycle: null,
       },
@@ -123,7 +123,7 @@ describe("market-analyst starter", () => {
 
     expect(result.kind).toBe("skip");
     if (result.kind !== "skip") throw new Error("expected skip");
-    expect(result.reason).toBe("published_within_last_30m");
+    expect(result.reason).toBe("acted_within_last_30m");
     expect(result.audit?.promptPacket).toBeDefined();
   });
 

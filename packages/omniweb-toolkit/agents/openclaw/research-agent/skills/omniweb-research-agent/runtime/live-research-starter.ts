@@ -28,7 +28,7 @@ import {
 
 interface ResearchState {
   lastCoverageTopic?: string;
-  lastPublishedAt?: string;
+  lastActionAt?: string;
   topicHistory?: Array<{
     topic: string;
     publishedAt: string;
@@ -46,7 +46,7 @@ interface ReadResult<T> {
 }
 
 const MAX_TOPIC_HISTORY = 5;
-const PUBLISH_COOLDOWN_MS = 30 * 60 * 1000;
+const ACTION_COOLDOWN_MS = 30 * 60 * 1000;
 
 function buildStarterPromptText(params: {
   topic: string;
@@ -353,17 +353,17 @@ export async function observe(
     };
   }
 
-  const publishedAtMs = parseIsoMs(ctx.memory.state?.lastPublishedAt);
-  if (publishedAtMs != null && Date.parse(ctx.cycle.startedAt) - publishedAtMs < PUBLISH_COOLDOWN_MS) {
+  const lastActionAtMs = parseIsoMs(ctx.memory.state?.lastActionAt);
+  if (lastActionAtMs != null && Date.parse(ctx.cycle.startedAt) - lastActionAtMs < ACTION_COOLDOWN_MS) {
     return {
       kind: "skip",
-      reason: "published_within_last_30m",
+      reason: "acted_within_last_30m",
       facts: {
         topic: chosenOpportunity.topic,
         researchFamily: chosenOpportunity.sourceProfile.family,
         opportunityKind: chosenOpportunity.kind,
-        lastPublishedAt: ctx.memory.state?.lastPublishedAt ?? null,
-        cooldownMsRemaining: PUBLISH_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - publishedAtMs),
+        lastActionAt: ctx.memory.state?.lastActionAt ?? null,
+        cooldownMsRemaining: ACTION_COOLDOWN_MS - (Date.parse(ctx.cycle.startedAt) - lastActionAtMs),
       },
       attestationPlan: chosenOpportunity.attestationPlan,
       audit: {
@@ -379,7 +379,7 @@ export async function observe(
           sourceProfile: chosenOpportunity.sourceProfile,
         },
         promptPacket: {
-          objective: "Skip repeated research publishes until the 30-minute cooldown expires.",
+          objective: "Skip repeated research actions until the 30-minute cooldown expires.",
           topic: chosenOpportunity.topic,
           opportunityKind: chosenOpportunity.kind,
           result: "skip",
@@ -746,7 +746,7 @@ export async function observe(
     },
     nextState: {
       lastCoverageTopic: chosenOpportunity.topic,
-      lastPublishedAt: ctx.cycle.startedAt,
+      lastActionAt: ctx.cycle.startedAt,
       topicHistory: buildNextTopicHistory(ctx.memory.state?.topicHistory ?? [], {
         topic: chosenOpportunity.topic,
         publishedAt: ctx.cycle.startedAt,

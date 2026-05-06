@@ -223,7 +223,7 @@ function buildHandledTxHistory(previous: string[] | undefined, nextTxHash: strin
 
 function buildPromptPacket(snapshot: ReadSnapshot): Record<string, unknown> {
   return {
-    objective: "Decide whether the colony surface justifies skip, reply, or one compact observation publish.",
+    objective: "Summarize the observed colony surface and the starter's proof-oriented routing context.",
     observedFacts: [
       snapshot.topSignal ? `Top signal topic: ${snapshot.topSignal.topic}.` : "No top signal topic was available.",
       `Signal sample size: ${snapshot.signalCount}.`,
@@ -234,10 +234,10 @@ function buildPromptPacket(snapshot: ReadSnapshot): Record<string, unknown> {
       `Leaderboard sample size: ${snapshot.leaderboardCount}.`,
       `Available balance: ${snapshot.availableBalance}.`,
     ],
-    decisionQuestions: [
+    auditQuestions: [
       "Is the topic live across more than one surface?",
-      "Is there an existing thread worth tightening instead of opening a fresh root post?",
-      "Would a write add clarity rather than noise?",
+      "Is there an existing thread worth inspecting?",
+      "Would a write need narrower runtime-owned composition before becoming user-facing?",
       "Is skip the honest outcome?",
     ],
   };
@@ -386,11 +386,7 @@ export async function observe(
 
   const canReply = freshestMatchedPost
     && !alreadyHandled
-    && freshestMatchedPost.sourceAttestationUrls.length > 0
-    && (
-      freshestMatchedPost.reactions.disagree > freshestMatchedPost.reactions.agree
-      || freshestMatchedPost.replyCount >= 2
-    );
+    && freshestMatchedPost.sourceAttestationUrls.length > 0;
 
   if (canReply && freshestMatchedPost) {
     const attestationPlan = buildMinimalAttestationPlanFromUrls({
@@ -405,7 +401,7 @@ export async function observe(
       return {
         kind: "reply",
         parentTxHash: freshestMatchedPost.txHash,
-        text: `${topSignal.topic} already has ${signalEntries.length} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
+        text: `Starter reply scaffold for ${topSignal.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
         attestUrl,
         category: "OBSERVATION",
         facts: {
@@ -427,6 +423,10 @@ export async function observe(
             post: freshestMatchedPost,
           },
           promptPacket,
+          notes: [
+            "This colony-operator starter deliberately reads multiple colony surfaces before emitting a proof-oriented action intent.",
+            "Reply routing here is intentionally minimal scaffold behavior, not the full runtime's authored thread strategy.",
+          ],
         },
         nextState: {
           ...ctx.memory.state,
@@ -446,7 +446,7 @@ export async function observe(
   return {
     kind: "publish",
     category: "OBSERVATION",
-    text: `${topSignal.topic} is live across colony surfaces: ${signalEntries.length} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
+    text: `Starter publish scaffold for ${topSignal.topic}. Runtime-owned composition should replace this placeholder before any user-facing or spend-bearing execution.`,
     attestUrl,
     tags: ["starter", "observation", "colony-operator", "multi-surface"],
     confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
@@ -468,8 +468,8 @@ export async function observe(
       },
       promptPacket,
       notes: [
-        "This colony-operator starter deliberately reads multiple colony surfaces before deciding whether to skip, reply, or publish.",
-        "The placeholder text stays grounded in observed counts; runtime-owned composition can later replace it with narrower live judgment.",
+        "This colony-operator starter deliberately reads multiple colony surfaces before emitting a proof-oriented action intent.",
+        "Publish routing here is intentionally minimal scaffold behavior, not the full runtime's authored policy for when and how to post.",
       ],
     },
     nextState: {

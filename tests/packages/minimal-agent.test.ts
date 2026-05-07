@@ -4,9 +4,11 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getDefaultMinimalStateDir,
+  normalizeDecisionToResolvedIntent,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
 } from "../../packages/omniweb-toolkit/src/minimal-agent.js";
+import { describeRuntimeCapabilities } from "../../packages/omniweb-toolkit/src/readiness.js";
 
 const tempDirs: string[] = [];
 
@@ -74,6 +76,75 @@ afterEach(async () => {
 });
 
 describe("minimal agent runtime", () => {
+  it("normalizes decisions into resolved-intent classifications at the edge", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+        reply: {
+          ...blockedCapabilities.actionFamilies.reply,
+          executable: true,
+          readiness: "ready",
+        },
+        react: {
+          ...blockedCapabilities.actionFamilies.react,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const publish = normalizeDecisionToResolvedIntent({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "hello",
+      attestUrl: "https://example.com/a.json",
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const react = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "react", targetTxHash: "0xabc", reaction: "agree" },
+      readiness: { requiresWallet: true, requiresTargetPost: true },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const blockedPublish = normalizeDecisionToResolvedIntent({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "blocked",
+      attestUrl: "https://example.com/a.json",
+    }, { runtimeCapabilities: blockedCapabilities });
+    const tip = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "tip", targetTxHash: "0xabc", amount: 5 },
+    }, { runtimeCapabilities: blockedCapabilities });
+
+    expect(publish).toMatchObject({
+      status: "executable",
+      actionType: "publish",
+      executionPathFamily: "direct_attested_write",
+    });
+    expect(react).toMatchObject({
+      status: "executable",
+      actionType: "react",
+      executionPathFamily: "reaction",
+    });
+    expect(blockedPublish).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+      reasonCodes: ["runtime_capability_blocked"],
+    });
+    expect(tip).toMatchObject({
+      status: "unsupported",
+      actionType: "tip",
+      reasonCodes: ["action_family_unsupported"],
+    });
+  });
+
   it("writes skip cycle artifacts and persists next state", async () => {
     const stateDir = await createTempDir();
     const record = await runMinimalAgentCycle(
@@ -91,14 +162,14 @@ describe("minimal agent runtime", () => {
       },
     );
 
-    expect(record.outcome.status).toBe("skipped");
+    expect(record.outcome.execution.status).toBe("skipped");
     expect(record.memoryAfter.state).toEqual({ lastReason: "no_new_signal" });
 
     const latest = await readJson(resolve(stateDir, "runs", "latest.json"));
     const state = await readJson(resolve(stateDir, "state", "current.json"));
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-skip.md"), "utf-8");
 
-    expect(latest.outcome.status).toBe("skipped");
+    expect(latest.outcome.execution.status).toBe("skipped");
     expect(state.agentState).toEqual({ lastReason: "no_new_signal" });
     expect(state.lastCycle.status).toBe("skipped");
     expect(summary).toContain("SkipReason: no_new_signal");
@@ -199,19 +270,19 @@ describe("minimal agent runtime", () => {
       tags: ["coverage"],
       confidence: 88,
     });
-    expect(record.outcome.status).toBe("published");
-    expect(record.outcome.txHash).toBe("0xabc");
-    expect(record.outcome.attestationTxHash).toBe("0xattest");
-    expect(record.outcome.attestationResponseHash).toBe("0xresponse");
-    expect(record.outcome.verification?.indexedVisible).toBe(true);
-    expect(record.outcome.verification?.verificationPath).toBe("feed");
-    expect(record.outcome.verification?.observedScore).toBe(80);
+    expect(record.outcome.execution.status).toBe("published");
+    expect(record.outcome.execution.txHash).toBe("0xabc");
+    expect(record.outcome.execution.attestationTxHash).toBe("0xattest");
+    expect(record.outcome.execution.attestationResponseHash).toBe("0xresponse");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("feed");
+    expect(record.outcome.execution.verification?.observedScore).toBe(80);
     expect(record.memoryAfter.state).toEqual({ lastTopic: "coverage-gap" });
 
     const latest = await readJson(resolve(stateDir, "runs", "latest.json"));
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-publish.md"), "utf-8");
     expect(latest.decision.audit.inputs.signals[0].topic).toBe("coverage-gap");
-    expect(latest.outcome.attestationTxHash).toBe("0xattest");
+    expect(latest.outcome.execution.attestationTxHash).toBe("0xattest");
     expect(summary).toContain("AuditSections: inputs, selectedEvidence, promptPacket");
     expect(summary).toContain("AttestationPlan: ready (ready)");
     expect(summary).toContain("AttestationTxHash: 0xattest");
@@ -240,8 +311,8 @@ describe("minimal agent runtime", () => {
     );
 
     expect(omni.colony.publish).not.toHaveBeenCalled();
-    expect(record.outcome.status).toBe("dry_run");
-    expect(record.outcome.demSpendEstimate).toBe(0);
+    expect(record.outcome.execution.status).toBe("dry_run");
+    expect(record.outcome.execution.demSpendEstimate).toBe(0);
   });
 
   it("supports reply decisions and records replied status", async () => {
@@ -302,10 +373,10 @@ describe("minimal agent runtime", () => {
       attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
       category: "ANALYSIS",
     });
-    expect(record.outcome.status).toBe("replied");
-    expect(record.outcome.txHash).toBe("0xreply-live");
-    expect(record.outcome.attestationTxHash).toBe("0xreply-attest");
-    expect(record.outcome.verification?.indexedVisible).toBe(true);
+    expect(record.outcome.execution.status).toBe("replied");
+    expect(record.outcome.execution.txHash).toBe("0xreply-live");
+    expect(record.outcome.execution.attestationTxHash).toBe("0xreply-attest");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
   });
 
   it("supports react decisions and records reacted status", async () => {
@@ -338,10 +409,10 @@ describe("minimal agent runtime", () => {
     );
 
     expect(omni.colony.react).toHaveBeenCalledWith("0xtarget", "agree");
-    expect(record.outcome.status).toBe("reacted");
-    expect(record.outcome.demSpendEstimate).toBe(0);
-    expect(record.outcome.verification?.verificationPath).toBe("reaction_counts");
-    expect(record.outcome.verification?.error).toBeUndefined();
+    expect(record.outcome.execution.status).toBe("reacted");
+    expect(record.outcome.execution.demSpendEstimate).toBe(0);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("reaction_counts");
+    expect(record.outcome.execution.verification?.error).toBeUndefined();
 
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-react.md"), "utf-8");
     expect(summary).toContain("Reaction: agree");
@@ -368,8 +439,8 @@ describe("minimal agent runtime", () => {
     );
 
     expect(omni.colony.publish).not.toHaveBeenCalled();
-    expect(record.outcome.status).toBe("failed");
-    expect(record.outcome.error?.message).toContain("placeholder_attest_url");
+    expect(record.outcome.execution.status).toBe("failed");
+    expect(record.outcome.execution.error?.message).toContain("placeholder_attest_url");
   });
 
   it("reuses one omni session across loop iterations and advances persisted iteration", async () => {

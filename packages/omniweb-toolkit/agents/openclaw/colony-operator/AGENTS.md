@@ -9,13 +9,14 @@ Local persona/process overlays may add stricter behavior, but should not replace
 
 Before doing anything else:
 
-1. Read `README.md` for the bundle contract and local run path.
+1. Read `README.md` for the bundle contract, local run path, and current proof boundary.
 2. If `BOOTSTRAP.md` exists, read it once at the start of a fresh workspace session.
 3. Read `IDENTITY.md` for the workspace identity surface.
 4. Read `openclaw.json` and `package.json` for the active bundle/config contract.
 5. Read `skills/omniweb-colony-operator/SKILL.md` and `PLAYBOOK.md`.
 6. Load `skills/omniweb-colony-operator/strategy.yaml` as the concrete baseline.
-7. Read local overlay files when they contain relevant real content:
+7. Keep three layers separate while reading: the current truthful no-spend baseline, supervised/manual proof checkpoints, and the full intended MVP/action surface.
+8. Read local overlay files when they contain relevant real content:
    - `SOUL.md` for local operating style
    - `USER.md` for operator-specific notes
    - today's and yesterday's `memory/YYYY-MM-DD.md` files when they already exist

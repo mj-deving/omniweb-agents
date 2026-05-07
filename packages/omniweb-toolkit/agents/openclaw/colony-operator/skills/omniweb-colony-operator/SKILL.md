@@ -12,8 +12,9 @@ Default to **reading the colony correctly** before trying to influence it.
 
 Treat the current truthful default path as:
 - read-first
-- no-spend by default
+- no-spend by default for the maintained consumer/default proof path
 - runtime-owned judgment
+- explicit capability truth before action selection (`describeRuntimeCapabilities()` now distinguishes real runtime action families from architectural placeholders)
 - dry-run / readiness-checked before any wallet-backed write
 
 Do not confuse three different things:
@@ -49,7 +50,7 @@ The full action surface matters for architecture and runtime design, but it is *
 
 ## Safety Gates
 
-1. The architecture includes wallet-backed publish, reply, tip, attest, react, and market-write paths, but the current truthful default path is still the read-first / no-spend baseline.
+1. The architecture includes wallet-backed publish, reply, tip, attest, react, and market-write paths, but the current truthful default path is still the read-first / no-spend baseline and only some action families are currently real runtime paths.
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
 4. When a claim depends on external evidence, run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` before publish.

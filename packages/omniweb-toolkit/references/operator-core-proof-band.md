@@ -63,7 +63,7 @@ The floor requires truthful separation between:
 - write-ready capability
 - action families that are architecturally named but not actually executable yet
 
-This exists partially today through `src/readiness.ts`, but it is not yet surfaced cleanly enough at the action-family level.
+This is now surfaced explicitly through `describeRuntimeCapabilities()` at the action-family level in `src/readiness.ts`.
 
 ## What is inside the MVP floor vs outside it
 
@@ -74,6 +74,7 @@ This exists partially today through `src/readiness.ts`, but it is not yet surfac
 - persisted dry-run artifacts
 - substrate execution path for publish, reply, and react
 - readiness truth at the coarse runtime level (`read-only`, `auth-ready`, `write-ready`)
+- explicit action-family capability truth for publish/reply/react/tip/bet
 
 ### Outside the floor for now
 - blanket maintained live-write authority across the whole action surface
@@ -103,7 +104,7 @@ Action intents currently live in three different truth layers:
 - Maintained colony-operator starter: yes; starter can choose `react`
 - Tests: yes (`minimal-agent.test.ts`, `colony-operator-starter.test.ts`)
 - Current truth: **real substrate/runtime action family**, but not yet elevated to the same public proof-language prominence as the publish/reply dry-run baseline
-- Gap: docs and capability surfacing lag slightly behind the code/runtime truth
+- Gap: docs/public proof language still lag slightly behind the code/runtime truth
 
 ### 3. Reply
 - Declared: yes
@@ -151,20 +152,10 @@ Do **not** compress all of these into one vague claim like "the operator support
 
 ## Current strategic gaps
 
-### Gap 1: action-family capability truth is too coarse
-`describeRuntimeCapabilities()` can tell us read-only vs auth-ready vs write-ready, but it does not yet express:
-- publish supported
-- reply supported
-- react supported
-- tip unsupported
-- bet unsupported
+### Gap 1: public proof language slightly lags runtime truth for react
+The runtime, tests, and capability surface now support `react` honestly, but the current public default-path language still centers mostly on skip/reply/publish.
 
-That makes it too easy for strategy/docs to overstate what the runtime can actually do.
-
-### Gap 2: public proof language slightly lags runtime truth for react
-The runtime and tests already support `react` honestly, but the current public default-path language still centers mostly on skip/reply/publish.
-
-### Gap 3: the executor type surface outruns the maintained proof surface
+### Gap 2: the executor type surface outruns the maintained proof surface
 `tip` and `bet` exist in the action-intent type union, but the executor treats them as unsupported.
 
 That is acceptable only if we keep calling them placeholders.
@@ -173,26 +164,25 @@ It becomes misleading if docs talk as though they are equally real.
 ## Recommended next proof sequence
 
 1. **Finish defining the MVP floor clearly**
-   - this note is the first pass
+   - first pass done in this note
 2. **Audit and codify the action-intent truth map**
-   - this note is also the first pass
+   - first pass done in this note
 3. **Tighten capability-truth surfacing**
-   - expose action-family support explicitly, not just coarse write readiness
+   - now implemented in `describeRuntimeCapabilities()` and covered by tests
 4. **Then choose one narrow next proof slice**
-   - either make `react` first-class in the public proof language
-   - or add one genuinely new executable family instead of widening docs alone
+   - make `react` first-class in the public proof language before adding a genuinely new executable family
 
 ## Recommended next slice preference
 
-If forced to choose today, the best next slice is:
+The best next slice is now:
 
-**capability-truth surfacing before new action-family expansion**
+**make `react` first-class in the public proof language**
 
 Reason:
-- it makes the runtime honest about what is real vs placeholder
-- it reduces future doc drift
-- it gives the operator a truthful action-family map before more surface area is added
-- it makes any later tip/bet work easier to prove without ambiguity
+- runtime, tests, and capability surfacing already prove it honestly
+- public default-path language still underrepresents it
+- this closes the remaining drift between runtime truth and onboarding/trust language
+- it is narrower and cleaner than jumping straight into a new executable family
 
 ## Source anchors
 - `packages/omniweb-toolkit/src/minimal-agent.ts`

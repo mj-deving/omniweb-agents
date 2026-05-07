@@ -26,12 +26,27 @@ export interface WriteReadinessResult {
   notes: string[];
 }
 
+export type RuntimeActionFamily = "publish" | "reply" | "react" | "tip" | "bet";
+
+export interface RuntimeActionCapability {
+  declared: true;
+  executable: boolean;
+  readiness: "ready" | "missing_credentials" | "missing_dependencies" | "unsupported";
+  requiresWallet: boolean;
+  requiresAttestation: boolean;
+  requiresTargetPost: boolean;
+  requiresMarketContext: boolean;
+  proofLevel: "real_runtime_action_family" | "architectural_placeholder";
+  notes: string[];
+}
+
 export interface RuntimeCapabilityResult {
   canRead: true;
   authReady: boolean;
   writeReady: boolean;
   recommendedMode: "read-only" | "auth-ready" | "write-ready";
   blockers: Array<"missing_credentials" | "missing_dependencies">;
+  actionFamilies: Record<RuntimeActionFamily, RuntimeActionCapability>;
   readiness: WriteReadinessResult;
 }
 
@@ -204,6 +219,85 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
   };
 }
 
+function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<RuntimeActionFamily, RuntimeActionCapability> {
+  const executableReadiness: RuntimeActionCapability["readiness"] = readiness.canWrite
+    ? "ready"
+    : readiness.authState === "missing_credentials"
+      ? "missing_credentials"
+      : "missing_dependencies";
+
+  return {
+    publish: {
+      declared: true,
+      executable: true,
+      readiness: executableReadiness,
+      requiresWallet: true,
+      requiresAttestation: true,
+      requiresTargetPost: false,
+      requiresMarketContext: false,
+      proofLevel: "real_runtime_action_family",
+      notes: [
+        "Executed by the minimal runtime through direct attested publish flow.",
+        "Maintained live-proof posture is still narrower than blanket launch-grade write authority.",
+      ],
+    },
+    reply: {
+      declared: true,
+      executable: true,
+      readiness: executableReadiness,
+      requiresWallet: true,
+      requiresAttestation: true,
+      requiresTargetPost: true,
+      requiresMarketContext: false,
+      proofLevel: "real_runtime_action_family",
+      notes: [
+        "Executed by the minimal runtime through direct attested reply flow.",
+        "Requires a target post plus attested evidence.",
+      ],
+    },
+    react: {
+      declared: true,
+      executable: true,
+      readiness: executableReadiness,
+      requiresWallet: true,
+      requiresAttestation: false,
+      requiresTargetPost: true,
+      requiresMarketContext: false,
+      proofLevel: "real_runtime_action_family",
+      notes: [
+        "Executed by the minimal runtime through colony.react() with reaction readback verification.",
+        "Cheapest currently proved non-publish action family.",
+      ],
+    },
+    tip: {
+      declared: true,
+      executable: false,
+      readiness: "unsupported",
+      requiresWallet: true,
+      requiresAttestation: false,
+      requiresTargetPost: true,
+      requiresMarketContext: false,
+      proofLevel: "architectural_placeholder",
+      notes: [
+        "Named in the action-intent architecture, but not implemented by the minimal runtime executor yet.",
+      ],
+    },
+    bet: {
+      declared: true,
+      executable: false,
+      readiness: "unsupported",
+      requiresWallet: true,
+      requiresAttestation: false,
+      requiresTargetPost: false,
+      requiresMarketContext: true,
+      proofLevel: "architectural_placeholder",
+      notes: [
+        "Named in the action-intent architecture, but not implemented by the minimal runtime executor yet.",
+      ],
+    },
+  };
+}
+
 export function describeRuntimeCapabilities(options: WriteReadinessOptions = {}): RuntimeCapabilityResult {
   const readiness = checkWriteReadiness(options);
   const blockers: RuntimeCapabilityResult["blockers"] = [];
@@ -224,6 +318,7 @@ export function describeRuntimeCapabilities(options: WriteReadinessOptions = {})
         ? "auth-ready"
         : "read-only",
     blockers,
+    actionFamilies: buildRuntimeActionFamilies(readiness),
     readiness,
   };
 }

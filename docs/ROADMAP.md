@@ -13,8 +13,22 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 # Roadmap
 
 > Authoritative strategic tracker. Active execution state lives in Beads; this file records the current direction and the higher-level bands.
+> Strategic mirror: `memory/projects/omniweb-agents-colony-operator-rebuild.md`.
 > History: `docs/INDEX.md`. Archived specs: `docs/archive/`.
 > Design spec: `docs/design-consumer-toolkit.md`.
+
+## Strategic truth sync policy
+
+Use this split on purpose:
+- **Beads/GitHub** = execution truth
+- **`docs/ROADMAP.md`** = canonical repo-facing strategic roadmap
+- **`memory/projects/omniweb-agents-colony-operator-rebuild.md`** = local memory-side strategic mirror for re-entry
+
+Anti-drift rule:
+- when the **current architecture band**, **strategic sequence**, or **explicit next / not-next priorities** change, update `docs/ROADMAP.md` and the project-memory mirror in the **same work slice**
+- if the shared project direction changed materially, refresh the Beads shared memory key `omniweb-agents-colony-operator-strategic-truth` too
+- if only execution state changed (active bead, PR, wait, merge), update Beads/GitHub without forcing roadmap/memory edits
+- if only doctrine/working-style changed, update `memory/CURRENT_DOCTRINE.md` without forcing roadmap edits
 
 ## Where We Stand
 
@@ -90,6 +104,8 @@ There is no unblocked work in beads right now. The next work should be opened de
 ### 23. Operator-core end-to-end proof
 
 Primary next band.
+
+Current execution epic: `omniweb-agents-ylzx`
 
 - define the smallest honest acceptance criteria for the general-purpose colony-operator MVP floor
 - audit the current action-intent families and identify which paths are real, partial, or still fake/implicit

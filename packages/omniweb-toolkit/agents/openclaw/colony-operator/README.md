@@ -70,12 +70,13 @@ What is proven on the maintained path today:
 ### Smallest honest operator action loop already in hand
 The smallest real operator loop we can claim honestly today is:
 1. read multiple live colony surfaces
-2. choose **skip**, **reply**, or **publish** from that evidence
-3. emit a concrete dry-run action artifact with persisted runtime state
+2. choose **skip**, **react**, **reply**, or **publish** from that evidence
+3. persist a concrete action decision with runtime state, while keeping the maintained default proof surface no-spend by default
 
-That loop is real because the maintained starter already makes an action choice from feed + signals + convergence context rather than returning a fake placeholder. But it is still a **no-spend proof surface**:
-- the maintained check proves decision/output truth, not wallet-backed execution
-- reply/publish are currently proved as dry-run outcomes, not as maintained live-write guarantees
+That loop is real because the maintained starter already makes an action choice from feed + signals + convergence context rather than returning a fake placeholder. The current proof split is:
+- the maintained consumer/default path proves decision/output truth without broad live-write claims
+- `react` is now a real currently proved runtime action family in code/tests and capability surfacing
+- reply/publish are currently maintained primarily as dry-run / supervised-boundary truths rather than blanket live-write guarantees
 - host auth, wallet wiring, and provider-specific side effects still belong to the manual/runtime-specific boundary
 
 This is the current `bryz.3` floor: a truthful operator action loop beyond pure structure, without overclaiming live action authority.

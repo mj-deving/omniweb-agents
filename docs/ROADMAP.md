@@ -6,7 +6,7 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "Phases 21-22 remain complete, but current `main` has moved into a newer runtime-owned operator band: colony-operator honesty, starter thinning, the generic action-intent seam, and first non-publish action-family proof. The ready queue remains intentionally empty until the next proof band is chosen deliberately."
+summary: "Phases 21-22 remain complete, but current `main` now points toward a substrate-first band: strong capability/readiness + write-ceremony substrate, a thin intent boundary, and lightweight skill-layer experimentation above it. The ready queue remains intentionally empty until the next proof band is chosen deliberately."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -26,6 +26,7 @@ Use this split on purpose:
 
 Anti-drift rule:
 - when the **current architecture band**, **strategic sequence**, or **explicit next / not-next priorities** change, update `docs/ROADMAP.md` and the project-memory mirror in the **same work slice**
+- for current package architecture planning in the seam-thinning band, treat `packages/omniweb-toolkit/references/current-toolkit-architecture-map-annotated.md` as the live architecture anchor and keep planning aligned to it
 - if the shared project direction changed materially, refresh the Beads shared memory key `omniweb-agents-colony-operator-strategic-truth` too
 - if only execution state changed (active bead, PR, wait, merge), update Beads/GitHub without forcing roadmap/memory edits
 - if only doctrine/working-style changed, update `memory/CURRENT_DOCTRINE.md` without forcing roadmap edits
@@ -35,13 +36,13 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Runtime-owned colony-operator rebuild on top of the attestation-first simplification baseline: truthful front door, thinner starters, substrate-first package boundaries, and the generic action-intent seam |
-| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the first runtime-owned operator cleanup band: colony-operator baseline tightening, starter thinning, and first non-publish action-family proof (`react`) |
+| Current direction | Substrate-first rebuild on top of the attestation-first simplification baseline: truthful front door, thinner starters, strong capability/readiness + write-ceremony substrate, and a thin generic action-intent seam |
+| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the front-door honesty cleanup plus the first real non-publish action-family proof (`react`) through the shared intent seam |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
-| Doctrine | The governing split is now explicit: substrate owns capability truth, starters own sensible defaults, playbooks own stronger strategy, and runtime owns non-deterministic judgment |
-| Documentation | Colony-operator is now the honest default front door; legacy specialist surfaces remain reference/compatibility material rather than the center of gravity |
-| Beads | `bd ready` is empty by design; stale legacy beads were deferred, and the next proof band should be opened deliberately from current architecture truth rather than old publish/research sludge |
-| Remaining external edges | operator-core proof definition, generic action-intent coverage beyond react/publish, capability-truth surfacing cleanup, generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
+| Doctrine | The governing split is now explicit: substrate owns capability truth, auth/readiness, guardrails, write ceremony, verification, and intent execution; skills own strategy and experimentation above that seam |
+| Documentation | Colony-operator remains the honest default front door for now, but it should be understood as a skill-layer entry path over substrate primitives rather than the architectural center of gravity |
+| Beads | `bd ready` is empty by design; stale legacy beads were deferred, and the next proof band should be opened deliberately from current substrate/intent truth rather than old publish/research sludge |
+| Remaining external edges | intent-boundary contract cleanup, generic action-intent coverage beyond react/publish/reply, capability-truth surfacing polish, generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -81,40 +82,43 @@ Anti-drift rule:
 
 ## Current Architecture Band (post-Phases 21-22)
 
-`main` has moved beyond pure attestation-first simplification into a newer operator-core rebuild band.
+`main` has moved beyond pure attestation-first simplification into a substrate-first rebuild band.
 
 This band has already landed the following truths:
 
-- colony-operator is the honest default/front-door operator path
+- colony-operator is the honest current front door, but not the architectural center of gravity
 - starter/runtime surfaces were thinned so the default path is easier to reason about
 - the generic action-intent seam now exists in the minimal runtime
 - `react` is the first non-publish action family proved through that seam
 - cold-consumer testing and follow-up doc cleanup were used to force the front door back into truthful shape
 
 The current architectural sequence is:
-1. keep one real core-action lane active at a time
-2. expand the generic action-intent seam through narrow real proof slices
-3. keep runtime-owned judgment primary and avoid slipping back into role-script fakery
-4. broaden into more action families or specialist overlays only after the operator core is honest and proved
+1. strengthen the substrate until capability truth and tricky ceremony live below the seam
+2. keep the intent boundary thin, explicit, and honest about blocked/supervised/unsupported states
+3. keep skill-layer strategy lightweight and swappable instead of baking more decision doctrine into runtime code
+4. broaden into more action families or specialist overlays only after the substrate + intent seam are honest and proved
 
 ## Next Work Bands
 
-There is no unblocked work in beads right now. The next work should be opened deliberately from one of these bands rather than inferred from stale paused epics.
+The next work is now explicitly opened in Beads under epic `omniweb-agents-5xp4`. Keep additions inside these bands rather than drifting back to stale paused epics.
 
-### 23. Operator-core end-to-end proof
+### 23. Substrate + intent-boundary proof
 
 Primary next band.
 
-Current execution epic: `omniweb-agents-ylzx`
+This band should replace the looser "operator-core" framing as the next execution center.
 
-- define the smallest honest acceptance criteria for the general-purpose colony-operator MVP floor
-- audit the current action-intent families and identify which paths are real, partial, or still fake/implicit
-- tighten capability-truth surfacing so the runtime can clearly tell what it can do, what it cannot do, and what still requires guarded/manual ceremony
-- land one narrow next proof slice at a time rather than reopening broad family expansion
+Current architecture-planning anchor for this band:
+- `packages/omniweb-toolkit/references/current-toolkit-architecture-map-annotated.md`
+
+- define the smallest honest substrate contract: capability truth, readiness, auth/write ceremony, verification, and execution-result shape
+- audit the current action-intent families and identify which paths are real, partial, unsupported, or still architecturally named only
+- tighten the intent boundary so blocked / supervised / unsupported states are first-class substrate outputs rather than prompt-space guesswork
+- land one narrow next proof slice at a time rather than reopening broad family expansion or thick runtime doctrine
 
 ### 24. Launch-proof and external truth
 
-Only after the operator-core proof band is tighter.
+Only after the substrate + intent-boundary proof band is tighter.
 
 - keep external/front-door docs aligned to actual shipped behavior
 - generic publish indexing still needs continued observation and conservative messaging
@@ -124,7 +128,7 @@ Only after the operator-core proof band is tighter.
 
 ### 25. Later expansion and overlays
 
-Only after the core proof band earns it.
+Only after the substrate/intent proof band earns it.
 
 - broaden into additional action families beyond the currently proved slices
 - revisit specialist/operator overlays as optional strategy surfaces rather than the default entry path
@@ -137,9 +141,9 @@ These are not next steps today:
 | ID | Area | Status |
 |----|------|--------|
 | `omniweb-agents-7h7` | packet layering and skeleton rollout | blocked behind the attestation-first model and newer operator-core proof band |
-| `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model and newer operator-core proof band |
-| `omniweb-agents-9he` | research family expansion | blocked until the runtime-owned operator core is better proved |
-| legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest colony-operator default path |
+| `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model and newer substrate/intent proof band |
+| `omniweb-agents-9he` | research family expansion | blocked until the substrate + intent seam is better proved |
+| legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest default path over the substrate seam |
 
 ---
 

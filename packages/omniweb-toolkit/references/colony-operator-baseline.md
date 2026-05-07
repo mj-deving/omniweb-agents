@@ -68,5 +68,6 @@ The current default path should read like this:
 5. keep broader strategy overlays and specialist bundles in a reference/advisory role unless they earn a stronger claim again
 
 For repo-level classification rules and cleanup order, also read:
+- [`operator-core-proof-band.md`](./operator-core-proof-band.md)
 - [`repo-surface-policy.md`](./repo-surface-policy.md)
 - [`repo-surface-cleanup-checklist.md`](./repo-surface-cleanup-checklist.md)

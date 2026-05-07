@@ -3,26 +3,26 @@ import { dirname, resolve } from "node:path";
 import type { PublishResult, ReactionType, ToolResult } from "../../../src/toolkit/types.js";
 import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
-import { runDirectAttestedWrite } from "./direct-attested-write.js";
 import type {
-  ExecutableIntent,
   MinimalActionIntent,
   MinimalActionReadiness,
   MinimalActionType,
   ResolvedIntent,
 } from "./intent-types.js";
-import { describeRuntimeCapabilities } from "./readiness.js";
-import type { RuntimeActionCapability, RuntimeCapabilityResult, WriteReadinessOptions } from "./readiness.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
-import { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
 import type { PublishVisibilityResult } from "./publish-visibility.js";
-import { verifyPublishVisibility } from "./publish-visibility.js";
 import {
   getDefaultSessionLedgerDir,
   loadRecentSessionResults,
   writeSessionLedgerJson,
   type SessionLedgerResult,
 } from "./session-ledger.js";
+import {
+  normalizeDecisionToActionIntent,
+  normalizeDecisionToResolvedIntent,
+} from "./minimal-agent-resolver.js";
+import { executeMinimalAction } from "./minimal-agent-executor.js";
+import { getObservedScore } from "./minimal-agent-verifier.js";
 
 export type MinimalAgentState = Record<string, unknown>;
 export type MinimalAuditSection = Record<string, unknown>;
@@ -230,8 +230,8 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
   };
 }
 
-type MinimalExecutionOutcome = MinimalCycleRecord["outcome"]["execution"];
-type MinimalVerificationResult = NonNullable<MinimalExecutionOutcome["verification"]>;
+export type MinimalExecutionOutcome = MinimalCycleRecord["outcome"]["execution"];
+export type MinimalVerificationResult = NonNullable<MinimalExecutionOutcome["verification"]>;
 
 interface StoredMinimalState<TState extends MinimalAgentState = MinimalAgentState> {
   version: 1;
@@ -246,171 +246,12 @@ const DEFAULT_STATE_DIR = ".omniweb-agent";
 const DEFAULT_VERIFICATION_TIMEOUT_MS = 45_000;
 const DEFAULT_VERIFICATION_POLL_MS = 5_000;
 const DEFAULT_VERIFICATION_LIMIT = 50;
-const PLACEHOLDER_ATTEST_HOSTS = new Set(["example.com", "www.example.com"]);
 
-export function normalizeDecisionToActionIntent<TState extends MinimalAgentState = MinimalAgentState>(
-  decision: MinimalObserveResult<TState>,
-): ActionIntentDecision<TState> | null {
-  if (decision.kind === "skip") return null;
-
-  if (decision.kind === "action") {
-    return decision;
-  }
-
-  if (decision.kind === "react") {
-    return null;
-  }
-
-  if (decision.kind === "publish") {
-    return {
-      kind: "action",
-      action: {
-        type: "publish",
-        category: decision.category,
-        text: decision.text,
-        attestUrl: decision.attestUrl,
-        tags: decision.tags,
-        confidence: decision.confidence,
-      },
-      facts: decision.facts,
-      audit: decision.audit,
-      attestationPlan: decision.attestationPlan,
-      nextState: decision.nextState,
-      readiness: {
-        requiresWallet: true,
-        requiresAttestation: true,
-      },
-    };
-  }
-
-  return {
-    kind: "action",
-    action: {
-      type: "reply",
-      parentTxHash: decision.parentTxHash,
-      text: decision.text,
-      attestUrl: decision.attestUrl,
-      category: decision.category,
-    },
-    facts: decision.facts,
-    audit: decision.audit,
-    attestationPlan: decision.attestationPlan,
-    nextState: decision.nextState,
-    readiness: {
-      requiresWallet: true,
-      requiresAttestation: true,
-      requiresTargetPost: true,
-    },
-  };
-}
-
-function normalizeActionIntentToResolvedIntent(
-  action: MinimalActionIntent,
-  readiness?: MinimalActionReadiness,
-  capability?: RuntimeActionCapability,
-): ResolvedIntent {
-  const normalizedTarget = {
-    parentTxHash: action.parentTxHash,
-    targetTxHash: action.targetTxHash,
-    marketId: action.marketId,
-  };
-  const normalizedDraft = {
-    category: action.category,
-    text: action.text,
-    attestUrl: action.attestUrl,
-    tags: action.tags,
-    confidence: action.confidence,
-    reaction: action.reaction,
-    amount: action.amount,
-  };
-
-  if (capability) {
-    if (capability.readiness === "unsupported" || capability.executable === false) {
-      return {
-        status: "unsupported",
-        actionType: action.type,
-        normalizedTarget,
-        normalizedDraft,
-        readiness,
-        capability,
-        reasonCodes: ["action_family_unsupported"],
-        missingRequirements: [],
-        executionPathFamily: "unsupported",
-      };
-    }
-
-    if (capability.readiness !== "ready") {
-      return {
-        status: "blocked",
-        actionType: action.type,
-        normalizedTarget,
-        normalizedDraft,
-        readiness,
-        capability,
-        reasonCodes: ["runtime_capability_blocked"],
-        missingRequirements: capability.readiness === "missing_credentials"
-          ? ["credentials"]
-          : capability.readiness === "missing_dependencies"
-            ? ["dependencies"]
-            : [],
-        executionPathFamily: capability.proofLevel === "architectural_placeholder"
-          ? "unsupported"
-          : action.type === "react"
-            ? "reaction"
-            : "direct_attested_write",
-      };
-    }
-  }
-
-  if (action.type === "tip" || action.type === "bet") {
-    return {
-      status: "unsupported",
-      actionType: action.type,
-      normalizedTarget,
-      normalizedDraft,
-      readiness,
-      reasonCodes: ["action_family_not_implemented"],
-      missingRequirements: ["runtime_executor"],
-      executionPathFamily: "unsupported",
-    };
-  }
-
-  const executionPathFamily = action.type === "react"
-    ? "reaction"
-    : action.type === "publish" || action.type === "reply"
-      ? "direct_attested_write"
-      : "none";
-
-  return {
-    status: "executable",
-    actionType: action.type,
-    normalizedTarget,
-    normalizedDraft,
-    readiness,
-    reasonCodes: [],
-    missingRequirements: [],
-    executionPathFamily,
-  } satisfies ExecutableIntent;
-}
-
-export interface NormalizeDecisionToResolvedIntentOptions extends WriteReadinessOptions {
-  runtimeCapabilities?: RuntimeCapabilityResult;
-}
-
-export function normalizeDecisionToResolvedIntent<TState extends MinimalAgentState = MinimalAgentState>(
-  decision: MinimalObserveResult<TState>,
-  options: NormalizeDecisionToResolvedIntentOptions = {},
-): ResolvedIntent | null {
-  const actionDecision = normalizeDecisionToActionIntent(decision);
-  if (!actionDecision) {
-    return null;
-  }
-
-  const capability = options.runtimeCapabilities?.actionFamilies[actionDecision.action.type]
-    ?? describeRuntimeCapabilities(options).actionFamilies[actionDecision.action.type];
-
-  return normalizeActionIntentToResolvedIntent(actionDecision.action, actionDecision.readiness, capability);
-}
+export {
+  normalizeDecisionToActionIntent,
+  normalizeDecisionToResolvedIntent,
+} from "./minimal-agent-resolver.js";
+export type { NormalizeDecisionToResolvedIntentOptions } from "./minimal-agent-resolver.js";
 
 export function getDefaultMinimalStateDir(cwd?: string): string {
   return resolve(cwd ?? process.cwd(), DEFAULT_STATE_DIR);
@@ -561,8 +402,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  const attestationGuardError = validateAttestationDecision(decision);
-  if (attestationGuardError) {
+  if (!actionDecision) {
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -577,7 +417,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
           demSpendEstimate: 0,
           error: {
             stage: "execute",
-            message: attestationGuardError,
+            message: "missing_action_intent",
             retryable: false,
           },
         },
@@ -587,193 +427,16 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  if (decision.kind === "react" || actionDecision?.action.type === "react") {
-    const targetTxHash = decision.kind === "react"
-      ? decision.targetTxHash
-      : actionDecision!.action.targetTxHash;
-    const reactionType = decision.kind === "react"
-      ? decision.reaction
-      : actionDecision!.action.reaction ?? "agree";
-
-    if (!targetTxHash) {
-      const record = buildCompletedRecord({
-        cycle,
-        startedAtMs,
-        now,
-        memoryBefore,
-        nextState: decision.nextState ?? memoryBefore.state,
-        decision,
-        outcome: {
-          resolution: resolvedIntent,
-          execution: {
-            status: "failed",
-            demSpendEstimate: 0,
-            error: {
-              stage: "execute",
-              message: "missing_reaction_target",
-              retryable: false,
-            },
-          },
-        },
-      });
-      await persistCycleArtifacts(stateDir, record);
-      return record;
-    }
-
-    const beforeResult = await omni.colony.getReactions(targetTxHash);
-    const before = normalizeReactionEnvelope(beforeResult?.ok === true ? beforeResult.data : undefined);
-    const reactionResult = await omni.colony.react(targetTxHash, reactionType);
-    const afterResult = await omni.colony.getReactions(targetTxHash);
-    const after = normalizeReactionEnvelope(afterResult?.ok === true ? afterResult.data : undefined);
-    const verification: MinimalReactionVerification = {
-      attempted: true,
-      visible: reactionResult?.ok === true,
-      indexedVisible: reactionResult?.ok === true,
-      polls: 1,
-      elapsedMs: 0,
-      txHash: targetTxHash,
-      verificationPath: "reaction_counts",
-      reactionType,
-      before,
-      after,
-      error: reactionReadbackSatisfied(before, after, reactionType)
-        ? undefined
-        : reactionResult?.ok === true
-          ? "reaction_readback_unconfirmed"
-          : readApiErrorMessage(reactionResult?.error) ?? "reaction_failed",
-    };
-
-    if (reactionResult?.ok !== true) {
-      const record = buildCompletedRecord({
-        cycle,
-        startedAtMs,
-        now,
-        memoryBefore,
-        nextState: decision.nextState ?? memoryBefore.state,
-        decision,
-        outcome: {
-          resolution: resolvedIntent,
-          execution: {
-            status: "failed",
-            demSpendEstimate: 0,
-            reactionResult: { ok: false, error: reactionResult?.error },
-            verification,
-            error: {
-              stage: "execute",
-              message: readApiErrorMessage(reactionResult?.error) ?? "reaction_failed",
-              retryable: true,
-            },
-          },
-        },
-      });
-      await persistCycleArtifacts(stateDir, record);
-      return record;
-    }
-
-    const record = buildCompletedRecord({
-      cycle,
-      startedAtMs,
-      now,
-      memoryBefore,
-      nextState: decision.nextState ?? memoryBefore.state,
-      decision,
-      outcome: {
-        resolution: resolvedIntent,
-        execution: {
-          status: "reacted",
-          demSpendEstimate: 0,
-          reactionResult: { ok: true },
-          verification,
-        },
-      },
-    });
-    await persistCycleArtifacts(stateDir, record);
-    return record;
-  }
-
-  if (!actionDecision || (actionDecision.action.type !== "publish" && actionDecision.action.type !== "reply")) {
-    const record = buildCompletedRecord({
-      cycle,
-      startedAtMs,
-      now,
-      memoryBefore,
-      nextState: decision.nextState ?? memoryBefore.state,
-      decision,
-      outcome: {
-        resolution: resolvedIntent,
-        execution: {
-          status: "failed",
-          demSpendEstimate: 0,
-          error: {
-            stage: "execute",
-            message: `unsupported_action_type:${actionDecision?.action.type ?? "unknown"}`,
-            retryable: false,
-          },
-        },
-      },
-    });
-    await persistCycleArtifacts(stateDir, record);
-    return record;
-  }
-
-  const directWrite = await runDirectAttestedWrite({
+  const execution = await executeMinimalAction({
     omni,
-    kind: actionDecision.action.type,
-    draft: actionDecision.action.type === "publish"
-      ? {
-          text: actionDecision.action.text ?? "",
-          category: actionDecision.action.category,
-          attestUrl: actionDecision.action.attestUrl ?? "",
-          tags: actionDecision.action.tags,
-          confidence: actionDecision.action.confidence,
-        }
-      : {
-          parentTxHash: actionDecision.action.parentTxHash,
-          text: actionDecision.action.text ?? "",
-          attestUrl: actionDecision.action.attestUrl ?? "",
-          category: actionDecision.action.category,
-        },
-    verifyPublishVisibility,
+    decision,
+    actionDecision,
     verification: {
       timeoutMs: opts.verification?.timeoutMs ?? DEFAULT_VERIFICATION_TIMEOUT_MS,
       pollMs: opts.verification?.pollMs ?? DEFAULT_VERIFICATION_POLL_MS,
       limit: opts.verification?.limit ?? DEFAULT_VERIFICATION_LIMIT,
     },
   });
-
-  const publishResult = directWrite.result;
-
-  if (!directWrite.accepted || !publishResult?.ok) {
-    const record = buildCompletedRecord({
-      cycle,
-      startedAtMs,
-      now,
-      memoryBefore,
-      nextState: decision.nextState ?? memoryBefore.state,
-      decision,
-      outcome: {
-        resolution: resolvedIntent,
-        execution: {
-          status: "failed",
-          publishResult,
-          demSpendEstimate: 0,
-          error: {
-            stage: "execute",
-            message: publishResult?.error?.message ?? directWrite.error?.message ?? "publish_failed",
-            code: publishResult?.error?.code ?? directWrite.error?.code,
-            retryable: publishResult?.error?.retryable ?? directWrite.error?.retryable,
-          },
-        },
-      },
-    });
-    await persistCycleArtifacts(stateDir, record);
-    return record;
-  }
-
-  const txHash = directWrite.txHash;
-  const attestationTxHash = directWrite.attestationTxHash;
-  const attestationResponseHash = directWrite.attestationResponseHash;
-  const verification = directWrite.visibility as PublishVisibilityResult | undefined;
 
   const record = buildCompletedRecord({
     cycle,
@@ -784,15 +447,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     decision,
     outcome: {
       resolution: resolvedIntent,
-      execution: {
-        status: actionDecision.action.type === "publish" ? "published" : "replied",
-        txHash,
-        attestationTxHash,
-        attestationResponseHash,
-        demSpendEstimate: 1,
-        publishResult,
-        verification,
-      },
+      execution,
     },
   });
   await persistCycleArtifacts(stateDir, record);
@@ -1178,87 +833,12 @@ function hasKeys(value: Record<string, unknown> | undefined): boolean {
   return Object.keys(value).length > 0;
 }
 
-function normalizeReactionEnvelope(value: unknown): MinimalReactionVerification["before"] {
-  if (!value || typeof value !== "object") return null;
-  const record = value as Record<string, unknown>;
-  return {
-    agree: typeof record.agree === "number" ? record.agree : 0,
-    disagree: typeof record.disagree === "number" ? record.disagree : 0,
-    flag: typeof record.flag === "number" ? record.flag : 0,
-    myReaction: typeof record.myReaction === "string" ? record.myReaction : null,
-  };
-}
-
-function getObservedScore(verification?: MinimalVerificationResult): number | undefined {
-  if (!verification || !("observedScore" in verification)) return undefined;
-  return typeof verification.observedScore === "number" ? verification.observedScore : undefined;
-}
-
-function reactionReadbackSatisfied(
-  before: MinimalReactionVerification["before"],
-  after: MinimalReactionVerification["after"],
-  expectedType: Exclude<ReactionType, null>,
-): boolean {
-  if (!after) return false;
-  if (after.myReaction === expectedType) return true;
-  return after[expectedType] > (before?.[expectedType] ?? 0);
-}
-
-function readApiErrorMessage(value: unknown): string | null {
-  if (!value || typeof value !== "object") return null;
-  const message = (value as { message?: unknown }).message;
-  return typeof message === "string" && message.length > 0 ? message : null;
-}
-
-function validateAttestationDecision<TState extends MinimalAgentState>(
-  decision: MinimalObserveResult<TState>,
-): string | null {
-  const plan = decision.attestationPlan;
-  if (plan && !plan.ready) {
-    return `attestation_plan_not_ready:${plan.reason}`;
-  }
-
-  if (decision.kind === "publish" || decision.kind === "reply") {
-    if (isPlaceholderAttestUrl(decision.attestUrl)) {
-      return `placeholder_attest_url:${decision.attestUrl}`;
-    }
-
-    const plannedUrl = getPrimaryAttestUrl(plan);
-    if (plannedUrl && plannedUrl !== decision.attestUrl) {
-      return `attest_url_mismatch:${decision.attestUrl}`;
-    }
-  }
-
-  if (decision.kind === "action" && decision.action.attestUrl) {
-    if (isPlaceholderAttestUrl(decision.action.attestUrl)) {
-      return `placeholder_attest_url:${decision.action.attestUrl}`;
-    }
-
-    const plannedUrl = getPrimaryAttestUrl(plan);
-    if (plannedUrl && plannedUrl !== decision.action.attestUrl) {
-      return `attest_url_mismatch:${decision.action.attestUrl}`;
-    }
-  }
-
-  return null;
-}
-
 function getDecisionActionType<TState extends MinimalAgentState>(
   decision: MinimalObserveResult<TState>,
 ): MinimalActionType | "skip" {
   if (decision.kind === "skip") return "skip";
   if (decision.kind === "action") return decision.action.type;
   return decision.kind;
-}
-
-function isPlaceholderAttestUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    if (PLACEHOLDER_ATTEST_HOSTS.has(parsed.hostname)) return true;
-    return parsed.pathname.includes("example") || parsed.pathname.includes("placeholder");
-  } catch {
-    return true;
-  }
 }
 
 function isCycleSummary(value: unknown): value is MinimalCycleSummary {

@@ -1,16 +1,22 @@
 /**
- * Agent loop re-exports for supercolony-toolkit/agent subpath.
+ * Runtime-facing exports for `omniweb-toolkit/agent`.
  *
- * Keeps the legacy runAgentLoop exports available while promoting the
- * upstream-style minimal observe() runtime as the default fresh-consumer path.
+ * Honest center of gravity:
+ * - `omniweb-toolkit` main entry is still the substrate-first front door
+ * - this subpath is the runtime/loop convenience surface
+ * - broader research/market/starter helpers below remain compatibility exports,
+ *   not the architectural center of the package
  */
 
+// Core runtime loop + seam helpers
 export {
   getDefaultMinimalStateDir,
   normalizeDecisionToActionIntent,
+  normalizeDecisionToResolvedIntent,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
 } from "./minimal-agent.js";
+export { executeMinimalAction } from "./minimal-agent-executor.js";
 export {
   getDefaultSessionLedgerDir,
   loadRecentSessionResults,
@@ -21,6 +27,8 @@ export { buildMinimalAttestationPlanFromUrls } from "./minimal-attestation-plan.
 export { getPrimaryAttestationCandidate } from "./minimal-attestation-plan.js";
 export { getPrimaryAttestationSourceName } from "./minimal-attestation-plan.js";
 export { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
+
+// Compatibility/helper exports
 export { deriveEngagementOpportunities } from "./engagement-opportunities.js";
 export { buildEngagementDraft } from "./engagement-draft.js";
 export {
@@ -102,7 +110,9 @@ export type {
   RunMinimalAgentCycleOptions,
   RunMinimalAgentLoopOptions,
   MinimalCycleRecord,
+  MinimalExecutionOutcome,
   MinimalReactionVerification,
+  NormalizeDecisionToResolvedIntentOptions,
 } from "./minimal-agent.js";
 export type {
   MinimalActionType,

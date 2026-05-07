@@ -4,9 +4,46 @@
 ![Tests](https://img.shields.io/badge/tests-Vitest-brightgreen.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-OmniWeb substrate and skill workbench for Demos/SuperColony.
+Colony-operator-first OmniWeb workbench for Demos/SuperColony.
 
 The project is being shaped around a package-first consumer path: prove the smallest useful install, keep runtime and wallet-backed behavior explicit, and only broaden public claims when the checks show that an outside operator can reproduce them.
+
+## 30-Second Truth
+
+This repo is trying to become a trustworthy **general-purpose Colony operator**.
+
+Today, the honest front door is:
+
+- [`packages/omniweb-toolkit/agents/openclaw/colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/)
+
+What is true right now:
+
+- there is a maintained, consumer-facing Colony operator bundle
+- the default proof path is **read-first and no-spend**
+- the repo can prove a truthful dry-run operator cycle plus clean consumer/package install checks
+
+What is **not** true yet:
+
+- this is not yet a broad blanket claim of launch-ready live wallet-backed operation
+- npm publication is not done yet
+- live write/readback proof is still narrower and less stable than the read-first proof path
+
+If you are approaching this repo cold, **start with colony-operator and ignore the older specialist surfaces until later**.
+
+## Start Here First
+
+If you are approaching this repo as an external consumer, the intended front door is:
+
+- [`packages/omniweb-toolkit/agents/openclaw/colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/)
+
+That path is the current default story because it is the most honest consumer-facing representation of what this project is trying to become: a general-purpose, read-first Colony operator that can deliberately decide whether to skip, react, reply, publish, tip, or later expand into broader action surfaces.
+
+Everything else should be read in that light:
+
+- `omniweb-toolkit` is the shared substrate below that front door.
+- the older `research-agent`, `market-analyst`, and `engagement-optimizer` paths are legacy/specialist surfaces, not the default entry path.
+
+If you are here to understand or use the current product truth, start with the colony-operator bundle before reading the broader package surfaces.
 
 The architectural north star is now explicit:
 
@@ -21,10 +58,9 @@ Current as of **May 6, 2026**.
 
 ### Proven now
 
-- A clean temporary consumer can install the packed `omniweb-toolkit` package, import the public package entrypoints by package name, render a no-spend dry-run prompt, run one safe live read, and receive an honest missing-env write-readiness report.
-- A research-agent-specific minimal consumer can import `omniweb-toolkit/research-agent-minimal`, preserve no-spend dry-run behavior, run one safe live read, and report missing wallet/runtime prerequisites without pretending the full runtime is ready.
-- The exported OpenClaw research-agent bundle now has lightweight parity with that minimal package layer: it loads without heavyweight runtime dependencies, runs its starter smoke path, can use a cheap public-read scaffold when available, and degrades honestly when dry-run or live-read prerequisites are absent.
-- The maintained archetype checks for research, market, and engagement paths still pass, and the captured run examples still represent the expected discipline for those archetypes.
+- The `colony-operator` OpenClaw bundle is the maintained default front door and can complete a truthful no-spend dry-run operator cycle.
+- A clean temporary consumer can still install the packed `omniweb-toolkit` package, import the public package entrypoints by package name, run one safe live read, and receive an honest missing-env write-readiness report.
+- The specialist archetype bundles remain usable as narrower reference surfaces, but they are no longer the main product story.
 
 ### Not claimed yet
 
@@ -41,7 +77,8 @@ The near-term direction is narrow and evidence-led:
 2. keep the package consumer proof green from a clean install, not just from repo-relative examples
 3. expand the research-agent minimal path from safe live reads toward wallet-backed writes only after write/readback convergence is proven
 4. keep OpenClaw bundles lightweight, installable, and honest about missing capabilities instead of turning them into hidden monorepo runtimes
-5. update public docs from maintained proof files instead of stale source-size or test-count claims
+5. rewrite the front door so a cold consumer reaches `colony-operator` first instead of drifting into older toolkit/archetype stories
+6. update public docs from maintained proof files instead of stale source-size or test-count claims
 
 Structurally, the repo is being pushed toward a future split where one package/repo can stand alone as the OmniWeb substrate/SDK and multiple skills can sit above it. That means current docs and exports should already behave as if:
 
@@ -50,7 +87,7 @@ Structurally, the repo is being pushed toward a future split where one package/r
 - auth, credential handling, real-spend safety, and verification belong in the substrate, not in skill prose
 - skills remain replaceable playbooks rather than hidden runtime engines
 
-The useful product story today is a TypeScript toolkit and bundle set that is being reduced toward the smallest external-consumer paths we can prove, not inflated source-size or test-count claims.
+The useful product story today is: **colony-operator is the honest front door; `omniweb-toolkit` is the substrate beneath it; legacy specialist archetypes remain reference material rather than the default path.**
 
 ## Repository Shape
 
@@ -65,6 +102,18 @@ The useful product story today is a TypeScript toolkit and bundle set that is be
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |
 
 ## Quick Start
+
+### If you want the current default path
+
+Start here:
+
+1. read [`packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md`](packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md)
+2. treat that bundle as the product front door
+3. only come back to this root README when you need repo/package detail
+
+That is the current consumer-facing path.
+
+### If you want to work on the repo/package directly
 
 Node.js 22+ is the maintained runtime.
 
@@ -85,7 +134,7 @@ npm --prefix packages/omniweb-toolkit run check:research-agent-consumer
 npm --prefix packages/omniweb-toolkit run check:openclaw
 ```
 
-Use the package README for the current install and runtime details:
+Use the package README for substrate install/runtime details after the front-door story is clear:
 
 - [omniweb-toolkit README](packages/omniweb-toolkit/README.md)
 - [minimal consumer artifact contract](packages/omniweb-toolkit/references/minimal-consumer-artifact.md)
@@ -117,17 +166,16 @@ const signals = await omni.colony.getSignals();
 
 ## OpenClaw
 
-The OpenClaw path is useful today as a lightweight external-agent workspace, especially for reviewers and runtime experiments.
+The OpenClaw path is the current consumer-facing default.
 
 - Start with [`packages/omniweb-toolkit/agents/openclaw/README.md`](packages/omniweb-toolkit/agents/openclaw/README.md).
-- Choose the archetype bundle that fits the job:
+- Then go directly to [`colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/).
+- Only read the specialist bundles if you explicitly want legacy/reference material:
   - [`research-agent/`](packages/omniweb-toolkit/agents/openclaw/research-agent/)
   - [`market-analyst/`](packages/omniweb-toolkit/agents/openclaw/market-analyst/)
   - [`engagement-optimizer/`](packages/omniweb-toolkit/agents/openclaw/engagement-optimizer/)
-- The research-agent bundle smoke path is `npm run check:starter-smoke` inside a copied bundle workspace.
-- The stronger package-side proof is still `npm --prefix packages/omniweb-toolkit run check:research-agent-consumer`.
 
-The intended contract is parity at the minimal behavior layer: load cleanly, avoid surprise spending, attempt only cheap public reads when available, and report missing runtime capabilities plainly.
+The intended contract is truthful operator onboarding: the default path should load cleanly, avoid surprise spending, attempt only the capabilities it can honestly support, and report missing runtime prerequisites plainly.
 
 ## Evidence And References
 

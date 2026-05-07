@@ -4,6 +4,15 @@ import type { PublishResult, ReactionType, ToolResult } from "../../../src/toolk
 import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
 import { runDirectAttestedWrite } from "./direct-attested-write.js";
+import type {
+  ExecutableIntent,
+  MinimalActionIntent,
+  MinimalActionReadiness,
+  MinimalActionType,
+  ResolvedIntent,
+} from "./intent-types.js";
+import { describeRuntimeCapabilities } from "./readiness.js";
+import type { RuntimeActionCapability, RuntimeCapabilityResult, WriteReadinessOptions } from "./readiness.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
 import { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
 import type { PublishVisibilityResult } from "./publish-visibility.js";
@@ -79,28 +88,7 @@ interface BaseDecision<TState extends MinimalAgentState = MinimalAgentState> {
   nextState?: TState;
 }
 
-export type MinimalActionType = "publish" | "reply" | "react" | "tip" | "bet";
-
-export interface MinimalActionIntent {
-  type: MinimalActionType;
-  category?: string;
-  text?: string;
-  attestUrl?: string;
-  tags?: string[];
-  confidence?: number;
-  parentTxHash?: string;
-  targetTxHash?: string;
-  reaction?: Exclude<ReactionType, null>;
-  amount?: number;
-  marketId?: string;
-}
-
-export interface MinimalActionReadiness {
-  requiresWallet?: boolean;
-  requiresAttestation?: boolean;
-  requiresTargetPost?: boolean;
-  requiresMarketContext?: boolean;
-}
+export type { MinimalActionType, MinimalActionIntent, MinimalActionReadiness } from "./intent-types.js";
 
 export interface ActionIntentDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
   kind: "action";
@@ -222,24 +210,28 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
   memoryBefore: MinimalAgentMemory<TState>;
   memoryAfter: MinimalAgentMemory<TState>;
   outcome: {
-    status: MinimalCycleStatus;
-    txHash?: string;
-    attestationTxHash?: string;
-    attestationResponseHash?: string;
-    demSpendEstimate?: number;
-    verification?: PublishVisibilityResult | MinimalReactionVerification;
-    publishResult?: ToolResult<PublishResult>;
-    reactionResult?: { ok: boolean; error?: unknown };
-    error?: {
-      stage: MinimalErrorStage;
-      message: string;
-      code?: string;
-      retryable?: boolean;
+    resolution: ResolvedIntent | null;
+    execution: {
+      status: MinimalCycleStatus;
+      txHash?: string;
+      attestationTxHash?: string;
+      attestationResponseHash?: string;
+      demSpendEstimate?: number;
+      verification?: PublishVisibilityResult | MinimalReactionVerification;
+      publishResult?: ToolResult<PublishResult>;
+      reactionResult?: { ok: boolean; error?: unknown };
+      error?: {
+        stage: MinimalErrorStage;
+        message: string;
+        code?: string;
+        retryable?: boolean;
+      };
     };
   };
 }
 
-type MinimalVerificationResult = NonNullable<MinimalCycleRecord["outcome"]["verification"]>;
+type MinimalExecutionOutcome = MinimalCycleRecord["outcome"]["execution"];
+type MinimalVerificationResult = NonNullable<MinimalExecutionOutcome["verification"]>;
 
 interface StoredMinimalState<TState extends MinimalAgentState = MinimalAgentState> {
   version: 1;
@@ -310,6 +302,114 @@ export function normalizeDecisionToActionIntent<TState extends MinimalAgentState
       requiresTargetPost: true,
     },
   };
+}
+
+function normalizeActionIntentToResolvedIntent(
+  action: MinimalActionIntent,
+  readiness?: MinimalActionReadiness,
+  capability?: RuntimeActionCapability,
+): ResolvedIntent {
+  const normalizedTarget = {
+    parentTxHash: action.parentTxHash,
+    targetTxHash: action.targetTxHash,
+    marketId: action.marketId,
+  };
+  const normalizedDraft = {
+    category: action.category,
+    text: action.text,
+    attestUrl: action.attestUrl,
+    tags: action.tags,
+    confidence: action.confidence,
+    reaction: action.reaction,
+    amount: action.amount,
+  };
+
+  if (capability) {
+    if (capability.readiness === "unsupported" || capability.executable === false) {
+      return {
+        status: "unsupported",
+        actionType: action.type,
+        normalizedTarget,
+        normalizedDraft,
+        readiness,
+        capability,
+        reasonCodes: ["action_family_unsupported"],
+        missingRequirements: [],
+        executionPathFamily: "unsupported",
+      };
+    }
+
+    if (capability.readiness !== "ready") {
+      return {
+        status: "blocked",
+        actionType: action.type,
+        normalizedTarget,
+        normalizedDraft,
+        readiness,
+        capability,
+        reasonCodes: ["runtime_capability_blocked"],
+        missingRequirements: capability.readiness === "missing_credentials"
+          ? ["credentials"]
+          : capability.readiness === "missing_dependencies"
+            ? ["dependencies"]
+            : [],
+        executionPathFamily: capability.proofLevel === "architectural_placeholder"
+          ? "unsupported"
+          : action.type === "react"
+            ? "reaction"
+            : "direct_attested_write",
+      };
+    }
+  }
+
+  if (action.type === "tip" || action.type === "bet") {
+    return {
+      status: "unsupported",
+      actionType: action.type,
+      normalizedTarget,
+      normalizedDraft,
+      readiness,
+      reasonCodes: ["action_family_not_implemented"],
+      missingRequirements: ["runtime_executor"],
+      executionPathFamily: "unsupported",
+    };
+  }
+
+  const executionPathFamily = action.type === "react"
+    ? "reaction"
+    : action.type === "publish" || action.type === "reply"
+      ? "direct_attested_write"
+      : "none";
+
+  return {
+    status: "executable",
+    actionType: action.type,
+    normalizedTarget,
+    normalizedDraft,
+    readiness,
+    reasonCodes: [],
+    missingRequirements: [],
+    executionPathFamily,
+  } satisfies ExecutableIntent;
+}
+
+export interface NormalizeDecisionToResolvedIntentOptions extends WriteReadinessOptions {
+  runtimeCapabilities?: RuntimeCapabilityResult;
+}
+
+export function normalizeDecisionToResolvedIntent<TState extends MinimalAgentState = MinimalAgentState>(
+  decision: MinimalObserveResult<TState>,
+  options: NormalizeDecisionToResolvedIntentOptions = {},
+): ResolvedIntent | null {
+  const actionDecision = normalizeDecisionToActionIntent(decision);
+  if (!actionDecision) {
+    return null;
+  }
+
+  const capability = options.runtimeCapabilities?.actionFamilies[actionDecision.action.type]
+    ?? describeRuntimeCapabilities(options).actionFamilies[actionDecision.action.type];
+
+  return normalizeActionIntentToResolvedIntent(actionDecision.action, actionDecision.readiness, capability);
 }
 
 export function getDefaultMinimalStateDir(cwd?: string): string {
@@ -407,8 +507,11 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        status: "skipped",
-        demSpendEstimate: 0,
+        resolution: null,
+        execution: {
+          status: "skipped",
+          demSpendEstimate: 0,
+        },
       },
     });
     await persistCycleArtifacts(stateDir, record);
@@ -424,8 +527,11 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        status: "dry_run",
-        demSpendEstimate: 0,
+        resolution: normalizeDecisionToResolvedIntent(decision),
+        execution: {
+          status: "dry_run",
+          demSpendEstimate: 0,
+        },
       },
     });
     await persistCycleArtifacts(stateDir, record);
@@ -433,6 +539,27 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   }
 
   const actionDecision = normalizeDecisionToActionIntent(decision);
+  const resolvedIntent = normalizeDecisionToResolvedIntent(decision);
+
+  if (resolvedIntent && resolvedIntent.status !== "executable") {
+    const record = buildCompletedRecord({
+      cycle,
+      startedAtMs,
+      now,
+      memoryBefore,
+      nextState: decision.nextState ?? memoryBefore.state,
+      decision,
+      outcome: {
+        resolution: resolvedIntent,
+        execution: {
+          status: "skipped",
+          demSpendEstimate: 0,
+        },
+      },
+    });
+    await persistCycleArtifacts(stateDir, record);
+    return record;
+  }
 
   const attestationGuardError = validateAttestationDecision(decision);
   if (attestationGuardError) {
@@ -444,12 +571,15 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        status: "failed",
-        demSpendEstimate: 0,
-        error: {
-          stage: "execute",
-          message: attestationGuardError,
-          retryable: false,
+        resolution: resolvedIntent,
+        execution: {
+          status: "failed",
+          demSpendEstimate: 0,
+          error: {
+            stage: "execute",
+            message: attestationGuardError,
+            retryable: false,
+          },
         },
       },
     });
@@ -474,12 +604,15 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
         nextState: decision.nextState ?? memoryBefore.state,
         decision,
         outcome: {
-          status: "failed",
-          demSpendEstimate: 0,
-          error: {
-            stage: "execute",
-            message: "missing_reaction_target",
-            retryable: false,
+          resolution: resolvedIntent,
+          execution: {
+            status: "failed",
+            demSpendEstimate: 0,
+            error: {
+              stage: "execute",
+              message: "missing_reaction_target",
+              retryable: false,
+            },
           },
         },
       });
@@ -519,14 +652,17 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
         nextState: decision.nextState ?? memoryBefore.state,
         decision,
         outcome: {
-          status: "failed",
-          demSpendEstimate: 0,
-          reactionResult: { ok: false, error: reactionResult?.error },
-          verification,
-          error: {
-            stage: "execute",
-            message: readApiErrorMessage(reactionResult?.error) ?? "reaction_failed",
-            retryable: true,
+          resolution: resolvedIntent,
+          execution: {
+            status: "failed",
+            demSpendEstimate: 0,
+            reactionResult: { ok: false, error: reactionResult?.error },
+            verification,
+            error: {
+              stage: "execute",
+              message: readApiErrorMessage(reactionResult?.error) ?? "reaction_failed",
+              retryable: true,
+            },
           },
         },
       });
@@ -542,10 +678,13 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        status: "reacted",
-        demSpendEstimate: 0,
-        reactionResult: { ok: true },
-        verification,
+        resolution: resolvedIntent,
+        execution: {
+          status: "reacted",
+          demSpendEstimate: 0,
+          reactionResult: { ok: true },
+          verification,
+        },
       },
     });
     await persistCycleArtifacts(stateDir, record);
@@ -561,12 +700,15 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        status: "failed",
-        demSpendEstimate: 0,
-        error: {
-          stage: "execute",
-          message: `unsupported_action_type:${actionDecision?.action.type ?? "unknown"}`,
-          retryable: false,
+        resolution: resolvedIntent,
+        execution: {
+          status: "failed",
+          demSpendEstimate: 0,
+          error: {
+            stage: "execute",
+            message: `unsupported_action_type:${actionDecision?.action.type ?? "unknown"}`,
+            retryable: false,
+          },
         },
       },
     });
@@ -610,14 +752,17 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        status: "failed",
-        publishResult,
-        demSpendEstimate: 0,
-        error: {
-          stage: "execute",
-          message: publishResult?.error?.message ?? directWrite.error?.message ?? "publish_failed",
-          code: publishResult?.error?.code ?? directWrite.error?.code,
-          retryable: publishResult?.error?.retryable ?? directWrite.error?.retryable,
+        resolution: resolvedIntent,
+        execution: {
+          status: "failed",
+          publishResult,
+          demSpendEstimate: 0,
+          error: {
+            stage: "execute",
+            message: publishResult?.error?.message ?? directWrite.error?.message ?? "publish_failed",
+            code: publishResult?.error?.code ?? directWrite.error?.code,
+            retryable: publishResult?.error?.retryable ?? directWrite.error?.retryable,
+          },
         },
       },
     });
@@ -638,13 +783,16 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     nextState: decision.nextState ?? memoryBefore.state,
     decision,
     outcome: {
-      status: actionDecision.action.type === "publish" ? "published" : "replied",
-      txHash,
-      attestationTxHash,
-      attestationResponseHash,
-      demSpendEstimate: 1,
-      publishResult,
-      verification,
+      resolution: resolvedIntent,
+      execution: {
+        status: actionDecision.action.type === "publish" ? "published" : "replied",
+        txHash,
+        attestationTxHash,
+        attestationResponseHash,
+        demSpendEstimate: 1,
+        publishResult,
+        verification,
+      },
     },
   });
   await persistCycleArtifacts(stateDir, record);
@@ -803,11 +951,14 @@ function buildFailureRecord<TState extends MinimalAgentState>(args: {
     nextState: args.nextState ?? args.memoryBefore.state,
     decision: args.decision,
     outcome: {
-      status: "failed",
-      demSpendEstimate: 0,
-      error: {
-        stage: args.stage,
-        message,
+      resolution: null,
+      execution: {
+        status: "failed",
+        demSpendEstimate: 0,
+        error: {
+          stage: args.stage,
+          message,
+        },
       },
     },
   });
@@ -845,16 +996,16 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
     finishedAt: args.finishedAt,
     decisionKind: args.decision.kind,
     actionType: getDecisionActionType(args.decision),
-    status: args.outcome.status,
-    txHash: args.outcome.txHash,
-    attestationTxHash: args.outcome.attestationTxHash,
-    attestationResponseHash: args.outcome.attestationResponseHash,
-    verificationPath: args.outcome.verification?.verificationPath,
-    visible: args.outcome.verification?.visible,
-    indexedVisible: args.outcome.verification?.indexedVisible,
-    observedScore: getObservedScore(args.outcome.verification),
-    errorStage: args.outcome.error?.stage,
-    errorMessage: args.outcome.error?.message,
+    status: args.outcome.execution.status,
+    txHash: args.outcome.execution.txHash,
+    attestationTxHash: args.outcome.execution.attestationTxHash,
+    attestationResponseHash: args.outcome.execution.attestationResponseHash,
+    verificationPath: args.outcome.execution.verification?.verificationPath,
+    visible: args.outcome.execution.verification?.visible,
+    indexedVisible: args.outcome.execution.verification?.indexedVisible,
+    observedScore: getObservedScore(args.outcome.execution.verification),
+    errorStage: args.outcome.execution.error?.stage,
+    errorMessage: args.outcome.execution.error?.message,
   };
 }
 
@@ -870,7 +1021,8 @@ function renderCycleSummary<TState extends MinimalAgentState>(
     `- DurationMs: ${record.durationMs}`,
     `- DecisionKind: ${record.decision.kind}`,
     `- ActionType: ${getDecisionActionType(record.decision)}`,
-    `- Outcome: ${record.outcome.status}`,
+    `- ResolutionStatus: ${record.outcome.resolution?.status ?? "none"}`,
+    `- Outcome: ${record.outcome.execution.status}`,
     `- DryRun: ${record.dryRun}`,
   ];
 
@@ -902,35 +1054,46 @@ function renderCycleSummary<TState extends MinimalAgentState>(
     }
   }
 
-  if (record.outcome.txHash) {
-    lines.push(`- TxHash: ${record.outcome.txHash}`);
+  if (record.outcome.execution.txHash) {
+    lines.push(`- TxHash: ${record.outcome.execution.txHash}`);
   }
 
-  if (record.outcome.attestationTxHash) {
-    lines.push(`- AttestationTxHash: ${record.outcome.attestationTxHash}`);
+  if (record.outcome.execution.attestationTxHash) {
+    lines.push(`- AttestationTxHash: ${record.outcome.execution.attestationTxHash}`);
   }
 
-  if (record.outcome.attestationResponseHash) {
-    lines.push(`- AttestationResponseHash: ${record.outcome.attestationResponseHash}`);
+  if (record.outcome.execution.attestationResponseHash) {
+    lines.push(`- AttestationResponseHash: ${record.outcome.execution.attestationResponseHash}`);
   }
 
-  if (record.outcome.verification) {
-    lines.push(`- Visible: ${record.outcome.verification.visible}`);
-    lines.push(`- IndexedVisible: ${record.outcome.verification.indexedVisible}`);
-    lines.push(`- VerificationPath: ${record.outcome.verification.verificationPath ?? "none"}`);
-    lines.push(`- VerificationPolls: ${record.outcome.verification.polls}`);
-    const observedScore = getObservedScore(record.outcome.verification);
+  if (record.outcome.execution.verification) {
+    lines.push(`- Visible: ${record.outcome.execution.verification.visible}`);
+    lines.push(`- IndexedVisible: ${record.outcome.execution.verification.indexedVisible}`);
+    lines.push(`- VerificationPath: ${record.outcome.execution.verification.verificationPath ?? "none"}`);
+    lines.push(`- VerificationPolls: ${record.outcome.execution.verification.polls}`);
+    const observedScore = getObservedScore(record.outcome.execution.verification);
     if (typeof observedScore === "number") {
       lines.push(`- ObservedScore: ${observedScore}`);
     }
-    if (record.outcome.verification.error) {
-      lines.push(`- VerificationNote: ${record.outcome.verification.error}`);
+    if (record.outcome.execution.verification.error) {
+      lines.push(`- VerificationNote: ${record.outcome.execution.verification.error}`);
     }
   }
 
-  if (record.outcome.error) {
-    lines.push(`- ErrorStage: ${record.outcome.error.stage}`);
-    lines.push(`- Error: ${record.outcome.error.message}`);
+  if (record.outcome.execution.error) {
+    lines.push(`- ErrorStage: ${record.outcome.execution.error.stage}`);
+    lines.push(`- Error: ${record.outcome.execution.error.message}`);
+  }
+
+  if (record.outcome.resolution) {
+    lines.push(`- ResolutionActionType: ${record.outcome.resolution.actionType}`);
+    lines.push(`- ResolutionPath: ${record.outcome.resolution.executionPathFamily}`);
+    if (record.outcome.resolution.reasonCodes.length > 0) {
+      lines.push(`- ResolutionReasons: ${record.outcome.resolution.reasonCodes.join(", ")}`);
+    }
+    if (record.outcome.resolution.missingRequirements.length > 0) {
+      lines.push(`- MissingRequirements: ${record.outcome.resolution.missingRequirements.join(", ")}`);
+    }
   }
 
   const factKeys = Object.keys(record.decision.facts ?? {});
@@ -1158,16 +1321,17 @@ async function persistSessionLedger<TState extends MinimalAgentState>(
     version: 1,
     session_id: record.sessionId,
     action: actionType,
-    status: record.outcome.status,
-    tx_hash: record.outcome.txHash ?? null,
+    resolution: record.outcome.resolution,
+    status: record.outcome.execution.status,
+    tx_hash: record.outcome.execution.txHash ?? null,
     target_tx_hash: record.decision.kind === "react"
       ? record.decision.targetTxHash
       : record.decision.kind === "action" && record.decision.action.type === "react"
         ? record.decision.action.targetTxHash ?? null
         : null,
-    dem_spent: record.outcome.demSpendEstimate ?? 0,
-    verification: record.outcome.verification ?? null,
-    error: record.outcome.error ?? null,
+    dem_spent: record.outcome.execution.demSpendEstimate ?? 0,
+    verification: record.outcome.execution.verification ?? null,
+    error: record.outcome.execution.error ?? null,
   };
 
   await writeSessionLedgerJson(record.sessionDir, "inputs.json", inputs);
@@ -1189,21 +1353,22 @@ function buildSessionResult<TState extends MinimalAgentState>(
     session_id: record.sessionId,
     started_at: record.startedAt,
     finished_at: record.finishedAt,
-    status: record.outcome.status,
+    status: record.outcome.execution.status,
+    resolution_status: record.outcome.resolution?.status ?? null,
     actions_taken: [record.decision.kind],
-    dem_spent: record.outcome.demSpendEstimate ?? 0,
+    dem_spent: record.outcome.execution.demSpendEstimate ?? 0,
     scorecard_summary: scorecardSummary,
     stop_reasons: buildStopReasons(record),
-    tx_hash: record.outcome.txHash,
-    indexed_visible: record.outcome.verification?.indexedVisible,
-    verification_path: record.outcome.verification?.verificationPath ?? null,
+    tx_hash: record.outcome.execution.txHash,
+    indexed_visible: record.outcome.execution.verification?.indexedVisible,
+    verification_path: record.outcome.execution.verification?.verificationPath ?? null,
   };
 }
 
 function buildScorecardSummary<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
 ): Record<string, unknown> | null {
-  const verification = record.outcome.verification;
+  const verification = record.outcome.execution.verification;
   const observedScore = getObservedScore(verification);
   if (typeof observedScore === "number") {
     return {
@@ -1220,7 +1385,7 @@ function buildStopReasons<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
 ): string[] {
   const reasons = new Set<string>();
-  const errorMessage = record.outcome.error?.message?.toLowerCase() ?? "";
+  const errorMessage = record.outcome.execution.error?.message?.toLowerCase() ?? "";
 
   if (record.decision.kind === "skip") {
     reasons.add(record.decision.reason);
@@ -1239,8 +1404,14 @@ function buildStopReasons<TState extends MinimalAgentState>(
   if (errorMessage.startsWith("placeholder_attest_url")) {
     reasons.add("placeholder_attest_url");
   }
-  if (record.outcome.verification?.visible && !record.outcome.verification.indexedVisible) {
+  if (record.outcome.execution.verification?.visible && !record.outcome.execution.verification.indexedVisible) {
     reasons.add("indexer_lag");
+  }
+  if (record.outcome.resolution?.status === "blocked") {
+    reasons.add("runtime_capability_blocked");
+  }
+  if (record.outcome.resolution?.status === "unsupported") {
+    reasons.add("action_family_unsupported");
   }
 
   return Array.from(reasons);

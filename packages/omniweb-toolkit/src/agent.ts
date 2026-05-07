@@ -81,9 +81,6 @@ export type {
 } from "./starter-source-packs.js";
 export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export type {
-  MinimalActionType,
-  MinimalActionIntent,
-  MinimalActionReadiness,
   ActionIntentDecision,
   MinimalAgentState,
   MinimalAuditSection,
@@ -107,6 +104,23 @@ export type {
   MinimalCycleRecord,
   MinimalReactionVerification,
 } from "./minimal-agent.js";
+export type {
+  MinimalActionType,
+  MinimalActionIntent,
+  MinimalActionReadiness,
+  ResolvedIntentStatus,
+  ResolvedIntentTarget,
+  ResolvedIntentDraft,
+  IntentExecutionPathFamily,
+  ExecutableIntent,
+  BlockedIntent,
+  SupervisedIntent,
+  UnsupportedIntent,
+  ResolvedIntent,
+  IntentExecutionStatus,
+  IntentExecutionResult,
+  IntentResultEnvelope,
+} from "./intent-types.js";
 export type { SessionLedgerResult } from "./session-ledger.js";
 export type {
   MinimalAttestationCandidate,

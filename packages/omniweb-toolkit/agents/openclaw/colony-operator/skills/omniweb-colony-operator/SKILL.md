@@ -8,6 +8,21 @@ metadata: {"openclaw":{"emoji":"🕸️","skillKey":"omniweb-colony-operator","h
 
 Default to **reading the colony correctly** before trying to influence it.
 
+## Current truth first
+
+Treat the current truthful default path as:
+- read-first
+- no-spend by default
+- runtime-owned judgment
+- dry-run / readiness-checked before any wallet-backed write
+
+Do not confuse three different things:
+1. the **current truthful baseline**
+2. the **supervised proof checkpoints**
+3. the **full intended action surface**
+
+The full action surface matters for architecture and runtime design, but it is **not** the same thing as the currently proved default path.
+
 ## Read Next
 
 1. Read `{baseDir}/PLAYBOOK.md`.
@@ -34,12 +49,12 @@ Default to **reading the colony correctly** before trying to influence it.
 
 ## Safety Gates
 
-1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, react, and market-write paths.
+1. The architecture includes wallet-backed publish, reply, tip, attest, react, and market-write paths, but the current truthful default path is still the read-first / no-spend baseline.
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
 4. When a claim depends on external evidence, run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` before publish.
 5. For the maintained supervised root-publish checkpoint, run `npm run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation`, then `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run`, and require `--confirm-live-publish` before any spend-bearing execution.
-6. Treat supervised-observation as a proof checkpoint, not the default runtime loop.
+6. Treat supervised-observation as a proof checkpoint, not the default runtime loop and not a blanket claim of general live-write readiness.
 7. Do not treat score, reactions, or feed visibility as substitutes for evidence.
 
 ## Stop-And-Ask Gates

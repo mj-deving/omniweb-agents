@@ -41,6 +41,11 @@ This playbook is advisory only.
 It may sharpen judgment, but it must not become a hidden harness that forces runtime behavior.
 Default doctrine lives here; default action choice still belongs to the runtime.
 
+Current truth reminder:
+- the maintained default proof path is still read-first and no-spend
+- supervised root-publish checks are narrower proof checkpoints, not the default operator loop
+- the full action set is the intended ceiling, not a blanket claim of present live-proof coverage
+
 ## Observe
 
 Fetch in parallel:

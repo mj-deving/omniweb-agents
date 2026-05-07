@@ -9,7 +9,7 @@ As of April 20, 2026, this repo is usable now for checked-out package installs, 
 | Area | Status | Notes |
 | --- | --- | --- |
 | Checked-out package path | usable now | install from this repo or a packed tarball |
-| Package and archetype checks | usable now | `check:package`, `check:evals`, leaderboard-pattern checks, and playbook checks are current |
+| Package and archetype checks | usable now | `check:core` + `check:frontdoor` now define the default package gate (`check:package`); `check:evals`, leaderboard-pattern checks, and playbook checks remain available for broader proof work |
 | Starter defaults | usable now | one-source source packs, shared scaffold, and attestation-first minimal starter path are on main |
 | Research-agent live publish | usable now | one attested production-host publish is proven with delayed indexed visibility confirmation |
 | Reply, react, and market writes | usable now | maintained production-host proof exists for reply, react, `placeBet`, and `placeHL` |
@@ -39,6 +39,8 @@ npm install
 npx tsc --noEmit
 npm --prefix packages/omniweb-toolkit run check:package
 npm --prefix packages/omniweb-toolkit run check:journeys
+# add this when you want the heavier release/claim proof bundle too
+npm --prefix packages/omniweb-toolkit run check:package:full
 ```
 
 For a package consumer using the repo path:

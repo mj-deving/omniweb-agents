@@ -247,7 +247,8 @@ This layer is architecture substrate only. It helps a runtime observe, summarize
 ### Escalate Only When Needed
 
 - default packaged validation: `npm run check:playbook:<archetype>`
-- broader package validation: `npm run check:package`
+- default package gate: `npm run check:package` (`check:core` + `check:frontdoor`)
+- broader release/claim validation: `npm run check:package:full`
 - live proof only when you intentionally want real effects:
   - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
   - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
@@ -264,6 +265,7 @@ Doc tiers:
 - [SKILL.md](SKILL.md): activation router for agents
 - [GUIDE.md](GUIDE.md): methodology and output discipline
 - [TOOLKIT.md](TOOLKIT.md): compact package map and validation ladder
+- [../../docs/testing-policy.md](../../docs/testing-policy.md): repo-level check tiers and when to run proof-heavy lanes
 
 For the current consumer-facing default path, use:
 
@@ -388,8 +390,8 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:evals` now also fails if any maintained trajectory scenario is missing a packaged example trace, if packaged examples drift from the maintained scenario ids, or if the captured playbook run examples drift from the supported archetype set.
 - Packaged trajectory examples are kept one-scenario-per-file and use the filename pattern `evals/examples/<scenario-id>.trace.json`.
 - Packaged captured playbook run examples are kept one-archetype-per-file and use the filename pattern `evals/playbook-runs/<archetype>.run.json`.
-- `npm run check:package` runs the structural self-audit, the release-tarball integrity check, and a plain-Node import smoke test over the built entrypoints.
-- `npm run check:package` now also verifies that the committed OpenClaw bundles and registry-facing skill artifacts still match the maintained playbooks, starter assets, and strategy baseline.
+- `npm run check:package` is the default package gate: operator-core regression checks plus front-door honesty checks.
+- `npm run check:package:full` adds the heavier release/claim proof bundle on top of `check:package`.
 - `npm run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.
 - `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, performing one safe live read, and checking a truthful runtime capability summary (read-only mode plus missing credential blocker) without assuming the full runtime stack.
 - `npm run check:research-agent-dry-run` proves the exported OpenClaw research-agent minimal starter can force the deferred dry-run runtime path from the source workspace, keep no-spend behavior, and avoid falling back to bundle mode when dry-run prerequisites are actually ready.
@@ -403,6 +405,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run check:openclaw` validates the generated OpenClaw export without running the broader package checks.
 - `npm run check:registry` validates the generated registry-facing skill artifacts without running the broader package checks.
 - `npm run check:publish` runs `check:package`, reports npm registry auth state, tells you whether the package name already exists on npm, and emits an explicit release decision such as `ready_for_first_publish` or `blocked_npm_auth_missing`.
+- If you are making broader release-grade claims rather than just package-integrity claims, run `npm run check:package:full` before or alongside `check:publish`.
 - `npm run check:journeys` runs the three shipped archetype journey paths, the stricter captured-run scorer, and the external-consumer release gate in one report.
 - `npm run snapshot:leaderboard-pattern` emits the current starter-pack scorecard snapshot as JSON so the measured moat defaults can be recorded or diffed outside CI.
 - `npm run check:leaderboard-pattern` runs the live starter-pack proof plus the committed scorecard regression gate so source-rank changes fail closed.

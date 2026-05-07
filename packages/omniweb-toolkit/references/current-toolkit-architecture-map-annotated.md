@@ -20,6 +20,37 @@ The default rule is:
 - **keep skill policy visibly skill-local**
 - **cut mixed export surfaces that hide the center of gravity**
 
+Status: working note  
+Updated: 2026-05-07
+
+## Honest center of gravity
+
+- `src/index.ts` = substrate-first public entry
+- `src/agent.ts` = compatibility/thin runtime-facing surface, not the architectural center
+- `src/minimal-agent.ts` = currently overloaded: orchestration + seam logic + execution branches + persistence/reporting
+- `src/intent-types.ts` = canonical seam contract
+- `src/readiness.ts` = runtime capability truth
+
+## Desired split
+
+### Substrate seam truth
+Owns:
+- `intent-types.ts`
+- readiness/capability truth
+- resolver / executor / verifier helpers extracted from `minimal-agent.ts`
+
+### Runtime orchestration
+Owns:
+- connect / observe / persist / loop control
+- state transitions and cycle/session records
+- summary rendering and session-ledger emission
+
+### Skill-local policy
+Owns:
+- starter topic preference
+- abstain-vs-act judgment
+- prompt wording and archetype-specific strategy
+
 ---
 
 # 1. Root substrate layer — keep and extend carefully
@@ -249,6 +280,27 @@ Keep only if it remains optional starter support rather than core architecture.
 ### `src/topic-family-contract.ts`
 Keep if it remains a clean contract-definition layer rather than hidden strategy doctrine.
 
+## `minimal-agent.ts` annotated responsibility bands
+
+### Band A — should move below the seam
+- decision normalization
+- action-family support classification
+- attestation execution branching
+- reaction execution branching
+- verification/readback shaping
+
+### Band B — should stay as orchestration
+- cycle setup and memory load
+- observe call boundary
+- dry-run / skip handling
+- persistence and ledger write
+- loop scheduling
+
+### Band C — stay local unless proven reusable
+- markdown summary rendering
+- session result projection
+- stop-reason heuristics
+
 ## Thin / move out of `src/minimal-agent.ts`
 `minimal-agent.ts` should end up owning only:
 - cycle orchestration
@@ -263,8 +315,6 @@ Move out of `minimal-agent.ts` anything that is really:
 - execution path selection
 - protocol-specific supervision truth
 - evidence/path mechanics
-
-Those belong in the seam/runtime substrate.
 
 Move out of `minimal-agent.ts` anything that is really:
 - topic-family policy
@@ -392,10 +442,10 @@ If the goal is to reduce boundary blur with the smallest meaningful moves, the f
    - execution-path family truth
 
 3. **keep `minimal-agent.ts` as orchestrator only**
+   - connect
    - observe
-   - ask seam to resolve
-   - ask seam to execute
-   - ask seam to verify
+   - resolve intent
+   - execute resolved intent
    - persist result
 
 4. **shrink the public claim of `src/agent.ts`**
@@ -405,6 +455,18 @@ If the goal is to reduce boundary blur with the smallest meaningful moves, the f
 5. **demote `starter.ts` to one skill over the seam**
    - let it own strategy
    - stop letting it own mechanics
+
+## Immediate refactor test
+
+The next honest cut is not more features. It is reducing `runMinimalAgentCycle()` to:
+
+1. connect
+2. observe
+3. resolve intent
+4. execute resolved intent
+5. persist/report
+
+If a branch inside that function knows reaction-vs-publish write mechanics, the seam is still too fat.
 
 ---
 

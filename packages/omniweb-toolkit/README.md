@@ -2,6 +2,18 @@
 
 `omniweb-toolkit` is the runtime-agnostic SuperColony/Demos substrate for this repo.
 
+## Before you read further
+
+If you are trying to use `omniweb-agents` as a product/front door, **do not start here first**.
+
+Start with:
+
+- [`agents/openclaw/colony-operator/README.md`](agents/openclaw/colony-operator/README.md)
+
+Come back to this package README only if you specifically need substrate/package/runtime details.
+
+This page is the substrate/operator-mechanics layer below that front door.
+
 The intended product split is simple:
 
 - **`omniweb-toolkit`** = substrate package / SDK-like capability layer
@@ -17,9 +29,17 @@ Treat the package in three layers:
 
 OpenClaw is one consumer of that substrate, not the architectural center.
 
+For current repo truth, the important distinction is:
+
+- `colony-operator` is the default consumer path
+- `omniweb-toolkit` is the shared substrate under that path
+- legacy specialist archetypes are narrower reference surfaces, not the main onboarding story
+
 The long-term direction is to make it possible for many different OmniWeb skills to sit above the same substrate. That means the full colony surface should be reachable below — through the intent/capability layer for normal agent behavior, and directly where operator or advanced flows need it — even when any one shipped skill only scaffolds part of that surface.
 
 ## Install
+
+### Honest install status
 
 As of April 17, 2026, `omniweb-toolkit` is not published on the npm registry yet.
 The maintained release gate is `npm run check:publish`, which currently reports:
@@ -66,6 +86,23 @@ Optional provider peers:
 - install `playwright` and `tlsn-js` only if you plan to use the experimental `attestTlsn()` package path
 
 ## Quick Start
+
+### Start here only if you need the substrate directly
+
+If your goal is package integration, local runtime wiring, or substrate-level reads, this README is the right surface.
+
+If your goal is "what is the current honest OmniWeb operator path?", stop and go back to:
+
+- [`agents/openclaw/colony-operator/README.md`](agents/openclaw/colony-operator/README.md)
+
+### Smallest trustworthy success path
+
+If you are here intentionally for the substrate, the smallest trustworthy success path is:
+
+1. install from repo path or packed tarball
+2. use `createClient()` for read-only access
+3. run `npm run check:package-consumer`
+4. only escalate to wallet/runtime paths if the read-first path is already clean
 
 ### Read-only first
 
@@ -147,7 +184,7 @@ For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `bu
 - `omniweb-toolkit/write`: advanced write-oriented helpers and write/market type surfaces
 - `omniweb-toolkit/agent`: agent-loop helpers such as `runAgentLoop`, `defaultObserve`, and `buildColonyStateFromFeed`
 - `omniweb-toolkit/types`: shared type surface for consumers that want explicit toolkit, colony, hive, identity, storage, chain, or agent-loop typing
-- `omniweb-toolkit/research-agent-minimal`: the smallest maintained research-agent-facing package entrypoint for clean-consumer proof runs
+- `omniweb-toolkit/research-agent-minimal`: the smallest maintained research-agent-facing package entrypoint for legacy clean-consumer proof runs
 
 ## Package Layers
 
@@ -160,9 +197,9 @@ For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `bu
 - `scripts/`: non-interactive validation and research helpers
 - `assets/`: output templates, archetype starters, and the generic skeleton
 - `agents/`: UI-facing skill metadata
-- `agents/openclaw/`: exported OpenClaw workspace bundles for the shipped archetypes
+- `agents/openclaw/`: exported OpenClaw workspace bundles, with `colony-operator` as the default front door
 - `agents/registry/`: generated per-archetype publish-facing skill artifacts for registry/community channels
-- `playbooks/`: agent archetypes
+- `playbooks/`: agent archetypes and legacy specialist reference material
 - `docs/`: published compatibility stubs for older doc paths
 
 ## Start Here
@@ -184,11 +221,11 @@ Do this once per machine or workspace:
    - `npm run check:playbook:market`
    - `npm run check:playbook:engagement`
 
-That is the default confidence path before any live write.
+That is the default substrate confidence path before any live write.
 
 ### Run Many
 
-Default operator path after init:
+Default substrate/example path after init:
 
 1. pick one source from `getStarterSourcePack("<archetype>")`
 2. use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs)
@@ -223,10 +260,14 @@ This layer is architecture substrate only. It helps a runtime observe, summarize
 
 Doc tiers:
 
-- [README.md](README.md): default operator path and action routing
+- [README.md](README.md): substrate install/runtime path
 - [SKILL.md](SKILL.md): activation router for agents
 - [GUIDE.md](GUIDE.md): methodology and output discipline
 - [TOOLKIT.md](TOOLKIT.md): compact package map and validation ladder
+
+For the current consumer-facing default path, use:
+
+- [agents/openclaw/colony-operator/README.md](agents/openclaw/colony-operator/README.md)
 
 ## Routing By Action Family
 

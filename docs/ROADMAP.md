@@ -6,8 +6,8 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "Phases 21-22 remain complete. The repo doctrine is now being tightened around a substrate-first package with skills/playbooks above it, while the ready queue remains intentionally empty until the next band is chosen deliberately."
-read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern"]
+summary: "Phases 21-22 remain complete, but current `main` has moved into a newer runtime-owned operator band: colony-operator honesty, starter thinning, the generic action-intent seam, and first non-publish action-family proof. The ready queue remains intentionally empty until the next proof band is chosen deliberately."
+read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
 # Roadmap
@@ -21,13 +21,13 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Substrate-first package/doctrine cleanup on top of the attestation-first runtime simplification baseline (`omniweb-agents-bgo`) |
-| Shipped moat | Leaderboard-pattern rollout complete (`omniweb-agents-ez4`) with one-source starter packs, shared scaffold, attestation-first minimal starter, and scorecard regression gate |
+| Current direction | Runtime-owned colony-operator rebuild on top of the attestation-first simplification baseline: truthful front door, thinner starters, substrate-first package boundaries, and the generic action-intent seam |
+| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the first runtime-owned operator cleanup band: colony-operator baseline tightening, starter thinning, and first non-publish action-family proof (`react`) |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
-| Doctrine | Research family doctrine, oracle-divergence doctrine, and research metric semantics now live in flat YAML rather than only TypeScript |
-| Documentation | Repo status docs are current through PR `#196`; package docs remain the public API source of truth |
-| Beads | `bd ready` is empty; old contract/prompt/family expansion epics are explicitly blocked, not active |
-| Remaining external edges | generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
+| Doctrine | The governing split is now explicit: substrate owns capability truth, starters own sensible defaults, playbooks own stronger strategy, and runtime owns non-deterministic judgment |
+| Documentation | Colony-operator is now the honest default front door; legacy specialist surfaces remain reference/compatibility material rather than the center of gravity |
+| Beads | `bd ready` is empty by design; stale legacy beads were deferred, and the next proof band should be opened deliberately from current architecture truth rather than old publish/research sludge |
+| Remaining external edges | operator-core proof definition, generic action-intent coverage beyond react/publish, capability-truth surfacing cleanup, generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -65,32 +65,65 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 
 ---
 
+## Current Architecture Band (post-Phases 21-22)
+
+`main` has moved beyond pure attestation-first simplification into a newer operator-core rebuild band.
+
+This band has already landed the following truths:
+
+- colony-operator is the honest default/front-door operator path
+- starter/runtime surfaces were thinned so the default path is easier to reason about
+- the generic action-intent seam now exists in the minimal runtime
+- `react` is the first non-publish action family proved through that seam
+- cold-consumer testing and follow-up doc cleanup were used to force the front door back into truthful shape
+
+The current architectural sequence is:
+1. keep one real core-action lane active at a time
+2. expand the generic action-intent seam through narrow real proof slices
+3. keep runtime-owned judgment primary and avoid slipping back into role-script fakery
+4. broaden into more action families or specialist overlays only after the operator core is honest and proved
+
 ## Next Work Bands
 
 There is no unblocked work in beads right now. The next work should be opened deliberately from one of these bands rather than inferred from stale paused epics.
 
-### 23. Operationalize the moat
+### 23. Operator-core end-to-end proof
 
-- refresh live proof runs and scorecards on a regular cadence
-- keep the leaderboard-pattern defaults honest as new source evidence or score shifts appear
-- continue expanding attestable sources only when they improve the simple source -> attest -> interpret -> publish loop
+Primary next band.
 
-### 24. Launch-proof and ecosystem edges
+- define the smallest honest acceptance criteria for the general-purpose colony-operator MVP floor
+- audit the current action-intent families and identify which paths are real, partial, or still fake/implicit
+- tighten capability-truth surfacing so the runtime can clearly tell what it can do, what it cannot do, and what still requires guarded/manual ceremony
+- land one narrow next proof slice at a time rather than reopening broad family expansion
 
+### 24. Launch-proof and external truth
+
+Only after the operator-core proof band is tighter.
+
+- keep external/front-door docs aligned to actual shipped behavior
 - generic publish indexing still needs continued observation and conservative messaging
 - tip-specific readback remains weaker than the other proved write families
 - `getPriceHistory` population still lags on the production host
 - npm publish remains blocked by environment/auth and launch-proof posture, not by package structure
 
-### 25. Explicitly paused work
+### 25. Later expansion and overlays
+
+Only after the core proof band earns it.
+
+- broaden into additional action families beyond the currently proved slices
+- revisit specialist/operator overlays as optional strategy surfaces rather than the default entry path
+- expand research/family playbooks only where they improve a runtime-owned operator instead of replacing it
+
+### 26. Explicitly paused work
 
 These are not next steps today:
 
 | ID | Area | Status |
 |----|------|--------|
-| `omniweb-agents-7h7` | packet layering and skeleton rollout | blocked behind the attestation-first model |
-| `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model |
-| `omniweb-agents-9he` | research family expansion | blocked until the simpler runtime path is exhausted |
+| `omniweb-agents-7h7` | packet layering and skeleton rollout | blocked behind the attestation-first model and newer operator-core proof band |
+| `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model and newer operator-core proof band |
+| `omniweb-agents-9he` | research family expansion | blocked until the runtime-owned operator core is better proved |
+| legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest colony-operator default path |
 
 ---
 

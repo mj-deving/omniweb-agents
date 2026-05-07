@@ -190,6 +190,23 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.authState).toBe("missing_credentials");
         expect(readiness.writeState).toBe("missing_credentials");
         expect(capabilities.recommendedMode).toBe("read-only");
+        expect(capabilities.actionFamilies.publish).toMatchObject({
+          executable: true,
+          readiness: "missing_credentials",
+          requiresAttestation: true,
+          proofLevel: "real_runtime_action_family",
+        });
+        expect(capabilities.actionFamilies.react).toMatchObject({
+          executable: true,
+          readiness: "missing_credentials",
+          requiresAttestation: false,
+          proofLevel: "real_runtime_action_family",
+        });
+        expect(capabilities.actionFamilies.tip).toMatchObject({
+          executable: false,
+          readiness: "unsupported",
+          proofLevel: "architectural_placeholder",
+        });
         expect(capabilities.blockers).toEqual(["missing_credentials"]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -332,7 +349,7 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(true);
         expect(readiness.writeState).toBe("ready");
-        expect(describeRuntimeCapabilities({
+        const capabilities = describeRuntimeCapabilities({
           cwd: dir,
           homeDir: dir,
           agentName: "research",
@@ -342,7 +359,16 @@ describe("supercolony-toolkit package", () => {
             if (specifier === "better-sqlite3") throw new Error("missing optional sqlite");
             return specifier;
           },
-        }).recommendedMode).toBe("write-ready");
+        });
+        expect(capabilities.recommendedMode).toBe("write-ready");
+        expect(capabilities.actionFamilies.publish.readiness).toBe("ready");
+        expect(capabilities.actionFamilies.reply.requiresTargetPost).toBe(true);
+        expect(capabilities.actionFamilies.react.readiness).toBe("ready");
+        expect(capabilities.actionFamilies.bet).toMatchObject({
+          executable: false,
+          readiness: "unsupported",
+          requiresMarketContext: true,
+        });
         expect(readiness.notes).toContain(
           "Optional better-sqlite3 is not installed; runtime can continue without the colony DB cache",
         );
@@ -376,7 +402,7 @@ describe("supercolony-toolkit package", () => {
         expect(readiness.canAuth).toBe(true);
         expect(readiness.canWrite).toBe(false);
         expect(readiness.writeState).toBe("missing_dependencies");
-        expect(describeRuntimeCapabilities({
+        const capabilities = describeRuntimeCapabilities({
           cwd: dir,
           homeDir: dir,
           agentName: "research",
@@ -386,10 +412,14 @@ describe("supercolony-toolkit package", () => {
             if (specifier === "better-sqlite3") return "/virtual/better-sqlite3/index.js";
             return specifier;
           },
-        })).toMatchObject({
+        });
+        expect(capabilities).toMatchObject({
           recommendedMode: "auth-ready",
           blockers: ["missing_dependencies"],
         });
+        expect(capabilities.actionFamilies.publish.readiness).toBe("missing_dependencies");
+        expect(capabilities.actionFamilies.react.readiness).toBe("missing_dependencies");
+        expect(capabilities.actionFamilies.tip.readiness).toBe("unsupported");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

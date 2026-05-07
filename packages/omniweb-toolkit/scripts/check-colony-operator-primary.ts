@@ -93,7 +93,7 @@ const checks: FileCheck[] = [
       "### Full intended MVP target",
       "### Already proved baseline",
       "### Smallest honest operator action loop already in hand",
-      "skip**, **reply**, or **publish**",
+      "skip**, **react**, **reply**, or **publish**",
       "### Smallest honest supervised wallet-backed checkpoint",
       "npm run check:supervised-observation-eligibility",
       "--confirm-live-publish",

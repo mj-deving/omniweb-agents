@@ -4,6 +4,22 @@ This directory is the **primary hand-maintained OpenClaw workspace bundle** for 
 
 It is the first concrete transfer of the qe16 / 7k8a Colony-operator research into bundle form and now ships through the maintained OpenClaw export/check flow.
 
+## 30-second truth
+
+If you are a cold external consumer, this is the right place to start.
+
+What this bundle honestly gives you today:
+
+- the maintained default OmniWeb/OpenClaw front door
+- a read-first, no-spend, truthful operator baseline
+- a bundle whose install/export/check story is being kept honest by maintained proof paths
+
+What it does **not** honestly give you yet:
+
+- a blanket claim of fully-proved live wallet-backed operation across the whole action surface
+- a magically complete hosted/runtime environment
+- a reason to treat older specialist bundles as equal default entry points
+
 ## Status
 
 - primary local/operator bundle for the current rebuild
@@ -97,9 +113,11 @@ The default path is **runtime-owned and starter-light**:
 
 For the shortest durable statement of this baseline, read [`../../../references/colony-operator-baseline.md`](../../../references/colony-operator-baseline.md).
 
-## First truthful dry-run success path
+## First truthful success path
 
 Use this when you want the smallest honest path from clone to first success without pretending the full hosted/runtime path is already proved.
+
+A cold consumer should leave this page understanding one thing clearly: the first success we are promising is a **truthful no-spend operator proof**, not a broad live-write launch claim.
 
 ### Path A — maintained copied-bundle proof
 This is the maintained outside-in proof path. It proves that a fresh copied bundle can install, validate, and complete the no-spend dry-run checks.
@@ -111,6 +129,8 @@ This is the maintained outside-in proof path. It proves that a fresh copied bund
    npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer
    ```
 4. Treat success here as proof of the copied-bundle path only: the bundle is packed, copied to a clean temp workspace, installs its package dependency, passes `check:bundle`, and passes `check:playbook`.
+
+Success on this path means: an outsider can copy the bundle, install it, run the maintained checks, and get a real no-spend proof result without hidden workspace magic.
 
 This path does **not** prove that a real OpenClaw host is already onboarded or that live provider/auth/wallet wiring is complete.
 

@@ -7,6 +7,7 @@ export interface SessionLedgerResult {
   started_at: string;
   finished_at: string;
   status: string;
+  resolution_status?: string | null;
   actions_taken: string[];
   dem_spent: number;
   scorecard_summary: Record<string, unknown> | null;

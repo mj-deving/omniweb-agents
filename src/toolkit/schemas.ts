@@ -14,7 +14,6 @@
  */
 
 import { z } from "zod";
-import type { ZodType } from "zod/v3";
 import type { DemosError } from "./types.js";
 import { demosError } from "./types.js";
 
@@ -57,13 +56,13 @@ const positiveFinite = z.number({
 
 // ── Policy Schemas ───────────────────────────────────
 
-export const TipPolicySchema: ZodType<TipPolicy> = z.object({
+export const TipPolicySchema: z.ZodType<TipPolicy> = z.object({
   maxPerTip: z.number().positive().finite().optional(),
   maxPerPost: z.number().int().positive().optional(),
   cooldownMs: z.number().int().nonnegative().optional(),
 }).strict();
 
-export const PayPolicySchema: ZodType<PayPolicy> = z.object({
+export const PayPolicySchema: z.ZodType<PayPolicy> = z.object({
   maxPerCall: z.number().positive().finite().optional(),
   rolling24hCap: z.number().positive().finite().optional(),
   trustedPayees: z.array(z.string()).optional(),
@@ -72,7 +71,7 @@ export const PayPolicySchema: ZodType<PayPolicy> = z.object({
 
 // ── Tool Input Schemas ───────────────────────────────
 
-export const ConnectOptionsSchema: ZodType<ConnectOptions> = z.object({
+export const ConnectOptionsSchema: z.ZodType<ConnectOptions> = z.object({
   walletPath: nonEmptyString,
   rpcUrl: z.string().url().optional(),
   algorithm: z.enum(["falcon", "ml-dsa", "ed25519"]).optional(),
@@ -93,7 +92,7 @@ export const ConnectOptionsSchema: ZodType<ConnectOptions> = z.object({
   }).optional(),
 });
 
-export const PublishDraftSchema: ZodType<PublishDraft> = z.object({
+export const PublishDraftSchema: z.ZodType<PublishDraft> = z.object({
   text: textBody,
   category: nonEmptyString,
   tags: z.array(z.string()).optional(),
@@ -105,7 +104,7 @@ export const PublishDraftSchema: ZodType<PublishDraft> = z.object({
   attestUrl: nonEmptyString,  // Required — SSRF validated in executePublishPipeline, not here
 });
 
-export const ReplyOptionsSchema: ZodType<ReplyOptions> = z.object({
+export const ReplyOptionsSchema: z.ZodType<ReplyOptions> = z.object({
   parentTxHash: txHashString,
   text: textBody,
   category: z.string().optional(),
@@ -117,34 +116,34 @@ export const ReplyOptionsSchema: ZodType<ReplyOptions> = z.object({
   attestUrl: nonEmptyString,
 });
 
-export const ReactOptionsSchema: ZodType<ReactOptions> = z.object({
+export const ReactOptionsSchema: z.ZodType<ReactOptions> = z.object({
   txHash: txHashString,
   type: z.union([z.enum(["agree", "disagree", "flag"]), z.null()]),
 });
 
-export const TipOptionsSchema: ZodType<TipOptions> = z.object({
+export const TipOptionsSchema: z.ZodType<TipOptions> = z.object({
   txHash: txHashString,
   amount: positiveFinite,
 });
 
-export const ScanOptionsSchema: ZodType<ScanOptions | undefined> = z.object({
+export const ScanOptionsSchema: z.ZodType<ScanOptions | undefined> = z.object({
   domain: z.string().optional(),
   limit: z.number().int().positive().optional(),
 }).optional();
 
-export const VerifyOptionsSchema: ZodType<VerifyOptions> = z.object({
+export const VerifyOptionsSchema: z.ZodType<VerifyOptions> = z.object({
   txHash: txHashString,
 });
 
-export const AttestOptionsSchema: ZodType<AttestOptions> = z.object({
+export const AttestOptionsSchema: z.ZodType<AttestOptions> = z.object({
   url: nonEmptyString,    // NOT .url() — SSRF validator in attest.ts owns URL parsing
 });
 
-export const DiscoverSourcesOptionsSchema: ZodType<DiscoverSourcesOptions | undefined> = z.object({
+export const DiscoverSourcesOptionsSchema: z.ZodType<DiscoverSourcesOptions | undefined> = z.object({
   domain: z.string().optional(),
 }).optional();
 
-export const PayOptionsSchema: ZodType<PayOptions> = z.object({
+export const PayOptionsSchema: z.ZodType<PayOptions> = z.object({
   url: nonEmptyString,    // NOT .url() — SSRF validator in pay.ts owns URL parsing
   method: z.string().optional(),
   headers: z.record(z.string(), z.string()).optional(),
@@ -156,7 +155,7 @@ export const PayOptionsSchema: ZodType<PayOptions> = z.object({
 // ── D402 Protocol Schemas ───────────────────────────
 
 /** Validate 402 response body shape */
-export const D402RequirementSchema: ZodType<{
+export const D402RequirementSchema: z.ZodType<{
   amount: number;
   recipient: string;
   resourceId: string;
@@ -171,7 +170,7 @@ export const D402RequirementSchema: ZodType<{
 // ── Catalog Entry Schema ─────────────────────────────
 
 /** Schema for source catalog entries — replaces inline Record<string, unknown> casts in discover-sources.ts */
-export const CatalogEntrySchema: ZodType<{
+export const CatalogEntrySchema: z.ZodType<{
   id?: string | undefined;
   name?: string | undefined;
   domain?: string | undefined;
@@ -201,7 +200,7 @@ export type CatalogEntry = z.infer<typeof CatalogEntrySchema>;
  * Never throws.
  */
 export function validateInput<T>(
-  schema: ZodType<T>,
+  schema: z.ZodType<T>,
   input: unknown,
 ): DemosError | null {
   const result = schema.safeParse(input);

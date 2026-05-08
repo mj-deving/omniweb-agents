@@ -17,7 +17,7 @@ import {
  * This starter now exercises the real colony read spine instead of only one compact colony read
  * or a recycled observe-first signal check. It still stays conservative: read feed,
  * signals, convergence, leaderboard, and balance; prefer skip when evidence is
- * thin; and emit a generic action intent only when the surface actually supports it.
+ * thin; and only choose reply or publish when the surface actually supports it.
  */
 
 const { colonyUrl: COLONY_URL } = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());
@@ -46,7 +46,7 @@ function buildHandledTxHistory(previous: string[] | undefined, nextTxHash: strin
 
 function buildPromptPacket(snapshot: ColonySurfaceSnapshot): Record<string, unknown> {
   return {
-    objective: "Decide whether the colony surface justifies skip or one compact action intent (reply or observation publish).",
+    objective: "Decide whether the colony surface justifies skip, reply, or one compact observation publish.",
     observedFacts: [
       snapshot.topSignal ? `Top signal topic: ${snapshot.topSignal.topic}.` : "No top signal topic was available.",
       `Signal sample size: ${snapshot.signalCount}.`,
@@ -255,19 +255,11 @@ export async function observe(
 
     if (attestUrl) {
       return {
-        kind: "action",
-        action: {
-          type: "reply",
-          parentTxHash: freshestMatchedPost.txHash,
-          text: `${topSignal.topic} already has ${signalCount} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
-          attestUrl,
-          category: "OBSERVATION",
-        },
-        readiness: {
-          requiresWallet: true,
-          requiresAttestation: true,
-          requiresTargetPost: true,
-        },
+        kind: "reply",
+        parentTxHash: freshestMatchedPost.txHash,
+        text: `${topSignal.topic} already has ${signalCount} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
+        attestUrl,
+        category: "OBSERVATION",
         facts: {
           topic: topSignal.normalizedTopic,
           selectedAction: "reply",
@@ -285,7 +277,6 @@ export async function observe(
           },
           selectedEvidence: {
             post: freshestMatchedPost,
-            actionType: "reply",
           },
           promptPacket,
         },
@@ -305,19 +296,12 @@ export async function observe(
   const attestUrl = matchingConvergence ? `${COLONY_URL}/api/convergence` : `${COLONY_URL}/api/signals`;
 
   return {
-    kind: "action",
-    action: {
-      type: "publish",
-      category: "OBSERVATION",
-      text: `${topSignal.topic} is live across colony surfaces: ${signalCount} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
-      attestUrl,
-      tags: ["starter", "observation", "colony-operator", "multi-surface"],
-      confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
-    },
-    readiness: {
-      requiresWallet: true,
-      requiresAttestation: true,
-    },
+    kind: "publish",
+    category: "OBSERVATION",
+    text: `${topSignal.topic} is live across colony surfaces: ${signalCount} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
+    attestUrl,
+    tags: ["starter", "observation", "colony-operator", "multi-surface"],
+    confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
     facts: {
       topic: topSignal.normalizedTopic,
       selectedAction: "publish",
@@ -334,12 +318,9 @@ export async function observe(
         matchingConvergence,
         matchedPosts: matchedPosts.slice(0, 3),
       },
-      selectedEvidence: {
-        actionType: "publish",
-      },
       promptPacket,
       notes: [
-        "This colony-operator starter deliberately reads multiple colony surfaces before deciding whether to skip or emit one compact action intent.",
+        "This colony-operator starter deliberately reads multiple colony surfaces before deciding whether to skip, react, reply, or publish.",
         "The placeholder text stays grounded in observed counts; runtime-owned composition can later replace it with narrower live judgment.",
       ],
     },

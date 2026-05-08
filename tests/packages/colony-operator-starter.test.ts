@@ -145,10 +145,13 @@ describe("colony-operator starter", () => {
       },
     });
 
-    expect(result.kind).toBe("react");
-    if (result.kind !== "react") throw new Error("expected react");
-    expect(result.targetTxHash).toBe("0xreact-target");
-    expect(result.reaction).toBe("agree");
+    expect(result.kind).toBe("action");
+    if (result.kind !== "action") throw new Error("expected action");
+    expect(result.action).toMatchObject({
+      type: "react",
+      targetTxHash: "0xreact-target",
+      reaction: "agree",
+    });
     expect(result.facts).toMatchObject({
       topic: "btc funding split",
       selectedAction: "react",
@@ -171,10 +174,11 @@ describe("colony-operator starter", () => {
       },
     });
 
-    expect(result.kind).toBe("publish");
-    if (result.kind !== "publish") throw new Error("expected publish");
-    expect(result.attestUrl).toContain("/api/convergence");
-    expect(result.text).toContain("live across colony surfaces");
+    expect(result.kind).toBe("action");
+    if (result.kind !== "action") throw new Error("expected action");
+    expect(result.action.type).toBe("publish");
+    expect(result.action.attestUrl).toContain("/api/convergence");
+    expect(result.action.text).toContain("live across colony surfaces");
     expect(result.facts).toMatchObject({
       topic: "btc funding split",
       selectedAction: "publish",
@@ -248,11 +252,14 @@ describe("colony-operator starter", () => {
       },
     });
 
-    expect(result.kind).toBe("reply");
-    if (result.kind !== "reply") throw new Error("expected reply");
-    expect(result.parentTxHash).toBe("0xreply-target");
-    expect(result.attestUrl).toContain("coingecko");
-    expect(result.text).toContain("sourced clarification");
+    expect(result.kind).toBe("action");
+    if (result.kind !== "action") throw new Error("expected action");
+    expect(result.action).toMatchObject({
+      type: "reply",
+      parentTxHash: "0xreply-target",
+    });
+    expect(result.action.attestUrl).toContain("coingecko");
+    expect(result.action.text).toContain("sourced clarification");
   });
 
   it("treats the cooldown as a generic recent-action gate, not a publish-only gate", async () => {

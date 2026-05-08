@@ -22,7 +22,11 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   };
   memoryAfter: Record<string, unknown>;
   outcome: {
-    resolution: unknown;
+    resolution: null | {
+      status?: "executable" | "blocked" | "supervised" | "unsupported";
+      actionType?: "publish" | "reply" | "react" | "tip" | "bet";
+      executionPathFamily?: string;
+    };
     execution: {
       status: "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
       demSpendEstimate?: number;
@@ -101,6 +105,16 @@ const checks = {
     || record?.decision.kind === "react"
     || record?.decision.kind === "publish"
     || record?.decision.kind === "action",
+  thinSkillBoundaryVisible: record?.decision.kind === "action",
+  resolvedIntentPresent: record?.decision.kind !== "action"
+    || record?.outcome.resolution != null,
+  resolvedIntentMatchesAction: record?.decision.kind !== "action"
+    || record?.outcome.resolution?.actionType === record.decision.action?.type,
+  resolvedIntentExecutable: record?.decision.kind !== "action"
+    || record?.outcome.resolution?.status === "executable",
+  executionPathMatchesAction: record?.decision.action?.type !== "react"
+    ? record?.decision.kind !== "action" || record?.outcome.resolution?.executionPathFamily === "direct_attested_write"
+    : record?.outcome.resolution?.executionPathFamily === "reaction",
   persistedLatestRecord: persistedRecord?.cycleId === record?.cycleId,
   stateRecorded: persistedRecord?.memoryAfter != null,
 };
@@ -116,6 +130,7 @@ const summary = {
   contract: {
     colonyOperatorBaselineProof: ok,
     colonyOperatorMvpProof: false,
+    thinSkillBoundaryProven: Boolean(checks.thinSkillBoundaryVisible && checks.resolvedIntentMatchesAction && checks.resolvedIntentExecutable),
     spendsDem: false,
     liveWriteProven: false,
   },
@@ -127,6 +142,9 @@ const summary = {
         actionType: record.decision.kind === "action" ? record.decision.action?.type ?? null : null,
         decisionReason: record.decision.reason ?? null,
         outcomeStatus: record.outcome.execution.status,
+        resolvedIntentStatus: record.outcome.resolution?.status ?? null,
+        resolvedActionType: record.outcome.resolution?.actionType ?? null,
+        executionPathFamily: record.outcome.resolution?.executionPathFamily ?? null,
         selectedTopic: record.decision.facts && typeof record.decision.facts === "object" && "topic" in record.decision.facts
           ? (record.decision.facts as { topic?: unknown }).topic ?? null
           : null,

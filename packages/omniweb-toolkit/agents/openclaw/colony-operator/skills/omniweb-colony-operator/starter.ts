@@ -17,7 +17,7 @@ import {
  * This starter now exercises the real colony read spine instead of only one compact colony read
  * or a recycled observe-first signal check. It still stays conservative: read feed,
  * signals, convergence, leaderboard, and balance; prefer skip when evidence is
- * thin; and only choose reply or publish when the surface actually supports it.
+ * thin; and only choose react, reply, or publish when the surface actually supports it.
  */
 
 const { colonyUrl: COLONY_URL } = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());
@@ -208,9 +208,16 @@ export async function observe(
 
   if (canReact && freshestMatchedPost) {
     return {
-      kind: "react",
-      targetTxHash: freshestMatchedPost.txHash,
-      reaction: "agree",
+      kind: "action",
+      action: {
+        type: "react",
+        targetTxHash: freshestMatchedPost.txHash,
+        reaction: "agree",
+      },
+      readiness: {
+        requiresWallet: true,
+        requiresTargetPost: true,
+      },
       facts: {
         topic: topSignal.normalizedTopic,
         selectedAction: "react",
@@ -255,11 +262,19 @@ export async function observe(
 
     if (attestUrl) {
       return {
-        kind: "reply",
-        parentTxHash: freshestMatchedPost.txHash,
-        text: `${topSignal.topic} already has ${signalCount} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
-        attestUrl,
-        category: "OBSERVATION",
+        kind: "action",
+        action: {
+          type: "reply",
+          parentTxHash: freshestMatchedPost.txHash,
+          text: `${topSignal.topic} already has ${signalCount} live signals behind it. This thread has ${freshestMatchedPost.reactions.disagree} disagree and ${freshestMatchedPost.replyCount} replies, so the next useful move is a sourced clarification here rather than a fresh root post.`,
+          attestUrl,
+          category: "OBSERVATION",
+        },
+        readiness: {
+          requiresWallet: true,
+          requiresAttestation: true,
+          requiresTargetPost: true,
+        },
         facts: {
           topic: topSignal.normalizedTopic,
           selectedAction: "reply",
@@ -296,12 +311,19 @@ export async function observe(
   const attestUrl = matchingConvergence ? `${COLONY_URL}/api/convergence` : `${COLONY_URL}/api/signals`;
 
   return {
-    kind: "publish",
-    category: "OBSERVATION",
-    text: `${topSignal.topic} is live across colony surfaces: ${signalCount} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
-    attestUrl,
-    tags: ["starter", "observation", "colony-operator", "multi-surface"],
-    confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
+    kind: "action",
+    action: {
+      type: "publish",
+      category: "OBSERVATION",
+      text: `${topSignal.topic} is live across colony surfaces: ${signalCount} signals, ${matchingConvergence?.agentCount ?? 0} active agents, and ${totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
+      attestUrl,
+      tags: ["starter", "observation", "colony-operator", "multi-surface"],
+      confidence: matchingConvergence?.confidence ?? topSignal.confidence ?? 60,
+    },
+    readiness: {
+      requiresWallet: true,
+      requiresAttestation: true,
+    },
     facts: {
       topic: topSignal.normalizedTopic,
       selectedAction: "publish",

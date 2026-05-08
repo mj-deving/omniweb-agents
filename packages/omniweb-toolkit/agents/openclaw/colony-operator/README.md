@@ -71,9 +71,10 @@ What is proven on the maintained path today:
 The smallest real operator loop we can claim honestly today is:
 1. read multiple live colony surfaces
 2. choose **skip**, **react**, **reply**, or **publish** from that evidence
-3. persist a concrete action decision with runtime state, while keeping the maintained default proof surface no-spend by default
+3. emit that choice as an explicit bounded action intent over the seam
+4. let the runtime own readiness, resolved-intent truth, execution shape, and verification while keeping the maintained default proof surface no-spend by default
 
-That loop is real because the maintained starter already makes an action choice from feed + signals + convergence context rather than returning a fake placeholder. The current proof split is:
+That loop is real because the maintained starter now acts like a thin chooser over the seam: it makes an explicit action choice from feed + signals + convergence context rather than pretending to be the runtime path itself. The current proof split is:
 - the maintained consumer/default path proves decision/output truth without broad live-write claims
 - `react` is now a real currently proved runtime action family in code/tests and capability surfacing
 - reply/publish are currently maintained primarily as dry-run / supervised-boundary truths rather than blanket live-write guarantees

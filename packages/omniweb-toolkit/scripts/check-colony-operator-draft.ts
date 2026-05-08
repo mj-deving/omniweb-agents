@@ -69,7 +69,7 @@ const checks: FileCheck[] = [
     path: "agents/registry/omniweb-colony-operator/starter.ts",
     mustContain: [
       "Primary hand-maintained colony-operator starter",
-      "one compact colony read",
+      "only choose react, reply, or publish",
       'category: "OBSERVATION"',
     ],
     mustNotContain: [

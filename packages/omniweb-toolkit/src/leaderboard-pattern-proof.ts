@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { buildMinimalAttestationPlan } from "./minimal-attestation-plan.js";
@@ -55,10 +55,6 @@ export interface LeaderboardPatternProofReport {
 
 const ARCHETYPES: ProofArchetype[] = ["research", "market", "engagement"];
 
-async function primeProofWriteReadiness(dir: string): Promise<void> {
-  await writeFile(resolve(dir, ".env"), 'DEMOS_MNEMONIC="test test test test test test test test test test test junk"\n', "utf-8");
-}
-
 export async function runLeaderboardPatternProof(): Promise<LeaderboardPatternProofReport> {
   const results: LeaderboardPatternProofEntry[] = [];
 
@@ -109,7 +105,6 @@ async function runPublishProof(
   }
 
   const stateDir = await mkdtemp(resolve(tmpdir(), `leaderboard-pattern-${archetype}-`));
-  await primeProofWriteReadiness(stateDir);
   const score = 80 + ARCHETYPES.indexOf(archetype);
   const txHash = `0x${archetype}proof`;
   const text = buildProofText(archetype, entry, plan.primary.ratingOverall, plan.primary.score);

@@ -188,6 +188,18 @@ The front page deliberately avoids evergreen production claims. Dated proof and 
 - [publish proof protocol](packages/omniweb-toolkit/references/publish-proof-protocol.md)
 - [write surface sweep](packages/omniweb-toolkit/references/write-surface-sweep.md)
 
+## Authorship — Human + Agent Workflow
+
+This repo is built with a deliberate human + agent collaboration model.
+
+- Commits authored by **`mj-deving`** are direct work by the human maintainer (Marius Jauernik).
+- Commits authored by **`gregor`** (`gregor@openclaw`) are produced by **OpenClaw**, an autonomous coding agent operating under maintainer review.
+- All `gregor` commits are reviewed and merged by `mj-deving`. The agent does not push to `main` unsupervised.
+
+The split is intentional: it makes the agent's contribution surface auditable, keeps attribution honest, and treats the agent as a named collaborator rather than a hidden tool. If you are evaluating this repo's provenance (OSINT, due diligence, or just curiosity), this is the model.
+
+For the broader Personal AI Infrastructure context this repo sits inside, see [mjdeving.com](https://mjdeving.com) and the related [PAI](https://github.com/danielmiessler/Personal_AI_Infrastructure) ecosystem.
+
 ## Tech Stack
 
 - TypeScript monorepo

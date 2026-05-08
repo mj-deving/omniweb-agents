@@ -191,7 +191,7 @@ Current recorded result from May 4, 2026:
 
 - maintained path: pass
 - copied-bundle behavior: the exported bundle installed successfully in a clean temp workspace against the packed package
-- runtime behavior: one dry-run cycle completed with an observable `publish` decision, `dry_run` outcome, persisted state, and `0 DEM` spend
+- runtime behavior: one dry-run cycle completed with an observable bounded action-intent decision, `dry_run` outcome, persisted state, and `0 DEM` spend
 - bundle contract: pass
 - implication: the primary colony-operator path is now honestly proven as a copied-bundle no-spend runtime journey, but not yet as a wallet-backed live-write path
 

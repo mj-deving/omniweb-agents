@@ -198,8 +198,6 @@ This repo is built with a deliberate human + agent collaboration model.
 
 The split is intentional: it makes the agent's contribution surface auditable, keeps attribution honest, and treats the agent as a named collaborator rather than a hidden tool. If you are evaluating this repo's provenance (OSINT, due diligence, or just curiosity), this is the model.
 
-For the broader Personal AI Infrastructure context this repo sits inside, see [mjdeving.com](https://mjdeving.com) and the related [PAI](https://github.com/danielmiessler/Personal_AI_Infrastructure) ecosystem.
-
 ## Tech Stack
 
 - TypeScript monorepo

@@ -27,11 +27,12 @@ export interface WriteReadinessResult {
 }
 
 export type RuntimeActionFamily = "publish" | "reply" | "react" | "tip" | "bet";
+export type RuntimeActionReadinessState = "ready" | "missing_credentials" | "missing_dependencies" | "unsupported";
 
 export interface RuntimeActionCapability {
   declared: true;
   executable: boolean;
-  readiness: "ready" | "missing_credentials" | "missing_dependencies" | "unsupported";
+  readiness: RuntimeActionReadinessState;
   requiresWallet: boolean;
   requiresAttestation: boolean;
   requiresTargetPost: boolean;
@@ -220,7 +221,7 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
 }
 
 function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<RuntimeActionFamily, RuntimeActionCapability> {
-  const executableReadiness: RuntimeActionCapability["readiness"] = readiness.canWrite
+  const executableReadiness: RuntimeActionReadinessState = readiness.canWrite
     ? "ready"
     : readiness.authState === "missing_credentials"
       ? "missing_credentials"

@@ -11,7 +11,6 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   iteration: number;
   dryRun: boolean;
   decision: {
-    kind: "skip" | "reply" | "react" | "publish";
     kind: "skip" | "reply" | "react" | "publish" | "action";
     reason?: string | null;
     action?: {
@@ -23,8 +22,11 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   };
   memoryAfter: Record<string, unknown>;
   outcome: {
-    status: "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
-    demSpendEstimate?: number;
+    resolution: unknown;
+    execution: {
+      status: "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
+      demSpendEstimate?: number;
+    };
   };
 }
 
@@ -88,9 +90,8 @@ const checks = {
   cycleReturned: record != null,
   noThrow: failure == null,
   dryRunFlag: record?.dryRun === true,
-  noSpendEstimate: (record?.outcome.demSpendEstimate ?? -1) === 0,
-  outcomeIsSafe: record?.outcome.status === "dry_run" || record?.outcome.status === "skipped",
-  decisionIsObservable: record?.decision.kind === "skip" || record?.decision.kind === "reply" || record?.decision.kind === "react" || record?.decision.kind === "publish",
+  noSpendEstimate: (record?.outcome.execution.demSpendEstimate ?? -1) === 0,
+  outcomeIsSafe: record?.outcome.execution.status === "dry_run" || record?.outcome.execution.status === "skipped",
   actionShapeSupported: record?.decision.kind !== "action"
     || record.decision.action?.type === "publish"
     || record.decision.action?.type === "reply"
@@ -125,7 +126,7 @@ const summary = {
         decisionKind: record.decision.kind,
         actionType: record.decision.kind === "action" ? record.decision.action?.type ?? null : null,
         decisionReason: record.decision.reason ?? null,
-        outcomeStatus: record.outcome.status,
+        outcomeStatus: record.outcome.execution.status,
         selectedTopic: record.decision.facts && typeof record.decision.facts === "object" && "topic" in record.decision.facts
           ? (record.decision.facts as { topic?: unknown }).topic ?? null
           : null,

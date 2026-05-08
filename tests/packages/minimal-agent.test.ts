@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +20,10 @@ async function createTempDir(): Promise<string> {
 
 async function readJson(path: string): Promise<any> {
   return JSON.parse(await readFile(path, "utf-8"));
+}
+
+async function primeWriteReadiness(dir: string): Promise<void> {
+  await writeFile(resolve(dir, ".env"), 'DEMOS_MNEMONIC="test test test test test test test test test test test junk"\n', "utf-8");
 }
 
 function makeNow(...values: number[]): () => number {
@@ -177,6 +181,7 @@ describe("minimal agent runtime", () => {
 
   it("publishes, verifies visibility, and records tx metadata", async () => {
     const stateDir = await createTempDir();
+    await primeWriteReadiness(stateDir);
     const omni = makeOmni({
       colony: {
         publish: vi.fn().mockResolvedValue({
@@ -258,6 +263,7 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-publish",
         now: makeNow(1_700_000_001_000, 1_700_000_001_500),
       },
@@ -317,6 +323,7 @@ describe("minimal agent runtime", () => {
 
   it("supports reply decisions and records replied status", async () => {
     const stateDir = await createTempDir();
+    await primeWriteReadiness(stateDir);
     const omni = makeOmni({
       colony: {
         reply: vi.fn().mockResolvedValue({
@@ -362,6 +369,7 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-reply",
         now: makeNow(1_700_000_002_000, 1_700_000_002_400),
       },
@@ -381,6 +389,7 @@ describe("minimal agent runtime", () => {
 
   it("supports react decisions and records reacted status", async () => {
     const stateDir = await createTempDir();
+    await primeWriteReadiness(stateDir);
     const omni = makeOmni({
       colony: {
         react: vi.fn().mockResolvedValue({ ok: true }),
@@ -403,6 +412,7 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-react",
         now: makeNow(1_700_000_002_100, 1_700_000_002_300),
       },
@@ -421,6 +431,7 @@ describe("minimal agent runtime", () => {
 
   it("blocks live publishes that still use placeholder attestation URLs", async () => {
     const stateDir = await createTempDir();
+    await primeWriteReadiness(stateDir);
     const omni = makeOmni();
 
     const record = await runMinimalAgentCycle(
@@ -433,6 +444,7 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-placeholder-block",
         now: makeNow(1_700_000_002_500, 1_700_000_002_800),
       },

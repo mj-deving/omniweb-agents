@@ -69,7 +69,7 @@ const checks: FileCheck[] = [
     path: "agents/registry/omniweb-colony-operator/starter.ts",
     mustContain: [
       "Primary hand-maintained colony-operator starter",
-      "one compact colony read",
+      "only choose react, reply, or publish",
       'category: "OBSERVATION"',
     ],
     mustNotContain: [
@@ -94,6 +94,8 @@ const checks: FileCheck[] = [
       "### Already proved baseline",
       "### Smallest honest operator action loop already in hand",
       "skip**, **react**, **reply**, or **publish**",
+      "explicit bounded action intent over the seam",
+      "let the runtime own readiness, resolved-intent truth, execution shape, and verification",
       "### Smallest honest supervised wallet-backed checkpoint",
       "npm run check:supervised-observation-eligibility",
       "--confirm-live-publish",

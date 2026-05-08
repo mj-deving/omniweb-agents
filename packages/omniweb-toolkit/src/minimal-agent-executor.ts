@@ -95,7 +95,7 @@ export async function executeMinimalAction<TState extends MinimalAgentState = Mi
     attestationResponseHash: directWrite.attestationResponseHash,
     demSpendEstimate: 1,
     publishResult,
-    verification: directWrite.visibility,
+    verification: directWrite.visibility as MinimalExecutionOutcome["verification"],
   };
 }
 

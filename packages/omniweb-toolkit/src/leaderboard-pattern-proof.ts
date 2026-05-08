@@ -27,7 +27,7 @@ export interface LeaderboardPatternProofEntry {
   attestUrl: string | null;
   decision: "publish" | "skip";
   ok: boolean;
-  outcomeStatus: MinimalCycleRecord["outcome"]["status"];
+  outcomeStatus: MinimalCycleRecord["outcome"]["execution"]["status"];
   observedScore: number | null;
 }
 
@@ -41,7 +41,7 @@ export interface LeaderboardPatternPackScorecard {
 
 export interface LeaderboardPatternSkipControl {
   ok: boolean;
-  outcomeStatus: MinimalCycleRecord["outcome"]["status"];
+  outcomeStatus: MinimalCycleRecord["outcome"]["execution"]["status"];
   reason: string;
 }
 

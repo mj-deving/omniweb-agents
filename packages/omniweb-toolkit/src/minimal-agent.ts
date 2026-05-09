@@ -103,6 +103,8 @@ export type {
   PolicyActionType,
   PolicyEvidenceRequest,
   PolicyEvidenceStrength,
+  PolicyMarketBetKind,
+  PolicyMarketDirection,
   ResolvedEvidencePlan,
 } from "./intent-types.js";
 

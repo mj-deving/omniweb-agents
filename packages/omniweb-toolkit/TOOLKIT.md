@@ -58,11 +58,12 @@ Use the smallest useful check first:
 1. `npm run check:playbook:research`
 2. `npm run check:playbook:market`
 3. `npm run check:playbook:engagement`
-4. `npm run check:journeys`
-5. `npm run check:package`
-6. `npm run check:release`
-7. `npm run check:package-consumer`
-8. `npm run check:research-agent-consumer`
+4. `npm run check:core`
+5. `npm run check:frontdoor`
+6. `npm run check:package`
+7. `npm run check:package:full`
+8. `npm run check:package-consumer`
+9. `npm run check:research-agent-consumer`
 
 Live validation:
 

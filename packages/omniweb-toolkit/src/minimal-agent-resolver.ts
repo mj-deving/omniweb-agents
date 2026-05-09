@@ -4,6 +4,7 @@ import type {
   ExecutableIntent,
   MinimalActionIntent,
   MinimalActionReadiness,
+  IntentExecutionPathFamily,
   PolicyActionRequest,
   PolicyEvidenceStrength,
   ResolvedEvidencePlan,
@@ -116,6 +117,14 @@ function buildResolvedEvidencePlan(request: PolicyActionRequest): ResolvedEviden
       : undefined,
     mechanism: resolveEvidenceMechanism(request.evidenceRequest?.strength),
   });
+}
+
+function inferExecutionPathFamily(actionType: MinimalActionIntent["type"]): IntentExecutionPathFamily {
+  if (actionType === "publish" || actionType === "reply") return "direct_attested_write";
+  if (actionType === "react") return "reaction";
+  if (actionType === "tip") return "tip_transfer";
+  if (actionType === "bet") return "market_write";
+  return "none";
 }
 
 function normalizePolicyActionRequestToActionIntent(
@@ -285,14 +294,12 @@ function normalizeActionIntentToResolvedIntent(
             : [],
         executionPathFamily: capability.proofLevel === "architectural_placeholder"
           ? "unsupported"
-          : action.type === "react"
-            ? "reaction"
-            : "direct_attested_write",
+          : inferExecutionPathFamily(action.type),
       };
     }
   }
 
-  if (action.type === "tip" || action.type === "bet") {
+  if (action.type === "bet") {
     return {
       status: "unsupported",
       actionType: action.type,
@@ -306,11 +313,7 @@ function normalizeActionIntentToResolvedIntent(
     };
   }
 
-  const executionPathFamily = action.type === "react"
-    ? "reaction"
-    : action.type === "publish" || action.type === "reply"
-      ? "direct_attested_write"
-      : "none";
+  const executionPathFamily = inferExecutionPathFamily(action.type);
 
   return {
     status: "executable",

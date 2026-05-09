@@ -144,22 +144,22 @@ Action intents currently live in three different truth layers:
 
 Use these labels consistently:
 - **real baseline outcome** — skip
-- **real runtime action family** — react, reply, publish
+- **real runtime action family** — react, reply, publish, tip
 - **supervised live checkpoint** — narrow publish checkpoint only
-- **architectural placeholder** — tip, bet
+- **architectural placeholder** — bet
 
-Do **not** compress all of these into one vague claim like "the operator supports publish/reply/react/tip/bet."
+Do **not** compress all of these into one vague claim like "the operator supports publish/reply/react/tip/bet" without separating the real runtime families from placeholder surfaces like bet.
 
 ## Current strategic gaps
 
 ### Gap 1: public proof language slightly lags runtime truth for react
 The runtime, tests, and capability surface now support `react` honestly, but the current public default-path language still centers mostly on skip/reply/publish.
 
-### Gap 2: the executor type surface outruns the maintained proof surface
-`tip` and `bet` exist in the action-intent type union, but the executor treats them as unsupported.
+### Gap 2: the maintained proof surface must stay aligned with the runtime truth map
+`tip` now executes through the shared intent-execution seam with readback verification, while `bet` remains an architectural placeholder.
 
-That is acceptable only if we keep calling them placeholders.
-It becomes misleading if docs talk as though they are equally real.
+That means the docs must stop grouping tip with placeholder families.
+It becomes misleading if proof language still describes both as equally unsupported.
 
 ## Recommended next proof sequence
 

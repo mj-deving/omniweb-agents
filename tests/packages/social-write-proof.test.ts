@@ -238,6 +238,16 @@ describe("social-write-proof helpers", () => {
     ).toBe(false);
   });
 
+  it("requires a post tip-stat baseline before accepting tip-stat convergence", () => {
+    expect(
+      tipReadbackSatisfied(
+        null,
+        normalizeTipReadback({ totalTips: 7, totalDem: 21, myTip: 3 }),
+        1,
+      ),
+    ).toBe(false);
+  });
+
   it("tracks balance deltas separately from tip-specific readback", () => {
     expect(
       tipSpendObserved(

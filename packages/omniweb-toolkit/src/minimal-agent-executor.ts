@@ -23,10 +23,10 @@ export interface ExecuteMinimalActionOptions<TState extends MinimalAgentState = 
 export async function executeMinimalAction<TState extends MinimalAgentState = MinimalAgentState>(
   options: ExecuteMinimalActionOptions<TState>,
 ): Promise<MinimalExecutionOutcome> {
-  const { omni, decision, verification, dryRun = false } = options;
-  const resolution = options.resolution ?? normalizeDecisionToResolvedIntent(decision, {
+  const { omni, decision, actionDecision, verification, dryRun = false } = options;
+  const resolution = options.resolution ?? normalizeDecisionToResolvedIntent(actionDecision, {
     runtimeCapabilities: buildInjectedPolicyRuntimeCapabilities(),
-    readiness: decision.kind === "action" ? decision.readiness : undefined,
+    readiness: actionDecision.readiness,
   });
 
   if (!resolution) {
@@ -46,7 +46,7 @@ export async function executeMinimalAction<TState extends MinimalAgentState = Mi
     resolution,
     verification,
     dryRun,
-    attestationPlan: decision.attestationPlan,
+    attestationPlan: actionDecision.attestationPlan ?? decision.attestationPlan,
   });
 
   return toMinimalExecutionOutcome(envelope.execution);

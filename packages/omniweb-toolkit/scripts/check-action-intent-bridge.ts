@@ -24,6 +24,7 @@ interface MinimalDecision {
     attestUrl?: string;
     tags?: string[];
     confidence?: number;
+    amount?: number;
     parentTxHash?: string;
     targetTxHash?: string;
     reaction?: "agree" | "disagree" | "flag";
@@ -115,6 +116,19 @@ const reactDecision: MinimalDecision = {
   },
 };
 
+const tipDecision: MinimalDecision = {
+  kind: "action",
+  action: {
+    type: "tip",
+    targetTxHash: "0xtip-target",
+    amount: 3,
+  },
+  readiness: {
+    requiresWallet: true,
+    requiresTargetPost: true,
+  },
+};
+
 const skippedDecision: MinimalDecision = {
   kind: "skip",
   reason: "bridge_check_skip",
@@ -145,6 +159,9 @@ const skippedPlan = planPolicyExecution(skippedDecision, {
   runtimeCapabilities: injectedRuntimeCapabilities,
 });
 const compiledReact = compilePolicyDecision(reactDecision, {
+  runtimeCapabilities: injectedRuntimeCapabilities,
+});
+const compiledTip = compilePolicyDecision(tipDecision, {
   runtimeCapabilities: injectedRuntimeCapabilities,
 });
 
@@ -250,6 +267,55 @@ const reactEnvelope = await executeResolvedIntent({
   },
 });
 
+const tipEnvelope = await executeResolvedIntent({
+  omni: {
+    colony: {
+      tip: async () => ({ ok: true, data: { txHash: "0xtip-envelope", validated: true } }),
+      getTipStats: (() => {
+        let call = 0;
+        return async () => {
+          call += 1;
+          return {
+            ok: true,
+            data: call === 1
+              ? { totalTips: 0, totalDem: 0, myTip: 0 }
+              : { totalTips: 1, totalDem: 3, myTip: 3 },
+          };
+        };
+      })(),
+      getAgentTipStats: (() => {
+        let call = 0;
+        return async () => {
+          call += 1;
+          return {
+            ok: true,
+            data: call === 1
+              ? { tipsGiven: { count: 0, totalDem: 0 }, tipsReceived: { count: 0, totalDem: 0 } }
+              : { tipsGiven: { count: 0, totalDem: 0 }, tipsReceived: { count: 1, totalDem: 3 } },
+          };
+        };
+      })(),
+      getBalance: (() => {
+        let call = 0;
+        return async () => ({ ok: true, data: { balance: call++ === 0 ? 10 : 7 } });
+      })(),
+      getPostDetail: async () => ({
+        ok: true,
+        data: {
+          post: { txHash: "0xtip-target", author: "0xrecipient", timestamp: 1, payload: {} },
+          replies: [],
+        },
+      }),
+    },
+  },
+  resolution: compiledTip.resolution,
+  verification: {
+    timeoutMs: 1,
+    pollMs: 1,
+    limit: 50,
+  },
+});
+
 const checks = {
   publishRequestNormalized: publishRequest.actionType === "publish",
   publishRequestCarriesEvidence: (publishRequest.evidenceRequest as { primary?: string } | undefined)?.primary === publishDecision.attestUrl,
@@ -281,6 +347,11 @@ const checks = {
   canonicalReactEnvelopeReady: reactEnvelope.execution?.status === "executed"
     && reactEnvelope.execution?.actionType === "react"
     && reactEnvelope.execution?.verificationPath === "reaction_counts",
+  compiledTipResolutionExecutable: compiledTip.resolution?.status === "executable",
+  canonicalTipEnvelopeReady: tipEnvelope.execution?.status === "executed"
+    && tipEnvelope.execution?.actionType === "tip"
+    && tipEnvelope.execution?.verificationPath === "tip_stats"
+    && tipEnvelope.execution?.indexedVisible === true,
 };
 
 const ok = Object.values(checks).every(Boolean);
@@ -303,9 +374,11 @@ console.log(JSON.stringify({
     dryRunPlan,
     skippedPlan,
     compiledReact,
+    compiledTip,
     publishEnvelope,
     replyEnvelope,
     reactEnvelope,
+    tipEnvelope,
   },
 }, null, 2));
 

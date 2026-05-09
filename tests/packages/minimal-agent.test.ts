@@ -4,7 +4,9 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getDefaultMinimalStateDir,
+  normalizeDecisionToPolicyActionRequest,
   normalizeDecisionToResolvedIntent,
+  resolveActionRequest,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
 } from "../../packages/omniweb-toolkit/src/minimal-agent.js";
@@ -76,7 +78,7 @@ afterEach(async () => {
 });
 
 describe("minimal agent runtime", () => {
-  it("normalizes decisions into resolved-intent classifications at the edge", async () => {
+  it("adapts legacy decisions into PolicyActionRequest without changing resolution truth", async () => {
     const dir = await createTempDir();
     const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
     const writeReadyCapabilities = {
@@ -101,12 +103,19 @@ describe("minimal agent runtime", () => {
       },
     };
 
-    const publish = normalizeDecisionToResolvedIntent({
+    const publishRequest = normalizeDecisionToPolicyActionRequest({
       kind: "publish",
       category: "OBSERVATION",
       text: "hello",
       attestUrl: "https://example.com/a.json",
-    }, { runtimeCapabilities: writeReadyCapabilities });
+      tags: ["bridge"],
+      confidence: 77,
+      audit: {
+        inputs: { topic: "coverage-gap" },
+        notes: ["route:publish"],
+      },
+    });
+    const publish = resolveActionRequest(publishRequest, { runtimeCapabilities: writeReadyCapabilities });
     const react = normalizeDecisionToResolvedIntent({
       kind: "action",
       action: { type: "react", targetTxHash: "0xabc", reaction: "agree" },
@@ -123,10 +132,34 @@ describe("minimal agent runtime", () => {
       action: { type: "tip", targetTxHash: "0xabc", amount: 5 },
     }, { runtimeCapabilities: blockedCapabilities });
 
+    expect(publishRequest).toEqual({
+      actionType: "publish",
+      draft: {
+        category: "OBSERVATION",
+        text: "hello",
+        tags: ["bridge"],
+        confidence: 77,
+      },
+      evidenceRequest: {
+        primary: "https://example.com/a.json",
+        strength: "inherit",
+      },
+      audit: {
+        matchedConditions: ["route:publish"],
+        observedInputs: ["topic"],
+      },
+    });
     expect(publish).toMatchObject({
       status: "executable",
       actionType: "publish",
       executionPathFamily: "direct_attested_write",
+      normalizedDraft: {
+        text: "hello",
+        attestUrl: "https://example.com/a.json",
+      },
+      evidencePlan: {
+        primary: "https://example.com/a.json",
+      },
     });
     expect(react).toMatchObject({
       status: "executable",
@@ -137,6 +170,9 @@ describe("minimal agent runtime", () => {
       status: "blocked",
       actionType: "publish",
       reasonCodes: ["runtime_capability_blocked"],
+      evidencePlan: {
+        primary: "https://example.com/a.json",
+      },
     });
     expect(tip).toMatchObject({
       status: "unsupported",

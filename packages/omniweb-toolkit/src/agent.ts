@@ -12,7 +12,9 @@
 export {
   getDefaultMinimalStateDir,
   normalizeDecisionToActionIntent,
+  normalizeDecisionToPolicyActionRequest,
   normalizeDecisionToResolvedIntent,
+  resolveActionRequest,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
 } from "./minimal-agent.js";
@@ -113,14 +115,23 @@ export type {
   MinimalExecutionOutcome,
   MinimalReactionVerification,
   NormalizeDecisionToResolvedIntentOptions,
+  ResolveActionRequestOptions,
 } from "./minimal-agent.js";
 export type {
   MinimalActionType,
   MinimalActionIntent,
   MinimalActionReadiness,
+  PolicyActionAudit,
+  PolicyActionDraft,
+  PolicyActionRequest,
+  PolicyActionTarget,
+  PolicyActionType,
+  PolicyEvidenceRequest,
+  PolicyEvidenceStrength,
   ResolvedIntentStatus,
   ResolvedIntentTarget,
   ResolvedIntentDraft,
+  ResolvedEvidencePlan,
   IntentExecutionPathFamily,
   ExecutableIntent,
   BlockedIntent,

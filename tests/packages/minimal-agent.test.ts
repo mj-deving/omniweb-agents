@@ -3,9 +3,11 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  compilePolicyDecision,
   getDefaultMinimalStateDir,
   normalizeDecisionToPolicyActionRequest,
   normalizeDecisionToResolvedIntent,
+  planPolicyExecution,
   resolveActionRequest,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
@@ -178,6 +180,70 @@ describe("minimal agent runtime", () => {
       status: "unsupported",
       actionType: "tip",
       reasonCodes: ["action_family_unsupported"],
+    });
+  });
+
+  it("compiles and plans policy execution outside the loop core", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const compiled = compilePolicyDecision({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Policy shell compile check",
+      attestUrl: "https://example.com/policy-shell.json",
+      tags: ["policy-shell"],
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const executePlan = planPolicyExecution({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Execute through policy shell",
+      attestUrl: "https://example.com/policy-shell.json",
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const dryRunPlan = planPolicyExecution({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Dry run through policy shell",
+      attestUrl: "https://example.com/policy-shell.json",
+    }, { runtimeCapabilities: writeReadyCapabilities, dryRun: true });
+    const blockedPlan = planPolicyExecution({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Blocked through policy shell",
+      attestUrl: "https://example.com/policy-shell.json",
+    }, { runtimeCapabilities: blockedCapabilities });
+
+    expect(compiled.request).toMatchObject({
+      actionType: "publish",
+      draft: {
+        text: "Policy shell compile check",
+      },
+    });
+    expect(compiled.actionDecision?.action).toMatchObject({
+      type: "publish",
+      text: "Policy shell compile check",
+    });
+    expect(compiled.resolution).toMatchObject({
+      status: "executable",
+      actionType: "publish",
+    });
+    expect(executePlan.disposition).toEqual({ kind: "execute" });
+    expect(dryRunPlan.disposition).toEqual({ kind: "dry_run", status: "dry_run" });
+    expect(blockedPlan.disposition).toEqual({ kind: "skip", status: "skipped" });
+    expect(blockedPlan.resolution).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
     });
   });
 

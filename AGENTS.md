@@ -85,7 +85,9 @@ Use `bd` as the task authority.
 
 Important commands:
 
+- `bd prime` to refresh current Beads workflow context from the installed CLI before choosing or resuming work
 - `bd ready --json` to see unblocked work
+- `bd ready --claim --json` to atomically claim the first safe ready item when filters make the selection unambiguous
 - `bd show <id>` to inspect one task
 - `bd update <id> --claim` to claim a task
 - `bd note <id> "..."` to leave execution notes
@@ -100,6 +102,7 @@ Important commands:
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
 - `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
 - `bd dolt pull` / `bd dolt push` for shared-state sync
+- `bd -C <path> ...` for cross-worktree Beads commands without changing shell cwd; verify generated setup writes landed in the intended Git worktree
 - `scripts/restore-beads-db.sh` to recover a fresh clone or shadow Beads DB from the canonical embedded Dolt database; see `docs/beads-bootstrap.md`
 - if `.beads` exists but `./scripts/check-beads-health.sh` reports bootstrap `has_existing=false`, treat it as a broken manual restore and repair with:
   `./scripts/check-beads-health.sh --fix --repair-broken --sync`
@@ -138,6 +141,7 @@ Rules:
 - For epics or multi-step hardening tracks, add dependency edges early so `bd ready` reflects actual order rather than just named backlog.
 - Use `bd swarm` when an epic is clearly parallelizable and child beads can be worked independently.
 - Run `./scripts/beads-maintenance.sh` at natural boundaries: before `/clear`, after a merged work cluster, or when the queue starts to feel noisy.
+- Project-scoped Codex Beads guidance lives in `.agents/skills/beads/SKILL.md`; use it as the local skill layer after generic Beads workflow has been loaded.
 
 ## Branch / PR Discipline
 

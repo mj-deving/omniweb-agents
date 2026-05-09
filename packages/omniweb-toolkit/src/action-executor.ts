@@ -60,6 +60,17 @@ export async function executeResolvedIntent(
     };
   }
 
+  if (dryRun) {
+    return {
+      resolution,
+      execution: {
+        status: "dry_run",
+        actionType: resolution.actionType,
+        demSpendEstimate: 0,
+      },
+    };
+  }
+
   const attestationGuardError = validateResolvedIntentAttestation(resolution, attestationPlan);
   if (attestationGuardError) {
     return {
@@ -69,17 +80,6 @@ export async function executeResolvedIntent(
         message: attestationGuardError,
         retryable: false,
       }),
-    };
-  }
-
-  if (dryRun) {
-    return {
-      resolution,
-      execution: {
-        status: "dry_run",
-        actionType: resolution.actionType,
-        demSpendEstimate: 0,
-      },
     };
   }
 

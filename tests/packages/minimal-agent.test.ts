@@ -15,6 +15,7 @@ import {
   runPolicyWithTrace,
   type PolicyDefinition,
 } from "../../packages/omniweb-toolkit/src/minimal-agent.js";
+import { executeMinimalAction } from "../../packages/omniweb-toolkit/src/minimal-agent-executor.ts";
 import { describeRuntimeCapabilities } from "../../packages/omniweb-toolkit/src/readiness.js";
 
 const tempDirs: string[] = [];
@@ -489,6 +490,38 @@ describe("minimal agent runtime", () => {
     });
   });
 
+  it("executeMinimalAction honors caller-provided actionDecision when resolution is absent", async () => {
+    const omni = makeOmni();
+    omni.colony.react = vi.fn().mockResolvedValue({ ok: true });
+    omni.colony.getReactions = vi.fn()
+      .mockResolvedValueOnce({ ok: true, data: { agree: 0, disagree: 0, flag: 0 } })
+      .mockResolvedValueOnce({ ok: true, data: { agree: 1, disagree: 0, flag: 0, myReaction: "agree" } });
+
+    const execution = await executeMinimalAction({
+      omni,
+      decision: {
+        kind: "publish",
+        category: "OBSERVATION",
+        text: "Stale publish decision",
+        attestUrl: "https://app.supercolony.ai/api/signals",
+      },
+      actionDecision: {
+        kind: "action",
+        action: { type: "react", targetTxHash: "0xreact-from-action", reaction: "agree" },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      },
+      verification: { timeoutMs: 1, pollMs: 1, limit: 10 },
+    });
+
+    expect(omni.colony.react).toHaveBeenCalledWith("0xreact-from-action", "agree");
+    expect(omni.colony.publish).not.toHaveBeenCalled();
+    expect(execution).toMatchObject({
+      status: "reacted",
+      demSpendEstimate: 0,
+    });
+    expect(execution.verification?.verificationPath).toBe("reaction_counts");
+  });
+
   it("writes skip cycle artifacts and persists next state", async () => {
     const stateDir = await createTempDir();
     const record = await runMinimalAgentCycle(
@@ -658,6 +691,43 @@ describe("minimal agent runtime", () => {
     expect(omni.colony.publish).not.toHaveBeenCalled();
     expect(record.outcome.execution.status).toBe("dry_run");
     expect(record.outcome.execution.demSpendEstimate).toBe(0);
+  });
+
+  it("executeResolvedIntent honors dryRun before attestation validation", async () => {
+    const omni = makeOmni();
+    const runtime = describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} });
+    const resolution = normalizeDecisionToResolvedIntent({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Dry-run direct envelope.",
+      attestUrl: "https://example.com/dry-run-direct",
+    }, {
+      runtimeCapabilities: {
+        ...runtime,
+        actionFamilies: {
+          ...runtime.actionFamilies,
+          publish: {
+            ...runtime.actionFamilies.publish,
+            executable: true,
+            readiness: "ready",
+          },
+        },
+      },
+    })!;
+
+    const envelope = await executeResolvedIntent({
+      omni,
+      resolution,
+      dryRun: true,
+      verification: { timeoutMs: 1, pollMs: 1, limit: 1 },
+    });
+
+    expect(omni.colony.publish).not.toHaveBeenCalled();
+    expect(envelope.execution).toMatchObject({
+      status: "dry_run",
+      actionType: "publish",
+      demSpendEstimate: 0,
+    });
   });
 
   it("supports reply decisions and records replied status", async () => {

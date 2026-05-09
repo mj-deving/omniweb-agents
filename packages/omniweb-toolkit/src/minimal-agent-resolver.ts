@@ -71,11 +71,13 @@ function buildPolicyActionRequest(action: MinimalActionIntent, audit?: PolicyAct
 }
 
 function deriveDefaultReadiness(request: PolicyActionRequest): MinimalActionReadiness | undefined {
+  const requiresAttestation = request.evidenceRequest?.strength !== "none";
+
   switch (request.actionType) {
     case "publish":
-      return { requiresWallet: true, requiresAttestation: true };
+      return { requiresWallet: true, requiresAttestation };
     case "reply":
-      return { requiresWallet: true, requiresAttestation: true, requiresTargetPost: true };
+      return { requiresWallet: true, requiresAttestation, requiresTargetPost: true };
     case "react":
       return { requiresWallet: true, requiresTargetPost: true };
     case "tip":
@@ -116,6 +118,59 @@ function buildResolvedEvidencePlan(request: PolicyActionRequest): ResolvedEviden
       : undefined,
     mechanism: resolveEvidenceMechanism(request.evidenceRequest?.strength),
   });
+}
+
+function inferExecutionPathFamily(actionType: MinimalActionIntent["type"]): ResolvedIntent["executionPathFamily"] {
+  if (actionType === "react") return "reaction";
+  if (actionType === "publish" || actionType === "reply") return "direct_attested_write";
+  if (actionType === "bet") return "market_write";
+  return "none";
+}
+
+function readRequiredText(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function validateActionRequest(
+  action: MinimalActionIntent,
+  evidencePlan?: ResolvedEvidencePlan,
+): { reasonCodes: string[]; missingRequirements: string[] } | null {
+  const reasonCodes: string[] = [];
+  const missingRequirements: string[] = [];
+  const missingFields: string[] = [];
+
+  if (action.type === "publish" || action.type === "reply") {
+    if (!readRequiredText(action.text)) {
+      missingFields.push("text");
+    }
+
+    if (action.type === "reply" && !readRequiredText(action.parentTxHash)) {
+      missingFields.push("parent_tx_hash");
+    }
+
+    if (evidencePlan?.mechanism === "none") {
+      reasonCodes.push("evidence_strength_incompatible");
+      missingRequirements.push("attestation");
+    } else if (!readRequiredText(action.attestUrl)) {
+      missingFields.push("evidence_url");
+    }
+  }
+
+  if (action.type === "react") {
+    if (!readRequiredText(action.targetTxHash)) {
+      missingFields.push("post_tx_hash");
+    }
+    if (!action.reaction) {
+      missingFields.push("reaction");
+    }
+  }
+
+  if (missingFields.length > 0) {
+    reasonCodes.unshift("request_missing_fields");
+    missingRequirements.unshift(...missingFields);
+  }
+
+  return reasonCodes.length > 0 ? { reasonCodes, missingRequirements } : null;
 }
 
 function normalizePolicyActionRequestToActionIntent(
@@ -252,6 +307,22 @@ function normalizeActionIntentToResolvedIntent(
     amount: action.amount,
   };
 
+  const requestValidation = validateActionRequest(action, evidencePlan);
+  if (requestValidation) {
+    return {
+      status: "blocked",
+      actionType: action.type,
+      normalizedTarget,
+      normalizedDraft,
+      evidencePlan,
+      readiness,
+      capability,
+      reasonCodes: requestValidation.reasonCodes,
+      missingRequirements: requestValidation.missingRequirements,
+      executionPathFamily: inferExecutionPathFamily(action.type),
+    };
+  }
+
   if (capability) {
     if (capability.readiness === "unsupported" || capability.executable === false) {
       return {
@@ -285,9 +356,7 @@ function normalizeActionIntentToResolvedIntent(
             : [],
         executionPathFamily: capability.proofLevel === "architectural_placeholder"
           ? "unsupported"
-          : action.type === "react"
-            ? "reaction"
-            : "direct_attested_write",
+          : inferExecutionPathFamily(action.type),
       };
     }
   }
@@ -306,11 +375,7 @@ function normalizeActionIntentToResolvedIntent(
     };
   }
 
-  const executionPathFamily = action.type === "react"
-    ? "reaction"
-    : action.type === "publish" || action.type === "reply"
-      ? "direct_attested_write"
-      : "none";
+  const executionPathFamily = inferExecutionPathFamily(action.type);
 
   return {
     status: "executable",

@@ -45,6 +45,11 @@ Current truth reminder:
 - the maintained default proof path is still read-first and no-spend
 - supervised root-publish checks are narrower proof checkpoints, not the default operator loop
 - the full action set is the intended ceiling, not a blanket claim of present live-proof coverage
+- the current architecture checkpoint is PR #360 plus the 2026-05-08 reference trio: broad substrate exists, boundary blur is the main problem, and the next code PR remains `omniweb-agents-5xp4.9` for the no-behavior-change request seam
+- on current code, runtime still owns action selection; the playbook-owned policy pivot is the planned direction, not a reason to overclaim what has already landed
+
+Anti-drift rule:
+- do not jump from this checkpoint to `5xp4.10+` or back to older operator-core / launch-first premises when deciding the next implementation move
 
 ## Observe
 

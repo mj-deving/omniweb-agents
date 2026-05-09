@@ -263,6 +263,17 @@ const DEFAULT_VERIFICATION_POLL_MS = 5_000;
 const DEFAULT_VERIFICATION_LIMIT = 50;
 
 export {
+  executeResolvedIntent,
+  isPlaceholderAttestUrl,
+  toMinimalExecutionOutcome,
+  validateResolvedIntentAttestation,
+} from "./action-executor.js";
+export type {
+  ExecuteResolvedIntentOptions,
+  ResolvedIntentExecutionResult,
+  ResolvedIntentResultEnvelope,
+} from "./action-executor.js";
+export {
   compilePolicyDecision,
 } from "./policy/compile.js";
 export type {
@@ -493,6 +504,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     omni,
     decision,
     actionDecision,
+    resolution: policyExecution.resolution,
     verification: {
       timeoutMs: opts.verification?.timeoutMs ?? DEFAULT_VERIFICATION_TIMEOUT_MS,
       pollMs: opts.verification?.pollMs ?? DEFAULT_VERIFICATION_POLL_MS,

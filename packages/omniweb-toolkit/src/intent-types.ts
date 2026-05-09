@@ -130,7 +130,7 @@ export interface UnsupportedIntent extends ResolvedIntentBase {
 
 export type ResolvedIntent = ExecutableIntent | BlockedIntent | SupervisedIntent | UnsupportedIntent;
 
-export type IntentExecutionStatus = "executed" | "skipped" | "failed";
+export type IntentExecutionStatus = "executed" | "dry_run" | "skipped" | "failed";
 
 export interface IntentExecutionResult {
   status: IntentExecutionStatus;
@@ -138,11 +138,13 @@ export interface IntentExecutionResult {
   txHash?: string;
   attestationTxHash?: string;
   attestationResponseHash?: string;
+  demSpendEstimate?: number;
   verificationPath?: string;
   visible?: boolean;
   indexedVisible?: boolean;
   errorCode?: string;
   errorMessage?: string;
+  retryable?: boolean;
 }
 
 export interface IntentResultEnvelope {

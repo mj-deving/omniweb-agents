@@ -83,14 +83,14 @@ export function buildInjectedPolicyRuntimeCapabilities(): RuntimeCapabilityResul
       },
       bet: {
         declared: true,
-        executable: false,
-        readiness: "unsupported",
+        executable: true,
+        readiness: "ready",
         requiresWallet: true,
         requiresAttestation: false,
         requiresTargetPost: false,
         requiresMarketContext: true,
-        proofLevel: "architectural_placeholder",
-        notes: ["Minimal agent executor does not implement bet actions yet"],
+        proofLevel: "real_runtime_action_family",
+        notes: ["Injected omni session executes bet actions through placeBet()/placeHL() with shared market-pool verification"],
       },
     },
     readiness: {

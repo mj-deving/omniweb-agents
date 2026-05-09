@@ -56,6 +56,14 @@ function makeOmni(overrides?: Partial<any>): any {
         ok: true,
         data: { txHash: "0xtip", validated: true },
       }),
+      placeBet: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { txHash: "0xbet", memo: "HIVE_BET:BTC:50000:24h", amount: 5, registered: true },
+      }),
+      placeHL: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { txHash: "0xhl", memo: "HIVE_HL:BTC:HIGHER:24h", amount: 5, registered: true },
+      }),
       getReactions: vi.fn().mockResolvedValue({
         ok: true,
         data: { agree: 0, disagree: 0, flag: 0 },
@@ -74,6 +82,34 @@ function makeOmni(overrides?: Partial<any>): any {
       getBalance: vi.fn().mockResolvedValue({
         ok: true,
         data: { balance: 100 },
+      }),
+      getPool: vi.fn().mockResolvedValue({
+        ok: true,
+        data: {
+          asset: "BTC",
+          horizon: "24h",
+          totalBets: 1,
+          totalDem: 5,
+          poolAddress: "0xpool",
+          roundEnd: 1,
+          bets: [{ txHash: "0xexisting", bettor: "0xother", predictedPrice: 50000, amount: 5, roundEnd: 1, horizon: "24h" }],
+        },
+      }),
+      getHigherLowerPool: vi.fn().mockResolvedValue({
+        ok: true,
+        data: {
+          asset: "BTC",
+          horizon: "24h",
+          totalHigher: 5,
+          totalLower: 0,
+          totalDem: 5,
+          higherCount: 1,
+          lowerCount: 0,
+          roundEnd: 1,
+          referencePrice: 50000,
+          poolAddress: "0xhl-pool",
+          currentPrice: 49900,
+        },
       }),
       getFeed: vi.fn().mockResolvedValue({
         ok: true,
@@ -231,7 +267,7 @@ describe("minimal agent runtime", () => {
     });
   });
 
-  it("preserves market-write fields through the shared seam before executor support exists", async () => {
+  it("resolves market-write fields through the shared seam into executable market intents", async () => {
     const dir = await createTempDir();
     const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
     const marketSeamCapabilities = {
@@ -243,7 +279,7 @@ describe("minimal agent runtime", () => {
           executable: true,
           readiness: "ready" as const,
           proofLevel: "real_runtime_action_family" as const,
-          notes: ["test override for seam audit"],
+          notes: ["test override for market-write execution"],
         },
       },
     };
@@ -307,8 +343,9 @@ describe("minimal agent runtime", () => {
       },
     });
     expect(higherLowerResolution).toMatchObject({
-      status: "unsupported",
+      status: "executable",
       actionType: "bet",
+      executionPathFamily: "market_write",
       normalizedTarget: {
         asset: "BTC",
       },
@@ -318,12 +355,11 @@ describe("minimal agent runtime", () => {
         horizon: "24h",
         direction: "lower",
       },
-      reasonCodes: ["action_family_not_implemented"],
-      missingRequirements: ["runtime_executor"],
     });
     expect(fixedPriceResolution).toMatchObject({
-      status: "unsupported",
+      status: "executable",
       actionType: "bet",
+      executionPathFamily: "market_write",
       normalizedTarget: {
         asset: "ETH",
       },
@@ -333,8 +369,6 @@ describe("minimal agent runtime", () => {
         horizon: "4h",
         predictedPrice: 3_465,
       },
-      reasonCodes: ["action_family_not_implemented"],
-      missingRequirements: ["runtime_executor"],
     });
   });
 
@@ -376,6 +410,16 @@ describe("minimal agent runtime", () => {
       actionType: "react",
       draft: { reaction: "agree" },
     }, { runtimeCapabilities: writeReadyCapabilities });
+    const malformedBetMissingFields = resolveActionRequest({
+      actionType: "bet",
+      target: { asset: "BTC" },
+      draft: { marketKind: "fixed_price", horizon: "24h", amount: 5 },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const malformedBetAmount = resolveActionRequest({
+      actionType: "bet",
+      target: { asset: "BTC" },
+      draft: { marketKind: "higher_lower", horizon: "24h", direction: "higher", amount: 4 },
+    }, { runtimeCapabilities: writeReadyCapabilities });
 
     expect(malformedReply).toMatchObject({
       status: "blocked",
@@ -397,6 +441,20 @@ describe("minimal agent runtime", () => {
       reasonCodes: ["request_missing_fields"],
       missingRequirements: ["post_tx_hash"],
       executionPathFamily: "reaction",
+    });
+    expect(malformedBetMissingFields).toMatchObject({
+      status: "blocked",
+      actionType: "bet",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["predicted_price"],
+      executionPathFamily: "market_write",
+    });
+    expect(malformedBetAmount).toMatchObject({
+      status: "blocked",
+      actionType: "bet",
+      reasonCodes: ["market_amount_fixed_to_5_dem"],
+      missingRequirements: ["amount=5_dem"],
+      executionPathFamily: "market_write",
     });
   });
 
@@ -563,7 +621,7 @@ describe("minimal agent runtime", () => {
     expect(trace.decision.kind).toBe("action");
   });
 
-  it("executes publish, reply, and react through one resolved-intent envelope", async () => {
+  it("executes publish, reply, react, tip, and bet through one resolved-intent envelope", async () => {
     const verification = {
       timeoutMs: 45_000,
       pollMs: 5_000,
@@ -776,6 +834,135 @@ describe("minimal agent runtime", () => {
         pollMs: 1,
       },
     });
+    const fixedBetOmni = makeOmni({
+      colony: {
+        placeBet: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xbet-envelope", memo: "HIVE_BET:ETH:3465:4h", amount: 5, registered: true },
+        }),
+        getPool: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "ETH",
+              horizon: "4h",
+              totalBets: 1,
+              totalDem: 5,
+              poolAddress: "0xpool-fixed",
+              roundEnd: 1,
+              bets: [{ txHash: "0xexisting-fixed", bettor: "0xother", predictedPrice: 3400, amount: 5, roundEnd: 1, horizon: "4h" }],
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "ETH",
+              horizon: "4h",
+              totalBets: 2,
+              totalDem: 10,
+              poolAddress: "0xpool-fixed",
+              roundEnd: 1,
+              bets: [
+                { txHash: "0xexisting-fixed", bettor: "0xother", predictedPrice: 3400, amount: 5, roundEnd: 1, horizon: "4h" },
+                { txHash: "0xbet-envelope", bettor: "0xme", predictedPrice: 3465, amount: 5, roundEnd: 1, horizon: "4h" },
+              ],
+            },
+          }),
+      },
+    });
+    const higherLowerOmni = makeOmni({
+      colony: {
+        placeHL: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xhl-envelope", memo: "HIVE_HL:BTC:LOWER:24h", amount: 5, registered: true },
+        }),
+        getHigherLowerPool: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "BTC",
+              horizon: "24h",
+              totalHigher: 10,
+              totalLower: 5,
+              totalDem: 15,
+              higherCount: 2,
+              lowerCount: 1,
+              roundEnd: 1,
+              referencePrice: 50000,
+              poolAddress: "0xpool-hl",
+              currentPrice: 49850,
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "BTC",
+              horizon: "24h",
+              totalHigher: 10,
+              totalLower: 10,
+              totalDem: 20,
+              higherCount: 2,
+              lowerCount: 2,
+              roundEnd: 1,
+              referencePrice: 50000,
+              poolAddress: "0xpool-hl",
+              currentPrice: 49850,
+            },
+          }),
+      },
+    });
+    const fixedBetEnvelope = await executeResolvedIntent({
+      omni: fixedBetOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "bet", asset: "ETH", marketKind: "fixed_price", predictedPrice: 3465, horizon: "4h", amount: 5 },
+        readiness: { requiresWallet: true, requiresMarketContext: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            bet: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.bet,
+              executable: true,
+              readiness: "ready",
+              proofLevel: "real_runtime_action_family",
+            },
+          },
+        },
+      })!,
+      verification: {
+        ...verification,
+        timeoutMs: 1,
+        pollMs: 1,
+      },
+    });
+    const higherLowerEnvelope = await executeResolvedIntent({
+      omni: higherLowerOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "bet", asset: "BTC", marketKind: "higher_lower", direction: "lower", horizon: "24h", amount: 5 },
+        readiness: { requiresWallet: true, requiresMarketContext: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            bet: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.bet,
+              executable: true,
+              readiness: "ready",
+              proofLevel: "real_runtime_action_family",
+            },
+          },
+        },
+      })!,
+      verification: {
+        ...verification,
+        timeoutMs: 1,
+        pollMs: 1,
+      },
+    });
 
     expect(publishEnvelope.execution).toMatchObject({
       status: "executed",
@@ -805,6 +992,22 @@ describe("minimal agent runtime", () => {
       txHash: "0xtip-envelope",
       demSpendEstimate: 5,
       verificationPath: "tip_stats",
+      indexedVisible: true,
+    });
+    expect(fixedBetEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "bet",
+      txHash: "0xbet-envelope",
+      demSpendEstimate: 5,
+      verificationPath: "betting_pool",
+      indexedVisible: true,
+    });
+    expect(higherLowerEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "bet",
+      txHash: "0xhl-envelope",
+      demSpendEstimate: 5,
+      verificationPath: "higher_lower_pool",
       indexedVisible: true,
     });
   });
@@ -1262,6 +1465,74 @@ describe("minimal agent runtime", () => {
     expect(summary).toContain("ActionType: tip");
     expect(summary).toContain("TargetTxHash: 0xtip-target");
     expect(summary).toContain("Amount: 3");
+  });
+
+  it("supports bet action decisions and records market_written status", async () => {
+    const stateDir = await createTempDir();
+    const omni = makeOmni({
+      colony: {
+        placeBet: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xbet-cycle", memo: "HIVE_BET:ETH:3465:4h", amount: 5, registered: true },
+        }),
+        getPool: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "ETH",
+              horizon: "4h",
+              totalBets: 1,
+              totalDem: 5,
+              poolAddress: "0xpool-cycle",
+              roundEnd: 1,
+              bets: [{ txHash: "0xexisting-cycle", bettor: "0xother", predictedPrice: 3400, amount: 5, roundEnd: 1, horizon: "4h" }],
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "ETH",
+              horizon: "4h",
+              totalBets: 2,
+              totalDem: 10,
+              poolAddress: "0xpool-cycle",
+              roundEnd: 1,
+              bets: [
+                { txHash: "0xexisting-cycle", bettor: "0xother", predictedPrice: 3400, amount: 5, roundEnd: 1, horizon: "4h" },
+                { txHash: "0xbet-cycle", bettor: "0xme", predictedPrice: 3465, amount: 5, roundEnd: 1, horizon: "4h" },
+              ],
+            },
+          }),
+      },
+    });
+
+    const record = await runMinimalAgentCycle(
+      async () => ({
+        kind: "action",
+        action: { type: "bet", asset: "ETH", marketKind: "fixed_price", predictedPrice: 3465, horizon: "4h", amount: 5 },
+        readiness: { requiresWallet: true, requiresMarketContext: true },
+      }),
+      {
+        omni,
+        stateDir,
+        cwd: stateDir,
+        cycleId: "cycle-bet",
+        verification: { timeoutMs: 1, pollMs: 1, limit: 10 },
+        now: makeNow(1_700_000_002_650, 1_700_000_002_850),
+      },
+    );
+
+    expect(omni.colony.placeBet).toHaveBeenCalledWith("ETH", 3465, { horizon: "4h" });
+    expect(record.outcome.execution.status).toBe("market_written");
+    expect(record.outcome.execution.txHash).toBe("0xbet-cycle");
+    expect(record.outcome.execution.demSpendEstimate).toBe(5);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("betting_pool");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
+
+    const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-bet.md"), "utf-8");
+    expect(summary).toContain("ActionType: bet");
+    expect(summary).toContain("Amount: 5");
+    expect(summary).toContain("TxHash: 0xbet-cycle");
   });
 
   it("blocks live publishes that still use placeholder attestation URLs", async () => {

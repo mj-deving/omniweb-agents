@@ -764,6 +764,42 @@ describe("minimal agent runtime", () => {
     expect(summary).toContain("SkipReason: no_new_signal");
   });
 
+  it("surfaces env_missing stop reasons for capability-blocked publish skips", async () => {
+    const stateDir = await createTempDir();
+    const omni = makeOmni();
+
+    const record = await runMinimalAgentCycle(
+      async () => ({
+        kind: "publish",
+        category: "ANALYSIS",
+        text: "Blocked publish should expose env_missing.",
+        attestUrl: "https://example.com/capability-blocked.json",
+      }),
+      {
+        connectFn: async () => omni,
+        stateDir,
+        cwd: stateDir,
+        readinessOptions: {
+          cwd: stateDir,
+          homeDir: stateDir,
+          env: {},
+          packageResolver: (specifier: string) => specifier,
+        },
+        cycleId: "cycle-capability-blocked",
+        now: makeNow(1_700_000_000_300, 1_700_000_000_450),
+      },
+    );
+
+    expect(omni.colony.publish).not.toHaveBeenCalled();
+    expect(record.outcome.execution.status).toBe("skipped");
+    expect(record.outcome.resolution?.status).toBe("blocked");
+    expect(record.outcome.resolution?.capability?.readiness).toBe("missing_credentials");
+
+    const result = await readJson(resolve(stateDir, "sessions", record.sessionId, "result.json"));
+    expect(result.stop_reasons).toContain("env_missing");
+    expect(result.stop_reasons).toContain("runtime_capability_blocked");
+  });
+
   it("publishes, verifies visibility, and records tx metadata", async () => {
     const stateDir = await createTempDir();
     const omni = makeOmni({

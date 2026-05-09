@@ -3,7 +3,6 @@ import { dirname, resolve } from "node:path";
 import type { PublishResult, ReactionType, ToolResult } from "../../../src/toolkit/types.js";
 import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
-import type { RuntimeCapabilityResult } from "./readiness.js";
 import type {
   MinimalActionIntent,
   MinimalActionReadiness,
@@ -18,12 +17,12 @@ import {
   writeSessionLedgerJson,
   type SessionLedgerResult,
 } from "./session-ledger.js";
-import {
-  normalizeDecisionToActionIntent,
-  normalizeDecisionToResolvedIntent,
-} from "./minimal-agent-resolver.js";
 import { executeMinimalAction } from "./minimal-agent-executor.js";
 import { getObservedScore } from "./minimal-agent-verifier.js";
+import {
+  buildInjectedPolicyRuntimeCapabilities,
+  planPolicyExecution,
+} from "./policy/run.js";
 
 export type MinimalAgentState = Record<string, unknown>;
 export type MinimalAuditSection = Record<string, unknown>;
@@ -261,6 +260,22 @@ const DEFAULT_VERIFICATION_POLL_MS = 5_000;
 const DEFAULT_VERIFICATION_LIMIT = 50;
 
 export {
+  compilePolicyDecision,
+} from "./policy/compile.js";
+export type {
+  CompilePolicyDecisionOptions,
+  CompiledPolicyDecision,
+} from "./policy/compile.js";
+export {
+  buildInjectedPolicyRuntimeCapabilities,
+  planPolicyExecution,
+} from "./policy/run.js";
+export type {
+  PlanPolicyExecutionOptions,
+  PlannedPolicyExecution,
+  PolicyExecutionDisposition,
+} from "./policy/run.js";
+export {
   normalizeDecisionToActionIntent,
   normalizeDecisionToPolicyActionRequest,
   normalizeDecisionToResolvedIntent,
@@ -273,96 +288,6 @@ export type {
 
 export function getDefaultMinimalStateDir(cwd?: string): string {
   return resolve(cwd ?? process.cwd(), DEFAULT_STATE_DIR);
-}
-
-function buildInjectedOmniRuntimeCapabilities(): RuntimeCapabilityResult {
-  return {
-    canRead: true,
-    authReady: true,
-    writeReady: true,
-    recommendedMode: "write-ready",
-    blockers: [],
-    actionFamilies: {
-      publish: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: true,
-        requiresTargetPost: false,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery"],
-      },
-      reply: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: true,
-        requiresTargetPost: true,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery"],
-      },
-      react: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: false,
-        requiresTargetPost: true,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery"],
-      },
-      tip: {
-        declared: true,
-        executable: false,
-        readiness: "unsupported",
-        requiresWallet: true,
-        requiresAttestation: false,
-        requiresTargetPost: true,
-        requiresMarketContext: false,
-        proofLevel: "architectural_placeholder",
-        notes: ["Minimal agent executor does not implement tip actions yet"],
-      },
-      bet: {
-        declared: true,
-        executable: false,
-        readiness: "unsupported",
-        requiresWallet: true,
-        requiresAttestation: false,
-        requiresTargetPost: false,
-        requiresMarketContext: true,
-        proofLevel: "architectural_placeholder",
-        notes: ["Minimal agent executor does not implement bet actions yet"],
-      },
-    },
-    readiness: {
-      ok: true,
-      canRead: true,
-      canAuth: true,
-      canWrite: true,
-      authState: "ready",
-      writeState: "ready",
-      missingEnv: [],
-      missingPackages: [],
-      credentialSourcesChecked: [],
-      runtimeCredentialSource: null,
-      notes: ["Injected omni session bypasses file-based readiness discovery"],
-    },
-  };
-}
-
-function resolveIntentForCycle<TState extends MinimalAgentState = MinimalAgentState>(
-  decision: MinimalObserveResult<TState>,
-  opts: RunMinimalAgentCycleOptions<TState>,
-): ResolvedIntent | null {
-  return normalizeDecisionToResolvedIntent(decision, {
-    cwd: opts.cwd,
-    runtimeCapabilities: opts.omni ? buildInjectedOmniRuntimeCapabilities() : undefined,
-  });
 }
 
 export async function runMinimalAgentCycle<TState extends MinimalAgentState = MinimalAgentState>(
@@ -447,7 +372,13 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  if (decision.kind === "skip") {
+  const policyExecution = planPolicyExecution(decision, {
+    cwd: opts.cwd,
+    dryRun: cycle.dryRun,
+    runtimeCapabilities: opts.omni ? buildInjectedPolicyRuntimeCapabilities() : undefined,
+  });
+
+  if (policyExecution.disposition.kind === "skip") {
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -456,9 +387,9 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        resolution: null,
+        resolution: policyExecution.resolution,
         execution: {
-          status: "skipped",
+          status: policyExecution.disposition.status,
           demSpendEstimate: 0,
         },
       },
@@ -467,7 +398,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  if (cycle.dryRun) {
+  if (policyExecution.disposition.kind === "dry_run") {
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -476,9 +407,9 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        resolution: resolveIntentForCycle(decision, opts),
+        resolution: policyExecution.resolution,
         execution: {
-          status: "dry_run",
+          status: policyExecution.disposition.status,
           demSpendEstimate: 0,
         },
       },
@@ -487,10 +418,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
-  const actionDecision = normalizeDecisionToActionIntent(decision);
-  const resolvedIntent = resolveIntentForCycle(decision, opts);
-
-  if (resolvedIntent && resolvedIntent.status !== "executable") {
+  if (policyExecution.disposition.kind === "failed") {
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -499,10 +427,15 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        resolution: resolvedIntent,
+        resolution: policyExecution.resolution,
         execution: {
-          status: "skipped",
+          status: policyExecution.disposition.status,
           demSpendEstimate: 0,
+          error: {
+            stage: policyExecution.disposition.errorStage,
+            message: policyExecution.disposition.errorMessage,
+            retryable: policyExecution.disposition.retryable,
+          },
         },
       },
     });
@@ -510,6 +443,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     return record;
   }
 
+  const actionDecision = policyExecution.actionDecision;
   if (!actionDecision) {
     const record = buildCompletedRecord({
       cycle,
@@ -519,7 +453,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
       nextState: decision.nextState ?? memoryBefore.state,
       decision,
       outcome: {
-        resolution: resolvedIntent,
+        resolution: policyExecution.resolution,
         execution: {
           status: "failed",
           demSpendEstimate: 0,
@@ -554,7 +488,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     nextState: decision.nextState ?? memoryBefore.state,
     decision,
     outcome: {
-      resolution: resolvedIntent,
+      resolution: policyExecution.resolution,
       execution,
     },
   });

@@ -4,7 +4,7 @@ import { loadPackageExport } from "./_shared.js";
 
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
-  console.log("Usage: check-action-intent-bridge.ts\n\nValidates that legacy decisions normalize into PolicyActionRequest and generic action intents.");
+  console.log("Usage: check-action-intent-bridge.ts\n\nValidates that legacy decisions normalize into PolicyActionRequest, generic action intents, and the explicit policy compile/run shell.");
   process.exit(0);
 }
 
@@ -41,6 +41,27 @@ const normalizeDecisionToPolicyActionRequest = await loadPackageExport<
 const normalizeDecisionToActionIntent = await loadPackageExport<
   (decision: MinimalDecision) => MinimalDecision | null
 >("../dist/agent.js", "../src/agent.ts", "normalizeDecisionToActionIntent");
+
+const compilePolicyDecision = await loadPackageExport<
+  (decision: MinimalDecision, options?: Record<string, unknown>) => {
+    request: Record<string, unknown>;
+    actionDecision: MinimalDecision | null;
+    resolution: Record<string, unknown> | null;
+  }
+>("../dist/agent.js", "../src/agent.ts", "compilePolicyDecision");
+
+const buildInjectedPolicyRuntimeCapabilities = await loadPackageExport<
+  () => Record<string, unknown>
+>("../dist/agent.js", "../src/agent.ts", "buildInjectedPolicyRuntimeCapabilities");
+
+const planPolicyExecution = await loadPackageExport<
+  (decision: MinimalDecision, options?: Record<string, unknown>) => {
+    request: Record<string, unknown>;
+    actionDecision: MinimalDecision | null;
+    resolution: Record<string, unknown> | null;
+    disposition: Record<string, unknown>;
+  }
+>("../dist/agent.js", "../src/agent.ts", "planPolicyExecution");
 
 const publishDecision: MinimalDecision = {
   kind: "publish",
@@ -90,6 +111,21 @@ const replyAction = normalizeDecisionToActionIntent(replyDecision);
 const directAction = normalizeDecisionToActionIntent(directActionDecision);
 const skippedAction = normalizeDecisionToActionIntent(skippedDecision);
 
+const injectedRuntimeCapabilities = buildInjectedPolicyRuntimeCapabilities();
+const compiledPublish = compilePolicyDecision(publishDecision, {
+  runtimeCapabilities: injectedRuntimeCapabilities,
+});
+const executePlan = planPolicyExecution(publishDecision, {
+  runtimeCapabilities: injectedRuntimeCapabilities,
+});
+const dryRunPlan = planPolicyExecution(publishDecision, {
+  runtimeCapabilities: injectedRuntimeCapabilities,
+  dryRun: true,
+});
+const skippedPlan = planPolicyExecution(skippedDecision, {
+  runtimeCapabilities: injectedRuntimeCapabilities,
+});
+
 const checks = {
   publishRequestNormalized: publishRequest.actionType === "publish",
   publishRequestCarriesEvidence: (publishRequest.evidenceRequest as { primary?: string } | undefined)?.primary === publishDecision.attestUrl,
@@ -107,6 +143,11 @@ const checks = {
   replyReadinessTarget: replyAction?.readiness?.requiresTargetPost === true,
   directActionPassthrough: directAction === directActionDecision,
   skipReturnsNull: skippedAction === null,
+  compiledPublishRequestMatches: compiledPublish.request.actionType === publishRequest.actionType,
+  compiledPublishResolutionExecutable: compiledPublish.resolution?.status === "executable",
+  executePlanReady: executePlan.disposition.kind === "execute",
+  dryRunPlanReady: dryRunPlan.disposition.kind === "dry_run",
+  skippedPlanReady: skippedPlan.disposition.kind === "skip",
 };
 
 const ok = Object.values(checks).every(Boolean);
@@ -124,6 +165,10 @@ console.log(JSON.stringify({
     replyAction,
     directAction,
     skippedAction,
+    compiledPublish,
+    executePlan,
+    dryRunPlan,
+    skippedPlan,
   },
 }, null, 2));
 

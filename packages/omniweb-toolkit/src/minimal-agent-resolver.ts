@@ -171,6 +171,31 @@ function validateActionRequest(
     }
   }
 
+  if (action.type === "bet") {
+    if (!readRequiredText(action.asset)) {
+      missingFields.push("asset");
+    }
+    if (!readRequiredText(action.horizon)) {
+      missingFields.push("horizon");
+    }
+    if (action.marketKind !== "fixed_price" && action.marketKind !== "higher_lower") {
+      missingFields.push("market_kind");
+    }
+    if (
+      action.marketKind === "fixed_price"
+      && (typeof action.predictedPrice !== "number" || !Number.isFinite(action.predictedPrice) || action.predictedPrice <= 0)
+    ) {
+      missingFields.push("predicted_price");
+    }
+    if (action.marketKind === "higher_lower" && action.direction !== "higher" && action.direction !== "lower") {
+      missingFields.push("direction");
+    }
+    if (action.amount != null && (!Number.isFinite(action.amount) || action.amount !== 5)) {
+      reasonCodes.push("market_amount_fixed_to_5_dem");
+      missingRequirements.push("amount=5_dem");
+    }
+  }
+
   if (missingFields.length > 0) {
     reasonCodes.unshift("request_missing_fields");
     missingRequirements.unshift(...missingFields);
@@ -373,20 +398,6 @@ function normalizeActionIntentToResolvedIntent(
           : inferExecutionPathFamily(action.type),
       };
     }
-  }
-
-  if (action.type === "bet") {
-    return {
-      status: "unsupported",
-      actionType: action.type,
-      normalizedTarget,
-      normalizedDraft,
-      evidencePlan,
-      readiness,
-      reasonCodes: ["action_family_not_implemented"],
-      missingRequirements: ["runtime_executor"],
-      executionPathFamily: "unsupported",
-    };
   }
 
   const executionPathFamily = inferExecutionPathFamily(action.type);

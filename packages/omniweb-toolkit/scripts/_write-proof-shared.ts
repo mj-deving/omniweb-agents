@@ -369,8 +369,10 @@ export function tipReadbackSatisfied(
   after: TipReadback | null,
   minimumSpend: number,
 ): boolean {
-  const beforeMyTip = readNumber(before?.myTip);
-  const afterMyTip = readNumber(after?.myTip);
+  if (!before || !after) return false;
+
+  const beforeMyTip = readNumber(before.myTip);
+  const afterMyTip = readNumber(after.myTip);
 
   if (afterMyTip != null) {
     if (beforeMyTip == null) {
@@ -378,12 +380,12 @@ export function tipReadbackSatisfied(
     } else if (afterMyTip > beforeMyTip) {
       return true;
     }
-  } else if (hasRecordedTip(after?.myTip) && !hasRecordedTip(before?.myTip)) {
+  } else if (hasRecordedTip(after.myTip) && !hasRecordedTip(before.myTip)) {
     return true;
   }
 
-  if ((after?.totalTips ?? 0) > (before?.totalTips ?? 0)) return true;
-  if ((after?.totalDem ?? 0) >= (before?.totalDem ?? 0) + minimumSpend) return true;
+  if (after.totalTips > before.totalTips) return true;
+  if (after.totalDem >= before.totalDem + minimumSpend) return true;
 
   return false;
 }

@@ -132,57 +132,55 @@ Action intents currently live in three different truth layers:
 - Current truth: **architectural placeholder only**
 - Gap: currently named in the architecture/action surface, but unsupported by the minimal runtime executor
 
-### 6. Bet
+### 6. Bet (Market Write)
 - Declared: yes (`MinimalActionType`)
-- Runtime support: no
-- Maintained colony-operator starter: no
-- Tests: no proof as an action-intent execution family
-- Current truth: **architectural placeholder only**
-- Gap: currently named in the architecture/action surface, but unsupported by the minimal runtime executor
+- Runtime support: **yes** — `executeMarketWriteIntent()` via `placeBet()`/`placeHL()` with pool readback verification
+- Execution families: fixed-price (`betting_pool`) and higher-lower (`higher_lower_pool`)
+- Maintained colony-operator starter: no (not yet wired into a starter flow)
+- Tests: yes — `minimal-agent.test.ts` covers resolution, execution envelope, malformed requests, and `runMinimalAgentCycle` with `market_written` status
+- Current truth: **real runtime action family with narrow live contract**
+- Live contract: fixed at 5 DEM per bet; fixed-price requires `predictedPrice`; higher-lower requires `direction`; arbitrary sizing is not yet supported
+- Gap: no maintained colony-operator starter path yet; verification proof is runtime-level, not yet exercised through a full operator workflow
 
 ## Recommended truth labels
 
 Use these labels consistently:
 - **real baseline outcome** — skip
-- **real runtime action family** — react, reply, publish, tip
+- **real runtime action family** — react, reply, publish, tip, bet (market write)
 - **supervised live checkpoint** — narrow publish checkpoint only
-- **architectural placeholder** — bet
 
-Do **not** compress all of these into one vague claim like "the operator supports publish/reply/react/tip/bet" without separating the real runtime families from placeholder surfaces like bet.
+Do **not** compress all of these into one vague claim like "the operator supports everything" without separating supervised-only paths from full live-write authority.
 
 ## Current strategic gaps
 
-### Gap 1: public proof language slightly lags runtime truth for react
-The runtime, tests, and capability surface now support `react` honestly, but the current public default-path language still centers mostly on skip/reply/publish.
+### Gap 1: public proof language slightly lags runtime truth for react and bet
+The runtime, tests, and capability surface now support `react` and `bet` honestly, but the current public default-path language still centers mostly on skip/reply/publish.
 
-### Gap 2: the maintained proof surface must stay aligned with the runtime truth map
-`tip` now executes through the shared intent-execution seam with readback verification, while `bet` remains an architectural placeholder.
-
-That means the docs must stop grouping tip with placeholder families.
-It becomes misleading if proof language still describes both as equally unsupported.
+### Gap 2: bet and tip now both execute through the shared seam but lack maintained operator-starter paths
+`tip` and `bet` both run through the intent-execution-resolve-verify flow, but neither has a dedicated maintained starter/playbook entry yet.
+The docs must not imply they are equivalent to fully proved operator actions.
 
 ## Recommended next proof sequence
 
 1. **Finish defining the MVP floor clearly**
    - first pass done in this note
 2. **Audit and codify the action-intent truth map**
-   - first pass done in this note
+   - updated: bet is now a real runtime action family
 3. **Tighten capability-truth surfacing**
    - now implemented in `describeRuntimeCapabilities()` and covered by tests
-4. **Then choose one narrow next proof slice**
-   - make `react` first-class in the public proof language before adding a genuinely new executable family
+4. **Wire bet into a maintained operator-starter or playbook flow**
+   - this is the next concrete slice after 5xp4.14.2
 
 ## Recommended next slice preference
 
 The best next slice is now:
 
-**make `react` first-class in the public proof language**
+**wire bet into a maintained operator-starter path and verify end-to-end**
 
 Reason:
-- runtime, tests, and capability surfacing already prove it honestly
-- public default-path language still underrepresents it
-- this closes the remaining drift between runtime truth and onboarding/trust language
-- it is narrower and cleaner than jumping straight into a new executable family
+- runtime, tests, and capability surface already support bet execution honestly
+- what is missing is the operator-facing workflow integration (starter, attestation, logging)
+- this is narrower and more valuable than adding another raw runtime family
 
 ## Source anchors
 - `packages/omniweb-toolkit/src/minimal-agent.ts`

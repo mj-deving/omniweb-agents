@@ -27,7 +27,7 @@ export interface LeaderboardPatternProofEntry {
   attestUrl: string | null;
   decision: "publish" | "skip";
   ok: boolean;
-  outcomeStatus: MinimalCycleRecord["outcome"]["status"];
+  outcomeStatus: MinimalCycleRecord["outcome"]["execution"]["status"];
   observedScore: number | null;
 }
 
@@ -41,7 +41,7 @@ export interface LeaderboardPatternPackScorecard {
 
 export interface LeaderboardPatternSkipControl {
   ok: boolean;
-  outcomeStatus: MinimalCycleRecord["outcome"]["status"];
+  outcomeStatus: MinimalCycleRecord["outcome"]["execution"]["status"];
   reason: string;
 }
 
@@ -132,6 +132,7 @@ async function runPublishProof(
       {
         omni: makeProofOmni(txHash, text, score, archetype === "engagement" ? "OBSERVATION" : "ANALYSIS"),
         stateDir,
+        cwd: stateDir,
         cycleId: `${archetype}-proof`,
         now: () => Date.UTC(2026, 3, 20, 7, 30, ARCHETYPES.indexOf(archetype)),
       },
@@ -147,12 +148,12 @@ async function runPublishProof(
       attestationReady: true,
       attestUrl: plan.primary.url,
       decision: "publish",
-      ok: record.outcome.status === "published" && record.outcome.verification?.indexedVisible === true,
-      outcomeStatus: record.outcome.status,
-      observedScore: record.outcome.verification
-        && "observedScore" in record.outcome.verification
-        && typeof record.outcome.verification.observedScore === "number"
-        ? record.outcome.verification.observedScore
+      ok: record.outcome.execution.status === "published" && record.outcome.execution.verification?.indexedVisible === true,
+      outcomeStatus: record.outcome.execution.status,
+      observedScore: record.outcome.execution.verification
+        && "observedScore" in record.outcome.execution.verification
+        && typeof record.outcome.execution.verification.observedScore === "number"
+        ? record.outcome.execution.verification.observedScore
         : null,
     };
   } finally {
@@ -181,8 +182,8 @@ async function runSkipControl(): Promise<LeaderboardPatternSkipControl> {
     );
 
     return {
-      ok: record.outcome.status === "skipped",
-      outcomeStatus: record.outcome.status,
+      ok: record.outcome.execution.status === "skipped",
+      outcomeStatus: record.outcome.execution.status,
       reason: "no_attestation_ready_source",
     };
   } finally {

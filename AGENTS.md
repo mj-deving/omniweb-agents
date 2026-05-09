@@ -85,7 +85,9 @@ Use `bd` as the task authority.
 
 Important commands:
 
+- `bd prime` to refresh current Beads workflow context from the installed CLI before choosing or resuming work
 - `bd ready --json` to see unblocked work
+- `bd ready --claim --json` to atomically claim the first safe ready item when filters make the selection unambiguous
 - `bd show <id>` to inspect one task
 - `bd update <id> --claim` to claim a task
 - `bd note <id> "..."` to leave execution notes
@@ -100,6 +102,7 @@ Important commands:
 - `bd history <id>` / `bd diff <from-ref> <to-ref>` when task state changes unexpectedly
 - `./scripts/beads-maintenance.sh` for periodic stale/orphan/duplicate hygiene
 - `bd dolt pull` / `bd dolt push` for shared-state sync
+- `bd -C <path> ...` for cross-worktree Beads commands without changing shell cwd; verify generated setup writes landed in the intended Git worktree
 - `scripts/restore-beads-db.sh` to recover a fresh clone or shadow Beads DB from the canonical embedded Dolt database; see `docs/beads-bootstrap.md`
 - if `.beads` exists but `./scripts/check-beads-health.sh` reports bootstrap `has_existing=false`, treat it as a broken manual restore and repair with:
   `./scripts/check-beads-health.sh --fix --repair-broken --sync`
@@ -138,6 +141,7 @@ Rules:
 - For epics or multi-step hardening tracks, add dependency edges early so `bd ready` reflects actual order rather than just named backlog.
 - Use `bd swarm` when an epic is clearly parallelizable and child beads can be worked independently.
 - Run `./scripts/beads-maintenance.sh` at natural boundaries: before `/clear`, after a merged work cluster, or when the queue starts to feel noisy.
+- Project-scoped Codex Beads guidance lives in `.agents/skills/beads/SKILL.md`; use it as the local skill layer after generic Beads workflow has been loaded.
 
 ## Branch / PR Discipline
 
@@ -211,9 +215,10 @@ Default expectation:
 1. agent makes a scoped change
 2. agent runs relevant checks
 3. agent opens a PR
-4. agent inspects Codex review output and addresses findings before merge
-5. CI passes
-6. the PR is merged or auto-merged to `main`
+4. agent triages review output before merge: fix it, reply with rationale, or link a follow-up issue/bead
+5. at least one approving review is present on the PR
+6. CI passes
+7. the PR is merged or auto-merged to `main`
 
 Before merging a PR:
 
@@ -221,6 +226,7 @@ Before merging a PR:
 - explicitly check for comments from `chatgpt-codex-connector[bot]`
 - if Codex review is still pending, wait for it or trigger it with `@codex review`
 - do not merge while unresolved Codex findings remain unless the user explicitly accepts them
+- if a finding is deferred, acknowledge it in-thread and link the follow-up issue/bead before merge
 - preferred CLI check: `gh pr view <num> --comments`
 
 Preferred repo settings:
@@ -228,8 +234,10 @@ Preferred repo settings:
 - protect `main`
 - disable direct pushes to `main`
 - require the CI checks you actually trust
+- require at least 1 approving review on `main`
+- require conversation resolution on `main`
+- keep `dismiss_stale_reviews=false` and `require_last_push_approval=false` unless deliberately tightening the gate; this keeps stacked PRs moving faster
 - if Codex auto-review is enabled, make sure the merge flow waits for it before enabling auto-merge
-- do not require human approval if the goal is zero manual review
 - prefer squash merge for small scoped branches
 - enable auto-merge
 

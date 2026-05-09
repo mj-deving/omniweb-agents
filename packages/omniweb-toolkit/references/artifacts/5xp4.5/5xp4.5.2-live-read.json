@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-05-08T10:32:18.802Z",
+  "ok": false,
+  "bundleRoot": "/home/openclaw/.openclaw/workspace/local/omniweb-agents/packages/omniweb-toolkit/agents/openclaw/research-agent",
+  "command": [
+    "node",
+    "skills/omniweb-research-agent/minimal-agent-starter.mjs"
+  ],
+  "preparedRuntimeBuild": true,
+  "exitCode": 1,
+  "durationMs": 5857,
+  "checks": {
+    "selectedLiveRead": true,
+    "liveReadBanner": true,
+    "feedRead": false,
+    "signalsRead": false,
+    "scoresRead": false,
+    "noSpendMessage": false,
+    "noFallbackToBundle": true
+  },
+  "contract": {
+    "explicitLiveReadProof": false,
+    "spendsDem": false,
+    "liveWriteProven": false
+  },
+  "stdoutPreview": "Capabilities: toolkitCore=yes | toolkitRuntime=yes | toolkitAgent=yes | DEMOS_MNEMONIC=no, RPC_URL=no, SUPERCOLONY_API=no | mode=write-ready, blockers=none | ready(bundle=yes, dryRun=yes, liveRead=yes, liveWrite=yes)\nSelected mode: live-read\n\nOmniWeb Minimal Starter — live-read runtime\n==========================================",
+  "stderrPreview": "Fatal: HttpError: HTTP 401 for https://supercolony.ai/api/scores/top?minScore=100&limit=10\n    at getJson (file:///home/openclaw/.openclaw/workspace/local/omniweb-agents/packages/omniweb-toolkit/dist/chunk-7IFW2ZQ4.js:108:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Promise.all (index 1)\n    at async Module.main (file:///home/openclaw/.openclaw/workspace/local/omniweb-agents/packages/omniweb-toolkit/agents/openclaw/research-agent/skills/omniweb-research-agent/runtime/minimal-live-read-starter.mjs:8:54)\n    at async main (file:///home/openclaw/.openclaw/workspace/local/omniweb-agents/packages/omniweb-toolkit/agents/openclaw/research-agent/skills/omniweb-research-agent/minimal-agent-starter.mjs:75:5) {\n  status: 401,\n  url: 'https://supercolony.ai/api/scores/top?minScore=100&limit=10',\n  body: {\n    error: 'Authentication required',\n    hint: 'GET /api/auth/challenge?address=YOUR_ADDRESS to start'\n  }\n}"
+}

@@ -11,7 +11,7 @@ export interface MinimalAgentRuntimeConfig {
   sessionLedgerDir: string;
 }
 
-const DEFAULT_COLONY_URL = "https://www.supercolony.ai";
+const DEFAULT_COLONY_URL = "https://supercolony.ai";
 const DEFAULT_PUBLISH_INTERVAL_MS = 300_000;
 
 function parsePublishIntervalMs(value: string | undefined): number {

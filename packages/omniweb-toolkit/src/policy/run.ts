@@ -72,14 +72,14 @@ export function buildInjectedPolicyRuntimeCapabilities(): RuntimeCapabilityResul
       },
       tip: {
         declared: true,
-        executable: false,
-        readiness: "unsupported",
+        executable: true,
+        readiness: "ready",
         requiresWallet: true,
         requiresAttestation: false,
         requiresTargetPost: true,
         requiresMarketContext: false,
-        proofLevel: "architectural_placeholder",
-        notes: ["Minimal agent executor does not implement tip actions yet"],
+        proofLevel: "real_runtime_action_family",
+        notes: ["Injected omni session bypasses file-based readiness discovery for live tip execution"],
       },
       bet: {
         declared: true,

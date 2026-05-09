@@ -87,6 +87,7 @@ export interface ResolvedIntentDraft {
 export type IntentExecutionPathFamily =
   | "direct_attested_write"
   | "reaction"
+  | "tip_transfer"
   | "market_write"
   | "manual_supervision"
   | "unsupported"

@@ -4,6 +4,7 @@ import type {
   ExecutableIntent,
   MinimalActionIntent,
   MinimalActionReadiness,
+  IntentExecutionPathFamily,
   PolicyActionRequest,
   PolicyEvidenceStrength,
   ResolvedEvidencePlan,
@@ -120,9 +121,10 @@ function buildResolvedEvidencePlan(request: PolicyActionRequest): ResolvedEviden
   });
 }
 
-function inferExecutionPathFamily(actionType: MinimalActionIntent["type"]): ResolvedIntent["executionPathFamily"] {
+function inferExecutionPathFamily(actionType: MinimalActionIntent["type"]): IntentExecutionPathFamily {
   if (actionType === "react") return "reaction";
   if (actionType === "publish" || actionType === "reply") return "direct_attested_write";
+  if (actionType === "tip") return "tip_transfer";
   if (actionType === "bet") return "market_write";
   return "none";
 }
@@ -361,7 +363,7 @@ function normalizeActionIntentToResolvedIntent(
     }
   }
 
-  if (action.type === "tip" || action.type === "bet") {
+  if (action.type === "bet") {
     return {
       status: "unsupported",
       actionType: action.type,

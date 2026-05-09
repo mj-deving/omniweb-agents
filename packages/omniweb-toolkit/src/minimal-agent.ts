@@ -48,7 +48,7 @@ export interface MinimalCycleSummary {
   txHash?: string;
   attestationTxHash?: string;
   attestationResponseHash?: string;
-  verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"];
+  verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"] | MinimalTipVerification["verificationPath"];
   visible?: boolean;
   indexedVisible?: boolean;
   observedScore?: number;
@@ -150,7 +150,7 @@ export type MinimalObserveFn<TState extends MinimalAgentState = MinimalAgentStat
   ctx: MinimalObserveContext<TState>,
 ) => Promise<MinimalObserveResult<TState>>;
 
-export type MinimalCycleStatus = "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
+export type MinimalCycleStatus = "skipped" | "dry_run" | "published" | "replied" | "reacted" | "tipped" | "failed";
 
 export interface MinimalReactionVerification {
   attempted: boolean;
@@ -173,6 +173,47 @@ export interface MinimalReactionVerification {
     flag: number;
     myReaction?: string | null;
   } | null;
+  error?: string;
+}
+
+export interface MinimalTipVerification {
+  attempted: true;
+  visible: boolean;
+  indexedVisible: boolean;
+  polls: number;
+  elapsedMs: number;
+  txHash: string;
+  verificationPath: "tip_stats";
+  amount: number;
+  tipTxHash?: string;
+  recipientAddress?: string;
+  beforeTipStats: {
+    totalTips: number;
+    totalDem: number;
+    myTip?: unknown;
+  } | null;
+  afterTipStats: {
+    totalTips: number;
+    totalDem: number;
+    myTip?: unknown;
+  } | null;
+  beforeRecipientTipStats: {
+    receivedCount: number;
+    receivedDem: number;
+    givenCount: number;
+    givenDem: number;
+  } | null;
+  afterRecipientTipStats: {
+    receivedCount: number;
+    receivedDem: number;
+    givenCount: number;
+    givenDem: number;
+  } | null;
+  beforeBalance: number | null;
+  afterBalance: number | null;
+  tipStatsConverged: boolean;
+  recipientTipStatsConverged: boolean;
+  spendObserved: boolean;
   error?: string;
 }
 
@@ -232,7 +273,7 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
       attestationTxHash?: string;
       attestationResponseHash?: string;
       demSpendEstimate?: number;
-      verification?: PublishVisibilityResult | MinimalReactionVerification;
+      verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification;
       publishResult?: ToolResult<PublishResult>;
       reactionResult?: { ok: boolean; error?: unknown };
       error?: {
@@ -766,6 +807,15 @@ function renderCycleSummary<TState extends MinimalAgentState>(
         lines.push(`- Reaction: ${record.decision.action.reaction}`);
       }
     } else {
+      if (record.decision.action.parentTxHash) {
+        lines.push(`- ParentTxHash: ${record.decision.action.parentTxHash}`);
+      }
+      if (record.decision.action.targetTxHash) {
+        lines.push(`- TargetTxHash: ${record.decision.action.targetTxHash}`);
+      }
+      if (typeof record.decision.action.amount === "number") {
+        lines.push(`- Amount: ${record.decision.action.amount}`);
+      }
       if (typeof record.decision.action.text === "string") {
         lines.push(`- Text: ${truncate(record.decision.action.text, 180)}`);
       }

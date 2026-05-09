@@ -25,6 +25,8 @@ interface MinimalDecision {
     tags?: string[];
     confidence?: number;
     parentTxHash?: string;
+    targetTxHash?: string;
+    reaction?: "agree" | "disagree" | "flag";
   };
   readiness?: {
     requiresWallet?: boolean;
@@ -63,6 +65,10 @@ const planPolicyExecution = await loadPackageExport<
   }
 >("../dist/agent.js", "../src/agent.ts", "planPolicyExecution");
 
+const executeResolvedIntent = await loadPackageExport<
+  (options: Record<string, unknown>) => Promise<Record<string, unknown>>
+>("../dist/agent.js", "../src/agent.ts", "executeResolvedIntent");
+
 const publishDecision: MinimalDecision = {
   kind: "publish",
   category: "OBSERVATION",
@@ -96,6 +102,19 @@ const directActionDecision: MinimalDecision = {
   },
 };
 
+const reactDecision: MinimalDecision = {
+  kind: "action",
+  action: {
+    type: "react",
+    targetTxHash: "0xreact-target",
+    reaction: "agree",
+  },
+  readiness: {
+    requiresWallet: true,
+    requiresTargetPost: true,
+  },
+};
+
 const skippedDecision: MinimalDecision = {
   kind: "skip",
   reason: "bridge_check_skip",
@@ -125,6 +144,111 @@ const dryRunPlan = planPolicyExecution(publishDecision, {
 const skippedPlan = planPolicyExecution(skippedDecision, {
   runtimeCapabilities: injectedRuntimeCapabilities,
 });
+const compiledReact = compilePolicyDecision(reactDecision, {
+  runtimeCapabilities: injectedRuntimeCapabilities,
+});
+
+const publishEnvelope = await executeResolvedIntent({
+  omni: {
+    colony: {
+      publish: async () => ({
+        ok: true,
+        data: { txHash: "0xpublish-envelope" },
+        provenance: {
+          path: "local",
+          attestation: {
+            txHash: "0xpublish-attest-envelope",
+            responseHash: "0xpublish-response-envelope",
+          },
+        },
+      }),
+      getFeed: async () => ({
+        ok: true,
+        data: {
+          posts: [
+            {
+              txHash: "0xpublish-envelope",
+              payload: { cat: "OBSERVATION", text: "Publish bridge check" },
+              score: 80,
+            },
+          ],
+          meta: { lastBlock: 123 },
+        },
+      }),
+    },
+  },
+  resolution: compiledPublish.resolution,
+  verification: {
+    timeoutMs: 45_000,
+    pollMs: 5_000,
+    limit: 50,
+  },
+});
+
+const replyEnvelope = await executeResolvedIntent({
+  omni: {
+    colony: {
+      reply: async () => ({
+        ok: true,
+        data: { txHash: "0xreply-envelope" },
+        provenance: {
+          path: "local",
+          attestation: {
+            txHash: "0xreply-attest-envelope",
+            responseHash: "0xreply-response-envelope",
+          },
+        },
+      }),
+      getFeed: async () => ({
+        ok: true,
+        data: {
+          posts: [
+            {
+              txHash: "0xreply-envelope",
+              payload: { cat: "OBSERVATION", text: "Reply bridge check" },
+              score: 79,
+            },
+          ],
+          meta: { lastBlock: 124 },
+        },
+      }),
+    },
+  },
+  resolution: compilePolicyDecision(replyDecision, {
+    runtimeCapabilities: injectedRuntimeCapabilities,
+  }).resolution,
+  verification: {
+    timeoutMs: 45_000,
+    pollMs: 5_000,
+    limit: 50,
+  },
+});
+
+const reactEnvelope = await executeResolvedIntent({
+  omni: {
+    colony: {
+      react: async () => ({ ok: true }),
+      getReactions: (() => {
+        let call = 0;
+        return async () => {
+          call += 1;
+          return {
+            ok: true,
+            data: call === 1
+              ? { agree: 0, disagree: 0, flag: 0 }
+              : { agree: 1, disagree: 0, flag: 0 },
+          };
+        };
+      })(),
+    },
+  },
+  resolution: compiledReact.resolution,
+  verification: {
+    timeoutMs: 45_000,
+    pollMs: 5_000,
+    limit: 50,
+  },
+});
 
 const checks = {
   publishRequestNormalized: publishRequest.actionType === "publish",
@@ -148,6 +272,15 @@ const checks = {
   executePlanReady: executePlan.disposition.kind === "execute",
   dryRunPlanReady: dryRunPlan.disposition.kind === "dry_run",
   skippedPlanReady: skippedPlan.disposition.kind === "skip",
+  canonicalPublishEnvelopeReady: publishEnvelope.execution?.status === "executed"
+    && publishEnvelope.execution?.actionType === "publish"
+    && publishEnvelope.execution?.indexedVisible === true,
+  canonicalReplyEnvelopeReady: replyEnvelope.execution?.status === "executed"
+    && replyEnvelope.execution?.actionType === "reply"
+    && replyEnvelope.execution?.indexedVisible === true,
+  canonicalReactEnvelopeReady: reactEnvelope.execution?.status === "executed"
+    && reactEnvelope.execution?.actionType === "react"
+    && reactEnvelope.execution?.verificationPath === "reaction_counts",
 };
 
 const ok = Object.values(checks).every(Boolean);
@@ -169,6 +302,10 @@ console.log(JSON.stringify({
     executePlan,
     dryRunPlan,
     skippedPlan,
+    compiledReact,
+    publishEnvelope,
+    replyEnvelope,
+    reactEnvelope,
   },
 }, null, 2));
 

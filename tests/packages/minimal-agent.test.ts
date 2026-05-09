@@ -231,6 +231,113 @@ describe("minimal agent runtime", () => {
     });
   });
 
+  it("preserves market-write fields through the shared seam before executor support exists", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const marketSeamCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        bet: {
+          ...blockedCapabilities.actionFamilies.bet,
+          executable: true,
+          readiness: "ready" as const,
+          proofLevel: "real_runtime_action_family" as const,
+          notes: ["test override for seam audit"],
+        },
+      },
+    };
+
+    const higherLowerDecision = {
+      kind: "action" as const,
+      action: {
+        type: "bet" as const,
+        asset: "BTC",
+        marketKind: "higher_lower" as const,
+        direction: "lower" as const,
+        horizon: "24h",
+        amount: 5,
+      },
+      readiness: { requiresWallet: true, requiresMarketContext: true },
+    };
+    const fixedPriceDecision = {
+      kind: "action" as const,
+      action: {
+        type: "bet" as const,
+        asset: "ETH",
+        marketKind: "fixed_price" as const,
+        predictedPrice: 3_465,
+        horizon: "4h",
+        amount: 5,
+      },
+      readiness: { requiresWallet: true, requiresMarketContext: true },
+    };
+
+    const higherLowerRequest = normalizeDecisionToPolicyActionRequest(higherLowerDecision);
+    const fixedPriceRequest = normalizeDecisionToPolicyActionRequest(fixedPriceDecision);
+    const higherLowerResolution = normalizeDecisionToResolvedIntent(higherLowerDecision, {
+      runtimeCapabilities: marketSeamCapabilities,
+    });
+    const fixedPriceResolution = normalizeDecisionToResolvedIntent(fixedPriceDecision, {
+      runtimeCapabilities: marketSeamCapabilities,
+    });
+
+    expect(higherLowerRequest).toEqual({
+      actionType: "bet",
+      target: {
+        asset: "BTC",
+      },
+      draft: {
+        amount: 5,
+        marketKind: "higher_lower",
+        horizon: "24h",
+        direction: "lower",
+      },
+    });
+    expect(fixedPriceRequest).toEqual({
+      actionType: "bet",
+      target: {
+        asset: "ETH",
+      },
+      draft: {
+        amount: 5,
+        marketKind: "fixed_price",
+        horizon: "4h",
+        predictedPrice: 3_465,
+      },
+    });
+    expect(higherLowerResolution).toMatchObject({
+      status: "unsupported",
+      actionType: "bet",
+      normalizedTarget: {
+        asset: "BTC",
+      },
+      normalizedDraft: {
+        amount: 5,
+        marketKind: "higher_lower",
+        horizon: "24h",
+        direction: "lower",
+      },
+      reasonCodes: ["action_family_not_implemented"],
+      missingRequirements: ["runtime_executor"],
+    });
+    expect(fixedPriceResolution).toMatchObject({
+      status: "unsupported",
+      actionType: "bet",
+      normalizedTarget: {
+        asset: "ETH",
+      },
+      normalizedDraft: {
+        amount: 5,
+        marketKind: "fixed_price",
+        horizon: "4h",
+        predictedPrice: 3_465,
+      },
+      reasonCodes: ["action_family_not_implemented"],
+      missingRequirements: ["runtime_executor"],
+    });
+  });
+
   it("blocks malformed action requests before execution-time failures", async () => {
     const dir = await createTempDir();
     const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });

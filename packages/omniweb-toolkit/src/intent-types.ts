@@ -3,6 +3,8 @@ import type { RuntimeActionCapability, RuntimeActionFamily } from "./readiness.j
 
 export type MinimalActionType = RuntimeActionFamily;
 export type PolicyActionType = MinimalActionType | "skip";
+export type PolicyMarketBetKind = "fixed_price" | "higher_lower";
+export type PolicyMarketDirection = "higher" | "lower";
 
 export interface PolicyActionTarget {
   postTxHash?: string;
@@ -18,6 +20,10 @@ export interface PolicyActionDraft {
   amount?: number;
   confidence?: number;
   tags?: string[];
+  marketKind?: PolicyMarketBetKind;
+  horizon?: string;
+  predictedPrice?: number;
+  direction?: PolicyMarketDirection;
 }
 
 export type PolicyEvidenceStrength = "none" | "inherit" | "dahr" | "tlsn";
@@ -56,6 +62,10 @@ export interface MinimalActionIntent {
   amount?: number;
   marketId?: string;
   asset?: string;
+  marketKind?: PolicyMarketBetKind;
+  horizon?: string;
+  predictedPrice?: number;
+  direction?: PolicyMarketDirection;
 }
 
 export interface MinimalActionReadiness {
@@ -82,6 +92,10 @@ export interface ResolvedIntentDraft {
   confidence?: number;
   reaction?: Exclude<ReactionType, null>;
   amount?: number;
+  marketKind?: PolicyMarketBetKind;
+  horizon?: string;
+  predictedPrice?: number;
+  direction?: PolicyMarketDirection;
 }
 
 export type IntentExecutionPathFamily =

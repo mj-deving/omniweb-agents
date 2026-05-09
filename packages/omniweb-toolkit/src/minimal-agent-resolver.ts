@@ -56,6 +56,10 @@ function buildPolicyActionRequest(action: MinimalActionIntent, audit?: PolicyAct
     amount: action.amount,
     confidence: action.confidence,
     tags: action.tags,
+    marketKind: action.marketKind,
+    horizon: action.horizon,
+    predictedPrice: action.predictedPrice,
+    direction: action.direction,
   });
   const evidenceRequest = compactObject({
     primary: action.attestUrl,
@@ -195,6 +199,10 @@ function normalizePolicyActionRequestToActionIntent(
     amount: request.draft?.amount,
     marketId: request.target?.marketId,
     asset: request.target?.asset,
+    marketKind: request.draft?.marketKind,
+    horizon: request.draft?.horizon,
+    predictedPrice: request.draft?.predictedPrice,
+    direction: request.draft?.direction,
   };
 }
 
@@ -307,6 +315,10 @@ function normalizeActionIntentToResolvedIntent(
     confidence: action.confidence,
     reaction: action.reaction,
     amount: action.amount,
+    marketKind: action.marketKind,
+    horizon: action.horizon,
+    predictedPrice: action.predictedPrice,
+    direction: action.direction,
   };
 
   const requestValidation = validateActionRequest(action, evidencePlan);

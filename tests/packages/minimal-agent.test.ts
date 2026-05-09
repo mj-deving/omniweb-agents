@@ -187,6 +187,100 @@ describe("minimal agent runtime", () => {
     });
   });
 
+  it("blocks malformed action requests before execution-time failures", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+        reply: {
+          ...blockedCapabilities.actionFamilies.reply,
+          executable: true,
+          readiness: "ready",
+        },
+        react: {
+          ...blockedCapabilities.actionFamilies.react,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const malformedReply = resolveActionRequest({
+      actionType: "reply",
+      draft: { text: "hello" },
+      evidenceRequest: { primary: "https://example.com/reply.json", strength: "inherit" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const malformedPublish = resolveActionRequest({
+      actionType: "publish",
+      draft: { text: "hello" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const malformedReact = resolveActionRequest({
+      actionType: "react",
+      draft: { reaction: "agree" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+
+    expect(malformedReply).toMatchObject({
+      status: "blocked",
+      actionType: "reply",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["parent_tx_hash"],
+      executionPathFamily: "direct_attested_write",
+    });
+    expect(malformedPublish).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["evidence_url"],
+      executionPathFamily: "direct_attested_write",
+    });
+    expect(malformedReact).toMatchObject({
+      status: "blocked",
+      actionType: "react",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["post_tx_hash"],
+      executionPathFamily: "reaction",
+    });
+  });
+
+  it("derives attestation readiness from evidence strength", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const resolution = resolveActionRequest({
+      actionType: "publish",
+      draft: { text: "hello" },
+      evidenceRequest: { strength: "none" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+
+    expect(resolution).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+      reasonCodes: ["evidence_strength_incompatible"],
+      missingRequirements: ["attestation"],
+      evidencePlan: { mechanism: "none" },
+      readiness: { requiresAttestation: false },
+      executionPathFamily: "direct_attested_write",
+    });
+  });
+
   it("compiles and plans policy execution outside the loop core", async () => {
     const dir = await createTempDir();
     const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });

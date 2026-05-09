@@ -11,6 +11,8 @@ import {
   resolveActionRequest,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
+  runPolicyWithTrace,
+  type PolicyDefinition,
 } from "../../packages/omniweb-toolkit/src/minimal-agent.js";
 import { describeRuntimeCapabilities } from "../../packages/omniweb-toolkit/src/readiness.js";
 
@@ -245,6 +247,73 @@ describe("minimal agent runtime", () => {
       status: "blocked",
       actionType: "publish",
     });
+  });
+
+  it("runs policy observe/derive/conditions/routes above the action seam", async () => {
+    const policy: PolicyDefinition<
+      { lastRoute?: string },
+      { value: number },
+      { doubled: number },
+      "large_enough",
+      "publish_value"
+    > = {
+      policyId: "test.policy.v1",
+      observe: async () => ({ value: 4 }),
+      derive: ({ observed }) => ({ doubled: observed.value * 2 }),
+      conditions: {
+        large_enough: ({ derived }) => derived.doubled >= 8,
+      },
+      routes: [
+        {
+          id: "publish_value",
+          when: ({ conditionResults }) => conditionResults.large_enough,
+          buildDecision: ({ derived, ctx }) => ({
+            kind: "action",
+            action: {
+              type: "publish",
+              category: "OBSERVATION",
+              text: `Derived value ${derived.doubled}`,
+              attestUrl: "https://example.com/policy-test.json",
+            },
+            nextState: {
+              ...ctx.memory.state,
+              lastRoute: "publish_value",
+            },
+          }),
+        },
+      ],
+    };
+
+    const trace = await runPolicyWithTrace(policy, {
+      omni: makeOmni(),
+      cycle: {
+        id: "policy-cycle",
+        iteration: 1,
+        startedAt: new Date(1_700_000_000_000).toISOString(),
+        stateDir: "/tmp/policy-state",
+        sessionId: "policy-session",
+        sessionDir: "/tmp/policy-session",
+        dryRun: true,
+      },
+      memory: {
+        state: { lastRoute: "skip" },
+        lastCycle: null,
+      },
+      ledger: {
+        sessionId: "policy-session",
+        sessionDir: "/tmp/policy-session",
+        recentResults: [],
+      },
+    });
+
+    expect(trace.routeId).toBe("publish_value");
+    expect(trace.matchedConditions).toEqual(["large_enough"]);
+    expect(trace.decision.audit).toMatchObject({
+      policyId: "test.policy.v1",
+      routeId: "publish_value",
+      matchedConditions: ["large_enough"],
+    });
+    expect(trace.decision.kind).toBe("action");
   });
 
   it("writes skip cycle artifacts and persists next state", async () => {

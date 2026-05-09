@@ -32,6 +32,9 @@ export interface MinimalAuditPayload {
   selectedEvidence?: MinimalAuditSection;
   promptPacket?: MinimalAuditSection;
   notes?: string[];
+  policyId?: string;
+  routeId?: string;
+  matchedConditions?: string[];
 }
 
 export interface MinimalCycleSummary {
@@ -266,15 +269,32 @@ export type {
   CompilePolicyDecisionOptions,
   CompiledPolicyDecision,
 } from "./policy/compile.js";
+export { evaluatePolicyConditions } from "./policy/conditions.js";
+export { runPolicyDerive } from "./policy/derive.js";
+export { runPolicyObserve } from "./policy/observe.js";
+export { selectPolicyRoute } from "./policy/routes.js";
 export {
   buildInjectedPolicyRuntimeCapabilities,
   planPolicyExecution,
+  runPolicy,
+  runPolicyWithTrace,
 } from "./policy/run.js";
 export type {
   PlanPolicyExecutionOptions,
   PlannedPolicyExecution,
   PolicyExecutionDisposition,
 } from "./policy/run.js";
+export type {
+  PolicyConditionDefinitions,
+  PolicyConditionEvaluation,
+  PolicyConditionEvaluator,
+  PolicyConditionInput,
+  PolicyDefinition,
+  PolicyDeriveInput,
+  PolicyRouteDefinition,
+  PolicyRouteInput,
+  PolicyRunResult,
+} from "./policy/types.js";
 export {
   normalizeDecisionToActionIntent,
   normalizeDecisionToPolicyActionRequest,

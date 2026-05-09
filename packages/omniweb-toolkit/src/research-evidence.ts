@@ -41,6 +41,7 @@ export interface FetchResearchEvidenceSummaryOptions {
 }
 
 type ResearchEvidenceSourceKind =
+  | "binance-24hr-ticker"
   | "binance-premium-index"
   | "binance-open-interest"
   | "coingecko-market-chart"
@@ -128,7 +129,8 @@ export function classifyResearchEvidenceSemanticClass(
   derivedMetrics: Record<string, string>,
 ): ResearchEvidenceSemanticClass {
   if (
-    sourceKind === "binance-premium-index"
+    sourceKind === "binance-24hr-ticker"
+    || sourceKind === "binance-premium-index"
     || sourceKind === "binance-open-interest"
     || sourceKind === "coingecko-market-chart"
     || sourceKind === "coingecko-coins-markets"
@@ -270,6 +272,13 @@ function extractResearchEvidenceValues(
     }
   }
 
+  if (sourceKind === "binance-24hr-ticker") {
+    const tickerValues = extractBinance24hrTickerValues(payload);
+    if (Object.keys(tickerValues).length > 0) {
+      return tickerValues;
+    }
+  }
+
   if (sourceKind === "binance-open-interest") {
     const openInterestValues = extractBinanceOpenInterestValues(payload);
     if (Object.keys(openInterestValues).length > 0) {
@@ -371,6 +380,15 @@ function isBinancePremiumIndexUrl(url: string): boolean {
   }
 }
 
+function isBinance24hrTickerUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "api.binance.com" && parsed.pathname.includes("/ticker/24hr");
+  } catch {
+    return false;
+  }
+}
+
 function isBinanceOpenInterestUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -378,6 +396,24 @@ function isBinanceOpenInterestUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function extractBinance24hrTickerValues(payload: unknown): Record<string, string> {
+  if (!isRecord(payload)) {
+    return {};
+  }
+
+  return compactMetrics({
+    symbol: typeof payload.symbol === "string" ? payload.symbol : null,
+    lastPriceUsd: normalizeScalarValue(payload.lastPrice),
+    priceChangeUsd: normalizeScalarValue(payload.priceChange),
+    priceChangePct24h: normalizeScalarValue(payload.priceChangePercent),
+    volumeBase24h: normalizeScalarValue(payload.volume),
+    volumeQuote24hUsd: normalizeScalarValue(payload.quoteVolume),
+    weightedAvgPriceUsd: normalizeScalarValue(payload.weightedAvgPrice),
+    high24hUsd: normalizeScalarValue(payload.highPrice),
+    low24hUsd: normalizeScalarValue(payload.lowPrice),
+  });
 }
 
 function isCoinGeckoMarketChartUrl(url: string): boolean {
@@ -753,6 +789,10 @@ function deriveResearchMetrics(
     return deriveBinancePremiumMetrics(values);
   }
 
+  if (sourceKind === "binance-24hr-ticker") {
+    return deriveBinance24hrTickerMetrics(values);
+  }
+
   if (sourceKind === "binance-open-interest") {
     return deriveBinanceOpenInterestMetrics(values);
   }
@@ -802,6 +842,13 @@ function deriveResearchMetrics(
   }
 
   return {};
+}
+
+function deriveBinance24hrTickerMetrics(values: Record<string, string>): Record<string, string> {
+  return compactMetrics({
+    intradayRangeUsd: subtractValues(values.high24hUsd, values.low24hUsd),
+    closeVsWeightedAvgUsd: subtractValues(values.lastPriceUsd, values.weightedAvgPriceUsd),
+  });
 }
 
 function deriveBinancePremiumMetrics(values: Record<string, string>): Record<string, string> {
@@ -999,6 +1046,10 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
     return "coingecko-simple-price";
   }
 
+  if (sourceId.startsWith("binance-24hr-") || (provider === "binance" && name.includes("24hr"))) {
+    return "binance-24hr-ticker";
+  }
+
   if (sourceId.startsWith("binance-futures-oi-") || (provider === "binance-futures" && name.includes("open-interest"))) {
     return "binance-open-interest";
   }
@@ -1018,6 +1069,7 @@ function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): Re
   if (isCoinGeckoMarketChartUrl(source.url)) return "coingecko-market-chart";
   if (isCoinGeckoCoinsMarketsUrl(source.url)) return "coingecko-coins-markets";
   if (isCoinGeckoSimplePriceUrl(source.url)) return "coingecko-simple-price";
+  if (isBinance24hrTickerUrl(source.url)) return "binance-24hr-ticker";
   if (isBinanceOpenInterestUrl(source.url)) return "binance-open-interest";
   if (isBinancePremiumIndexUrl(source.url)) return "binance-premium-index";
   return "generic";

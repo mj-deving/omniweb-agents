@@ -54,7 +54,7 @@ This file complements:
   - `check:colony-operator-consumer` packed `omniweb-toolkit`, copied `agents/openclaw/colony-operator/` into a clean temp workspace, and installed it successfully
   - the copied bundle passed `npm run check:bundle`, including the maintained runtime-contract probe against the copied workspace
   - the copied bundle passed `npm run check:playbook`, which completed one starter cycle with `ok: true`
-  - the returned decision kind was observable (`publish` in the latest recorded run)
+  - the returned decision kind was observable, and when the decision was `kind=action` the action family matched the runtime-resolved intent truth
   - the outcome stayed `dry_run` with `0 DEM` spend and persisted state under a temporary state dir
 - Interpretation:
   - the new default colony-operator path is now proven as a truthful copied-bundle no-spend runtime drill rather than only a maintained skeleton or workspace-local contract

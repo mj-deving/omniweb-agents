@@ -17,7 +17,7 @@ import {
  * This starter now exercises the real colony read spine instead of only one compact colony read
  * or a recycled observe-first signal check. It still stays conservative: read feed,
  * signals, convergence, leaderboard, and balance; prefer skip when evidence is
- * thin; and only choose reply or publish when the surface actually supports it.
+ * thin; and only choose react, reply, or publish when the surface actually supports it.
  */
 
 const { colonyUrl: COLONY_URL } = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());

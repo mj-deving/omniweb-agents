@@ -1,19 +1,19 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-06
+updated: 2026-05-09
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "Phases 21-22 remain complete, but current `main` has moved into a newer runtime-owned operator band: colony-operator honesty, starter thinning, the generic action-intent seam, and first non-publish action-family proof. The ready queue remains intentionally empty until the next proof band is chosen deliberately."
+summary: "The current architecture checkpoint is PR #360 plus the 5xp4 PR ladder: broad substrate exists, boundary blur is the main problem, the preferred pivot is playbook-owned policy over a shared resolver/executor seam, and the next code PR remains the no-behavior-change `5xp4.9` PolicyActionRequest seam."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
 # Roadmap
 
 > Authoritative strategic tracker. Active execution state lives in Beads; this file records the current direction and the higher-level bands.
-> Strategic mirror: `memory/projects/omniweb-agents-colony-operator-rebuild.md`.
+> Strategic re-entry mirror: `packages/omniweb-toolkit/agents/openclaw/colony-operator/MEMORY.md` + `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md`.
 > History: `docs/INDEX.md`. Archived specs: `docs/archive/`.
 > Design spec: `docs/design-consumer-toolkit.md`.
 
@@ -22,26 +22,28 @@ read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "c
 Use this split on purpose:
 - **Beads/GitHub** = execution truth
 - **`docs/ROADMAP.md`** = canonical repo-facing strategic roadmap
-- **`memory/projects/omniweb-agents-colony-operator-rebuild.md`** = local memory-side strategic mirror for re-entry
+- **`packages/omniweb-toolkit/agents/openclaw/colony-operator/MEMORY.md` + `.../memory/CURRENT_DOCTRINE.md`** = local re-entry mirror for this architecture lane
 
 Anti-drift rule:
 - when the **current architecture band**, **strategic sequence**, or **explicit next / not-next priorities** change, update `docs/ROADMAP.md` and the project-memory mirror in the **same work slice**
+- for the current playbook-policy checkpoint, also keep PR #360 and the three 2026-05-08 reference docs as the exact status-quo anchor
+- for current package architecture planning in the seam-thinning band, treat `packages/omniweb-toolkit/references/current-toolkit-architecture-map-annotated.md` as the live architecture anchor and keep planning aligned to it
 - if the shared project direction changed materially, refresh the Beads shared memory key `omniweb-agents-colony-operator-strategic-truth` too
 - if only execution state changed (active bead, PR, wait, merge), update Beads/GitHub without forcing roadmap/memory edits
-- if only doctrine/working-style changed, update `memory/CURRENT_DOCTRINE.md` without forcing roadmap edits
+- if only doctrine/working-style changed, update `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md` without forcing roadmap edits
 
 ## Where We Stand
 
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Runtime-owned colony-operator rebuild on top of the attestation-first simplification baseline: truthful front door, thinner starters, substrate-first package boundaries, and the generic action-intent seam |
-| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the first runtime-owned operator cleanup band: colony-operator baseline tightening, starter thinning, and first non-publish action-family proof (`react`) |
+| Current direction | Checkpointed playbook-policy pivot on top of the substrate-first rebuild: truthful front door, strong capability/readiness + write-ceremony substrate, thin intent seam, and an explicit plan to move strategy upward without pretending it already landed |
+| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the front-door honesty cleanup plus the first real non-publish action-family proof (`react`) through the shared intent seam |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
-| Doctrine | The governing split is now explicit: substrate owns capability truth, starters own sensible defaults, playbooks own stronger strategy, and runtime owns non-deterministic judgment |
-| Documentation | Colony-operator is now the honest default front door; legacy specialist surfaces remain reference/compatibility material rather than the center of gravity |
-| Beads | `bd ready` is empty by design; stale legacy beads were deferred, and the next proof band should be opened deliberately from current architecture truth rather than old publish/research sludge |
-| Remaining external edges | operator-core proof definition, generic action-intent coverage beyond react/publish, capability-truth surfacing cleanup, generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
+| Doctrine | Current shipped truth is still read-first / no-spend by default / runtime-owned action selection; the planned pivot is playbook-owned policy above a shared resolver/executor seam, checkpointed in PR #360 but not yet implemented |
+| Documentation | Colony-operator remains the honest default front door for now, but it should be understood as a skill-layer entry path over substrate primitives rather than the architectural center of gravity |
+| Beads | PR #360 is the planning checkpoint; the canonical execution ladder is `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15`; `5xp4.9` / `5xp4.9.1` are ready, no gate currently blocks the ladder, and `5xp4.9` remains the next code PR |
+| Remaining external edges | intent-boundary contract cleanup, generic action-intent coverage beyond react/publish/reply, capability-truth surfacing polish, generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -79,67 +81,50 @@ Anti-drift rule:
 
 ---
 
-## Current Architecture Band (post-Phases 21-22)
+## Current Architecture Checkpoint
 
-`main` has moved beyond pure attestation-first simplification into a newer operator-core rebuild band.
+`main` is now anchored by the planning checkpoint captured in PR #360 and the Beads ladder under `omniweb-agents-5xp4`.
 
-This band has already landed the following truths:
+This checkpoint locks in the following truths:
 
-- colony-operator is the honest default/front-door operator path
-- starter/runtime surfaces were thinned so the default path is easier to reason about
-- the generic action-intent seam now exists in the minimal runtime
-- `react` is the first non-publish action family proved through that seam
-- cold-consumer testing and follow-up doc cleanup were used to force the front door back into truthful shape
+- `omniweb-toolkit` already has a broad substrate.
+- **Boundary blur** is the main problem, not missing primitives.
+- The preferred pivot is **playbook-owned policy over a shared resolver/executor seam**.
+- Current shipped behavior is still read-first / no-spend by default / runtime-owned action selection.
+- The pivot is checkpointed in docs and Beads before implementation so later work does not drift into older premises.
 
-The current architectural sequence is:
-1. keep one real core-action lane active at a time
-2. expand the generic action-intent seam through narrow real proof slices
-3. keep runtime-owned judgment primary and avoid slipping back into role-script fakery
-4. broaden into more action families or specialist overlays only after the operator core is honest and proved
+Canonical source artifacts for this checkpoint:
+- `packages/omniweb-toolkit/references/2026-05-08-supercolony-substrate-status-map.md`
+- `packages/omniweb-toolkit/references/playbook-owned-policy-contract.md`
+- `packages/omniweb-toolkit/references/playbook-policy-implementation-plan.md`
+- PR #360 — https://github.com/mj-deving/omniweb-agents/pull/360
 
-## Next Work Bands
+## Next Work Ladder
 
-There is no unblocked work in beads right now. The next work should be opened deliberately from one of these bands rather than inferred from stale paused epics.
+The next work is not a vague band anymore; it is an explicit PR-sized Beads ladder. Do not skip steps.
 
-### 23. Operator-core end-to-end proof
+1. `omniweb-agents-5xp4.9` — introduce a playbook-facing `PolicyActionRequest` seam without behavior change
+2. `omniweb-agents-5xp4.10` — thin `minimal-agent.ts` into orchestration-only glue
+3. `omniweb-agents-5xp4.11` — add an explicit TypeScript-first policy layer and move colony-operator starter into that mode
+4. `omniweb-agents-5xp4.12` — unify publish/reply/react under one executor + result envelope
+5. `omniweb-agents-5xp4.13` — bring tip into the shared seam honestly
+6. `omniweb-agents-5xp4.14` — bring market/bet writes into the same seam
+7. `omniweb-agents-5xp4.15` — realign docs, proof surfaces, and bundle story around the landed architecture
 
-Primary next band.
+Important nuance:
+- `5xp4.8` still matters as a maintained proof checkpoint, but it is **not** the next implementation PR in this ladder.
+- PR #360 is the committed checkpoint for planning state, not PR1 of implementation.
 
-Current execution epic: `omniweb-agents-ylzx`
-
-- define the smallest honest acceptance criteria for the general-purpose colony-operator MVP floor
-- audit the current action-intent families and identify which paths are real, partial, or still fake/implicit
-- tighten capability-truth surfacing so the runtime can clearly tell what it can do, what it cannot do, and what still requires guarded/manual ceremony
-- land one narrow next proof slice at a time rather than reopening broad family expansion
-
-### 24. Launch-proof and external truth
-
-Only after the operator-core proof band is tighter.
-
-- keep external/front-door docs aligned to actual shipped behavior
-- generic publish indexing still needs continued observation and conservative messaging
-- tip-specific readback remains weaker than the other proved write families
-- `getPriceHistory` population still lags on the production host
-- npm publish remains blocked by environment/auth and launch-proof posture, not by package structure
-
-### 25. Later expansion and overlays
-
-Only after the core proof band earns it.
-
-- broaden into additional action families beyond the currently proved slices
-- revisit specialist/operator overlays as optional strategy surfaces rather than the default entry path
-- expand research/family playbooks only where they improve a runtime-owned operator instead of replacing it
-
-### 26. Explicitly paused work
+## Explicitly not next
 
 These are not next steps today:
 
 | ID | Area | Status |
 |----|------|--------|
-| `omniweb-agents-7h7` | packet layering and skeleton rollout | blocked behind the attestation-first model and newer operator-core proof band |
-| `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model and newer operator-core proof band |
-| `omniweb-agents-9he` | research family expansion | blocked until the runtime-owned operator core is better proved |
-| legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest colony-operator default path |
+| `omniweb-agents-7h7` | packet layering and skeleton rollout | blocked behind the attestation-first model and the newer playbook-policy / seam ladder |
+| `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model and the newer playbook-policy / seam ladder |
+| `omniweb-agents-9he` | research family expansion | blocked until the substrate + intent seam is better proved |
+| legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest default path over the substrate seam |
 
 ---
 

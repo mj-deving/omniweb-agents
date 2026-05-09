@@ -145,10 +145,13 @@ describe("colony-operator starter", () => {
       },
     });
 
-    expect(result.kind).toBe("react");
-    if (result.kind !== "react") throw new Error("expected react");
-    expect(result.targetTxHash).toBe("0xreact-target");
-    expect(result.reaction).toBe("agree");
+    expect(result.kind).toBe("action");
+    if (result.kind !== "action") throw new Error("expected action");
+    expect(result.action).toMatchObject({
+      type: "react",
+      targetTxHash: "0xreact-target",
+      reaction: "agree",
+    });
     expect(result.facts).toMatchObject({
       topic: "btc funding split",
       selectedAction: "react",
@@ -251,8 +254,10 @@ describe("colony-operator starter", () => {
 
     expect(result.kind).toBe("action");
     if (result.kind !== "action") throw new Error("expected action");
-    expect(result.action.type).toBe("reply");
-    expect(result.action.parentTxHash).toBe("0xreply-target");
+    expect(result.action).toMatchObject({
+      type: "reply",
+      parentTxHash: "0xreply-target",
+    });
     expect(result.action.attestUrl).toContain("coingecko");
     expect(result.action.text).toContain("sourced clarification");
   });

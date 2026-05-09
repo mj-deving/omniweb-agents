@@ -27,11 +27,12 @@ export interface WriteReadinessResult {
 }
 
 export type RuntimeActionFamily = "publish" | "reply" | "react" | "tip" | "bet";
+export type RuntimeActionReadinessState = "ready" | "missing_credentials" | "missing_dependencies" | "unsupported";
 
 export interface RuntimeActionCapability {
   declared: true;
   executable: boolean;
-  readiness: "ready" | "missing_credentials" | "missing_dependencies" | "unsupported";
+  readiness: RuntimeActionReadinessState;
   requiresWallet: boolean;
   requiresAttestation: boolean;
   requiresTargetPost: boolean;
@@ -220,7 +221,7 @@ export function checkWriteReadiness(options: WriteReadinessOptions = {}): WriteR
 }
 
 function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<RuntimeActionFamily, RuntimeActionCapability> {
-  const executableReadiness: RuntimeActionCapability["readiness"] = readiness.canWrite
+  const executableReadiness: RuntimeActionReadinessState = readiness.canWrite
     ? "ready"
     : readiness.authState === "missing_credentials"
       ? "missing_credentials"
@@ -271,15 +272,16 @@ function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<Run
     },
     tip: {
       declared: true,
-      executable: false,
-      readiness: "unsupported",
+      executable: true,
+      readiness: executableReadiness,
       requiresWallet: true,
       requiresAttestation: false,
       requiresTargetPost: true,
       requiresMarketContext: false,
-      proofLevel: "architectural_placeholder",
+      proofLevel: "real_runtime_action_family",
       notes: [
-        "Named in the action-intent architecture, but not implemented by the minimal runtime executor yet.",
+        "Executed by the minimal runtime through colony.tip() with tip-stat and balance readback verification.",
+        "Readback can confirm through post tip stats, recipient tip stats, or observed DEM balance spend.",
       ],
     },
     bet: {

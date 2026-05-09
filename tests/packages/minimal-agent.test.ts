@@ -3,10 +3,20 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  compilePolicyDecision,
+  executeResolvedIntent,
   getDefaultMinimalStateDir,
+  normalizeDecisionToPolicyActionRequest,
+  normalizeDecisionToResolvedIntent,
+  planPolicyExecution,
+  resolveActionRequest,
   runMinimalAgentCycle,
   runMinimalAgentLoop,
+  runPolicyWithTrace,
+  type PolicyDefinition,
 } from "../../packages/omniweb-toolkit/src/minimal-agent.js";
+import { executeMinimalAction } from "../../packages/omniweb-toolkit/src/minimal-agent-executor.ts";
+import { describeRuntimeCapabilities } from "../../packages/omniweb-toolkit/src/readiness.js";
 
 const tempDirs: string[] = [];
 
@@ -42,9 +52,28 @@ function makeOmni(overrides?: Partial<any>): any {
       react: vi.fn().mockResolvedValue({
         ok: true,
       }),
+      tip: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { txHash: "0xtip", validated: true },
+      }),
       getReactions: vi.fn().mockResolvedValue({
         ok: true,
         data: { agree: 0, disagree: 0, flag: 0 },
+      }),
+      getTipStats: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { totalTips: 0, totalDem: 0, myTip: 0 },
+      }),
+      getAgentTipStats: vi.fn().mockResolvedValue({
+        ok: true,
+        data: {
+          tipsGiven: { count: 0, totalDem: 0 },
+          tipsReceived: { count: 0, totalDem: 0 },
+        },
+      }),
+      getBalance: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { balance: 100 },
       }),
       getFeed: vi.fn().mockResolvedValue({
         ok: true,
@@ -74,6 +103,637 @@ afterEach(async () => {
 });
 
 describe("minimal agent runtime", () => {
+  it("adapts legacy decisions into PolicyActionRequest without changing resolution truth", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+        reply: {
+          ...blockedCapabilities.actionFamilies.reply,
+          executable: true,
+          readiness: "ready",
+        },
+        react: {
+          ...blockedCapabilities.actionFamilies.react,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const publishRequest = normalizeDecisionToPolicyActionRequest({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "hello",
+      attestUrl: "https://example.com/a.json",
+      tags: ["bridge"],
+      confidence: 77,
+      audit: {
+        inputs: { topic: "coverage-gap" },
+        notes: ["route:publish"],
+      },
+    });
+    const publish = resolveActionRequest(publishRequest, { runtimeCapabilities: writeReadyCapabilities });
+    const react = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "react", targetTxHash: "0xabc", reaction: "agree" },
+      readiness: { requiresWallet: true, requiresTargetPost: true },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const blockedPublish = normalizeDecisionToResolvedIntent({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "blocked",
+      attestUrl: "https://example.com/a.json",
+    }, { runtimeCapabilities: blockedCapabilities });
+    const blockedTip = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "tip", targetTxHash: "0xabc", amount: 5 },
+    }, { runtimeCapabilities: blockedCapabilities });
+    const executableTip = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "tip", targetTxHash: "0xready-tip", amount: 5 },
+    }, {
+      runtimeCapabilities: {
+        ...writeReadyCapabilities,
+        actionFamilies: {
+          ...writeReadyCapabilities.actionFamilies,
+          tip: {
+            ...writeReadyCapabilities.actionFamilies.tip,
+            executable: true,
+            readiness: "ready",
+          },
+        },
+      },
+    });
+
+    expect(publishRequest).toEqual({
+      actionType: "publish",
+      draft: {
+        category: "OBSERVATION",
+        text: "hello",
+        tags: ["bridge"],
+        confidence: 77,
+      },
+      evidenceRequest: {
+        primary: "https://example.com/a.json",
+        strength: "inherit",
+      },
+      audit: {
+        matchedConditions: ["route:publish"],
+        observedInputs: ["topic"],
+      },
+    });
+    expect(publish).toMatchObject({
+      status: "executable",
+      actionType: "publish",
+      executionPathFamily: "direct_attested_write",
+      normalizedDraft: {
+        text: "hello",
+        attestUrl: "https://example.com/a.json",
+      },
+      evidencePlan: {
+        primary: "https://example.com/a.json",
+      },
+    });
+    expect(react).toMatchObject({
+      status: "executable",
+      actionType: "react",
+      executionPathFamily: "reaction",
+    });
+    expect(blockedPublish).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+      reasonCodes: ["runtime_capability_blocked"],
+      evidencePlan: {
+        primary: "https://example.com/a.json",
+      },
+    });
+    expect(blockedTip).toMatchObject({
+      status: "blocked",
+      actionType: "tip",
+      executionPathFamily: "tip_transfer",
+      reasonCodes: ["runtime_capability_blocked"],
+    });
+    expect(executableTip).toMatchObject({
+      status: "executable",
+      actionType: "tip",
+      executionPathFamily: "tip_transfer",
+      normalizedDraft: {
+        amount: 5,
+      },
+    });
+  });
+
+  it("blocks malformed action requests before execution-time failures", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+        reply: {
+          ...blockedCapabilities.actionFamilies.reply,
+          executable: true,
+          readiness: "ready",
+        },
+        react: {
+          ...blockedCapabilities.actionFamilies.react,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const malformedReply = resolveActionRequest({
+      actionType: "reply",
+      draft: { text: "hello" },
+      evidenceRequest: { primary: "https://example.com/reply.json", strength: "inherit" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const malformedPublish = resolveActionRequest({
+      actionType: "publish",
+      draft: { text: "hello" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const malformedReact = resolveActionRequest({
+      actionType: "react",
+      draft: { reaction: "agree" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+
+    expect(malformedReply).toMatchObject({
+      status: "blocked",
+      actionType: "reply",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["parent_tx_hash"],
+      executionPathFamily: "direct_attested_write",
+    });
+    expect(malformedPublish).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["evidence_url"],
+      executionPathFamily: "direct_attested_write",
+    });
+    expect(malformedReact).toMatchObject({
+      status: "blocked",
+      actionType: "react",
+      reasonCodes: ["request_missing_fields"],
+      missingRequirements: ["post_tx_hash"],
+      executionPathFamily: "reaction",
+    });
+  });
+
+  it("derives attestation readiness from evidence strength", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const resolution = resolveActionRequest({
+      actionType: "publish",
+      draft: { text: "hello" },
+      evidenceRequest: { strength: "none" },
+    }, { runtimeCapabilities: writeReadyCapabilities });
+
+    expect(resolution).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+      reasonCodes: ["evidence_strength_incompatible"],
+      missingRequirements: ["attestation"],
+      evidencePlan: { mechanism: "none" },
+      readiness: { requiresAttestation: false },
+      executionPathFamily: "direct_attested_write",
+    });
+  });
+
+  it("compiles and plans policy execution outside the loop core", async () => {
+    const dir = await createTempDir();
+    const blockedCapabilities = describeRuntimeCapabilities({ cwd: dir, homeDir: dir, env: {} });
+    const writeReadyCapabilities = {
+      ...blockedCapabilities,
+      actionFamilies: {
+        ...blockedCapabilities.actionFamilies,
+        publish: {
+          ...blockedCapabilities.actionFamilies.publish,
+          executable: true,
+          readiness: "ready",
+        },
+      },
+    };
+
+    const compiled = compilePolicyDecision({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Policy shell compile check",
+      attestUrl: "https://example.com/policy-shell.json",
+      tags: ["policy-shell"],
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const executePlan = planPolicyExecution({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Execute through policy shell",
+      attestUrl: "https://example.com/policy-shell.json",
+    }, { runtimeCapabilities: writeReadyCapabilities });
+    const dryRunPlan = planPolicyExecution({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Dry run through policy shell",
+      attestUrl: "https://example.com/policy-shell.json",
+    }, { runtimeCapabilities: writeReadyCapabilities, dryRun: true });
+    const blockedPlan = planPolicyExecution({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Blocked through policy shell",
+      attestUrl: "https://example.com/policy-shell.json",
+    }, { runtimeCapabilities: blockedCapabilities });
+
+    expect(compiled.request).toMatchObject({
+      actionType: "publish",
+      draft: {
+        text: "Policy shell compile check",
+      },
+    });
+    expect(compiled.actionDecision?.action).toMatchObject({
+      type: "publish",
+      text: "Policy shell compile check",
+    });
+    expect(compiled.resolution).toMatchObject({
+      status: "executable",
+      actionType: "publish",
+    });
+    expect(executePlan.disposition).toEqual({ kind: "execute" });
+    expect(dryRunPlan.disposition).toEqual({ kind: "dry_run", status: "dry_run" });
+    expect(blockedPlan.disposition).toEqual({ kind: "skip", status: "skipped" });
+    expect(blockedPlan.resolution).toMatchObject({
+      status: "blocked",
+      actionType: "publish",
+    });
+  });
+
+  it("runs policy observe/derive/conditions/routes above the action seam", async () => {
+    const policy: PolicyDefinition<
+      { lastRoute?: string },
+      { value: number },
+      { doubled: number },
+      "large_enough",
+      "publish_value"
+    > = {
+      policyId: "test.policy.v1",
+      observe: async () => ({ value: 4 }),
+      derive: ({ observed }) => ({ doubled: observed.value * 2 }),
+      conditions: {
+        large_enough: ({ derived }) => derived.doubled >= 8,
+      },
+      routes: [
+        {
+          id: "publish_value",
+          when: ({ conditionResults }) => conditionResults.large_enough,
+          buildDecision: ({ derived, ctx }) => ({
+            kind: "action",
+            action: {
+              type: "publish",
+              category: "OBSERVATION",
+              text: `Derived value ${derived.doubled}`,
+              attestUrl: "https://example.com/policy-test.json",
+            },
+            nextState: {
+              ...ctx.memory.state,
+              lastRoute: "publish_value",
+            },
+          }),
+        },
+      ],
+    };
+
+    const trace = await runPolicyWithTrace(policy, {
+      omni: makeOmni(),
+      cycle: {
+        id: "policy-cycle",
+        iteration: 1,
+        startedAt: new Date(1_700_000_000_000).toISOString(),
+        stateDir: "/tmp/policy-state",
+        sessionId: "policy-session",
+        sessionDir: "/tmp/policy-session",
+        dryRun: true,
+      },
+      memory: {
+        state: { lastRoute: "skip" },
+        lastCycle: null,
+      },
+      ledger: {
+        sessionId: "policy-session",
+        sessionDir: "/tmp/policy-session",
+        recentResults: [],
+      },
+    });
+
+    expect(trace.routeId).toBe("publish_value");
+    expect(trace.matchedConditions).toEqual(["large_enough"]);
+    expect(trace.decision.audit).toMatchObject({
+      policyId: "test.policy.v1",
+      routeId: "publish_value",
+      matchedConditions: ["large_enough"],
+    });
+    expect(trace.decision.kind).toBe("action");
+  });
+
+  it("executes publish, reply, and react through one resolved-intent envelope", async () => {
+    const verification = {
+      timeoutMs: 45_000,
+      pollMs: 5_000,
+      limit: 50,
+    };
+    const publishOmni = makeOmni({
+      colony: {
+        publish: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xpublish-envelope" },
+          provenance: {
+            path: "local",
+            latencyMs: 20,
+            attestation: {
+              txHash: "0xpublish-attest-envelope",
+              responseHash: "0xpublish-response-envelope",
+            },
+          },
+        }),
+        getFeed: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            posts: [
+              {
+                txHash: "0xpublish-envelope",
+                payload: {
+                  cat: "OBSERVATION",
+                  text: "Unified envelope publish",
+                },
+                score: 77,
+                blockNumber: 999,
+              },
+            ],
+            meta: { lastBlock: 999 },
+          },
+        }),
+      },
+    });
+    const replyOmni = makeOmni({
+      colony: {
+        reply: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xreply-envelope" },
+          provenance: {
+            path: "local",
+            latencyMs: 20,
+            attestation: {
+              txHash: "0xreply-attest-envelope",
+              responseHash: "0xreply-response-envelope",
+            },
+          },
+        }),
+        getFeed: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            posts: [
+              {
+                txHash: "0xreply-envelope",
+                payload: {
+                  cat: "OBSERVATION",
+                  text: "Unified envelope reply",
+                },
+                score: 75,
+                blockNumber: 1001,
+              },
+            ],
+            meta: { lastBlock: 1001 },
+          },
+        }),
+      },
+    });
+    const reactOmni = makeOmni({
+      colony: {
+        react: vi.fn().mockResolvedValue({ ok: true }),
+        getReactions: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { agree: 3, disagree: 0, flag: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { agree: 4, disagree: 0, flag: 0 } }),
+      },
+    });
+
+    const publishEnvelope = await executeResolvedIntent({
+      omni: publishOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "publish",
+        category: "OBSERVATION",
+        text: "Unified envelope publish",
+        attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            publish: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.publish,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+    const replyEnvelope = await executeResolvedIntent({
+      omni: replyOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "reply",
+        parentTxHash: "0xreply-parent-envelope",
+        category: "OBSERVATION",
+        text: "Unified envelope reply",
+        attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            reply: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.reply,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+    const reactEnvelope = await executeResolvedIntent({
+      omni: reactOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "react", targetTxHash: "0xreact-envelope", reaction: "agree" },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            react: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.react,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+    const tipOmni = makeOmni({
+      colony: {
+        tip: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xtip-envelope", validated: true },
+        }),
+        getPostDetail: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            post: {
+              txHash: "0xtip-target-envelope",
+              author: "0xrecipient-envelope",
+              timestamp: 1,
+              payload: {},
+            },
+            replies: [],
+          },
+        }),
+        getTipStats: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 1, totalDem: 2, myTip: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 2, totalDem: 7, myTip: 5 } }),
+        getAgentTipStats: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 2 },
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 2, totalDem: 7 },
+            },
+          }),
+        getBalance: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { balance: 42 } })
+          .mockResolvedValueOnce({ ok: true, data: { balance: 37 } }),
+      },
+    });
+    const tipEnvelope = await executeResolvedIntent({
+      omni: tipOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "tip", targetTxHash: "0xtip-target-envelope", amount: 5 },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            tip: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.tip,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification: {
+        ...verification,
+        timeoutMs: 1,
+        pollMs: 1,
+      },
+    });
+
+    expect(publishEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "publish",
+      txHash: "0xpublish-envelope",
+      attestationTxHash: "0xpublish-attest-envelope",
+      verificationPath: "feed",
+      indexedVisible: true,
+    });
+    expect(replyEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "reply",
+      txHash: "0xreply-envelope",
+      attestationTxHash: "0xreply-attest-envelope",
+      verificationPath: "feed",
+      indexedVisible: true,
+    });
+    expect(reactEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "react",
+      verificationPath: "reaction_counts",
+      indexedVisible: true,
+    });
+    expect(tipEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "tip",
+      txHash: "0xtip-envelope",
+      demSpendEstimate: 5,
+      verificationPath: "tip_stats",
+      indexedVisible: true,
+    });
+  });
+
+  it("executeMinimalAction honors caller-provided actionDecision when resolution is absent", async () => {
+    const omni = makeOmni();
+    omni.colony.react = vi.fn().mockResolvedValue({ ok: true });
+    omni.colony.getReactions = vi.fn()
+      .mockResolvedValueOnce({ ok: true, data: { agree: 0, disagree: 0, flag: 0 } })
+      .mockResolvedValueOnce({ ok: true, data: { agree: 1, disagree: 0, flag: 0, myReaction: "agree" } });
+
+    const execution = await executeMinimalAction({
+      omni,
+      decision: {
+        kind: "publish",
+        category: "OBSERVATION",
+        text: "Stale publish decision",
+        attestUrl: "https://app.supercolony.ai/api/signals",
+      },
+      actionDecision: {
+        kind: "action",
+        action: { type: "react", targetTxHash: "0xreact-from-action", reaction: "agree" },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      },
+      verification: { timeoutMs: 1, pollMs: 1, limit: 10 },
+    });
+
+    expect(omni.colony.react).toHaveBeenCalledWith("0xreact-from-action", "agree");
+    expect(omni.colony.publish).not.toHaveBeenCalled();
+    expect(execution).toMatchObject({
+      status: "reacted",
+      demSpendEstimate: 0,
+    });
+    expect(execution.verification?.verificationPath).toBe("reaction_counts");
+  });
+
   it("writes skip cycle artifacts and persists next state", async () => {
     const stateDir = await createTempDir();
     const record = await runMinimalAgentCycle(
@@ -91,14 +751,14 @@ describe("minimal agent runtime", () => {
       },
     );
 
-    expect(record.outcome.status).toBe("skipped");
+    expect(record.outcome.execution.status).toBe("skipped");
     expect(record.memoryAfter.state).toEqual({ lastReason: "no_new_signal" });
 
     const latest = await readJson(resolve(stateDir, "runs", "latest.json"));
     const state = await readJson(resolve(stateDir, "state", "current.json"));
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-skip.md"), "utf-8");
 
-    expect(latest.outcome.status).toBe("skipped");
+    expect(latest.outcome.execution.status).toBe("skipped");
     expect(state.agentState).toEqual({ lastReason: "no_new_signal" });
     expect(state.lastCycle.status).toBe("skipped");
     expect(summary).toContain("SkipReason: no_new_signal");
@@ -187,6 +847,7 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-publish",
         now: makeNow(1_700_000_001_000, 1_700_000_001_500),
       },
@@ -199,19 +860,19 @@ describe("minimal agent runtime", () => {
       tags: ["coverage"],
       confidence: 88,
     });
-    expect(record.outcome.status).toBe("published");
-    expect(record.outcome.txHash).toBe("0xabc");
-    expect(record.outcome.attestationTxHash).toBe("0xattest");
-    expect(record.outcome.attestationResponseHash).toBe("0xresponse");
-    expect(record.outcome.verification?.indexedVisible).toBe(true);
-    expect(record.outcome.verification?.verificationPath).toBe("feed");
-    expect(record.outcome.verification?.observedScore).toBe(80);
+    expect(record.outcome.execution.status).toBe("published");
+    expect(record.outcome.execution.txHash).toBe("0xabc");
+    expect(record.outcome.execution.attestationTxHash).toBe("0xattest");
+    expect(record.outcome.execution.attestationResponseHash).toBe("0xresponse");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("feed");
+    expect(record.outcome.execution.verification?.observedScore).toBe(80);
     expect(record.memoryAfter.state).toEqual({ lastTopic: "coverage-gap" });
 
     const latest = await readJson(resolve(stateDir, "runs", "latest.json"));
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-publish.md"), "utf-8");
     expect(latest.decision.audit.inputs.signals[0].topic).toBe("coverage-gap");
-    expect(latest.outcome.attestationTxHash).toBe("0xattest");
+    expect(latest.outcome.execution.attestationTxHash).toBe("0xattest");
     expect(summary).toContain("AuditSections: inputs, selectedEvidence, promptPacket");
     expect(summary).toContain("AttestationPlan: ready (ready)");
     expect(summary).toContain("AttestationTxHash: 0xattest");
@@ -240,8 +901,45 @@ describe("minimal agent runtime", () => {
     );
 
     expect(omni.colony.publish).not.toHaveBeenCalled();
-    expect(record.outcome.status).toBe("dry_run");
-    expect(record.outcome.demSpendEstimate).toBe(0);
+    expect(record.outcome.execution.status).toBe("dry_run");
+    expect(record.outcome.execution.demSpendEstimate).toBe(0);
+  });
+
+  it("executeResolvedIntent honors dryRun before attestation validation", async () => {
+    const omni = makeOmni();
+    const runtime = describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} });
+    const resolution = normalizeDecisionToResolvedIntent({
+      kind: "publish",
+      category: "OBSERVATION",
+      text: "Dry-run direct envelope.",
+      attestUrl: "https://example.com/dry-run-direct",
+    }, {
+      runtimeCapabilities: {
+        ...runtime,
+        actionFamilies: {
+          ...runtime.actionFamilies,
+          publish: {
+            ...runtime.actionFamilies.publish,
+            executable: true,
+            readiness: "ready",
+          },
+        },
+      },
+    })!;
+
+    const envelope = await executeResolvedIntent({
+      omni,
+      resolution,
+      dryRun: true,
+      verification: { timeoutMs: 1, pollMs: 1, limit: 1 },
+    });
+
+    expect(omni.colony.publish).not.toHaveBeenCalled();
+    expect(envelope.execution).toMatchObject({
+      status: "dry_run",
+      actionType: "publish",
+      demSpendEstimate: 0,
+    });
   });
 
   it("supports reply decisions and records replied status", async () => {
@@ -291,6 +989,7 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-reply",
         now: makeNow(1_700_000_002_000, 1_700_000_002_400),
       },
@@ -302,10 +1001,10 @@ describe("minimal agent runtime", () => {
       attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
       category: "ANALYSIS",
     });
-    expect(record.outcome.status).toBe("replied");
-    expect(record.outcome.txHash).toBe("0xreply-live");
-    expect(record.outcome.attestationTxHash).toBe("0xreply-attest");
-    expect(record.outcome.verification?.indexedVisible).toBe(true);
+    expect(record.outcome.execution.status).toBe("replied");
+    expect(record.outcome.execution.txHash).toBe("0xreply-live");
+    expect(record.outcome.execution.attestationTxHash).toBe("0xreply-attest");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
   });
 
   it("supports react decisions and records reacted status", async () => {
@@ -332,20 +1031,94 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-react",
         now: makeNow(1_700_000_002_100, 1_700_000_002_300),
       },
     );
 
     expect(omni.colony.react).toHaveBeenCalledWith("0xtarget", "agree");
-    expect(record.outcome.status).toBe("reacted");
-    expect(record.outcome.demSpendEstimate).toBe(0);
-    expect(record.outcome.verification?.verificationPath).toBe("reaction_counts");
-    expect(record.outcome.verification?.error).toBeUndefined();
+    expect(record.outcome.execution.status).toBe("reacted");
+    expect(record.outcome.execution.demSpendEstimate).toBe(0);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("reaction_counts");
+    expect(record.outcome.execution.verification?.error).toBeUndefined();
 
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-react.md"), "utf-8");
     expect(summary).toContain("Reaction: agree");
     expect(summary).toContain("TargetTxHash: 0xtarget");
+  });
+
+  it("supports tip action decisions and records tipped status", async () => {
+    const stateDir = await createTempDir();
+    const omni = makeOmni({
+      colony: {
+        tip: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xtip-cycle", validated: true },
+        }),
+        getPostDetail: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            post: {
+              txHash: "0xtip-target",
+              author: "0xrecipient",
+              timestamp: 1,
+              payload: {},
+            },
+            replies: [],
+          },
+        }),
+        getTipStats: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 0, totalDem: 0, myTip: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 1, totalDem: 3, myTip: 3 } }),
+        getAgentTipStats: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 0, totalDem: 0 },
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 3 },
+            },
+          }),
+        getBalance: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { balance: 20 } })
+          .mockResolvedValueOnce({ ok: true, data: { balance: 17 } }),
+      },
+    });
+
+    const record = await runMinimalAgentCycle(
+      async () => ({
+        kind: "action",
+        action: { type: "tip", targetTxHash: "0xtip-target", amount: 3 },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }),
+      {
+        omni,
+        stateDir,
+        cwd: stateDir,
+        cycleId: "cycle-tip",
+        verification: { timeoutMs: 1, pollMs: 1, limit: 10 },
+        now: makeNow(1_700_000_002_350, 1_700_000_002_500),
+      },
+    );
+
+    expect(omni.colony.tip).toHaveBeenCalledWith("0xtip-target", 3);
+    expect(record.outcome.execution.status).toBe("tipped");
+    expect(record.outcome.execution.txHash).toBe("0xtip-cycle");
+    expect(record.outcome.execution.demSpendEstimate).toBe(3);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("tip_stats");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
+
+    const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-tip.md"), "utf-8");
+    expect(summary).toContain("ActionType: tip");
+    expect(summary).toContain("TargetTxHash: 0xtip-target");
+    expect(summary).toContain("Amount: 3");
   });
 
   it("blocks live publishes that still use placeholder attestation URLs", async () => {
@@ -362,14 +1135,15 @@ describe("minimal agent runtime", () => {
       {
         omni,
         stateDir,
+        cwd: stateDir,
         cycleId: "cycle-placeholder-block",
         now: makeNow(1_700_000_002_500, 1_700_000_002_800),
       },
     );
 
     expect(omni.colony.publish).not.toHaveBeenCalled();
-    expect(record.outcome.status).toBe("failed");
-    expect(record.outcome.error?.message).toContain("placeholder_attest_url");
+    expect(record.outcome.execution.status).toBe("failed");
+    expect(record.outcome.execution.error?.message).toContain("placeholder_attest_url");
   });
 
   it("reuses one omni session across loop iterations and advances persisted iteration", async () => {

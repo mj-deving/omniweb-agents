@@ -11,7 +11,6 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   iteration: number;
   dryRun: boolean;
   decision: {
-    kind: "skip" | "reply" | "react" | "publish";
     kind: "skip" | "reply" | "react" | "publish" | "action";
     reason?: string | null;
     action?: {
@@ -20,11 +19,23 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
       category?: string;
     };
     facts?: Record<string, unknown>;
+    audit?: {
+      policyId?: string;
+      routeId?: string;
+      matchedConditions?: string[];
+    };
   };
   memoryAfter: Record<string, unknown>;
   outcome: {
-    status: "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
-    demSpendEstimate?: number;
+    resolution: null | {
+      status?: "executable" | "blocked" | "supervised" | "unsupported";
+      actionType?: "publish" | "reply" | "react" | "tip" | "bet";
+      executionPathFamily?: string;
+    };
+    execution: {
+      status: "skipped" | "dry_run" | "published" | "replied" | "reacted" | "failed";
+      demSpendEstimate?: number;
+    };
   };
 }
 
@@ -88,9 +99,8 @@ const checks = {
   cycleReturned: record != null,
   noThrow: failure == null,
   dryRunFlag: record?.dryRun === true,
-  noSpendEstimate: (record?.outcome.demSpendEstimate ?? -1) === 0,
-  outcomeIsSafe: record?.outcome.status === "dry_run" || record?.outcome.status === "skipped",
-  decisionIsObservable: record?.decision.kind === "skip" || record?.decision.kind === "reply" || record?.decision.kind === "react" || record?.decision.kind === "publish",
+  noSpendEstimate: (record?.outcome.execution.demSpendEstimate ?? -1) === 0,
+  outcomeIsSafe: record?.outcome.execution.status === "dry_run" || record?.outcome.execution.status === "skipped",
   actionShapeSupported: record?.decision.kind !== "action"
     || record.decision.action?.type === "publish"
     || record.decision.action?.type === "reply"
@@ -100,6 +110,19 @@ const checks = {
     || record?.decision.kind === "react"
     || record?.decision.kind === "publish"
     || record?.decision.kind === "action",
+  thinSkillBoundaryVisible: record?.decision.kind === "action",
+  explicitPolicyIdPresent: record?.decision.audit?.policyId === "colony-operator.surface-policy.v1",
+  explicitRouteIdPresent: typeof record?.decision.audit?.routeId === "string" && record.decision.audit.routeId.length > 0,
+  matchedConditionsTracked: Array.isArray(record?.decision.audit?.matchedConditions),
+  resolvedIntentPresent: record?.decision.kind !== "action"
+    || record?.outcome.resolution != null,
+  resolvedIntentMatchesAction: record?.decision.kind !== "action"
+    || record?.outcome.resolution?.actionType === record.decision.action?.type,
+  resolvedIntentExecutable: record?.decision.kind !== "action"
+    || record?.outcome.resolution?.status === "executable",
+  executionPathMatchesAction: record?.decision.action?.type !== "react"
+    ? record?.decision.kind !== "action" || record?.outcome.resolution?.executionPathFamily === "direct_attested_write"
+    : record?.outcome.resolution?.executionPathFamily === "reaction",
   persistedLatestRecord: persistedRecord?.cycleId === record?.cycleId,
   stateRecorded: persistedRecord?.memoryAfter != null,
 };
@@ -115,6 +138,13 @@ const summary = {
   contract: {
     colonyOperatorBaselineProof: ok,
     colonyOperatorMvpProof: false,
+    thinSkillBoundaryProven: Boolean(
+      checks.thinSkillBoundaryVisible
+      && checks.explicitPolicyIdPresent
+      && checks.explicitRouteIdPresent
+      && checks.resolvedIntentMatchesAction
+      && checks.resolvedIntentExecutable,
+    ),
     spendsDem: false,
     liveWriteProven: false,
   },
@@ -125,7 +155,13 @@ const summary = {
         decisionKind: record.decision.kind,
         actionType: record.decision.kind === "action" ? record.decision.action?.type ?? null : null,
         decisionReason: record.decision.reason ?? null,
-        outcomeStatus: record.outcome.status,
+        outcomeStatus: record.outcome.execution.status,
+        resolvedIntentStatus: record.outcome.resolution?.status ?? null,
+        resolvedActionType: record.outcome.resolution?.actionType ?? null,
+        executionPathFamily: record.outcome.resolution?.executionPathFamily ?? null,
+        policyId: record.decision.audit?.policyId ?? null,
+        routeId: record.decision.audit?.routeId ?? null,
+        matchedConditions: record.decision.audit?.matchedConditions ?? [],
         selectedTopic: record.decision.facts && typeof record.decision.facts === "object" && "topic" in record.decision.facts
           ? (record.decision.facts as { topic?: unknown }).topic ?? null
           : null,

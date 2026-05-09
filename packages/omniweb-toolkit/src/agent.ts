@@ -8,6 +8,13 @@
  *   not the architectural center of the package
  */
 
+// Explicit policy compile/run shell
+export { compilePolicyDecision } from "./policy/compile.js";
+export {
+  buildInjectedPolicyRuntimeCapabilities,
+  planPolicyExecution,
+} from "./policy/run.js";
+
 // Core runtime loop + seam helpers
 export {
   getDefaultMinimalStateDir,
@@ -90,6 +97,15 @@ export type {
   StarterSourcePackEntry,
 } from "./starter-source-packs.js";
 export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
+export type {
+  CompilePolicyDecisionOptions,
+  CompiledPolicyDecision,
+} from "./policy/compile.js";
+export type {
+  PlanPolicyExecutionOptions,
+  PlannedPolicyExecution,
+  PolicyExecutionDisposition,
+} from "./policy/run.js";
 export type {
   ActionIntentDecision,
   MinimalAgentState,

@@ -1,7 +1,7 @@
 import process from "node:process";
 
 const REQUIRED_ENV = ["DEMOS_MNEMONIC", "RPC_URL", "SUPERCOLONY_API"];
-const DEFAULT_COLONY_URL = "https://www.supercolony.ai";
+const DEFAULT_COLONY_URL = "https://supercolony.ai";
 
 export async function canImport(specifier) {
   try {

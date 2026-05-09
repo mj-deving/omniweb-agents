@@ -4,7 +4,7 @@ import { loadPackageExport } from "./_shared.js";
 
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
-  console.log("Usage: check-action-intent-bridge.ts\n\nValidates that publish/reply decisions normalize into generic action intents.");
+  console.log("Usage: check-action-intent-bridge.ts\n\nValidates that legacy decisions normalize into PolicyActionRequest and generic action intents.");
   process.exit(0);
 }
 
@@ -33,6 +33,10 @@ interface MinimalDecision {
   };
   facts?: Record<string, unknown>;
 }
+
+const normalizeDecisionToPolicyActionRequest = await loadPackageExport<
+  (decision: MinimalDecision) => Record<string, unknown>
+>("../dist/agent.js", "../src/agent.ts", "normalizeDecisionToPolicyActionRequest");
 
 const normalizeDecisionToActionIntent = await loadPackageExport<
   (decision: MinimalDecision) => MinimalDecision | null
@@ -76,18 +80,30 @@ const skippedDecision: MinimalDecision = {
   reason: "bridge_check_skip",
 };
 
+const publishRequest = normalizeDecisionToPolicyActionRequest(publishDecision);
+const replyRequest = normalizeDecisionToPolicyActionRequest(replyDecision);
+const directRequest = normalizeDecisionToPolicyActionRequest(directActionDecision);
+const skippedRequest = normalizeDecisionToPolicyActionRequest(skippedDecision);
+
 const publishAction = normalizeDecisionToActionIntent(publishDecision);
 const replyAction = normalizeDecisionToActionIntent(replyDecision);
 const directAction = normalizeDecisionToActionIntent(directActionDecision);
 const skippedAction = normalizeDecisionToActionIntent(skippedDecision);
 
 const checks = {
-  publishNormalized: publishAction?.kind === "action" && publishAction.action?.type === "publish",
-  publishCarriesText: publishAction?.action?.text === publishDecision.text,
-  publishCarriesTags: Array.isArray(publishAction?.action?.tags) && publishAction?.action?.tags?.[0] === "bridge",
+  publishRequestNormalized: publishRequest.actionType === "publish",
+  publishRequestCarriesEvidence: (publishRequest.evidenceRequest as { primary?: string } | undefined)?.primary === publishDecision.attestUrl,
+  publishRequestCarriesText: (publishRequest.draft as { text?: string } | undefined)?.text === publishDecision.text,
+  replyRequestNormalized: replyRequest.actionType === "reply",
+  replyRequestCarriesParent: (replyRequest.target as { parentTxHash?: string } | undefined)?.parentTxHash === replyDecision.parentTxHash,
+  directRequestNormalized: directRequest.actionType === "publish",
+  skipRequestNormalized: skippedRequest.actionType === "skip",
+  publishActionNormalized: publishAction?.kind === "action" && publishAction.action?.type === "publish",
+  publishActionCarriesText: publishAction?.action?.text === publishDecision.text,
+  publishActionCarriesTags: Array.isArray(publishAction?.action?.tags) && publishAction?.action?.tags?.[0] === "bridge",
   publishReadinessWallet: publishAction?.readiness?.requiresWallet === true,
-  replyNormalized: replyAction?.kind === "action" && replyAction.action?.type === "reply",
-  replyCarriesParent: replyAction?.action?.parentTxHash === replyDecision.parentTxHash,
+  replyActionNormalized: replyAction?.kind === "action" && replyAction.action?.type === "reply",
+  replyActionCarriesParent: replyAction?.action?.parentTxHash === replyDecision.parentTxHash,
   replyReadinessTarget: replyAction?.readiness?.requiresTargetPost === true,
   directActionPassthrough: directAction === directActionDecision,
   skipReturnsNull: skippedAction === null,
@@ -100,6 +116,10 @@ console.log(JSON.stringify({
   ok,
   checks,
   samples: {
+    publishRequest,
+    replyRequest,
+    directRequest,
+    skippedRequest,
     publishAction,
     replyAction,
     directAction,

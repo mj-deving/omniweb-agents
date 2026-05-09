@@ -89,7 +89,19 @@ interface BaseDecision<TState extends MinimalAgentState = MinimalAgentState> {
   nextState?: TState;
 }
 
-export type { MinimalActionType, MinimalActionIntent, MinimalActionReadiness } from "./intent-types.js";
+export type {
+  MinimalActionType,
+  MinimalActionIntent,
+  MinimalActionReadiness,
+  PolicyActionAudit,
+  PolicyActionDraft,
+  PolicyActionRequest,
+  PolicyActionTarget,
+  PolicyActionType,
+  PolicyEvidenceRequest,
+  PolicyEvidenceStrength,
+  ResolvedEvidencePlan,
+} from "./intent-types.js";
 
 export interface ActionIntentDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
   kind: "action";
@@ -250,9 +262,14 @@ const DEFAULT_VERIFICATION_LIMIT = 50;
 
 export {
   normalizeDecisionToActionIntent,
+  normalizeDecisionToPolicyActionRequest,
   normalizeDecisionToResolvedIntent,
+  resolveActionRequest,
 } from "./minimal-agent-resolver.js";
-export type { NormalizeDecisionToResolvedIntentOptions } from "./minimal-agent-resolver.js";
+export type {
+  NormalizeDecisionToResolvedIntentOptions,
+  ResolveActionRequestOptions,
+} from "./minimal-agent-resolver.js";
 
 export function getDefaultMinimalStateDir(cwd?: string): string {
   return resolve(cwd ?? process.cwd(), DEFAULT_STATE_DIR);

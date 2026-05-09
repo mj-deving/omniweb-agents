@@ -23,6 +23,7 @@ import {
   buildInjectedPolicyRuntimeCapabilities,
   planPolicyExecution,
 } from "./policy/run.js";
+import type { WriteReadinessOptions } from "./readiness.js";
 
 export type MinimalAgentState = Record<string, unknown>;
 export type MinimalAuditSection = Record<string, unknown>;
@@ -234,6 +235,7 @@ interface MinimalRuntimeSharedOptions<TState extends MinimalAgentState = Minimal
   cwd?: string;
   dryRun?: boolean;
   verification?: MinimalVerificationOptions;
+  readinessOptions?: WriteReadinessOptions;
   now?: () => number;
 }
 
@@ -445,7 +447,12 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   }
 
   const policyExecution = planPolicyExecution(decision, {
-    cwd: opts.cwd,
+    cwd: opts.readinessOptions?.cwd ?? opts.cwd,
+    env: opts.readinessOptions?.env,
+    envPath: opts.readinessOptions?.envPath,
+    homeDir: opts.readinessOptions?.homeDir,
+    packageResolver: opts.readinessOptions?.packageResolver,
+    agentName: opts.readinessOptions?.agentName,
     dryRun: cycle.dryRun,
     runtimeCapabilities: opts.omni ? buildInjectedPolicyRuntimeCapabilities() : undefined,
   });
@@ -1090,12 +1097,20 @@ function buildStopReasons<TState extends MinimalAgentState>(
 ): string[] {
   const reasons = new Set<string>();
   const errorMessage = record.outcome.execution.error?.message?.toLowerCase() ?? "";
+  const capabilityReadiness = record.outcome.resolution?.capability?.readiness;
 
   if (record.decision.kind === "skip") {
     reasons.add(record.decision.reason);
   }
-  if (errorMessage.includes("no credentials file") || errorMessage.includes("demos_mnemonic")) {
+  if (
+    capabilityReadiness === "missing_credentials"
+    || errorMessage.includes("no credentials file")
+    || errorMessage.includes("demos_mnemonic")
+  ) {
     reasons.add("env_missing");
+  }
+  if (capabilityReadiness === "missing_dependencies") {
+    reasons.add("missing_dependencies");
   }
   if (
     errorMessage.includes("timeout")

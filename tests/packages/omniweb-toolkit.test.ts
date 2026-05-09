@@ -203,9 +203,9 @@ describe("supercolony-toolkit package", () => {
           proofLevel: "real_runtime_action_family",
         });
         expect(capabilities.actionFamilies.tip).toMatchObject({
-          executable: false,
-          readiness: "unsupported",
-          proofLevel: "architectural_placeholder",
+          executable: true,
+          readiness: "missing_credentials",
+          proofLevel: "real_runtime_action_family",
         });
         expect(capabilities.blockers).toEqual(["missing_credentials"]);
       } finally {
@@ -419,7 +419,7 @@ describe("supercolony-toolkit package", () => {
         });
         expect(capabilities.actionFamilies.publish.readiness).toBe("missing_dependencies");
         expect(capabilities.actionFamilies.react.readiness).toBe("missing_dependencies");
-        expect(capabilities.actionFamilies.tip.readiness).toBe("unsupported");
+        expect(capabilities.actionFamilies.tip.readiness).toBe("missing_dependencies");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

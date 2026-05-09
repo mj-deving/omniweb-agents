@@ -12,9 +12,20 @@ import type {
   MinimalErrorStage,
   MinimalExecutionOutcome,
   MinimalReactionVerification,
+  MinimalTipVerification,
   MinimalVerificationOptions,
 } from "./minimal-agent.js";
-import { normalizeReactionEnvelope, reactionReadbackSatisfied } from "./minimal-agent-verifier.js";
+import {
+  agentTipReadbackSatisfied,
+  normalizeAgentTipReadback,
+  normalizeBalance,
+  normalizeReactionEnvelope,
+  normalizeTipAmount,
+  normalizeTipReadback,
+  reactionReadbackSatisfied,
+  tipReadbackSatisfied,
+  tipSpendObserved,
+} from "./minimal-agent-verifier.js";
 import { verifyPublishVisibility, type PublishVisibilityResult } from "./publish-visibility.js";
 
 export interface ExecuteResolvedIntentOptions {
@@ -26,7 +37,7 @@ export interface ExecuteResolvedIntentOptions {
 }
 
 export interface ResolvedIntentExecutionResult extends IntentExecutionResult {
-  verification?: PublishVisibilityResult | MinimalReactionVerification;
+  verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification;
   publishResult?: ToolResult<PublishResult>;
   reactionResult?: { ok: boolean; error?: unknown };
   error?: {
@@ -94,6 +105,13 @@ export async function executeResolvedIntent(
     return {
       resolution,
       execution: await executeReactionIntent({ omni, resolution }),
+    };
+  }
+
+  if (resolution.executionPathFamily === "tip_transfer") {
+    return {
+      resolution,
+      execution: await executeTipIntent({ omni, resolution, verification }),
     };
   }
 
@@ -296,6 +314,141 @@ async function executeReactionIntent(args: {
   };
 }
 
+async function executeTipIntent(args: {
+  omni: OmniWeb;
+  resolution: ResolvedIntent;
+  verification: Required<MinimalVerificationOptions>;
+}): Promise<ResolvedIntentExecutionResult> {
+  const { omni, resolution, verification: verificationOptions } = args;
+  const targetTxHash = resolution.normalizedTarget.targetTxHash;
+  const requestedAmount = resolution.normalizedDraft.amount;
+
+  if (!targetTxHash) {
+    return buildFailedExecution(resolution.actionType, {
+      stage: "execute",
+      message: "missing_tip_target",
+      retryable: false,
+    });
+  }
+
+  if (typeof requestedAmount !== "number" || !Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+    return buildFailedExecution(resolution.actionType, {
+      stage: "execute",
+      message: "missing_tip_amount",
+      retryable: false,
+    });
+  }
+
+  const normalizedAmount = normalizeTipAmount(requestedAmount);
+  const recipientAddress = await readTipRecipientAddress(omni, targetTxHash);
+  const beforeTipStats = normalizeTipReadback(await readTipStats(omni, targetTxHash));
+  const beforeRecipientTipStats = normalizeAgentTipReadback(
+    recipientAddress ? await readAgentTipStats(omni, recipientAddress) : undefined,
+  );
+  const beforeBalance = normalizeBalance(await readOwnBalance(omni));
+  const tipResult = await omni.colony.tip(targetTxHash, normalizedAmount);
+
+  if (tipResult?.ok !== true) {
+    const verification: MinimalTipVerification = {
+      attempted: true,
+      visible: false,
+      indexedVisible: false,
+      polls: 0,
+      elapsedMs: 0,
+      txHash: targetTxHash,
+      verificationPath: "tip_stats",
+      amount: normalizedAmount,
+      recipientAddress: recipientAddress ?? undefined,
+      beforeTipStats,
+      afterTipStats: beforeTipStats,
+      beforeRecipientTipStats,
+      afterRecipientTipStats: beforeRecipientTipStats,
+      beforeBalance,
+      afterBalance: beforeBalance,
+      tipStatsConverged: false,
+      recipientTipStatsConverged: false,
+      spendObserved: false,
+      error: readApiErrorMessage(tipResult?.error) ?? "tip_failed",
+    };
+
+    return buildFailedExecution(resolution.actionType, {
+      stage: "execute",
+      message: readApiErrorMessage(tipResult?.error) ?? "tip_failed",
+      retryable: true,
+    }, {
+      verification,
+    });
+  }
+
+  const startedAt = Date.now();
+  const deadline = startedAt + Math.max(0, verificationOptions.timeoutMs);
+  let polls = 0;
+  let afterTipStats = beforeTipStats;
+  let afterRecipientTipStats = beforeRecipientTipStats;
+  let afterBalance = beforeBalance;
+  let tipStatsConverged = false;
+  let recipientTipStatsConverged = false;
+  let spendObserved = false;
+
+  while (true) {
+    polls += 1;
+    afterTipStats = normalizeTipReadback(await readTipStats(omni, targetTxHash));
+    afterRecipientTipStats = normalizeAgentTipReadback(
+      recipientAddress ? await readAgentTipStats(omni, recipientAddress) : undefined,
+    );
+    afterBalance = normalizeBalance(await readOwnBalance(omni));
+    tipStatsConverged = tipReadbackSatisfied(beforeTipStats, afterTipStats, normalizedAmount);
+    recipientTipStatsConverged = agentTipReadbackSatisfied(
+      beforeRecipientTipStats,
+      afterRecipientTipStats,
+      normalizedAmount,
+    );
+    spendObserved = tipSpendObserved(beforeBalance, afterBalance, normalizedAmount);
+
+    if (tipStatsConverged || recipientTipStatsConverged || spendObserved || Date.now() >= deadline) {
+      break;
+    }
+
+    await sleep(verificationOptions.pollMs);
+  }
+
+  const verification: MinimalTipVerification = {
+    attempted: true,
+    visible: true,
+    indexedVisible: tipStatsConverged || recipientTipStatsConverged || spendObserved,
+    polls,
+    elapsedMs: Date.now() - startedAt,
+    txHash: targetTxHash,
+    verificationPath: "tip_stats",
+    amount: normalizedAmount,
+    tipTxHash: tipResult.data.txHash,
+    recipientAddress: recipientAddress ?? undefined,
+    beforeTipStats,
+    afterTipStats,
+    beforeRecipientTipStats,
+    afterRecipientTipStats,
+    beforeBalance,
+    afterBalance,
+    tipStatsConverged,
+    recipientTipStatsConverged,
+    spendObserved,
+    error: tipStatsConverged || recipientTipStatsConverged || spendObserved
+      ? undefined
+      : "tip_readback_unconfirmed",
+  };
+
+  return {
+    status: "executed",
+    actionType: resolution.actionType,
+    txHash: tipResult.data.txHash,
+    demSpendEstimate: normalizedAmount,
+    verification,
+    verificationPath: verification.verificationPath,
+    visible: verification.visible,
+    indexedVisible: verification.indexedVisible,
+  };
+}
+
 function buildFailedExecution(
   actionType: MinimalActionType,
   error: {
@@ -318,7 +471,36 @@ function buildFailedExecution(
   };
 }
 
+async function readTipRecipientAddress(omni: OmniWeb, targetTxHash: string): Promise<string | null> {
+  const detailResult = await omni.colony.getPostDetail?.(targetTxHash);
+  if (detailResult?.ok !== true) return null;
+  return typeof detailResult.data?.post?.author === "string" && detailResult.data.post.author.length > 0
+    ? detailResult.data.post.author
+    : null;
+}
+
+async function readTipStats(omni: OmniWeb, targetTxHash: string): Promise<unknown> {
+  const result = await omni.colony.getTipStats(targetTxHash);
+  return result?.ok === true ? result.data : undefined;
+}
+
+async function readAgentTipStats(omni: OmniWeb, address: string): Promise<unknown> {
+  const result = await omni.colony.getAgentTipStats(address);
+  return result?.ok === true ? result.data : undefined;
+}
+
+async function readOwnBalance(omni: OmniWeb): Promise<unknown> {
+  const result = await omni.colony.getBalance();
+  return result?.ok === true ? result.data : undefined;
+}
+
+async function sleep(ms: number): Promise<void> {
+  if (ms <= 0) return;
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function readApiErrorMessage(value: unknown): string | null {
+  if (typeof value === "string") return value.trim().length > 0 ? value : null;
   if (!value || typeof value !== "object") return null;
   const record = value as Record<string, unknown>;
   return typeof record.message === "string" ? record.message : null;
@@ -333,6 +515,7 @@ function toMinimalCycleStatus(execution: ResolvedIntentExecutionResult): Minimal
     if (execution.actionType === "publish") return "published";
     if (execution.actionType === "reply") return "replied";
     if (execution.actionType === "react") return "reacted";
+    if (execution.actionType === "tip") return "tipped";
     return "failed";
   }
 

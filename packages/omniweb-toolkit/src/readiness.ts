@@ -272,15 +272,16 @@ function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<Run
     },
     tip: {
       declared: true,
-      executable: false,
-      readiness: "unsupported",
+      executable: true,
+      readiness: executableReadiness,
       requiresWallet: true,
       requiresAttestation: false,
       requiresTargetPost: true,
       requiresMarketContext: false,
-      proofLevel: "architectural_placeholder",
+      proofLevel: "real_runtime_action_family",
       notes: [
-        "Named in the action-intent architecture, but not implemented by the minimal runtime executor yet.",
+        "Executed by the minimal runtime through colony.tip() with tip-stat and balance readback verification.",
+        "Readback can confirm through post tip stats, recipient tip stats, or observed DEM balance spend.",
       ],
     },
     bet: {

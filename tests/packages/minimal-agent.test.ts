@@ -51,9 +51,28 @@ function makeOmni(overrides?: Partial<any>): any {
       react: vi.fn().mockResolvedValue({
         ok: true,
       }),
+      tip: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { txHash: "0xtip", validated: true },
+      }),
       getReactions: vi.fn().mockResolvedValue({
         ok: true,
         data: { agree: 0, disagree: 0, flag: 0 },
+      }),
+      getTipStats: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { totalTips: 0, totalDem: 0, myTip: 0 },
+      }),
+      getAgentTipStats: vi.fn().mockResolvedValue({
+        ok: true,
+        data: {
+          tipsGiven: { count: 0, totalDem: 0 },
+          tipsReceived: { count: 0, totalDem: 0 },
+        },
+      }),
+      getBalance: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { balance: 100 },
       }),
       getFeed: vi.fn().mockResolvedValue({
         ok: true,
@@ -132,10 +151,26 @@ describe("minimal agent runtime", () => {
       text: "blocked",
       attestUrl: "https://example.com/a.json",
     }, { runtimeCapabilities: blockedCapabilities });
-    const tip = normalizeDecisionToResolvedIntent({
+    const blockedTip = normalizeDecisionToResolvedIntent({
       kind: "action",
       action: { type: "tip", targetTxHash: "0xabc", amount: 5 },
     }, { runtimeCapabilities: blockedCapabilities });
+    const executableTip = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "tip", targetTxHash: "0xready-tip", amount: 5 },
+    }, {
+      runtimeCapabilities: {
+        ...writeReadyCapabilities,
+        actionFamilies: {
+          ...writeReadyCapabilities.actionFamilies,
+          tip: {
+            ...writeReadyCapabilities.actionFamilies.tip,
+            executable: true,
+            readiness: "ready",
+          },
+        },
+      },
+    });
 
     expect(publishRequest).toEqual({
       actionType: "publish",
@@ -179,10 +214,19 @@ describe("minimal agent runtime", () => {
         primary: "https://example.com/a.json",
       },
     });
-    expect(tip).toMatchObject({
-      status: "unsupported",
+    expect(blockedTip).toMatchObject({
+      status: "blocked",
       actionType: "tip",
-      reasonCodes: ["action_family_unsupported"],
+      executionPathFamily: "tip_transfer",
+      reasonCodes: ["runtime_capability_blocked"],
+    });
+    expect(executableTip).toMatchObject({
+      status: "executable",
+      actionType: "tip",
+      executionPathFamily: "tip_transfer",
+      normalizedDraft: {
+        amount: 5,
+      },
     });
   });
 
@@ -464,6 +508,72 @@ describe("minimal agent runtime", () => {
       })!,
       verification,
     });
+    const tipOmni = makeOmni({
+      colony: {
+        tip: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xtip-envelope", validated: true },
+        }),
+        getPostDetail: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            post: {
+              txHash: "0xtip-target-envelope",
+              author: "0xrecipient-envelope",
+              timestamp: 1,
+              payload: {},
+            },
+            replies: [],
+          },
+        }),
+        getTipStats: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 1, totalDem: 2, myTip: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 2, totalDem: 7, myTip: 5 } }),
+        getAgentTipStats: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 2 },
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 2, totalDem: 7 },
+            },
+          }),
+        getBalance: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { balance: 42 } })
+          .mockResolvedValueOnce({ ok: true, data: { balance: 37 } }),
+      },
+    });
+    const tipEnvelope = await executeResolvedIntent({
+      omni: tipOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "tip", targetTxHash: "0xtip-target-envelope", amount: 5 },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            tip: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.tip,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification: {
+        ...verification,
+        timeoutMs: 1,
+        pollMs: 1,
+      },
+    });
 
     expect(publishEnvelope.execution).toMatchObject({
       status: "executed",
@@ -485,6 +595,14 @@ describe("minimal agent runtime", () => {
       status: "executed",
       actionType: "react",
       verificationPath: "reaction_counts",
+      indexedVisible: true,
+    });
+    expect(tipEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "tip",
+      txHash: "0xtip-envelope",
+      demSpendEstimate: 5,
+      verificationPath: "tip_stats",
       indexedVisible: true,
     });
   });
@@ -764,6 +882,79 @@ describe("minimal agent runtime", () => {
     const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-react.md"), "utf-8");
     expect(summary).toContain("Reaction: agree");
     expect(summary).toContain("TargetTxHash: 0xtarget");
+  });
+
+  it("supports tip action decisions and records tipped status", async () => {
+    const stateDir = await createTempDir();
+    const omni = makeOmni({
+      colony: {
+        tip: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xtip-cycle", validated: true },
+        }),
+        getPostDetail: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            post: {
+              txHash: "0xtip-target",
+              author: "0xrecipient",
+              timestamp: 1,
+              payload: {},
+            },
+            replies: [],
+          },
+        }),
+        getTipStats: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 0, totalDem: 0, myTip: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 1, totalDem: 3, myTip: 3 } }),
+        getAgentTipStats: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 0, totalDem: 0 },
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 3 },
+            },
+          }),
+        getBalance: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { balance: 20 } })
+          .mockResolvedValueOnce({ ok: true, data: { balance: 17 } }),
+      },
+    });
+
+    const record = await runMinimalAgentCycle(
+      async () => ({
+        kind: "action",
+        action: { type: "tip", targetTxHash: "0xtip-target", amount: 3 },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }),
+      {
+        omni,
+        stateDir,
+        cwd: stateDir,
+        cycleId: "cycle-tip",
+        verification: { timeoutMs: 1, pollMs: 1, limit: 10 },
+        now: makeNow(1_700_000_002_350, 1_700_000_002_500),
+      },
+    );
+
+    expect(omni.colony.tip).toHaveBeenCalledWith("0xtip-target", 3);
+    expect(record.outcome.execution.status).toBe("tipped");
+    expect(record.outcome.execution.txHash).toBe("0xtip-cycle");
+    expect(record.outcome.execution.demSpendEstimate).toBe(3);
+    expect(record.outcome.execution.verification?.verificationPath).toBe("tip_stats");
+    expect(record.outcome.execution.verification?.indexedVisible).toBe(true);
+
+    const summary = await readFile(resolve(stateDir, "runs", "2023-11-14", "cycle-tip.md"), "utf-8");
+    expect(summary).toContain("ActionType: tip");
+    expect(summary).toContain("TargetTxHash: 0xtip-target");
+    expect(summary).toContain("Amount: 3");
   });
 
   it("blocks live publishes that still use placeholder attestation URLs", async () => {

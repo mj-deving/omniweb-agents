@@ -211,9 +211,10 @@ Default expectation:
 1. agent makes a scoped change
 2. agent runs relevant checks
 3. agent opens a PR
-4. agent inspects Codex review output and addresses findings before merge
-5. CI passes
-6. the PR is merged or auto-merged to `main`
+4. agent triages review output before merge: fix it, reply with rationale, or link a follow-up issue/bead
+5. at least one approving review is present on the PR
+6. CI passes
+7. the PR is merged or auto-merged to `main`
 
 Before merging a PR:
 
@@ -221,6 +222,7 @@ Before merging a PR:
 - explicitly check for comments from `chatgpt-codex-connector[bot]`
 - if Codex review is still pending, wait for it or trigger it with `@codex review`
 - do not merge while unresolved Codex findings remain unless the user explicitly accepts them
+- if a finding is deferred, acknowledge it in-thread and link the follow-up issue/bead before merge
 - preferred CLI check: `gh pr view <num> --comments`
 
 Preferred repo settings:
@@ -228,8 +230,10 @@ Preferred repo settings:
 - protect `main`
 - disable direct pushes to `main`
 - require the CI checks you actually trust
+- require at least 1 approving review on `main`
+- require conversation resolution on `main`
+- keep `dismiss_stale_reviews=false` and `require_last_push_approval=false` unless deliberately tightening the gate; this keeps stacked PRs moving faster
 - if Codex auto-review is enabled, make sure the merge flow waits for it before enabling auto-merge
-- do not require human approval if the goal is zero manual review
 - prefer squash merge for small scoped branches
 - enable auto-merge
 

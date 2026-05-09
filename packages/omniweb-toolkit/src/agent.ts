@@ -9,6 +9,12 @@
  */
 
 // Explicit policy compile/run shell
+export {
+  executeResolvedIntent,
+  isPlaceholderAttestUrl,
+  toMinimalExecutionOutcome,
+  validateResolvedIntentAttestation,
+} from "./action-executor.js";
 export { evaluatePolicyConditions } from "./policy/conditions.js";
 export { compilePolicyDecision } from "./policy/compile.js";
 export { runPolicyDerive } from "./policy/derive.js";
@@ -103,6 +109,11 @@ export type {
   StarterSourcePackEntry,
 } from "./starter-source-packs.js";
 export type { MinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
+export type {
+  ExecuteResolvedIntentOptions,
+  ResolvedIntentExecutionResult,
+  ResolvedIntentResultEnvelope,
+} from "./action-executor.js";
 export type {
   CompilePolicyDecisionOptions,
   CompiledPolicyDecision,

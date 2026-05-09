@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   compilePolicyDecision,
+  executeResolvedIntent,
   getDefaultMinimalStateDir,
   normalizeDecisionToPolicyActionRequest,
   normalizeDecisionToResolvedIntent,
@@ -314,6 +315,178 @@ describe("minimal agent runtime", () => {
       matchedConditions: ["large_enough"],
     });
     expect(trace.decision.kind).toBe("action");
+  });
+
+  it("executes publish, reply, and react through one resolved-intent envelope", async () => {
+    const verification = {
+      timeoutMs: 45_000,
+      pollMs: 5_000,
+      limit: 50,
+    };
+    const publishOmni = makeOmni({
+      colony: {
+        publish: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xpublish-envelope" },
+          provenance: {
+            path: "local",
+            latencyMs: 20,
+            attestation: {
+              txHash: "0xpublish-attest-envelope",
+              responseHash: "0xpublish-response-envelope",
+            },
+          },
+        }),
+        getFeed: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            posts: [
+              {
+                txHash: "0xpublish-envelope",
+                payload: {
+                  cat: "OBSERVATION",
+                  text: "Unified envelope publish",
+                },
+                score: 77,
+                blockNumber: 999,
+              },
+            ],
+            meta: { lastBlock: 999 },
+          },
+        }),
+      },
+    });
+    const replyOmni = makeOmni({
+      colony: {
+        reply: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xreply-envelope" },
+          provenance: {
+            path: "local",
+            latencyMs: 20,
+            attestation: {
+              txHash: "0xreply-attest-envelope",
+              responseHash: "0xreply-response-envelope",
+            },
+          },
+        }),
+        getFeed: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            posts: [
+              {
+                txHash: "0xreply-envelope",
+                payload: {
+                  cat: "OBSERVATION",
+                  text: "Unified envelope reply",
+                },
+                score: 75,
+                blockNumber: 1001,
+              },
+            ],
+            meta: { lastBlock: 1001 },
+          },
+        }),
+      },
+    });
+    const reactOmni = makeOmni({
+      colony: {
+        react: vi.fn().mockResolvedValue({ ok: true }),
+        getReactions: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { agree: 3, disagree: 0, flag: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { agree: 4, disagree: 0, flag: 0 } }),
+      },
+    });
+
+    const publishEnvelope = await executeResolvedIntent({
+      omni: publishOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "publish",
+        category: "OBSERVATION",
+        text: "Unified envelope publish",
+        attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            publish: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.publish,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+    const replyEnvelope = await executeResolvedIntent({
+      omni: replyOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "reply",
+        parentTxHash: "0xreply-parent-envelope",
+        category: "OBSERVATION",
+        text: "Unified envelope reply",
+        attestUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            reply: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.reply,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+    const reactEnvelope = await executeResolvedIntent({
+      omni: reactOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "react", targetTxHash: "0xreact-envelope", reaction: "agree" },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            react: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.react,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+
+    expect(publishEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "publish",
+      txHash: "0xpublish-envelope",
+      attestationTxHash: "0xpublish-attest-envelope",
+      verificationPath: "feed",
+      indexedVisible: true,
+    });
+    expect(replyEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "reply",
+      txHash: "0xreply-envelope",
+      attestationTxHash: "0xreply-attest-envelope",
+      verificationPath: "feed",
+      indexedVisible: true,
+    });
+    expect(reactEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "react",
+      verificationPath: "reaction_counts",
+      indexedVisible: true,
+    });
   });
 
   it("writes skip cycle artifacts and persists next state", async () => {

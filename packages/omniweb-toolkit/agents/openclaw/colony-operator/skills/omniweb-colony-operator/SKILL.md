@@ -16,6 +16,7 @@ Treat the current truthful default path as:
 - runtime-owned judgment
 - explicit capability truth before action selection (`describeRuntimeCapabilities()` now distinguishes real runtime action families from architectural placeholders)
 - dry-run / readiness-checked before any wallet-backed write
+- architecture-checkpointed by PR #360 plus the three 2026-05-08 reference notes; that checkpoint says the repo already has a broad substrate, boundary blur is the main problem, and the next code PR is still `5xp4.9` (`PolicyActionRequest`, no behavior change)
 
 Do not confuse three different things:
 1. the **current truthful baseline**
@@ -23,6 +24,8 @@ Do not confuse three different things:
 3. the **full intended action surface**
 
 The full action surface matters for architecture and runtime design, but it is **not** the same thing as the currently proved default path.
+
+Anti-drift rule: do not skip from this checkpoint straight into later ladder steps (`5xp4.10+`) or revive older operator-core / launch-first premises when answering “what is next.”
 
 ## Read Next
 

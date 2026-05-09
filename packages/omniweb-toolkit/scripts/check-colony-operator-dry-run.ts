@@ -19,6 +19,11 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
       category?: string;
     };
     facts?: Record<string, unknown>;
+    audit?: {
+      policyId?: string;
+      routeId?: string;
+      matchedConditions?: string[];
+    };
   };
   memoryAfter: Record<string, unknown>;
   outcome: {
@@ -106,6 +111,9 @@ const checks = {
     || record?.decision.kind === "publish"
     || record?.decision.kind === "action",
   thinSkillBoundaryVisible: record?.decision.kind === "action",
+  explicitPolicyIdPresent: record?.decision.audit?.policyId === "colony-operator.surface-policy.v1",
+  explicitRouteIdPresent: typeof record?.decision.audit?.routeId === "string" && record.decision.audit.routeId.length > 0,
+  matchedConditionsTracked: Array.isArray(record?.decision.audit?.matchedConditions),
   resolvedIntentPresent: record?.decision.kind !== "action"
     || record?.outcome.resolution != null,
   resolvedIntentMatchesAction: record?.decision.kind !== "action"
@@ -130,7 +138,13 @@ const summary = {
   contract: {
     colonyOperatorBaselineProof: ok,
     colonyOperatorMvpProof: false,
-    thinSkillBoundaryProven: Boolean(checks.thinSkillBoundaryVisible && checks.resolvedIntentMatchesAction && checks.resolvedIntentExecutable),
+    thinSkillBoundaryProven: Boolean(
+      checks.thinSkillBoundaryVisible
+      && checks.explicitPolicyIdPresent
+      && checks.explicitRouteIdPresent
+      && checks.resolvedIntentMatchesAction
+      && checks.resolvedIntentExecutable,
+    ),
     spendsDem: false,
     liveWriteProven: false,
   },
@@ -145,6 +159,9 @@ const summary = {
         resolvedIntentStatus: record.outcome.resolution?.status ?? null,
         resolvedActionType: record.outcome.resolution?.actionType ?? null,
         executionPathFamily: record.outcome.resolution?.executionPathFamily ?? null,
+        policyId: record.decision.audit?.policyId ?? null,
+        routeId: record.decision.audit?.routeId ?? null,
+        matchedConditions: record.decision.audit?.matchedConditions ?? [],
         selectedTopic: record.decision.facts && typeof record.decision.facts === "object" && "topic" in record.decision.facts
           ? (record.decision.facts as { topic?: unknown }).topic ?? null
           : null,

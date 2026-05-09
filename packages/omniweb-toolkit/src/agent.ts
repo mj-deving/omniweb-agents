@@ -9,10 +9,16 @@
  */
 
 // Explicit policy compile/run shell
+export { evaluatePolicyConditions } from "./policy/conditions.js";
 export { compilePolicyDecision } from "./policy/compile.js";
+export { runPolicyDerive } from "./policy/derive.js";
+export { runPolicyObserve } from "./policy/observe.js";
+export { selectPolicyRoute } from "./policy/routes.js";
 export {
   buildInjectedPolicyRuntimeCapabilities,
   planPolicyExecution,
+  runPolicy,
+  runPolicyWithTrace,
 } from "./policy/run.js";
 
 // Core runtime loop + seam helpers
@@ -106,6 +112,17 @@ export type {
   PlannedPolicyExecution,
   PolicyExecutionDisposition,
 } from "./policy/run.js";
+export type {
+  PolicyConditionDefinitions,
+  PolicyConditionEvaluation,
+  PolicyConditionEvaluator,
+  PolicyConditionInput,
+  PolicyDefinition,
+  PolicyDeriveInput,
+  PolicyRouteDefinition,
+  PolicyRouteInput,
+  PolicyRunResult,
+} from "./policy/types.js";
 export type {
   ActionIntentDecision,
   MinimalAgentState,

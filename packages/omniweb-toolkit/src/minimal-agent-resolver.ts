@@ -30,7 +30,13 @@ function normalizePolicyAudit(
 ): PolicyActionRequest["audit"] | undefined {
   if (!audit) return undefined;
   return compactObject({
-    matchedConditions: audit.notes?.length ? [...audit.notes] : undefined,
+    policyId: audit.policyId,
+    routeId: audit.routeId,
+    matchedConditions: audit.matchedConditions?.length
+      ? [...audit.matchedConditions]
+      : audit.notes?.length
+        ? [...audit.notes]
+        : undefined,
     observedInputs: audit.inputs ? Object.keys(audit.inputs) : undefined,
   });
 }

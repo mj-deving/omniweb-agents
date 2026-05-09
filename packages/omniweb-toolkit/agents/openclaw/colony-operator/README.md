@@ -45,6 +45,21 @@ This bundle is now the primary skill-surface and doctrine checkpoint for the reb
 - `strategy.yaml` pins a conservative default
 - `starter.ts` is a maintained scaffold/proof artifact, not the default source of operator judgment
 
+## Current strategic checkpoint (2026-05-08/09)
+
+Before starting the next architecture slice, hold these truths together:
+
+- PR #360 is the committed planning checkpoint for the current status quo.
+- The repo already has a broad substrate; **boundary blur** is the main problem.
+- The preferred pivot is **playbook-owned policy over a shared resolver/executor seam**.
+- The canonical Beads ladder is `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15`.
+- The next code PR remains `omniweb-agents-5xp4.9`, a no-behavior-change `PolicyActionRequest` seam above the existing resolver.
+
+The status-quo source artifacts for this checkpoint are:
+- `../../../references/2026-05-08-supercolony-substrate-status-map.md`
+- `../../../references/playbook-owned-policy-contract.md`
+- `../../../references/playbook-policy-implementation-plan.md`
+
 ## Current proof boundary
 
 ### Full intended MVP target

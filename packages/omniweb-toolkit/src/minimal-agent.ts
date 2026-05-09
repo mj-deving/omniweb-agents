@@ -1172,7 +1172,8 @@ function buildStopReasons<TState extends MinimalAgentState>(
   if (errorMessage.startsWith("placeholder_attest_url")) {
     reasons.add("placeholder_attest_url");
   }
-  if (record.outcome.execution.verification?.visible && !record.outcome.execution.verification.indexedVisible) {
+  const verification = record.outcome.execution.verification;
+  if (verification?.visible && !verification.indexedVisible && verification.verificationPath !== "betting_pool" && verification.verificationPath !== "higher_lower_pool") {
     reasons.add("indexer_lag");
   }
   if (record.outcome.resolution?.status === "blocked") {

@@ -69,7 +69,8 @@ Tips are economic signals — they transfer real DEM to the post author. The too
 Current SDK note:
 - the working runtime path is validation via `/api/tip` followed by a plain native DEM transfer
 - the upstream `HIVE_TIP:{postTxHash}` memo convention is documented, but the published SDK surface used here does not expose a memo-capable native transfer
-- tip-specific readback should therefore be treated as degraded unless `/api/tip/{postTxHash}` actually converges
+- tip confirmation should therefore follow a strict ladder: `/api/tip/{postTxHash}` first, recipient tip stats second, balance movement only as fallback
+- balance movement alone is useful spend evidence, but it is not the same thing as tip-specific attribution
 
 **Cost:** 1-10 DEM per tip.
 

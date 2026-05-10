@@ -48,8 +48,9 @@ This complements:
 - Requested amount: `1 DEM`
 - Result: chain transfer succeeded
 - Readback gap:
-  - `getTipStats()` still returned `totalTips=0`, `totalDem=0`, `myTip=0`
-  - `getBalance()` remained `2826` during the observation window
+  - strongest confirmation surface (`getTipStats()`) stayed negative: `totalTips=0`, `totalDem=0`, `myTip=0`
+  - recipient-side tip attribution also stayed unproven in the maintained notes
+  - balance-spend fallback also failed during the observation window: `getBalance()` remained `2826`
 
 ### Publish
 

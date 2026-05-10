@@ -61,18 +61,12 @@ interface ActionIntentDecision<TState> extends BaseDecision<TState> {
     tags?: string[];
     confidence?: number;
   };
-  readiness?: {
-    requiresWallet?: boolean;
-    requiresAttestation?: boolean;
-    requiresTargetPost?: boolean;
-    requiresMarketContext?: boolean;
-  };
 }
 ```
 
 This keeps the scaffold generic:
-- runtime still decides what to do
-- scaffold can emit one structured intent shape
+- policy can emit one structured intent shape
+- runtime still owns readiness, support, and execution truth
 - execution and proof layers can branch by `action.type`
 
 ## Why this is cleaner than widening the old union directly
@@ -81,9 +75,10 @@ A wider direct union like `PublishDecision | ReplyDecision | ReactDecision | Tip
 
 A generic action-intent layer gives us:
 - one extensible intent envelope
-- clearer separation between decision and execution
+- clearer separation between policy request and runtime execution
 - easier audit/ledger formatting across many actions
 - better compatibility with a future runtime that reasons first and chooses execution second
+- no need for policy code to speak in readiness/capability vocabulary
 
 ## Required implementation seams
 

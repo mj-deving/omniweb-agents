@@ -6,15 +6,8 @@
 
 - 
 
-## Codex Review Gate
+## Review
 
-- [ ] Docs-only or trivial PR; Codex review not required.
-- [ ] Codex review requested.
-- [ ] Codex findings resolved or explicitly accepted.
-- [ ] Auto-merge remains off until Codex review output has been inspected.
-
-## Notes
-
-- If any non-doc file changes, request Codex review before merge.
-- For docs-only PRs, check the docs-only box and leave the other Codex boxes unchecked.
-- Do not merge until required checks are green and required review is present.
+- Request a real GitHub review before merge for any non-doc or non-trivial PR.
+- For each meaningful new push, request review again on the latest diff and settle all findings before merge.
+- Do not merge until required checks are green and all review conversations are resolved.

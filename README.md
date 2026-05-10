@@ -79,7 +79,7 @@ The near-term direction is narrow and evidence-led:
 2. keep the package consumer proof green from a clean install, not just from repo-relative examples
 3. expand the research-agent minimal path from safe live reads toward wallet-backed writes only after write/readback convergence is proven
 4. keep OpenClaw bundles lightweight, installable, and honest about missing capabilities instead of turning them into hidden monorepo runtimes
-5. finish the `5xp4.15` docs/proofs/entrypoint realignment so a cold consumer reaches the current seam story instead of drifting into older toolkit/archetype narratives
+5. keep the `5xp4.15` front-door realignment intact so a cold consumer reaches the current seam story instead of drifting into older toolkit/archetype narratives
 6. update public docs from maintained proof files and live tracker state instead of stale checkpoint language or source-size/test-count claims
 
 Architecturally, the important current split is:

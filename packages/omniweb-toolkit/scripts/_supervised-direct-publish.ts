@@ -1,4 +1,6 @@
+import type { PublishVisibilityResult } from "../src/publish-visibility.ts";
 import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
+import { describePublishVisibilityResult } from "./_publish-visibility-summary.ts";
 
 export async function runDirectSupervisedPublish(opts: {
   omni: any;
@@ -82,6 +84,7 @@ export async function runDirectSupervisedPublish(opts: {
       demSpendEstimate: 1,
       publishResult: write.result,
       verification: write.visibility,
+      verificationSummary: describePublishVisibilityResult(write.visibility as PublishVisibilityResult | undefined),
     },
   };
 }

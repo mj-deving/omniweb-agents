@@ -1,7 +1,94 @@
 import { describe, expect, it } from "vitest";
-import { summarizePublishVisibilityAttempts } from "../../packages/omniweb-toolkit/scripts/_publish-visibility-summary.ts";
+import {
+  describePublishVisibilityResult,
+  summarizePublishVisibilityAttempts,
+} from "../../packages/omniweb-toolkit/scripts/_publish-visibility-summary.ts";
 
-describe("summarizePublishVisibilityAttempts", () => {
+describe("publish visibility summary helpers", () => {
+  it("maps raw visibility results to explicit outcome labels", () => {
+    expect(describePublishVisibilityResult()).toMatchObject({
+      outcome: "unresolved-within-window",
+      resolution: "unresolved-within-window",
+      visibilitySurface: "none",
+      indexedVisible: false,
+      polls: 0,
+    });
+
+    expect(describePublishVisibilityResult({
+      attempted: true,
+      visible: true,
+      indexedVisible: true,
+      postDetailVisible: false,
+      chainVisible: false,
+      visibilitySurface: "feed_indexed",
+      feedScope: "category",
+      polls: 1,
+      elapsedMs: 10,
+      verificationPath: "feed",
+    })).toMatchObject({
+      outcome: "feed-indexed-category",
+      resolution: "category-follow-up",
+      feedScope: "category",
+      usedCategoryFollowUp: true,
+      verificationPath: "feed",
+    });
+
+    expect(describePublishVisibilityResult({
+      attempted: true,
+      visible: true,
+      indexedVisible: false,
+      postDetailVisible: true,
+      chainVisible: false,
+      visibilitySurface: "post_detail",
+      polls: 2,
+      elapsedMs: 20,
+      verificationPath: "post_detail",
+    })).toMatchObject({
+      outcome: "post-detail-only",
+      resolution: "post-detail-only",
+      verificationPath: "post_detail",
+      postDetailVisible: true,
+      usedDelayedPolling: true,
+    });
+  });
+
+  it("marks recent-feed convergence as immediate vs delayed", () => {
+    expect(describePublishVisibilityResult({
+      attempted: true,
+      visible: true,
+      indexedVisible: true,
+      postDetailVisible: false,
+      chainVisible: false,
+      visibilitySurface: "feed_indexed",
+      feedScope: "recent",
+      polls: 1,
+      elapsedMs: 10,
+      verificationPath: "feed",
+    })).toMatchObject({
+      outcome: "feed-indexed-recent",
+      resolution: "immediate-recent",
+      usedDelayedPolling: false,
+    });
+
+    expect(describePublishVisibilityResult({
+      attempted: true,
+      visible: true,
+      indexedVisible: true,
+      postDetailVisible: true,
+      chainVisible: true,
+      visibilitySurface: "feed_indexed",
+      feedScope: "recent",
+      polls: 3,
+      elapsedMs: 30,
+      verificationPath: "feed",
+    })).toMatchObject({
+      outcome: "feed-indexed-recent",
+      resolution: "delayed-recent",
+      usedDelayedPolling: true,
+      polls: 3,
+    });
+  });
+
   it("distinguishes feed recent, feed category, post-detail-only, chain-only, and unresolved outcomes", () => {
     const summary = summarizePublishVisibilityAttempts([
       {

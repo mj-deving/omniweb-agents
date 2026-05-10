@@ -1,11 +1,39 @@
 import type { PublishVisibilityResult } from "../src/publish-visibility.ts";
 
 export type PublishAttemptKind = "publish" | "reply";
+export type PublishVisibilityOutcome =
+  | "feed-indexed-recent"
+  | "feed-indexed-category"
+  | "post-detail-only"
+  | "chain-only"
+  | "unresolved-within-window";
+export type PublishVisibilityResolution =
+  | "immediate-recent"
+  | "delayed-recent"
+  | "category-follow-up"
+  | "post-detail-only"
+  | "chain-only"
+  | "unresolved-within-window";
 
 export interface PublishAttemptLike {
   kind: PublishAttemptKind;
   accepted: boolean;
   visibility?: PublishVisibilityResult;
+}
+
+export interface PublishVisibilityOutcomeSummary {
+  outcome: PublishVisibilityOutcome;
+  resolution: PublishVisibilityResolution;
+  indexedVisible: boolean;
+  visible: boolean;
+  visibilitySurface: PublishVisibilityResult["visibilitySurface"];
+  verificationPath: PublishVisibilityResult["verificationPath"] | null;
+  feedScope: PublishVisibilityResult["feedScope"] | null;
+  polls: number;
+  usedDelayedPolling: boolean;
+  usedCategoryFollowUp: boolean;
+  postDetailVisible: boolean;
+  chainVisible: boolean;
 }
 
 export interface PublishVisibilityBucketSummary {
@@ -45,6 +73,97 @@ function createBucket(): PublishVisibilityBucketSummary {
   };
 }
 
+export function describePublishVisibilityResult(
+  visibility?: PublishVisibilityResult,
+): PublishVisibilityOutcomeSummary {
+  if (!visibility) {
+    return {
+      outcome: "unresolved-within-window",
+      resolution: "unresolved-within-window",
+      indexedVisible: false,
+      visible: false,
+      visibilitySurface: "none",
+      verificationPath: null,
+      feedScope: null,
+      polls: 0,
+      usedDelayedPolling: false,
+      usedCategoryFollowUp: false,
+      postDetailVisible: false,
+      chainVisible: false,
+    };
+  }
+
+  if (visibility.visibilitySurface === "feed_indexed") {
+    return {
+      outcome: visibility.feedScope === "category" ? "feed-indexed-category" : "feed-indexed-recent",
+      resolution: visibility.feedScope === "category"
+        ? "category-follow-up"
+        : visibility.polls > 1
+          ? "delayed-recent"
+          : "immediate-recent",
+      indexedVisible: visibility.indexedVisible,
+      visible: visibility.visible,
+      visibilitySurface: visibility.visibilitySurface,
+      verificationPath: visibility.verificationPath ?? null,
+      feedScope: visibility.feedScope ?? null,
+      polls: visibility.polls,
+      usedDelayedPolling: visibility.polls > 1,
+      usedCategoryFollowUp: visibility.feedScope === "category",
+      postDetailVisible: visibility.postDetailVisible,
+      chainVisible: visibility.chainVisible,
+    };
+  }
+
+  if (visibility.visibilitySurface === "post_detail") {
+    return {
+      outcome: "post-detail-only",
+      resolution: "post-detail-only",
+      indexedVisible: visibility.indexedVisible,
+      visible: visibility.visible,
+      visibilitySurface: visibility.visibilitySurface,
+      verificationPath: visibility.verificationPath ?? null,
+      feedScope: visibility.feedScope ?? null,
+      polls: visibility.polls,
+      usedDelayedPolling: visibility.polls > 1,
+      usedCategoryFollowUp: false,
+      postDetailVisible: visibility.postDetailVisible,
+      chainVisible: visibility.chainVisible,
+    };
+  }
+
+  if (visibility.visibilitySurface === "chain") {
+    return {
+      outcome: "chain-only",
+      resolution: "chain-only",
+      indexedVisible: visibility.indexedVisible,
+      visible: visibility.visible,
+      visibilitySurface: visibility.visibilitySurface,
+      verificationPath: visibility.verificationPath ?? null,
+      feedScope: visibility.feedScope ?? null,
+      polls: visibility.polls,
+      usedDelayedPolling: visibility.polls > 1,
+      usedCategoryFollowUp: false,
+      postDetailVisible: visibility.postDetailVisible,
+      chainVisible: visibility.chainVisible,
+    };
+  }
+
+  return {
+    outcome: "unresolved-within-window",
+    resolution: "unresolved-within-window",
+    indexedVisible: visibility.indexedVisible,
+    visible: visibility.visible,
+    visibilitySurface: visibility.visibilitySurface,
+    verificationPath: visibility.verificationPath ?? null,
+    feedScope: visibility.feedScope ?? null,
+    polls: visibility.polls,
+    usedDelayedPolling: visibility.polls > 1,
+    usedCategoryFollowUp: false,
+    postDetailVisible: visibility.postDetailVisible,
+    chainVisible: visibility.chainVisible,
+  };
+}
+
 export function summarizePublishVisibilityAttempts(
   attempts: PublishAttemptLike[],
 ): PublishVisibilityAttemptSummary {
@@ -61,24 +180,20 @@ export function summarizePublishVisibilityAttempts(
       bucket.accepted += 1;
     }
 
-    const visibility = attempt.visibility;
-    const surface = visibility?.visibilitySurface ?? "none";
-
-    if (surface === "feed_indexed") {
-      if (visibility?.feedScope === "category") {
-        bucket.feedIndexedCategory += 1;
-      } else {
-        bucket.feedIndexedRecent += 1;
-      }
-    } else if (surface === "post_detail") {
+    const outcome = describePublishVisibilityResult(attempt.visibility).outcome;
+    if (outcome === "feed-indexed-category") {
+      bucket.feedIndexedCategory += 1;
+    } else if (outcome === "feed-indexed-recent") {
+      bucket.feedIndexedRecent += 1;
+    } else if (outcome === "post-detail-only") {
       bucket.postDetailOnly += 1;
-    } else if (surface === "chain") {
+    } else if (outcome === "chain-only") {
       bucket.chainOnly += 1;
     } else {
       bucket.notVisible += 1;
     }
 
-    if (!attempt.accepted || !visibility?.indexedVisible) {
+    if (!attempt.accepted || !attempt.visibility?.indexedVisible) {
       bucket.failed += 1;
     }
   }

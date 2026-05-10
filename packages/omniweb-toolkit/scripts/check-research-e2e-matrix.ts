@@ -17,6 +17,7 @@ import {
 } from "./_research-matrix-broadcast.ts";
 import { loadConnect, loadPackageExport } from "./_shared.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
+import { describePublishVisibilityResult } from "./_publish-visibility-summary.ts";
 
 type MatrixFamily =
   | "funding-structure"
@@ -71,6 +72,7 @@ interface MatrixFamilyResult {
   qualityGate?: unknown;
   match?: unknown;
   verification?: unknown;
+  verificationSummary?: ReturnType<typeof describePublishVisibilityResult>;
   publish?: {
     txHash?: string;
     provenance?: unknown;
@@ -887,6 +889,7 @@ if (publishSelection.selectedFamily) {
           provenance: publishResult.provenance,
         };
         selectedResult.verification = verification;
+        selectedResult.verificationSummary = describePublishVisibilityResult(verification);
         selectedResult.verdictSchedule = scheduleSupervisedVerdict(selectedContext.draft.category, publishedAt);
         if (recordPendingVerdict && publishResult.data?.txHash) {
           const queued = await enqueuePendingVerdict(

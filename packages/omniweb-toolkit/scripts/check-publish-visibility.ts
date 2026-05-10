@@ -16,7 +16,10 @@
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.ts";
 import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
-import { summarizePublishVisibilityAttempts } from "./_publish-visibility-summary.ts";
+import {
+  describePublishVisibilityResult,
+  summarizePublishVisibilityAttempts,
+} from "./_publish-visibility-summary.ts";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_CATEGORY = "OBSERVATION";
@@ -39,6 +42,7 @@ interface ProbeAttempt {
   attestationTxHash?: string;
   provenancePath?: string;
   visibility?: Awaited<ReturnType<typeof verifyPublishVisibility>>;
+  visibilitySummary?: ReturnType<typeof describePublishVisibilityResult>;
   error?: {
     code: string;
     message: string;
@@ -299,6 +303,8 @@ async function executePublishAttempt(
     },
   });
 
+  const visibility = write.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>> | undefined;
+
   return {
     kind: "publish",
     run,
@@ -308,7 +314,8 @@ async function executePublishAttempt(
     txHash: write.txHash,
     attestationTxHash: write.attestationTxHash,
     provenancePath: write.provenancePath,
-    visibility: write.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>> | undefined,
+    visibility,
+    visibilitySummary: describePublishVisibilityResult(visibility),
     error: write.accepted ? undefined : normalizeError(write.error, "UNKNOWN", "Unknown publish failure"),
   };
 }
@@ -331,6 +338,8 @@ async function executeReplyAttempt(
     },
   });
 
+  const visibility = write.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>> | undefined;
+
   return {
     kind: "reply",
     run,
@@ -340,7 +349,8 @@ async function executeReplyAttempt(
     txHash: write.txHash,
     attestationTxHash: write.attestationTxHash,
     provenancePath: write.provenancePath,
-    visibility: write.visibility as Awaited<ReturnType<typeof verifyPublishVisibility>> | undefined,
+    visibility,
+    visibilitySummary: describePublishVisibilityResult(visibility),
     error: write.accepted ? undefined : normalizeError(write.error, "UNKNOWN", "Unknown reply failure"),
   };
 }

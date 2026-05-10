@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-09
+updated: 2026-05-10
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The current architecture checkpoint is PR #360 plus the 5xp4 PR ladder: broad substrate exists, boundary blur is the main problem, the preferred pivot is playbook-owned policy over a shared resolver/executor seam, and the next code PR remains the no-behavior-change `5xp4.9` PolicyActionRequest seam."
+summary: "The shared request/resolution/execution seam is now landed through `5xp4.15`; roadmap, bundle, and proof surfaces now match the playbook-owned policy architecture on `main`, with PR #372 closing the docs/proofs realignment slice."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -37,12 +37,12 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Checkpointed playbook-policy pivot on top of the substrate-first rebuild: truthful front door, strong capability/readiness + write-ceremony substrate, thin intent seam, and an explicit plan to move strategy upward without pretending it already landed |
-| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the front-door honesty cleanup plus the first real non-publish action-family proof (`react`) through the shared intent seam |
+| Current direction | Landed playbook-policy architecture on top of the substrate-first rebuild: strategy now lives above a shared intent seam, while capability/readiness/execution/verification truth stays in the substrate/runtime |
+| Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
-| Doctrine | Current shipped truth is still read-first / no-spend by default / runtime-owned action selection; the planned pivot is playbook-owned policy above a shared resolver/executor seam, checkpointed in PR #360 but not yet implemented |
-| Documentation | Colony-operator remains the honest default front door for now, but it should be understood as a skill-layer entry path over substrate primitives rather than the architectural center of gravity |
-| Beads | PR #360 is the planning checkpoint; the canonical execution ladder is `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15`; `5xp4.9` / `5xp4.9.1` are ready, no gate currently blocks the ladder, and `5xp4.9` remains the next code PR |
+| Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, and substrate/runtime ownership of capability truth, readiness, execution, and verification |
+| Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, and PR #372 closes `5xp4.15`; the canonical ladder `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15` is now landed |
 | Remaining external edges | intent-boundary contract cleanup, generic action-intent coverage beyond react/publish/reply, capability-truth surfacing polish, generic publish indexing, tip-specific readback, price-history population, npm auth/publish, and broader storage/escrow/IPFS live proofs |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
@@ -83,36 +83,38 @@ Anti-drift rule:
 
 ## Current Architecture Checkpoint
 
-`main` is now anchored by the planning checkpoint captured in PR #360 and the Beads ladder under `omniweb-agents-5xp4`.
+`main` is now anchored by the planning checkpoint captured in PR #360, the market-write merge checkpoint in PR #371, and the Beads ladder under `omniweb-agents-5xp4`.
 
 This checkpoint locks in the following truths:
 
 - `omniweb-toolkit` already has a broad substrate.
 - **Boundary blur** is the main problem, not missing primitives.
-- The preferred pivot is **playbook-owned policy over a shared resolver/executor seam**.
-- Current shipped behavior is still read-first / no-spend by default / runtime-owned action selection.
-- The pivot is checkpointed in docs and Beads before implementation so later work does not drift into older premises.
+- The preferred pivot was **playbook-owned policy over a shared request/resolution/execution seam**.
+- Current shipped behavior is now read-first / no-spend by default on the maintained proof path, with an explicit policy layer above the seam and substrate/runtime-owned execution truth below it.
+- The planning checkpoint prevented drift; the implementation ladder has now landed through `5xp4.15`, including the docs/proofs/bundle realignment closeout in PR #372.
 
 Canonical source artifacts for this checkpoint:
 - `packages/omniweb-toolkit/references/2026-05-08-supercolony-substrate-status-map.md`
 - `packages/omniweb-toolkit/references/playbook-owned-policy-contract.md`
 - `packages/omniweb-toolkit/references/playbook-policy-implementation-plan.md`
 - PR #360 — https://github.com/mj-deving/omniweb-agents/pull/360
+- PR #371 — https://github.com/mj-deving/omniweb-agents/pull/371
+- PR #372 — https://github.com/mj-deving/omniweb-agents/pull/372
 
 ## Next Work Ladder
 
-The next work is not a vague band anymore; it is an explicit PR-sized Beads ladder. Do not skip steps.
+The next work is not a vague band anymore; it is an explicit PR-sized Beads ladder. That ladder is now landed through the docs/proofs closeout.
 
-1. `omniweb-agents-5xp4.9` — introduce a playbook-facing `PolicyActionRequest` seam without behavior change
-2. `omniweb-agents-5xp4.10` — thin `minimal-agent.ts` into orchestration-only glue
-3. `omniweb-agents-5xp4.11` — add an explicit TypeScript-first policy layer and move colony-operator starter into that mode
-4. `omniweb-agents-5xp4.12` — unify publish/reply/react under one executor + result envelope
-5. `omniweb-agents-5xp4.13` — bring tip into the shared seam honestly
-6. `omniweb-agents-5xp4.14` — bring market/bet writes into the same seam
-7. `omniweb-agents-5xp4.15` — realign docs, proof surfaces, and bundle story around the landed architecture
+1. `omniweb-agents-5xp4.9` — introduce a playbook-facing `PolicyActionRequest` seam without behavior change ✅
+2. `omniweb-agents-5xp4.10` — thin `minimal-agent.ts` into orchestration-only glue ✅
+3. `omniweb-agents-5xp4.11` — add an explicit TypeScript-first policy layer and move colony-operator starter into that mode ✅
+4. `omniweb-agents-5xp4.12` — unify publish/reply/react under one executor + result envelope ✅
+5. `omniweb-agents-5xp4.13` — bring tip into the shared seam honestly ✅
+6. `omniweb-agents-5xp4.14` — bring market/bet writes into the same seam ✅
+7. `omniweb-agents-5xp4.15` — realign docs, proof surfaces, and bundle story around the landed architecture ✅ (closed by PR #372)
 
 Important nuance:
-- `5xp4.8` still matters as a maintained proof checkpoint, but it is **not** the next implementation PR in this ladder.
+- `5xp4.8` still matters as a maintained supervised-publish proof checkpoint, but it is **parallel** to this closeout lane rather than the next architecture slice.
 - PR #360 is the committed checkpoint for planning state, not PR1 of implementation.
 
 ## Explicitly not next

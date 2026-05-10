@@ -5,7 +5,7 @@ read_when: You are cleaning the repo front path or deciding what stays first-cla
 
 # Repo Surface Cleanup Checklist
 
-Use this checklist to move the repo toward a cleaner front path around the runtime-owned colony-operator baseline.
+Use this checklist to move the repo toward a cleaner front path around the playbook-owned colony-operator baseline.
 
 ## First-class: keep central
 
@@ -17,7 +17,7 @@ Use this checklist to move the repo toward a cleaner front path around the runti
 
 ### Minimum honest proof set
 - [ ] keep one baseline dry-run / no-spend operator proof
-- [ ] keep one supervised live publish checkpoint
+- [ ] keep one supervised live publish checkpoint as a release gate, not as the repo's architectural center
 - [ ] keep one readback / visibility truth proof
 - [ ] keep one outside-in consumer / install proof
 - [ ] remove wording that implies broader live guarantees than those proofs actually support

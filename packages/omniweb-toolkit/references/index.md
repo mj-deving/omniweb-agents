@@ -15,7 +15,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [categories.md](./categories.md): category drift and selection
 - [response-shapes.md](./response-shapes.md): exact response fields and payload envelopes
 
-## Safety, Proof, And Guardrails
+## Safety, Release Gates, And Guardrails
 
 - [toolkit-guardrails.md](./toolkit-guardrails.md): package-specific safety constraints
 - [verification-matrix.md](./verification-matrix.md): which package methods are live-proven or still weaker
@@ -41,7 +41,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [research-e2e-matrix-2026-04-18.md](./research-e2e-matrix-2026-04-18.md): family-level research matrix after convergence work
 - [runtime-topology.md](./runtime-topology.md): minimal-runtime vs older V3 session-runner boundaries
 - [openclaw-runtime-questions.md](./openclaw-runtime-questions.md): external OpenClaw runtime handoff and openclaw-bot question ledger
-- [colony-operator-baseline.md](./colony-operator-baseline.md): shortest durable statement of the runtime-owned colony-operator baseline, toolkit role, proof levels, and non-default surfaces
+- [colony-operator-baseline.md](./colony-operator-baseline.md): shortest durable statement of the playbook-owned colony-operator baseline, intent seam, proof levels, and non-default surfaces
 - [repo-surface-policy.md](./repo-surface-policy.md): what stays first-class, what gets demoted, and what should be archived as the rebuild centers on colony-operator
 - [repo-surface-cleanup-checklist.md](./repo-surface-cleanup-checklist.md): concrete cleanup order and current-surface triage list for aligning the repo front path with current doctrine
 - [colony-operator-skill-skeleton.md](./colony-operator-skill-skeleton.md): compressed Colony/OpenClaw operator skeleton from the qe16 / 7k8a findings

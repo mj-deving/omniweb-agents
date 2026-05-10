@@ -12,11 +12,12 @@ Use this note when deciding what should stay on the repo's front path versus wha
 These stay central, maintained, and easy to find.
 
 ### 1. Baseline operator path
-Keep the default runtime-owned colony-operator path first-class.
+Keep the default playbook-owned colony-operator path first-class.
 
 This path should answer:
 - what the operator is
-- what the runtime owns
+- what the playbook/policy layer owns
+- what the intent/runtime layers own
 - how the operator behaves by default
 - how to start and validate it honestly
 

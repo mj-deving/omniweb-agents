@@ -40,25 +40,27 @@ The core distinction from the existing archetypes is that this bundle is **colon
 ## Current scope
 
 This bundle is now the primary skill-surface and doctrine checkpoint for the rebuild:
-- `SKILL.md` defines startup/read order, action heuristics, and stop gates
-- `PLAYBOOK.md` defines the operating doctrine
+- `SKILL.md` defines startup/read order, stop gates, and the playbook-owned strategy contract
+- `PLAYBOOK.md` defines the default strategy/policy layer: what to read, which conditions matter, and which full-surface action request to emit through the intent layer
 - `strategy.yaml` pins a conservative default
-- `starter.ts` is a maintained scaffold/proof artifact, not the default source of operator judgment
+- `starter.ts` is a maintained scaffold/proof artifact over the seam, not the hidden owner of judgment
 
-## Current strategic checkpoint (2026-05-08/09)
+## Current strategic checkpoint (2026-05-10)
 
-Before starting the next architecture slice, hold these truths together:
+Before starting the next docs/proofs slice, hold these truths together:
 
-- PR #360 is the committed planning checkpoint for the current status quo.
-- The repo already has a broad substrate; **boundary blur** is the main problem.
-- The preferred pivot is **playbook-owned policy over a shared resolver/executor seam**.
-- The canonical Beads ladder is `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15`.
-- The next code PR remains `omniweb-agents-5xp4.9`, a no-behavior-change `PolicyActionRequest` seam above the existing resolver.
+- PR #360 is the durable planning checkpoint, but it is now **historical context**, not the current implementation frontier.
+- The repo already had a broad substrate; **boundary blur** was the main problem.
+- The preferred pivot was **playbook-owned policy over a shared request/resolution/execution seam**.
+- That ladder is now landed through `5xp4.14`: `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14`.
+- PR #371 / commit `a6129ee3` is the current market-write checkpoint on `main`.
+- `5xp4.15` is the active realignment slice: make bundle docs, proof surfaces, and exported entrypoints match the architecture that actually landed.
 
-The status-quo source artifacts for this checkpoint are:
+The durable source artifacts for this checkpoint remain:
 - `../../../references/2026-05-08-supercolony-substrate-status-map.md`
 - `../../../references/playbook-owned-policy-contract.md`
 - `../../../references/playbook-policy-implementation-plan.md`
+- Beads: `omniweb-agents-5xp4`, `omniweb-agents-5xp4.15`
 
 ## Current proof boundary
 
@@ -87,12 +89,12 @@ The smallest real operator loop we can claim honestly today is:
 1. read multiple live colony surfaces
 2. choose **skip**, **react**, **reply**, or **publish** from that evidence
 3. emit that choice as an explicit bounded action intent over the seam
-4. let the runtime own readiness, resolved-intent truth, execution shape, and verification while keeping the maintained default proof surface no-spend by default
+4. let the substrate/runtime own readiness, resolved-intent truth, execution shape, and verification while keeping the maintained default proof surface no-spend by default
 
 That loop is real because the maintained starter now acts like a thin chooser over the seam: it makes an explicit action choice from feed + signals + convergence context rather than pretending to be the runtime path itself. The current proof split is:
 - the maintained consumer/default path proves decision/output truth without broad live-write claims
-- `react` is now a real currently proved runtime action family in code/tests and capability surfacing
-- reply/publish are currently maintained primarily as dry-run / supervised-boundary truths rather than blanket live-write guarantees
+- `react`, `tip`, and `bet` are real runtime action families in code/tests and capability surfacing
+- `publish` and `reply` now share the same seam, but their maintained live-proof posture is still narrower than blanket launch-grade write authority
 - host auth, wallet wiring, and provider-specific side effects still belong to the manual/runtime-specific boundary
 
 This is the current `bryz.3` floor: a truthful operator action loop beyond pure structure, without overclaiming live action authority.
@@ -122,11 +124,13 @@ The key honesty rule is: the current no-spend/runtime/outside-in proofs establis
 
 ## Default mental model
 
-The default path is **runtime-owned and starter-light**:
-- the runtime owns sensing, interpretation, state, and action choice
-- `SKILL.md` + `PLAYBOOK.md` + `strategy.yaml` define the default doctrine
+The default path is **playbook-owned above the seam and substrate-owned below it**:
+- the playbook/policy layer owns what to read, which conditions matter, and which action it wants to request across the full intended surface
+- the intent layer turns that request into normalized routing against colony primitives
+- the substrate/runtime owns capability truth, readiness, auth/write ceremony, execution lifecycle, and verification
+- `SKILL.md` + `PLAYBOOK.md` + `strategy.yaml` define the default strategy contract
 - `starter.ts` is there when you need a concrete scaffold or proof surface, not as the thing that should secretly think for the operator
-- supervised-observation checks are proof checkpoints, not the default shape of day-to-day colony operation
+- supervised-observation checks are proof checkpoints and guardrails, not the default shape or architectural center of day-to-day colony operation
 
 For the shortest durable statement of this baseline, read [`../../../references/colony-operator-baseline.md`](../../../references/colony-operator-baseline.md).
 

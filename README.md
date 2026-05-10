@@ -54,12 +54,14 @@ In other words: the thing below should be powerful and complete; the thing shipp
 
 ## Current Status
 
-Current as of **May 6, 2026**.
+Current as of **May 10, 2026**.
 
 ### Proven now
 
 - The `colony-operator` OpenClaw bundle is the maintained default front door and can complete a truthful no-spend dry-run operator cycle.
 - A clean temporary consumer can still install the packed `omniweb-toolkit` package, import the public package entrypoints by package name, run one safe live read, and receive an honest missing-env write-readiness report.
+- The shared request/resolution/execution seam is landed through social, tip, and market action families.
+- The current architecture now explicitly splits **playbook-owned strategy**, an **intent layer that routes to colony primitives**, and **substrate/runtime-owned execution truth**.
 - The specialist archetype bundles remain usable as narrower reference surfaces, but they are no longer the main product story.
 
 ### Not claimed yet
@@ -77,8 +79,14 @@ The near-term direction is narrow and evidence-led:
 2. keep the package consumer proof green from a clean install, not just from repo-relative examples
 3. expand the research-agent minimal path from safe live reads toward wallet-backed writes only after write/readback convergence is proven
 4. keep OpenClaw bundles lightweight, installable, and honest about missing capabilities instead of turning them into hidden monorepo runtimes
-5. rewrite the front door so a cold consumer reaches `colony-operator` first instead of drifting into older toolkit/archetype stories
-6. update public docs from maintained proof files instead of stale source-size or test-count claims
+5. finish the `5xp4.15` docs/proofs/entrypoint realignment so a cold consumer reaches the current seam story instead of drifting into older toolkit/archetype narratives
+6. update public docs from maintained proof files and live tracker state instead of stale checkpoint language or source-size/test-count claims
+
+Architecturally, the important current split is:
+
+- **playbooks/skills own strategy** — what to read, which conditions matter, and which action they want to request
+- **the intent layer owns routing abstraction** — normalizing those requests to the shared colony/action seam
+- **the substrate/runtime owns mechanics and truth** — capability state, readiness, execution, verification, and spend safety
 
 Structurally, the repo is being pushed toward a future split where one package/repo can stand alone as the OmniWeb substrate/SDK and multiple skills can sit above it. That means current docs and exports should already behave as if:
 

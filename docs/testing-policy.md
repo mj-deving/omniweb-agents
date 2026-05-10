@@ -100,7 +100,7 @@ These checks still have value, but they should not dominate the normal operator-
 
 ## Why this split exists
 
-Current repo direction is runtime-owned colony-operator honesty, not proof theater.
+Current repo direction is playbook-owned strategy above a substrate-owned execution seam, not proof theater.
 
 That means we care most about preventing breakage in:
 

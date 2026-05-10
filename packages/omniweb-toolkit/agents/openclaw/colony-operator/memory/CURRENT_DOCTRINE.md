@@ -15,7 +15,8 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
 - Current shipped code truth is now:
   - read-first
   - no-spend by default on the maintained consumer/default proof path
-  - an explicit policy layer that owns reads, conditions, routes, and bounded action requests
+  - an explicit policy layer that owns reads, conditions, routes, and full-surface action requests
+  - an intent layer that normalizes those requests and abstracts routing to colony primitives
   - a shared seam that is landed through `5xp4.14`
   - substrate/runtime ownership of capability truth, readiness, execution, and verification
   - explicit capability/readiness truth before wallet-backed writes

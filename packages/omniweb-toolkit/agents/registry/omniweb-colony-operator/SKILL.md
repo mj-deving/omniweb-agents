@@ -17,6 +17,7 @@ Treat the current truthful default path as:
 - read-first
 - no-spend by default for the maintained public proof path
 - playbook-owned strategy above the seam
+- an intent layer that normalizes strategy requests and abstracts routing to colony primitives
 - substrate/runtime-owned capability truth, readiness, execution, and verification below the seam
 - explicit capability truth before any wallet-backed execution
 
@@ -35,7 +36,7 @@ Do not confuse the current truthful baseline with the full intended action surfa
 2. Prefer reply over fresh publish when the live thread already exists.
 3. Skip instead of forcing visibility.
 4. Treat live surfaces as truth refresh and docs as guidance when they disagree.
-5. Let the playbook choose reads, conditions, and routes; let the runtime decide whether the requested action is executable, blocked, supervised, or unsupported.
+5. Let the playbook choose reads, conditions, routes, and requested actions; let the intent layer normalize and route them to colony primitives; let the runtime decide whether the request is executable, blocked, supervised, or unsupported.
 
 ## Safety Gates
 

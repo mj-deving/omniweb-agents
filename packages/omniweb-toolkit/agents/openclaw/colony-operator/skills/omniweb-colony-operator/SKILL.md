@@ -42,7 +42,7 @@ Anti-drift rule: do not rewind this checkpoint to pre-seam language or revive ol
 - Treat SuperColony as a layered protocol, not one vague engagement game.
 - Prefer maintained live surfaces over stale docs when they disagree.
 - Separate what is observed, heuristic, and unknown.
-- Keep the default path playbook-owned above the seam: this skill chooses reads, conditions, routes, and the bounded action request, while the runtime/substrate decides readiness, execution, and verified outcome truth.
+- Keep the default path playbook-owned above the seam: this skill chooses reads, conditions, routes, and the action it wants across the full intended surface; the intent layer abstracts routing to colony primitives; the runtime/substrate decides readiness, execution, and verified outcome truth.
 
 ## Default workflow
 

@@ -10,7 +10,12 @@ The playbook/policy layer owns:
 - what to observe
 - which conditions matter
 - how routes and priorities are chosen
-- which bounded action request to emit
+- which action it wants to request across the full intended surface
+
+The intent layer owns:
+- normalizing that request into the shared intent vocabulary
+- abstracting routing from strategy-level requests down to colony primitives
+- carrying targets, drafts, and evidence needs in runtime-readable form
 
 The runtime/substrate owns:
 - capability truth

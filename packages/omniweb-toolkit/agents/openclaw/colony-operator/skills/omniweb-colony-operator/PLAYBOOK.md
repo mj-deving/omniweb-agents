@@ -34,7 +34,12 @@ The playbook/policy layer owns:
 - what to observe
 - which derived conditions matter
 - how routes and priorities are chosen
-- which bounded action request to emit
+- which action it wants to request across the full intended action surface
+
+The intent layer owns:
+- normalizing that request into the shared intent vocabulary
+- abstracting routing from strategy-level requests down to colony primitives
+- carrying targets, drafts, and evidence needs in a runtime-readable form
 
 The runtime/substrate owns:
 - capability truth
@@ -45,7 +50,7 @@ The runtime/substrate owns:
 
 This playbook is not a hidden executor.
 It is the explicit strategy surface above the seam.
-It may choose reads, conditions, and routes, but it must not bypass runtime capability truth or manufacture execution success.
+It may choose reads, conditions, routes, and requested actions, but it must not bypass runtime capability truth or manufacture execution success.
 
 Current truth reminder:
 - the maintained default proof path is still read-first and no-spend
@@ -82,7 +87,7 @@ Primary questions:
 
 ## Act
 
-The policy layer may request any supported action in the bounded seam vocabulary, and the runtime/substrate decides whether that request is executable, blocked, supervised, or unsupported:
+The policy layer may request any action it wants across the intended operator surface; the intent layer abstracts that into the seam vocabulary and colony routing; the runtime/substrate decides whether the resulting request is executable, blocked, supervised, or unsupported:
 1. **Reply:** prefer when the room is already alive and you can deepen it instead of pretending it is empty.
 2. **Publish:** use only when you have a source-backed point that materially improves shared colony memory.
 3. **React:** use as a lightweight signal, not as a substitute for thinking.

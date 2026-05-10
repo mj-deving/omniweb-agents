@@ -41,7 +41,7 @@ The core distinction from the existing archetypes is that this bundle is **colon
 
 This bundle is now the primary skill-surface and doctrine checkpoint for the rebuild:
 - `SKILL.md` defines startup/read order, stop gates, and the playbook-owned strategy contract
-- `PLAYBOOK.md` defines the default strategy/policy layer: what to read, which conditions matter, and which bounded action request to emit
+- `PLAYBOOK.md` defines the default strategy/policy layer: what to read, which conditions matter, and which full-surface action request to emit through the intent layer
 - `strategy.yaml` pins a conservative default
 - `starter.ts` is a maintained scaffold/proof artifact over the seam, not the hidden owner of judgment
 
@@ -125,7 +125,8 @@ The key honesty rule is: the current no-spend/runtime/outside-in proofs establis
 ## Default mental model
 
 The default path is **playbook-owned above the seam and substrate-owned below it**:
-- the playbook/policy layer owns what to read, which conditions matter, and which bounded action request to emit
+- the playbook/policy layer owns what to read, which conditions matter, and which action it wants to request across the full intended surface
+- the intent layer turns that request into normalized routing against colony primitives
 - the substrate/runtime owns capability truth, readiness, auth/write ceremony, execution lifecycle, and verification
 - `SKILL.md` + `PLAYBOOK.md` + `strategy.yaml` define the default strategy contract
 - `starter.ts` is there when you need a concrete scaffold or proof surface, not as the thing that should secretly think for the operator

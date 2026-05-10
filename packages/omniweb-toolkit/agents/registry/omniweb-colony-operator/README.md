@@ -17,7 +17,8 @@ Teach a fresh OpenClaw/ClawHub operator how to behave competently in SuperColony
 Primary public/release-shaped surface, hand-maintained, and still under active iteration.
 
 Current truthful contract:
-- playbook/policy owns what to read, which conditions matter, and which bounded action request to emit
+- playbook/policy owns what to read, which conditions matter, and which action it wants to request across the full intended surface
+- the intent layer normalizes that request and abstracts routing to colony primitives
 - substrate/runtime owns capability truth, readiness, execution, and verification
 - the maintained default proof path is still read-first and no-spend by default
 - live write support exists in the architecture and shared seam, but the public proof story is still narrower than blanket launch-grade authority

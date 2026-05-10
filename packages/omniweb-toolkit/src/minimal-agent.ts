@@ -7,6 +7,8 @@ import type {
   MinimalActionIntent,
   MinimalActionReadiness,
   MinimalActionType,
+  PolicyMarketBetKind,
+  PolicyMarketDirection,
   ResolvedIntent,
 } from "./intent-types.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
@@ -49,7 +51,7 @@ export interface MinimalCycleSummary {
   txHash?: string;
   attestationTxHash?: string;
   attestationResponseHash?: string;
-  verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"] | MinimalTipVerification["verificationPath"];
+  verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"] | MinimalTipVerification["verificationPath"] | MinimalMarketWriteVerification["verificationPath"];
   visible?: boolean;
   indexedVisible?: boolean;
   observedScore?: number;
@@ -103,6 +105,8 @@ export type {
   PolicyActionType,
   PolicyEvidenceRequest,
   PolicyEvidenceStrength,
+  PolicyMarketBetKind,
+  PolicyMarketDirection,
   ResolvedEvidencePlan,
 } from "./intent-types.js";
 
@@ -151,7 +155,7 @@ export type MinimalObserveFn<TState extends MinimalAgentState = MinimalAgentStat
   ctx: MinimalObserveContext<TState>,
 ) => Promise<MinimalObserveResult<TState>>;
 
-export type MinimalCycleStatus = "skipped" | "dry_run" | "published" | "replied" | "reacted" | "tipped" | "failed";
+export type MinimalCycleStatus = "skipped" | "dry_run" | "published" | "replied" | "reacted" | "tipped" | "market_written" | "failed";
 
 export interface MinimalReactionVerification {
   attempted: boolean;
@@ -218,6 +222,51 @@ export interface MinimalTipVerification {
   error?: string;
 }
 
+export interface MinimalBettingPoolReadback {
+  asset: string;
+  horizon: string;
+  totalBets: number;
+  totalDem: number;
+  bets: Array<{
+    txHash: string;
+    predictedPrice: number;
+    amount: number;
+  }>;
+}
+
+export interface MinimalHigherLowerPoolReadback {
+  asset: string;
+  horizon: string;
+  totalHigher: number;
+  totalLower: number;
+  totalDem: number;
+  higherCount: number;
+  lowerCount: number;
+  referencePrice: number | null;
+  currentPrice: number;
+}
+
+export interface MinimalMarketWriteVerification {
+  attempted: true;
+  visible: boolean;
+  indexedVisible: boolean;
+  polls: number;
+  elapsedMs: number;
+  txHash?: string;
+  verificationPath: "betting_pool" | "higher_lower_pool";
+  marketKind: PolicyMarketBetKind;
+  asset: string;
+  horizon: string;
+  amount: number;
+  memo?: string;
+  predictedPrice?: number;
+  direction?: PolicyMarketDirection;
+  registrationConfirmed: boolean;
+  beforePool: MinimalBettingPoolReadback | MinimalHigherLowerPoolReadback | null;
+  afterPool: MinimalBettingPoolReadback | MinimalHigherLowerPoolReadback | null;
+  error?: string;
+}
+
 export type MinimalErrorStage = "connect" | "observe" | "execute" | "verify";
 
 export interface MinimalVerificationOptions {
@@ -275,7 +324,7 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
       attestationTxHash?: string;
       attestationResponseHash?: string;
       demSpendEstimate?: number;
-      verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification;
+      verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification | MinimalMarketWriteVerification;
       publishResult?: ToolResult<PublishResult>;
       reactionResult?: { ok: boolean; error?: unknown };
       error?: {
@@ -1123,7 +1172,8 @@ function buildStopReasons<TState extends MinimalAgentState>(
   if (errorMessage.startsWith("placeholder_attest_url")) {
     reasons.add("placeholder_attest_url");
   }
-  if (record.outcome.execution.verification?.visible && !record.outcome.execution.verification.indexedVisible) {
+  const verification = record.outcome.execution.verification;
+  if (verification?.visible && !verification.indexedVisible && verification.verificationPath !== "betting_pool" && verification.verificationPath !== "higher_lower_pool") {
     reasons.add("indexer_lag");
   }
   if (record.outcome.resolution?.status === "blocked") {

@@ -365,8 +365,8 @@ describe("supercolony-toolkit package", () => {
         expect(capabilities.actionFamilies.reply.requiresTargetPost).toBe(true);
         expect(capabilities.actionFamilies.react.readiness).toBe("ready");
         expect(capabilities.actionFamilies.bet).toMatchObject({
-          executable: false,
-          readiness: "unsupported",
+          executable: true,
+          readiness: "ready",
           requiresMarketContext: true,
         });
         expect(readiness.notes).toContain(

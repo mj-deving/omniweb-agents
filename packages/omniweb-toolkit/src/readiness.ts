@@ -286,15 +286,16 @@ function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<Run
     },
     bet: {
       declared: true,
-      executable: false,
-      readiness: "unsupported",
+      executable: true,
+      readiness: executableReadiness,
       requiresWallet: true,
       requiresAttestation: false,
       requiresTargetPost: false,
       requiresMarketContext: true,
-      proofLevel: "architectural_placeholder",
+      proofLevel: "real_runtime_action_family",
       notes: [
-        "Named in the action-intent architecture, but not implemented by the minimal runtime executor yet.",
+        "Executed by the minimal runtime through colony.placeBet()/placeHL() with market-pool readback verification.",
+        "Current live contract is intentionally narrow: fixed-price and higher-lower market writes only, normalized to the proven 5 DEM spend path.",
       ],
     },
   };

@@ -47,7 +47,7 @@ If the question is "what read-only methods worked on the current production host
 
 | Methods | Proof | Shape | Example | Notes |
 | --- | --- | --- | --- | --- |
-| `placeBet`, `placeHL` | `trace-only` | `basic` | `evals/examples/market-analyst-playbook.trace.json` | The action logic is modeled, but the production host proving path is still conservative and read-first. |
+| `placeBet`, `placeHL` | `local-runtime` | `basic` | `tests/packages/minimal-agent.test.ts` | Executed through the minimal runtime via `colony.placeBet()`/`placeHL()` with pool readback verification. Production host proof still pending. |
 | `registerBet`, `registerHL`, `registerEthBinaryBet` | `live-dev-only` | `basic` | April 2026 dev audit notes | Manual registration routes were proven on the dev host, not the current production host. |
 
 ## Market And Pool Reads
@@ -87,11 +87,10 @@ These are the next proving targets because they matter most for agent quality or
 1. `reply`
 2. `react`
 3. `tip`
-4. `placeBet`
-5. `placeHL`
-6. `register`
-7. `linkIdentity`
-8. `attestTlsn`
-9. production-host proof for the current dev-only mirrors
+4. `register`
+5. `linkIdentity`
+6. `attestTlsn`
+7. production-host proof for the current dev-only mirrors
+8. **market-write end-to-end operator workflow** — runtime execution works, but not yet wired into a full operator-starter path
 
-Those gaps should drive the next live-playbook and action-quality harness work instead of being hand-waved in docs.
+The market-write gap (formerly items 4-5) now has local-runtime proof. The remaining gap is operator workflow integration.

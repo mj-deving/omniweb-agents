@@ -9,8 +9,11 @@ import type {
 } from "./intent-types.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
 import type {
+  MinimalBettingPoolReadback,
   MinimalErrorStage,
   MinimalExecutionOutcome,
+  MinimalHigherLowerPoolReadback,
+  MinimalMarketWriteVerification,
   MinimalReactionVerification,
   MinimalTipVerification,
   MinimalVerificationOptions,
@@ -37,7 +40,7 @@ export interface ExecuteResolvedIntentOptions {
 }
 
 export interface ResolvedIntentExecutionResult extends IntentExecutionResult {
-  verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification;
+  verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification | MinimalMarketWriteVerification;
   publishResult?: ToolResult<PublishResult>;
   reactionResult?: { ok: boolean; error?: unknown };
   error?: {
@@ -112,6 +115,13 @@ export async function executeResolvedIntent(
     return {
       resolution,
       execution: await executeTipIntent({ omni, resolution, verification }),
+    };
+  }
+
+  if (resolution.executionPathFamily === "market_write") {
+    return {
+      resolution,
+      execution: await executeMarketWriteIntent({ omni, resolution, verification }),
     };
   }
 
@@ -449,6 +459,330 @@ async function executeTipIntent(args: {
   };
 }
 
+async function executeMarketWriteIntent(args: {
+  omni: OmniWeb;
+  resolution: ResolvedIntent;
+  verification: Required<MinimalVerificationOptions>;
+}): Promise<ResolvedIntentExecutionResult> {
+  const { omni, resolution, verification: verificationOptions } = args;
+
+  if (resolution.actionType !== "bet") {
+    return buildFailedExecution(resolution.actionType, {
+      stage: "execute",
+      message: `unsupported_market_write_action:${resolution.actionType}`,
+      retryable: false,
+    });
+  }
+
+  const asset = resolution.normalizedTarget.asset;
+  const horizon = resolution.normalizedDraft.horizon;
+  const marketKind = resolution.normalizedDraft.marketKind;
+
+  if (!asset) {
+    return buildFailedExecution(resolution.actionType, {
+      stage: "execute",
+      message: "missing_bet_asset",
+      retryable: false,
+    });
+  }
+
+  if (!horizon) {
+    return buildFailedExecution(resolution.actionType, {
+      stage: "execute",
+      message: "missing_bet_horizon",
+      retryable: false,
+    });
+  }
+
+  if (marketKind === "fixed_price") {
+    const predictedPrice = resolution.normalizedDraft.predictedPrice;
+    if (typeof predictedPrice !== "number" || !Number.isFinite(predictedPrice) || predictedPrice <= 0) {
+      return buildFailedExecution(resolution.actionType, {
+        stage: "execute",
+        message: "missing_predicted_price",
+        retryable: false,
+      });
+    }
+
+    const beforePool = normalizeBettingPoolReadback(await readBettingPool(omni, asset, horizon));
+    const betResult = await omni.colony.placeBet(asset, predictedPrice, { horizon });
+
+    if (betResult?.ok !== true) {
+      const verification: MinimalMarketWriteVerification = {
+        attempted: true,
+        visible: false,
+        indexedVisible: false,
+        polls: 0,
+        elapsedMs: 0,
+        verificationPath: "betting_pool",
+        marketKind,
+        asset,
+        horizon,
+        amount: 5,
+        predictedPrice,
+        registrationConfirmed: false,
+        beforePool,
+        afterPool: beforePool,
+        error: readApiErrorMessage(betResult?.error) ?? "bet_failed",
+      };
+
+      return buildFailedExecution(resolution.actionType, {
+        stage: "execute",
+        message: readApiErrorMessage(betResult?.error) ?? "bet_failed",
+        retryable: true,
+      }, {
+        verification,
+      });
+    }
+
+    const readback = await verifyFixedPriceBetReadback({
+      omni,
+      asset,
+      horizon,
+      txHash: betResult.data.txHash,
+      beforePool,
+      verification: verificationOptions,
+    });
+    const registrationError = betResult.data.registered
+      ? undefined
+      : betResult.data.registrationError ?? "bet_registration_unconfirmed";
+    const readbackError = readback.indexedVisible ? undefined : "bet_readback_unconfirmed";
+    const verification: MinimalMarketWriteVerification = {
+      attempted: true,
+      visible: true,
+      indexedVisible: readback.indexedVisible,
+      polls: readback.polls,
+      elapsedMs: readback.elapsedMs,
+      txHash: betResult.data.txHash,
+      verificationPath: "betting_pool",
+      marketKind,
+      asset,
+      horizon,
+      amount: betResult.data.amount,
+      memo: betResult.data.memo,
+      predictedPrice,
+      registrationConfirmed: betResult.data.registered,
+      beforePool,
+      afterPool: readback.afterPool,
+      error: registrationError ?? readbackError,
+    };
+
+    if (!betResult.data.registered || !readback.indexedVisible) {
+      return buildFailedExecution(resolution.actionType, {
+        stage: "verify",
+        message: registrationError ?? readbackError ?? "bet_verification_failed",
+        retryable: true,
+      }, {
+        txHash: betResult.data.txHash,
+        demSpendEstimate: betResult.data.amount,
+        verification,
+        verificationPath: verification.verificationPath,
+        visible: verification.visible,
+        indexedVisible: verification.indexedVisible,
+      });
+    }
+
+    return {
+      status: "executed",
+      actionType: resolution.actionType,
+      txHash: betResult.data.txHash,
+      demSpendEstimate: betResult.data.amount,
+      verification,
+      verificationPath: verification.verificationPath,
+      visible: verification.visible,
+      indexedVisible: verification.indexedVisible,
+    };
+  }
+
+  if (marketKind === "higher_lower") {
+    const direction = resolution.normalizedDraft.direction;
+    if (direction !== "higher" && direction !== "lower") {
+      return buildFailedExecution(resolution.actionType, {
+        stage: "execute",
+        message: "missing_higher_lower_direction",
+        retryable: false,
+      });
+    }
+
+    const beforePool = normalizeHigherLowerPoolReadback(await readHigherLowerPool(omni, asset, horizon));
+    const betResult = await omni.colony.placeHL(asset, direction, { amount: 5, horizon });
+
+    if (betResult?.ok !== true) {
+      const verification: MinimalMarketWriteVerification = {
+        attempted: true,
+        visible: false,
+        indexedVisible: false,
+        polls: 0,
+        elapsedMs: 0,
+        verificationPath: "higher_lower_pool",
+        marketKind,
+        asset,
+        horizon,
+        amount: 5,
+        direction,
+        registrationConfirmed: false,
+        beforePool,
+        afterPool: beforePool,
+        error: readApiErrorMessage(betResult?.error) ?? "higher_lower_bet_failed",
+      };
+
+      return buildFailedExecution(resolution.actionType, {
+        stage: "execute",
+        message: readApiErrorMessage(betResult?.error) ?? "higher_lower_bet_failed",
+        retryable: true,
+      }, {
+        verification,
+      });
+    }
+
+    const readback = await verifyHigherLowerBetReadback({
+      omni,
+      asset,
+      horizon,
+      direction,
+      amount: betResult.data.amount,
+      beforePool,
+      verification: verificationOptions,
+    });
+    const registrationError = betResult.data.registered
+      ? undefined
+      : betResult.data.registrationError ?? "higher_lower_registration_unconfirmed";
+    const readbackError = readback.indexedVisible ? undefined : "higher_lower_readback_unconfirmed";
+    const verification: MinimalMarketWriteVerification = {
+      attempted: true,
+      visible: true,
+      indexedVisible: readback.indexedVisible,
+      polls: readback.polls,
+      elapsedMs: readback.elapsedMs,
+      txHash: betResult.data.txHash,
+      verificationPath: "higher_lower_pool",
+      marketKind,
+      asset,
+      horizon,
+      amount: betResult.data.amount,
+      memo: betResult.data.memo,
+      direction,
+      registrationConfirmed: betResult.data.registered,
+      beforePool,
+      afterPool: readback.afterPool,
+      error: registrationError ?? readbackError,
+    };
+
+    if (!betResult.data.registered || !readback.indexedVisible) {
+      return buildFailedExecution(resolution.actionType, {
+        stage: "verify",
+        message: registrationError ?? readbackError ?? "higher_lower_verification_failed",
+        retryable: true,
+      }, {
+        txHash: betResult.data.txHash,
+        demSpendEstimate: betResult.data.amount,
+        verification,
+        verificationPath: verification.verificationPath,
+        visible: verification.visible,
+        indexedVisible: verification.indexedVisible,
+      });
+    }
+
+    return {
+      status: "executed",
+      actionType: resolution.actionType,
+      txHash: betResult.data.txHash,
+      demSpendEstimate: betResult.data.amount,
+      verification,
+      verificationPath: verification.verificationPath,
+      visible: verification.visible,
+      indexedVisible: verification.indexedVisible,
+    };
+  }
+
+  return buildFailedExecution(resolution.actionType, {
+    stage: "execute",
+    message: "missing_market_kind",
+    retryable: false,
+  });
+}
+
+async function verifyFixedPriceBetReadback(args: {
+  omni: OmniWeb;
+  asset: string;
+  horizon: string;
+  txHash: string;
+  beforePool: MinimalBettingPoolReadback | null;
+  verification: Required<MinimalVerificationOptions>;
+}): Promise<{
+  afterPool: MinimalBettingPoolReadback | null;
+  indexedVisible: boolean;
+  polls: number;
+  elapsedMs: number;
+}> {
+  const { omni, asset, horizon, txHash, beforePool, verification } = args;
+  const startedAt = Date.now();
+  const deadline = startedAt + Math.max(0, verification.timeoutMs);
+  let polls = 0;
+  let afterPool = beforePool;
+  let indexedVisible = false;
+
+  while (true) {
+    polls += 1;
+    afterPool = normalizeBettingPoolReadback(await readBettingPool(omni, asset, horizon));
+    indexedVisible = fixedBetReadbackSatisfied(beforePool, afterPool, txHash);
+
+    if (indexedVisible || Date.now() >= deadline) {
+      break;
+    }
+
+    await sleep(verification.pollMs);
+  }
+
+  return {
+    afterPool,
+    indexedVisible,
+    polls,
+    elapsedMs: Date.now() - startedAt,
+  };
+}
+
+async function verifyHigherLowerBetReadback(args: {
+  omni: OmniWeb;
+  asset: string;
+  horizon: string;
+  direction: "higher" | "lower";
+  amount: number;
+  beforePool: MinimalHigherLowerPoolReadback | null;
+  verification: Required<MinimalVerificationOptions>;
+}): Promise<{
+  afterPool: MinimalHigherLowerPoolReadback | null;
+  indexedVisible: boolean;
+  polls: number;
+  elapsedMs: number;
+}> {
+  const { omni, asset, horizon, direction, amount, beforePool, verification } = args;
+  const startedAt = Date.now();
+  const deadline = startedAt + Math.max(0, verification.timeoutMs);
+  let polls = 0;
+  let afterPool = beforePool;
+  let indexedVisible = false;
+
+  while (true) {
+    polls += 1;
+    afterPool = normalizeHigherLowerPoolReadback(await readHigherLowerPool(omni, asset, horizon));
+    indexedVisible = higherLowerReadbackSatisfied(beforePool, afterPool, direction, amount);
+
+    if (indexedVisible || Date.now() >= deadline) {
+      break;
+    }
+
+    await sleep(verification.pollMs);
+  }
+
+  return {
+    afterPool,
+    indexedVisible,
+    polls,
+    elapsedMs: Date.now() - startedAt,
+  };
+}
+
 function buildFailedExecution(
   actionType: MinimalActionType,
   error: {
@@ -494,6 +828,98 @@ async function readOwnBalance(omni: OmniWeb): Promise<unknown> {
   return result?.ok === true ? result.data : undefined;
 }
 
+async function readBettingPool(omni: OmniWeb, asset: string, horizon: string): Promise<unknown> {
+  const result = await omni.colony.getPool({ asset, horizon });
+  return result?.ok === true ? result.data : undefined;
+}
+
+async function readHigherLowerPool(omni: OmniWeb, asset: string, horizon: string): Promise<unknown> {
+  const result = await omni.colony.getHigherLowerPool({ asset, horizon });
+  return result?.ok === true ? result.data : undefined;
+}
+
+function normalizeBettingPoolReadback(value: unknown): MinimalBettingPoolReadback | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const asset = readNonEmptyString(record.asset);
+  const horizon = readNonEmptyString(record.horizon);
+  if (!asset || !horizon) return null;
+
+  const bets = Array.isArray(record.bets)
+    ? record.bets
+      .map((entry) => normalizeBetEntry(entry))
+      .filter((entry): entry is MinimalBettingPoolReadback["bets"][number] => entry !== null)
+    : [];
+
+  return {
+    asset,
+    horizon,
+    totalBets: readFiniteNumber(record.totalBets) ?? 0,
+    totalDem: readFiniteNumber(record.totalDem) ?? 0,
+    bets,
+  };
+}
+
+function normalizeHigherLowerPoolReadback(value: unknown): MinimalHigherLowerPoolReadback | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const asset = readNonEmptyString(record.asset);
+  const horizon = readNonEmptyString(record.horizon);
+  if (!asset || !horizon) return null;
+
+  return {
+    asset,
+    horizon,
+    totalHigher: readFiniteNumber(record.totalHigher) ?? 0,
+    totalLower: readFiniteNumber(record.totalLower) ?? 0,
+    totalDem: readFiniteNumber(record.totalDem) ?? 0,
+    higherCount: readFiniteNumber(record.higherCount) ?? 0,
+    lowerCount: readFiniteNumber(record.lowerCount) ?? 0,
+    referencePrice: readFiniteNumber(record.referencePrice) ?? null,
+    currentPrice: readFiniteNumber(record.currentPrice) ?? 0,
+  };
+}
+
+function normalizeBetEntry(value: unknown): MinimalBettingPoolReadback["bets"][number] | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const txHash = readNonEmptyString(record.txHash);
+  const predictedPrice = readFiniteNumber(record.predictedPrice);
+  const amount = readFiniteNumber(record.amount);
+  if (!txHash || predictedPrice == null || amount == null) {
+    return null;
+  }
+  return { txHash, predictedPrice, amount };
+}
+
+function fixedBetReadbackSatisfied(
+  before: MinimalBettingPoolReadback | null,
+  after: MinimalBettingPoolReadback | null,
+  txHash: string,
+): boolean {
+  if (!after) return false;
+  if (after.bets.some((bet) => bet.txHash === txHash)) return true;
+  if (!before) return false;
+  return after.totalBets > before.totalBets || after.totalDem > before.totalDem;
+}
+
+function higherLowerReadbackSatisfied(
+  before: MinimalHigherLowerPoolReadback | null,
+  after: MinimalHigherLowerPoolReadback | null,
+  direction: "higher" | "lower",
+  amount: number,
+): boolean {
+  if (!after) return false;
+  const totalField = direction === "higher" ? "totalHigher" : "totalLower";
+  const countField = direction === "higher" ? "higherCount" : "lowerCount";
+  if (!before) {
+    return after[totalField] >= amount || after.totalDem >= amount;
+  }
+  return after[countField] > before[countField]
+    || after[totalField] >= before[totalField] + amount
+    || after.totalDem >= before.totalDem + amount;
+}
+
 async function sleep(ms: number): Promise<void> {
   if (ms <= 0) return;
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -506,6 +932,14 @@ function readApiErrorMessage(value: unknown): string | null {
   return typeof record.message === "string" ? record.message : null;
 }
 
+function readNonEmptyString(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function readFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 function isVerificationResult(value: unknown): value is PublishVisibilityResult {
   return Boolean(value && typeof value === "object" && "visible" in value && "indexedVisible" in value);
 }
@@ -516,6 +950,7 @@ function toMinimalCycleStatus(execution: ResolvedIntentExecutionResult): Minimal
     if (execution.actionType === "reply") return "replied";
     if (execution.actionType === "react") return "reacted";
     if (execution.actionType === "tip") return "tipped";
+    if (execution.actionType === "bet") return "market_written";
     return "failed";
   }
 

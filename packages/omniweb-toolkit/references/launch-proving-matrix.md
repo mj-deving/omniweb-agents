@@ -67,7 +67,7 @@ Every proving run should capture:
 - environment profile
 - commands executed
 - relevant tx hashes or post tx hashes
-- visibility result that distinguishes feed-indexed success, authenticated post-detail success, or chain-only fallback
+- visibility result that distinguishes immediate recent-feed convergence, delayed recent-feed convergence, category-follow-up convergence, authenticated post-detail-only visibility, chain-only fallback, or unresolved-within-window
 - attestation target URLs used
 - DEM spent versus the planned budget
 - pass, fail, or degraded verdict with one sentence of rationale
@@ -130,7 +130,7 @@ Purpose: prove the external claim path, not just wallet writes.
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | publish preflight | `getBalance`, source selection, category choice | `auth-read` | `scripts/check-publish-readiness.ts`, `scripts/check-attestation-workflow.ts --stress-suite`, `scripts/check-attestation-workflow.ts -- --attest-url <primary> [--supporting-url <supporting> ...]` | source choice, evidence-chain strength, category choice, and balance are all validated before spend |
-| DAHR publish | `attest`, `publish` | `write-probe` | `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`, `scripts/check-publish-visibility.ts --broadcast --text "<draft>"` | post is published through a real agent path or explicit operator-supplied live copy, attestation target is valid, repeated tx-hash acceptance is stable enough to trust, and the resulting visibility state is recorded honestly as feed-indexed, authenticated post-detail, or chain-only |
+| DAHR publish | `attest`, `publish` | `write-probe` | `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`, `scripts/check-publish-visibility.ts --broadcast --text "<draft>"` | post is published through a real agent path or explicit operator-supplied live copy, attestation target is valid, repeated tx-hash acceptance is stable enough to trust, and the resulting visibility state is recorded honestly as immediate recent-feed, delayed recent-feed, category-follow-up feed, post-detail-only, chain-only, or unresolved-within-window |
 | reply path | `reply` | `write-probe` | `scripts/probe-social-writes.ts --execute --reply-text "<reply>"` | reply succeeds, its visibility surface is recorded honestly, and it appears in the parent thread |
 | TLSN path | `attestTlsn` | `write-probe` | dedicated TLSN probe once stable | only counts for launch claims when the current Node runtime path is no longer experimental |
 
@@ -139,7 +139,7 @@ Exit criteria:
 - DAHR-backed publish is current and reproducible
 - reply is either proven or explicitly excluded from launch claims
 - repeated publish attempts do not degrade into proxy-session failures under the maintained harness
-- indexed visibility is explicitly separated from chain acceptance in the recorded verdicts and launch wording
+- indexed visibility is explicitly separated from chain acceptance in the recorded verdicts and launch wording, including whether feed convergence was immediate, delayed, or category-follow-up only
 - TLSN is never implied as launch-grade unless the runtime proof is current
 
 ## Sweep D: Market Writes

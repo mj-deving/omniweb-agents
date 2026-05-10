@@ -1535,6 +1535,132 @@ describe("minimal agent runtime", () => {
     expect(summary).toContain("TxHash: 0xbet-cycle");
   });
 
+  it("does not mark unconfirmed market-write readback as indexer lag", async () => {
+    const fixedStateDir = await createTempDir();
+    const fixedOmni = makeOmni({
+      colony: {
+        placeBet: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xbet-unconfirmed", memo: "HIVE_BET:ETH:3465:4h", amount: 5, registered: true },
+        }),
+        getPool: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "ETH",
+              horizon: "4h",
+              totalBets: 1,
+              totalDem: 5,
+              poolAddress: "0xpool-unconfirmed",
+              roundEnd: 1,
+              bets: [{ txHash: "0xexisting-fixed", bettor: "0xother", predictedPrice: 3400, amount: 5, roundEnd: 1, horizon: "4h" }],
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "ETH",
+              horizon: "4h",
+              totalBets: 1,
+              totalDem: 5,
+              poolAddress: "0xpool-unconfirmed",
+              roundEnd: 1,
+              bets: [{ txHash: "0xexisting-fixed", bettor: "0xother", predictedPrice: 3400, amount: 5, roundEnd: 1, horizon: "4h" }],
+            },
+          }),
+      },
+    });
+
+    const fixedRecord = await runMinimalAgentCycle(
+      async () => ({
+        kind: "action",
+        action: { type: "bet", asset: "ETH", marketKind: "fixed_price", predictedPrice: 3465, horizon: "4h", amount: 5 },
+        readiness: { requiresWallet: true, requiresMarketContext: true },
+      }),
+      {
+        omni: fixedOmni,
+        stateDir: fixedStateDir,
+        cwd: fixedStateDir,
+        cycleId: "cycle-bet-unconfirmed",
+        verification: { timeoutMs: 0, pollMs: 1, limit: 10 },
+        now: makeNow(1_700_000_003_000, 1_700_000_003_000),
+      },
+    );
+
+    expect(fixedRecord.outcome.execution.status).toBe("failed");
+    expect(fixedRecord.outcome.execution.verification?.verificationPath).toBe("betting_pool");
+    expect(fixedRecord.outcome.execution.verification?.visible).toBe(true);
+    expect(fixedRecord.outcome.execution.verification?.indexedVisible).toBe(false);
+    const fixedResult = await readJson(resolve(fixedStateDir, "sessions", fixedRecord.sessionId, "result.json"));
+    expect(fixedResult.stop_reasons).not.toContain("indexer_lag");
+
+    const higherLowerStateDir = await createTempDir();
+    const higherLowerOmni = makeOmni({
+      colony: {
+        placeHL: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xhl-unconfirmed", memo: "HIVE_HL:BTC:LOWER:24h", amount: 5, registered: true },
+        }),
+        getHigherLowerPool: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "BTC",
+              horizon: "24h",
+              totalHigher: 10,
+              totalLower: 5,
+              totalDem: 15,
+              higherCount: 2,
+              lowerCount: 1,
+              roundEnd: 1,
+              referencePrice: 50000,
+              poolAddress: "0xpool-hl-unconfirmed",
+              currentPrice: 49850,
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "BTC",
+              horizon: "24h",
+              totalHigher: 10,
+              totalLower: 5,
+              totalDem: 15,
+              higherCount: 2,
+              lowerCount: 1,
+              roundEnd: 1,
+              referencePrice: 50000,
+              poolAddress: "0xpool-hl-unconfirmed",
+              currentPrice: 49850,
+            },
+          }),
+      },
+    });
+
+    const higherLowerRecord = await runMinimalAgentCycle(
+      async () => ({
+        kind: "action",
+        action: { type: "bet", asset: "BTC", marketKind: "higher_lower", direction: "lower", horizon: "24h", amount: 5 },
+        readiness: { requiresWallet: true, requiresMarketContext: true },
+      }),
+      {
+        omni: higherLowerOmni,
+        stateDir: higherLowerStateDir,
+        cwd: higherLowerStateDir,
+        cycleId: "cycle-hl-unconfirmed",
+        verification: { timeoutMs: 0, pollMs: 1, limit: 10 },
+        now: makeNow(1_700_000_003_100, 1_700_000_003_100),
+      },
+    );
+
+    expect(higherLowerRecord.outcome.execution.status).toBe("failed");
+    expect(higherLowerRecord.outcome.execution.verification?.verificationPath).toBe("higher_lower_pool");
+    expect(higherLowerRecord.outcome.execution.verification?.visible).toBe(true);
+    expect(higherLowerRecord.outcome.execution.verification?.indexedVisible).toBe(false);
+    const higherLowerResult = await readJson(resolve(higherLowerStateDir, "sessions", higherLowerRecord.sessionId, "result.json"));
+    expect(higherLowerResult.stop_reasons).not.toContain("indexer_lag");
+  });
+
   it("blocks live publishes that still use placeholder attestation URLs", async () => {
     const stateDir = await createTempDir();
     const omni = makeOmni();

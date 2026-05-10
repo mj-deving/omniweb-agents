@@ -58,6 +58,67 @@ jobs:
               return user && codexLogins.has(user.login);
             }
 
+            async function loadTimeline(pullNumber) {
+              const nodes = [];
+              let cursor = null;
+
+              do {
+                const response = await github.graphql(
+                  `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequest(number: $number) {
+                        timelineItems(first: 100, after: $cursor) {
+                          pageInfo {
+                            hasNextPage
+                            endCursor
+                          }
+                          nodes {
+                            __typename
+                            ... on PullRequestCommit {
+                              commit {
+                                oid
+                              }
+                            }
+                            ... on PullRequestReview {
+                              state
+                              createdAt
+                              author {
+                                login
+                              }
+                              commit {
+                                oid
+                              }
+                            }
+                            ... on IssueComment {
+                              bodyText
+                              createdAt
+                              author {
+                                login
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }`,
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    number: pullNumber,
+                    cursor,
+                  }
+                );
+
+                const timeline = response.repository.pullRequest.timelineItems;
+                nodes.push(...timeline.nodes);
+                cursor = timeline.pageInfo.hasNextPage
+                  ? timeline.pageInfo.endCursor
+                  : null;
+              } while (cursor);
+
+              return nodes;
+            }
+
             const pr = await resolvePullRequest();
             if (!pr) {
               core.setFailed('Codex review gate only runs for pull requests.');
@@ -71,22 +132,50 @@ jobs:
             });
 
             const headSha = pull.data.head.sha;
-            const reviews = await github.paginate(github.rest.pulls.listReviews, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number,
-              per_page: 100,
-            });
+            const timeline = await loadTimeline(pr.number);
+            const headIndex = timeline.findLastIndex(
+              (node) =>
+                node.__typename === 'PullRequestCommit' &&
+                node.commit &&
+                node.commit.oid === headSha
+            );
 
-            const codexReviews = reviews.filter((review) => isCodexActor(review.user));
-            const codexHeadReviews = codexReviews
-              .filter((review) => review.commit_id === headSha)
-              .sort(
-                (left, right) =>
-                  new Date(right.submitted_at).valueOf() -
-                  new Date(left.submitted_at).valueOf()
-              );
-            const latestHeadReview = codexHeadReviews[0];
+            if (headIndex < 0) {
+              core.setFailed(`Could not find latest head ${headSha} in PR timeline.`);
+              return;
+            }
+
+            const afterHead = timeline.slice(headIndex + 1);
+            const codexHeadReviews = afterHead.filter(
+              (node) =>
+                node.__typename === 'PullRequestReview' &&
+                node.commit &&
+                node.commit.oid === headSha &&
+                isCodexActor(node.author)
+            );
+            const codexSignals = afterHead
+              .map((node, index) => ({ node, index }))
+              .filter(({ node }) => {
+                if (!isCodexActor(node.author)) {
+                  return false;
+                }
+
+                if (
+                  node.__typename === 'PullRequestReview' &&
+                  node.commit &&
+                  node.commit.oid === headSha
+                ) {
+                  return true;
+                }
+
+                return (
+                  node.__typename === 'IssueComment' &&
+                  /^Codex Review: Didn't find any major issues\./.test(
+                    node.bodyText || ''
+                  )
+                );
+              });
+            const latestSignal = codexSignals[codexSignals.length - 1];
 
             core.summary
               .addHeading('Codex review gate')
@@ -94,21 +183,29 @@ jobs:
               .addEOL()
               .addRaw(`Head SHA: ${headSha}`)
               .addEOL()
-              .addRaw(`Codex reviews found: ${codexReviews.length}`)
-              .addEOL()
               .addRaw(`Codex reviews on head: ${codexHeadReviews.length}`)
               .addEOL();
 
-            if (!latestHeadReview) {
+            if (!latestSignal) {
               core.summary
-                .addRaw('Result: fail - no Codex review exists for latest head.')
+                .addRaw('Result: fail - no Codex review signal exists after latest head.')
                 .addEOL()
                 .addRaw('Action: wait for Codex auto-review, or comment `@codex review` and re-run this check after Codex responds.')
                 .addEOL();
               await core.summary.write();
-              core.setFailed(`No Codex review found for latest head ${headSha}.`);
+              core.setFailed(`No Codex review signal found for latest head ${headSha}.`);
               return;
             }
+
+            if (latestSignal.node.__typename === 'IssueComment') {
+              core.summary
+                .addRaw('Result: pass - latest Codex signal is a no-issues comment after latest head.')
+                .addEOL();
+              await core.summary.write();
+              return;
+            }
+
+            const latestHeadReview = latestSignal.node;
 
             if (latestHeadReview.state === 'CHANGES_REQUESTED') {
               core.summary

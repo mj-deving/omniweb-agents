@@ -108,7 +108,7 @@ Every publish-proof run that is meant to support an external claim should leave 
 - `check-publish-readiness.ts` JSON output
 - live publish result including post tx hash and attestation tx hash when separate
 - chain verification result or explorer links proving the write exists
-- indexed visibility result showing feed and/or post-detail success, or the explicit timeout outcome
+- visibility result showing whether the post reached feed-indexed visibility, authenticated post-detail visibility only, chain-only visibility, or the explicit timeout outcome
 - delayed supervised verdict schedule when the run is being used for score experiments (`2h` for `ANALYSIS`, `4-6h` for `PREDICTION`)
 - operator note describing what the run proves and what it does not prove
 
@@ -120,18 +120,20 @@ Treat publish proof as a layered confirmation process:
 
 1. **attestation**: the source proof exists
 2. **chain write**: the publish tx exists
-3. **indexed visibility**: feed or post-detail routes surface the post
+3. **visibility confirmation**: the post reaches either authenticated post-detail visibility or feed-indexed visibility
+4. **feed-indexed visibility**: the feed surfaces the post in either the recent window or the category-scoped follow-up
 
 For supervised score experiments, add:
 
-4. **delayed verdict**: run `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the category-specific window so the final reaction/score read is captured consistently instead of inferred from the immediate snapshot alone
+5. **delayed verdict**: run `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the category-specific window so the final reaction/score read is captured consistently instead of inferred from the immediate snapshot alone
+
 
 Visibility confirmation should use both:
 
 - recent feed polling
 - direct post-detail lookup when available
 
-If chain proof succeeds but indexed visibility does not, record the run as `chain-publish-proven` and `indexed-visibility-pending` or `indexed-visibility-failed`, depending on the verification window outcome. Do not mark it as a full end-to-end success.
+If chain proof succeeds but feed indexing does not, record whether the run is `post-detail-visible` or `chain-only`, then mark it as `indexed-visibility-pending` or `indexed-visibility-failed` depending on the verification window outcome. Do not mark it as a full end-to-end success.
 
 If the shorter automated probe window expires while the post is already chain-visible and the indexed block height is still lagging, run one authenticated follow-up with `getPostDetail()` and `getFeed()` before treating the result as a final blocker. That follow-up does not erase the delayed-window finding, but it does distinguish "indexer is late" from "indexer never converged."
 
@@ -141,7 +143,7 @@ Feed follow-up must account for windowing pressure:
 - if `getPostDetail()` succeeds and reveals a category, also check the category-scoped feed window for that category
 - record whether feed success came from the unfiltered recent window or the category-scoped follow-up
 
-Reason: a post can be fully indexed yet still fall outside the top-N unfiltered feed window when total colony volume is high. The stablecoin publish proof from April 18, 2026 was visible via `post_detail` and ranked `37` in `category=ANALYSIS`, but only ranked `476` in the unfiltered feed.
+Reason: a post can be authenticated and category-discoverable without appearing in the top-N unfiltered feed window when total colony volume is high. The stablecoin publish proof from April 18, 2026 was visible via `post_detail` and ranked `37` in `category=ANALYSIS`, but only ranked `476` in the unfiltered feed.
 
 ## Acceptable Failure Envelopes
 

@@ -52,8 +52,11 @@ export interface MinimalCycleSummary {
   attestationTxHash?: string;
   attestationResponseHash?: string;
   verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"] | MinimalTipVerification["verificationPath"] | MinimalMarketWriteVerification["verificationPath"];
+  visibilitySurface?: PublishVisibilityResult["visibilitySurface"];
   visible?: boolean;
   indexedVisible?: boolean;
+  postDetailVisible?: boolean;
+  chainVisible?: boolean;
   observedScore?: number;
   errorStage?: MinimalErrorStage;
   errorMessage?: string;
@@ -815,6 +818,8 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
   decision: MinimalObserveResult<TState>;
   outcome: MinimalCycleRecord<TState>["outcome"];
 }): MinimalCycleSummary {
+  const publishVisibility = asPublishVisibilityResult(args.outcome.execution.verification);
+
   return {
     id: args.cycle.id,
     iteration: args.cycle.iteration,
@@ -827,8 +832,11 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
     attestationTxHash: args.outcome.execution.attestationTxHash,
     attestationResponseHash: args.outcome.execution.attestationResponseHash,
     verificationPath: args.outcome.execution.verification?.verificationPath,
+    visibilitySurface: publishVisibility?.visibilitySurface,
     visible: args.outcome.execution.verification?.visible,
     indexedVisible: args.outcome.execution.verification?.indexedVisible,
+    postDetailVisible: publishVisibility?.postDetailVisible,
+    chainVisible: publishVisibility?.chainVisible,
     observedScore: getObservedScore(args.outcome.execution.verification),
     errorStage: args.outcome.execution.error?.stage,
     errorMessage: args.outcome.execution.error?.message,
@@ -902,8 +910,14 @@ function renderCycleSummary<TState extends MinimalAgentState>(
   }
 
   if (record.outcome.execution.verification) {
+    const publishVisibility = asPublishVisibilityResult(record.outcome.execution.verification);
     lines.push(`- Visible: ${record.outcome.execution.verification.visible}`);
     lines.push(`- IndexedVisible: ${record.outcome.execution.verification.indexedVisible}`);
+    if (publishVisibility) {
+      lines.push(`- PostDetailVisible: ${publishVisibility.postDetailVisible}`);
+      lines.push(`- ChainVisible: ${publishVisibility.chainVisible}`);
+      lines.push(`- VisibilitySurface: ${publishVisibility.visibilitySurface}`);
+    }
     lines.push(`- VerificationPath: ${record.outcome.execution.verification.verificationPath ?? "none"}`);
     lines.push(`- VerificationPolls: ${record.outcome.execution.verification.polls}`);
     const observedScore = getObservedScore(record.outcome.execution.verification);
@@ -1108,6 +1122,8 @@ function buildSessionResult<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
   scorecardSummary: Record<string, unknown> | null,
 ): SessionLedgerResult {
+  const publishVisibility = asPublishVisibilityResult(record.outcome.execution.verification);
+
   return {
     version: 1,
     session_id: record.sessionId,
@@ -1122,6 +1138,9 @@ function buildSessionResult<TState extends MinimalAgentState>(
     tx_hash: record.outcome.execution.txHash,
     indexed_visible: record.outcome.execution.verification?.indexedVisible,
     verification_path: record.outcome.execution.verification?.verificationPath ?? null,
+    visibility_surface: publishVisibility?.visibilitySurface ?? null,
+    post_detail_visible: publishVisibility?.postDetailVisible ?? null,
+    chain_visible: publishVisibility?.chainVisible ?? null,
   };
 }
 
@@ -1129,16 +1148,30 @@ function buildScorecardSummary<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
 ): Record<string, unknown> | null {
   const verification = record.outcome.execution.verification;
+  const publishVisibility = asPublishVisibilityResult(verification);
   const observedScore = getObservedScore(verification);
   if (typeof observedScore === "number") {
     return {
       observed_score: observedScore,
       indexed_visible: verification?.indexedVisible ?? false,
       verification_path: verification?.verificationPath ?? null,
+      visibility_surface: publishVisibility?.visibilitySurface ?? null,
+      post_detail_visible: publishVisibility?.postDetailVisible ?? null,
+      chain_visible: publishVisibility?.chainVisible ?? null,
     };
   }
 
   return null;
+}
+
+function asPublishVisibilityResult(
+  verification: MinimalCycleRecord["outcome"]["execution"]["verification"] | undefined,
+): PublishVisibilityResult | undefined {
+  if (!verification) {
+    return undefined;
+  }
+
+  return "visibilitySurface" in verification ? verification as PublishVisibilityResult : undefined;
 }
 
 function buildStopReasons<TState extends MinimalAgentState>(

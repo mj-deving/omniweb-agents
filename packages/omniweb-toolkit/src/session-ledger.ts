@@ -15,6 +15,9 @@ export interface SessionLedgerResult {
   tx_hash?: string;
   indexed_visible?: boolean;
   verification_path?: string | null;
+  visibility_surface?: string | null;
+  post_detail_visible?: boolean | null;
+  chain_visible?: boolean | null;
 }
 
 export function getDefaultSessionLedgerDir(cwd?: string): string {

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { verifyPublishVisibility } from "../../packages/omniweb-toolkit/src/publish-visibility";
 
 describe("verifyPublishVisibility", () => {
-  it("keeps polling after chain visibility and returns indexed visibility when post detail catches up", async () => {
+  it("keeps polling after chain visibility and returns post_detail visibility separately from feed indexing", async () => {
     let now = 0;
     let postDetailCalls = 0;
     const getFeed = vi.fn().mockResolvedValue({
@@ -51,7 +51,10 @@ describe("verifyPublishVisibility", () => {
 
     expect(result).toMatchObject({
       visible: true,
-      indexedVisible: true,
+      indexedVisible: false,
+      postDetailVisible: true,
+      chainVisible: true,
+      visibilitySurface: "post_detail",
       verificationPath: "post_detail",
       txHash: "tx-1",
       observedBlockNumber: 77,
@@ -113,6 +116,9 @@ describe("verifyPublishVisibility", () => {
     expect(result).toMatchObject({
       visible: true,
       indexedVisible: true,
+      postDetailVisible: true,
+      chainVisible: false,
+      visibilitySurface: "feed_indexed",
       verificationPath: "feed",
       feedScope: "category",
       txHash: "tx-3",
@@ -158,6 +164,9 @@ describe("verifyPublishVisibility", () => {
     expect(result).toMatchObject({
       visible: true,
       indexedVisible: false,
+      postDetailVisible: false,
+      chainVisible: true,
+      visibilitySurface: "chain",
       verificationPath: "chain",
       txHash: "tx-2",
       observedBlockNumber: 88,

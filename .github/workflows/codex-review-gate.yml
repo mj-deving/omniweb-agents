@@ -58,11 +58,6 @@ jobs:
               return user && codexLogins.has(user.login);
             }
 
-            function isAfterHead(value, headDate) {
-              const date = new Date(value);
-              return !Number.isNaN(date.valueOf()) && date >= headDate;
-            }
-
             const pr = await resolvePullRequest();
             if (!pr) {
               core.setFailed('Codex review gate only runs for pull requests.');
@@ -76,17 +71,6 @@ jobs:
             });
 
             const headSha = pull.data.head.sha;
-            const headCommit = await github.rest.repos.getCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: headSha,
-            });
-            const headDate = new Date(
-              headCommit.data.commit.committer?.date ||
-                headCommit.data.commit.author?.date ||
-                pull.data.updated_at
-            );
-
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -95,14 +79,14 @@ jobs:
             });
 
             const codexReviews = reviews.filter((review) => isCodexActor(review.user));
-            const blockingHeadReview = codexReviews.find(
-              (review) => review.commit_id === headSha && review.state === 'CHANGES_REQUESTED'
-            );
-            const acceptedHeadReview = codexReviews.find(
-              (review) =>
-                review.commit_id === headSha &&
-                ['APPROVED', 'COMMENTED'].includes(review.state)
-            );
+            const codexHeadReviews = codexReviews
+              .filter((review) => review.commit_id === headSha)
+              .sort(
+                (left, right) =>
+                  new Date(right.submitted_at).valueOf() -
+                  new Date(left.submitted_at).valueOf()
+              );
+            const latestHeadReview = codexHeadReviews[0];
 
             core.summary
               .addHeading('Codex review gate')
@@ -111,98 +95,42 @@ jobs:
               .addRaw(`Head SHA: ${headSha}`)
               .addEOL()
               .addRaw(`Codex reviews found: ${codexReviews.length}`)
+              .addEOL()
+              .addRaw(`Codex reviews on head: ${codexHeadReviews.length}`)
               .addEOL();
 
-            if (blockingHeadReview) {
+            if (!latestHeadReview) {
               core.summary
-                .addRaw('Result: fail - Codex requested changes on the latest head.')
+                .addRaw('Result: fail - no Codex review exists for latest head.')
+                .addEOL()
+                .addRaw('Action: wait for Codex auto-review, or comment `@codex review` and re-run this check after Codex responds.')
                 .addEOL();
               await core.summary.write();
-              core.setFailed('Codex requested changes on the latest PR head.');
+              core.setFailed(`No Codex review found for latest head ${headSha}.`);
               return;
             }
 
-            if (acceptedHeadReview) {
+            if (latestHeadReview.state === 'CHANGES_REQUESTED') {
+              core.summary
+                .addRaw('Result: fail - latest Codex review requested changes on the latest head.')
+                .addEOL();
+              await core.summary.write();
+              core.setFailed('Latest Codex review requested changes on the latest PR head.');
+              return;
+            }
+
+            if (['APPROVED', 'COMMENTED'].includes(latestHeadReview.state)) {
               core.summary
                 .addRaw(
-                  `Result: pass - Codex ${acceptedHeadReview.state.toLowerCase()} review exists on latest head.`
+                  `Result: pass - latest Codex review on head is ${latestHeadReview.state.toLowerCase()}.`
                 )
                 .addEOL();
               await core.summary.write();
               return;
             }
 
-            const issueReactions = await github.paginate(github.rest.reactions.listForIssue, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100,
-            });
-
-            const prThumbsUp = issueReactions.find(
-              (reaction) =>
-                reaction.content === '+1' &&
-                isCodexActor(reaction.user) &&
-                isAfterHead(reaction.created_at, headDate)
-            );
-
-            if (prThumbsUp) {
-              core.summary
-                .addRaw('Result: pass - Codex thumbs-up reaction exists after latest head.')
-                .addEOL();
-              await core.summary.write();
-              return;
-            }
-
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100,
-            });
-
-            for (const comment of comments) {
-              const body = comment.body || '';
-              const relevantComment =
-                body.includes('@codex review') || isCodexActor(comment.user);
-              if (!relevantComment) {
-                continue;
-              }
-
-              const reactions = await github.paginate(
-                github.rest.reactions.listForIssueComment,
-                {
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: comment.id,
-                  per_page: 100,
-                }
-              );
-
-              const commentThumbsUp = reactions.find(
-                (reaction) =>
-                  reaction.content === '+1' &&
-                  isCodexActor(reaction.user) &&
-                  isAfterHead(reaction.created_at, headDate)
-              );
-
-              if (commentThumbsUp) {
-                core.summary
-                  .addRaw(
-                    'Result: pass - Codex thumbs-up reaction on a review-related comment exists after latest head.'
-                  )
-                  .addEOL();
-                await core.summary.write();
-                return;
-              }
-            }
-
             core.summary
-              .addRaw('Result: fail - no Codex review signal exists for latest head.')
-              .addEOL()
-              .addRaw('Action: wait for Codex auto-review, or comment `@codex review` and re-run this check after Codex responds.')
+              .addRaw(`Result: fail - latest Codex review state is ${latestHeadReview.state}.`)
               .addEOL();
             await core.summary.write();
-            core.setFailed(
-              `No Codex review, Codex approval/comment, or Codex thumbs-up reaction found for latest head ${headSha}.`
-            );
+            core.setFailed(`Unsupported latest Codex review state: ${latestHeadReview.state}.`);

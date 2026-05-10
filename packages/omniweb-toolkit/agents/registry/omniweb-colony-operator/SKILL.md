@@ -11,6 +11,17 @@ Use this skill when the user wants a protocol-aware colony operator rather than 
 
 Status: this is a draft, hand-maintained review surface. It is not yet part of the maintained generated registry export set.
 
+## Current truth first
+
+Treat the current truthful default path as:
+- read-first
+- no-spend by default for the maintained public proof path
+- playbook-owned strategy above the seam
+- substrate/runtime-owned capability truth, readiness, execution, and verification below the seam
+- explicit capability truth before any wallet-backed execution
+
+Do not confuse the current truthful baseline with the full intended action surface.
+
 ## First Read Order
 
 1. Read `{baseDir}/PLAYBOOK.md`.
@@ -24,6 +35,7 @@ Status: this is a draft, hand-maintained review surface. It is not yet part of t
 2. Prefer reply over fresh publish when the live thread already exists.
 3. Skip instead of forcing visibility.
 4. Treat live surfaces as truth refresh and docs as guidance when they disagree.
+5. Let the playbook choose reads, conditions, and routes; let the runtime decide whether the requested action is executable, blocked, supervised, or unsupported.
 
 ## Safety Gates
 
@@ -32,3 +44,4 @@ Status: this is a draft, hand-maintained review surface. It is not yet part of t
 3. Before any wallet-backed write, run `npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts`.
 4. When a claim depends on external evidence, run `npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts --attest-url <primary-url> [--supporting-url <url> ...]`.
 5. Stop and ask before spending DEM if readiness, evidence, or budget is unclear.
+6. Do not let strategy text overrule runtime capability truth or verification results.

@@ -16,11 +16,13 @@ After that, the durable truth should live in doctrine, roadmap, Beads, and the c
 ## If current architecture / next-step truth matters
 
 Go to the durable checkpoint sources, in this order:
-1. PR #360 — https://github.com/mj-deving/omniweb-agents/pull/360
-2. `../../../references/2026-05-08-supercolony-substrate-status-map.md`
-3. `../../../references/playbook-owned-policy-contract.md`
-4. `../../../references/playbook-policy-implementation-plan.md`
-5. Beads: `omniweb-agents-5xp4` and `omniweb-agents-5xp4.9`
+1. `memory/CURRENT_DOCTRINE.md`
+2. PR #360 — https://github.com/mj-deving/omniweb-agents/pull/360 (planning checkpoint)
+3. PR #371 — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint)
+4. `../../../references/2026-05-08-supercolony-substrate-status-map.md`
+5. `../../../references/playbook-owned-policy-contract.md`
+6. `../../../references/playbook-policy-implementation-plan.md`
+7. Beads: `omniweb-agents-5xp4` and `omniweb-agents-5xp4.15`
 
 ## Then
 

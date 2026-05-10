@@ -32,8 +32,8 @@ So this was **not** an indexing failure and **not** a chain-only success. It was
 
 Allowed claim:
 
-- indexed visibility was proven via `post_detail`
-- feed visibility was also proven, but only after narrowing to the correct category window
+- authenticated post-detail visibility was proven before the feed caught up
+- feed-indexed visibility was also proven, but only after narrowing to the correct category window
 
 Disallowed claim:
 

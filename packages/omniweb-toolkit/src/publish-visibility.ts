@@ -1,7 +1,12 @@
+export type PublishVisibilitySurface = "feed_indexed" | "post_detail" | "chain" | "none";
+
 export interface PublishVisibilityResult {
   attempted: true;
   visible: boolean;
   indexedVisible: boolean;
+  postDetailVisible: boolean;
+  chainVisible: boolean;
+  visibilitySurface: PublishVisibilitySurface;
   polls: number;
   elapsedMs: number;
   txHash?: string;
@@ -46,7 +51,8 @@ export async function verifyPublishVisibility(
   let polls = 0;
   let lastIndexedBlock: number | undefined;
   let lastError: string | undefined;
-  let chainVisible: PublishVisibilityResult | null = null;
+  let chainVisibleMatch: PublishVisibilityResult | null = null;
+  let postDetailVisible = false;
 
   while (now() <= deadline) {
     polls += 1;
@@ -66,6 +72,9 @@ export async function verifyPublishVisibility(
         attempted: true,
         visible: true,
         indexedVisible: true,
+        postDetailVisible,
+        chainVisible: Boolean(chainVisibleMatch),
+        visibilitySurface: "feed_indexed",
         polls,
         elapsedMs: now() - startedAt,
         txHash: recentFeedMatch.matched.txHash ?? recentFeedMatch.matched.tx_hash ?? txHash,
@@ -81,6 +90,7 @@ export async function verifyPublishVisibility(
     if (txHash && typeof omni?.colony?.getPostDetail === "function") {
       const postDetailResult = await omni.colony.getPostDetail(txHash);
       if (postDetailResult?.ok && postDetailResult.data?.post) {
+        postDetailVisible = true;
         const observedCategory =
           (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat;
         if (observedCategory) {
@@ -93,6 +103,9 @@ export async function verifyPublishVisibility(
               attempted: true,
               visible: true,
               indexedVisible: true,
+              postDetailVisible,
+              chainVisible: Boolean(chainVisibleMatch),
+              visibilitySurface: "feed_indexed",
               polls,
               elapsedMs: now() - startedAt,
               txHash: categoryFeedMatch.matched.txHash ?? categoryFeedMatch.matched.tx_hash ?? txHash,
@@ -111,7 +124,10 @@ export async function verifyPublishVisibility(
         return {
           attempted: true,
           visible: true,
-          indexedVisible: true,
+          indexedVisible: false,
+          postDetailVisible: true,
+          chainVisible: Boolean(chainVisibleMatch),
+          visibilitySurface: "post_detail",
           polls,
           elapsedMs: now() - startedAt,
           txHash,
@@ -138,10 +154,13 @@ export async function verifyPublishVisibility(
           : null;
 
         if (matched) {
-          chainVisible = {
+          chainVisibleMatch = {
             attempted: true,
             visible: true,
             indexedVisible: false,
+            postDetailVisible,
+            chainVisible: true,
+            visibilitySurface: "chain",
             polls,
             elapsedMs: now() - startedAt,
             txHash: matched.txHash ?? txHash,
@@ -161,12 +180,12 @@ export async function verifyPublishVisibility(
     await sleep(opts.pollMs);
   }
 
-  if (chainVisible) {
+  if (chainVisibleMatch) {
     return {
-      ...chainVisible,
+      ...chainVisibleMatch,
       polls,
       lastIndexedBlock,
-      error: lastError ?? chainVisible.error,
+      error: lastError ?? chainVisibleMatch.error,
     };
   }
 
@@ -174,6 +193,9 @@ export async function verifyPublishVisibility(
     attempted: true,
     visible: false,
     indexedVisible: false,
+    postDetailVisible,
+    chainVisible: false,
+    visibilitySurface: "none",
     polls,
     elapsedMs: now() - startedAt,
     txHash,

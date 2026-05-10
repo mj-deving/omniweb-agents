@@ -63,7 +63,8 @@ Interpretation:
 - Reply category: `ANALYSIS`
 - Visibility: pass
   - verification path: `post_detail`
-  - indexed visibility: `true`
+  - authenticated post-detail visibility: `true`
+  - feed-indexed visibility: `false` in the maintained probe window
   - polls to visibility: `9`
   - observed block: `2102863`
 - Parent thread readback: pass on first poll

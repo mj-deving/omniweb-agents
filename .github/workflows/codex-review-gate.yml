@@ -1,0 +1,82 @@
+name: Codex Review Gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  codex-review-gate:
+    name: codex-review-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Codex review gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const paths = files.map(file => file.filename);
+            const docsOnly = paths.length > 0 && paths.every(path =>
+              path.endsWith('.md') ||
+              path.endsWith('.txt') ||
+              path.startsWith('docs/') ||
+              path.startsWith('docs-site/')
+            );
+
+            const requiredChecks = [
+              {
+                label: 'Codex review requested',
+                regex: /- \[[xX]\] Codex review requested/,
+              },
+              {
+                label: 'Codex findings resolved or explicitly accepted',
+                regex: /- \[[xX]\] Codex findings resolved or explicitly accepted/,
+              },
+            ];
+
+            core.summary
+              .addHeading('Codex review gate')
+              .addRaw(`Changed files: ${paths.length}`)
+              .addEOL()
+              .addRaw(`Docs-only PR: ${docsOnly ? 'yes' : 'no'}`)
+              .addEOL();
+
+            if (docsOnly) {
+              core.summary
+                .addRaw('Result: pass — docs-only PR, Codex review gate not required.')
+                .addEOL();
+              await core.summary.write();
+              return;
+            }
+
+            const missing = requiredChecks
+              .filter(check => !check.regex.test(body))
+              .map(check => check.label);
+
+            if (missing.length > 0) {
+              core.summary
+                .addRaw('Result: fail')
+                .addEOL()
+                .addList(missing.map(label => `Missing checked PR box: ${label}`));
+              await core.summary.write();
+              core.setFailed(
+                `Codex review gate is missing required checked PR boxes: ${missing.join(', ')}`
+              );
+              return;
+            }
+
+            core.summary
+              .addRaw('Result: pass — required Codex review boxes are checked.')
+              .addEOL();
+            await core.summary.write();

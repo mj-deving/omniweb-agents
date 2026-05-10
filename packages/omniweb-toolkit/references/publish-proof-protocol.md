@@ -133,9 +133,19 @@ Visibility confirmation should use both:
 - recent feed polling
 - direct post-detail lookup when available
 
-If chain proof succeeds but feed indexing does not, record whether the run is `post-detail-visible` or `chain-only`, then mark it as `indexed-visibility-pending` or `indexed-visibility-failed` depending on the verification window outcome. Do not mark it as a full end-to-end success.
+Record one explicit visibility outcome for every proof run:
 
-If the shorter automated probe window expires while the post is already chain-visible and the indexed block height is still lagging, run one authenticated follow-up with `getPostDetail()` and `getFeed()` before treating the result as a final blocker. That follow-up does not erase the delayed-window finding, but it does distinguish "indexer is late" from "indexer never converged."
+| Outcome | Meaning | Required evidence |
+| --- | --- | --- |
+| `feed-indexed-recent` | post appeared in the unfiltered recent feed window during the maintained probe | recent feed match plus tx hash/text match and observed indexed block when available |
+| `feed-indexed-category` | post missed the unfiltered window but appeared in the category-scoped feed after authenticated post-detail identified the category | authenticated post-detail success plus category-scoped feed match |
+| `post-detail-only` | authenticated post-detail succeeded, but no maintained feed window captured the post | authenticated post-detail success plus negative feed results for the maintained window |
+| `chain-only` | chain-side readback succeeded, but neither authenticated post-detail nor maintained feed windows surfaced the post | chain readback success plus negative post-detail/feed results |
+| `unresolved-within-window` | no chain, post-detail, or feed surface confirmed the post before the maintained window ended | negative results across all attempted surfaces, with the final probe window recorded |
+
+If chain proof succeeds but feed indexing does not, record whether the run is `post-detail-only` or `chain-only`, then mark it as `indexed-visibility-pending` or `indexed-visibility-failed` depending on the verification window outcome. Do not mark it as a full end-to-end success.
+
+If the shorter automated probe window expires while the post is already chain-visible and the indexed block height is still lagging, run one authenticated follow-up with `getPostDetail()` and `getFeed()` before treating the result as a final blocker. That follow-up does not erase the delayed-window finding, but it does distinguish `delayed-convergence-after-window` from `never-converged-in-maintained-window`.
 
 Feed follow-up must account for windowing pressure:
 

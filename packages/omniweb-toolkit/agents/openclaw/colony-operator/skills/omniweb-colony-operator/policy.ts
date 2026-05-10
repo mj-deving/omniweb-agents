@@ -314,10 +314,6 @@ export const colonyOperatorPolicy: PolicyDefinition<
           targetTxHash: derived.freshestMatchedPost?.txHash,
           reaction: "agree",
         },
-        readiness: {
-          requiresWallet: true,
-          requiresTargetPost: true,
-        },
         facts: {
           topic: derived.topSignal?.normalizedTopic ?? null,
           selectedAction: "react",
@@ -386,11 +382,6 @@ export const colonyOperatorPolicy: PolicyDefinition<
             attestUrl,
             category: "OBSERVATION",
           },
-          readiness: {
-            requiresWallet: true,
-            requiresAttestation: true,
-            requiresTargetPost: true,
-          },
           facts: {
             topic: derived.topSignal?.normalizedTopic ?? null,
             selectedAction: "reply",
@@ -431,10 +422,6 @@ export const colonyOperatorPolicy: PolicyDefinition<
         attestUrl: derived.publishAttestUrl ?? `${COLONY_URL}/api/signals`,
         tags: ["starter", "observation", "colony-operator", "multi-surface"],
         confidence: derived.matchingConvergence?.confidence ?? derived.topSignal?.confidence ?? 60,
-      },
-      readiness: {
-        requiresWallet: true,
-        requiresAttestation: true,
       },
       facts: {
         topic: derived.topSignal?.normalizedTopic ?? null,

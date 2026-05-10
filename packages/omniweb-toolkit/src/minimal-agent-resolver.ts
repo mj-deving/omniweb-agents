@@ -94,18 +94,6 @@ function deriveDefaultReadiness(request: PolicyActionRequest): MinimalActionRead
   }
 }
 
-function mergeReadiness(
-  base: MinimalActionReadiness | undefined,
-  override: MinimalActionReadiness | undefined,
-): MinimalActionReadiness | undefined {
-  return compactObject({
-    requiresWallet: override?.requiresWallet ?? base?.requiresWallet,
-    requiresAttestation: override?.requiresAttestation ?? base?.requiresAttestation,
-    requiresTargetPost: override?.requiresTargetPost ?? base?.requiresTargetPost,
-    requiresMarketContext: override?.requiresMarketContext ?? base?.requiresMarketContext,
-  });
-}
-
 function resolveEvidenceMechanism(
   strength: PolicyEvidenceStrength | undefined,
 ): ResolvedEvidencePlan["mechanism"] | undefined {
@@ -316,7 +304,6 @@ export function normalizeDecisionToActionIntent<TState extends MinimalAgentState
     audit: decision.audit,
     attestationPlan: decision.attestationPlan,
     nextState: decision.nextState,
-    readiness: deriveDefaultReadiness(request),
   };
 }
 
@@ -428,7 +415,6 @@ function normalizeActionIntentToResolvedIntent(
 
 export interface ResolveActionRequestOptions extends WriteReadinessOptions {
   runtimeCapabilities?: RuntimeCapabilityResult;
-  readiness?: MinimalActionReadiness;
 }
 
 export function resolveActionRequest(
@@ -440,7 +426,7 @@ export function resolveActionRequest(
     return null;
   }
 
-  const readiness = mergeReadiness(deriveDefaultReadiness(request), options.readiness);
+  const readiness = deriveDefaultReadiness(request);
   const capability = options.runtimeCapabilities?.actionFamilies[action.type]
     ?? describeRuntimeCapabilities(options).actionFamilies[action.type];
 
@@ -454,10 +440,5 @@ export function normalizeDecisionToResolvedIntent<TState extends MinimalAgentSta
   options: NormalizeDecisionToResolvedIntentOptions = {},
 ): ResolvedIntent | null {
   const request = normalizeDecisionToPolicyActionRequest(decision);
-  return resolveActionRequest(request, {
-    ...options,
-    readiness: decision.kind === "action"
-      ? mergeReadiness(options.readiness, decision.readiness)
-      : options.readiness,
-  });
+  return resolveActionRequest(request, options);
 }

@@ -16,7 +16,11 @@ The repo’s stated contract is now clear in multiple places:
 - playbooks/skills own strategy and request actions
 - the substrate/runtime owns capability truth, readiness, resolution, execution, and verification
 
-But the current code still has a few places where policy-facing surfaces can carry runtime-owned truth. This note freezes those leaks before the implementation pass changes them.
+But the current code still had a few places where policy-facing surfaces could carry runtime-owned truth. This note freezes those leaks before the implementation pass changed them.
+
+Update — 2026-05-10:
+- The seam fixes described below landed in commit `63cd0f1f`.
+- Keep this note as the pre-change audit trail for PR #376, not as the current contract description.
 
 ## Current contract to preserve
 
@@ -74,11 +78,16 @@ Relevant code:
 - `src/minimal-agent.ts`
 - `src/minimal-agent-executor.ts`
 
-Current shape:
+Current shape at audit time:
 
-- `buildInjectedPolicyRuntimeCapabilities()` lives in `src/policy/run.ts`
-- runtime/executor/orchestration code imports that helper from the policy layer
-- the helper constructs action-family readiness, proof levels, and runtime write state
+- `buildInjectedPolicyRuntimeCapabilities()` lived in `src/policy/run.ts`
+- runtime/executor/orchestration code imported that helper from the policy layer
+- the helper constructed action-family readiness, proof levels, and runtime write state
+
+Resolved state:
+
+- injected runtime capability truth now lives in `src/injected-runtime-capabilities.ts`
+- runtime/executor/orchestration imports the helper from the runtime-owned module instead of `src/policy/`
 
 Why this is a leak:
 
@@ -99,10 +108,15 @@ Relevant code:
 - `src/minimal-agent-resolver.ts`
 - `references/playbook-owned-policy-contract.md`
 
-Current shape:
+Current shape at audit time:
 
-- `resolveActionRequest(request, options)` takes both `runtimeCapabilities?` and `readiness?`
-- the docs say the resolver should accept a policy request and resolve it into honest runtime truth
+- `resolveActionRequest(request, options)` took both `runtimeCapabilities?` and `readiness?`
+- the docs said the resolver should accept a policy request and resolve it into honest runtime truth
+
+Resolved state:
+
+- `resolveActionRequest(request, options)` now accepts only runtime-owned capability input (`runtimeCapabilities?`)
+- readiness is derived inside the resolver from the request plus runtime capability truth
 
 Why this is a leak:
 

@@ -161,9 +161,9 @@ Current home:
 - `src/minimal-agent-resolver.ts`
 
 Target API shape:
-- `resolveActionRequest(request, runtimeCapabilities, readiness) -> ResolvedAction`
+- `resolveActionRequest(request, { runtimeCapabilities? }) -> ResolvedIntent | null`
 
-This should be the official compiler step from policy request to execution truth.
+This should be the official compiler step from policy request to execution truth, with runtime capabilities as the only caller-supplied support/readiness input.
 
 ## C. Executor contract
 Current home:

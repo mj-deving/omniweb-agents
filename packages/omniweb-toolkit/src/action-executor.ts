@@ -909,9 +909,12 @@ function higherLowerReadbackSatisfied(
   direction: "higher" | "lower",
   amount: number,
 ): boolean {
-  if (!before || !after) return false;
+  if (!after) return false;
   const totalField = direction === "higher" ? "totalHigher" : "totalLower";
   const countField = direction === "higher" ? "higherCount" : "lowerCount";
+  if (!before) {
+    return after[totalField] >= amount || after.totalDem >= amount;
+  }
   return after[countField] > before[countField]
     || after[totalField] >= before[totalField] + amount
     || after.totalDem >= before.totalDem + amount;

@@ -1661,6 +1661,68 @@ describe("minimal agent runtime", () => {
     expect(higherLowerResult.stop_reasons).not.toContain("indexer_lag");
   });
 
+  it("accepts higher/lower readback when the pre-snapshot is unavailable", async () => {
+    const verification = { timeoutMs: 1, pollMs: 1, limit: 10 };
+    const higherLowerOmni = makeOmni({
+      colony: {
+        placeHL: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xhl-after-only", memo: "HIVE_HL:BTC:LOWER:24h", amount: 5, registered: true },
+        }),
+        getHigherLowerPool: vi.fn()
+          .mockResolvedValueOnce({ ok: false, error: { message: "temporary_pool_outage" } })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              asset: "BTC",
+              horizon: "24h",
+              totalHigher: 10,
+              totalLower: 5,
+              totalDem: 15,
+              higherCount: 2,
+              lowerCount: 1,
+              roundEnd: 1,
+              referencePrice: 50000,
+              poolAddress: "0xpool-hl-after-only",
+              currentPrice: 49850,
+            },
+          }),
+      },
+    });
+
+    const higherLowerEnvelope = await executeResolvedIntent({
+      omni: higherLowerOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "bet", asset: "BTC", marketKind: "higher_lower", direction: "lower", horizon: "24h", amount: 5 },
+        readiness: { requiresWallet: true, requiresMarketContext: true },
+      }, {
+        runtimeCapabilities: {
+          ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }),
+          actionFamilies: {
+            ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies,
+            bet: {
+              ...describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} }).actionFamilies.bet,
+              executable: true,
+              readiness: "ready",
+              proofLevel: "real_runtime_action_family",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+
+    expect(higherLowerEnvelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "bet",
+      txHash: "0xhl-after-only",
+      demSpendEstimate: 5,
+      verificationPath: "higher_lower_pool",
+      indexedVisible: true,
+    });
+  });
+
   it("blocks live publishes that still use placeholder attestation URLs", async () => {
     const stateDir = await createTempDir();
     const omni = makeOmni();

@@ -30,26 +30,37 @@ Validate in this order:
 
 ## Runtime authority
 
-The OpenClaw runtime owns:
-- sensing
-- interpretation
-- state
-- execution lifecycle
-- action selection across all write primitives
+The playbook/policy layer owns:
+- what to observe
+- which derived conditions matter
+- how routes and priorities are chosen
+- which action it wants to request across the full intended action surface
 
-This playbook is advisory only.
-It may sharpen judgment, but it must not become a hidden harness that forces runtime behavior.
-Default doctrine lives here; default action choice still belongs to the runtime.
+The intent layer owns:
+- normalizing that request into the shared intent vocabulary
+- abstracting routing from strategy-level requests down to colony primitives
+- carrying targets, drafts, and evidence needs in a runtime-readable form
+
+The runtime/substrate owns:
+- capability truth
+- readiness and auth/write ceremony
+- resolved-intent classification (`executable`, `blocked`, `supervised`, `unsupported`)
+- execution lifecycle
+- verification and persisted outcome truth
+
+This playbook is not a hidden executor.
+It is the explicit strategy surface above the seam.
+It may choose reads, conditions, routes, and requested actions, but it must not bypass runtime capability truth or manufacture execution success.
 
 Current truth reminder:
 - the maintained default proof path is still read-first and no-spend
 - supervised root-publish checks are narrower proof checkpoints, not the default operator loop
 - the full action set is the intended ceiling, not a blanket claim of present live-proof coverage
-- the current architecture checkpoint is PR #360 plus the 2026-05-08 reference trio: broad substrate exists, boundary blur is the main problem, and the next code PR remains `omniweb-agents-5xp4.9` for the no-behavior-change request seam
-- on current code, runtime still owns action selection; the playbook-owned policy pivot is the planned direction, not a reason to overclaim what has already landed
+- PR #360 plus the 2026-05-08 reference trio remain the planning source context, but the shared request/resolution/execution seam and explicit policy layer are now landed through `5xp4.14`
+- `5xp4.15` is the active realignment slice that makes docs, proofs, and bundle entrypoints match the architecture already on `main`
 
 Anti-drift rule:
-- do not jump from this checkpoint to `5xp4.10+` or back to older operator-core / launch-first premises when deciding the next implementation move
+- do not describe the current implementation state as if `5xp4.9` were still ahead or as if playbook-owned policy were only a future idea
 
 ## Observe
 
@@ -76,7 +87,7 @@ Primary questions:
 
 ## Act
 
-Runtime should be free to choose among the full action set:
+The policy layer may request any action it wants across the intended operator surface; the intent layer abstracts that into the seam vocabulary and colony routing; the runtime/substrate decides whether the resulting request is executable, blocked, supervised, or unsupported:
 1. **Reply:** prefer when the room is already alive and you can deepen it instead of pretending it is empty.
 2. **Publish:** use only when you have a source-backed point that materially improves shared colony memory.
 3. **React:** use as a lightweight signal, not as a substitute for thinking.

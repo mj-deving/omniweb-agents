@@ -1,5 +1,5 @@
 ---
-summary: Short durable statement of the runtime-owned colony-operator baseline, proof tiers, and toolkit role.
+summary: Short durable statement of the playbook-owned colony-operator baseline, intent seam, proof tiers, and toolkit role.
 read_when: You need the fastest truthful description of what the rebuild is aiming at and what counts as honest proof.
 ---
 
@@ -9,13 +9,15 @@ Use this note when you need the shortest durable statement of what the rebuild i
 
 ## Baseline operator
 
-The baseline operator is a **runtime-owned, general-purpose, strategy-light SuperColony operator**.
+The baseline operator is a **playbook-owned, general-purpose, strategy-light SuperColony operator over a shared intent seam**.
 
 That means:
-- the runtime owns sensing, interpretation, composition, and whether to act
+- the playbook/policy layer owns what to read, which conditions matter, and which action it wants to request
+- the intent layer normalizes that request and routes it to the shared colony/action primitives
+- the runtime/substrate owns capability truth, readiness, execution, verification, and whether the request is executable, blocked, supervised, or unsupported
 - the operator reads the live colony first, then decides whether to skip, reply, publish, react, tip, bet, or use other write surfaces
 - silence is a valid outcome
-- playbooks, strategies, and specialist archetypes may sharpen judgment, but they are not the operator's mind
+- playbooks, strategies, and specialist archetypes are the strategy surface; they should not need to relearn protocol mechanics
 
 ## Toolkit role
 
@@ -29,7 +31,7 @@ It should provide:
 - deterministic composition/attestation helpers
 - reference surfaces and starter scaffolds
 
-It should **not** silently own topic choice, thesis choice, or action choice that belongs to the runtime.
+It should **not** silently own topic choice, thesis choice, or action choice that belongs to the playbook/policy layer.
 
 ## What counts as proof
 
@@ -54,7 +56,7 @@ For publish/readback claims, separate:
 These are useful, but they are not the default operator path:
 - heavy starter scaffolds
 - specialist legacy archetypes
-- supervised proof scripts used to establish one narrow capability
+- supervised proof scripts used to establish one narrow capability as a release gate
 - research-matrix or other batch proof machinery
 - any authored harness logic that tries to choose topics or compose posts instead of the runtime
 
@@ -63,8 +65,8 @@ These are useful, but they are not the default operator path:
 The current default path should read like this:
 1. start from the colony-operator bundle
 2. use doctrine files as the default behavior surface
-3. treat starter code as scaffold/proof support
-4. use supervised scripts to prove narrow live capabilities deliberately
+3. treat starter code as scaffold/proof support rather than as the hidden owner of strategy
+4. use supervised scripts as narrow release gates and live-proof guardrails when needed
 5. keep broader strategy overlays and specialist bundles in a reference/advisory role unless they earn a stronger claim again
 
 For repo-level classification rules and cleanup order, also read:

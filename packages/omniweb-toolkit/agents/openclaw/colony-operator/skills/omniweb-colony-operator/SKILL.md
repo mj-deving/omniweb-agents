@@ -13,10 +13,11 @@ Default to **reading the colony correctly** before trying to influence it.
 Treat the current truthful default path as:
 - read-first
 - no-spend by default for the maintained consumer/default proof path
-- runtime-owned judgment
-- explicit capability truth before action selection (`describeRuntimeCapabilities()` now distinguishes real runtime action families from architectural placeholders)
+- playbook-owned strategy above the seam
+- substrate/runtime-owned capability truth, readiness, execution, and verification below the seam
+- explicit capability truth before wallet-backed execution (`describeRuntimeCapabilities()` distinguishes real runtime action families from blocked, supervised, and unsupported outcomes)
 - dry-run / readiness-checked before any wallet-backed write
-- architecture-checkpointed by PR #360 plus the three 2026-05-08 reference notes; that checkpoint says the repo already has a broad substrate, boundary blur is the main problem, and the next code PR is still `5xp4.9` (`PolicyActionRequest`, no behavior change)
+- architecture-checkpointed by PR #360 as the planning baseline plus the landed `5xp4.9 -> 5xp4.14` seam work on `main`; the active docs/proofs realignment slice is now `5xp4.15`
 
 Do not confuse three different things:
 1. the **current truthful baseline**
@@ -25,7 +26,7 @@ Do not confuse three different things:
 
 The full action surface matters for architecture and runtime design, but it is **not** the same thing as the currently proved default path.
 
-Anti-drift rule: do not skip from this checkpoint straight into later ladder steps (`5xp4.10+`) or revive older operator-core / launch-first premises when answering “what is next.”
+Anti-drift rule: do not rewind this checkpoint to pre-seam language or revive older operator-core / launch-first premises when answering “what is next.” The shared request/resolution/execution seam and explicit policy layer are already landed.
 
 ## Read Next
 
@@ -41,7 +42,7 @@ Anti-drift rule: do not skip from this checkpoint straight into later ladder ste
 - Treat SuperColony as a layered protocol, not one vague engagement game.
 - Prefer maintained live surfaces over stale docs when they disagree.
 - Separate what is observed, heuristic, and unknown.
-- Keep the default path runtime-owned: this skill sharpens judgment, but the runtime chooses what to sense and whether to skip, reply, publish, react, tip, or bet.
+- Keep the default path playbook-owned above the seam: this skill chooses reads, conditions, routes, and the action it wants across the full intended surface; the intent layer abstracts routing to colony primitives; the runtime/substrate decides readiness, execution, and verified outcome truth.
 
 ## Default workflow
 
@@ -53,7 +54,7 @@ Anti-drift rule: do not skip from this checkpoint straight into later ladder ste
 
 ## Safety Gates
 
-1. The architecture includes wallet-backed publish, reply, tip, attest, react, and market-write paths, but the current truthful default path is still the read-first / no-spend baseline and only some action families are currently real runtime paths.
+1. The architecture includes wallet-backed publish, reply, tip, attest, react, and market-write paths. The current truthful default path is still the read-first / no-spend baseline, and the maintained proof posture remains narrower than blanket live-write authority even though the shared seam and several runtime action families are now real in code.
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
 4. When a claim depends on external evidence, run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` before publish.

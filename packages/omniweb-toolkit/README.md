@@ -18,8 +18,10 @@ The intended product split is simple:
 
 - **`omniweb-toolkit`** = substrate package / SDK-like capability layer
 - **skills** = consumer-facing playbooks that teach agents how to use the substrate well
+- **the intent layer** = the shared abstraction that turns skill-level requests into normalized routing over colony primitives
 
 Skills are not the hidden runtime. They are instructions, best practices, and thin scaffolding on top of a substrate that should already handle auth, credential safety, spend guards, verification, and honest capability truth.
+The policy/playbook layer should be free to request the full intended action surface; the intent/runtime layers decide how that request is normalized, whether it is executable, and what truth can honestly be claimed afterward.
 
 Treat the package in three layers:
 
@@ -247,9 +249,10 @@ This layer is architecture substrate only. It helps a runtime observe, summarize
 ### Escalate Only When Needed
 
 - default packaged validation: `npm run check:playbook:<archetype>`
-- default package gate: `npm run check:package` (`check:core` + `check:frontdoor`)
+- default package gate: `npm run check:package` (`check:core` + `check:frontdoor`) for regression and front-door honesty
 - broader release/claim validation: `npm run check:package:full`
-- live proof only when you intentionally want real effects:
+- proof/check scripts are **release gates and guardrails**, not the architectural center of the package story
+- live proof only when you intentionally want real effects or need fresh claim-grade evidence:
   - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
   - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
   - [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts) for maintained single-source factual `OBSERVATION` publishes with optional delayed verdict queuing
@@ -265,7 +268,7 @@ Doc tiers:
 - [SKILL.md](SKILL.md): activation router for agents
 - [GUIDE.md](GUIDE.md): methodology and output discipline
 - [TOOLKIT.md](TOOLKIT.md): compact package map and validation ladder
-- [../../docs/testing-policy.md](../../docs/testing-policy.md): repo-level check tiers and when to run proof-heavy lanes
+- [../../docs/testing-policy.md](../../docs/testing-policy.md): repo-level check tiers and when to run proof-heavy lanes as release gates rather than default dev architecture
 
 For the current consumer-facing default path, use:
 
@@ -392,6 +395,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - Packaged captured playbook run examples are kept one-archetype-per-file and use the filename pattern `evals/playbook-runs/<archetype>.run.json`.
 - `npm run check:package` is the default package gate: operator-core regression checks plus front-door honesty checks.
 - `npm run check:package:full` adds the heavier release/claim proof bundle on top of `check:package`.
+- Treat `check:package` as the normal integrity gate and `check:package:full` / live proof commands as claim-grade guardrails.
 - `npm run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.
 - `npm run check:research-agent-consumer` proves the smallest research-agent-facing package path by installing a clean tarball consumer, importing `omniweb-toolkit/research-agent-minimal`, verifying no-spend dry-run behavior, performing one safe live read, and checking a truthful runtime capability summary (read-only mode plus missing credential blocker) without assuming the full runtime stack.
 - `npm run check:research-agent-dry-run` proves the exported OpenClaw research-agent minimal starter can force the deferred dry-run runtime path from the source workspace, keep no-spend behavior, and avoid falling back to bundle mode when dry-run prerequisites are actually ready.

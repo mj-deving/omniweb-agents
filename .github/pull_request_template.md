@@ -6,8 +6,9 @@
 
 - 
 
-## Codex Review
+## Review
 
-- Trigger Codex review only for code, runtime, release, auth, or write-path changes.
-- For docs-only or trivial workflow PRs, keep the PR as draft until ready and avoid unnecessary review churn.
-- Do not enable auto-merge until Codex review output has been inspected.
+- Request a real GitHub review before merge for any non-doc or non-trivial PR.
+- For each meaningful new push, request review again on the latest diff and settle all findings before merge.
+- The `codex-review` check must pass on the latest head before merge.
+- Do not merge until required checks are green and all review conversations are resolved.

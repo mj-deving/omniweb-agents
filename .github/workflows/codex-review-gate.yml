@@ -1,0 +1,233 @@
+name: Codex Review Gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: codex-review-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  codex-review:
+    name: codex-review
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Codex signal on latest PR head
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const codexLogins = new Set([
+              'chatgpt-codex-connector[bot]',
+              'chatgpt-codex-connector',
+            ]);
+
+            async function resolvePullRequest() {
+              if (context.payload.pull_request) {
+                return context.payload.pull_request;
+              }
+
+              if (context.payload.review && context.payload.pull_request) {
+                return context.payload.pull_request;
+              }
+
+              if (context.payload.issue && context.payload.issue.pull_request) {
+                const response = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.payload.issue.number,
+                });
+                return response.data;
+              }
+
+              return null;
+            }
+
+            function isCodexActor(user) {
+              return user && codexLogins.has(user.login);
+            }
+
+            async function loadTimeline(pullNumber) {
+              const nodes = [];
+              let cursor = null;
+
+              do {
+                const response = await github.graphql(
+                  `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequest(number: $number) {
+                        timelineItems(first: 100, after: $cursor) {
+                          pageInfo {
+                            hasNextPage
+                            endCursor
+                          }
+                          nodes {
+                            __typename
+                            ... on PullRequestCommit {
+                              commit {
+                                oid
+                              }
+                            }
+                            ... on PullRequestReview {
+                              state
+                              createdAt
+                              author {
+                                login
+                              }
+                              commit {
+                                oid
+                              }
+                            }
+                            ... on IssueComment {
+                              bodyText
+                              createdAt
+                              author {
+                                login
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }`,
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    number: pullNumber,
+                    cursor,
+                  }
+                );
+
+                const timeline = response.repository.pullRequest.timelineItems;
+                nodes.push(...timeline.nodes);
+                cursor = timeline.pageInfo.hasNextPage
+                  ? timeline.pageInfo.endCursor
+                  : null;
+              } while (cursor);
+
+              return nodes;
+            }
+
+            const pr = await resolvePullRequest();
+            if (!pr) {
+              core.setFailed('Codex review gate only runs for pull requests.');
+              return;
+            }
+
+            const pull = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+            });
+
+            const headSha = pull.data.head.sha;
+            const timeline = await loadTimeline(pr.number);
+            const headIndex = timeline.findLastIndex(
+              (node) =>
+                node.__typename === 'PullRequestCommit' &&
+                node.commit &&
+                node.commit.oid === headSha
+            );
+
+            if (headIndex < 0) {
+              core.setFailed(`Could not find latest head ${headSha} in PR timeline.`);
+              return;
+            }
+
+            const afterHead = timeline.slice(headIndex + 1);
+            const codexHeadReviews = afterHead.filter(
+              (node) =>
+                node.__typename === 'PullRequestReview' &&
+                node.commit &&
+                node.commit.oid === headSha &&
+                isCodexActor(node.author)
+            );
+            const codexSignals = afterHead
+              .map((node, index) => ({ node, index }))
+              .filter(({ node }) => {
+                if (!isCodexActor(node.author)) {
+                  return false;
+                }
+
+                if (
+                  node.__typename === 'PullRequestReview' &&
+                  node.commit &&
+                  node.commit.oid === headSha
+                ) {
+                  return true;
+                }
+
+                return (
+                  node.__typename === 'IssueComment' &&
+                  /^Codex Review: Didn't find any major issues\./.test(
+                    node.bodyText || ''
+                  )
+                );
+              });
+            const latestSignal = codexSignals[codexSignals.length - 1];
+
+            core.summary
+              .addHeading('Codex review gate')
+              .addRaw(`PR: #${pr.number}`)
+              .addEOL()
+              .addRaw(`Head SHA: ${headSha}`)
+              .addEOL()
+              .addRaw(`Codex reviews on head: ${codexHeadReviews.length}`)
+              .addEOL();
+
+            if (!latestSignal) {
+              core.summary
+                .addRaw('Result: fail - no Codex review signal exists after latest head.')
+                .addEOL()
+                .addRaw('Action: wait for Codex auto-review, or comment `@codex review` and re-run this check after Codex responds.')
+                .addEOL();
+              await core.summary.write();
+              core.setFailed(`No Codex review signal found for latest head ${headSha}.`);
+              return;
+            }
+
+            if (latestSignal.node.__typename === 'IssueComment') {
+              core.summary
+                .addRaw('Result: pass - latest Codex signal is a no-issues comment after latest head.')
+                .addEOL();
+              await core.summary.write();
+              return;
+            }
+
+            const latestHeadReview = latestSignal.node;
+
+            if (latestHeadReview.state === 'CHANGES_REQUESTED') {
+              core.summary
+                .addRaw('Result: fail - latest Codex review requested changes on the latest head.')
+                .addEOL();
+              await core.summary.write();
+              core.setFailed('Latest Codex review requested changes on the latest PR head.');
+              return;
+            }
+
+            if (['APPROVED', 'COMMENTED'].includes(latestHeadReview.state)) {
+              core.summary
+                .addRaw(
+                  `Result: pass - latest Codex review on head is ${latestHeadReview.state.toLowerCase()}.`
+                )
+                .addEOL();
+              await core.summary.write();
+              return;
+            }
+
+            core.summary
+              .addRaw(`Result: fail - latest Codex review state is ${latestHeadReview.state}.`)
+              .addEOL();
+            await core.summary.write();
+            core.setFailed(`Unsupported latest Codex review state: ${latestHeadReview.state}.`);

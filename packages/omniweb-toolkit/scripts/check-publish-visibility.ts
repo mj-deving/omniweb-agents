@@ -16,6 +16,7 @@
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.ts";
 import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
+import { summarizePublishVisibilityAttempts } from "./_publish-visibility-summary.ts";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_CATEGORY = "OBSERVATION";
@@ -344,50 +345,8 @@ async function executeReplyAttempt(
   };
 }
 
-function summarizeAttempts(attempts: ProbeAttempt[]): {
-  attemptedCount: number;
-  acceptedCount: number;
-  indexedVisibleCount: number;
-  chainOnlyCount: number;
-  failedCount: number;
-  byKind: Record<AttemptKind, {
-    attempted: number;
-    accepted: number;
-    indexedVisible: number;
-    chainOnly: number;
-    failed: number;
-  }>;
-} {
-  const base = {
-    publish: { attempted: 0, accepted: 0, indexedVisible: 0, chainOnly: 0, failed: 0 },
-    reply: { attempted: 0, accepted: 0, indexedVisible: 0, chainOnly: 0, failed: 0 },
-  };
-
-  for (const attempt of attempts) {
-    const bucket = base[attempt.kind];
-    bucket.attempted += 1;
-    if (attempt.accepted) {
-      bucket.accepted += 1;
-    }
-    if (attempt.visibility?.indexedVisible) {
-      bucket.indexedVisible += 1;
-    }
-    if (attempt.visibility?.visible && !attempt.visibility.indexedVisible) {
-      bucket.chainOnly += 1;
-    }
-    if (!attempt.accepted || !attempt.visibility?.indexedVisible) {
-      bucket.failed += 1;
-    }
-  }
-
-  return {
-    attemptedCount: attempts.length,
-    acceptedCount: attempts.filter((attempt) => attempt.accepted).length,
-    indexedVisibleCount: attempts.filter((attempt) => attempt.visibility?.indexedVisible).length,
-    chainOnlyCount: attempts.filter((attempt) => attempt.visibility?.visible && !attempt.visibility.indexedVisible).length,
-    failedCount: attempts.filter((attempt) => !attempt.accepted || !attempt.visibility?.indexedVisible).length,
-    byKind: base,
-  };
+function summarizeAttempts(attempts: ProbeAttempt[]) {
+  return summarizePublishVisibilityAttempts(attempts);
 }
 
 async function readBalance(omni: any): Promise<number | null> {

@@ -1251,6 +1251,97 @@ describe("minimal agent runtime", () => {
     expect(record.outcome.execution.demSpendEstimate).toBe(0);
   });
 
+  it("keeps polling after balance spend so tip stats can upgrade the confirmation surface", async () => {
+    const verification = { timeoutMs: 20, pollMs: 1, limit: 10 };
+    const runtime = describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} });
+    const tipOmni = makeOmni({
+      colony: {
+        tip: vi.fn().mockResolvedValue({
+          ok: true,
+          data: { txHash: "0xtip-upgrade", validated: true },
+        }),
+        getPostDetail: vi.fn().mockResolvedValue({
+          ok: true,
+          data: {
+            post: {
+              txHash: "0xtip-upgrade-target",
+              author: "0xrecipient-upgrade",
+              timestamp: 1,
+              payload: {},
+            },
+            replies: [],
+          },
+        }),
+        getTipStats: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 1, totalDem: 2, myTip: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 1, totalDem: 2, myTip: 0 } })
+          .mockResolvedValueOnce({ ok: true, data: { totalTips: 2, totalDem: 7, myTip: 5 } }),
+        getAgentTipStats: vi.fn()
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 2 },
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 2 },
+            },
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            data: {
+              tipsGiven: { count: 0, totalDem: 0 },
+              tipsReceived: { count: 1, totalDem: 2 },
+            },
+          }),
+        getBalance: vi.fn()
+          .mockResolvedValueOnce({ ok: true, data: { balance: 42 } })
+          .mockResolvedValueOnce({ ok: true, data: { balance: 37 } })
+          .mockResolvedValueOnce({ ok: true, data: { balance: 37 } }),
+      },
+    });
+
+    const envelope = await executeResolvedIntent({
+      omni: tipOmni,
+      resolution: normalizeDecisionToResolvedIntent({
+        kind: "action",
+        action: { type: "tip", targetTxHash: "0xtip-upgrade-target", amount: 5 },
+        readiness: { requiresWallet: true, requiresTargetPost: true },
+      }, {
+        runtimeCapabilities: {
+          ...runtime,
+          actionFamilies: {
+            ...runtime.actionFamilies,
+            tip: {
+              ...runtime.actionFamilies.tip,
+              executable: true,
+              readiness: "ready",
+            },
+          },
+        },
+      })!,
+      verification,
+    });
+
+    expect(envelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "tip",
+      txHash: "0xtip-upgrade",
+      verificationPath: "post_tip_stats",
+      indexedVisible: true,
+    });
+    expect(envelope.execution.verification).toMatchObject({
+      tipConfirmationSurface: "post_tip_stats",
+      tipStatsConverged: true,
+      spendObserved: true,
+      polls: 2,
+    });
+  });
+
   it("executeResolvedIntent honors dryRun before attestation validation", async () => {
     const omni = makeOmni();
     const runtime = describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} });
@@ -1524,7 +1615,7 @@ describe("minimal agent runtime", () => {
         stateDir,
         cwd: stateDir,
         cycleId: "cycle-tip-fallback",
-        verification: { timeoutMs: 1, pollMs: 1, limit: 10 },
+        verification: { timeoutMs: 0, pollMs: 1, limit: 10 },
         now: makeNow(1_700_000_002_550, 1_700_000_002_700),
       },
     );

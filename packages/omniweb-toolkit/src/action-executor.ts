@@ -416,7 +416,7 @@ async function executeTipIntent(args: {
     );
     spendObserved = tipSpendObserved(beforeBalance, afterBalance, normalizedAmount);
 
-    if (tipStatsConverged || recipientTipStatsConverged || spendObserved || Date.now() >= deadline) {
+    if (tipStatsConverged || recipientTipStatsConverged || Date.now() >= deadline) {
       break;
     }
 

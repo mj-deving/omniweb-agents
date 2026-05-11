@@ -79,3 +79,5 @@ export function buildInjectedRuntimeCapabilities(): RuntimeCapabilityResult {
     },
   };
 }
+
+export const buildInjectedPolicyRuntimeCapabilities = buildInjectedRuntimeCapabilities;

@@ -7,6 +7,11 @@ import { runPolicyObserve } from "./observe.js";
 import { selectPolicyRoute } from "./routes.js";
 import type { PolicyDefinition, PolicyRunResult } from "./types.js";
 
+export {
+  buildInjectedPolicyRuntimeCapabilities,
+  buildInjectedRuntimeCapabilities,
+} from "../injected-runtime-capabilities.js";
+
 export type PolicyExecutionDisposition =
   | { kind: "skip"; status: "skipped" }
   | { kind: "dry_run"; status: "dry_run" }

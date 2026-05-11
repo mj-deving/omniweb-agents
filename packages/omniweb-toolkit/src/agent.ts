@@ -20,7 +20,10 @@ export { compilePolicyDecision } from "./policy/compile.js";
 export { runPolicyDerive } from "./policy/derive.js";
 export { runPolicyObserve } from "./policy/observe.js";
 export { selectPolicyRoute } from "./policy/routes.js";
-export { buildInjectedRuntimeCapabilities } from "./injected-runtime-capabilities.js";
+export {
+  buildInjectedPolicyRuntimeCapabilities,
+  buildInjectedRuntimeCapabilities,
+} from "./injected-runtime-capabilities.js";
 export {
   planPolicyExecution,
   runPolicy,

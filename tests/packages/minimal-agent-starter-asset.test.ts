@@ -29,4 +29,26 @@ describe("minimal-agent starter asset", () => {
     expect(packageJson.peerDependencies["@kynesyslabs/demosdk"]).toBe(">=2.11.0");
     expect(packageJson.peerDependenciesMeta["@kynesyslabs/demosdk"]).toEqual({ optional: true });
   });
+
+  it("exposes the documented supervised checkpoint npm entrypoints", () => {
+    const packageJson = JSON.parse(
+      readFileSync(new URL("../../packages/omniweb-toolkit/package.json", import.meta.url), "utf8"),
+    );
+
+    expect(packageJson.scripts["check:supervised-observation"]).toBe(
+      "node --import tsx ./scripts/check-supervised-observation.ts",
+    );
+    expect(packageJson.scripts["check:supervised-observation-eligibility"]).toBe(
+      "node --import tsx ./scripts/check-supervised-observation-eligibility.ts",
+    );
+    expect(packageJson.scripts["check:supervised-publish-verdict"]).toBe(
+      "node --import tsx ./scripts/check-supervised-publish-verdict.ts",
+    );
+    expect(packageJson.scripts["check:pending-verdicts"]).toBe(
+      "node --import tsx ./scripts/check-pending-verdicts.ts",
+    );
+    expect(packageJson.scripts["record:pending-verdict"]).toBe(
+      "node --import tsx ./scripts/record-pending-verdict.ts",
+    );
+  });
 });

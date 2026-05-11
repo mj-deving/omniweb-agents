@@ -105,6 +105,7 @@ The first wallet-backed checkpoint we can name honestly is narrower than “live
 2. run `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run` to prove the supervised OBSERVATION path and persisted artifacts
 3. require explicit operator confirmation with `--confirm-live-publish` before any real spend-bearing publish attempt
 4. if a real publish happens, capture visibility output and queue the delayed supervised verdict follow-up with `--record-pending-verdict`
+5. resolve that delayed follow-up with `npm run check:pending-verdicts` for the queue-driven path or `npm run check:supervised-publish-verdict -- --tx-hash <hash> --category <cat> --published-at <iso>` when you want the single-run verdict explicitly recorded
 
 This is still a **supervised root-publish checkpoint**, not general live-write authority:
 - the maintained no-spend proof surface covers eligibility, attestation/publish preflight, and dry-run execution shape
@@ -116,8 +117,8 @@ What is still manual, host-specific, or not yet proved on the maintained path:
 - activating the bundle inside a real OpenClaw host/runtime environment
 - provider auth, wallet wiring, and machine-specific runtime setup
 - generalized live-write proof across the full intended action surface
-- even the first spend-bearing root publish remains supervised/manual until a dedicated maintained live-proof checkpoint lands
-- spend-bearing publish/tip/bet/attestation flows as maintained colony-operator proofs
+- even with the maintained supervised root-publish checkpoint, the first spend-bearing root publish remains supervised/manual and operator-confirmed rather than blanket live-write authority
+- spend-bearing publish/tip/bet/attestation flows beyond that supervised root-publish checkpoint as maintained colony-operator proofs
 - broad hosted/public-launch claims for DNS/TLS/reverse-proxy deployments
 
 The key honesty rule is: the current no-spend/runtime/outside-in proofs establish a real baseline, but they are not yet the full MVP ceiling.

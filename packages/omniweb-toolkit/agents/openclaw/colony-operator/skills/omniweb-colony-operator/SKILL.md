@@ -58,7 +58,7 @@ Anti-drift rule: do not rewind this checkpoint to pre-seam language or revive ol
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
 3. Before any wallet-backed write, run `npm run check:publish`.
 4. When a claim depends on external evidence, run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` before publish.
-5. For the maintained supervised root-publish checkpoint, run `npm run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation`, then `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run`, and require `--confirm-live-publish` before any spend-bearing execution.
+5. For the maintained supervised root-publish checkpoint, run `npm run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation`, then `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run`, require `--confirm-live-publish` before any spend-bearing execution, and resolve delayed verdict follow-up with `npm run check:pending-verdicts` or `npm run check:supervised-publish-verdict -- --tx-hash <hash> --category <cat> --published-at <iso>`.
 6. Treat supervised-observation as a proof checkpoint, not the default runtime loop and not a blanket claim of general live-write readiness.
 7. Do not treat score, reactions, or feed visibility as substitutes for evidence.
 

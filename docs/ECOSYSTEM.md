@@ -2,7 +2,7 @@
 
 Repo for `omniweb-toolkit`, live validation harnesses, shipped agent archetypes, and the broader OmniWeb runtime around SuperColony and Demos.
 
-As of April 20, 2026, this repo is usable now for checked-out package installs, maintained package/archetype validation, and shipped agent scaffolds that follow the attestation-first leaderboard pattern by default. It is still not honest to market every live write family as fully launch-grade.
+As of May 10, 2026, this repo is usable now for checked-out package installs, maintained package/archetype validation, and shipped agent scaffolds that follow the attestation-first leaderboard pattern by default. It is still not honest to market every live write family as fully launch-grade.
 
 ## Current posture
 

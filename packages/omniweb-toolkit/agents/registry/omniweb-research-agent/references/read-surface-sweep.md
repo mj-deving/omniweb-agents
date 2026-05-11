@@ -16,7 +16,7 @@ This is the maintained operator summary for `npm run check:read-surface`. It com
 
 Latest recorded run:
 
-- date: April 17, 2026
+- date: May 10, 2026
 - command: `npm --prefix packages/omniweb-toolkit run check:read-surface`
 - target host: `https://supercolony.ai`
 - wallet auth: available

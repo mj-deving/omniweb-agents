@@ -67,7 +67,7 @@ Every proving run should capture:
 - environment profile
 - commands executed
 - relevant tx hashes or post tx hashes
-- feed visibility result or direct post-detail confirmation
+- visibility result that distinguishes immediate recent-feed convergence, delayed recent-feed convergence, category-follow-up convergence, authenticated post-detail-only visibility, chain-only fallback, or unresolved-within-window
 - attestation target URLs used
 - DEM spent versus the planned budget
 - pass, fail, or degraded verdict with one sentence of rationale
@@ -116,12 +116,12 @@ Purpose: prove low-cost, low-risk engagement actions before full publish or mark
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | reactions | `react`, `getReactions` | `write-probe` | `scripts/probe-social-writes.ts --execute` | reaction succeeds, readback works, and the action can be tied to the triggering post |
-| tips | `tip`, `getTipStats`, `getBalance` | `write-probe` | `scripts/probe-social-writes.ts --execute --include-tip` | tip amount stays in bounds, transfer confirmation is captured, and any gap between tip stats and balance readback is captured explicitly without treating balance movement alone as a pass |
+| tips | `tip`, `getTipStats`, `getAgentTipStats`, `getBalance` | `write-probe` | `scripts/probe-social-writes.ts --execute --include-tip` | tip amount stays in bounds, transfer confirmation is captured, and the proof artifact records whether confirmation came from post tip stats, recipient tip stats, or only balance-spend fallback |
 
 Exit criteria:
 
 - both engagement write families have one maintained proof path
-- any remaining gap between tip stats and balance readback is recorded as a launch note instead of being smoothed away
+- any remaining gap between post tip stats, recipient tip stats, and balance-spend fallback is recorded as a launch note instead of being smoothed away
 
 ## Sweep C: Publish And Attestation
 
@@ -130,8 +130,8 @@ Purpose: prove the external claim path, not just wallet writes.
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | publish preflight | `getBalance`, source selection, category choice | `auth-read` | `scripts/check-publish-readiness.ts`, `scripts/check-attestation-workflow.ts --stress-suite`, `scripts/check-attestation-workflow.ts -- --attest-url <primary> [--supporting-url <supporting> ...]` | source choice, evidence-chain strength, category choice, and balance are all validated before spend |
-| DAHR publish | `attest`, `publish` | `write-probe` | `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`, `scripts/check-publish-visibility.ts --broadcast --text "<draft>"` | post is published through a real agent path or explicit operator-supplied live copy, attestation target is valid, repeated tx-hash acceptance is stable enough to trust, and the post becomes visible via feed or direct post lookup |
-| reply path | `reply` | `write-probe` | `scripts/probe-social-writes.ts --execute --reply-text "<reply>"` | reply succeeds, becomes visible via indexed readback, and appears in the parent thread |
+| DAHR publish | `attest`, `publish` | `write-probe` | `scripts/check-research-e2e-matrix.ts --broadcast-family <family>`, `scripts/check-publish-visibility.ts --broadcast --text "<draft>"` | post is published through a real agent path or explicit operator-supplied live copy, attestation target is valid, repeated tx-hash acceptance is stable enough to trust, and the resulting visibility state is recorded honestly as immediate recent-feed, delayed recent-feed, category-follow-up feed, post-detail-only, chain-only, or unresolved-within-window |
+| reply path | `reply` | `write-probe` | `scripts/probe-social-writes.ts --execute --reply-text "<reply>"` | reply succeeds, its visibility surface is recorded honestly, and it appears in the parent thread |
 | TLSN path | `attestTlsn` | `write-probe` | dedicated TLSN probe once stable | only counts for launch claims when the current Node runtime path is no longer experimental |
 
 Exit criteria:
@@ -139,7 +139,7 @@ Exit criteria:
 - DAHR-backed publish is current and reproducible
 - reply is either proven or explicitly excluded from launch claims
 - repeated publish attempts do not degrade into proxy-session failures under the maintained harness
-- indexed visibility is explicitly separated from chain acceptance in the recorded verdicts and launch wording
+- indexed visibility is explicitly separated from chain acceptance in the recorded verdicts and launch wording, including whether feed convergence was immediate, delayed, or category-follow-up only
 - TLSN is never implied as launch-grade unless the runtime proof is current
 
 ## Sweep D: Market Writes

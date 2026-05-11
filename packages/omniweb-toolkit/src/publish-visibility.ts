@@ -1,7 +1,12 @@
+export type PublishVisibilitySurface = "feed_indexed" | "post_detail" | "chain" | "none";
+
 export interface PublishVisibilityResult {
   attempted: true;
   visible: boolean;
   indexedVisible: boolean;
+  postDetailVisible: boolean;
+  chainVisible: boolean;
+  visibilitySurface: PublishVisibilitySurface;
   polls: number;
   elapsedMs: number;
   txHash?: string;
@@ -46,7 +51,12 @@ export async function verifyPublishVisibility(
   let polls = 0;
   let lastIndexedBlock: number | undefined;
   let lastError: string | undefined;
-  let chainVisible: PublishVisibilityResult | null = null;
+  let chainVisibleMatch: PublishVisibilityResult | null = null;
+  let postDetailVisible = false;
+  let postDetailVisibleMatch: Pick<
+    PublishVisibilityResult,
+    "txHash" | "observedCategory" | "observedBlockNumber"
+  > | null = null;
 
   while (now() <= deadline) {
     polls += 1;
@@ -66,6 +76,9 @@ export async function verifyPublishVisibility(
         attempted: true,
         visible: true,
         indexedVisible: true,
+        postDetailVisible,
+        chainVisible: Boolean(chainVisibleMatch),
+        visibilitySurface: "feed_indexed",
         polls,
         elapsedMs: now() - startedAt,
         txHash: recentFeedMatch.matched.txHash ?? recentFeedMatch.matched.tx_hash ?? txHash,
@@ -81,18 +94,34 @@ export async function verifyPublishVisibility(
     if (txHash && typeof omni?.colony?.getPostDetail === "function") {
       const postDetailResult = await omni.colony.getPostDetail(txHash);
       if (postDetailResult?.ok && postDetailResult.data?.post) {
+        postDetailVisible = true;
         const observedCategory =
           (postDetailResult.data.post.payload as { cat?: string } | undefined)?.cat;
+        postDetailVisibleMatch = {
+          txHash,
+          observedCategory,
+          observedBlockNumber: postDetailResult.data.post.blockNumber,
+        };
         if (observedCategory) {
           const categoryFeedMatch = await readFeedMatch(omni, txHash, textSnippet, {
             limit: opts.limit,
             category: observedCategory,
           });
+          if (categoryFeedMatch.result?.ok) {
+            lastIndexedBlock = typeof categoryFeedMatch.result.data?.meta?.lastBlock === "number"
+              ? categoryFeedMatch.result.data.meta.lastBlock
+              : lastIndexedBlock;
+          } else if (categoryFeedMatch.result) {
+            lastError = categoryFeedMatch.result?.error ?? lastError;
+          }
           if (categoryFeedMatch.matched) {
             return {
               attempted: true,
               visible: true,
               indexedVisible: true,
+              postDetailVisible,
+              chainVisible: Boolean(chainVisibleMatch),
+              visibilitySurface: "feed_indexed",
               polls,
               elapsedMs: now() - startedAt,
               txHash: categoryFeedMatch.matched.txHash ?? categoryFeedMatch.matched.tx_hash ?? txHash,
@@ -107,19 +136,6 @@ export async function verifyPublishVisibility(
             };
           }
         }
-
-        return {
-          attempted: true,
-          visible: true,
-          indexedVisible: true,
-          polls,
-          elapsedMs: now() - startedAt,
-          txHash,
-          verificationPath: "post_detail",
-          observedCategory,
-          observedBlockNumber: postDetailResult.data.post.blockNumber,
-          lastIndexedBlock,
-        };
       }
       if (!postDetailResult?.ok) {
         lastError = postDetailResult?.error ?? lastError;
@@ -138,10 +154,13 @@ export async function verifyPublishVisibility(
           : null;
 
         if (matched) {
-          chainVisible = {
+          chainVisibleMatch = {
             attempted: true,
             visible: true,
             indexedVisible: false,
+            postDetailVisible,
+            chainVisible: true,
+            visibilitySurface: "chain",
             polls,
             elapsedMs: now() - startedAt,
             txHash: matched.txHash ?? txHash,
@@ -161,12 +180,30 @@ export async function verifyPublishVisibility(
     await sleep(opts.pollMs);
   }
 
-  if (chainVisible) {
+  if (postDetailVisible && postDetailVisibleMatch) {
     return {
-      ...chainVisible,
+      attempted: true,
+      visible: true,
+      indexedVisible: false,
+      postDetailVisible: true,
+      chainVisible: Boolean(chainVisibleMatch),
+      visibilitySurface: "post_detail",
+      polls,
+      elapsedMs: now() - startedAt,
+      txHash: postDetailVisibleMatch.txHash,
+      verificationPath: "post_detail",
+      observedCategory: postDetailVisibleMatch.observedCategory,
+      observedBlockNumber: postDetailVisibleMatch.observedBlockNumber,
+      lastIndexedBlock,
+    };
+  }
+
+  if (chainVisibleMatch) {
+    return {
+      ...chainVisibleMatch,
       polls,
       lastIndexedBlock,
-      error: lastError ?? chainVisible.error,
+      error: lastError ?? chainVisibleMatch.error,
     };
   }
 
@@ -174,6 +211,9 @@ export async function verifyPublishVisibility(
     attempted: true,
     visible: false,
     indexedVisible: false,
+    postDetailVisible,
+    chainVisible: false,
+    visibilitySurface: "none",
     polls,
     elapsedMs: now() - startedAt,
     txHash,

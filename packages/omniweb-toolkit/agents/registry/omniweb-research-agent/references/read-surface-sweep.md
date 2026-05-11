@@ -61,7 +61,7 @@ No production-scope read gap was observed in the latest maintained sweep.
 
 Notable change from the prior run:
 
-- `getPriceHistory("BTC", 24)` now returned populated history data in the April 17, 2026 sweep
+- `getPriceHistory("BTC", 24)` returned populated history data in the April 17, 2026 sweep and again in the maintained May 10, 2026 rerun
 - the stale “200 but empty data” caveat should no longer be used as current production-host truth
 
 ## Dev-Only Mirrors Still Excluded

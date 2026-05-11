@@ -3,7 +3,76 @@ import { describe, expect, it, vi } from "vitest";
 import { verifyPublishVisibility } from "../../packages/omniweb-toolkit/src/publish-visibility";
 
 describe("verifyPublishVisibility", () => {
-  it("keeps polling after chain visibility and returns post_detail visibility separately from feed indexing", async () => {
+  it("keeps polling after post-detail visibility and upgrades to indexed feed visibility on a later poll", async () => {
+    let now = 0;
+    let categoryCalls = 0;
+    const getFeed = vi.fn().mockImplementation(async ({ category }: { limit: number; category?: string }) => {
+      if (category === "ANALYSIS") {
+        categoryCalls += 1;
+        return {
+          ok: true,
+          data: {
+            posts: categoryCalls >= 2
+              ? [{ txHash: "tx-late", blockNumber: 92, category: "ANALYSIS", text: "delayed category follow-up" }]
+              : [],
+            meta: { lastBlock: 301 },
+          },
+        };
+      }
+
+      return {
+        ok: true,
+        data: {
+          posts: [],
+          meta: { lastBlock: 300 },
+        },
+      };
+    });
+    const getPostDetail = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        post: {
+          txHash: "tx-late",
+          blockNumber: 92,
+          payload: { cat: "ANALYSIS" },
+        },
+      },
+    });
+
+    const result = await verifyPublishVisibility(
+      {
+        colony: { getFeed, getPostDetail },
+      },
+      "tx-late",
+      "delayed category follow-up",
+      {
+        timeoutMs: 2_000,
+        pollMs: 1_000,
+        limit: 25,
+        now: () => now,
+        sleep: async (ms) => { now += ms; },
+      },
+    );
+
+    expect(result).toMatchObject({
+      visible: true,
+      indexedVisible: true,
+      postDetailVisible: true,
+      chainVisible: false,
+      visibilitySurface: "feed_indexed",
+      verificationPath: "feed",
+      feedScope: "category",
+      txHash: "tx-late",
+      observedCategory: "ANALYSIS",
+      observedBlockNumber: 92,
+      elapsedMs: 1_000,
+      lastIndexedBlock: 301,
+    });
+    expect(getPostDetail).toHaveBeenCalledTimes(2);
+    expect(getFeed).toHaveBeenCalledTimes(4);
+  });
+
+  it("waits through the verification window before declaring post_detail-only visibility", async () => {
     let now = 0;
     let postDetailCalls = 0;
     const getFeed = vi.fn().mockResolvedValue({
@@ -41,7 +110,7 @@ describe("verifyPublishVisibility", () => {
       "tx-1",
       "hello world",
       {
-        timeoutMs: 10_000,
+        timeoutMs: 3_000,
         pollMs: 1_000,
         limit: 20,
         now: () => now,
@@ -58,10 +127,10 @@ describe("verifyPublishVisibility", () => {
       verificationPath: "post_detail",
       txHash: "tx-1",
       observedBlockNumber: 77,
-      elapsedMs: 2_000,
+      elapsedMs: 3_000,
     });
-    expect(getHivePosts).toHaveBeenCalledTimes(2);
-    expect(getPostDetail).toHaveBeenCalledTimes(3);
+    expect(getHivePosts).toHaveBeenCalledTimes(4);
+    expect(getPostDetail).toHaveBeenCalledTimes(4);
   });
 
   it("uses a category-scoped feed follow-up when generic feed window misses the post", async () => {

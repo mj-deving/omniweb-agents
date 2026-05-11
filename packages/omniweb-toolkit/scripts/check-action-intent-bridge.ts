@@ -29,11 +29,6 @@ interface MinimalDecision {
     targetTxHash?: string;
     reaction?: "agree" | "disagree" | "flag";
   };
-  readiness?: {
-    requiresWallet?: boolean;
-    requiresAttestation?: boolean;
-    requiresTargetPost?: boolean;
-  };
   facts?: Record<string, unknown>;
 }
 
@@ -53,9 +48,9 @@ const compilePolicyDecision = await loadPackageExport<
   }
 >("../dist/agent.js", "../src/agent.ts", "compilePolicyDecision");
 
-const buildInjectedPolicyRuntimeCapabilities = await loadPackageExport<
+const buildInjectedRuntimeCapabilities = await loadPackageExport<
   () => Record<string, unknown>
->("../dist/agent.js", "../src/agent.ts", "buildInjectedPolicyRuntimeCapabilities");
+>("../dist/agent.js", "../src/agent.ts", "buildInjectedRuntimeCapabilities");
 
 const planPolicyExecution = await loadPackageExport<
   (decision: MinimalDecision, options?: Record<string, unknown>) => {
@@ -97,10 +92,6 @@ const directActionDecision: MinimalDecision = {
     tags: ["bridge", "action"],
     confidence: 71,
   },
-  readiness: {
-    requiresWallet: true,
-    requiresAttestation: true,
-  },
 };
 
 const reactDecision: MinimalDecision = {
@@ -110,10 +101,6 @@ const reactDecision: MinimalDecision = {
     targetTxHash: "0xreact-target",
     reaction: "agree",
   },
-  readiness: {
-    requiresWallet: true,
-    requiresTargetPost: true,
-  },
 };
 
 const tipDecision: MinimalDecision = {
@@ -122,10 +109,6 @@ const tipDecision: MinimalDecision = {
     type: "tip",
     targetTxHash: "0xtip-target",
     amount: 3,
-  },
-  readiness: {
-    requiresWallet: true,
-    requiresTargetPost: true,
   },
 };
 
@@ -144,7 +127,7 @@ const replyAction = normalizeDecisionToActionIntent(replyDecision);
 const directAction = normalizeDecisionToActionIntent(directActionDecision);
 const skippedAction = normalizeDecisionToActionIntent(skippedDecision);
 
-const injectedRuntimeCapabilities = buildInjectedPolicyRuntimeCapabilities();
+const injectedRuntimeCapabilities = buildInjectedRuntimeCapabilities();
 const compiledPublish = compilePolicyDecision(publishDecision, {
   runtimeCapabilities: injectedRuntimeCapabilities,
 });
@@ -327,10 +310,10 @@ const checks = {
   publishActionNormalized: publishAction?.kind === "action" && publishAction.action?.type === "publish",
   publishActionCarriesText: publishAction?.action?.text === publishDecision.text,
   publishActionCarriesTags: Array.isArray(publishAction?.action?.tags) && publishAction?.action?.tags?.[0] === "bridge",
-  publishReadinessWallet: publishAction?.readiness?.requiresWallet === true,
+  publishActionOmitsPolicyReadiness: !("readiness" in (publishAction ?? {})),
   replyActionNormalized: replyAction?.kind === "action" && replyAction.action?.type === "reply",
   replyActionCarriesParent: replyAction?.action?.parentTxHash === replyDecision.parentTxHash,
-  replyReadinessTarget: replyAction?.readiness?.requiresTargetPost === true,
+  replyActionOmitsPolicyReadiness: !("readiness" in (replyAction ?? {})),
   directActionPassthrough: directAction === directActionDecision,
   skipReturnsNull: skippedAction === null,
   compiledPublishRequestMatches: compiledPublish.request.actionType === publishRequest.actionType,
@@ -350,7 +333,7 @@ const checks = {
   compiledTipResolutionExecutable: compiledTip.resolution?.status === "executable",
   canonicalTipEnvelopeReady: tipEnvelope.execution?.status === "executed"
     && tipEnvelope.execution?.actionType === "tip"
-    && tipEnvelope.execution?.verificationPath === "tip_stats"
+    && tipEnvelope.execution?.verificationPath === "post_tip_stats"
     && tipEnvelope.execution?.indexedVisible === true,
 };
 

@@ -1,4 +1,3 @@
-import type { RuntimeCapabilityResult } from "../readiness.js";
 import type { MinimalAgentState, MinimalObserveContext, MinimalObserveResult } from "../minimal-agent.js";
 import type { CompiledPolicyDecision, CompilePolicyDecisionOptions } from "./compile.js";
 import { compilePolicyDecision } from "./compile.js";
@@ -7,6 +6,11 @@ import { runPolicyDerive } from "./derive.js";
 import { runPolicyObserve } from "./observe.js";
 import { selectPolicyRoute } from "./routes.js";
 import type { PolicyDefinition, PolicyRunResult } from "./types.js";
+
+export {
+  buildInjectedPolicyRuntimeCapabilities,
+  buildInjectedRuntimeCapabilities,
+} from "../injected-runtime-capabilities.js";
 
 export type PolicyExecutionDisposition =
   | { kind: "skip"; status: "skipped" }
@@ -27,86 +31,6 @@ export interface PlanPolicyExecutionOptions extends CompilePolicyDecisionOptions
 export interface PlannedPolicyExecution<TState extends MinimalAgentState = MinimalAgentState>
   extends CompiledPolicyDecision<TState> {
   disposition: PolicyExecutionDisposition;
-}
-
-export function buildInjectedPolicyRuntimeCapabilities(): RuntimeCapabilityResult {
-  return {
-    canRead: true,
-    authReady: true,
-    writeReady: true,
-    recommendedMode: "write-ready",
-    blockers: [],
-    actionFamilies: {
-      publish: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: true,
-        requiresTargetPost: false,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery"],
-      },
-      reply: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: true,
-        requiresTargetPost: true,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery"],
-      },
-      react: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: false,
-        requiresTargetPost: true,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery"],
-      },
-      tip: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: false,
-        requiresTargetPost: true,
-        requiresMarketContext: false,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session bypasses file-based readiness discovery for live tip execution"],
-      },
-      bet: {
-        declared: true,
-        executable: true,
-        readiness: "ready",
-        requiresWallet: true,
-        requiresAttestation: false,
-        requiresTargetPost: false,
-        requiresMarketContext: true,
-        proofLevel: "real_runtime_action_family",
-        notes: ["Injected omni session executes bet actions through placeBet()/placeHL() with shared market-pool verification"],
-      },
-    },
-    readiness: {
-      ok: true,
-      canRead: true,
-      canAuth: true,
-      canWrite: true,
-      authState: "ready",
-      writeState: "ready",
-      missingEnv: [],
-      missingPackages: [],
-      credentialSourcesChecked: [],
-      runtimeCredentialSource: null,
-      notes: ["Injected omni session bypasses file-based readiness discovery"],
-    },
-  };
 }
 
 export function planPolicyExecution<TState extends MinimalAgentState = MinimalAgentState>(

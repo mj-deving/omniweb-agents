@@ -9,7 +9,7 @@ import type {
   MinimalVerificationOptions,
 } from "./minimal-agent.js";
 import { normalizeDecisionToResolvedIntent } from "./minimal-agent-resolver.js";
-import { buildInjectedPolicyRuntimeCapabilities } from "./policy/run.js";
+import { buildInjectedRuntimeCapabilities } from "./injected-runtime-capabilities.js";
 
 export interface ExecuteMinimalActionOptions<TState extends MinimalAgentState = MinimalAgentState> {
   omni: OmniWeb;
@@ -25,8 +25,7 @@ export async function executeMinimalAction<TState extends MinimalAgentState = Mi
 ): Promise<MinimalExecutionOutcome> {
   const { omni, decision, actionDecision, verification, dryRun = false } = options;
   const resolution = options.resolution ?? normalizeDecisionToResolvedIntent(actionDecision, {
-    runtimeCapabilities: buildInjectedPolicyRuntimeCapabilities(),
-    readiness: actionDecision.readiness,
+    runtimeCapabilities: buildInjectedRuntimeCapabilities(),
   });
 
   if (!resolution) {
@@ -62,8 +61,7 @@ export function validateAttestationDecision<TState extends MinimalAgentState>(
   decision: MinimalObserveResult<TState>,
 ): string | null {
   const resolution = normalizeDecisionToResolvedIntent(decision, {
-    runtimeCapabilities: buildInjectedPolicyRuntimeCapabilities(),
-    readiness: decision.kind === "action" ? decision.readiness : undefined,
+    runtimeCapabilities: buildInjectedRuntimeCapabilities(),
   });
   if (!resolution) return null;
   return validateResolvedIntentAttestation(resolution, decision.attestationPlan);

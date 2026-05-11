@@ -51,4 +51,29 @@ describe("minimal-agent starter asset", () => {
       "node --import tsx ./scripts/record-pending-verdict.ts",
     );
   });
+
+  it("exposes the same supervised checkpoint entrypoints from the colony-operator workspace bundle", () => {
+    const bundlePackageJson = JSON.parse(
+      readFileSync(
+        new URL("../../packages/omniweb-toolkit/agents/openclaw/colony-operator/package.json", import.meta.url),
+        "utf8",
+      ),
+    );
+
+    expect(bundlePackageJson.scripts["check:supervised-observation"]).toContain(
+      "check-supervised-observation.ts",
+    );
+    expect(bundlePackageJson.scripts["check:supervised-observation-eligibility"]).toContain(
+      "check-supervised-observation-eligibility.ts",
+    );
+    expect(bundlePackageJson.scripts["check:supervised-publish-verdict"]).toContain(
+      "check-supervised-publish-verdict.ts",
+    );
+    expect(bundlePackageJson.scripts["check:pending-verdicts"]).toContain(
+      "check-pending-verdicts.ts",
+    );
+    expect(bundlePackageJson.scripts["record:pending-verdict"]).toContain(
+      "record-pending-verdict.ts",
+    );
+  });
 });

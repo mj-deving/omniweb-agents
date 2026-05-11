@@ -366,7 +366,8 @@ async function executeTipIntent(args: {
       polls: 0,
       elapsedMs: 0,
       txHash: targetTxHash,
-      verificationPath: "tip_stats",
+      verificationPath: "none",
+      tipConfirmationSurface: "none",
       amount: normalizedAmount,
       recipientAddress: recipientAddress ?? undefined,
       beforeTipStats,
@@ -415,21 +416,28 @@ async function executeTipIntent(args: {
     );
     spendObserved = tipSpendObserved(beforeBalance, afterBalance, normalizedAmount);
 
-    if (tipStatsConverged || recipientTipStatsConverged || spendObserved || Date.now() >= deadline) {
+    if (tipStatsConverged || recipientTipStatsConverged || Date.now() >= deadline) {
       break;
     }
 
     await sleep(verificationOptions.pollMs);
   }
 
+  const tipConfirmationSurface = resolveTipConfirmationSurface({
+    tipStatsConverged,
+    recipientTipStatsConverged,
+    spendObserved,
+  });
+
   const verification: MinimalTipVerification = {
     attempted: true,
-    visible: true,
-    indexedVisible: tipStatsConverged || recipientTipStatsConverged || spendObserved,
+    visible: tipConfirmationSurface !== "none",
+    indexedVisible: tipStatsConverged || recipientTipStatsConverged,
     polls,
     elapsedMs: Date.now() - startedAt,
     txHash: targetTxHash,
-    verificationPath: "tip_stats",
+    verificationPath: tipConfirmationSurface,
+    tipConfirmationSurface,
     amount: normalizedAmount,
     tipTxHash: tipResult.data.txHash,
     recipientAddress: recipientAddress ?? undefined,
@@ -442,7 +450,7 @@ async function executeTipIntent(args: {
     tipStatsConverged,
     recipientTipStatsConverged,
     spendObserved,
-    error: tipStatsConverged || recipientTipStatsConverged || spendObserved
+    error: tipConfirmationSurface !== "none"
       ? undefined
       : "tip_readback_unconfirmed",
   };
@@ -890,6 +898,17 @@ function normalizeBetEntry(value: unknown): MinimalBettingPoolReadback["bets"][n
     return null;
   }
   return { txHash, predictedPrice, amount };
+}
+
+function resolveTipConfirmationSurface(args: {
+  tipStatsConverged: boolean;
+  recipientTipStatsConverged: boolean;
+  spendObserved: boolean;
+}): MinimalTipVerification["tipConfirmationSurface"] {
+  if (args.tipStatsConverged) return "post_tip_stats";
+  if (args.recipientTipStatsConverged) return "recipient_tip_stats";
+  if (args.spendObserved) return "balance_spend";
+  return "none";
 }
 
 function fixedBetReadbackSatisfied(

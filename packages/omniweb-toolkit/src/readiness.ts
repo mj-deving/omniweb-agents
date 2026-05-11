@@ -280,8 +280,8 @@ function buildRuntimeActionFamilies(readiness: WriteReadinessResult): Record<Run
       requiresMarketContext: false,
       proofLevel: "real_runtime_action_family",
       notes: [
-        "Executed by the minimal runtime through colony.tip() with tip-stat and balance readback verification.",
-        "Readback can confirm through post tip stats, recipient tip stats, or observed DEM balance spend.",
+        "Executed by the minimal runtime through colony.tip() with a three-step confirmation ladder.",
+        "Strongest confirmation is post tip stats, then recipient tip stats, with observed DEM balance spend only as a fallback signal.",
       ],
     },
     bet: {

@@ -52,8 +52,15 @@ export interface MinimalCycleSummary {
   attestationTxHash?: string;
   attestationResponseHash?: string;
   verificationPath?: PublishVisibilityResult["verificationPath"] | MinimalReactionVerification["verificationPath"] | MinimalTipVerification["verificationPath"] | MinimalMarketWriteVerification["verificationPath"];
+  visibilitySurface?: PublishVisibilityResult["visibilitySurface"];
   visible?: boolean;
   indexedVisible?: boolean;
+  postDetailVisible?: boolean;
+  chainVisible?: boolean;
+  tipConfirmationSurface?: MinimalTipVerification["tipConfirmationSurface"];
+  tipStatsConverged?: boolean;
+  recipientTipStatsConverged?: boolean;
+  spendObserved?: boolean;
   observedScore?: number;
   errorStage?: MinimalErrorStage;
   errorMessage?: string;
@@ -188,7 +195,8 @@ export interface MinimalTipVerification {
   polls: number;
   elapsedMs: number;
   txHash: string;
-  verificationPath: "tip_stats";
+  verificationPath: "post_tip_stats" | "recipient_tip_stats" | "balance_spend" | "none";
+  tipConfirmationSurface: "post_tip_stats" | "recipient_tip_stats" | "balance_spend" | "none";
   amount: number;
   tipTxHash?: string;
   recipientAddress?: string;
@@ -815,6 +823,9 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
   decision: MinimalObserveResult<TState>;
   outcome: MinimalCycleRecord<TState>["outcome"];
 }): MinimalCycleSummary {
+  const publishVisibility = asPublishVisibilityResult(args.outcome.execution.verification);
+  const tipVerification = asTipVerification(args.outcome.execution.verification);
+
   return {
     id: args.cycle.id,
     iteration: args.cycle.iteration,
@@ -827,8 +838,15 @@ function summarizeCycleFields<TState extends MinimalAgentState>(args: {
     attestationTxHash: args.outcome.execution.attestationTxHash,
     attestationResponseHash: args.outcome.execution.attestationResponseHash,
     verificationPath: args.outcome.execution.verification?.verificationPath,
+    visibilitySurface: publishVisibility?.visibilitySurface,
     visible: args.outcome.execution.verification?.visible,
     indexedVisible: args.outcome.execution.verification?.indexedVisible,
+    postDetailVisible: publishVisibility?.postDetailVisible,
+    chainVisible: publishVisibility?.chainVisible,
+    tipConfirmationSurface: tipVerification?.tipConfirmationSurface,
+    tipStatsConverged: tipVerification?.tipStatsConverged,
+    recipientTipStatsConverged: tipVerification?.recipientTipStatsConverged,
+    spendObserved: tipVerification?.spendObserved,
     observedScore: getObservedScore(args.outcome.execution.verification),
     errorStage: args.outcome.execution.error?.stage,
     errorMessage: args.outcome.execution.error?.message,
@@ -902,8 +920,21 @@ function renderCycleSummary<TState extends MinimalAgentState>(
   }
 
   if (record.outcome.execution.verification) {
+    const publishVisibility = asPublishVisibilityResult(record.outcome.execution.verification);
+    const tipVerification = asTipVerification(record.outcome.execution.verification);
     lines.push(`- Visible: ${record.outcome.execution.verification.visible}`);
     lines.push(`- IndexedVisible: ${record.outcome.execution.verification.indexedVisible}`);
+    if (publishVisibility) {
+      lines.push(`- PostDetailVisible: ${publishVisibility.postDetailVisible}`);
+      lines.push(`- ChainVisible: ${publishVisibility.chainVisible}`);
+      lines.push(`- VisibilitySurface: ${publishVisibility.visibilitySurface}`);
+    }
+    if (tipVerification) {
+      lines.push(`- TipConfirmationSurface: ${tipVerification.tipConfirmationSurface}`);
+      lines.push(`- TipStatsConverged: ${tipVerification.tipStatsConverged}`);
+      lines.push(`- RecipientTipStatsConverged: ${tipVerification.recipientTipStatsConverged}`);
+      lines.push(`- BalanceSpendObserved: ${tipVerification.spendObserved}`);
+    }
     lines.push(`- VerificationPath: ${record.outcome.execution.verification.verificationPath ?? "none"}`);
     lines.push(`- VerificationPolls: ${record.outcome.execution.verification.polls}`);
     const observedScore = getObservedScore(record.outcome.execution.verification);
@@ -1108,6 +1139,9 @@ function buildSessionResult<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
   scorecardSummary: Record<string, unknown> | null,
 ): SessionLedgerResult {
+  const publishVisibility = asPublishVisibilityResult(record.outcome.execution.verification);
+  const tipVerification = asTipVerification(record.outcome.execution.verification);
+
   return {
     version: 1,
     session_id: record.sessionId,
@@ -1122,6 +1156,13 @@ function buildSessionResult<TState extends MinimalAgentState>(
     tx_hash: record.outcome.execution.txHash,
     indexed_visible: record.outcome.execution.verification?.indexedVisible,
     verification_path: record.outcome.execution.verification?.verificationPath ?? null,
+    visibility_surface: publishVisibility?.visibilitySurface ?? null,
+    post_detail_visible: publishVisibility?.postDetailVisible ?? null,
+    chain_visible: publishVisibility?.chainVisible ?? null,
+    tip_confirmation_surface: tipVerification?.tipConfirmationSurface ?? null,
+    tip_stats_converged: tipVerification?.tipStatsConverged ?? null,
+    recipient_tip_stats_converged: tipVerification?.recipientTipStatsConverged ?? null,
+    balance_spend_observed: tipVerification?.spendObserved ?? null,
   };
 }
 
@@ -1129,16 +1170,40 @@ function buildScorecardSummary<TState extends MinimalAgentState>(
   record: MinimalCycleRecord<TState>,
 ): Record<string, unknown> | null {
   const verification = record.outcome.execution.verification;
+  const publishVisibility = asPublishVisibilityResult(verification);
   const observedScore = getObservedScore(verification);
   if (typeof observedScore === "number") {
     return {
       observed_score: observedScore,
       indexed_visible: verification?.indexedVisible ?? false,
       verification_path: verification?.verificationPath ?? null,
+      visibility_surface: publishVisibility?.visibilitySurface ?? null,
+      post_detail_visible: publishVisibility?.postDetailVisible ?? null,
+      chain_visible: publishVisibility?.chainVisible ?? null,
     };
   }
 
   return null;
+}
+
+function asPublishVisibilityResult(
+  verification: MinimalCycleRecord["outcome"]["execution"]["verification"] | undefined,
+): PublishVisibilityResult | undefined {
+  if (!verification) {
+    return undefined;
+  }
+
+  return "visibilitySurface" in verification ? verification as PublishVisibilityResult : undefined;
+}
+
+function asTipVerification(
+  verification: MinimalCycleRecord["outcome"]["execution"]["verification"] | undefined,
+): MinimalTipVerification | undefined {
+  if (!verification) {
+    return undefined;
+  }
+
+  return "tipConfirmationSurface" in verification ? verification as MinimalTipVerification : undefined;
 }
 
 function buildStopReasons<TState extends MinimalAgentState>(
@@ -1173,8 +1238,16 @@ function buildStopReasons<TState extends MinimalAgentState>(
     reasons.add("placeholder_attest_url");
   }
   const verification = record.outcome.execution.verification;
-  if (verification?.visible && !verification.indexedVisible && verification.verificationPath !== "betting_pool" && verification.verificationPath !== "higher_lower_pool") {
+  const publishVisibility = asPublishVisibilityResult(verification);
+  const tipVerification = asTipVerification(verification);
+  if (publishVisibility?.visible && !publishVisibility.indexedVisible) {
     reasons.add("indexer_lag");
+  }
+  if (tipVerification?.tipConfirmationSurface === "balance_spend") {
+    reasons.add("tip_readback_fallback");
+  }
+  if (tipVerification?.tipConfirmationSurface === "none") {
+    reasons.add("tip_readback_unconfirmed");
   }
   if (record.outcome.resolution?.status === "blocked") {
     reasons.add("runtime_capability_blocked");

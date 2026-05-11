@@ -22,6 +22,9 @@ export { runPolicyObserve } from "./policy/observe.js";
 export { selectPolicyRoute } from "./policy/routes.js";
 export {
   buildInjectedPolicyRuntimeCapabilities,
+  buildInjectedRuntimeCapabilities,
+} from "./injected-runtime-capabilities.js";
+export {
   planPolicyExecution,
   runPolicy,
   runPolicyWithTrace,

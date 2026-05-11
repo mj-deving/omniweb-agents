@@ -5,7 +5,6 @@ import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
 import type {
   MinimalActionIntent,
-  MinimalActionReadiness,
   MinimalActionType,
   PolicyMarketBetKind,
   PolicyMarketDirection,
@@ -21,10 +20,8 @@ import {
 } from "./session-ledger.js";
 import { executeMinimalAction } from "./minimal-agent-executor.js";
 import { getObservedScore } from "./minimal-agent-verifier.js";
-import {
-  buildInjectedPolicyRuntimeCapabilities,
-  planPolicyExecution,
-} from "./policy/run.js";
+import { planPolicyExecution } from "./policy/run.js";
+import { buildInjectedRuntimeCapabilities } from "./injected-runtime-capabilities.js";
 import type { WriteReadinessOptions } from "./readiness.js";
 
 export type MinimalAgentState = Record<string, unknown>;
@@ -120,7 +117,6 @@ export type {
 export interface ActionIntentDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
   kind: "action";
   action: MinimalActionIntent;
-  readiness?: MinimalActionReadiness;
 }
 
 export interface SkipDecision<TState extends MinimalAgentState = MinimalAgentState> extends BaseDecision<TState> {
@@ -386,6 +382,9 @@ export { runPolicyObserve } from "./policy/observe.js";
 export { selectPolicyRoute } from "./policy/routes.js";
 export {
   buildInjectedPolicyRuntimeCapabilities,
+  buildInjectedRuntimeCapabilities,
+} from "./injected-runtime-capabilities.js";
+export {
   planPolicyExecution,
   runPolicy,
   runPolicyWithTrace,
@@ -511,7 +510,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
     packageResolver: opts.readinessOptions?.packageResolver,
     agentName: opts.readinessOptions?.agentName,
     dryRun: cycle.dryRun,
-    runtimeCapabilities: opts.omni ? buildInjectedPolicyRuntimeCapabilities() : undefined,
+    runtimeCapabilities: opts.omni ? buildInjectedRuntimeCapabilities() : undefined,
   });
 
   if (policyExecution.disposition.kind === "skip") {

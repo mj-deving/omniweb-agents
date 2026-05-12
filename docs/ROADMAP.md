@@ -122,9 +122,9 @@ Important nuance:
 
 - `0z87` and `5xp4.8` are closed proof checkpoints, not the active blocker anymore.
 - `uw66.14` is merged as PR #378 and successfully encoded node/API balance-divergence truth.
-- A fresh bounded rerun on `node3.demos.sh` now shows aligned balance truth (`1000 DEM` on colony/API and raw chain) plus green no-spend readiness.
-- The remaining blocker for `uw66.1` is narrower: `publish failed: dahr.startProxy() timed out after 30000ms` on the live publish path.
-- The active bounded slice is therefore `uw66.15`, which records that post-`uw66.14` rerun truth and keeps `uw66.1` blocked for the right reason.
+- PR #379 (`uw66.15`) and PR #380 (`uw66.16`) narrowed the old balance-divergence story, but the blocker is now broader than just node3: direct auth challenge calls to `supercolony.ai` are returning `500`, while node hosts do not expose that auth path at all (`404`).
+- Fresh true per-node spend-path probes split the remaining route truth: `node2` currently reports raw chain balance `0` and fails attestation with insufficient balance, while `node3` and `demosnode.discus.sh` still fail with `dahr.startProxy() timed out after 30000ms`.
+- The active bounded slice is therefore `uw66.18`, which records the combined auth-API plus cross-node spend-path blocker truth and keeps `uw66.1` blocked for the right reason.
 
 ## Explicitly not next
 

@@ -94,6 +94,7 @@ Interpretation:
 - `check:publish` answers whether the package is structurally shippable
 - `check:attestation` answers whether the evidence chain is strong enough
 - `check-publish-readiness.ts` answers whether the current runtime, auth, and guardrails permit a write, and should surface missing credential sources as a no-spend preflight failure rather than a late publish-path surprise
+- if readiness reports `balance_truth_diverged`, treat the lane as blocked by upstream node/API state inconsistency rather than spend-ready; do not keep retrying live writes until the active RPC node, raw chain balance, and colony/API balance tell one honest story again
 - `check-supervised-observation-eligibility.ts` answers the stricter launch-ordering question for the minimal supervised observation lane: are package publish, credentials, and draft-quality all green at once yet?
 - the actual live publish proof must either use a real agent-backed path or explicit operator-supplied live text; canned operational verification copy does not count
 
@@ -167,6 +168,8 @@ These failures do **not** automatically invalidate the attestation or chain-writ
 | isolated probe success with no repetition | the specific run worked | that the pipeline is reliably launch-ready |
 
 These failures are blocker-class for launch messaging:
+
+- active-RPC balance truth divergence (for example, colony/API balance and raw chain balance disagree on the same wallet during the same proof window)
 
 - repeated inability to get a valid DAHR proof from healthy candidate sources
 - repeated publish tx failure after successful readiness and attestation preflight

@@ -68,7 +68,8 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   const { demos, address, rpcUrl, algorithm } = await connectWallet(envPath, opts?.agentName);
 
   // Step 2: Create SDK bridge
-  const sdkBridge = createSdkBridge(demos, opts?.apiBaseUrl, AUTH_PENDING_TOKEN);
+  const effectiveApiBaseUrl = opts?.apiBaseUrl ?? getApiUrl();
+  const sdkBridge = createSdkBridge(demos, effectiveApiBaseUrl, AUTH_PENDING_TOKEN);
 
   // Step 3: Authenticate (graceful degradation — chain-only on failure)
   const authSession = createAuthSession(demos, address);
@@ -134,7 +135,7 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
     sdkBridge,
     address,
     rpcUrl,
-    apiBaseUrl: getApiUrl(),
+    apiBaseUrl: effectiveApiBaseUrl,
     algorithm,
     getToken,
     getAuthState: () => authSession.getState(),

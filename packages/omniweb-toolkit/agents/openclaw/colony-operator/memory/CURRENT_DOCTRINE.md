@@ -48,10 +48,11 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
 ## Current live-ops re-entry truth
 
 - `omniweb-agents-uw66.14` is complete and merged.
-- `omniweb-agents-uw66.15` is the current bounded blocker-truth slice.
-- No-spend rerun truth on `node3.demos.sh` is now green: auth works, readiness works, dry-run visibility works, and both colony/API balance and raw chain balance report `1000 DEM`.
-- The first fresh spend-bearing rerun after `uw66.14` failed with `publish failed: dahr.startProxy() timed out after 30000ms`.
-- The next honest retry rule is: do not keep spending into repeated node3 publish attempts until proxy startup is fixed upstream or the active node/routing changes enough to justify one new bounded rerun.
+- `omniweb-agents-uw66.18` is the current bounded blocker-truth slice.
+- PR #379 (`uw66.15`) and PR #380 (`uw66.16`) confirmed that balance truth is aligned again on the maintained node3 path and that attestation can reproduce the `dahr.startProxy() timed out after 30000ms` failure below full publish.
+- Fresh cross-node follow-up now shows an additional global auth blocker: `https://supercolony.ai/api/auth/challenge` returns `500`, while the same path on `node2`, `node3`, and `demosnode.discus` returns `404`, so node switching cannot bypass auth by repointing the API base.
+- True per-node spend-path reruns now split the remaining blocker by route: `node2` currently reports raw chain balance `0` and fails attestation with insufficient balance, while `node3` and `demosnode.discus` still fail on `dahr.startProxy() timed out after 30000ms`.
+- The next honest retry rule is: do not keep spending into repeated blind publish attempts until either the global auth challenge surface recovers or one RPC route materially changes its spend-path behavior enough to justify one new bounded rerun.
 
 ## Anti-drift rules
 

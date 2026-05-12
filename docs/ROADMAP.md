@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-10
+updated: 2026-05-12
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is now landed through `5xp4.15`; roadmap, bundle, and proof surfaces now match the playbook-owned policy architecture on `main`, with PR #372 closing the docs/proofs realignment slice."
+summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops lane has moved from balance-divergence truth to a narrower node3 DAHR/Web2 proxy-start blocker after PR #378."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -30,6 +30,7 @@ Anti-drift rule:
 - for current package architecture planning in the seam-thinning band, treat `packages/omniweb-toolkit/references/current-toolkit-architecture-map-annotated.md` as the live architecture anchor and keep planning aligned to it
 - if the shared project direction changed materially, refresh the Beads shared memory key `omniweb-agents-colony-operator-strategic-truth` too
 - if only execution state changed (active bead, PR, wait, merge), update Beads/GitHub without forcing roadmap/memory edits
+- if the explicit immediate blocker for the current live-ops lane changes materially, refresh the local re-entry mirror and this roadmap together so fresh sessions do not retry the wrong failure mode
 - if only doctrine/working-style changed, update `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md` without forcing roadmap edits
 
 ## Where We Stand
@@ -116,6 +117,14 @@ The next work is not a vague band anymore; it is an explicit PR-sized Beads ladd
 Important nuance:
 - `5xp4.8` still matters as a maintained supervised-publish proof checkpoint, but it is **parallel** to this closeout lane rather than the next architecture slice.
 - PR #360 is the committed checkpoint for planning state, not PR1 of implementation.
+
+## Current frozen-seam colony live-ops band
+
+- `0z87` and `5xp4.8` are closed proof checkpoints, not the active blocker anymore.
+- `uw66.14` is merged as PR #378 and successfully encoded node/API balance-divergence truth.
+- A fresh bounded rerun on `node3.demos.sh` now shows aligned balance truth (`1000 DEM` on colony/API and raw chain) plus green no-spend readiness.
+- The remaining blocker for `uw66.1` is narrower: `publish failed: dahr.startProxy() timed out after 30000ms` on the live publish path.
+- The active bounded slice is therefore `uw66.15`, which records that post-`uw66.14` rerun truth and keeps `uw66.1` blocked for the right reason.
 
 ## Explicitly not next
 

@@ -149,6 +149,9 @@ try {
   const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
   const session = await createSessionFromRuntime(omni.runtime, { stateDir, allowInsecureUrls });
   const authToken = await omni.runtime.getToken();
+  const runtimeAuthState = typeof omni.runtime.getAuthState === "function"
+    ? omni.runtime.getAuthState()
+    : null;
 
   const balanceTruth = await readRuntimeBalanceTruth(omni);
   const feedResult = await omni.colony.getFeed({ limit: 3 });
@@ -211,11 +214,21 @@ try {
         auth: {
           tokenAvailable: !!authToken,
           sdkBridgeApiAccess: omni.runtime.sdkBridge.apiAccess,
+          apiBaseUrl: omni.runtime.apiBaseUrl,
         },
         checks: {
           connect: true,
           credentialReadiness,
           tokenAvailable: !!authToken,
+          runtimeAuthState: runtimeAuthState
+            ? {
+                ok: runtimeAuthState.ok,
+                state: runtimeAuthState.state,
+                source: runtimeAuthState.source,
+                expiresAt: runtimeAuthState.expiresAt,
+                detail: runtimeAuthState.detail,
+              }
+            : null,
           balance: balanceTruth,
           feedRead: {
             ok: feedOk,

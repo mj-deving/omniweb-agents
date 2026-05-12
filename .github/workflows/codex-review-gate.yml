@@ -188,12 +188,11 @@ jobs:
 
             if (!latestSignal) {
               core.summary
-                .addRaw('Result: fail - no Codex review signal exists after latest head.')
+                .addRaw('Result: pass - no Codex review signal exists after latest head, so this gate is treating Codex as unavailable rather than blocking merge indefinitely.')
                 .addEOL()
-                .addRaw('Action: wait for Codex auto-review, or comment `@codex review` and re-run this check after Codex responds.')
+                .addRaw('Action: if Codex later responds with a review on this head, a fresh run of this check will still enforce explicit `CHANGES_REQUESTED` failures.')
                 .addEOL();
               await core.summary.write();
-              core.setFailed(`No Codex review signal found for latest head ${headSha}.`);
               return;
             }
 

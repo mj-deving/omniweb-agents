@@ -1,8 +1,8 @@
 # CURRENT_DOCTRINE.md
 
 Status: active
-Updated: 2026-05-10
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint)
+Updated: 2026-05-12
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#378` — https://github.com/mj-deving/omniweb-agents/pull/378 (node/API blocker-truth closeout)
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
 
@@ -21,6 +21,8 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
   - substrate/runtime ownership of capability truth, readiness, execution, and verification
   - explicit capability/readiness truth before wallet-backed writes
 - The docs/proofs realignment slice `5xp4.15` is now closed by PR #372.
+- In the frozen-seam colony live-ops band, `uw66.14` is now merged as PR #378 and the active blocker has narrowed: node3 balance truth is aligned again, but the spend-bearing publish path still fails on `dahr.startProxy() timed out after 30000ms`.
+- `uw66.1` therefore remains blocked, but specifically on `dahr_web2_proxy_failure`, not on balance divergence.
 
 ## Canonical sources
 
@@ -29,6 +31,7 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
 - `packages/omniweb-toolkit/references/playbook-policy-implementation-plan.md`
 - PR #371 / commit `a6129ee3`
 - PR #372 / commit `33606051`+
+- PR #378 / commit `c49693c7`
 - `bd show omniweb-agents-5xp4 --json`
 - `bd show omniweb-agents-5xp4.15 --json`
 
@@ -41,6 +44,14 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
 5. `omniweb-agents-5xp4.13` — bring tip into the shared seam honestly ✅ landed
 6. `omniweb-agents-5xp4.14` — bring market/bet writes into the same seam ✅ landed
 7. `omniweb-agents-5xp4.15` — realign docs, proof surfaces, and bundle story around the new architecture ✅ landed
+
+## Current live-ops re-entry truth
+
+- `omniweb-agents-uw66.14` is complete and merged.
+- `omniweb-agents-uw66.15` is the current bounded blocker-truth slice.
+- No-spend rerun truth on `node3.demos.sh` is now green: auth works, readiness works, dry-run visibility works, and both colony/API balance and raw chain balance report `1000 DEM`.
+- The first fresh spend-bearing rerun after `uw66.14` failed with `publish failed: dahr.startProxy() timed out after 30000ms`.
+- The next honest retry rule is: do not keep spending into repeated node3 publish attempts until proxy startup is fixed upstream or the active node/routing changes enough to justify one new bounded rerun.
 
 ## Anti-drift rules
 

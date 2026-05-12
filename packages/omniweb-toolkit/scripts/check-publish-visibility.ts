@@ -16,6 +16,7 @@
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.ts";
 import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { assertLiveColonyCopy } from "./_live-colony-copy-guard.js";
+import { readRuntimeBalanceTruth, type RuntimeBalanceTruth } from "./_runtime-balance-truth.js";
 import {
   describePublishVisibilityResult,
   summarizePublishVisibilityAttempts,
@@ -28,6 +29,7 @@ const DEFAULT_REPLY_CATEGORY = "ANALYSIS";
 type AttemptKind = "publish" | "reply";
 
 interface ProbeAttempt {
+  laneStatus?: ReturnType<typeof classifyAttemptLaneStatus>;
   kind: AttemptKind;
   run: number;
   draft: {
@@ -119,12 +121,14 @@ if (runs <= 0 || feedTimeoutMs <= 0 || feedPollMs <= 0 || feedLimit <= 0) {
 try {
   const connect = await loadConnect();
   const omni = await connect({ stateDir, allowInsecureUrls });
-  const initialBalance = await readBalance(omni);
+  const initialBalance = await readRuntimeBalanceTruth(omni);
+
+  const initialLaneStatus = classifyAttemptLaneStatus(undefined, initialBalance);
 
   if (!broadcast) {
     console.log(JSON.stringify({
       attempted: false,
-      ok: true,
+      ok: initialLaneStatus.status === "ready",
       address: omni.address,
       stateDir: stateDir ?? "(default)",
       runs,
@@ -135,7 +139,9 @@ try {
       feedTimeoutMs,
       feedPollMs,
       feedLimit,
-      initialBalanceDem: initialBalance,
+      runtime: buildRuntimeContext(omni, initialBalance),
+      initialBalance,
+      laneStatus: initialLaneStatus,
       plannedAttempts: buildPlan({
         runs,
         replyAfterPublish,
@@ -148,6 +154,38 @@ try {
       message: "Dry run only. Re-run with --broadcast to execute real publish/reply visibility probes.",
     }, null, 2));
     process.exit(0);
+  }
+
+  if (initialLaneStatus.status !== "ready") {
+    console.log(JSON.stringify({
+      attempted: false,
+      ok: false,
+      checkedAt: new Date().toISOString(),
+      address: omni.address,
+      stateDir: stateDir ?? "(default)",
+      runs,
+      replyAfterPublish,
+      attestUrl,
+      category,
+      replyCategory,
+      feedTimeoutMs,
+      feedPollMs,
+      feedLimit,
+      runtime: buildRuntimeContext(omni, initialBalance),
+      initialBalance,
+      laneStatus: initialLaneStatus,
+      plannedAttempts: buildPlan({
+        runs,
+        replyAfterPublish,
+        text,
+        replyText,
+        category,
+        replyCategory,
+        attestUrl,
+      }),
+      message: "Broadcast aborted before any live write attempt because the lane is already blocked upstream.",
+    }, null, 2));
+    process.exit(1);
   }
 
   const attempts: ProbeAttempt[] = [];
@@ -187,9 +225,10 @@ try {
     attempts.push(replyAttempt);
   }
 
-  const finalBalance = await readBalance(omni);
+  const finalBalance = await readRuntimeBalanceTruth(omni);
   const summary = summarizeAttempts(attempts);
-  const ok = summary.failedCount === 0 && summary.acceptedCount > 0;
+  const laneStatus = classifyLaneStatus({ attempts, initialBalance, finalBalance });
+  const ok = summary.failedCount === 0 && summary.acceptedCount > 0 && laneStatus.status === "ready";
 
   console.log(JSON.stringify({
     attempted: true,
@@ -205,9 +244,11 @@ try {
     feedTimeoutMs,
     feedPollMs,
     feedLimit,
-    initialBalanceDem: initialBalance,
-    finalBalanceDem: finalBalance,
-    balanceDeltaDem: balanceDelta(initialBalance, finalBalance),
+    runtime: buildRuntimeContext(omni, finalBalance),
+    initialBalance,
+    finalBalance,
+    balanceDeltaDem: balanceDelta(initialBalance.effectiveDem, finalBalance.effectiveDem),
+    laneStatus,
     summary,
     attempts,
   }, null, 2));
@@ -317,6 +358,7 @@ async function executePublishAttempt(
     visibility,
     visibilitySummary: describePublishVisibilityResult(visibility),
     error: write.accepted ? undefined : normalizeError(write.error, "UNKNOWN", "Unknown publish failure"),
+    laneStatus: classifyAttemptLaneStatus(write.error, await readRuntimeBalanceTruth(omni)),
   };
 }
 
@@ -352,6 +394,7 @@ async function executeReplyAttempt(
     visibility,
     visibilitySummary: describePublishVisibilityResult(visibility),
     error: write.accepted ? undefined : normalizeError(write.error, "UNKNOWN", "Unknown reply failure"),
+    laneStatus: classifyAttemptLaneStatus(write.error, await readRuntimeBalanceTruth(omni)),
   };
 }
 
@@ -359,17 +402,69 @@ function summarizeAttempts(attempts: ProbeAttempt[]) {
   return summarizePublishVisibilityAttempts(attempts);
 }
 
-async function readBalance(omni: any): Promise<number | null> {
-  try {
-    const result = await omni.colony.getBalance();
-    if (!result?.ok) return null;
-    const data = result.data as { balance?: number | string; available?: number | string } | undefined;
-    const value = data?.balance ?? data?.available;
-    const numeric = typeof value === "number" ? value : Number(value);
-    return Number.isFinite(numeric) ? numeric : null;
-  } catch {
-    return null;
+function buildRuntimeContext(omni: any, balance: RuntimeBalanceTruth) {
+  return {
+    rpcUrl: omni?.runtime?.rpcUrl ?? null,
+    address: omni?.address ?? null,
+    chainBlockNumber: balance.chainBlockNumber,
+  };
+}
+
+function classifyAttemptLaneStatus(
+  error: { code?: string; message?: string } | undefined,
+  balance: RuntimeBalanceTruth,
+): { status: "ready" | "blocked_upstream"; blocker?: string; message?: string } {
+  if (balance.divergence.blocksWriteReadiness) {
+    return {
+      status: "blocked_upstream",
+      blocker: "node_api_balance_divergence",
+      message: balance.divergence.message,
+    };
   }
+
+  const message = error?.message ?? "";
+  if (/startProxy\(\) timed out|startproxy timeout|web2 proxy|proxy session/i.test(message)) {
+    return {
+      status: "blocked_upstream",
+      blocker: "dahr_web2_proxy_failure",
+      message,
+    };
+  }
+
+  return { status: "ready" };
+}
+
+function classifyLaneStatus(opts: {
+  attempts: ProbeAttempt[];
+  initialBalance: RuntimeBalanceTruth;
+  finalBalance: RuntimeBalanceTruth;
+}): { status: "ready" | "blocked_upstream" | "degraded_visibility"; blocker?: string; message?: string } {
+  if (opts.initialBalance.divergence.blocksWriteReadiness || opts.finalBalance.divergence.blocksWriteReadiness) {
+    return {
+      status: "blocked_upstream",
+      blocker: "node_api_balance_divergence",
+      message: opts.initialBalance.divergence.message ?? opts.finalBalance.divergence.message,
+    };
+  }
+
+  const proxyAttempt = opts.attempts.find((attempt) => attempt.laneStatus?.blocker === "dahr_web2_proxy_failure");
+  if (proxyAttempt?.laneStatus?.message) {
+    return {
+      status: "blocked_upstream",
+      blocker: "dahr_web2_proxy_failure",
+      message: proxyAttempt.laneStatus.message,
+    };
+  }
+
+  if (opts.attempts.some((attempt) => attempt.accepted && !attempt.visibility?.indexedVisible)) {
+    return {
+      status: "degraded_visibility",
+      blocker: "visibility_not_indexed",
+      message: "One or more accepted writes did not become indexed-visible within the verification window.",
+    };
+  }
+
+  return { status: "ready" };
 }
 
 function appendRunTag(text: string, run: number): string {

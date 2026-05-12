@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const FAKE_ADDRESS = "0xfakeaddress1234567890";
 const FAKE_TOKEN = "test-auth-token-123";
 
-const { fakeDemos, mockSdkBridge, mockConnectWallet, mockCreateAuthSession, mockApiCall, mockResolveProvider } = vi.hoisted(() => {
+const { fakeDemos, mockSdkBridge, mockConnectWallet, mockCreateAuthSession, mockApiCall, mockGetApiUrl, mockResolveProvider } = vi.hoisted(() => {
   const fakeDemos = {
     connect: vi.fn(),
     connectWallet: vi.fn(),
@@ -50,6 +50,7 @@ const { fakeDemos, mockSdkBridge, mockConnectWallet, mockCreateAuthSession, mock
       getState: vi.fn().mockReturnValue({ ok: true, state: "authenticated", token: "test-auth-token-123" }),
     })),
     mockApiCall: vi.fn().mockResolvedValue({ ok: true, status: 200, data: {} }),
+    mockGetApiUrl: vi.fn().mockReturnValue("https://supercolony.ai"),
     mockResolveProvider: vi.fn().mockReturnValue({ name: "mock-provider", generate: vi.fn().mockResolvedValue("mock response") }),
   };
 });
@@ -57,6 +58,7 @@ const { fakeDemos, mockSdkBridge, mockConnectWallet, mockCreateAuthSession, mock
 vi.mock("../../src/lib/network/sdk.js", () => ({
   connectWallet: mockConnectWallet,
   apiCall: mockApiCall,
+  getApiUrl: mockGetApiUrl,
 }));
 
 vi.mock("../../src/lib/auth/auth.js", () => ({
@@ -99,6 +101,7 @@ describe("createAgentRuntime", () => {
       getState: vi.fn().mockReturnValue({ ok: true, state: "authenticated", token: FAKE_TOKEN }),
     }));
     mockApiCall.mockResolvedValue({ ok: true, status: 200, data: {} });
+    mockGetApiUrl.mockReturnValue("https://supercolony.ai");
     mockResolveProvider.mockReturnValue({ name: "mock-provider", generate: vi.fn() });
   });
 
@@ -108,6 +111,7 @@ describe("createAgentRuntime", () => {
     expect(runtime.address).toBe(FAKE_ADDRESS);
     expect(runtime.rpcUrl).toBe("https://rpc.test");
     expect(runtime.algorithm).toBe("ed25519");
+    expect(runtime.apiBaseUrl).toBe("https://supercolony.ai");
     expect(runtime.demos).toBe(fakeDemos);
     expect(runtime.sdkBridge).toBe(mockSdkBridge);
     expect(typeof runtime.getToken).toBe("function");
@@ -146,6 +150,15 @@ describe("createAgentRuntime", () => {
     expect(createSdkBridge).toHaveBeenCalledWith(fakeDemos, "https://custom.api.com", "__AUTH_PENDING__");
   });
 
+  it("reports the effective apiBaseUrl used by the runtime", async () => {
+    mockGetApiUrl.mockReturnValueOnce("https://derived.api.test");
+    const runtime = await createAgentRuntime();
+    expect(runtime.apiBaseUrl).toBe("https://derived.api.test");
+
+    const overridden = await createAgentRuntime({ apiBaseUrl: "https://custom.api.com" });
+    expect(overridden.apiBaseUrl).toBe("https://custom.api.com");
+  });
+
   it("creates a shared auth session with demos and address", async () => {
     await createAgentRuntime();
     expect(mockCreateAuthSession).toHaveBeenCalledWith(fakeDemos, FAKE_ADDRESS);
@@ -168,6 +181,11 @@ describe("createAgentRuntime", () => {
     const runtime = await createAgentRuntime();
     const token = await runtime.getToken();
     expect(token).toBe(FAKE_TOKEN);
+  });
+
+  it("exposes auth session state", async () => {
+    const runtime = await createAgentRuntime();
+    expect(runtime.getAuthState()).toEqual({ ok: true, state: "authenticated", token: FAKE_TOKEN });
   });
 
   it("authenticatedApiCall passes the token to apiCall", async () => {

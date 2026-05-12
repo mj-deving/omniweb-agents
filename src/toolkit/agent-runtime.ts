@@ -12,9 +12,10 @@ import { resolve } from "node:path";
 import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
-import { connectWallet } from "../lib/network/sdk.js";
+import { connectWallet, getApiUrl } from "../lib/network/sdk.js";
 import type { SigningAlgorithm } from "../lib/network/sdk.js";
 import { createAuthSession } from "../lib/auth/auth.js";
+import type { AuthState } from "../lib/auth/auth.js";
 import { createSdkBridge, AUTH_PENDING_TOKEN } from "./sdk-bridge.js";
 import type { SdkBridge } from "./sdk-bridge.js";
 import { SuperColonyApiClient } from "./supercolony/api-client.js";
@@ -30,8 +31,10 @@ export interface AgentRuntime {
   sdkBridge: SdkBridge;
   address: string;
   rpcUrl: string;
+  apiBaseUrl: string;
   algorithm: SigningAlgorithm;
   getToken: (opts?: { forceRefresh?: boolean }) => Promise<string | null>;
+  getAuthState: () => AuthState | null;
   demos: Demos;
   /** Authenticated API call wrapper — sdkBridge captures AUTH_PENDING_TOKEN at
    *  construction and never updates. Same pattern as v3-loop.ts:89-95. */
@@ -65,7 +68,8 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   const { demos, address, rpcUrl, algorithm } = await connectWallet(envPath, opts?.agentName);
 
   // Step 2: Create SDK bridge
-  const sdkBridge = createSdkBridge(demos, opts?.apiBaseUrl, AUTH_PENDING_TOKEN);
+  const effectiveApiBaseUrl = opts?.apiBaseUrl ?? getApiUrl();
+  const sdkBridge = createSdkBridge(demos, effectiveApiBaseUrl, AUTH_PENDING_TOKEN);
 
   // Step 3: Authenticate (graceful degradation — chain-only on failure)
   const authSession = createAuthSession(demos, address);
@@ -131,8 +135,10 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
     sdkBridge,
     address,
     rpcUrl,
+    apiBaseUrl: effectiveApiBaseUrl,
     algorithm,
     getToken,
+    getAuthState: () => authSession.getState(),
     demos,
     authenticatedApiCall,
     colonyDb,

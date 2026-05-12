@@ -24,6 +24,7 @@ import {
   analyzeAttestUrlDiagnostics,
   buildAttestUrlWarnings,
 } from "./_publish-readiness-shared.js";
+import { readRuntimeBalanceTruth } from "./_runtime-balance-truth.js";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_TEXT =
@@ -149,11 +150,8 @@ try {
   const session = await createSessionFromRuntime(omni.runtime, { stateDir, allowInsecureUrls });
   const authToken = await omni.runtime.getToken();
 
-  const balanceResult = await omni.colony.getBalance();
-  const chainBalanceResult = await omni.chain.getBalance(omni.address);
+  const balanceTruth = await readRuntimeBalanceTruth(omni);
   const feedResult = await omni.colony.getFeed({ limit: 3 });
-  const balanceOk = balanceResult?.ok === true;
-  const chainBalanceOk = chainBalanceResult?.ok === true;
   const feedOk = feedResult?.ok === true;
   const writeRate = await getWriteRateRemaining(session.stateStore, session.walletAddress);
   const dedupError = await checkAndRecordDedup(session.stateStore, session.walletAddress, text, false);
@@ -191,18 +189,11 @@ try {
         };
   }
 
-  const balanceData = balanceOk
-    ? balanceResult.data as { balance?: number; available?: number; cached?: boolean }
-    : null;
-  const colonyBalance = Number(balanceData?.balance ?? balanceData?.available ?? 0);
-  const chainBalance = Number(chainBalanceResult?.balance ?? 0);
-  const useChainBalance = chainBalanceOk && chainBalance > 0 && (!balanceOk || colonyBalance <= 0);
-  const effectiveBalance = useChainBalance ? chainBalance : colonyBalance;
-
   const blockers: string[] = [];
   if (!authToken) blockers.push("token_unavailable");
-  if (!balanceOk && !chainBalanceOk) blockers.push("balance_unavailable");
-  if (effectiveBalance <= 0) blockers.push("insufficient_dem");
+  if (balanceTruth.readiness === "balance_unavailable") blockers.push("balance_unavailable");
+  if (balanceTruth.divergence.blocksWriteReadiness) blockers.push("balance_truth_diverged");
+  if ((balanceTruth.effectiveDem ?? 0) <= 0) blockers.push("insufficient_dem");
   if (!feedOk) blockers.push("feed_unavailable");
   if (schemaError) blockers.push("draft_invalid");
   if (!urlCheck.valid) blockers.push("attest_url_blocked");
@@ -225,22 +216,7 @@ try {
           connect: true,
           credentialReadiness,
           tokenAvailable: !!authToken,
-          balance: {
-            ok: balanceOk || chainBalanceOk,
-            dem: effectiveBalance,
-            source: useChainBalance ? "chain_fallback" : "colony",
-            colony: {
-              ok: balanceOk,
-              dem: colonyBalance,
-              cached: balanceData?.cached,
-              error: balanceOk ? undefined : balanceResult?.error ?? { code: "UNAVAILABLE", message: "Balance result unavailable" },
-            },
-            chain: {
-              ok: chainBalanceOk,
-              dem: chainBalance,
-              error: chainBalanceOk ? undefined : chainBalanceResult?.error ?? { code: "UNAVAILABLE", message: "Chain balance unavailable" },
-            },
-          },
+          balance: balanceTruth,
           feedRead: {
             ok: feedOk,
             count: feedOk

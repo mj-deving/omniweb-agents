@@ -57,6 +57,7 @@ Before starting the next live-ops or docs slice, hold these truths together:
 - PR #372 closes the docs/proofs/front-door realignment around the landed architecture.
 - PR #376 closes the intent-boundary cleanup and removes lingering policy-side readiness leakage.
 - PR #383 is the latest live-ops doctrine truth-sync: `uw66.1` is parked on upstream auth plus DAHR/Web2 proxy instability, not a need for broad seam churn.
+- PR #384 aligns the GitHub-facing front door with that doctrine so the repo entry path does not drift back toward older archetype-first language.
 
 The durable source artifacts for this checkpoint remain:
 - `../../../references/2026-05-08-supercolony-substrate-status-map.md`

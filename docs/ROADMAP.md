@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-12
+updated: 2026-05-13
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops lane has moved from balance-divergence truth to a narrower node3 DAHR/Web2 proxy-start blocker after PR #378."
+summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the next band freezes that seam and moves into a fast colony live-ops lane, while the bounded publish proof remains honestly parked on upstream auth/DAHR proxy instability rather than operator-logic gaps."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,13 +38,13 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Landed playbook-policy architecture on top of the substrate-first rebuild: strategy now lives above a shared intent seam, while capability/readiness/execution/verification truth stays in the substrate/runtime |
+| Current direction | Landed playbook-policy architecture on top of the substrate-first rebuild, then freeze that thin waist for one wave and move fast in a colony live-ops lane above it: prove real operator execution first, harden lower layers from live evidence second |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
-| Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, and substrate/runtime ownership of capability truth, readiness, execution, and verification |
+| Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, and PR #372 closes `5xp4.15`; the canonical ladder `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15` is now landed |
-| Remaining external edges | intent-boundary contract cleanup, generic action-intent coverage beyond react/publish/reply, capability-truth surfacing polish, generic publish indexing, tip-specific readback, npm auth/publish, and broader storage/escrow/IPFS live proofs |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, and PR #377 closes `5xp4.8`; the frozen-seam live-ops epic is active, blocker-truth/diagnosis follow-ups have landed through PR #382, `uw66.1` is currently parked on upstream auth + Web2/DAHR proxy instability, and the immediate next move is upstream handoff/fix rather than another blind live publish retry |
+| Remaining external edges | real colony-operator live execution proof across publish/reply/react/tip/bet, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -54,6 +54,8 @@ Anti-drift rule:
 **Philosophy:** Hard gates where they matter, but keep the winning loop simple: source -> attest -> interpret -> publish.
 
 **Architectural rule:** the substrate owns the hard parts of real operation; the skill owns instructions, best practices, and thin scaffolding. If an agent has to manually reason about auth ceremony, credential lifecycle, or spend-safety plumbing in prompt-space, the boundary is wrong.
+
+**Current execution rule:** freeze the thin waist for one live-ops wave — `PolicyActionRequest`, resolved intent statuses, and the execution/verification envelope stay stable unless a real run proves they are wrong. Move fast above that seam, then harden below it from observed failure rather than speculative contract churn.
 
 ---
 
@@ -102,9 +104,9 @@ Canonical source artifacts for this checkpoint:
 - PR #371 — https://github.com/mj-deving/omniweb-agents/pull/371
 - PR #372 — https://github.com/mj-deving/omniweb-agents/pull/372
 
-## Next Work Ladder
+## Closed Architecture Ladder
 
-The next work is not a vague band anymore; it is an explicit PR-sized Beads ladder. That ladder is now landed through the docs/proofs closeout.
+The explicit playbook-policy seam ladder is now closed as architecture work through the docs/proofs realignment checkpoint.
 
 1. `omniweb-agents-5xp4.9` — introduce a playbook-facing `PolicyActionRequest` seam without behavior change ✅
 2. `omniweb-agents-5xp4.10` — thin `minimal-agent.ts` into orchestration-only glue ✅
@@ -115,8 +117,63 @@ The next work is not a vague band anymore; it is an explicit PR-sized Beads ladd
 7. `omniweb-agents-5xp4.15` — realign docs, proof surfaces, and bundle story around the landed architecture ✅ (closed by PR #372)
 
 Important nuance:
-- `5xp4.8` still matters as a maintained supervised-publish proof checkpoint, but it is **parallel** to this closeout lane rather than the next architecture slice.
-- PR #360 is the committed checkpoint for planning state, not PR1 of implementation.
+- `5xp4.8` still matters as a maintained supervised-publish proof checkpoint, but it is **not** a reason to reopen broad seam churn.
+- PR #376 closes the intent-boundary cleanup that was still hanging off older roadmap wording.
+- PR #360 remains the planning checkpoint, not a reason to describe the seam as still upcoming.
+
+## Next Operating Band — frozen seam, fast colony live-ops
+
+The next band should **not** be another large architecture migration. The next band should use the landed seam as a stable thin waist and move quickly in a colony-operator live-ops lane above it.
+
+### Band goal
+
+Reach a truthful colony-operator floor where one maintained operator lane can:
+- read the live colony surfaces it needs
+- choose among `publish`, `reply`, `react`, `tip`, `bet`, or `skip`
+- execute through the same runtime truth path
+- verify and report outcomes honestly per action family
+
+Then extend that floor to official identity participation:
+- `register`
+- human-link challenge / claim / approve / readback / unlink
+
+Only after that floor is real should the repo spend a wave on broader consumer hardening (`npm publish`, outside-in registry install proof, tighter public claims).
+
+### Execution strategy for this band
+
+1. **Close truth-sync and checkpoint gaps first.** Finish `0z87` and `5xp4.8` before opening a new broad rewrite lane.
+2. **Freeze the seam for one wave.** Treat `PolicyActionRequest`, resolved status truth (`executable | blocked | supervised | unsupported`), and the execution/verification envelope as stable unless a live run proves otherwise.
+3. **Move fast above the seam.** Prefer one fast-moving live-ops operator lane over broad substrate churn or a full repo fork.
+4. **Harden from observed pain.** If a live run exposes a substrate gap, fix that precise gap; do not preemptively fan changes across many contracts.
+5. **Keep execution state in Beads.** Use roadmap/doctrine updates only when the strategic band or explicit next/not-next priorities change.
+
+### High-level wave order
+
+#### Wave A — closeout and freeze
+- truth-sync the current host/readiness story (`0z87`) ✅
+- productize the supervised publish checkpoint (`5xp4.8`) ✅
+- declare the thin waist stable for one live-ops wave
+- create a dedicated colony live-ops execution epic above the seam
+- blocker-truth and diagnosis follow-ups are now landed through PR #382; the current next move is an upstream auth/proxy handoff-fix slice, then one fresh bounded `uw66.1` rerun only if the rerun preconditions materially change
+
+#### Wave B — real multi-action colony execution
+- prove bounded live `publish` (`uw66.1`) once the upstream auth/proxy rerun conditions are satisfied and one honest bounded retry is justified
+- prove bounded live `reply`
+- prove bounded live `react`
+- prove bounded live `tip`
+- prove bounded live `bet`
+- prove one maintained operator cycle that can honestly choose among those actions
+
+#### Wave C — full colony participation surface
+- prove official `register`
+- prove official human-link challenge / claim / approve / cleanup
+- widen the maintained operator/starter contract toward generic action-intent coverage instead of a narrow publish/reply bias
+- polish capability-truth surfacing so operator-facing runtime reports stay honest during fast iteration
+
+#### Wave D — consumer hardening after live operator truth exists
+- unblock `npm publish` auth and registry path
+- prove outside-in registry install / consumer journey on the published package
+- refresh public/docs launch wording only after the live operator lane and registry path are current
 
 ## Current frozen-seam colony live-ops band
 
@@ -125,6 +182,7 @@ Important nuance:
 - PR #379 (`uw66.15`) and PR #380 (`uw66.16`) narrowed the old balance-divergence story, but the blocker is now broader than just node3: direct auth challenge calls to `supercolony.ai` are returning `500`, while node hosts do not expose that auth path at all (`404`).
 - Fresh true per-node spend-path probes split the remaining route truth: `node2` currently reports raw chain balance `0` and fails attestation with insufficient balance, while `node3` and `demosnode.discus.sh` still fail with `dahr.startProxy() timed out after 30000ms`.
 - The active bounded slice is therefore `uw66.18`, which records the combined auth-API plus cross-node spend-path blocker truth and keeps `uw66.1` blocked for the right reason.
+- Immediate next move: upstream auth/proxy handoff and fix first, then at most one fresh bounded `uw66.1` rerun if the rerun preconditions materially change.
 
 ## Explicitly not next
 
@@ -136,14 +194,17 @@ These are not next steps today:
 | `omniweb-agents-8lg` | prompt architecture contractification | blocked behind the attestation-first model and the newer playbook-policy / seam ladder |
 | `omniweb-agents-9he` | research family expansion | blocked until the substrate + intent seam is better proved |
 | legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest default path over the substrate seam |
+| broad repo fork of the substrate | duplicated fast lane below the seam | blocked unless the frozen-seam live-ops lane proves that the shared substrate itself is the speed limiter |
 
 ---
 
 ## Deferred / External
 
+These remain outside the current colony-operator execution band. They matter later as broader Demos/SDK proof work, but they are **not** the next colony lane.
+
 | ID | P | Item | Status |
 |----|---|------|--------|
-| `omniweb-agents-028` | P2 | npm publish | Deferred — ship after the current launch-proof edge cases are tighter |
+| `omniweb-agents-028` | P2 | npm publish | Later in the colony lane — after live operator proof is current |
 | `omniweb-agents-l4h` | P3 | StorageProgram write probe | Deferred follow-up |
 | `omniweb-agents-p5l` | P3 | Escrow live test | Deferred follow-up |
 | `omniweb-agents-ubn` | P3 | IPFS live test | Deferred follow-up |

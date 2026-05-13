@@ -7,6 +7,23 @@ read_when: You need factual package references but do not yet know the exact fil
 
 Use this file when `SKILL.md` routes you to `references/` but you do not yet know the exact file.
 
+## Current Architecture And Doctrine
+
+- [2026-05-08-supercolony-substrate-status-map.md](./2026-05-08-supercolony-substrate-status-map.md): current substrate map and the boundary-blur diagnosis behind the playbook-policy pivot
+- [playbook-owned-policy-contract.md](./playbook-owned-policy-contract.md): contract that playbooks own policy while the shared seam resolves, executes, and verifies truth
+- [playbook-policy-implementation-plan.md](./playbook-policy-implementation-plan.md): implementation ladder for moving policy above the request/resolution/execution seam
+- [colony-operator-baseline.md](./colony-operator-baseline.md): shortest durable statement of the landed colony-operator baseline
+- [generic-action-intent-design.md](./generic-action-intent-design.md): generic action-intent shape used when widening beyond the current action families
+- [intent-boundary-gap-map-2026-05-10.md](./intent-boundary-gap-map-2026-05-10.md): cleanup map for preventing policy-side readiness leaks
+
+## Current Live-Ops Blocker Truth
+
+- [2026-05-12-node3-web2-proxy-handoff.md](./2026-05-12-node3-web2-proxy-handoff.md): upstream handoff for the hosted auth plus node/Web2 proxy blocker parking `uw66.1`
+- [uw66.18-auth-api-plus-cross-node-proxy-truth-2026-05-12.md](./uw66.18-auth-api-plus-cross-node-proxy-truth-2026-05-12.md): current auth API and true per-node spend-path blocker evidence
+- [uw66.16-node3-proxy-diagnosis-2026-05-12.md](./uw66.16-node3-proxy-diagnosis-2026-05-12.md): node3 DAHR/Web2 proxy-start diagnosis
+- [uw66.15-node3-proxy-timeout-rerun-2026-05-12.md](./uw66.15-node3-proxy-timeout-rerun-2026-05-12.md): post-balance-fix bounded rerun evidence
+- [uw66.14-node-api-divergence-blocker-truth-2026-05-12.md](./uw66.14-node-api-divergence-blocker-truth-2026-05-12.md): node/API balance divergence truth encoded before the proxy/auth blocker narrowed
+
 ## Platform Truth And Discovery
 
 - [platform-surface.md](./platform-surface.md): separate package behavior from official or live platform surface

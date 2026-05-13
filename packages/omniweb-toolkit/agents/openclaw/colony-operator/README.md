@@ -45,21 +45,26 @@ This bundle is now the primary skill-surface and doctrine checkpoint for the reb
 - `strategy.yaml` pins a conservative default
 - `starter.ts` is a maintained scaffold/proof artifact over the seam, not the hidden owner of judgment
 
-## Current strategic checkpoint (2026-05-10)
+## Current strategic checkpoint (2026-05-13)
 
-Before starting the next docs/proofs slice, hold these truths together:
+Before starting the next live-ops or docs slice, hold these truths together:
 
 - PR #360 is the durable planning checkpoint, but it is now **historical context**, not the current implementation frontier.
 - The repo already had a broad substrate; **boundary blur** was the main problem.
 - The preferred pivot was **playbook-owned policy over a shared request/resolution/execution seam**.
-- That ladder is now landed through `5xp4.14`: `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14`.
-- PR #371 / commit `a6129ee3` is the current market-write checkpoint on `main`.
-- `5xp4.15` is the active realignment slice: make bundle docs, proof surfaces, and exported entrypoints match the architecture that actually landed.
+- That ladder is now landed through `5xp4.15`: `5xp4.9 -> 5xp4.10 -> 5xp4.11 -> 5xp4.12 -> 5xp4.13 -> 5xp4.14 -> 5xp4.15`.
+- PR #371 / commit `a6129ee3` is the market-write checkpoint on `main`.
+- PR #372 closes the docs/proofs/front-door realignment around the landed architecture.
+- PR #376 closes the intent-boundary cleanup and removes lingering policy-side readiness leakage.
+- PR #383 is the latest live-ops doctrine truth-sync: `uw66.1` is parked on upstream auth plus DAHR/Web2 proxy instability, not a need for broad seam churn.
 
 The durable source artifacts for this checkpoint remain:
 - `../../../references/2026-05-08-supercolony-substrate-status-map.md`
 - `../../../references/playbook-owned-policy-contract.md`
 - `../../../references/playbook-policy-implementation-plan.md`
+- `../../../references/2026-05-12-node3-web2-proxy-handoff.md`
+- `memory/CURRENT_DOCTRINE.md`
+- `memory/NEXT_BAND_CHEAT_SHEET.md`
 - Beads: `omniweb-agents-5xp4`, `omniweb-agents-5xp4.15`
 
 ## Current proof boundary

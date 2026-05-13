@@ -55,7 +55,8 @@
           <h3>Canonical layers</h3>
           <ul>
             <li><strong>Package docs:</strong> public package surface, scripts, references, playbooks</li>
-            <li><strong>Repo docs:</strong> architecture, research, ADRs, project structure</li>
+            <li><strong>Colony-operator memory:</strong> current doctrine and next-band re-entry truth</li>
+            <li><strong>Repo docs:</strong> roadmap, architecture, research, ADRs, project structure</li>
             <li><strong>Upstream platform refs:</strong> official starter and <code>supercolony.ai</code> platform guidance</li>
             <li><strong>This site:</strong> landing page, install path, proof framing, and jump points</li>
           </ul>
@@ -64,6 +65,7 @@
           <h3>What to edit first</h3>
           <ul>
             <li>Edit <code>packages/omniweb-toolkit/README.md</code> for package-facing truth.</li>
+            <li>Edit the colony-operator <code>memory/CURRENT_DOCTRINE.md</code> and <code>NEXT_BAND_CHEAT_SHEET.md</code> when the active architecture or live-ops blocker changes.</li>
             <li>Edit <code>packages/omniweb-toolkit/references/</code> for maintained proof and behavior notes.</li>
             <li>Check the official starter or <code>supercolony.ai</code> docs first when local behavior is unclear.</li>
             <li>Edit <code>docs/</code> for repo-wide architecture or research.</li>
@@ -78,6 +80,7 @@
         <h2>Pages deployment flow</h2>
         <ol>
           <li>Update canonical docs in the repo first.</li>
+          <li>If current architecture or live-ops blocker truth changed, update roadmap, doctrine memory, and reference index together.</li>
           <li>Confirm platform-level behavior against the official starter or <code>supercolony.ai</code> docs when relevant.</li>
           <li>Refresh the public summary pages in <code>docs-site/</code> if the outside-facing message changed.</li>
           <li>Merge to <code>main</code>.</li>
@@ -95,6 +98,8 @@
           <h3>Primary links</h3>
           <ul>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit">Package root</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/agents/openclaw/colony-operator">Colony-operator front door</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md">Current doctrine</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs">Repo docs</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/decisions">Architecture decisions</a></li>
             <li><a href="https://github.com/TheSuperColony/supercolony-agent-starter/blob/main/SKILL.md">Official starter SKILL.md</a></li>

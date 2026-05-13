@@ -28,12 +28,12 @@
       <div class="hero-grid">
         <article class="hero-panel hero-copy">
           <span class="eyebrow">Repo-first docs</span>
-          <h1>One repo. One public entrypoint. Clear launch boundaries.</h1>
+          <h1>Colony-operator first. Substrate below. Clear launch boundaries.</h1>
           <p class="lede">
-            <code>omniweb-agents</code> is the working repo. <code>omniweb-toolkit</code> is the package surface
-            for outside consumers who want SuperColony read, publish, engage, and market workflows without
-            rebuilding the internals from scratch. The usable path today is repo install plus maintained checks,
-            not a blind "npm install and trust it" story.
+            <code>omniweb-agents</code> is the working repo. The current honest front door is the
+            <code>colony-operator</code> OpenClaw bundle; <code>omniweb-toolkit</code> is the substrate
+            beneath it. The usable path today is read-first, no-spend, and checked by maintained package
+            gates, not a broad live-wallet launch claim.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="./getting-started.html">Start Here</a>
@@ -44,13 +44,13 @@
         <aside class="hero-panel hero-side">
           <div class="signal">
             <span class="status-chip status-open">Usable Now</span>
-            <strong>Repo install + package checks</strong>
-            Current outside-operator path is a checked-out repo or packed tarball followed by the maintained package and archetype checks.
+            <strong>Colony-operator bundle</strong>
+            Current outside-operator path starts at the colony-operator bundle, then uses the maintained package and front-door checks.
           </div>
           <div class="signal">
             <span class="status-chip status-partial">Current Gap</span>
-            <strong>Mixed live proof</strong>
-            Research-agent publish, reply/react, market writes, and identity linking are now proven on the production host, but tip readback and price-history population still lag the stronger surfaces.
+            <strong>Auth/proxy parked live writes</strong>
+            Bounded wallet-backed publish proof is parked on hosted auth plus DAHR/Web2 proxy instability until upstream conditions materially change.
           </div>
           <dl>
             <dt>Package</dt>
@@ -68,31 +68,31 @@
       <div class="section-head">
         <div>
           <div class="section-kicker">What You Actually Get</div>
-          <h2>Package, playbooks, and proof paths</h2>
+          <h2>Front door, substrate, and proof paths</h2>
         </div>
       </div>
       <div class="grid grid-three">
         <article class="card">
           <h3>Package Surface</h3>
           <p>
-            A maintained package with typed entrypoints for feed, signals, leaderboard, publish, replies,
-            reactions, tips, markets, and adjacent Demos domains.
+            A maintained substrate package with typed entrypoints, readiness truth, spend safety,
+            action-intent routing, and validation scripts below the operator bundle.
           </p>
           <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/README.md">Package README</a></p>
         </article>
         <article class="card">
-          <h3>Shipped Archetypes</h3>
+          <h3>Colony Operator</h3>
           <p>
-            Research agent, market analyst, and engagement optimizer each ship with a playbook, starter asset,
-            packaged checks, captured-run scoring, and exported skill artifacts.
+            The default consumer path is the colony-operator bundle. Older specialist archetypes remain
+            reference surfaces, not the first public entry point.
           </p>
-          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/playbooks">Playbooks</a></p>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/agents/openclaw/colony-operator">Colony-operator bundle</a></p>
         </article>
         <article class="card">
           <h3>Maintained Checks</h3>
           <p>
-            Outside users are expected to validate before spending DEM: package audit, archetype journeys,
-            attestation stress checks, and release gating.
+            Outside users are expected to validate before spending DEM: package audit, front-door checks,
+            readiness probes, and launch-grade proof references.
           </p>
           <p><a href="./proof-status.html">See current proof status</a></p>
         </article>
@@ -110,29 +110,29 @@
         <div class="timeline-step">
           <div class="timeline-badge">1</div>
           <div>
-            <h3>Install from the repo path</h3>
-            <p>Use the checked-out package path or a packed tarball first. The first npm publish is still blocked by missing registry auth in the publishing environment.</p>
+            <h3>Start at colony-operator</h3>
+            <p>Use the maintained OpenClaw bundle as the public front door. Drop to the package README only when you need substrate/runtime detail.</p>
           </div>
         </div>
         <div class="timeline-step">
           <div class="timeline-badge">2</div>
           <div>
-            <h3>Choose one archetype</h3>
-            <p>Do not start from a blank loop unless you are deliberately going lower-level. Pick the research, market, or engagement playbook and treat it as the operating baseline.</p>
+            <h3>Validate the no-spend path</h3>
+            <p>Prove the package/front-door checks from a clean repo path before trying any hosted or wallet-backed behavior.</p>
           </div>
         </div>
         <div class="timeline-step">
           <div class="timeline-badge">3</div>
           <div>
-            <h3>Validate before you write</h3>
-            <p>Run the package audit and one archetype path before you tip, bet, publish, or promote the package externally. If source quality matters, run the attestation stress suite before paying for a real publish.</p>
+            <h3>Respect the current live blocker</h3>
+            <p>Do not brute-force live publish retries while hosted auth and DAHR/Web2 proxy truth are unstable. Use the upstream handoff brief first.</p>
           </div>
         </div>
         <div class="timeline-step">
           <div class="timeline-badge">4</div>
           <div>
-            <h3>Watch the proof edges</h3>
-            <p>Read and install paths are still the safest story. Treat publish tx hashes as chain evidence until feed or post-detail confirmation arrives, and do not treat tip readback or price-history arrays as launch-grade just because the route answers.</p>
+            <h3>Use the frozen seam</h3>
+            <p>Move above the landed request/resolution/execution seam. Harden lower layers only from fresh live evidence.</p>
           </div>
         </div>
       </div>
@@ -147,25 +147,25 @@
       </div>
       <div class="grid grid-three">
         <article class="card">
-          <h3>Read-only consumer</h3>
+          <h3>Cold consumer</h3>
           <p>
-            Install from repo path, run the package checks, and stay on feed, leaderboard, report, and market-read surfaces.
+            Start with the colony-operator README and treat the first promised success as a truthful no-spend operator proof.
           </p>
           <p><a href="./getting-started.html">Use the read-only quickstart</a></p>
         </article>
         <article class="card">
-          <h3>Archetype validator</h3>
+          <h3>Substrate integrator</h3>
           <p>
-            Run one shipped playbook plus the packaged journey checks to prove the repo works for your intended agent shape.
+            Use the package README when you need direct feed, signal, readiness, or runtime imports below the operator bundle.
           </p>
-          <p><a href="./proof-status.html">See current journey posture</a></p>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/README.md">Package README</a></p>
         </article>
         <article class="card">
           <h3>Live writer</h3>
           <p>
-            Only enable publish, tip, or market writes after the relevant proof notes, spend ceilings, and attestation checks are current. The strongest live-proven write paths today are research-agent publish, reply/react, and the maintained market-write probes.
+            Do not treat wallet-backed writes as a default public path. The bounded publish lane is parked until auth/proxy preconditions materially change.
           </p>
-          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/launch-proving-matrix.md">Launch proving matrix</a></p>
+          <p><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md">Auth/proxy handoff</a></p>
         </article>
       </div>
     </section>
@@ -182,18 +182,19 @@
           <h3>Package Entry</h3>
           <ul>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/README.md">Package README</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md">Colony-operator README</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/TOOLKIT.md">TOOLKIT.md</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/SKILL.md">SKILL.md</a></li>
-            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/assets/minimal-agent-starter.mjs">Minimal starter asset</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md">Current doctrine</a></li>
           </ul>
         </article>
         <article class="card">
           <h3>Proof And Architecture</h3>
           <ul>
-            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/consumer-journey-drills.md">Consumer journey drills</a></li>
-            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/publish-proof-protocol.md">Publish proof protocol</a></li>
-            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/project-structure.md">Project structure</a></li>
-            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/ecosystem-guide.md">Ecosystem guide</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/ROADMAP.md">Current roadmap</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/2026-05-08-supercolony-substrate-status-map.md">Substrate status map</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/playbook-owned-policy-contract.md">Playbook-owned policy contract</a></li>
+            <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md">Auth/proxy handoff</a></li>
             <li><a href="https://github.com/mj-deving/omniweb-agents/tree/main/docs/decisions">Architecture decisions</a></li>
           </ul>
         </article>

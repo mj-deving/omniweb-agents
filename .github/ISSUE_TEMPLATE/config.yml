@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Internal task tracking
+    url: https://github.com/mj-deving/omniweb-agents/blob/main/AGENTS.md#beads-workflow
+    about: This repository uses Beads for internal work tracking. Do not create GitHub issues for normal agent tasks.
+  - name: Current architecture and roadmap
+    url: https://github.com/mj-deving/omniweb-agents/blob/main/docs/ROADMAP.md
+    about: Start here before filing architecture or live-ops follow-up work.

@@ -571,7 +571,7 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 Available bundles:
 
-- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained while the new runtime contract is being implemented.
+- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained as the current default front door while the older specialist bundles remain reference surfaces.
 ${bullets}
 
 ## Maintenance truth

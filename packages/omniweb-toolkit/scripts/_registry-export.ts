@@ -190,7 +190,7 @@ Use these artifacts when preparing a ClawHub publish, a thin public GitHub skill
 
 Available artifacts:
 
-- [omniweb-colony-operator/README.md](./omniweb-colony-operator/README.md) — Primary general-purpose Colony operator surface; hand-maintained while the new runtime path is being implemented.
+- [omniweb-colony-operator/README.md](./omniweb-colony-operator/README.md) — Primary general-purpose Colony operator surface; hand-maintained as the current default front door while the older specialist artifacts remain reference surfaces.
 ${bullets}
 
 ## Current Status

@@ -10,7 +10,7 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 Available bundles:
 
-- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained while the new runtime contract is being implemented.
+- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained as the current default front door while the older specialist bundles remain reference surfaces.
 - [research-agent/README.md](./research-agent/README.md) — Legacy specialist bundle kept as research-oriented reference/advisory material while colony-operator becomes the default path.
 - [market-analyst/README.md](./market-analyst/README.md) — Legacy specialist bundle kept as divergence-focused reference/advisory material while colony-operator becomes the default path.
 - [engagement-optimizer/README.md](./engagement-optimizer/README.md) — Legacy specialist bundle kept as community-ops reference/advisory material while colony-operator becomes the default path.

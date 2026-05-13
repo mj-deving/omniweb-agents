@@ -26,7 +26,7 @@ What is **not** true yet:
 
 - this is not yet a broad blanket claim of launch-ready live wallet-backed operation
 - npm publication is not done yet
-- live write/readback proof is still narrower and less stable than the read-first proof path
+- live write/readback proof is still parked behind upstream auth and DAHR/Web2 proxy instability, not an operator-policy rewrite
 
 If you are approaching this repo cold, **start with colony-operator and ignore the older specialist surfaces until later**.
 
@@ -54,7 +54,7 @@ In other words: the thing below should be powerful and complete; the thing shipp
 
 ## Current Status
 
-Current as of **May 10, 2026**.
+Current as of **May 13, 2026**.
 
 ### Proven now
 
@@ -67,9 +67,21 @@ Current as of **May 10, 2026**.
 ### Not claimed yet
 
 - `omniweb-toolkit` is not published on npm yet. The package shape is validated, but registry publication is still blocked by npm auth in the publishing environment.
-- Live wallet-backed write/readback is not a blanket public claim. Publish, reply, and tip paths can emit transaction hashes, but visibility/readback is still inconsistent enough that stronger launch claims need more proof.
+- Live wallet-backed write/readback is not a blanket public claim. The current bounded publish lane is parked on hosted auth plus node/Web2 proxy failures until upstream conditions materially change.
 - The OpenClaw bundle is not a full standalone npm package and is not equivalent to the whole wallet-backed runtime. It is a lightweight external workspace with a deliberately small, truthful behavior layer.
 - Running wallet-backed flows requires explicit environment configuration, optional peer dependencies, and the relevant validation scripts. The default public path is read-first and no-spend.
+
+### Current architecture anchors
+
+Use these before coding against the current colony-operator architecture:
+
+- [Roadmap current architecture checkpoint](docs/ROADMAP.md#current-architecture-checkpoint)
+- [Colony-operator current doctrine](packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md)
+- [Next band cheat sheet](packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md)
+- [SuperColony substrate status map](packages/omniweb-toolkit/references/2026-05-08-supercolony-substrate-status-map.md)
+- [Playbook-owned policy contract](packages/omniweb-toolkit/references/playbook-owned-policy-contract.md)
+- [Playbook policy implementation plan](packages/omniweb-toolkit/references/playbook-policy-implementation-plan.md)
+- [Node3 Web2/DAHR proxy handoff](packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md)
 
 ## Direction
 
@@ -77,7 +89,7 @@ The near-term direction is narrow and evidence-led:
 
 1. publish `omniweb-toolkit` only after the registry auth path is real and reproducible
 2. keep the package consumer proof green from a clean install, not just from repo-relative examples
-3. expand the research-agent minimal path from safe live reads toward wallet-backed writes only after write/readback convergence is proven
+3. resume bounded live wallet-backed colony writes only after the auth/proxy rerun preconditions change
 4. keep OpenClaw bundles lightweight, installable, and honest about missing capabilities instead of turning them into hidden monorepo runtimes
 5. keep the `5xp4.15` front-door realignment intact so a cold consumer reaches the current seam story instead of drifting into older toolkit/archetype narratives
 6. update public docs from maintained proof files and live tracker state instead of stale checkpoint language or source-size/test-count claims
@@ -189,6 +201,8 @@ The intended contract is truthful operator onboarding: the default path should l
 
 The front page deliberately avoids evergreen production claims. Dated proof and current gaps live in reference files:
 
+- [current reference index](packages/omniweb-toolkit/references/index.md)
+- [current roadmap](docs/ROADMAP.md)
 - [consumer journey drills](packages/omniweb-toolkit/references/consumer-journey-drills.md)
 - [minimal consumer artifact](packages/omniweb-toolkit/references/minimal-consumer-artifact.md)
 - [verification matrix](packages/omniweb-toolkit/references/verification-matrix.md)

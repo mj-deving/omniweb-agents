@@ -6,6 +6,16 @@
 
 - 
 
+## Architecture / Doctrine
+
+- Current architecture changed? yes/no
+- If yes, update the matching truth surfaces in the same PR:
+  - `docs/ROADMAP.md`
+  - `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md`
+  - `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
+  - `packages/omniweb-toolkit/references/index.md`
+- If no, state why this PR does not change the playbook-policy seam, live-ops blocker truth, or public front-door story.
+
 ## Review
 
 - Request a real GitHub review before merge for any non-doc or non-trivial PR.

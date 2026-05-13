@@ -1,10 +1,13 @@
 # CURRENT_DOCTRINE.md
 
 Status: active
-Updated: 2026-05-12
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#378` — https://github.com/mj-deving/omniweb-agents/pull/378 (node/API blocker-truth closeout)
+Updated: 2026-05-13
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
+Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`
+
+Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
 
 ## Current status quo
 
@@ -17,12 +20,12 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
   - no-spend by default on the maintained consumer/default proof path
   - an explicit policy layer that owns reads, conditions, routes, and full-surface action requests
   - an intent layer that normalizes those requests and abstracts routing to colony primitives
-  - a shared seam that is landed through `5xp4.14`
+  - a shared seam that is landed through `5xp4.15`
   - substrate/runtime ownership of capability truth, readiness, execution, and verification
   - explicit capability/readiness truth before wallet-backed writes
-- The docs/proofs realignment slice `5xp4.15` is now closed by PR #372.
-- In the frozen-seam colony live-ops band, `uw66.14` is now merged as PR #378 and the active blocker has narrowed: node3 balance truth is aligned again, but the spend-bearing publish path still fails on `dahr.startProxy() timed out after 30000ms`.
-- `uw66.1` therefore remains blocked, but specifically on `dahr_web2_proxy_failure`, not on balance divergence.
+- The docs/proofs realignment slice `5xp4.15` is closed by PR #372, and PR #376 closes the intent-boundary cleanup that removed lingering policy-side readiness leakage.
+- The next execution band is **not** another broad architecture rewrite. It is a frozen-seam colony live-ops lane: finish `0z87` + `5xp4.8`, keep the thin waist stable for one wave, prove real multi-action colony execution above it, then harden lower layers from live evidence.
+- Current live blocker truth below `uw66.1` is no longer the older node-balance ambiguity alone: the active blocker is upstream auth instability plus DAHR/Web2 proxy startup failure, while `node2` remains unusable because raw chain balance is still `0 DEM` even when colony/API balance surfaces can read `1000 DEM`.
 
 ## Canonical sources
 
@@ -31,7 +34,9 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
 - `packages/omniweb-toolkit/references/playbook-policy-implementation-plan.md`
 - PR #371 / commit `a6129ee3`
 - PR #372 / commit `33606051`+
+- PR #376 / intent-boundary cleanup closeout
 - PR #378 / commit `c49693c7`
+- `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`
 - `bd show omniweb-agents-5xp4.15 --json`
 
@@ -45,19 +50,22 @@ Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not 
 6. `omniweb-agents-5xp4.14` — bring market/bet writes into the same seam ✅ landed
 7. `omniweb-agents-5xp4.15` — realign docs, proof surfaces, and bundle story around the new architecture ✅ landed
 
-## Current live-ops re-entry truth
+## Current next band
 
-- `omniweb-agents-uw66.14` is complete and merged.
-- `omniweb-agents-uw66.18` is the current bounded blocker-truth slice.
-- PR #379 (`uw66.15`) and PR #380 (`uw66.16`) confirmed that balance truth is aligned again on the maintained node3 path and that attestation can reproduce the `dahr.startProxy() timed out after 30000ms` failure below full publish.
-- Fresh cross-node follow-up now shows an additional global auth blocker: `https://supercolony.ai/api/auth/challenge` returns `500`, while the same path on `node2`, `node3`, and `demosnode.discus` returns `404`, so node switching cannot bypass auth by repointing the API base.
-- True per-node spend-path reruns now split the remaining blocker by route: `node2` currently reports raw chain balance `0` and fails attestation with insufficient balance, while `node3` and `demosnode.discus` still fail on `dahr.startProxy() timed out after 30000ms`.
-- The next honest retry rule is: do not keep spending into repeated blind publish attempts until either the global auth challenge surface recovers or one RPC route materially changes its spend-path behavior enough to justify one new bounded rerun.
+1. `0z87` and `5xp4.8` are now closed; keep that closeout pair as the gate that opened the frozen-seam live-ops band.
+2. Freeze the thin waist for one live-ops wave: `PolicyActionRequest`, resolved status truth, and the execution/verification envelope should not churn casually.
+3. The blocker-truth/diagnosis wave is already landed through PR #382; `uw66.1` now stays parked until upstream auth/proxy conditions change enough to justify one fresh bounded rerun.
+4. The immediate next move is an upstream-quality handoff/fix slice for the hosted auth + node3/Web2 proxy failure, not another blind spend-bearing retry.
+5. After that blocker clears, prove real operator execution across `publish`, `reply`, `react`, `tip`, `bet`, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
+6. Harden and consumerize only after the live operator floor is real.
 
 ## Anti-drift rules
 
 - Do **not** treat PR #360 as the current implementation frontier; it is planning context.
 - Do **not** describe the present architecture as if `5xp4.9` were still upcoming.
-- Do **not** revive old operator-core, launch-first, prompt-contract, or specialist-front-door premises as the next execution center.
+- Do **not** reopen broad seam churn when the current need is live operator proof above the seam.
+- Do **not** keep brute-retrying `uw66.1` while hosted auth or proxy truth is unstable; rerun only when the preconditions are explicit and materially changed.
+- Do **not** default to forking the substrate; fork the operator lane above the seam first if a faster track is needed.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
-- When uncertain, re-read PR #360, PR #371, and the live Beads state before coding.
+- Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.
+- When uncertain, re-read PR #360, PR #371, PR #376, and the live Beads state before coding.

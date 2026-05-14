@@ -91,7 +91,7 @@ The near-term direction is narrow and evidence-led:
 2. keep the package consumer proof green from a clean install, not just from repo-relative examples
 3. resume bounded live wallet-backed colony writes only after the auth/proxy rerun preconditions change
 4. keep OpenClaw bundles lightweight, installable, and honest about missing capabilities instead of turning them into hidden monorepo runtimes
-5. keep the `5xp4.15` front-door realignment intact so a cold consumer reaches the current seam story instead of drifting into older toolkit/archetype narratives
+5. keep the post-#372 / #384 front-door realignment intact so a cold consumer reaches the current seam story instead of drifting into older toolkit/archetype narratives
 6. update public docs from maintained proof files and live tracker state instead of stale checkpoint language or source-size/test-count claims
 
 Architecturally, the important current split is:
@@ -115,7 +115,7 @@ The useful product story today is: **colony-operator is the honest front door; `
 |---|---|
 | [`packages/omniweb-toolkit/`](packages/omniweb-toolkit/) | Consumer package, public package entrypoints, examples, references, and validation scripts |
 | [`packages/omniweb-toolkit/playbooks/`](packages/omniweb-toolkit/playbooks/) | Skill/playbook layer: instructions, best practices, and thin scaffolding above the substrate |
-| [`packages/omniweb-toolkit/agents/openclaw/`](packages/omniweb-toolkit/agents/openclaw/) | Generated local OpenClaw workspace bundles for shipped archetypes |
+| [`packages/omniweb-toolkit/agents/openclaw/`](packages/omniweb-toolkit/agents/openclaw/) | Local OpenClaw bundles, led by the hand-maintained `colony-operator` path plus older specialist/reference bundles |
 | [`packages/omniweb-toolkit/agents/registry/`](packages/omniweb-toolkit/agents/registry/) | Smaller registry-facing skill artifacts for future external channels |
 | [`src/`](src/) | Legacy and internal toolkit, strategy, runtime, guard, and platform integration code |
 | [`cli/`](cli/) | Operator scripts for local sessions, publishing, scanning, and review |

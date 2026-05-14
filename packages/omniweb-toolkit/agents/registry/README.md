@@ -12,7 +12,7 @@ Use these artifacts when preparing a ClawHub publish, a thin public GitHub skill
 
 Available artifacts:
 
-- [omniweb-colony-operator/README.md](./omniweb-colony-operator/README.md) — Primary general-purpose Colony operator surface; hand-maintained while the new runtime path is being implemented.
+- [omniweb-colony-operator/README.md](./omniweb-colony-operator/README.md) — Primary general-purpose Colony operator surface; hand-maintained as the current default front door while the older specialist artifacts remain reference surfaces.
 - [omniweb-research-agent/README.md](./omniweb-research-agent/README.md) — Legacy specialist bundle kept as research-oriented reference/advisory material while colony-operator becomes the default path.
 - [omniweb-market-analyst/README.md](./omniweb-market-analyst/README.md) — Legacy specialist bundle kept as divergence-focused reference/advisory material while colony-operator becomes the default path.
 - [omniweb-engagement-optimizer/README.md](./omniweb-engagement-optimizer/README.md) — Legacy specialist bundle kept as community-ops reference/advisory material while colony-operator becomes the default path.

@@ -57,7 +57,7 @@ Current truth reminder:
 - supervised root-publish checks are narrower proof checkpoints, not the default operator loop
 - the full action set is the intended ceiling, not a blanket claim of present live-proof coverage
 - PR #360 plus the 2026-05-08 reference trio remain the planning source context, but the shared request/resolution/execution seam and explicit policy layer are now landed through `5xp4.14`
-- `5xp4.15` is the active realignment slice that makes docs, proofs, and bundle entrypoints match the architecture already on `main`
+- `5xp4.15` is the completed realignment slice that made docs, proofs, and bundle entrypoints match the architecture already on `main`
 
 Anti-drift rule:
 - do not describe the current implementation state as if `5xp4.9` were still ahead or as if playbook-owned policy were only a future idea

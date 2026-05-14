@@ -43,8 +43,8 @@ Anti-drift rule:
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, and PR #377 closes `5xp4.8`; the frozen-seam live-ops epic is active, blocker-truth/diagnosis follow-ups have landed through PR #382, `uw66.1` is currently parked on upstream auth + Web2/DAHR proxy instability, and the immediate next move is upstream handoff/fix rather than another blind live publish retry |
-| Remaining external edges | real colony-operator live execution proof across publish/reply/react/tip/bet, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, and `uw66.1` now has a bounded live publish proof with delayed recent-feed visibility; the next live-ops proof is reply visibility/thread confirmation |
+| Remaining external edges | real colony-operator live execution proof across reply/react/tip/bet, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -154,10 +154,10 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - productize the supervised publish checkpoint (`5xp4.8`) ✅
 - declare the thin waist stable for one live-ops wave
 - create a dedicated colony live-ops execution epic above the seam
-- blocker-truth and diagnosis follow-ups are now landed through PR #382; the current next move is an upstream auth/proxy handoff-fix slice, then one fresh bounded `uw66.1` rerun only if the rerun preconditions materially change
+- blocker-truth and diagnosis follow-ups are now landed through PR #382, the response-shape/readiness cleanup landed through PR #388, and the bounded `uw66.1` live publish rerun is now proven with delayed recent-feed visibility
 
 #### Wave B — real multi-action colony execution
-- prove bounded live `publish` (`uw66.1`) once the upstream auth/proxy rerun conditions are satisfied and one honest bounded retry is justified
+- prove bounded live `publish` (`uw66.1`) ✅
 - prove bounded live `reply`
 - prove bounded live `react`
 - prove bounded live `tip`
@@ -179,10 +179,10 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 
 - `0z87` and `5xp4.8` are closed proof checkpoints, not the active blocker anymore.
 - `uw66.14` is merged as PR #378 and successfully encoded node/API balance-divergence truth.
-- PR #379 (`uw66.15`) and PR #380 (`uw66.16`) narrowed the old balance-divergence story, but the blocker is now broader than just node3: direct auth challenge calls to `supercolony.ai` are returning `500`, while node hosts do not expose that auth path at all (`404`).
-- Fresh true per-node spend-path probes split the remaining route truth: `node2` currently reports raw chain balance `0` and fails attestation with insufficient balance, while `node3` and `demosnode.discus.sh` still fail with `dahr.startProxy() timed out after 30000ms`.
-- The active bounded slice is therefore `uw66.18`, which records the combined auth-API plus cross-node spend-path blocker truth and keeps `uw66.1` blocked for the right reason.
-- Immediate next move: upstream auth/proxy handoff and fix first, then at most one fresh bounded `uw66.1` rerun if the rerun preconditions materially change.
+- PR #379 (`uw66.15`) through PR #382 (`uw66.18`) narrowed the old balance/proxy/auth story and captured the blocker truth that kept `uw66.1` parked.
+- PR #387 and PR #388 cleared the final response-shape and live-check timeout drift that blocked a truthful rerun.
+- `uw66.1` now has a bounded wallet-backed live publish proof: DAHR attestation and publish txs confirmed on-chain, and delayed recent-feed indexed visibility converged after the first maintained 90s probe window.
+- Immediate next move: `uw66.2`, proving live reply visibility and thread confirmation above the same frozen seam.
 
 ## Explicitly not next
 

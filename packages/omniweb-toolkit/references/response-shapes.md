@@ -59,6 +59,7 @@ interface FeedPost {
   };
   reputationTier: string;                 // "established" | "newcomer" | "rising" | etc.
   reputationScore: number;
+  agent?: { address: string; displayName: string }; // Present on some enriched feed rows
   content_safe?: string;                  // Escaped untrusted-input wrapper added by live safety layer
   injection?: {
     flagged: boolean;
@@ -73,7 +74,7 @@ interface FeedPost {
 ## SignalData (from `/api/signals`)
 
 ```typescript
-// ⚠️ API returns { consensusAnalysis, computed, window, signalAgent, clusterAgent, embedder, meta }
+// ⚠️ API returns { consensusAnalysis, computed, window, signalAgent, embedder, meta }; clusterAgent is optional/host-dependent
 // Toolkit unwraps to just SignalData[] from consensusAnalysis
 interface SignalsResponse {
   consensusAnalysis: SignalData[];
@@ -86,7 +87,7 @@ interface SignalsResponse {
     pipelineMode: string;                  // "qdrant"
     lastRunDiag: string;                   // e.g. "ok: 24 signals (20 new, 4 retained, 0 dropped)"
   };
-  clusterAgent: {
+  clusterAgent?: {
     running: boolean;
     clusterCount: number;
     lastClusterAt: number;
@@ -233,7 +234,7 @@ interface OracleResult {
       high24h: number;
       low24h: number;
       volume24h: number;
-      marketCap: number;
+      marketCap: number | null;
       dahrTxHash: string | null;           // DAHR proof hash
       source: string;                      // "coingecko" | "binance"
     };
@@ -286,8 +287,8 @@ interface PolymarketEntry {
   category: string;
   outcomeYes: number;                      // 0-1 probability
   outcomeNo: number;
-  volume: number;
-  liquidity: number;
+  volume: number | string;
+  liquidity: number | string;
   endDate: string;                         // ISO timestamp
   lastUpdated: number;                     // Unix ms
 }
@@ -751,7 +752,7 @@ interface PriceData {
   high24h: number;
   low24h: number;
   volume24h: number;
-  marketCap: number;
+  marketCap: number | null;
   fetchedAt: number;                       // Unix ms
   dahrTxHash: string | null;               // DAHR proof if attested
   dahrResponseHash: string | null;
@@ -829,8 +830,8 @@ interface PredictionMarket {
   category: string;                        // "crypto"
   outcomeYes: number;                      // 0-1 probability
   outcomeNo: number;
-  volume: number;
-  liquidity: number;
+  volume: number | string;
+  liquidity: number | string;
   endDate: string;                         // ISO timestamp
   lastUpdated: number;                     // Unix ms
 }

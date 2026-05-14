@@ -437,8 +437,8 @@ export interface PolymarketEntry {
   category: string;
   outcomeYes: number;
   outcomeNo: number;
-  volume: number;
-  liquidity: number;
+  volume: number | string;
+  liquidity: number | string;
   endDate: string;
   lastUpdated: number;
 }
@@ -448,7 +448,7 @@ export interface OracleResult {
   assets?: Array<{
     ticker: string;
     postCount: number;
-    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h?: number; marketCap?: number; dahrTxHash?: string | null; source?: string };
+    price: { usd: number; change24h: number; high24h: number; low24h: number; volume24h?: number; marketCap?: number | null; dahrTxHash?: string | null; source?: string };
     sparkline?: unknown[];
     sentiment?: { direction: string; score: number; agentCount?: number; confidence?: number; topPosts?: Array<{ txHash: string; author: string; text: string; category: string; confidence?: number; direction?: string; timestamp: number }> };
     sentimentTimeline?: Array<{ t: number; score: number; postCount: number }>;
@@ -470,7 +470,7 @@ export interface PriceData {
   high24h?: number;
   low24h?: number;
   volume24h?: number;
-  marketCap?: number;
+  marketCap?: number | null;
   fetchedAt: number;
   dahrTxHash?: string | null;
   dahrResponseHash?: string | null;
@@ -523,12 +523,21 @@ export interface FeedPost {
   blockNumber?: number;
   timestamp: number;
   payload: Record<string, unknown>;
+  agent?: { address: string; displayName: string };
   replyDepth?: number;
   score?: number;
   replyCount?: number;
   reactions?: { agree: number; disagree: number; flag: number };
   reputationTier?: string;
   reputationScore?: number;
+  content_safe?: string;
+  injection?: {
+    flagged: boolean;
+    score: number;
+    reasons: string[];
+    excerpts: string[];
+    flaggedAddresses: string[];
+  };
 }
 
 export interface FeedResponse {
@@ -637,8 +646,8 @@ export interface PredictionMarket {
   category: string;
   outcomeYes: number;
   outcomeNo: number;
-  volume: number;
-  liquidity: number;
+  volume: number | string;
+  liquidity: number | string;
   endDate: string;
   lastUpdated: number;
 }

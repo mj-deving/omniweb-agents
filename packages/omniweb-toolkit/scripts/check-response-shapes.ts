@@ -109,6 +109,7 @@ const endpoints = [
           reputationScore: isNumber,
         },
         optional: {
+          agent: isObject,
           content_safe: isString,
           injection: isObject,
         },
@@ -151,9 +152,11 @@ const endpoints = [
             computed: isArray,
             window: isString,
             signalAgent: isObject,
-            clusterAgent: isObject,
             embedder: isObject,
             meta: isObject,
+          },
+          optional: {
+            clusterAgent: isObject,
           },
         }),
       ];
@@ -343,7 +346,7 @@ const endpoints = [
           high24h: isNumber,
           low24h: isNumber,
           volume24h: isNumber,
-          marketCap: isNumber,
+          marketCap: isNullableNumber,
           dahrTxHash: isNullableString,
           source: isString,
         },
@@ -416,6 +419,9 @@ const endpoints = [
           consensus: isObject,
           content: isObject,
           computedAt: isNumber,
+        },
+        optional: {
+          resolver: isObject,
         },
       }),
       validateShapeFromMaybeObject("NetworkStats.network", getNestedObject(json, "network"), {
@@ -972,7 +978,7 @@ const endpoints = [
           high24h: isNumber,
           low24h: isNumber,
           volume24h: isNumber,
-          marketCap: isNumber,
+          marketCap: isNullableNumber,
           fetchedAt: isNumber,
           dahrTxHash: isNullableString,
           dahrResponseHash: isNullableString,
@@ -1085,8 +1091,8 @@ const endpoints = [
           category: isString,
           outcomeYes: isNumber,
           outcomeNo: isNumber,
-          volume: isNumber,
-          liquidity: isNumber,
+          volume: isNumberLike,
+          liquidity: isNumberLike,
           endDate: isString,
           lastUpdated: isNumber,
         },
@@ -1292,6 +1298,17 @@ function isNullableString(value: unknown): value is string | null {
 
 function isNullableNumber(value: unknown): value is number | null {
   return value === null || isNumber(value);
+}
+
+function isNumberLike(value: unknown): value is number | string {
+  if (isNumber(value)) {
+    return true;
+  }
+  if (!isString(value)) {
+    return false;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 && Number.isFinite(Number(trimmed));
 }
 
 function isStringArray(value: unknown): value is string[] {

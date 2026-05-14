@@ -146,12 +146,29 @@ export async function fetchText(
   }
 
   try {
-    const response = await fetch(url, {
-      method,
-      body,
-      headers,
-      signal: AbortSignal.timeout(timeoutMs),
+    const controller = new AbortController();
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(new Error(`request timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
     });
+
+    const response = await Promise.race([
+      fetch(url, {
+        method,
+        body,
+        headers,
+        signal: controller.signal,
+      }),
+      timeout,
+    ]).finally(() => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    });
+
     return {
       ok: response.ok,
       status: response.status,

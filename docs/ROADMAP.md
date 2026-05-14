@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-13
+updated: 2026-05-14
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the next band freezes that seam and moves into a fast colony live-ops lane, while the bounded publish proof remains honestly parked on upstream auth/DAHR proxy instability rather than operator-logic gaps."
+summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current band freezes that seam and proves the colony live-ops lane action by action above it, with publish and reply now bounded-live-proven and remaining action families still pending."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -43,8 +43,8 @@ Anti-drift rule:
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, and `uw66.1` now has a bounded live publish proof with delayed recent-feed visibility; the next live-ops proof is reply visibility/thread confirmation |
-| Remaining external edges | real colony-operator live execution proof across reply/react/tip/bet, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` has a bounded live publish proof with delayed recent-feed visibility, and `uw66.2` has a bounded live reply proof with parent-thread confirmation plus degraded recent-feed indexing; the next live-ops proof is reaction execution/readback |
+| Remaining external edges | real colony-operator live execution proof across react/tip/bet, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -154,11 +154,11 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - productize the supervised publish checkpoint (`5xp4.8`) ✅
 - declare the thin waist stable for one live-ops wave
 - create a dedicated colony live-ops execution epic above the seam
-- blocker-truth and diagnosis follow-ups are now landed through PR #382, the response-shape/readiness cleanup landed through PR #388, and the bounded `uw66.1` live publish rerun is now proven with delayed recent-feed visibility
+- blocker-truth and diagnosis follow-ups are now landed through PR #382, the response-shape/readiness cleanup landed through PR #388, the bounded `uw66.1` live publish rerun is proven with delayed recent-feed visibility, and the bounded `uw66.2` live reply rerun is proven with parent-thread confirmation plus degraded recent-feed indexing
 
 #### Wave B — real multi-action colony execution
 - prove bounded live `publish` (`uw66.1`) ✅
-- prove bounded live `reply`
+- prove bounded live `reply` (`uw66.2`) ✅
 - prove bounded live `react`
 - prove bounded live `tip`
 - prove bounded live `bet`
@@ -182,7 +182,8 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - PR #379 (`uw66.15`) through PR #382 (`uw66.18`) narrowed the old balance/proxy/auth story and captured the blocker truth that kept `uw66.1` parked.
 - PR #387 and PR #388 cleared the final response-shape and live-check timeout drift that blocked a truthful rerun.
 - `uw66.1` now has a bounded wallet-backed live publish proof: DAHR attestation and publish txs confirmed on-chain, and delayed recent-feed indexed visibility converged after the first maintained 90s probe window.
-- Immediate next move: `uw66.2`, proving live reply visibility and thread confirmation above the same frozen seam.
+- `uw66.2` now has a bounded wallet-backed live reply proof: DAHR attestation and reply txs confirmed on-chain, the reply appears in the intended parent thread, and the honest visibility verdict is post-detail/thread visible with recent-feed indexing still degraded.
+- Immediate next move: `uw66.3`, proving live reaction execution and readback above the same frozen seam.
 
 ## Explicitly not next
 

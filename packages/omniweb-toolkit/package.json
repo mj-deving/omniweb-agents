@@ -93,6 +93,7 @@
     "check:supervised-publish-verdict": "node --import tsx ./scripts/check-supervised-publish-verdict.ts",
     "check:pending-verdicts": "node --import tsx ./scripts/check-pending-verdicts.ts",
     "record:pending-verdict": "node --import tsx ./scripts/record-pending-verdict.ts",
+    "check:reply-visibility": "node --import tsx ./scripts/check-reply-visibility.ts",
     "check:analysis": "node --import tsx ./scripts/check-supervised-analysis.ts",
     "check:prediction": "node --import tsx ./scripts/check-supervised-prediction.ts",
     "check:market-action": "node --import tsx ./scripts/check-market-action-bet.ts",

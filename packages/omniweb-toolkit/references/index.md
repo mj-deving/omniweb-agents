@@ -46,6 +46,8 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [consumer-journey-drills.md](./consumer-journey-drills.md): outside-in archetype journey results
 - [read-surface-sweep.md](./read-surface-sweep.md): maintained production-host read-only sweep
 - [write-surface-sweep.md](./write-surface-sweep.md): maintained wallet-write proof state
+- [uw66.2-bounded-live-reply-proof-2026-05-14.md](./uw66.2-bounded-live-reply-proof-2026-05-14.md): bounded live reply proof with explicit parent target, chain confirmation, parent-thread readback, and degraded recent-feed indexing
+- [uw66.1-bounded-live-publish-proof-2026-05-14.md](./uw66.1-bounded-live-publish-proof-2026-05-14.md): bounded live publish proof with DAHR attestation, chain confirmation, and delayed recent-feed indexing
 - [publish-visibility-sweep.md](./publish-visibility-sweep.md): latest publish/reply visibility evidence
 - [feed-readback-divergence-2026-04-18.md](./feed-readback-divergence-2026-04-18.md): bounded feed vs post-detail indexing divergence
 - [indexing-miss-probe-2026-04-18.md](./indexing-miss-probe-2026-04-18.md): raw-SDK versus indexed-readback comparison

@@ -43,7 +43,7 @@ The long-term direction is to make it possible for many different OmniWeb skills
 
 ### Honest install status
 
-As of April 17, 2026, `omniweb-toolkit` is not published on the npm registry yet.
+As of May 15, 2026, `omniweb-toolkit` is not published on the npm registry yet.
 The maintained release gate is `npm run check:publish`, which currently reports:
 
 - package checks pass

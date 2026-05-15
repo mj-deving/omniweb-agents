@@ -274,6 +274,15 @@ Goal: prove that a new outside operator can install and validate the package wit
 | success | install instructions, peer dependencies, and first validation path are sufficient for a fresh operator |
 | evidence | exact install command, package version or git ref, check outputs, any setup friction noted as a finding |
 
+Current recorded result from May 15, 2026:
+
+- maintained release gate: degraded/blocked
+- command: `npm --prefix packages/omniweb-toolkit run check:publish`
+- package structure: pass, because the gate's internal `npm run check:package` exited `0`
+- registry package: pass for first-publish availability, because `npm view omniweb-toolkit version --json` reported no existing package and `nameAvailable=true`
+- npm auth: fail, because `npm whoami --registry https://registry.npmjs.org` returned `Not authenticated with npm registry`
+- implication: npm/registry readiness is blocked only on publishing-environment auth. This does not weaken AC-1 through AC-8 launch-proof verdicts, and it should not be represented as a package-structure or journey failure.
+
 ## Launch Decision Gates
 
 Do not present the repo as "usable now" for a given action family unless:

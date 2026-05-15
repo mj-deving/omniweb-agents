@@ -195,7 +195,7 @@ ${bullets}
 
 ## Current Status
 
-As of April 23, 2026, the npm registry does not resolve either \`omniweb-toolkit\` or the exported bundle package names. That means these registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
+As of May 15, 2026, \`npm run check:publish\` reports \`blocked_npm_auth_missing\`: package checks pass, \`omniweb-toolkit\` remains name-available on npm, and this publishing environment is not authenticated to the npm registry. These registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
 
 Until then:
 

@@ -60,6 +60,9 @@ function mockDemos() {
     broadcast: vi.fn(async () => ({
       response: { results: { tx1: { hash: "mock-broadcast-hash" } } },
     })),
+    getAddress: vi.fn(() => "0xagent"),
+    getAddressInfo: vi.fn(async () => ({ nonce: 41 })),
+    getAddressNonce: vi.fn(async () => 0),
   };
 }
 
@@ -459,6 +462,7 @@ describe("SDK Bridge Adapter", () => {
           type: "native",
           to: "0xpool",
           amount: 5,
+          nonce: 42,
           data: ["native", { nativeOperation: "send", args: ["0xpool", 5, "HIVE_BET:BTC:70000:30m"] }],
         }),
       }));

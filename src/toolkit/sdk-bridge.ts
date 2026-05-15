@@ -114,6 +114,9 @@ interface DemosRpcMethods {
   // Use getTxByHash instead (chain-first migration).
   connect(rpcUrl: string): Promise<void>;
   connectWallet(mnemonic: string, opts?: Record<string, unknown>): Promise<string>;
+  getAddress?(): string;
+  getAddressInfo?(address: string): Promise<{ nonce?: number | string | null } | null>;
+  getAddressNonce?(address: string): Promise<number>;
   // Chain query methods (chain-first migration)
   getTxByHash?(txHash: string): Promise<{
     hash: string;
@@ -327,12 +330,14 @@ export function buildMemoTransferTransaction(
   amount: number,
   memo: string,
   shape: Exclude<MemoTransferShape, "wallet-provider-send-transaction">,
+  opts?: { nonce?: number },
 ): { content: Record<string, unknown>; [key: string]: unknown } {
   const content: Record<string, unknown> = {
     ...(emptyTx.content ?? {}),
     type: "native",
     to,
     amount,
+    ...(opts?.nonce === undefined ? {} : { nonce: opts.nonce }),
     timestamp: Date.now(),
     data: [
       "native",
@@ -355,6 +360,35 @@ export function buildMemoTransferTransaction(
     ...emptyTx,
     content,
   };
+}
+
+async function resolveNextNativeNonce(rpc: DemosRpcMethods): Promise<number | undefined> {
+  if (typeof rpc.getAddress !== "function") return undefined;
+  const address = rpc.getAddress();
+  const candidates: number[] = [];
+
+  if (typeof rpc.getAddressInfo === "function") {
+    const info = await rpc.getAddressInfo(address);
+    const parsed = parseNonce(info?.nonce);
+    if (parsed !== undefined) candidates.push(parsed);
+  }
+
+  if (typeof rpc.getAddressNonce === "function") {
+    const parsed = parseNonce(await rpc.getAddressNonce(address));
+    if (parsed !== undefined) candidates.push(parsed);
+  }
+
+  if (candidates.length === 0) return undefined;
+  return Math.max(...candidates) + 1;
+}
+
+function parseNonce(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+  }
+  return undefined;
 }
 
 // ── Helpers ──────────────────────────────────────────
@@ -647,12 +681,17 @@ export function createSdkBridge(
           throw new Error("transferDem: memo transfer requires DemosTransactions.empty(), which is unavailable in this runtime");
         }
 
+        const nonce = await resolveNextNativeNonce(rpc);
+        if (nonce === undefined) {
+          throw new Error("transferDem: memo transfer requires address nonce from Demos runtime");
+        }
         const unsigned = buildMemoTransferTransaction(
           tx.empty(),
           to,
           amount,
           normalizedMemo,
           transferShape,
+          { nonce },
         );
         const signed = await rpc.sign(unsigned);
         const stages = {

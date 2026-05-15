@@ -137,7 +137,10 @@ try {
     process.exit(confirmRecord?.valid ? 0 : 1);
   }
 
+  const chainBefore = await getLastBlock(demos);
   const broadcast = await DemosTransactions.broadcast(confirmed, demos);
+  const broadcastRecord = readRecord(broadcast);
+  const confirmationBlock = readNumber(readRecord(broadcastRecord?.extra)?.confirmationBlock);
   const txHash = signed.hash;
   const readback = await pollPoolReadback({
     colonyUrl,
@@ -150,6 +153,7 @@ try {
     timeoutMs,
     pollMs,
   });
+  const chainAfter = await getLastBlock(demos);
 
   console.log(JSON.stringify({
     attempted: true,
@@ -170,6 +174,12 @@ try {
       message: confirmRecord?.message ?? null,
     },
     broadcast: summarizeBroadcast(broadcast),
+    chain: {
+      beforeLastBlock: chainBefore,
+      afterLastBlock: chainAfter,
+      confirmationBlock: confirmationBlock ?? null,
+      reachedConfirmationBlock: confirmationBlock === undefined || chainAfter === null ? null : chainAfter >= confirmationBlock,
+    },
     readback,
   }, null, 2));
   process.exit(readback.ok ? 0 : 1);
@@ -188,10 +198,10 @@ async function buildSignedNativeMemoTransfer(
   memo: string,
 ): Promise<{ hash: string; content: JsonRecord }> {
   const address = demos.getAddress();
-  const nonce = await demos.getAddressNonce(address);
+  const nonce = await resolveNextNonce(demos, address);
   const tx = DemosTransactions.empty() as { content: JsonRecord };
   tx.content.to = to;
-  tx.content.nonce = nonce + 1;
+  tx.content.nonce = nonce;
   tx.content.amount = amount;
   tx.content.type = "native";
   tx.content.timestamp = Date.now();
@@ -203,6 +213,19 @@ async function buildSignedNativeMemoTransfer(
     },
   ];
   return await demos.sign(tx) as { hash: string; content: JsonRecord };
+}
+
+async function resolveNextNonce(demos: Demos, address: string): Promise<number> {
+  const candidates: number[] = [];
+  const info = await demos.getAddressInfo(address);
+  const infoNonce = readNumber(readRecord(info)?.nonce);
+  if (infoNonce !== undefined) candidates.push(infoNonce);
+  const rpcNonce = await demos.getAddressNonce(address);
+  if (Number.isInteger(rpcNonce) && rpcNonce >= 0) candidates.push(rpcNonce);
+  if (candidates.length === 0) {
+    throw new Error(`Could not resolve nonce for ${address}`);
+  }
+  return Math.max(...candidates) + 1;
 }
 
 async function fetchPool(colonyUrl: string, asset: string, horizon: string): Promise<PoolSnapshot> {
@@ -305,9 +328,19 @@ function summarizeBroadcast(value: unknown): unknown {
   if (!record) return value;
   return {
     response: record.response,
+    extra: record.extra,
     hash: record.hash,
     txHash: record.txHash,
   };
+}
+
+async function getLastBlock(demos: Demos): Promise<number | null> {
+  try {
+    const value = await demos.getLastBlockNumber();
+    return readNumber(value) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function readEnv(path: string): Record<string, string> {

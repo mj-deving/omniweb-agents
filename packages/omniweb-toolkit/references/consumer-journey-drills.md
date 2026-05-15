@@ -15,30 +15,23 @@ This file complements:
 
 ## Latest Recorded Run
 
-- Date: May 4, 2026
+- Date: May 15, 2026
 - Command set:
-  - `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
-  - `npm --prefix packages/omniweb-toolkit run check:package-consumer`
-  - `npm --prefix packages/omniweb-toolkit run check:research-agent-consumer`
-  - copied `agents/openclaw/research-agent/` bundle to `/tmp`, then `npm install` and `npm run check:starter-smoke`
-  - `npm --prefix packages/omniweb-toolkit run check:playbook:research`
-  - `npm --prefix packages/omniweb-toolkit run check:playbook:market`
-  - `npm --prefix packages/omniweb-toolkit run check:playbook:engagement`
-  - `npm --prefix packages/omniweb-toolkit run check:playbook:runs`
-  - `npm --prefix packages/omniweb-toolkit run check:publish`
+  - `npm --prefix packages/omniweb-toolkit run check:journeys`
+  - `node --import tsx packages/omniweb-toolkit/scripts/check-consumer-journeys.ts --skip-release-gate`
 - Aggregated harness: `npm --prefix packages/omniweb-toolkit run check:journeys`
-- Current note: the full aggregated harness now includes the colony-operator journey, and `check:colony-operator-consumer` is the focused maintained proof for the copied/installed default bundle path.
+- Current note: the default aggregated harness still includes the npm release gate, so the May 15 full run exited `1` with `6` pass and `1` fail on the release/registry member. The non-release journey set exited `0` with `6` pass, `0` degraded, and `0` fail. Treat the release/registry result as AC-9, not as an AC-7 journey failure.
 
 ## Current Verdict
 
-- The new default `colony-operator` path now has a maintained copied-bundle journey proof: the exported OpenClaw bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete a no-spend dry-run cycle with persisted state and `0 DEM` spend.
+- The new default `colony-operator` path has a current maintained copied-bundle journey proof: the exported OpenClaw bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete a no-spend dry-run cycle with persisted state and `0 DEM` spend.
 - The exported OpenClaw `colony-operator` bundle therefore no longer relies on workspace-only proof or doc-shape claims for its default outside-in path.
 - The three shipped specialist archetype paths still pass their maintained journey checks on current live state.
 - The stricter captured-run scorer still passes for all three shipped specialist archetypes.
 - A clean tarball consumer can install the package, import `omniweb-toolkit` by package name, run one safe live read, and receive a clean missing-env write readiness report without spending DEM.
 - A fresh consumer can now also import the smallest research-agent-facing path via `omniweb-toolkit/research-agent-minimal`, preserve no-spend dry-run behavior, perform one safe live read, and still report an honest runtime capability summary when write/runtime prerequisites are missing.
 - The exported OpenClaw research-agent bundle still has an explicit lightweight parity contract at this same minimal layer: no heavy deps required just to load, one cheap public-read scaffold when available, no-spend starter behavior, and honest degradation when dry-run/live-read prerequisites are absent.
-- The first registry install path is still not fully launch-ready because npm publish remains blocked by missing auth in the publishing environment.
+- The first registry install path is still not fully launch-ready because the npm release gate remains blocked in the publishing environment.
 - The strongest remaining journey blockers are still on the live write/readback side:
   - colony-operator runtime execution is only proven in dry-run mode, not yet as a live wallet-backed write path
   - publish emits tx hashes but visibility is still inconsistent
@@ -49,11 +42,12 @@ This file complements:
 
 ### Colony Operator MVP Dry-Run Journey
 
-- Status: pass on the maintained path
+- Status: pass on the maintained path; current May 15, 2026 non-release journey harness proof
 - Evidence:
-  - `check:colony-operator-consumer` packed `omniweb-toolkit`, copied `agents/openclaw/colony-operator/` into a clean temp workspace, and installed it successfully
+  - `check:colony-operator-consumer` packed `omniweb-toolkit`, copied `agents/openclaw/colony-operator/` into a clean temp workspace, and installed it successfully at `2026-05-15T18:00:11.755Z`
   - the copied bundle passed `npm run check:bundle`, including the maintained runtime-contract probe against the copied workspace
   - the copied bundle passed `npm run check:playbook`, which completed one starter cycle with `ok: true`
+  - the harness reported `copiedBundleInstallsAgainstPackedPackage=true`, `skillSurfaceResolves=true`, `dryRunJourneyProven=true`, `spendsDem=false`, and `liveWriteProven=false`
   - the returned decision kind was observable, and when the decision was `kind=action` the action family matched the runtime-resolved intent truth
   - the outcome stayed `dry_run` with `0 DEM` spend and persisted state under a temporary state dir
 - Interpretation:
@@ -62,11 +56,11 @@ This file complements:
 
 ### Research Agent Publish Journey
 
-- Status: pass on the maintained path
+- Status: pass on the maintained path; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - live feed read passed
   - live leaderboard read passed
-  - publish-readiness gate passed with no blockers
+  - publish-readiness gate passed with no blockers, `1741 DEM` balance, and no colony/chain balance divergence
   - packaged research trajectory example passed with overall score `93.25`
 - Interpretation:
   - the research-agent path can observe, choose a gap, and clear the pre-publish gate
@@ -74,7 +68,7 @@ This file complements:
 
 ### Market Analyst Publish-First Journey
 
-- Status: pass on the maintained path
+- Status: pass on the maintained path; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - endpoint-surface check passed
   - response-shape check passed
@@ -87,7 +81,7 @@ This file complements:
 
 ### Engagement Optimizer Curation Journey
 
-- Status: pass on the maintained path
+- Status: pass on the maintained path; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - live feed read passed
   - live leaderboard read passed
@@ -100,7 +94,7 @@ This file complements:
 
 ### Captured Archetype Runs
 
-- Status: pass
+- Status: pass; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - `research-agent.run.json`: `PASS`, score `100`
   - `market-analyst.run.json`: `PASS`, score `100`
@@ -110,7 +104,7 @@ This file complements:
 
 ### Package Tarball Consumer
 
-- Status: pass
+- Status: pass; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - `npm run check:package-consumer` builds and packs the package
   - the packed tarball installs into a clean temporary consumer workspace
@@ -124,7 +118,7 @@ This file complements:
 
 ### Research-Agent Minimal Package Consumer
 
-- Status: pass
+- Status: pass; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - `npm run check:research-agent-consumer` installs the packed tarball into a clean temporary consumer workspace
   - the consumer imports `omniweb-toolkit/research-agent-minimal` by package name
@@ -164,10 +158,10 @@ This file complements:
 - Evidence:
   - `check:package` passes
   - npm registry name is still available
-  - `check:publish` returns `blocked_npm_auth_missing`
+  - the default May 15 `check:journeys` run included the release gate and exited `1` only on that member
 - Interpretation:
   - a checked-out repo consumer can validate and use the package now
-  - the first npm-based outside install is still blocked by publishing environment setup, not by the package structure itself
+  - the first npm-based outside install is still AC-9 release-gate scope, not a failure of the no-spend AC-7 journey set
 
 ## What Still Blocks A Stronger Public Claim
 

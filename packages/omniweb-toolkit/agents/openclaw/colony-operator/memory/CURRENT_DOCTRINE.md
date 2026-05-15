@@ -29,7 +29,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `uw66.2` is now live-reply proven in the bounded sense: DAHR attestation and reply txs confirmed on-chain, the reply appears in the intended parent thread, and the honest visibility verdict is post-detail/thread visible with recent-feed indexing still degraded.
 - `uw66.3` is now live-reaction proven in the bounded sense: the maintained social-write probe executed an `agree` reaction and readback confirmed the target moved from `agree: 6` to `agree: 7` with `myReaction: "agree"` on the first poll.
 - `uw66.4` is now live-tip proven in the bounded sense: the maintained tip-only probe sent `1 DEM`, returned tx `25da09cf964502a05b7651b1f549f2c33c9d15ab3b779f15295cec74db933a4c`, and confirmed it on-chain at block `2263010`; post/recipient tip stats and balance readback remained stale.
-- `uw66.5` is currently blocked by `omniweb-agents-3myq`: the maintained fixed-price market-write probe sent a 5 DEM `SOL` transfer tx and chain verification confirmed it, but `/api/bets/place` rejected registration as `wrong_tx_type` (`tx is native, expected transfer`) and pool readback stayed unchanged.
+- `uw66.5` is currently blocked by `omniweb-agents-3myq`: the maintained fixed-price market-write probe sent a 5 DEM `SOL` transfer tx and chain verification confirmed it, but `/api/bets/place` rejected registration as `wrong_tx_type` (`tx is native, expected transfer`) and pool readback stayed unchanged. A raw `content.type: "transfer"` envelope is not a valid local workaround: it can confirm, but it does not produce the pool inflow registration verifies, and manually adding balance GCR edits fails node confirmation with `GCREdit mismatch`.
 
 ## Canonical sources
 
@@ -70,7 +70,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 4. `uw66.2` is closed as the reply proof slice: accepted reply tx and attestation tx are chain-confirmed, parent-thread readback is confirmed, and recent-feed indexing remains degraded rather than hidden.
 5. `uw66.3` is closed as the reaction proof slice: maintained `agree` execution succeeded and first-poll readback confirmed the reaction.
 6. `uw66.4` is closed as the tip proof slice: a 1 DEM tip tx is confirmed on-chain, while post/recipient stats and balance readback remained degraded.
-7. `uw66.5` is blocked by `omniweb-agents-3myq`: current market-write registration rejects confirmed native transfer txs as the wrong tx type.
+7. `uw66.5` is blocked by `omniweb-agents-3myq`: current market-write registration rejects confirmed native transfer txs as the wrong tx type, and raw `transfer` envelopes are disproven unless the upstream/runtime path can also produce verified pool inflow.
 8. The immediate next move is resolving `omniweb-agents-3myq`, then rerunning `uw66.5` for pool-readback proof.
 9. After market-write, continue with one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
 10. Harden and consumerize only after the live operator floor is real.
@@ -81,7 +81,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Do **not** describe the present architecture as if `5xp4.9` were still upcoming.
 - Do **not** reopen broad seam churn when the current need is live operator proof above the seam.
 - Do **not** reopen `uw66.1` through `uw66.4` just because a bounded proof is narrower than launch-grade repeatability; they are proof checkpoints with honest visibility/readback classifications.
-- Do **not** retry `uw66.5` as a normal proof loop until `omniweb-agents-3myq` is resolved; the current blocker is tx-type compatibility between the SDK native transfer path and SuperColony bet registration.
+- Do **not** retry `uw66.5` as a normal proof loop until `omniweb-agents-3myq` is resolved; the current blocker is tx-type plus inflow compatibility between the SDK native transfer path, node GCR validation, and SuperColony bet registration.
 - Do **not** default to forking the substrate; fork the operator lane above the seam first if a faster track is needed.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
 - Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.

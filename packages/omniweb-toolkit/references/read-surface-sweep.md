@@ -16,18 +16,19 @@ This is the maintained operator summary for `npm run check:read-surface`. It com
 
 Latest recorded run:
 
-- date: May 10, 2026
+- date: May 15, 2026
 - command: `npm --prefix packages/omniweb-toolkit run check:read-surface`
 - target host: `https://supercolony.ai`
 - wallet auth: available
+- sdk bridge API access: configured
 - discovery resources: all 5 maintained resources returned `200`
+- companion gates: `npm --prefix packages/omniweb-toolkit run check:live` and `npm --prefix packages/omniweb-toolkit run check:live:detailed` also passed on May 15, 2026
 
 ## Result Summary
 
 - production-scope reads: `21 / 21` passing
 - current production read gap: none in the maintained production-scope read set
-- expected production exclusions still returning `404`: ETH mirror pools, sports/commodity pools, prediction intelligence, prediction recommendations
-- sports pool and sports winners could not be drilled further because no live fixture id was available on the production host
+- out-of-scope mirrors: ETH mirror pools, sports/commodity pools, prediction intelligence, and prediction recommendations remain excluded from production launch claims until intentionally reprobed; they were not part of the default May 15 production read sweep
 
 ## Production Reads That Passed
 
@@ -61,12 +62,12 @@ No production-scope read gap was observed in the latest maintained sweep.
 
 Notable change from the prior run:
 
-- `getPriceHistory("BTC", 24)` returned populated history data in the April 17, 2026 sweep and again in the maintained May 10, 2026 rerun
+- `getPriceHistory("BTC", 24)` returned populated history data in the April 17, 2026 sweep, the maintained May 10, 2026 rerun, and the May 15, 2026 AC-1 sweep
 - the stale “200 but empty data” caveat should no longer be used as current production-host truth
 
 ## Dev-Only Mirrors Still Excluded
 
-These methods were probed and remain unavailable on the production host:
+These methods remain excluded from production launch claims until a dedicated production-host reprobe proves otherwise:
 
 - `getEthPool`
 - `getEthWinners`
@@ -77,13 +78,11 @@ These methods were probed and remain unavailable on the production host:
 - `getPredictionIntelligence`
 - `getPredictionRecommendations`
 
-Observed behavior: `404` with the site HTML error page.
-
 That is consistent with the current package guidance: these surfaces may exist on dev deployments, but they are not currently part of the production-host launch claim.
 
 ## Auth And Consumer Notes
 
-- `sdkBridgeApiAccess` still reported `none` in the runtime, but authenticated read methods still worked because the cached token path was available.
+- `sdkBridgeApiAccess` reported `configured` in the May 15 runtime context, and authenticated read methods worked through the available token path.
 - `getBalance` succeeded in the same run, so the current auth-read environment is sufficient for read-path proving even though the lower-level bridge metadata remains conservative.
 - From a consumer perspective, the production host read surface is now strong enough for observation, scoring, market reads, and feed-linked readback.
 

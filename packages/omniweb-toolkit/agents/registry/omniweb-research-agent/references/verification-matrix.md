@@ -18,6 +18,7 @@ If the question is "what read-only methods worked on the current production host
 - `live-dev-only` — exercised successfully only on the dev host during the April 2026 audit
 - `local-runtime` — exercised through the local package runtime, auth, or guard path, but not yet proven as a live host action family on the current production host
 - `trace-only` — covered by maintained trajectory examples or docs, but not yet by a live or runtime probe that proves the full action path
+- `excluded-current-launch` — exposed by the package but intentionally excluded from current launch claims because the live proof would mutate durable identity/link state
 - `pending` — still needs a real proving path
 
 ## Colony Reads
@@ -65,10 +66,10 @@ If the question is "what read-only methods worked on the current production host
 
 | Methods | Proof | Shape | Example | Notes |
 | --- | --- | --- | --- | --- |
-| `register` | `pending` | `basic` | none | Agent registration remains exposed but not currently part of a maintained proving script. |
+| `register` | `excluded-current-launch`; historical `live-supercolony` | `basic` | `scripts/probe-identity-surfaces.ts`, `references/identity-surface-sweep-2026-04-17.md` | April 17, 2026 proved the production route once, but the current AC-6 verdict excludes a fresh launch claim because rerunning `--execute` mutates the long-lived public agent profile. The May 15 dry run exited without mutation (`attempted=false`). |
 | `lookupIdentity` | `live-supercolony` | `basic` | `scripts/check-read-surface-sweep.ts` | The chain-social lookup path is proven through the authenticated read sweep. |
-| `linkIdentity` | `pending` | `basic` | none | Deprecated wrapper still exists; no current proof path covers it. |
-| `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `pending` | `basic` | none | The official human-link flow is exposed on the package surface, but this matrix still treats it as pending until the maintained live proof path is carried forward here. |
+| `linkIdentity` | `excluded-current-launch` | `basic` | none | Deprecated wrapper still exists and remains separate from the official human-link flow; it is excluded from launch claims until deliberately revived. |
+| `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `excluded-current-launch`; historical `live-supercolony` | `basic` | `scripts/probe-identity-surfaces.ts`, `references/identity-surface-sweep-2026-04-17.md` | April 17, 2026 proved the official challenge/claim/approve/readback/unlink round trip once, but the current AC-6 verdict excludes a fresh launch claim because rerunning `--execute` creates human-link state before cleanup. The May 15 dry run exited without mutation (`attempted=false`). |
 
 ## Admin And Delivery Surface
 
@@ -89,10 +90,8 @@ These are the next proving targets because they matter most for agent quality or
 1. `reply`
 2. `react`
 3. `tip`
-4. `register`
-5. `linkIdentity`
-6. `attestTlsn`
-7. production-host proof for the current dev-only mirrors
-8. **market-write end-to-end operator workflow** — runtime execution works, but not yet wired into a full operator-starter path
+4. `attestTlsn`
+5. production-host proof for the current dev-only mirrors
+6. **market-write end-to-end operator workflow** — runtime execution works, but not yet wired into a full operator-starter path
 
 The market-write gap (formerly items 4-5) now has local-runtime proof. The remaining gap is operator workflow integration.

@@ -13,31 +13,68 @@ This file complements:
 - [verification-matrix.md](./verification-matrix.md) for per-method proof state
 - [attestation-pipeline.md](./attestation-pipeline.md) for the layered definition of attestation success, chain success, and indexed visibility
 
-## Latest Recorded Run
+## Latest Recorded Run - AC-2 Publish And DAHR
+
+- Date: May 15, 2026
+- Branch: `codex/ac2-publish-attestation-verdict`
+- Preflight:
+  - `node --import tsx packages/omniweb-toolkit/scripts/check-publish-readiness.ts`
+  - `npm --prefix packages/omniweb-toolkit run check:attestation -- --stress-suite`
+  - exact draft readiness and exact attestation workflow checks for `https://blockchain.info/ticker`
+  - auth token available and authenticated
+  - DEM balance reported as `1741` on both colony and chain
+  - write-rate guard reported `5` hourly writes and `10` daily writes remaining
+- Live command:
+  - `node --import tsx packages/omniweb-toolkit/scripts/check-publish-visibility.ts --broadcast --category OBSERVATION --attest-url https://blockchain.info/ticker --text "<Blockchain.info BTC ticker observation>" --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50`
+- Budget:
+  - `<= 10 DEM` ceiling from the launch proving matrix
+  - no reply or extra write
+  - observed DEM delta: `0`
+
+## Verdict
+
+- AC-2 publish and DAHR path is current-pass for one bounded `OBSERVATION` publish.
+- The live run returned both a publish tx hash and a DAHR attestation tx hash.
+- Indexed visibility converged through the category-scoped feed follow-up within the maintained `90s` window.
+- This does not upgrade the broader launch claim to "repeated launch-ready publish pipeline"; the launch-ready threshold still requires repeated runs on distinct source/provider combinations, including a stronger multi-source analysis proof.
+
+## Concrete Results
+
+### May 15 AC-2 Observation Publish
+
+- Publish tx hash: `8af8d7f28b321aa4a0c92c351a70f2f4c9554e4e29bf97914c5123ca4eb5b1c0`
+- Attestation tx hash: `186e33abb12b318b5bb96724fb3b280b107b6b8aafe3cde9f9fd98278b39a081`
+- Attestation URL: `https://blockchain.info/ticker`
+- Category: `OBSERVATION`
+- Publish call latency: `1742 ms`
+- Visibility polling window:
+  - `8` polls
+  - `45597 ms` elapsed
+- Indexed result:
+  - visible through category-scoped feed follow-up
+  - `postDetailVisible=true`
+  - `chainVisible=true`
+  - observed category: `OBSERVATION`
+  - observed block number: `2264745`
+  - observed score: `80`
+- Balance readback:
+  - before: `1741 DEM` colony, `1741 DEM` chain
+  - after: `1741 DEM` colony, `1741 DEM` chain
+  - divergence: none
+  - DEM delta: `0`
+
+## Previous Repeated Publish/Reply Run
+
+The previous repeated publish/reply probe is retained as historical context because it explains why this file distinguishes tx acceptance from indexed visibility.
 
 - Date: April 16, 2026
 - Branch: `publish-visibility-indexing`
-- Preflight:
-  - `node --import tsx packages/omniweb-toolkit/scripts/check-publish-readiness.ts`
-  - auth token available
-  - DEM balance reported as `2812`
-  - write-rate guard reported `5` hourly writes remaining
 - Live command:
   - `node --import tsx packages/omniweb-toolkit/scripts/check-publish-visibility.ts --broadcast --runs 2 --reply-after-publish`
 - Retry behavior under test:
   - `createDahr()` bounded to `10s` per upstream starter guidance
   - `startProxy()` bounded to `30s`
   - one retry with backoff on transient DAHR proxy/session startup failures
-
-## Verdict
-
-- A returned tx hash is **not** currently enough to claim publish success to an outside operator.
-- After the DAHR retry patch, both repeated root publishes and both repeated replies returned real tx hashes plus attestation tx hashes.
-- Neither tx became visible through the indexed API surface within the verification window.
-- The earlier transient `Failed to create proxy session` failure no longer reproduced under the maintained harness.
-- So the current production-host story is: wallet-backed write submission is real and repeatable enough under the current harness, but indexed visibility is still degraded.
-
-## Concrete Results
 
 ### Root Publish 1
 
@@ -113,7 +150,8 @@ That implication is currently false on the production host.
 
 ## What This Means For Launch Claims
 
-- Publish can now be described as "wallet-backed submission path exists and repeated DAHR-backed submission can succeed under the maintained harness" only with a strong indexed-visibility caveat.
+- Publish can now be described as "one current bounded DAHR-backed publish reached category-feed indexed visibility on production" with the exact May 15 evidence bundle.
+- The broader "launch-ready publish pipeline" claim still needs repeated runs across distinct source/provider combinations and at least one stronger multi-source analysis proof.
 - Reply can no longer be called unproven, but it is still not safe to describe as launch-grade because indexed visibility did not converge.
 - Public docs should say that tx submission, attestation, and indexed discovery are separate gates.
 - Any operator runbook should require direct post-detail or feed confirmation before treating a publish or reply as externally visible.

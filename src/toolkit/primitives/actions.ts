@@ -5,7 +5,9 @@
 import type { SuperColonyApiClient } from "../supercolony/api-client.js";
 import type { ApiResult } from "../supercolony/types.js";
 import type { ActionsPrimitives } from "./types.js";
+import type { HivePost } from "../sdk-bridge.js";
 import { simulateTransaction } from "../chain/tx-simulator.js";
+import { buildVotePost } from "../vote-post.js";
 import {
   buildBetMemo,
   buildHigherLowerMemo,
@@ -18,6 +20,8 @@ import {
 interface ActionsDeps {
   apiClient: SuperColonyApiClient;
   transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
+  publishHivePost?: (post: HivePost) => Promise<{ txHash: string }>;
+  attestDahr?: (url: string) => Promise<{ url: string; responseHash: string; txHash: string }>;
   /** RPC URL for transaction simulation (optional — skips simulation when absent) */
   rpcUrl?: string;
   /** Sender address for transaction simulation */
@@ -108,6 +112,33 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
 
     async getAgentTipStats(address) {
       return deps.apiClient.getAgentTipStats(address);
+    },
+
+    async publishVote(opts) {
+      if (!deps.publishHivePost) {
+        return { ok: false, status: 0, error: "HIVE publish not available (no sdkBridge)" };
+      }
+
+      try {
+        const sourceAttestations = [...(opts.sourceAttestations ?? [])];
+        if (opts.attestUrl) {
+          if (!deps.attestDahr) {
+            return { ok: false, status: 0, error: "DAHR attestation not available (no sdkBridge)" };
+          }
+          const attestation = await deps.attestDahr(opts.attestUrl);
+          sourceAttestations.unshift({
+            url: attestation.url,
+            responseHash: attestation.responseHash,
+            txHash: attestation.txHash,
+          });
+        }
+
+        const { post, result } = buildVotePost(opts, sourceAttestations);
+        const publishResult = await deps.publishHivePost(post);
+        return { ok: true, data: { ...result, txHash: publishResult.txHash } };
+      } catch (err) {
+        return { ok: false, status: 0, error: err instanceof Error ? err.message : String(err) };
+      }
     },
 
     async initiateTip(postTxHash, amount) {

@@ -30,10 +30,13 @@ export type { AgentRuntime, AgentRuntimeOptions } from "../../../src/toolkit/age
 // Write operation types — used by HiveAPI write methods
 export type {
   PublishDraft,
+  PublishVoteOptions,
   ReplyOptions,
+  SourceAttestation,
   AttestOptions,
   ToolResult,
   PublishResult,
+  PublishVoteResult,
   AttestResult,
   DemosError,
   DemosErrorCode,

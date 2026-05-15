@@ -21,6 +21,7 @@ import { demosError } from "./types.js";
 import type {
   ConnectOptions,
   PublishDraft,
+  PublishVoteOptions,
   ReplyOptions,
   ReactOptions,
   TipOptions,
@@ -114,6 +115,26 @@ export const ReplyOptionsSchema: z.ZodType<ReplyOptions> = z.object({
   mentions: z.array(z.string()).optional(),
   payload: z.record(z.string(), z.unknown()).optional(),
   attestUrl: nonEmptyString,
+});
+
+const sourceAttestationSchema = z.object({
+  url: nonEmptyString,
+  responseHash: nonEmptyString,
+  txHash: txHashString,
+  timestamp: z.number().int().positive().optional(),
+});
+
+export const PublishVoteOptionsSchema: z.ZodType<PublishVoteOptions> = z.object({
+  asset: nonEmptyString,
+  predictedPrice: positiveFinite,
+  referencePrice: positiveFinite,
+  confidence: z.number().min(0).max(100).optional(),
+  horizon: nonEmptyString.optional(),
+  text: z.string().trim().min(1).max(10240).optional(),
+  tags: z.array(z.string()).optional(),
+  mentions: z.array(z.string()).optional(),
+  attestUrl: nonEmptyString.optional(),
+  sourceAttestations: z.array(sourceAttestationSchema).optional(),
 });
 
 export const ReactOptionsSchema: z.ZodType<ReactOptions> = z.object({
@@ -222,6 +243,7 @@ export function validateInput<T>(
 // Forward: schema output must be assignable to interface
 type _AssertConnect = z.output<typeof ConnectOptionsSchema> extends ConnectOptions ? true : never;
 type _AssertPublish = z.output<typeof PublishDraftSchema> extends PublishDraft ? true : never;
+type _AssertPublishVote = z.output<typeof PublishVoteOptionsSchema> extends PublishVoteOptions ? true : never;
 type _AssertReply = z.output<typeof ReplyOptionsSchema> extends ReplyOptions ? true : never;
 type _AssertReact = z.output<typeof ReactOptionsSchema> extends ReactOptions ? true : never;
 type _AssertTip = z.output<typeof TipOptionsSchema> extends TipOptions ? true : never;
@@ -234,6 +256,7 @@ type _AssertPayPolicy = z.output<typeof PayPolicySchema> extends PayPolicy ? tru
 // Reverse: interface must be assignable to schema input (catches missing required fields)
 type _AssertConnectRev = ConnectOptions extends z.input<typeof ConnectOptionsSchema> ? true : never;
 type _AssertPublishRev = PublishDraft extends z.input<typeof PublishDraftSchema> ? true : never;
+type _AssertPublishVoteRev = PublishVoteOptions extends z.input<typeof PublishVoteOptionsSchema> ? true : never;
 type _AssertReplyRev = ReplyOptions extends z.input<typeof ReplyOptionsSchema> ? true : never;
 type _AssertReactRev = ReactOptions extends z.input<typeof ReactOptionsSchema> ? true : never;
 type _AssertTipRev = TipOptions extends z.input<typeof TipOptionsSchema> ? true : never;

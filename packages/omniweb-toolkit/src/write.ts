@@ -7,10 +7,13 @@ export {
 
 export type {
   PublishDraft,
+  PublishVoteOptions,
   ReplyOptions,
+  SourceAttestation,
   AttestOptions,
   ToolResult,
   PublishResult,
+  PublishVoteResult,
   AttestResult,
 } from "../../../src/toolkit/types.js";
 

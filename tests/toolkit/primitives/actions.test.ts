@@ -148,6 +148,125 @@ describe("actions.getAgentTipStats", () => {
   });
 });
 
+describe("actions.publishVote", () => {
+  it("publishes the active VOTE payload directly through the HIVE bridge", async () => {
+    const publishHivePost = vi.fn().mockResolvedValue({ txHash: "0xvote" });
+    const actions = createActionsPrimitives({
+      apiClient: createMockApiClient(),
+      publishHivePost,
+    });
+
+    const result = await actions.publishVote({
+      asset: "btc",
+      predictedPrice: 81000,
+      referencePrice: 80800,
+      confidence: 70,
+      sourceAttestations: [{
+        url: "https://api.example.com/data",
+        responseHash: "hash",
+        txHash: "0xattest",
+      }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(true);
+    if (result!.ok) {
+      expect(result!.data).toMatchObject({
+        txHash: "0xvote",
+        category: "VOTE",
+        asset: "BTC",
+        predictedPrice: 81000,
+        referencePrice: 80800,
+      });
+    }
+    expect(publishHivePost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: "VOTE",
+        text: "30m prediction: BTC target $81000.00 (bias: 1.002)",
+        assets: ["BTC"],
+        confidence: 70,
+        payload: {
+          asset: "BTC",
+          predictedPrice: 81000,
+          referencePrice: 80800,
+        },
+        sourceAttestations: [{
+          url: "https://api.example.com/data",
+          responseHash: "hash",
+          txHash: "0xattest",
+        }],
+      }),
+    );
+  });
+
+  it("returns an honest unavailable error without a HIVE bridge", async () => {
+    const actions = createActionsPrimitives({ apiClient: createMockApiClient() });
+    const result = await actions.publishVote({ asset: "BTC", predictedPrice: 81000, referencePrice: 80800 });
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    if (!result!.ok) {
+      expect(result!.error).toContain("HIVE publish not available");
+    }
+  });
+
+  it("attests attestUrl before publishing a direct VOTE primitive", async () => {
+    const publishHivePost = vi.fn().mockResolvedValue({ txHash: "0xvote" });
+    const attestDahr = vi.fn().mockResolvedValue({
+      url: "https://api.example.com/data",
+      responseHash: "hash",
+      txHash: "0xattest",
+    });
+    const actions = createActionsPrimitives({
+      apiClient: createMockApiClient(),
+      publishHivePost,
+      attestDahr,
+    });
+
+    const result = await actions.publishVote({
+      asset: "BTC",
+      predictedPrice: 81000,
+      referencePrice: 80800,
+      attestUrl: "https://api.example.com/data",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(true);
+    expect(attestDahr).toHaveBeenCalledWith("https://api.example.com/data");
+    expect(publishHivePost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceAttestations: [{
+          url: "https://api.example.com/data",
+          responseHash: "hash",
+          txHash: "0xattest",
+        }],
+      }),
+    );
+  });
+
+  it("rejects attestUrl on the direct VOTE primitive when attestation is unavailable", async () => {
+    const publishHivePost = vi.fn().mockResolvedValue({ txHash: "0xvote" });
+    const actions = createActionsPrimitives({
+      apiClient: createMockApiClient(),
+      publishHivePost,
+    });
+
+    const result = await actions.publishVote({
+      asset: "BTC",
+      predictedPrice: 81000,
+      referencePrice: 80800,
+      attestUrl: "https://api.example.com/data",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.ok).toBe(false);
+    expect(publishHivePost).not.toHaveBeenCalled();
+    if (!result!.ok) {
+      expect(result!.error).toContain("DAHR attestation not available");
+    }
+  });
+});
+
 describe("actions.placeBet", () => {
   it("resolves pool address then transfers 5 DEM with HIVE_BET memo", async () => {
     const pool = { asset: "BTC", horizon: "30m", totalBets: 3, totalDem: 15, poolAddress: "0xpool", roundEnd: 0, bets: [] };

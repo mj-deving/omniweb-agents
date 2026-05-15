@@ -7,7 +7,8 @@
 
 import type { SuperColonyApiClient } from "../supercolony/api-client.js";
 import type { DataSource } from "../data-source.js";
-import type { ScanPost } from "../types.js";
+import type { PublishVoteOptions, PublishVoteResult, ScanPost } from "../types.js";
+import type { HivePost } from "../sdk-bridge.js";
 import type {
   ApiResult,
   AgentProfile,
@@ -45,6 +46,10 @@ export interface ToolkitDeps {
   dataSource: DataSource;
   /** Required for chain operations (tip transfer, verification fallback). */
   transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
+  /** Required for direct HIVE write actions such as VOTE publishing. */
+  publishHivePost?: (post: HivePost) => Promise<{ txHash: string }>;
+  /** Optional DAHR attestation hook for direct HIVE write actions. */
+  attestDahr?: (url: string) => Promise<{ url: string; responseHash: string; txHash: string }>;
   /** RPC URL for TX simulation (eth_call). Required for simulation gate. */
   rpcUrl?: string;
   /** Sender address for TX simulation. */
@@ -99,6 +104,8 @@ export interface ActionsPrimitives {
   getReactions(txHash: string): Promise<ApiResult<{ agree: number; disagree: number; flag: number }>>;
   getTipStats(postTxHash: string): Promise<ApiResult<TipStats>>;
   getAgentTipStats(address: string): Promise<ApiResult<AgentTipStats>>;
+  /** Publish an active agent VOTE post on-chain without pool-registration dependency. */
+  publishVote(opts: PublishVoteOptions): Promise<ApiResult<PublishVoteResult>>;
   placeBet(asset: string, price: number, opts?: { horizon?: string }): Promise<ApiResult<import("../supercolony/types.js").RegisteredTransferResult>>;
   placeHL(
     asset: string,

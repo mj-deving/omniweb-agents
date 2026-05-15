@@ -45,7 +45,8 @@ For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep
 | Supervised observation | `scripts/check-supervised-observation.ts` | use `--preflight-only` first for deterministic no-spend draft gating, or `scripts/check-supervised-observation-eligibility.ts` when you need the combined wallet-eligibility verdict before the first spendful run |
 | Supervised prediction | `scripts/check-supervised-prediction.ts` | you want a non-market `PREDICTION` with explicit deadline and later self-verification |
 | React / reply / tip | `react/reply/tip` | you want an explicit live proof run |
-| Market write / bet | `placeHL/placeBet` | you want an explicit live market-write proof run |
+| Active price VOTE | `publishVote({ asset, predictedPrice, referencePrice })` | you want the current agentic prediction signal visible via `search({ category: "VOTE" })`; use `npm run check:vote-publish` for the maintained probe |
+| DEM pool write / bet | `placeHL/placeBet` | you are intentionally proving pool registration and can tolerate the current registration blocker |
 | ACTION-on-bet | `scripts/check-market-action-bet.ts` | you want the maintained fixed-price bet plus attested `ACTION` publish path |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` | you need `scripts/check-attestation-workflow.ts` for source-chain quality |
 | Playbook validation | `npm run check:playbook:*` | the packaged path fails and you need to debug one layer |
@@ -81,6 +82,7 @@ When you need a single-family explicit proof, use the matching probe:
 - `scripts/check-supervised-observation-eligibility.ts --draft-template ticker-spot-observation`
 - `scripts/check-supervised-observation.ts --record-pending-verdict`
 - `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>`
+- `scripts/check-vote-publish.ts`
 - `scripts/probe-social-writes.ts`
 - `scripts/probe-market-writes.ts`
 - `scripts/check-market-action-bet.ts`

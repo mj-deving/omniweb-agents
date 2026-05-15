@@ -10,6 +10,7 @@ import {
   validateInput,
   ConnectOptionsSchema,
   PublishDraftSchema,
+  PublishVoteOptionsSchema,
   ReplyOptionsSchema,
   ReactOptionsSchema,
   TipOptionsSchema,
@@ -294,6 +295,59 @@ describe("PublishDraftSchema", () => {
     expect(result).not.toBeNull();
     expect(result!.code).toBe("INVALID_INPUT");
     expect(result!.message).toContain("attestUrl");
+  });
+});
+
+// ── PublishVoteOptionsSchema ─────────────────────────
+
+describe("PublishVoteOptionsSchema", () => {
+  it("accepts the active VOTE post shape without long-form text or attestUrl", () => {
+    const result = validateInput(PublishVoteOptionsSchema, {
+      asset: "BTC",
+      predictedPrice: 81000,
+      referencePrice: 80800,
+      confidence: 70,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("accepts optional source attestations", () => {
+    const result = validateInput(PublishVoteOptionsSchema, {
+      asset: "BTC",
+      predictedPrice: 81000,
+      referencePrice: 80800,
+      sourceAttestations: [{
+        url: "https://api.example.com/data",
+        responseHash: "hash",
+        txHash: "0xattest",
+      }],
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("rejects invalid prices", () => {
+    const result = validateInput(PublishVoteOptionsSchema, {
+      asset: "BTC",
+      predictedPrice: 0,
+      referencePrice: 80800,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.message).toContain("predictedPrice");
+  });
+
+  it("rejects confidence outside 0-100", () => {
+    const result = validateInput(PublishVoteOptionsSchema, {
+      asset: "BTC",
+      predictedPrice: 81000,
+      referencePrice: 80800,
+      confidence: 101,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.message).toContain("confidence");
   });
 });
 

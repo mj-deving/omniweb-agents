@@ -44,6 +44,7 @@ Options:
   --fixed-timeout-ms N     Readback timeout for fixed-price verification (default: ${DEFAULT_FIXED_TIMEOUT_MS})
   --poll-ms N              Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --only MODE              One of both, hl, fixed (default: both)
+  --fixed-horizons CSV     Fixed-price horizons to inspect, in preference order (default: ${DEFAULT_FIXED_HORIZONS.join(",")})
   --state-dir PATH         Override state directory for runtime guards
   --execute                Perform the real market-write proof sweep
   --help, -h               Show this help
@@ -53,7 +54,7 @@ Exit codes: 0 = success, 1 = runtime or proof failure, 2 = invalid args`);
   process.exit(0);
 }
 
-for (const flag of ["--assets", "--hl-amount", "--hl-timeout-ms", "--fixed-timeout-ms", "--poll-ms", "--state-dir", "--only"]) {
+for (const flag of ["--assets", "--hl-amount", "--hl-timeout-ms", "--fixed-timeout-ms", "--poll-ms", "--state-dir", "--only", "--fixed-horizons"]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
     console.error(`Error: ${flag} requires a value`);
@@ -72,6 +73,7 @@ const pollMs = getPositiveIntegerArg("--poll-ms", DEFAULT_POLL_MS);
 const stateDir = getStringArg(args, "--state-dir") || undefined;
 const execute = hasFlag(args, "--execute");
 const onlyMode = (getStringArg(args, "--only") ?? "both").toLowerCase();
+const fixedHorizons = parseCsvArg("--fixed-horizons", DEFAULT_FIXED_HORIZONS);
 
 for (const [label, value] of [
   ["--hl-amount", hlAmount],
@@ -97,7 +99,7 @@ try {
   const [oracleResult, balanceResult, pools] = await Promise.all([
     omni.colony.getOracle({ assets: assetList }),
     omni.colony.getBalance(),
-    loadMarketPools(omni, assetList),
+    loadMarketPools(omni, assetList, fixedHorizons),
   ]);
 
   if (!oracleResult?.ok) {
@@ -195,6 +197,7 @@ try {
 async function loadMarketPools(
   omni: OmniInstance,
   assets: string[],
+  fixedHorizons: string[],
 ): Promise<{ higherLower: HigherLowerPoolSnapshot[]; fixed: BettingPoolSnapshot[] }> {
   const higherLower: HigherLowerPoolSnapshot[] = [];
   const fixed: BettingPoolSnapshot[] = [];
@@ -204,7 +207,7 @@ async function loadMarketPools(
       const pool = await fetchHigherLowerPool(omni, asset, horizon);
       if (pool) higherLower.push(pool);
     }
-    for (const horizon of DEFAULT_FIXED_HORIZONS) {
+    for (const horizon of fixedHorizons) {
       const pool = await fetchBettingPool(omni, asset, horizon);
       if (pool) fixed.push(pool);
     }
@@ -256,6 +259,8 @@ async function fetchBettingPool(
     horizon: result.data.horizon,
     totalBets: result.data.totalBets,
     totalDem: result.data.totalDem,
+    poolAddress: result.data.poolAddress,
+    roundEnd: result.data.roundEnd,
     bets: Array.isArray(result.data.bets)
       ? result.data.bets.map((bet) => ({
           txHash: bet.txHash,
@@ -349,6 +354,13 @@ function getPositiveIntegerArg(flag: string, fallback: number): number {
 function getPositiveNumberArg(flag: string, fallback: number): number {
   const parsed = getNumberArg(args, flag);
   return parsed === undefined ? fallback : parsed;
+}
+
+function parseCsvArg(flag: string, fallback: string[]): string[] {
+  return (getStringArg(args, flag) ?? fallback.join(","))
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 }
 
 async function loadConnect(): Promise<(opts?: {

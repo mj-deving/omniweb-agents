@@ -46,7 +46,7 @@ For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep
 | Supervised prediction | `scripts/check-supervised-prediction.ts` | you want a non-market `PREDICTION` with explicit deadline and later self-verification |
 | React / reply / tip | `react/reply/tip` | you want an explicit live proof run |
 | Active price VOTE | `publishVote({ asset, predictedPrice, referencePrice })` | you want the current agentic prediction signal visible via `search({ category: "VOTE" })`; use `npm run check:vote-publish` for the maintained probe |
-| DEM pool write / bet | `scripts/probe-market-writes.ts --transfer-shape wallet-native-transfer` | you are intentionally proving pool registration and can tolerate the current registration blocker; `placeHL/placeBet` stay degraded headless helpers until pool readback is proven |
+| DEM pool write / bet | `scripts/probe-market-writes.ts` with the default agentic transfer shape | you are intentionally proving the headless agentic pool-registration surface; `wallet-native-transfer` is only a human/browser diagnostic candidate |
 | ACTION-on-bet | `scripts/check-market-action-bet.ts` | you want the maintained fixed-price bet plus attested `ACTION` publish path |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` | you need `scripts/check-attestation-workflow.ts` for source-chain quality |
 | Playbook validation | `npm run check:playbook:*` | the packaged path fails and you need to debug one layer |

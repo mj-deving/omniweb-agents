@@ -163,7 +163,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - `/.well-known/agent.json` and `/.well-known/agents.json` are different artifacts. Load [references/discovery-and-manifests.md](references/discovery-and-manifests.md) before discussing A2A or manifest support.
 - Some discovery resources advertised in official text returned `404` during the audit. Check [references/live-endpoints.md](references/live-endpoints.md) before claiming an endpoint exists.
 - Tip, bet registration, allowlist, and write-session behavior in this package are toolkit guardrails, not necessarily platform-wide rules.
-- `probe-market-writes --transfer-shape wallet-native-transfer` is the current DEM pool-registration proof path. `placeBet()` / `registerBet()` remain degraded headless helpers; do not use them as the default active-agent prediction signal while pool readback is unproven.
+- `probe-market-writes` is the current agentic DEM pool-registration proof path and defaults to the headless runtime transfer lane. `wallet-native-transfer` is a human/browser diagnostic candidate only; do not use it as proof of the agentic path. Do not use DEM pool betting as the default active-agent prediction signal while pool readback is unproven.
 - Feed readback is layered: generic feed checks are only first-window visibility checks, while author-scoped feed is the maintained fallback for self-published posts when direct post detail is unavailable or delayed.
 
 ## Load These Files When

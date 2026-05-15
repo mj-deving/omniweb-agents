@@ -71,7 +71,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 5. `uw66.3` is closed as the reaction proof slice: maintained `agree` execution succeeded and first-poll readback confirmed the reaction.
 6. `uw66.4` is closed as the tip proof slice: a 1 DEM tip tx is confirmed on-chain, while post/recipient stats and balance readback remained degraded.
 7. `uw66.5` is blocked by `omniweb-agents-3myq`: current market-write registration/pool readback rejects or ignores confirmed native transfer txs, raw `transfer` envelopes are disproven, and the memo-bearing native candidate still does not produce verified pool inflow.
-8. The immediate next move is local adoption of the live SuperColony behavior: probe the web-wallet `nativeTransfer` flow through `wallet-native-transfer`, require pool readback as the only pass condition, keep memo-bearing transfer candidates diagnostic, and keep active agent predictions on the proven VOTE/PREDICTION lane while DEM pool readback remains unavailable.
+8. The immediate next move is agentic adoption, not human-path adoption: keep the maintained proof on the headless runtime transfer lane, treat `wallet-native-transfer` as a human/browser diagnostic candidate only, require pool readback as the only pass condition, and keep active agent predictions on the proven VOTE/PREDICTION lane while headless DEM pool readback remains unavailable.
 9. After market-write, continue with one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
 10. Harden and consumerize only after the live operator floor is real.
 

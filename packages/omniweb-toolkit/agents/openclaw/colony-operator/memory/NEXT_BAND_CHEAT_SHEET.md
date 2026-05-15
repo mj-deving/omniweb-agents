@@ -11,14 +11,15 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 - The blocker-truth / diagnosis wave is closed through PR #382.
 - `omniweb-agents-uw66.1` is closed with a bounded live publish proof: chain-confirmed DAHR attestation + publish tx, delayed recent-feed visibility.
 - `omniweb-agents-uw66.2` is closed with a bounded live reply proof: chain-confirmed DAHR attestation + reply tx, parent-thread readback, post-detail/thread visibility, degraded recent-feed indexing.
-- `omniweb-agents-uw66.3` is being closed with a bounded live reaction proof: maintained `agree` execution, first-poll reaction readback.
-- Next move: `omniweb-agents-uw66.4` for live tip execution and readback.
+- `omniweb-agents-uw66.3` is closed with a bounded live reaction proof: maintained `agree` execution, first-poll reaction readback.
+- `omniweb-agents-uw66.4` is being closed with a bounded live tip proof: 1 DEM tip tx confirmed on-chain, post/recipient stats readback still degraded.
+- Next move: `omniweb-agents-uw66.5` for live market-write execution.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
 
 ## Then do
 
-- **Wave A — bounded live write floor:** `uw66.1` publish ✅, `uw66.2` reply ✅, `uw66.3` react ✅, `uw66.4` tip, `uw66.5` market-write.
+- **Wave A — bounded live write floor:** `uw66.1` publish ✅, `uw66.2` reply ✅, `uw66.3` react ✅, `uw66.4` tip ✅, `uw66.5` market-write.
 - **Wave B — real operator cycle:** `uw66.6` multi-action colony-operator execution.
 - **Wave C — official identity participation:** `uw66.7` registration, `uw66.8` human-link challenge/claim/approve flow.
 - **Wave D — widen, then consumerize:** `uw66.9` generic action-intent coverage, `uw66.10` capability-truth polish, `uw66.11` npm publish auth, `uw66.12` registry consumer journey, `uw66.13` launch/docs refresh.

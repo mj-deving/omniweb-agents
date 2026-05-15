@@ -193,7 +193,7 @@ For documentation-only child PRs:
 
 ## §9. Acceptance Criteria
 
-- [ ] **AC-1** Current production read surface is re-proven and documented. Test recipe: run `check:live`, `check:live:detailed`, and `check:read-surface`; update `verification-matrix.md` and any current read-sweep note.
+- [x] **AC-1** Current production read surface is re-proven and documented. Test recipe: run `check:live`, `check:live:detailed`, and `check:read-surface`; update `verification-matrix.md` and any current read-sweep note. Verdict: pass on 2026-05-15 with 21/21 maintained production reads passing on `https://supercolony.ai`.
 - [ ] **AC-2** Publish and DAHR attestation path has a current pass/degraded verdict with visibility evidence. Test recipe: run publish readiness and attestation checks before any spend; if live publish is approved, record post tx, attestation tx, and visibility/readback.
 - [ ] **AC-3** Reply, react, and tip have current pass/degraded verdicts with readback or attribution evidence. Test recipe: run `probe-social-writes.ts` no-spend/preflight first, then bounded execute only for the selected family.
 - [ ] **AC-4** DEM pool betting is proven only by headless runtime transfer plus pool readback, or marked degraded. Test recipe: run `probe-market-writes.ts` with the default transfer shape; pass only if pool readback changes.
@@ -251,6 +251,12 @@ The long-running goal is complete when all of these are true:
 Codex appends timestamped progress notes here during the future `/goal` run.
 
 - 2026-05-15: PRD prepared from `docs/GOAL_BRIEF.md`; no `/goal` launched and no DEM spent in the prep slice.
+- 2026-05-15 AC-1: `npm --prefix packages/omniweb-toolkit run check:live` passed at `2026-05-15T16:32:10Z` against `https://supercolony.ai`. Discovery resources `/llms-full.txt`, `/openapi.json`, `/.well-known/ai-plugin.json`, `/.well-known/agents.json`, and `/.well-known/agent.json` returned `200`; maintained core endpoints returned expected statuses; stats categories were `ACTION`, `ALERT`, `ANALYSIS`, `FEED`, `OBSERVATION`, `OPINION`, `PREDICTION`, `QUESTION`, `SIGNAL`, and `VOTE`.
+- 2026-05-15 AC-1: first `check:live:detailed` attempt failed before host probing because this fresh worktree had no installed dependencies and Node could not resolve `tsx`. Ran `npm install` for local setup only, reverted the resulting lockfile ordering churn, and reran the gate successfully.
+- 2026-05-15 AC-1: `npm --prefix packages/omniweb-toolkit run check:live:detailed` passed at `2026-05-15T16:34:34Z` through `2026-05-15T16:34:43Z`. Discovery snapshots matched, endpoint-surface expectations matched, all ten active categories returned posts, and response-shape checks passed for feed, signals, convergence, oracle, agents, stats, DEM pools, prices, report, leaderboard, prediction markets, and health.
+- 2026-05-15 AC-1: `npm --prefix packages/omniweb-toolkit run check:read-surface` passed at `2026-05-15T16:34:58Z`. Runtime context reported `sdkBridgeApiAccess: "configured"`, wallet auth available, and wallet `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`; the maintained production read sweep returned `21 / 21` pass with no production read gaps. No DEM was spent.
+- 2026-05-15 AC-1: `npm --prefix packages/omniweb-toolkit run check:verification-matrix` initially failed after the AC-1 matrix edit because the current `HiveAPI` declaration included `publishVote` without a matrix row. Added the minimal method-level row so package validation stays green; live `publishVote` broadcast/readback remains an AC-5/AC-8 proof item, not AC-1 evidence.
+- 2026-05-15 AC-1 validation: `git diff --check` passed; `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md` passed; `npm --prefix packages/omniweb-toolkit run check:verification-matrix` passed with `missingHiveMethods: []`; `npx tsc --noEmit --pretty false` exited `0`; `npm --prefix packages/omniweb-toolkit run check:package` exited `0` after regenerating the registry export; `npm --prefix packages/omniweb-toolkit run check:evals` exited `0` with `30` eval checks passed. No DEM was spent.
 
 ## §14. Launch Prompt
 

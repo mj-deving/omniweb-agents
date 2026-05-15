@@ -201,7 +201,7 @@ For documentation-only child PRs:
 - [x] **AC-6** Identity/register/link surfaces are proven or explicitly excluded from launch claims. Test recipe: run `probe-identity-surfaces.ts` only when the run deliberately mutates registration/link state; otherwise mark excluded with rationale. Verdict: excluded from current launch claims on 2026-05-15. The dry-run probe exited `0` with `attempted=false` for wallet `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`; no current live mutation was authorized because `register()` changes the long-lived public agent profile and the official link flow creates human-link state before cleanup. The April 17 proof remains historical package evidence, not a current launch claim.
 - [x] **AC-7** At least one outside-in agent journey is executed or intentionally skipped with captured evidence. Test recipe: run `check:playbook:*`, `check:journeys`, or a captured journey drill and record outputs. Verdict: pass on 2026-05-15 for the no-spend outside-in journey set. The non-release `check:journeys` harness passed with `6` pass, `0` degraded, `0` fail; the default full harness still includes the npm release gate and failed there only, which is deferred to AC-9.
 - [x] **AC-8** Package docs, verification matrix, and launch references are synchronized with the proof results. Test recipe: doc diff plus `check:verification-matrix` when matrix coverage changes. Verdict: pass on 2026-05-15. Package activation guidance, consumer journey docs, launch proving matrix, verification matrix, and generated registry reference copies now agree on AC-1 through AC-7 pass/degraded/excluded state; AC-9 remains the isolated npm/registry readiness gate.
-- [ ] **AC-9** npm/registry readiness is evaluated only after launch-proof verdicts are current. Test recipe: run `check:publish` after AC-1 through AC-8 have current verdicts; record npm auth/package-name outcome separately from launch proof.
+- [x] **AC-9** npm/registry readiness is evaluated only after launch-proof verdicts are current. Test recipe: run `check:publish` after AC-1 through AC-8 have current verdicts; record npm auth/package-name outcome separately from launch proof. Verdict: degraded/blocked on 2026-05-15. `check:publish` ran after AC-8, `check:package` passed, `omniweb-toolkit` remains name-available on npm, and the only release blocker reported by the gate is missing npm registry auth in this publishing environment.
 
 ## §10. Anti-Requirements
 
@@ -230,14 +230,14 @@ For documentation-only child PRs:
 
 The long-running goal is complete when all of these are true:
 
-- [ ] Every stable acceptance anchor in §9 is checked with evidence.
-- [ ] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md`.
-- [ ] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
-- [ ] Full gate exits 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
-- [ ] Live read gate exits 0 or has a documented current-host blocker: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
-- [ ] Every live write performed has command, budget, tx hash when available, before/after readback, and verdict recorded.
-- [ ] `docs/GOAL_BRIEF.md`, this PRD, package references, and Beads agree on pass/degraded/skipped/STUCK state.
-- [ ] §13 contains a completion report naming changed files, PRs, commits, and verification output.
+- [x] Every stable acceptance anchor in §9 is checked with evidence.
+- [x] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md`.
+- [x] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
+- [x] Full gate exits 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
+- [x] Live read gate exits 0 or has a documented current-host blocker: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
+- [x] Every live write performed has command, budget, tx hash when available, before/after readback, and verdict recorded.
+- [x] `docs/GOAL_BRIEF.md`, this PRD, package references, and Beads agree on pass/degraded/skipped/STUCK state.
+- [x] §13 contains a completion report naming changed files, PRs, commits, and verification output.
 
 ## §12. Assumptions And Open Questions
 
@@ -282,6 +282,9 @@ Codex appends timestamped progress notes here during the future `/goal` run.
 - 2026-05-15 AC-8 sync pass: package docs and references were aligned after AC-1 through AC-7. `consumer-journey-drills.md` now preserves the current AC-2 publish pass, AC-3 reply/reaction/tip mixed verdicts, AC-4 DEM pool betting degraded/STUCK state, AC-5 VOTE prediction lane, and AC-7 non-release journey pass. `launch-proving-matrix.md` now records current May 15 outcomes for research, market, and engagement journeys instead of relying on stale April-only notes. `SKILL.md` now separates full `check:journeys` from the AC-7 `--skip-release-gate` path so AC-9 remains isolated.
 - 2026-05-15 AC-8 setup note: the first `npm --prefix packages/omniweb-toolkit run check:verification-matrix` attempt in the fresh AC-8 worktree failed before matrix evaluation because local dependencies were absent and Node could not resolve `tsx`; this was worktree setup, not a matrix failure.
 - 2026-05-15 AC-8 validation: `git diff --check` passed; `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md` passed; `npm --prefix packages/omniweb-toolkit run build` refreshed declarations for matrix validation; `npm --prefix packages/omniweb-toolkit run check:verification-matrix` passed with `missingHiveMethods: []`; `npx tsc --noEmit --pretty false` exited `0`; `npm --prefix packages/omniweb-toolkit run check:package` exited `0`; `npm --prefix packages/omniweb-toolkit run check:evals` exited `0` with `30` eval checks passed.
+- 2026-05-15 AC-9 registry readiness: `npm --prefix packages/omniweb-toolkit run check:publish` exited `1` at `2026-05-15T18:28:18.725Z` with `releaseDecision="blocked_npm_auth_missing"`. Its internal `npm run check:package` passed; `npm whoami --registry https://registry.npmjs.org` failed with `Not authenticated with npm registry`; `npm view omniweb-toolkit version --json` reported the package does not exist and `nameAvailable=true`. No DEM was spent and no live colony write was attempted.
+- 2026-05-15 AC-9 validation: `git diff --check` passed; `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md` passed; `npx tsc --noEmit --pretty false` exited `0`; `npm --prefix packages/omniweb-toolkit run check:package` exited `0`; `npm --prefix packages/omniweb-toolkit run check:evals` exited `0` with `30` eval checks passed; `npm --prefix packages/omniweb-toolkit run check:verification-matrix` passed with `missingHiveMethods: []`; `npm --prefix packages/omniweb-toolkit run check:live` passed at `2026-05-15T18:33:01Z`; `npm --prefix packages/omniweb-toolkit run check:live:detailed` passed through `2026-05-15T18:33:07.337Z`. No DEM was spent and no live colony write was attempted.
+- 2026-05-15 completion report: AC-1 through AC-9 are checked. Merged evidence PRs and commits: AC-1 PR #400 `dca70464b409030294c4dc7fcd2c481d0e666aca`; AC-2 PR #401 `5f8df637c869014f1c0efefd8813d9ca0afb37c9`; AC-3 PR #402 `5f3430151d3c11df31b14e25d7dca944de931bc1`; AC-4 PR #403 `e27d0f145b5024fde469069d5781c73335c96984`; AC-5 PR #404 `1cd52880048c7f8ce193030fed048fffcc6e4a65`; AC-6 PR #405 `c48bb45beb625b2c11b181e865c1ce9c0ad507ff`; AC-7 PR #406 `4e70faef34bf25120eab6ed55f2cfad2f0ea225e`; AC-8 PR #407 `759135ac4dea749f3a72271d6d9a25496077fae3`. AC-9 changed `docs/MASTER_PRD.md`, `packages/omniweb-toolkit/README.md`, `packages/omniweb-toolkit/references/consumer-journey-drills.md`, `packages/omniweb-toolkit/references/launch-proving-matrix.md`, `packages/omniweb-toolkit/scripts/_registry-export.ts`, and generated registry copies under `packages/omniweb-toolkit/agents/registry/`. AC-9 PR/commit evidence will be the branch `codex/ac9-registry-readiness` PR that carries this completion report.
 
 ## §14. Launch Prompt
 

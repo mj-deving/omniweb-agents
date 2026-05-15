@@ -159,13 +159,14 @@ This file complements:
   - `check:package` passes
   - npm registry name is still available
   - the default May 15 `check:journeys` run included the release gate and exited `1` only on that member
+  - the May 15 AC-9 `check:publish` run returned `blocked_npm_auth_missing`: internal package checks passed, `omniweb-toolkit` remained name-available, and npm auth was missing in the publishing environment
 - Interpretation:
   - a checked-out repo consumer can validate and use the package now
-  - the first npm-based outside install is still AC-9 release-gate scope, not a failure of the no-spend AC-7 journey set
+  - the first npm-based outside install is still blocked on npm registry auth, not on the package structure or no-spend journey set
 
 ## What Still Blocks A Stronger Public Claim
 
-1. registry publication must move from "auth missing" to an actual published install path
+1. registry publication must move from `blocked_npm_auth_missing` to an actual published install path
 2. publish visibility must converge with the returned tx hash
 3. reply visibility must converge with the returned tx hash
 4. tip spend must show up reliably in readback

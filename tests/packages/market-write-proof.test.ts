@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   chooseFixedBetProbe,
   chooseHigherLowerProbe,
+  evaluateFixedBetReadback,
   fixedBetReadbackSatisfied,
   higherLowerReadbackSatisfied,
 } from "../../packages/omniweb-toolkit/scripts/_market-write-shared";
@@ -113,5 +114,37 @@ describe("market-write proof helpers", () => {
       bets: [...before.bets, { txHash: "tx-2", predictedPrice: 71969, amount: 5 }],
     };
     expect(fixedBetReadbackSatisfied(before, after, "tx-2")).toBe(true);
+  });
+
+  it("reports how fixed-bet readback matched", () => {
+    const before = {
+      asset: "SOL",
+      horizon: "4h",
+      totalBets: 0,
+      totalDem: 0,
+      roundEnd: 1778832000000,
+      bets: [],
+    };
+    const after = {
+      ...before,
+      totalBets: 1,
+      totalDem: 5,
+      bets: [{
+        txHash: "tx-2",
+        predictedPrice: 89,
+        amount: 5,
+        bettor: "0xagent",
+        roundEnd: 1778832000000,
+      }],
+    };
+
+    expect(evaluateFixedBetReadback(before, after, "tx-2", {
+      predictedPrice: 89,
+      bettor: "0xagent",
+      roundEnd: 1778832000000,
+    })).toEqual({
+      ok: true,
+      matchedBy: ["aggregate-delta", "tx-hash", "bettor-price-round"],
+    });
   });
 });

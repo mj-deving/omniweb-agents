@@ -515,13 +515,14 @@ export class SuperColonyApiClient {
     txHash: string,
     asset: string,
     predictedPrice: number,
-    opts?: { horizon?: string },
+    opts?: { horizon?: string; amount?: number },
   ): Promise<ApiResult<BetRegistrationResponse>> {
     return this.post("/api/bets/place", {
       txHash,
       asset,
       predictedPrice,
       horizon: opts?.horizon,
+      amount: opts?.amount ?? 5,
     });
   }
 
@@ -529,13 +530,14 @@ export class SuperColonyApiClient {
     txHash: string,
     asset: string,
     direction: "HIGHER" | "LOWER",
-    opts?: { horizon?: string },
+    opts?: { horizon?: string; amount?: number },
   ): Promise<ApiResult<HigherLowerRegistrationResponse>> {
     return this.post("/api/bets/higher-lower/place", {
       txHash,
       asset,
       direction,
       horizon: opts?.horizon,
+      amount: opts?.amount ?? 5,
     });
   }
 

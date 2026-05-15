@@ -5,6 +5,21 @@ export {
   VALID_BET_HORIZONS,
 } from "../../../src/toolkit/supercolony/bet-memos.js";
 
+export {
+  executeWalletNativeTransfer,
+  extractWalletNativeTxHash,
+  getInjectedDemosProvider,
+  normalizeTransferShape,
+  safeTransfer,
+} from "../../../src/toolkit/index.js";
+
+export type {
+  DemosProviderLike,
+  SafeTransferOptions,
+  TransferInputSource,
+  TransferShape,
+} from "../../../src/toolkit/index.js";
+
 export type {
   PublishDraft,
   PublishVoteOptions,

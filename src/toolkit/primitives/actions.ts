@@ -5,7 +5,7 @@
 import type { SuperColonyApiClient } from "../supercolony/api-client.js";
 import type { ApiResult } from "../supercolony/types.js";
 import type { ActionsPrimitives } from "./types.js";
-import type { HivePost } from "../sdk-bridge.js";
+import type { HivePost, TransferDemResult } from "../sdk-bridge.js";
 import { simulateTransaction } from "../chain/tx-simulator.js";
 import { buildVotePost } from "../vote-post.js";
 import {
@@ -19,7 +19,7 @@ import {
 
 interface ActionsDeps {
   apiClient: SuperColonyApiClient;
-  transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
+  transferDem?: (to: string, amount: number, memo: string) => Promise<TransferDemResult>;
   publishHivePost?: (post: HivePost) => Promise<{ txHash: string }>;
   attestDahr?: (url: string) => Promise<{ url: string; responseHash: string; txHash: string }>;
   /** RPC URL for transaction simulation (optional — skips simulation when absent) */
@@ -30,13 +30,16 @@ interface ActionsDeps {
 
 export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
   function registrationFailure(
-    txHash: string,
     memo: string,
     amount: number,
-    registration: ApiResult<unknown>,
+    transfer: TransferDemResult,
+    registration?: ApiResult<unknown>,
+    readbackError?: string,
   ) {
     const registrationError =
-      registration === null
+      registration === undefined
+        ? undefined
+        : registration === null
         ? "Registration endpoint unavailable after transfer"
         : registration.ok
           ? undefined
@@ -44,7 +47,16 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
 
     return {
       ok: true as const,
-      data: { txHash, memo, amount, registered: false, registrationError },
+      data: {
+        txHash: transfer.txHash,
+        memo,
+        amount,
+        registered: false,
+        memoEncoded: transfer.memoEncoded,
+        transferShape: transfer.transferShape,
+        registrationError,
+        readbackError,
+      },
     };
   }
 
@@ -200,16 +212,13 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
         }
 
         const result = await deps.transferDem(poolAddress, 5, memo);
-        const registration = await deps.apiClient.registerBet(
-          result.txHash,
-          normalizedAsset,
-          normalizedPrice,
-          { horizon },
+        return registrationFailure(
+          memo,
+          5,
+          result,
+          undefined,
+          "Pool readback has not been verified by placeBet(); run the maintained market-write probe to confirm registration.",
         );
-        if (registration === null || !registration.ok) {
-          return registrationFailure(result.txHash, memo, 5, registration);
-        }
-        return { ok: true, data: { txHash: result.txHash, memo, amount: 5, registered: true } };
       } catch (err) {
         return { ok: false, status: 0, error: err instanceof Error ? err.message : String(err) };
       }
@@ -258,16 +267,13 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
         }
 
         const result = await deps.transferDem(poolAddress, amount, memo);
-        const registration = await deps.apiClient.registerHigherLowerBet(
-          result.txHash,
-          normalizedAsset,
-          normalizedDirection,
-          { horizon },
+        return registrationFailure(
+          memo,
+          amount,
+          result,
+          undefined,
+          "Pool readback has not been verified by placeHL(); run the maintained market-write probe to confirm registration.",
         );
-        if (registration === null || !registration.ok) {
-          return registrationFailure(result.txHash, memo, amount, registration);
-        }
-        return { ok: true, data: { txHash: result.txHash, memo, amount, registered: true } };
       } catch (err) {
         return { ok: false, status: 0, error: err instanceof Error ? err.message : String(err) };
       }

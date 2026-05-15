@@ -553,7 +553,7 @@ async function executeMarketWriteIntent(args: {
     });
     const registrationError = betResult.data.registered
       ? undefined
-      : betResult.data.registrationError ?? "bet_registration_unconfirmed";
+      : betResult.data.registrationError;
     const readbackError = readback.indexedVisible ? undefined : "bet_readback_unconfirmed";
     const verification: MinimalMarketWriteVerification = {
       attempted: true,
@@ -569,13 +569,13 @@ async function executeMarketWriteIntent(args: {
       amount: betResult.data.amount,
       memo: betResult.data.memo,
       predictedPrice,
-      registrationConfirmed: betResult.data.registered,
+      registrationConfirmed: readback.indexedVisible,
       beforePool,
       afterPool: readback.afterPool,
       error: registrationError ?? readbackError,
     };
 
-    if (!betResult.data.registered || !readback.indexedVisible) {
+    if (!readback.indexedVisible) {
       return buildFailedExecution(resolution.actionType, {
         stage: "verify",
         message: registrationError ?? readbackError ?? "bet_verification_failed",
@@ -654,7 +654,7 @@ async function executeMarketWriteIntent(args: {
     });
     const registrationError = betResult.data.registered
       ? undefined
-      : betResult.data.registrationError ?? "higher_lower_registration_unconfirmed";
+      : betResult.data.registrationError;
     const readbackError = readback.indexedVisible ? undefined : "higher_lower_readback_unconfirmed";
     const verification: MinimalMarketWriteVerification = {
       attempted: true,
@@ -670,13 +670,13 @@ async function executeMarketWriteIntent(args: {
       amount: betResult.data.amount,
       memo: betResult.data.memo,
       direction,
-      registrationConfirmed: betResult.data.registered,
+      registrationConfirmed: readback.indexedVisible,
       beforePool,
       afterPool: readback.afterPool,
       error: registrationError ?? readbackError,
     };
 
-    if (!betResult.data.registered || !readback.indexedVisible) {
+    if (!readback.indexedVisible) {
       return buildFailedExecution(resolution.actionType, {
         stage: "verify",
         message: registrationError ?? readbackError ?? "higher_lower_verification_failed",

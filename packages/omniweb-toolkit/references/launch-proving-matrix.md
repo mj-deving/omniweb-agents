@@ -148,10 +148,12 @@ Purpose: prove paid market actions only after the publish path is stable.
 
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
+| active VOTE prediction lane | `publishVote` | `write-probe` | `scripts/check-vote-publish.ts --broadcast --asset <asset> --reference-price <price> --predicted-price <price>` | the VOTE post publishes through the local runtime, optional source attestation is recorded, and `search({ category: "VOTE" })` reads back the new tx on `https://supercolony.ai`; this remains the active prediction lane while DEM pool betting is degraded |
 | higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute` | the action uses a real observed edge, the live registration path is confirmed through pool readback, and higher-lower sizing follows the current fixed-`5 DEM` runtime contract |
 
 Exit criteria:
 
+- the active VOTE prediction lane has current broadcast and readback evidence, or is explicitly degraded
 - the market analyst playbook can either bet with real proof or stays explicitly publish-first and read-first
 - balance readback lag is treated as a secondary signal; pool readback is the primary confirmation path for current market writes
 

@@ -59,6 +59,29 @@ describe("market-write proof helpers", () => {
     });
   });
 
+  it("can choose an available empty fixed-price pool for a seed bet", () => {
+    const plan = chooseFixedBetProbe(
+      [
+        {
+          asset: "ETH",
+          horizon: "4h",
+          totalBets: 0,
+          totalDem: 0,
+          bets: [],
+        },
+      ],
+      [{ ticker: "ETH", sentimentScore: -61, currentPrice: 2252.36 }],
+    );
+
+    expect(plan).toMatchObject({
+      asset: "ETH",
+      horizon: "4h",
+      predictedPrice: 2230,
+      sentimentScore: -61,
+    });
+    expect(plan?.reason).toContain("seedable");
+  });
+
   it("accepts higher-lower readback via count or DEM deltas", () => {
     const before = {
       asset: "BTC",

@@ -9,6 +9,7 @@ import {
   buildMemoTransferTransaction,
   createSdkBridge,
   executeWalletNativeTransfer,
+  normalizeTransferShape,
 } from "../../src/toolkit/sdk-bridge.js";
 import type { SdkBridge } from "../../src/toolkit/sdk-bridge.js";
 
@@ -405,6 +406,11 @@ describe("SDK Bridge Adapter", () => {
   });
 
   describe("transferDem", () => {
+    it("defaults transfer-shape selection to the headless agentic memo lane", () => {
+      expect(normalizeTransferShape(undefined)).toBe("native-content-memo");
+      expect(normalizeTransferShape("wallet-native-transfer")).toBe("wallet-native-transfer");
+    });
+
     it("calls transfer → confirm → broadcast pipeline", async () => {
       const result = await bridge.transferDem("demos1recipient", 5, "");
 

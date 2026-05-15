@@ -252,6 +252,7 @@ export interface SdkBridge {
 
 export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-content-memo";
 export const WALLET_NATIVE_TRANSFER_SHAPE: WalletNativeTransferShape = "wallet-native-transfer";
+export const DEFAULT_TRANSFER_SHAPE: MemoTransferShape = DEFAULT_MEMO_TRANSFER_SHAPE;
 
 export function normalizeMemoTransferShape(value: string | undefined): MemoTransferShape {
   switch ((value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim()) {
@@ -267,7 +268,7 @@ export function normalizeMemoTransferShape(value: string | undefined): MemoTrans
 }
 
 export function normalizeTransferShape(value: string | undefined): MemoTransferShape | WalletNativeTransferShape {
-  const normalized = (value ?? WALLET_NATIVE_TRANSFER_SHAPE).trim();
+  const normalized = (value ?? DEFAULT_TRANSFER_SHAPE).trim();
   if (normalized === WALLET_NATIVE_TRANSFER_SHAPE) return WALLET_NATIVE_TRANSFER_SHAPE;
   return normalizeMemoTransferShape(normalized);
 }

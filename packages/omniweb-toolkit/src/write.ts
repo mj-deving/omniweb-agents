@@ -6,6 +6,8 @@ export {
 } from "../../../src/toolkit/supercolony/bet-memos.js";
 
 export {
+  DEFAULT_TRANSFER_SHAPE,
+  WALLET_NATIVE_TRANSFER_SHAPE,
   executeWalletNativeTransfer,
   extractWalletNativeTxHash,
   getInjectedDemosProvider,

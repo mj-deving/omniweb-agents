@@ -73,6 +73,7 @@ export interface TxModule {
 }
 
 export type MemoTransferShape =
+  | "native-args-memo"
   | "native-content-memo"
   | "native-data-memo"
   | "wallet-provider-send-transaction";
@@ -250,19 +251,20 @@ export interface SdkBridge {
   getDemos(): Demos;
 }
 
-export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-content-memo";
+export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-args-memo";
 export const WALLET_NATIVE_TRANSFER_SHAPE: WalletNativeTransferShape = "wallet-native-transfer";
 export const DEFAULT_TRANSFER_SHAPE: MemoTransferShape = DEFAULT_MEMO_TRANSFER_SHAPE;
 
 export function normalizeMemoTransferShape(value: string | undefined): MemoTransferShape {
   switch ((value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim()) {
+    case "native-args-memo":
     case "native-content-memo":
     case "native-data-memo":
     case "wallet-provider-send-transaction":
       return (value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim() as MemoTransferShape;
     default:
       throw new Error(
-        `Unsupported memo transfer shape "${value}". Valid shapes: native-content-memo, native-data-memo, wallet-provider-send-transaction`,
+        `Unsupported memo transfer shape "${value}". Valid shapes: native-args-memo, native-content-memo, native-data-memo, wallet-provider-send-transaction`,
       );
   }
 }
@@ -341,7 +343,9 @@ export function buildMemoTransferTransaction(
     ],
   };
 
-  if (shape === "native-content-memo") {
+  if (shape === "native-args-memo") {
+    (((content.data as unknown[])[1] as Record<string, unknown>).args as unknown[]).push(memo);
+  } else if (shape === "native-content-memo") {
     content.memo = memo;
   } else {
     ((content.data as unknown[])[1] as Record<string, unknown>).memo = memo;

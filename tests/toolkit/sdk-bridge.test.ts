@@ -407,7 +407,7 @@ describe("SDK Bridge Adapter", () => {
 
   describe("transferDem", () => {
     it("defaults transfer-shape selection to the headless agentic memo lane", () => {
-      expect(normalizeTransferShape(undefined)).toBe("native-content-memo");
+      expect(normalizeTransferShape(undefined)).toBe("native-args-memo");
       expect(normalizeTransferShape("wallet-native-transfer")).toBe("wallet-native-transfer");
     });
 
@@ -437,7 +437,7 @@ describe("SDK Bridge Adapter", () => {
       expect(demos.transfer.mock.calls[0]).toHaveLength(2);
     });
 
-    it("builds a native memo transfer with top-level content.memo before signing", async () => {
+    it("builds the official native memo transfer shape before signing", async () => {
       bridge = createSdkBridge(
         demos as any,
         "https://www.supercolony.ai",
@@ -451,7 +451,7 @@ describe("SDK Bridge Adapter", () => {
       expect(result).toMatchObject({
         txHash: "mock-broadcast-hash",
         memoEncoded: true,
-        transferShape: "native-content-memo",
+        transferShape: "native-args-memo",
       });
       expect(demos.transfer).not.toHaveBeenCalled();
       expect(demos.sign).toHaveBeenCalledWith(expect.objectContaining({
@@ -459,10 +459,27 @@ describe("SDK Bridge Adapter", () => {
           type: "native",
           to: "0xpool",
           amount: 5,
-          memo: "HIVE_BET:BTC:70000:30m",
-          data: ["native", { nativeOperation: "send", args: ["0xpool", 5] }],
+          data: ["native", { nativeOperation: "send", args: ["0xpool", 5, "HIVE_BET:BTC:70000:30m"] }],
         }),
       }));
+    });
+
+    it("can build the memo in top-level content.memo when selected", async () => {
+      const tx = buildMemoTransferTransaction(
+        { content: {} },
+        "0xpool",
+        5,
+        "HIVE_BET:BTC:70000:30m",
+        "native-content-memo",
+      );
+
+      expect(tx.content).toMatchObject({
+        type: "native",
+        to: "0xpool",
+        amount: 5,
+        memo: "HIVE_BET:BTC:70000:30m",
+        data: ["native", { nativeOperation: "send", args: ["0xpool", 5] }],
+      });
     });
 
     it("can build the memo inside content.data[1] when selected", async () => {

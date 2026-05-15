@@ -41,9 +41,10 @@ Use those explicitly when building attestation or publishing tools that operate 
 
 ## Betting Registration Model
 
-- The packaged SDK bridge can broadcast DEM transfers, but it does not embed the betting memo on-chain.
-- Because of that, `placeBet()` and `placeHL()` now use a two-step local flow: transfer first, then explicit API registration with the returned `txHash`.
-- A successful transfer with failed registration returns `registered: false` plus a `registrationError` so callers can retry with `registerBet()` or `registerHL()` instead of losing the transaction handle.
+- DEM betting is memo-transfer based: send exactly `5 DEM` to the pool with `HIVE_BET...` or `HIVE_HL...`, then prove success through pool readback.
+- `transferDem(to, amount, memo)` now fails closed for non-empty memos unless the runtime can encode a memo-bearing transfer shape. It reports the selected `transferShape` and whether the memo was encoded.
+- `placeBet()` and `placeHL()` return the tx hash, memo, amount, and transfer-shape metadata after the on-chain transfer. They do not treat `/api/bets/place` or `/api/bets/higher-lower/place` as primary proof.
+- The maintained market-write probe polls pool readback first. Manual registration routes are labeled recovery only, and a failed recovery must preserve the tx hash, memo, amount, and readback error.
 - `registerEthBinaryBet(txHash)` is a manual recovery helper for the live ETH binary registration route.
 - DEM binary bets remain fail-closed in this package because the current live surface does not expose a comparable safe manual-registration route.
 
@@ -69,7 +70,7 @@ These are package guardrails that reduce accidental misuse.
 If a write workflow fails:
 
 1. check credentials and DEM
-2. check whether transfer succeeded but registration returned `registered: false`
+2. check whether the memo transfer confirmed, whether pool readback converged, and whether `registered: false` preserved the tx hash, memo, amount, and readback error
 3. check allowlist and target URL assumptions
 4. check whether the flow requires DAHR rather than TLSN
 5. check `check-attestation-workflow.ts --stress-suite` or the primary/supporting-source report before assuming the evidence chain is strong enough

@@ -13,8 +13,8 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 - `omniweb-agents-uw66.2` is closed with a bounded live reply proof: chain-confirmed DAHR attestation + reply tx, parent-thread readback, post-detail/thread visibility, degraded recent-feed indexing.
 - `omniweb-agents-uw66.3` is closed with a bounded live reaction proof: maintained `agree` execution, first-poll reaction readback.
 - `omniweb-agents-uw66.4` is closed with a bounded live tip proof: 1 DEM tip tx confirmed on-chain, post/recipient stats readback still degraded.
-- `omniweb-agents-uw66.5` is blocked by `omniweb-agents-3myq`: a 5 DEM fixed-price transfer tx confirmed on-chain, but `/api/bets/place` rejected registration as `wrong_tx_type` (`tx is native, expected transfer`) and pool readback stayed unchanged. Raw `content.type: "transfer"` envelopes are disproven as a local workaround unless they also produce verified pool inflow.
-- Next move: resolve `omniweb-agents-3myq`, then rerun `omniweb-agents-uw66.5` for live market-write pool-readback proof.
+- `omniweb-agents-uw66.5` is blocked by `omniweb-agents-3myq`: a plain 5 DEM fixed-price transfer tx confirmed on-chain, but `/api/bets/place` rejected registration as `wrong_tx_type` and pool readback stayed unchanged. Raw `content.type: "transfer"` envelopes are disproven as a local workaround. A memo-bearing `native-content-memo` tx (`4acb9f76d54a96415e77d3639af591355efd42f598850295852c4cfea72cf4f1`, `HIVE_BET:SOL:89:4h`) later confirmed at block `2264378` and balance readback moved `1747 -> 1741`, but SOL 4h pool readback stayed `totalBets=0,totalDem=0`; manual registration recovery returned `wrong_sender`.
+- Next move: upstream/runtime alignment around `safeTransfer` / memo-bearing DEM transfer that also creates accepted pool inflow, then rerun `omniweb-agents-uw66.5` for live market-write pool-readback proof.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
 

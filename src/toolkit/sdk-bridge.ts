@@ -66,9 +66,23 @@ export function sanitizeUrl(url: string): string {
 
 /** Transaction module interface — typed replacement for bare Function fields */
 export interface TxModule {
+  empty?: () => { content: Record<string, unknown>; [key: string]: unknown };
   store(data: Uint8Array, demos: Demos): Promise<unknown>;
   confirm(storeTx: unknown, demos: Demos): Promise<unknown>;
   broadcast(validity: unknown, demos: Demos): Promise<unknown>;
+}
+
+export type MemoTransferShape =
+  | "native-content-memo"
+  | "native-data-memo"
+  | "wallet-provider-send-transaction";
+
+export type TransferShape = "sdk-native-transfer" | MemoTransferShape;
+
+export interface TransferDemResult {
+  txHash: string;
+  memoEncoded: boolean;
+  transferShape: TransferShape;
 }
 
 /** Error keywords indicating auth/rate-limit failures in DAHR proxy responses */
@@ -88,6 +102,7 @@ interface DemosRpcMethods {
   /** Broadcasts a confirmed transaction to the network */
   broadcast(validityData: unknown): Promise<unknown>;
   sendTransaction(txData: unknown): Promise<{ hash?: string; txHash?: string }>;
+  sign?(transaction: unknown): Promise<unknown>;
   // NOTE: queryTx/getTx removed — these methods don't exist on the Demos SDK class.
   // Use getTxByHash instead (chain-first migration).
   connect(rpcUrl: string): Promise<void>;
@@ -195,7 +210,7 @@ export interface SdkBridge {
   publishHivePost(post: HivePost): Promise<{ txHash: string }>;
 
   /** Transfer DEM tokens to a recipient */
-  transferDem(to: string, amount: number, memo: string): Promise<{ txHash: string }>;
+  transferDem(to: string, amount: number, memo: string): Promise<TransferDemResult>;
 
   /** Settle a D402 payment (createPayment + settle, nonce-safe) */
   payD402(requirement: D402PaymentRequirement): Promise<D402SettlementResult>;
@@ -227,6 +242,55 @@ export interface SdkBridge {
    * @throws {Error} Unless bridge was created with `options.allowRawSdk: true`.
    */
   getDemos(): Demos;
+}
+
+export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-content-memo";
+
+export function normalizeMemoTransferShape(value: string | undefined): MemoTransferShape {
+  switch ((value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim()) {
+    case "native-content-memo":
+    case "native-data-memo":
+    case "wallet-provider-send-transaction":
+      return (value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim() as MemoTransferShape;
+    default:
+      throw new Error(
+        `Unsupported memo transfer shape "${value}". Valid shapes: native-content-memo, native-data-memo, wallet-provider-send-transaction`,
+      );
+  }
+}
+
+export function buildMemoTransferTransaction(
+  emptyTx: { content?: Record<string, unknown>; [key: string]: unknown },
+  to: string,
+  amount: number,
+  memo: string,
+  shape: Exclude<MemoTransferShape, "wallet-provider-send-transaction">,
+): { content: Record<string, unknown>; [key: string]: unknown } {
+  const content: Record<string, unknown> = {
+    ...(emptyTx.content ?? {}),
+    type: "native",
+    to,
+    amount,
+    timestamp: Date.now(),
+    data: [
+      "native",
+      {
+        nativeOperation: "send",
+        args: [to, amount],
+      } as Record<string, unknown>,
+    ],
+  };
+
+  if (shape === "native-content-memo") {
+    content.memo = memo;
+  } else {
+    ((content.data as unknown[])[1] as Record<string, unknown>).memo = memo;
+  }
+
+  return {
+    ...emptyTx,
+    content,
+  };
 }
 
 // ── Helpers ──────────────────────────────────────────
@@ -294,7 +358,7 @@ export function createSdkBridge(
   async function loadTxModule(): Promise<TxModule> {
     if (cachedTxModule) return cachedTxModule;
     const { DemosTransactions } = await import("@kynesyslabs/demosdk/websdk");
-    cachedTxModule = DemosTransactions as TxModule;
+    cachedTxModule = DemosTransactions as unknown as TxModule;
     return cachedTxModule;
   }
 
@@ -476,20 +540,66 @@ export function createSdkBridge(
     /**
      * Transfer DEM tokens to a recipient address.
      *
-     * KNOWN LIMITATION: The `memo` parameter is accepted for interface compatibility
-     * but is NOT sent on-chain. The published Demos SDK `transfer(to, amount)` method
-     * has no memo parameter, so tip transfers currently use a plain native send.
-     *
-     * Tip validation still goes through `/api/tip`, but tip-stat attribution can lag
-     * or stay absent because the current SDK path cannot encode the upstream memo hint.
+     * Empty memos use the SDK's native transfer helper. Non-empty memos must use an
+     * explicit memo-bearing path; if the current runtime cannot build or sign one,
+     * this fails closed instead of silently broadcasting an un-attributable transfer.
      */
-    async transferDem(to: string, amount: number, memo: string): Promise<{ txHash: string }> {
+    async transferDem(to: string, amount: number, memo: string): Promise<TransferDemResult> {
       if (!to || typeof to !== "string") {
         throw new Error("transferDem: 'to' address is required");
       }
       if (!Number.isFinite(amount) || amount <= 0) {
         throw new Error(`transferDem: invalid amount ${amount} — must be a positive finite number`);
       }
+      const normalizedMemo = memo.trim();
+      if (normalizedMemo.length > 0) {
+        const transferShape = normalizeMemoTransferShape(process.env.OMNIWEB_MEMO_TRANSFER_SHAPE);
+        if (transferShape === "wallet-provider-send-transaction") {
+          if (typeof rpc.sendTransaction !== "function") {
+            throw new Error("transferDem: memo transfer shape wallet-provider-send-transaction is unavailable in this runtime");
+          }
+          const sent = await rpc.sendTransaction({ to, amount: String(amount), memo: normalizedMemo });
+          const txHash = extractTxHash(sent);
+          if (!txHash) {
+            throw new Error("DEM memo transfer sendTransaction succeeded but txHash not found in response");
+          }
+          return { txHash: String(txHash), memoEncoded: true, transferShape };
+        }
+
+        if (typeof rpc.sign !== "function") {
+          throw new Error("transferDem: memo transfer requires demos.sign(), which is unavailable in this runtime");
+        }
+        const tx = await loadTxModule();
+        if (typeof tx.empty !== "function") {
+          throw new Error("transferDem: memo transfer requires DemosTransactions.empty(), which is unavailable in this runtime");
+        }
+
+        const unsigned = buildMemoTransferTransaction(
+          tx.empty(),
+          to,
+          amount,
+          normalizedMemo,
+          transferShape,
+        );
+        const signed = await rpc.sign(unsigned);
+        const stages = {
+          store: async (signedTx: unknown) => signedTx,
+          confirm: (signedTx: unknown) => rpc.confirm(signedTx),
+          broadcast: (validity: unknown) => rpc.broadcast(validity),
+        };
+        const chainTx = await executeChainTx(stages, signed).catch((error: unknown) => {
+          if (isMissingConfirmedTxHashError(error)) {
+            throw new Error("DEM memo transfer broadcast succeeded but txHash not found in response");
+          }
+          throw error;
+        });
+        const txHash = extractTxHash({ txHash: chainTx.txHash });
+        if (!txHash) {
+          throw new Error("DEM memo transfer broadcast succeeded but txHash not found in response");
+        }
+        return { txHash: String(txHash), memoEncoded: true, transferShape };
+      }
+
       // SDK transfer() creates signed tx only (2 params — memo not supported at SDK level).
       // Must confirm + broadcast to actually submit to the network.
       const stages = {
@@ -509,7 +619,7 @@ export function createSdkBridge(
       if (!txHash) {
         throw new Error("DEM transfer broadcast succeeded but txHash not found in response");
       }
-      return { txHash: String(txHash) };
+      return { txHash: String(txHash), memoEncoded: false, transferShape: "sdk-native-transfer" };
     },
 
     async payD402(requirement: D402PaymentRequirement): Promise<D402SettlementResult> {

@@ -177,7 +177,7 @@ ETH mirror reads are available via `getEthPool()`, `getEthWinners()`, `getEthHig
 Sports and commodity reads are available via `getSportsMarkets()`, `getSportsPool()`, `getSportsWinners()`, and `getCommodityPool()`.
 Prediction intelligence reads are available via `getPredictionIntelligence()` and `getPredictionRecommendations(userAddress)`. The current dev deployment returns `410 Gone` for `/api/ballot*`, so ballot stays documented as removed rather than exposed as a live package surface.
 Active agent price predictions are visible today as HIVE `VOTE` posts, not `/api/ballot*` writes. Use `omni.colony.publishVote({ asset, predictedPrice, referencePrice, attestUrl })` for the current agentic prediction signal and verify with `omni.colony.search({ category: "VOTE" })`.
-Supported DEM write recovery helpers now include `registerBet(txHash, asset, predictedPrice)`, `registerHL(txHash, asset, direction)`, and `registerEthBinaryBet(txHash)` for the live manual-registration routes.
+DEM betting is primary memo-transfer plus pool readback: `placeBet()` and `placeHL()` send a memo-bearing 5 DEM transfer when the runtime supports one, and the maintained proof path treats `registerBet(txHash, asset, predictedPrice)` / `registerHL(txHash, asset, direction)` as labeled recovery helpers rather than primary success.
 For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `buildHigherLowerMemo()`, and `buildBinaryBetMemo()` so memo construction stays host-agnostic and versioned with the toolkit.
 
 ## Import Surface

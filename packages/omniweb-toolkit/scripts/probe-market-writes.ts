@@ -13,6 +13,14 @@
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.js";
 import { normalizeBalance } from "./_write-proof-shared.js";
 import {
+  buildBetMemo,
+  buildHigherLowerMemo,
+} from "../../../src/toolkit/supercolony/bet-memos.js";
+import {
+  DEFAULT_MEMO_TRANSFER_SHAPE,
+  normalizeMemoTransferShape,
+} from "../../../src/toolkit/sdk-bridge.js";
+import {
   chooseFixedBetProbe,
   chooseHigherLowerProbe,
   fixedBetReadbackSatisfied,
@@ -31,6 +39,19 @@ const DEFAULT_HL_TIMEOUT_MS = 20_000;
 const DEFAULT_FIXED_TIMEOUT_MS = 20_000;
 
 type OmniInstance = Awaited<ReturnType<Awaited<ReturnType<typeof loadConnect>>>>;
+type ReadbackVerification = {
+  attempted: true;
+  ok: boolean;
+  polls: number;
+  before: HigherLowerPoolSnapshot | BettingPoolSnapshot | null;
+  after: HigherLowerPoolSnapshot | BettingPoolSnapshot | null;
+};
+type RecoveryResult = {
+  attempted: true;
+  label: "manual_registration_recovery";
+  registration: Record<string, unknown>;
+  verification: ReadbackVerification;
+};
 
 const args = process.argv.slice(2);
 
@@ -45,6 +66,7 @@ Options:
   --poll-ms N              Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --only MODE              One of both, hl, fixed (default: both)
   --fixed-horizons CSV     Fixed-price horizons to inspect, in preference order (default: ${DEFAULT_FIXED_HORIZONS.join(",")})
+  --memo-transfer-shape S  Memo-bearing transfer shape: native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_MEMO_TRANSFER_SHAPE})
   --state-dir PATH         Override state directory for runtime guards
   --execute                Perform the real market-write proof sweep
   --help, -h               Show this help
@@ -54,7 +76,7 @@ Exit codes: 0 = success, 1 = runtime or proof failure, 2 = invalid args`);
   process.exit(0);
 }
 
-for (const flag of ["--assets", "--hl-amount", "--hl-timeout-ms", "--fixed-timeout-ms", "--poll-ms", "--state-dir", "--only", "--fixed-horizons"]) {
+for (const flag of ["--assets", "--hl-amount", "--hl-timeout-ms", "--fixed-timeout-ms", "--poll-ms", "--state-dir", "--only", "--fixed-horizons", "--memo-transfer-shape"]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
     console.error(`Error: ${flag} requires a value`);
@@ -74,6 +96,14 @@ const stateDir = getStringArg(args, "--state-dir") || undefined;
 const execute = hasFlag(args, "--execute");
 const onlyMode = (getStringArg(args, "--only") ?? "both").toLowerCase();
 const fixedHorizons = parseCsvArg("--fixed-horizons", DEFAULT_FIXED_HORIZONS);
+let memoTransferShape: ReturnType<typeof normalizeMemoTransferShape>;
+try {
+  memoTransferShape = normalizeMemoTransferShape(getStringArg(args, "--memo-transfer-shape") ?? process.env.OMNIWEB_MEMO_TRANSFER_SHAPE);
+} catch (error) {
+  console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
+}
+process.env.OMNIWEB_MEMO_TRANSFER_SHAPE = memoTransferShape;
 
 for (const [label, value] of [
   ["--hl-amount", hlAmount],
@@ -124,12 +154,25 @@ try {
       ok: true,
       address: omni.address,
       balanceBefore,
+      memoTransferShape,
       higherLower: hlPlan ? {
         plan: hlPlan,
+        transfer: {
+          to: hlBefore?.poolAddress ?? null,
+          amount: hlPlan.amount,
+          memo: buildHigherLowerMemo(hlPlan.asset, hlPlan.direction, { horizon: hlPlan.horizon }),
+          shape: memoTransferShape,
+        },
         before: hlBefore,
       } : undefined,
       fixedBet: fixedPlan ? {
         plan: fixedPlan,
+        transfer: {
+          to: fixedBefore?.poolAddress ?? null,
+          amount: 5,
+          memo: buildBetMemo(fixedPlan.asset, fixedPlan.predictedPrice, { horizon: fixedPlan.horizon }),
+          shape: memoTransferShape,
+        },
         before: fixedBefore,
       } : undefined,
       message: "Dry run only. Re-run with --execute to perform the live higher-lower and fixed-price bet proof.",
@@ -143,24 +186,42 @@ try {
         horizon: hlPlan.horizon,
       })
     : null;
-  const hlVerification = hlPlan && hlResult?.ok
+  let hlVerification = hlPlan && hlResult?.ok
     ? await verifyHigherLowerReadback(omni, hlPlan, hlBefore, {
         timeoutMs: hlTimeoutMs,
         pollMs,
       })
     : { attempted: false };
+  const hlRecovery = hlPlan && hlResult?.ok && hlVerification.attempted && !hlVerification.ok
+    ? await recoverHigherLowerRegistration(omni, hlPlan, hlBefore, hlResult.data.txHash, {
+        timeoutMs: hlTimeoutMs,
+        pollMs,
+      })
+    : null;
+  if (hlRecovery?.verification?.attempted) {
+    hlVerification = hlRecovery.verification;
+  }
 
   const fixedResult = fixedPlan
     ? await omni.colony.placeBet(fixedPlan.asset, fixedPlan.predictedPrice, {
         horizon: fixedPlan.horizon,
       })
     : null;
-  const fixedVerification = fixedPlan && fixedResult?.ok
+  let fixedVerification = fixedPlan && fixedResult?.ok
     ? await verifyFixedBetReadback(omni, fixedPlan, fixedBefore, fixedResult.data?.txHash, {
         timeoutMs: fixedTimeoutMs,
         pollMs,
       })
     : { attempted: false };
+  const fixedRecovery = fixedPlan && fixedResult?.ok && fixedVerification.attempted && !fixedVerification.ok
+    ? await recoverFixedRegistration(omni, fixedPlan, fixedBefore, fixedResult.data.txHash, {
+        timeoutMs: fixedTimeoutMs,
+        pollMs,
+      })
+    : null;
+  if (fixedRecovery?.verification?.attempted) {
+    fixedVerification = fixedRecovery.verification;
+  }
 
   const balanceAfterResult = await omni.colony.getBalance();
   const balanceAfter = normalizeBalance(balanceAfterResult?.ok ? balanceAfterResult.data?.balance : null);
@@ -180,11 +241,13 @@ try {
       plan: hlPlan,
       result: summarizeResult(hlResult),
       verification: hlVerification,
+      manualRegistrationRecovery: hlRecovery,
     } : undefined,
     fixedBet: fixedPlan ? {
       plan: fixedPlan,
       result: summarizeResult(fixedResult),
       verification: fixedVerification,
+      manualRegistrationRecovery: fixedRecovery,
     } : undefined,
   }, null, 2));
 
@@ -243,6 +306,7 @@ async function fetchHigherLowerPool(
     higherCount: result.data.higherCount,
     lowerCount: result.data.lowerCount,
     referencePrice: result.data.referencePrice,
+    poolAddress: result.data.poolAddress,
     currentPrice: result.data.currentPrice,
   };
 }
@@ -264,8 +328,10 @@ async function fetchBettingPool(
     bets: Array.isArray(result.data.bets)
       ? result.data.bets.map((bet) => ({
           txHash: bet.txHash,
+          bettor: bet.bettor,
           predictedPrice: bet.predictedPrice,
           amount: bet.amount,
+          roundEnd: bet.roundEnd,
         }))
       : [],
   };
@@ -276,13 +342,7 @@ async function verifyHigherLowerReadback(
   plan: ReturnType<typeof chooseHigherLowerProbe> extends infer T ? Exclude<T, null> : never,
   before: HigherLowerPoolSnapshot | null,
   opts: { timeoutMs: number; pollMs: number },
-): Promise<{
-  attempted: true;
-  ok: boolean;
-  polls: number;
-  before: HigherLowerPoolSnapshot | null;
-  after: HigherLowerPoolSnapshot | null;
-}> {
+): Promise<ReadbackVerification> {
   const deadline = Date.now() + opts.timeoutMs;
   let polls = 0;
   let after = before;
@@ -306,13 +366,7 @@ async function verifyFixedBetReadback(
   before: BettingPoolSnapshot | null,
   txHash: string | undefined,
   opts: { timeoutMs: number; pollMs: number },
-): Promise<{
-  attempted: true;
-  ok: boolean;
-  polls: number;
-  before: BettingPoolSnapshot | null;
-  after: BettingPoolSnapshot | null;
-}> {
+): Promise<ReadbackVerification> {
   const deadline = Date.now() + opts.timeoutMs;
   let polls = 0;
   let after = before;
@@ -320,7 +374,11 @@ async function verifyFixedBetReadback(
   while (Date.now() <= deadline) {
     polls += 1;
     after = await fetchBettingPool(omni, plan.asset, plan.horizon);
-    if (before && after && txHash && fixedBetReadbackSatisfied(before, after, txHash)) {
+    if (before && after && txHash && fixedBetReadbackSatisfied(before, after, txHash, {
+      predictedPrice: plan.predictedPrice,
+      roundEnd: before.roundEnd,
+      bettor: omni.address,
+    })) {
       return { attempted: true, ok: true, polls, before, after };
     }
     if (Date.now() + opts.pollMs > deadline) break;
@@ -330,10 +388,53 @@ async function verifyFixedBetReadback(
   return { attempted: true, ok: false, polls, before, after };
 }
 
+async function recoverHigherLowerRegistration(
+  omni: OmniInstance,
+  plan: ReturnType<typeof chooseHigherLowerProbe> extends infer T ? Exclude<T, null> : never,
+  before: HigherLowerPoolSnapshot | null,
+  txHash: string,
+  opts: { timeoutMs: number; pollMs: number },
+): Promise<RecoveryResult> {
+  const registration = await omni.colony.registerHL(txHash, plan.asset, plan.direction, { horizon: plan.horizon });
+  const verification = await verifyHigherLowerReadback(omni, plan, before, opts);
+  return {
+    attempted: true,
+    label: "manual_registration_recovery",
+    registration: summarizeResult(registration),
+    verification,
+  };
+}
+
+async function recoverFixedRegistration(
+  omni: OmniInstance,
+  plan: ReturnType<typeof chooseFixedBetProbe> extends infer T ? Exclude<T, null> : never,
+  before: BettingPoolSnapshot | null,
+  txHash: string,
+  opts: { timeoutMs: number; pollMs: number },
+): Promise<RecoveryResult> {
+  const registration = await omni.colony.registerBet(txHash, plan.asset, plan.predictedPrice, { horizon: plan.horizon });
+  const verification = await verifyFixedBetReadback(omni, plan, before, txHash, opts);
+  return {
+    attempted: true,
+    label: "manual_registration_recovery",
+    registration: summarizeResult(registration),
+    verification,
+  };
+}
+
 function summarizeResult(
   result: {
     ok: boolean;
-    data?: { txHash?: string; memo?: string; amount?: number; registered?: boolean; registrationError?: string };
+    data?: {
+      txHash?: string;
+      memo?: string;
+      amount?: number;
+      registered?: boolean;
+      memoEncoded?: boolean;
+      transferShape?: string;
+      registrationError?: string;
+      readbackError?: string;
+    };
     error?: unknown;
   } | null,
 ): Record<string, unknown> {

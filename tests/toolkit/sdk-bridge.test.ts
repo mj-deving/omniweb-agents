@@ -5,11 +5,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createSdkBridge } from "../../src/toolkit/sdk-bridge.js";
+import {
+  buildMemoTransferTransaction,
+  createSdkBridge,
+} from "../../src/toolkit/sdk-bridge.js";
 import type { SdkBridge } from "../../src/toolkit/sdk-bridge.js";
 
 // Mock DemosTransactions (static methods)
 const mockDemosTransactions = {
+  empty: vi.fn(() => ({ content: {} })),
   store: vi.fn(async () => ({ type: "store", data: "encoded" })),
   confirm: vi.fn(async () => ({
     response: { data: { transaction: { hash: "mock-confirm-hash" } } },
@@ -38,6 +42,10 @@ function mockDemos() {
     },
     sendTransaction: vi.fn(async () => ({
       hash: "mock-send-tx-hash",
+    })),
+    sign: vi.fn(async (tx: unknown) => ({
+      hash: "mock-signed-memo-tx-hash",
+      ...(tx as Record<string, unknown>),
     })),
     // transfer creates a signed tx (step 1 of 3 — confirm + broadcast follow)
     transfer: vi.fn(async (to: string, amount: number) => ({
@@ -397,7 +405,7 @@ describe("SDK Bridge Adapter", () => {
 
   describe("transferDem", () => {
     it("calls transfer → confirm → broadcast pipeline", async () => {
-      const result = await bridge.transferDem("demos1recipient", 5, "HIVE_TIP:tx123");
+      const result = await bridge.transferDem("demos1recipient", 5, "");
 
       expect(result.txHash).toBeDefined();
       // Step 1: transfer creates signed tx (2 params — memo not passed to SDK)
@@ -408,16 +416,83 @@ describe("SDK Bridge Adapter", () => {
       expect(demos.broadcast).toHaveBeenCalled();
     });
 
-    it("prefers the broadcast txHash for transfers when available", async () => {
-      const result = await bridge.transferDem("demos1recipient", 3, "memo");
+    it("prefers the broadcast txHash for plain transfers when available", async () => {
+      const result = await bridge.transferDem("demos1recipient", 3, "");
       expect(result.txHash).toBe("mock-broadcast-hash");
+      expect(result.memoEncoded).toBe(false);
+      expect(result.transferShape).toBe("sdk-native-transfer");
     });
 
-    it("does not pass memo to SDK transfer (SDK only accepts 2 params)", async () => {
-      await bridge.transferDem("demos1recipient", 5, "HIVE_TIP:tx123");
+    it("does not pass empty memo to SDK transfer (SDK only accepts 2 params)", async () => {
+      await bridge.transferDem("demos1recipient", 5, "");
       // transfer should be called with exactly 2 args, not 3
       expect(demos.transfer).toHaveBeenCalledWith("demos1recipient", 5);
       expect(demos.transfer.mock.calls[0]).toHaveLength(2);
+    });
+
+    it("builds a native memo transfer with top-level content.memo before signing", async () => {
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        mockDemosTransactions as any,
+      );
+
+      const result = await bridge.transferDem("0xpool", 5, "HIVE_BET:BTC:70000:30m");
+
+      expect(result).toMatchObject({
+        txHash: "mock-broadcast-hash",
+        memoEncoded: true,
+        transferShape: "native-content-memo",
+      });
+      expect(demos.transfer).not.toHaveBeenCalled();
+      expect(demos.sign).toHaveBeenCalledWith(expect.objectContaining({
+        content: expect.objectContaining({
+          type: "native",
+          to: "0xpool",
+          amount: 5,
+          memo: "HIVE_BET:BTC:70000:30m",
+          data: ["native", { nativeOperation: "send", args: ["0xpool", 5] }],
+        }),
+      }));
+    });
+
+    it("can build the memo inside content.data[1] when selected", async () => {
+      const tx = buildMemoTransferTransaction(
+        { content: {} },
+        "0xpool",
+        5,
+        "HIVE_HL:BTC:LOWER:24h",
+        "native-data-memo",
+      );
+
+      expect(tx.content).toMatchObject({
+        type: "native",
+        to: "0xpool",
+        amount: 5,
+        data: ["native", {
+          nativeOperation: "send",
+          args: ["0xpool", 5],
+          memo: "HIVE_HL:BTC:LOWER:24h",
+        }],
+      });
+      expect(tx.content.memo).toBeUndefined();
+    });
+
+    it("rejects non-empty memos when the runtime cannot sign memo transfers", async () => {
+      demos.sign = undefined as any;
+      bridge = createSdkBridge(
+        demos as any,
+        "https://www.supercolony.ai",
+        "token",
+        undefined,
+        mockDemosTransactions as any,
+      );
+
+      await expect(bridge.transferDem("0xpool", 5, "HIVE_BET:BTC:70000:30m"))
+        .rejects.toThrow("memo transfer requires demos.sign");
+      expect(demos.transfer).not.toHaveBeenCalled();
     });
   });
 

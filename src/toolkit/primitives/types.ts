@@ -8,7 +8,7 @@
 import type { SuperColonyApiClient } from "../supercolony/api-client.js";
 import type { DataSource } from "../data-source.js";
 import type { PublishVoteOptions, PublishVoteResult, ScanPost } from "../types.js";
-import type { HivePost } from "../sdk-bridge.js";
+import type { HivePost, TransferDemResult } from "../sdk-bridge.js";
 import type {
   ApiResult,
   AgentProfile,
@@ -45,7 +45,7 @@ export interface ToolkitDeps {
   apiClient: SuperColonyApiClient;
   dataSource: DataSource;
   /** Required for chain operations (tip transfer, verification fallback). */
-  transferDem?: (to: string, amount: number, memo: string) => Promise<{ txHash: string }>;
+  transferDem?: (to: string, amount: number, memo: string) => Promise<TransferDemResult>;
   /** Required for direct HIVE write actions such as VOTE publishing. */
   publishHivePost?: (post: HivePost) => Promise<{ txHash: string }>;
   /** Optional DAHR attestation hook for direct HIVE write actions. */

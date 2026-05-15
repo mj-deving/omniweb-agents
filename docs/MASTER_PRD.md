@@ -1,0 +1,293 @@
+---
+type: master-prd
+status: frozen
+created: 2026-05-15
+source_contract: docs/GOAL_BRIEF.md
+owner_bead: omniweb-agents-5w2w
+summary: "GoalMode execution surface for launch-proving the agentic SuperColony live-ops lane."
+---
+
+# Agentic SuperColony Live-Ops Lane - Master PRD
+
+## §0. Frontmatter
+
+- Author: Codex
+- Created: 2026-05-15
+- Status: FROZEN
+- Source contract: `docs/GOAL_BRIEF.md`
+- Stable anchors: AC-1 through AC-9
+- Target stack: Node.js 22+, npm workspaces, TypeScript, `tsx`, Vitest, `omniweb-toolkit`, Demos SDK, SuperColony production host
+- Fast gate: `npx tsc --noEmit --pretty false`
+- Full gate: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`
+- Live read gate: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`
+- Launch status: not launched. This PRD prepares a future `/goal` run.
+
+## §1. Problem
+
+The repo has accumulated strong primitive work, but the next useful milestone is not another isolated proof. The product need is a coherent, launch-grade agentic live-ops lane for SuperColony: an agent can observe current state, act through headless toolkit/runtime paths, capture evidence, and describe unsupported surfaces honestly.
+
+The May 15 BET correction makes this sharper. The browser wallet `nativeTransfer` path is a human path. It is useful as a diagnostic comparison only. The agentic path must be the headless runtime path, and DEM pool betting can only be called working if pool readback changes after a headless transfer.
+
+## §2. Vision
+
+The completed goal leaves the repo with one durable operator lane:
+
+1. current production read truth is sampled first
+2. write families are proved in launch-matrix order
+3. every spend has a budget, command, tx hash, readback verdict, and doc update
+4. unsupported write families are marked degraded instead of hidden
+5. the package docs tell the same story as the evidence
+6. npm/registry hardening can proceed from launch proof rather than optimism
+
+## §3. Out Of Scope
+
+- Launching `/goal` in the prep PR.
+- Spending DEM during PRD preparation.
+- Treating web wallet or browser provider behavior as the agentic BET route.
+- Reopening paused packet-layering, prompt-contract, or family-expansion epics.
+- Adding StorageProgram, escrow, IPFS, XMCore, messaging, encryption, or ZK proof work to this goal.
+- Publishing operational proof narration to the public colony feed.
+- Counting dry-runs, trace-only examples, or dev-only historical sweeps as live launch proof.
+
+## §4. Architecture
+
+### §4.1 Authority Layers
+
+- Root workflow authority: `CLAUDE.md`, `AGENTS.md`, Beads, open PRs, and `main`.
+- Package public-surface authority: `packages/omniweb-toolkit/`.
+- Launch plan authority: `packages/omniweb-toolkit/references/launch-proving-matrix.md`.
+- Method proof authority: `packages/omniweb-toolkit/references/verification-matrix.md`.
+- Current BET blocker authority: `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`.
+
+### §4.2 Agentic Runtime Boundary
+
+Agentic execution means local package/runtime calls through `connect()`, toolkit scripts, Demos SDK, wallet credentials, and headless runtime transfer lanes. It does not mean reproducing a human browser session.
+
+For BET specifically:
+
+- default proof path: `packages/omniweb-toolkit/scripts/probe-market-writes.ts` using the default headless transfer shape
+- pass criterion: pool readback changes
+- fail/degraded criterion: confirmed tx without pool readback, registration-only success, provider unavailable, or wallet-native browser path only
+- active prediction fallback: `publishVote()` / VOTE / PREDICTION lane
+
+### §4.3 Execution Model
+
+The future `/goal` run should not edit everything in one branch. It should:
+
+- create child beads for each acceptance anchor or tightly coupled pair
+- use one branch and one PR per child bead
+- merge green PRs after CI and review inspection
+- append evidence to §13 after each anchor
+- stop with a STUCK note after three failed attempts on the same blocker
+
+## §5. Data Model
+
+No new database schema is required by this PRD.
+
+Evidence records should be stored as documentation and structured script output, not as a new tracking system:
+
+- command executed
+- date and commit
+- host under test
+- wallet address when a write is performed
+- DEM budget and spend
+- tx hash or post hash when available
+- before/after readback
+- pass, fail, degraded, or skipped verdict
+- doc path updated
+
+Beads remains the task ledger. Do not create a second task list in markdown for execution state.
+
+## §6. APIs And Interfaces
+
+### §6.1 Read Interfaces
+
+The goal should exercise the package read surfaces through existing scripts and methods:
+
+- `check:live`
+- `check:live:detailed`
+- `check:read-surface`
+- `check:responses`
+- `check:endpoints`
+- `check:categories`
+- `leaderboard-snapshot.ts`
+
+### §6.2 Write Interfaces
+
+The goal should use existing write proof scripts:
+
+- `probe-publish.ts`
+- `probe-social-writes.ts`
+- `probe-market-writes.ts`
+- `check-vote-publish.ts`
+- `probe-identity-surfaces.ts`
+- `check-write-surface-sweep.ts`
+
+Live writes must require explicit `--execute` or `--broadcast` flags.
+
+### §6.3 Documentation Interfaces
+
+The goal should update package-first truth:
+
+- `packages/omniweb-toolkit/references/verification-matrix.md`
+- `packages/omniweb-toolkit/references/launch-proving-matrix.md`
+- relevant proof notes under `packages/omniweb-toolkit/references/`
+- `packages/omniweb-toolkit/README.md`, `SKILL.md`, or `TOOLKIT.md` only when operator routing changes
+- `docs/ROADMAP.md` only for strategic band updates
+
+## §7. Operator Experience
+
+The desired operator path is:
+
+1. inspect current Beads and open PR state
+2. pick the next AC anchor
+3. run no-spend preflight first
+4. if preflight is sane and the PRD permits spend, run one bounded live proof
+5. record evidence
+6. update docs and tests
+7. open and merge a scoped PR
+8. continue until all anchors are pass, degraded, skipped, or STUCK with evidence
+
+The operator should never need to infer whether a family is safe to use. The package should say whether it is live-proven, local-runtime only, trace-only, pending, degraded, or excluded.
+
+## §7.5 Dependency And Boundary Verification
+
+### §7.5.1 Authentication boundary, wallet runtime, and production host
+
+Declared by the Goal Brief as operator auth, wallet state, DEM balance, and live SuperColony host behavior. Verification uses existing read and write probes, with live writes gated behind explicit `--execute` or `--broadcast`.
+
+### §7.5.2 Playwright browser automation and human-wallet exclusion
+
+Declared by the Goal Brief as a boundary: browser automation may support scripts that explicitly need it, but browser/web-wallet provider behavior is not the agentic BET route. Verification is documentary plus `probe-market-writes.ts` behavior: the default transfer shape must remain headless-agentic, and `wallet-native-transfer` must remain explicit diagnostic-only behavior.
+
+### §7.5.3 LLM or model API use in journey checks
+
+Declared by the Goal Brief as optional support for draft generation. Verification must record generated outputs and source evidence; a model assertion alone cannot close a launch-proof acceptance anchor.
+
+### §7.5.4 Database engine and local state-store boundary
+
+Declared by the Goal Brief as the local SQLite / `better-sqlite3` state-store path when stateful runtime behavior is touched. Verification uses existing package gates and focused tests for any changed stateful behavior.
+
+## §8. Test Strategy
+
+For every code-changing child PR:
+
+- run `npx tsc --noEmit --pretty false`
+- run focused Vitest files for touched code
+- run the smallest matching package script
+- run broader package gates when public package behavior or docs change
+
+For live-proof child PRs:
+
+- run no-spend preflight first
+- record balance/readback before any live write
+- execute at most the bounded action named by the child bead
+- record tx hashes and readback
+- update verification docs in the same PR
+
+For documentation-only child PRs:
+
+- run the GoalMode gates
+- run `git diff --check`
+- run any doc/frontmatter check present in CI
+
+## §9. Acceptance Criteria
+
+- [ ] **AC-1** Current production read surface is re-proven and documented. Test recipe: run `check:live`, `check:live:detailed`, and `check:read-surface`; update `verification-matrix.md` and any current read-sweep note.
+- [ ] **AC-2** Publish and DAHR attestation path has a current pass/degraded verdict with visibility evidence. Test recipe: run publish readiness and attestation checks before any spend; if live publish is approved, record post tx, attestation tx, and visibility/readback.
+- [ ] **AC-3** Reply, react, and tip have current pass/degraded verdicts with readback or attribution evidence. Test recipe: run `probe-social-writes.ts` no-spend/preflight first, then bounded execute only for the selected family.
+- [ ] **AC-4** DEM pool betting is proven only by headless runtime transfer plus pool readback, or marked degraded. Test recipe: run `probe-market-writes.ts` with the default transfer shape; pass only if pool readback changes.
+- [ ] **AC-5** VOTE/PREDICTION remains the active agentic prediction lane while DEM pool betting is degraded. Test recipe: run or document the maintained `check:vote-publish` path and keep agent prediction docs routed there unless AC-4 passes.
+- [ ] **AC-6** Identity/register/link surfaces are proven or explicitly excluded from launch claims. Test recipe: run `probe-identity-surfaces.ts` only when the run deliberately mutates registration/link state; otherwise mark excluded with rationale.
+- [ ] **AC-7** At least one outside-in agent journey is executed or intentionally skipped with captured evidence. Test recipe: run `check:playbook:*`, `check:journeys`, or a captured journey drill and record outputs.
+- [ ] **AC-8** Package docs, verification matrix, and launch references are synchronized with the proof results. Test recipe: doc diff plus `check:verification-matrix` when matrix coverage changes.
+- [ ] **AC-9** npm/registry readiness is evaluated only after launch-proof verdicts are current. Test recipe: run `check:publish` after AC-1 through AC-8 have current verdicts; record npm auth/package-name outcome separately from launch proof.
+
+## §10. Anti-Requirements
+
+- Do NOT use `wallet-native-transfer` as agentic BET proof.
+- Do NOT close AC-4 on transfer confirmation, balance movement, or manual registration alone.
+- Do NOT let old April write-sweep success override current May BET blocker evidence.
+- Do NOT spend DEM without an explicit child-bead scope, preflight, and `--execute` or `--broadcast`.
+- Do NOT publish operational proof narration to the public colony feed.
+- Do NOT claim a launch-grade write family without current host readback or an explicit degraded verdict.
+- Do NOT add new stable acceptance anchors during implementation; route new scope through the Goal Brief first.
+- Do NOT skip tests, mark TODO tests as evidence, or use `--no-verify`.
+- Do NOT widen this goal into storage, escrow, IPFS, XMCore, messaging, encryption, or ZK work.
+
+### GoalMode Generic Anti-Drift Rules
+
+- Do NOT add features beyond this PRD and the source contract.
+- Do NOT introduce new stable acceptance anchors during implementation; route new scope through the source contract first.
+- Do NOT swap tools, libraries, providers, frameworks, data stores, or deployment targets named by the contract without updating the contract.
+- Do NOT introduce feature flags for in-scope behavior just to defer completion.
+- Do NOT replace a contract-required real dependency with a stand-in for completion evidence.
+- Do NOT skip tests, mark TODO tests as passing evidence, or use `--no-verify`.
+- Do NOT widen scope based on "also noticed" work.
+- Do NOT interpret this PRD as a reference app, demo, skeleton, or showcase.
+
+## §11. Definition Of Done
+
+The long-running goal is complete when all of these are true:
+
+- [ ] Every stable acceptance anchor in §9 is checked with evidence.
+- [ ] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md`.
+- [ ] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
+- [ ] Full gate exits 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
+- [ ] Live read gate exits 0 or has a documented current-host blocker: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
+- [ ] Every live write performed has command, budget, tx hash when available, before/after readback, and verdict recorded.
+- [ ] `docs/GOAL_BRIEF.md`, this PRD, package references, and Beads agree on pass/degraded/skipped/STUCK state.
+- [ ] §13 contains a completion report naming changed files, PRs, commits, and verification output.
+
+## §12. Assumptions And Open Questions
+
+- Assumption: the future `/goal` run starts from a clean worktree based on current `origin/main`.
+- Assumption: the operator wallet has enough DEM for the bounded proof budget before any spendful child bead is claimed.
+- Assumption: npm auth may still be missing; that is a release blocker, not a reason to weaken launch proof.
+- Open question: none blocking PRD freeze.
+
+## §13. Run Log And Progress Notes
+
+Codex appends timestamped progress notes here during the future `/goal` run.
+
+- 2026-05-15: PRD prepared from `docs/GOAL_BRIEF.md`; no `/goal` launched and no DEM spent in the prep slice.
+
+## §14. Launch Prompt
+
+Use this only after the prep PR is merged and the launch preflight passes.
+
+```text
+/goal Complete docs/MASTER_PRD.md against docs/GOAL_BRIEF.md for the agentic SuperColony live-ops lane. Work anchor by anchor, using Beads as the task ledger and one branch/PR per child slice.
+
+Read first:
+- CLAUDE.md
+- AGENTS.md
+- docs/GOAL_BRIEF.md
+- docs/MASTER_PRD.md
+- packages/omniweb-toolkit/SKILL.md
+- packages/omniweb-toolkit/TOOLKIT.md
+- packages/omniweb-toolkit/references/launch-proving-matrix.md
+- packages/omniweb-toolkit/references/verification-matrix.md
+- packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md
+
+Stable anchors:
+- AC-1 through AC-9 in docs/MASTER_PRD.md §9
+
+Rules:
+- Do not use wallet-native/browser transfer as agentic BET proof.
+- Do not spend DEM without an explicit child bead, preflight, and --execute or --broadcast.
+- Run no-spend preflights before live writes.
+- Pass AC-4 only on headless transfer plus pool readback change; otherwise mark DEM pool betting degraded and route active predictions through VOTE/PREDICTION.
+- After each meaningful change, run the smallest relevant gate and append evidence to §13.
+- Do not add scope. New requirements go back through docs/GOAL_BRIEF.md first.
+- If the same blocker fails three times, write a STUCK note in §13 naming the anchor, attempts, and needed input, then pause.
+
+Done means:
+- every §9 anchor is checked with evidence or explicit degraded/skipped/STUCK verdict
+- PrdSpecificityGate passes
+- npx tsc --noEmit --pretty false exits 0
+- npm --prefix packages/omniweb-toolkit run check:package exits 0
+- npm --prefix packages/omniweb-toolkit run check:evals exits 0
+- live read gates have current pass/degraded evidence
+- §13 has a completion report
+```

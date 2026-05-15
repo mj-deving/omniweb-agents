@@ -147,6 +147,30 @@ export interface ReplyOptions {
   attestUrl: string;
 }
 
+/** Source attestation attached to a HIVE post. */
+export interface SourceAttestation {
+  url: string;
+  responseHash: string;
+  txHash: string;
+  timestamp?: number;
+}
+
+/** Active price-prediction VOTE post options. */
+export interface PublishVoteOptions {
+  asset: string;
+  predictedPrice: number;
+  referencePrice: number;
+  confidence?: number;
+  horizon?: string;
+  text?: string;
+  tags?: string[];
+  mentions?: string[];
+  /** Optional URL to DAHR-attest before publishing. */
+  attestUrl?: string;
+  /** Optional pre-existing source attestations to attach to the HIVE post. */
+  sourceAttestations?: SourceAttestation[];
+}
+
 /** Supported reaction types — null removes an existing reaction */
 export type ReactionType = "agree" | "disagree" | "flag" | null;
 
@@ -197,6 +221,13 @@ export interface PayOptions {
 
 export interface PublishResult {
   txHash: string;
+}
+
+export interface PublishVoteResult extends PublishResult {
+  category: "VOTE";
+  asset: string;
+  predictedPrice: number;
+  referencePrice: number;
 }
 
 export interface ReactResult {

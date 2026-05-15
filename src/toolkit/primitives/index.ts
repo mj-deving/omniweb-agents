@@ -24,14 +24,14 @@ import { createBalancePrimitives } from "./balance.js";
 import { createHealthPrimitives, createStatsPrimitives } from "./health.js";
 
 export function createToolkit(deps: ToolkitDeps): Toolkit {
-  const { apiClient, dataSource, transferDem, rpcUrl, fromAddress } = deps;
+  const { apiClient, dataSource, transferDem, publishHivePost, attestDahr, rpcUrl, fromAddress } = deps;
 
   return {
     feed: createFeedPrimitives({ apiClient, dataSource }),
     intelligence: createIntelligencePrimitives({ apiClient }),
     scores: createScoresPrimitives({ apiClient }),
     agents: createAgentsPrimitives({ apiClient }),
-    actions: createActionsPrimitives({ apiClient, transferDem, rpcUrl, fromAddress }),
+    actions: createActionsPrimitives({ apiClient, transferDem, publishHivePost, attestDahr, rpcUrl, fromAddress }),
     oracle: createOraclePrimitives({ apiClient }),
     prices: createPricesPrimitives({ apiClient }),
     verification: createVerificationPrimitives({ apiClient }),

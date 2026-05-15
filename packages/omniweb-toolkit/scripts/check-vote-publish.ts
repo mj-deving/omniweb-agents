@@ -1,0 +1,175 @@
+#!/usr/bin/env npx tsx
+
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { getNumberArg, getStringArg, hasFlag, loadConnect } from "./_shared.ts";
+
+const DEFAULT_VERIFY_TIMEOUT_MS = 45_000;
+const DEFAULT_VERIFY_POLL_MS = 5_000;
+const DEFAULT_VERIFY_LIMIT = 50;
+
+const args = process.argv.slice(2);
+
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-vote-publish.ts [options]
+
+Options:
+  --broadcast               Publish a real HIVE VOTE post
+  --asset SYMBOL            Asset symbol for --broadcast (default: BTC)
+  --predicted-price N       Predicted price for --broadcast
+  --reference-price N       Reference price for --broadcast
+  --confidence N            Confidence percentage 0-100 (default: 70)
+  --attest-url URL          Optional DAHR source URL to attach to the VOTE post
+  --env-path PATH           Override wallet credentials file passed to connect()
+  --agent-name NAME         Use named wallet credentials when present
+  --state-dir PATH          Forwarded to connect()/state persistence
+  --allow-insecure          Forwarded to connect() for local debugging only
+  --verify-timeout-ms N     VOTE readback timeout (default: ${DEFAULT_VERIFY_TIMEOUT_MS})
+  --verify-poll-ms N        VOTE readback poll interval (default: ${DEFAULT_VERIFY_POLL_MS})
+  --verify-limit N          VOTE feed search limit (default: ${DEFAULT_VERIFY_LIMIT})
+  --out PATH                Write the JSON report to a file as well as stdout
+  --help, -h                Show this help
+`);
+  process.exit(0);
+}
+
+const broadcast = hasFlag(args, "--broadcast");
+const asset = (getStringArg(args, "--asset") ?? "BTC").trim().toUpperCase();
+const predictedPrice = getNumberArg(args, "--predicted-price");
+const referencePrice = getNumberArg(args, "--reference-price");
+const confidence = getNumberArg(args, "--confidence") ?? 70;
+const attestUrl = getStringArg(args, "--attest-url");
+const envPath = getStringArg(args, "--env-path");
+const agentName = getStringArg(args, "--agent-name");
+const stateDir = getStringArg(args, "--state-dir");
+const allowInsecureUrls = hasFlag(args, "--allow-insecure");
+const verifyTimeoutMs = getPositiveIntegerArg("--verify-timeout-ms", DEFAULT_VERIFY_TIMEOUT_MS);
+const verifyPollMs = getPositiveIntegerArg("--verify-poll-ms", DEFAULT_VERIFY_POLL_MS);
+const verifyLimit = getPositiveIntegerArg("--verify-limit", DEFAULT_VERIFY_LIMIT);
+const outputPath = getStringArg(args, "--out");
+
+if (broadcast) {
+  if (!Number.isFinite(predictedPrice) || predictedPrice! <= 0) {
+    failUsage("--predicted-price is required for --broadcast and must be positive");
+  }
+  if (!Number.isFinite(referencePrice) || referencePrice! <= 0) {
+    failUsage("--reference-price is required for --broadcast and must be positive");
+  }
+  if (!Number.isFinite(confidence) || confidence < 0 || confidence > 100) {
+    failUsage("--confidence must be between 0 and 100");
+  }
+}
+
+const connect = await loadConnect();
+const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
+
+const before = await searchVotes(omni, verifyLimit);
+let publishResult: unknown = null;
+let readback: unknown = null;
+let ok = before.ok;
+
+if (broadcast) {
+  publishResult = await omni.colony.publishVote({
+    asset,
+    predictedPrice,
+    referencePrice,
+    confidence,
+    attestUrl,
+  });
+
+  const txHash = publishResult && typeof publishResult === "object" && "data" in publishResult
+    ? (publishResult as { data?: { txHash?: string } }).data?.txHash
+    : undefined;
+  readback = await pollVoteReadback(omni, txHash, verifyTimeoutMs, verifyPollMs, verifyLimit);
+  ok = Boolean((publishResult as { ok?: boolean } | null)?.ok && (readback as { found?: boolean } | null)?.found);
+}
+
+const report = {
+  ok,
+  checkedAt: new Date().toISOString(),
+  operatorPath: "hive-vote-publish",
+  broadcast,
+  asset,
+  before,
+  publishResult,
+  readback,
+  note: broadcast
+    ? "Executed publishVote() and verified via search({ category: \"VOTE\" })."
+    : "Dry run only. Re-run with --broadcast plus prices to publish a real HIVE VOTE post.",
+};
+
+await maybeWriteOutput(outputPath, report);
+console.log(JSON.stringify(report, null, 2));
+process.exit(ok ? 0 : 1);
+
+async function searchVotes(omni: any, limit: number) {
+  const result = await omni.colony.search({ category: "VOTE", limit });
+  const posts = extractPosts(result);
+  return {
+    ok: Boolean(result?.ok && posts.length > 0),
+    count: posts.length,
+    sample: posts.slice(0, 3).map((post) => ({
+      txHash: post.txHash,
+      author: post.author,
+      category: post.category,
+      assets: post.assets,
+      confidence: post.confidence,
+      payload: post.payload,
+      text: typeof post.text === "string" ? post.text.slice(0, 160) : post.text,
+    })),
+  };
+}
+
+async function pollVoteReadback(
+  omni: any,
+  txHash: string | undefined,
+  timeoutMs: number,
+  pollMs: number,
+  limit: number,
+) {
+  const deadline = Date.now() + timeoutMs;
+  do {
+    const result = await omni.colony.search({ category: "VOTE", limit });
+    const posts = extractPosts(result);
+    const match = txHash ? posts.find((post) => post.txHash === txHash) : null;
+    if (match) {
+      return { found: true, txHash, post: match };
+    }
+    await sleep(pollMs);
+  } while (Date.now() < deadline);
+
+  return { found: false, txHash, timeoutMs };
+}
+
+function extractPosts(result: unknown): any[] {
+  if (!result || typeof result !== "object") return [];
+  const data = "ok" in result && (result as { ok?: boolean }).ok
+    ? (result as { data?: unknown }).data
+    : result;
+  if (!data || typeof data !== "object") return [];
+  const posts = (data as { posts?: unknown; feed?: unknown }).posts ?? (data as { posts?: unknown; feed?: unknown }).feed;
+  return Array.isArray(posts) ? posts : [];
+}
+
+function getPositiveIntegerArg(flag: string, fallback: number): number {
+  const value = getNumberArg(args, flag) ?? fallback;
+  if (!Number.isInteger(value) || value <= 0) {
+    failUsage(`${flag} must be a positive integer`);
+  }
+  return value;
+}
+
+function failUsage(message: string): never {
+  console.error(`Error: ${message}`);
+  process.exit(2);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function maybeWriteOutput(path: string | undefined, data: unknown): Promise<void> {
+  if (!path) return;
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(data, null, 2)}\n`);
+}

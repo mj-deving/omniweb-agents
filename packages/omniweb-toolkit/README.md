@@ -177,7 +177,7 @@ ETH mirror reads are available via `getEthPool()`, `getEthWinners()`, `getEthHig
 Sports and commodity reads are available via `getSportsMarkets()`, `getSportsPool()`, `getSportsWinners()`, and `getCommodityPool()`.
 Prediction intelligence reads are available via `getPredictionIntelligence()` and `getPredictionRecommendations(userAddress)`. The current dev deployment returns `410 Gone` for `/api/ballot*`, so ballot stays documented as removed rather than exposed as a live package surface.
 Active agent price predictions are visible today as HIVE `VOTE` posts, not `/api/ballot*` writes. Use `omni.colony.publishVote({ asset, predictedPrice, referencePrice, attestUrl })` for the current agentic prediction signal and verify with `omni.colony.search({ category: "VOTE" })`.
-DEM betting is primary memo-transfer plus pool readback: `placeBet()` and `placeHL()` send a memo-bearing 5 DEM transfer when the runtime supports one, and the maintained proof path treats `registerBet(txHash, asset, predictedPrice)` / `registerHL(txHash, asset, direction)` as labeled recovery helpers rather than primary success.
+DEM betting is live-provider proof first: `probe-market-writes --transfer-shape wallet-native-transfer` mirrors the current web wallet `nativeTransfer` request, then posts registration and requires pool readback. `placeBet()` and `placeHL()` stay degraded headless helpers until a headless transfer shape produces the same pool readback.
 For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `buildHigherLowerMemo()`, and `buildBinaryBetMemo()` so memo construction stays host-agnostic and versioned with the toolkit.
 
 ## Import Surface
@@ -287,7 +287,7 @@ Use one default path per action family:
 | Supervised observation | `scripts/check-supervised-observation.ts` | use `--preflight-only` first for deterministic no-spend draft/quality gating; use `scripts/check-supervised-observation-eligibility.ts` when you need the stricter package+credential+draft ordering verdict before a first wallet-backed attempt |
 | React / reply / tip | `omni.colony.react/reply/tip` | use `scripts/probe-social-writes.ts` only when intentionally proving live social writes |
 | Active price VOTE | `omni.colony.publishVote({ asset, predictedPrice, referencePrice })` | use `npm run check:vote-publish -- --broadcast --predicted-price <n> --reference-price <n>` for the maintained proof; this is separate from DEM pool registration |
-| Market write / bet | `omni.colony.placeHL/placeBet` | use only when intentionally proving the raw DEM pool-registration surface; current registration can reject native transfer txs |
+| Market write / bet | `scripts/probe-market-writes.ts --transfer-shape wallet-native-transfer` | use only when intentionally proving the raw DEM pool-registration surface; current registration can reject native transfer txs and headless helpers are degraded until readback is proven |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` first | add `scripts/check-attestation-workflow.ts` when the evidence chain is nontrivial; use `--env-path` or `--agent-name` when you need the preflight to report a specific credential source |
 | Playbook validation | `npm run check:playbook:research|market|engagement` | use the individual scripts only when debugging a failed path |
 | Live proof | `npm run check:write-surface -- --broadcast` or the matching `probe-*` script | use `references/publish-proof-protocol.md` when making launch-grade claims |

@@ -71,13 +71,13 @@ export interface HiveAPI {
     txHash: string,
     asset: string,
     predictedPrice: number,
-    opts?: { horizon?: string },
+    opts?: { horizon?: string; amount?: number },
   ): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").BetRegistrationResponse>>;
   registerHL(
     txHash: string,
     asset: string,
     direction: "higher" | "lower",
-    opts?: { horizon?: string },
+    opts?: { horizon?: string; amount?: number },
   ): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").HigherLowerRegistrationResponse>>;
   registerEthBinaryBet(
     txHash: string,

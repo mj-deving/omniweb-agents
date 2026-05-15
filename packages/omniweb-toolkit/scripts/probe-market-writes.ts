@@ -18,15 +18,19 @@ import {
 } from "../../../src/toolkit/supercolony/bet-memos.js";
 import {
   DEFAULT_MEMO_TRANSFER_SHAPE,
-  normalizeMemoTransferShape,
+  WALLET_NATIVE_TRANSFER_SHAPE,
+  extractWalletNativeTxHash,
+  normalizeTransferShape,
 } from "../../../src/toolkit/sdk-bridge.js";
 import {
   chooseFixedBetProbe,
   chooseHigherLowerProbe,
-  fixedBetReadbackSatisfied,
+  evaluateFixedBetReadback,
   higherLowerReadbackSatisfied,
   type BettingPoolSnapshot,
+  type FixedBetProbePlan,
   type HigherLowerPoolSnapshot,
+  type FixedBetReadbackEvaluation,
   type OracleAssetSignal,
 } from "./_market-write-shared.js";
 
@@ -37,6 +41,7 @@ const DEFAULT_FIXED_HORIZONS = ["30m", "4h", "24h", "10m"];
 const DEFAULT_POLL_MS = 3_000;
 const DEFAULT_HL_TIMEOUT_MS = 20_000;
 const DEFAULT_FIXED_TIMEOUT_MS = 20_000;
+const DEFAULT_PROVIDER_URL = "https://www.supercolony.ai/predictions";
 
 type OmniInstance = Awaited<ReturnType<Awaited<ReturnType<typeof loadConnect>>>>;
 type ReadbackVerification = {
@@ -45,6 +50,7 @@ type ReadbackVerification = {
   polls: number;
   before: HigherLowerPoolSnapshot | BettingPoolSnapshot | null;
   after: HigherLowerPoolSnapshot | BettingPoolSnapshot | null;
+  matchedBy?: FixedBetReadbackEvaluation["matchedBy"];
 };
 type RecoveryResult = {
   attempted: true;
@@ -66,7 +72,9 @@ Options:
   --poll-ms N              Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --only MODE              One of both, hl, fixed (default: both)
   --fixed-horizons CSV     Fixed-price horizons to inspect, in preference order (default: ${DEFAULT_FIXED_HORIZONS.join(",")})
+  --transfer-shape S       Transfer shape: wallet-native-transfer, native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${WALLET_NATIVE_TRANSFER_SHAPE})
   --memo-transfer-shape S  Memo-bearing transfer shape: native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_MEMO_TRANSFER_SHAPE})
+  --provider-url URL       Browser page used to capture window.__demosProviderCaptured || window.demos for wallet-native-transfer (default: ${DEFAULT_PROVIDER_URL})
   --state-dir PATH         Override state directory for runtime guards
   --execute                Perform the real market-write proof sweep
   --help, -h               Show this help
@@ -76,7 +84,7 @@ Exit codes: 0 = success, 1 = runtime or proof failure, 2 = invalid args`);
   process.exit(0);
 }
 
-for (const flag of ["--assets", "--hl-amount", "--hl-timeout-ms", "--fixed-timeout-ms", "--poll-ms", "--state-dir", "--only", "--fixed-horizons", "--memo-transfer-shape"]) {
+for (const flag of ["--assets", "--hl-amount", "--hl-timeout-ms", "--fixed-timeout-ms", "--poll-ms", "--state-dir", "--only", "--fixed-horizons", "--transfer-shape", "--memo-transfer-shape", "--provider-url"]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
     console.error(`Error: ${flag} requires a value`);
@@ -96,14 +104,21 @@ const stateDir = getStringArg(args, "--state-dir") || undefined;
 const execute = hasFlag(args, "--execute");
 const onlyMode = (getStringArg(args, "--only") ?? "both").toLowerCase();
 const fixedHorizons = parseCsvArg("--fixed-horizons", DEFAULT_FIXED_HORIZONS);
-let memoTransferShape: ReturnType<typeof normalizeMemoTransferShape>;
+const providerUrl = getStringArg(args, "--provider-url") ?? DEFAULT_PROVIDER_URL;
+let transferShape: ReturnType<typeof normalizeTransferShape>;
 try {
-  memoTransferShape = normalizeMemoTransferShape(getStringArg(args, "--memo-transfer-shape") ?? process.env.OMNIWEB_MEMO_TRANSFER_SHAPE);
+  transferShape = normalizeTransferShape(
+    getStringArg(args, "--transfer-shape")
+      ?? getStringArg(args, "--memo-transfer-shape")
+      ?? process.env.OMNIWEB_TRANSFER_SHAPE
+      ?? process.env.OMNIWEB_MEMO_TRANSFER_SHAPE,
+  );
 } catch (error) {
   console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(2);
 }
-process.env.OMNIWEB_MEMO_TRANSFER_SHAPE = memoTransferShape;
+process.env.OMNIWEB_TRANSFER_SHAPE = transferShape;
+process.env.OMNIWEB_MEMO_TRANSFER_SHAPE = transferShape;
 
 for (const [label, value] of [
   ["--hl-amount", hlAmount],
@@ -122,6 +137,13 @@ if (!["both", "hl", "fixed"].includes(onlyMode)) {
   process.exit(2);
 }
 
+if (transferShape === WALLET_NATIVE_TRANSFER_SHAPE && onlyMode === "hl") {
+  console.error("Error: wallet-native-transfer currently supports only fixed-price pool proof; use --only fixed");
+  process.exit(2);
+}
+
+const effectiveOnlyMode = transferShape === WALLET_NATIVE_TRANSFER_SHAPE && onlyMode === "both" ? "fixed" : onlyMode;
+
 try {
   const connect = await loadConnect();
   const omni = await connect({ stateDir });
@@ -137,10 +159,10 @@ try {
   }
 
   const oracleAssets = normalizeOracleAssets(oracleResult.data);
-  const hlPlan = onlyMode === "fixed" ? null : chooseHigherLowerProbe(pools.higherLower, oracleAssets, hlAmount);
-  const fixedPlan = onlyMode === "hl" ? null : chooseFixedBetProbe(pools.fixed, oracleAssets);
+  const hlPlan = effectiveOnlyMode === "fixed" ? null : chooseHigherLowerProbe(pools.higherLower, oracleAssets, hlAmount);
+  const fixedPlan = effectiveOnlyMode === "hl" ? null : chooseFixedBetProbe(pools.fixed, oracleAssets);
 
-  if ((onlyMode !== "fixed" && !hlPlan) || (onlyMode !== "hl" && !fixedPlan)) {
+  if ((effectiveOnlyMode !== "fixed" && !hlPlan) || (effectiveOnlyMode !== "hl" && !fixedPlan)) {
     throw new Error("No viable live market-write candidate was found on the current host");
   }
 
@@ -154,14 +176,20 @@ try {
       ok: true,
       address: omni.address,
       balanceBefore,
-      memoTransferShape,
+      transferShape,
+      provider: transferShape === WALLET_NATIVE_TRANSFER_SHAPE ? {
+        required: true,
+        url: providerUrl,
+        source: "window.__demosProviderCaptured || window.demos",
+      } : undefined,
+      fixedOnly: transferShape === WALLET_NATIVE_TRANSFER_SHAPE,
       higherLower: hlPlan ? {
         plan: hlPlan,
         transfer: {
           to: hlBefore?.poolAddress ?? null,
           amount: hlPlan.amount,
           memo: buildHigherLowerMemo(hlPlan.asset, hlPlan.direction, { horizon: hlPlan.horizon }),
-          shape: memoTransferShape,
+          shape: transferShape,
         },
         before: hlBefore,
       } : undefined,
@@ -171,13 +199,70 @@ try {
           to: fixedBefore?.poolAddress ?? null,
           amount: 5,
           memo: buildBetMemo(fixedPlan.asset, fixedPlan.predictedPrice, { horizon: fixedPlan.horizon }),
-          shape: memoTransferShape,
+          shape: transferShape,
+          providerRequest: fixedBefore?.poolAddress
+            ? buildWalletNativeTransferRequest(fixedBefore.poolAddress, 5)
+            : null,
+          registrationPayload: {
+            txHash: "<provider tx hash>",
+            asset: fixedPlan.asset,
+            predictedPrice: fixedPlan.predictedPrice,
+            horizon: fixedPlan.horizon,
+            amount: 5,
+          },
         },
         before: fixedBefore,
       } : undefined,
-      message: "Dry run only. Re-run with --execute to perform the live higher-lower and fixed-price bet proof.",
+      message: transferShape === WALLET_NATIVE_TRANSFER_SHAPE
+        ? "Dry run only. Re-run with --execute to capture an injected Demos provider and perform one fixed-price wallet-native proof attempt."
+        : "Dry run only. Re-run with --execute to perform the live higher-lower and fixed-price bet proof.",
     }, null, 2));
     process.exit(0);
+  }
+
+  if (transferShape === WALLET_NATIVE_TRANSFER_SHAPE) {
+    if (!fixedPlan || !fixedBefore) {
+      throw new Error("wallet-native-transfer requires a fixed-price pool candidate");
+    }
+    const walletNative = await executeWalletNativeFixedProof(omni, fixedPlan, fixedBefore, {
+      providerUrl,
+      timeoutMs: fixedTimeoutMs,
+      pollMs,
+    });
+    const balanceAfterResult = await omni.colony.getBalance();
+    const balanceAfter = normalizeBalance(balanceAfterResult?.ok ? balanceAfterResult.data?.balance : null);
+    const ok = walletNative.transfer.ok && !!walletNative.verification.attempted && walletNative.verification.ok;
+
+    console.log(JSON.stringify({
+      attempted: true,
+      ok,
+      address: omni.address,
+      balanceBefore,
+      balanceAfter,
+      estimatedSpend: balanceBefore != null && balanceAfter != null ? balanceBefore - balanceAfter : null,
+      transferShape,
+      provider: {
+        required: true,
+        url: providerUrl,
+        source: "window.__demosProviderCaptured || window.demos",
+      },
+      fixedBet: {
+        plan: fixedPlan,
+        pool: {
+          asset: fixedBefore.asset,
+          horizon: fixedBefore.horizon,
+          poolAddress: fixedBefore.poolAddress ?? null,
+        },
+        transfer: walletNative.transfer,
+        registration: walletNative.registration,
+        verification: walletNative.verification,
+      },
+      message: ok
+        ? "wallet-native-transfer pool readback matched"
+        : "wallet-native-transfer did not prove DEM pool registration; route active prediction posting through publishVote()/PREDICTION until readback changes.",
+    }, null, 2));
+
+    process.exit(ok ? 0 : 1);
   }
 
   const hlResult = hlPlan
@@ -237,6 +322,7 @@ try {
     balanceBefore,
     balanceAfter,
     estimatedSpend: balanceBefore != null && balanceAfter != null ? balanceBefore - balanceAfter : null,
+    transferShape,
     higherLower: hlPlan ? {
       plan: hlPlan,
       result: summarizeResult(hlResult),
@@ -374,18 +460,156 @@ async function verifyFixedBetReadback(
   while (Date.now() <= deadline) {
     polls += 1;
     after = await fetchBettingPool(omni, plan.asset, plan.horizon);
-    if (before && after && txHash && fixedBetReadbackSatisfied(before, after, txHash, {
+    const evaluation = before && after && txHash ? evaluateFixedBetReadback(before, after, txHash, {
       predictedPrice: plan.predictedPrice,
       roundEnd: before.roundEnd,
       bettor: omni.address,
-    })) {
-      return { attempted: true, ok: true, polls, before, after };
+    }) : null;
+    if (evaluation?.ok) {
+      return { attempted: true, ok: true, polls, before, after, matchedBy: evaluation.matchedBy };
     }
     if (Date.now() + opts.pollMs > deadline) break;
     await sleep(opts.pollMs);
   }
 
   return { attempted: true, ok: false, polls, before, after };
+}
+
+function buildWalletNativeTransferRequest(recipientAddress: string, amount: number) {
+  return {
+    method: "nativeTransfer" as const,
+    params: [{ recipientAddress, amount }],
+  };
+}
+
+async function executeWalletNativeFixedProof(
+  omni: OmniInstance,
+  plan: FixedBetProbePlan,
+  before: BettingPoolSnapshot,
+  opts: { providerUrl: string; timeoutMs: number; pollMs: number },
+): Promise<{
+  transfer: Record<string, unknown> & { ok: boolean };
+  registration: Record<string, unknown> | null;
+  verification: ReadbackVerification;
+}> {
+  if (!before.poolAddress) {
+    return {
+      transfer: {
+        ok: false,
+        error: "fixed-price pool has no poolAddress",
+      },
+      registration: null,
+      verification: { attempted: true, ok: false, polls: 0, before, after: before },
+    };
+  }
+
+  const transfer = await runWalletNativeTransferInBrowser(opts.providerUrl, before.poolAddress, 5);
+  if (!transfer.ok || typeof transfer.txHash !== "string") {
+    return {
+      transfer,
+      registration: null,
+      verification: { attempted: true, ok: false, polls: 0, before, after: before },
+    };
+  }
+
+  const registration = await omni.colony.registerBet(transfer.txHash, plan.asset, plan.predictedPrice, {
+    horizon: plan.horizon,
+    amount: 5,
+  });
+  const verification = await verifyFixedBetReadback(omni, plan, before, transfer.txHash, {
+    timeoutMs: opts.timeoutMs,
+    pollMs: opts.pollMs,
+  });
+
+  return {
+    transfer,
+    registration: summarizeResult(registration),
+    verification,
+  };
+}
+
+async function runWalletNativeTransferInBrowser(
+  providerUrl: string,
+  recipientAddress: string,
+  amount: number,
+): Promise<Record<string, unknown> & { ok: boolean; txHash?: string }> {
+  const request = buildWalletNativeTransferRequest(recipientAddress, amount);
+  let browser: { close(): Promise<void> } | null = null;
+
+  try {
+    const { chromium } = await import("playwright");
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto(providerUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => undefined);
+
+    const providerState = await page.evaluate(() => {
+      const globalObject = window as unknown as Record<string, unknown>;
+      const provider = globalObject.__demosProviderCaptured ?? globalObject.demos;
+      return {
+        available: !!provider && typeof provider === "object" && typeof (provider as Record<string, unknown>).request === "function",
+        source: globalObject.__demosProviderCaptured ? "window.__demosProviderCaptured" : globalObject.demos ? "window.demos" : null,
+      };
+    });
+
+    if (!providerState.available) {
+      return {
+        ok: false,
+        error: "provider unavailable: window.__demosProviderCaptured || window.demos is missing or lacks request()",
+        providerUrl,
+        providerSource: providerState.source,
+        request,
+      };
+    }
+
+    const providerResult = await page.evaluate(async (walletRequest) => {
+      const globalObject = window as unknown as Record<string, unknown>;
+      const provider = globalObject.__demosProviderCaptured ?? globalObject.demos;
+      try {
+        const response = await (provider as { request(args: typeof walletRequest): Promise<unknown> }).request(walletRequest);
+        return { ok: true, response };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    }, request);
+
+    if (!providerResult.ok) {
+      return {
+        ok: false,
+        error: providerResult.error,
+        providerUrl,
+        request,
+      };
+    }
+
+    const txHash = extractWalletNativeTxHash(providerResult.response);
+    if (!txHash) {
+      return {
+        ok: false,
+        error: "wallet-native transfer response did not include a tx hash",
+        providerUrl,
+        request,
+        response: providerResult.response,
+      };
+    }
+
+    return {
+      ok: true,
+      providerUrl,
+      request,
+      response: providerResult.response,
+      txHash,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      providerUrl,
+      request,
+    };
+  } finally {
+    await browser?.close().catch(() => undefined);
+  }
 }
 
 async function recoverHigherLowerRegistration(

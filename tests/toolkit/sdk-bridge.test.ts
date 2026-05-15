@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   buildMemoTransferTransaction,
   createSdkBridge,
+  executeWalletNativeTransfer,
 } from "../../src/toolkit/sdk-bridge.js";
 import type { SdkBridge } from "../../src/toolkit/sdk-bridge.js";
 
@@ -493,6 +494,24 @@ describe("SDK Bridge Adapter", () => {
       await expect(bridge.transferDem("0xpool", 5, "HIVE_BET:BTC:70000:30m"))
         .rejects.toThrow("memo transfer requires demos.sign");
       expect(demos.transfer).not.toHaveBeenCalled();
+    });
+
+    it("calls injected wallet nativeTransfer with the live web app request shape", async () => {
+      const provider = {
+        request: vi.fn().mockResolvedValue({ txHash: "wallet-native-tx" }),
+      };
+
+      const result = await executeWalletNativeTransfer(provider, "0xpool", 5);
+
+      expect(provider.request).toHaveBeenCalledWith({
+        method: "nativeTransfer",
+        params: [{ recipientAddress: "0xpool", amount: 5 }],
+      });
+      expect(result.txHash).toBe("wallet-native-tx");
+      expect(result.request).toEqual({
+        method: "nativeTransfer",
+        params: [{ recipientAddress: "0xpool", amount: 5 }],
+      });
     });
   });
 

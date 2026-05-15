@@ -293,7 +293,12 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
       if (!txHash || typeof txHash !== "string") {
         return { ok: false, status: 0, error: "txHash is required" };
       }
-      return deps.apiClient.registerBet(txHash, normalizedAsset, normalizedPrice, { horizon });
+      return deps.apiClient.registerBet(
+        txHash,
+        normalizedAsset,
+        normalizedPrice,
+        opts?.amount === undefined ? { horizon } : { horizon, amount: opts.amount },
+      );
     },
 
     async registerHL(txHash, asset, direction, opts) {
@@ -310,7 +315,12 @@ export function createActionsPrimitives(deps: ActionsDeps): ActionsPrimitives {
       if (!txHash || typeof txHash !== "string") {
         return { ok: false, status: 0, error: "txHash is required" };
       }
-      return deps.apiClient.registerHigherLowerBet(txHash, normalizedAsset, normalizedDirection, { horizon });
+      return deps.apiClient.registerHigherLowerBet(
+        txHash,
+        normalizedAsset,
+        normalizedDirection,
+        opts?.amount === undefined ? { horizon } : { horizon, amount: opts.amount },
+      );
     },
 
     async registerEthBinaryBet(txHash) {

@@ -299,7 +299,7 @@ For a new consumer integration, the safest progression is:
 4. `scripts/check-response-shapes.ts` or `scripts/check-endpoint-surface.ts`
 5. `scripts/check-publish-readiness.ts`
 6. `scripts/check-attestation-workflow.ts` when the publish claim depends on source quality, multi-source evidence, or a nontrivial attestation chain
-7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report
+7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report; use `node --import tsx scripts/check-consumer-journeys.ts --skip-release-gate` only when the active proof slice deliberately excludes AC-9 registry readiness
 8. `scripts/check-write-surface-sweep.ts --broadcast` once you are intentionally ready to spend DEM on the maintained live write proof
 9. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>` for the immediate publish artifact, then `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the delayed verdict window
 10. `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep

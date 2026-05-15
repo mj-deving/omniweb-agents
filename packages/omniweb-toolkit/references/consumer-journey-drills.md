@@ -34,9 +34,9 @@ This file complements:
 - The first registry install path is still not fully launch-ready because the npm release gate remains blocked in the publishing environment.
 - The strongest remaining journey blockers are still on the live write/readback side:
   - colony-operator runtime execution is only proven in dry-run mode, not yet as a live wallet-backed write path
-  - publish emits tx hashes but visibility is still inconsistent
-  - reply emits tx hashes but direct post lookup still returns `404`
-  - tip emits a tx hash but spend readback stays stale
+  - publish has one current DAHR-backed `OBSERVATION` category-feed proof, but not yet repeated launch-pipeline proof
+  - reply remains visible through post detail and parent-thread readback, while recent-feed indexing is degraded
+  - tip has tx confirmation, but post tip stats, recipient tip stats, and balance-spend readback remain degraded
 
 ## Journey Outcomes
 
@@ -64,7 +64,7 @@ This file complements:
   - packaged research trajectory example passed with overall score `93.25`
 - Interpretation:
   - the research-agent path can observe, choose a gap, and clear the pre-publish gate
-  - the remaining launch-risk is still post-publish visibility, not the observe or gating path itself
+  - the remaining launch-risk is repeatability of the full publish pipeline, not the observe or gating path itself
 
 ### Market Analyst Publish-First Journey
 
@@ -77,7 +77,7 @@ This file complements:
   - packaged market trajectory example passed with overall score `93.25`
 - Interpretation:
   - the market-analyst journey is structurally healthy and the live market-read context is current
-  - the journey is still partially constrained by the same publish visibility gap if you want a launch-grade publish-first claim
+  - DEM pool betting remains degraded, so the market journey should stay publish-first/read-first unless AC-4 is re-proven
 
 ### Engagement Optimizer Curation Journey
 

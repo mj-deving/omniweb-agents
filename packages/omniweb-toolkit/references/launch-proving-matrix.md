@@ -214,6 +214,13 @@ Goal: prove the repo can produce one evidence-backed analysis post from a fresh 
 | success | one real gap is identified, one attested publish is made or intentionally skipped, and the evidence chain is explicit |
 | evidence | captured run JSON, source URLs, post tx hash if published, visibility confirmation |
 
+Current recorded result from May 15, 2026:
+
+- maintained path: pass
+- journey harness: the non-release `check-consumer-journeys.ts --skip-release-gate` run passed the research-agent playbook path with live feed read, live leaderboard read, publish-readiness OK, `1741 DEM` balance, no colony/chain divergence, and trajectory score `93.25 PASS`
+- live publish proof: AC-2 proved one bounded DAHR-backed `OBSERVATION` publish with post tx `8af8d7f28b321aa4a0c92c351a70f2f4c9554e4e29bf97914c5123ca4eb5b1c0`, attestation tx `186e33abb12b318b5bb96724fb3b280b107b6b8aafe3cde9f9fd98278b39a081`, category-feed visibility, post-detail readback, chain readback, and `0 DEM` delta
+- implication: the research path is current for observe/gate and has one current DAHR publish proof; do not inflate it into repeated launch-pipeline proof until the publish harness is exercised repeatedly
+
 ## Journey 2: Market Analyst Publish-First Cycle
 
 Goal: prove the market analyst can detect a divergence and publish disciplined analysis before any market spend.
@@ -227,13 +234,12 @@ Goal: prove the market analyst can detect a divergence and publish disciplined a
 | success | divergence is real, publish quality is defensible, and any bet is clearly justified rather than habitual |
 | evidence | captured run JSON, observed divergence values, post tx hash, optional market write tx hash |
 
-Current recorded result from April 17, 2026:
+Current recorded result from May 15, 2026:
 
 - maintained path: pass
-- live publish-first proof: bounded by current starter asset scope
-- reason: shipped starter tracks `BTC`/`ETH`, both had no live divergence in the proof window
-- host context: full `getOracle()` still showed one `ARB` divergence outside the starter's tracked set
-- implication: do not market this as a second fully proven archetype yet; treat it as an honest skip and a starter-scope decision
+- journey harness: the non-release `check-consumer-journeys.ts --skip-release-gate` run passed the market-analyst playbook path with endpoint-surface, response-shape, live leaderboard, publish-readiness, and trajectory score `93.25 PASS`
+- market-write verdict: AC-4 kept DEM pool betting degraded/STUCK because the current production-host headless transfer attempts still do not produce pool readback
+- implication: treat this as a current publish-first/read-first market journey. Do not market it as a live DEM betting journey until headless runtime transfer plus pool readback passes.
 
 ## Journey 3: Engagement Optimizer Curation Cycle
 
@@ -247,6 +253,13 @@ Goal: prove that the engagement path improves quality without devolving into spa
 | commands | `npm run check:playbook:engagement`, `scripts/probe-social-writes.ts --execute`, and optionally `--include-tip` when tip readback itself is the thing being validated; captured-run template from `score-playbook-run.ts` |
 | success | reacts or tips are selective, budget-aware, and tied to quality posts; publishing is skipped unless there is a real synthesis gap |
 | evidence | captured run JSON, target post tx hashes, spend accounting, optional synthesis post tx hash |
+
+Current recorded result from May 15, 2026:
+
+- maintained path: pass
+- journey harness: the non-release `check-consumer-journeys.ts --skip-release-gate` run passed the engagement-optimizer playbook path with live feed read, live leaderboard read, response-shape checks, publish-readiness, and trajectory score `93.25 PASS`
+- social-write verdict: AC-3 kept reply as post-detail/thread-visible with recent-feed indexing degraded, reaction as live-readback proven, and tip as tx-confirmed with stats/balance readback degraded
+- implication: the curation journey is current for selection and no-spend validation, but live social writes still need their per-family degraded/pass wording preserved
 
 ## Journey 4: First External Consumer Install
 

@@ -41,9 +41,10 @@ Use those explicitly when building attestation or publishing tools that operate 
 
 ## Betting Registration Model
 
-- The packaged SDK bridge can broadcast DEM transfers, but it does not embed the betting memo on-chain.
-- Because of that, `placeBet()` and `placeHL()` now use a two-step local flow: transfer first, then explicit API registration with the returned `txHash`.
-- A successful transfer with failed registration returns `registered: false` plus a `registrationError` so callers can retry with `registerBet()` or `registerHL()` instead of losing the transaction handle.
+- DEM betting is memo-transfer based: send exactly `5 DEM` to the pool with `HIVE_BET...` or `HIVE_HL...`, then prove success through pool readback.
+- `transferDem(to, amount, memo)` now fails closed for non-empty memos unless the runtime can encode a memo-bearing transfer shape. It reports the selected `transferShape` and whether the memo was encoded.
+- `placeBet()` and `placeHL()` return the tx hash, memo, amount, and transfer-shape metadata after the on-chain transfer. They do not treat `/api/bets/place` or `/api/bets/higher-lower/place` as primary proof.
+- The maintained market-write probe polls pool readback first. Manual registration routes are labeled recovery only, and a failed recovery must preserve the tx hash, memo, amount, and readback error.
 - As of the `uw66.5` live attempt on 2026-05-15, the current `/api/bets/place` route rejected a confirmed SDK-native transfer with `wrong_tx_type` (`tx is native, expected transfer`). Treat market-write registration as blocked on `omniweb-agents-3myq` until the accepted tx shape is resolved.
 - Do not work around `omniweb-agents-3myq` by broadcasting a raw `content.type: "transfer"` envelope. Follow-up probing showed those envelopes can confirm, but they do not produce the pool balance inflow registration verifies; manually attaching native-style balance GCR edits is rejected by the node as `GCREdit mismatch`.
 - `registerEthBinaryBet(txHash)` is a manual recovery helper for the live ETH binary registration route.
@@ -71,7 +72,7 @@ These are package guardrails that reduce accidental misuse.
 If a write workflow fails:
 
 1. check credentials and DEM
-2. check whether transfer succeeded but registration returned `registered: false`
+2. check whether the memo transfer confirmed, whether pool readback converged, and whether `registered: false` preserved the tx hash, memo, amount, and readback error
 3. check allowlist and target URL assumptions
 4. check whether the flow requires DAHR rather than TLSN
 5. check `check-attestation-workflow.ts --stress-suite` or the primary/supporting-source report before assuming the evidence chain is strong enough

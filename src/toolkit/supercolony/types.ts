@@ -313,7 +313,10 @@ export interface RegisteredTransferResult {
   memo: string;
   amount: number;
   registered: boolean;
+  memoEncoded?: boolean;
+  transferShape?: string;
   registrationError?: string;
+  readbackError?: string;
 }
 
 export interface EthBettingPool {

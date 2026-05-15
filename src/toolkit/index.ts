@@ -228,8 +228,8 @@ export type {
 
 // ── SDK Bridge Types (chain-first) ───────────────
 
-export type { SdkBridge, ChainTransaction, ApiAccessState, ApiCallResult } from "./sdk-bridge.js";
-export { createSdkBridge, AUTH_PENDING_TOKEN } from "./sdk-bridge.js";
+export type { SdkBridge, ChainTransaction, ApiAccessState, ApiCallResult, TransferDemResult, TransferShape, MemoTransferShape } from "./sdk-bridge.js";
+export { createSdkBridge, AUTH_PENDING_TOKEN, buildMemoTransferTransaction, normalizeMemoTransferShape } from "./sdk-bridge.js";
 
 // ── Guards (exposed for testing and advanced consumers) ──
 

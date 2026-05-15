@@ -13,6 +13,7 @@ export interface HigherLowerPoolSnapshot {
   higherCount: number;
   lowerCount: number;
   referencePrice: number | null;
+  poolAddress?: string;
   currentPrice: number;
 }
 
@@ -23,7 +24,7 @@ export interface BettingPoolSnapshot {
   totalDem: number;
   poolAddress?: string;
   roundEnd?: number;
-  bets: Array<{ txHash: string; predictedPrice: number; amount: number }>;
+  bets: Array<{ txHash: string; predictedPrice: number; amount: number; bettor?: string; roundEnd?: number }>;
 }
 
 export interface HigherLowerProbePlan {
@@ -144,10 +145,24 @@ export function fixedBetReadbackSatisfied(
   before: BettingPoolSnapshot,
   after: BettingPoolSnapshot,
   txHash: string,
+  expected?: { predictedPrice: number; roundEnd?: number; bettor?: string },
 ): boolean {
+  const txHashMatched = after.bets.some((bet) => bet.txHash === txHash);
+  const expectedMatched = expected
+    ? after.bets.some((bet) => {
+        const existedBefore = before.bets.some((prior) => prior.txHash === bet.txHash);
+        if (existedBefore) return false;
+        const predictedPriceMatches = bet.predictedPrice === expected.predictedPrice;
+        const roundMatches = expected.roundEnd == null || (bet as { roundEnd?: number }).roundEnd === expected.roundEnd;
+        const bettorMatches = expected.bettor == null || (bet as { bettor?: string }).bettor === expected.bettor;
+        return predictedPriceMatches && roundMatches && bettorMatches;
+      })
+    : false;
+
   return (
     after.totalBets > before.totalBets
     || after.totalDem > before.totalDem
-    || after.bets.some((bet) => bet.txHash === txHash)
+    || txHashMatched
+    || expectedMatched
   );
 }

@@ -289,10 +289,11 @@ describe("actions.placeBet", () => {
     expect(result!.ok).toBe(true);
     if (result!.ok) {
       expect(result!.data.txHash).toBe("0xbet1");
-      expect(result!.data.registered).toBe(true);
+      expect(result!.data.registered).toBe(false);
+      expect(result!.data.readbackError).toContain("Pool readback");
     }
     expect(client.getBettingPool).toHaveBeenCalledWith("BTC", "30m");
-    expect(client.registerBet).toHaveBeenCalledWith("0xbet1", "BTC", 70000, { horizon: "30m" });
+    expect(client.registerBet).not.toHaveBeenCalled();
     expect(transferDem).toHaveBeenCalledWith("0xpool", 5, "HIVE_BET:BTC:70000:30m");
   });
 
@@ -336,7 +337,7 @@ describe("actions.placeBet", () => {
     expect(transferDem).not.toHaveBeenCalled();
   });
 
-  it("returns txHash with registered=false when registration fails after transfer", async () => {
+  it("does not erase txHash or memo when manual registration would fail", async () => {
     const pool = { asset: "BTC", horizon: "30m", totalBets: 3, totalDem: 15, poolAddress: "0xpool", roundEnd: 0, bets: [] };
     const client = createMockApiClient({
       getBettingPool: vi.fn().mockResolvedValue(mockOk(pool)),
@@ -350,9 +351,12 @@ describe("actions.placeBet", () => {
     expect(result!.ok).toBe(true);
     if (result!.ok) {
       expect(result.data.txHash).toBe("0xbet1");
+      expect(result.data.memo).toBe("HIVE_BET:BTC:70000:30m");
       expect(result.data.registered).toBe(false);
-      expect(result.data.registrationError).toContain("indexer lag");
+      expect(result.data.registrationError).toBeUndefined();
+      expect(result.data.readbackError).toContain("Pool readback");
     }
+    expect(client.registerBet).not.toHaveBeenCalled();
   });
 
   it("rejects asset containing colons", async () => {
@@ -412,7 +416,7 @@ describe("actions.placeBet", () => {
 });
 
 describe("actions.placeHL", () => {
-  it("transfers then registers higher-lower bets with normalized memo", async () => {
+  it("transfers higher-lower bets with normalized memo", async () => {
     const pool = { asset: "BTC", horizon: "30m", totalHigher: 1, totalLower: 1, totalDem: 10, higherCount: 1, lowerCount: 1, roundEnd: 0, referencePrice: null, poolAddress: "0xpool", currentPrice: 70000 };
     const client = createMockApiClient({
       getHigherLowerPool: vi.fn().mockResolvedValue(mockOk(pool)),
@@ -435,10 +439,11 @@ describe("actions.placeHL", () => {
     if (result!.ok) {
       expect(result.data.txHash).toBe("0xhl1");
       expect(result.data.memo).toBe("HIVE_HL:BTC:HIGHER:30m");
-      expect(result.data.registered).toBe(true);
+      expect(result.data.registered).toBe(false);
+      expect(result.data.readbackError).toContain("Pool readback");
     }
     expect(transferDem).toHaveBeenCalledWith("0xpool", 5, "HIVE_HL:BTC:HIGHER:30m");
-    expect(client.registerHigherLowerBet).toHaveBeenCalledWith("0xhl1", "BTC", "HIGHER", { horizon: "30m" });
+    expect(client.registerHigherLowerBet).not.toHaveBeenCalled();
   });
 
   it("rejects non-5 higher-lower amounts before transfer", async () => {

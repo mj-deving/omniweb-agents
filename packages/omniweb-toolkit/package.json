@@ -85,6 +85,7 @@
     "check:research-starter-loop": "node --import tsx ./scripts/check-research-starter-loop.ts",
     "check:read-surface": "node --import tsx ./scripts/check-read-surface-sweep.ts",
     "check:write-surface": "node --import tsx ./scripts/check-write-surface-sweep.ts",
+    "check:social-writes": "node --import tsx ./scripts/probe-social-writes.ts",
     "check:reply": "node --import tsx ./scripts/check-supervised-reply.ts",
     "check:observation": "node --import tsx ./scripts/check-supervised-observation.ts",
     "check:observation:eligibility": "node --import tsx ./scripts/check-supervised-observation-eligibility.ts",

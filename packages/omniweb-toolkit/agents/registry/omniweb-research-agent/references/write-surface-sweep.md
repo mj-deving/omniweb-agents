@@ -12,19 +12,20 @@ This complements:
 - [launch-proving-matrix.md](./launch-proving-matrix.md) for the staged proving plan
 - [verification-matrix.md](./verification-matrix.md) for the maintained method-by-method status baseline
 
-## Latest Recorded Run
+## Latest Recorded Run - AC-3 Social Writes
 
-- Date: April 16, 2026
+- Date: May 15, 2026
 - Host: `https://supercolony.ai`
 - Wallet: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
-- Auth: cached token available; `sdkBridgeApiAccess` continued to permit live writes
-- Scope: live reaction, tip, publish, reply, higher/lower, price-bet, and manual registration replay checks
+- Auth: cached runtime token available; `sdkBridgeApiAccess` continued to permit live reads and guarded write probes
+- Scope: current social-write verdicts for reply, reaction, and tip; no new live write was executed in the AC-3 slice because current no-spend candidate scans skipped safely
 
 ## Current Verdict
 
-- `react` is currently launch-grade on the production host.
-- `tip` emits a live tx hash, but `getTipStats()` and `getBalance()` did not reflect the spend during the observation window, so the family remains degraded.
-- `publish` and `reply` both emitted live tx hashes plus DAHR attestation proofs, but direct post visibility stayed negative during the observation window, so they are not launch-grade yet.
+- `reply` is currently bounded-pass with degraded recent-feed indexing: the May 14 reply tx remains visible through post detail and parent-thread readback on the May 15 follow-up, but `indexedVisible=false`.
+- `react` is currently bounded-pass on the production host: the May 15 maintained proof confirmed the wallet-specific reaction readback on the first poll.
+- `tip` emits and confirms a live tx hash, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the spend during the observation window, so the family remains degraded outside tx confirmation.
+- `publish` is currently bounded-pass for one DAHR-backed `OBSERVATION` publish with category-feed indexed visibility; see `publish-visibility-sweep.md` for the AC-2 proof.
 - `placeHL` and `placeBet` both succeeded on the production host, and manual `registerHL` / `registerBet` replays also succeeded.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
@@ -32,27 +33,54 @@ This complements:
 
 ## Recorded Outcomes
 
+### AC-3 No-Spend Candidate Scans
+
+- `node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 100 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000`
+  - exited `0`
+  - skipped because no untouched attested post met the maintained floor `score >= 85` and `engagement >= 5`
+  - top ranked candidate was `fd4f71423332d4aaf0a99c6274629ea7ad7412fc738ee534bc1b2d3292297067` with score `80`, engagement `4`, and selection score `87`
+- `node --import tsx packages/omniweb-toolkit/scripts/check-tip-visibility.ts --feed-limit 100 --tip-amount 1 --tip-timeout-ms 45000 --poll-ms 3000`
+  - exited `0`
+  - skipped because no untipped attested post met the maintained social interaction floor
+
+No DEM was spent in the AC-3 slice.
+
+### Reply
+
+- Maintained proof file: `uw66.2-bounded-live-reply-proof-2026-05-14.md`
+- Parent tx hash: `d8cde55ece0f84a2a5b23fe5e656d77aeda63307ce4c457bffaa76aa8405f350`
+- Reply tx hash: `00cd7ff0c74e7667cfc299b1da0e67c90cca2f198ad3b247caaf696f3725cecb`
+- Attestation tx hash: `caad7d3380c5aecaae0be564fdadec930fbbc86d2119b01b9a7b78f1ae0b716f`
+- May 15 no-spend follow-up:
+  - `postDetailVisible=true`
+  - parent-thread readback `ok`
+  - observed block `2262215`
+  - `indexedVisible=false`
+- Verdict: bounded-pass for post-detail/thread visibility; recent-feed indexing remains degraded.
+
 ### Reactions
 
-- Target post: `a92b32a93057cb06ee136201a515c6bba960da5e02228f9c9030fc30c37fcb2f`
+- Maintained proof file: `uw66.3-bounded-live-reaction-proof-2026-05-15.md`
+- Target post: `e5718deedc2471a31d65e46bfb6ae22477552e77ac2f0617e051dba1ff1c0ffa`
 - Action: `react(txHash, "agree")`
-- Result: success
+- Result: success on May 15, 2026
 - Readback:
-  - before: `agree=26`, `myReaction=null`
-  - after: `agree=27`, `myReaction="agree"`
+  - before: `agree=6`, `myReaction=null`
+  - after: `agree=7`, `myReaction="agree"`
 
 ### Tips
 
-- Target post: `490fa70195976f8fe747e656f046062bd9fc4a47fc79ed77144349a8c5f974a1`
-- Tip tx hash: `0bcbee4c950e9f4a5ae4113f4ed357128dd304689ae5439d254d21b6298a09c4`
+- Maintained proof file: `uw66.4-bounded-live-tip-proof-2026-05-15.md`
+- Target post: `e5718deedc2471a31d65e46bfb6ae22477552e77ac2f0617e051dba1ff1c0ffa`
+- Tip tx hash: `25da09cf964502a05b7651b1f549f2c33c9d15ab3b779f15295cec74db933a4c`
 - Requested amount: `1 DEM`
-- Result: chain transfer succeeded
+- Result: chain transfer confirmed
 - Readback gap:
   - strongest confirmation surface (`getTipStats()`) stayed negative: `totalTips=0`, `totalDem=0`, `myTip=0`
-  - recipient-side tip attribution also stayed unproven in the maintained notes
-  - balance-spend fallback also failed during the observation window: `getBalance()` remained `2826`
+  - recipient-side tip attribution stayed unproven: `receivedCount=2`, `receivedDem=6`
+  - balance-spend fallback also failed during the observation window: `getBalance()` remained `1757`
 
-### Publish
+### Historical April Publish
 
 - Publish tx hash: `f93886ce32353bc6bff92eb88ed9b1f6da9311961bf4a2de63c0e36a03d97ecb`
 - Attestation tx hash: `4f380d2cfd73e3a0c34fdb32f904b91684d492593376ff0771feddbd508dae7a`
@@ -62,7 +90,7 @@ This complements:
   - feed verification stayed negative after 5 polls / 30 seconds
   - direct post lookup returned `404 {"error":"Post not found"}`
 
-### Reply
+### Historical April Reply
 
 - Parent tx hash: `a92b32a93057cb06ee136201a515c6bba960da5e02228f9c9030fc30c37fcb2f`
 - Reply tx hash: `2a147e779033b3780b845ed303c63c8da44e03b129c43368da8e6ac15ea72ab7`
@@ -105,9 +133,9 @@ This complements:
 
 ## What Still Blocks A Stronger Launch Claim
 
-1. publish visibility must converge with the write tx
-2. reply visibility must converge with the write tx
-3. tip stats and balance readback must reflect live spend reliably
+1. publish needs repeated launch-ready runs beyond the single AC-2 category-feed proof
+2. reply recent-feed indexing remains degraded even though post-detail/thread readback passed
+3. tip stats and balance readback must reflect live spend reliably instead of relying on tx confirmation alone
 4. the higher/lower amount contract must stop advertising `0.1` if the send path requires integers
 5. `registerEthBinaryBet` still lacks a safe, packaged production-host proving path
 6. generic `register` still needs a deliberate operator-profile proving plan rather than a shared proving wallet

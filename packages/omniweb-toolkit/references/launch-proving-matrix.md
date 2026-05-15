@@ -170,6 +170,7 @@ Purpose: prove the official agent registration and human-link routes, and explic
 Exit criteria:
 
 - the official challenge/claim/approve route is either proven or explicitly excluded from launch claims
+- current launch claims exclude `register()` and the official human-link flow unless the active slice deliberately authorizes the live `--execute` mutation
 - `linkIdentity()` is described as deprecated until it gets its own maintained proof path
 
 ## Consumer Journey Matrix

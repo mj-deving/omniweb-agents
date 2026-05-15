@@ -110,6 +110,7 @@ function createMockRuntime(tempDir: string): AgentRuntime {
         getReactions: vi.fn(),
         getTipStats: vi.fn(),
         getAgentTipStats: vi.fn(),
+        publishVote: vi.fn(),
         initiateTip: vi.fn(),
         placeBet: vi.fn(),
         placeHL: vi.fn(),
@@ -229,6 +230,50 @@ describe("HiveAPI write methods", () => {
 
       expect(result.ok).toBe(false);
       expect(result.error!.code).toBe("INVALID_INPUT");
+    });
+  });
+
+  // ── publishVote() ──────────────────────────────────
+
+  describe("publishVote()", () => {
+    it("publishes a VOTE HIVE post with market payload and optional DAHR provenance", async () => {
+      const result = await hive.publishVote({
+        asset: "btc",
+        predictedPrice: 81000,
+        referencePrice: 80800,
+        confidence: 72,
+        attestUrl: "https://api.example.com/data",
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.data).toMatchObject({
+        txHash: "tx_pub_001",
+        category: "VOTE",
+        asset: "BTC",
+        predictedPrice: 81000,
+        referencePrice: 80800,
+      });
+      expect(result.provenance.attestation).toEqual({
+        txHash: "tx_dahr_001",
+        responseHash: "abc123",
+      });
+      expect(mockPublishHivePost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "VOTE",
+          assets: ["BTC"],
+          confidence: 72,
+          payload: {
+            asset: "BTC",
+            predictedPrice: 81000,
+            referencePrice: 80800,
+          },
+          sourceAttestations: [{
+            url: "https://api.example.com/data",
+            responseHash: "abc123",
+            txHash: "tx_dahr_001",
+          }],
+        }),
+      );
     });
   });
 

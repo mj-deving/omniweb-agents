@@ -101,6 +101,8 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
     apiClient,
     dataSource,
     transferDem: (to, amount, memo) => sdkBridge.transferDem(to, amount, memo),
+    publishHivePost: (post) => sdkBridge.publishHivePost(post),
+    attestDahr: (url) => sdkBridge.attestDahr(url),
   });
 
   // Step 7: Create authenticated API call wrapper (Codex review fix #3)

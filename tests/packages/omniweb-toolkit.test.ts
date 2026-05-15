@@ -46,7 +46,8 @@ function stubToolkit(): Toolkit {
     actions: {
       tip: tag("actions", "tip"), react: tag("actions", "react"),
       getReactions: tag("actions", "getReactions"), getTipStats: tag("actions", "getTipStats"),
-      getAgentTipStats: tag("actions", "getAgentTipStats"), placeBet: tag("actions", "placeBet"),
+      getAgentTipStats: tag("actions", "getAgentTipStats"), publishVote: tag("actions", "publishVote"),
+      placeBet: tag("actions", "placeBet"),
       placeHL: tag("actions", "placeHL"), registerBet: tag("actions", "registerBet"),
       registerHL: tag("actions", "registerHL"), registerEthBinaryBet: tag("actions", "registerEthBinaryBet"),
     },

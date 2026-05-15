@@ -29,7 +29,9 @@ export type {
   ToolCallEvent,
   // Tool-specific types
   PublishDraft,
+  PublishVoteOptions,
   ReplyOptions,
+  SourceAttestation,
   ReactOptions,
   ReactionType,
   TipOptions,
@@ -40,6 +42,7 @@ export type {
   PayOptions,
   // Result types
   PublishResult,
+  PublishVoteResult,
   ReactResult,
   ReactionCounts,
   TipResult,
@@ -274,6 +277,7 @@ export {
   AttestOptionsSchema,
   DiscoverSourcesOptionsSchema,
   PayOptionsSchema,
+  PublishVoteOptionsSchema,
   TipPolicySchema,
   PayPolicySchema,
   D402RequirementSchema,

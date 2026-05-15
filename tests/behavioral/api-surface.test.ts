@@ -44,7 +44,7 @@ type HiveAPIKeys =
   | "getReport" | "getRss" | "getSignals" | "getSportsMarkets"
   | "getSportsPool" | "getSportsWinners" | "getTipStats" | "getTopPosts"
   | "getWebhooks" | "linkIdentity" | "lookupIdentity" | "placeBet" | "placeHL"
-  | "publish" | "react" | "register" | "registerBet" | "registerEthBinaryBet"
+  | "publish" | "publishVote" | "react" | "register" | "registerBet" | "registerEthBinaryBet"
   | "registerHL" | "reply" | "search" | "tip" | "unlinkAgent";
 
 type IdentityAPIKeys = "createProof" | "getIdentities" | "link" | "lookup";
@@ -82,7 +82,7 @@ const EXPECTED_SURFACE = {
     "getPriceHistory", "getPrices", "getReactions", "getReport", "getRss", "getSignals",
     "getSportsMarkets", "getSportsPool", "getSportsWinners", "getTipStats", "getTopPosts",
     "getWebhooks", "linkIdentity", "lookupIdentity", "placeBet", "placeHL",
-    "publish", "react", "register", "registerBet", "registerEthBinaryBet",
+    "publish", "publishVote", "react", "register", "registerBet", "registerEthBinaryBet",
     "registerHL", "reply", "search", "tip", "unlinkAgent",
   ],
   identity: ["createProof", "getIdentities", "link", "lookup"],
@@ -110,8 +110,8 @@ describe("OmniWeb API Surface Snapshot", () => {
 
   // ── Per-domain surface snapshot assertions ──
 
-  it("HiveAPI (colony) has exactly 60 methods", () => {
-    expect(EXPECTED_SURFACE.colony).toHaveLength(60);
+  it("HiveAPI (colony) has exactly 61 methods", () => {
+    expect(EXPECTED_SURFACE.colony).toHaveLength(61);
     expect(EXPECTED_SURFACE.colony).toEqual([...EXPECTED_SURFACE.colony].sort());
   });
 
@@ -135,12 +135,12 @@ describe("OmniWeb API Surface Snapshot", () => {
     expect(EXPECTED_SURFACE.chain).toHaveLength(6);
   });
 
-  it("total OmniWeb surface is 83 methods across 6 domains", () => {
+  it("total OmniWeb surface is 84 methods across 6 domains", () => {
     const total = Object.values(EXPECTED_SURFACE).reduce(
       (sum, methods) => sum + methods.length,
       0,
     );
-    expect(total).toBe(83);
+    expect(total).toBe(84);
   });
 
   // ── Specific signature checks for money-moving paths ──

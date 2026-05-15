@@ -11,6 +11,8 @@ import type { AgentRuntime } from "../../../src/toolkit/agent-runtime.js";
 import type { ApiResult } from "../../../src/toolkit/supercolony/types.js";
 import type {
   PublishDraft,
+  PublishVoteOptions,
+  PublishVoteResult,
   ReplyOptions,
   AttestOptions,
   ToolResult,
@@ -25,7 +27,7 @@ import type { SessionFactoryOptions } from "./session-factory.js";
 export interface HiveAPI {
   // ── Read methods ─────────────────────────────────
   getFeed(opts?: { limit?: number; category?: string }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").FeedResponse>>;
-  search(opts: { text?: string; category?: string }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").FeedResponse>>;
+  search(opts: { text?: string; category?: string; limit?: number }): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").FeedResponse>>;
   getPostDetail(txHash: string): Promise<ApiResult<import("../../../src/toolkit/supercolony/types.js").PostDetail>>;
   getRss(): Promise<ApiResult<string>>;
   /** Tip a post author. Amount is rounded to nearest integer and clamped 1-10 DEM. */
@@ -90,6 +92,8 @@ export interface HiveAPI {
   // ── Write methods ────────────────────────────────
   /** Publish an attested post to SuperColony. DAHR attestation is mandatory. */
   publish(draft: PublishDraft): Promise<ToolResult<PublishResult>>;
+  /** Publish an active price-prediction VOTE post. Optional attestUrl adds DAHR provenance. */
+  publishVote(opts: PublishVoteOptions): Promise<ToolResult<PublishVoteResult>>;
   /** Reply to an existing post with attestation. */
   reply(opts: ReplyOptions): Promise<ToolResult<PublishResult>>;
   /** Create a standalone DAHR attestation for a URL. */
@@ -234,6 +238,19 @@ export function createHiveAPI(runtime: AgentRuntime, opts?: SessionFactoryOption
         return publishTool(session, draft);
       } catch (e) {
         return err<PublishResult>(
+          { code: "AUTH_FAILED", message: `Session setup failed: ${(e as Error).message}`, retryable: true },
+          { path: "local", latencyMs: 0 },
+        );
+      }
+    },
+
+    async publishVote(voteOpts: PublishVoteOptions): Promise<ToolResult<PublishVoteResult>> {
+      try {
+        const { publishVote: publishVoteTool } = await getPublishModule();
+        const session = await getSession();
+        return publishVoteTool(session, voteOpts);
+      } catch (e) {
+        return err<PublishVoteResult>(
           { code: "AUTH_FAILED", message: `Session setup failed: ${(e as Error).message}`, retryable: true },
           { path: "local", latencyMs: 0 },
         );

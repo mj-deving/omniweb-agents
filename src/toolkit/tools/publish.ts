@@ -5,14 +5,15 @@
  * reply() is a thin wrapper over publish() with threading.
  */
 
-import type { PublishDraft, ReplyOptions, PublishResult, ToolResult } from "../types.js";
+import type { PublishDraft, PublishVoteOptions, PublishVoteResult, ReplyOptions, PublishResult, SourceAttestation, ToolResult } from "../types.js";
 import { ok, err, demosError } from "../types.js";
 import { DemosSession } from "../session.js";
 import { checkAndRecordWrite } from "../guards/write-rate-limit.js";
 import { checkAndRecordDedup } from "../guards/dedup-guard.js";
 import { withToolWrapper, localProvenance } from "./tool-wrapper.js";
-import { validateInput, PublishDraftSchema, ReplyOptionsSchema } from "../schemas.js";
+import { validateInput, PublishDraftSchema, PublishVoteOptionsSchema, ReplyOptionsSchema } from "../schemas.js";
 import { validateUrl } from "../url-validator.js";
+import { buildVotePost } from "../vote-post.js";
 
 const DEFAULT_CONFIDENCE = 80;
 
@@ -33,7 +34,7 @@ export async function publish(
   });
 }
 
-/** Shared guard check → pipeline → guard record flow for publish and reply */
+/** Shared guard check → pipeline → guard record flow for publish, reply, and VOTE. */
 async function guardAndPublish(
   session: DemosSession,
   draft: PublishDraft,
@@ -66,6 +67,37 @@ async function guardAndPublish(
   );
 }
 
+async function guardAndPublishPost<T extends Record<string, unknown>>(
+  session: DemosSession,
+  text: string,
+  start: number,
+  publishPost: () => Promise<{ txHash: string; data: T; attestation?: { txHash: string; responseHash: string } }>,
+): Promise<ToolResult<T & PublishResult>> {
+  const [rateLimitCheck, dedupError] = await Promise.all([
+    checkAndRecordWrite(session.stateStore, session.walletAddress, false),
+    checkAndRecordDedup(session.stateStore, session.walletAddress, text, false),
+  ]);
+
+  if (rateLimitCheck.error) return err(rateLimitCheck.error, localProvenance(start));
+  if (dedupError) return err(dedupError, localProvenance(start));
+
+  const result = await publishPost();
+
+  await Promise.all([
+    checkAndRecordWrite(session.stateStore, session.walletAddress, true),
+    checkAndRecordDedup(session.stateStore, session.walletAddress, text, true),
+  ]);
+
+  return ok<T & PublishResult>(
+    { ...result.data, txHash: result.txHash },
+    {
+      path: "local",
+      latencyMs: Date.now() - start,
+      attestation: result.attestation,
+    },
+  );
+}
+
 /**
  * Reply to an existing post. Routes through the same guard + pipeline flow as publish().
  */
@@ -93,33 +125,46 @@ export async function reply(
   });
 }
 
+/**
+ * Publish an active price-prediction VOTE post.
+ *
+ * This mirrors the current visible agent lane: HIVE category VOTE with
+ * assets[], confidence, and payload.{asset,predictedPrice,referencePrice}.
+ * It does not depend on /api/ballot* or /api/bets/place pool registration.
+ */
+export async function publishVote(
+  session: DemosSession,
+  opts: PublishVoteOptions,
+): Promise<ToolResult<PublishVoteResult>> {
+  return withToolWrapper(session, "publishVote", "TX_FAILED", async (start) => {
+    const inputError = validateInput(PublishVoteOptionsSchema, opts);
+    if (inputError) return err(inputError, localProvenance(start));
+
+    const initialVote = buildVotePost(opts);
+    return guardAndPublishPost(session, initialVote.post.text, start, async () => {
+      const sourceAttestations = [...(opts.sourceAttestations ?? [])];
+      let attestation: { txHash: string; responseHash: string } | undefined;
+
+      if (opts.attestUrl) {
+        const source = await attestSourceUrl(session, opts.attestUrl);
+        sourceAttestations.unshift(source);
+        attestation = { txHash: source.txHash, responseHash: source.responseHash };
+      }
+
+      const { post, result } = buildVotePost(opts, sourceAttestations);
+      const publishResult = await session.getBridge().publishHivePost(post);
+      return { txHash: publishResult.txHash, data: result, attestation };
+    });
+  });
+}
+
 async function executePublishPipeline(
   session: DemosSession,
   draft: PublishDraft,
 ): Promise<{ publishTxHash: string; attestationTxHash: string; responseHash: string }> {
   const bridge = session.getBridge();
 
-  // Step 1: DAHR attestation (mandatory — every post must carry proof)
-  // attestUrl is guaranteed by type system + Zod schema validation at entry
-
-  // URL allowlist enforcement (if configured)
-  if (session.urlAllowlist.length > 0) {
-    const urlObj = new URL(draft.attestUrl);
-    if (!session.urlAllowlist.some((allowed) => urlObj.origin.startsWith(allowed) || draft.attestUrl.startsWith(allowed))) {
-      // Throws caught by withToolWrapper in publish() — intentional internal throw pattern
-      throw demosError("INVALID_INPUT", `Attestation URL not in allowlist: ${urlObj.hostname}`, false);
-    }
-  }
-
-  // SSRF validation — DNS resolution + IP blocklist (matches attest.ts and pay.ts pattern)
-  const urlCheck = await validateUrl(draft.attestUrl, {
-    allowInsecure: session.allowInsecureUrls,
-  });
-  if (!urlCheck.valid) {
-    throw demosError("INVALID_INPUT", `Attestation URL blocked: ${urlCheck.reason}`, false);
-  }
-
-  const attestResult = await bridge.attestDahr(draft.attestUrl);
+  const attestResult = await attestSourceUrl(session, draft.attestUrl);
 
   // Step 2: Publish HIVE post on-chain via store → confirm → broadcast
   const result = await bridge.publishHivePost({
@@ -142,5 +187,31 @@ async function executePublishPipeline(
     publishTxHash: result.txHash,
     attestationTxHash: attestResult.txHash,
     responseHash: attestResult.responseHash,
+  };
+}
+
+async function attestSourceUrl(session: DemosSession, attestUrl: string): Promise<SourceAttestation> {
+  // URL allowlist enforcement (if configured)
+  if (session.urlAllowlist.length > 0) {
+    const urlObj = new URL(attestUrl);
+    if (!session.urlAllowlist.some((allowed) => urlObj.origin.startsWith(allowed) || attestUrl.startsWith(allowed))) {
+      // Throws caught by withToolWrapper — intentional internal throw pattern
+      throw demosError("INVALID_INPUT", `Attestation URL not in allowlist: ${urlObj.hostname}`, false);
+    }
+  }
+
+  // SSRF validation — DNS resolution + IP blocklist (matches attest.ts and pay.ts pattern)
+  const urlCheck = await validateUrl(attestUrl, {
+    allowInsecure: session.allowInsecureUrls,
+  });
+  if (!urlCheck.valid) {
+    throw demosError("INVALID_INPUT", `Attestation URL blocked: ${urlCheck.reason}`, false);
+  }
+
+  const attestResult = await session.getBridge().attestDahr(attestUrl);
+  return {
+    url: attestResult.url,
+    responseHash: attestResult.responseHash,
+    txHash: attestResult.txHash,
   };
 }

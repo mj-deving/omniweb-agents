@@ -229,7 +229,7 @@ export type {
 // ── SDK Bridge Types (chain-first) ───────────────
 
 export type { SdkBridge, ChainTransaction, ApiAccessState, ApiCallResult, TransferDemResult, TransferShape, MemoTransferShape, WalletNativeTransferShape, DemosProviderLike } from "./sdk-bridge.js";
-export { createSdkBridge, AUTH_PENDING_TOKEN, buildMemoTransferTransaction, normalizeMemoTransferShape, normalizeTransferShape, executeWalletNativeTransfer, extractWalletNativeTxHash, getInjectedDemosProvider } from "./sdk-bridge.js";
+export { createSdkBridge, AUTH_PENDING_TOKEN, DEFAULT_TRANSFER_SHAPE, WALLET_NATIVE_TRANSFER_SHAPE, buildMemoTransferTransaction, normalizeMemoTransferShape, normalizeTransferShape, executeWalletNativeTransfer, extractWalletNativeTxHash, getInjectedDemosProvider } from "./sdk-bridge.js";
 export type { SafeTransferOptions, TransferInputSource } from "./safe-transfer.js";
 export { safeTransfer } from "./safe-transfer.js";
 

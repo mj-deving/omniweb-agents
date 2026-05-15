@@ -17,6 +17,7 @@ import {
   buildHigherLowerMemo,
 } from "../../../src/toolkit/supercolony/bet-memos.js";
 import {
+  DEFAULT_TRANSFER_SHAPE,
   DEFAULT_MEMO_TRANSFER_SHAPE,
   WALLET_NATIVE_TRANSFER_SHAPE,
   extractWalletNativeTxHash,
@@ -72,7 +73,7 @@ Options:
   --poll-ms N              Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --only MODE              One of both, hl, fixed (default: both)
   --fixed-horizons CSV     Fixed-price horizons to inspect, in preference order (default: ${DEFAULT_FIXED_HORIZONS.join(",")})
-  --transfer-shape S       Transfer shape: wallet-native-transfer, native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${WALLET_NATIVE_TRANSFER_SHAPE})
+  --transfer-shape S       Agentic transfer shape: native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_TRANSFER_SHAPE}); wallet-native-transfer is human/browser diagnostic only
   --memo-transfer-shape S  Memo-bearing transfer shape: native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_MEMO_TRANSFER_SHAPE})
   --provider-url URL       Browser page used to capture window.__demosProviderCaptured || window.demos for wallet-native-transfer (default: ${DEFAULT_PROVIDER_URL})
   --state-dir PATH         Override state directory for runtime guards
@@ -200,11 +201,11 @@ try {
           amount: 5,
           memo: buildBetMemo(fixedPlan.asset, fixedPlan.predictedPrice, { horizon: fixedPlan.horizon }),
           shape: transferShape,
-          providerRequest: fixedBefore?.poolAddress
-            ? buildWalletNativeTransferRequest(fixedBefore.poolAddress, 5)
-            : null,
+          ...(transferShape === WALLET_NATIVE_TRANSFER_SHAPE && fixedBefore?.poolAddress
+            ? { providerRequest: buildWalletNativeTransferRequest(fixedBefore.poolAddress, 5) }
+            : {}),
           registrationPayload: {
-            txHash: "<provider tx hash>",
+            txHash: "<transfer tx hash>",
             asset: fixedPlan.asset,
             predictedPrice: fixedPlan.predictedPrice,
             horizon: fixedPlan.horizon,
@@ -214,7 +215,7 @@ try {
         before: fixedBefore,
       } : undefined,
       message: transferShape === WALLET_NATIVE_TRANSFER_SHAPE
-        ? "Dry run only. Re-run with --execute to capture an injected Demos provider and perform one fixed-price wallet-native proof attempt."
+        ? "Dry run only. wallet-native-transfer is a human/browser diagnostic candidate, not the agentic proof path."
         : "Dry run only. Re-run with --execute to perform the live higher-lower and fixed-price bet proof.",
     }, null, 2));
     process.exit(0);
@@ -258,8 +259,8 @@ try {
         verification: walletNative.verification,
       },
       message: ok
-        ? "wallet-native-transfer pool readback matched"
-        : "wallet-native-transfer did not prove DEM pool registration; route active prediction posting through publishVote()/PREDICTION until readback changes.",
+        ? "wallet-native-transfer pool readback matched on the human/browser diagnostic path"
+        : "wallet-native-transfer did not prove the agentic DEM pool path; keep agentic predictions on publishVote()/PREDICTION while headless DEM pool readback remains unavailable.",
     }, null, 2));
 
     process.exit(ok ? 0 : 1);

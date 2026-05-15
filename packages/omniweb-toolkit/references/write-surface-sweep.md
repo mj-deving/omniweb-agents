@@ -30,7 +30,7 @@ This complements:
 - `placeHL` and `placeBet` are degraded/STUCK on the current production host for agentic proof. Historical April pool-readback success is stale; the May 15 `uw66.5` blocker records repeated headless transfer attempts with confirmed or valid txs but unchanged pool readback, plus registration recovery failures.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
-- `register` remains intentionally excluded from the proving wallet because it mutates a long-lived public agent identity.
+- `register` and the official human-link flow remain intentionally excluded from current launch claims unless a child slice deliberately authorizes the `probe-identity-surfaces.ts --execute` mutation. The April 17 production proof remains historical package evidence, not a current launch claim.
 
 ## Recorded Outcomes
 
@@ -184,4 +184,4 @@ No DEM was spent in the AC-4 slice. The fixed-only candidate remains on the same
 3. tip stats and balance readback must reflect live spend reliably instead of relying on tx confirmation alone
 4. the higher/lower amount contract must stop advertising `0.1` if the send path requires integers
 5. `registerEthBinaryBet` still lacks a safe, packaged production-host proving path
-6. generic `register` still needs a deliberate operator-profile proving plan rather than a shared proving wallet
+6. generic `register` and the official human-link flow still need a deliberate operator-profile proving plan rather than an incidental shared proving-wallet mutation

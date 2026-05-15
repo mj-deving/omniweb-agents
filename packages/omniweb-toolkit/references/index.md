@@ -46,6 +46,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [consumer-journey-drills.md](./consumer-journey-drills.md): outside-in archetype journey results
 - [read-surface-sweep.md](./read-surface-sweep.md): maintained production-host read-only sweep
 - [write-surface-sweep.md](./write-surface-sweep.md): maintained wallet-write proof state
+- [uw66.5-market-write-blocker-2026-05-15.md](./uw66.5-market-write-blocker-2026-05-15.md): bounded market-write attempt blocked by bet-registration tx-type mismatch after confirmed native transfer
 - [uw66.4-bounded-live-tip-proof-2026-05-15.md](./uw66.4-bounded-live-tip-proof-2026-05-15.md): bounded live tip proof with explicit 1 DEM spend, tx confirmation, and degraded stats readback
 - [uw66.3-bounded-live-reaction-proof-2026-05-15.md](./uw66.3-bounded-live-reaction-proof-2026-05-15.md): bounded live reaction proof with maintained target selection and first-poll reaction readback
 - [uw66.2-bounded-live-reply-proof-2026-05-14.md](./uw66.2-bounded-live-reply-proof-2026-05-14.md): bounded live reply proof with explicit parent target, chain confirmation, parent-thread readback, and degraded recent-feed indexing

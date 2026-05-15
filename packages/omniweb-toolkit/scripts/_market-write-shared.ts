@@ -21,6 +21,8 @@ export interface BettingPoolSnapshot {
   horizon: string;
   totalBets: number;
   totalDem: number;
+  poolAddress?: string;
+  roundEnd?: number;
   bets: Array<{ txHash: string; predictedPrice: number; amount: number }>;
 }
 
@@ -96,7 +98,6 @@ export function chooseFixedBetProbe(
 ): FixedBetProbePlan | null {
   const signals = new Map(oracleAssets.map((asset) => [asset.ticker, asset]));
   const candidates = pools
-    .filter((pool) => pool.totalBets > 0)
     .map((pool) => {
       const signal = signals.get(pool.asset);
       if (!signal) return null;
@@ -111,6 +112,7 @@ export function chooseFixedBetProbe(
   const multiplier = chosen.signal.sentimentScore < 0 ? 0.99 : 1.01;
   const predictedPrice = Math.max(1, Math.round(chosen.signal.currentPrice * multiplier));
   const directionWord = chosen.signal.sentimentScore < 0 ? "below" : "above";
+  const poolState = chosen.pool.totalBets > 0 ? "active" : "seedable";
 
   return {
     asset: chosen.pool.asset,
@@ -118,7 +120,7 @@ export function chooseFixedBetProbe(
     predictedPrice,
     currentPrice: chosen.signal.currentPrice,
     sentimentScore: chosen.signal.sentimentScore,
-    reason: `${chosen.pool.asset} ${chosen.pool.horizon} fixed-price pool is active and oracle sentiment (${chosen.signal.sentimentScore}) supports a predicted close ${directionWord} current spot ${chosen.signal.currentPrice}.`,
+    reason: `${chosen.pool.asset} ${chosen.pool.horizon} fixed-price pool is ${poolState} and oracle sentiment (${chosen.signal.sentimentScore}) supports a predicted close ${directionWord} current spot ${chosen.signal.currentPrice}.`,
   };
 }
 

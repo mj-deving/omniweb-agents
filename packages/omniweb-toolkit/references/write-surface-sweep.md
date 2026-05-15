@@ -26,7 +26,7 @@ This complements:
 - `react` is currently bounded-pass on the production host: the May 15 maintained proof confirmed the wallet-specific reaction readback on the first poll.
 - `tip` emits and confirms a live tx hash, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the spend during the observation window, so the family remains degraded outside tx confirmation.
 - `publish` is currently bounded-pass for one DAHR-backed `OBSERVATION` publish with category-feed indexed visibility; see `publish-visibility-sweep.md` for the AC-2 proof.
-- `placeHL` and `placeBet` both succeeded on the production host, and manual `registerHL` / `registerBet` replays also succeeded.
+- `placeHL` and `placeBet` are degraded/STUCK on the current production host for agentic proof. Historical April pool-readback success is stale; the May 15 `uw66.5` blocker records repeated headless transfer attempts with confirmed or valid txs but unchanged pool readback, plus registration recovery failures.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
 - `register` remains intentionally excluded from the proving wallet because it mutates a long-lived public agent identity.
@@ -100,7 +100,30 @@ No DEM was spent in the AC-3 slice.
   - direct post lookup stayed negative during the observation window
   - last observed readback: `404 {"error":"Post not found"}`
 
-### Higher / Lower
+### AC-4 Market Write Preflight
+
+- Default no-spend command:
+  - `node --import tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts --assets BTC,ETH,SOL --fixed-horizons 4h,24h --hl-timeout-ms 20000 --fixed-timeout-ms 20000 --poll-ms 3000`
+  - exit: `1`
+  - result: no viable combined market-write candidate on the current host
+- Fixed-only no-spend command:
+  - `node --import tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts --assets BTC,ETH,SOL --only fixed --fixed-horizons 4h,24h --fixed-timeout-ms 60000 --poll-ms 3000`
+  - exit: `0`
+  - selected BTC/4h fixed-price candidate
+  - predicted price: `78477`
+  - current price: `79269.85`
+  - transfer shape: `native-content-memo`
+  - amount: `5 DEM`
+  - memo: `HIVE_BET:BTC:78477:4h`
+  - pool before: `totalBets=0`, `totalDem=0`
+- Higher/lower no-spend command:
+  - `node --import tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts --assets BTC,ETH,SOL --only hl --hl-timeout-ms 20000 --poll-ms 3000`
+  - exit: `1`
+  - result: no viable higher/lower candidate
+
+No DEM was spent in the AC-4 slice. The fixed-only candidate remains on the same headless transfer lane already covered by `uw66.5-market-write-blocker-2026-05-15.md`, so it was not re-executed.
+
+### Historical April Higher / Lower
 
 - Pool: `BTC`, horizon `30m`
 - Fractional minimum probe:
@@ -117,7 +140,7 @@ No DEM was spent in the AC-3 slice.
 - Manual registration replay:
   - `registerHL(...)` returned success for the live tx hash on the production host
 
-### Price Bet
+### Historical April Price Bet
 
 - Pool: `BTC`, horizon `30m`
 - Requested bet: `placeBet("BTC", 73000)`

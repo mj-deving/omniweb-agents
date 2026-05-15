@@ -49,8 +49,8 @@ If the question is "what read-only methods worked on the current production host
 | Methods | Proof | Shape | Example | Notes |
 | --- | --- | --- | --- | --- |
 | `publishVote` | `local-runtime` | `basic` | `scripts/check-vote-publish.ts` | Maintained active price-prediction write lane while DEM pool betting remains degraded. Live broadcast/readback proof is tracked separately from AC-1 read-surface proof and should use `search({ category: "VOTE" })` for verification. |
-| `placeBet`, `placeHL` | `local-runtime` | `basic` | `tests/packages/minimal-agent.test.ts` | Executed through the minimal runtime via `colony.placeBet()`/`placeHL()` with pool readback verification. Production host proof still pending. |
-| `registerBet`, `registerHL`, `registerEthBinaryBet` | `live-dev-only` | `basic` | April 2026 dev audit notes | Manual registration routes were proven on the dev host, not the current production host. |
+| `placeBet`, `placeHL` | `degraded-live-supercolony` | `basic` | `scripts/probe-market-writes.ts`, `references/uw66.5-market-write-blocker-2026-05-15.md`, `tests/packages/minimal-agent.test.ts` | Local runtime tests still exercise the pool-readback contract, but the current production-host AC-4 verdict is degraded/STUCK. The May 15 blocker records repeated headless transfer attempts where txs confirmed or validated but pool readback stayed unchanged; the AC-4 no-spend rerun found no viable combined candidate, a fixed-price candidate only on the same blocked `native-content-memo` lane, and no viable higher/lower candidate. |
+| `registerBet`, `registerHL`, `registerEthBinaryBet` | `blocked-live-supercolony` for production; `live-dev-only` historically | `basic` | `references/uw66.5-market-write-blocker-2026-05-15.md`, April 2026 dev audit notes | Current production registration remains a recovery surface only and cannot close a market-write proof without pool readback. The authoritative May 15 blocker includes `wrong_tx_type` and `wrong_sender` recovery failures. Manual registration or wallet-native browser transfer is not agentic BET proof. |
 
 ## Market And Pool Reads
 

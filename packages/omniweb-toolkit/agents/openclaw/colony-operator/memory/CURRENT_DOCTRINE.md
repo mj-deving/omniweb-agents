@@ -1,11 +1,11 @@
 # CURRENT_DOCTRINE.md
 
 Status: active
-Updated: 2026-05-14
+Updated: 2026-05-15
 Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
-Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`
+Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`
 
 Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
 
@@ -27,6 +27,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - The next execution band is **not** another broad architecture rewrite. It is a frozen-seam colony live-ops lane: `0z87` + `5xp4.8` are closed, the thin waist stays stable for one wave, and real multi-action colony execution is being proved above it one action family at a time.
 - `uw66.1` is now live-publish proven: DAHR attestation and publish txs confirmed on-chain, with delayed recent-feed visibility.
 - `uw66.2` is now live-reply proven in the bounded sense: DAHR attestation and reply txs confirmed on-chain, the reply appears in the intended parent thread, and the honest visibility verdict is post-detail/thread visible with recent-feed indexing still degraded.
+- `uw66.3` is now live-reaction proven in the bounded sense: the maintained social-write probe executed an `agree` reaction and readback confirmed the target moved from `agree: 6` to `agree: 7` with `myReaction: "agree"` on the first poll.
 
 ## Canonical sources
 
@@ -40,6 +41,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - PR #389 / commit `abd08f8444bd`
 - `packages/omniweb-toolkit/references/uw66.1-bounded-live-publish-proof-2026-05-14.md`
 - `packages/omniweb-toolkit/references/uw66.2-bounded-live-reply-proof-2026-05-14.md`
+- `packages/omniweb-toolkit/references/uw66.3-bounded-live-reaction-proof-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`
 - `bd show omniweb-agents-5xp4.15 --json`
@@ -59,17 +61,18 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 1. `0z87` and `5xp4.8` are now closed; keep that closeout pair as the gate that opened the frozen-seam live-ops band.
 2. Freeze the thin waist for one live-ops wave: `PolicyActionRequest`, resolved status truth, and the execution/verification envelope should not churn casually.
 3. The blocker-truth/diagnosis wave is landed through PR #382, response-shape/readiness cleanup is landed through PR #388, and `uw66.1` is closed by PR #389.
-4. `uw66.2` is the current reply proof slice: accepted reply tx and attestation tx are chain-confirmed, parent-thread readback is confirmed, and recent-feed indexing remains degraded rather than hidden.
-5. The immediate next move is `uw66.3`: prove live reaction execution and readback.
-6. After reaction, continue across `tip`, `bet`, one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
-7. Harden and consumerize only after the live operator floor is real.
+4. `uw66.2` is closed as the reply proof slice: accepted reply tx and attestation tx are chain-confirmed, parent-thread readback is confirmed, and recent-feed indexing remains degraded rather than hidden.
+5. `uw66.3` is the current reaction proof slice: maintained `agree` execution succeeded and first-poll readback confirmed the reaction.
+6. The immediate next move is `uw66.4`: prove live tip execution and readback.
+7. After tip, continue across `bet`, one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
+8. Harden and consumerize only after the live operator floor is real.
 
 ## Anti-drift rules
 
 - Do **not** treat PR #360 as the current implementation frontier; it is planning context.
 - Do **not** describe the present architecture as if `5xp4.9` were still upcoming.
 - Do **not** reopen broad seam churn when the current need is live operator proof above the seam.
-- Do **not** reopen `uw66.1` or `uw66.2` just because indexing is delayed; both are bounded proof checkpoints with honest visibility classifications.
+- Do **not** reopen `uw66.1`, `uw66.2`, or `uw66.3` just because a bounded proof is narrower than launch-grade repeatability; they are proof checkpoints with honest visibility/readback classifications.
 - Do **not** default to forking the substrate; fork the operator lane above the seam first if a faster track is needed.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
 - Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.

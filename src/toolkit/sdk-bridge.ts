@@ -77,7 +77,13 @@ export type MemoTransferShape =
   | "native-data-memo"
   | "wallet-provider-send-transaction";
 
-export type TransferShape = "sdk-native-transfer" | MemoTransferShape;
+export type WalletNativeTransferShape = "wallet-native-transfer";
+
+export type TransferShape = "sdk-native-transfer" | MemoTransferShape | WalletNativeTransferShape;
+
+export interface DemosProviderLike {
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+}
 
 export interface TransferDemResult {
   txHash: string;
@@ -245,6 +251,7 @@ export interface SdkBridge {
 }
 
 export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-content-memo";
+export const WALLET_NATIVE_TRANSFER_SHAPE: WalletNativeTransferShape = "wallet-native-transfer";
 
 export function normalizeMemoTransferShape(value: string | undefined): MemoTransferShape {
   switch ((value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim()) {
@@ -257,6 +264,58 @@ export function normalizeMemoTransferShape(value: string | undefined): MemoTrans
         `Unsupported memo transfer shape "${value}". Valid shapes: native-content-memo, native-data-memo, wallet-provider-send-transaction`,
       );
   }
+}
+
+export function normalizeTransferShape(value: string | undefined): MemoTransferShape | WalletNativeTransferShape {
+  const normalized = (value ?? WALLET_NATIVE_TRANSFER_SHAPE).trim();
+  if (normalized === WALLET_NATIVE_TRANSFER_SHAPE) return WALLET_NATIVE_TRANSFER_SHAPE;
+  return normalizeMemoTransferShape(normalized);
+}
+
+export function extractWalletNativeTxHash(response: unknown): string | undefined {
+  const seen = new Set<unknown>();
+  const visit = (value: unknown): string | undefined => {
+    if (!value || typeof value !== "object" || seen.has(value)) return undefined;
+    seen.add(value);
+    const record = value as Record<string, unknown>;
+    for (const key of ["txHash", "hash", "transactionHash"]) {
+      const candidate = record[key];
+      if (typeof candidate === "string" && candidate.length > 0) return candidate;
+    }
+    for (const nested of Object.values(record)) {
+      const candidate = visit(nested);
+      if (candidate) return candidate;
+    }
+    return undefined;
+  };
+  if (typeof response === "string" && response.length > 0) return response;
+  return visit(response);
+}
+
+export async function executeWalletNativeTransfer(
+  provider: DemosProviderLike,
+  recipientAddress: string,
+  amount: number,
+): Promise<{ txHash: string; request: { method: "nativeTransfer"; params: [{ recipientAddress: string; amount: number }] }; response: unknown }> {
+  const request: { method: "nativeTransfer"; params: [{ recipientAddress: string; amount: number }] } = {
+    method: "nativeTransfer" as const,
+    params: [{ recipientAddress, amount }],
+  };
+  const response = await provider.request(request);
+  const txHash = extractWalletNativeTxHash(response);
+  if (!txHash) {
+    throw new Error("wallet-native transfer succeeded but txHash not found in provider response");
+  }
+  return { txHash, request, response };
+}
+
+export function getInjectedDemosProvider(globalObject: unknown = globalThis): DemosProviderLike | null {
+  if (!globalObject || typeof globalObject !== "object") return null;
+  const record = globalObject as Record<string, unknown>;
+  const provider = record.__demosProviderCaptured ?? record.demos;
+  if (!provider || typeof provider !== "object") return null;
+  const request = (provider as Record<string, unknown>).request;
+  return typeof request === "function" ? provider as DemosProviderLike : null;
 }
 
 export function buildMemoTransferTransaction(
@@ -553,7 +612,7 @@ export function createSdkBridge(
       }
       const normalizedMemo = memo.trim();
       if (normalizedMemo.length > 0) {
-        const transferShape = normalizeMemoTransferShape(process.env.OMNIWEB_MEMO_TRANSFER_SHAPE);
+        const transferShape = normalizeTransferShape(process.env.OMNIWEB_MEMO_TRANSFER_SHAPE ?? DEFAULT_MEMO_TRANSFER_SHAPE);
         if (transferShape === "wallet-provider-send-transaction") {
           if (typeof rpc.sendTransaction !== "function") {
             throw new Error("transferDem: memo transfer shape wallet-provider-send-transaction is unavailable in this runtime");
@@ -564,6 +623,15 @@ export function createSdkBridge(
             throw new Error("DEM memo transfer sendTransaction succeeded but txHash not found in response");
           }
           return { txHash: String(txHash), memoEncoded: true, transferShape };
+        }
+
+        if (transferShape === WALLET_NATIVE_TRANSFER_SHAPE) {
+          const provider = getInjectedDemosProvider();
+          if (!provider) {
+            throw new Error("transferDem: wallet-native-transfer requires an injected Demos provider");
+          }
+          const sent = await executeWalletNativeTransfer(provider, to, amount);
+          return { txHash: sent.txHash, memoEncoded: false, transferShape };
         }
 
         if (typeof rpc.sign !== "function") {

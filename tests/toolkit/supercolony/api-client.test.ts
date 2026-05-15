@@ -1658,7 +1658,7 @@ describe("SuperColonyApiClient", () => {
       expect(fetchUrl).toContain("userAddress=demo");
     });
 
-    it("registerBet posts txHash, asset, predictedPrice, and horizon", async () => {
+    it("registerBet posts the live web app registration payload", async () => {
       mockFetchResponse({
         ok: true,
         txHash: "a".repeat(64),
@@ -1679,6 +1679,7 @@ describe("SuperColonyApiClient", () => {
         asset: "BTC",
         predictedPrice: 70000,
         horizon: "30m",
+        amount: 5,
       });
     });
 
@@ -1703,6 +1704,7 @@ describe("SuperColonyApiClient", () => {
         asset: "BTC",
         direction: "HIGHER",
         horizon: "4h",
+        amount: 5,
       });
     });
 

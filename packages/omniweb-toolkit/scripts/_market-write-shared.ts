@@ -47,6 +47,11 @@ export interface FixedBetProbePlan {
   reason: string;
 }
 
+export interface FixedBetReadbackEvaluation {
+  ok: boolean;
+  matchedBy: Array<"aggregate-delta" | "tx-hash" | "bettor-price-round">;
+}
+
 export function chooseHigherLowerProbe(
   pools: HigherLowerPoolSnapshot[],
   oracleAssets: OracleAssetSignal[],
@@ -147,6 +152,15 @@ export function fixedBetReadbackSatisfied(
   txHash: string,
   expected?: { predictedPrice: number; roundEnd?: number; bettor?: string },
 ): boolean {
+  return evaluateFixedBetReadback(before, after, txHash, expected).ok;
+}
+
+export function evaluateFixedBetReadback(
+  before: BettingPoolSnapshot,
+  after: BettingPoolSnapshot,
+  txHash: string,
+  expected?: { predictedPrice: number; roundEnd?: number; bettor?: string },
+): FixedBetReadbackEvaluation {
   const txHashMatched = after.bets.some((bet) => bet.txHash === txHash);
   const expectedMatched = expected
     ? after.bets.some((bet) => {
@@ -158,11 +172,14 @@ export function fixedBetReadbackSatisfied(
         return predictedPriceMatches && roundMatches && bettorMatches;
       })
     : false;
+  const aggregateDelta = after.totalBets > before.totalBets || after.totalDem > before.totalDem;
+  const matchedBy: FixedBetReadbackEvaluation["matchedBy"] = [];
+  if (aggregateDelta) matchedBy.push("aggregate-delta");
+  if (txHashMatched) matchedBy.push("tx-hash");
+  if (expectedMatched) matchedBy.push("bettor-price-round");
 
-  return (
-    after.totalBets > before.totalBets
-    || after.totalDem > before.totalDem
-    || txHashMatched
-    || expectedMatched
-  );
+  return {
+    ok: matchedBy.length > 0,
+    matchedBy,
+  };
 }

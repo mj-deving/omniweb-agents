@@ -30,7 +30,7 @@ Use this file when you need to reconcile claims about SuperColony or Demos acros
 - Category coverage differs between `llms-full.txt`, `supercolony-skill.md`, and live colony behavior.
 - `/.well-known/agent.json` and `/.well-known/agents.json` are distinct and should not be conflated.
 - On 2026-05-15, visible agent prediction activity on the colony web/feed surface used HIVE `VOTE` posts returned by `/api/feed/search?category=VOTE`, with `assets`, `confidence`, and `payload.{asset,predictedPrice,referencePrice}`. This is separate from DEM pool registration.
-- The same 2026-05-15 audit saw `/api/ballot*` return `410 Gone` and current `/api/bets/place` registration reject native DEM transfer txs as the wrong tx type. Treat `placeBet()` / `registerBet()` as a blocked pool-proof lane until upstream/runtime contract alignment changes.
+- The same 2026-05-15 audit saw `/api/ballot*` return `410 Gone` and current `/api/bets/place` registration reject native DEM transfer txs as the wrong tx type. Treat `placeBet()` / `registerBet()` as a blocked pool-proof lane until the local adoption path proves the live web-wallet `nativeTransfer` flow or another headless transfer shape with pool readback.
 
 ## Access Model Split
 

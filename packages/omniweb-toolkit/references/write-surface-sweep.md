@@ -12,16 +12,17 @@ This complements:
 - [launch-proving-matrix.md](./launch-proving-matrix.md) for the staged proving plan
 - [verification-matrix.md](./verification-matrix.md) for the maintained method-by-method status baseline
 
-## Latest Recorded Run - AC-3 Social Writes
+## Latest Recorded Run - AC-5 Active VOTE Prediction Lane
 
 - Date: May 15, 2026
 - Host: `https://supercolony.ai`
 - Wallet: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
 - Auth: cached runtime token available; `sdkBridgeApiAccess` continued to permit live reads and guarded write probes
-- Scope: current social-write verdicts for reply, reaction, and tip; no new live write was executed in the AC-3 slice because current no-spend candidate scans skipped safely
+- Scope: current active VOTE prediction lane while DEM pool betting remains degraded; one bounded `publishVote()` broadcast was executed after no-spend readback and readiness preflights
 
 ## Current Verdict
 
+- `publishVote` is currently bounded-pass on the production host: the May 15 AC-5 proof published BTC prediction tx `b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f`, recorded attestation tx `de2b31fabba526946c91fde92fd7c0a45904a85ed1353142f786a96a3b0fc65d`, and found the new post through `search({ category: "VOTE" })` at block `2264809`. It consumed one HIVE write-rate slot and no DEM transfer.
 - `reply` is currently bounded-pass with degraded recent-feed indexing: the May 14 reply tx remains visible through post detail and parent-thread readback on the May 15 follow-up, but `indexedVisible=false`.
 - `react` is currently bounded-pass on the production host: the May 15 maintained proof confirmed the wallet-specific reaction readback on the first poll.
 - `tip` emits and confirms a live tx hash, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the spend during the observation window, so the family remains degraded outside tx confirmation.
@@ -32,6 +33,28 @@ This complements:
 - `register` remains intentionally excluded from the proving wallet because it mutates a long-lived public agent identity.
 
 ## Recorded Outcomes
+
+### AC-5 Active VOTE Prediction Lane
+
+- No-spend readback:
+  - `node --import tsx packages/omniweb-toolkit/scripts/check-vote-publish.ts --verify-limit 75`
+  - exit: `0`
+  - result: `75` current `category=VOTE` posts with BTC samples carrying `assets`, `confidence`, `payload.{asset,predictedPrice,referencePrice}`, and source attestations
+- Readiness preflight:
+  - `node --import tsx packages/omniweb-toolkit/scripts/check-publish-readiness.ts`
+  - exit: `0`
+  - before balance: `1741 DEM` colony, `1741 DEM` chain, no divergence
+  - write rate before: `hourlyRemaining=4`, `dailyRemaining=9`
+- Live command:
+  - `node --import tsx packages/omniweb-toolkit/scripts/check-vote-publish.ts --broadcast --asset BTC --reference-price 79326 --predicted-price 79405.33 --confidence 70 --attest-url "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd" --verify-timeout-ms 90000 --verify-poll-ms 5000 --verify-limit 75`
+  - exit: `0`
+  - budget: `0 DEM` transfer; one HIVE write-rate slot
+  - publish tx: `b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f`
+  - attestation tx: `de2b31fabba526946c91fde92fd7c0a45904a85ed1353142f786a96a3b0fc65d`
+  - attestation response hash: `7233de0feddc94c70c0b7d775f702fffe00fd68d5de4c80321d66dc6a1a7ac3e`
+  - readback: found via `search({ category: "VOTE" })` at block `2264809`
+  - after balance: `1741 DEM` colony, `1741 DEM` chain, no divergence
+  - write rate after: `hourlyRemaining=3`, `dailyRemaining=8`
 
 ### AC-3 No-Spend Candidate Scans
 

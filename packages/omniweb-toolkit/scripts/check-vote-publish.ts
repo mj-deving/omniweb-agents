@@ -3,6 +3,14 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { getNumberArg, getStringArg, hasFlag, loadConnect } from "./_shared.ts";
+import {
+  buildWriteLifecycleProofPacket,
+  classifyLifecycleStatus,
+  createWriteLifecycleStore,
+  finalVerdictForStatus,
+  lifecycleFlagEnabled,
+  readCurrentGitCommit,
+} from "./_write-lifecycle.ts";
 
 const DEFAULT_VERIFY_TIMEOUT_MS = 45_000;
 const DEFAULT_VERIFY_POLL_MS = 5_000;
@@ -23,6 +31,9 @@ Options:
   --env-path PATH           Override wallet credentials file passed to connect()
   --agent-name NAME         Use named wallet credentials when present
   --state-dir PATH          Forwarded to connect()/state persistence
+  --record-lifecycle        Persist a write lifecycle record under --state-dir/write-lifecycle
+  --recheck ID_OR_TX        Recheck an existing lifecycle record or tx hash without broadcasting
+  --proof-out PATH          Write the lifecycle proof packet to this path
   --allow-insecure          Forwarded to connect() for local debugging only
   --verify-timeout-ms N     VOTE readback timeout (default: ${DEFAULT_VERIFY_TIMEOUT_MS})
   --verify-poll-ms N        VOTE readback poll interval (default: ${DEFAULT_VERIFY_POLL_MS})
@@ -42,11 +53,14 @@ const attestUrl = getStringArg(args, "--attest-url");
 const envPath = getStringArg(args, "--env-path");
 const agentName = getStringArg(args, "--agent-name");
 const stateDir = getStringArg(args, "--state-dir");
+const recordLifecycle = lifecycleFlagEnabled(args);
+const recheckId = getStringArg(args, "--recheck");
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const verifyTimeoutMs = getPositiveIntegerArg("--verify-timeout-ms", DEFAULT_VERIFY_TIMEOUT_MS);
 const verifyPollMs = getPositiveIntegerArg("--verify-poll-ms", DEFAULT_VERIFY_POLL_MS);
 const verifyLimit = getPositiveIntegerArg("--verify-limit", DEFAULT_VERIFY_LIMIT);
 const outputPath = getStringArg(args, "--out");
+const proofOut = getStringArg(args, "--proof-out");
 
 if (broadcast) {
   if (!Number.isFinite(predictedPrice) || predictedPrice! <= 0) {
@@ -62,13 +76,90 @@ if (broadcast) {
 
 const connect = await loadConnect();
 const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
+const lifecycleStore = recordLifecycle || recheckId ? createWriteLifecycleStore({ stateDir }) : null;
+
+if (recheckId) {
+  const record = await lifecycleStore!.get(recheckId);
+  const txHash = record?.txHash ?? recheckId;
+  const readbackCheck = await pollVoteReadback(omni, txHash, verifyTimeoutMs, verifyPollMs, verifyLimit);
+  const status = classifyLifecycleStatus({
+    txHash,
+    indexed: Boolean(readbackCheck.found),
+    expired: !readbackCheck.found,
+  });
+  const baseRecord = record
+    ?? await lifecycleStore!.create({
+      actionFamily: "vote",
+      walletAddress: omni.address ?? null,
+      command: process.argv.join(" "),
+      commit: readCurrentGitCommit(),
+      budget: { unit: "write-rate-slot", spendStatus: "no-spend" },
+      txHash,
+      expectedReadback: ["category-search"],
+      status: txHash ? "broadcasted" : "planned",
+      metadata: { recheckOnly: true },
+    });
+  const updated = await lifecycleStore!.update(baseRecord.id, {
+        status,
+        transitionReason: readbackCheck.found ? "VOTE category search matched tx" : "VOTE category search recheck expired",
+        observation: {
+          surface: "category-search",
+          status,
+          ok: Boolean(readbackCheck.found),
+          summary: readbackCheck.found
+            ? "search({ category: \"VOTE\" }) matched the recorded tx"
+            : "search({ category: \"VOTE\" }) did not match the recorded tx within the recheck window",
+          data: readbackCheck,
+        },
+        finalVerdict: finalVerdictForStatus(status)
+          ? {
+              verdict: finalVerdictForStatus(status)!,
+              rationale: readbackCheck.found ? "VOTE indexed through category search" : "VOTE readback expired",
+              at: new Date().toISOString(),
+            }
+          : undefined,
+      });
+  const proofPacket = buildWriteLifecycleProofPacket(updated);
+  const proofPath = await lifecycleStore!.writeProofPacket(updated, proofPacket, proofOut);
+  const report = {
+    ok: Boolean(readbackCheck.found),
+    checkedAt: new Date().toISOString(),
+    operatorPath: "hive-vote-publish",
+    broadcast: false,
+    mode: "lifecycle-recheck",
+    txHash,
+    readback: readbackCheck,
+    lifecycle: {
+      record: updated,
+      proofPath,
+      proofPacket,
+    },
+  };
+  await maybeWriteOutput(outputPath, report);
+  console.log(JSON.stringify(report, null, 2));
+  process.exit(report.ok ? 0 : 1);
+}
 
 const before = await searchVotes(omni, verifyLimit);
 let publishResult: unknown = null;
 let readback: unknown = null;
 let ok = before.ok;
+let lifecycle: unknown = null;
 
 if (broadcast) {
+  const lifecycleRecord = lifecycleStore
+    ? await lifecycleStore.create({
+        actionFamily: "vote",
+        walletAddress: omni.address ?? null,
+        command: process.argv.join(" "),
+        commit: readCurrentGitCommit(),
+        budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: "planned" },
+        asset,
+        expectedReadback: ["category-search"],
+        nextRecheck: { afterMs: verifyTimeoutMs, policy: "short-window" },
+        metadata: { confidence, referencePrice, predictedPrice, attestUrl },
+      })
+    : null;
   publishResult = await omni.colony.publishVote({
     asset,
     predictedPrice,
@@ -80,8 +171,46 @@ if (broadcast) {
   const txHash = publishResult && typeof publishResult === "object" && "data" in publishResult
     ? (publishResult as { data?: { txHash?: string } }).data?.txHash
     : undefined;
+  const attestationTxHash = publishResult && typeof publishResult === "object" && "data" in publishResult
+    ? (publishResult as { data?: { attestationTxHash?: string } }).data?.attestationTxHash
+    : undefined;
   readback = await pollVoteReadback(omni, txHash, verifyTimeoutMs, verifyPollMs, verifyLimit);
   ok = Boolean((publishResult as { ok?: boolean } | null)?.ok && (readback as { found?: boolean } | null)?.found);
+
+  if (lifecycleRecord) {
+    const status = classifyLifecycleStatus({
+      txHash,
+      indexed: Boolean((readback as { found?: boolean }).found),
+      expired: Boolean(txHash) && !(readback as { found?: boolean }).found,
+      failed: !Boolean((publishResult as { ok?: boolean } | null)?.ok),
+    });
+    const updated = await lifecycleStore!.update(lifecycleRecord.id, {
+      status,
+      txHash,
+      attestationTxHash,
+      budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: "executed" },
+      transitionReason: ok ? "VOTE category search matched tx" : "VOTE short-window readback did not close",
+      observation: {
+        surface: "category-search",
+        status,
+        ok,
+        summary: ok
+          ? "search({ category: \"VOTE\" }) matched the broadcast tx"
+          : "short-window VOTE search did not match the broadcast tx",
+        data: readback,
+      },
+      finalVerdict: finalVerdictForStatus(status)
+        ? {
+            verdict: finalVerdictForStatus(status)!,
+            rationale: ok ? "VOTE indexed through category search" : "VOTE short-window readback expired",
+            at: new Date().toISOString(),
+          }
+        : undefined,
+    });
+    const proofPacket = buildWriteLifecycleProofPacket(updated);
+    const proofPath = await lifecycleStore!.writeProofPacket(updated, proofPacket, proofOut);
+    lifecycle = { record: updated, proofPath, proofPacket };
+  }
 }
 
 const report = {
@@ -93,6 +222,7 @@ const report = {
   before,
   publishResult,
   readback,
+  lifecycle,
   note: broadcast
     ? "Executed publishVote() and verified via search({ category: \"VOTE\" })."
     : "Dry run only. Re-run with --broadcast plus prices to publish a real HIVE VOTE post.",

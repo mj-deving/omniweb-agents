@@ -15,6 +15,14 @@ import { resolve } from "node:path";
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";
 import { buildBetMemo, normalizeHorizon } from "../../../src/toolkit/supercolony/bet-memos.js";
 import { getNumberArg, getStringArg, hasFlag } from "./_shared.js";
+import {
+  buildWriteLifecycleProofPacket,
+  classifyLifecycleStatus,
+  createWriteLifecycleStore,
+  finalVerdictForStatus,
+  lifecycleFlagEnabled,
+  readCurrentGitCommit,
+} from "./_write-lifecycle.ts";
 
 const DEFAULT_ASSET = "BTC";
 const DEFAULT_HORIZON = "30m";
@@ -67,6 +75,10 @@ Options:
   --poll-ms N               Execute-mode pool polling interval (default: ${DEFAULT_POLL_MS})
   --timeout-ms N            Execute-mode pool polling timeout (default: ${DEFAULT_TIMEOUT_MS})
   --check-tx HASH           Check active-pool/winners readback for an existing tx without signing or spending
+  --record-lifecycle        Persist a write lifecycle record under --state-dir/write-lifecycle
+  --recheck ID_OR_TX        Recheck an existing lifecycle record or tx hash without signing or spending
+  --state-dir PATH          State directory for lifecycle records (does not affect wallet auth here)
+  --proof-out PATH          Write the lifecycle proof packet to this path
   --bettor ADDRESS          Optional bettor address for --check-tx fallback matching
   --execute                 Broadcast one real DEM bet; omitted means confirm-only/no spend
   --help, -h                Show this help
@@ -86,6 +98,9 @@ for (const flag of [
   "--poll-ms",
   "--timeout-ms",
   "--check-tx",
+  "--recheck",
+  "--state-dir",
+  "--proof-out",
   "--bettor",
 ]) {
   const index = args.indexOf(flag);
@@ -106,7 +121,11 @@ const colonyUrl = stripTrailingSlash(
 );
 const pollMs = getPositiveIntegerArg("--poll-ms", DEFAULT_POLL_MS);
 const timeoutMs = getPositiveIntegerArg("--timeout-ms", DEFAULT_TIMEOUT_MS);
-const checkTx = getStringArg(args, "--check-tx");
+const recheckId = getStringArg(args, "--recheck");
+const checkTx = getStringArg(args, "--check-tx") ?? recheckId;
+const stateDir = getStringArg(args, "--state-dir");
+const proofOut = getStringArg(args, "--proof-out");
+const recordLifecycle = lifecycleFlagEnabled(args) || Boolean(recheckId);
 const checkBettor = getStringArg(args, "--bettor") ?? "";
 const execute = hasFlag(args, "--execute");
 
@@ -116,35 +135,56 @@ if (amount < DEFAULT_AMOUNT) {
 }
 
 try {
+  const lifecycleStore = recordLifecycle ? createWriteLifecycleStore({ stateDir }) : null;
+  const recheckRecord = recheckId && lifecycleStore ? await lifecycleStore.get(recheckId) : null;
+  const effectiveCheckTx = recheckRecord?.txHash ?? checkTx;
+  const effectiveBettor = recheckRecord?.walletAddress ?? checkBettor;
   const before = await fetchPool(colonyUrl, asset, horizon);
 
-  if (checkTx) {
+  if (effectiveCheckTx) {
     const readback = await pollPoolReadback({
       colonyUrl,
       asset,
       horizon,
-      txHash: checkTx,
-      bettor: checkBettor,
+      txHash: effectiveCheckTx,
+      bettor: effectiveBettor ?? "",
       predictedPrice,
       before,
       timeoutMs,
       pollMs,
       amount,
     });
+    const lifecycle = lifecycleStore
+      ? await persistBetLifecycle({
+          store: lifecycleStore,
+          existingRecordId: recheckRecord?.id,
+          address: effectiveBettor || null,
+          txHash: effectiveCheckTx,
+          asset,
+          horizon,
+          predictedPrice,
+          amount,
+          memo: buildBetMemo(asset, predictedPrice, { horizon }),
+          readback,
+          spendStatus: "no-spend",
+          proofOut,
+        })
+      : null;
     console.log(JSON.stringify({
       attempted: false,
       ok: readback.ok,
       mode: "readback-check-no-broadcast",
       officialPath: "native memo transfer; no /api/bets/place registration call",
-      txHash: checkTx,
+      txHash: effectiveCheckTx,
       expected: {
         asset,
         horizon,
         predictedPrice,
         amount,
-        bettor: checkBettor || null,
+        bettor: effectiveBettor || null,
       },
       readback,
+      lifecycle,
     }, null, 2));
     process.exit(readback.ok ? 0 : 1);
   }
@@ -207,6 +247,26 @@ try {
     amount,
   });
   const chainAfter = await getLastBlock(demos);
+  const lifecycle = lifecycleStore
+    ? await persistBetLifecycle({
+        store: lifecycleStore,
+        address,
+        txHash,
+        asset,
+        horizon,
+        predictedPrice,
+        amount,
+        memo,
+        readback,
+        spendStatus: "executed",
+        chain: {
+          beforeLastBlock: chainBefore,
+          afterLastBlock: chainAfter,
+          confirmationBlock: confirmationBlock ?? null,
+        },
+        proofOut,
+      })
+    : null;
 
   console.log(JSON.stringify({
     attempted: true,
@@ -234,6 +294,7 @@ try {
       reachedConfirmationBlock: confirmationBlock === undefined || chainAfter === null ? null : chainAfter >= confirmationBlock,
     },
     readback,
+    lifecycle,
   }, null, 2));
   process.exit(readback.ok ? 0 : 1);
 } catch (error) {
@@ -242,6 +303,99 @@ try {
     error: error instanceof Error ? error.message : String(error),
   }, null, 2));
   process.exit(1);
+}
+
+async function persistBetLifecycle(opts: {
+  store: ReturnType<typeof createWriteLifecycleStore>;
+  existingRecordId?: string;
+  address: string | null;
+  txHash: string;
+  asset: string;
+  horizon: string;
+  predictedPrice: number;
+  amount: number;
+  memo: string;
+  readback: Awaited<ReturnType<typeof pollPoolReadback>>;
+  spendStatus: "no-spend" | "executed";
+  chain?: Record<string, unknown>;
+  proofOut?: string;
+}): Promise<Record<string, unknown>> {
+  const matchedBy = opts.readback.matchedBy;
+  const status = classifyLifecycleStatus({
+    txHash: opts.txHash,
+    chainConfirmed: Boolean(opts.chain),
+    indexed: matchedBy?.startsWith("active-") ?? false,
+    resolved: matchedBy?.startsWith("winner-") ?? false,
+    expired: !opts.readback.ok,
+  });
+  const record = opts.existingRecordId
+    ? await opts.store.update(opts.existingRecordId, {
+        txHash: opts.txHash,
+        status,
+        transitionReason: opts.readback.ok ? `BET readback matched by ${matchedBy}` : "BET delayed readback expired",
+        observation: {
+          surface: matchedBy?.startsWith("winner-") ? "winners-history" : "active-pool",
+          status,
+          ok: opts.readback.ok,
+          summary: opts.readback.ok ? `BET readback matched by ${matchedBy}` : "BET readback did not match active pool or winners/history",
+          data: opts.readback,
+        },
+        finalVerdict: finalVerdictForStatus(status)
+          ? {
+              verdict: finalVerdictForStatus(status)!,
+              rationale: opts.readback.ok ? `BET readback matched by ${matchedBy}` : "BET readback expired",
+              at: new Date().toISOString(),
+            }
+          : undefined,
+      })
+    : await opts.store.create({
+        actionFamily: "bet-fixed",
+        walletAddress: opts.address,
+        command: process.argv.join(" "),
+        commit: readCurrentGitCommit(),
+        budget: { amount: opts.amount, unit: "DEM", ceiling: opts.amount, spendStatus: opts.spendStatus },
+        txHash: opts.txHash,
+        asset: opts.asset,
+        horizon: opts.horizon,
+        memo: opts.memo,
+        predictedPrice: opts.predictedPrice,
+        expectedReadback: ["chain-rpc", "active-pool", "winners-history"],
+        status,
+        nextRecheck: { afterMs: opts.readback.ok ? 0 : 90_000, policy: matchedBy?.startsWith("winner-") ? "round-rollover" : "delayed-indexing" },
+        metadata: { officialPath: "native memo transfer; no /api/bets/place registration call" },
+      });
+  const updated = opts.existingRecordId ? record : await opts.store.update(record.id, {
+    status,
+    transitionReason: opts.readback.ok ? `BET readback matched by ${matchedBy}` : "BET readback expired",
+    observation: {
+      surface: matchedBy?.startsWith("winner-") ? "winners-history" : "active-pool",
+      status,
+      ok: opts.readback.ok,
+      summary: opts.readback.ok ? `BET readback matched by ${matchedBy}` : "BET readback did not match active pool or winners/history",
+      data: opts.readback,
+    },
+    finalVerdict: finalVerdictForStatus(status)
+      ? {
+          verdict: finalVerdictForStatus(status)!,
+          rationale: opts.readback.ok ? `BET readback matched by ${matchedBy}` : "BET readback expired",
+          at: new Date().toISOString(),
+        }
+      : undefined,
+  });
+  const withChain = opts.chain
+    ? await opts.store.update(updated.id, {
+        observation: {
+          surface: "chain-rpc",
+          status: "chain-confirmed",
+          ok: true,
+          summary: "Demos RPC block state captured for broadcast attempt",
+          data: opts.chain,
+        },
+      })
+    : updated;
+  const proofPacket = buildWriteLifecycleProofPacket(withChain);
+  const proofPath = await opts.store.writeProofPacket(withChain, proofPacket, opts.proofOut);
+  return { record: withChain, proofPath, proofPacket };
 }
 
 async function buildSignedNativeMemoTransfer(

@@ -21,6 +21,16 @@ import {
   describePublishVisibilityResult,
   summarizePublishVisibilityAttempts,
 } from "./_publish-visibility-summary.ts";
+import {
+  buildWriteLifecycleProofPacket,
+  classifyLifecycleStatus,
+  createWriteLifecycleStore,
+  finalVerdictForStatus,
+  lifecycleFlagEnabled,
+  readCurrentGitCommit,
+  type WriteActionFamily,
+  type WriteLifecycleSurface,
+} from "./_write-lifecycle.ts";
 
 const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const DEFAULT_CATEGORY = "OBSERVATION";
@@ -66,6 +76,9 @@ Options:
   --reply-category CAT    Reply category (default: ANALYSIS)
   --attest-url URL        Attestation URL (default: Blockchain.info ticker JSON)
   --state-dir PATH        Override state directory for guard persistence
+  --record-lifecycle      Persist lifecycle records for accepted/failed writes
+  --recheck ID_OR_TX      Recheck an existing lifecycle record or tx hash without broadcasting
+  --proof-out PATH        Write a proof packet for --recheck, or a proof directory for broadcast attempts
   --feed-timeout-ms N     Visibility polling deadline (default: 45000)
   --feed-poll-ms N        Delay between visibility polls (default: 3000)
   --feed-limit N          Recent feed window to scan (default: 25)
@@ -106,6 +119,9 @@ const category = getStringArg(args, "--category") ?? DEFAULT_CATEGORY;
 const replyCategory = getStringArg(args, "--reply-category") ?? DEFAULT_REPLY_CATEGORY;
 const attestUrl = getStringArg(args, "--attest-url") ?? DEFAULT_ATTEST_URL;
 const stateDir = getStringArg(args, "--state-dir");
+const recordLifecycle = lifecycleFlagEnabled(args);
+const recheckId = getStringArg(args, "--recheck");
+const proofOut = getStringArg(args, "--proof-out");
 const feedTimeoutMs = getIntegerArgOrExit("--feed-timeout-ms", 45_000);
 const feedPollMs = getIntegerArgOrExit("--feed-poll-ms", 3_000);
 const feedLimit = getIntegerArgOrExit("--feed-limit", 25);
@@ -121,9 +137,88 @@ if (runs <= 0 || feedTimeoutMs <= 0 || feedPollMs <= 0 || feedLimit <= 0) {
 try {
   const connect = await loadConnect();
   const omni = await connect({ stateDir, allowInsecureUrls });
+  const lifecycleStore = recordLifecycle || recheckId ? createWriteLifecycleStore({ stateDir }) : null;
   const initialBalance = await readRuntimeBalanceTruth(omni);
 
   const initialLaneStatus = classifyAttemptLaneStatus(undefined, initialBalance);
+
+  if (recheckId) {
+    const record = await lifecycleStore!.get(recheckId);
+    const txHash = record?.txHash ?? recheckId;
+    const actionFamily = record?.actionFamily ?? "publish";
+    const recheckText =
+      readMetadataString(record?.metadata, "text")
+      ?? (actionFamily === "reply" ? replyText : text);
+    if (!recheckText) {
+      throw new Error("--recheck requires lifecycle metadata text or explicit --text/--reply-text");
+    }
+    const verifyPublishVisibility = await loadVerifyPublishVisibility();
+    const visibility = await verifyPublishVisibility(omni, txHash, recheckText, {
+      timeoutMs: feedTimeoutMs,
+      pollMs: feedPollMs,
+      limit: feedLimit,
+    });
+    const status = classifyLifecycleStatus({
+      txHash,
+      indexed: visibility.indexedVisible,
+      degraded: visibility.visible && !visibility.indexedVisible,
+      expired: !visibility.visible,
+    });
+    const baseRecord = record
+      ?? await lifecycleStore!.create({
+          actionFamily: actionFamily as WriteActionFamily,
+          walletAddress: omni.address ?? null,
+          command: process.argv.join(" "),
+          commit: readCurrentGitCommit(),
+          budget: { unit: "write-rate-slot", spendStatus: "no-spend" },
+          txHash,
+          expectedReadback: ["recent-feed", "post-detail"],
+          status: txHash ? "broadcasted" : "planned",
+          metadata: { recheckOnly: true, text: recheckText },
+        });
+    const updated = await lifecycleStore!.update(baseRecord.id, {
+      status,
+      transitionReason: visibility.visible
+        ? "publish/reply visibility recheck found a product surface"
+        : "publish/reply visibility recheck expired",
+      observation: {
+        surface: visibility.indexedVisible ? "recent-feed" : "post-detail",
+        status,
+        ok: visibility.visible,
+        summary: formatVisibilitySummary(describePublishVisibilityResult(visibility)),
+        data: visibility,
+      },
+      finalVerdict: finalVerdictForStatus(status)
+        ? {
+            verdict: finalVerdictForStatus(status)!,
+            rationale: formatVisibilitySummary(describePublishVisibilityResult(visibility)),
+            at: new Date().toISOString(),
+          }
+        : undefined,
+    });
+    const proofPacket = buildWriteLifecycleProofPacket(updated);
+    const proofPath = await lifecycleStore!.writeProofPacket(updated, proofPacket, proofOut);
+    console.log(JSON.stringify({
+      attempted: false,
+      verificationAttempted: true,
+      ok: visibility.visible,
+      checkedAt: new Date().toISOString(),
+      address: omni.address,
+      mode: "lifecycle-recheck",
+      txHash,
+      actionFamily,
+      verification: {
+        visibility,
+        visibilitySummary: describePublishVisibilityResult(visibility),
+      },
+      lifecycle: {
+        record: updated,
+        proofPath,
+        proofPacket,
+      },
+    }, null, 2));
+    process.exit(visibility.visible ? 0 : 1);
+  }
 
   if (!broadcast) {
     console.log(JSON.stringify({
@@ -229,6 +324,9 @@ try {
   const summary = summarizeAttempts(attempts);
   const laneStatus = classifyLaneStatus({ attempts, initialBalance, finalBalance });
   const ok = summary.failedCount === 0 && summary.acceptedCount > 0 && laneStatus.status === "ready";
+  const lifecycle = lifecycleStore
+    ? await Promise.all(attempts.map((attempt) => persistAttemptLifecycle(lifecycleStore, omni, attempt, proofOut)))
+    : null;
 
   console.log(JSON.stringify({
     attempted: true,
@@ -251,12 +349,81 @@ try {
     laneStatus,
     summary,
     attempts,
+    lifecycle,
   }, null, 2));
 
   process.exit(ok ? 0 : 1);
 } catch (error) {
   console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
+}
+
+async function persistAttemptLifecycle(
+  store: ReturnType<typeof createWriteLifecycleStore>,
+  omni: any,
+  attempt: ProbeAttempt,
+  proofOut: string | undefined,
+): Promise<Record<string, unknown>> {
+  const actionFamily: WriteActionFamily = attempt.kind === "reply" ? "reply" : "publish";
+  const expectedReadback: WriteLifecycleSurface[] = attempt.kind === "reply"
+    ? ["post-detail", "parent-thread", "recent-feed"]
+    : ["post-detail", "recent-feed", "category-search"];
+  const status = classifyLifecycleStatus({
+    txHash: attempt.txHash,
+    indexed: Boolean(attempt.visibility?.indexedVisible),
+    degraded: Boolean(attempt.visibility?.visible && !attempt.visibility.indexedVisible),
+    expired: Boolean(attempt.accepted && attempt.visibility && !attempt.visibility.visible),
+    failed: !attempt.accepted,
+  });
+  const record = await store.create({
+    actionFamily,
+    walletAddress: omni.address ?? null,
+    command: process.argv.join(" "),
+    commit: readCurrentGitCommit(),
+    budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: attempt.accepted ? "executed" : "planned" },
+    txHash: attempt.txHash,
+    attestationTxHash: attempt.attestationTxHash,
+    targetPostHash: attempt.kind === "reply" ? attempt.draft.parentTxHash : undefined,
+    expectedReadback,
+    status: attempt.txHash ? "broadcasted" : "planned",
+    nextRecheck: { afterMs: feedTimeoutMs, policy: "short-window" },
+    metadata: {
+      text: attempt.draft.text,
+      category: attempt.draft.category,
+      attestUrl: attempt.draft.attestUrl,
+      run: attempt.run,
+      provenancePath: attempt.provenancePath,
+    },
+  });
+  const updated = await store.update(record.id, {
+    status,
+    transitionReason: attempt.visibilitySummary
+      ? formatVisibilitySummary(attempt.visibilitySummary)
+      : attempt.accepted ? "write accepted" : "write failed",
+    observation: {
+      surface: attempt.visibility?.indexedVisible ? "recent-feed" : "post-detail",
+      status,
+      ok: Boolean(attempt.visibility?.visible),
+      summary: attempt.visibilitySummary
+        ? formatVisibilitySummary(attempt.visibilitySummary)
+        : attempt.accepted ? "write accepted without visibility summary" : "write failed before readback",
+      data: attempt.visibility ?? attempt.error,
+    },
+    finalVerdict: finalVerdictForStatus(status)
+      ? {
+          verdict: finalVerdictForStatus(status)!,
+          rationale: attempt.visibilitySummary ? formatVisibilitySummary(attempt.visibilitySummary) : status,
+          at: new Date().toISOString(),
+        }
+      : undefined,
+  });
+  const proofPacket = buildWriteLifecycleProofPacket(updated);
+  const proofPath = await store.writeProofPacket(
+    updated,
+    proofPacket,
+    proofOut && !proofOut.endsWith(".json") ? `${proofOut.replace(/\/+$/, "")}/${updated.id}.proof.json` : proofOut,
+  );
+  return { record: updated, proofPath, proofPacket };
 }
 
 function getIntegerArgOrExit(flag: string, fallback: number): number {
@@ -491,6 +658,15 @@ function normalizeError(
     message: error?.message ?? fallbackMessage,
     retryable: error?.retryable,
   };
+}
+
+function readMetadataString(metadata: Record<string, unknown> | undefined, key: string): string | null {
+  const value = metadata?.[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function formatVisibilitySummary(summary: ReturnType<typeof describePublishVisibilityResult>): string {
+  return `${summary.outcome}; resolution=${summary.resolution}; visible=${summary.visible}; indexed=${summary.indexedVisible}`;
 }
 
 async function loadConnect(): Promise<(opts?: {

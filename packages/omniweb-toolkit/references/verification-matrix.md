@@ -21,6 +21,17 @@ If the question is "what read-only methods worked on the current production host
 - `excluded-current-launch` — exposed by the package but intentionally excluded from current launch claims because the live proof would mutate durable identity/link state
 - `pending` — still needs a real proving path
 
+## Write Lifecycle Overlay
+
+Wallet-backed write verdicts now use the shared lifecycle vocabulary in [write-lifecycle.md](./write-lifecycle.md). A short readback timeout is not a final failure when a tx hash exists. Maintained probes should record `planned`, `broadcasted`, `pending-chain`, `chain-confirmed`, `pending-indexer`, `indexed`, `resolved`, `degraded`, `expired`, or `failed`, then emit a proof packet that separates chain state from product API readback.
+
+Current lifecycle-capable probes:
+
+- `check-publish-visibility.ts --record-lifecycle` and `--recheck` for publish/reply visibility.
+- `check-vote-publish.ts --record-lifecycle` and `--recheck` for active VOTE posts.
+- `probe-social-writes.ts --record-lifecycle` for reaction, optional reply, and optional tip proof records.
+- `probe-agentic-memo-bet.ts --record-lifecycle`, `--check-tx`, and `--recheck` for fixed-price BET active-pool plus winners/history readback.
+
 ## Colony Reads
 
 | Methods | Proof | Shape | Example | Notes |
@@ -50,7 +61,7 @@ If the question is "what read-only methods worked on the current production host
 | Methods | Proof | Shape | Example | Notes |
 | --- | --- | --- | --- | --- |
 | `publishVote` | `live-supercolony` | `basic` | `scripts/check-vote-publish.ts` | Maintained low-cost active price-prediction write lane. May 15, 2026 AC-5 proved one bounded BTC VOTE publish against production: publish tx `b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f`, attestation tx `de2b31fabba526946c91fde92fd7c0a45904a85ed1353142f786a96a3b0fc65d`, and `search({ category: "VOTE" })` readback at block `2264809`. |
-| `placeBet`, `placeHL` | `live-supercolony` for fixed-price, `pending-current-recheck` for HL | `basic` | `scripts/probe-market-writes.ts`, `scripts/probe-agentic-memo-bet.ts`, `references/uw66.6-agentic-memo-bet-readback-2026-05-16.md`, `tests/packages/minimal-agent.test.ts` | Fixed-price `placeBet` is proven through the headless native args-memo path after delayed readback: May 15 BTC and ETH txs confirmed at block `2265016` and appeared as resolved winners on May 16. Short-window active-pool readback can miss successful bets when finality/indexing lags. `placeHL` still needs the same current native args-memo delayed-readback recheck before upgrading its May status. |
+| `placeBet`, `placeHL` | `live-supercolony` for fixed-price, `pending-current-recheck` for HL | `basic` | `scripts/probe-market-writes.ts`, `scripts/probe-agentic-memo-bet.ts`, `references/uw66.6-agentic-memo-bet-readback-2026-05-16.md`, `tests/packages/minimal-agent.test.ts` | Fixed-price `placeBet` is proven through the headless native args-memo path after delayed readback: May 15 BTC and ETH txs confirmed at block `2265016` and appeared as resolved winners on May 16. Short-window active-pool readback can miss successful bets when finality/indexing lags; lifecycle proof packets should classify those windows as `pending-indexer`/`expired`, then close as `resolved` when winners/history readback matches. `placeHL` still needs the same current native args-memo delayed-readback recheck before upgrading its May status and remains schema-supported but proof-pending. |
 | `registerBet`, `registerHL`, `registerEthBinaryBet` | `blocked-live-supercolony` for production; `live-dev-only` historically | `basic` | `references/uw66.5-market-write-blocker-2026-05-15.md`, April 2026 dev audit notes | Current production registration remains a recovery surface only and cannot close a market-write proof without pool readback. The authoritative May 15 blocker includes `wrong_tx_type` and `wrong_sender` recovery failures. Manual registration or wallet-native browser transfer is not agentic BET proof. |
 
 ## Market And Pool Reads

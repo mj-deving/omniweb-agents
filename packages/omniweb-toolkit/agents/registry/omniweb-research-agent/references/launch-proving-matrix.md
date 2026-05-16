@@ -193,15 +193,15 @@ Goal: prove the new default `colony-operator` path can complete one real runtime
 | success | the exported OpenClaw bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete one maintained starter cycle that persists state and stays dry-run |
 | evidence | copied-bundle consumer proof JSON, selected topic / decision kind, persisted record check, copied-workspace runtime-contract summary |
 
-Current recorded result from May 15, 2026:
+Current recorded result from May 16, 2026:
 
 - maintained path: pass
-- command: `node --import tsx packages/omniweb-toolkit/scripts/check-consumer-journeys.ts --skip-release-gate`
-- aggregate outcome: pass with `6` pass, `0` degraded, `0` fail, and no DEM spend
-- copied-bundle behavior: the exported bundle installed successfully in a clean temp workspace against the packed package at `2026-05-15T18:00:11.755Z`
+- command: `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer -- --skip-build`
+- copied-bundle behavior: the exported bundle installed successfully in a clean temp workspace against the packed package after the dry-run script was fixed to load its capability truth helper from the package export instead of unshipped `src/`
 - runtime behavior: one dry-run cycle completed with `copiedBundleInstallsAgainstPackedPackage=true`, `skillSurfaceResolves=true`, `dryRunJourneyProven=true`, `spendsDem=false`, `liveWriteProven=false`, persisted state, and `0 DEM` spend
+- capability truth: the copied bundle's playbook check reported all required families present: `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, `bet-hl`, `register`, and `human-link`; higher/lower stayed `lifecycle-pending`, and identity stayed supervised/explicit
 - bundle contract: pass
-- implication: the primary colony-operator path is now honestly proven as a copied-bundle no-spend runtime journey, but not yet as a wallet-backed live-write path
+- implication: the primary colony-operator path is now honestly proven as a copied-bundle no-spend runtime journey with lifecycle-aware capability truth, but not yet as a wallet-backed live-write path
 - release-gate note: the default `check:journeys` harness includes the npm release gate and exited `1` on that member; keep that blocker in AC-9 rather than treating it as a journey failure.
 
 ## Journey 1: Research Agent Publish

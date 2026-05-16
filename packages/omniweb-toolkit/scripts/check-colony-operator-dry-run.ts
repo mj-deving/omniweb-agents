@@ -39,6 +39,34 @@ interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<str
   };
 }
 
+interface ColonyOperatorCapabilityTruth {
+  recommendedMode: string;
+  authReady: boolean;
+  writeReady: boolean;
+  blockers: string[];
+  coverage: {
+    allRequiredFamiliesPresent: boolean;
+    requiredFamilies: string[];
+    presentFamilies: string[];
+    missingFamilies: string[];
+    lifecycleAwareFamilies: string[];
+    identityFamilies: string[];
+    noSpendDefault: boolean;
+  };
+  actions: Array<{
+    actionFamily: string;
+    status: string;
+    lifecycleStatus: string;
+    runtimeFamily: string;
+    executionPathFamily: string;
+    requiresExplicitExecute: boolean;
+    writesLifecycleRecord: boolean;
+    spendsDem: boolean;
+    proofLevel: string;
+    reasonCodes: string[];
+  }>;
+}
+
 const args = process.argv.slice(2);
 const keepRecord = hasFlag(args, "--record", "-r");
 
@@ -69,6 +97,10 @@ const started = Date.now();
 const runMinimalAgentCycle = await loadPackageExport<
   (observe: unknown, opts?: Record<string, unknown>) => Promise<MinimalCycleRecord>
 >("../dist/agent.js", "../src/agent.ts", "runMinimalAgentCycle");
+const buildColonyOperatorCapabilityTruth = await loadPackageExport<
+  (opts?: Record<string, unknown>) => ColonyOperatorCapabilityTruth
+>("../dist/agent.js", "../src/agent.ts", "buildColonyOperatorCapabilityTruth");
+const capabilityTruth = buildColonyOperatorCapabilityTruth({ cwd: PACKAGE_ROOT });
 const starterModule = await import(pathToFileURL(resolve(
   PACKAGE_ROOT,
   "agents/openclaw/colony-operator/skills/omniweb-colony-operator/starter.ts",
@@ -104,7 +136,9 @@ const checks = {
   actionShapeSupported: record?.decision.kind !== "action"
     || record.decision.action?.type === "publish"
     || record.decision.action?.type === "reply"
-    || record.decision.action?.type === "react",
+    || record.decision.action?.type === "react"
+    || record.decision.action?.type === "tip"
+    || record.decision.action?.type === "bet",
   decisionIsObservable: record?.decision.kind === "skip"
     || record?.decision.kind === "reply"
     || record?.decision.kind === "react"
@@ -125,6 +159,25 @@ const checks = {
     : record?.outcome.resolution?.executionPathFamily === "reaction",
   persistedLatestRecord: persistedRecord?.cycleId === record?.cycleId,
   stateRecorded: persistedRecord?.memoryAfter != null,
+  fullActionVocabularyPresent: capabilityTruth.coverage.allRequiredFamiliesPresent,
+  voteSeparatedFromPoolBet: hasAction(capabilityTruth, "VOTE")
+    && hasAction(capabilityTruth, "bet-fixed")
+    && hasAction(capabilityTruth, "bet-hl"),
+  higherLowerNotOverclaimed: capabilityTruth.actions.some((action) => (
+    action.actionFamily === "bet-hl"
+    && action.status === "lifecycle-pending"
+    && action.reasonCodes.includes("higher_lower_current_delayed_readback_pending")
+  )),
+  lifecycleTruthPresent: ["publish", "reply", "react", "tip", "VOTE", "bet-fixed", "bet-hl"]
+    .every((family) => capabilityTruth.actions.some((action) => (
+      action.actionFamily === family
+      && action.writesLifecycleRecord
+    ))),
+  identityTruthPresent: ["register", "human-link"]
+    .every((family) => capabilityTruth.actions.some((action) => (
+      action.actionFamily === family
+      && (action.status === "blocked" || action.status === "supervised")
+    ))),
 };
 
 const ok = Object.values(checks).every(Boolean);
@@ -147,6 +200,40 @@ const summary = {
     ),
     spendsDem: false,
     liveWriteProven: false,
+    lifecycleAwareOperatorTruth: Boolean(
+      checks.fullActionVocabularyPresent
+      && checks.voteSeparatedFromPoolBet
+      && checks.higherLowerNotOverclaimed
+      && checks.lifecycleTruthPresent
+      && checks.identityTruthPresent,
+    ),
+  },
+  capabilityTruth: {
+    recommendedMode: capabilityTruth.recommendedMode,
+    authReady: capabilityTruth.authReady,
+    writeReady: capabilityTruth.writeReady,
+    blockers: capabilityTruth.blockers,
+    coverage: capabilityTruth.coverage,
+    actions: capabilityTruth.actions.map((action) => ({
+      actionFamily: action.actionFamily,
+      status: action.status,
+      lifecycleStatus: action.lifecycleStatus,
+      runtimeFamily: action.runtimeFamily,
+      executionPathFamily: action.executionPathFamily,
+      requiresExplicitExecute: action.requiresExplicitExecute,
+      writesLifecycleRecord: action.writesLifecycleRecord,
+      spendsDem: action.spendsDem,
+      proofLevel: action.proofLevel,
+      reasonCodes: action.reasonCodes,
+    })),
+    skippedAlternatives: capabilityTruth.actions
+      .filter((action) => action.actionFamily !== summaryActionFamily(record))
+      .map((action) => ({
+        actionFamily: action.actionFamily,
+        status: action.status,
+        lifecycleStatus: action.lifecycleStatus,
+        reasonCodes: action.reasonCodes,
+      })),
   },
   result: record
     ? {
@@ -262,4 +349,14 @@ function makeMockOmni(): any {
       }),
     },
   };
+}
+
+function hasAction(truth: ColonyOperatorCapabilityTruth, family: string): boolean {
+  return truth.actions.some((action) => action.actionFamily === family);
+}
+
+function summaryActionFamily(record: MinimalCycleRecord | null): string {
+  if (!record) return "none";
+  if (record.decision.kind === "skip") return "skip";
+  return record.decision.kind === "action" ? record.decision.action?.type ?? "unknown" : record.decision.kind;
 }

@@ -21,7 +21,7 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 ## Then do
 
 - **Wave A — bounded live write floor:** `uw66.1` publish ✅, `uw66.2` reply ✅, `uw66.3` react ✅, `uw66.4` tip ✅, AC-5 VOTE ✅, fixed-price BET via PR #409 ✅ pending merge.
-- **Wave B — lifecycle hardening:** use `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md` to turn delayed indexing into a durable pending-write/recheck system.
+- **Wave B — lifecycle hardening:** use `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`, `docs/WRITE_LIFECYCLE_MASTER_PRD.md`, and `docs/WRITE_LIFECYCLE_GOAL_LAUNCH.md` to turn delayed indexing into a durable pending-write/recheck system.
 - **Wave C — real operator cycle:** multi-action colony-operator execution after lifecycle handling exists.
 - **Wave D — official identity participation:** registration, human-link challenge/claim/approve flow.
 - **Wave E — widen, then consumerize:** generic action-intent coverage, capability-truth polish, npm publish auth, registry consumer journey, launch/docs refresh.

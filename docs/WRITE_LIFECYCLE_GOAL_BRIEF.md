@@ -1,8 +1,9 @@
 ---
 type: goal-brief
-status: draft
+status: frozen
 created: 2026-05-16
-summary: "Draft GoalMode brief for durable write lifecycle tracking and delayed readback across SuperColony agentic write families."
+owner_bead: omniweb-agents-zg11
+summary: "GoalMode brief for durable write lifecycle tracking and delayed readback across SuperColony agentic write families."
 ---
 
 # Agentic Write Lifecycle And Delayed Readback - Goal Brief
@@ -71,9 +72,33 @@ AC-8: One bounded live or delayed no-spend replay validates the lifecycle path e
 - Publishing npm package releases.
 - Proving identity/register/link flows; that remains the next colony participation band after lifecycle hardening.
 
+## Constraints
+
+- Work from `main` after PR #409 merges, or explicitly from `codex/official-bet-path` if PR #409 is still blocked by merge policy.
+- Node.js 22+, npm workspaces, TypeScript, `tsx`, Vitest, Demos SDK, and SuperColony production host remain the target stack.
+- Beads is the task ledger; child work should be one bead, one branch, and one PR.
+- Database engine / local persistence boundary: the pending-write store must be local, durable, non-secret, and compatible with the package's existing `--state-dir` and JSON artifact style; SQLite may be reused only if it is lower-risk than JSON/JSONL for the implemented slice.
+- Authentication boundary / operator auth: live writes use the real wallet runtime and local operator credentials, but no mnemonic, token, or secret may be written to lifecycle records.
+- Live writes must stay behind explicit `--execute` or `--broadcast` flags and within existing `launch-proving-matrix.md` DEM budgets.
+- No-spend delayed rechecks of existing tx hashes are preferred over new live spend.
+- Completion evidence must exercise real Demos/SuperColony readback surfaces for at least one lifecycle validation; unit tests may use fixtures only for owned parsing/state logic.
+- Browser automation boundary: Playwright/browser automation and browser wallet/provider behavior remain human-path diagnostic only and cannot close agentic write lifecycle acceptance.
+- Docs and matrices must remain package-first: update package references and generated/registry surfaces when public guidance changes.
+
 ## Launch Preconditions
 
 - PR #409 is merged, or the goal explicitly branches from `codex/official-bet-path`.
 - Beads has a fresh epic/parent issue for the lifecycle goal.
 - The goal PRD is generated from this brief and reconciled before implementation starts.
 - Live spend remains behind explicit `--execute` or `--broadcast`, with no-spend rechecks preferred whenever existing tx hashes are enough.
+
+## Verification
+
+- Source/PRD specificity: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/WRITE_LIFECYCLE_GOAL_BRIEF.md docs/WRITE_LIFECYCLE_MASTER_PRD.md`
+- Fast checkpoint: `npx tsc --noEmit --pretty false`
+- Focused tests: targeted `npx vitest run <test-file>` for lifecycle/state/probe changes.
+- Package public-surface gate: `npm --prefix packages/omniweb-toolkit run check:package`
+- Package evidence gate: `npm --prefix packages/omniweb-toolkit run check:evals`
+- Matrix/docs gate: `npm --prefix packages/omniweb-toolkit run check:verification-matrix`
+- Live read gate: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`
+- Final lifecycle validation: one bounded live or delayed no-spend replay command recorded in the PRD run log.

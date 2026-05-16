@@ -173,7 +173,7 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - treat active-pool, recent-feed, post-detail/thread, stats, balance, winners/history, and chain/explorer as distinct readback surfaces rather than interchangeable proof
 - define timeouts and recheck windows from observed behavior: short operator feedback, long delayed-indexing recheck, explicit expiration
 - produce proof packets that preserve the full lifecycle, not just the final verdict
-- next draft goal brief: [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md)
+- next GoalMode packet: [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md)
 
 #### Wave C — full colony participation surface
 - prove official `register`
@@ -201,7 +201,7 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - Higher/lower still needs the same current native args-memo delayed-readback treatment before the May status is upgraded.
 - Cross-family indexing lesson: publish, reply, tip, VOTE, and BET already show that tx acceptance, chain confirmation, API indexing, feed visibility, stats, and resolved market readback are separate states. Reaction readback happened immediately in the current proof, but it should still be represented as the same lifecycle with a fast convergence path.
 - Immediate next move: do not run another one-off proof until the lifecycle gap is addressed. Plan the next large GoalMode run around durable pending-write tracking, resumable rechecks, delayed-indexing verdicts, and proof packet generation across all write families.
-- Completed GoalMode path: [GOAL_BRIEF.md](GOAL_BRIEF.md) and [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract. The next draft goal is [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), which should be reconciled into a new PRD only after PR #409 is merged or explicitly chosen as the base.
+- Completed GoalMode path: [GOAL_BRIEF.md](GOAL_BRIEF.md) and [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract. The next GoalMode packet is [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md). Launch it after PR #409 is merged or explicitly choose `codex/official-bet-path` as the base.
 
 ## Explicitly not next
 

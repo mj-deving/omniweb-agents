@@ -50,6 +50,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `packages/omniweb-toolkit/references/uw66.4-bounded-live-tip-proof-2026-05-15.md`
 - `packages/omniweb-toolkit/references/uw66.6-agentic-memo-bet-readback-2026-05-16.md`
 - `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`
+- `docs/WRITE_LIFECYCLE_MASTER_PRD.md`
+- `docs/WRITE_LIFECYCLE_GOAL_LAUNCH.md`
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`

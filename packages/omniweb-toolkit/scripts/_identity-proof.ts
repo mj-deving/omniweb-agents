@@ -43,6 +43,38 @@ export function summarizeChallenge(result: unknown): Record<string, unknown> {
   };
 }
 
+export function extractSignatureValue(sign: { ok?: boolean; signature?: unknown } | null | undefined): string | null {
+  if (!sign?.ok) return null;
+  if (typeof sign.signature === "string") return sign.signature;
+  if (sign.signature && typeof sign.signature === "object") {
+    const data = (sign.signature as Record<string, unknown>).data;
+    return typeof data === "string" ? data : null;
+  }
+  return null;
+}
+
+export function summarizeSignResult(
+  sign: { ok?: boolean; error?: unknown } | null | undefined,
+  signature: string | null,
+): Record<string, unknown> {
+  if (sign?.ok) {
+    return {
+      ok: true,
+      hasSignature: typeof signature === "string" && signature.length > 0,
+      redacted: true,
+    };
+  }
+
+  return {
+    ok: false,
+    detail: typeof sign?.error === "string" ? sign.error.slice(0, 200) : "sign failed",
+  };
+}
+
+export function shouldRunCleanupPhase(phase: IdentityProofPhase, linkSucceeded: boolean): boolean {
+  return phase === "cleanup" || (phase === "full" && linkSucceeded);
+}
+
 export function summarizeAgentProfile(result: unknown, agentAddress: string): Record<string, unknown> {
   if (!isOkApiResult(result)) {
     return summarizeMutationResult(result, "agent profile read back");

@@ -12,15 +12,18 @@ import { dirname } from "node:path";
 import { getStringArg, hasFlag, loadConnect } from "./_shared.js";
 import {
   IDENTITY_PROOF_PHASES,
+  extractSignatureValue,
   isIdentityProofPhase,
   isOkApiResult,
   linkedContains,
   profileMatches,
+  shouldRunCleanupPhase,
   shortCommit,
   summarizeAgentProfile,
   summarizeChallenge,
   summarizeLinkedAgents,
   summarizeMutationResult,
+  summarizeSignResult,
 } from "./_identity-proof.js";
 
 const DEFAULT_REGISTER_NAME = "mj-codex-proof-agent";
@@ -144,9 +147,7 @@ if (phase === "human-link" || phase === "full") {
   sign = isOkApiResult(challenge)
     ? await omni.chain.signMessage(challenge.data.message)
     : { ok: false, error: "challenge failed" };
-  const signature = sign.ok && sign.signature && typeof sign.signature === "object"
-    ? ((sign.signature as Record<string, unknown>).data ?? sign.signature)
-    : sign.signature;
+  const signature = extractSignatureValue(sign);
 
   claim = typeof challengeValue === "string" && typeof signature === "string"
     ? await omni.colony.claimAgentLink({
@@ -165,7 +166,13 @@ if (phase === "human-link" || phase === "full") {
   linked = await omni.colony.getLinkedAgents();
 }
 
-if (phase === "cleanup" || phase === "full") {
+const linkSucceeded = isOkApiResult(challenge)
+  && typeof extractSignatureValue(sign) === "string"
+  && isOkApiResult(claim)
+  && isOkApiResult(approve)
+  && linkedContains(linked, agentAddress);
+
+if (shouldRunCleanupPhase(phase, linkSucceeded)) {
   unlink = await omni.colony.unlinkAgent(agentAddress);
   linkedAfter = await omni.colony.getLinkedAgents();
 }
@@ -175,7 +182,7 @@ const registerOk = phase !== "register" && phase !== "full"
   : isOkApiResult(register) && profileMatches(profileAfterRegister, agentAddress, registerName);
 const linkOk = phase !== "human-link" && phase !== "full"
   ? true
-  : isOkApiResult(challenge) && !!sign?.ok && isOkApiResult(claim) && isOkApiResult(approve) && linkedContains(linked, agentAddress);
+  : linkSucceeded;
 const cleanupOk = phase !== "cleanup" && phase !== "full"
   ? true
   : isOkApiResult(unlink) && !linkedContains(linkedAfter, agentAddress);
@@ -205,9 +212,7 @@ emit({
   register: summarizeMutationResult(register, "register() accepted the public profile update"),
   profileAfterRegister: summarizeAgentProfile(profileAfterRegister, agentAddress),
   challenge: summarizeChallenge(challenge),
-  sign: sign?.ok
-    ? { ok: true, hasSignature: true, redacted: true }
-    : { ok: false, detail: typeof sign?.error === "string" ? sign.error.slice(0, 200) : "sign failed" },
+  sign: summarizeSignResult(sign, extractSignatureValue(sign)),
   claim: summarizeMutationResult(claim, "claimAgentLink() accepted the redacted challenge handle"),
   approve: summarizeMutationResult(approve, "approveAgentLink() accepted the redacted challenge handle plus agentAddress"),
   linked: summarizeLinkedAgents(linked, agentAddress),

@@ -1,11 +1,14 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import {
+  extractSignatureValue,
   linkedContains,
   profileMatches,
+  shouldRunCleanupPhase,
   summarizeAgentProfile,
   summarizeChallenge,
   summarizeLinkedAgents,
+  summarizeSignResult,
 } from "../../packages/omniweb-toolkit/scripts/_identity-proof.js";
 
 describe("identity proof runner safety", () => {
@@ -102,5 +105,30 @@ describe("identity proof runner safety", () => {
       count: 1,
     });
     expect(JSON.stringify(linkedSummary)).not.toContain("should-not-appear");
+  });
+
+  it("derives signature summary from the actual parsed signature value", () => {
+    const nestedSignature = { ok: true, signature: { data: "secret-signature" } };
+    const missingSignature = { ok: true, signature: { data: 123 } };
+
+    expect(extractSignatureValue(nestedSignature)).toBe("secret-signature");
+    expect(summarizeSignResult(nestedSignature, extractSignatureValue(nestedSignature))).toMatchObject({
+      ok: true,
+      hasSignature: true,
+      redacted: true,
+    });
+    expect(extractSignatureValue(missingSignature)).toBeNull();
+    expect(summarizeSignResult(missingSignature, extractSignatureValue(missingSignature))).toMatchObject({
+      ok: true,
+      hasSignature: false,
+      redacted: true,
+    });
+  });
+
+  it("only allows full-phase cleanup after the link flow succeeded", () => {
+    expect(shouldRunCleanupPhase("full", false)).toBe(false);
+    expect(shouldRunCleanupPhase("full", true)).toBe(true);
+    expect(shouldRunCleanupPhase("cleanup", false)).toBe(true);
+    expect(shouldRunCleanupPhase("human-link", true)).toBe(false);
   });
 });

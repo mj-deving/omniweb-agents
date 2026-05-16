@@ -317,5 +317,5 @@ Codex appends timestamped progress notes here during `/goal` runs:
 
 - Changed code/tests: `packages/omniweb-toolkit/scripts/_write-lifecycle.ts`, `check-publish-visibility.ts`, `check-vote-publish.ts`, `probe-agentic-memo-bet.ts`, `probe-social-writes.ts`, `tests/packages/write-lifecycle.test.ts`.
 - Changed package references/docs: `packages/omniweb-toolkit/references/write-lifecycle.md`, `references/index.md`, `verification-matrix.md`, `launch-proving-matrix.md`, `write-surface-sweep.md`, `uw66.6-agentic-memo-bet-readback-2026-05-16.md`, `README.md`, `SKILL.md`, colony-operator re-entry memory, generated registry reference copies, and this PRD.
-- PR: pending creation after commit/push.
-- Commit: pending.
+- PR: `#411` - https://github.com/mj-deving/omniweb-agents/pull/411.
+- Commit: `43a6007d` (`lifecycle: add durable write readback records`).

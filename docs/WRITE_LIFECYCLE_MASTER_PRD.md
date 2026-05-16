@@ -319,3 +319,10 @@ Codex appends timestamped progress notes here during `/goal` runs:
 - Changed package references/docs: `packages/omniweb-toolkit/references/write-lifecycle.md`, `references/index.md`, `verification-matrix.md`, `launch-proving-matrix.md`, `write-surface-sweep.md`, `uw66.6-agentic-memo-bet-readback-2026-05-16.md`, `README.md`, `SKILL.md`, colony-operator re-entry memory, generated registry reference copies, and this PRD.
 - PR: `#411` - https://github.com/mj-deving/omniweb-agents/pull/411.
 - Commit: `43a6007d` (`lifecycle: add durable write readback records`).
+
+### 2026-05-16T08:46Z - PR Review Fixes
+
+- Codex review thread `3252532182`: fixed in `919cce07` by making fixed-price BET lifecycle rechecks use the stored record's asset, horizon, predicted price, amount, memo, and bettor before pool fetch/readback/proof updates.
+- Codex review thread `3252532183`: fixed in `919cce07` by making publish/reply lifecycle rechecks exit `0` only for `indexed`; post-detail-only visibility remains recorded as `degraded` but no longer passes the recheck.
+- Codex review thread `3252532184`: fixed in `919cce07` by preserving `spendStatus="planned"` for failed/no-tx VOTE publish attempts and only marking `executed` when publish succeeds with a tx hash.
+- Review-fix gates: `git diff --check`, `npx tsc --noEmit --pretty false`, focused lifecycle/social/publish/market tests (`28` passed), and `npm --prefix packages/omniweb-toolkit run check:package` all exited `0`.

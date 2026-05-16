@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-15
+updated: 2026-05-16
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current band freezes that seam and proves the colony live-ops lane action by action above it, with publish, reply, react, and tip now bounded-live-proven while market-write is blocked by the current registration tx-type mismatch."
+summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops band has bounded proofs for publish, reply, react, tip, VOTE prediction, and fixed-price DEM betting, and the next large goal is a durable write-lifecycle/readback layer so delayed Demos/SuperColony indexing cannot be mistaken for write failure."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -43,8 +43,8 @@ Anti-drift rule:
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` now prove bounded live publish/reply/react/tip, and `uw66.5` is blocked by `omniweb-agents-3myq` after both a plain native transfer and a memo-bearing native transfer failed pool readback |
-| Remaining external edges | real colony-operator live execution proof across bet/market-write, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, and PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback while still waiting on merge policy |
+| Remaining external edges | durable write lifecycle/readback state across all write families, current higher/lower delayed-readback proof, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -56,6 +56,8 @@ Anti-drift rule:
 **Architectural rule:** the substrate owns the hard parts of real operation; the skill owns instructions, best practices, and thin scaffolding. If an agent has to manually reason about auth ceremony, credential lifecycle, or spend-safety plumbing in prompt-space, the boundary is wrong.
 
 **Current execution rule:** freeze the thin waist for one live-ops wave — `PolicyActionRequest`, resolved intent statuses, and the execution/verification envelope stay stable unless a real run proves they are wrong. Move fast above that seam, then harden below it from observed failure rather than speculative contract churn.
+
+**Write lifecycle rule:** every live write now has two clocks: chain acceptance/finality and product-indexed readback. A tx hash or confirmation block is not sufficient for product success, but a short readback timeout is also not sufficient for failure. Maintained probes and runbooks must classify `pending-chain`, `pending-indexer`, `indexed`, `resolved`, and `degraded/expired` states explicitly.
 
 ---
 
@@ -131,7 +133,7 @@ Reach a truthful colony-operator floor where one maintained operator lane can:
 - read the live colony surfaces it needs
 - choose among `publish`, `reply`, `react`, `tip`, `bet`, or `skip`
 - execute through the same runtime truth path
-- verify and report outcomes honestly per action family
+- verify and report outcomes honestly per action family, including delayed indexing and round rollover
 
 Then extend that floor to official identity participation:
 - `register`
@@ -161,8 +163,17 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - prove bounded live `reply` (`uw66.2`) ✅
 - prove bounded live `react` (`uw66.3`) ✅
 - prove bounded live `tip` (`uw66.4`) ✅
-- unblock `omniweb-agents-3myq`, then prove bounded live `bet`
+- prove active VOTE prediction lane (AC-5) ✅
+- prove bounded fixed-price agentic DEM betting via headless native args-memo plus delayed winners readback (PR #409 / `omniweb-agents-dnoy`) ✅ pending merge
 - prove one maintained operator cycle that can honestly choose among those actions
+
+#### Wave B.5 — durable write lifecycle and delayed readback
+- add a persisted pending-write ledger for every wallet-backed write family, not only BET
+- make write probes resumable by tx hash, post hash, asset/horizon, wallet, memo, and expected round where applicable
+- treat active-pool, recent-feed, post-detail/thread, stats, balance, winners/history, and chain/explorer as distinct readback surfaces rather than interchangeable proof
+- define timeouts and recheck windows from observed behavior: short operator feedback, long delayed-indexing recheck, explicit expiration
+- produce proof packets that preserve the full lifecycle, not just the final verdict
+- next GoalMode packet: [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md)
 
 #### Wave C — full colony participation surface
 - prove official `register`
@@ -185,9 +196,12 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - `uw66.2` now has a bounded wallet-backed live reply proof: DAHR attestation and reply txs confirmed on-chain, the reply appears in the intended parent thread, and the honest visibility verdict is post-detail/thread visible with recent-feed indexing still degraded.
 - `uw66.3` now has a bounded live reaction proof: the maintained social-write probe executed an `agree` reaction and readback confirmed `agree: 6 -> 7` plus `myReaction: "agree"` on the first poll.
 - `uw66.4` now has a bounded live tip proof: the maintained tip-only probe sent `1 DEM`, returned tx `25da09cf964502a05b7651b1f549f2c33c9d15ab3b779f15295cec74db933a4c`, and confirmed it on-chain at block `2263010`; post/recipient stats and balance readback remained stale.
-- `uw66.5` is blocked by `omniweb-agents-3myq`: the maintained market-write probe first sent a plain 5 DEM `SOL` fixed-price transfer tx (`9f2d8b2d9b702aa4f4b7a7e2a9eec69fcef97e2162011592b46c4c9c3a61b4e4`) and chain verification confirmed it at block `2263073`, but `/api/bets/place` rejected registration as `wrong_tx_type` and pool readback stayed unchanged. A later memo-bearing `native-content-memo` transfer tx (`4acb9f76d54a96415e77d3639af591355efd42f598850295852c4cfea72cf4f1`, memo `HIVE_BET:SOL:89:4h`) confirmed at block `2264378` from the expected wallet and moved balance readback `1747 -> 1741`, but the same SOL 4h pool stayed `totalBets=0,totalDem=0`; manual registration recovery returned `wrong_sender`. `native-data-memo` was confirm-only validated, not broadcast, to preserve the one-5-DEM-attempt cap.
-- Immediate next move: keep `uw66.5` scoped to the headless agentic path. `wallet-native-transfer` is a human/browser diagnostic candidate, not the agentic proof path. Agentic DEM pool betting remains degraded until a headless runtime transfer produces pool readback; route active predictions through the proven VOTE/PREDICTION lane while DEM pool readback remains unavailable.
-- GoalMode path: [GOAL_BRIEF.md](GOAL_BRIEF.md) and [MASTER_PRD.md](MASTER_PRD.md) now capture the long-running `/goal` contract for this band. The contract keeps the frozen seam stable, treats DEM pool betting as headless-agentic only, and turns the next work into a launch-proof lane instead of another isolated proof fragment. Do not launch `/goal` until the GoalMode launch preflight passes from a clean worktree.
+- AC-5 has a bounded VOTE prediction proof: `publishVote()` wrote BTC prediction tx `b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f` with attestation tx `de2b31fabba526946c91fde92fd7c0a45904a85ed1353142f786a96a3b0fc65d`, then read back through `search({ category: "VOTE" })` at block `2264809`.
+- `uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through headless native args-memo transfer. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, all resolved in SuperColony winners at block `2265016` after the same-window active-pool probe had timed out. Use `2265016` as the product-indexed block; the explorer raw payload still exposes a stale/internal `2265014` field.
+- Higher/lower still needs the same current native args-memo delayed-readback treatment before the May status is upgraded.
+- Cross-family indexing lesson: publish, reply, tip, VOTE, and BET already show that tx acceptance, chain confirmation, API indexing, feed visibility, stats, and resolved market readback are separate states. Reaction readback happened immediately in the current proof, but it should still be represented as the same lifecycle with a fast convergence path.
+- Immediate next move: do not run another one-off proof until the lifecycle gap is addressed. Plan the next large GoalMode run around durable pending-write tracking, resumable rechecks, delayed-indexing verdicts, and proof packet generation across all write families.
+- Completed GoalMode path: [GOAL_BRIEF.md](GOAL_BRIEF.md) and [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract. The next GoalMode packet is [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md). Launch it after PR #409 is merged or explicitly choose `codex/official-bet-path` as the base.
 
 ## Explicitly not next
 

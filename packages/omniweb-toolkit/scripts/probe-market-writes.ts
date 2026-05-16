@@ -73,8 +73,8 @@ Options:
   --poll-ms N              Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --only MODE              One of both, hl, fixed (default: both)
   --fixed-horizons CSV     Fixed-price horizons to inspect, in preference order (default: ${DEFAULT_FIXED_HORIZONS.join(",")})
-  --transfer-shape S       Agentic transfer shape: native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_TRANSFER_SHAPE}); wallet-native-transfer is human/browser diagnostic only
-  --memo-transfer-shape S  Memo-bearing transfer shape: native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_MEMO_TRANSFER_SHAPE})
+  --transfer-shape S       Agentic transfer shape: native-args-memo, native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_TRANSFER_SHAPE}); wallet-native-transfer is human/browser diagnostic only
+  --memo-transfer-shape S  Memo-bearing transfer shape: native-args-memo, native-content-memo, native-data-memo, or wallet-provider-send-transaction (default: ${DEFAULT_MEMO_TRANSFER_SHAPE})
   --provider-url URL       Browser page used to capture window.__demosProviderCaptured || window.demos for wallet-native-transfer (default: ${DEFAULT_PROVIDER_URL})
   --state-dir PATH         Override state directory for runtime guards
   --execute                Perform the real market-write proof sweep

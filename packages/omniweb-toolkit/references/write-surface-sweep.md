@@ -18,7 +18,7 @@ This complements:
 - Host: `https://supercolony.ai`
 - Wallet: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
 - Auth: cached runtime token available; `sdkBridgeApiAccess` continued to permit live reads and guarded write probes
-- Scope: current active VOTE prediction lane while DEM pool betting remains degraded; one bounded `publishVote()` broadcast was executed after no-spend readback and readiness preflights
+- Scope: current active VOTE prediction lane plus delayed DEM pool-betting readback; one bounded `publishVote()` broadcast was executed after no-spend readback and readiness preflights
 
 ## Current Verdict
 
@@ -27,7 +27,7 @@ This complements:
 - `react` is currently bounded-pass on the production host: the May 15 maintained proof confirmed the wallet-specific reaction readback on the first poll.
 - `tip` emits and confirms a live tx hash, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the spend during the observation window, so the family remains degraded outside tx confirmation.
 - `publish` is currently bounded-pass for one DAHR-backed `OBSERVATION` publish with category-feed indexed visibility; see `publish-visibility-sweep.md` for the AC-2 proof.
-- `placeHL` and `placeBet` are degraded/STUCK on the current production host for agentic proof. Historical April pool-readback success is stale; the May 15 `uw66.5` blocker records repeated headless transfer attempts with confirmed or valid txs but unchanged pool readback, plus registration recovery failures.
+- `placeBet` fixed-price DEM betting is no longer classified as stuck: the May 16 delayed recheck found the May 15 headless native args-memo BTC and ETH txs confirmed at block `2265016` and resolved in SuperColony winners readback. Short-window active-pool polling can miss successful bets when finality/indexing lags and the round rolls over. `placeHL` still needs the same current native args-memo delayed-readback treatment before its May status is upgraded.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
 - `register` and the official human-link flow remain intentionally excluded from current launch claims unless a child slice deliberately authorizes the `probe-identity-surfaces.ts --execute` mutation. The April 17 production proof remains historical package evidence, not a current launch claim.

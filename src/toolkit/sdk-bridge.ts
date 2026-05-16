@@ -73,6 +73,7 @@ export interface TxModule {
 }
 
 export type MemoTransferShape =
+  | "native-args-memo"
   | "native-content-memo"
   | "native-data-memo"
   | "wallet-provider-send-transaction";
@@ -113,6 +114,9 @@ interface DemosRpcMethods {
   // Use getTxByHash instead (chain-first migration).
   connect(rpcUrl: string): Promise<void>;
   connectWallet(mnemonic: string, opts?: Record<string, unknown>): Promise<string>;
+  getAddress?(): string;
+  getAddressInfo?(address: string): Promise<{ nonce?: number | string | null } | null>;
+  getAddressNonce?(address: string): Promise<number>;
   // Chain query methods (chain-first migration)
   getTxByHash?(txHash: string): Promise<{
     hash: string;
@@ -250,19 +254,20 @@ export interface SdkBridge {
   getDemos(): Demos;
 }
 
-export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-content-memo";
+export const DEFAULT_MEMO_TRANSFER_SHAPE: MemoTransferShape = "native-args-memo";
 export const WALLET_NATIVE_TRANSFER_SHAPE: WalletNativeTransferShape = "wallet-native-transfer";
 export const DEFAULT_TRANSFER_SHAPE: MemoTransferShape = DEFAULT_MEMO_TRANSFER_SHAPE;
 
 export function normalizeMemoTransferShape(value: string | undefined): MemoTransferShape {
   switch ((value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim()) {
+    case "native-args-memo":
     case "native-content-memo":
     case "native-data-memo":
     case "wallet-provider-send-transaction":
       return (value ?? DEFAULT_MEMO_TRANSFER_SHAPE).trim() as MemoTransferShape;
     default:
       throw new Error(
-        `Unsupported memo transfer shape "${value}". Valid shapes: native-content-memo, native-data-memo, wallet-provider-send-transaction`,
+        `Unsupported memo transfer shape "${value}". Valid shapes: native-args-memo, native-content-memo, native-data-memo, wallet-provider-send-transaction`,
       );
   }
 }
@@ -325,12 +330,14 @@ export function buildMemoTransferTransaction(
   amount: number,
   memo: string,
   shape: Exclude<MemoTransferShape, "wallet-provider-send-transaction">,
+  opts?: { nonce?: number },
 ): { content: Record<string, unknown>; [key: string]: unknown } {
   const content: Record<string, unknown> = {
     ...(emptyTx.content ?? {}),
     type: "native",
     to,
     amount,
+    ...(opts?.nonce === undefined ? {} : { nonce: opts.nonce }),
     timestamp: Date.now(),
     data: [
       "native",
@@ -341,7 +348,9 @@ export function buildMemoTransferTransaction(
     ],
   };
 
-  if (shape === "native-content-memo") {
+  if (shape === "native-args-memo") {
+    (((content.data as unknown[])[1] as Record<string, unknown>).args as unknown[]).push(memo);
+  } else if (shape === "native-content-memo") {
     content.memo = memo;
   } else {
     ((content.data as unknown[])[1] as Record<string, unknown>).memo = memo;
@@ -351,6 +360,35 @@ export function buildMemoTransferTransaction(
     ...emptyTx,
     content,
   };
+}
+
+async function resolveNextNativeNonce(rpc: DemosRpcMethods): Promise<number | undefined> {
+  if (typeof rpc.getAddress !== "function") return undefined;
+  const address = rpc.getAddress();
+  const candidates: number[] = [];
+
+  if (typeof rpc.getAddressInfo === "function") {
+    const info = await rpc.getAddressInfo(address);
+    const parsed = parseNonce(info?.nonce);
+    if (parsed !== undefined) candidates.push(parsed);
+  }
+
+  if (typeof rpc.getAddressNonce === "function") {
+    const parsed = parseNonce(await rpc.getAddressNonce(address));
+    if (parsed !== undefined) candidates.push(parsed);
+  }
+
+  if (candidates.length === 0) return undefined;
+  return Math.max(...candidates) + 1;
+}
+
+function parseNonce(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+  }
+  return undefined;
 }
 
 // ── Helpers ──────────────────────────────────────────
@@ -643,12 +681,17 @@ export function createSdkBridge(
           throw new Error("transferDem: memo transfer requires DemosTransactions.empty(), which is unavailable in this runtime");
         }
 
+        const nonce = await resolveNextNativeNonce(rpc);
+        if (nonce === undefined) {
+          throw new Error("transferDem: memo transfer requires address nonce from Demos runtime");
+        }
         const unsigned = buildMemoTransferTransaction(
           tx.empty(),
           to,
           amount,
           normalizedMemo,
           transferShape,
+          { nonce },
         );
         const signed = await rpc.sign(unsigned);
         const stages = {

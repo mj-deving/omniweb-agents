@@ -226,8 +226,8 @@ External runtime and product-readback rules are execution gates, not generic dep
 ## §9. Acceptance Criteria
 
 - [x] **AC-1** PR #413 is retitled/reworded/merged as a capability-truth and dry-run checkpoint, with checks green and no Codex review findings.
-- [ ] **AC-2** Maintained operator entrypoint returns selected action, skipped alternatives, capability truth, lifecycle plan, execution mode, and spend status; dry-run cannot mutate/spend; live writes require `--execute`.
-- [ ] **AC-3** Decision loop covers `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, and status-only `bet-hl` without conflating VOTE and DEM pool betting.
+- [x] **AC-2** Maintained operator entrypoint returns selected action, skipped alternatives, capability truth, lifecycle plan, execution mode, and spend status; dry-run cannot mutate/spend; live writes require `--execute`.
+- [x] **AC-3** Decision loop covers `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, and status-only `bet-hl` without conflating VOTE and DEM pool betting.
 - [ ] **AC-4** One bounded live publish/reply operator cycle executes through the maintained entrypoint and proves product readback with a lifecycle record/proof packet.
 - [ ] **AC-5** Current `bet-hl` delayed readback is proved with product readback, or exact STUCK/blocker evidence is recorded.
 - [ ] **AC-6** Identity register/link live proof is run with explicit authorization and credentials, or exact blocker evidence is recorded without secrets.
@@ -275,3 +275,5 @@ The goal is complete only when all of these are true:
 
 - 2026-05-16T13:33Z - M0 / AC-1: PR #413 retitled to `Colony Operator capability truth and dry-run checkpoint`, reworded in docs/body, checks `check`, `validate`, and `codex-review` passed, no comments/reviews/threads existed, and PR #413 merged as squash commit `52397c54e8ae4721f9f0847738eaf52972571894`.
 - 2026-05-16T13:36Z - Beads graph created under parent `omniweb-agents-8tga`; M0 `8tga.1` closed; dependency chain created through `8tga.8`; external M6b gate `omniweb-agents-aick` blocks M7; `bd ready --json` shows `omniweb-agents-8tga.2` as the real next child milestone.
+- 2026-05-16T14:21Z - M1 / AC-2: added exported `runColonyOperatorCycle()` in `omniweb-toolkit/agent`, a maintained `check:colony-operator-entrypoint` proof, lifecycle-plan/write-store seam, and focused tests. Evidence: `npm test -- tests/packages/colony-operator-entrypoint.test.ts tests/packages/colony-operator-capability-truth.test.ts tests/packages/colony-operator-starter.test.ts` passed 8 tests; `npm --prefix packages/omniweb-toolkit run check:colony-operator-entrypoint` returned `ok: true`; `npx tsc --noEmit --pretty false` exited 0. Spend status: no-spend dry-run proof only; live write remains AC-4.
+- 2026-05-16T14:23Z - M2 / AC-3: added maintained `check:colony-operator-decision-coverage` proof. Evidence: selected families were `skip`, `publish`, `reply`, and `react`; surfaced alternatives included `tip`, `VOTE`, `bet-fixed`, and `bet-hl`; `VOTE` stayed `vote_publish`; `bet-fixed`/`bet-hl` stayed `market_write`; `bet-hl` stayed `lifecycle-pending` with `higher_lower_current_delayed_readback_pending`; all coverage scenarios were no-spend. `npm --prefix packages/omniweb-toolkit run check:colony-operator-decision-coverage`, focused Vitest, and `npx tsc --noEmit --pretty false` exited 0.

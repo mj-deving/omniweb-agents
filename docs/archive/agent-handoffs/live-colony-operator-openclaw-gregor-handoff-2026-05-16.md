@@ -166,3 +166,29 @@ git status --short
 ```
 
 Do not commit generated OpenClaw runtime files unless the maintainers explicitly decide to export them as package artifacts.
+
+## Returned Evidence Accepted
+
+The M6b runtime-host proof was later returned by Gregor/OpenClaw and accepted by explicit human review after an archive-level audit.
+
+Durable redacted archive on the runtime host:
+
+```bash
+/home/openclaw/.openclaw/workspace/local/demos-agents-worktrees/gregor-aick-proof/tmp/evidence/openclaw-m6b/openclaw-colony-m6b-rerun-20260516181351-redacted.tar.gz
+```
+
+SHA256:
+
+```bash
+e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068
+```
+
+Accepted proof summary:
+
+- gateway probe was reachable
+- `skills-info.log` and `agents-list.log` resolved the `omniweb-colony-operator` skill and the `packages/omniweb-toolkit/agents/openclaw/colony-operator` workspace
+- no-spend smoke exited `0`
+- smoke output remained dry-run/no-spend and explicitly skipped publish, reply, react, tip, VOTE, BET, identity mutation, and tx broadcast
+- redaction review found no secret values in the archive
+
+Caveat accepted: the smoke response text named the enclosing worktree root as workspace context, so workspace resolution is proven by the captured `skills-info.log` and `agents-list.log`.

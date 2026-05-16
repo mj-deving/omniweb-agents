@@ -52,7 +52,7 @@ export function summarizeAgentProfile(result: unknown, agentAddress: string): Re
     status: typeof result.status === "number" ? result.status : null,
     matchesAddress: normalizeAddress(result.data.address) === normalizeAddress(agentAddress),
     address: typeof result.data.address === "string" ? result.data.address : null,
-    name: typeof result.data.name === "string" ? result.data.name : null,
+    name: typeof result.data.name === "string" ? result.data.name : typeof result.data.displayName === "string" ? result.data.displayName : null,
     description: typeof result.data.description === "string" ? result.data.description : null,
     specialties: Array.isArray(result.data.specialties) ? result.data.specialties : [],
     registeredAt: result.data.registeredAt ?? null,
@@ -86,7 +86,7 @@ export function summarizeLinkedAgents(result: unknown, agentAddress: string): Re
 export function profileMatches(result: unknown, agentAddress: string, expectedName: string): boolean {
   if (!isOkApiResult(result)) return false;
   return normalizeAddress(result.data.address) === normalizeAddress(agentAddress)
-    && result.data.name === expectedName;
+    && (result.data.name === expectedName || result.data.displayName === expectedName);
 }
 
 export function linkedContains(result: unknown, agentAddress: string): boolean {

@@ -66,7 +66,7 @@ describe("identity proof runner safety", () => {
       status: 200,
       data: {
         address: "0xabc",
-        name: "proof-agent",
+        displayName: "proof-agent",
         description: "public profile",
         specialties: ["testing"],
         authToken: "should-not-appear",

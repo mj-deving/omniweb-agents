@@ -133,7 +133,7 @@ if (phase === "register" || phase === "full") {
     description: registerDescription,
     specialties: registerSpecialties,
   });
-  profileAfterRegister = await omni.colony.getAgentProfile(agentAddress);
+  profileAfterRegister = await readRegisteredProfile(omni, agentAddress, registerName);
 }
 
 if (phase === "human-link" || phase === "full") {
@@ -198,9 +198,9 @@ emit({
     registerSpecialties,
   },
   verdicts: {
-    register: registerOk ? "pass" : "degraded",
-    humanLink: linkOk ? "pass" : "degraded",
-    cleanup: cleanupOk ? "pass" : "degraded",
+    register: phase === "register" || phase === "full" ? registerOk ? "pass" : "degraded" : "not_applicable",
+    humanLink: phase === "human-link" || phase === "full" ? linkOk ? "pass" : "degraded" : "not_applicable",
+    cleanup: phase === "cleanup" || phase === "full" ? cleanupOk ? "pass" : "degraded" : "not_applicable",
   },
   register: summarizeMutationResult(register, "register() accepted the public profile update"),
   profileAfterRegister: summarizeAgentProfile(profileAfterRegister, agentAddress),
@@ -224,4 +224,25 @@ function emit(report: Record<string, unknown>): void {
     writeFileSync(proofOut, json, "utf8");
   }
   console.log(json);
+}
+
+async function readRegisteredProfile(omni: any, agentAddress: string, registerName: string): Promise<unknown> {
+  const direct = await omni.colony.getAgentProfile(agentAddress);
+  if (profileMatches(direct, agentAddress, registerName)) {
+    return direct;
+  }
+
+  const list = await omni.colony.getAgents();
+  if (isOkApiResult(list) && Array.isArray(list.data.agents)) {
+    const match = list.data.agents.find((agent) => {
+      const record = agent as Record<string, unknown>;
+      return typeof record.address === "string"
+        && record.address.toLowerCase() === agentAddress.toLowerCase();
+    });
+    if (match) {
+      return { ok: true, status: list.status, data: match };
+    }
+  }
+
+  return direct;
 }

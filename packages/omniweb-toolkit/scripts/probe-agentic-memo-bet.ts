@@ -7,7 +7,7 @@
  * send 5 DEM to the active pool with a HIVE_BET memo on the native transfer.
  *
  * Default behavior is confirm-only and does not broadcast. Passing --execute
- * broadcasts one 5 DEM bet and polls pool readback.
+ * broadcasts one 5 DEM bet and polls active-pool plus resolved winners readback.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -37,6 +37,20 @@ interface PoolSnapshot {
   bets: JsonRecord[];
 }
 
+interface WinnersSnapshot {
+  asset: string;
+  count: number;
+  winners: JsonRecord[];
+}
+
+type ReadbackMatch =
+  | "active-txHash"
+  | "active-bettor-price"
+  | "active-pool-count"
+  | "winner-txHash"
+  | "winner-bettor-price"
+  | null;
+
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
@@ -52,6 +66,8 @@ Options:
   --colony-url URL          SuperColony base URL (default: ${DEFAULT_COLONY_URL})
   --poll-ms N               Execute-mode pool polling interval (default: ${DEFAULT_POLL_MS})
   --timeout-ms N            Execute-mode pool polling timeout (default: ${DEFAULT_TIMEOUT_MS})
+  --check-tx HASH           Check active-pool/winners readback for an existing tx without signing or spending
+  --bettor ADDRESS          Optional bettor address for --check-tx fallback matching
   --execute                 Broadcast one real DEM bet; omitted means confirm-only/no spend
   --help, -h                Show this help
 
@@ -69,6 +85,8 @@ for (const flag of [
   "--colony-url",
   "--poll-ms",
   "--timeout-ms",
+  "--check-tx",
+  "--bettor",
 ]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
@@ -88,6 +106,8 @@ const colonyUrl = stripTrailingSlash(
 );
 const pollMs = getPositiveIntegerArg("--poll-ms", DEFAULT_POLL_MS);
 const timeoutMs = getPositiveIntegerArg("--timeout-ms", DEFAULT_TIMEOUT_MS);
+const checkTx = getStringArg(args, "--check-tx");
+const checkBettor = getStringArg(args, "--bettor") ?? "";
 const execute = hasFlag(args, "--execute");
 
 if (amount < DEFAULT_AMOUNT) {
@@ -96,13 +116,45 @@ if (amount < DEFAULT_AMOUNT) {
 }
 
 try {
+  const before = await fetchPool(colonyUrl, asset, horizon);
+
+  if (checkTx) {
+    const readback = await pollPoolReadback({
+      colonyUrl,
+      asset,
+      horizon,
+      txHash: checkTx,
+      bettor: checkBettor,
+      predictedPrice,
+      before,
+      timeoutMs,
+      pollMs,
+      amount,
+    });
+    console.log(JSON.stringify({
+      attempted: false,
+      ok: readback.ok,
+      mode: "readback-check-no-broadcast",
+      officialPath: "native memo transfer; no /api/bets/place registration call",
+      txHash: checkTx,
+      expected: {
+        asset,
+        horizon,
+        predictedPrice,
+        amount,
+        bettor: checkBettor || null,
+      },
+      readback,
+    }, null, 2));
+    process.exit(readback.ok ? 0 : 1);
+  }
+
   const env = { ...readEnv(envPath), ...process.env };
   const mnemonic = env.DEMOS_MNEMONIC;
   if (!mnemonic) {
     throw new Error(`DEMOS_MNEMONIC not found in ${resolve(envPath)} or process env`);
   }
 
-  const before = await fetchPool(colonyUrl, asset, horizon);
   const memo = buildBetMemo(asset, predictedPrice, { horizon });
   const demos = new Demos();
   await demos.connect(rpcUrl);
@@ -132,7 +184,7 @@ try {
         valid: confirmRecord?.valid ?? null,
         message: confirmRecord?.message ?? null,
       },
-      next: "Re-run with --execute to broadcast one real 5 DEM bet and poll pool readback.",
+      next: "Re-run with --execute to broadcast one real 5 DEM bet and poll active-pool plus winners readback.",
     }, null, 2));
     process.exit(confirmRecord?.valid ? 0 : 1);
   }
@@ -152,6 +204,7 @@ try {
     before,
     timeoutMs,
     pollMs,
+    amount,
   });
   const chainAfter = await getLastBlock(demos);
 
@@ -261,23 +314,44 @@ async function pollPoolReadback(opts: {
   before: PoolSnapshot;
   timeoutMs: number;
   pollMs: number;
+  amount: number;
 }): Promise<{
   ok: boolean;
   polls: number;
-  matchedBy: "txHash" | "bettor-price" | "pool-count" | null;
+  matchedBy: ReadbackMatch;
   before: ReturnType<typeof summarizePool>;
-  after: ReturnType<typeof summarizePool>;
+  activeAfter: ReturnType<typeof summarizePool>;
+  winners: {
+    count: number;
+    matched: ReturnType<typeof summarizeWinner> | null;
+  };
 }> {
   const deadline = Date.now() + opts.timeoutMs;
   let polls = 0;
   let after = opts.before;
-  let matchedBy: "txHash" | "bettor-price" | "pool-count" | null = null;
+  let winners: WinnersSnapshot = { asset: opts.asset, count: 0, winners: [] };
+  let matchedWinner: JsonRecord | null = null;
+  let matchedBy: ReadbackMatch = null;
 
   while (Date.now() <= deadline) {
     await sleep(polls === 0 ? 0 : opts.pollMs);
     polls += 1;
     after = await fetchPool(opts.colonyUrl, opts.asset, opts.horizon);
-    matchedBy = poolMatch(after, opts);
+    winners = await fetchWinners(opts.colonyUrl, opts.asset);
+
+    const poolMatchedBy = poolMatch(after, opts);
+    if (poolMatchedBy) {
+      matchedBy = poolMatchedBy;
+      break;
+    }
+
+    const winnerMatchResult = winnerMatch(winners.winners, opts);
+    if (winnerMatchResult.matchedBy) {
+      matchedBy = winnerMatchResult.matchedBy;
+      matchedWinner = winnerMatchResult.winner;
+      break;
+    }
+
     if (matchedBy) break;
   }
 
@@ -286,29 +360,56 @@ async function pollPoolReadback(opts: {
     polls,
     matchedBy,
     before: summarizePool(opts.before),
-    after: summarizePool(after),
+    activeAfter: summarizePool(after),
+    winners: {
+      count: winners.count,
+      matched: matchedWinner ? summarizeWinner(matchedWinner) : null,
+    },
   };
 }
 
 function poolMatch(
   pool: PoolSnapshot,
-  expected: { txHash: string; bettor: string; predictedPrice: number; before: PoolSnapshot },
-): "txHash" | "bettor-price" | "pool-count" | null {
+  expected: { txHash: string; bettor: string; predictedPrice: number; before: PoolSnapshot; amount: number },
+): "active-txHash" | "active-bettor-price" | "active-pool-count" | null {
   const normalizedTxHash = expected.txHash.toLowerCase();
   const normalizedBettor = expected.bettor.toLowerCase();
   for (const bet of pool.bets) {
     const betTxHash = readString(bet.txHash) ?? readString(bet.tx_hash) ?? readString(bet.transactionHash);
-    if (betTxHash?.toLowerCase() === normalizedTxHash) return "txHash";
+    if (betTxHash?.toLowerCase() === normalizedTxHash) return "active-txHash";
     const bettor = readString(bet.bettor) ?? readString(bet.address) ?? readString(bet.agent) ?? readString(bet.author);
     const price = readNumber(bet.predictedPrice) ?? readNumber(bet.price) ?? readNumber(bet.prediction);
     if (bettor?.toLowerCase() === normalizedBettor && price === expected.predictedPrice) {
-      return "bettor-price";
+      return "active-bettor-price";
     }
   }
-  if (pool.totalBets > expected.before.totalBets || pool.totalDem >= expected.before.totalDem + DEFAULT_AMOUNT) {
-    return "pool-count";
+  if (pool.totalBets > expected.before.totalBets || pool.totalDem >= expected.before.totalDem + expected.amount) {
+    return "active-pool-count";
   }
   return null;
+}
+
+function winnerMatch(
+  winners: JsonRecord[],
+  expected: { txHash: string; bettor: string; predictedPrice: number; horizon: string },
+): { matchedBy: "winner-txHash" | "winner-bettor-price" | null; winner: JsonRecord | null } {
+  const normalizedTxHash = expected.txHash.toLowerCase();
+  const normalizedBettor = expected.bettor.toLowerCase();
+  for (const winner of winners) {
+    const winnerTxHash = readString(winner.txHash) ?? readString(winner.tx_hash) ?? readString(winner.transactionHash);
+    if (winnerTxHash?.toLowerCase() === normalizedTxHash) {
+      return { matchedBy: "winner-txHash", winner };
+    }
+
+    const bettor = readString(winner.bettor) ?? readString(winner.address) ?? readString(winner.agent) ?? readString(winner.author);
+    const price = readNumber(winner.predictedPrice) ?? readNumber(winner.price) ?? readNumber(winner.prediction);
+    const horizon = readString(winner.horizon);
+    if (bettor?.toLowerCase() === normalizedBettor && price === expected.predictedPrice && horizon === expected.horizon) {
+      return { matchedBy: "winner-bettor-price", winner };
+    }
+  }
+
+  return { matchedBy: null, winner: null };
 }
 
 function summarizePool(pool: PoolSnapshot) {
@@ -320,6 +421,49 @@ function summarizePool(pool: PoolSnapshot) {
     totalDem: pool.totalDem,
     roundEnd: pool.roundEnd,
     betCount: pool.bets.length,
+  };
+}
+
+function summarizeWinner(winner: JsonRecord) {
+  return {
+    txHash: readString(winner.txHash) ?? readString(winner.tx_hash) ?? readString(winner.transactionHash) ?? null,
+    asset: readString(winner.asset) ?? null,
+    bettor: readString(winner.bettor) ?? readString(winner.address) ?? readString(winner.agent) ?? readString(winner.author) ?? null,
+    predictedPrice: readNumber(winner.predictedPrice) ?? readNumber(winner.price) ?? readNumber(winner.prediction) ?? null,
+    amount: readNumber(winner.amount) ?? null,
+    roundEnd: readNumber(winner.roundEnd) ?? null,
+    status: readString(winner.status) ?? null,
+    payout: readNumber(winner.payout) ?? null,
+    payoutTxHash: readString(winner.payoutTxHash) ?? null,
+    blockNumber: readNumber(winner.blockNumber) ?? null,
+    horizon: readString(winner.horizon) ?? null,
+  };
+}
+
+async function fetchWinners(colonyUrl: string, asset: string): Promise<WinnersSnapshot> {
+  const url = `${colonyUrl}/api/bets?view=winners&asset=${encodeURIComponent(asset)}`;
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const body = await response.text();
+  if (!response.ok) {
+    throw new Error(`winners fetch failed ${response.status}: ${body.slice(0, 500)}`);
+  }
+  const parsed = JSON.parse(body) as unknown;
+  if (Array.isArray(parsed)) {
+    return {
+      asset,
+      count: parsed.length,
+      winners: parsed.filter(isRecord),
+    };
+  }
+  const record = readRecord(parsed);
+  if (!record) {
+    return { asset, count: 0, winners: [] };
+  }
+  const winners = Array.isArray(record.winners) ? record.winners.filter(isRecord) : [];
+  return {
+    asset: readString(record.asset) ?? asset,
+    count: readNumber(record.count) ?? winners.length,
+    winners,
   };
 }
 

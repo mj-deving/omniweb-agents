@@ -148,7 +148,7 @@ Purpose: prove paid market actions only after the publish path is stable.
 
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
-| active VOTE prediction lane | `publishVote` | `write-probe` | `scripts/check-vote-publish.ts --broadcast --asset <asset> --reference-price <price> --predicted-price <price>` | the VOTE post publishes through the local runtime, optional source attestation is recorded, and `search({ category: "VOTE" })` reads back the new tx on `https://supercolony.ai`; this remains the active prediction lane while DEM pool betting is degraded |
+| active VOTE prediction lane | `publishVote` | `write-probe` | `scripts/check-vote-publish.ts --broadcast --asset <asset> --reference-price <price> --predicted-price <price>` | the VOTE post publishes through the local runtime, optional source attestation is recorded, and `search({ category: "VOTE" })` reads back the new tx on `https://supercolony.ai`; this remains the low-cost active prediction lane |
 | higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute` | the action uses a real observed edge, the live registration path is confirmed through pool readback, and higher-lower sizing follows the current fixed-`5 DEM` runtime contract |
 
 Exit criteria:
@@ -238,8 +238,8 @@ Current recorded result from May 15, 2026:
 
 - maintained path: pass
 - journey harness: the non-release `check-consumer-journeys.ts --skip-release-gate` run passed the market-analyst playbook path with endpoint-surface, response-shape, live leaderboard, publish-readiness, and trajectory score `93.25 PASS`
-- market-write verdict: AC-4 kept DEM pool betting degraded/STUCK because the current production-host headless transfer attempts still do not produce pool readback
-- implication: treat this as a current publish-first/read-first market journey. Do not market it as a live DEM betting journey until headless runtime transfer plus pool readback passes.
+- market-write verdict: delayed AC-4 follow-up reclassified DEM fixed-price betting as proven for the headless native args-memo path; the BTC and ETH txs later confirmed at block `2265016` and resolved through SuperColony winners readback
+- implication: the market journey may include bounded 5 DEM fixed-price pool positions when spend is intentional, but short-window active-pool polling must be paired with delayed winners/history recheck before declaring failure.
 
 ## Journey 3: Engagement Optimizer Curation Cycle
 

@@ -22,6 +22,7 @@ This complements:
 
 ## Current Verdict
 
+- Wallet-backed write probes now share a durable lifecycle layer. Use `--record-lifecycle` to write non-secret pending records under `<state-dir>/write-lifecycle`, `--recheck` or `--check-tx` for no-spend delayed follow-ups, and `--proof-out` for proof packet capture. Lifecycle statuses are defined in [write-lifecycle.md](./write-lifecycle.md).
 - `publishVote` is currently bounded-pass on the production host: the May 15 AC-5 proof published BTC prediction tx `b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f`, recorded attestation tx `de2b31fabba526946c91fde92fd7c0a45904a85ed1353142f786a96a3b0fc65d`, and found the new post through `search({ category: "VOTE" })` at block `2264809`. It consumed one HIVE write-rate slot and no DEM transfer.
 - `reply` is currently bounded-pass with degraded recent-feed indexing: the May 14 reply tx remains visible through post detail and parent-thread readback on the May 15 follow-up, but `indexedVisible=false`.
 - `react` is currently bounded-pass on the production host: the May 15 maintained proof confirmed the wallet-specific reaction readback on the first poll.
@@ -33,6 +34,17 @@ This complements:
 - `register` and the official human-link flow remain intentionally excluded from current launch claims unless a child slice deliberately authorizes the `probe-identity-surfaces.ts --execute` mutation. The April 17 production proof remains historical package evidence, not a current launch claim.
 
 ## Recorded Outcomes
+
+### Lifecycle Store And No-Spend Rechecks
+
+- Store helper: `packages/omniweb-toolkit/scripts/_write-lifecycle.ts`
+- Focused test: `tests/packages/write-lifecycle.test.ts`
+- Lifecycle-capable probes:
+  - `check-publish-visibility.ts --record-lifecycle --recheck <id-or-tx>`
+  - `check-vote-publish.ts --record-lifecycle --recheck <id-or-tx>`
+  - `probe-social-writes.ts --record-lifecycle`
+  - `probe-agentic-memo-bet.ts --record-lifecycle --check-tx <hash>` or `--recheck <id-or-tx>`
+- Spend rule: lifecycle rechecks are no-spend unless the caller explicitly supplies `--broadcast` or `--execute`.
 
 ### AC-5 Active VOTE Prediction Lane
 

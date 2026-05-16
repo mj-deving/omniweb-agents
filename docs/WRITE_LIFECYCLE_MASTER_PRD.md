@@ -216,14 +216,14 @@ Declared by the source contract as Playwright/browser automation and browser wal
 
 ## §9. Acceptance Criteria
 
-- [ ] **AC-1** Write lifecycle vocabulary and state transitions are documented for all maintained write families. Test recipe: update package references and run doc/matrix checks.
-- [ ] **AC-2** A local pending-write store records tx hash, wallet, action family, command context, spend budget, expected readback surfaces, first-seen block data, and next recheck policy. Test recipe: focused unit tests with temp state dirs.
-- [ ] **AC-3** Existing publish/reply/VOTE visibility probes can write and resume pending records without changing their normal no-spend default. Test recipe: focused probe tests plus dry-run command checks.
-- [ ] **AC-4** Existing tip/reaction probes use the shared lifecycle vocabulary, preserving immediate reaction readback and degraded tip stats accurately. Test recipe: focused tests and/or no-spend probe replay.
-- [ ] **AC-5** Fixed-price BET uses delayed active-pool plus winners/history readback as the maintained proof model; higher/lower is either upgraded with the same model or explicitly left pending. Test recipe: no-spend `--check-tx` recheck of known fixed-price txs and higher/lower verdict update.
-- [ ] **AC-6** Operator-facing proof packets include chain state, explorer block/time when available, product readback state, elapsed time, block delta, and final verdict. Test recipe: proof packet fixture/unit test plus one generated packet.
-- [ ] **AC-7** Verification docs, launch matrix, package guidance, roadmap, and colony-operator re-entry doctrine agree on the lifecycle model. Test recipe: doc diff, `check:verification-matrix`, and package/frontdoor gates when relevant.
-- [ ] **AC-8** One bounded live or delayed no-spend replay validates the lifecycle path end to end from pending record to final indexed/resolved verdict. Test recipe: record the command, output, and proof packet in §13.
+- [x] **AC-1** Write lifecycle vocabulary and state transitions are documented for all maintained write families. Test recipe: update package references and run doc/matrix checks.
+- [x] **AC-2** A local pending-write store records tx hash, wallet, action family, command context, spend budget, expected readback surfaces, first-seen block data, and next recheck policy. Test recipe: focused unit tests with temp state dirs.
+- [x] **AC-3** Existing publish/reply/VOTE visibility probes can write and resume pending records without changing their normal no-spend default. Test recipe: focused probe tests plus dry-run command checks.
+- [x] **AC-4** Existing tip/reaction probes use the shared lifecycle vocabulary, preserving immediate reaction readback and degraded tip stats accurately. Test recipe: focused tests and/or no-spend probe replay.
+- [x] **AC-5** Fixed-price BET uses delayed active-pool plus winners/history readback as the maintained proof model; higher/lower is either upgraded with the same model or explicitly left pending. Test recipe: no-spend `--check-tx` recheck of known fixed-price txs and higher/lower verdict update.
+- [x] **AC-6** Operator-facing proof packets include chain state, explorer block/time when available, product readback state, elapsed time, block delta, and final verdict. Test recipe: proof packet fixture/unit test plus one generated packet.
+- [x] **AC-7** Verification docs, launch matrix, package guidance, roadmap, and colony-operator re-entry doctrine agree on the lifecycle model. Test recipe: doc diff, `check:verification-matrix`, and package/frontdoor gates when relevant.
+- [x] **AC-8** One bounded live or delayed no-spend replay validates the lifecycle path end to end from pending record to final indexed/resolved verdict. Test recipe: record the command, output, and proof packet in §13.
 
 ## §10. Anti-Requirements
 
@@ -252,16 +252,16 @@ Declared by the source contract as Playwright/browser automation and browser wal
 
 The goal is complete when all of these are true:
 
-- [ ] Every stable acceptance anchor in §9 is checked with evidence.
-- [ ] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/WRITE_LIFECYCLE_GOAL_BRIEF.md docs/WRITE_LIFECYCLE_MASTER_PRD.md`.
-- [ ] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
-- [ ] Focused tests for touched code exit 0.
-- [ ] Full package gate exits 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
-- [ ] Docs/matrix gate exits 0: `npm --prefix packages/omniweb-toolkit run check:verification-matrix`.
-- [ ] Live read gate exits 0: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
-- [ ] AC-8 final lifecycle validation is recorded with command, output path, proof packet, and spend/no-spend status.
-- [ ] `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`, this PRD, package references, Beads, and roadmap agree on pass/degraded/pending state.
-- [ ] §13 contains a completion report naming changed files, PRs, commits, and verification output.
+- [x] Every stable acceptance anchor in §9 is checked with evidence.
+- [x] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/WRITE_LIFECYCLE_GOAL_BRIEF.md docs/WRITE_LIFECYCLE_MASTER_PRD.md`.
+- [x] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
+- [x] Focused tests for touched code exit 0.
+- [x] Full package gate exits 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
+- [x] Docs/matrix gate exits 0: `npm --prefix packages/omniweb-toolkit run check:verification-matrix`.
+- [x] Live read gate exits 0: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
+- [x] AC-8 final lifecycle validation is recorded with command, output path, proof packet, and spend/no-spend status.
+- [x] `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`, this PRD, package references, Beads, and roadmap agree on pass/degraded/pending state.
+- [x] §13 contains a completion report naming changed files, PRs, commits, and verification output.
 
 ## §12. Assumptions And Open Questions
 
@@ -278,3 +278,51 @@ Codex appends timestamped progress notes here during `/goal` runs:
 - Verification command and result.
 - STUCK note after repeated failures on the same blocker.
 - Completion report with changed files, commits, PRs, and final gates.
+
+### 2026-05-16T08:27Z - AC-1 Through AC-7 Closed
+
+- AC-1: Added shared lifecycle vocabulary/status documentation in `packages/omniweb-toolkit/references/write-lifecycle.md` and routed it from `SKILL.md`, `README.md`, `references/index.md`, `verification-matrix.md`, `launch-proving-matrix.md`, `write-surface-sweep.md`, and the colony-operator re-entry memory.
+- AC-2: Added `packages/omniweb-toolkit/scripts/_write-lifecycle.ts`, a local JSON lifecycle store under `<state-dir>/write-lifecycle` with records, transitions, observations, redaction for secret-like keys, and proof packet generation. Focused test: `tests/packages/write-lifecycle.test.ts`.
+- AC-3: Added lifecycle record/recheck/proof wiring to `check-publish-visibility.ts` and `check-vote-publish.ts`; normal defaults remain no-spend, and live writes still require `--broadcast`.
+- AC-4: Added lifecycle record/proof wiring to `probe-social-writes.ts` for reaction, optional reply, and optional tip execution; tip can close as `degraded` when tx confirmation exists but product stats lag.
+- AC-5: Added lifecycle record/proof wiring to `probe-agentic-memo-bet.ts`; fixed-price BET rechecks distinguish active-pool `indexed` from winners/history `resolved`. Higher/lower is schema-supported but remains current-proof pending in docs.
+- AC-6: Proof packets include command, commit, wallet, action family, action keys, budget, chain/product observations, elapsed time, block delta when observations expose blocks, and terminal verdict.
+- AC-7: Regenerated registry exports after reference updates with `npm --prefix packages/omniweb-toolkit run export:registry`; `npm --prefix packages/omniweb-toolkit run check:verification-matrix` passed.
+
+### 2026-05-16T08:26Z - AC-8 No-Spend Lifecycle Validation
+
+- Command: `node --import tsx packages/omniweb-toolkit/scripts/probe-agentic-memo-bet.ts --asset BTC --horizon 30m --predicted-price 90000 --amount 5 --check-tx 07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440 --record-lifecycle --state-dir /tmp/omni-write-lifecycle-goal --proof-out /tmp/omni-write-lifecycle-goal/fixed-bet-proof.json --timeout-ms 15000 --poll-ms 3000`
+- Result: exit `0`, no broadcast, `attempted=false`, spend status `no-spend`.
+- Readback: `matchedBy="winner-txHash"`, `winners.matched.blockNumber=2265016`, `status="resolved"`, `finalVerdict.verdict="pass"`.
+- Proof packet: `/tmp/omni-write-lifecycle-goal/fixed-bet-proof.json`.
+
+### 2026-05-16T08:27Z - Additional No-Spend VOTE Recheck
+
+- Command: `node --import tsx packages/omniweb-toolkit/scripts/check-vote-publish.ts --recheck b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f --state-dir /tmp/omni-write-lifecycle-goal --proof-out /tmp/omni-write-lifecycle-goal/vote-proof.json --verify-timeout-ms 15000 --verify-poll-ms 5000 --verify-limit 75`
+- Result: exit `0`, no broadcast, `mode="lifecycle-recheck"`, `status="indexed"`, `finalVerdict.verdict="pass"`.
+- Proof packet: `/tmp/omni-write-lifecycle-goal/vote-proof.json`.
+
+### 2026-05-16T08:29Z - Definition Of Done Gates
+
+- `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/WRITE_LIFECYCLE_GOAL_BRIEF.md docs/WRITE_LIFECYCLE_MASTER_PRD.md`: PASS.
+- `npx tsc --noEmit --pretty false`: exit `0`.
+- Focused tests: `npx vitest run tests/packages/write-lifecycle.test.ts tests/packages/social-write-proof.test.ts tests/packages/publish-visibility.test.ts tests/packages/market-write-proof.test.ts`: `4` files, `28` tests passed.
+- `npm --prefix packages/omniweb-toolkit run check:package`: exit `0`.
+- `npm --prefix packages/omniweb-toolkit run check:evals`: exit `0`, `30` passed, `0` warned, `0` failed.
+- `npm --prefix packages/omniweb-toolkit run check:verification-matrix`: exit `0`.
+- `npm --prefix packages/omniweb-toolkit run check:live`: exit `0`.
+- `npm --prefix packages/omniweb-toolkit run check:live:detailed`: exit `0`.
+
+### 2026-05-16T08:29Z - Completion Report
+
+- Changed code/tests: `packages/omniweb-toolkit/scripts/_write-lifecycle.ts`, `check-publish-visibility.ts`, `check-vote-publish.ts`, `probe-agentic-memo-bet.ts`, `probe-social-writes.ts`, `tests/packages/write-lifecycle.test.ts`.
+- Changed package references/docs: `packages/omniweb-toolkit/references/write-lifecycle.md`, `references/index.md`, `verification-matrix.md`, `launch-proving-matrix.md`, `write-surface-sweep.md`, `uw66.6-agentic-memo-bet-readback-2026-05-16.md`, `README.md`, `SKILL.md`, colony-operator re-entry memory, generated registry reference copies, and this PRD.
+- PR: `#411` - https://github.com/mj-deving/omniweb-agents/pull/411.
+- Commit: `43a6007d` (`lifecycle: add durable write readback records`).
+
+### 2026-05-16T08:46Z - PR Review Fixes
+
+- Codex review thread `3252532182`: fixed in `919cce07` by making fixed-price BET lifecycle rechecks use the stored record's asset, horizon, predicted price, amount, memo, and bettor before pool fetch/readback/proof updates.
+- Codex review thread `3252532183`: fixed in `919cce07` by making publish/reply lifecycle rechecks exit `0` only for `indexed`; post-detail-only visibility remains recorded as `degraded` but no longer passes the recheck.
+- Codex review thread `3252532184`: fixed in `919cce07` by preserving `spendStatus="planned"` for failed/no-tx VOTE publish attempts and only marking `executed` when publish succeeds with a tx hash.
+- Review-fix gates: `git diff --check`, `npx tsc --noEmit --pretty false`, focused lifecycle/social/publish/market tests (`28` passed), and `npm --prefix packages/omniweb-toolkit run check:package` all exited `0`.

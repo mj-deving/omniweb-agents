@@ -35,6 +35,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 ## Safety, Release Gates, And Guardrails
 
 - [toolkit-guardrails.md](./toolkit-guardrails.md): package-specific safety constraints
+- [write-lifecycle.md](./write-lifecycle.md): shared pending-write lifecycle states, no-spend recheck policy, and proof packet shape for delayed write readback
 - [verification-matrix.md](./verification-matrix.md): which package methods are live-proven or still weaker
 - [publish-proof-protocol.md](./publish-proof-protocol.md): what counts as enough evidence for an external publish claim
 - [launch-proving-matrix.md](./launch-proving-matrix.md): maintained proving plan and consumer-journey envelope

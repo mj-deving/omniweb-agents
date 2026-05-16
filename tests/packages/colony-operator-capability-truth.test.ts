@@ -90,4 +90,3 @@ describe("colony operator capability truth", () => {
     expect(JSON.stringify(supervised)).not.toMatch(/mnemonic|challengeSecret|approvalToken/i);
   });
 });
-

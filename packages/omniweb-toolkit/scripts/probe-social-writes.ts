@@ -41,6 +41,17 @@ import {
   tipSpendObserved,
   verifyPublishVisibility,
 } from "./_write-proof-shared.js";
+import {
+  buildWriteLifecycleProofPacket,
+  classifyLifecycleStatus,
+  createWriteLifecycleStore,
+  finalVerdictForStatus,
+  lifecycleFlagEnabled,
+  readCurrentGitCommit,
+  type WriteActionFamily,
+  type WriteLifecycleSurface,
+  type WriteLifecycleStatus,
+} from "./_write-lifecycle.ts";
 
 const DEFAULT_REPLY_CATEGORY = "ANALYSIS";
 const DEFAULT_REPLY_ATTEST_URL = "https://blockchain.info/ticker";
@@ -71,6 +82,8 @@ Options:
   --poll-ms N             Poll interval for readback polling (default: ${DEFAULT_POLL_MS})
   --base-url URL          SuperColony base URL for direct reaction readback (default: ${DEFAULT_BASE_URL})
   --state-dir PATH        Override state directory for runtime guards
+  --record-lifecycle      Persist lifecycle records for executed reaction/reply/tip writes
+  --proof-out PATH        Write lifecycle proof packets to a directory or single JSON path
   --allow-insecure        Allow HTTP attestation URLs (local dev only)
   --execute               Perform the real live proof sweep
   --help, -h              Show this help
@@ -92,6 +105,7 @@ for (const flag of [
   "--poll-ms",
   "--base-url",
   "--state-dir",
+  "--proof-out",
 ]) {
   const index = args.indexOf(flag);
   if (index >= 0 && !args[index + 1]) {
@@ -111,6 +125,8 @@ const tipTimeoutMs = getIntegerArg("--tip-timeout-ms", DEFAULT_TIP_TIMEOUT_MS);
 const pollMs = getIntegerArg("--poll-ms", DEFAULT_POLL_MS);
 const baseUrl = getStringArg(args, "--base-url") ?? DEFAULT_BASE_URL;
 const stateDir = getStringArg(args, "--state-dir") || undefined;
+const recordLifecycle = lifecycleFlagEnabled(args);
+const proofOut = getStringArg(args, "--proof-out");
 const allowInsecureUrls = hasFlag(args, "--allow-insecure");
 const execute = hasFlag(args, "--execute");
 const includeTip = hasFlag(args, "--include-tip");
@@ -132,6 +148,7 @@ for (const [label, value] of [
 try {
   const connect = await loadConnect();
   const omni = await connect({ stateDir, allowInsecureUrls });
+  const lifecycleStore = recordLifecycle ? createWriteLifecycleStore({ stateDir }) : null;
   const token = await omni.runtime.getToken();
   const feed = await omni.colony.getFeed({ limit: feedLimit });
   if (!feed?.ok) {
@@ -265,6 +282,82 @@ try {
     ))
     && (!includeTip || (!!tipResult?.ok && !!tipVerification.attempted && tipVerification.ok));
 
+  const lifecycle = lifecycleStore
+    ? await Promise.all([
+        persistSocialLifecycle(lifecycleStore, {
+          family: "react",
+          walletAddress: omni.address ?? null,
+          txHash: candidate.txHash,
+          targetPostHash: candidate.txHash,
+          status: classifyLifecycleStatus({
+            txHash: candidate.txHash,
+            indexed: Boolean(reactionVerification.attempted && reactionVerification.ok),
+            expired: Boolean(reactionVerification.attempted && !reactionVerification.ok),
+            failed: !reactionResult.ok,
+          }),
+          expectedReadback: ["reaction-envelope"],
+          budget: { unit: "none", spendStatus: "executed" },
+          observation: {
+            surface: "reaction-envelope",
+            ok: Boolean(reactionVerification.attempted && reactionVerification.ok),
+            data: reactionVerification,
+          },
+          metadata: { reactionType: "agree" },
+        }, proofOut),
+        includeTip && tipResult
+          ? persistSocialLifecycle(lifecycleStore, {
+              family: "tip",
+              walletAddress: omni.address ?? null,
+              txHash: tipResult.ok ? tipResult.data?.txHash : undefined,
+              targetPostHash: candidate.txHash,
+              status: classifyLifecycleStatus({
+                txHash: tipResult.ok ? tipResult.data?.txHash : undefined,
+                chainConfirmed: Boolean((tipVerification as { txConfirmed?: boolean }).txConfirmed),
+                indexed: Boolean(tipVerification.attempted && tipVerification.ok),
+                degraded: Boolean(
+                  tipVerification.attempted
+                  && !tipVerification.ok
+                  && (tipVerification as { txConfirmed?: boolean }).txConfirmed
+                ),
+                expired: Boolean(tipVerification.attempted && !tipVerification.ok),
+                failed: !tipResult.ok,
+              }),
+              expectedReadback: ["chain-rpc", "post-tip-stats", "recipient-tip-stats", "balance"],
+              budget: { amount: tipAmount, unit: "DEM", ceiling: tipAmount, spendStatus: tipResult.ok ? "executed" : "planned" },
+              observation: {
+                surface: "post-tip-stats",
+                ok: Boolean(tipVerification.attempted && tipVerification.ok),
+                data: tipVerification,
+              },
+              metadata: { targetAuthor: candidate.author },
+            }, proofOut)
+          : null,
+        replyText && replyWrite
+          ? persistSocialLifecycle(lifecycleStore, {
+              family: "reply",
+              walletAddress: omni.address ?? null,
+              txHash: replyWrite.txHash,
+              attestationTxHash: replyWrite.attestationTxHash,
+              targetPostHash: candidate.txHash,
+              status: classifyLifecycleStatus({
+                txHash: replyWrite.txHash,
+                indexed: Boolean(replyVerification.attempted && replyVerification.ok),
+                degraded: Boolean(replyVerification.attempted && !replyVerification.ok && replyWrite.accepted),
+                failed: !replyWrite.accepted,
+              }),
+              expectedReadback: ["post-detail", "parent-thread", "recent-feed"],
+              budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: replyWrite.accepted ? "executed" : "planned" },
+              observation: {
+                surface: "parent-thread",
+                ok: Boolean(replyVerification.attempted && replyVerification.ok),
+                data: replyVerification,
+              },
+              metadata: { text: replyText, category: replyCategory, attestUrl: replyAttestUrl },
+            }, proofOut)
+          : null,
+      ].filter(Boolean))
+    : null;
+
   console.log(JSON.stringify({
     attempted: true,
     ok: overallOk,
@@ -289,12 +382,69 @@ try {
       result: summarizeToolResult(replyResult),
       verification: replyVerification,
     },
+    lifecycle,
     }, null, 2));
 
   process.exit(overallOk ? 0 : 1);
 } catch (error) {
   console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
+}
+
+async function persistSocialLifecycle(
+  store: ReturnType<typeof createWriteLifecycleStore>,
+  opts: {
+    family: WriteActionFamily;
+    walletAddress: string | null;
+    txHash?: string;
+    attestationTxHash?: string;
+    targetPostHash?: string;
+    status: WriteLifecycleStatus;
+    expectedReadback: WriteLifecycleSurface[];
+    budget: Parameters<ReturnType<typeof createWriteLifecycleStore>["create"]>[0]["budget"];
+    observation: { surface: WriteLifecycleSurface; ok: boolean; data: unknown };
+    metadata?: Record<string, unknown>;
+  },
+  proofOut?: string,
+): Promise<Record<string, unknown>> {
+  const record = await store.create({
+    actionFamily: opts.family,
+    walletAddress: opts.walletAddress,
+    command: process.argv.join(" "),
+    commit: readCurrentGitCommit(),
+    budget: opts.budget,
+    txHash: opts.txHash,
+    attestationTxHash: opts.attestationTxHash,
+    targetPostHash: opts.targetPostHash,
+    expectedReadback: opts.expectedReadback,
+    status: opts.txHash ? "broadcasted" : "planned",
+    metadata: opts.metadata,
+  });
+  const updated = await store.update(record.id, {
+    status: opts.status,
+    transitionReason: `${opts.family} lifecycle observation: ${opts.status}`,
+    observation: {
+      surface: opts.observation.surface,
+      status: opts.status,
+      ok: opts.observation.ok,
+      summary: `${opts.family} lifecycle observation reached ${opts.status}`,
+      data: opts.observation.data,
+    },
+    finalVerdict: finalVerdictForStatus(opts.status)
+      ? {
+          verdict: finalVerdictForStatus(opts.status)!,
+          rationale: `${opts.family} lifecycle observation reached ${opts.status}`,
+          at: new Date().toISOString(),
+        }
+      : undefined,
+  });
+  const proofPacket = buildWriteLifecycleProofPacket(updated);
+  const proofPath = await store.writeProofPacket(
+    updated,
+    proofPacket,
+    proofOut && !proofOut.endsWith(".json") ? `${proofOut.replace(/\/+$/, "")}/${updated.id}.proof.json` : proofOut,
+  );
+  return { record: updated, proofPath, proofPacket };
 }
 
 function getIntegerArg(flag: string, fallback: number): number {

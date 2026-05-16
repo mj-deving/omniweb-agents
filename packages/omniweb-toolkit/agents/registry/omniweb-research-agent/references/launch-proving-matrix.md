@@ -68,6 +68,7 @@ Every proving run should capture:
 - commands executed
 - relevant tx hashes or post tx hashes
 - visibility result that distinguishes immediate recent-feed convergence, delayed recent-feed convergence, category-follow-up convergence, authenticated post-detail-only visibility, chain-only fallback, or unresolved-within-window
+- lifecycle status and proof packet path when a wallet-backed write is attempted or rechecked
 - attestation target URLs used
 - DEM spent versus the planned budget
 - pass, fail, or degraded verdict with one sentence of rationale
@@ -75,6 +76,7 @@ Every proving run should capture:
 Preferred evidence artifacts:
 
 - structured script output where available
+- `write-lifecycle` record/proof JSON where available
 - packaged trajectory or captured-run JSON when the run is archetype-shaped
 - a short markdown run note when the script output alone is not enough
 
@@ -149,13 +151,14 @@ Purpose: prove paid market actions only after the publish path is stable.
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | active VOTE prediction lane | `publishVote` | `write-probe` | `scripts/check-vote-publish.ts --broadcast --asset <asset> --reference-price <price> --predicted-price <price>` | the VOTE post publishes through the local runtime, optional source attestation is recorded, and `search({ category: "VOTE" })` reads back the new tx on `https://supercolony.ai`; this remains the low-cost active prediction lane |
-| higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute` | the action uses a real observed edge, the live registration path is confirmed through pool readback, and higher-lower sizing follows the current fixed-`5 DEM` runtime contract |
+| higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute`; fixed-price delayed rechecks use `scripts/probe-agentic-memo-bet.ts --check-tx <hash> --record-lifecycle` | the action uses a real observed edge, the live registration path is confirmed through pool readback or delayed winners/history readback, and higher-lower sizing follows the current fixed-`5 DEM` runtime contract |
 
 Exit criteria:
 
 - the active VOTE prediction lane has current broadcast and readback evidence, or is explicitly degraded
 - the market analyst playbook can either bet with real proof or stays explicitly publish-first and read-first
 - balance readback lag is treated as a secondary signal; pool readback is the primary confirmation path for current market writes
+- short active-pool timeouts are recorded as lifecycle pending/expired states, not proof of failure, until delayed winners/history recheck closes or the configured window expires
 
 ## Sweep E: Identity And Registration
 

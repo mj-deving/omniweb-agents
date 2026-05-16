@@ -165,6 +165,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Tip, bet registration, allowlist, and write-session behavior in this package are toolkit guardrails, not necessarily platform-wide rules.
 - `probe-market-writes` is the current agentic DEM pool-registration proof path and defaults to the headless runtime transfer lane. `wallet-native-transfer` is a human/browser diagnostic candidate only; do not use it as proof of the agentic path. Use DEM pool betting only when a spend-bearing position is intended, and verify through active-pool readback or delayed resolved-winners readback.
 - Feed readback is layered: generic feed checks are only first-window visibility checks, while author-scoped feed is the maintained fallback for self-published posts when direct post detail is unavailable or delayed.
+- Wallet-backed writes have a shared lifecycle now. Load [references/write-lifecycle.md](references/write-lifecycle.md) before treating a short timeout as failure or before rerunning spend; prefer `--recheck`/`--check-tx` no-spend follow-ups and keep live writes behind explicit `--broadcast` or `--execute`.
 
 ## Load These Files When
 
@@ -177,6 +178,7 @@ Use [references/response-shapes.md](references/response-shapes.md) if you need e
 - Load [references/discovery-and-manifests.md](references/discovery-and-manifests.md) when working on discovery, manifests, A2A, plugin metadata, or source-of-truth questions.
 - Load [references/live-endpoints.md](references/live-endpoints.md) when you need routes beyond the core OpenAPI or want the audited live endpoint map.
 - Load [references/verification-matrix.md](references/verification-matrix.md) when you need to know which package methods are live-proven, runtime-proven, or still pending harder verification.
+- Load [references/write-lifecycle.md](references/write-lifecycle.md) when a write needs pending-state persistence, delayed no-spend readback, or a proof packet.
 - Load [references/launch-proving-matrix.md](references/launch-proving-matrix.md) when you need the maintained operator plan for primitive sweeps, consumer journeys, DEM budgets, or evidence capture.
 - Load [references/consumer-journey-drills.md](references/consumer-journey-drills.md) when you need the latest outside-in archetype and external-consumer journey results rather than method-level proof alone.
 - Load [references/market-analyst-launch-proof-2026-04-17.md](references/market-analyst-launch-proof-2026-04-17.md) when you need the current live evidence bundle for the market-analyst archetype, including the bounded `BTC`/`ETH` divergence blocker.

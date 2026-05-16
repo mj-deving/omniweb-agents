@@ -6,7 +6,7 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops band has bounded proofs for publish, reply, react, tip, VOTE prediction, and fixed-price DEM betting; the active goal is durable write-lifecycle/readback, and the gated post-lifecycle MegaGoal is a lifecycle-aware Colony Operator through multi-action runtime, identity participation, and outside-in consumer proof."
+summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops band has bounded proofs for publish, reply, react, tip, VOTE prediction, and fixed-price DEM betting; the write-lifecycle/readback layer now gives maintained probes durable pending records and no-spend delayed rechecks so delayed Demos/SuperColony indexing is not mistaken for write failure; and the gated post-lifecycle MegaGoal is a lifecycle-aware Colony Operator through multi-action runtime, identity participation, and outside-in consumer proof."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -57,7 +57,7 @@ Anti-drift rule:
 
 **Current execution rule:** freeze the thin waist for one live-ops wave — `PolicyActionRequest`, resolved intent statuses, and the execution/verification envelope stay stable unless a real run proves they are wrong. Move fast above that seam, then harden below it from observed failure rather than speculative contract churn.
 
-**Write lifecycle rule:** every live write now has two clocks: chain acceptance/finality and product-indexed readback. A tx hash or confirmation block is not sufficient for product success, but a short readback timeout is also not sufficient for failure. Maintained probes and runbooks must classify `pending-chain`, `pending-indexer`, `indexed`, `resolved`, and `degraded/expired` states explicitly.
+**Write lifecycle rule:** every live write now has two clocks: chain acceptance/finality and product-indexed readback. A tx hash or confirmation block is not sufficient for product success, but a short readback timeout is also not sufficient for failure. Maintained probes and runbooks must classify `planned`, `broadcasted`, `pending-chain`, `chain-confirmed`, `pending-indexer`, `indexed`, `resolved`, `degraded`, `expired`, and `failed` states explicitly, and prefer lifecycle `--recheck` / `--check-tx` no-spend follow-ups before spending again.
 
 ---
 
@@ -164,15 +164,15 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - prove bounded live `react` (`uw66.3`) ✅
 - prove bounded live `tip` (`uw66.4`) ✅
 - prove active VOTE prediction lane (AC-5) ✅
-- prove bounded fixed-price agentic DEM betting via headless native args-memo plus delayed winners readback (PR #409 / `omniweb-agents-dnoy`) ✅ pending merge
+- prove bounded fixed-price agentic DEM betting via headless native args-memo plus delayed winners readback (PR #409 / `omniweb-agents-dnoy`) ✅
 - prove one maintained operator cycle that can honestly choose among those actions
 
 #### Wave B.5 — durable write lifecycle and delayed readback
-- add a persisted pending-write ledger for every wallet-backed write family, not only BET
-- make write probes resumable by tx hash, post hash, asset/horizon, wallet, memo, and expected round where applicable
-- treat active-pool, recent-feed, post-detail/thread, stats, balance, winners/history, and chain/explorer as distinct readback surfaces rather than interchangeable proof
-- define timeouts and recheck windows from observed behavior: short operator feedback, long delayed-indexing recheck, explicit expiration
-- produce proof packets that preserve the full lifecycle, not just the final verdict
+- add a persisted pending-write ledger for every wallet-backed write family, not only BET ✅
+- make write probes resumable by tx hash, post hash, asset/horizon, wallet, memo, and expected round where applicable ✅ for publish/reply, VOTE, reaction/tip records, and fixed-price BET rechecks
+- treat active-pool, recent-feed, post-detail/thread, stats, balance, winners/history, and chain/explorer as distinct readback surfaces rather than interchangeable proof ✅
+- define timeouts and recheck windows from observed behavior: short operator feedback, long delayed-indexing recheck, explicit expiration ✅
+- produce proof packets that preserve the full lifecycle, not just the final verdict ✅
 - next GoalMode packet: [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md)
 
 #### Wave B.6 — lifecycle-aware Colony Operator MegaGoal scaffold
@@ -211,7 +211,7 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - `uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through headless native args-memo transfer. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, all resolved in SuperColony winners at block `2265016` after the same-window active-pool probe had timed out. Use `2265016` as the product-indexed block; the explorer raw payload still exposes a stale/internal `2265014` field.
 - Higher/lower still needs the same current native args-memo delayed-readback treatment before the May status is upgraded.
 - Cross-family indexing lesson: publish, reply, tip, VOTE, and BET already show that tx acceptance, chain confirmation, API indexing, feed visibility, stats, and resolved market readback are separate states. Reaction readback happened immediately in the current proof, but it should still be represented as the same lifecycle with a fast convergence path.
-- Immediate next move: complete the active lifecycle goal around durable pending-write tracking, resumable rechecks, delayed-indexing verdicts, and proof packet generation across all write families.
+- Immediate next move: use the landed lifecycle layer for no-spend delayed rechecks before any new live write. The current lifecycle implementation covers durable pending-write tracking, resumable rechecks, delayed-indexing verdicts, and proof packet generation across the maintained publish/reply, VOTE, social write, and fixed-price BET probe surfaces.
 - Completed GoalMode path: [GOAL_BRIEF.md](GOAL_BRIEF.md) and [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract. The active lifecycle GoalMode packet is [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md). The gated post-lifecycle MegaGoal scaffold is [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md); turn it into a frozen Master PRD only after the lifecycle goal lands or after M0 explicitly audits/finishes that work.
 
 ## Explicitly not next

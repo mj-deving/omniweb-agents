@@ -1,11 +1,11 @@
 # CURRENT_DOCTRINE.md
 
 Status: active
-Updated: 2026-05-15
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout
+Updated: 2026-05-16
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
-Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`
+Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`
 
 Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
 
@@ -29,7 +29,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `uw66.2` is now live-reply proven in the bounded sense: DAHR attestation and reply txs confirmed on-chain, the reply appears in the intended parent thread, and the honest visibility verdict is post-detail/thread visible with recent-feed indexing still degraded.
 - `uw66.3` is now live-reaction proven in the bounded sense: the maintained social-write probe executed an `agree` reaction and readback confirmed the target moved from `agree: 6` to `agree: 7` with `myReaction: "agree"` on the first poll.
 - `uw66.4` is now live-tip proven in the bounded sense: the maintained tip-only probe sent `1 DEM`, returned tx `25da09cf964502a05b7651b1f549f2c33c9d15ab3b779f15295cec74db933a4c`, and confirmed it on-chain at block `2263010`; post/recipient tip stats and balance readback remained stale.
-- `uw66.5` is currently blocked by `omniweb-agents-3myq`: the maintained fixed-price market-write probe first sent a plain 5 DEM `SOL` transfer tx and chain verification confirmed it, but `/api/bets/place` rejected registration as `wrong_tx_type` and pool readback stayed unchanged. A raw `content.type: "transfer"` envelope is not a valid local workaround: it can confirm, but it does not produce the pool inflow registration verifies, and manually adding balance GCR edits fails node confirmation with `GCREdit mismatch`. A later memo-bearing `native-content-memo` transfer tx (`4acb9f76d54a96415e77d3639af591355efd42f598850295852c4cfea72cf4f1`, memo `HIVE_BET:SOL:89:4h`) confirmed at block `2264378` from the expected wallet and moved balance readback `1747 -> 1741`, but the SOL 4h pool stayed `totalBets=0,totalDem=0`; manual registration recovery returned `wrong_sender`. `native-data-memo` was confirm-only validated, not broadcast, to preserve the one-5-DEM-attempt cap.
+- `uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through the headless native args-memo path, but only after delayed indexing/readback. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, resolved in SuperColony winners at block `2265016` after same-window active-pool polling missed them.
+- The real current gap is cross-family write lifecycle handling. Publish, reply, tip, VOTE, and BET already show different delayed-indexing/readback behavior; future runs must not equate short timeout with failed write.
 
 ## Canonical sources
 
@@ -47,6 +48,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `packages/omniweb-toolkit/references/uw66.2-bounded-live-reply-proof-2026-05-14.md`
 - `packages/omniweb-toolkit/references/uw66.3-bounded-live-reaction-proof-2026-05-15.md`
 - `packages/omniweb-toolkit/references/uw66.4-bounded-live-tip-proof-2026-05-15.md`
+- `packages/omniweb-toolkit/references/uw66.6-agentic-memo-bet-readback-2026-05-16.md`
+- `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`
@@ -70,10 +73,11 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 4. `uw66.2` is closed as the reply proof slice: accepted reply tx and attestation tx are chain-confirmed, parent-thread readback is confirmed, and recent-feed indexing remains degraded rather than hidden.
 5. `uw66.3` is closed as the reaction proof slice: maintained `agree` execution succeeded and first-poll readback confirmed the reaction.
 6. `uw66.4` is closed as the tip proof slice: a 1 DEM tip tx is confirmed on-chain, while post/recipient stats and balance readback remained degraded.
-7. `uw66.5` is blocked by `omniweb-agents-3myq`: current market-write registration/pool readback rejects or ignores confirmed native transfer txs, raw `transfer` envelopes are disproven, and the memo-bearing native candidate still does not produce verified pool inflow.
-8. The immediate next move is agentic adoption, not human-path adoption: keep the maintained proof on the headless runtime transfer lane, treat `wallet-native-transfer` as a human/browser diagnostic candidate only, require pool readback as the only pass condition, and keep active agent predictions on the proven VOTE/PREDICTION lane while headless DEM pool readback remains unavailable.
-9. After market-write, continue with one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
-10. Harden and consumerize only after the live operator floor is real.
+7. `uw66.5` is proven for fixed-price BET through PR #409's native args-memo path and delayed winners readback, pending merge policy.
+8. The immediate next move is not another one-off write proof. Build the durable write lifecycle/readback layer so all live writes can move from broadcast to pending-chain, pending-indexer, indexed, resolved, degraded, or expired without losing proof context.
+9. Higher/lower still needs the same delayed-readback treatment before it can be upgraded from historical proof to current proof.
+10. After lifecycle hardening, continue with one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
+11. Harden and consumerize only after the live operator floor is real.
 
 ## Anti-drift rules
 
@@ -81,7 +85,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Do **not** describe the present architecture as if `5xp4.9` were still upcoming.
 - Do **not** reopen broad seam churn when the current need is live operator proof above the seam.
 - Do **not** reopen `uw66.1` through `uw66.4` just because a bounded proof is narrower than launch-grade repeatability; they are proof checkpoints with honest visibility/readback classifications.
-- Do **not** retry `uw66.5` as a normal proof loop until `omniweb-agents-3myq` is resolved; the current blocker is memo-bearing transfer plus inflow compatibility between the SDK/runtime transfer path, node GCR validation, and SuperColony bet registration/indexing.
+- Do **not** call a live write failed solely because its product readback surface is empty inside a short poll window. First classify chain state, indexer state, family-specific readback surfaces, elapsed time, and expiration policy.
+- Do **not** retry fixed-price BET as a normal proof loop; it is proven enough for the next lifecycle slice. Use existing tx hashes for no-spend delayed rechecks unless the next PRD explicitly authorizes a bounded spend.
 - Do **not** default to forking the substrate; fork the operator lane above the seam first if a faster track is needed.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
 - Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.

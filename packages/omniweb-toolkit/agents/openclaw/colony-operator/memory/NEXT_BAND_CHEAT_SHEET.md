@@ -1,7 +1,7 @@
 # NEXT_BAND_CHEAT_SHEET.md
 
 Status: active
-Updated: 2026-05-15
+Updated: 2026-05-16
 Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 
 ## Do first
@@ -13,17 +13,18 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 - `omniweb-agents-uw66.2` is closed with a bounded live reply proof: chain-confirmed DAHR attestation + reply tx, parent-thread readback, post-detail/thread visibility, degraded recent-feed indexing.
 - `omniweb-agents-uw66.3` is closed with a bounded live reaction proof: maintained `agree` execution, first-poll reaction readback.
 - `omniweb-agents-uw66.4` is closed with a bounded live tip proof: 1 DEM tip tx confirmed on-chain, post/recipient stats readback still degraded.
-- `omniweb-agents-uw66.5` is blocked by `omniweb-agents-3myq`: a plain 5 DEM fixed-price transfer tx confirmed on-chain, but `/api/bets/place` rejected registration as `wrong_tx_type` and pool readback stayed unchanged. Raw `content.type: "transfer"` envelopes are disproven as a local workaround. A memo-bearing `native-content-memo` tx (`4acb9f76d54a96415e77d3639af591355efd42f598850295852c4cfea72cf4f1`, `HIVE_BET:SOL:89:4h`) later confirmed at block `2264378` and balance readback moved `1747 -> 1741`, but SOL 4h pool readback stayed `totalBets=0,totalDem=0`; manual registration recovery returned `wrong_sender`.
-- Next move: agentic adoption only. Keep `uw66.5` on the headless runtime transfer lane, treat `wallet-native-transfer` as human/browser diagnostic only, require pool readback as the only pass condition, and route active predictions through VOTE/PREDICTION while headless DEM pool readback remains unavailable.
+- `omniweb-agents-uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through headless native args-memo, but same-window active-pool polling can miss it. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, resolved in SuperColony winners at block `2265016`.
+- Next move: durable write lifecycle/readback, not another fixed-price proof. Every write family needs pending-chain / pending-indexer / indexed / resolved / degraded / expired state handling.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
 
 ## Then do
 
-- **Wave A — bounded live write floor:** `uw66.1` publish ✅, `uw66.2` reply ✅, `uw66.3` react ✅, `uw66.4` tip ✅, `uw66.5` market-write blocked on `3myq`.
-- **Wave B — real operator cycle:** `uw66.6` multi-action colony-operator execution.
-- **Wave C — official identity participation:** `uw66.7` registration, `uw66.8` human-link challenge/claim/approve flow.
-- **Wave D — widen, then consumerize:** `uw66.9` generic action-intent coverage, `uw66.10` capability-truth polish, `uw66.11` npm publish auth, `uw66.12` registry consumer journey, `uw66.13` launch/docs refresh.
+- **Wave A — bounded live write floor:** `uw66.1` publish ✅, `uw66.2` reply ✅, `uw66.3` react ✅, `uw66.4` tip ✅, AC-5 VOTE ✅, fixed-price BET via PR #409 ✅ pending merge.
+- **Wave B — lifecycle hardening:** use `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md` to turn delayed indexing into a durable pending-write/recheck system.
+- **Wave C — real operator cycle:** multi-action colony-operator execution after lifecycle handling exists.
+- **Wave D — official identity participation:** registration, human-link challenge/claim/approve flow.
+- **Wave E — widen, then consumerize:** generic action-intent coverage, capability-truth polish, npm publish auth, registry consumer journey, launch/docs refresh.
 
 ## Keep frozen for this wave
 

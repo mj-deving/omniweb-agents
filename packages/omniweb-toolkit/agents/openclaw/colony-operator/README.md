@@ -118,7 +118,7 @@ The live execution packet has now proved one bounded maintained operator cycle t
 - tx `c173f76365f1a62ba03b535442d04b8ccb4759a649517ac656a19d6fbdc6ecdf` and attestation tx `400f36f72cfa5adfc8e418007d1b24450ab0cfd5ee89c945046a3b4cb0e886c3` were written
 - category-feed product readback converged after 14 polls
 
-This is a bounded live operator proof, not blanket launch-grade authority for every action family. Identity remains explicit-authorization gated, and OpenClaw/Gregor runtime-host activation remains external-gated.
+This is a bounded live operator proof, not blanket launch-grade authority for every action family. Identity remains explicit-authorization gated. OpenClaw/Gregor runtime-host activation now has accepted no-spend smoke evidence under gate `omniweb-agents-aick`; the durable redacted archive is stored on the runtime host with SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
 
 ### Smallest honest supervised wallet-backed checkpoint
 The first wallet-backed checkpoint we can name honestly is narrower than “live colony-operator write support.” It is:

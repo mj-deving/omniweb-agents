@@ -178,17 +178,23 @@ if (broadcast) {
   ok = Boolean((publishResult as { ok?: boolean } | null)?.ok && (readback as { found?: boolean } | null)?.found);
 
   if (lifecycleRecord) {
+    const publishSucceeded = Boolean((publishResult as { ok?: boolean } | null)?.ok);
     const status = classifyLifecycleStatus({
       txHash,
       indexed: Boolean((readback as { found?: boolean }).found),
       expired: Boolean(txHash) && !(readback as { found?: boolean }).found,
-      failed: !Boolean((publishResult as { ok?: boolean } | null)?.ok),
+      failed: !publishSucceeded,
     });
     const updated = await lifecycleStore!.update(lifecycleRecord.id, {
       status,
       txHash,
       attestationTxHash,
-      budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: "executed" },
+      budget: {
+        unit: "write-rate-slot",
+        amount: 1,
+        ceiling: 1,
+        spendStatus: publishSucceeded && txHash ? "executed" : "planned",
+      },
       transitionReason: ok ? "VOTE category search matched tx" : "VOTE short-window readback did not close",
       observation: {
         surface: "category-search",

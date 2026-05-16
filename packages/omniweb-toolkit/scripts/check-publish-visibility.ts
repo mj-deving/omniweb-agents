@@ -164,6 +164,7 @@ try {
       degraded: visibility.visible && !visibility.indexedVisible,
       expired: !visibility.visible,
     });
+    const recheckOk = status === "indexed";
     const baseRecord = record
       ?? await lifecycleStore!.create({
           actionFamily: actionFamily as WriteActionFamily,
@@ -178,9 +179,11 @@ try {
         });
     const updated = await lifecycleStore!.update(baseRecord.id, {
       status,
-      transitionReason: visibility.visible
-        ? "publish/reply visibility recheck found a product surface"
-        : "publish/reply visibility recheck expired",
+      transitionReason: recheckOk
+        ? "publish/reply visibility recheck found indexed feed visibility"
+        : visibility.visible
+          ? "publish/reply visibility recheck found only degraded non-indexed visibility"
+          : "publish/reply visibility recheck expired",
       observation: {
         surface: visibility.indexedVisible ? "recent-feed" : "post-detail",
         status,
@@ -201,7 +204,8 @@ try {
     console.log(JSON.stringify({
       attempted: false,
       verificationAttempted: true,
-      ok: visibility.visible,
+      ok: recheckOk,
+      visible: visibility.visible,
       checkedAt: new Date().toISOString(),
       address: omni.address,
       mode: "lifecycle-recheck",
@@ -217,7 +221,7 @@ try {
         proofPacket,
       },
     }, null, 2));
-    process.exit(visibility.visible ? 0 : 1);
+    process.exit(recheckOk ? 0 : 1);
   }
 
   if (!broadcast) {

@@ -139,20 +139,25 @@ try {
   const recheckRecord = recheckId && lifecycleStore ? await lifecycleStore.get(recheckId) : null;
   const effectiveCheckTx = recheckRecord?.txHash ?? checkTx;
   const effectiveBettor = recheckRecord?.walletAddress ?? checkBettor;
-  const before = await fetchPool(colonyUrl, asset, horizon);
+  const effectiveAsset = (recheckRecord?.asset ?? asset).trim().toUpperCase();
+  const effectiveHorizon = normalizeHorizon(recheckRecord?.horizon ?? horizon);
+  const effectivePredictedPrice = recheckRecord?.predictedPrice ?? predictedPrice;
+  const effectiveAmount = recheckRecord?.budget.amount ?? amount;
+  const effectiveMemo = recheckRecord?.memo ?? buildBetMemo(effectiveAsset, effectivePredictedPrice, { horizon: effectiveHorizon });
+  const before = await fetchPool(colonyUrl, effectiveAsset, effectiveHorizon);
 
   if (effectiveCheckTx) {
     const readback = await pollPoolReadback({
       colonyUrl,
-      asset,
-      horizon,
+      asset: effectiveAsset,
+      horizon: effectiveHorizon,
       txHash: effectiveCheckTx,
       bettor: effectiveBettor ?? "",
-      predictedPrice,
+      predictedPrice: effectivePredictedPrice,
       before,
       timeoutMs,
       pollMs,
-      amount,
+      amount: effectiveAmount,
     });
     const lifecycle = lifecycleStore
       ? await persistBetLifecycle({
@@ -160,11 +165,11 @@ try {
           existingRecordId: recheckRecord?.id,
           address: effectiveBettor || null,
           txHash: effectiveCheckTx,
-          asset,
-          horizon,
-          predictedPrice,
-          amount,
-          memo: buildBetMemo(asset, predictedPrice, { horizon }),
+          asset: effectiveAsset,
+          horizon: effectiveHorizon,
+          predictedPrice: effectivePredictedPrice,
+          amount: effectiveAmount,
+          memo: effectiveMemo,
           readback,
           spendStatus: "no-spend",
           proofOut,
@@ -177,10 +182,10 @@ try {
       officialPath: "native memo transfer; no /api/bets/place registration call",
       txHash: effectiveCheckTx,
       expected: {
-        asset,
-        horizon,
-        predictedPrice,
-        amount,
+        asset: effectiveAsset,
+        horizon: effectiveHorizon,
+        predictedPrice: effectivePredictedPrice,
+        amount: effectiveAmount,
         bettor: effectiveBettor || null,
       },
       readback,

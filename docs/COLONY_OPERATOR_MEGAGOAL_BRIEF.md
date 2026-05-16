@@ -1,11 +1,12 @@
 ---
 type: megagoal-brief
-status: draft-gated
+status: frozen
 created: 2026-05-16
+owner_bead: omniweb-agents-zqnh
 depends_on:
   - docs/WRITE_LIFECYCLE_MASTER_PRD.md
   - omniweb-agents-zg11
-summary: "Post-lifecycle MegaGoal scaffold for a lifecycle-aware Colony Operator from multi-action runtime through identity participation and outside-in consumer proof."
+summary: "Post-lifecycle MegaGoal contract for a lifecycle-aware Colony Operator from multi-action runtime through identity participation and outside-in consumer proof."
 ---
 
 # Lifecycle-Aware Colony Operator MegaGoal Brief
@@ -14,18 +15,19 @@ summary: "Post-lifecycle MegaGoal scaffold for a lifecycle-aware Colony Operator
 
 Ship a lifecycle-aware Colony Operator from durable write proof through multi-action operation, official identity participation, and outside-in package proof.
 
-This is a MegaGoal scaffold, not the active execution contract. It should become a frozen Master PRD only after `docs/WRITE_LIFECYCLE_MASTER_PRD.md` is complete and its final interfaces are known.
+This is the source contract for the next MegaGoal execution packet. The frozen Master PRD is `docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md`.
 
 ## Launch Gate
 
-Do not launch this MegaGoal until the durable write lifecycle goal is complete or explicitly audited as complete:
+The durable write lifecycle goal is complete enough to launch this MegaGoal:
 
-- `omniweb-agents-zg11` is closed, or a fresh audit confirms it is complete.
+- `omniweb-agents-zg11` is closed.
+- PR #411 merged the lifecycle layer to `main` at `cd08ca5d8ec17af67207886b44d7771b7b4935fd`.
 - `docs/WRITE_LIFECYCLE_MASTER_PRD.md` §9 and §11 are fully checked with evidence.
 - The lifecycle store, recheck commands, status vocabulary, and proof packet shape are available on `main`.
 - Roadmap, package references, and colony-operator re-entry doctrine agree on the lifecycle model.
 
-If the MegaGoal is launched before those are true, M0 must be "finish or audit the lifecycle goal" and no later milestone may start until M0 is complete.
+M0 remains an audit gate. It should verify the lifecycle goal is complete before starting M1, not redo the lifecycle implementation.
 
 ## MegaGoal Statement
 
@@ -44,9 +46,9 @@ One maintained Colony Operator should be able to:
 
 ### M0: Durable Write Lifecycle
 
-Status: active prerequisite.
+Status: completed prerequisite; audit before moving on.
 
-Complete `docs/WRITE_LIFECYCLE_MASTER_PRD.md` first. This milestone owns the pending-write store, shared statuses, resumable no-spend rechecks, proof packets, docs/matrix sync, and one lifecycle validation.
+Audit `docs/WRITE_LIFECYCLE_MASTER_PRD.md` first. This milestone owns verification that the pending-write store, shared statuses, resumable no-spend rechecks, proof packets, docs/matrix sync, and one lifecycle validation are present on `main`.
 
 Exit criteria:
 
@@ -120,14 +122,27 @@ Expected work:
 - Do not publish or claim consumer readiness before outside-in install proof exists.
 - Do not store secrets in lifecycle records, identity proof records, or proof packets.
 
+## Constraints
+
+- Work from `main` after PR #411, or explicitly audit why a different base is necessary before continuing.
+- Beads is the task ledger; create child beads under `omniweb-agents-zqnh` for coherent implementation slices.
+- Database engine / local lifecycle store boundary: reuse the landed lifecycle store and proof packet shape from `packages/omniweb-toolkit/scripts/_write-lifecycle.ts`; do not replace it with a different persistence engine such as SQLite unless the source contract is updated.
+- Authentication boundary / operator auth / wallet runtime: live writes and identity actions use real local operator credentials, but no mnemonic, token, challenge secret, approval token, or private operator note may be written to lifecycle records or proof packets.
+- Browser automation boundary / Playwright exclusion: browser wallet/provider behavior remains human-path diagnostic only and cannot close agentic proof.
+- Package registry / OpenClaw consumer boundary: do not claim outside-in consumer readiness until the package/registry/OpenClaw or equivalent install path is tested from a consumer posture.
+- Live spend remains behind explicit `--execute` or `--broadcast` flags and within launch-proving-matrix budgets.
+- Prefer no-spend delayed rechecks and dry-run operator cycles before any new live write.
+- Keep the `PolicyActionRequest` seam stable unless a live run proves it wrong.
+- Completion evidence must include real SuperColony/Demos readback for at least one operator/lifecycle path and outside-in consumer proof for M3.
+
 ## Draft Launch Prompt
 
-Use this only after the launch gate is satisfied, or after explicitly making M0 an audit/finish milestone:
+Use this after `docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md` passes the specificity gate:
 
 ```text
-/goal Ship the lifecycle-aware Colony Operator MegaGoal: complete M0 through M4 without stopping until the final definition of done is satisfied, or until the same blocker fails three times and a STUCK note is recorded.
+/goal Complete docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md against docs/COLONY_OPERATOR_MEGAGOAL_BRIEF.md without stopping until §11 definition of done is satisfied, or until the same blocker fails three times and a STUCK note is recorded in §13.
 
-M0: Durable write lifecycle/readback. If docs/WRITE_LIFECYCLE_MASTER_PRD.md is not complete, finish or audit it first.
+M0: Audit durable write lifecycle/readback from PR #411 and docs/WRITE_LIFECYCLE_MASTER_PRD.md before starting M1.
 
 M1: Build the multi-action Colony Operator runtime so one maintained operator loop can choose among skip, publish, reply, react, tip, VOTE, fixed-price BET, and higher/lower BET where available, route through maintained runtime paths, and persist/recheck lifecycle records for wallet-backed writes.
 

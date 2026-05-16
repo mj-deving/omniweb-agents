@@ -68,6 +68,7 @@
     "check:colony-operator-dry-run": "node --import tsx ./scripts/check-colony-operator-dry-run.ts",
     "check:colony-operator-entrypoint": "node --import tsx ./scripts/check-colony-operator-entrypoint.ts",
     "check:colony-operator-decision-coverage": "node --import tsx ./scripts/check-colony-operator-decision-coverage.ts",
+    "run:colony-operator-cycle": "node --import tsx ./scripts/run-colony-operator-cycle.ts",
     "check:colony-operator-draft": "node --import tsx ./scripts/check-colony-operator-primary.ts",
     "check:attestation": "node --import tsx ./scripts/check-attestation-workflow.ts",
     "check:openclaw": "node --import tsx ./scripts/check-openclaw-export.ts",

@@ -92,6 +92,27 @@ export interface ColonyOperatorLifecycleStore {
     txHash?: string;
     attestationTxHash?: string;
   }>;
+  update?(id: string, patch: {
+    status?: "planned" | "broadcasted" | "pending-chain" | "pending-indexer" | "indexed" | "resolved" | "degraded" | "failed";
+    transitionReason?: string;
+    observation?: {
+      surface: string;
+      status: "planned" | "broadcasted" | "pending-chain" | "pending-indexer" | "indexed" | "resolved" | "degraded" | "failed";
+      ok: boolean;
+      summary: string;
+      data?: unknown;
+    };
+    finalVerdict?: {
+      verdict: "pass" | "degraded" | "expired" | "failed";
+      rationale: string;
+      at: string;
+    };
+  }): Promise<{
+    id: string;
+    status: string;
+    txHash?: string;
+    attestationTxHash?: string;
+  }>;
   writeProofPacket?(record: unknown): Promise<string>;
   recordsDir?: string;
 }
@@ -234,7 +255,7 @@ async function buildLifecyclePlan<TState extends MinimalAgentState>(args: {
     return { ...base, status: "store-not-configured" };
   }
   const execution = args.cycle.outcome.execution;
-  const record = await args.lifecycleStore.create({
+  let record = await args.lifecycleStore.create({
     actionFamily: lifecycleFamily,
     walletAddress: args.walletAddress ?? null,
     command: args.command,
@@ -257,6 +278,23 @@ async function buildLifecyclePlan<TState extends MinimalAgentState>(args: {
       productReadback: args.cycle.outcome.execution.verification ?? null,
     },
   });
+  const productObservation = productReadbackObservationForExecution(execution);
+  if (productObservation && args.lifecycleStore.update) {
+    record = await args.lifecycleStore.update(record.id, {
+      status: lifecycleStatusForExecution(execution),
+      transitionReason: productObservation.ok
+        ? "maintained operator product readback confirmed"
+        : "maintained operator product readback not yet confirmed",
+      observation: productObservation,
+      finalVerdict: productObservation.ok
+        ? {
+            verdict: "pass",
+            rationale: productObservation.summary,
+            at: new Date().toISOString(),
+          }
+        : undefined,
+    });
+  }
   const proofPath = args.lifecycleStore.writeProofPacket
     ? await args.lifecycleStore.writeProofPacket(record)
     : null;
@@ -266,6 +304,38 @@ async function buildLifecyclePlan<TState extends MinimalAgentState>(args: {
     recordId: record.id,
     recordPath: args.lifecycleStore.recordsDir ? `${args.lifecycleStore.recordsDir}/${record.id}.json` : null,
     proofPath,
+  };
+}
+
+function productReadbackObservationForExecution(
+  execution: MinimalExecutionOutcome,
+): {
+  surface: string;
+  status: "planned" | "broadcasted" | "pending-chain" | "pending-indexer" | "indexed" | "resolved" | "degraded" | "failed";
+  ok: boolean;
+  summary: string;
+  data?: unknown;
+} | null {
+  const verification = execution.verification as Record<string, unknown> | undefined;
+  if (!verification || verification.attempted !== true) return null;
+  const status = lifecycleStatusForExecution(execution);
+  const surface = typeof verification.verificationPath === "string"
+    ? verification.verificationPath === "feed" ? "recent-feed" : verification.verificationPath
+    : typeof verification.visibilitySurface === "string" ? verification.visibilitySurface : "product-readback";
+  const visible = verification.visible === true;
+  const indexedVisible = verification.indexedVisible === true;
+  const polls = typeof verification.polls === "number" ? verification.polls : null;
+  const summary = indexedVisible
+    ? `product readback indexed via ${surface}${polls == null ? "" : ` after ${polls} polls`}`
+    : visible
+      ? `product readback visible but not indexed via ${surface}${polls == null ? "" : ` after ${polls} polls`}`
+      : `product readback not visible via ${surface}${polls == null ? "" : ` after ${polls} polls`}`;
+  return {
+    surface,
+    status,
+    ok: visible,
+    summary,
+    data: verification,
   };
 }
 

@@ -59,7 +59,6 @@ export function chooseHigherLowerProbe(
 ): HigherLowerProbePlan | null {
   const signals = new Map(oracleAssets.map((asset) => [asset.ticker, asset]));
   const candidates = pools
-    .filter((pool) => pool.referencePrice != null)
     .map((pool) => {
       const signal = signals.get(pool.asset);
       if (!signal) return null;
@@ -82,7 +81,9 @@ export function chooseHigherLowerProbe(
   const direction = chosen.signal.sentimentScore < 0 ? "lower" : "higher";
   const crowdDirection = chosen.pool.totalHigher >= chosen.pool.totalLower ? "higher" : "lower";
   const reason =
-    crowdDirection === direction
+    chosen.pool.referencePrice == null
+      ? `${chosen.pool.asset} ${chosen.pool.horizon} higher/lower pool is seedable and oracle sentiment (${chosen.signal.sentimentScore}) points ${direction}.`
+      : crowdDirection === direction
       ? `${chosen.pool.asset} ${chosen.pool.horizon} pool is active and oracle sentiment (${chosen.signal.sentimentScore}) aligns with the current crowd tilt.`
       : `${chosen.pool.asset} ${chosen.pool.horizon} pool is active, oracle sentiment (${chosen.signal.sentimentScore}) points ${direction}, and the current crowd tilt is ${crowdDirection}, creating a contrarian probe.`;
 

@@ -112,6 +112,12 @@ describe("colony operator execution entrypoint", () => {
         spendStatus: "executed",
       },
     });
+    expect(lifecycleStore.created[0].observations[0]).toMatchObject({
+      surface: "recent-feed",
+      status: "indexed",
+      ok: true,
+      summary: expect.stringContaining("product readback indexed via recent-feed"),
+    });
   });
 });
 
@@ -130,11 +136,27 @@ function makeLifecycleStore(): ColonyOperatorLifecycleStore & { created: any[] }
       const record = {
         id: `wl-test-${created.length + 1}`,
         status: input.status,
+        observations: [],
         txHash: input.txHash,
         attestationTxHash: input.attestationTxHash,
         ...input,
       };
       created.push(record);
+      return record;
+    }),
+    update: vi.fn(async (id: string, patch: any) => {
+      const record = created.find((entry) => entry.id === id);
+      if (!record) throw new Error(`missing record ${id}`);
+      Object.assign(record, patch.status ? { status: patch.status } : {});
+      if (patch.observation) {
+        record.observations.push({
+          observedAt: "2026-05-16T14:31:00.000Z",
+          ...patch.observation,
+        });
+      }
+      if (patch.finalVerdict) {
+        record.finalVerdict = patch.finalVerdict;
+      }
       return record;
     }),
     writeProofPacket: vi.fn(async (record: any) => `/tmp/${record.id}.proof.json`),

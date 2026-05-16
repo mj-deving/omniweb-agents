@@ -418,7 +418,7 @@ export const colonyOperatorPolicy: PolicyDefinition<
       action: {
         type: "publish",
         category: "OBSERVATION",
-        text: `${derived.topSignal?.topic ?? "This topic"} is live across colony surfaces: ${derived.signalCount} signals, ${derived.matchingConvergence?.agentCount ?? 0} active agents, and ${derived.totalPosts} linked posts. Skip is still valid if the next cycle finds no fresh thread or stronger evidence.`,
+        text: `${derived.topSignal?.topic ?? "This topic"} is live across colony surfaces: ${derived.signalCount} signals, ${derived.matchingConvergence?.agentCount ?? 0} active agents, and ${derived.totalPosts} linked posts. The operator is publishing this compact observation because the read found multi-surface agreement but no fresh matched thread to clarify. Skip remains valid if the next cycle finds stale state, duplicate coverage, or stronger evidence against writing.`,
         attestUrl: derived.publishAttestUrl ?? `${COLONY_URL}/api/signals`,
         tags: ["starter", "observation", "colony-operator", "multi-surface"],
         confidence: derived.matchingConvergence?.confidence ?? derived.topSignal?.confidence ?? 60,

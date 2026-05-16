@@ -2,10 +2,10 @@
 
 Status: active
 Updated: 2026-05-16
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
-Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`
+Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`
 
 Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
 
@@ -30,7 +30,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `uw66.3` is now live-reaction proven in the bounded sense: the maintained social-write probe executed an `agree` reaction and readback confirmed the target moved from `agree: 6` to `agree: 7` with `myReaction: "agree"` on the first poll.
 - `uw66.4` is now live-tip proven in the bounded sense: the maintained tip-only probe sent `1 DEM`, returned tx `25da09cf964502a05b7651b1f549f2c33c9d15ab3b779f15295cec74db933a4c`, and confirmed it on-chain at block `2263010`; post/recipient tip stats and balance readback remained stale.
 - `uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through the headless native args-memo path, but only after delayed indexing/readback. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, resolved in SuperColony winners at block `2265016` after same-window active-pool polling missed them.
-- The real current gap is cross-family write lifecycle handling. The first lifecycle layer now exists in `packages/omniweb-toolkit/scripts/_write-lifecycle.ts` with probe wiring for publish/reply visibility, VOTE, social writes, and fixed-price BET no-spend rechecks. Publish, reply, tip, VOTE, and BET already show different delayed-indexing/readback behavior; future runs must persist records and proof packets rather than equating short timeout with failed write.
+- The cross-family write lifecycle layer is landed by PR #411. It exists in `packages/omniweb-toolkit/scripts/_write-lifecycle.ts` with probe wiring for publish/reply visibility, VOTE, social writes, and fixed-price BET no-spend rechecks. Publish, reply, tip, VOTE, and BET already show different delayed-indexing/readback behavior; future runs must consume lifecycle records and proof packets rather than equating short timeout with failed write.
+- The immediate next owner epic is `omniweb-agents-zqnh`: lifecycle-aware Colony Operator MegaGoal. Use `docs/COLONY_OPERATOR_MEGAGOAL_BRIEF.md`, `docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md`, and `docs/COLONY_OPERATOR_MEGAGOAL_LAUNCH.md`. M0 is only a lifecycle audit; the long-running work continues through multi-action runtime, identity participation, outside-in consumer proof, and completion audit.
 
 ## Canonical sources
 
@@ -53,6 +54,9 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`
 - `docs/WRITE_LIFECYCLE_MASTER_PRD.md`
 - `docs/WRITE_LIFECYCLE_GOAL_LAUNCH.md`
+- `docs/COLONY_OPERATOR_MEGAGOAL_BRIEF.md`
+- `docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md`
+- `docs/COLONY_OPERATOR_MEGAGOAL_LAUNCH.md`
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`
@@ -76,10 +80,10 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 4. `uw66.2` is closed as the reply proof slice: accepted reply tx and attestation tx are chain-confirmed, parent-thread readback is confirmed, and recent-feed indexing remains degraded rather than hidden.
 5. `uw66.3` is closed as the reaction proof slice: maintained `agree` execution succeeded and first-poll readback confirmed the reaction.
 6. `uw66.4` is closed as the tip proof slice: a 1 DEM tip tx is confirmed on-chain, while post/recipient stats and balance readback remained degraded.
-7. `uw66.5` is proven for fixed-price BET through PR #409's native args-memo path and delayed winners readback, pending merge policy.
-8. The immediate next move is not another one-off write proof. Continue closing the durable write lifecycle/readback layer so all live writes can move from broadcast to pending-chain, pending-indexer, indexed, resolved, degraded, or expired without losing proof context.
+7. `uw66.5` is proven for fixed-price BET through PR #409's native args-memo path and delayed winners readback.
+8. The immediate next move is not another one-off write proof and not more lifecycle plumbing by itself. Launch the lifecycle-aware Colony Operator MegaGoal under `omniweb-agents-zqnh`; audit lifecycle first, then build the maintained multi-action operator cycle on top of it.
 9. Higher/lower still needs the same delayed-readback treatment before it can be upgraded from historical proof to current proof.
-10. After lifecycle hardening, continue with one maintained multi-action cycle, then official identity participation (`register`, human-link challenge/claim/approve/unlink`).
+10. The MegaGoal sequence is now explicit: M0 lifecycle audit, M1 maintained multi-action cycle, M2 official identity participation (`register`, human-link challenge/claim/approve/unlink`), M3 outside-in consumer proof, M4 completion audit.
 11. Harden and consumerize only after the live operator floor is real.
 
 ## Anti-drift rules

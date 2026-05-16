@@ -6,7 +6,7 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops band has bounded proofs for publish, reply, react, tip, VOTE prediction, and fixed-price DEM betting; the write-lifecycle/readback layer now gives maintained probes durable pending records and no-spend delayed rechecks so delayed Demos/SuperColony indexing is not mistaken for write failure; and the gated post-lifecycle MegaGoal is a lifecycle-aware Colony Operator through multi-action runtime, identity participation, and outside-in consumer proof."
+summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops band has bounded proofs for publish, reply, react, tip, VOTE prediction, and fixed-price DEM betting; the write-lifecycle/readback layer now gives maintained probes durable pending records and no-spend delayed rechecks so delayed Demos/SuperColony indexing is not mistaken for write failure; and the launch-ready post-lifecycle MegaGoal is a lifecycle-aware Colony Operator through multi-action runtime, identity participation, and outside-in consumer proof."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -43,8 +43,8 @@ Anti-drift rule:
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, `omniweb-agents-zg11` owns the active lifecycle goal, and the gated post-lifecycle MegaGoal scaffold is [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md) |
-| Remaining external edges | durable write lifecycle/readback state across all write families, current higher/lower delayed-readback proof, identity/registration/link proof, generic action-intent widening beyond the current publish/reply/react bias, capability-truth surfacing polish, and later npm auth/publish consumerization |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, and `omniweb-agents-zqnh` owns the launch-ready lifecycle-aware Colony Operator MegaGoal packet: [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md), [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md), and [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](COLONY_OPERATOR_MEGAGOAL_LAUNCH.md) |
+| Remaining external edges | current higher/lower delayed-readback proof, lifecycle-aware multi-action operator runtime, identity/registration/link proof, capability-truth surfacing polish, outside-in consumer proof, and later npm auth/publish consumerization |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -175,12 +175,14 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - produce proof packets that preserve the full lifecycle, not just the final verdict ✅
 - next GoalMode packet: [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md)
 
-#### Wave B.6 — lifecycle-aware Colony Operator MegaGoal scaffold
-- keep [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md) as the durable post-lifecycle planning source
-- do not launch the MegaGoal until `omniweb-agents-zg11` / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) is complete, unless M0 is explicitly scoped as a lifecycle completion audit
-- use the completed lifecycle interfaces as inputs to the next Master PRD rather than guessing record/recheck/proof packet shapes ahead of the active goal
+#### Wave B.6 — lifecycle-aware Colony Operator MegaGoal
+- [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md) is the frozen source contract for the post-lifecycle MegaGoal
+- [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md) is the frozen GoalMode execution surface
+- [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](COLONY_OPERATOR_MEGAGOAL_LAUNCH.md) contains the copy/paste `/goal` launch prompt and preflight
+- owner bead: `omniweb-agents-zqnh`
+- PR #411 / `omniweb-agents-zg11` completed the durable write lifecycle/readback prerequisite, so M0 is an audit gate rather than a blocker
 - MegaGoal sequence:
-  - M0: durable write lifecycle/readback completion or audit
+  - M0: durable write lifecycle/readback audit
   - M1: multi-action Colony Operator runtime with lifecycle integration
   - M2: official identity participation
   - M3: outside-in consumer/install proof
@@ -211,8 +213,8 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - `uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through headless native args-memo transfer. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, all resolved in SuperColony winners at block `2265016` after the same-window active-pool probe had timed out. Use `2265016` as the product-indexed block; the explorer raw payload still exposes a stale/internal `2265014` field.
 - Higher/lower still needs the same current native args-memo delayed-readback treatment before the May status is upgraded.
 - Cross-family indexing lesson: publish, reply, tip, VOTE, and BET already show that tx acceptance, chain confirmation, API indexing, feed visibility, stats, and resolved market readback are separate states. Reaction readback happened immediately in the current proof, but it should still be represented as the same lifecycle with a fast convergence path.
-- Immediate next move: use the landed lifecycle layer for no-spend delayed rechecks before any new live write. The current lifecycle implementation covers durable pending-write tracking, resumable rechecks, delayed-indexing verdicts, and proof packet generation across the maintained publish/reply, VOTE, social write, and fixed-price BET probe surfaces.
-- Completed GoalMode path: [GOAL_BRIEF.md](GOAL_BRIEF.md) and [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract. The active lifecycle GoalMode packet is [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md). The gated post-lifecycle MegaGoal scaffold is [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md); turn it into a frozen Master PRD only after the lifecycle goal lands or after M0 explicitly audits/finishes that work.
+- Immediate next move: launch the lifecycle-aware Colony Operator MegaGoal under `omniweb-agents-zqnh`. M0 should audit the landed lifecycle layer, then M1 should build one maintained operator cycle that consumes lifecycle truth instead of creating another one-off write proof.
+- Completed GoalMode paths: [GOAL_BRIEF.md](GOAL_BRIEF.md) / [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. The active next MegaGoal packet is [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md), [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md), and [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](COLONY_OPERATOR_MEGAGOAL_LAUNCH.md).
 
 ## Explicitly not next
 

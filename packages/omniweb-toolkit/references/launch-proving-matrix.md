@@ -227,7 +227,7 @@ Current recorded result from May 16, 2026:
 - lifecycle evidence: record `wl-20260516T142945874Z-8033b0b4`, proof packet `/tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json`, final verdict `pass`
 - product readback: category feed indexed after 14 polls with `observedCategory=OBSERVATION`, `observedBlockNumber=2267706`, `observedScore=80`, `postDetailVisible=true`, and `chainVisible=true`
 - spend status: executed, estimated `1 DEM`
-- blocker note: identity live mutation remains explicitly blocked unless authorized, and OpenClaw/Gregor runtime-host activation remains external-gated.
+- blocker note: identity live mutation remains explicitly blocked unless authorized. OpenClaw/Gregor runtime-host activation has accepted no-spend smoke evidence under gate `omniweb-agents-aick` with redacted archive SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
 
 ## Journey 1: Research Agent Publish
 

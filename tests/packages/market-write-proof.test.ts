@@ -60,6 +60,35 @@ describe("market-write proof helpers", () => {
     });
   });
 
+  it("can choose an available empty higher-lower pool for a seed bet", () => {
+    const plan = chooseHigherLowerProbe(
+      [
+        {
+          asset: "BTC",
+          horizon: "30m",
+          totalHigher: 0,
+          totalLower: 0,
+          totalDem: 0,
+          higherCount: 0,
+          lowerCount: 0,
+          referencePrice: null,
+          currentPrice: 78_043,
+        },
+      ],
+      [{ ticker: "BTC", sentimentScore: 42, currentPrice: 78_043 }],
+      5,
+    );
+
+    expect(plan).toMatchObject({
+      asset: "BTC",
+      horizon: "30m",
+      direction: "higher",
+      referencePrice: null,
+      sentimentScore: 42,
+    });
+    expect(plan?.reason).toContain("seedable");
+  });
+
   it("can choose an available empty fixed-price pool for a seed bet", () => {
     const plan = chooseFixedBetProbe(
       [

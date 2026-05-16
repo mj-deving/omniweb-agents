@@ -166,15 +166,22 @@ Purpose: prove the official agent registration and human-link routes, and explic
 
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
-| agent profile registration | `register` | `write-probe` | `scripts/probe-identity-surfaces.ts --execute` | registration succeeds against the current wallet without hidden setup assumptions |
-| official human-link flow | `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `write-probe` | `scripts/probe-identity-surfaces.ts --execute` | the link challenge, claim, approval, readback, and cleanup all work in one maintained run |
+| agent profile registration | `register` | `write-probe` | `scripts/probe-identity-surfaces.ts --phase register --execute --confirm-identity-mutation` | registration succeeds against the current wallet without hidden setup assumptions and product readback matches the public profile |
+| official human-link flow | `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `write-probe` | `scripts/probe-identity-surfaces.ts --phase human-link --execute --confirm-identity-mutation`, then `--phase cleanup --execute --confirm-identity-mutation` | the link challenge, claim, approval, linked-agent readback, cleanup, and post-cleanup readback all work through maintained runs |
 | deprecated link wrapper | `linkIdentity` | `write-probe` only if intentionally revived | none until revived | do not imply parity between the deprecated wrapper and the official human-link flow |
 
 Exit criteria:
 
 - the official challenge/claim/approve route is either proven or explicitly excluded from launch claims
-- current launch claims exclude `register()` and the official human-link flow unless the active slice deliberately authorizes the live `--execute` mutation
+- current launch claims may include `register()` and the official human-link flow only when they cite the May 16, 2026 q5k8 explicit-mutation proof packets and keep identity classified as supervised
 - `linkIdentity()` is described as deprecated until it gets its own maintained proof path
+
+Current recorded result:
+
+- May 16, 2026 q5k8 proved `register()` live with product readback through `/tmp/omni-live-colony-identity-m3-final/register-proof.json`.
+- May 16, 2026 q5k8 proved the official human-link challenge/claim/approve/readback path through `/tmp/omni-live-colony-identity-m4/human-link-proof.json`.
+- May 16, 2026 q5k8 proved cleanup through `/tmp/omni-live-colony-identity-m5/cleanup-proof.json`, with post-cleanup linked-agent readback returning no linked agent.
+- The local OpenClaw/copied-bundle follow-up stayed no-spend and did not self-certify external Gregor/OpenClaw live identity mutation.
 
 ## Consumer Journey Matrix
 
@@ -227,7 +234,7 @@ Current recorded result from May 16, 2026:
 - lifecycle evidence: record `wl-20260516T142945874Z-8033b0b4`, proof packet `/tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json`, final verdict `pass`
 - product readback: category feed indexed after 14 polls with `observedCategory=OBSERVATION`, `observedBlockNumber=2267706`, `observedScore=80`, `postDetailVisible=true`, and `chainVisible=true`
 - spend status: executed, estimated `1 DEM`
-- blocker note: identity live mutation remains explicitly blocked unless authorized. OpenClaw/Gregor runtime-host activation has accepted no-spend smoke evidence under gate `omniweb-agents-aick` with redacted archive SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
+- identity note: supervised q5k8 identity mutation is now locally live-proven for register, official human-link, and cleanup behind explicit identity confirmation. OpenClaw/Gregor runtime-host activation has accepted no-spend smoke evidence under gate `omniweb-agents-aick` with redacted archive SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`, but external hosted live identity mutation is still not self-certified.
 
 ## Journey 1: Research Agent Publish
 

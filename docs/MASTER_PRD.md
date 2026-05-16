@@ -5,9 +5,12 @@ created: 2026-05-15
 source_contract: docs/GOAL_BRIEF.md
 owner_bead: omniweb-agents-5w2w
 summary: "GoalMode execution surface for launch-proving the agentic SuperColony live-ops lane."
+superseded_for_next_goal_by: docs/WRITE_LIFECYCLE_GOAL_BRIEF.md
 ---
 
 # Agentic SuperColony Live-Ops Lane - Master PRD
+
+> Post-completion note, 2026-05-16: this PRD is the completed launch-proof contract, not the next execution contract. PR #409 / `uw66.6` supersedes the old AC-4 degraded/STUCK conclusion for fixed-price BET by proving delayed winners readback at block `2265016`. The next large goal should start from `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md` and address durable pending-write/readback lifecycle across all write families.
 
 ## §0. Frontmatter
 

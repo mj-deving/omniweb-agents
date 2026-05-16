@@ -4,9 +4,12 @@ status: frozen
 created: 2026-05-15
 owner_bead: omniweb-agents-5w2w
 summary: "Source contract for a long-running Codex /goal run to launch-prove the agentic SuperColony live-ops lane."
+superseded_for_next_goal_by: docs/WRITE_LIFECYCLE_GOAL_BRIEF.md
 ---
 
 # Agentic SuperColony Live-Ops Lane - Goal Brief
+
+> Post-completion note, 2026-05-16: this brief records the prior launch-proof run. For the next GoalMode planning surface, use `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`. PR #409 / `uw66.6` supersedes this brief's old DEM betting premise by proving fixed-price agentic DEM betting through delayed winners readback; the next problem is durable write lifecycle/readback handling, not proving the same fixed-price bet path again.
 
 ## Objective
 

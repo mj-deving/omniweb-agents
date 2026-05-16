@@ -77,7 +77,7 @@ This file complements:
   - packaged market trajectory example passed with overall score `93.25`
 - Interpretation:
   - the market-analyst journey is structurally healthy and the live market-read context is current
-  - DEM pool betting remains degraded, so the market journey should stay publish-first/read-first unless AC-4 is re-proven
+  - fixed-price DEM pool betting is re-proven through delayed winners readback, so the market journey can include a bounded 5 DEM pool position when spend is intentional; VOTE/publish remains the low-cost default signal
 
 ### Engagement Optimizer Curation Journey
 

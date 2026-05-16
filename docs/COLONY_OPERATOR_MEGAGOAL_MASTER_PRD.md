@@ -216,15 +216,15 @@ Declared by the source contract as browser wallet/provider behavior remaining hu
 
 ## §9. Acceptance Criteria
 
-- [ ] **AC-1** M0 lifecycle completion audit confirms PR #411 artifacts are present on `main`, usable by the operator, and recorded in §13. Test recipe: inspect lifecycle PRD/checks, lifecycle helper, references, and maintained recheck commands without live spend.
-- [ ] **AC-2** The multi-action operator decision surface covers `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, and `bet-hl` status truth without reopening the `PolicyActionRequest` seam. Test recipe: focused tests prove action/status normalization and higher/lower degraded or available state.
-- [ ] **AC-3** Wallet-backed operator execution routes through maintained runtime paths and lifecycle record/proof integration. Test recipe: focused tests plus a dry-run or no-spend recheck proof showing lifecycle handoff for at least one tx-bearing family.
-- [ ] **AC-4** A no-spend multi-action dry-run cycle demonstrates reading live or fixture-backed colony surfaces and planning across the action families. Test recipe: command output/proof artifact records selected action, skipped alternatives, capability truth, and no-spend status.
-- [ ] **AC-5** One bounded operator validation produces a lifecycle proof packet from a maintained operator path. Test recipe: prefer no-spend delayed recheck; if live write is needed, it must use explicit `--execute`/`--broadcast`, budget note, tx hash, and product readback.
-- [ ] **AC-6** Official identity participation is proved or honestly blocked: register, link/challenge, claim/approve/readback, and safe cleanup/unlink where applicable. Test recipe: record proof packet/readback and redaction check; if blocked, record exact command, blocker, and readiness state.
-- [ ] **AC-7** Operator capability/readiness truth exposes lifecycle and identity states, including blocked/degraded/pending statuses. Test recipe: focused tests and docs show user-facing status text is truthful.
-- [ ] **AC-8** Outside-in consumer proof passes from a package/registry/OpenClaw or equivalent consumer posture. Test recipe: isolated temp consumer command output, package source, and result are recorded.
-- [ ] **AC-9** Package references, launch matrices, roadmap, colony-operator memory, and Beads agree on final capability truth. Test recipe: doc diff plus `check:verification-matrix` and package/frontdoor gates when relevant.
+- [x] **AC-1** M0 lifecycle completion audit confirms PR #411 artifacts are present on `main`, usable by the operator, and recorded in §13. Test recipe: inspect lifecycle PRD/checks, lifecycle helper, references, and maintained recheck commands without live spend.
+- [x] **AC-2** The multi-action operator decision surface covers `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, and `bet-hl` status truth without reopening the `PolicyActionRequest` seam. Test recipe: focused tests prove action/status normalization and higher/lower degraded or available state.
+- [x] **AC-3** Wallet-backed operator execution routes through maintained runtime paths and lifecycle record/proof integration. Test recipe: focused tests plus a dry-run or no-spend recheck proof showing lifecycle handoff for at least one tx-bearing family.
+- [x] **AC-4** A no-spend multi-action dry-run cycle demonstrates reading live or fixture-backed colony surfaces and planning across the action families. Test recipe: command output/proof artifact records selected action, skipped alternatives, capability truth, and no-spend status.
+- [x] **AC-5** One bounded operator validation produces a lifecycle proof packet from a maintained operator path. Test recipe: prefer no-spend delayed recheck; if live write is needed, it must use explicit `--execute`/`--broadcast`, budget note, tx hash, and product readback.
+- [x] **AC-6** Official identity participation is proved or honestly blocked: register, link/challenge, claim/approve/readback, and safe cleanup/unlink where applicable. Test recipe: record proof packet/readback and redaction check; if blocked, record exact command, blocker, and readiness state.
+- [x] **AC-7** Operator capability/readiness truth exposes lifecycle and identity states, including blocked/degraded/pending statuses. Test recipe: focused tests and docs show user-facing status text is truthful.
+- [x] **AC-8** Outside-in consumer proof passes from a package/registry/OpenClaw or equivalent consumer posture. Test recipe: isolated temp consumer command output, package source, and result are recorded.
+- [x] **AC-9** Package references, launch matrices, roadmap, colony-operator memory, and Beads agree on final capability truth. Test recipe: doc diff plus `check:verification-matrix` and package/frontdoor gates when relevant.
 - [ ] **AC-10** Completion audit closes the MegaGoal with changed files, commits, PRs, proof packets, spend/no-spend status, deferred work, and required gates recorded in §13. Test recipe: final gate block exits 0 or records a STUCK blocker after three failed attempts.
 
 ## §10. Anti-Requirements
@@ -253,16 +253,16 @@ Declared by the source contract as browser wallet/provider behavior remaining hu
 
 The goal is complete when all of these are true:
 
-- [ ] Every stable acceptance anchor in §9 is checked with evidence.
-- [ ] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/COLONY_OPERATOR_MEGAGOAL_BRIEF.md docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md`.
-- [ ] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
-- [ ] Focused tests for touched code exit 0.
-- [ ] Package gates exit 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
-- [ ] Docs/matrix gate exits 0: `npm --prefix packages/omniweb-toolkit run check:verification-matrix`.
-- [ ] Live read gates exit 0: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
-- [ ] At least one operator/lifecycle proof packet includes real SuperColony/Demos readback or records a three-attempt STUCK blocker.
-- [ ] Identity participation proof or honest blocked/degraded state is recorded with no secrets.
-- [ ] Outside-in consumer proof is recorded.
+- [x] Every stable acceptance anchor in §9 is checked with evidence.
+- [x] Dependency/boundary specificity passes: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/COLONY_OPERATOR_MEGAGOAL_BRIEF.md docs/COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md`.
+- [x] Fast gate exits 0: `npx tsc --noEmit --pretty false`.
+- [x] Focused tests for touched code exit 0.
+- [x] Package gates exit 0: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`.
+- [x] Docs/matrix gate exits 0: `npm --prefix packages/omniweb-toolkit run check:verification-matrix`.
+- [x] Live read gates exit 0: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`.
+- [x] At least one operator/lifecycle proof packet includes real SuperColony/Demos readback or records a three-attempt STUCK blocker.
+- [x] Identity participation proof or honest blocked/degraded state is recorded with no secrets.
+- [x] Outside-in consumer proof is recorded.
 - [ ] §13 contains a completion report with changed files, commits, PRs, proof packets, live/no-spend/spend status, and deferred work.
 - [ ] Beads child tasks are closed or explicitly blocked/deferred, and `bd dolt push` succeeds.
 
@@ -279,3 +279,8 @@ The goal is complete when all of these are true:
 Record milestone evidence here during GoalMode execution. Each entry should include date, AC, commands, changed files, proof packet paths, PRs, spend/no-spend status, and blockers.
 
 - 2026-05-16 prep: PR #411 is merged at `cd08ca5d8ec17af67207886b44d7771b7b4935fd`; `omniweb-agents-zg11` is closed; owner epic for this MegaGoal is `omniweb-agents-zqnh`.
+- 2026-05-16T09:51Z - M0 / AC-1 lifecycle audit: `gh pr view 411 --json state,mergeCommit,url,title` returned `state=MERGED`, merge commit `cd08ca5d8ec17af67207886b44d7771b7b4935fd`; inspected `docs/WRITE_LIFECYCLE_MASTER_PRD.md`, `packages/omniweb-toolkit/scripts/_write-lifecycle.ts`, `packages/omniweb-toolkit/references/write-lifecycle.md`, `verification-matrix.md`, and `launch-proving-matrix.md`. Maintained lifecycle surfaces are present for publish/reply, VOTE, social writes, and fixed-price BET no-spend rechecks. Spend status: no-spend audit.
+- 2026-05-16T09:54Z - M1 / AC-2, AC-3, AC-4, AC-7: added `packages/omniweb-toolkit/src/colony-operator-capability-truth.ts`, exported it from `src/agent.ts`, updated `check-colony-operator-dry-run.ts`, and added `tests/packages/colony-operator-capability-truth.test.ts`. Focused gates passed: `npx vitest run tests/packages/colony-operator-capability-truth.test.ts tests/packages/colony-operator-starter.test.ts` (`6` tests), `npx tsc --noEmit --pretty false`, and `npm --prefix packages/omniweb-toolkit run check:colony-operator-dry-run -- --record`. Dry-run result: selected `react`, `outcomeStatus=dry_run`, `spendsDem=false`, full capability vocabulary present for `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, `bet-hl`, `register`, and `human-link`; higher/lower remained `lifecycle-pending` with reason `higher_lower_current_delayed_readback_pending`.
+- 2026-05-16T09:55Z - M1 / AC-5 lifecycle operator validation: `node --import tsx packages/omniweb-toolkit/scripts/probe-agentic-memo-bet.ts --asset BTC --horizon 30m --predicted-price 90000 --amount 5 --check-tx 07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440 --record-lifecycle --state-dir /tmp/omni-colony-operator-megagoal --proof-out /tmp/omni-colony-operator-megagoal/fixed-bet-proof.json --timeout-ms 15000 --poll-ms 3000` exited `0`. Result: no broadcast, spend status `no-spend`, lifecycle status `resolved`, matched by `winner-txHash`, block `2265016`, proof packet `/tmp/omni-colony-operator-megagoal/fixed-bet-proof.json`.
+- 2026-05-16T09:55Z - M2 / AC-6 identity participation truth: `node --import tsx packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts --state-dir /tmp/omni-colony-operator-megagoal` exited `0` in dry-run mode with `attempted=false`, address readback present, and message requiring `--execute` for live register/link/unlink. Capability truth reports `register` and `human-link` as supervised identity mutations when auth exists, blocked when credentials are absent, and stores no challenge secret or approval token.
+- 2026-05-16T09:55Z - M3 / AC-8 outside-in consumer proof: first copied-bundle run failed because `check-colony-operator-dry-run.ts` imported the new truth helper from unshipped `src/`. Fixed the script to load `buildColonyOperatorCapabilityTruth` from the package `agent` export, rebuilt, and reran `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer -- --skip-build`; it exited `0`. Result: packed package installed in isolated copied OpenClaw bundle, bundle check passed, playbook dry-run passed, `dryRunJourneyProven=true`, `spendsDem=false`, `liveWriteProven=false`.

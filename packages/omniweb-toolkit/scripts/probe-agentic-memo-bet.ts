@@ -383,7 +383,9 @@ function poolMatch(
       return "active-bettor-price";
     }
   }
-  if (pool.totalBets > expected.before.totalBets || pool.totalDem >= expected.before.totalDem + expected.amount) {
+  const totalBetsIncreased = pool.totalBets > expected.before.totalBets;
+  const totalDemIncreasedByAmount = pool.totalDem >= expected.before.totalDem + expected.amount;
+  if (totalBetsIncreased && totalDemIncreasedByAmount) {
     return "active-pool-count";
   }
   return null;

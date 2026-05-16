@@ -235,7 +235,7 @@ After mutation, the operator should see:
 - [x] **AC-4** One bounded live `register` proof succeeds with product readback, or records precise STUCK/blocker evidence.
 - [x] **AC-5** One bounded live human-link challenge / claim / approve proof succeeds with linked-agent readback, or records precise STUCK/blocker evidence.
 - [x] **AC-6** Cleanup/unlink succeeds with post-cleanup readback, or records precise STUCK state and cleanup instructions.
-- [ ] **AC-7** Final audit syncs roadmap, package references, operator memory, Beads, PR evidence, §13, and launch/public claims honestly.
+- [x] **AC-7** Final audit syncs roadmap, package references, operator memory, Beads, PR evidence, §13, and launch/public claims honestly.
 
 ## §10. Anti-Requirements
 
@@ -251,17 +251,17 @@ After mutation, the operator should see:
 
 The later `/goal` run is complete only when all of these are true:
 
-- [ ] Every §9 acceptance criterion is checked with evidence.
-- [ ] `PrdSpecificityGate` passes for this brief/PRD pair.
-- [ ] `npx tsc --noEmit --pretty false` exits 0 after code changes.
-- [ ] Focused tests for touched code exit 0.
-- [ ] `npm --prefix packages/omniweb-toolkit run check:verification-matrix` exits 0.
-- [ ] Package gates exit 0 when package docs or behavior change.
-- [ ] Register proof includes product readback or exact STUCK/blocker.
-- [ ] Human-link proof includes linked-agent readback or exact STUCK/blocker.
-- [ ] Cleanup proof includes post-cleanup readback or exact STUCK/blocker.
-- [ ] §13 contains changed files, commits, PRs, proof packets, live/no-spend/spend status, and remaining blockers.
-- [ ] Beads child milestones are closed or blocked honestly, `bd ready --json` reflects the next real milestone, and `bd dolt push` succeeds.
+- [x] Every §9 acceptance criterion is checked with evidence.
+- [x] `PrdSpecificityGate` passes for this brief/PRD pair.
+- [x] `npx tsc --noEmit --pretty false` exits 0 after code changes.
+- [x] Focused tests for touched code exit 0.
+- [x] `npm --prefix packages/omniweb-toolkit run check:verification-matrix` exits 0.
+- [x] Package gates exit 0 when package docs or behavior change.
+- [x] Register proof includes product readback or exact STUCK/blocker.
+- [x] Human-link proof includes linked-agent readback or exact STUCK/blocker.
+- [x] Cleanup proof includes post-cleanup readback or exact STUCK/blocker.
+- [x] §13 contains changed files, commits, PRs, proof packets, live/no-spend/spend status, and remaining blockers.
+- [x] Beads child milestones are closed or blocked honestly, `bd ready --json` reflects the next real milestone, and `bd dolt push` succeeds.
 
 ## §12. Assumptions And Open Questions
 
@@ -282,3 +282,4 @@ The later `/goal` run is complete only when all of these are true:
 - 2026-05-16T21:46Z - AC-5 M4 live human-link proof passed and intentionally left the link in place for M5 cleanup. Command: `node --import tsx packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts --phase human-link --execute --confirm-identity-mutation --state-dir /tmp/omni-live-colony-identity-m4 --proof-out /tmp/omni-live-colony-identity-m4/human-link-proof.json`. Proof packet: `/tmp/omni-live-colony-identity-m4/human-link-proof.json`. Commit under proof: `6be68935`. Result: `ok=true`, `verdicts.humanLink=pass`, `challenge.ok=true`, `challenge.hasChallengeHandle=true`, `challenge.hasMessage=true`, `sign.hasSignature=true`, `claim.ok=true`, `approve.ok=true`, and `linked.containsAgent=true` with linked public agent `mj-codex-proof-agent`, relationship `owner`, linkedAt `1778968012057`. The proof redacted challenge, challengeId, nonce, message, and signature values; no challenge secret, signature value, approval token, bearer token, or private auth material was persisted.
 - 2026-05-16T21:47Z - AC-6 M5 cleanup proof passed. Command: `node --import tsx packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts --phase cleanup --execute --confirm-identity-mutation --state-dir /tmp/omni-live-colony-identity-m5 --proof-out /tmp/omni-live-colony-identity-m5/cleanup-proof.json`. Proof packet: `/tmp/omni-live-colony-identity-m5/cleanup-proof.json`. Commit under proof: `324745fa`. Result: `ok=true`, `verdicts.cleanup=pass`, `unlink.ok=true`, `linkedAfter.ok=true`, `linkedAfter.count=0`, and `linkedAfter.containsAgent=false`. No cleanup STUCK state remains; no rerun or manual cleanup path is required.
 - 2026-05-16T21:49Z - Optional M6 no-spend OpenClaw/runtime smoke completed locally without live mutation. `npm --prefix packages/omniweb-toolkit run check:openclaw-runtime -- --archetype colony-operator` exited `0` with workspace/config/skill/package/frontmatter/body static checks passing and `executionProven=false`; OpenClaw CLI/runtime-host activation remains manual/external. `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer -- --skip-build` exited `0`: copied bundle installed against packed `omniweb-toolkit-0.1.0.tgz`, `skillSurfaceResolves=true`, `dryRunJourneyProven=true`, `spendsDem=false`, `liveWriteProven=false`, and dry-run capability truth included `identityFamilies=["register","human-link"]` with both identity actions `supervised` and `identity_mutation_requires_explicit_execute`. This is local copied-bundle/no-spend proof only, not external Gregor live mutation proof.
+- 2026-05-16T21:57Z - AC-7 M7 final audit completed on branch `codex/live-colony-identity-goal-current` and PR #418. Changed files: this PRD; `docs/ROADMAP.md`; `packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts`; `packages/omniweb-toolkit/scripts/_identity-proof.ts`; `tests/packages/identity-proof-runner.test.ts`; `packages/omniweb-toolkit/references/verification-matrix.md`; `packages/omniweb-toolkit/references/launch-proving-matrix.md`; registry export copies of those two reference files; and colony-operator `CURRENT_DOCTRINE.md` / `NEXT_BAND_CHEAT_SHEET.md`. Commits through the PR: `73db36e5` runner hardening, `5e24f72e` capability-truth proof, `d6f25107` register readback alignment, `6be68935` live register proof, `324745fa` live human-link proof, `7f461c0e` cleanup proof, `3c321f7b` OpenClaw no-spend smoke, `b22fd36a` final reference sync, and this PRD closeout commit. Final local gates passed: `PrdSpecificityGate` PASS; `npx vitest run tests/packages/identity-proof-runner.test.ts tests/packages/colony-operator-capability-truth.test.ts tests/packages/colony-operator-entrypoint.test.ts` passed 8 tests; `npx tsc --noEmit --pretty false` exited `0`; `npm --prefix packages/omniweb-toolkit run check:verification-matrix` returned `ok=true`; `npm --prefix packages/omniweb-toolkit run check:package` exited `0` after refreshing the registry export. Live/spend status: register and human-link/cleanup were live identity mutations with no DEM spend; M6 OpenClaw/copied-bundle checks were no-spend and did not self-certify external hosted live mutation. Remaining external edges: npm auth/publish and externally hosted Gregor/OpenClaw live identity mutation are still not claimed by this goal. Beads closeout for `q5k8.8` and parent `q5k8`, plus `bd dolt push`, are the final session closeout steps after PR #418 checks/review are inspected.

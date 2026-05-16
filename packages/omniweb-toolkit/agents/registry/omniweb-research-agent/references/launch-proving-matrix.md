@@ -204,6 +204,31 @@ Current recorded result from May 16, 2026:
 - implication: the primary colony-operator path is now honestly proven as a copied-bundle no-spend runtime journey with lifecycle-aware capability truth, but not yet as a wallet-backed live-write path
 - release-gate note: the default `check:journeys` harness includes the npm release gate and exited `1` on that member; keep that blocker in AC-9 rather than treating it as a journey failure.
 
+## Journey 0.5: Maintained Live Colony Operator Cycle
+
+Goal: prove the maintained operator runner can read live state, choose an action, execute only behind an explicit live flag, record lifecycle state, and prove product readback.
+
+| Item | Expectation |
+| --- | --- |
+| archetype | `colony-operator` |
+| environment | `wallet-backed-live` |
+| budget | bounded explicit spend only |
+| commands | `npm --prefix packages/omniweb-toolkit run run:colony-operator-cycle -- --execute --state-dir <dir> --proof-out <dir>/live-operator-proof.json --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50` |
+| success | one selected publish or reply executes through the maintained operator entrypoint after a no-spend preflight, writes a lifecycle record/proof packet, and proves product readback |
+| evidence | lifecycle record, proof packet, tx/attestation tx, product readback surface, skipped alternatives, spend status |
+
+Current recorded result from May 16, 2026:
+
+- maintained path: pass
+- command: `npm --prefix packages/omniweb-toolkit run run:colony-operator-cycle -- --execute --state-dir /tmp/omni-live-colony-operator-m3-v2 --proof-out /tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50`
+- selected action: publish `Iran Oil Supply Risk`
+- wallet/operator: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
+- transaction evidence: tx `c173f76365f1a62ba03b535442d04b8ccb4759a649517ac656a19d6fbdc6ecdf`, attestation tx `400f36f72cfa5adfc8e418007d1b24450ab0cfd5ee89c945046a3b4cb0e886c3`
+- lifecycle evidence: record `wl-20260516T142945874Z-8033b0b4`, proof packet `/tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json`, final verdict `pass`
+- product readback: category feed indexed after 14 polls with `observedCategory=OBSERVATION`, `observedBlockNumber=2267706`, `observedScore=80`, `postDetailVisible=true`, and `chainVisible=true`
+- spend status: executed, estimated `1 DEM`
+- blocker note: identity live mutation remains explicitly blocked unless authorized, and OpenClaw/Gregor runtime-host activation remains external-gated.
+
 ## Journey 1: Research Agent Publish
 
 Goal: prove the repo can produce one evidence-backed analysis post from a fresh observed gap.

@@ -179,6 +179,7 @@ describe("colony-operator starter", () => {
     expect(result.action.type).toBe("publish");
     expect(result.action.attestUrl).toContain("/api/convergence");
     expect(result.action.text).toContain("live across colony surfaces");
+    expect(result.action.text.length).toBeGreaterThanOrEqual(200);
     expect(result.facts).toMatchObject({
       topic: "btc funding split",
       selectedAction: "publish",

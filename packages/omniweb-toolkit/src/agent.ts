@@ -103,6 +103,15 @@ export {
   type ColonyOperatorLifecycleStatus,
   type ColonyOperatorTruthStatus,
 } from "./colony-operator-capability-truth.js";
+export {
+  runColonyOperatorCycle,
+  type ColonyOperatorExecutionEnvelope,
+  type ColonyOperatorExecutionMode,
+  type ColonyOperatorLifecyclePlan,
+  type ColonyOperatorLifecyclePlanStatus,
+  type ColonyOperatorLifecycleStore,
+  type RunColonyOperatorCycleOptions,
+} from "./colony-operator-entrypoint.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
 export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";

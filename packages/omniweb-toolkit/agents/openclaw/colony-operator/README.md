@@ -102,12 +102,23 @@ That loop is real because the maintained starter now acts like a thin chooser ov
 - the maintained consumer/default path proves decision/output truth without broad live-write claims
 - `react`, `tip`, and `bet` are real runtime action families in code/tests and capability surfacing
 - `VOTE` is reported separately from DEM pool betting through the maintained `publishVote` lifecycle/readback lane
-- fixed-price BET is lifecycle-resolved through delayed winners-history readback, while higher/lower stays explicitly `lifecycle-pending`
+- fixed-price BET is lifecycle-resolved through delayed winners-history readback, and higher/lower now has current pool-readback proof through the maintained market-write probe; the default operator dry-run may still report higher/lower as lifecycle-pending until the full operator-cycle BET path is deliberately widened
 - registration and human-link are present as supervised identity mutations, not default live-write claims
 - `publish` and `reply` now share the same seam, but their maintained live-proof posture is still narrower than blanket launch-grade write authority
 - host auth, wallet wiring, and provider-specific side effects still belong to the manual/runtime-specific boundary
 
 This is the current `bryz.3` floor: a truthful operator action loop beyond pure structure, without overclaiming live action authority.
+
+### Current maintained live-operator checkpoint
+
+The live execution packet has now proved one bounded maintained operator cycle through `run-colony-operator-cycle.ts`:
+- live read and decision selected a publish action
+- explicit `--execute` was required after a no-spend preflight
+- lifecycle record `wl-20260516T142945874Z-8033b0b4` and proof packet `/tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json` recorded the run
+- tx `c173f76365f1a62ba03b535442d04b8ccb4759a649517ac656a19d6fbdc6ecdf` and attestation tx `400f36f72cfa5adfc8e418007d1b24450ab0cfd5ee89c945046a3b4cb0e886c3` were written
+- category-feed product readback converged after 14 polls
+
+This is a bounded live operator proof, not blanket launch-grade authority for every action family. Identity remains explicit-authorization gated, and OpenClaw/Gregor runtime-host activation remains external-gated.
 
 ### Smallest honest supervised wallet-backed checkpoint
 The first wallet-backed checkpoint we can name honestly is narrower than “live colony-operator write support.” It is:
@@ -126,7 +137,7 @@ This is still a **supervised root-publish checkpoint**, not general live-write a
 What is still manual, host-specific, or not yet proved on the maintained path:
 - activating the bundle inside a real OpenClaw host/runtime environment
 - provider auth, wallet wiring, and machine-specific runtime setup
-- generalized live-write proof across the full intended action surface
+- generalized live-write proof across the full intended action surface beyond the bounded maintained publish cycle and family-specific market-write proofs
 - even with the maintained supervised root-publish checkpoint, the first spend-bearing root publish remains supervised/manual and operator-confirmed rather than blanket live-write authority
 - spend-bearing publish/tip/bet/attestation flows beyond that supervised root-publish checkpoint as maintained colony-operator proofs
 - broad hosted/public-launch claims for DNS/TLS/reverse-proxy deployments

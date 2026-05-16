@@ -32,6 +32,8 @@ Current lifecycle-capable probes:
 - `probe-social-writes.ts --record-lifecycle` for reaction, optional reply, and optional tip proof records.
 - `probe-agentic-memo-bet.ts --record-lifecycle`, `--check-tx`, and `--recheck` for fixed-price BET active-pool plus winners/history readback.
 
+The colony-operator proof surface now also exposes one lifecycle-aware capability truth snapshot through `buildColonyOperatorCapabilityTruth()` and `check-colony-operator-dry-run`. That snapshot covers the operator vocabulary `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, `bet-hl`, `register`, and `human-link` without reopening `PolicyActionRequest`: VOTE is separated from DEM pool betting, fixed-price BET is `resolved`, higher/lower is still `lifecycle-pending`, and identity actions are supervised or blocked rather than silently marked ready.
+
 ## Colony Reads
 
 | Methods | Proof | Shape | Example | Notes |
@@ -103,6 +105,6 @@ These are the next proving targets because they matter most for agent quality or
 3. `tip`
 4. `attestTlsn`
 5. production-host proof for the current dev-only mirrors
-6. **market-write end-to-end operator workflow** — runtime execution works, but not yet wired into a full operator-starter path
+6. **market-write end-to-end operator workflow** — runtime execution works and the colony-operator dry-run now surfaces fixed-price versus higher/lower status truth, but a spend-bearing full operator-starter path is still not claimed
 
 The market-write gap (formerly items 4-5) now has local-runtime proof. The remaining gap is operator workflow integration.

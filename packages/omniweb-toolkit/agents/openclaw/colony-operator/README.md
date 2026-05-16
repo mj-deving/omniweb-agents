@@ -89,17 +89,21 @@ What is proven on the maintained path today:
 - the default colony-operator path completes a no-spend dry-run cycle and persists real runtime state
 - the copied-bundle outside-in journey works without relying on workspace-only wiring
 - the maintained runtime proof already exercises a mock-backed multi-surface sensing/decision spine before decision output
+- the dry-run proof now carries lifecycle-aware capability truth for `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, fixed-price BET, higher/lower BET, registration, and human-link identity actions
 
 ### Smallest honest operator action loop already in hand
 The smallest real operator loop we can claim honestly today is:
 1. read multiple live colony surfaces
-2. choose **skip**, **react**, **reply**, or **publish** from that evidence
+2. choose **skip**, **react**, **reply**, or **publish** from that evidence while surfacing the broader action-family truth for `tip`, `VOTE`, fixed-price BET, higher/lower BET, and identity actions
 3. emit that choice as an explicit bounded action intent over the seam
 4. let the substrate/runtime own readiness, resolved-intent truth, execution shape, and verification while keeping the maintained default proof surface no-spend by default
 
 That loop is real because the maintained starter now acts like a thin chooser over the seam: it makes an explicit action choice from feed + signals + convergence context rather than pretending to be the runtime path itself. The current proof split is:
 - the maintained consumer/default path proves decision/output truth without broad live-write claims
 - `react`, `tip`, and `bet` are real runtime action families in code/tests and capability surfacing
+- `VOTE` is reported separately from DEM pool betting through the maintained `publishVote` lifecycle/readback lane
+- fixed-price BET is lifecycle-resolved through delayed winners-history readback, while higher/lower stays explicitly `lifecycle-pending`
+- registration and human-link are present as supervised identity mutations, not default live-write claims
 - `publish` and `reply` now share the same seam, but their maintained live-proof posture is still narrower than blanket launch-grade write authority
 - host auth, wallet wiring, and provider-specific side effects still belong to the manual/runtime-specific boundary
 

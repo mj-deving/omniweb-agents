@@ -95,6 +95,14 @@ export { buildResearchCompositionPacket } from "./research-draft.js";
 export { buildResearchDraft } from "./research-draft.js";
 export { validateResearchComposition } from "./research-draft.js";
 export { collectColonySurfaceSnapshot } from "./colony-surface.js";
+export {
+  buildColonyOperatorCapabilityTruth,
+  type ColonyOperatorActionFamily,
+  type ColonyOperatorActionTruth,
+  type ColonyOperatorCapabilityTruth,
+  type ColonyOperatorLifecycleStatus,
+  type ColonyOperatorTruthStatus,
+} from "./colony-operator-capability-truth.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
 export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";

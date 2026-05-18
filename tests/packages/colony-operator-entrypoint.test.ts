@@ -41,6 +41,24 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.execution.dryRun).toBe(true);
     expect(envelope.execution.status).toBe("dry_run");
     expect(envelope.execution.demSpendEstimate).toBe(0);
+    expect(envelope.observedContextSummary).toMatchObject({
+      source: "minimal-agent-cycle",
+      decisionKind: "action",
+      selectedActionFamily: "publish",
+      actionType: "publish",
+      policyId: "colony-operator.surface-policy.v1",
+      routeId: "publish_multi_surface_observation",
+      liveReadSurfaces: expect.arrayContaining(["signals", "convergence", "feed", "leaderboard", "balance"]),
+      facts: expect.objectContaining({
+        selectedAction: "publish",
+        signalCount: 2,
+        matchedFeedPosts: 1,
+      }),
+    });
+    expect(envelope.observedContextSummary.observedFacts).toEqual(expect.arrayContaining([
+      expect.stringContaining("Signal sample size: 2"),
+      expect.stringContaining("Matched feed posts: 1"),
+    ]));
     expect(envelope.selectedAction.actionFamily).toBe("publish");
     expect(envelope.selectedAction.intent).toMatchObject({
       actionFamily: "publish",
@@ -72,6 +90,62 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.capabilitySummary.lifecyclePendingFamilies).toContain("bet-hl");
     expect(envelope.capabilitySummary.explicitExecuteFamilies).toEqual(expect.arrayContaining(["publish", "tip", "VOTE", "register", "human-link"]));
     expect(envelope.capabilityTruth.coverage.allRequiredFamiliesPresent).toBe(true);
+    expect(envelope.actionSurface).toMatchObject({
+      selectedFamily: "publish",
+      allMaintainedFamiliesSurfaced: true,
+      defaultNoSpend: true,
+      liveExecutionAllowed: false,
+    });
+    expect(envelope.actionSurface.maintainedFamilies).toEqual([
+      "skip",
+      "publish",
+      "reply",
+      "react",
+      "tip",
+      "VOTE",
+      "bet-fixed",
+      "bet-hl",
+      "register",
+      "human-link",
+    ]);
+    expect(envelope.actionSurface.perActionStatus.find((action) => action.actionFamily === "publish")).toMatchObject({
+      selected: true,
+      capability: {
+        spendsDem: true,
+        writesLifecycleRecord: true,
+      },
+      explicitExecute: {
+        required: true,
+        satisfied: false,
+      },
+      admissibility: {
+        status: "blocked",
+        canExecuteNow: false,
+      },
+    });
+    expect(envelope.actionSurface.perActionStatus.find((action) => action.actionFamily === "bet-fixed")).toMatchObject({
+      lifecycle: {
+        status: "resolved",
+        expectedReadback: expect.arrayContaining(["active-pool", "winners-history"]),
+      },
+    });
+    expect(envelope.actionSurface.perActionStatus.find((action) => action.actionFamily === "bet-hl")).toMatchObject({
+      lifecycle: {
+        status: "lifecycle-pending",
+      },
+      admissibility: {
+        reasonCodes: expect.arrayContaining(["higher_lower_current_delayed_readback_pending"]),
+      },
+      finalLiveExecutionGate: {
+        gate: "blocked",
+      },
+    });
+    expect(envelope.finalVerdict).toMatchObject({
+      verdict: "no-spend-proof",
+      spendStatus: "no-spend",
+      selectedActionFamily: "publish",
+      liveExecutionAttempted: false,
+    });
     expect(envelope.capabilityDiscovery).toMatchObject({
       source: "omniweb-toolkit",
       compact: {
@@ -200,6 +274,13 @@ describe("colony operator execution entrypoint", () => {
       indexedVisible: true,
       verificationPath: "feed",
     });
+    expect(envelope.finalVerdict).toMatchObject({
+      verdict: "execution-pass",
+      spendStatus: "executed",
+      selectedActionFamily: "publish",
+      liveExecutionAttempted: true,
+      liveExecutionAllowed: true,
+    });
     expect(envelope.lifecyclePlan).toMatchObject({
       required: true,
       status: "recorded",
@@ -309,6 +390,29 @@ describe("colony operator execution entrypoint", () => {
       "bet-hl",
       "register",
     ]);
+    expect(envelope.actionSurface.allMaintainedFamiliesSurfaced).toBe(false);
+    expect(envelope.actionSurface.perActionStatus.map((action) => action.actionFamily)).toEqual([
+      "publish",
+      "tip",
+      "bet-fixed",
+      "bet-hl",
+      "register",
+    ]);
+    expect(envelope.actionSurface.perActionStatus.find((intent) => intent.actionFamily === "register")).toMatchObject({
+      supervision: {
+        required: true,
+        requirements: expect.arrayContaining(["identity_supervision_required"]),
+      },
+      explicitExecute: {
+        required: true,
+        satisfied: false,
+        gate: "supervised_authorization_required",
+      },
+      admissibility: {
+        status: "supervised",
+        executionGate: "supervision",
+      },
+    });
     expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "publish")).toMatchObject({
       status: "executable",
       proofLevel: "lifecycle_proven",

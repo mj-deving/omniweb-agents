@@ -47,6 +47,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [consumer-journey-drills.md](./consumer-journey-drills.md): outside-in archetype journey results
 - [read-surface-sweep.md](./read-surface-sweep.md): maintained production-host read-only sweep
 - [write-surface-sweep.md](./write-surface-sweep.md): maintained wallet-write proof state
+- [uw66.6-maintained-operator-cycle-proof-2026-05-18.md](./uw66.6-maintained-operator-cycle-proof-2026-05-18.md): no-spend maintained multi-action operator-cycle proof with observed context, action alternatives, per-action admissibility gates, and final verdict
 - [uw66.6-agentic-memo-bet-readback-2026-05-16.md](./uw66.6-agentic-memo-bet-readback-2026-05-16.md): delayed readback proof that headless native args-memo DEM bets confirmed and resolved through SuperColony winners indexing
 - [uw66.5-market-write-blocker-2026-05-15.md](./uw66.5-market-write-blocker-2026-05-15.md): bounded market-write attempt blocked by bet-registration tx-type mismatch after confirmed native transfer
 - [uw66.4-bounded-live-tip-proof-2026-05-15.md](./uw66.4-bounded-live-tip-proof-2026-05-15.md): bounded live tip proof with explicit 1 DEM spend, tx confirmation, and degraded stats readback

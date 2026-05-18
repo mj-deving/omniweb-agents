@@ -51,6 +51,7 @@ export interface ToolkitCodebaseReachabilityReport {
     distPath: string;
     sourceExists: boolean;
     coveredByTests: boolean;
+    coverageEvidence: string[];
   }[];
   surfaces: ToolkitCodebaseSurfaceRecord[];
   summary: {
@@ -97,6 +98,39 @@ export const TOOLKIT_CODEBASE_REACHABILITY_NEXT_BEADS = [
   "omniweb-agents-spectrum.10",
 ];
 
+export const PACKAGE_EXPORT_COVERAGE_EVIDENCE: Record<string, string[]> = {
+  ".": [
+    "tests/packages/omniweb-toolkit.test.ts",
+    "tests/toolkit/index.test.ts",
+    "packages/omniweb-toolkit/scripts/check-package-consumer.ts",
+    "packages/omniweb-toolkit/examples/read-feed.mjs",
+  ],
+  "./agent": [
+    "tests/packages/toolkit-capability-manifest.test.ts",
+    "tests/packages/consumer-spectrum-inventory.test.ts",
+    "packages/omniweb-toolkit/scripts/check-colony-operator-official-skill-coverage.ts",
+  ],
+  "./types": [
+    "tests/toolkit/types.test.ts",
+    "packages/omniweb-toolkit/scripts/check-package-consumer.ts",
+  ],
+  "./runtime": [
+    "tests/packages/runtime-balance-truth.test.ts",
+    "tests/packages/toolkit-action-admissibility.test.ts",
+    "packages/omniweb-toolkit/examples/write-readiness.mjs",
+  ],
+  "./write": [
+    "tests/packages/market-write-proof.test.ts",
+    "tests/packages/social-write-proof.test.ts",
+    "packages/omniweb-toolkit/scripts/check-write-surface-sweep.ts",
+  ],
+  "./research-agent-minimal": [
+    "packages/omniweb-toolkit/scripts/check-research-agent-consumer.ts",
+    "packages/omniweb-toolkit/examples/research-agent-minimal.mjs",
+    "packages/omniweb-toolkit/references/minimal-consumer-artifact.md",
+  ],
+};
+
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs"]);
 const DOC_EXTENSIONS = new Set([".md", ".mdx"]);
 
@@ -119,6 +153,7 @@ export function buildToolkitCodebaseReachabilityReport(
       distPath,
       sourceExists: existsSync(absoluteSource),
       coveredByTests: false,
+      coverageEvidence: [],
     };
   });
 
@@ -169,17 +204,25 @@ export function buildToolkitCodebaseReachabilityReport(
   const docReferences = buildTextReferences(repoRoot, docFiles, sourceFiles);
 
   const exportCoverage = packageExports.map((entry) => {
-    const sourceRepoPath = toRepoPath(repoRoot, join(packageDir, entry.sourcePath));
-    const coveredByTests = (testReferences.get(sourceRepoPath)?.length ?? 0) > 0
-      || Array.from(testReferences.values()).some((refs) => refs.some((ref) => ref.includes(entry.exportPath.replace(/^\.$/, "index"))));
-    return { ...entry, coveredByTests };
+    const coverageEvidence = packageExportCoverageEvidence({
+      entry,
+      repoRoot,
+    });
+    return { ...entry, coveredByTests: coverageEvidence.length > 0, coverageEvidence };
   });
+  const coveredPublicEntrypoints = new Set(
+    exportCoverage
+      .filter((entry) => entry.sourceExists && entry.coveredByTests)
+      .map((entry) => toRepoPath(repoRoot, join(packageDir, entry.sourcePath))),
+  );
+  const coveredPublicReachable = reachableFrom(coveredPublicEntrypoints, importGraph);
 
   const surfaces: ToolkitCodebaseSurfaceRecord[] = [
     ...sourceFiles.map((path) => classifySourceSurface({
       path,
       publicEntrypoints,
       publicReachable,
+      coveredPublicReachable,
       importGraph,
       reverseImports,
       testReferences,
@@ -205,7 +248,9 @@ export function buildToolkitCodebaseReachabilityReport(
       referencedByTests: [],
       referencedByScripts: [],
       referencedByDocs: [],
-      notes: entry.sourceExists ? [`Package export resolves to ${entry.sourcePath}.`] : [`Package export target ${entry.distPath} has no source counterpart.`],
+      notes: entry.sourceExists
+        ? [`Package export resolves to ${entry.sourcePath}.`, ...entry.coverageEvidence.map((item) => `Coverage: ${item}.`)]
+        : [`Package export target ${entry.distPath} has no source counterpart.`],
     })),
   ].sort((left, right) => left.path.localeCompare(right.path));
 
@@ -245,6 +290,7 @@ function classifySourceSurface(input: {
   path: string;
   publicEntrypoints: Set<string>;
   publicReachable: Set<string>;
+  coveredPublicReachable: Set<string>;
   importGraph: Map<string, string[]>;
   reverseImports: Map<string, string[]>;
   testReferences: Map<string, string[]>;
@@ -258,11 +304,13 @@ function classifySourceSurface(input: {
   const referencedByDocs = input.docReferences.get(input.path) ?? [];
   const publicEntrypoint = input.publicEntrypoints.has(input.path);
   const publicReachable = input.publicReachable.has(input.path);
+  const coveredByPublicEntrypoint = input.coveredPublicReachable.has(input.path);
   const duplicate = looksDuplicateOrSuperseded(input.path);
+  const deterministicCoverage = referencedByTests.length > 0 || referencedByScripts.length > 0 || coveredByPublicEntrypoint;
   const classification: ToolkitCodebaseReachabilityClassification = duplicate
     ? "duplicate_or_superseded"
     : publicReachable
-      ? referencedByTests.length > 0 ? "public_exported_tested" : "public_exported_uncovered"
+      ? deterministicCoverage ? "public_exported_tested" : "public_exported_uncovered"
       : importedBy.length > 0
         ? "internal_reachable"
         : referencedByScripts.length > 0
@@ -284,7 +332,7 @@ function classifySourceSurface(input: {
     referencedByTests,
     referencedByScripts,
     referencedByDocs,
-    notes: buildSourceNotes(classification, publicEntrypoint, publicReachable),
+    notes: buildSourceNotes(classification, publicEntrypoint, publicReachable, coveredByPublicEntrypoint),
   };
 }
 
@@ -323,6 +371,17 @@ function classifyDocSurface(path: string): ToolkitCodebaseSurfaceRecord {
     referencedByDocs: [],
     notes: ["Documentation/reference surface; classify separately from executable code."],
   };
+}
+
+function packageExportCoverageEvidence(input: {
+  entry: ToolkitCodebaseReachabilityReport["packageExports"][number];
+  repoRoot: string;
+}): string[] {
+  const evidence = new Set<string>();
+  for (const ref of PACKAGE_EXPORT_COVERAGE_EVIDENCE[input.entry.exportPath] ?? []) {
+    if (existsSync(resolve(input.repoRoot, ref))) evidence.add(ref);
+  }
+  return Array.from(evidence).sort();
 }
 
 function listFiles(root: string, extensions: Set<string>): string[] {
@@ -431,12 +490,14 @@ function buildSourceNotes(
   classification: ToolkitCodebaseReachabilityClassification,
   publicEntrypoint: boolean,
   publicReachable: boolean,
+  coveredByPublicEntrypoint: boolean,
 ): string[] {
   if (classification === "public_exported_uncovered") {
     return [publicEntrypoint ? "Package entrypoint lacks a direct test reference." : "Public barrel reachability lacks a direct test reference."];
   }
   if (classification === "stale_dead_orphaned") return ["No import, test, script, or doc reference was found; cleanup bead must verify before deletion."];
   if (classification === "duplicate_or_superseded") return ["Name suggests duplicate/superseded status; cleanup bead must prove before deletion."];
+  if (coveredByPublicEntrypoint) return ["Reachable from a package export with deterministic consumer coverage."];
   if (publicReachable) return ["Reachable from a package export."];
   return ["Reachability classified by local static references."];
 }

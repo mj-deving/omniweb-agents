@@ -32,6 +32,12 @@ describe("codebase reachability inventory", () => {
       "./write",
     ]));
     expect(report.packageExports.every((entry) => entry.sourceExists)).toBe(true);
+    expect(report.packageExports.every((entry) => entry.coveredByTests)).toBe(true);
+    expect(report.packageExports.find((entry) => entry.exportPath === "./research-agent-minimal")?.coverageEvidence).toEqual(
+      expect.arrayContaining([
+        "packages/omniweb-toolkit/scripts/check-research-agent-consumer.ts",
+      ]),
+    );
     expect(report.surfaces).toContainEqual(expect.objectContaining({
       path: "packages/omniweb-toolkit/src/index.ts",
       kind: "source",

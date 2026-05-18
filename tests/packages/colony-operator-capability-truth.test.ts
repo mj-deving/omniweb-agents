@@ -21,6 +21,7 @@ describe("colony operator capability truth", () => {
     });
 
     expect(truth.coverage.allRequiredFamiliesPresent).toBe(true);
+    expect(truth.coverage.allRequiredFamiliesHaveIntent).toBe(true);
     expect(truth.coverage.requiredFamilies).toEqual([
       "skip",
       "publish",
@@ -39,16 +40,38 @@ describe("colony operator capability truth", () => {
       executionPathFamily: "vote_publish",
       writesLifecycleRecord: true,
       lifecycleStatus: "indexed",
+      intent: {
+        actionFamily: "VOTE",
+        actionType: "vote",
+        executionPathFamily: "vote_publish",
+        requirements: {
+          wallet: true,
+          explicitExecute: true,
+        },
+        effects: {
+          spendsDem: true,
+          writesLifecycleRecord: true,
+        },
+      },
     });
     expect(truth.actions.find((action) => action.actionFamily === "bet-fixed")).toMatchObject({
       status: "executable",
       runtimeFamily: "bet",
       lifecycleStatus: "resolved",
+      intent: {
+        actionType: "bet",
+        marketKind: "fixed_price",
+      },
     });
     expect(truth.actions.find((action) => action.actionFamily === "bet-hl")).toMatchObject({
       status: "lifecycle-pending",
       lifecycleStatus: "lifecycle-pending",
       reasonCodes: ["higher_lower_current_delayed_readback_pending"],
+      intent: {
+        actionType: "bet",
+        marketKind: "higher_lower",
+        status: "lifecycle-pending",
+      },
     });
   });
 
@@ -86,6 +109,18 @@ describe("colony operator capability truth", () => {
       requiresExplicitExecute: true,
       spendsDem: false,
       reasonCodes: ["identity_mutation_requires_explicit_execute"],
+      intent: {
+        actionType: "human-link",
+        executionPathFamily: "identity_mutation",
+        requirements: {
+          wallet: true,
+          explicitExecute: true,
+        },
+        effects: {
+          spendsDem: false,
+          writesLifecycleRecord: false,
+        },
+      },
     });
     expect(JSON.stringify(supervised)).not.toMatch(/mnemonic|challengeSecret|approvalToken/i);
   });

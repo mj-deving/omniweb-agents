@@ -40,7 +40,7 @@ Anti-drift rule:
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
 | Current direction | Landed playbook-policy architecture on top of the substrate-first rebuild, then freeze that thin waist for one wave and move fast in a colony live-ops lane above it: prove real operator execution first, harden lower layers from live evidence second |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
-| Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred by environment/auth + launch-proof posture |
+| Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
 | Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, and `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run for [LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md](LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md), [LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md](LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md), and [LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md](LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md) |
@@ -199,8 +199,8 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - polish capability-truth surfacing so operator-facing runtime reports stay honest during fast iteration
 
 #### Wave D — consumer hardening after live operator truth exists
-- unblock `npm publish` auth and registry path
-- prove outside-in registry install / consumer journey on the published package
+- clean up npm release-readiness so package checks, pack dry-run, registry-name lookup, auth detection, and release authorization status are reproducible without publishing
+- keep outside-in registry install / published consumer proof blocked until a later explicitly authorized release exists
 - refresh public/docs launch wording only after the live operator lane and registry path are current
 
 ## Current frozen-seam colony live-ops band

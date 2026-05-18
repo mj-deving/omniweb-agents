@@ -235,7 +235,9 @@ const {
   describeRuntimeCapabilities,
 } = runtimeEntry;
 const {
+  buildColonyOperatorCapabilityTruth,
   buildColonyOperatorCapabilityDiscovery,
+  buildColonyOperatorMultiActionPlan,
   buildColonyOperatorResponseDepthAccess,
   buildLeaderboardPatternPrompt,
   getStarterSourcePack,
@@ -255,8 +257,22 @@ const toolkitManifest = buildToolkitCapabilityManifest({
   runtimeCapabilities: capabilities,
   now: new Date("2026-05-18T00:00:00.000Z"),
 });
+const colonyOperatorTruth = buildColonyOperatorCapabilityTruth({
+  runtimeCapabilities: capabilities,
+  now: new Date("2026-05-18T00:00:00.000Z"),
+});
 const colonyOperatorDiscovery = buildColonyOperatorCapabilityDiscovery(toolkitManifest);
 const responseDepthAccess = buildColonyOperatorResponseDepthAccess(toolkitManifest);
+const multiActionPlan = buildColonyOperatorMultiActionPlan({
+  mode: "dry-run",
+  capabilityTruth: colonyOperatorTruth,
+  requestedActions: [
+    { actionFamily: "publish", params: { category: "OBSERVATION" }, timeframe: "now" },
+    { actionFamily: "tip", params: { targetTxHash: "0xpackage-consumer", amount: 1 }, timeframe: "after readback" },
+    { actionFamily: "bet-hl", params: { asset: "ETH", direction: "higher" }, timeframe: "24h" },
+    { actionFamily: "register", params: { agentAddress: "0xconsumer" }, timeframe: "supervised only" },
+  ],
+});
 
 if (!readiness.canRead) {
   throw new Error("readiness unexpectedly reports read path unavailable");
@@ -297,6 +313,18 @@ if (!responseDepthAccess.surfaces.some((surface) => surface.id === "price-histor
 if (!responseDepthAccess.surfaces.some((surface) => surface.id === "lifecycle-proof-packets" && surface.envelopeFields.includes("lifecyclePlan.proofPath"))) {
   throw new Error("colony operator response-depth access did not preserve lifecycle proof packet pointers");
 }
+if (multiActionPlan.mode !== "dry-run" || multiActionPlan.requestedActionCount !== 4 || multiActionPlan.liveExecutionAllowed !== false) {
+  throw new Error("colony operator multi-action dry-run plan did not preserve no-spend gated planning");
+}
+if (!multiActionPlan.plannedIntents.some((intent) => intent.actionFamily === "tip" && intent.request.params.targetTxHash === "0xpackage-consumer")) {
+  throw new Error("colony operator multi-action plan did not preserve per-action params");
+}
+if (!multiActionPlan.plannedIntents.some((intent) => (
+  intent.actionFamily === "register"
+  && ["blocked", "supervised_authorization_required"].includes(intent.liveExecutionGate.gate)
+))) {
+  throw new Error("colony operator multi-action plan did not gate identity action");
+}
 
 const sourcePack = getStarterSourcePack("research");
 if (!sourcePack?.entries?.length) {
@@ -330,7 +358,7 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   imports: {
     main: ["createClient"],
     runtime: ["buildToolkitCapabilityManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
-    agent: ["buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorResponseDepthAccess", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
+    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
   dryRun: {
@@ -359,6 +387,13 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
       missingSurfaces: responseDepthAccess.missingSurfaces,
     },
     defaultBoundaries: colonyOperatorDiscovery.compact.defaultBoundaries,
+  },
+  colonyOperatorMultiActionPlan: {
+    mode: multiActionPlan.mode,
+    requestedActionCount: multiActionPlan.requestedActionCount,
+    liveExecutionAllowed: multiActionPlan.liveExecutionAllowed,
+    defaultLiveExecutionGate: multiActionPlan.defaultLiveExecutionGate,
+    plannedFamilies: multiActionPlan.plannedIntents.map((intent) => intent.actionFamily),
   },
   sourcePack: {
     archetype: sourcePack.archetype,

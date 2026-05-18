@@ -122,6 +122,7 @@ export {
 } from "./capability-manifest.js";
 export {
   buildColonyOperatorCapabilityDiscovery,
+  buildColonyOperatorMultiActionPlan,
   buildColonyOperatorResponseDepthAccess,
   runColonyOperatorCycle,
   type ColonyOperatorCapabilitySummary,
@@ -131,6 +132,10 @@ export {
   type ColonyOperatorLifecyclePlan,
   type ColonyOperatorLifecyclePlanStatus,
   type ColonyOperatorLifecycleStore,
+  type ColonyOperatorMultiActionPlan,
+  type ColonyOperatorPlannedAction,
+  type ColonyOperatorPlannedActionGate,
+  type ColonyOperatorRequestedAction,
   type ColonyOperatorResponseDepthAccess,
   type ColonyOperatorResponseDepthPreservationStatus,
   type ColonyOperatorResponseDepthSurface,

@@ -62,6 +62,7 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
   capabilityDiscovery: ColonyOperatorCapabilityDiscovery;
   capabilityTruth: ColonyOperatorCapabilityTruth;
   toolkitCapabilityManifest: ToolkitCapabilityManifest;
+  multiActionPlan: ColonyOperatorMultiActionPlan;
   lifecyclePlan: ColonyOperatorLifecyclePlan;
   execution: {
     cycleId: string;
@@ -168,6 +169,59 @@ export interface ColonyOperatorResponseDepthAccess {
   missingSurfaces: ColonyOperatorResponseDepthSurfaceId[];
 }
 
+export interface ColonyOperatorRequestedAction {
+  actionFamily: ColonyOperatorActionFamily;
+  params?: Record<string, unknown>;
+  timeframe?: string;
+  rationale?: string;
+}
+
+export type ColonyOperatorPlannedActionGate =
+  | "dry_run_only"
+  | "explicit_execute_required"
+  | "supervised_authorization_required"
+  | "blocked"
+  | "unsupported";
+
+export interface ColonyOperatorPlannedAction {
+  actionFamily: ColonyOperatorActionFamily;
+  request: ColonyOperatorRequestedAction;
+  intent: ColonyOperatorActionIntentContract;
+  status: ColonyOperatorActionTruth["status"];
+  lifecycleStatus: ColonyOperatorActionTruth["lifecycleStatus"];
+  executionPathFamily: ColonyOperatorActionTruth["executionPathFamily"];
+  proofLevel: ColonyOperatorActionTruth["proofLevel"];
+  readiness: {
+    canPlan: boolean;
+    canExecuteNow: boolean;
+    requiresExplicitExecute: boolean;
+    requiresSupervision: boolean;
+    spendsDem: boolean;
+    writesLifecycleRecord: boolean;
+    missingRequirements: string[];
+    reasonCodes: string[];
+  };
+  proofStatus: {
+    proofLevel: ColonyOperatorActionTruth["proofLevel"];
+    lifecycleStatus: ColonyOperatorActionTruth["lifecycleStatus"];
+    expectedReadback: string[];
+  };
+  liveExecutionGate: {
+    gate: ColonyOperatorPlannedActionGate;
+    reason: string;
+  };
+}
+
+export interface ColonyOperatorMultiActionPlan {
+  mode: ColonyOperatorExecutionMode;
+  requestedActionCount: number;
+  plannedIntents: ColonyOperatorPlannedAction[];
+  defaultLiveExecutionGate: "explicit_execute_required";
+  liveExecutionAllowed: boolean;
+  noSpendDefault: boolean;
+  canRepresentMultipleActions: boolean;
+}
+
 export interface ColonyOperatorLifecycleStore {
   create(input: {
     actionFamily: "publish" | "reply" | "react" | "tip" | "vote" | "bet-fixed" | "bet-hl";
@@ -221,6 +275,7 @@ export interface RunColonyOperatorCycleOptions<TState extends MinimalAgentState 
   execute?: boolean;
   capabilityTruth?: ColonyOperatorCapabilityTruth;
   toolkitCapabilityManifest?: ToolkitCapabilityManifest;
+  requestedActions?: ColonyOperatorRequestedAction[];
   lifecycleStore?: ColonyOperatorLifecycleStore;
   walletAddress?: string | null;
   command?: string;
@@ -275,6 +330,11 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
   });
   const verification = cycle.outcome.execution.verification as Record<string, unknown> | undefined;
   const capabilitySummary = summarizeCapabilityTruth(capabilityTruth, selectedTruth.actionFamily);
+  const multiActionPlan = buildColonyOperatorMultiActionPlan({
+    mode,
+    capabilityTruth,
+    requestedActions: opts.requestedActions ?? defaultRequestedActionsFor(selectedTruth, skippedAlternatives),
+  });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -292,6 +352,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
     capabilityDiscovery: buildColonyOperatorCapabilityDiscovery(toolkitCapabilityManifest, capabilitySummary),
     capabilityTruth,
     toolkitCapabilityManifest,
+    multiActionPlan,
     lifecyclePlan,
     execution: {
       cycleId: cycle.cycleId,
@@ -309,6 +370,62 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       error: cycle.outcome.execution.error ?? null,
     },
     cycle,
+  };
+}
+
+export function buildColonyOperatorMultiActionPlan(args: {
+  mode?: ColonyOperatorExecutionMode;
+  capabilityTruth: ColonyOperatorCapabilityTruth;
+  requestedActions: ColonyOperatorRequestedAction[];
+}): ColonyOperatorMultiActionPlan {
+  const mode = args.mode ?? "dry-run";
+  const plannedIntents = args.requestedActions.map((request) => {
+    const actionTruth = findActionTruth(args.capabilityTruth.actions, request.actionFamily);
+    const reasonCodes = [...actionTruth.reasonCodes];
+    const missingRequirements = missingRequirementsForPlannedAction(actionTruth);
+    // This surface is a multi-action planning envelope only. Live execution stays
+    // behind the existing explicit single-action executor path.
+    const canExecuteNow = false;
+    return {
+      actionFamily: actionTruth.actionFamily,
+      request: {
+        actionFamily: request.actionFamily,
+        params: request.params ? { ...request.params } : undefined,
+        timeframe: request.timeframe,
+        rationale: request.rationale,
+      },
+      intent: actionTruth.intent,
+      status: actionTruth.status,
+      lifecycleStatus: actionTruth.lifecycleStatus,
+      executionPathFamily: actionTruth.executionPathFamily,
+      proofLevel: actionTruth.proofLevel,
+      readiness: {
+        canPlan: actionTruth.status !== "unsupported",
+        canExecuteNow,
+        requiresExplicitExecute: actionTruth.requiresExplicitExecute,
+        requiresSupervision: actionTruth.status === "supervised",
+        spendsDem: actionTruth.spendsDem,
+        writesLifecycleRecord: actionTruth.writesLifecycleRecord,
+        missingRequirements,
+        reasonCodes,
+      },
+      proofStatus: {
+        proofLevel: actionTruth.proofLevel,
+        lifecycleStatus: actionTruth.lifecycleStatus,
+        expectedReadback: expectedReadbackFor(actionTruth, null),
+      },
+      liveExecutionGate: liveExecutionGateForPlannedAction(actionTruth, mode),
+    };
+  });
+
+  return {
+    mode,
+    requestedActionCount: args.requestedActions.length,
+    plannedIntents,
+    defaultLiveExecutionGate: "explicit_execute_required",
+    liveExecutionAllowed: false,
+    noSpendDefault: args.capabilityTruth.coverage.noSpendDefault,
+    canRepresentMultipleActions: plannedIntents.length > 1,
   };
 }
 
@@ -528,6 +645,53 @@ const RESPONSE_DEPTH_SURFACE_REQUIREMENTS: ResponseDepthSurfaceRequirement[] = [
 
 function uniqueStrings<T extends string>(values: T[]): T[] {
   return Array.from(new Set(values));
+}
+
+function defaultRequestedActionsFor(
+  selectedTruth: ColonyOperatorActionTruth,
+  skippedAlternatives: Array<{ actionFamily: ColonyOperatorActionFamily }>,
+): ColonyOperatorRequestedAction[] {
+  return [selectedTruth.actionFamily, ...skippedAlternatives.map((alternative) => alternative.actionFamily)]
+    .map((actionFamily) => ({ actionFamily }));
+}
+
+function missingRequirementsForPlannedAction(action: ColonyOperatorActionTruth): string[] {
+  const missing = [...action.reasonCodes];
+  if (action.status === "blocked" && action.requiresWallet && !missing.includes("missing_credentials")) {
+    missing.push("missing_credentials");
+  }
+  if (action.status === "lifecycle-pending" && !missing.includes("pending_current_recheck")) {
+    missing.push("pending_current_recheck");
+  }
+  if (action.status === "supervised" && !missing.includes("supervised_authorization_required")) {
+    missing.push("supervised_authorization_required");
+  }
+  return uniqueStrings(missing);
+}
+
+function liveExecutionGateForPlannedAction(
+  action: ColonyOperatorActionTruth,
+  mode: ColonyOperatorExecutionMode,
+): ColonyOperatorPlannedAction["liveExecutionGate"] {
+  if (action.status === "unsupported") {
+    return { gate: "unsupported", reason: "action family is not supported by the current runtime surface" };
+  }
+  if (action.status === "blocked") {
+    return { gate: "blocked", reason: action.reasonCodes.join(", ") || "runtime readiness blocker" };
+  }
+  if (action.status === "supervised") {
+    return { gate: "supervised_authorization_required", reason: "identity and supervised mutations require explicit operator authorization" };
+  }
+  if (action.status !== "executable") {
+    return { gate: "blocked", reason: action.reasonCodes.join(", ") || `${action.status} action is not live-executable` };
+  }
+  if (mode === "dry-run") {
+    return { gate: "dry_run_only", reason: "operator cycle is in dry-run mode and will not execute live writes" };
+  }
+  if (action.requiresExplicitExecute || action.spendsDem) {
+    return { gate: "explicit_execute_required", reason: "live write or spend-bearing action requires explicit execute authorization" };
+  }
+  return { gate: "dry_run_only", reason: "no live execution is planned for this action in the multi-action plan" };
 }
 
 function summarizeCapabilityTruth(

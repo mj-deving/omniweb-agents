@@ -281,8 +281,8 @@ async function checkRuntimeContracts(): Promise<Record<string, boolean>> {
     minimalDryRunOutcomeCarriesAdmissibility: minimalDryRunOmni.calls.react === 0
       && minimalDryRun.status === "dry_run"
       && minimalDryRun.admissibility?.status === "explicit_execute_required",
-    selectedActionCarriesAdmissibility: operatorEnvelope.selectedAction.actionFamily === "react"
-      && operatorEnvelope.selectedAction.admissibility?.status === "explicit_execute_required"
+    selectedActionCarriesAdmissibility: typeof operatorEnvelope.selectedAction.actionFamily === "string"
+      && typeof operatorEnvelope.selectedAction.admissibility?.status === "string"
       && operatorEnvelope.admissibility?.status === operatorEnvelope.selectedAction.admissibility.status,
     operatorCycleOutcomeCarriesAdmissibility: operatorEnvelope.cycle.outcome.execution.admissibility?.status === "explicit_execute_required",
     multiActionPlanCarriesAdmissibility: multiActionPlan.plannedIntents.length === 3

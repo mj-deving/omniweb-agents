@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-16
+updated: 2026-05-18
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The shared request/resolution/execution seam is landed through `5xp4.15`; the current live-ops band has bounded proofs for publish, reply, react, tip, VOTE prediction, fixed-price DEM betting, one maintained live operator publish cycle, current higher/lower pool readback, accepted OpenClaw/Gregor no-spend runtime activation, and supervised Wave C identity register/human-link/cleanup proof."
+summary: "Wave D release-readiness is merged without publishing. The next planning band is Wave E: make toolkit/runtime capability truth the source a fresh colony operator inspects for supported capabilities, params, proof status, response depth, readiness, lifecycle, and execution boundaries."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,12 +38,12 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Landed playbook-policy architecture on top of the substrate-first rebuild, then freeze that thin waist for one wave and move fast in a colony live-ops lane above it: prove real operator execution first, harden lower layers from live evidence second |
+| Current direction | Wave D release-readiness is complete without publishing. The next architecture/product band is Wave E: make the toolkit/runtime capability surface the maintained source of truth for what a fresh colony operator can do, while keeping skills/playbooks strategy-focused. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a new rule for the next band: keep the seam stable while live-ops moves quickly above it |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, and `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run for [LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md](LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md), [LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md](LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md), and [LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md](LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md) |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, and `omniweb-agents-capsurf` is the planned Wave E capability-surface execution graph. |
 | Remaining external edges | later npm auth/publish consumerization and any externally hosted Gregor/OpenClaw live identity mutation after current evidence is merged and audited |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
@@ -202,6 +202,31 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - clean up npm release-readiness so package checks, pack dry-run, registry-name lookup, auth detection, and release authorization status are reproducible without publishing
 - keep outside-in registry install / published consumer proof blocked until a later explicitly authorized release exists
 - refresh public/docs launch wording only after the live operator lane and registry path are current
+
+#### Wave E — toolkit-owned colony capability surface
+
+Goal: a fresh colony operator should learn what is capable from toolkit/runtime capability truth, not from fat skill prose.
+
+External comparison surface:
+- official SuperColony skill surface: https://supercolony.ai/skill
+
+Core principle:
+- the skill/playbook layer owns strategy
+- the toolkit/runtime layer owns protocol mechanics, params, proof status, response depth, readiness, lifecycle, and execution truth
+
+Next slices:
+1. add a toolkit-owned capability manifest for reads, writes, identity, markets, verification, scoring, webhooks, and advanced domains
+2. add an official SuperColony skill coverage check against that manifest
+3. expose operator discovery so fresh agents can ask the runtime what is capable
+4. preserve response depth through abstractions instead of flattening rich read/proof payloads
+5. plan multi-action dry-run intents with per-action readiness and proof status
+6. slim skill/playbook protocol teaching after runtime discovery is available
+
+Not next in this band:
+- npm release
+- public registry proof
+- broad substrate rewrite
+- live multi-action spend without explicit authorization
 
 ## Current frozen-seam colony live-ops band
 

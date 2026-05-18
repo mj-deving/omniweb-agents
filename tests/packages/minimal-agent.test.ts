@@ -1249,6 +1249,7 @@ describe("minimal agent runtime", () => {
     expect(omni.colony.publish).not.toHaveBeenCalled();
     expect(record.outcome.execution.status).toBe("dry_run");
     expect(record.outcome.execution.demSpendEstimate).toBe(0);
+    expect(record.outcome.execution.admissibility?.status).toBe("explicit_execute_required");
   });
 
   it("keeps polling after balance spend so tip stats can upgrade the confirmation surface", async () => {
@@ -1376,6 +1377,9 @@ describe("minimal agent runtime", () => {
       status: "dry_run",
       actionType: "publish",
       demSpendEstimate: 0,
+      admissibility: {
+        status: "explicit_execute_required",
+      },
     });
   });
 

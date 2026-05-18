@@ -149,28 +149,44 @@ export async function executeResolvedIntent(
   if (resolution.executionPathFamily === "direct_attested_write") {
     return {
       resolution,
-      execution: await executeDirectAttestedWriteIntent({ omni, resolution, verification }),
+      execution: withRuntimeGateReports(
+        await executeDirectAttestedWriteIntent({ omni, resolution, verification }),
+        guardrailEvaluation,
+        admissibility,
+      ),
     };
   }
 
   if (resolution.executionPathFamily === "reaction") {
     return {
       resolution,
-      execution: await executeReactionIntent({ omni, resolution }),
+      execution: withRuntimeGateReports(
+        await executeReactionIntent({ omni, resolution }),
+        guardrailEvaluation,
+        admissibility,
+      ),
     };
   }
 
   if (resolution.executionPathFamily === "tip_transfer") {
     return {
       resolution,
-      execution: await executeTipIntent({ omni, resolution, verification }),
+      execution: withRuntimeGateReports(
+        await executeTipIntent({ omni, resolution, verification }),
+        guardrailEvaluation,
+        admissibility,
+      ),
     };
   }
 
   if (resolution.executionPathFamily === "market_write") {
     return {
       resolution,
-      execution: await executeMarketWriteIntent({ omni, resolution, verification }),
+      execution: withRuntimeGateReports(
+        await executeMarketWriteIntent({ omni, resolution, verification }),
+        guardrailEvaluation,
+        admissibility,
+      ),
     };
   }
 
@@ -180,6 +196,9 @@ export async function executeResolvedIntent(
       stage: "execute",
       message: `unsupported_execution_path:${resolution.executionPathFamily}`,
       retryable: false,
+    }, {
+      guardrailEvaluation,
+      admissibility,
     }),
   };
 }
@@ -203,7 +222,21 @@ export function toMinimalExecutionOutcome(
     verification: execution.verification,
     publishResult: execution.publishResult,
     reactionResult: execution.reactionResult,
+    guardrailEvaluation: execution.guardrailEvaluation,
+    admissibility: execution.admissibility,
     error: execution.error,
+  };
+}
+
+function withRuntimeGateReports(
+  execution: ResolvedIntentExecutionResult,
+  guardrailEvaluation: ToolkitGuardrailEvaluationReport,
+  admissibility: ToolkitActionAdmissibilityReport,
+): ResolvedIntentExecutionResult {
+  return {
+    ...execution,
+    guardrailEvaluation,
+    admissibility,
   };
 }
 

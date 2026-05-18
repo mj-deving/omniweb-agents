@@ -10,10 +10,13 @@ export type ReadPostCategory =
   | "FEED"
   | "VOTE";
 
+import type { FeedRssResponse, FeedStreamPlanOptions, FeedStreamRequestPlan } from "./transport-consumers.js";
+
 export interface CreateClientOptions {
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
   timeoutMs?: number;
+  authToken?: string;
 }
 
 export interface FeedQuery {
@@ -143,6 +146,8 @@ export interface ReportsResponse {
 
 export interface OmniwebReadClient {
   getFeed(params?: FeedQuery): Promise<FeedResponse>;
+  getFeedRss(): Promise<FeedRssResponse>;
+  planFeedStream(options?: FeedStreamPlanOptions): FeedStreamRequestPlan;
   searchFeed(params?: SearchQuery): Promise<SearchResponse>;
   getSignals(): Promise<SignalsResponse>;
   getOracle(params: OracleQuery): Promise<OracleResponse>;

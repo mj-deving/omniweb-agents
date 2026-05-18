@@ -1,5 +1,6 @@
 import { ENDPOINTS, SUPERCOLONY_BASE_URL, withQuery } from "./endpoints.js";
 import { HttpError, OmniwebError, ParseError } from "./errors.js";
+import { buildFeedStreamRequestPlan, summarizeRssFeed } from "./transport-consumers.js";
 import type {
   CreateClientOptions,
   FeedQuery,
@@ -30,6 +31,24 @@ async function fetchWithTimeout(fetchImpl: typeof globalThis.fetch, url: string,
       headers: {
         accept: "application/json",
       },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchTextWithTimeout(
+  fetchImpl: typeof globalThis.fetch,
+  url: string,
+  timeoutMs: number,
+  accept: string,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetchImpl(url, {
+      headers: { accept },
       signal: controller.signal,
     });
   } finally {
@@ -93,6 +112,31 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
   return {
     getFeed(params?: FeedQuery): Promise<FeedResponse> {
       return getJson<FeedResponse>(withQuery(ENDPOINTS.feed, params ? { ...params } : undefined));
+    },
+
+    async getFeedRss() {
+      const url = new URL(ENDPOINTS.feedRss, baseUrl).toString();
+      const response = await fetchTextWithTimeout(fetchImpl, url, timeoutMs, "application/atom+xml,text/xml,*/*");
+      const text = await response.text();
+      if (!response.ok) {
+        throw new HttpError(`HTTP ${response.status} for ${url}`, {
+          status: response.status,
+          url,
+          body: text,
+        });
+      }
+      return {
+        xml: text,
+        summary: summarizeRssFeed(text, response.headers.get("content-type") ?? ""),
+      };
+    },
+
+    planFeedStream(streamOptions = {}) {
+      return buildFeedStreamRequestPlan({
+        token: streamOptions.token ?? options.authToken ?? null,
+        lastEventId: streamOptions.lastEventId,
+        openStream: streamOptions.openStream,
+      });
     },
 
     searchFeed(params?: SearchQuery): Promise<SearchResponse> {

@@ -160,6 +160,28 @@ export {
   type OfficialSkillSurfaceArea,
 } from "./official-skill-coverage.js";
 export {
+  CONSUMER_SPECTRUM_CLASSIFICATIONS,
+  CONSUMER_SPECTRUM_DISCOVERY_RESOURCES,
+  CONSUMER_SPECTRUM_ENDPOINT_PROBES,
+  CONSUMER_SPECTRUM_NEXT_BEADS,
+  buildConsumerSpectrumInventoryReport,
+  classifyConsumerSpectrumProbe,
+  extractOpenApiPaths,
+  summarizeConsumerSpectrumBodyShape,
+  type ConsumerSpectrumClassification,
+  type ConsumerSpectrumDiscoveryResource,
+  type ConsumerSpectrumEndpointExpectation,
+  type ConsumerSpectrumEndpointProbe,
+  type ConsumerSpectrumInventoryInput,
+  type ConsumerSpectrumInventoryReport,
+  type ConsumerSpectrumLiveProbeResult,
+  type ConsumerSpectrumLocalToolkitSummary,
+  type ConsumerSpectrumOfficialAreaAssessment,
+  type ConsumerSpectrumOpenApiSummary,
+  type ConsumerSpectrumResourceKind,
+  type ConsumerSpectrumShapeObservation,
+} from "./consumer-spectrum-inventory.js";
+export {
   buildColonyOperatorCapabilityDiscovery,
   buildColonyOperatorMultiActionPlan,
   buildColonyOperatorResponseDepthAccess,

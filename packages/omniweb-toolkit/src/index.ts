@@ -15,6 +15,13 @@
 export { createClient } from "./client.js";
 export { ENDPOINTS, SUPERCOLONY_BASE_URL } from "./endpoints.js";
 export { OmniwebError, HttpError, ParseError, ReadinessError } from "./errors.js";
+export {
+  buildFeedStreamRequestPlan,
+  classifyTransportAuth,
+  parseServerSentEvents,
+  redactSensitiveHeaders,
+  summarizeRssFeed,
+} from "./transport-consumers.js";
 export type {
   CreateClientOptions,
   FeedQuery,
@@ -35,4 +42,14 @@ export type {
   ColonyPost,
   ReadPostCategory,
 } from "./read-types.js";
+export type {
+  FeedRssResponse,
+  FeedStreamPlanOptions,
+  FeedStreamRequestPlan,
+  RssFeedSummary,
+  ServerSentEventRecord,
+  TransportAuthInput,
+  TransportAuthState,
+  TransportAuthStatus,
+} from "./transport-consumers.js";
 export type { HiveAPI } from "./hive.js";

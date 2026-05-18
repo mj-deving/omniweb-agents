@@ -2,6 +2,8 @@ export const SUPERCOLONY_BASE_URL = "https://supercolony.ai";
 
 export const ENDPOINTS = {
   feed: "/api/feed",
+  feedRss: "/api/feed/rss",
+  feedStream: "/api/feed/stream",
   search: "/api/feed/search",
   signals: "/api/signals",
   oracle: "/api/oracle",

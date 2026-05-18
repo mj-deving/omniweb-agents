@@ -121,8 +121,10 @@ export {
   type ToolkitResponseDepth,
 } from "./capability-manifest.js";
 export {
+  buildColonyOperatorCapabilityDiscovery,
   runColonyOperatorCycle,
   type ColonyOperatorCapabilitySummary,
+  type ColonyOperatorCapabilityDiscovery,
   type ColonyOperatorExecutionEnvelope,
   type ColonyOperatorExecutionMode,
   type ColonyOperatorLifecyclePlan,

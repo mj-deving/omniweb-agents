@@ -51,6 +51,7 @@ export interface ColonyOperatorLifecyclePlan {
 export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentState = MinimalAgentState> {
   generatedAt: string;
   mode: ColonyOperatorExecutionMode;
+  observedContextSummary: ColonyOperatorObservedContextSummary;
   selectedAction: {
     actionFamily: ColonyOperatorActionFamily;
     status: string;
@@ -74,6 +75,7 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
   guardrailEvaluation: ToolkitGuardrailEvaluationReport;
   admissibility: ToolkitActionAdmissibilityReport;
   multiActionPlan: ColonyOperatorMultiActionPlan;
+  actionSurface: ColonyOperatorActionSurface;
   lifecyclePlan: ColonyOperatorLifecyclePlan;
   execution: {
     cycleId: string;
@@ -90,7 +92,23 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
     };
     error: MinimalExecutionOutcome["error"] | null;
   };
+  finalVerdict: ColonyOperatorFinalVerdict;
   cycle: MinimalCycleRecord<TState>;
+}
+
+export interface ColonyOperatorObservedContextSummary {
+  source: "minimal-agent-cycle";
+  cycleId: string;
+  decisionKind: MinimalCycleRecord["decision"]["kind"];
+  selectedActionFamily: ColonyOperatorActionFamily;
+  actionType: string | null;
+  policyId: string | null;
+  routeId: string | null;
+  matchedConditions: string[];
+  liveReadSurfaces: string[];
+  facts: Record<string, unknown> | null;
+  promptObjective: string | null;
+  observedFacts: string[];
 }
 
 export interface ColonyOperatorCapabilitySummary {
@@ -235,6 +253,67 @@ export interface ColonyOperatorMultiActionPlan {
   canRepresentMultipleActions: boolean;
 }
 
+export interface ColonyOperatorActionSurface {
+  maintainedFamilies: ColonyOperatorActionFamily[];
+  selectedFamily: ColonyOperatorActionFamily;
+  surfacedAlternativeFamilies: ColonyOperatorActionFamily[];
+  allMaintainedFamiliesSurfaced: boolean;
+  perActionStatus: ColonyOperatorPerActionStatus[];
+  defaultNoSpend: boolean;
+  liveExecutionAllowed: boolean;
+}
+
+export interface ColonyOperatorPerActionStatus {
+  actionFamily: ColonyOperatorActionFamily;
+  selected: boolean;
+  status: ColonyOperatorActionTruth["status"];
+  lifecycleStatus: ColonyOperatorActionTruth["lifecycleStatus"];
+  executionPathFamily: ColonyOperatorActionTruth["executionPathFamily"];
+  proofLevel: ColonyOperatorActionTruth["proofLevel"];
+  capability: {
+    requiresWallet: boolean;
+    requiresAttestation: boolean;
+    requiresTargetPost: boolean;
+    requiresMarketContext: boolean;
+    spendsDem: boolean;
+    writesLifecycleRecord: boolean;
+  };
+  guardrails: {
+    status: ToolkitGuardrailEvaluationReport["status"];
+    blockedReasonCodes: string[];
+    supervisedRequirements: string[];
+    degradedReasonCodes: string[];
+  };
+  lifecycle: {
+    status: ColonyOperatorActionTruth["lifecycleStatus"];
+    expectedReadback: string[];
+  };
+  supervision: {
+    required: boolean;
+    requirements: string[];
+  };
+  explicitExecute: {
+    required: boolean;
+    satisfied: boolean;
+    gate: ColonyOperatorPlannedActionGate;
+  };
+  admissibility: Pick<
+    ToolkitActionAdmissibilityReport,
+    "status" | "decision" | "executionGate" | "canPlan" | "canExecuteNow" | "reasonCodes"
+  >;
+  finalLiveExecutionGate: ColonyOperatorPlannedAction["liveExecutionGate"];
+}
+
+export interface ColonyOperatorFinalVerdict {
+  verdict: "no-spend-proof" | "execution-pass" | "execution-degraded" | "execution-failed";
+  mode: ColonyOperatorExecutionMode;
+  spendStatus: "no-spend" | "planned" | "executed" | "unknown";
+  selectedActionFamily: ColonyOperatorActionFamily;
+  liveExecutionAttempted: boolean;
+  liveExecutionAllowed: boolean;
+  rationale: string;
+}
+
 export interface ColonyOperatorLifecycleStore {
   create(input: {
     actionFamily: "publish" | "reply" | "react" | "tip" | "vote" | "bet-fixed" | "bet-hl";
@@ -368,10 +447,24 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       toolkitCapabilityManifest,
       guardrailEvaluation: selectedGuardrailEvaluation,
     });
+  const actionSurface = buildColonyOperatorActionSurface({
+    capabilityTruth,
+    selectedFamily: selectedTruth.actionFamily,
+    multiActionPlan,
+  });
+  const observedContextSummary = buildObservedContextSummary(cycle, selectedTruth.actionFamily);
+  const finalVerdict = buildFinalVerdict({
+    mode,
+    selectedFamily: selectedTruth.actionFamily,
+    execution: cycle.outcome.execution,
+    lifecyclePlan,
+    liveExecutionAllowed: mode === "execute",
+  });
 
   return {
     generatedAt: new Date().toISOString(),
     mode,
+    observedContextSummary,
     selectedAction: {
       actionFamily: selectedTruth.actionFamily,
       status: selectedTruth.status,
@@ -389,6 +482,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
     guardrailEvaluation: selectedGuardrailEvaluation,
     admissibility: selectedAdmissibility,
     multiActionPlan,
+    actionSurface,
     lifecyclePlan,
     execution: {
       cycleId: cycle.cycleId,
@@ -405,6 +499,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       },
       error: cycle.outcome.execution.error ?? null,
     },
+    finalVerdict,
     cycle,
   };
 }
@@ -701,6 +796,209 @@ const RESPONSE_DEPTH_SURFACE_REQUIREMENTS: ResponseDepthSurfaceRequirement[] = [
 
 function uniqueStrings<T extends string>(values: T[]): T[] {
   return Array.from(new Set(values));
+}
+
+function buildObservedContextSummary<TState extends MinimalAgentState>(
+  cycle: MinimalCycleRecord<TState>,
+  selectedFamily: ColonyOperatorActionFamily,
+): ColonyOperatorObservedContextSummary {
+  const audit = cycle.decision.audit;
+  const promptPacket = audit?.promptPacket;
+  const observedFacts = arrayOfStrings(recordValue(promptPacket, "observedFacts"));
+  const promptObjective = stringValue(recordValue(promptPacket, "objective"));
+  const facts = isRecord(cycle.decision.facts) ? cycle.decision.facts : null;
+  const actionType = cycle.outcome.resolution?.actionType
+    ?? (cycle.decision.kind === "action" ? cycle.decision.action.type : cycle.decision.kind === "skip" ? "skip" : cycle.decision.kind);
+
+  return {
+    source: "minimal-agent-cycle",
+    cycleId: cycle.cycleId,
+    decisionKind: cycle.decision.kind,
+    selectedActionFamily: selectedFamily,
+    actionType,
+    policyId: stringValue(audit?.policyId),
+    routeId: stringValue(audit?.routeId),
+    matchedConditions: arrayOfStrings(audit?.matchedConditions),
+    liveReadSurfaces: inferLiveReadSurfaces(observedFacts, facts),
+    facts,
+    promptObjective,
+    observedFacts,
+  };
+}
+
+function inferLiveReadSurfaces(observedFacts: string[], facts: Record<string, unknown> | null): string[] {
+  const haystack = [
+    ...observedFacts,
+    ...Object.keys(facts ?? {}),
+  ].join(" ").toLowerCase();
+  const surfaces: string[] = [];
+  if (haystack.includes("signal")) surfaces.push("signals");
+  if (haystack.includes("convergence") || haystack.includes("agent")) surfaces.push("convergence");
+  if (haystack.includes("feed") || haystack.includes("post") || haystack.includes("thread")) surfaces.push("feed");
+  if (haystack.includes("leaderboard")) surfaces.push("leaderboard");
+  if (haystack.includes("balance")) surfaces.push("balance");
+  return uniqueStrings(surfaces);
+}
+
+function buildColonyOperatorActionSurface(args: {
+  capabilityTruth: ColonyOperatorCapabilityTruth;
+  selectedFamily: ColonyOperatorActionFamily;
+  multiActionPlan: ColonyOperatorMultiActionPlan;
+}): ColonyOperatorActionSurface {
+  const plannedByFamily = new Map(args.multiActionPlan.plannedIntents.map((action) => [action.actionFamily, action]));
+  const truthByFamily = new Map(args.capabilityTruth.actions.map((action) => [action.actionFamily, action]));
+  const perActionStatus = args.multiActionPlan.plannedIntents.map((planned): ColonyOperatorPerActionStatus => {
+    const truth = truthByFamily.get(planned.actionFamily)!;
+    return {
+      actionFamily: planned.actionFamily,
+      selected: planned.actionFamily === args.selectedFamily,
+      status: planned.status,
+      lifecycleStatus: planned.lifecycleStatus,
+      executionPathFamily: planned.executionPathFamily,
+      proofLevel: planned.proofLevel,
+      capability: {
+        requiresWallet: truth.requiresWallet,
+        requiresAttestation: truth.requiresAttestation,
+        requiresTargetPost: truth.requiresTargetPost,
+        requiresMarketContext: truth.requiresMarketContext,
+        spendsDem: truth.spendsDem,
+        writesLifecycleRecord: truth.writesLifecycleRecord,
+      },
+      guardrails: {
+        status: planned.guardrailEvaluation.status,
+        blockedReasonCodes: [...planned.guardrailEvaluation.blockedReasonCodes],
+        supervisedRequirements: [...planned.guardrailEvaluation.supervisedRequirements],
+        degradedReasonCodes: [...planned.guardrailEvaluation.degradedReasonCodes],
+      },
+      lifecycle: {
+        status: planned.proofStatus.lifecycleStatus,
+        expectedReadback: [...planned.proofStatus.expectedReadback],
+      },
+      supervision: {
+        required: planned.readiness.requiresSupervision,
+        requirements: [...planned.admissibility.supervisedRequirements],
+      },
+      explicitExecute: {
+        required: planned.readiness.requiresExplicitExecute,
+        satisfied: planned.admissibility.explicitExecute,
+        gate: planned.liveExecutionGate.gate,
+      },
+      admissibility: {
+        status: planned.admissibility.status,
+        decision: planned.admissibility.decision,
+        executionGate: planned.admissibility.executionGate,
+        canPlan: planned.admissibility.canPlan,
+        canExecuteNow: planned.admissibility.canExecuteNow,
+        reasonCodes: [...planned.admissibility.reasonCodes],
+      },
+      finalLiveExecutionGate: planned.liveExecutionGate,
+    };
+  });
+
+  const maintainedFamilies = [...args.capabilityTruth.coverage.requiredFamilies];
+  return {
+    maintainedFamilies,
+    selectedFamily: args.selectedFamily,
+    surfacedAlternativeFamilies: perActionStatus
+      .filter((action) => !action.selected)
+      .map((action) => action.actionFamily),
+    allMaintainedFamiliesSurfaced: maintainedFamilies.every((family) => plannedByFamily.has(family)),
+    perActionStatus,
+    defaultNoSpend: args.multiActionPlan.noSpendDefault,
+    liveExecutionAllowed: args.multiActionPlan.liveExecutionAllowed,
+  };
+}
+
+function buildFinalVerdict(args: {
+  mode: ColonyOperatorExecutionMode;
+  selectedFamily: ColonyOperatorActionFamily;
+  execution: MinimalExecutionOutcome;
+  lifecyclePlan: ColonyOperatorLifecyclePlan;
+  liveExecutionAllowed: boolean;
+}): ColonyOperatorFinalVerdict {
+  if (args.mode === "dry-run") {
+    return {
+      verdict: "no-spend-proof",
+      mode: args.mode,
+      spendStatus: "no-spend",
+      selectedActionFamily: args.selectedFamily,
+      liveExecutionAttempted: false,
+      liveExecutionAllowed: false,
+      rationale: "dry-run emitted observed context, selected action, full action surface, and no-spend gates without executing a live write",
+    };
+  }
+
+  const verification = args.execution.verification as Record<string, unknown> | undefined;
+  const productVisible = verification?.visible === true;
+  const liveExecutionAttempted = liveExecutionAttemptedFor(args.execution);
+  if (!liveExecutionAttempted) {
+    return {
+      verdict: "no-spend-proof",
+      mode: args.mode,
+      spendStatus: "no-spend",
+      selectedActionFamily: args.selectedFamily,
+      liveExecutionAttempted: false,
+      liveExecutionAllowed: args.liveExecutionAllowed,
+      rationale: "execute mode produced no live action attempt because the selected action was skipped or gated before dispatch",
+    };
+  }
+
+  const executionFailed = args.execution.status === "failed";
+  const verdict: ColonyOperatorFinalVerdict["verdict"] = executionFailed
+    ? "execution-failed"
+    : productVisible && args.lifecyclePlan.status === "recorded"
+      ? "execution-pass"
+      : "execution-degraded";
+  const spendStatus: ColonyOperatorFinalVerdict["spendStatus"] = executionFailed
+    ? "unknown"
+    : args.execution.demSpendEstimate && args.execution.demSpendEstimate > 0
+      ? "executed"
+      : "no-spend";
+
+  return {
+    verdict,
+    mode: args.mode,
+    spendStatus,
+    selectedActionFamily: args.selectedFamily,
+    liveExecutionAttempted,
+    liveExecutionAllowed: args.liveExecutionAllowed,
+    rationale: verdict === "execution-pass"
+      ? "single selected action executed and product readback/lifecycle proof recorded"
+      : verdict === "execution-degraded"
+        ? "single selected action ran but product readback or lifecycle proof did not fully converge"
+        : "single selected action failed before a complete product proof",
+  };
+}
+
+function liveExecutionAttemptedFor(execution: MinimalExecutionOutcome): boolean {
+  if (execution.status === "dry_run" || execution.status === "skipped") return false;
+  if (execution.txHash || execution.attestationTxHash) return true;
+  if (
+    execution.status === "published"
+    || execution.status === "replied"
+    || execution.status === "reacted"
+    || execution.status === "tipped"
+    || execution.status === "market_written"
+  ) {
+    return true;
+  }
+  return execution.status === "failed" && execution.admissibility?.canExecuteNow === true;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value != null && !Array.isArray(value);
+}
+
+function recordValue(value: unknown, key: string): unknown {
+  return isRecord(value) ? value[key] : undefined;
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function arrayOfStrings(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
 function defaultRequestedActionsFor(

@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-18
-Scope: terse operator re-entry card after post-Wave-E action admissibility.
+Scope: terse operator re-entry card after PR #431 / `uw66.6`.
 
 ## Do first
 
@@ -18,7 +18,9 @@ Scope: terse operator re-entry card after post-Wave-E action admissibility.
 - Wave E / `omniweb-agents-capsurf` is complete through PRs #420-#426: runtime capability manifest, official skill coverage, operator discovery, response-depth preservation, multi-action dry-run planning, and skill/playbook slimming.
 - PR #427 completed toolkit guardrails.
 - PRs #428/#429 completed `omniweb-agents-admissibility`: runtime now has the decision layer that says whether a requested operator action can be planned or executed right now.
-- Next lane: use the completed runtime gate for the maintained multi-action operator cycle. Do not reopen capability, guardrails, or action-gating as upcoming architecture work.
+- PR #431 completed `uw66.6`: the maintained operator-cycle proof observes live context, selects an action, surfaces maintained alternatives, reports capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and keeps the default verdict no-spend.
+- Next lane: consumer-spectrum and codebase reality map before widening implementation. Compare official SuperColony docs/discovery, actual live endpoint response shapes, and local toolkit/code reachability. Do not reopen capability, guardrails, admissibility, or the maintained operator-cycle report surface as upcoming architecture work.
+- Active Beads epic: `omniweb-agents-spectrum`; current docs/bead sync: `omniweb-agents-spectrum.0`; first implementation slice: `omniweb-agents-spectrum.1`.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
 
@@ -30,7 +32,7 @@ Scope: terse operator re-entry card after post-Wave-E action admissibility.
 - **Wave D — official identity participation:** q5k8 proved supervised local register, human-link, and cleanup through maintained package paths.
 - **Wave E — capability surface:** complete via `omniweb-agents-capsurf` and PRs #420-#426.
 - **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
-- **Next lane — maintained operator cycle:** observe live context, choose among maintained action families, surface capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and execute only under separate explicit authorization when there are live effects.
+- **Next lane — consumer-spectrum inventory:** build a repeatable map across official docs/cards/skill/OpenAPI, live endpoint response shapes, current toolkit surfaces, and codebase reachability/deadweight before package widening.
 
 ## Keep frozen for this wave
 
@@ -39,14 +41,17 @@ Scope: terse operator re-entry card after post-Wave-E action admissibility.
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
+- no-release posture while the consumer-spectrum inventory is incomplete
 
 ## Do not touch yet
 
 - broad seam rewrite
 - default substrate fork
 - StorageProgram / escrow / IPFS proof bands
-- launch / consumer polish before the live operator floor and outside-in proof are real
+- launch / consumer polish before the consumer-spectrum/live-shape/codebase inventory is real
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend, and unsupervised identity mutation
+- blind deletion or refactor of old toolkit code before reachability/coverage classifies it
+- feature widening that skips actual live endpoint response-shape comparison
 
 ## Execution habits
 
@@ -61,3 +66,4 @@ Scope: terse operator re-entry card after post-Wave-E action admissibility.
 
 - move fast **above** the seam
 - harden **below** the seam only from observed live pain and evidence
+- inventory first, then widen or delete from proof

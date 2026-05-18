@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { observe } from "../../packages/omniweb-toolkit/agents/openclaw/colony-operator/skills/omniweb-colony-operator/starter.ts";
 import {
+  buildToolkitCapabilityManifest,
   buildColonyOperatorCapabilityTruth,
   runColonyOperatorCycle,
   type ColonyOperatorLifecycleStore,
@@ -30,6 +31,7 @@ describe("colony operator execution entrypoint", () => {
     const envelope = await runColonyOperatorCycle(observe, {
       stateDir,
       cwd: stateDir,
+      readinessOptions: { cwd: stateDir, homeDir: stateDir, env: {} },
       omni: makeOmni(),
       lifecycleStore,
       now: makeNow(Date.UTC(2026, 4, 16, 14, 30, 0), Date.UTC(2026, 4, 16, 14, 30, 1)),
@@ -64,6 +66,41 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.capabilitySummary.lifecyclePendingFamilies).toContain("bet-hl");
     expect(envelope.capabilitySummary.explicitExecuteFamilies).toEqual(expect.arrayContaining(["publish", "tip", "VOTE", "register", "human-link"]));
     expect(envelope.capabilityTruth.coverage.allRequiredFamiliesPresent).toBe(true);
+    expect(envelope.capabilityDiscovery).toMatchObject({
+      source: "omniweb-toolkit",
+      compact: {
+        availableReadCapabilities: expect.arrayContaining(["colony.feed", "colony.post-detail", "colony.markets.read"]),
+        blockedCapabilities: expect.arrayContaining(["colony.publish", "colony.tip", "colony.identity"]),
+        richResponseCapabilities: expect.arrayContaining(["colony.post-detail", "colony.markets.read", "colony.pools.read"]),
+        proofResponseCapabilities: expect.arrayContaining(["colony.publish", "colony.reply", "colony.bet-fixed"]),
+        defaultBoundaries: {
+          noSpendDefault: true,
+          liveExecutionRequiresExplicitExecute: true,
+          strategyLayer: "skill/playbook",
+          protocolLayer: "toolkit/runtime",
+        },
+      },
+      fullDetailAccess: {
+        manifestField: "toolkitCapabilityManifest",
+        includes: expect.arrayContaining(["methods", "params", "requirements", "responseDepth", "proofTier", "lifecycle", "status"]),
+      },
+    });
+    expect(envelope.capabilityDiscovery.fullDetailAccess.capabilityIds).toEqual(expect.arrayContaining([
+      "colony.publish",
+      "colony.identity",
+      "storage.programs",
+    ]));
+    expect(envelope.toolkitCapabilityManifest.capabilities.find((capability) => capability.id === "colony.publish")).toMatchObject({
+      methods: ["omni.colony.publish"],
+      params: expect.arrayContaining([{ name: "text", required: true, type: "string" }]),
+      responseDepth: "proof",
+      proofTier: "lifecycle_proven",
+    });
+    expect(envelope.toolkitCapabilityManifest.capabilities.find((capability) => capability.id === "colony.post-detail")).toMatchObject({
+      lifecycle: {
+        readbackSurfaces: ["post-detail", "thread"],
+      },
+    });
     expect(envelope.lifecyclePlan).toMatchObject({
       required: true,
       status: "planned",
@@ -76,18 +113,23 @@ describe("colony operator execution entrypoint", () => {
     const stateDir = await createTempDir();
     const lifecycleStore = makeLifecycleStore();
     const runtime = describeRuntimeCapabilities({ cwd: stateDir, homeDir: stateDir, env: {} });
-    const capabilityTruth = buildColonyOperatorCapabilityTruth({
-      runtimeCapabilities: {
-        ...runtime,
-        authReady: true,
-        writeReady: true,
-        blockers: [],
-        recommendedMode: "write-ready",
-        actionFamilies: {
-          ...runtime.actionFamilies,
-          publish: { ...runtime.actionFamilies.publish, readiness: "ready" },
-        },
+    const readyRuntime = {
+      ...runtime,
+      authReady: true,
+      writeReady: true,
+      blockers: [],
+      recommendedMode: "write-ready" as const,
+      actionFamilies: {
+        ...runtime.actionFamilies,
+        publish: { ...runtime.actionFamilies.publish, readiness: "ready" as const },
       },
+    };
+    const capabilityTruth = buildColonyOperatorCapabilityTruth({
+      runtimeCapabilities: readyRuntime,
+      now: new Date("2026-05-16T14:30:00.000Z"),
+    });
+    const toolkitCapabilityManifest = buildToolkitCapabilityManifest({
+      runtimeCapabilities: readyRuntime,
       now: new Date("2026-05-16T14:30:00.000Z"),
     });
 
@@ -98,6 +140,7 @@ describe("colony operator execution entrypoint", () => {
       omni: makeOmni(),
       lifecycleStore,
       capabilityTruth,
+      toolkitCapabilityManifest,
       walletAddress: "0xoperator",
       command: "check-colony-operator-entrypoint --execute",
       commit: "testcommit",
@@ -108,6 +151,8 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.mode).toBe("execute");
     expect(envelope.capabilitySummary.executableFamilies).toContain("publish");
     expect(envelope.capabilitySummary.spendFamilies).toContain("publish");
+    expect(envelope.capabilityDiscovery.compact.availableWriteCapabilities).toContain("colony.publish");
+    expect(envelope.capabilityDiscovery.operatorActionFamilies.executableFamilies).toContain("publish");
     expect(envelope.execution.dryRun).toBe(false);
     expect(envelope.execution.status).toBe("published");
     expect(envelope.execution.txHash).toBe("0xentrypoint-publish");

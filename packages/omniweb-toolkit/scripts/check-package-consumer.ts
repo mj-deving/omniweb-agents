@@ -231,6 +231,7 @@ await import("omniweb-" + "toolkit/types");
 const { createClient } = mainEntry;
 const {
   buildToolkitCapabilityManifest,
+  buildToolkitActionAdmissibilityManifest,
   buildToolkitGuardrailManifest,
   checkWriteReadiness,
   describeRuntimeCapabilities,
@@ -242,6 +243,7 @@ const {
   buildColonyOperatorResponseDepthAccess,
   buildOfficialSkillCoverageReport,
   buildLeaderboardPatternPrompt,
+  evaluateToolkitActionAdmissibility,
   evaluateToolkitGuardrails,
   getStarterSourcePack,
 } = agentEntry;
@@ -266,6 +268,9 @@ const guardrailManifest = buildToolkitGuardrailManifest({
 const guardrailReport = await evaluateToolkitGuardrails({
   urls: ["https://127.0.0.1/proof"],
 });
+const admissibilityManifest = buildToolkitActionAdmissibilityManifest({
+  now: new Date("2026-05-18T00:00:00.000Z"),
+});
 const colonyOperatorTruth = buildColonyOperatorCapabilityTruth({
   runtimeCapabilities: capabilities,
   now: new Date("2026-05-18T00:00:00.000Z"),
@@ -284,6 +289,13 @@ const multiActionPlan = buildColonyOperatorMultiActionPlan({
     { actionFamily: "bet-hl", params: { asset: "ETH", direction: "higher" }, timeframe: "24h" },
     { actionFamily: "register", params: { agentAddress: "0xconsumer" }, timeframe: "supervised only" },
   ],
+});
+const publishActionTruth = colonyOperatorTruth.actions.find((action) => action.actionFamily === "publish");
+const publishAdmissibility = await evaluateToolkitActionAdmissibility({
+  mode: "dry-run",
+  explicitExecute: false,
+  actionFamily: "publish",
+  actionTruth: publishActionTruth,
 });
 
 if (!readiness.canRead) {
@@ -312,6 +324,12 @@ if (guardrailManifest.authority !== "toolkit-runtime" || guardrailManifest.domai
 }
 if (guardrailReport.status !== "block" || !guardrailReport.blockedReasonCodes.includes("private_ipv4_url_blocked")) {
   throw new Error("guardrail evaluator did not block unsafe URL before execution");
+}
+if (admissibilityManifest.authority !== "toolkit-runtime" || admissibilityManifest.runtimeTruth.admissibilityField !== "admissibility") {
+  throw new Error("admissibility manifest did not expose runtime-owned admissibility field");
+}
+if (publishAdmissibility.status !== "blocked" && publishAdmissibility.status !== "explicit_execute_required") {
+  throw new Error("admissibility evaluator did not gate publish without current execute-ready truth");
 }
 if (colonyOperatorDiscovery.fullDetailAccess.manifestField !== "toolkitCapabilityManifest") {
   throw new Error("colony operator discovery did not point to manifest detail access");
@@ -358,6 +376,12 @@ if (!multiActionPlan.plannedIntents.some((intent) => (
 ))) {
   throw new Error("colony operator multi-action plan did not gate identity action");
 }
+if (!multiActionPlan.plannedIntents.some((intent) => (
+  intent.actionFamily === "publish"
+  && ["blocked", "explicit_execute_required"].includes(intent.admissibility.status)
+))) {
+  throw new Error("colony operator multi-action plan did not attach publish admissibility");
+}
 
 const sourcePack = getStarterSourcePack("research");
 if (!sourcePack?.entries?.length) {
@@ -390,8 +414,8 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   console.log(JSON.stringify({
   imports: {
     main: ["createClient"],
-    runtime: ["buildToolkitCapabilityManifest", "buildToolkitGuardrailManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
-    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildOfficialSkillCoverageReport", "buildLeaderboardPatternPrompt", "evaluateToolkitGuardrails", "getStarterSourcePack"],
+    runtime: ["buildToolkitCapabilityManifest", "buildToolkitActionAdmissibilityManifest", "buildToolkitGuardrailManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
+    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildOfficialSkillCoverageReport", "buildLeaderboardPatternPrompt", "evaluateToolkitActionAdmissibility", "evaluateToolkitGuardrails", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
   dryRun: {
@@ -415,6 +439,12 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
     domainCount: guardrailManifest.domains.length,
     unsafeUrlStatus: guardrailReport.status,
     blockedReasonCodes: guardrailReport.blockedReasonCodes,
+  },
+  admissibility: {
+    authority: admissibilityManifest.authority,
+    statusVocabulary: admissibilityManifest.statusVocabulary,
+    publishStatus: publishAdmissibility.status,
+    publishGate: publishAdmissibility.executionGate,
   },
   colonyOperatorDiscovery: {
     source: colonyOperatorDiscovery.source,

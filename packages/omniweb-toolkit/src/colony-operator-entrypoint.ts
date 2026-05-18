@@ -16,6 +16,10 @@ import {
   evaluateToolkitGuardrailsSync,
   type ToolkitGuardrailEvaluationReport,
 } from "./guardrails.js";
+import {
+  evaluateToolkitActionAdmissibilitySync,
+  type ToolkitActionAdmissibilityReport,
+} from "./action-admissibility.js";
 import type { MinimalActionType, ResolvedIntent } from "./intent-types.js";
 import {
   runMinimalAgentCycle,
@@ -54,6 +58,7 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
     executionPathFamily: string;
     reasonCodes: string[];
     intent: ColonyOperatorActionIntentContract;
+    admissibility: ToolkitActionAdmissibilityReport;
   };
   skippedAlternatives: Array<{
     actionFamily: ColonyOperatorActionFamily;
@@ -67,6 +72,7 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
   capabilityTruth: ColonyOperatorCapabilityTruth;
   toolkitCapabilityManifest: ToolkitCapabilityManifest;
   guardrailEvaluation: ToolkitGuardrailEvaluationReport;
+  admissibility: ToolkitActionAdmissibilityReport;
   multiActionPlan: ColonyOperatorMultiActionPlan;
   lifecyclePlan: ColonyOperatorLifecyclePlan;
   execution: {
@@ -216,6 +222,7 @@ export interface ColonyOperatorPlannedAction {
     reason: string;
   };
   guardrailEvaluation: ToolkitGuardrailEvaluationReport;
+  admissibility: ToolkitActionAdmissibilityReport;
 }
 
 export interface ColonyOperatorMultiActionPlan {
@@ -351,6 +358,16 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       actionTruth: selectedTruth,
       toolkitCapabilityManifest,
     });
+  const selectedAdmissibility = multiActionPlan.plannedIntents.find((action) => action.actionFamily === selectedTruth.actionFamily)
+    ?.admissibility
+    ?? evaluateToolkitActionAdmissibilitySync({
+      mode,
+      explicitExecute: mode === "execute",
+      actionFamily: selectedTruth.actionFamily,
+      actionTruth: selectedTruth,
+      toolkitCapabilityManifest,
+      guardrailEvaluation: selectedGuardrailEvaluation,
+    });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -362,6 +379,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       executionPathFamily: selectedTruth.executionPathFamily,
       reasonCodes: selectedTruth.reasonCodes,
       intent: selectedTruth.intent,
+      admissibility: selectedAdmissibility,
     },
     skippedAlternatives,
     capabilitySummary,
@@ -369,6 +387,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
     capabilityTruth,
     toolkitCapabilityManifest,
     guardrailEvaluation: selectedGuardrailEvaluation,
+    admissibility: selectedAdmissibility,
     multiActionPlan,
     lifecyclePlan,
     execution: {
@@ -412,6 +431,15 @@ export function buildColonyOperatorMultiActionPlan(args: {
       requestedAction: request,
       toolkitCapabilityManifest: args.toolkitCapabilityManifest,
     });
+    const admissibility = evaluateToolkitActionAdmissibilitySync({
+      mode,
+      explicitExecute: mode === "execute",
+      actionFamily: actionTruth.actionFamily,
+      actionTruth,
+      requestedAction: request,
+      toolkitCapabilityManifest: args.toolkitCapabilityManifest,
+      guardrailEvaluation,
+    });
     return {
       actionFamily: actionTruth.actionFamily,
       request: {
@@ -442,6 +470,7 @@ export function buildColonyOperatorMultiActionPlan(args: {
       },
       liveExecutionGate: liveExecutionGateForPlannedAction(actionTruth, mode),
       guardrailEvaluation,
+      admissibility,
     };
   });
 

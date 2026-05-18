@@ -1,8 +1,8 @@
 # NEXT_BAND_CHEAT_SHEET.md
 
 Status: active
-Updated: 2026-05-16
-Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
+Updated: 2026-05-18
+Scope: terse operator re-entry card for the post-Wave-E action-admissibility band.
 
 ## Do first
 
@@ -15,7 +15,9 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 - `omniweb-agents-uw66.4` is closed with a bounded live tip proof: 1 DEM tip tx confirmed on-chain, post/recipient stats readback still degraded.
 - `omniweb-agents-uw66.5` / PR #409 changed the market-write conclusion: fixed-price agentic DEM betting works through headless native args-memo, but same-window active-pool polling can miss it. BTC txs `07a921826d436781685505a05ae967dd5a6c55bd9940cc8153b0bb1c70352440` and `0fb5dda1416130bf3288f5e97aab96c015eacdbfd6605898f2b362b6ae4f8007`, plus ETH tx `7dbee3140aa2b6ef83b6f580db3f52dab0f5531adcbe5653927eb110e86f9471`, resolved in SuperColony winners at block `2265016`.
 - PR #411 completed durable write lifecycle/readback. Every maintained write family now has pending-chain / pending-indexer / indexed / resolved / degraded / expired state handling through the lifecycle layer where wired.
-- Current move: close the q5k8 identity participation PR after final audit gates. q5k8 has local live register, human-link, and cleanup proof behind explicit identity confirmation; external hosted Gregor/OpenClaw live identity mutation remains unproved.
+- Wave E / `omniweb-agents-capsurf` is complete through PRs #420-#426: runtime capability manifest, official skill coverage, operator discovery, response-depth preservation, multi-action dry-run planning, and skill/playbook slimming.
+- PR #427 completed toolkit guardrails.
+- Current move: `omniweb-agents-admissibility` adds the runtime decision layer that says whether a requested operator action can be planned or executed right now.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
 
@@ -25,13 +27,15 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 - **Wave B — lifecycle hardening:** complete via PR #411 and `docs/WRITE_LIFECYCLE_MASTER_PRD.md`.
 - **Wave C — lifecycle-aware operator MegaGoal:** complete through capability truth, bounded maintained operator publish, higher/lower readback, and accepted no-spend OpenClaw/Gregor runtime-host smoke evidence.
 - **Wave D — official identity participation:** q5k8 proved supervised local register, human-link, and cleanup through maintained package paths.
-- **Wave E — consumer proof and later publish:** copied-bundle no-spend proof is current; npm publish/auth and external hosted live identity mutation remain later unless directly proved.
+- **Wave E — capability surface:** complete via `omniweb-agents-capsurf` and PRs #420-#426.
+- **Post-Wave-E — action admissibility:** current; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
 
 ## Keep frozen for this wave
 
 - `PolicyActionRequest`
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
+- live multi-action execution remains dry-run only unless explicitly widened
 
 ## Do not touch yet
 
@@ -39,6 +43,7 @@ Scope: terse operator re-entry card for the frozen-seam colony live-ops band.
 - default substrate fork
 - StorageProgram / escrow / IPFS proof bands
 - launch / consumer polish before the live operator floor and outside-in proof are real
+- npm release, public registry proof, broad substrate rewrite, and unsupervised identity mutation
 
 ## Execution habits
 

@@ -11,6 +11,10 @@ import {
   evaluateToolkitGuardrails,
   type ToolkitGuardrailEvaluationReport,
 } from "./guardrails.js";
+import {
+  evaluateToolkitActionAdmissibility,
+  type ToolkitActionAdmissibilityReport,
+} from "./action-admissibility.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
 import type {
   MinimalBettingPoolReadback,
@@ -48,6 +52,7 @@ export interface ResolvedIntentExecutionResult extends IntentExecutionResult {
   publishResult?: ToolResult<PublishResult>;
   reactionResult?: { ok: boolean; error?: unknown };
   guardrailEvaluation?: ToolkitGuardrailEvaluationReport;
+  admissibility?: ToolkitActionAdmissibilityReport;
   error?: {
     stage: MinimalErrorStage;
     message: string;
@@ -65,6 +70,20 @@ export async function executeResolvedIntent(
   options: ExecuteResolvedIntentOptions,
 ): Promise<ResolvedIntentResultEnvelope> {
   const { omni, resolution, verification, dryRun = false, attestationPlan } = options;
+  const executionMode = dryRun ? "dry-run" : "execute";
+  const guardrailEvaluation = await evaluateToolkitGuardrails({
+    mode: executionMode,
+    explicitExecute: !dryRun,
+    actionFamily: actionFamilyForResolvedIntent(resolution),
+    resolution,
+  });
+  const admissibility = await evaluateToolkitActionAdmissibility({
+    mode: executionMode,
+    explicitExecute: !dryRun,
+    actionFamily: actionFamilyForResolvedIntent(resolution),
+    resolution,
+    guardrailEvaluation,
+  });
 
   if (resolution.status !== "executable") {
     return {
@@ -75,6 +94,8 @@ export async function executeResolvedIntent(
         demSpendEstimate: 0,
         errorCode: resolution.reasonCodes[0] ?? `resolution_${resolution.status}`,
         errorMessage: `resolution_not_executable:${resolution.status}`,
+        guardrailEvaluation,
+        admissibility,
       },
     };
   }
@@ -86,27 +107,27 @@ export async function executeResolvedIntent(
         status: "dry_run",
         actionType: resolution.actionType,
         demSpendEstimate: 0,
+        guardrailEvaluation,
+        admissibility,
       },
     };
   }
 
   const attestationGuardError = validateResolvedIntentAttestation(resolution, attestationPlan);
-  const guardrailEvaluation = await evaluateToolkitGuardrails({
-    mode: "execute",
-    explicitExecute: true,
-    actionFamily: actionFamilyForResolvedIntent(resolution),
-    resolution,
-  });
-  if (guardrailEvaluation.status === "block") {
+  if (admissibility.status !== "allowed") {
+    const failureCode = admissibility.status === "blocked" && guardrailEvaluation.blockedReasonCodes.length > 0
+      ? guardrailEvaluation.blockedReasonCodes[0]
+      : admissibility.reasonCodes[0] ?? `admissibility_${admissibility.status}`;
     return {
       resolution,
       execution: buildFailedExecution(resolution.actionType, {
         stage: "execute",
-        code: guardrailEvaluation.blockedReasonCodes[0] ?? "guardrail_blocked",
-        message: `guardrail_blocked:${guardrailEvaluation.blockedReasonCodes.join(",")}`,
+        code: failureCode,
+        message: `admissibility_${admissibility.status}:${admissibility.reasonCodes.join(",")}`,
         retryable: false,
       }, {
         guardrailEvaluation,
+        admissibility,
       }),
     };
   }
@@ -118,6 +139,9 @@ export async function executeResolvedIntent(
         stage: "execute",
         message: attestationGuardError,
         retryable: false,
+      }, {
+        guardrailEvaluation,
+        admissibility,
       }),
     };
   }

@@ -135,6 +135,19 @@ export {
   type ToolkitGuardrailUntrustedInput,
 } from "./guardrails.js";
 export {
+  buildToolkitActionAdmissibilityManifest,
+  evaluateToolkitActionAdmissibility,
+  evaluateToolkitActionAdmissibilitySync,
+  type ToolkitActionAdmissibilityDecision,
+  type ToolkitActionAdmissibilityGuardrailFinding,
+  type ToolkitActionAdmissibilityInput,
+  type ToolkitActionAdmissibilityManifest,
+  type ToolkitActionAdmissibilityReasonCode,
+  type ToolkitActionAdmissibilityReport,
+  type ToolkitActionAdmissibilityStatus,
+  type ToolkitActionExecutionGate,
+} from "./action-admissibility.js";
+export {
   OFFICIAL_SUPERCOLONY_SKILL_MARKDOWN_URL,
   OFFICIAL_SUPERCOLONY_SKILL_URL,
   OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS,

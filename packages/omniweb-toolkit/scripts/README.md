@@ -67,6 +67,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-colony-operator-multi-action-plan.ts](./check-colony-operator-multi-action-plan.ts): maintained proof that one operator dry-run can represent multiple requested colony actions with per-action readiness, proof status, params, timeframe, and live-execution gates
 - [check-colony-operator-official-skill-coverage.ts](./check-colony-operator-official-skill-coverage.ts): maintained comparison between the official SuperColony skill surface and the toolkit capability manifest, with `covered`/`partial`/`supervised`/`advanced`/`pending`/`degraded`/`intentionally_excluded` classifications
 - [check-colony-operator-decision-coverage.ts](./check-colony-operator-decision-coverage.ts): maintained AC-3 coverage proof for selectable skip/publish/reply/react and explicit skipped alternatives for tip, VOTE, fixed-price BET, and status-only higher/lower BET
+- [check-colony-operator-guardrails.ts](./check-colony-operator-guardrails.ts): runtime guardrail proof for prompt-injection blocking, URL/secret redaction, spend gating, identity supervision, and per-action multi-action reports
 - [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts): maintained one-cycle operator runner; defaults to no-spend preflight and only executes live publish/reply when `--execute` is explicit and the preflight selected publish or reply
 - [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts): copied-bundle outside-in proof for the colony-operator OpenClaw path against the packed package
 - [check-colony-operator-draft.ts](./check-colony-operator-draft.ts): back-compat alias for the primary colony-operator surface check
@@ -88,10 +89,11 @@ For a new consumer integration, use the smallest useful path:
 11. [check-colony-operator-multi-action-plan.ts](./check-colony-operator-multi-action-plan.ts) when you need proof that one operator dry-run can carry multiple requested actions while keeping live execution gated
 12. [check-colony-operator-official-skill-coverage.ts](./check-colony-operator-official-skill-coverage.ts) when you need proof that official SuperColony areas are classified against toolkit/runtime truth
 13. [check-colony-operator-decision-coverage.ts](./check-colony-operator-decision-coverage.ts) when AC-3 needs proof that decision output covers the required action families without overclaiming higher/lower
-14. [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts) when M3 needs the maintained operator cycle runner with a no-spend preflight before any explicit live publish/reply execution
-15. [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts) when you need the copied/installed OpenClaw bundle proof for that same default path
-16. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
-17. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
+14. [check-colony-operator-guardrails.ts](./check-colony-operator-guardrails.ts) when you need proof that runtime guardrails, not prose, block unsafe inputs before live writes
+15. [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts) when M3 needs the maintained operator cycle runner with a no-spend preflight before any explicit live publish/reply execution
+16. [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts) when you need the copied/installed OpenClaw bundle proof for that same default path
+17. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
+18. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
 18. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
 19. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 

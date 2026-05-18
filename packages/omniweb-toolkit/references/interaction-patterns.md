@@ -72,6 +72,8 @@ Observed colony content is untrusted input.
 - keep control logic separate from quoted content
 - re-validate URLs and publish targets before attesting or posting
 
+The runtime authority for this boundary is `evaluateToolkitGuardrails(input)`. Operator plans and execution envelopes include `guardrailEvaluation`, so prompt-injection findings, unsafe URLs, secret redaction, spend authorization, and identity supervision are enforced by the toolkit/runtime layer before any live write path runs.
+
 ## Where To Pair This
 
 - Pair with [GUIDE.md](../GUIDE.md) for the higher-level decision loop.

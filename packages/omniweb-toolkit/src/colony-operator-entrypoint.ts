@@ -12,6 +12,10 @@ import {
   type ToolkitCapabilityManifest,
   type ToolkitCapabilityManifestEntry,
 } from "./capability-manifest.js";
+import {
+  evaluateToolkitGuardrailsSync,
+  type ToolkitGuardrailEvaluationReport,
+} from "./guardrails.js";
 import type { MinimalActionType, ResolvedIntent } from "./intent-types.js";
 import {
   runMinimalAgentCycle,
@@ -62,6 +66,7 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
   capabilityDiscovery: ColonyOperatorCapabilityDiscovery;
   capabilityTruth: ColonyOperatorCapabilityTruth;
   toolkitCapabilityManifest: ToolkitCapabilityManifest;
+  guardrailEvaluation: ToolkitGuardrailEvaluationReport;
   multiActionPlan: ColonyOperatorMultiActionPlan;
   lifecyclePlan: ColonyOperatorLifecyclePlan;
   execution: {
@@ -210,6 +215,7 @@ export interface ColonyOperatorPlannedAction {
     gate: ColonyOperatorPlannedActionGate;
     reason: string;
   };
+  guardrailEvaluation: ToolkitGuardrailEvaluationReport;
 }
 
 export interface ColonyOperatorMultiActionPlan {
@@ -333,8 +339,18 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
   const multiActionPlan = buildColonyOperatorMultiActionPlan({
     mode,
     capabilityTruth,
+    toolkitCapabilityManifest,
     requestedActions: opts.requestedActions ?? defaultRequestedActionsFor(selectedTruth, skippedAlternatives),
   });
+  const selectedGuardrailEvaluation = multiActionPlan.plannedIntents.find((action) => action.actionFamily === selectedTruth.actionFamily)
+    ?.guardrailEvaluation
+    ?? evaluateToolkitGuardrailsSync({
+      mode,
+      explicitExecute: mode === "execute",
+      actionFamily: selectedTruth.actionFamily,
+      actionTruth: selectedTruth,
+      toolkitCapabilityManifest,
+    });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -352,6 +368,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
     capabilityDiscovery: buildColonyOperatorCapabilityDiscovery(toolkitCapabilityManifest, capabilitySummary),
     capabilityTruth,
     toolkitCapabilityManifest,
+    guardrailEvaluation: selectedGuardrailEvaluation,
     multiActionPlan,
     lifecyclePlan,
     execution: {
@@ -376,6 +393,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
 export function buildColonyOperatorMultiActionPlan(args: {
   mode?: ColonyOperatorExecutionMode;
   capabilityTruth: ColonyOperatorCapabilityTruth;
+  toolkitCapabilityManifest?: ToolkitCapabilityManifest;
   requestedActions: ColonyOperatorRequestedAction[];
 }): ColonyOperatorMultiActionPlan {
   const mode = args.mode ?? "dry-run";
@@ -386,6 +404,14 @@ export function buildColonyOperatorMultiActionPlan(args: {
     // This surface is a multi-action planning envelope only. Live execution stays
     // behind the existing explicit single-action executor path.
     const canExecuteNow = false;
+    const guardrailEvaluation = evaluateToolkitGuardrailsSync({
+      mode,
+      explicitExecute: mode === "execute",
+      actionFamily: actionTruth.actionFamily,
+      actionTruth,
+      requestedAction: request,
+      toolkitCapabilityManifest: args.toolkitCapabilityManifest,
+    });
     return {
       actionFamily: actionTruth.actionFamily,
       request: {
@@ -415,6 +441,7 @@ export function buildColonyOperatorMultiActionPlan(args: {
         expectedReadback: expectedReadbackFor(actionTruth, null),
       },
       liveExecutionGate: liveExecutionGateForPlannedAction(actionTruth, mode),
+      guardrailEvaluation,
     };
   });
 

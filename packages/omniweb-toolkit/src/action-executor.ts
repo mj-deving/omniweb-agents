@@ -7,6 +7,10 @@ import type {
   MinimalActionType,
   ResolvedIntent,
 } from "./intent-types.js";
+import {
+  evaluateToolkitGuardrails,
+  type ToolkitGuardrailEvaluationReport,
+} from "./guardrails.js";
 import type { MinimalAttestationPlan } from "./minimal-attestation-plan.js";
 import type {
   MinimalBettingPoolReadback,
@@ -43,6 +47,7 @@ export interface ResolvedIntentExecutionResult extends IntentExecutionResult {
   verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification | MinimalMarketWriteVerification;
   publishResult?: ToolResult<PublishResult>;
   reactionResult?: { ok: boolean; error?: unknown };
+  guardrailEvaluation?: ToolkitGuardrailEvaluationReport;
   error?: {
     stage: MinimalErrorStage;
     message: string;
@@ -86,6 +91,26 @@ export async function executeResolvedIntent(
   }
 
   const attestationGuardError = validateResolvedIntentAttestation(resolution, attestationPlan);
+  const guardrailEvaluation = await evaluateToolkitGuardrails({
+    mode: "execute",
+    explicitExecute: true,
+    actionFamily: actionFamilyForResolvedIntent(resolution),
+    resolution,
+  });
+  if (guardrailEvaluation.status === "block") {
+    return {
+      resolution,
+      execution: buildFailedExecution(resolution.actionType, {
+        stage: "execute",
+        code: guardrailEvaluation.blockedReasonCodes[0] ?? "guardrail_blocked",
+        message: `guardrail_blocked:${guardrailEvaluation.blockedReasonCodes.join(",")}`,
+        retryable: false,
+      }, {
+        guardrailEvaluation,
+      }),
+    };
+  }
+
   if (attestationGuardError) {
     return {
       resolution,
@@ -133,6 +158,13 @@ export async function executeResolvedIntent(
       retryable: false,
     }),
   };
+}
+
+function actionFamilyForResolvedIntent(resolution: ResolvedIntent): string {
+  if (resolution.actionType === "bet") {
+    return resolution.normalizedDraft.marketKind === "higher_lower" ? "bet-hl" : "bet-fixed";
+  }
+  return resolution.actionType;
 }
 
 export function toMinimalExecutionOutcome(

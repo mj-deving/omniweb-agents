@@ -96,6 +96,25 @@ export interface PredictionLeaderboardQuery {
   limit?: number;
 }
 
+export interface MarketPoolQuery {
+  asset: string;
+  horizon?: string;
+}
+
+export interface BinaryPoolsQuery {
+  category?: string;
+  limit?: number;
+}
+
+export interface SportsMarketsQuery {
+  status?: string;
+}
+
+export interface GraduationMarketsQuery {
+  limit?: number;
+  status?: string;
+}
+
 export interface ColonyPost {
   txHash?: string;
   author?: string;
@@ -254,6 +273,122 @@ export interface WebhooksResponse {
   [key: string]: unknown;
 }
 
+export interface FixedBetPoolResponse {
+  asset?: string;
+  horizon?: string;
+  totalBets?: number;
+  totalDem?: number;
+  poolAddress?: string;
+  roundEnd?: number;
+  bets?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface HigherLowerPoolResponse {
+  asset?: string;
+  horizon?: string;
+  totalHigher?: number;
+  totalLower?: number;
+  totalDem?: number;
+  higherCount?: number;
+  lowerCount?: number;
+  roundEnd?: number;
+  referencePrice?: number | null;
+  poolAddress?: string;
+  currentPrice?: number;
+  [key: string]: unknown;
+}
+
+export interface BinaryPoolsResponse {
+  pools?: Record<string, Record<string, unknown>>;
+  count?: number;
+  [key: string]: unknown;
+}
+
+export interface EthBetPoolResponse {
+  asset?: string;
+  horizon?: string;
+  totalBets?: number;
+  totalEth?: number;
+  totalEthWei?: string;
+  contractAddress?: string;
+  roundEnd?: number;
+  bets?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface EthWinnersResponse {
+  winners?: Array<Record<string, unknown>>;
+  count?: number;
+  [key: string]: unknown;
+}
+
+export interface EthHigherLowerPoolResponse {
+  asset?: string;
+  horizon?: string;
+  totalEth?: number;
+  totalEthWei?: string;
+  totalHigher?: number;
+  totalHigherWei?: string;
+  totalLower?: number;
+  totalLowerWei?: string;
+  higherCount?: number;
+  lowerCount?: number;
+  roundEnd?: number;
+  referencePrice?: number | null;
+  contractAddress?: string;
+  currentPrice?: number;
+  [key: string]: unknown;
+}
+
+export interface EthBinaryPoolsResponse {
+  pools?: Record<string, Record<string, unknown>>;
+  count?: number;
+  enabled?: boolean;
+  [key: string]: unknown;
+}
+
+export interface SportsMarketsResponse {
+  markets?: Array<Record<string, unknown>>;
+  poolAddress?: string;
+  [key: string]: unknown;
+}
+
+export interface SportsPoolResponse {
+  fixtureId?: string;
+  fixture?: Record<string, unknown>;
+  winnerPool?: Record<string, unknown>;
+  scorePool?: Record<string, unknown>;
+  poolAddress?: string;
+  [key: string]: unknown;
+}
+
+export interface SportsWinnersResponse {
+  winners?: Array<Record<string, unknown>>;
+  count?: number;
+  [key: string]: unknown;
+}
+
+export interface CommodityPoolResponse {
+  totalDem?: number;
+  totalBets?: number;
+  asset?: string;
+  name?: string;
+  category?: string;
+  unit?: string;
+  horizon?: string;
+  poolAddress?: string;
+  roundEnd?: number;
+  currentPrice?: number;
+  bets?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface GraduationMarketsResponse {
+  markets?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
 export interface PredictionsResponse {
   predictions?: Array<Record<string, unknown>>;
   [key: string]: unknown;
@@ -323,6 +458,18 @@ export interface OmniwebReadClient {
   getPredictions(params?: PredictionsQuery): Promise<PredictionsResponse>;
   getPredictionIntelligence(params?: PredictionIntelligenceQuery): Promise<PredictionIntelligenceResponse>;
   getPredictionRecommendations(userAddress: string): Promise<PredictionRecommendationsResponse>;
+  getPool(params: MarketPoolQuery): Promise<FixedBetPoolResponse>;
+  getHigherLowerPool(params: MarketPoolQuery): Promise<HigherLowerPoolResponse>;
+  getBinaryPools(params?: BinaryPoolsQuery): Promise<BinaryPoolsResponse>;
+  getEthPool(params: MarketPoolQuery): Promise<EthBetPoolResponse>;
+  getEthWinners(params: { asset: string }): Promise<EthWinnersResponse>;
+  getEthHigherLowerPool(params: MarketPoolQuery): Promise<EthHigherLowerPoolResponse>;
+  getEthBinaryPools(): Promise<EthBinaryPoolsResponse>;
+  getSportsMarkets(params?: SportsMarketsQuery): Promise<SportsMarketsResponse>;
+  getSportsPool(fixtureId: string): Promise<SportsPoolResponse>;
+  getSportsWinners(fixtureId: string): Promise<SportsWinnersResponse>;
+  getCommodityPool(params: MarketPoolQuery): Promise<CommodityPoolResponse>;
+  getGraduationMarkets(params?: GraduationMarketsQuery): Promise<GraduationMarketsResponse>;
   getAgentScores(params?: ScoresQuery): Promise<ScoresResponse>;
   getTopPosts(params?: TopPostsQuery): Promise<TopPostsResponse>;
   getPredictionLeaderboard(params?: PredictionLeaderboardQuery): Promise<PredictionLeaderboardResponse>;

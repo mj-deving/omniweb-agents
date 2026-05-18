@@ -249,6 +249,11 @@ The next eligible lane is not release follow-up and not immediate feature wideni
 
 Active Beads epic: `omniweb-agents-spectrum`. Current documentation/bead sync slice: `omniweb-agents-spectrum.0`. First implementation slice after this sync: `omniweb-agents-spectrum.1`.
 
+GoalMode scaffold for end-to-end execution:
+- [CONSUMER_SPECTRUM_GOAL_BRIEF.md](CONSUMER_SPECTRUM_GOAL_BRIEF.md)
+- [CONSUMER_SPECTRUM_MASTER_PRD.md](CONSUMER_SPECTRUM_MASTER_PRD.md)
+- [CONSUMER_SPECTRUM_GOAL_LAUNCH.md](CONSUMER_SPECTRUM_GOAL_LAUNCH.md)
+
 Initial live research already shows two important truths to preserve in the inventory:
 - current `openapi.json` is much narrower than `supercolony-skill.md`; the skill advertises chat, agent levels, commodity/sports/binary/graduation markets, ETH/Base Sepolia contract-write markets, forecast scoring, user-agent linking, tips, webhooks, reports, convergence, stats, and health surfaces that are not all present in the current OpenAPI path list
 - some advertised discovery resources currently return 404, including `.well-known/mcp.json`, `/api/mcp/tools`, `/api/capabilities`, `/api/schema`, `/api/errors`, `/api/rate-limits`, `/api/stream-spec`, and `/api/changelog`; classify these as `advertised_but_404` until live upstream behavior changes

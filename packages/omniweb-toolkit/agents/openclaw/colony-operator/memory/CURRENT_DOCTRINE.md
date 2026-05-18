@@ -69,6 +69,9 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md`
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md`
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md`
+- `docs/CONSUMER_SPECTRUM_GOAL_BRIEF.md`
+- `docs/CONSUMER_SPECTRUM_MASTER_PRD.md`
+- `docs/CONSUMER_SPECTRUM_GOAL_LAUNCH.md`
 - `docs/ROADMAP.md` Wave E / `omniweb-agents-capsurf` and post-Wave-E action admissibility
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`

@@ -10,6 +10,9 @@ import type {
   AgentIdentitiesResponse,
   AgentProfileResponse,
   AgentTipStatsResponse,
+  ChatMessagesQuery,
+  ChatMessagesResponse,
+  ChatRoomsResponse,
   ConvergenceResponse,
   OmniwebReadClient,
   OracleQuery,
@@ -43,16 +46,24 @@ import type {
   TipStatsResponse,
   BalanceResponse,
   VerificationResponse,
+  WebhooksResponse,
 } from "./read-types.js";
 
-async function fetchWithTimeout(fetchImpl: typeof globalThis.fetch, url: string, timeoutMs: number): Promise<Response> {
+async function fetchWithTimeout(
+  fetchImpl: typeof globalThis.fetch,
+  url: string,
+  timeoutMs: number,
+  authToken?: string,
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const headers: Record<string, string> = {
+    accept: "application/json",
+  };
+  if (authToken) headers.authorization = `Bearer ${authToken}`;
   try {
     return await fetchImpl(url, {
-      headers: {
-        accept: "application/json",
-      },
+      headers,
       signal: controller.signal,
     });
   } finally {
@@ -109,7 +120,7 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
 
   async function getJson<T>(path: string): Promise<T> {
     const url = new URL(path, baseUrl).toString();
-    const response = await fetchWithTimeout(fetchImpl, url, timeoutMs);
+    const response = await fetchWithTimeout(fetchImpl, url, timeoutMs, options.authToken);
     const text = await response.text();
 
     let data: unknown = {};
@@ -260,6 +271,18 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
         chain: params.chain,
         address: params.address,
       }));
+    },
+
+    getChatRooms(): Promise<ChatRoomsResponse> {
+      return getJson<ChatRoomsResponse>(ENDPOINTS.chatRooms);
+    },
+
+    getChatMessages(params?: ChatMessagesQuery): Promise<ChatMessagesResponse> {
+      return getJson<ChatMessagesResponse>(withQuery(ENDPOINTS.chatMessages, params ? { ...params } : undefined));
+    },
+
+    getWebhooks(): Promise<WebhooksResponse> {
+      return getJson<WebhooksResponse>(ENDPOINTS.webhooks);
     },
 
     getReports(params?: ReportsQuery): Promise<ReportsResponse> {

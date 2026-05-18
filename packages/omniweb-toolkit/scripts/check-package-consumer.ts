@@ -234,7 +234,11 @@ const {
   checkWriteReadiness,
   describeRuntimeCapabilities,
 } = runtimeEntry;
-const { buildLeaderboardPatternPrompt, getStarterSourcePack } = agentEntry;
+const {
+  buildColonyOperatorCapabilityDiscovery,
+  buildLeaderboardPatternPrompt,
+  getStarterSourcePack,
+} = agentEntry;
 
 const readiness = checkWriteReadiness({
   cwd: ${JSON.stringify(options.consumerRoot)},
@@ -250,6 +254,7 @@ const toolkitManifest = buildToolkitCapabilityManifest({
   runtimeCapabilities: capabilities,
   now: new Date("2026-05-18T00:00:00.000Z"),
 });
+const colonyOperatorDiscovery = buildColonyOperatorCapabilityDiscovery(toolkitManifest);
 
 if (!readiness.canRead) {
   throw new Error("readiness unexpectedly reports read path unavailable");
@@ -271,6 +276,15 @@ if (!toolkitManifest.capabilities.some((capability) => capability.id === "colony
 }
 if (JSON.stringify(toolkitManifest).match(/mnemonic|seed phrase|approvalToken|challengeSecret/i)) {
   throw new Error("toolkit manifest leaked sensitive credential field names");
+}
+if (colonyOperatorDiscovery.fullDetailAccess.manifestField !== "toolkitCapabilityManifest") {
+  throw new Error("colony operator discovery did not point to manifest detail access");
+}
+if (!colonyOperatorDiscovery.compact.availableReadCapabilities.includes("colony.feed")) {
+  throw new Error("colony operator discovery did not expose compact read capability access");
+}
+if (colonyOperatorDiscovery.compact.defaultBoundaries.protocolLayer !== "toolkit/runtime") {
+  throw new Error("colony operator discovery did not preserve toolkit/runtime authority");
 }
 
 const sourcePack = getStarterSourcePack("research");
@@ -305,7 +319,7 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   imports: {
     main: ["createClient"],
     runtime: ["buildToolkitCapabilityManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
-    agent: ["buildLeaderboardPatternPrompt", "getStarterSourcePack"],
+    agent: ["buildColonyOperatorCapabilityDiscovery", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
   dryRun: {
@@ -323,6 +337,13 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
     readCapabilities: toolkitManifest.coverage.readCapabilities,
     writeCapabilities: toolkitManifest.coverage.writeCapabilities,
     blockedCapabilities: toolkitManifest.coverage.blockedCapabilities,
+  },
+  colonyOperatorDiscovery: {
+    source: colonyOperatorDiscovery.source,
+    recommendedMode: colonyOperatorDiscovery.recommendedMode,
+    availableReadCapabilities: colonyOperatorDiscovery.compact.availableReadCapabilities,
+    fullDetailAccess: colonyOperatorDiscovery.fullDetailAccess,
+    defaultBoundaries: colonyOperatorDiscovery.compact.defaultBoundaries,
   },
   sourcePack: {
     archetype: sourcePack.archetype,

@@ -45,12 +45,46 @@ interface OperatorEnvelope {
     noSpendDefault: boolean;
     allRequiredFamiliesHaveIntent: boolean;
   };
+  capabilityDiscovery: {
+    source: "omniweb-toolkit";
+    compact: {
+      availableReadCapabilities: string[];
+      availableWriteCapabilities: string[];
+      blockedCapabilities: string[];
+      richResponseCapabilities: string[];
+      proofResponseCapabilities: string[];
+      defaultBoundaries: {
+        noSpendDefault: boolean;
+        liveExecutionRequiresExplicitExecute: boolean;
+        strategyLayer: string;
+        protocolLayer: string;
+      };
+    };
+    fullDetailAccess: {
+      manifestField: string;
+      capabilityIds: string[];
+      includes: string[];
+    };
+  };
   capabilityTruth: {
     coverage: {
       allRequiredFamiliesPresent: boolean;
       allRequiredFamiliesHaveIntent: boolean;
       noSpendDefault: boolean;
     };
+  };
+  toolkitCapabilityManifest: {
+    source: "omniweb-toolkit";
+    capabilities: Array<{
+      id: string;
+      methods: string[];
+      params: Array<{ name: string; required: boolean; type: string }>;
+      requirements: Record<string, unknown>;
+      responseDepth: string;
+      proofTier: string;
+      lifecycle: Record<string, unknown>;
+      status: string;
+    }>;
   };
   lifecyclePlan: {
     required: boolean;
@@ -125,6 +159,19 @@ const checks = {
   capabilitySummaryPresent: envelope?.capabilitySummary.selectedFamily === envelope?.selectedAction.actionFamily
     && envelope?.capabilitySummary.allRequiredFamiliesHaveIntent === true
     && envelope?.capabilitySummary.lifecyclePendingFamilies.includes("bet-hl") === true,
+  compactDiscoveryPresent: envelope?.capabilityDiscovery.source === "omniweb-toolkit"
+    && envelope.capabilityDiscovery.compact.availableReadCapabilities.includes("colony.feed")
+    && envelope.capabilityDiscovery.compact.richResponseCapabilities.includes("colony.post-detail")
+    && envelope.capabilityDiscovery.compact.proofResponseCapabilities.includes("colony.publish")
+    && envelope.capabilityDiscovery.compact.defaultBoundaries.protocolLayer === "toolkit/runtime",
+  fullManifestAccessPresent: envelope?.capabilityDiscovery.fullDetailAccess.manifestField === "toolkitCapabilityManifest"
+    && envelope.capabilityDiscovery.fullDetailAccess.includes.includes("params")
+    && envelope.capabilityDiscovery.fullDetailAccess.includes.includes("proofTier")
+    && envelope.toolkitCapabilityManifest.capabilities.some((capability) => (
+      capability.id === "colony.publish"
+      && capability.methods.includes("omni.colony.publish")
+      && capability.params.some((param) => param.name === "text" && param.required)
+    )),
   lifecyclePlanPresent: envelope?.lifecyclePlan.required === true && envelope.lifecyclePlan.status === "planned",
   noProductMutationClaimed: envelope?.execution.productReadback.attempted === false,
 };
@@ -138,6 +185,7 @@ console.log(JSON.stringify({
   checks,
   contract: {
     maintainedOperatorEntrypoint: ok,
+    runtimeCapabilityDiscovery: Boolean(checks.compactDiscoveryPresent && checks.fullManifestAccessPresent),
     explicitExecuteRequiredForLiveWrites: checks.dryRunDefault && checks.lifecyclePlanPresent,
     spendsDem: false,
     liveWriteProven: false,
@@ -153,6 +201,23 @@ console.log(JSON.stringify({
           lifecycleStatus: alternative.lifecycleStatus,
           intent: alternative.intent,
         })),
+        capabilityDiscovery: envelope.capabilityDiscovery,
+        toolkitCapabilityManifest: {
+          source: envelope.toolkitCapabilityManifest.source,
+          capabilityCount: envelope.toolkitCapabilityManifest.capabilities.length,
+          sampleCapabilities: envelope.toolkitCapabilityManifest.capabilities
+            .filter((capability) => ["colony.feed", "colony.publish", "colony.post-detail", "colony.identity"].includes(capability.id))
+            .map((capability) => ({
+              id: capability.id,
+              methods: capability.methods,
+              params: capability.params,
+              requirements: capability.requirements,
+              responseDepth: capability.responseDepth,
+              proofTier: capability.proofTier,
+              lifecycle: capability.lifecycle,
+              status: capability.status,
+            })),
+        },
         capabilitySummary: envelope.capabilitySummary,
         lifecyclePlan: envelope.lifecyclePlan,
         execution: envelope.execution,

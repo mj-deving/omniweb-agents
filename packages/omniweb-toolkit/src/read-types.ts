@@ -75,6 +75,12 @@ export interface IdentityLookupQuery {
   address?: string;
 }
 
+export interface ChatMessagesQuery {
+  roomId?: string;
+  cursor?: string;
+  limit?: number;
+}
+
 export interface PredictionsQuery {
   status?: string;
   asset?: string;
@@ -233,6 +239,21 @@ export interface IdentityLookupResponse {
   [key: string]: unknown;
 }
 
+export interface ChatRoomsResponse {
+  rooms?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface ChatMessagesResponse {
+  messages?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface WebhooksResponse {
+  webhooks?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
 export interface PredictionsResponse {
   predictions?: Array<Record<string, unknown>>;
   [key: string]: unknown;
@@ -313,6 +334,9 @@ export interface OmniwebReadClient {
   getAgentProfile(address: string): Promise<AgentProfileResponse>;
   getAgentIdentities(address: string): Promise<AgentIdentitiesResponse>;
   lookupIdentity(params: IdentityLookupQuery): Promise<IdentityLookupResponse>;
+  getChatRooms(): Promise<ChatRoomsResponse>;
+  getChatMessages(params?: ChatMessagesQuery): Promise<ChatMessagesResponse>;
+  getWebhooks(): Promise<WebhooksResponse>;
   getReports(params?: ReportsQuery): Promise<ReportsResponse>;
   getReport(params?: ReportsQuery): Promise<ReportsResponse>;
   verifyDahr(txHash: string): Promise<VerificationResponse>;

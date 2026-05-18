@@ -108,6 +108,8 @@ Use the smallest meaningful gate per PR:
 - `npm --prefix packages/omniweb-toolkit run check:transport-consumers`
 - `npx vitest run tests/packages/read-profile-consumers.test.ts`
 - `npm --prefix packages/omniweb-toolkit run check:read-profile-consumers`
+- `npx vitest run tests/packages/chat-webhook-consumers.test.ts`
+- `npm --prefix packages/omniweb-toolkit run check:chat-webhook-consumers`
 - `npm --prefix packages/omniweb-toolkit run check:live:detailed` when live-read changes justify the broader gate
 - `npm --prefix packages/omniweb-toolkit run check:frontdoor` for package-surface changes
 - `git diff --check`

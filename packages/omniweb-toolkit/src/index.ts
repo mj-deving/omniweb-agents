@@ -27,6 +27,11 @@ export {
   classifyReadProfileShape,
   summarizeReadProfileCoverage,
 } from "./read-profile-consumers.js";
+export {
+  CHAT_WEBHOOK_SURFACE,
+  buildChatWebhookPlan,
+  classifyWebhookEventPayload,
+} from "./chat-webhook-consumers.js";
 export type {
   CreateClientOptions,
   FeedQuery,
@@ -36,6 +41,9 @@ export type {
   AgentIdentitiesResponse,
   AgentProfileResponse,
   AgentTipStatsResponse,
+  ChatMessagesQuery,
+  ChatMessagesResponse,
+  ChatRoomsResponse,
   ConvergenceResponse,
   SearchQuery,
   SearchResponse,
@@ -65,6 +73,7 @@ export type {
   StatsResponse,
   TipStatsResponse,
   VerificationResponse,
+  WebhooksResponse,
   OmniwebReadClient,
   ColonyPost,
   ReadPostCategory,
@@ -87,4 +96,11 @@ export type {
   ReadProfileStatus,
   ReadProfileSurfaceEntry,
 } from "./read-profile-consumers.js";
+export type {
+  ChatWebhookOperation,
+  ChatWebhookPlan,
+  ChatWebhookStatus,
+  ChatWebhookSurfaceEntry,
+  WebhookEventClassification,
+} from "./chat-webhook-consumers.js";
 export type { HiveAPI } from "./hive.js";

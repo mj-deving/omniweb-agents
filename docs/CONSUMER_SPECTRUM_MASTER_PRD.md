@@ -94,6 +94,8 @@ Only after the inventory and codebase map can later beads widen:
 
 The final proof is local/tarball consumer use, not registry publication. It should install from workspace or packed tarball and exercise the maintained spectrum with honest blocked/unsupported verdicts.
 
+PR slice `omniweb-agents-spectrum.10` owns this final proof through `check:consumer-spectrum-tarball`: build the package, `npm pack` it into a temporary clean consumer, install the local tarball by package name, import the root plus `runtime` and `agent` subpaths, and exercise the no-spend transport, read/profile, chat/webhook, market-read, market-write-intent, and operator action spectrum. Expected non-green states remain part of the proof: level reads are still advertised-but-404, chat/webhook mutations are auth/execute gated, ETH and graduation markets report deployment/server drift, binary/commodity/sports write intents are unsupported, identity remains supervised, and higher/lower operator execution stays blocked pending deliberate current recheck. This is explicitly not public registry evidence.
+
 ## Section 5. Validation Ladder
 
 Use the smallest meaningful gate per PR:
@@ -114,6 +116,7 @@ Use the smallest meaningful gate per PR:
 - `npm --prefix packages/omniweb-toolkit run check:market-read-consumers`
 - `npx vitest run tests/packages/market-write-intents.test.ts`
 - `npm --prefix packages/omniweb-toolkit run check:market-write-intents`
+- `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball`
 - `npm --prefix packages/omniweb-toolkit run check:live:detailed` when live-read changes justify the broader gate
 - `npm --prefix packages/omniweb-toolkit run check:frontdoor` for package-surface changes
 - `git diff --check`

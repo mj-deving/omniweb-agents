@@ -74,6 +74,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-chat-webhook-consumers.ts](./check-chat-webhook-consumers.ts): no-spend auth-gated chat/webhook lifecycle proof with explicit remote-mutation gates and inbound webhook event classification
 - [check-market-read-consumers.ts](./check-market-read-consumers.ts): no-spend market-read matrix across fixed, higher/lower, binary, ETH, sports, commodity, graduation, and prediction-intelligence families with live deployment-drift classification
 - [check-market-write-intents.ts](./check-market-write-intents.ts): no-spend market-write intent matrix across fixed, higher/lower, binary, graduation, commodity, sports, ETH fixed, ETH higher/lower, and ETH binary families with explicit admissibility and execution gates
+- [check-consumer-spectrum-tarball.ts](./check-consumer-spectrum-tarball.ts): clean local-tarball install proof that imports the package by name and exercises the maintained no-spend transport, read/profile, chat/webhook, market-read, market-write-intent, and operator action spectrum without registry publication
 - [check-colony-operator-decision-coverage.ts](./check-colony-operator-decision-coverage.ts): maintained AC-3 coverage proof for selectable skip/publish/reply/react and explicit skipped alternatives for tip, VOTE, fixed-price BET, and status-only higher/lower BET
 - [check-colony-operator-guardrails.ts](./check-colony-operator-guardrails.ts): runtime guardrail proof for prompt-injection blocking, URL/secret redaction, spend gating, identity supervision, and per-action multi-action reports
 - [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts): maintained one-cycle operator runner; defaults to no-spend preflight and only executes live publish/reply when `--execute` is explicit and the preflight selected publish or reply
@@ -102,7 +103,8 @@ For a new consumer integration, use the smallest useful path:
 16. [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts) when you need the copied/installed OpenClaw bundle proof for that same default path
 17. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
 18. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
-18. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
-19. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
+19. [check-consumer-spectrum-tarball.ts](./check-consumer-spectrum-tarball.ts) when you need the whole-spectrum local-tarball proof without registry publication, live spend, or identity mutation
+20. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+21. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

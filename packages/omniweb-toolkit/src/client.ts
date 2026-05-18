@@ -5,11 +5,30 @@ import type {
   CreateClientOptions,
   FeedQuery,
   FeedResponse,
+  AgentsQuery,
+  AgentsResponse,
+  AgentIdentitiesResponse,
+  AgentProfileResponse,
+  AgentTipStatsResponse,
+  ConvergenceResponse,
   OmniwebReadClient,
   OracleQuery,
   OracleResponse,
+  HealthResponse,
+  IdentityLookupQuery,
+  IdentityLookupResponse,
+  PostDetailResponse,
+  PredictionsQuery,
+  PredictionsResponse,
+  PredictionIntelligenceQuery,
+  PredictionIntelligenceResponse,
+  PredictionLeaderboardQuery,
+  PredictionLeaderboardResponse,
+  PredictionRecommendationsResponse,
+  PredictionScoreResponse,
   PricesQuery,
   PricesResponse,
+  ReactionCountsResponse,
   TopPostsQuery,
   TopPostsResponse,
   ReportsQuery,
@@ -20,7 +39,10 @@ import type {
   SearchResponse,
   SignalsResponse,
   StatsResponse,
+  ThreadResponse,
+  TipStatsResponse,
   BalanceResponse,
+  VerificationResponse,
 } from "./read-types.js";
 
 async function fetchWithTimeout(fetchImpl: typeof globalThis.fetch, url: string, timeoutMs: number): Promise<Response> {
@@ -58,6 +80,12 @@ async function fetchTextWithTimeout(
 
 function assetsParam(assets: string[]): string {
   return assets.join(",");
+}
+
+function pathJoin(...parts: string[]): string {
+  return parts.map((part, index) => (
+    index === 0 ? part.replace(/\/+$/g, "") : part.replace(/^\/+|\/+$/g, "")
+  )).join("/");
 }
 
 function searchParams(params?: SearchQuery): Record<string, unknown> | undefined {
@@ -143,8 +171,20 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
       return getJson<SearchResponse>(withQuery(ENDPOINTS.search, searchParams(params)));
     },
 
+    getPostDetail(txHash: string): Promise<PostDetailResponse> {
+      return getJson<PostDetailResponse>(pathJoin(ENDPOINTS.post, encodeURIComponent(txHash)));
+    },
+
+    getThread(txHash: string): Promise<ThreadResponse> {
+      return getJson<ThreadResponse>(pathJoin(ENDPOINTS.thread, encodeURIComponent(txHash)));
+    },
+
     getSignals(): Promise<SignalsResponse> {
       return getJson<SignalsResponse>(ENDPOINTS.signals);
+    },
+
+    getConvergence(): Promise<ConvergenceResponse> {
+      return getJson<ConvergenceResponse>(ENDPOINTS.convergence);
     },
 
     getOracle(params: OracleQuery): Promise<OracleResponse> {
@@ -160,6 +200,18 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
       }));
     },
 
+    getPredictions(params?: PredictionsQuery): Promise<PredictionsResponse> {
+      return getJson<PredictionsResponse>(withQuery(ENDPOINTS.predictions, params ? { ...params } : undefined));
+    },
+
+    getPredictionIntelligence(params?: PredictionIntelligenceQuery): Promise<PredictionIntelligenceResponse> {
+      return getJson<PredictionIntelligenceResponse>(withQuery(ENDPOINTS.predictionIntelligence, params ? { ...params } : undefined));
+    },
+
+    getPredictionRecommendations(userAddress: string): Promise<PredictionRecommendationsResponse> {
+      return getJson<PredictionRecommendationsResponse>(withQuery(ENDPOINTS.predictionRecommendations, { userAddress }));
+    },
+
     getAgentScores(params?: ScoresQuery): Promise<ScoresResponse> {
       return getJson<ScoresResponse>(withQuery(ENDPOINTS.scores, params ? { ...params } : undefined));
     },
@@ -168,16 +220,74 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
       return getJson<TopPostsResponse>(withQuery(ENDPOINTS.topPosts, params ? { ...params } : undefined));
     },
 
+    getPredictionLeaderboard(params?: PredictionLeaderboardQuery): Promise<PredictionLeaderboardResponse> {
+      return getJson<PredictionLeaderboardResponse>(withQuery(ENDPOINTS.predictionLeaderboard, params ? { ...params } : undefined));
+    },
+
+    getPredictionScore(address: string): Promise<PredictionScoreResponse> {
+      return getJson<PredictionScoreResponse>(pathJoin(ENDPOINTS.predictionScore, encodeURIComponent(address)));
+    },
+
     getBalance(): Promise<BalanceResponse> {
       return getJson<BalanceResponse>(ENDPOINTS.balance);
+    },
+
+    getHealth(): Promise<HealthResponse> {
+      return getJson<HealthResponse>(ENDPOINTS.health);
     },
 
     getStats(): Promise<StatsResponse> {
       return getJson<StatsResponse>(ENDPOINTS.stats);
     },
 
+    getAgents(params?: AgentsQuery): Promise<AgentsResponse> {
+      return getJson<AgentsResponse>(withQuery(ENDPOINTS.agents, params ? { ...params } : undefined));
+    },
+
+    getAgentProfile(address: string): Promise<AgentProfileResponse> {
+      return getJson<AgentProfileResponse>(pathJoin(ENDPOINTS.agent, encodeURIComponent(address)));
+    },
+
+    getAgentIdentities(address: string): Promise<AgentIdentitiesResponse> {
+      return getJson<AgentIdentitiesResponse>(pathJoin(ENDPOINTS.agent, encodeURIComponent(address), "identities"));
+    },
+
+    lookupIdentity(params: IdentityLookupQuery): Promise<IdentityLookupResponse> {
+      return getJson<IdentityLookupResponse>(withQuery(ENDPOINTS.identity, {
+        platform: params.platform,
+        username: params.username,
+        search: params.query,
+        chain: params.chain,
+        address: params.address,
+      }));
+    },
+
     getReports(params?: ReportsQuery): Promise<ReportsResponse> {
       return getJson<ReportsResponse>(withQuery(ENDPOINTS.reports, params ? { ...params } : undefined));
+    },
+
+    getReport(params?: ReportsQuery): Promise<ReportsResponse> {
+      return getJson<ReportsResponse>(withQuery(ENDPOINTS.report, params ? { ...params } : undefined));
+    },
+
+    verifyDahr(txHash: string): Promise<VerificationResponse> {
+      return getJson<VerificationResponse>(pathJoin(ENDPOINTS.verifyDahr, encodeURIComponent(txHash)));
+    },
+
+    verifyTlsn(txHash: string): Promise<VerificationResponse> {
+      return getJson<VerificationResponse>(pathJoin(ENDPOINTS.verifyTlsn, encodeURIComponent(txHash)));
+    },
+
+    getReactions(txHash: string): Promise<ReactionCountsResponse> {
+      return getJson<ReactionCountsResponse>(pathJoin(ENDPOINTS.feed, encodeURIComponent(txHash), "react"));
+    },
+
+    getTipStats(txHash: string): Promise<TipStatsResponse> {
+      return getJson<TipStatsResponse>(pathJoin(ENDPOINTS.tip, encodeURIComponent(txHash)));
+    },
+
+    getAgentTipStats(address: string): Promise<AgentTipStatsResponse> {
+      return getJson<AgentTipStatsResponse>(pathJoin(ENDPOINTS.agent, encodeURIComponent(address), "tips"));
     },
   };
 }

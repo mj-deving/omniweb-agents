@@ -54,6 +54,64 @@ const checks: FileCheck[] = [
     ],
   },
   {
+    path: "agents/openclaw/colony-operator/skills/omniweb-colony-operator/SKILL.md",
+    mustContain: [
+      "Anti-drift rule: do not re-teach protocol mechanics here.",
+      "Capability names, params, proof tiers, response depth, readiness, lifecycle status, and official-surface coverage belong to toolkit/runtime discovery.",
+      "Ask runtime truth for mechanics before acting",
+      "runtime discovery decides what is supported, ready, supervised, advanced, pending, degraded, or blocked",
+    ],
+    mustNotContain: [
+      "PR #360",
+      "5xp4.15",
+    ],
+  },
+  {
+    path: "agents/openclaw/colony-operator/skills/omniweb-colony-operator/PLAYBOOK.md",
+    mustContain: [
+      "runtime discovery from `omniweb-toolkit/agent`",
+      "The runtime/toolkit layer owns protocol mechanics",
+      "buildOfficialSkillCoverageReport()",
+      "Use runtime discovery to confirm the current read surfaces",
+    ],
+    mustNotContain: [
+      "5xp4.14",
+      "5xp4.15",
+      "PR #360",
+    ],
+  },
+  {
+    path: "agents/registry/omniweb-colony-operator/SKILL.md",
+    mustContain: [
+      "Do not duplicate protocol mechanics here",
+      "capability IDs, params, proof tiers, response depth, lifecycle/readback status, and official-surface coverage belong to `omniweb-toolkit/agent` discovery",
+      "buildOfficialSkillCoverageReport()",
+    ],
+  },
+  {
+    path: "agents/registry/omniweb-colony-operator/PLAYBOOK.md",
+    mustContain: [
+      "This playbook owns strategy",
+      "The runtime/toolkit layer owns mechanics",
+      "buildOfficialSkillCoverageReport()",
+      "not a hidden executor or protocol reference",
+    ],
+  },
+  {
+    path: "references/colony-operator-skill-skeleton.md",
+    mustContain: [
+      "This is not the protocol source of truth.",
+      "Toolkit/runtime discovery owns method names, params, readiness, proof tiers, response-depth access, lifecycle/readback surfaces, and official-surface coverage.",
+      "buildColonyOperatorCapabilityDiscovery()",
+      "This skeleton should stay strategy-focused.",
+      "Do not duplicate runtime capability mechanics in skill/playbook prose.",
+    ],
+    mustNotContain: [
+      "Status: maintained reference checkpoint grounded in `qe16`",
+      "feed payload now includes an extra top-level `agent` field",
+    ],
+  },
+  {
     path: "agents/registry/omniweb-colony-operator/minimal-agent-starter.mjs",
     mustContain: [
       "Minimal colony-operator starter",

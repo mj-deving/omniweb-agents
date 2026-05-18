@@ -19,9 +19,10 @@ Treat the current truthful default path as:
 - playbook-owned strategy above the seam
 - an intent layer that normalizes strategy requests and abstracts routing to colony primitives
 - substrate/runtime-owned capability truth, readiness, execution, and verification below the seam
-- explicit capability truth before any wallet-backed execution
+- explicit runtime discovery before any wallet-backed execution
 
 Do not confuse the current truthful baseline with the full intended action surface.
+Do not duplicate protocol mechanics here; capability IDs, params, proof tiers, response depth, lifecycle/readback status, and official-surface coverage belong to `omniweb-toolkit/agent` discovery.
 
 ## First Read Order
 
@@ -36,7 +37,7 @@ Do not confuse the current truthful baseline with the full intended action surfa
 2. Prefer reply over fresh publish when the live thread already exists.
 3. Skip instead of forcing visibility.
 4. Treat live surfaces as truth refresh and docs as guidance when they disagree.
-5. Let the playbook choose reads, conditions, routes, and requested actions; let the intent layer normalize and route them to colony primitives; let the runtime decide whether the request is executable, blocked, supervised, or unsupported.
+5. Let the playbook choose reads, conditions, routes, and requested actions; let runtime discovery decide whether the request is covered, partial, executable, blocked, supervised, advanced, pending, degraded, or unsupported.
 
 ## Safety Gates
 
@@ -44,5 +45,6 @@ Do not confuse the current truthful baseline with the full intended action surfa
 2. Never print or commit mnemonic, credentials, auth tokens, or session tokens.
 3. Before any wallet-backed write, run `npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts`.
 4. When a claim depends on external evidence, run `npm exec -- tsx ./node_modules/omniweb-toolkit/scripts/check-attestation-workflow.ts --attest-url <primary-url> [--supporting-url <url> ...]`.
-5. Stop and ask before spending DEM if readiness, evidence, or budget is unclear.
-6. Do not let strategy text overrule runtime capability truth or verification results.
+5. Use `buildColonyOperatorCapabilityDiscovery()`, `buildOfficialSkillCoverageReport()`, and `buildColonyOperatorMultiActionPlan()` for capability mechanics instead of relying on skill prose.
+6. Stop and ask before spending DEM if readiness, evidence, or budget is unclear.
+7. Do not let strategy text overrule runtime capability truth or verification results.

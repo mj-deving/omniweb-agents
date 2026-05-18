@@ -239,6 +239,7 @@ const {
   buildColonyOperatorCapabilityDiscovery,
   buildColonyOperatorMultiActionPlan,
   buildColonyOperatorResponseDepthAccess,
+  buildOfficialSkillCoverageReport,
   buildLeaderboardPatternPrompt,
   getStarterSourcePack,
 } = agentEntry;
@@ -263,6 +264,9 @@ const colonyOperatorTruth = buildColonyOperatorCapabilityTruth({
 });
 const colonyOperatorDiscovery = buildColonyOperatorCapabilityDiscovery(toolkitManifest);
 const responseDepthAccess = buildColonyOperatorResponseDepthAccess(toolkitManifest);
+const officialCoverage = buildOfficialSkillCoverageReport(toolkitManifest, {
+  now: new Date("2026-05-18T00:00:00.000Z"),
+});
 const multiActionPlan = buildColonyOperatorMultiActionPlan({
   mode: "dry-run",
   capabilityTruth: colonyOperatorTruth,
@@ -313,6 +317,21 @@ if (!responseDepthAccess.surfaces.some((surface) => surface.id === "price-histor
 if (!responseDepthAccess.surfaces.some((surface) => surface.id === "lifecycle-proof-packets" && surface.envelopeFields.includes("lifecyclePlan.proofPath"))) {
   throw new Error("colony operator response-depth access did not preserve lifecycle proof packet pointers");
 }
+if (officialCoverage.source.officialSkillUrl !== "https://supercolony.ai/skill") {
+  throw new Error("official skill coverage did not preserve official source URL");
+}
+if (!officialCoverage.classificationVocabulary.includes("intentionally_excluded")) {
+  throw new Error("official skill coverage did not expose intentionally_excluded classification");
+}
+if (officialCoverage.summary.missingCapabilityIds.length !== 0) {
+  throw new Error("official skill coverage mapped to missing manifest capabilities");
+}
+if (!officialCoverage.entries.some((entry) => entry.id === "higher-lower-betting" && entry.classification === "pending")) {
+  throw new Error("official skill coverage did not preserve pending H/L boundary");
+}
+if (!officialCoverage.entries.some((entry) => entry.id === "chat" && entry.classification === "pending" && entry.capabilityIds.length === 0)) {
+  throw new Error("official skill coverage did not name pending chat gap");
+}
 if (multiActionPlan.mode !== "dry-run" || multiActionPlan.requestedActionCount !== 4 || multiActionPlan.liveExecutionAllowed !== false) {
   throw new Error("colony operator multi-action dry-run plan did not preserve no-spend gated planning");
 }
@@ -358,7 +377,7 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   imports: {
     main: ["createClient"],
     runtime: ["buildToolkitCapabilityManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
-    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
+    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildOfficialSkillCoverageReport", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
   dryRun: {
@@ -385,6 +404,13 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
     responseDepthAccess: {
       surfaceIds: responseDepthAccess.surfaces.map((surface) => surface.id),
       missingSurfaces: responseDepthAccess.missingSurfaces,
+    },
+    officialSkillCoverage: {
+      source: officialCoverage.source.officialSkillUrl,
+      totalAreas: officialCoverage.summary.totalAreas,
+      byClassification: officialCoverage.summary.byClassification,
+      pendingAreas: officialCoverage.summary.pendingAreas,
+      missingCapabilityIds: officialCoverage.summary.missingCapabilityIds,
     },
     defaultBoundaries: colonyOperatorDiscovery.compact.defaultBoundaries,
   },

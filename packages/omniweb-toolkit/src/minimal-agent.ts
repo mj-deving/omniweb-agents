@@ -1,8 +1,16 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { PublishResult, ReactionType, ToolResult } from "../../../src/toolkit/types.js";
+import {
+  evaluateToolkitActionAdmissibilitySync,
+  type ToolkitActionAdmissibilityReport,
+} from "./action-admissibility.js";
 import { connect } from "./connect.js";
 import type { ConnectOptions, OmniWeb } from "./colony.js";
+import {
+  evaluateToolkitGuardrailsSync,
+  type ToolkitGuardrailEvaluationReport,
+} from "./guardrails.js";
 import type {
   MinimalActionIntent,
   MinimalActionType,
@@ -331,6 +339,8 @@ export interface MinimalCycleRecord<TState extends MinimalAgentState = MinimalAg
       verification?: PublishVisibilityResult | MinimalReactionVerification | MinimalTipVerification | MinimalMarketWriteVerification;
       publishResult?: ToolResult<PublishResult>;
       reactionResult?: { ok: boolean; error?: unknown };
+      guardrailEvaluation?: ToolkitGuardrailEvaluationReport;
+      admissibility?: ToolkitActionAdmissibilityReport;
       error?: {
         stage: MinimalErrorStage;
         message: string;
@@ -514,6 +524,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   });
 
   if (policyExecution.disposition.kind === "skip") {
+    const runtimeGateReports = buildMinimalRuntimeGateReports(policyExecution.resolution, cycle.dryRun);
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -526,6 +537,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
         execution: {
           status: policyExecution.disposition.status,
           demSpendEstimate: 0,
+          ...runtimeGateReports,
         },
       },
     });
@@ -534,6 +546,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   }
 
   if (policyExecution.disposition.kind === "dry_run") {
+    const runtimeGateReports = buildMinimalRuntimeGateReports(policyExecution.resolution, true);
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -546,6 +559,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
         execution: {
           status: policyExecution.disposition.status,
           demSpendEstimate: 0,
+          ...runtimeGateReports,
         },
       },
     });
@@ -554,6 +568,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   }
 
   if (policyExecution.disposition.kind === "failed") {
+    const runtimeGateReports = buildMinimalRuntimeGateReports(policyExecution.resolution, cycle.dryRun);
     const record = buildCompletedRecord({
       cycle,
       startedAtMs,
@@ -571,6 +586,7 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
             message: policyExecution.disposition.errorMessage,
             retryable: policyExecution.disposition.retryable,
           },
+          ...runtimeGateReports,
         },
       },
     });
@@ -630,6 +646,39 @@ export async function runMinimalAgentCycle<TState extends MinimalAgentState = Mi
   });
   await persistCycleArtifacts(stateDir, record);
   return record;
+}
+
+function buildMinimalRuntimeGateReports(
+  resolution: ResolvedIntent | null,
+  dryRun: boolean,
+): Pick<MinimalExecutionOutcome, "guardrailEvaluation" | "admissibility"> {
+  if (!resolution) return {};
+  const mode = dryRun ? "dry-run" : "execute";
+  const actionFamily = actionFamilyForMinimalResolution(resolution);
+  const guardrailEvaluation = evaluateToolkitGuardrailsSync({
+    mode,
+    explicitExecute: !dryRun,
+    actionFamily,
+    resolution,
+  });
+  const admissibility = evaluateToolkitActionAdmissibilitySync({
+    mode,
+    explicitExecute: !dryRun,
+    actionFamily,
+    resolution,
+    guardrailEvaluation,
+  });
+  return {
+    guardrailEvaluation,
+    admissibility,
+  };
+}
+
+function actionFamilyForMinimalResolution(resolution: ResolvedIntent): string {
+  if (resolution.actionType === "bet") {
+    return resolution.normalizedDraft.marketKind === "higher_lower" ? "bet-hl" : "bet-fixed";
+  }
+  return resolution.actionType;
 }
 
 export async function runMinimalAgentLoop<TState extends MinimalAgentState = MinimalAgentState>(

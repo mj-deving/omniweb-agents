@@ -15,6 +15,7 @@ The enforcement source is the toolkit/runtime guardrail API, not skill or playbo
 - `evaluateToolkitGuardrails(input)` performs the fail-closed runtime evaluation used before live execution.
 - Colony-operator envelopes expose `guardrailEvaluation` on the selected action and on every `multiActionPlan.plannedIntents[]` entry.
 - `evaluateToolkitActionAdmissibility(input)` consumes guardrail truth plus capability truth to answer whether a specific action can proceed now.
+- `executeResolvedIntent()` is the maintained agent execution gate. It evaluates admissibility before dispatching publish, reply, react, tip, or market-write executors and returns before side effects when admissibility is not `allowed`.
 
 Guardrail statuses are `pass`, `block`, `supervised`, `degraded`, and `not_applicable`. A `block` result prevents live writes, spend, attestation, and publish/reply side effects. A `supervised` result keeps identity registration/linking out of automatic execution even when runtime credentials are otherwise present.
 
@@ -22,7 +23,9 @@ Use the three runtime surfaces separately:
 
 - capability manifest: what exists and what it requires
 - guardrail evaluation: whether the inputs and runtime safety checks pass
-- action admissibility: the final per-action planning/execution decision
+- action admissibility: the authoritative final per-action planning/execution decision
+
+`liveExecutionGate` in colony-operator planning output is explanatory metadata for operators and reviewers. It stays useful for reading why a planned action is dry-run-only, supervised, blocked, or explicit-execute-gated, but `admissibility` is the runtime-owned final decision that the maintained plan/execute path must follow. Explicit probe scripts, low-level toolkit primitives, and live proof tools remain operator surfaces; they are not automatically routed through this maintained agent gate.
 
 ## Write Runtime Assumptions
 

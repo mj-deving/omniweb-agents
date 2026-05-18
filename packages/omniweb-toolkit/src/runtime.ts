@@ -1,5 +1,6 @@
 export { connect } from "./connect.js";
 export { buildToolkitCapabilityManifest, describeToolkitCapabilities } from "./capability-manifest.js";
+export { buildOfficialSkillCoverageReport, getOfficialSkillSurfaceAreas } from "./official-skill-coverage.js";
 export { checkWriteReadiness } from "./readiness.js";
 export { describeRuntimeCapabilities } from "./readiness.js";
 export type { OmniWeb, Colony, ConnectOptions } from "./colony.js";
@@ -16,6 +17,13 @@ export type {
   ToolkitCapabilityStatus,
   ToolkitResponseDepth,
 } from "./capability-manifest.js";
+export type {
+  OfficialSkillCoverageClassification,
+  OfficialSkillCoverageEntry,
+  OfficialSkillCoverageOptions,
+  OfficialSkillCoverageReport,
+  OfficialSkillSurfaceArea,
+} from "./official-skill-coverage.js";
 export type {
   WriteReadinessOptions,
   WriteReadinessResult,

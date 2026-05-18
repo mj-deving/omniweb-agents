@@ -3,6 +3,7 @@ import {
   buildToolkitCapabilityManifest,
   describeToolkitCapabilities,
 } from "../../packages/omniweb-toolkit/src/capability-manifest.js";
+import { buildColonyOperatorResponseDepthAccess } from "../../packages/omniweb-toolkit/src/agent.js";
 import { describeRuntimeCapabilities, type RuntimeCapabilityResult } from "../../packages/omniweb-toolkit/src/readiness.js";
 
 function readyRuntime(): RuntimeCapabilityResult {
@@ -149,6 +150,46 @@ describe("toolkit capability manifest", () => {
       lifecycle: {
         readbackSurfaces: expect.arrayContaining(["storage-program-rpc", "recent-storage-transactions"]),
       },
+    });
+  });
+
+  it("preserves response-depth access for deep read and lifecycle proof surfaces", () => {
+    const manifest = buildToolkitCapabilityManifest({ runtimeCapabilities: readyRuntime() });
+    const responseDepthAccess = buildColonyOperatorResponseDepthAccess(manifest);
+
+    expect(responseDepthAccess.missingSurfaces).toEqual([]);
+    expect(responseDepthAccess.surfaces).toHaveLength(7);
+    expect(responseDepthAccess.surfaces.every((surface) => surface.preservationStatus === "preserved")).toBe(true);
+    expect(responseDepthAccess.surfaces.find((surface) => surface.id === "signals-convergence")).toMatchObject({
+      capabilityIds: ["colony.signals"],
+      methods: expect.arrayContaining(["omni.colony.getSignals", "omni.colony.getConvergence", "omni.colony.getReport"]),
+      responseDepths: ["rich"],
+      readbackSurfaces: expect.arrayContaining(["signals", "convergence", "reports"]),
+    });
+    expect(responseDepthAccess.surfaces.find((surface) => surface.id === "price-history")).toMatchObject({
+      capabilityIds: ["colony.markets.read"],
+      methods: expect.arrayContaining(["omni.colony.getPriceHistory"]),
+      readbackSurfaces: expect.arrayContaining(["price-history"]),
+    });
+    expect(responseDepthAccess.surfaces.find((surface) => surface.id === "pool-state")).toMatchObject({
+      capabilityIds: ["colony.pools.read"],
+      methods: expect.arrayContaining(["omni.colony.getPool", "omni.colony.getHigherLowerPool"]),
+      readbackSurfaces: expect.arrayContaining(["active-pool", "higher-lower-pool", "winners-history"]),
+    });
+    expect(responseDepthAccess.surfaces.find((surface) => surface.id === "reactions-tip-stats")).toMatchObject({
+      capabilityIds: ["colony.engagement-reads"],
+      methods: expect.arrayContaining(["omni.colony.getReactions", "omni.colony.getTipStats", "omni.colony.getAgentTipStats"]),
+      readbackSurfaces: expect.arrayContaining(["reaction-summary", "post-tip-stats", "agent-tip-stats"]),
+    });
+    expect(responseDepthAccess.surfaces.find((surface) => surface.id === "identity-link-readbacks")).toMatchObject({
+      capabilityIds: expect.arrayContaining(["colony.identity-reads", "colony.identity"]),
+      methods: expect.arrayContaining(["omni.colony.lookupIdentity", "omni.colony.getLinkedAgents", "omni.colony.unlinkAgent"]),
+      readbackSurfaces: expect.arrayContaining(["identity-lookup", "linked-agents", "post-cleanup-readback"]),
+    });
+    expect(responseDepthAccess.surfaces.find((surface) => surface.id === "lifecycle-proof-packets")).toMatchObject({
+      responseDepths: expect.arrayContaining(["proof", "lifecycle"]),
+      proofTiers: expect.arrayContaining(["lifecycle_proven", "pending_current_recheck"]),
+      envelopeFields: expect.arrayContaining(["lifecyclePlan.recordId", "lifecyclePlan.proofPath", "cycle.outcome.execution"]),
     });
   });
 });

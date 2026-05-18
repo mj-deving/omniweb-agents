@@ -37,6 +37,9 @@ export {
   classifyMarketReadShape,
   summarizeMarketReadCoverage,
 } from "./market-read-consumers.js";
+export {
+  buildMarketWriteIntentMatrix,
+} from "./market-write-intents.js";
 export type {
   CreateClientOptions,
   FeedQuery,
@@ -131,4 +134,11 @@ export type {
   MarketReadStatus,
   MarketReadSurfaceEntry,
 } from "./market-read-consumers.js";
+export type {
+  MarketWriteCapabilityStatus,
+  MarketWriteFamily,
+  MarketWriteIntent,
+  MarketWriteIntentMatrix,
+  MarketWriteLifecycleStatus,
+} from "./market-write-intents.js";
 export type { HiveAPI } from "./hive.js";

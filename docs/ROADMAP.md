@@ -6,7 +6,7 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "Wave E capability surface and toolkit guardrails are merged. The next layer is toolkit action admissibility: one runtime answer for whether a requested operator action can be planned or executed right now."
+summary: "Wave E capability surface, toolkit guardrails, and action admissibility are complete via PRs #428/#429. The next lane is an admissibility-gated maintained multi-action operator cycle, without implicit live spend, npm release, registry proof, broad substrate rewrite, or unsupervised identity mutation."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,13 +38,13 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Wave E capability surface and toolkit guardrails are complete. The current architecture/product band is action admissibility: combine capability truth, guardrail truth, lifecycle status, supervision, and explicit-execute boundaries into one runtime decision surface. |
+| Current direction | Wave E capability surface, toolkit guardrails, and action admissibility are complete. The next eligible architecture/product lane is a maintained multi-action operator cycle that uses the now-gated runtime path to observe, select, admit, execute only when explicitly authorized, and report outcomes honestly. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
-| Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam honestly instead of talking like the pivot is still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, and `omniweb-agents-admissibility` is the current action-admissibility graph. |
-| Remaining external edges | later npm auth/publish consumerization and any externally hosted Gregor/OpenClaw live identity mutation after current evidence is merged and audited |
+| Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam, capability surface, guardrails, and admissibility gate honestly instead of talking like those pivots are still ahead |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, and `uw66.6` is the next maintained multi-action operator-cycle lane after stale blocker reconciliation. |
+| Remaining external edges | later npm auth/publish consumerization, public registry proof, live multi-action spend, and any externally hosted Gregor/OpenClaw live identity mutation after separate authorization |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -222,7 +222,7 @@ Completed slices:
 5. multi-action dry-run intents with per-action readiness and proof status
 6. slimmed skill/playbook protocol teaching after runtime discovery became available
 
-#### Post-Wave-E — toolkit action admissibility
+#### Post-Wave-E — toolkit action admissibility ✅
 
 Goal: a fresh colony operator should receive one runtime answer for a requested action: can it be planned or executed right now?
 
@@ -231,18 +231,30 @@ Core principle:
 - guardrail truth answers **whether it is safe**
 - action admissibility answers **whether this specific action can proceed now**
 
-Current slices:
-1. add `evaluateToolkitActionAdmissibility()` and `buildToolkitActionAdmissibilityManifest()` to `omniweb-toolkit/agent` and `omniweb-toolkit/runtime`
-2. attach per-action admissibility to colony-operator selected actions and multi-action dry-run plans
-3. make `executeResolvedIntent()` fail closed before side effects unless the final admissibility status is `allowed`
-4. add `check:colony-operator-admissibility` to the front-door package checks
-5. keep live multi-action execution and identity mutation supervised/deferred unless explicitly authorized
+Completed via PR #428 and PR #429:
+1. `evaluateToolkitActionAdmissibility()` and `buildToolkitActionAdmissibilityManifest()` are exported from `omniweb-toolkit/agent` and `omniweb-toolkit/runtime`
+2. per-action admissibility is attached to colony-operator selected actions and multi-action dry-run plans
+3. `executeResolvedIntent()` fails closed before side effects unless the final admissibility status is `allowed`
+4. `check:colony-operator-admissibility` and `check:colony-operator-admissibility-hardening` are wired into front-door package checks
+5. admissibility/guardrail reports stay present across allowed dispatches, minimal-cycle dry-run, skip, and failed outcomes
+
+#### Next lane — admissibility-gated maintained operator cycle
+
+The next eligible lane is the maintained multi-action operator cycle. It should reuse the now-gated runtime path rather than introduce another architecture layer:
+- observe live colony state
+- choose across the maintained action families
+- run capability, guardrail, lifecycle, supervision, explicit-execute, and admissibility checks as one visible decision path
+- execute only under separate explicit authorization when an action would spend, publish, mutate identity, or otherwise create live effects
+- persist and report the outcome honestly per action family
+
+BET/higher-lower widening is deliberate follow-up inside this lane, not implicit authority to spend. Existing fixed-price BET and higher/lower readback evidence can guide the plan, but a full operator-cycle BET path must be explicitly widened and verified before it is treated as default operator authority.
 
 Not next in this band:
 - npm release
 - public registry proof
 - broad substrate rewrite
 - live multi-action spend without explicit authorization
+- unsupervised identity mutation
 
 ## Current frozen-seam colony live-ops band
 
@@ -261,7 +273,8 @@ Not next in this band:
 - Current MegaGoal checkpoint: PR #413 has passed the M0 lifecycle audit, added the capability truth layer, generated a no-spend fixed-price BET lifecycle proof packet at `/tmp/omni-colony-operator-megagoal/fixed-bet-proof.json`, and reran the copied-bundle outside-in consumer proof successfully. The follow-on live execution packet proves one maintained publish operator cycle with product readback, current higher/lower pool readback, and accepted Gregor/OpenClaw runtime-host no-spend smoke evidence. The q5k8 Wave C run now proves supervised identity register, human-link, and cleanup locally through maintained package paths.
 - Current live execution parent: `omniweb-agents-8tga` owns the real maintained-operator cycle. M0-M6b now have evidence or exact blocker records, and gate `omniweb-agents-aick` was closed by explicit human acceptance after Gregor's archive-level audit. The durable evidence archive is `/home/openclaw/.openclaw/workspace/local/demos-agents-worktrees/gregor-aick-proof/tmp/evidence/openclaw-m6b/openclaw-colony-m6b-rerun-20260516181351-redacted.tar.gz` with SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
 - Current Wave C packet: `omniweb-agents-q5k8` owns the supervised identity participation GoalMode run. It proved live `register`, human-link approve/readback, and unlink cleanup behind explicit `--execute` plus identity-specific confirmation; identity remains supervised and is not a default autonomous action.
-- Completed GoalMode paths: [GOAL_BRIEF.md](GOAL_BRIEF.md) / [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. The active next execution packet must target the live maintained operator cycle rather than treating [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md), [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md), and [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](COLONY_OPERATOR_MEGAGOAL_LAUNCH.md) as closed.
+- PR #427 completed toolkit guardrails, and PRs #428/#429 completed action admissibility. Fresh sessions should not route back into capability, guardrail, or admissibility as upcoming architecture work.
+- Completed GoalMode paths: [GOAL_BRIEF.md](GOAL_BRIEF.md) / [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. The active next execution packet must target the admissibility-gated maintained operator cycle rather than treating [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md), [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md), and [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](COLONY_OPERATOR_MEGAGOAL_LAUNCH.md) as closed or treating admissibility as still upcoming.
 
 ## Explicitly not next
 
@@ -274,6 +287,8 @@ These are not next steps today:
 | `omniweb-agents-9he` | research family expansion | blocked until the substrate + intent seam is better proved |
 | legacy specialist-front-door churn | extra archetype polishing | blocked unless it directly improves the honest default path over the substrate seam |
 | broad repo fork of the substrate | duplicated fast lane below the seam | blocked unless the frozen-seam live-ops lane proves that the shared substrate itself is the speed limiter |
+| `omniweb-agents-admissibility` | action admissibility architecture | complete via PRs #428/#429; do not reopen as the next lane |
+| live multi-action spend / identity mutation | execution authority | not authorized by the post-admissibility truth sync; requires separate explicit authorization |
 
 ---
 
@@ -283,7 +298,7 @@ These remain outside the current colony-operator execution band. They matter lat
 
 | ID | P | Item | Status |
 |----|---|------|--------|
-| `omniweb-agents-028` | P2 | npm publish | Later in the colony lane — after live operator proof is current |
+| `omniweb-agents-028` | P2 | npm publish | Deferred until explicit release authorization plus npm auth; not part of the next operator-cycle lane |
 | `omniweb-agents-l4h` | P3 | StorageProgram write probe | Deferred follow-up |
 | `omniweb-agents-p5l` | P3 | Escrow live test | Deferred follow-up |
 | `omniweb-agents-ubn` | P3 | IPFS live test | Deferred follow-up |

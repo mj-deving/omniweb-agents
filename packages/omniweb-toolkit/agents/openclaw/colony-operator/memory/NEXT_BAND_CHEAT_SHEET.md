@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-18
-Scope: terse operator re-entry card for the post-Wave-E action-admissibility band.
+Scope: terse operator re-entry card after post-Wave-E action admissibility.
 
 ## Do first
 
@@ -17,7 +17,8 @@ Scope: terse operator re-entry card for the post-Wave-E action-admissibility ban
 - PR #411 completed durable write lifecycle/readback. Every maintained write family now has pending-chain / pending-indexer / indexed / resolved / degraded / expired state handling through the lifecycle layer where wired.
 - Wave E / `omniweb-agents-capsurf` is complete through PRs #420-#426: runtime capability manifest, official skill coverage, operator discovery, response-depth preservation, multi-action dry-run planning, and skill/playbook slimming.
 - PR #427 completed toolkit guardrails.
-- Current move: `omniweb-agents-admissibility` adds the runtime decision layer that says whether a requested operator action can be planned or executed right now.
+- PRs #428/#429 completed `omniweb-agents-admissibility`: runtime now has the decision layer that says whether a requested operator action can be planned or executed right now.
+- Next lane: use the completed runtime gate for the maintained multi-action operator cycle. Do not reopen capability, guardrails, or action-gating as upcoming architecture work.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
 
@@ -28,14 +29,16 @@ Scope: terse operator re-entry card for the post-Wave-E action-admissibility ban
 - **Wave C — lifecycle-aware operator MegaGoal:** complete through capability truth, bounded maintained operator publish, higher/lower readback, and accepted no-spend OpenClaw/Gregor runtime-host smoke evidence.
 - **Wave D — official identity participation:** q5k8 proved supervised local register, human-link, and cleanup through maintained package paths.
 - **Wave E — capability surface:** complete via `omniweb-agents-capsurf` and PRs #420-#426.
-- **Post-Wave-E — action admissibility:** current; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
+- **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
+- **Next lane — maintained operator cycle:** observe live context, choose among maintained action families, surface capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and execute only under separate explicit authorization when there are live effects.
 
 ## Keep frozen for this wave
 
 - `PolicyActionRequest`
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
-- live multi-action execution remains dry-run only unless explicitly widened
+- live multi-action execution remains dry-run only unless explicitly widened and authorized
+- BET/higher-lower widening is deliberate follow-up, not default spend authority
 
 ## Do not touch yet
 
@@ -43,7 +46,7 @@ Scope: terse operator re-entry card for the post-Wave-E action-admissibility ban
 - default substrate fork
 - StorageProgram / escrow / IPFS proof bands
 - launch / consumer polish before the live operator floor and outside-in proof are real
-- npm release, public registry proof, broad substrate rewrite, and unsupervised identity mutation
+- npm release, public registry proof, broad substrate rewrite, live multi-action spend, and unsupervised identity mutation
 
 ## Execution habits
 

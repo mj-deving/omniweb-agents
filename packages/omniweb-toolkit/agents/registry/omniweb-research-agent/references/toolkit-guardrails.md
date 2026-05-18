@@ -14,8 +14,15 @@ The enforcement source is the toolkit/runtime guardrail API, not skill or playbo
 - `buildToolkitGuardrailManifest()` lists the active guardrail domains and status vocabulary.
 - `evaluateToolkitGuardrails(input)` performs the fail-closed runtime evaluation used before live execution.
 - Colony-operator envelopes expose `guardrailEvaluation` on the selected action and on every `multiActionPlan.plannedIntents[]` entry.
+- `evaluateToolkitActionAdmissibility(input)` consumes guardrail truth plus capability truth to answer whether a specific action can proceed now.
 
 Guardrail statuses are `pass`, `block`, `supervised`, `degraded`, and `not_applicable`. A `block` result prevents live writes, spend, attestation, and publish/reply side effects. A `supervised` result keeps identity registration/linking out of automatic execution even when runtime credentials are otherwise present.
+
+Use the three runtime surfaces separately:
+
+- capability manifest: what exists and what it requires
+- guardrail evaluation: whether the inputs and runtime safety checks pass
+- action admissibility: the final per-action planning/execution decision
 
 ## Write Runtime Assumptions
 

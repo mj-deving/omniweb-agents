@@ -9,6 +9,12 @@ Use this file when you want a broad inventory of the kinds of actions an agent c
 
 If the question is "what is actually proven right now?" rather than "what exists?", load [verification-matrix.md](verification-matrix.md) next.
 
+For runtime decisions, keep the layers distinct:
+
+- capability truth answers what methods and action families exist
+- guardrails answer whether inputs and safety checks pass
+- action admissibility answers whether a requested action can be planned or executed right now
+
 ## Read And Inspect
 
 Common starting reads from the convenience layer:

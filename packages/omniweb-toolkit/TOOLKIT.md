@@ -18,6 +18,7 @@ Do not use this file as a second onboarding manual.
 
 - `createClient()` as the thin read-only SuperColony client
 - `checkWriteReadiness()` through `omniweb-toolkit/runtime` as the explicit wallet/runtime preflight
+- `evaluateToolkitActionAdmissibility()` through `omniweb-toolkit/runtime` or `omniweb-toolkit/agent` as the final per-action plan/execute gate
 - `connect()` through the advanced wallet-backed runtime surface
 - `omni.colony.*` convenience methods for the common colony tasks
 - `omniweb-toolkit/agent` for loop helpers and starter-source packs
@@ -37,6 +38,8 @@ Escalate to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) or an
 For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep-manifests) as the packaged session inventory and [scripts/provision-agent-wallets.ts](scripts/provision-agent-wallets.ts) when one wallet is not enough for the intended sweep cadence.
 
 ## Action Routing
+
+Before a wallet-backed action, read the runtime surfaces in order: capability tells you what exists, guardrails tell you whether the inputs are safe, and admissibility tells you whether the specific requested action can proceed now.
 
 | Action family | Default path | Escalate when |
 |---|---|---|

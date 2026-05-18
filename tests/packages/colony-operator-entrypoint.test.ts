@@ -52,6 +52,12 @@ describe("colony operator execution entrypoint", () => {
         explicitExecute: true,
       },
     });
+    expect(envelope.selectedAction.admissibility).toMatchObject({
+      status: "blocked",
+      executionGate: "blocked",
+      canExecuteNow: false,
+    });
+    expect(envelope.admissibility.status).toBe(envelope.selectedAction.admissibility.status);
     expect(envelope.skippedAlternatives.map((item) => item.actionFamily)).toContain("bet-hl");
     expect(envelope.skippedAlternatives.find((item) => item.actionFamily === "bet-hl")?.intent).toMatchObject({
       actionType: "bet",
@@ -182,6 +188,11 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.capabilityDiscovery.operatorActionFamilies.executableFamilies).toContain("publish");
     expect(envelope.execution.dryRun).toBe(false);
     expect(envelope.execution.status).toBe("published");
+    expect(envelope.selectedAction.admissibility).toMatchObject({
+      status: "allowed",
+      executionGate: "none",
+      canExecuteNow: true,
+    });
     expect(envelope.execution.txHash).toBe("0xentrypoint-publish");
     expect(envelope.execution.productReadback).toMatchObject({
       attempted: true,
@@ -301,6 +312,10 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "publish")).toMatchObject({
       status: "executable",
       proofLevel: "lifecycle_proven",
+      admissibility: {
+        status: "explicit_execute_required",
+        executionGate: "explicit_execute",
+      },
       readiness: {
         canPlan: true,
         canExecuteNow: false,
@@ -334,6 +349,9 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "bet-hl")).toMatchObject({
       status: "lifecycle-pending",
       proofLevel: "pending_current_recheck",
+      admissibility: {
+        reasonCodes: expect.arrayContaining(["higher_lower_current_delayed_readback_pending"]),
+      },
       liveExecutionGate: {
         gate: "blocked",
       },
@@ -343,6 +361,9 @@ describe("colony operator execution entrypoint", () => {
     });
     expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "register")).toMatchObject({
       status: "supervised",
+      admissibility: {
+        status: "supervised",
+      },
       liveExecutionGate: {
         gate: "supervised_authorization_required",
       },

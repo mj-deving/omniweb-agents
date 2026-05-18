@@ -49,6 +49,7 @@ export interface FetchTextResult {
   status: number;
   url: string;
   body: string;
+  contentType?: string | null;
   error?: string;
 }
 
@@ -174,6 +175,7 @@ export async function fetchText(
       status: response.status,
       url,
       body: await response.text(),
+      contentType: response.headers.get("content-type"),
     };
   } catch (error) {
     const curlFallback = fetchTextWithCurl(url, headers, timeoutMs, method, body);

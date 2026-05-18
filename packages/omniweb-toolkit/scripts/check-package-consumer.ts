@@ -229,7 +229,11 @@ const agentEntry = await import("omniweb-" + "toolkit/agent");
 await import("omniweb-" + "toolkit/types");
 
 const { createClient } = mainEntry;
-const { checkWriteReadiness, describeRuntimeCapabilities } = runtimeEntry;
+const {
+  buildToolkitCapabilityManifest,
+  checkWriteReadiness,
+  describeRuntimeCapabilities,
+} = runtimeEntry;
 const { buildLeaderboardPatternPrompt, getStarterSourcePack } = agentEntry;
 
 const readiness = checkWriteReadiness({
@@ -242,6 +246,10 @@ const capabilities = describeRuntimeCapabilities({
   homeDir: ${JSON.stringify(options.consumerRoot)},
   env: {},
 });
+const toolkitManifest = buildToolkitCapabilityManifest({
+  runtimeCapabilities: capabilities,
+  now: new Date("2026-05-18T00:00:00.000Z"),
+});
 
 if (!readiness.canRead) {
   throw new Error("readiness unexpectedly reports read path unavailable");
@@ -251,6 +259,18 @@ if (readiness.canWrite) {
 }
 if (!readiness.missingEnv.includes("DEMOS_MNEMONIC")) {
   throw new Error("readiness did not report missing DEMOS_MNEMONIC");
+}
+if (toolkitManifest.source !== "omniweb-toolkit") {
+  throw new Error("toolkit manifest did not report package source");
+}
+if (!toolkitManifest.capabilities.some((capability) => capability.id === "colony.publish" && capability.status === "blocked")) {
+  throw new Error("toolkit manifest did not expose blocked publish capability without credentials");
+}
+if (!toolkitManifest.capabilities.some((capability) => capability.id === "colony.feed" && capability.status === "available")) {
+  throw new Error("toolkit manifest did not keep read-only feed capability available");
+}
+if (JSON.stringify(toolkitManifest).match(/mnemonic|seed phrase|approvalToken|challengeSecret/i)) {
+  throw new Error("toolkit manifest leaked sensitive credential field names");
 }
 
 const sourcePack = getStarterSourcePack("research");
@@ -284,7 +304,7 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   console.log(JSON.stringify({
   imports: {
     main: ["createClient"],
-    runtime: ["checkWriteReadiness", "describeRuntimeCapabilities"],
+    runtime: ["buildToolkitCapabilityManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
     agent: ["buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
@@ -296,6 +316,14 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   },
   readiness,
   capabilities,
+  toolkitManifest: {
+    source: toolkitManifest.source,
+    recommendedMode: toolkitManifest.recommendedMode,
+    capabilityCount: toolkitManifest.capabilities.length,
+    readCapabilities: toolkitManifest.coverage.readCapabilities,
+    writeCapabilities: toolkitManifest.coverage.writeCapabilities,
+    blockedCapabilities: toolkitManifest.coverage.blockedCapabilities,
+  },
   sourcePack: {
     archetype: sourcePack.archetype,
     sourceCount: sourcePack.entries.length,

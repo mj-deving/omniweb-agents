@@ -106,6 +106,21 @@ export {
   type ColonyOperatorTruthStatus,
 } from "./colony-operator-capability-truth.js";
 export {
+  buildToolkitCapabilityManifest,
+  describeToolkitCapabilities,
+  type ToolkitCapabilityDomain,
+  type ToolkitCapabilityKind,
+  type ToolkitCapabilityLifecycle,
+  type ToolkitCapabilityManifest,
+  type ToolkitCapabilityManifestEntry,
+  type ToolkitCapabilityManifestOptions,
+  type ToolkitCapabilityParameter,
+  type ToolkitCapabilityProofTier,
+  type ToolkitCapabilityRequirements,
+  type ToolkitCapabilityStatus,
+  type ToolkitResponseDepth,
+} from "./capability-manifest.js";
+export {
   runColonyOperatorCycle,
   type ColonyOperatorCapabilitySummary,
   type ColonyOperatorExecutionEnvelope,

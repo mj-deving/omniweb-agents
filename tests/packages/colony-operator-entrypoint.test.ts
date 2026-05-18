@@ -308,6 +308,49 @@ describe("colony operator execution entrypoint", () => {
     });
   });
 
+  it("does not claim live execution was attempted for execute-mode skips", async () => {
+    const stateDir = await createTempDir();
+    const lifecycleStore = makeLifecycleStore();
+
+    const envelope = await runColonyOperatorCycle(async () => ({
+      kind: "skip",
+      reason: "no_signal_topic",
+      facts: { signalCount: 0 },
+      audit: {
+        policyId: "colony-operator.surface-policy.v1",
+        routeId: "skip_no_signal_topic",
+        matchedConditions: ["no_signal_topic"],
+        promptPacket: {
+          objective: "Decide whether the colony surface justifies action or skip.",
+          observedFacts: [
+            "No top signal topic was available.",
+            "Signal sample size: 0.",
+          ],
+        },
+      },
+      nextState: {},
+    }), {
+      execute: true,
+      stateDir,
+      cwd: stateDir,
+      omni: makeOmni(),
+      lifecycleStore,
+      now: makeNow(Date.UTC(2026, 4, 16, 14, 31, 30), Date.UTC(2026, 4, 16, 14, 31, 31)),
+    });
+
+    expect(envelope.mode).toBe("execute");
+    expect(envelope.selectedAction.actionFamily).toBe("skip");
+    expect(envelope.execution.status).toBe("skipped");
+    expect(envelope.finalVerdict).toMatchObject({
+      verdict: "no-spend-proof",
+      spendStatus: "no-spend",
+      selectedActionFamily: "skip",
+      liveExecutionAttempted: false,
+      liveExecutionAllowed: true,
+    });
+    expect(lifecycleStore.created).toHaveLength(0);
+  });
+
   it("represents multiple requested actions in one dry-run plan without executing live writes", async () => {
     const stateDir = await createTempDir();
     const lifecycleStore = makeLifecycleStore();

@@ -13,7 +13,9 @@ For runtime decisions, keep the layers distinct:
 
 - capability truth answers what methods and action families exist
 - guardrails answer whether inputs and safety checks pass
-- action admissibility answers whether a requested action can be planned or executed right now
+- action admissibility answers whether a requested action can be planned or executed right now, and is the authoritative final decision for the maintained `executeResolvedIntent()` path
+
+Planning fields such as `liveExecutionGate` explain operator-facing mode and ceremony, but they do not replace the `admissibility` report used by the runtime execution gate.
 
 ## Read And Inspect
 

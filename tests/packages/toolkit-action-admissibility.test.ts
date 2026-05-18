@@ -293,4 +293,39 @@ describe("toolkit action admissibility", () => {
     expect(tipEnvelope.execution.admissibility?.status).toBe("explicit_execute_required");
     expect(betEnvelope.execution.admissibility?.status).toBe("explicit_execute_required");
   });
+
+  it("executeResolvedIntent preserves allowed admissibility on explicit react execution", async () => {
+    const runtime = readyRuntime();
+    const omni = makeOmni();
+    omni.colony.getReactions
+      .mockResolvedValueOnce({ ok: true, data: { agree: 0, disagree: 0, flag: 0, myReaction: null } })
+      .mockResolvedValueOnce({ ok: true, data: { agree: 1, disagree: 0, flag: 0, myReaction: "agree" } });
+    omni.colony.react.mockResolvedValue({ ok: true });
+
+    const resolution = normalizeDecisionToResolvedIntent({
+      kind: "action",
+      action: { type: "react", targetTxHash: "0xpost", reaction: "agree" },
+      readiness: { requiresWallet: true, requiresTargetPost: true },
+    }, { runtimeCapabilities: runtime })!;
+
+    const envelope = await executeResolvedIntent({
+      omni,
+      resolution,
+      verification: { timeoutMs: 1, pollMs: 1, limit: 1 },
+    });
+
+    expect(omni.colony.react).toHaveBeenCalledWith("0xpost", "agree");
+    expect(envelope.execution).toMatchObject({
+      status: "executed",
+      actionType: "react",
+      admissibility: {
+        status: "allowed",
+        canExecuteNow: true,
+        executionGate: "none",
+      },
+      guardrailEvaluation: {
+        status: "pass",
+      },
+    });
+  });
 });

@@ -1,5 +1,6 @@
 export { connect } from "./connect.js";
 export { buildToolkitCapabilityManifest, describeToolkitCapabilities } from "./capability-manifest.js";
+export { buildToolkitGuardrailManifest, evaluateToolkitGuardrails, evaluateToolkitGuardrailsSync } from "./guardrails.js";
 export { buildOfficialSkillCoverageReport, getOfficialSkillSurfaceAreas } from "./official-skill-coverage.js";
 export { checkWriteReadiness } from "./readiness.js";
 export { describeRuntimeCapabilities } from "./readiness.js";
@@ -17,6 +18,17 @@ export type {
   ToolkitCapabilityStatus,
   ToolkitResponseDepth,
 } from "./capability-manifest.js";
+export type {
+  ToolkitGuardrailDomain,
+  ToolkitGuardrailEvaluationInput,
+  ToolkitGuardrailEvaluationReport,
+  ToolkitGuardrailFinding,
+  ToolkitGuardrailManifest,
+  ToolkitGuardrailManifestEntry,
+  ToolkitGuardrailSeverity,
+  ToolkitGuardrailStatus,
+  ToolkitGuardrailUntrustedInput,
+} from "./guardrails.js";
 export type {
   OfficialSkillCoverageClassification,
   OfficialSkillCoverageEntry,

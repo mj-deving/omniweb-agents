@@ -42,6 +42,11 @@ interface MultiActionPlan {
       gate: string;
       reason: string;
     };
+    guardrailEvaluation: {
+      status: string;
+      blockedReasonCodes: string[];
+      supervisedRequirements: string[];
+    };
   }>;
   defaultLiveExecutionGate: string;
   liveExecutionAllowed: boolean;
@@ -186,6 +191,12 @@ const checks = {
   supervisedIdentityGated: dryRunByFamily.register?.status === "supervised"
     && dryRunByFamily.register.readiness.requiresSupervision === true
     && dryRunByFamily.register.liveExecutionGate.gate === "supervised_authorization_required",
+  guardrailsAttachedIndependently: dryRunByFamily.publish?.guardrailEvaluation.status === "block"
+    && dryRunByFamily.publish.guardrailEvaluation.blockedReasonCodes.includes("explicit_execute_required_for_spend")
+    && dryRunByFamily.tip?.guardrailEvaluation.status === "block"
+    && dryRunByFamily["bet-fixed"]?.guardrailEvaluation.status === "block"
+    && dryRunByFamily.register?.guardrailEvaluation.status === "supervised"
+    && dryRunByFamily.register.guardrailEvaluation.supervisedRequirements.includes("identity_mutation_requires_supervision"),
   executeModeStillGated: executePlan.mode === "execute"
     && executePlan.liveExecutionAllowed === false
     && executeByFamily.publish?.liveExecutionGate.gate === "explicit_execute_required"
@@ -204,7 +215,7 @@ console.log(JSON.stringify({
   contract: {
     multiActionDryRunPlanning: ok,
     perActionReadinessAndProofStatus: ok,
-    liveExecutionExplicitlyGated: checks.dryRunNeverAllowsLiveExecution && checks.executeModeStillGated,
+    liveExecutionExplicitlyGated: checks.dryRunNeverAllowsLiveExecution && checks.executeModeStillGated && checks.guardrailsAttachedIndependently,
     spendsDem: false,
     liveWriteProven: false,
   },
@@ -217,6 +228,7 @@ console.log(JSON.stringify({
       status: intent.status,
       readiness: intent.readiness,
       liveExecutionGate: intent.liveExecutionGate,
+      guardrailEvaluation: intent.guardrailEvaluation,
     })),
   },
 }, null, 2));

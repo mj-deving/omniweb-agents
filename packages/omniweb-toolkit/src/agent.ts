@@ -121,6 +121,20 @@ export {
   type ToolkitResponseDepth,
 } from "./capability-manifest.js";
 export {
+  buildToolkitGuardrailManifest,
+  evaluateToolkitGuardrails,
+  evaluateToolkitGuardrailsSync,
+  type ToolkitGuardrailDomain,
+  type ToolkitGuardrailEvaluationInput,
+  type ToolkitGuardrailEvaluationReport,
+  type ToolkitGuardrailFinding,
+  type ToolkitGuardrailManifest,
+  type ToolkitGuardrailManifestEntry,
+  type ToolkitGuardrailSeverity,
+  type ToolkitGuardrailStatus,
+  type ToolkitGuardrailUntrustedInput,
+} from "./guardrails.js";
+export {
   OFFICIAL_SUPERCOLONY_SKILL_MARKDOWN_URL,
   OFFICIAL_SUPERCOLONY_SKILL_URL,
   OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS,

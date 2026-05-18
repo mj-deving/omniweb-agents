@@ -34,6 +34,10 @@ export interface SearchQuery extends FeedQuery {
   q?: string;
 }
 
+export interface PostLookupQuery {
+  txHash: string;
+}
+
 export interface OracleQuery {
   assets: string[];
   window?: string;
@@ -55,6 +59,34 @@ export interface TopPostsQuery {
 
 export interface ReportsQuery {
   list?: boolean;
+  limit?: number;
+  id?: string;
+}
+
+export interface AgentsQuery {
+  limit?: number;
+}
+
+export interface IdentityLookupQuery {
+  platform?: string;
+  username?: string;
+  query?: string;
+  chain?: string;
+  address?: string;
+}
+
+export interface PredictionsQuery {
+  status?: string;
+  asset?: string;
+  agent?: string;
+}
+
+export interface PredictionIntelligenceQuery {
+  limit?: number;
+  stats?: boolean;
+}
+
+export interface PredictionLeaderboardQuery {
   limit?: number;
 }
 
@@ -91,6 +123,30 @@ export interface SignalsResponse {
   consensusAnalysis?: Array<Record<string, unknown>>;
   computedSignals?: Array<Record<string, unknown>>;
   meta?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface ThreadResponse {
+  focusedPost?: ColonyPost;
+  root?: ColonyPost;
+  posts?: ColonyPost[];
+  replies?: ColonyPost[];
+  totalReplies?: number;
+  [key: string]: unknown;
+}
+
+export interface PostDetailResponse {
+  post?: ColonyPost;
+  root?: ColonyPost;
+  replies?: ColonyPost[];
+  [key: string]: unknown;
+}
+
+export interface ConvergenceResponse {
+  pulse?: Record<string, unknown>;
+  mindshare?: Record<string, unknown>;
+  stats?: Record<string, unknown>;
+  signals?: unknown[];
   [key: string]: unknown;
 }
 
@@ -144,17 +200,124 @@ export interface ReportsResponse {
   [key: string]: unknown;
 }
 
+export interface HealthResponse {
+  ok?: boolean;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface AgentsResponse {
+  agents?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface AgentProfileResponse {
+  agent?: Record<string, unknown>;
+  posts?: ColonyPost[];
+  reputation?: Record<string, unknown>;
+  hasMore?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AgentIdentitiesResponse {
+  xmIdentities?: Array<Record<string, unknown>>;
+  web2Identities?: Array<Record<string, unknown>>;
+  identities?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface IdentityLookupResponse {
+  identity?: Record<string, unknown>;
+  identities?: Array<Record<string, unknown>>;
+  agents?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface PredictionsResponse {
+  predictions?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface PredictionIntelligenceResponse {
+  predictions?: Array<Record<string, unknown>>;
+  stats?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface PredictionRecommendationsResponse {
+  recommendations?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface PredictionLeaderboardResponse {
+  agents?: Array<Record<string, unknown>>;
+  leaderboard?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface PredictionScoreResponse {
+  composite?: number;
+  breakdown?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface VerificationResponse {
+  verified?: boolean;
+  attestations?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface ReactionCountsResponse {
+  agree?: number;
+  disagree?: number;
+  flag?: number;
+  [key: string]: unknown;
+}
+
+export interface TipStatsResponse {
+  totalTips?: number;
+  totalAmount?: number;
+  tips?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface AgentTipStatsResponse {
+  totalReceived?: number;
+  totalSent?: number;
+  tips?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
 export interface OmniwebReadClient {
   getFeed(params?: FeedQuery): Promise<FeedResponse>;
   getFeedRss(): Promise<FeedRssResponse>;
   planFeedStream(options?: FeedStreamPlanOptions): FeedStreamRequestPlan;
   searchFeed(params?: SearchQuery): Promise<SearchResponse>;
+  getPostDetail(txHash: string): Promise<PostDetailResponse>;
+  getThread(txHash: string): Promise<ThreadResponse>;
   getSignals(): Promise<SignalsResponse>;
+  getConvergence(): Promise<ConvergenceResponse>;
   getOracle(params: OracleQuery): Promise<OracleResponse>;
   getPrices(params: PricesQuery): Promise<PricesResponse>;
+  getPredictions(params?: PredictionsQuery): Promise<PredictionsResponse>;
+  getPredictionIntelligence(params?: PredictionIntelligenceQuery): Promise<PredictionIntelligenceResponse>;
+  getPredictionRecommendations(userAddress: string): Promise<PredictionRecommendationsResponse>;
   getAgentScores(params?: ScoresQuery): Promise<ScoresResponse>;
   getTopPosts(params?: TopPostsQuery): Promise<TopPostsResponse>;
+  getPredictionLeaderboard(params?: PredictionLeaderboardQuery): Promise<PredictionLeaderboardResponse>;
+  getPredictionScore(address: string): Promise<PredictionScoreResponse>;
   getBalance(): Promise<BalanceResponse>;
+  getHealth(): Promise<HealthResponse>;
   getStats(): Promise<StatsResponse>;
+  getAgents(params?: AgentsQuery): Promise<AgentsResponse>;
+  getAgentProfile(address: string): Promise<AgentProfileResponse>;
+  getAgentIdentities(address: string): Promise<AgentIdentitiesResponse>;
+  lookupIdentity(params: IdentityLookupQuery): Promise<IdentityLookupResponse>;
   getReports(params?: ReportsQuery): Promise<ReportsResponse>;
+  getReport(params?: ReportsQuery): Promise<ReportsResponse>;
+  verifyDahr(txHash: string): Promise<VerificationResponse>;
+  verifyTlsn(txHash: string): Promise<VerificationResponse>;
+  getReactions(txHash: string): Promise<ReactionCountsResponse>;
+  getTipStats(txHash: string): Promise<TipStatsResponse>;
+  getAgentTipStats(address: string): Promise<AgentTipStatsResponse>;
 }

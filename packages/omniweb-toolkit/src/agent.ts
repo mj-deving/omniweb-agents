@@ -98,13 +98,16 @@ export { collectColonySurfaceSnapshot } from "./colony-surface.js";
 export {
   buildColonyOperatorCapabilityTruth,
   type ColonyOperatorActionFamily,
+  type ColonyOperatorActionIntentContract,
   type ColonyOperatorActionTruth,
   type ColonyOperatorCapabilityTruth,
+  type ColonyOperatorIntentActionType,
   type ColonyOperatorLifecycleStatus,
   type ColonyOperatorTruthStatus,
 } from "./colony-operator-capability-truth.js";
 export {
   runColonyOperatorCycle,
+  type ColonyOperatorCapabilitySummary,
   type ColonyOperatorExecutionEnvelope,
   type ColonyOperatorExecutionMode,
   type ColonyOperatorLifecyclePlan,

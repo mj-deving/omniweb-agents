@@ -40,7 +40,29 @@ describe("colony operator execution entrypoint", () => {
     expect(envelope.execution.status).toBe("dry_run");
     expect(envelope.execution.demSpendEstimate).toBe(0);
     expect(envelope.selectedAction.actionFamily).toBe("publish");
+    expect(envelope.selectedAction.intent).toMatchObject({
+      actionFamily: "publish",
+      actionType: "publish",
+      executionPathFamily: "direct_attested_write",
+      requirements: {
+        wallet: true,
+        attestation: true,
+        explicitExecute: true,
+      },
+    });
     expect(envelope.skippedAlternatives.map((item) => item.actionFamily)).toContain("bet-hl");
+    expect(envelope.skippedAlternatives.find((item) => item.actionFamily === "bet-hl")?.intent).toMatchObject({
+      actionType: "bet",
+      marketKind: "higher_lower",
+      status: "lifecycle-pending",
+    });
+    expect(envelope.capabilitySummary).toMatchObject({
+      selectedFamily: "publish",
+      noSpendDefault: true,
+      allRequiredFamiliesHaveIntent: true,
+    });
+    expect(envelope.capabilitySummary.lifecyclePendingFamilies).toContain("bet-hl");
+    expect(envelope.capabilitySummary.explicitExecuteFamilies).toEqual(expect.arrayContaining(["publish", "tip", "VOTE", "register", "human-link"]));
     expect(envelope.capabilityTruth.coverage.allRequiredFamiliesPresent).toBe(true);
     expect(envelope.lifecyclePlan).toMatchObject({
       required: true,
@@ -84,6 +106,8 @@ describe("colony operator execution entrypoint", () => {
     });
 
     expect(envelope.mode).toBe("execute");
+    expect(envelope.capabilitySummary.executableFamilies).toContain("publish");
+    expect(envelope.capabilitySummary.spendFamilies).toContain("publish");
     expect(envelope.execution.dryRun).toBe(false);
     expect(envelope.execution.status).toBe("published");
     expect(envelope.execution.txHash).toBe("0xentrypoint-publish");

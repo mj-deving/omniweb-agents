@@ -19,7 +19,7 @@ Available artifacts:
 
 ## Current Status
 
-As of May 15, 2026, `npm run check:publish` reports `blocked_npm_auth_missing`: package checks pass, `omniweb-toolkit` remains name-available on npm, and this publishing environment is not authenticated to the npm registry. These registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
+As of May 18, 2026, `npm run check:publish` reports `ready_to_publish_but_not_authorized` when package checks, `npm pack --dry-run --json`, and registry-name lookup are clean but no explicit release approval is present. The check never runs `npm publish`; these registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
 
 Until then:
 

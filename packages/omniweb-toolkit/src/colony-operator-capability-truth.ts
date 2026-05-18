@@ -29,6 +29,40 @@ export type ColonyOperatorLifecycleStatus =
   | "degraded"
   | "lifecycle-pending";
 
+export type ColonyOperatorIntentActionType =
+  | "skip"
+  | "publish"
+  | "reply"
+  | "react"
+  | "tip"
+  | "vote"
+  | "bet"
+  | "register"
+  | "human-link";
+
+export interface ColonyOperatorActionIntentContract {
+  actionFamily: ColonyOperatorActionFamily;
+  actionType: ColonyOperatorIntentActionType;
+  marketKind?: "fixed_price" | "higher_lower";
+  status: ColonyOperatorTruthStatus;
+  lifecycleStatus: ColonyOperatorLifecycleStatus;
+  runtimeFamily: RuntimeActionFamily | "identity" | "none";
+  executionPathFamily: ColonyOperatorActionTruth["executionPathFamily"];
+  requirements: {
+    wallet: boolean;
+    attestation: boolean;
+    targetPost: boolean;
+    marketContext: boolean;
+    explicitExecute: boolean;
+  };
+  effects: {
+    spendsDem: boolean;
+    writesLifecycleRecord: boolean;
+  };
+  proofLevel: ColonyOperatorActionTruth["proofLevel"];
+  reasonCodes: string[];
+}
+
 export interface ColonyOperatorActionTruth {
   actionFamily: ColonyOperatorActionFamily;
   status: ColonyOperatorTruthStatus;
@@ -57,6 +91,7 @@ export interface ColonyOperatorActionTruth {
     | "pending_current_recheck";
   reasonCodes: string[];
   notes: string[];
+  intent: ColonyOperatorActionIntentContract;
 }
 
 export interface ColonyOperatorCapabilityTruth {
@@ -71,11 +106,15 @@ export interface ColonyOperatorCapabilityTruth {
     presentFamilies: ColonyOperatorActionFamily[];
     missingFamilies: ColonyOperatorActionFamily[];
     allRequiredFamiliesPresent: boolean;
+    intentFamilies: ColonyOperatorActionFamily[];
+    allRequiredFamiliesHaveIntent: boolean;
     lifecycleAwareFamilies: ColonyOperatorActionFamily[];
     identityFamilies: ColonyOperatorActionFamily[];
     noSpendDefault: boolean;
   };
 }
+
+type ColonyOperatorActionTruthInput = Omit<ColonyOperatorActionTruth, "intent">;
 
 const REQUIRED_OPERATOR_FAMILIES: ColonyOperatorActionFamily[] = [
   "skip",
@@ -94,7 +133,7 @@ export function buildColonyOperatorCapabilityTruth(
   options: WriteReadinessOptions & { now?: Date; runtimeCapabilities?: RuntimeCapabilityResult } = {},
 ): ColonyOperatorCapabilityTruth {
   const runtime = options.runtimeCapabilities ?? describeRuntimeCapabilities(options);
-  const actions: ColonyOperatorActionTruth[] = [
+  const actionsWithoutIntent: ColonyOperatorActionTruthInput[] = [
     {
       actionFamily: "skip",
       status: "executable",
@@ -180,9 +219,14 @@ export function buildColonyOperatorCapabilityTruth(
     identityAction("register", runtime),
     identityAction("human-link", runtime),
   ];
+  const actions = actionsWithoutIntent.map(withIntentContract);
 
   const presentFamilies = actions.map((action) => action.actionFamily);
   const missingFamilies = REQUIRED_OPERATOR_FAMILIES.filter((family) => !presentFamilies.includes(family));
+  const intentFamilies = actions
+    .filter((action) => action.intent.actionFamily === action.actionFamily)
+    .map((action) => action.actionFamily);
+  const missingIntentFamilies = REQUIRED_OPERATOR_FAMILIES.filter((family) => !intentFamilies.includes(family));
 
   return {
     generatedAt: (options.now ?? new Date()).toISOString(),
@@ -196,6 +240,8 @@ export function buildColonyOperatorCapabilityTruth(
       presentFamilies,
       missingFamilies,
       allRequiredFamiliesPresent: missingFamilies.length === 0,
+      intentFamilies,
+      allRequiredFamiliesHaveIntent: missingIntentFamilies.length === 0,
       lifecycleAwareFamilies: actions
         .filter((action) => action.writesLifecycleRecord)
         .map((action) => action.actionFamily),
@@ -219,7 +265,7 @@ function fromRuntimeAction(
     reasonCodes?: string[];
     notes: string[];
   },
-): ColonyOperatorActionTruth {
+): ColonyOperatorActionTruthInput {
   const blockedStatus: ColonyOperatorTruthStatus = capability.readiness === "unsupported" || !capability.executable
     ? "unsupported"
     : capability.readiness === "ready"
@@ -253,7 +299,7 @@ function fromRuntimeAction(
 function identityAction(
   actionFamily: Extract<ColonyOperatorActionFamily, "register" | "human-link">,
   runtime: RuntimeCapabilityResult,
-): ColonyOperatorActionTruth {
+): ColonyOperatorActionTruthInput {
   const missingCredentials = runtime.blockers.includes("missing_credentials");
   return {
     actionFamily,
@@ -278,6 +324,48 @@ function identityAction(
         : "Human-link challenge/claim/approve/readback is official identity participation and must not persist challenge secrets or approval tokens.",
     ],
   };
+}
+
+function withIntentContract(action: ColonyOperatorActionTruthInput): ColonyOperatorActionTruth {
+  return {
+    ...action,
+    intent: {
+      actionFamily: action.actionFamily,
+      actionType: intentActionTypeFor(action.actionFamily),
+      ...intentMarketKindFor(action.actionFamily),
+      status: action.status,
+      lifecycleStatus: action.lifecycleStatus,
+      runtimeFamily: action.runtimeFamily,
+      executionPathFamily: action.executionPathFamily,
+      requirements: {
+        wallet: action.requiresWallet,
+        attestation: action.requiresAttestation,
+        targetPost: action.requiresTargetPost,
+        marketContext: action.requiresMarketContext,
+        explicitExecute: action.requiresExplicitExecute,
+      },
+      effects: {
+        spendsDem: action.spendsDem,
+        writesLifecycleRecord: action.writesLifecycleRecord,
+      },
+      proofLevel: action.proofLevel,
+      reasonCodes: [...action.reasonCodes],
+    },
+  };
+}
+
+function intentActionTypeFor(family: ColonyOperatorActionFamily): ColonyOperatorIntentActionType {
+  if (family === "VOTE") return "vote";
+  if (family === "bet-fixed" || family === "bet-hl") return "bet";
+  return family;
+}
+
+function intentMarketKindFor(
+  family: ColonyOperatorActionFamily,
+): Pick<ColonyOperatorActionIntentContract, "marketKind"> {
+  if (family === "bet-fixed") return { marketKind: "fixed_price" };
+  if (family === "bet-hl") return { marketKind: "higher_lower" };
+  return {};
 }
 
 function reasonCodesForCapability(capability: RuntimeActionCapability): string[] {

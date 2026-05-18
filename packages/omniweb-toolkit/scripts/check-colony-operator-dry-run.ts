@@ -51,6 +51,8 @@ interface ColonyOperatorCapabilityTruth {
     missingFamilies: string[];
     lifecycleAwareFamilies: string[];
     identityFamilies: string[];
+    intentFamilies: string[];
+    allRequiredFamiliesHaveIntent: boolean;
     noSpendDefault: boolean;
   };
   actions: Array<{
@@ -64,6 +66,28 @@ interface ColonyOperatorCapabilityTruth {
     spendsDem: boolean;
     proofLevel: string;
     reasonCodes: string[];
+    intent?: {
+      actionFamily: string;
+      actionType: string;
+      marketKind?: string;
+      status: string;
+      lifecycleStatus: string;
+      runtimeFamily: string;
+      executionPathFamily: string;
+      requirements: {
+        wallet: boolean;
+        attestation: boolean;
+        targetPost: boolean;
+        marketContext: boolean;
+        explicitExecute: boolean;
+      };
+      effects: {
+        spendsDem: boolean;
+        writesLifecycleRecord: boolean;
+      };
+      proofLevel: string;
+      reasonCodes: string[];
+    };
   }>;
 }
 
@@ -178,6 +202,19 @@ const checks = {
       action.actionFamily === family
       && (action.status === "blocked" || action.status === "supervised")
     ))),
+  genericIntentContractPresent: capabilityTruth.coverage.allRequiredFamiliesHaveIntent === true
+    && capabilityTruth.actions.every((action) => action.intent?.actionFamily === action.actionFamily),
+  genericIntentCoversNonPublishFamilies: [
+    ["tip", "tip"],
+    ["VOTE", "vote"],
+    ["bet-fixed", "bet"],
+    ["bet-hl", "bet"],
+    ["register", "register"],
+    ["human-link", "human-link"],
+  ].every(([family, actionType]) => capabilityTruth.actions.some((action) => (
+    action.actionFamily === family
+    && action.intent?.actionType === actionType
+  ))),
 };
 
 const ok = Object.values(checks).every(Boolean);
@@ -225,6 +262,7 @@ const summary = {
       spendsDem: action.spendsDem,
       proofLevel: action.proofLevel,
       reasonCodes: action.reasonCodes,
+      intent: action.intent,
     })),
     skippedAlternatives: capabilityTruth.actions
       .filter((action) => action.actionFamily !== summaryActionFamily(record))
@@ -233,6 +271,7 @@ const summary = {
         status: action.status,
         lifecycleStatus: action.lifecycleStatus,
         reasonCodes: action.reasonCodes,
+        intent: action.intent,
       })),
   },
   result: record

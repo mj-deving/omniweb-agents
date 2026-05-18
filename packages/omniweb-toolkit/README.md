@@ -43,12 +43,13 @@ The long-term direction is to make it possible for many different OmniWeb skills
 
 ### Honest install status
 
-As of May 15, 2026, `omniweb-toolkit` is not published on the npm registry yet.
+As of May 18, 2026, `omniweb-toolkit` is not published on the npm registry yet.
 The maintained release gate is `npm run check:publish`, which currently reports:
 
-- package checks pass
-- the npm package name is still unclaimed
-- a real publish is blocked from this environment unless npm registry auth is configured
+- package checks and `npm pack --dry-run --json` pass
+- package metadata and exported files are included in the preflight report
+- the npm package name is still checked before any release claim
+- no release is executed by the check; a real publish needs explicit release authorization plus npm registry auth
 
 Until the first npm release exists, install from a checked-out repo path or a packed tarball.
 
@@ -412,14 +413,15 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - `npm run export:registry` regenerates `agents/registry/` from the current playbooks and starter assets.
 - `npm run check:openclaw` validates the generated OpenClaw export without running the broader package checks.
 - `npm run check:registry` validates the generated registry-facing skill artifacts without running the broader package checks.
-- `npm run check:publish` runs `check:package`, reports npm registry auth state, tells you whether the package name already exists on npm, and emits an explicit release decision such as `ready_for_first_publish` or `blocked_npm_auth_missing`.
+- `npm run check:publish` runs `check:package`, validates `npm pack --dry-run --json`, reports package metadata, reports npm registry auth state, tells you whether the package name already exists on npm, and emits an explicit release decision such as `ready_to_publish_but_not_authorized`, `ready_to_publish_authorized`, or `blocked_npm_auth_missing`.
+- `npm run check:publish` never runs `npm publish`; rerun with `-- --release-authorized` only after explicit human release approval, and still publish manually outside the check.
 - If you are making broader release-grade claims rather than just package-integrity claims, run `npm run check:package:full` before or alongside `check:publish`.
 - `npm run check:journeys` runs the three shipped archetype journey paths, the stricter captured-run scorer, and the external-consumer release gate in one report.
 - `npm run snapshot:leaderboard-pattern` emits the current starter-pack scorecard snapshot as JSON so the measured moat defaults can be recorded or diffed outside CI.
 - `npm run check:leaderboard-pattern` runs the live starter-pack proof plus the committed scorecard regression gate so source-rank changes fail closed.
 - `npm run check:publish-visibility -- --broadcast --runs 2 --reply-after-publish` runs the maintained live publish/reply indexing harness and reports whether returned tx hashes became indexed-visible within the verification window.
 - `npm run check:write-surface -- --broadcast` runs the maintained live write sweep for reactions, publish/reply, and market writes; add `--include-tip` only when you intentionally want the extra tip probe and spend.
-- `npm run check:publish` currently returns `blocked_npm_auth_missing`: package checks pass, the package name is still available, and the only external blocker is npm registry auth in the publishing environment.
+- `npm run check:publish` currently returns `ready_to_publish_but_not_authorized` when package checks, pack dry-run, and registry-name lookup are clean but this session has no explicit release authorization. That means no npm publish occurred and the public registry install path is still unavailable.
 - `npm run check:playbook:research`, `npm run check:playbook:market`, and `npm run check:playbook:engagement` each run the shipped live/readiness/trajectory path for one archetype.
 - `npm run check:attestation -- --attest-url <url> [--supporting-url <url> ...]` scores the source choice, evidence-chain quality, and draft quality for a planned publish workflow before you spend DEM.
 - For evidence-backed starter publish claims, `check:attestation` is a maintained gate, not optional polish.

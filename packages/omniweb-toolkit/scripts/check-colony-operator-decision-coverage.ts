@@ -25,10 +25,30 @@ interface OperatorEnvelope {
       lifecycleStatus: string;
       executionPathFamily: string;
       reasonCodes: string[];
+      intent?: {
+        actionFamily: string;
+        actionType: string;
+        marketKind?: string;
+        status: string;
+        executionPathFamily: string;
+        requirements: {
+          wallet: boolean;
+          attestation: boolean;
+          targetPost: boolean;
+          marketContext: boolean;
+          explicitExecute: boolean;
+        };
+        effects: {
+          spendsDem: boolean;
+          writesLifecycleRecord: boolean;
+        };
+      };
     }>;
     coverage: {
       allRequiredFamiliesPresent: boolean;
+      allRequiredFamiliesHaveIntent: boolean;
       presentFamilies: string[];
+      intentFamilies: string[];
     };
   };
   execution: {
@@ -43,7 +63,7 @@ const allowedArgs = new Set(["--help", "-h"]);
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-decision-coverage.ts
 
-Run no-spend operator scenarios and assert AC-3 decision coverage: skip/publish/reply/react are selectable, tip/VOTE/bet-fixed are emitted as explicit non-selected alternatives, and bet-hl remains status-only lifecycle-pending.
+Run no-spend operator scenarios and assert decision coverage: skip/publish/reply/react are selectable, tip/VOTE/bet-fixed are emitted as explicit non-selected alternatives, bet-hl remains lifecycle-pending, and every maintained family has a generic action-intent contract.
 
 Output: JSON decision-coverage proof summary
 Exit codes: 0 = proof passed, 1 = proof failed, 2 = invalid args`);
@@ -120,6 +140,13 @@ const checks = {
     && fixedBetTruth?.executionPathFamily === "market_write"
     && higherLowerTruth?.executionPathFamily === "market_write",
   capabilityTruthComplete: latestTruth?.coverage.allRequiredFamiliesPresent === true,
+  genericIntentContractComplete: latestTruth?.coverage.allRequiredFamiliesHaveIntent === true
+    && latestTruth.actions.every((action) => action.intent?.actionFamily === action.actionFamily),
+  voteIntentSeparatedFromBet: voteTruth?.intent?.actionType === "vote"
+    && fixedBetTruth?.intent?.actionType === "bet"
+    && fixedBetTruth.intent.marketKind === "fixed_price"
+    && higherLowerTruth?.intent?.actionType === "bet"
+    && higherLowerTruth.intent.marketKind === "higher_lower",
   noSpendAcrossCoverageProof: envelopes.every(({ envelope }) => envelope.execution.demSpendEstimate === 0),
 };
 const ok = Object.values(checks).every(Boolean);
@@ -131,11 +158,13 @@ console.log(JSON.stringify({
   checks,
   selectedFamilies: Array.from(selectedFamilies).sort(),
   surfacedAlternatives: Array.from(allAlternativeFamilies).sort(),
+  intentFamilies: latestTruth?.coverage.intentFamilies ?? [],
   statusOnlyFamilies: higherLowerTruth ? [{
     actionFamily: higherLowerTruth.actionFamily,
     status: higherLowerTruth.status,
     lifecycleStatus: higherLowerTruth.lifecycleStatus,
     reasonCodes: higherLowerTruth.reasonCodes,
+    intent: higherLowerTruth.intent,
   }] : [],
   scenarios: envelopes.map(({ scenario, envelope }) => ({
     scenario,

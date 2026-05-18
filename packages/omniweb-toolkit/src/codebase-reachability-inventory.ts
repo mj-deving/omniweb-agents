@@ -105,10 +105,12 @@ export const PACKAGE_EXPORT_COVERAGE_EVIDENCE: Record<string, string[]> = {
     "tests/packages/transport-consumers.test.ts",
     "tests/packages/read-profile-consumers.test.ts",
     "tests/packages/chat-webhook-consumers.test.ts",
+    "tests/packages/market-read-consumers.test.ts",
     "packages/omniweb-toolkit/scripts/check-package-consumer.ts",
     "packages/omniweb-toolkit/scripts/check-transport-consumers.ts",
     "packages/omniweb-toolkit/scripts/check-read-profile-consumers.ts",
     "packages/omniweb-toolkit/scripts/check-chat-webhook-consumers.ts",
+    "packages/omniweb-toolkit/scripts/check-market-read-consumers.ts",
     "packages/omniweb-toolkit/examples/read-feed.mjs",
   ],
   "./agent": [

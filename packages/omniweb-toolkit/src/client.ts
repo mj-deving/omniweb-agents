@@ -10,10 +10,22 @@ import type {
   AgentIdentitiesResponse,
   AgentProfileResponse,
   AgentTipStatsResponse,
+  BinaryPoolsQuery,
+  BinaryPoolsResponse,
   ChatMessagesQuery,
   ChatMessagesResponse,
   ChatRoomsResponse,
+  CommodityPoolResponse,
   ConvergenceResponse,
+  EthBetPoolResponse,
+  EthBinaryPoolsResponse,
+  EthHigherLowerPoolResponse,
+  EthWinnersResponse,
+  FixedBetPoolResponse,
+  GraduationMarketsQuery,
+  GraduationMarketsResponse,
+  HigherLowerPoolResponse,
+  MarketPoolQuery,
   OmniwebReadClient,
   OracleQuery,
   OracleResponse,
@@ -41,6 +53,10 @@ import type {
   SearchQuery,
   SearchResponse,
   SignalsResponse,
+  SportsMarketsQuery,
+  SportsMarketsResponse,
+  SportsPoolResponse,
+  SportsWinnersResponse,
   StatsResponse,
   ThreadResponse,
   TipStatsResponse,
@@ -221,6 +237,69 @@ export function createClient(options: CreateClientOptions = {}): OmniwebReadClie
 
     getPredictionRecommendations(userAddress: string): Promise<PredictionRecommendationsResponse> {
       return getJson<PredictionRecommendationsResponse>(withQuery(ENDPOINTS.predictionRecommendations, { userAddress }));
+    },
+
+    getPool(params: MarketPoolQuery): Promise<FixedBetPoolResponse> {
+      return getJson<FixedBetPoolResponse>(withQuery(ENDPOINTS.betPool, {
+        asset: params.asset,
+        horizon: params.horizon,
+      }));
+    },
+
+    getHigherLowerPool(params: MarketPoolQuery): Promise<HigherLowerPoolResponse> {
+      return getJson<HigherLowerPoolResponse>(withQuery(ENDPOINTS.betHigherLowerPool, {
+        asset: params.asset,
+        horizon: params.horizon,
+      }));
+    },
+
+    getBinaryPools(params?: BinaryPoolsQuery): Promise<BinaryPoolsResponse> {
+      return getJson<BinaryPoolsResponse>(withQuery(ENDPOINTS.betBinaryPools, params ? { ...params } : undefined));
+    },
+
+    getEthPool(params: MarketPoolQuery): Promise<EthBetPoolResponse> {
+      return getJson<EthBetPoolResponse>(withQuery(ENDPOINTS.betEthPool, {
+        asset: params.asset,
+        horizon: params.horizon,
+      }));
+    },
+
+    getEthWinners(params: { asset: string }): Promise<EthWinnersResponse> {
+      return getJson<EthWinnersResponse>(withQuery(ENDPOINTS.betEthWinners, { asset: params.asset }));
+    },
+
+    getEthHigherLowerPool(params: MarketPoolQuery): Promise<EthHigherLowerPoolResponse> {
+      return getJson<EthHigherLowerPoolResponse>(withQuery(ENDPOINTS.betEthHigherLowerPool, {
+        asset: params.asset,
+        horizon: params.horizon,
+      }));
+    },
+
+    getEthBinaryPools(): Promise<EthBinaryPoolsResponse> {
+      return getJson<EthBinaryPoolsResponse>(ENDPOINTS.betEthBinaryPools);
+    },
+
+    getSportsMarkets(params?: SportsMarketsQuery): Promise<SportsMarketsResponse> {
+      return getJson<SportsMarketsResponse>(withQuery(ENDPOINTS.betSportsMarkets, params ? { ...params } : undefined));
+    },
+
+    getSportsPool(fixtureId: string): Promise<SportsPoolResponse> {
+      return getJson<SportsPoolResponse>(withQuery(ENDPOINTS.betSportsPool, { fixtureId }));
+    },
+
+    getSportsWinners(fixtureId: string): Promise<SportsWinnersResponse> {
+      return getJson<SportsWinnersResponse>(withQuery(ENDPOINTS.betSportsWinners, { fixtureId }));
+    },
+
+    getCommodityPool(params: MarketPoolQuery): Promise<CommodityPoolResponse> {
+      return getJson<CommodityPoolResponse>(withQuery(ENDPOINTS.betCommodityPool, {
+        asset: params.asset,
+        horizon: params.horizon,
+      }));
+    },
+
+    getGraduationMarkets(params?: GraduationMarketsQuery): Promise<GraduationMarketsResponse> {
+      return getJson<GraduationMarketsResponse>(withQuery(ENDPOINTS.betGraduationMarkets, params ? { ...params } : undefined));
     },
 
     getAgentScores(params?: ScoresQuery): Promise<ScoresResponse> {

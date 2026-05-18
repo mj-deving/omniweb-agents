@@ -3,7 +3,12 @@ import {
   buildToolkitCapabilityManifest,
   describeToolkitCapabilities,
 } from "../../packages/omniweb-toolkit/src/capability-manifest.js";
-import { buildColonyOperatorResponseDepthAccess } from "../../packages/omniweb-toolkit/src/agent.js";
+import {
+  OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS,
+  buildColonyOperatorResponseDepthAccess,
+  buildOfficialSkillCoverageReport,
+  getOfficialSkillSurfaceAreas,
+} from "../../packages/omniweb-toolkit/src/agent.js";
 import { describeRuntimeCapabilities, type RuntimeCapabilityResult } from "../../packages/omniweb-toolkit/src/readiness.js";
 
 function readyRuntime(): RuntimeCapabilityResult {
@@ -191,5 +196,89 @@ describe("toolkit capability manifest", () => {
       proofTiers: expect.arrayContaining(["lifecycle_proven", "pending_current_recheck"]),
       envelopeFields: expect.arrayContaining(["lifecyclePlan.recordId", "lifecyclePlan.proofPath", "cycle.outcome.execution"]),
     });
+  });
+
+  it("classifies the official SuperColony skill surface against manifest truth", () => {
+    const manifest = buildToolkitCapabilityManifest({
+      runtimeCapabilities: readyRuntime(),
+      now: new Date("2026-05-18T09:15:00.000Z"),
+    });
+    const report = buildOfficialSkillCoverageReport(manifest, {
+      now: new Date("2026-05-18T09:16:00.000Z"),
+    });
+
+    expect(report.generatedAt).toBe("2026-05-18T09:16:00.000Z");
+    expect(report.source).toMatchObject({
+      officialSkillUrl: "https://supercolony.ai/skill",
+      officialSkillMarkdownUrl: "https://supercolony.ai/supercolony-skill.md",
+      comparedAgainst: "toolkitCapabilityManifest",
+      sourceOfTruth: "omniweb-toolkit",
+    });
+    expect(report.classificationVocabulary).toEqual(OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS);
+    expect(report.summary.missingCapabilityIds).toEqual([]);
+    expect(report.summary.byClassification).toMatchObject({
+      covered: expect.any(Number),
+      partial: expect.any(Number),
+      supervised: expect.any(Number),
+      advanced: expect.any(Number),
+      pending: expect.any(Number),
+      degraded: expect.any(Number),
+      intentionally_excluded: expect.any(Number),
+    });
+    for (const classification of OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS) {
+      expect(report.summary.byClassification[classification]).toBeGreaterThan(0);
+    }
+
+    expect(report.entries.find((entry) => entry.id === "feed-search")).toMatchObject({
+      classification: "covered",
+      capabilityIds: ["colony.search"],
+      capabilityStatuses: [
+        expect.objectContaining({
+          id: "colony.search",
+          status: "available",
+          methods: expect.arrayContaining(["createClient().searchFeed", "omni.colony.search"]),
+        }),
+      ],
+    });
+    expect(report.entries.find((entry) => entry.id === "higher-lower-betting")).toMatchObject({
+      classification: "pending",
+      capabilityIds: expect.arrayContaining(["colony.bet-higher-lower"]),
+      capabilityStatuses: expect.arrayContaining([
+        expect.objectContaining({
+          id: "colony.bet-higher-lower",
+          status: "pending",
+          proofTier: "pending_current_recheck",
+        }),
+      ]),
+    });
+    expect(report.entries.find((entry) => entry.id === "agent-identity")).toMatchObject({
+      classification: "supervised",
+      capabilityStatuses: expect.arrayContaining([
+        expect.objectContaining({
+          id: "colony.identity",
+          status: "supervised",
+          proofTier: "supervised_identity",
+        }),
+      ]),
+    });
+    expect(report.entries.find((entry) => entry.id === "proof-storage")).toMatchObject({
+      classification: "degraded",
+      capabilityStatuses: [
+        expect.objectContaining({
+          id: "storage.programs",
+          status: "degraded",
+        }),
+      ],
+    });
+    expect(report.entries.find((entry) => entry.id === "chat")).toMatchObject({
+      classification: "pending",
+      capabilityIds: [],
+      notes: expect.arrayContaining(["Official chat is a known surface not yet represented by the toolkit capability manifest."]),
+    });
+    expect(report.entries.find((entry) => entry.id === "integration-packages")).toMatchObject({
+      classification: "intentionally_excluded",
+      capabilityIds: [],
+    });
+    expect(getOfficialSkillSurfaceAreas()).toHaveLength(report.entries.length);
   });
 });

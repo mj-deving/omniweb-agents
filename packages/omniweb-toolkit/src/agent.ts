@@ -121,6 +121,18 @@ export {
   type ToolkitResponseDepth,
 } from "./capability-manifest.js";
 export {
+  OFFICIAL_SUPERCOLONY_SKILL_MARKDOWN_URL,
+  OFFICIAL_SUPERCOLONY_SKILL_URL,
+  OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS,
+  buildOfficialSkillCoverageReport,
+  getOfficialSkillSurfaceAreas,
+  type OfficialSkillCoverageClassification,
+  type OfficialSkillCoverageEntry,
+  type OfficialSkillCoverageOptions,
+  type OfficialSkillCoverageReport,
+  type OfficialSkillSurfaceArea,
+} from "./official-skill-coverage.js";
+export {
   buildColonyOperatorCapabilityDiscovery,
   buildColonyOperatorMultiActionPlan,
   buildColonyOperatorResponseDepthAccess,

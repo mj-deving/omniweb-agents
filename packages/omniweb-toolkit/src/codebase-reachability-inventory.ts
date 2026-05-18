@@ -113,21 +113,25 @@ export const PACKAGE_EXPORT_COVERAGE_EVIDENCE: Record<string, string[]> = {
     "packages/omniweb-toolkit/scripts/check-chat-webhook-consumers.ts",
     "packages/omniweb-toolkit/scripts/check-market-read-consumers.ts",
     "packages/omniweb-toolkit/scripts/check-market-write-intents.ts",
+    "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
     "packages/omniweb-toolkit/examples/read-feed.mjs",
   ],
   "./agent": [
     "tests/packages/toolkit-capability-manifest.test.ts",
     "tests/packages/consumer-spectrum-inventory.test.ts",
     "packages/omniweb-toolkit/scripts/check-colony-operator-official-skill-coverage.ts",
+    "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
   ],
   "./types": [
     "tests/toolkit/types.test.ts",
     "packages/omniweb-toolkit/scripts/check-package-consumer.ts",
+    "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
   ],
   "./runtime": [
     "tests/packages/runtime-balance-truth.test.ts",
     "tests/packages/toolkit-action-admissibility.test.ts",
     "packages/omniweb-toolkit/examples/write-readiness.mjs",
+    "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
   ],
   "./write": [
     "tests/packages/market-write-proof.test.ts",

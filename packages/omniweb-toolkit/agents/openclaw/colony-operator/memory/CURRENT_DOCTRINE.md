@@ -2,10 +2,10 @@
 
 Status: active
 Updated: 2026-05-18
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release, `#427` — toolkit guardrails, `#428/#429` — action admissibility
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
-Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`, `#416`, `#418`, `#419`
+Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`, `#416`, `#418`, `#419`, `#427`, `#428`, `#429`
 
 Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
 
@@ -35,7 +35,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Wave C `omniweb-agents-q5k8` has now locally proved supervised identity participation through maintained package paths: live `register` with product readback, official human-link challenge/claim/approve/readback, and unlink cleanup with post-cleanup readback. Identity remains supervised and requires `--execute --confirm-identity-mutation`; it is not a default autonomous operator action.
 - PR #419 completes Wave D release-readiness without npm release, public registry proof, or broad launch claims.
 - Wave E / `omniweb-agents-capsurf` is complete through PRs #420-#426: the toolkit/runtime layer owns the maintained capability surface a fresh colony operator inspects for supported actions, params, proof status, response depth, readiness, lifecycle, and execution boundaries. Skills/playbooks stay strategy-focused and should not re-teach protocol mechanics.
-- PR #427 completed the toolkit guardrail surface. The current next layer is `omniweb-agents-admissibility`: capability answers what exists, guardrails answer whether it is safe, and action admissibility answers whether this specific action can be planned or executed right now.
+- PR #427 completed the toolkit guardrail surface. PRs #428/#429 completed `omniweb-agents-admissibility`: capability answers what exists, guardrails answer whether it is safe, and action admissibility answers whether this specific action can be planned or executed right now.
+- The next lane is the admissibility-gated maintained multi-action operator cycle: observe live context, choose among maintained action families, surface capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth in one path, and execute only when the specific action has separate authorization.
 
 ## Canonical sources
 
@@ -64,7 +65,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md`
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md`
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md`
-- `docs/ROADMAP.md` Wave E / `omniweb-agents-capsurf`
+- `docs/ROADMAP.md` Wave E / `omniweb-agents-capsurf` and post-Wave-E action admissibility
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`
@@ -96,7 +97,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 12. Wave C `omniweb-agents-q5k8` proved live local identity participation on May 16, 2026: register proof `/tmp/omni-live-colony-identity-m3-final/register-proof.json`, human-link proof `/tmp/omni-live-colony-identity-m4/human-link-proof.json`, and cleanup proof `/tmp/omni-live-colony-identity-m5/cleanup-proof.json`. The proof packets redacted challenge/signature/token-like material and kept identity supervised.
 13. Harden and consumerize only after the live operator floor and external runtime story are honest; the copied-bundle outside-in proof is current for no-spend consumer posture, not for registry publication or external hosted OpenClaw/Gregor live identity mutation.
 14. Wave D release-readiness is complete without release, and Wave E toolkit-owned capability surface is complete through `omniweb-agents-capsurf` / PRs #420-#426.
-15. The current band is `omniweb-agents-admissibility`: add a toolkit-owned action admissibility API, attach it to colony-operator planning and execution envelopes, and make `executeResolvedIntent()` fail closed before side effects unless the final admissibility status is `allowed`.
+15. Toolkit guardrails are complete via PR #427, and action admissibility is complete via PRs #428/#429: the toolkit owns the admissibility API, selected actions and multi-action dry-run plans carry per-action admissibility, and `executeResolvedIntent()` fails closed before side effects unless final admissibility is `allowed`.
+16. The next band is a maintained multi-action operator cycle that uses the now-gated runtime path. BET/higher-lower widening is deliberate follow-up inside that lane, not default authority to spend.
 
 ## Anti-drift rules
 
@@ -110,7 +112,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Do **not** treat the M4 higher/lower family-specific proof as blanket operator-cycle BET authority; it proves current pool readback for the maintained market-write lane.
 - Do **not** self-close future OpenClaw/Gregor runtime gates. The May 16 `omniweb-agents-aick` gate closed only after explicit human acceptance of Gregor's archive-level audit; use `docs/archive/agent-handoffs/live-colony-operator-openclaw-gregor-handoff-2026-05-16.md` as the evidence pattern for future runtime-host checks.
 - Do **not** default to forking the substrate; fork the operator lane above the seam first if a faster track is needed.
-- Do **not** use Wave E or the admissibility layer as permission to publish to npm, prove public registry install, rewrite the broad substrate, or run live multi-action spend. Those are explicitly deferred unless separately authorized.
+- Do **not** use Wave E, guardrails, or the completed admissibility layer as permission to publish to npm, prove public registry install, rewrite the broad substrate, or run live multi-action spend. Those are explicitly deferred unless separately authorized.
+- Do **not** treat action admissibility as still upcoming/current architecture work. It is complete via PRs #428/#429; the next architecture/product lane is the admissibility-gated maintained operator cycle.
 - Do **not** let skills/playbooks become the protocol mechanics source of truth again. Wave E moved capability discovery, params, proof tiers, response-depth access, readiness, lifecycle, and execution truth into toolkit/runtime surfaces; the admissibility layer consumes that truth instead of re-teaching it.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
 - Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.

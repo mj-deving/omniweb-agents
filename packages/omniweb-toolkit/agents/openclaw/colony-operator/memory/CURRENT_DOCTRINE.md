@@ -1,11 +1,11 @@
 # CURRENT_DOCTRINE.md
 
 Status: active
-Updated: 2026-05-16
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal
+Updated: 2026-05-18
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
-Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`, `#416`, `#418`
+Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`, `#416`, `#418`, `#419`
 
 Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/NEXT_BAND_CHEAT_SHEET.md`
 
@@ -33,6 +33,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - The cross-family write lifecycle layer is landed by PR #411. It exists in `packages/omniweb-toolkit/scripts/_write-lifecycle.ts` with probe wiring for publish/reply visibility, VOTE, social writes, and fixed-price BET no-spend rechecks. Publish, reply, tip, VOTE, and BET already show different delayed-indexing/readback behavior; future runs must consume lifecycle records and proof packets rather than equating short timeout with failed write.
 - PR #413 is the `omniweb-agents-zqnh` capability-truth checkpoint, not the full lifecycle-aware Colony Operator MegaGoal completion. The follow-on live execution packet under `omniweb-agents-8tga` proved one bounded maintained operator publish cycle with product readback, current higher/lower pool readback, the earlier pre-q5k8 identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host activation under `omniweb-agents-aick`.
 - Wave C `omniweb-agents-q5k8` has now locally proved supervised identity participation through maintained package paths: live `register` with product readback, official human-link challenge/claim/approve/readback, and unlink cleanup with post-cleanup readback. Identity remains supervised and requires `--execute --confirm-identity-mutation`; it is not a default autonomous operator action.
+- PR #419 completes Wave D release-readiness without npm release, public registry proof, or broad launch claims.
+- The next planning band is Wave E / `omniweb-agents-capsurf`: the toolkit/runtime layer should own the maintained capability surface a fresh colony operator inspects for supported actions, params, proof status, response depth, readiness, lifecycle, and execution boundaries. Skills/playbooks should stay strategy-focused and should not re-teach protocol mechanics.
 
 ## Canonical sources
 
@@ -61,6 +63,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md`
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md`
 - `docs/LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md`
+- `docs/ROADMAP.md` Wave E / `omniweb-agents-capsurf`
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
 - `bd show omniweb-agents-5xp4 --json`
@@ -91,6 +94,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 11. Identity participation is not blanket ready by default. Registration and human-link are supervised identity mutations that require explicit identity-mutation authorization and `--execute`; dry-run identity probing can record address/readiness without storing challenge secrets or approval tokens.
 12. Wave C `omniweb-agents-q5k8` proved live local identity participation on May 16, 2026: register proof `/tmp/omni-live-colony-identity-m3-final/register-proof.json`, human-link proof `/tmp/omni-live-colony-identity-m4/human-link-proof.json`, and cleanup proof `/tmp/omni-live-colony-identity-m5/cleanup-proof.json`. The proof packets redacted challenge/signature/token-like material and kept identity supervised.
 13. Harden and consumerize only after the live operator floor and external runtime story are honest; the copied-bundle outside-in proof is current for no-spend consumer posture, not for registry publication or external hosted OpenClaw/Gregor live identity mutation.
+14. Wave D release-readiness is now complete without release. The next band is Wave E: toolkit-owned colony capability surface. Execute it through `omniweb-agents-capsurf` and its ordered child slices, starting with a toolkit capability manifest, then official SuperColony skill coverage, operator discovery, response-depth preservation, multi-action dry-run planning, and skill/playbook slimming.
 
 ## Anti-drift rules
 
@@ -104,6 +108,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Do **not** treat the M4 higher/lower family-specific proof as blanket operator-cycle BET authority; it proves current pool readback for the maintained market-write lane.
 - Do **not** self-close future OpenClaw/Gregor runtime gates. The May 16 `omniweb-agents-aick` gate closed only after explicit human acceptance of Gregor's archive-level audit; use `docs/archive/agent-handoffs/live-colony-operator-openclaw-gregor-handoff-2026-05-16.md` as the evidence pattern for future runtime-host checks.
 - Do **not** default to forking the substrate; fork the operator lane above the seam first if a faster track is needed.
+- Do **not** use Wave E as permission to publish to npm, prove public registry install, rewrite the broad substrate, or run live multi-action spend. Those are explicitly deferred unless separately authorized.
+- Do **not** let skills/playbooks become the protocol mechanics source of truth again. Wave E moves capability discovery, params, proof tiers, response-depth access, readiness, lifecycle, and execution truth into toolkit/runtime surfaces.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
 - Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.
 - When uncertain, re-read PR #360, PR #371, PR #376, and the live Beads state before coding.

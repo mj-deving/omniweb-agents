@@ -6,7 +6,7 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "Wave E capability surface, toolkit guardrails, action admissibility, and the no-spend maintained operator-cycle proof are complete through PR #431. The next lane is a consumer-spectrum and codebase reality map before widening implementation: compare official docs, live endpoint response shapes, and local toolkit/code reachability; no npm release, public registry proof, broad rewrite, blind ballast deletion, live spend, or unsupervised identity mutation."
+summary: "The no-release consumer-spectrum lane is complete through PRs #432-#441: official docs/discovery, live endpoint response shapes, package exports, code reachability, transport/read/chat/webhook/market consumers, market write intents, and local tarball whole-spectrum proof are mapped and checked. Remaining edges are deliberate follow-ups only: no npm release, public registry proof, live multi-action spend, or unsupervised identity mutation."
 read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,13 +38,13 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | Wave E capability surface, toolkit guardrails, action admissibility, and the maintained operator-cycle proof are complete through PR #431. The next eligible architecture/product lane is a consumer-spectrum and codebase reality map before widening: compare official SuperColony docs/cards/skill/OpenAPI, actual live endpoint response shapes, and the current toolkit/codebase surface so follow-up implementation removes real gaps and deadweight instead of guessing. |
+| Current direction | The consumer-spectrum/codebase reality lane is complete through PRs #432-#441. The repo now has deterministic checks for official discovery/docs and live endpoint-shape comparison, code reachability, public export coverage, auth/RSS/SSE, read/profile/scoring/verification, chat/webhooks, market reads, no-spend market write intents, and a local tarball whole-spectrum consumer proof. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam, capability surface, guardrails, and admissibility gate honestly instead of talking like those pivots are still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, and the next Beads lane is consumer-spectrum/live-shape/codebase inventory before feature widening. |
-| Remaining external edges | later npm auth/publish consumerization, public registry proof, live multi-action spend, and any externally hosted Gregor/OpenClaw live identity mutation after separate authorization; these remain explicitly outside the consumer-spectrum inventory lane |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, and PRs #432-#441 completed `omniweb-agents-spectrum`. |
+| Remaining external edges | later npm auth/publish consumerization, public registry proof, live multi-action spend, and any externally hosted Gregor/OpenClaw live identity mutation after separate authorization; these remain explicitly outside the completed consumer-spectrum no-release lane |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -125,7 +125,7 @@ Important nuance:
 
 ## Closed Operating Band — frozen seam, fast colony live-ops
 
-This band is now complete through PR #431 / `uw66.6` as a proof checkpoint. It should stay in the roadmap as history and evidence, but it is no longer the active next lane. The active next lane is the consumer-spectrum and codebase reality map below.
+This band is now complete through PR #431 / `uw66.6` as a proof checkpoint. It should stay in the roadmap as history and evidence, but it is no longer the active next lane. The follow-on consumer-spectrum and codebase reality map is also complete through PRs #432-#441 below.
 
 ### Band goal
 
@@ -238,16 +238,16 @@ Completed via PR #428 and PR #429:
 4. `check:colony-operator-admissibility` and `check:colony-operator-admissibility-hardening` are wired into front-door package checks
 5. admissibility/guardrail reports stay present across allowed dispatches, minimal-cycle dry-run, skip, and failed outcomes
 
-#### Next lane — consumer spectrum and codebase reality map
+#### Completed lane — consumer spectrum and codebase reality map
 
-The next eligible lane is not release follow-up and not immediate feature widening. It is an evidence-building map that proves what a package consumer can actually rely on before the repo touches broad implementation:
-- compare official SuperColony discovery surfaces: `llms.txt`, `llms-full.txt`, `supercolony-skill.md`, `openapi.json`, `.well-known/agent.json`, `.well-known/agents.json`, and `.well-known/ai-plugin.json`
-- compare actual live endpoint response shapes, not only docs snapshots: status, content type, auth requirement, top-level fields, error body, pagination/cursor fields, empty/non-empty behavior, and streaming shape where safe
-- compare local toolkit coverage: `buildToolkitCapabilityManifest()`, `buildOfficialSkillCoverageReport()`, `HiveAPI`, `createClient`, response-depth maps, admissibility/guardrail/lifecycle surfaces, package exports, scripts, and package checks
-- classify codebase reachability and ballast before deleting anything: public/exported+tested, public/exported+uncovered, internal reachable, scripts-only, docs-only, test-only, duplicate/superseded, stale/dead/orphaned
-- turn the map into a PR ladder that widens consumer support across the full colony interaction spectrum while keeping live spend and identity mutation gated
+This lane is complete through PRs #432-#441. It was not release follow-up and not public registry proof; it was an evidence-building map plus no-spend consumer widening that proves what a package consumer can actually rely on before later release or live-spend work:
+- compared official SuperColony discovery surfaces: `llms.txt`, `llms-full.txt`, `supercolony-skill.md`, `openapi.json`, `.well-known/agent.json`, `.well-known/agents.json`, and `.well-known/ai-plugin.json`
+- compared actual live endpoint response shapes, not only docs snapshots: status, content type, auth requirement, top-level fields, error body, pagination/cursor fields, empty/non-empty behavior, and streaming shape where safe
+- compared local toolkit coverage: `buildToolkitCapabilityManifest()`, `buildOfficialSkillCoverageReport()`, `HiveAPI`, `createClient`, response-depth maps, admissibility/guardrail/lifecycle surfaces, package exports, scripts, and package checks
+- classified codebase reachability and ballast before deleting anything; the inventory found no static duplicate/superseded, stale/dead/orphaned, or blocked local code to remove in this lane
+- widened package consumer support across the colony interaction spectrum while keeping live spend and identity mutation gated
 
-Active Beads epic: `omniweb-agents-spectrum`. Current documentation/bead sync slice: `omniweb-agents-spectrum.0`. First implementation slice after this sync: `omniweb-agents-spectrum.1`.
+Completed Beads epic: `omniweb-agents-spectrum`. Closeout docs slice: `omniweb-agents-gh1x`.
 
 GoalMode scaffold for end-to-end execution:
 - [CONSUMER_SPECTRUM_GOAL_BRIEF.md](CONSUMER_SPECTRUM_GOAL_BRIEF.md)
@@ -274,24 +274,21 @@ Required output classes for the inventory:
 - `public_export_uncovered`
 - `test_only_or_script_only`
 
-Follow-up ladder after the map:
-1. create the repeatable consumer-spectrum inventory gate
-2. classify codebase reachability and ballast
-3. remove or consolidate only inventory-proven deadweight
-4. normalize public exports and consumer coverage
-5. harden auth plus RSS/SSE transport consumers
-6. complete read/profile/verification coverage
-7. add chat and webhook consumer lifecycle
-8. widen market reads across binary, graduation, commodity, sports, and ETH surfaces
-9. add no-spend market write intents and admissibility for all market classes
-10. prove a local/tarball whole-spectrum consumer journey without registry publication
+Completed ladder:
+1. PR #433 created the repeatable consumer-spectrum inventory gate
+2. PR #434 classified codebase reachability and ballast
+3. no deletion PR was needed because the inventory found no static dead/orphaned or duplicate/superseded local code
+4. PR #435 normalized public exports and consumer coverage
+5. PR #436 hardened auth plus RSS/SSE transport consumers
+6. PR #437 completed read/profile/verification coverage
+7. PR #438 added chat and webhook consumer lifecycle
+8. PR #439 widened market reads across binary, graduation, commodity, sports, and ETH surfaces
+9. PR #440 added no-spend market write intents and admissibility for all market classes
+10. PR #441 proved a local/tarball whole-spectrum consumer journey without registry publication
 
-Not next in this band:
+Still not authorized by this completed band:
 - npm release
 - public registry proof
-- blind ballast deletion before inventory evidence
-- broad substrate rewrite before the consumer map proves the need
-- feature widening that skips official-docs/live-shape/local-code comparison
 - live multi-action spend without explicit authorization
 - unsupervised identity mutation
 
@@ -313,7 +310,7 @@ Not next in this band:
 - Current live execution parent: `omniweb-agents-8tga` owns the real maintained-operator cycle. M0-M6b now have evidence or exact blocker records, and gate `omniweb-agents-aick` was closed by explicit human acceptance after Gregor's archive-level audit. The durable evidence archive is `/home/openclaw/.openclaw/workspace/local/demos-agents-worktrees/gregor-aick-proof/tmp/evidence/openclaw-m6b/openclaw-colony-m6b-rerun-20260516181351-redacted.tar.gz` with SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
 - Current Wave C packet: `omniweb-agents-q5k8` owns the supervised identity participation GoalMode run. It proved live `register`, human-link approve/readback, and unlink cleanup behind explicit `--execute` plus identity-specific confirmation; identity remains supervised and is not a default autonomous action.
 - PR #427 completed toolkit guardrails, and PRs #428/#429 completed action admissibility. Fresh sessions should not route back into capability, guardrail, or admissibility as upcoming architecture work.
-- Completed GoalMode paths: [GOAL_BRIEF.md](GOAL_BRIEF.md) / [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. PR #431 completed `uw66.6`; the active next execution packet must target the consumer-spectrum and codebase reality map rather than treating admissibility or the maintained operator-cycle report surface as still upcoming.
+- Completed GoalMode paths: [GOAL_BRIEF.md](GOAL_BRIEF.md) / [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. PR #431 completed `uw66.6`; PRs #432-#441 completed the consumer-spectrum/codebase reality map and no-spend local tarball consumer proof.
 
 ## Explicitly not next
 

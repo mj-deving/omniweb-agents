@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-18
-Scope: terse operator re-entry card after PR #431 / `uw66.6`.
+Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane.
 
 ## Do first
 
@@ -19,10 +19,10 @@ Scope: terse operator re-entry card after PR #431 / `uw66.6`.
 - PR #427 completed toolkit guardrails.
 - PRs #428/#429 completed `omniweb-agents-admissibility`: runtime now has the decision layer that says whether a requested operator action can be planned or executed right now.
 - PR #431 completed `uw66.6`: the maintained operator-cycle proof observes live context, selects an action, surfaces maintained alternatives, reports capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and keeps the default verdict no-spend.
-- Next lane: consumer-spectrum and codebase reality map before widening implementation. Compare official SuperColony docs/discovery, actual live endpoint response shapes, and local toolkit/code reachability. Do not reopen capability, guardrails, admissibility, or the maintained operator-cycle report surface as upcoming architecture work.
-- Active Beads epic: `omniweb-agents-spectrum`; current docs/bead sync: `omniweb-agents-spectrum.0`; first implementation slice: `omniweb-agents-spectrum.1`.
+- PRs #432-#441 completed the no-release consumer-spectrum and codebase reality lane: official docs/discovery and live endpoint shapes were compared, code reachability/ballast was classified, public exports were normalized, consumer transport/read/chat/webhook/market surfaces were widened, no-spend market write intents were added, and `check:consumer-spectrum-tarball` proves a clean local tarball whole-spectrum consumer install without registry publication.
+- Beads epic `omniweb-agents-spectrum` is complete/closeable after the roadmap re-entry mirror update.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
-- `bd ready` may still be empty for this lane while the active bead is already claimed/in progress.
+- `bd ready` may be empty when all current consumer-spectrum work is closed.
 
 ## Then do
 
@@ -32,7 +32,7 @@ Scope: terse operator re-entry card after PR #431 / `uw66.6`.
 - **Wave D — official identity participation:** q5k8 proved supervised local register, human-link, and cleanup through maintained package paths.
 - **Wave E — capability surface:** complete via `omniweb-agents-capsurf` and PRs #420-#426.
 - **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
-- **Next lane — consumer-spectrum inventory:** build a repeatable map across official docs/cards/skill/OpenAPI, live endpoint response shapes, current toolkit surfaces, and codebase reachability/deadweight before package widening.
+- **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
 
 ## Keep frozen for this wave
 
@@ -41,17 +41,17 @@ Scope: terse operator re-entry card after PR #431 / `uw66.6`.
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
-- no-release posture while the consumer-spectrum inventory is incomplete
+- no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
 
 ## Do not touch yet
 
 - broad seam rewrite
 - default substrate fork
 - StorageProgram / escrow / IPFS proof bands
-- launch / consumer polish before the consumer-spectrum/live-shape/codebase inventory is real
+- launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend, and unsupervised identity mutation
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it
-- feature widening that skips actual live endpoint response-shape comparison
+- feature widening that skips actual live endpoint response-shape comparison or the completed consumer-spectrum checks
 
 ## Execution habits
 

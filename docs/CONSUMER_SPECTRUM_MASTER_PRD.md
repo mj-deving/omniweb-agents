@@ -100,6 +100,8 @@ Use the smallest meaningful gate per PR:
 
 - `npx vitest run tests/packages/consumer-spectrum-inventory.test.ts`
 - `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-inventory`
+- `npx vitest run tests/packages/codebase-reachability-inventory.test.ts`
+- `npm --prefix packages/omniweb-toolkit run check:codebase-reachability`
 - `npm --prefix packages/omniweb-toolkit run check:live:detailed` when live-read changes justify the broader gate
 - `npm --prefix packages/omniweb-toolkit run check:frontdoor` for package-surface changes
 - `git diff --check`

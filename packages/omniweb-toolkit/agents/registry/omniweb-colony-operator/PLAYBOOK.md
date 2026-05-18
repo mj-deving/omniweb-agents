@@ -6,24 +6,19 @@ See `references/colony-operator-skill-skeleton.md` for the canonical compressed 
 
 ## Runtime authority
 
-The playbook/policy layer owns:
-- what to observe
-- which conditions matter
-- how routes and priorities are chosen
-- which action it wants to request across the full intended surface
+This playbook owns strategy: what to observe, which conditions matter, how priorities are chosen, and which action family to request.
 
-The intent layer owns:
-- normalizing that request into the shared intent vocabulary
-- abstracting routing from strategy-level requests down to colony primitives
-- carrying targets, drafts, and evidence needs in runtime-readable form
+The runtime/toolkit layer owns mechanics: capability IDs, method names, params, auth/write/spend requirements, response-depth class, proof tier, lifecycle/readback surfaces, readiness, and execution status.
 
-The runtime/substrate owns:
-- capability truth
-- readiness and auth/write ceremony
-- execution lifecycle
-- verification and persisted outcome truth
+Use runtime truth instead of re-deriving protocol details from prose:
 
-This playbook is the strategy surface above the seam, not a hidden executor.
+- `buildToolkitCapabilityManifest()`
+- `buildColonyOperatorCapabilityDiscovery()`
+- `buildColonyOperatorResponseDepthAccess()`
+- `buildOfficialSkillCoverageReport()`
+- `buildColonyOperatorMultiActionPlan()`
+
+This playbook is the strategy surface above the seam, not a hidden executor or protocol reference.
 
 ```yaml
 profile: conservative

@@ -231,6 +231,7 @@ await import("omniweb-" + "toolkit/types");
 const { createClient } = mainEntry;
 const {
   buildToolkitCapabilityManifest,
+  buildToolkitGuardrailManifest,
   checkWriteReadiness,
   describeRuntimeCapabilities,
 } = runtimeEntry;
@@ -241,6 +242,7 @@ const {
   buildColonyOperatorResponseDepthAccess,
   buildOfficialSkillCoverageReport,
   buildLeaderboardPatternPrompt,
+  evaluateToolkitGuardrails,
   getStarterSourcePack,
 } = agentEntry;
 
@@ -257,6 +259,12 @@ const capabilities = describeRuntimeCapabilities({
 const toolkitManifest = buildToolkitCapabilityManifest({
   runtimeCapabilities: capabilities,
   now: new Date("2026-05-18T00:00:00.000Z"),
+});
+const guardrailManifest = buildToolkitGuardrailManifest({
+  now: new Date("2026-05-18T00:00:00.000Z"),
+});
+const guardrailReport = await evaluateToolkitGuardrails({
+  urls: ["https://127.0.0.1/proof"],
 });
 const colonyOperatorTruth = buildColonyOperatorCapabilityTruth({
   runtimeCapabilities: capabilities,
@@ -298,6 +306,12 @@ if (!toolkitManifest.capabilities.some((capability) => capability.id === "colony
 }
 if (JSON.stringify(toolkitManifest).match(/mnemonic|seed phrase|approvalToken|challengeSecret/i)) {
   throw new Error("toolkit manifest leaked sensitive credential field names");
+}
+if (guardrailManifest.authority !== "toolkit-runtime" || guardrailManifest.domains.length !== 8) {
+  throw new Error("guardrail manifest did not expose runtime-owned guardrail domains");
+}
+if (guardrailReport.status !== "block" || !guardrailReport.blockedReasonCodes.includes("private_ipv4_url_blocked")) {
+  throw new Error("guardrail evaluator did not block unsafe URL before execution");
 }
 if (colonyOperatorDiscovery.fullDetailAccess.manifestField !== "toolkitCapabilityManifest") {
   throw new Error("colony operator discovery did not point to manifest detail access");
@@ -376,8 +390,8 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   console.log(JSON.stringify({
   imports: {
     main: ["createClient"],
-    runtime: ["buildToolkitCapabilityManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
-    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildOfficialSkillCoverageReport", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
+    runtime: ["buildToolkitCapabilityManifest", "buildToolkitGuardrailManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
+    agent: ["buildColonyOperatorCapabilityTruth", "buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorMultiActionPlan", "buildColonyOperatorResponseDepthAccess", "buildOfficialSkillCoverageReport", "buildLeaderboardPatternPrompt", "evaluateToolkitGuardrails", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
   dryRun: {
@@ -395,6 +409,12 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
     readCapabilities: toolkitManifest.coverage.readCapabilities,
     writeCapabilities: toolkitManifest.coverage.writeCapabilities,
     blockedCapabilities: toolkitManifest.coverage.blockedCapabilities,
+  },
+  guardrails: {
+    authority: guardrailManifest.authority,
+    domainCount: guardrailManifest.domains.length,
+    unsafeUrlStatus: guardrailReport.status,
+    blockedReasonCodes: guardrailReport.blockedReasonCodes,
   },
   colonyOperatorDiscovery: {
     source: colonyOperatorDiscovery.source,

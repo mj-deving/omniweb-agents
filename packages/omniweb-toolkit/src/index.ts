@@ -32,6 +32,11 @@ export {
   buildChatWebhookPlan,
   classifyWebhookEventPayload,
 } from "./chat-webhook-consumers.js";
+export {
+  MARKET_READ_SURFACE,
+  classifyMarketReadShape,
+  summarizeMarketReadCoverage,
+} from "./market-read-consumers.js";
 export type {
   CreateClientOptions,
   FeedQuery,
@@ -41,10 +46,21 @@ export type {
   AgentIdentitiesResponse,
   AgentProfileResponse,
   AgentTipStatsResponse,
+  BinaryPoolsQuery,
+  BinaryPoolsResponse,
   ChatMessagesQuery,
   ChatMessagesResponse,
   ChatRoomsResponse,
+  CommodityPoolResponse,
   ConvergenceResponse,
+  EthBetPoolResponse,
+  EthBinaryPoolsResponse,
+  EthHigherLowerPoolResponse,
+  EthWinnersResponse,
+  FixedBetPoolResponse,
+  GraduationMarketsQuery,
+  GraduationMarketsResponse,
+  HigherLowerPoolResponse,
   SearchQuery,
   SearchResponse,
   SignalsResponse,
@@ -63,6 +79,7 @@ export type {
   PredictionLeaderboardResponse,
   PredictionRecommendationsResponse,
   PredictionScoreResponse,
+  MarketPoolQuery,
   PricesQuery,
   PricesResponse,
   ReactionCountsResponse,
@@ -70,6 +87,10 @@ export type {
   ScoresResponse,
   ReportsQuery,
   ReportsResponse,
+  SportsMarketsQuery,
+  SportsMarketsResponse,
+  SportsPoolResponse,
+  SportsWinnersResponse,
   StatsResponse,
   TipStatsResponse,
   VerificationResponse,
@@ -103,4 +124,11 @@ export type {
   ChatWebhookSurfaceEntry,
   WebhookEventClassification,
 } from "./chat-webhook-consumers.js";
+export type {
+  MarketReadCoverageSummary,
+  MarketReadFamily,
+  MarketReadShapeCheck,
+  MarketReadStatus,
+  MarketReadSurfaceEntry,
+} from "./market-read-consumers.js";
 export type { HiveAPI } from "./hive.js";

@@ -215,6 +215,143 @@ describe("colony operator execution entrypoint", () => {
       summary: expect.stringContaining("product readback indexed via recent-feed"),
     });
   });
+
+  it("represents multiple requested actions in one dry-run plan without executing live writes", async () => {
+    const stateDir = await createTempDir();
+    const lifecycleStore = makeLifecycleStore();
+    const runtime = describeRuntimeCapabilities({ cwd: stateDir, homeDir: stateDir, env: {} });
+    const readyRuntime = {
+      ...runtime,
+      authReady: true,
+      writeReady: true,
+      blockers: [],
+      recommendedMode: "write-ready" as const,
+      actionFamilies: {
+        publish: { ...runtime.actionFamilies.publish, readiness: "ready" as const },
+        reply: { ...runtime.actionFamilies.reply, readiness: "ready" as const },
+        react: { ...runtime.actionFamilies.react, readiness: "ready" as const },
+        tip: { ...runtime.actionFamilies.tip, readiness: "ready" as const },
+        bet: { ...runtime.actionFamilies.bet, readiness: "ready" as const },
+      },
+    };
+    const capabilityTruth = buildColonyOperatorCapabilityTruth({
+      runtimeCapabilities: readyRuntime,
+      now: new Date("2026-05-16T14:30:00.000Z"),
+    });
+    const toolkitCapabilityManifest = buildToolkitCapabilityManifest({
+      runtimeCapabilities: readyRuntime,
+      now: new Date("2026-05-16T14:30:00.000Z"),
+    });
+
+    const envelope = await runColonyOperatorCycle(observe, {
+      stateDir,
+      cwd: stateDir,
+      omni: makeOmni(),
+      lifecycleStore,
+      capabilityTruth,
+      toolkitCapabilityManifest,
+      requestedActions: [
+        {
+          actionFamily: "publish",
+          params: { category: "OBSERVATION", text: "BTC funding split follow-up" },
+          timeframe: "now",
+        },
+        {
+          actionFamily: "tip",
+          params: { targetTxHash: "0xentrypoint-publish", amount: 1 },
+          timeframe: "after post-detail readback",
+        },
+        {
+          actionFamily: "bet-fixed",
+          params: { asset: "BTC", horizon: "30m", predictedPrice: 78000 },
+          timeframe: "30m",
+        },
+        {
+          actionFamily: "bet-hl",
+          params: { asset: "ETH", horizon: "24h", direction: "higher" },
+          timeframe: "24h",
+        },
+        {
+          actionFamily: "register",
+          params: { agentAddress: "0xoperator" },
+          timeframe: "supervised only",
+        },
+      ],
+      now: makeNow(Date.UTC(2026, 4, 16, 14, 32, 0), Date.UTC(2026, 4, 16, 14, 32, 1)),
+    });
+
+    expect(envelope.mode).toBe("dry-run");
+    expect(envelope.execution.status).toBe("dry_run");
+    expect(envelope.execution.demSpendEstimate).toBe(0);
+    expect(envelope.multiActionPlan).toMatchObject({
+      mode: "dry-run",
+      requestedActionCount: 5,
+      canRepresentMultipleActions: true,
+      liveExecutionAllowed: false,
+      noSpendDefault: true,
+      defaultLiveExecutionGate: "explicit_execute_required",
+    });
+    expect(envelope.multiActionPlan.plannedIntents.map((intent) => intent.actionFamily)).toEqual([
+      "publish",
+      "tip",
+      "bet-fixed",
+      "bet-hl",
+      "register",
+    ]);
+    expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "publish")).toMatchObject({
+      status: "executable",
+      proofLevel: "lifecycle_proven",
+      readiness: {
+        canPlan: true,
+        canExecuteNow: false,
+        requiresExplicitExecute: true,
+        spendsDem: true,
+        writesLifecycleRecord: true,
+      },
+      proofStatus: {
+        expectedReadback: expect.arrayContaining(["recent-feed", "category-search", "post-detail"]),
+      },
+      liveExecutionGate: {
+        gate: "dry_run_only",
+      },
+    });
+    expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "tip")).toMatchObject({
+      request: {
+        params: { targetTxHash: "0xentrypoint-publish", amount: 1 },
+        timeframe: "after post-detail readback",
+      },
+      proofStatus: {
+        expectedReadback: expect.arrayContaining(["post-tip-stats", "recipient-tip-stats", "balance"]),
+      },
+    });
+    expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "bet-fixed")).toMatchObject({
+      status: "executable",
+      executionPathFamily: "market_write",
+      proofStatus: {
+        expectedReadback: expect.arrayContaining(["active-pool", "winners-history"]),
+      },
+    });
+    expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "bet-hl")).toMatchObject({
+      status: "lifecycle-pending",
+      proofLevel: "pending_current_recheck",
+      liveExecutionGate: {
+        gate: "blocked",
+      },
+      readiness: {
+        missingRequirements: expect.arrayContaining(["higher_lower_current_delayed_readback_pending", "pending_current_recheck"]),
+      },
+    });
+    expect(envelope.multiActionPlan.plannedIntents.find((intent) => intent.actionFamily === "register")).toMatchObject({
+      status: "supervised",
+      liveExecutionGate: {
+        gate: "supervised_authorization_required",
+      },
+      readiness: {
+        requiresSupervision: true,
+      },
+    });
+    expect(lifecycleStore.created).toHaveLength(0);
+  });
 });
 
 function makeNow(...values: number[]): () => number {

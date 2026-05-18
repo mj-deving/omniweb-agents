@@ -64,6 +64,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-colony-operator-dry-run.ts](./check-colony-operator-dry-run.ts): maintained no-spend baseline runtime proof for one colony-operator cycle; proves the current baseline, not the full final MVP ceiling
 - [check-colony-operator-entrypoint.ts](./check-colony-operator-entrypoint.ts): maintained AC-2 entrypoint proof for selected/skipped actions, capability truth, explicit dry-run mode, lifecycle plan, and no-spend status
 - [check-colony-operator-response-depth.ts](./check-colony-operator-response-depth.ts): maintained response-depth preservation proof for post/thread, signals, price history, pools, engagement stats, identity readbacks, and lifecycle proof packets
+- [check-colony-operator-multi-action-plan.ts](./check-colony-operator-multi-action-plan.ts): maintained proof that one operator dry-run can represent multiple requested colony actions with per-action readiness, proof status, params, timeframe, and live-execution gates
 - [check-colony-operator-decision-coverage.ts](./check-colony-operator-decision-coverage.ts): maintained AC-3 coverage proof for selectable skip/publish/reply/react and explicit skipped alternatives for tip, VOTE, fixed-price BET, and status-only higher/lower BET
 - [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts): maintained one-cycle operator runner; defaults to no-spend preflight and only executes live publish/reply when `--execute` is explicit and the preflight selected publish or reply
 - [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts): copied-bundle outside-in proof for the colony-operator OpenClaw path against the packed package
@@ -83,12 +84,13 @@ For a new consumer integration, use the smallest useful path:
 8. [check-colony-operator-dry-run.ts](./check-colony-operator-dry-run.ts) when you need the maintained no-spend baseline proof for the new default colony-operator path while keeping clear that the full MVP target includes broader spend-bearing/action-surface capability
 9. [check-colony-operator-entrypoint.ts](./check-colony-operator-entrypoint.ts) when AC-2 needs proof that the maintained operator entrypoint returns selected/skipped actions, capability truth, lifecycle planning, and no-spend default mode
 10. [check-colony-operator-response-depth.ts](./check-colony-operator-response-depth.ts) when you need proof that operator/runtime abstractions preserve deep read and lifecycle-proof access
-11. [check-colony-operator-decision-coverage.ts](./check-colony-operator-decision-coverage.ts) when AC-3 needs proof that decision output covers the required action families without overclaiming higher/lower
-12. [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts) when M3 needs the maintained operator cycle runner with a no-spend preflight before any explicit live publish/reply execution
-13. [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts) when you need the copied/installed OpenClaw bundle proof for that same default path
-14. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
-15. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
-16. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
-17. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
+11. [check-colony-operator-multi-action-plan.ts](./check-colony-operator-multi-action-plan.ts) when you need proof that one operator dry-run can carry multiple requested actions while keeping live execution gated
+12. [check-colony-operator-decision-coverage.ts](./check-colony-operator-decision-coverage.ts) when AC-3 needs proof that decision output covers the required action families without overclaiming higher/lower
+13. [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts) when M3 needs the maintained operator cycle runner with a no-spend preflight before any explicit live publish/reply execution
+14. [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts) when you need the copied/installed OpenClaw bundle proof for that same default path
+15. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
+16. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
+17. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+18. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

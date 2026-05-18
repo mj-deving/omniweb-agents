@@ -9,6 +9,7 @@ import { createWriteLifecycleStore, readCurrentGitCommit } from "./_write-lifecy
 
 interface OperatorEnvelope {
   mode: "dry-run" | "execute";
+  observedContextSummary: Record<string, unknown>;
   selectedAction: {
     actionFamily: string;
     status: string;
@@ -16,6 +17,14 @@ interface OperatorEnvelope {
     executionPathFamily: string;
     reasonCodes: string[];
   };
+  actionSurface: {
+    surfacedAlternativeFamilies: string[];
+    perActionStatus: unknown[];
+    allMaintainedFamiliesSurfaced: boolean;
+    defaultNoSpend: boolean;
+    liveExecutionAllowed: boolean;
+  };
+  finalVerdict: Record<string, unknown>;
   lifecyclePlan: {
     required: boolean;
     status: string;
@@ -48,6 +57,11 @@ if (hasFlag(args, "--help", "-h")) {
 Run one maintained Colony Operator cycle. Default is no-spend dry-run. Passing
 --execute first runs a no-spend preflight and only proceeds if the selected
 action is publish or reply.
+
+The JSON report includes observed read context, selected action, surfaced
+alternatives across maintained action families, per-action capability /
+guardrail / lifecycle / supervision / explicit-execute / admissibility status,
+and a final no-spend or execution verdict.
 
 Options:
   --execute               Execute one live publish/reply cycle after preflight
@@ -141,6 +155,7 @@ try {
       executeRequested: false,
       walletAddress: omni.address ?? null,
       preflight,
+      operatorCycleProof: summarizeOperatorCycleProof(preflight),
       nextAction: preflightEligible
         ? "Re-run with --execute to perform one bounded live publish/reply operator cycle."
         : "Current operator decision is not publish/reply; do not spend for M3 from this state.",
@@ -154,6 +169,7 @@ try {
       executeRequested: true,
       walletAddress: omni.address ?? null,
       preflight,
+      operatorCycleProof: summarizeOperatorCycleProof(preflight),
       blocker: "selected_action_not_publish_or_reply",
       spendStatus: "no-spend",
     };
@@ -185,6 +201,7 @@ try {
       walletAddress: omni.address ?? null,
       preflight,
       execution,
+      operatorCycleProof: summarizeOperatorCycleProof(execution),
       spendStatus: execution.execution.demSpendEstimate > 0 ? "executed" : "no-spend",
       finalVerdict: liveOk ? "pass" : "pending-or-degraded",
     };
@@ -211,4 +228,19 @@ function getPositiveInt(flag: string, fallback: number): number {
     process.exit(2);
   }
   return value;
+}
+
+function summarizeOperatorCycleProof(envelope: OperatorEnvelope): Record<string, unknown> {
+  return {
+    observedContextSummary: envelope.observedContextSummary,
+    selectedAction: envelope.selectedAction,
+    surfacedAlternativeFamilies: envelope.actionSurface.surfacedAlternativeFamilies,
+    allMaintainedFamiliesSurfaced: envelope.actionSurface.allMaintainedFamiliesSurfaced,
+    defaultNoSpend: envelope.actionSurface.defaultNoSpend,
+    liveExecutionAllowed: envelope.actionSurface.liveExecutionAllowed,
+    perActionStatus: envelope.actionSurface.perActionStatus,
+    lifecyclePlan: envelope.lifecyclePlan,
+    execution: envelope.execution,
+    finalVerdict: envelope.finalVerdict,
+  };
 }

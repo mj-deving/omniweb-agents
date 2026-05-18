@@ -36,7 +36,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - PR #419 completes Wave D release-readiness without npm release, public registry proof, or broad launch claims.
 - Wave E / `omniweb-agents-capsurf` is complete through PRs #420-#426: the toolkit/runtime layer owns the maintained capability surface a fresh colony operator inspects for supported actions, params, proof status, response depth, readiness, lifecycle, and execution boundaries. Skills/playbooks stay strategy-focused and should not re-teach protocol mechanics.
 - PR #427 completed the toolkit guardrail surface. PRs #428/#429 completed `omniweb-agents-admissibility`: capability answers what exists, guardrails answer whether it is safe, and action admissibility answers whether this specific action can be planned or executed right now.
-- The next lane is the admissibility-gated maintained multi-action operator cycle: observe live context, choose among maintained action families, surface capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth in one path, and execute only when the specific action has separate authorization.
+- The `uw66.6` lane is the admissibility-gated maintained multi-action operator cycle: observe live context, choose among maintained action families, surface capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth in one path, and execute only when the specific action has separate authorization. The default proof remains no-spend.
 
 ## Canonical sources
 
@@ -55,6 +55,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `packages/omniweb-toolkit/references/uw66.3-bounded-live-reaction-proof-2026-05-15.md`
 - `packages/omniweb-toolkit/references/uw66.4-bounded-live-tip-proof-2026-05-15.md`
 - `packages/omniweb-toolkit/references/uw66.6-agentic-memo-bet-readback-2026-05-16.md`
+- `packages/omniweb-toolkit/references/uw66.6-maintained-operator-cycle-proof-2026-05-18.md`
 - `packages/omniweb-toolkit/references/write-lifecycle.md`
 - `docs/WRITE_LIFECYCLE_GOAL_BRIEF.md`
 - `docs/WRITE_LIFECYCLE_MASTER_PRD.md`
@@ -98,7 +99,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 13. Harden and consumerize only after the live operator floor and external runtime story are honest; the copied-bundle outside-in proof is current for no-spend consumer posture, not for registry publication or external hosted OpenClaw/Gregor live identity mutation.
 14. Wave D release-readiness is complete without release, and Wave E toolkit-owned capability surface is complete through `omniweb-agents-capsurf` / PRs #420-#426.
 15. Toolkit guardrails are complete via PR #427, and action admissibility is complete via PRs #428/#429: the toolkit owns the admissibility API, selected actions and multi-action dry-run plans carry per-action admissibility, and `executeResolvedIntent()` fails closed before side effects unless final admissibility is `allowed`.
-16. The next band is a maintained multi-action operator cycle that uses the now-gated runtime path. BET/higher-lower widening is deliberate follow-up inside that lane, not default authority to spend.
+16. `uw66.6` proves the maintained multi-action operator-cycle report surface in no-spend mode: observed context, selected action, all maintained alternatives, per-action capability/guardrail/lifecycle/supervision/explicit-execute/admissibility status, and final verdict. BET/higher-lower widening is deliberate follow-up inside that lane, not default authority to spend.
 
 ## Anti-drift rules
 

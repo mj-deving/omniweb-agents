@@ -197,10 +197,16 @@ function runReleaseGateJourney(): JourneyResult {
       ? "The npm publish gate is clear, so the first external consumer install path is not blocked at the registry layer."
       : "The external consumer install path is blocked or failed during the npm publish gate.";
 
-  if (parsed?.releaseDecision === "blocked_npm_auth_missing" && parsed.checks?.packageCheck?.ok) {
+  if (
+    (parsed?.releaseDecision === "blocked_npm_auth_missing"
+      || parsed?.releaseDecision === "ready_to_publish_but_not_authorized")
+    && parsed.checks?.packageCheck?.ok
+  ) {
     status = "degraded";
     rationale =
-      "The checked-out package path is healthy, but the first registry install is still blocked by missing npm auth in the publishing environment.";
+      parsed.releaseDecision === "ready_to_publish_but_not_authorized"
+        ? "The checked-out package path is release-ready, but no npm publish was authorized, so the first registry install path remains unavailable."
+        : "The checked-out package path is healthy, but the authorized registry release path is blocked by missing npm auth in the publishing environment.";
   }
 
   return {

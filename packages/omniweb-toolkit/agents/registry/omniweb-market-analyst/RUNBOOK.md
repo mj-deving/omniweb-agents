@@ -4,7 +4,7 @@ This file turns the skill artifact into an executable install and validation pat
 
 ## Install
 
-Preferred install path after npm publish:
+Preferred install path after an explicit npm release:
 
 ```bash
 npm install omniweb-toolkit@0.1.0 @kynesyslabs/demosdk better-sqlite3

@@ -1,9 +1,11 @@
 import type { OmniWeb } from "./colony.js";
 import {
   buildColonyOperatorCapabilityTruth,
+  type ColonyOperatorActionIntentContract,
   type ColonyOperatorActionFamily,
   type ColonyOperatorActionTruth,
   type ColonyOperatorCapabilityTruth,
+  type ColonyOperatorTruthStatus,
 } from "./colony-operator-capability-truth.js";
 import type { MinimalActionType, ResolvedIntent } from "./intent-types.js";
 import {
@@ -42,13 +44,16 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
     lifecycleStatus: string;
     executionPathFamily: string;
     reasonCodes: string[];
+    intent: ColonyOperatorActionIntentContract;
   };
   skippedAlternatives: Array<{
     actionFamily: ColonyOperatorActionFamily;
     status: string;
     lifecycleStatus: string;
     reasonCodes: string[];
+    intent: ColonyOperatorActionIntentContract;
   }>;
+  capabilitySummary: ColonyOperatorCapabilitySummary;
   capabilityTruth: ColonyOperatorCapabilityTruth;
   lifecyclePlan: ColonyOperatorLifecyclePlan;
   execution: {
@@ -67,6 +72,19 @@ export interface ColonyOperatorExecutionEnvelope<TState extends MinimalAgentStat
     error: MinimalExecutionOutcome["error"] | null;
   };
   cycle: MinimalCycleRecord<TState>;
+}
+
+export interface ColonyOperatorCapabilitySummary {
+  selectedFamily: ColonyOperatorActionFamily;
+  executableFamilies: ColonyOperatorActionFamily[];
+  supervisedFamilies: ColonyOperatorActionFamily[];
+  blockedFamilies: ColonyOperatorActionFamily[];
+  lifecyclePendingFamilies: ColonyOperatorActionFamily[];
+  unsupportedFamilies: ColonyOperatorActionFamily[];
+  explicitExecuteFamilies: ColonyOperatorActionFamily[];
+  spendFamilies: ColonyOperatorActionFamily[];
+  noSpendDefault: boolean;
+  allRequiredFamiliesHaveIntent: boolean;
 }
 
 export interface ColonyOperatorLifecycleStore {
@@ -154,6 +172,7 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       status: action.status,
       lifecycleStatus: action.lifecycleStatus,
       reasonCodes: action.reasonCodes,
+      intent: action.intent,
     }));
   const lifecyclePlan = await buildLifecyclePlan({
     mode,
@@ -175,8 +194,10 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
       lifecycleStatus: selectedTruth.lifecycleStatus,
       executionPathFamily: selectedTruth.executionPathFamily,
       reasonCodes: selectedTruth.reasonCodes,
+      intent: selectedTruth.intent,
     },
     skippedAlternatives,
+    capabilitySummary: summarizeCapabilityTruth(capabilityTruth, selectedTruth.actionFamily),
     capabilityTruth,
     lifecyclePlan,
     execution: {
@@ -196,6 +217,37 @@ export async function runColonyOperatorCycle<TState extends MinimalAgentState = 
     },
     cycle,
   };
+}
+
+function summarizeCapabilityTruth(
+  truth: ColonyOperatorCapabilityTruth,
+  selectedFamily: ColonyOperatorActionFamily,
+): ColonyOperatorCapabilitySummary {
+  return {
+    selectedFamily,
+    executableFamilies: familiesWithStatus(truth.actions, "executable"),
+    supervisedFamilies: familiesWithStatus(truth.actions, "supervised"),
+    blockedFamilies: familiesWithStatus(truth.actions, "blocked"),
+    lifecyclePendingFamilies: familiesWithStatus(truth.actions, "lifecycle-pending"),
+    unsupportedFamilies: familiesWithStatus(truth.actions, "unsupported"),
+    explicitExecuteFamilies: truth.actions
+      .filter((action) => action.requiresExplicitExecute)
+      .map((action) => action.actionFamily),
+    spendFamilies: truth.actions
+      .filter((action) => action.spendsDem)
+      .map((action) => action.actionFamily),
+    noSpendDefault: truth.coverage.noSpendDefault,
+    allRequiredFamiliesHaveIntent: truth.coverage.allRequiredFamiliesHaveIntent,
+  };
+}
+
+function familiesWithStatus(
+  actions: ColonyOperatorActionTruth[],
+  status: ColonyOperatorTruthStatus,
+): ColonyOperatorActionFamily[] {
+  return actions
+    .filter((action) => action.status === status)
+    .map((action) => action.actionFamily);
 }
 
 function inferSelectedActionFamily(record: MinimalCycleRecord): ColonyOperatorActionFamily {

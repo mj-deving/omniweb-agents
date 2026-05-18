@@ -66,7 +66,7 @@ Current as of **May 13, 2026**.
 
 ### Not claimed yet
 
-- `omniweb-toolkit` is not published on npm yet. The package shape is validated, but registry publication is still blocked by npm auth in the publishing environment.
+- `omniweb-toolkit` is not published on npm yet. The package shape, pack dry-run, and registry-name preflight are validated, but registry publication remains unauthorized in this session and no `npm publish` has occurred.
 - Live wallet-backed write/readback is not a blanket public claim. The current bounded publish lane is parked on hosted auth plus node/Web2 proxy failures until upstream conditions materially change.
 - The OpenClaw bundle is not a full standalone npm package and is not equivalent to the whole wallet-backed runtime. It is a lightweight external workspace with a deliberately small, truthful behavior layer.
 - Running wallet-backed flows requires explicit environment configuration, optional peer dependencies, and the relevant validation scripts. The default public path is read-first and no-spend.

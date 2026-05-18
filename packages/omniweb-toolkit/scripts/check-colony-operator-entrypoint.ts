@@ -13,11 +13,42 @@ interface OperatorEnvelope {
     status: string;
     lifecycleStatus: string;
     executionPathFamily: string;
+    intent?: {
+      actionFamily: string;
+      actionType: string;
+      marketKind?: string;
+      status: string;
+      executionPathFamily: string;
+    };
   };
-  skippedAlternatives: Array<{ actionFamily: string; status: string; lifecycleStatus: string }>;
+  skippedAlternatives: Array<{
+    actionFamily: string;
+    status: string;
+    lifecycleStatus: string;
+    intent?: {
+      actionFamily: string;
+      actionType: string;
+      marketKind?: string;
+      status: string;
+      executionPathFamily: string;
+    };
+  }>;
+  capabilitySummary: {
+    selectedFamily: string;
+    executableFamilies: string[];
+    supervisedFamilies: string[];
+    blockedFamilies: string[];
+    lifecyclePendingFamilies: string[];
+    unsupportedFamilies: string[];
+    explicitExecuteFamilies: string[];
+    spendFamilies: string[];
+    noSpendDefault: boolean;
+    allRequiredFamiliesHaveIntent: boolean;
+  };
   capabilityTruth: {
     coverage: {
       allRequiredFamiliesPresent: boolean;
+      allRequiredFamiliesHaveIntent: boolean;
       noSpendDefault: boolean;
     };
   };
@@ -87,8 +118,13 @@ const checks = {
   dryRunDefault: envelope?.mode === "dry-run" && envelope.execution.dryRun === true,
   noSpendDefault: envelope?.execution.demSpendEstimate === 0 && envelope.capabilityTruth.coverage.noSpendDefault === true,
   selectedActionPresent: typeof envelope?.selectedAction.actionFamily === "string",
+  selectedActionIntentPresent: envelope?.selectedAction.intent?.actionFamily === envelope?.selectedAction.actionFamily,
   skippedAlternativesPresent: Array.isArray(envelope?.skippedAlternatives) && envelope.skippedAlternatives.length >= 5,
+  skippedAlternativeIntentsPresent: envelope?.skippedAlternatives.every((item) => item.intent?.actionFamily === item.actionFamily) === true,
   capabilityTruthPresent: envelope?.capabilityTruth.coverage.allRequiredFamiliesPresent === true,
+  capabilitySummaryPresent: envelope?.capabilitySummary.selectedFamily === envelope?.selectedAction.actionFamily
+    && envelope?.capabilitySummary.allRequiredFamiliesHaveIntent === true
+    && envelope?.capabilitySummary.lifecyclePendingFamilies.includes("bet-hl") === true,
   lifecyclePlanPresent: envelope?.lifecyclePlan.required === true && envelope.lifecyclePlan.status === "planned",
   noProductMutationClaimed: envelope?.execution.productReadback.attempted === false,
 };
@@ -111,6 +147,13 @@ console.log(JSON.stringify({
         mode: envelope.mode,
         selectedAction: envelope.selectedAction,
         skippedAlternativeCount: envelope.skippedAlternatives.length,
+        skippedAlternatives: envelope.skippedAlternatives.map((alternative) => ({
+          actionFamily: alternative.actionFamily,
+          status: alternative.status,
+          lifecycleStatus: alternative.lifecycleStatus,
+          intent: alternative.intent,
+        })),
+        capabilitySummary: envelope.capabilitySummary,
         lifecyclePlan: envelope.lifecyclePlan,
         execution: envelope.execution,
       }

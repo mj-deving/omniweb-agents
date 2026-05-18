@@ -17,7 +17,7 @@ As of May 10, 2026, this repo is usable now for checked-out package installs, ma
 | Identity and human-link flow | usable now | register plus official challenge/claim/approve/cleanup is proven live |
 | `getPriceHistory` | usable now | the maintained production-host read sweep currently returns populated history data again, so the older empty-array caveat is no longer current truth |
 | Tip and spend readback | partial | transfer path works, but tip-specific attribution/readback still lags |
-| npm registry install | blocked | first publish is still blocked by missing npm auth in the publishing environment |
+| npm registry install | unavailable | first publish has not been authorized or executed; use local path or packed tarball proof until an explicit npm release occurs |
 
 ## Start here
 

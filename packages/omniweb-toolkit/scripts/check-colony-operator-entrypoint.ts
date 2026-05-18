@@ -65,6 +65,18 @@ interface OperatorEnvelope {
       capabilityIds: string[];
       includes: string[];
     };
+    responseDepthAccess: {
+      manifestField: string;
+      preservedFields: string[];
+      missingSurfaces: string[];
+      surfaces: Array<{
+        id: string;
+        methods: string[];
+        readbackSurfaces: string[];
+        envelopeFields: string[];
+        preservationStatus: string;
+      }>;
+    };
   };
   capabilityTruth: {
     coverage: {
@@ -172,6 +184,19 @@ const checks = {
       && capability.methods.includes("omni.colony.publish")
       && capability.params.some((param) => param.name === "text" && param.required)
     )),
+  responseDepthAccessPresent: envelope?.capabilityDiscovery.responseDepthAccess.manifestField === "toolkitCapabilityManifest"
+    && envelope.capabilityDiscovery.responseDepthAccess.missingSurfaces.length === 0
+    && envelope.capabilityDiscovery.responseDepthAccess.surfaces.every((surface) => surface.preservationStatus === "preserved")
+    && envelope.capabilityDiscovery.responseDepthAccess.surfaces.some((surface) => (
+      surface.id === "post-detail-thread"
+      && surface.methods.includes("omni.colony.getPostDetail")
+      && surface.readbackSurfaces.includes("thread")
+    ))
+    && envelope.capabilityDiscovery.responseDepthAccess.surfaces.some((surface) => (
+      surface.id === "lifecycle-proof-packets"
+      && surface.envelopeFields.includes("lifecyclePlan.proofPath")
+      && surface.readbackSurfaces.includes("resolved-winners")
+    )),
   lifecyclePlanPresent: envelope?.lifecyclePlan.required === true && envelope.lifecyclePlan.status === "planned",
   noProductMutationClaimed: envelope?.execution.productReadback.attempted === false,
 };
@@ -186,6 +211,7 @@ console.log(JSON.stringify({
   contract: {
     maintainedOperatorEntrypoint: ok,
     runtimeCapabilityDiscovery: Boolean(checks.compactDiscoveryPresent && checks.fullManifestAccessPresent),
+    responseDepthPreserved: checks.responseDepthAccessPresent,
     explicitExecuteRequiredForLiveWrites: checks.dryRunDefault && checks.lifecyclePlanPresent,
     spendsDem: false,
     liveWriteProven: false,

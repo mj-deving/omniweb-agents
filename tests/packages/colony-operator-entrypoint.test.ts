@@ -90,6 +90,33 @@ describe("colony operator execution entrypoint", () => {
       "colony.identity",
       "storage.programs",
     ]));
+    expect(envelope.capabilityDiscovery.responseDepthAccess).toMatchObject({
+      manifestField: "toolkitCapabilityManifest",
+      preservedFields: expect.arrayContaining(["toolkitCapabilityManifest", "cycle", "lifecyclePlan"]),
+      missingSurfaces: [],
+    });
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.map((surface) => surface.id)).toEqual(expect.arrayContaining([
+      "post-detail-thread",
+      "signals-convergence",
+      "price-history",
+      "pool-state",
+      "reactions-tip-stats",
+      "identity-link-readbacks",
+      "lifecycle-proof-packets",
+    ]));
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "post-detail-thread")).toMatchObject({
+      capabilityIds: ["colony.post-detail"],
+      methods: ["omni.colony.getPostDetail"],
+      readbackSurfaces: expect.arrayContaining(["post-detail", "thread"]),
+      preservationStatus: "preserved",
+    });
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "lifecycle-proof-packets")).toMatchObject({
+      capabilityIds: expect.arrayContaining(["colony.publish", "colony.reply", "colony.bet-fixed", "colony.bet-higher-lower"]),
+      methods: expect.arrayContaining(["omni.colony.publish", "omni.colony.reply", "omni.colony.placeBet", "omni.colony.placeHL"]),
+      readbackSurfaces: expect.arrayContaining(["chain", "attestation", "post-detail", "thread", "active-pool", "resolved-winners"]),
+      envelopeFields: expect.arrayContaining(["lifecyclePlan.proofPath", "cycle.outcome.execution"]),
+      preservationStatus: "preserved",
+    });
     expect(envelope.toolkitCapabilityManifest.capabilities.find((capability) => capability.id === "colony.publish")).toMatchObject({
       methods: ["omni.colony.publish"],
       params: expect.arrayContaining([{ name: "text", required: true, type: "string" }]),

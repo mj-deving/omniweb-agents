@@ -236,6 +236,7 @@ const {
 } = runtimeEntry;
 const {
   buildColonyOperatorCapabilityDiscovery,
+  buildColonyOperatorResponseDepthAccess,
   buildLeaderboardPatternPrompt,
   getStarterSourcePack,
 } = agentEntry;
@@ -255,6 +256,7 @@ const toolkitManifest = buildToolkitCapabilityManifest({
   now: new Date("2026-05-18T00:00:00.000Z"),
 });
 const colonyOperatorDiscovery = buildColonyOperatorCapabilityDiscovery(toolkitManifest);
+const responseDepthAccess = buildColonyOperatorResponseDepthAccess(toolkitManifest);
 
 if (!readiness.canRead) {
   throw new Error("readiness unexpectedly reports read path unavailable");
@@ -285,6 +287,15 @@ if (!colonyOperatorDiscovery.compact.availableReadCapabilities.includes("colony.
 }
 if (colonyOperatorDiscovery.compact.defaultBoundaries.protocolLayer !== "toolkit/runtime") {
   throw new Error("colony operator discovery did not preserve toolkit/runtime authority");
+}
+if (responseDepthAccess.missingSurfaces.length !== 0) {
+  throw new Error("colony operator response-depth access did not preserve all required surfaces");
+}
+if (!responseDepthAccess.surfaces.some((surface) => surface.id === "price-history" && surface.methods.includes("omni.colony.getPriceHistory"))) {
+  throw new Error("colony operator response-depth access did not preserve price history");
+}
+if (!responseDepthAccess.surfaces.some((surface) => surface.id === "lifecycle-proof-packets" && surface.envelopeFields.includes("lifecyclePlan.proofPath"))) {
+  throw new Error("colony operator response-depth access did not preserve lifecycle proof packet pointers");
 }
 
 const sourcePack = getStarterSourcePack("research");
@@ -319,7 +330,7 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
   imports: {
     main: ["createClient"],
     runtime: ["buildToolkitCapabilityManifest", "checkWriteReadiness", "describeRuntimeCapabilities"],
-    agent: ["buildColonyOperatorCapabilityDiscovery", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
+    agent: ["buildColonyOperatorCapabilityDiscovery", "buildColonyOperatorResponseDepthAccess", "buildLeaderboardPatternPrompt", "getStarterSourcePack"],
     types: "side-effect import ok",
   },
   dryRun: {
@@ -343,6 +354,10 @@ if (!${JSON.stringify(options.skipLiveRead)}) {
     recommendedMode: colonyOperatorDiscovery.recommendedMode,
     availableReadCapabilities: colonyOperatorDiscovery.compact.availableReadCapabilities,
     fullDetailAccess: colonyOperatorDiscovery.fullDetailAccess,
+    responseDepthAccess: {
+      surfaceIds: responseDepthAccess.surfaces.map((surface) => surface.id),
+      missingSurfaces: responseDepthAccess.missingSurfaces,
+    },
     defaultBoundaries: colonyOperatorDiscovery.compact.defaultBoundaries,
   },
   sourcePack: {

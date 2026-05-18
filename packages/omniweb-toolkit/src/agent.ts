@@ -122,6 +122,7 @@ export {
 } from "./capability-manifest.js";
 export {
   buildColonyOperatorCapabilityDiscovery,
+  buildColonyOperatorResponseDepthAccess,
   runColonyOperatorCycle,
   type ColonyOperatorCapabilitySummary,
   type ColonyOperatorCapabilityDiscovery,
@@ -130,6 +131,10 @@ export {
   type ColonyOperatorLifecyclePlan,
   type ColonyOperatorLifecyclePlanStatus,
   type ColonyOperatorLifecycleStore,
+  type ColonyOperatorResponseDepthAccess,
+  type ColonyOperatorResponseDepthPreservationStatus,
+  type ColonyOperatorResponseDepthSurface,
+  type ColonyOperatorResponseDepthSurfaceId,
   type RunColonyOperatorCycleOptions,
 } from "./colony-operator-entrypoint.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";

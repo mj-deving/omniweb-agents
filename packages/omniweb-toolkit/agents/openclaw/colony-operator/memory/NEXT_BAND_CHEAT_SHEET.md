@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-19
-Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane and the completed hosted no-spend operator consumer proof.
+Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane and the completed hosted no-spend operator consumer proof; current next lane is `omniweb-agents-action-spectrum`.
 
 ## Do first
 
@@ -23,6 +23,8 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - Beads epic `omniweb-agents-spectrum` is complete.
 - Hosted no-spend operator consumer proof is complete through `omniweb-agents-hosted`: clean local-tarball install, package-name imports, repeated full-spectrum no-spend operator cycles, optional dry-run hosted smoke, drift/degraded ledger, and front-door check wiring. Packet: `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`.
 - Do not relaunch `/goal` for `omniweb-agents-hosted`; future release, public-registry, live-spend, or production hosted-activation work needs a separate explicit lane.
+- The new explicit live-spend successor lane is `omniweb-agents-action-spectrum`. PR0 is matrix-only and no-spend: `docs/FULL_ACTION_SPECTRUM_GOAL_BRIEF.md`, `docs/FULL_ACTION_SPECTRUM_MASTER_PRD.md`, `docs/FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md`, and `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`.
+- Do not confuse `omniweb-agents-action-spectrum` with historical `omniweb-agents-spectrum`; the latter is the completed consumer-spectrum lane in docs.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` should not surface `omniweb-agents-hosted.*` after PR5 closes; follow-up work should be new, explicitly scoped Beads.
 
@@ -36,6 +38,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
 - **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
 - **Hosted no-spend operator consumer proof:** complete via `omniweb-agents-hosted`; use `npm --prefix packages/omniweb-toolkit run check:frontdoor` or `check:hosted-operator-consumer` for current package proof.
+- **Full action-spectrum matrix:** active via `omniweb-agents-action-spectrum`; land PR0 before any live spend or mutation run.
 
 ## Keep frozen for this wave
 
@@ -43,6 +46,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
+- full action-spectrum PR0 remains no-spend matrix work only
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
 - no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
 - hosted proof means local tarball plus optional dry-run runtime smoke, not production deployment
@@ -51,9 +55,10 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 
 - broad seam rewrite
 - default substrate fork
-- StorageProgram / escrow / IPFS proof bands
+- StorageProgram / escrow / IPFS execution outside `omniweb-agents-action-spectrum.5`
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
-- npm release, public registry proof, broad substrate rewrite, live multi-action spend, and unsupervised identity mutation
+- npm release, public registry proof, broad substrate rewrite, live multi-action spend outside explicit `omniweb-agents-action-spectrum` child budgets, and unsupervised identity mutation
+- live spend or mutation from `omniweb-agents-action-spectrum.0`; use later child beads with explicit budget and controlled targets
 - relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it

@@ -55,6 +55,8 @@ Before a wallet-backed action, read the runtime surfaces in order: capability te
 | Playbook validation | `npm run check:playbook:*` | the packaged path fails and you need to debug one layer |
 | Live proof | `npm run check:write-surface -- --broadcast` or a matching `probe-*` script | you are making launch-grade claims |
 
+For an all-operations spend/mutation plan, use [references/full-action-spectrum-testing-matrix.md](references/full-action-spectrum-testing-matrix.md). It is the row-level matrix for proving every read, write, identity/admin mutation, and Demos-domain operation without turning one successful tx into a blanket claim.
+
 ## Validation Ladder
 
 Use the smallest useful check first:

@@ -156,8 +156,8 @@ const checks = {
     && hasCapability(entries["web2-identity"], "identity.web2", "advanced")
     && entries.webhooks?.classification === "advanced"
     && hasCapability(entries.webhooks, "colony.webhooks", "advanced"),
-  knownGapsAreNamed: entries.chat?.classification === "pending"
-    && entries.chat.capabilityIds.length === 0
+  knownGapsAreNamed: entries.chat?.classification === "partial"
+    && hasCapability(entries.chat, "colony.chat", "available")
     && entries["proof-storage"]?.classification === "degraded"
     && hasCapability(entries["proof-storage"], "storage.programs", "degraded")
     && entries["integration-packages"]?.classification === "intentionally_excluded"

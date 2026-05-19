@@ -65,6 +65,36 @@ interface OperatorEnvelope {
       capabilityIds: string[];
       includes: string[];
     };
+    operatorHelp: {
+      format: string;
+      manifestField: string;
+      defaultMode: string;
+      commandCount: number;
+      readCommandCount: number;
+      writeCommandCount: number;
+      commands: Array<{
+        command: string;
+        capabilityId: string;
+        params: Array<{ name: string; required: boolean; type: string }>;
+        responseDepth: string;
+        proofTier: string;
+        readbackSurfaces: string[];
+        noSpend: boolean;
+        noMutation: boolean;
+        usage: string;
+      }>;
+      readCommands: Array<{
+        command: string;
+        capabilityId: string;
+        params: Array<{ name: string; required: boolean; type: string }>;
+        responseDepth: string;
+        proofTier: string;
+        readbackSurfaces: string[];
+        noSpend: boolean;
+        noMutation: boolean;
+        usage: string;
+      }>;
+    };
     responseDepthAccess: {
       manifestField: string;
       preservedFields: string[];
@@ -91,6 +121,8 @@ interface OperatorEnvelope {
       id: string;
       methods: string[];
       params: Array<{ name: string; required: boolean; type: string }>;
+      methodParams: Record<string, Array<{ name: string; required: boolean; type: string }>>;
+      methodRequirements: Record<string, Record<string, unknown>>;
       requirements: Record<string, unknown>;
       responseDepth: string;
       proofTier: string;
@@ -179,12 +211,38 @@ const checks = {
     && envelope.capabilityDiscovery.compact.defaultBoundaries.protocolLayer === "toolkit/runtime",
   fullManifestAccessPresent: envelope?.capabilityDiscovery.fullDetailAccess.manifestField === "toolkitCapabilityManifest"
     && envelope.capabilityDiscovery.fullDetailAccess.includes.includes("params")
+    && envelope.capabilityDiscovery.fullDetailAccess.includes.includes("methodParams")
+    && envelope.capabilityDiscovery.fullDetailAccess.includes.includes("methodRequirements")
     && envelope.capabilityDiscovery.fullDetailAccess.includes.includes("proofTier")
     && envelope.toolkitCapabilityManifest.capabilities.some((capability) => (
       capability.id === "colony.publish"
       && capability.methods.includes("omni.colony.publish")
       && capability.params.some((param) => param.name === "text" && param.required)
     )),
+  operatorHelpPresent: envelope?.capabilityDiscovery.operatorHelp.format === "toolkit-help.v1"
+    && envelope.capabilityDiscovery.operatorHelp.manifestField === "toolkitCapabilityManifest"
+    && envelope.capabilityDiscovery.operatorHelp.defaultMode === "read-first-no-spend"
+    && envelope.capabilityDiscovery.operatorHelp.commandCount >= envelope.toolkitCapabilityManifest.capabilities.length
+    && envelope.capabilityDiscovery.operatorHelp.readCommands.some((command) => (
+      command.command === "createClient().getFeed"
+      && command.noSpend
+      && command.noMutation
+      && command.params.some((param) => param.name === "limit")
+      && command.usage.includes("--limit")
+    ))
+    && envelope.capabilityDiscovery.operatorHelp.readCommands.some((command) => command.command === "createClient().getThread")
+    && envelope.capabilityDiscovery.operatorHelp.readCommands.some((command) => command.command === "createClient().getChatMessages")
+    && envelope.capabilityDiscovery.operatorHelp.readCommands.some((command) => (
+      command.command === "omni.escrow.getClaimable"
+      && command.noSpend
+      && command.noMutation
+    ))
+    && envelope.capabilityDiscovery.operatorHelp.commands.every((command) => {
+      const capability = envelope?.toolkitCapabilityManifest.capabilities.find((item) => item.id === command.capabilityId);
+      const expectedParams = capability?.methodParams[command.command] ?? capability?.params ?? [];
+      return capability != null
+        && expectedParams.map((param) => param.name).join("\0") === command.params.map((param) => param.name).join("\0");
+    }),
   responseDepthAccessPresent: envelope?.capabilityDiscovery.responseDepthAccess.manifestField === "toolkitCapabilityManifest"
     && envelope.capabilityDiscovery.responseDepthAccess.missingSurfaces.length === 0
     && envelope.capabilityDiscovery.responseDepthAccess.surfaces.every((surface) => surface.preservationStatus === "preserved")
@@ -211,7 +269,7 @@ console.log(JSON.stringify({
   checks,
   contract: {
     maintainedOperatorEntrypoint: ok,
-    runtimeCapabilityDiscovery: Boolean(checks.compactDiscoveryPresent && checks.fullManifestAccessPresent),
+    runtimeCapabilityDiscovery: Boolean(checks.compactDiscoveryPresent && checks.fullManifestAccessPresent && checks.operatorHelpPresent),
     responseDepthPreserved: checks.responseDepthAccessPresent,
     explicitExecuteRequiredForLiveWrites: checks.dryRunDefault && checks.lifecyclePlanPresent,
     spendsDem: false,
@@ -238,6 +296,8 @@ console.log(JSON.stringify({
               id: capability.id,
               methods: capability.methods,
               params: capability.params,
+              methodParams: capability.methodParams,
+              methodRequirements: capability.methodRequirements,
               requirements: capability.requirements,
               responseDepth: capability.responseDepth,
               proofTier: capability.proofTier,

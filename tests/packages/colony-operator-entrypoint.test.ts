@@ -162,7 +162,17 @@ describe("colony operator execution entrypoint", () => {
       },
       fullDetailAccess: {
         manifestField: "toolkitCapabilityManifest",
-        includes: expect.arrayContaining(["methods", "params", "requirements", "responseDepth", "proofTier", "lifecycle", "status"]),
+        includes: expect.arrayContaining([
+          "methods",
+          "params",
+          "methodParams",
+          "requirements",
+          "methodRequirements",
+          "responseDepth",
+          "proofTier",
+          "lifecycle",
+          "status",
+        ]),
       },
     });
     expect(envelope.capabilityDiscovery.fullDetailAccess.capabilityIds).toEqual(expect.arrayContaining([
@@ -170,6 +180,59 @@ describe("colony operator execution entrypoint", () => {
       "colony.identity",
       "storage.programs",
     ]));
+    expect(envelope.capabilityDiscovery.operatorHelp).toMatchObject({
+      format: "toolkit-help.v1",
+      manifestField: "toolkitCapabilityManifest",
+      intent: "discover_toolkit_surface",
+      defaultMode: "read-first-no-spend",
+      commandCount: expect.any(Number),
+      readCommandCount: expect.any(Number),
+      writeCommandCount: expect.any(Number),
+    });
+    expect(envelope.capabilityDiscovery.operatorHelp.commandCount).toBeGreaterThan(envelope.toolkitCapabilityManifest.capabilities.length);
+    expect(envelope.capabilityDiscovery.operatorHelp.readCommands).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        command: "createClient().getFeed",
+        capabilityId: "colony.feed",
+        noSpend: true,
+        noMutation: true,
+        usage: expect.stringContaining("--limit"),
+        params: expect.arrayContaining([
+          expect.objectContaining({ name: "limit", required: false, type: "number" }),
+          expect.objectContaining({ name: "cursor", required: false, type: "string" }),
+        ]),
+      }),
+      expect.objectContaining({
+        command: "createClient().getThread",
+        capabilityId: "colony.post-detail",
+        responseDepth: "rich",
+        params: expect.arrayContaining([expect.objectContaining({ name: "txHash", required: true })]),
+      }),
+      expect.objectContaining({
+        command: "createClient().getChatMessages",
+        capabilityId: "colony.chat",
+        params: expect.arrayContaining([expect.objectContaining({ name: "roomId" })]),
+      }),
+      expect.objectContaining({
+        command: "omni.escrow.getClaimable",
+        capabilityId: "escrow.identity",
+        noSpend: true,
+        noMutation: true,
+      }),
+      expect.objectContaining({
+        command: "omni.identity.lookup",
+        capabilityId: "identity.web2",
+        noSpend: true,
+        noMutation: true,
+      }),
+    ]));
+    for (const command of envelope.capabilityDiscovery.operatorHelp.commands) {
+      const capability = envelope.toolkitCapabilityManifest.capabilities.find((item) => item.id === command.capabilityId);
+      expect(capability, command.capabilityId).toBeDefined();
+      expect(command.params.map((param) => param.name)).toEqual(
+        (capability?.methodParams[command.command] ?? capability?.params ?? []).map((param) => param.name),
+      );
+    }
     expect(envelope.capabilityDiscovery.responseDepthAccess).toMatchObject({
       manifestField: "toolkitCapabilityManifest",
       preservedFields: expect.arrayContaining(["toolkitCapabilityManifest", "cycle", "lifecyclePlan"]),
@@ -186,7 +249,7 @@ describe("colony operator execution entrypoint", () => {
     ]));
     expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "post-detail-thread")).toMatchObject({
       capabilityIds: ["colony.post-detail"],
-      methods: ["omni.colony.getPostDetail"],
+      methods: expect.arrayContaining(["createClient().getPostDetail", "createClient().getThread", "omni.colony.getPostDetail"]),
       readbackSurfaces: expect.arrayContaining(["post-detail", "thread"]),
       preservationStatus: "preserved",
     });

@@ -1,13 +1,13 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-18
+updated: 2026-05-19
 completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The no-release consumer-spectrum lane is complete through PRs #432-#441: official docs/discovery, live endpoint response shapes, package exports, code reachability, transport/read/chat/webhook/market consumers, market write intents, and local tarball whole-spectrum proof are mapped and checked. Remaining edges are deliberate follow-ups only: no npm release, public registry proof, live multi-action spend, or unsupervised identity mutation."
-read_when: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
+summary: "The no-release consumer-spectrum lane is complete through PRs #432-#441. The next band is `omniweb-agents-hosted`: a GoalMode-backed hosted/external-style no-spend operator consumer proof over the local omniweb-toolkit tarball, with no npm release, no public registry proof, no live spend, and no unsupervised identity mutation."
+topic_hint: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
 # Roadmap
@@ -38,13 +38,13 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | The consumer-spectrum/codebase reality lane is complete through PRs #432-#441. The repo now has deterministic checks for official discovery/docs and live endpoint-shape comparison, code reachability, public export coverage, auth/RSS/SSE, read/profile/scoring/verification, chat/webhooks, market reads, no-spend market write intents, and a local tarball whole-spectrum consumer proof. |
+| Current direction | The consumer-spectrum/codebase reality lane is complete through PRs #432-#441. The active next band is `omniweb-agents-hosted`: prove a hosted/external-style operator can consume the local tarball, discover capability/admissibility from runtime surfaces, run repeated no-spend full-spectrum operator cycles, preserve drift/degraded truth, and emit honest proof packets. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam, capability surface, guardrails, and admissibility gate honestly instead of talking like those pivots are still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, and PRs #432-#441 completed `omniweb-agents-spectrum`. |
-| Remaining external edges | later npm auth/publish consumerization, public registry proof, live multi-action spend, and any externally hosted Gregor/OpenClaw live identity mutation after separate authorization; these remain explicitly outside the completed consumer-spectrum no-release lane |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed `omniweb-agents-spectrum`, and `omniweb-agents-hosted` now carries the hosted no-spend operator consumer proof. |
+| Remaining external edges | later npm auth/publish consumerization, public registry proof, live multi-action spend, and any externally hosted Gregor/OpenClaw live identity mutation after separate authorization; these remain explicitly outside both the completed consumer-spectrum no-release lane and the hosted no-spend operator consumer proof |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -258,6 +258,37 @@ Initial live research already shows two important truths to preserve in the inve
 - current `openapi.json` is much narrower than `supercolony-skill.md`; the skill advertises chat, agent levels, commodity/sports/binary/graduation markets, ETH/Base Sepolia contract-write markets, forecast scoring, user-agent linking, tips, webhooks, reports, convergence, stats, and health surfaces that are not all present in the current OpenAPI path list
 - some advertised discovery resources currently return 404, including `.well-known/mcp.json`, `/api/mcp/tools`, `/api/capabilities`, `/api/schema`, `/api/errors`, `/api/rate-limits`, `/api/stream-spec`, and `/api/changelog`; classify these as `advertised_but_404` until live upstream behavior changes
 
+#### Next active lane - hosted no-spend operator consumer proof
+
+This lane is planned under Beads epic `omniweb-agents-hosted`.
+
+GoalMode scaffold:
+- [HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md](HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md)
+- [HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md](HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md)
+- [HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md](HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md)
+
+Purpose:
+- prove a fresh hosted/external-style consumer can install the local `omniweb-toolkit` tarball
+- prove package-name imports only, including root, `runtime`, `agent`, `types`, and maintained write-facing surfaces
+- run repeated full-spectrum no-spend operator cycles across publish, reply, react, tip, VOTE, fixed-price BET, higher/lower BET, register, human-link, and skip alternatives
+- preserve capability, guardrail, lifecycle, supervision, explicit-execute, admissibility, and endpoint drift/degraded truth in proof packets
+- keep optional hosted runtime smoke deterministic, dry-run, and non-mutating by default
+
+Explicit non-goals:
+- no npm release
+- no public registry proof
+- no live spend or broadcast
+- no unsupervised identity mutation
+- no production OpenClaw/Gregor activation claim
+
+Execution order:
+1. `omniweb-agents-hosted.0` - GoalMode packet and roadmap scaffold
+2. `omniweb-agents-hosted.1` - clean hosted consumer fixture
+3. `omniweb-agents-hosted.2` - repeated no-spend operator cycles
+4. `omniweb-agents-hosted.3` - optional hosted runtime smoke
+5. `omniweb-agents-hosted.4` - drift and degraded endpoint ledger
+6. `omniweb-agents-hosted.5` - GoalMode closeout and Beads memory
+
 Required output classes for the inventory:
 - `covered`
 - `partial`
@@ -327,7 +358,7 @@ These are not next steps today:
 | `omniweb-agents-uw66.6` | maintained operator-cycle report surface | complete via PR #431; use it as evidence, not the next claimable lane |
 | blind dead-code cleanup | codebase ballast | blocked until consumer-spectrum/codebase inventory proves what is unused, duplicate, or superseded |
 | feature widening before inventory | consumer spectrum | blocked until official docs, live response shapes, and local toolkit/code reachability are compared |
-| live multi-action spend / identity mutation | execution authority | not authorized by the post-admissibility truth sync; requires separate explicit authorization |
+| live multi-action spend / identity mutation | execution authority | not authorized by the hosted no-spend lane; requires separate explicit authorization |
 
 ---
 

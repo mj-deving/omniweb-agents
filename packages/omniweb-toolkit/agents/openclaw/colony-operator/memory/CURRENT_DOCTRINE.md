@@ -1,8 +1,8 @@
 # CURRENT_DOCTRINE.md
 
 Status: active
-Updated: 2026-05-18
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release, `#427` — toolkit guardrails, `#428/#429` — action admissibility, `#431` — no-spend maintained operator-cycle proof, `#432-#441` — completed no-release consumer-spectrum/codebase map and local tarball whole-spectrum proof
+Updated: 2026-05-19
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release, `#427` — toolkit guardrails, `#428/#429` — action admissibility, `#431` — no-spend maintained operator-cycle proof, `#432-#441` — completed no-release consumer-spectrum/codebase map and local tarball whole-spectrum proof, `omniweb-agents-hosted` — hosted no-spend operator consumer GoalMode packet
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
 Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`, `#416`, `#418`, `#419`, `#427`, `#428`, `#429`, `#431`, `#432`, `#433`, `#434`, `#435`, `#436`, `#437`, `#438`, `#439`, `#440`, `#441`
@@ -38,7 +38,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - PR #427 completed the toolkit guardrail surface. PRs #428/#429 completed `omniweb-agents-admissibility`: capability answers what exists, guardrails answer whether it is safe, and action admissibility answers whether this specific action can be planned or executed right now.
 - PR #431 completed `uw66.6`: the maintained multi-action operator-cycle report surface now observes live context, selects an action, surfaces maintained alternatives, runs capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and emits a no-spend verdict unless a specific live effect is separately authorized.
 - The no-release consumer-spectrum lane is complete through PRs #432-#441. It compared official SuperColony docs/discovery, actual live endpoint response shapes, local toolkit/code reachability, public exports, transport/read/chat/webhook/market consumers, market write intents, and a clean local tarball whole-spectrum consumer install proof.
-- Beads epic `omniweb-agents-spectrum` is ready for closeout after the roadmap/re-entry mirror update. This lane did not authorize npm release, public registry proof, live multi-action spend, or unsupervised identity mutation.
+- Beads epic `omniweb-agents-spectrum` is complete. This lane did not authorize npm release, public registry proof, live multi-action spend, or unsupervised identity mutation.
+- The next active execution band is `omniweb-agents-hosted`: a hosted/external-style no-spend operator consumer proof over the local tarball. Its GoalMode packet is `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, and `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`. It proves clean tarball install, package-name imports, repeated full-spectrum no-spend operator cycles, capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and drift/degraded proof packets. It does not authorize npm release, public registry proof, live spend, production hosted activation, or unsupervised identity mutation.
 
 ## Canonical sources
 
@@ -72,6 +73,9 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `docs/CONSUMER_SPECTRUM_GOAL_BRIEF.md`
 - `docs/CONSUMER_SPECTRUM_MASTER_PRD.md`
 - `docs/CONSUMER_SPECTRUM_GOAL_LAUNCH.md`
+- `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`
+- `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`
+- `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`
 - `docs/ROADMAP.md` Wave E / `omniweb-agents-capsurf` and post-Wave-E action admissibility
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
@@ -108,6 +112,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 16. `uw66.6` proves the maintained multi-action operator-cycle report surface in no-spend mode: observed context, selected action, all maintained alternatives, per-action capability/guardrail/lifecycle/supervision/explicit-execute/admissibility status, and final verdict. BET/higher-lower widening is deliberate follow-up inside that lane, not default authority to spend.
 17. The consumer-spectrum lane is complete: PR #433 added the inventory gate; PR #434 classified codebase reachability and found no static dead/orphaned or duplicate/superseded local code; PR #435 normalized public exports; PRs #436-#439 widened transport, read/profile, chat/webhook, and market reads; PR #440 added no-spend market write intents; PR #441 proved the clean local tarball whole-spectrum consumer journey.
 18. Future cleanup or widening must cite those inventories/checks. Do not delete code simply because it looks old, and do not treat the local tarball proof as npm release or public registry evidence.
+19. Next active band: `omniweb-agents-hosted` proves a hosted/external-style no-spend operator consumer flow over the local tarball. PR0 is scaffold only. Later `/goal` execution starts at `omniweb-agents-hosted.1` after PR0 lands and the Beads graph is pushed.
 
 ## Anti-drift rules
 
@@ -126,6 +131,8 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Do **not** treat `uw66.6` as still upcoming/current architecture work. It is complete via PR #431.
 - Do **not** treat the consumer-spectrum/live-shape/codebase inventory as still upcoming/current architecture work. It is complete via PRs #432-#441.
 - Do **not** release, publish to npm, prove public registry install, or do release follow-up in this lane.
+- Do **not** launch `/goal` for `omniweb-agents-hosted` until PR0 lands and the Beads graph is pushed.
+- Do **not** treat the hosted no-spend proof as production hosted activation, live spend authority, or public registry evidence.
 - Do **not** widen package behavior or delete old code before the inventory has compared official docs, live endpoint shapes, and local code reachability.
 - Do **not** let skills/playbooks become the protocol mechanics source of truth again. Wave E moved capability discovery, params, proof tiers, response-depth access, readiness, lifecycle, and execution truth into toolkit/runtime surfaces; the admissibility layer consumes that truth instead of re-teaching it.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.

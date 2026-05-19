@@ -1,6 +1,7 @@
 ---
 summary: Categorized map of the package reference docs so SKILL.md can stay thin without losing discoverability.
-read_when: You need factual package references but do not yet know the exact file to open.
+topic_hint:
+  - "You need factual package references but do not yet know the exact file to open."
 ---
 
 # Reference Index
@@ -45,6 +46,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 ## Live Evidence Bundles
 
 - [consumer-journey-drills.md](./consumer-journey-drills.md): outside-in archetype journey results
+- [full-action-spectrum-read-discovery-proof-2026-05-19.md](./full-action-spectrum-read-discovery-proof-2026-05-19.md): PR1 no-spend read/discovery refresh for action-spectrum rows R1-R10 and H1-H3
 - [read-surface-sweep.md](./read-surface-sweep.md): maintained production-host read-only sweep
 - [write-surface-sweep.md](./write-surface-sweep.md): maintained wallet-write proof state
 - [uw66.6-maintained-operator-cycle-proof-2026-05-18.md](./uw66.6-maintained-operator-cycle-proof-2026-05-18.md): no-spend maintained multi-action operator-cycle proof with observed context, action alternatives, per-action admissibility gates, and final verdict

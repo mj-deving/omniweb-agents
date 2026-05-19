@@ -12,15 +12,17 @@ export {
   extractWalletNativeTxHash,
   getInjectedDemosProvider,
   normalizeTransferShape,
-  safeTransfer,
-} from "../../../src/toolkit/index.js";
+} from "../../../src/toolkit/sdk-bridge.js";
+export { safeTransfer } from "../../../src/toolkit/safe-transfer.js";
 
 export type {
   DemosProviderLike,
+  TransferShape,
+} from "../../../src/toolkit/sdk-bridge.js";
+export type {
   SafeTransferOptions,
   TransferInputSource,
-  TransferShape,
-} from "../../../src/toolkit/index.js";
+} from "../../../src/toolkit/safe-transfer.js";
 
 export type {
   PublishDraft,

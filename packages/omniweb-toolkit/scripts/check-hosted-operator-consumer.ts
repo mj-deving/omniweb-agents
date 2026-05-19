@@ -1,0 +1,498 @@
+#!/usr/bin/env npx tsx
+/**
+ * check-hosted-operator-consumer.ts - clean local-tarball proof for a hosted-style no-spend operator consumer.
+ */
+
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, resolve } from "node:path";
+import { PACKAGE_ROOT, hasFlag } from "./_shared.js";
+
+interface CommandResult {
+  command: string[];
+  cwd: string;
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  durationMs: number;
+}
+
+interface RawPackEntry {
+  filename: string;
+  size?: number;
+  packageSize?: number;
+  unpackedSize?: number;
+  entryCount?: number;
+  files?: unknown[];
+}
+
+interface PackSummary {
+  filename: string;
+  packageSize?: number;
+  unpackedSize?: number;
+  entryCount?: number;
+}
+
+const args = process.argv.slice(2);
+const skipBuild = hasFlag(args, "--skip-build");
+const keepTemp = hasFlag(args, "--keep-temp");
+
+const allowedArgs = new Set([
+  "--skip-build",
+  "--keep-temp",
+  "--help",
+  "-h",
+]);
+
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts [options]
+
+Build, pack, and install omniweb-toolkit into a clean temporary consumer workspace,
+then prove a hosted-style no-spend operator can import every maintained public subpath
+by package name only.
+
+Options:
+  --skip-build   Do not run npm run build before packing
+  --keep-temp    Keep the temporary consumer workspace for debugging
+  --help, -h     Show this help
+
+Output: JSON no-spend hosted local-tarball consumer proof
+Exit codes: 0 = proof passed, 1 = proof failed, 2 = invalid args`);
+  process.exit(0);
+}
+
+const unsupportedArgs = args.filter((arg) => !allowedArgs.has(arg));
+if (unsupportedArgs.length > 0) {
+  console.error(`Error: unsupported arguments: ${unsupportedArgs.join(" ")}`);
+  process.exit(2);
+}
+
+const tempRoot = mkdtempSync(join(tmpdir(), "omniweb-hosted-operator-consumer-"));
+
+let ok = false;
+let buildResult: CommandResult | null = null;
+let packResult: CommandResult | null = null;
+let installResult: CommandResult | null = null;
+let consumerResult: CommandResult | null = null;
+let packEntry: PackSummary | null = null;
+let consumerSummary: unknown = null;
+let consumerScriptAudit: unknown = null;
+
+try {
+  if (!skipBuild) {
+    buildResult = runCommand(["npm", "run", "build"], PACKAGE_ROOT);
+    if (buildResult.exitCode !== 0) {
+      throw new Error("package build failed before hosted operator consumer proof");
+    }
+  }
+
+  packResult = runCommand([
+    "npm",
+    "pack",
+    "--json",
+    "--pack-destination",
+    tempRoot,
+  ], PACKAGE_ROOT);
+  if (packResult.exitCode !== 0) {
+    throw new Error("npm pack failed before hosted operator consumer proof");
+  }
+
+  const parsedPack = JSON.parse(packResult.stdout) as RawPackEntry[];
+  const rawPackEntry = parsedPack[0] ?? null;
+  if (!rawPackEntry?.filename) {
+    throw new Error("npm pack did not report a tarball filename");
+  }
+  packEntry = {
+    filename: rawPackEntry.filename,
+    packageSize: rawPackEntry.packageSize ?? rawPackEntry.size,
+    unpackedSize: rawPackEntry.unpackedSize,
+    entryCount: rawPackEntry.entryCount ?? rawPackEntry.files?.length,
+  };
+
+  const tarballPath = resolve(tempRoot, basename(rawPackEntry.filename));
+  writeFileSync(join(tempRoot, "package.json"), `${JSON.stringify({
+    private: true,
+    type: "module",
+    dependencies: {
+      "omniweb-toolkit": `file:${tarballPath}`,
+    },
+  }, null, 2)}\n`);
+
+  installResult = runCommand([
+    "npm",
+    "install",
+    "--ignore-scripts",
+    "--no-audit",
+    "--fund=false",
+    "--package-lock=false",
+  ], tempRoot);
+  if (installResult.exitCode !== 0) {
+    throw new Error("clean hosted consumer npm install failed");
+  }
+
+  const proofScript = renderHostedConsumerProofScript();
+  consumerScriptAudit = auditHostedConsumerProofScript(proofScript);
+  writeFileSync(join(tempRoot, "hosted-operator-proof.mjs"), proofScript);
+  consumerResult = runCommand(["node", "hosted-operator-proof.mjs"], tempRoot);
+  if (consumerResult.exitCode !== 0) {
+    throw new Error("hosted operator consumer proof script failed");
+  }
+
+  consumerSummary = JSON.parse(consumerResult.stdout);
+  ok = true;
+} catch (error) {
+  consumerSummary = {
+    error: error instanceof Error ? error.message : String(error),
+  };
+} finally {
+  console.log(JSON.stringify({
+    checkedAt: new Date().toISOString(),
+    ok,
+    packageRoot: PACKAGE_ROOT,
+    tempRoot: keepTemp ? tempRoot : null,
+    keptTemp: keepTemp,
+    skipped: {
+      build: skipBuild,
+    },
+    pack: packEntry,
+    commands: {
+      build: summarizeCommand(buildResult),
+      pack: summarizeCommand(packResult),
+      install: summarizeCommand(installResult),
+      consumer: summarizeCommand(consumerResult),
+    },
+    consumerScriptAudit,
+    consumer: consumerSummary,
+    contract: {
+      ownerBead: "omniweb-agents-hosted.1",
+      localTarballInstall: ok,
+      packageNameImportsOnly: ok,
+      repoRelativeImports: false,
+      noSpend: true,
+      noMutation: true,
+      mutatesIdentity: false,
+      liveExecution: false,
+      publicRegistryProof: false,
+      release: false,
+    },
+  }, null, 2));
+
+  if (!keepTemp) {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+process.exit(ok ? 0 : 1);
+
+function runCommand(command: string[], cwd: string): CommandResult {
+  const started = Date.now();
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      npm_config_audit: "false",
+      npm_config_fund: "false",
+    },
+  });
+
+  return {
+    command,
+    cwd,
+    exitCode: result.status ?? 1,
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? "",
+    durationMs: Date.now() - started,
+  };
+}
+
+function summarizeCommand(result: CommandResult | null): unknown {
+  if (!result) return null;
+  return {
+    command: result.command,
+    cwd: result.cwd,
+    exitCode: result.exitCode,
+    durationMs: result.durationMs,
+    stdout: result.stdout.trim().slice(0, 1600),
+    stderr: result.stderr.trim().slice(0, 1600),
+  };
+}
+
+function auditHostedConsumerProofScript(source: string): {
+  ok: true;
+  packageImports: string[];
+  forbiddenImportSpecifiers: string[];
+} {
+  const importSpecifiers = Array.from(source.matchAll(/import\("([^"]+)"\)/g)).map((match) => match[1]);
+  const packageImports = [
+    "omniweb-toolkit",
+    "omniweb-toolkit/runtime",
+    "omniweb-toolkit/agent",
+    "omniweb-toolkit/types",
+    "omniweb-toolkit/write",
+  ];
+  const missingPackageImports = packageImports.filter((specifier) => !importSpecifiers.includes(specifier));
+  const forbiddenImportSpecifiers = importSpecifiers.filter((specifier) => (
+    specifier.startsWith(".") ||
+    specifier.startsWith("/") ||
+    specifier.includes("packages/omniweb-toolkit") ||
+    specifier.includes("src/")
+  ));
+  if (missingPackageImports.length > 0 || forbiddenImportSpecifiers.length > 0) {
+    throw new Error(`hosted consumer proof import audit failed: ${JSON.stringify({
+      missingPackageImports,
+      forbiddenImportSpecifiers,
+      importSpecifiers,
+    })}`);
+  }
+  return {
+    ok: true,
+    packageImports,
+    forbiddenImportSpecifiers,
+  };
+}
+
+function renderHostedConsumerProofScript(): string {
+  return `const root = await import("omniweb-toolkit");
+const runtime = await import("omniweb-toolkit/runtime");
+const agent = await import("omniweb-toolkit/agent");
+await import("omniweb-toolkit/types");
+const write = await import("omniweb-toolkit/write");
+
+const requiredRootExports = [
+  "createClient",
+  "buildMarketWriteIntentMatrix",
+  "summarizeReadProfileCoverage",
+  "buildChatWebhookPlan",
+];
+const requiredRuntimeExports = [
+  "buildToolkitCapabilityManifest",
+  "checkWriteReadiness",
+  "describeRuntimeCapabilities",
+];
+const requiredAgentExports = [
+  "buildColonyOperatorCapabilityTruth",
+  "buildColonyOperatorMultiActionPlan",
+  "evaluateToolkitActionAdmissibility",
+];
+const requiredWriteExports = [
+  "buildBetMemo",
+  "buildHigherLowerMemo",
+  "buildBinaryBetMemo",
+  "normalizeTransferShape",
+  "extractWalletNativeTxHash",
+  "DEFAULT_TRANSFER_SHAPE",
+  "WALLET_NATIVE_TRANSFER_SHAPE",
+];
+
+for (const [surface, mod, exports] of [
+  ["root", root, requiredRootExports],
+  ["runtime", runtime, requiredRuntimeExports],
+  ["agent", agent, requiredAgentExports],
+  ["write", write, requiredWriteExports],
+]) {
+  for (const exportName of exports) {
+    if (!(exportName in mod)) {
+      throw new Error("missing " + surface + " export: " + exportName);
+    }
+  }
+}
+
+const client = root.createClient({ timeoutMs: 1 });
+if (typeof client.getFeed !== "function") {
+  throw new Error("root createClient did not expose read client methods");
+}
+
+const actualReadiness = runtime.checkWriteReadiness({ cwd: process.cwd(), homeDir: process.cwd(), env: {} });
+const actualRuntimeCapabilities = runtime.describeRuntimeCapabilities({ cwd: process.cwd(), homeDir: process.cwd(), env: {} });
+const toolkitManifest = runtime.buildToolkitCapabilityManifest({
+  runtimeCapabilities: actualRuntimeCapabilities,
+  now: new Date("2026-05-19T00:00:00.000Z"),
+});
+const syntheticRuntimeCapabilities = deterministicRuntimeCapabilities();
+const capabilityTruth = agent.buildColonyOperatorCapabilityTruth({
+  runtimeCapabilities: syntheticRuntimeCapabilities,
+  now: new Date("2026-05-19T00:00:00.000Z"),
+});
+const requestedActions = [
+  { actionFamily: "skip", timeframe: "default" },
+  { actionFamily: "publish", params: { category: "OBSERVATION" }, timeframe: "now" },
+  { actionFamily: "reply", params: { parentTxHash: "0xparent" }, timeframe: "after readback" },
+  { actionFamily: "react", params: { targetTxHash: "0xpost", reaction: "agree" }, timeframe: "after readback" },
+  { actionFamily: "tip", params: { targetTxHash: "0xpost", amount: 1 }, timeframe: "after readback" },
+  { actionFamily: "VOTE", params: { asset: "BTC", horizon: "24h" }, timeframe: "24h" },
+  { actionFamily: "bet-fixed", params: { asset: "BTC", horizon: "30m" }, timeframe: "30m" },
+  { actionFamily: "bet-hl", params: { asset: "BTC", direction: "higher", horizon: "24h" }, timeframe: "24h" },
+  { actionFamily: "register", params: { agentAddress: "0xconsumer" }, timeframe: "supervised only" },
+  { actionFamily: "human-link", params: { platform: "x", username: "consumer" }, timeframe: "supervised only" },
+];
+const multiActionPlan = agent.buildColonyOperatorMultiActionPlan({
+  mode: "dry-run",
+  capabilityTruth,
+  toolkitCapabilityManifest: toolkitManifest,
+  requestedActions,
+});
+const marketWriteMatrix = root.buildMarketWriteIntentMatrix({
+  now: new Date("2026-05-19T00:00:00.000Z"),
+  runtimeCapabilities: syntheticRuntimeCapabilities,
+});
+
+const fixedMemo = write.buildBetMemo("btc", 70000, { horizon: "30m" });
+const higherLowerMemo = write.buildHigherLowerMemo("btc", "higher", { horizon: "24h" });
+const binaryMemo = write.buildBinaryBetMemo("market-1", "yes");
+const normalizedDefaultTransferShape = write.normalizeTransferShape(undefined);
+const normalizedWalletTransferShape = write.normalizeTransferShape(write.WALLET_NATIVE_TRANSFER_SHAPE);
+const extractedTxHash = write.extractWalletNativeTxHash({ nested: { transactionHash: "0xabc" } });
+
+const plannedByFamily = new Map(multiActionPlan.plannedIntents.map((intent) => [intent.actionFamily, intent]));
+const marketByFamily = new Map(marketWriteMatrix.intents.map((intent) => [intent.family, intent]));
+const requiredActionFamilies = requestedActions.map((action) => action.actionFamily);
+const checks = {
+  packageNameImports: true,
+  rootSurface: requiredRootExports.every((exportName) => typeof root[exportName] === "function"),
+  runtimeSurface: requiredRuntimeExports.every((exportName) => typeof runtime[exportName] === "function"),
+  agentSurface: requiredAgentExports.every((exportName) => typeof agent[exportName] === "function"),
+  writeSurface: requiredWriteExports.every((exportName) => exportName in write),
+  localReadConstructedWithoutNetwork: typeof client.getFeed === "function",
+  installedRuntimeGatesWrites: actualReadiness.canRead === true
+    && actualReadiness.canWrite === false
+    && actualRuntimeCapabilities.canRead === true
+    && actualRuntimeCapabilities.writeReady === false,
+  toolkitManifestRuntimeTruth: toolkitManifest.source === "omniweb-toolkit"
+    && toolkitManifest.coverage.readCapabilities > 0
+    && toolkitManifest.coverage.writeCapabilities >= 0,
+  writeHelpersNoSpend: fixedMemo === "HIVE_BET:btc:70000:30m"
+    && higherLowerMemo === "HIVE_HL:btc:HIGHER:24h"
+    && binaryMemo === "HIVE_BINARY:market-1:YES"
+    && normalizedDefaultTransferShape === write.DEFAULT_TRANSFER_SHAPE
+    && normalizedWalletTransferShape === write.WALLET_NATIVE_TRANSFER_SHAPE
+    && extractedTxHash === "0xabc",
+  operatorPlanNoSpend: multiActionPlan.mode === "dry-run"
+    && multiActionPlan.liveExecutionAllowed === false
+    && multiActionPlan.noSpendDefault === true
+    && requiredActionFamilies.every((family) => plannedByFamily.has(family))
+    && multiActionPlan.plannedIntents.every((intent) => intent.readiness.canExecuteNow === false),
+  operatorIdentitySupervised: plannedByFamily.get("register").liveExecutionGate.gate === "supervised_authorization_required"
+    && plannedByFamily.get("human-link").liveExecutionGate.gate === "supervised_authorization_required",
+  operatorSpendExplicitOrDryRun: plannedByFamily.get("publish").liveExecutionGate.gate === "dry_run_only"
+    && plannedByFamily.get("bet-fixed").admissibility.status === "blocked"
+    && plannedByFamily.get("bet-fixed").admissibility.reasonCodes.includes("explicit_execute_required_for_spend")
+    && plannedByFamily.get("bet-hl").liveExecutionGate.gate === "blocked",
+  marketWritesNoSpend: marketWriteMatrix.noSpend === true
+    && marketWriteMatrix.noMutation === true
+    && marketWriteMatrix.liveExecutionDisabled === true
+    && marketWriteMatrix.summary.allLiveExecutionDisabled === true
+    && marketWriteMatrix.summary.explicitExecuteRequiredFamilies.includes("fixed-price")
+    && marketWriteMatrix.summary.lifecyclePendingFamilies.includes("higher-lower")
+    && marketWriteMatrix.summary.unsupportedFamilies.includes("sports")
+    && marketByFamily.get("graduation").capabilityStatus === "server_error",
+};
+const ok = Object.values(checks).every(Boolean);
+if (!ok) {
+  throw new Error("hosted operator consumer checks failed: " + JSON.stringify(checks));
+}
+
+console.log(JSON.stringify({
+  ok,
+  imports: {
+    root: "omniweb-toolkit",
+    runtime: "omniweb-toolkit/runtime",
+    agent: "omniweb-toolkit/agent",
+    types: "omniweb-toolkit/types",
+    write: "omniweb-toolkit/write",
+  },
+  checks,
+  proof: {
+    actualRuntime: {
+      canRead: actualReadiness.canRead,
+      canWrite: actualReadiness.canWrite,
+      missingEnv: actualReadiness.missingEnv,
+      recommendedMode: actualRuntimeCapabilities.recommendedMode,
+      blockers: actualRuntimeCapabilities.blockers,
+    },
+    operatorActions: multiActionPlan.plannedIntents.map((intent) => ({
+      actionFamily: intent.actionFamily,
+      status: intent.status,
+      lifecycleStatus: intent.lifecycleStatus,
+      guardrailStatus: intent.guardrailEvaluation.status,
+      admissibilityStatus: intent.admissibility.status,
+      liveExecutionGate: intent.liveExecutionGate.gate,
+      spendsDem: intent.readiness.spendsDem,
+      canExecuteNow: intent.readiness.canExecuteNow,
+    })),
+    marketWrites: marketWriteMatrix.intents.map((intent) => ({
+      family: intent.family,
+      capabilityStatus: intent.capabilityStatus,
+      lifecycleStatus: intent.lifecycleStatus,
+      supervision: intent.supervision,
+      explicitExecute: intent.explicitExecute,
+      admissibilityStatus: intent.admissibilityStatus,
+      canExecuteNow: intent.canExecuteNow,
+    })),
+    writeHelpers: {
+      fixedMemo,
+      higherLowerMemo,
+      binaryMemo,
+      normalizedDefaultTransferShape,
+      normalizedWalletTransferShape,
+      extractedTxHash,
+    },
+  },
+  contract: {
+    ownerBead: "omniweb-agents-hosted.1",
+    localTarballInstall: true,
+    packageNameImportsOnly: true,
+    repoRelativeImports: false,
+    publicRegistryProof: false,
+    release: false,
+    noSpend: true,
+    noMutation: true,
+    mutatesIdentity: false,
+    liveExecution: false,
+  },
+}, null, 2));
+
+function deterministicRuntimeCapabilities() {
+  const readiness = {
+    ok: true,
+    canRead: true,
+    canAuth: true,
+    canWrite: true,
+    authState: "ready",
+    writeState: "ready",
+    missingEnv: [],
+    missingPackages: [],
+    credentialSourcesChecked: ["deterministic-hosted-consumer-fixture"],
+    runtimeCredentialSource: "deterministic-hosted-consumer-fixture",
+    notes: ["Synthetic runtime capability truth for deterministic no-spend hosted local-tarball proof."],
+  };
+  const readyAction = {
+    declared: true,
+    executable: true,
+    readiness: "ready",
+    requiresWallet: true,
+    requiresAttestation: false,
+    requiresTargetPost: false,
+    requiresMarketContext: false,
+    proofLevel: "real_runtime_action_family",
+    notes: ["Synthetic capability used only for no-spend hosted local-tarball proof."],
+  };
+  return {
+    canRead: true,
+    authReady: true,
+    writeReady: true,
+    recommendedMode: "write-ready",
+    blockers: [],
+    readiness,
+    actionFamilies: {
+      publish: { ...readyAction, requiresAttestation: true },
+      reply: { ...readyAction, requiresAttestation: true, requiresTargetPost: true },
+      react: { ...readyAction, requiresTargetPost: true },
+      tip: { ...readyAction, requiresTargetPost: true },
+      bet: { ...readyAction, requiresMarketContext: true },
+    },
+  };
+}
+`;
+}

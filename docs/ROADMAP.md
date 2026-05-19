@@ -6,7 +6,7 @@ completed_phases: 22
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The no-release consumer-spectrum lane and hosted no-spend operator proof are complete. The next lane is omniweb-agents-action-spectrum: a full read/write testing matrix for every supported operation before any separately authorized live spend or mutation run."
+summary: "The full action-spectrum matrix is complete. The next lane is colony operator capability stress-test and GoalMode readiness: stress-test operatorHelp reads, preview every write without mutation, and keep wallet/profile blockers hard-gated before live operations."
 topic_hint: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,13 +38,13 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | The consumer-spectrum/codebase reality lane and `omniweb-agents-hosted` are complete. The active next lane is `omniweb-agents-action-spectrum`: first land a full read/write/mutation testing matrix that covers every supported operation with spend class, authorization flag, command, readback surface, and degraded verdict vocabulary; only later child beads may execute live spend or mutation under explicit budgets. |
+| Current direction | The consumer-spectrum, hosted no-spend proof, and full action-spectrum matrix lanes are complete. The active next lane is `omniweb-agents-operator-stress`: stress-test `capabilityDiscovery.operatorHelp` reads, produce write execution previews / proposed action packets without mutation, and prepare a long-running GoalMode run that covers every acceptance anchor before any separately reviewed live-write tranche. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam, capability surface, guardrails, and admissibility gate honestly instead of talking like those pivots are still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed historical consumer-spectrum `omniweb-agents-spectrum`, `omniweb-agents-hosted` completed the hosted no-spend operator consumer proof, and `omniweb-agents-action-spectrum` is the new full-operation testing matrix lane. |
-| Remaining external edges | npm release/public registry proof and production hosted activation remain separately gated. Live spend and supervised mutation move into `omniweb-agents-action-spectrum` only after PR0 lands and each child bead records explicit budget, host, wallet, controlled target, and command-flag authorization. |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed historical consumer-spectrum `omniweb-agents-spectrum`, `omniweb-agents-hosted` completed the hosted no-spend operator consumer proof, `omniweb-agents-action-spectrum` completed the full-operation testing matrix, and `omniweb-agents-operator-stress` is the new GoalMode/read-stress/write-preview lane. |
+| Remaining external edges | npm release/public registry proof and production hosted activation remain separately gated. Further identity/profile mutation waits on `omniweb-agents-km3g`; escrow/storage/IPFS/raw-chain live probes wait on `omniweb-agents-vhat`; any later live-write tranche must record explicit budget, host, wallet, controlled target, command flag, and product readback criteria. |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
 **Discovery layer:** `openapi.json` (27KB), A2A agent card, AI plugin — see `docs/research/supercolony-discovery/`
@@ -324,7 +324,44 @@ Still not authorized by this completed band:
 - live multi-action spend without explicit authorization
 - unsupervised identity mutation
 
-## Active Band — full action-spectrum matrix
+## Phase 23: Colony Operator Capability Stress-Test and GoalMode Readiness
+
+Owner bead: `omniweb-agents-operator-stress`
+
+GoalMode packet:
+- [docs/goalmode/colony-operator-stress-test-2026-05-19.md](goalmode/colony-operator-stress-test-2026-05-19.md)
+
+This is the next lane after the completed action-spectrum matrix. It exists because the repo now has the command catalog and proof vocabulary, but a fresh colony operator still needs the current surface stress-tested as an operational help system before more live operations are allowed.
+
+Current truth:
+- `capabilityDiscovery.operatorHelp` is on `main` as the CLI-style operator discovery surface.
+- `operatorHelp.readCommands` and `operatorHelp.writeCommands` are generated from `toolkitCapabilityManifest`, including method-level params, response depth, proof tier, requirements, no-spend/no-mutation flags, usage strings, and readback surfaces.
+- Response-depth discovery now exposes time and horizon knobs. Defaults remain `window=24h` for oracle-style market reads, `periods=24` for `getPriceHistory(asset, periods)`, and `horizon=30m` for active fixed, higher/lower, ETH, and commodity pool reads. Supported horizon examples include `30m`, `1h`, `4h`, `12h`, and `24h`.
+- The completed action-spectrum lane leaves two hard safety blockers that must not be papered over: `omniweb-agents-km3g` for identity/profile targeting and configured-wallet restore, and `omniweb-agents-vhat` for escrow/storage/IPFS probe targeting plus chain sign/verify classification.
+
+Execution ladder:
+1. `omniweb-agents-operator-stress.0` - propagate this roadmap state
+2. `omniweb-agents-operator-stress.1` - add the GoalMode launch packet
+3. `omniweb-agents-operator-stress.2` - enumerate `operatorHelp.readCommands`, run maintained no-spend read sweeps plus time/horizon samples, and classify every read as green, thin, missing-param, auth-gated, dev-only, degraded, or broken
+4. `omniweb-agents-operator-stress.3` - enumerate `operatorHelp.writeCommands` and generate reviewable execution previews / proposed action packets without mutation
+5. `omniweb-agents-operator-stress.4` - keep credential/profile blockers wired into the execution graph; no new throwaway wallet/profile by default
+6. `omniweb-agents-operator-stress.5` - optional reviewed live-write tranche, only after read stress, write previews, safety blocker wiring, and `km3g` / `vhat` are resolved or explicitly STUCK with evidence
+
+GoalMode stop rule:
+- keep working until AC-1 through AC-9 in the packet have evidence, an explicit `DEGRADED` verdict, or a `STUCK` note after repeated attempts on the same blocker
+- do not stop at AC-1 or the first successful read pass
+- default to read-only plus write previews; live writes are a later reviewed tranche, not part of the first stress pass unless a child bead explicitly authorizes them
+
+Explicit boundaries:
+- no npm release
+- no public registry proof
+- no production hosted activation claim
+- no new throwaway wallet/profile by default
+- no identity/profile mutation before `omniweb-agents-km3g`
+- no escrow/storage/IPFS/raw-chain live probe before `omniweb-agents-vhat`
+- no tx-only success claims where product readback is the success criterion
+
+## Completed Band — full action-spectrum matrix
 
 Owner bead: `omniweb-agents-action-spectrum`
 
@@ -342,9 +379,9 @@ Package matrix:
 - `packages/omniweb-toolkit/references/full-action-spectrum-domain-write-proof-2026-05-19.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-closeout-2026-05-19.md`
 
-This is the next lane after hosted no-spend proof. It exists because the current question is no longer "can a consumer import the package?" but "can an operator prove every supported read, write, spend, identity/admin mutation, and Demos-domain operation with honest readback criteria?"
+This lane is complete after hosted no-spend proof. It existed because the question was no longer "can a consumer import the package?" but "can an operator prove every supported read, write, spend, identity/admin mutation, and Demos-domain operation with honest readback criteria?"
 
-PR0 is scaffold-only and does not run live spend. Later child beads may execute live operations only after recording:
+PR0 was scaffold-only and did not run live spend. Later child beads executed or blocked live operations only after recording:
 
 - active child bead
 - explicit budget ceiling

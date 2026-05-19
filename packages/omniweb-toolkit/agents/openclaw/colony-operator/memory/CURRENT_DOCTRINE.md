@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-19
-Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release, `#427` — toolkit guardrails, `#428/#429` — action admissibility, `#431` — no-spend maintained operator-cycle proof, `#432-#441` — completed no-release consumer-spectrum/codebase map and local tarball whole-spectrum proof, `#443-#447 + PR5` — completed hosted no-spend operator consumer GoalMode proof
+Checkpoint PRs: `#360` — https://github.com/mj-deving/omniweb-agents/pull/360 (planning), `#371` — https://github.com/mj-deving/omniweb-agents/pull/371 (market-write merge checkpoint), `#372` — https://github.com/mj-deving/omniweb-agents/pull/372 (docs/proofs closeout checkpoint), `#376` — intent-boundary cleanup closeout, `#409` — fixed-price agentic DEM bet delayed-readback proof, `#411` — durable write lifecycle/readback goal, `#419` — Wave D release-readiness without npm release, `#427` — toolkit guardrails, `#428/#429` — action admissibility, `#431` — no-spend maintained operator-cycle proof, `#432-#441` — completed no-release consumer-spectrum/codebase map and local tarball whole-spectrum proof, `#443-#447 + PR5` — completed hosted no-spend operator consumer GoalMode proof, `omniweb-agents-action-spectrum` — active full-operation matrix lane
 
 Purpose: hold the exact colony-operator re-entry truth so fresh sessions do not drift back into older premises.
 Recent live-ops truth-sync PRs: `#378`, `#379`, `#380`, `#382`, `#389`, `#390`, `#391`, `#392`, `#409`, `#411`, `#416`, `#418`, `#419`, `#427`, `#428`, `#429`, `#431`, `#432`, `#433`, `#434`, `#435`, `#436`, `#437`, `#438`, `#439`, `#440`, `#441`, `#443`, `#444`, `#445`, `#446`, `#447`
@@ -40,6 +40,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - The no-release consumer-spectrum lane is complete through PRs #432-#441. It compared official SuperColony docs/discovery, actual live endpoint response shapes, local toolkit/code reachability, public exports, transport/read/chat/webhook/market consumers, market write intents, and a clean local tarball whole-spectrum consumer install proof.
 - Beads epic `omniweb-agents-spectrum` is complete. This lane did not authorize npm release, public registry proof, live multi-action spend, or unsupervised identity mutation.
 - The hosted no-spend operator consumer lane is complete through `omniweb-agents-hosted`: a hosted/external-style proof over the local tarball. Its GoalMode packet is `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, and `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`. It proves clean tarball install, package-name imports, repeated full-spectrum no-spend operator cycles, capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, drift/degraded proof packets, optional dry-run-only hosted smoke, and front-door check wiring. It does not authorize npm release, public registry proof, live spend, production hosted activation, or unsupervised identity mutation.
+- The active next lane is `omniweb-agents-action-spectrum`, not the historical completed `omniweb-agents-spectrum` consumer lane. PR0 is a no-spend scaffold for `docs/FULL_ACTION_SPECTRUM_GOAL_BRIEF.md`, `docs/FULL_ACTION_SPECTRUM_MASTER_PRD.md`, `docs/FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md`, and `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`. Later child beads may execute live spend or mutation only with explicit budgets, controlled targets, and command flags.
 
 ## Canonical sources
 
@@ -76,6 +77,10 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`
 - `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`
 - `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`
+- `docs/FULL_ACTION_SPECTRUM_GOAL_BRIEF.md`
+- `docs/FULL_ACTION_SPECTRUM_MASTER_PRD.md`
+- `docs/FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md`
+- `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`
 - `docs/ROADMAP.md` Wave E / `omniweb-agents-capsurf` and post-Wave-E action admissibility
 - `packages/omniweb-toolkit/references/uw66.5-market-write-blocker-2026-05-15.md`
 - `packages/omniweb-toolkit/references/2026-05-12-node3-web2-proxy-handoff.md`
@@ -113,6 +118,7 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 17. The consumer-spectrum lane is complete: PR #433 added the inventory gate; PR #434 classified codebase reachability and found no static dead/orphaned or duplicate/superseded local code; PR #435 normalized public exports; PRs #436-#439 widened transport, read/profile, chat/webhook, and market reads; PR #440 added no-spend market write intents; PR #441 proved the clean local tarball whole-spectrum consumer journey.
 18. Future cleanup or widening must cite those inventories/checks. Do not delete code simply because it looks old, and do not treat the local tarball proof as npm release or public registry evidence.
 19. Hosted no-spend operator consumer proof is complete through `omniweb-agents-hosted`: clean local-tarball install, package-name imports, repeated no-spend full-spectrum cycles, optional dry-run hosted smoke, drift/degraded ledger, and front-door check wiring.
+20. `omniweb-agents-action-spectrum` is the next lane. PR0 must land the full matrix before any live spend child runs. The matrix must cover read/discovery, publish/reply/react/tip/VOTE, fixed-price and higher/lower BET, registration recovery, identity/human-link, webhooks, escrow, storage, IPFS, raw chain operations, helper exports, and hosted/consumer proof rows.
 
 ## Anti-drift rules
 
@@ -133,8 +139,10 @@ Quick re-entry card: `packages/omniweb-toolkit/agents/openclaw/colony-operator/m
 - Do **not** release, publish to npm, prove public registry install, or do release follow-up in this lane.
 - Do **not** relaunch `omniweb-agents-hosted` as release, public-registry, live-spend, or production hosted-activation work; those need a separate explicit lane.
 - Do **not** treat the hosted no-spend proof as production hosted activation, live spend authority, or public registry evidence.
+- Do **not** treat `omniweb-agents-action-spectrum.0` as live spend authority. It is the matrix scaffold; spend and mutation are only in later child beads with explicit budget and controlled targets.
+- Do **not** reuse `omniweb-agents-spectrum` for this new lane; that ID is historical consumer-spectrum closeout in docs.
 - Do **not** widen package behavior or delete old code before the inventory has compared official docs, live endpoint shapes, and local code reachability.
 - Do **not** let skills/playbooks become the protocol mechanics source of truth again. Wave E moved capability discovery, params, proof tiers, response-depth access, readiness, lifecycle, and execution truth into toolkit/runtime surfaces; the admissibility layer consumes that truth instead of re-teaching it.
 - `5xp4.8` remains a maintained proof checkpoint, but it does **not** replace the landed `5xp4.15` checkpoint as the current architecture/documentation truth.
-- Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are explicitly later work, not the next colony lane.
+- Broader Demos/SDK proof bands like StorageProgram, escrow, and IPFS are now included in the action-spectrum matrix, but execution remains gated behind the dedicated non-colony child bead and explicit budget.
 - When uncertain, re-read PR #360, PR #371, PR #376, and the live Beads state before coding.

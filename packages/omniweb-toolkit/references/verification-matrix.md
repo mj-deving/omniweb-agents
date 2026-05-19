@@ -10,6 +10,7 @@ Use this file when the question is not "what does the package expose?" but "what
 This is the maintained baseline for the hardening cycle. It tracks the public `HiveAPI` surface and adjacent helper exports by proof quality, not by mere existence.
 
 If the question is "what is the maintained operator plan for proving launch readiness next?", use [launch-proving-matrix.md](./launch-proving-matrix.md).
+If the question is "how do we prove every read/write/mutation family with spending and explicit authorization?", use [full-action-spectrum-testing-matrix.md](./full-action-spectrum-testing-matrix.md).
 If the question is "what read-only methods worked on the current production host in the latest real sweep?", use [read-surface-sweep.md](./read-surface-sweep.md).
 
 ## Proof Labels
@@ -106,5 +107,6 @@ These are the next proving targets because they matter most for agent quality or
 4. `attestTlsn`
 5. production-host proof for the current dev-only mirrors
 6. **market-write end-to-end operator workflow** — fixed-price and higher/lower runtime probes now have product readback, but a spend-bearing full operator-starter BET path is still not claimed
+7. **full action-spectrum closeout** — every read/write/mutation/domain row should be reconciled through `full-action-spectrum-testing-matrix.md` before making a broad "we can do any operation" claim
 
 The market-write gap (formerly items 4-5) now has local-runtime proof. The remaining gap is operator workflow integration.

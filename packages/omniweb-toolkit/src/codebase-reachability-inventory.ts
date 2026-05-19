@@ -114,6 +114,7 @@ export const PACKAGE_EXPORT_COVERAGE_EVIDENCE: Record<string, string[]> = {
     "packages/omniweb-toolkit/scripts/check-market-read-consumers.ts",
     "packages/omniweb-toolkit/scripts/check-market-write-intents.ts",
     "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
+    "packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts",
     "packages/omniweb-toolkit/examples/read-feed.mjs",
   ],
   "./agent": [
@@ -121,22 +122,26 @@ export const PACKAGE_EXPORT_COVERAGE_EVIDENCE: Record<string, string[]> = {
     "tests/packages/consumer-spectrum-inventory.test.ts",
     "packages/omniweb-toolkit/scripts/check-colony-operator-official-skill-coverage.ts",
     "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
+    "packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts",
   ],
   "./types": [
     "tests/toolkit/types.test.ts",
     "packages/omniweb-toolkit/scripts/check-package-consumer.ts",
     "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
+    "packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts",
   ],
   "./runtime": [
     "tests/packages/runtime-balance-truth.test.ts",
     "tests/packages/toolkit-action-admissibility.test.ts",
     "packages/omniweb-toolkit/examples/write-readiness.mjs",
     "packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts",
+    "packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts",
   ],
   "./write": [
     "tests/packages/market-write-proof.test.ts",
     "tests/packages/social-write-proof.test.ts",
     "packages/omniweb-toolkit/scripts/check-write-surface-sweep.ts",
+    "packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts",
   ],
   "./research-agent-minimal": [
     "packages/omniweb-toolkit/scripts/check-research-agent-consumer.ts",

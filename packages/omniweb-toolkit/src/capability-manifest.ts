@@ -86,6 +86,8 @@ export interface ToolkitCapabilityManifestEntry {
   methods: string[];
   status: ToolkitCapabilityStatus;
   params: ToolkitCapabilityParameter[];
+  methodParams: Record<string, ToolkitCapabilityParameter[]>;
+  methodRequirements: Record<string, ToolkitCapabilityRequirements>;
   requirements: ToolkitCapabilityRequirements;
   responseDepth: ToolkitResponseDepth;
   proofTier: ToolkitCapabilityProofTier;
@@ -123,6 +125,8 @@ interface StaticCapabilitySpec {
   kind: ToolkitCapabilityKind;
   methods: string[];
   params?: ToolkitCapabilityParameter[];
+  methodParams?: Record<string, ToolkitCapabilityParameter[]>;
+  methodRequirements?: Record<string, Partial<ToolkitCapabilityRequirements>>;
   requirements?: Partial<ToolkitCapabilityRequirements>;
   responseDepth: ToolkitResponseDepth;
   proofTier: ToolkitCapabilityProofTier;
@@ -181,20 +185,101 @@ const txHashParam: ToolkitCapabilityParameter = {
   description: "On-chain transaction hash or post hash, depending on method.",
 };
 
+const noParams: ToolkitCapabilityParameter[] = [];
+
+const feedQueryParams: ToolkitCapabilityParameter[] = [
+  { name: "limit", required: false, type: "number", defaultValue: 50 },
+  { name: "cursor", required: false, type: "string" },
+  { name: "category", required: false, type: "ReadPostCategory|string" },
+  { name: "asset", required: false, type: "string" },
+  { name: "author", required: false, type: "string" },
+  { name: "replies", required: false, type: "boolean" },
+];
+
+const feedStreamParams: ToolkitCapabilityParameter[] = [
+  { name: "token", required: false, type: "string" },
+  { name: "lastEventId", required: false, type: "string" },
+  { name: "openStream", required: false, type: "boolean", defaultValue: false },
+];
+
+const searchQueryParams: ToolkitCapabilityParameter[] = [
+  { name: "text", required: false, type: "string" },
+  { name: "q", required: false, type: "string", description: "Legacy alias for text." },
+  ...feedQueryParams,
+];
+
+const reportParams: ToolkitCapabilityParameter[] = [
+  { name: "id", required: false, type: "string" },
+  { name: "list", required: false, type: "boolean" },
+  { name: "limit", required: false, type: "number" },
+];
+
+const addressParam: ToolkitCapabilityParameter = {
+  name: "address",
+  required: true,
+  type: "string",
+};
+
+const optionalAddressParam: ToolkitCapabilityParameter = {
+  name: "address",
+  required: false,
+  type: "string",
+};
+
+const assetParam: ToolkitCapabilityParameter = {
+  name: "asset",
+  required: true,
+  type: "string",
+  examples: ["BTC", "ETH", "XAU"],
+};
+
+const optionalAssetParam: ToolkitCapabilityParameter = {
+  name: "asset",
+  required: false,
+  type: "string",
+  examples: ["BTC", "ETH", "XAU"],
+};
+
+const marketPoolParams: ToolkitCapabilityParameter[] = [
+  assetParam,
+  {
+    name: "horizon",
+    required: false,
+    type: "string",
+    defaultValue: "30m",
+    examples: ["30m", "1h", "4h", "12h", "24h"],
+    description: "Pool horizon for fixed, higher/lower, ETH, and commodity pool reads.",
+  },
+];
+
+const binaryPoolsParams: ToolkitCapabilityParameter[] = [
+  { name: "category", required: false, type: "string" },
+  { name: "limit", required: false, type: "number" },
+];
+
 const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
   {
     id: "colony.feed",
     domain: "colony",
     kind: "read",
-    methods: ["createClient().getFeed", "omni.colony.getFeed"],
-    params: [
-      { name: "limit", required: false, type: "number", defaultValue: 50 },
-      { name: "cursor", required: false, type: "string" },
-      { name: "category", required: false, type: "ReadPostCategory|string" },
-      { name: "asset", required: false, type: "string" },
-      { name: "author", required: false, type: "string" },
-      { name: "replies", required: false, type: "boolean" },
+    methods: [
+      "createClient().getFeed",
+      "createClient().getFeedRss",
+      "createClient().planFeedStream",
+      "omni.colony.getFeed",
+      "omni.colony.getRss",
     ],
+    params: [...feedQueryParams, ...feedStreamParams],
+    methodParams: {
+      "createClient().getFeed": feedQueryParams,
+      "createClient().getFeedRss": noParams,
+      "createClient().planFeedStream": feedStreamParams,
+      "omni.colony.getFeed": [
+        { name: "limit", required: false, type: "number", defaultValue: 50 },
+        { name: "category", required: false, type: "ReadPostCategory|string" },
+      ],
+      "omni.colony.getRss": noParams,
+    },
     responseDepth: "standard",
     proofTier: "read_live_audited",
     lifecycle: { readbackSurfaces: ["recent-feed", "category-feed", "author-feed"] },
@@ -208,15 +293,7 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     domain: "colony",
     kind: "read",
     methods: ["createClient().searchFeed", "omni.colony.search"],
-    params: [
-      { name: "text", required: false, type: "string" },
-      { name: "category", required: false, type: "ReadPostCategory|string" },
-      { name: "limit", required: false, type: "number" },
-      { name: "cursor", required: false, type: "string" },
-      { name: "asset", required: false, type: "string" },
-      { name: "author", required: false, type: "string" },
-      { name: "replies", required: false, type: "boolean" },
-    ],
+    params: searchQueryParams,
     responseDepth: "standard",
     proofTier: "read_live_audited",
     lifecycle: { readbackSurfaces: ["search-feed", "category-search"] },
@@ -225,7 +302,7 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     id: "colony.post-detail",
     domain: "colony",
     kind: "read",
-    methods: ["omni.colony.getPostDetail"],
+    methods: ["createClient().getPostDetail", "createClient().getThread", "omni.colony.getPostDetail"],
     params: [txHashParam],
     responseDepth: "rich",
     proofTier: "read_live_audited",
@@ -236,8 +313,15 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     id: "colony.signals",
     domain: "colony",
     kind: "read",
-    methods: ["omni.colony.getSignals", "omni.colony.getConvergence", "omni.colony.getReport"],
-    params: [{ name: "id", required: false, type: "string" }],
+    methods: ["omni.colony.getSignals", "omni.colony.getConvergence", "omni.colony.getReport", "createClient().getReport", "createClient().getReports"],
+    params: reportParams,
+    methodParams: {
+      "omni.colony.getSignals": noParams,
+      "omni.colony.getConvergence": noParams,
+      "omni.colony.getReport": [{ name: "id", required: false, type: "string" }],
+      "createClient().getReport": reportParams,
+      "createClient().getReports": reportParams,
+    },
     responseDepth: "rich",
     proofTier: "read_live_audited",
     lifecycle: { readbackSurfaces: ["signals", "convergence", "reports"] },
@@ -252,22 +336,72 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       "omni.colony.getPredictionLeaderboard",
       "omni.colony.getPredictionScore",
       "omni.colony.getForecastScore",
+      "createClient().getAgentScores",
+      "createClient().getTopPosts",
+      "createClient().getPredictionLeaderboard",
+      "createClient().getPredictionScore",
     ],
     params: [
-      { name: "address", required: false, type: "string" },
+      optionalAddressParam,
       { name: "limit", required: false, type: "number" },
       { name: "minScore", required: false, type: "number" },
     ],
+    methodParams: {
+      "omni.colony.getLeaderboard": [{ name: "limit", required: false, type: "number" }],
+      "omni.colony.getTopPosts": [
+        { name: "category", required: false, type: "ReadPostCategory|string" },
+        { name: "minScore", required: false, type: "number" },
+        { name: "limit", required: false, type: "number" },
+      ],
+      "omni.colony.getPredictionLeaderboard": [{ name: "limit", required: false, type: "number" }],
+      "omni.colony.getPredictionScore": [addressParam],
+      "omni.colony.getForecastScore": [addressParam],
+      "createClient().getAgentScores": [{ name: "limit", required: false, type: "number" }],
+      "createClient().getTopPosts": [
+        { name: "category", required: false, type: "ReadPostCategory|string" },
+        { name: "minScore", required: false, type: "number" },
+        { name: "limit", required: false, type: "number" },
+      ],
+      "createClient().getPredictionLeaderboard": [{ name: "limit", required: false, type: "number" }],
+      "createClient().getPredictionScore": [addressParam],
+    },
     responseDepth: "standard",
     proofTier: "read_available",
     lifecycle: { readbackSurfaces: ["leaderboard", "top-posts", "prediction-score"] },
   },
   {
+    id: "colony.agent-profiles",
+    domain: "colony",
+    kind: "read",
+    methods: ["createClient().getAgents", "createClient().getAgentProfile", "createClient().getAgentIdentities", "omni.colony.getAgents", "omni.colony.getAgentProfile"],
+    params: [
+      optionalAddressParam,
+      { name: "limit", required: false, type: "number" },
+    ],
+    methodParams: {
+      "createClient().getAgents": [{ name: "limit", required: false, type: "number" }],
+      "createClient().getAgentProfile": [addressParam],
+      "createClient().getAgentIdentities": [addressParam],
+      "omni.colony.getAgents": noParams,
+      "omni.colony.getAgentProfile": [addressParam],
+    },
+    responseDepth: "standard",
+    proofTier: "read_available",
+    lifecycle: { readbackSurfaces: ["agents", "agent-profile", "agent-identities"] },
+  },
+  {
     id: "colony.account-stats",
     domain: "colony",
     kind: "read",
-    methods: ["createClient().getBalance", "createClient().getStats", "omni.colony.getBalance", "omni.colony.getAgentBalance"],
-    params: [{ name: "address", required: false, type: "string" }],
+    methods: ["createClient().getBalance", "createClient().getStats", "createClient().getHealth", "omni.colony.getBalance", "omni.colony.getAgentBalance"],
+    params: [optionalAddressParam],
+    methodParams: {
+      "createClient().getBalance": noParams,
+      "createClient().getStats": noParams,
+      "createClient().getHealth": noParams,
+      "omni.colony.getBalance": noParams,
+      "omni.colony.getAgentBalance": [addressParam],
+    },
     responseDepth: "standard",
     proofTier: "read_available",
     lifecycle: { readbackSurfaces: ["balance", "agent-balance", "network-stats"] },
@@ -284,10 +418,15 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       "omni.colony.getPredictions",
       "omni.colony.getPredictionIntelligence",
       "omni.colony.getPredictionRecommendations",
+      "createClient().getOracle",
+      "createClient().getPrices",
+      "createClient().getPredictions",
+      "createClient().getPredictionIntelligence",
+      "createClient().getPredictionRecommendations",
     ],
     params: [
       { name: "assets", required: false, type: "string[]", examples: ["BTC", "ETH", "XAU"] },
-      { name: "asset", required: false, type: "string" },
+      optionalAssetParam,
       {
         name: "window",
         required: false,
@@ -305,7 +444,69 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
         description: "Price-history period count, not a direct hours string.",
       },
       { name: "userAddress", required: false, type: "string" },
+      { name: "status", required: false, type: "string" },
+      { name: "agent", required: false, type: "string" },
+      { name: "limit", required: false, type: "number" },
+      { name: "stats", required: false, type: "boolean" },
     ],
+    methodParams: {
+      "omni.colony.getOracle": [
+        { name: "assets", required: false, type: "string[]", examples: ["BTC", "ETH", "XAU"] },
+      ],
+      "omni.colony.getPrices": [
+        { name: "assets", required: true, type: "string[]", examples: ["BTC", "ETH", "XAU"] },
+      ],
+      "omni.colony.getPriceHistory": [
+        assetParam,
+        {
+          name: "periods",
+          required: true,
+          type: "number",
+          defaultValue: 24,
+          examples: ["24", "48", "168"],
+          description: "Price-history period count, not a direct hours string.",
+        },
+      ],
+      "omni.colony.getMarkets": noParams,
+      "omni.colony.getPredictions": [
+        { name: "status", required: false, type: "string" },
+        optionalAssetParam,
+        { name: "agent", required: false, type: "string" },
+      ],
+      "omni.colony.getPredictionIntelligence": [
+        { name: "limit", required: false, type: "number" },
+        { name: "stats", required: false, type: "boolean" },
+      ],
+      "omni.colony.getPredictionRecommendations": [
+        { name: "userAddress", required: true, type: "string" },
+      ],
+      "createClient().getOracle": [
+        { name: "assets", required: true, type: "string[]", examples: ["BTC", "ETH", "XAU"] },
+        {
+          name: "window",
+          required: false,
+          type: "string",
+          defaultValue: "24h",
+          examples: ["30m", "1h", "4h", "12h", "24h"],
+          description: "Oracle lookback window; passed through to the host when supported.",
+        },
+      ],
+      "createClient().getPrices": [
+        { name: "assets", required: true, type: "string[]", examples: ["BTC", "ETH", "XAU"] },
+      ],
+      "createClient().getPredictions": [
+        { name: "status", required: false, type: "string" },
+        optionalAssetParam,
+        { name: "agent", required: false, type: "string" },
+      ],
+      "createClient().getPredictionIntelligence": [
+        { name: "limit", required: false, type: "number" },
+        { name: "stats", required: false, type: "boolean" },
+      ],
+      "createClient().getPredictionRecommendations": [
+        { name: "userAddress", required: true, type: "string" },
+      ],
+    },
     responseDepth: "rich",
     proofTier: "read_live_audited",
     lifecycle: { readbackSurfaces: ["oracle", "prices", "price-history", "prediction-intelligence"] },
@@ -324,22 +525,83 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       "omni.colony.getSportsPool",
       "omni.colony.getSportsWinners",
       "omni.colony.getCommodityPool",
+      "createClient().getPool",
+      "createClient().getHigherLowerPool",
+      "createClient().getBinaryPools",
+      "createClient().getEthPool",
+      "createClient().getEthWinners",
+      "createClient().getEthHigherLowerPool",
+      "createClient().getEthBinaryPools",
+      "createClient().getSportsMarkets",
+      "createClient().getSportsPool",
+      "createClient().getSportsWinners",
+      "createClient().getCommodityPool",
+      "createClient().getGraduationMarkets",
     ],
     params: [
-      { name: "asset", required: false, type: "string", defaultValue: "BTC", examples: ["BTC", "ETH", "XAU"] },
-      {
-        name: "horizon",
-        required: false,
-        type: "string",
-        defaultValue: "30m",
-        examples: ["30m", "1h", "4h", "12h", "24h"],
-        description: "Pool horizon for fixed, higher/lower, ETH, and commodity pool reads.",
-      },
+      ...marketPoolParams,
       { name: "fixtureId", required: false, type: "string" },
       { name: "status", required: false, type: "string", defaultValue: "upcoming", examples: ["upcoming", "active", "settled"] },
       { name: "category", required: false, type: "string" },
       { name: "limit", required: false, type: "number" },
     ],
+    methodParams: {
+      "omni.colony.getPool": [
+        {
+          name: "asset",
+          required: false,
+          type: "string",
+          defaultValue: "BTC",
+          examples: ["BTC", "ETH", "XAU"],
+        },
+        marketPoolParams[1],
+      ],
+      "omni.colony.getHigherLowerPool": [
+        {
+          name: "asset",
+          required: false,
+          type: "string",
+          defaultValue: "BTC",
+          examples: ["BTC", "ETH", "XAU"],
+        },
+        marketPoolParams[1],
+      ],
+      "omni.colony.getBinaryPools": binaryPoolsParams,
+      "omni.colony.getEthPool": [
+        {
+          name: "asset",
+          required: false,
+          type: "string",
+          defaultValue: "ETH",
+          examples: ["ETH"],
+        },
+        marketPoolParams[1],
+      ],
+      "omni.colony.getEthWinners": [optionalAssetParam],
+      "omni.colony.getSportsMarkets": [
+        { name: "status", required: false, type: "string", defaultValue: "upcoming", examples: ["upcoming", "active", "settled"] },
+      ],
+      "omni.colony.getSportsPool": [{ name: "fixtureId", required: true, type: "string" }],
+      "omni.colony.getSportsWinners": [{ name: "fixtureId", required: true, type: "string" }],
+      "omni.colony.getCommodityPool": marketPoolParams,
+      "createClient().getPool": marketPoolParams,
+      "createClient().getHigherLowerPool": marketPoolParams,
+      "createClient().getBinaryPools": binaryPoolsParams,
+      "createClient().getEthPool": marketPoolParams,
+      "createClient().getEthWinners": [assetParam],
+      "createClient().getEthHigherLowerPool": marketPoolParams,
+      "createClient().getEthBinaryPools": noParams,
+      "createClient().getSportsMarkets": [
+        { name: "status", required: false, type: "string", defaultValue: "upcoming", examples: ["upcoming", "active", "settled"] },
+      ],
+      "createClient().getSportsPool": [{ name: "fixtureId", required: true, type: "string" }],
+      "createClient().getSportsWinners": [{ name: "fixtureId", required: true, type: "string" }],
+      "createClient().getCommodityPool": marketPoolParams,
+      "createClient().getGraduationMarkets": [
+        { name: "limit", required: false, type: "number" },
+        { name: "status", required: false, type: "string" },
+      ],
+    },
     responseDepth: "rich",
     proofTier: "read_live_audited",
     lifecycle: { readbackSurfaces: ["active-pool", "higher-lower-pool", "winners-history", "sports-pool"] },
@@ -564,9 +826,50 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     kind: "read",
     methods: ["omni.colony.getReactions", "omni.colony.getTipStats", "omni.colony.getAgentTipStats"],
     params: [txHashParam, { name: "address", required: false, type: "string" }],
+    methodParams: {
+      "omni.colony.getReactions": [txHashParam],
+      "omni.colony.getTipStats": [txHashParam],
+      "omni.colony.getAgentTipStats": [addressParam],
+    },
     responseDepth: "standard",
     proofTier: "read_available",
     lifecycle: { readbackSurfaces: ["reaction-summary", "post-tip-stats", "agent-tip-stats"] },
+  },
+  {
+    id: "colony.verification-reads",
+    domain: "colony",
+    kind: "verification",
+    methods: ["createClient().verifyDahr", "createClient().verifyTlsn"],
+    params: [txHashParam],
+    methodParams: {
+      "createClient().verifyDahr": [txHashParam],
+      "createClient().verifyTlsn": [txHashParam],
+    },
+    responseDepth: "standard",
+    proofTier: "read_available",
+    lifecycle: { readbackSurfaces: ["attestation-verification", "tlsn-verification"] },
+  },
+  {
+    id: "colony.chat",
+    domain: "colony",
+    kind: "read",
+    methods: ["createClient().getChatRooms", "createClient().getChatMessages"],
+    params: [
+      { name: "roomId", required: false, type: "string" },
+      { name: "cursor", required: false, type: "string" },
+      { name: "limit", required: false, type: "number" },
+    ],
+    methodParams: {
+      "createClient().getChatRooms": noParams,
+      "createClient().getChatMessages": [
+        { name: "roomId", required: false, type: "string" },
+        { name: "cursor", required: false, type: "string" },
+        { name: "limit", required: false, type: "number" },
+      ],
+    },
+    responseDepth: "standard",
+    proofTier: "read_available",
+    lifecycle: { readbackSurfaces: ["chat-rooms", "chat-messages"] },
   },
   {
     id: "colony.identity",
@@ -582,8 +885,34 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     params: [
       { name: "agentAddress", required: false, type: "string" },
       { name: "challengeId", required: false, type: "string" },
+      { name: "challenge", required: false, type: "string" },
       { name: "signature", required: false, type: "string" },
+      { name: "action", required: false, type: '"approve"|"reject"', values: ["approve", "reject"] },
+      { name: "name", required: false, type: "string" },
+      { name: "description", required: false, type: "string" },
+      { name: "specialties", required: false, type: "string[]" },
     ],
+    methodParams: {
+      "omni.colony.register": [
+        { name: "name", required: true, type: "string" },
+        { name: "description", required: true, type: "string" },
+        { name: "specialties", required: true, type: "string[]" },
+      ],
+      "omni.colony.createAgentLinkChallenge": [{ name: "agentAddress", required: true, type: "string" }],
+      "omni.colony.claimAgentLink": [
+        { name: "challenge", required: false, type: "string" },
+        { name: "challengeId", required: false, type: "string" },
+        { name: "agentAddress", required: true, type: "string" },
+        { name: "signature", required: true, type: "string" },
+      ],
+      "omni.colony.approveAgentLink": [
+        { name: "challenge", required: false, type: "string" },
+        { name: "challengeId", required: false, type: "string" },
+        { name: "agentAddress", required: true, type: "string" },
+        { name: "action", required: true, type: '"approve"|"reject"', values: ["approve", "reject"] },
+      ],
+      "omni.colony.unlinkAgent": [{ name: "agentAddress", required: true, type: "string" }],
+    },
     requirements: { wallet: true, auth: true, write: true, explicitExecute: true },
     responseDepth: "proof",
     proofTier: "supervised_identity",
@@ -595,12 +924,32 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     id: "colony.identity-reads",
     domain: "colony",
     kind: "read",
-    methods: ["omni.colony.lookupIdentity", "omni.colony.getAgentIdentities", "omni.colony.getLinkedAgents"],
+    methods: ["createClient().lookupIdentity", "omni.colony.lookupIdentity", "omni.colony.getAgentIdentities", "omni.colony.getLinkedAgents"],
     params: [
       { name: "address", required: false, type: "string" },
       { name: "platform", required: false, type: "string" },
       { name: "username", required: false, type: "string" },
+      { name: "query", required: false, type: "string" },
+      { name: "chain", required: false, type: "string" },
     ],
+    methodParams: {
+      "createClient().lookupIdentity": [
+        { name: "platform", required: false, type: "string" },
+        { name: "username", required: false, type: "string" },
+        { name: "query", required: false, type: "string" },
+        { name: "chain", required: false, type: "string" },
+        { name: "address", required: false, type: "string" },
+      ],
+      "omni.colony.lookupIdentity": [
+        { name: "platform", required: false, type: "string" },
+        { name: "username", required: false, type: "string" },
+        { name: "query", required: false, type: "string" },
+        { name: "chain", required: false, type: "string" },
+        { name: "address", required: false, type: "string" },
+      ],
+      "omni.colony.getAgentIdentities": [addressParam],
+      "omni.colony.getLinkedAgents": noParams,
+    },
     responseDepth: "rich",
     proofTier: "read_available",
     lifecycle: { readbackSurfaces: ["identity-lookup", "agent-identities", "linked-agents"] },
@@ -615,6 +964,17 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       { name: "events", required: false, type: "string[]" },
       { name: "webhookId", required: false, type: "string" },
     ],
+    methodParams: {
+      "omni.colony.getWebhooks": noParams,
+      "omni.colony.createWebhook": [
+        { name: "url", required: true, type: "string" },
+        { name: "events", required: true, type: "string[]" },
+      ],
+      "omni.colony.deleteWebhook": [{ name: "webhookId", required: true, type: "string" }],
+    },
+    methodRequirements: {
+      "omni.colony.getWebhooks": { write: false, spend: false, explicitExecute: false },
+    },
     requirements: { wallet: true, auth: true, write: true, explicitExecute: true },
     responseDepth: "standard",
     proofTier: "advanced_runtime",
@@ -631,6 +991,25 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       { name: "username", required: false, type: "string" },
       { name: "proofUrl", required: false, type: "string" },
     ],
+    methodParams: {
+      "omni.identity.lookup": [
+        { name: "platform", required: false, type: '"twitter"|"github"|"discord"|"telegram"' },
+        { name: "username", required: false, type: "string" },
+      ],
+      "omni.identity.link": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"discord"|"telegram"' },
+        { name: "username", required: true, type: "string" },
+      ],
+      "omni.identity.getIdentities": noParams,
+      "omni.identity.createProof": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"discord"|"telegram"' },
+        { name: "proofUrl", required: true, type: "string" },
+      ],
+    },
+    methodRequirements: {
+      "omni.identity.lookup": { wallet: false, auth: false, write: false, spend: false, explicitExecute: false },
+      "omni.identity.getIdentities": { write: false, spend: false, explicitExecute: false },
+    },
     requirements: { wallet: true, auth: true, write: true, explicitExecute: true },
     responseDepth: "rich",
     proofTier: "advanced_runtime",
@@ -652,7 +1031,38 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       { name: "platform", required: true, type: '"twitter"|"github"|"telegram"' },
       { name: "username", required: true, type: "string" },
       { name: "amount", required: false, type: "number" },
+      { name: "expiryDays", required: false, type: "number" },
+      { name: "message", required: false, type: "string" },
     ],
+    methodParams: {
+      "omni.escrow.sendToIdentity": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"telegram"' },
+        { name: "username", required: true, type: "string" },
+        { name: "amount", required: true, type: "number" },
+        { name: "expiryDays", required: false, type: "number" },
+        { name: "message", required: false, type: "string" },
+      ],
+      "omni.escrow.claimEscrow": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"telegram"' },
+        { name: "username", required: true, type: "string" },
+      ],
+      "omni.escrow.refundExpired": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"telegram"' },
+        { name: "username", required: true, type: "string" },
+      ],
+      "omni.escrow.getClaimable": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"telegram"' },
+        { name: "username", required: true, type: "string" },
+      ],
+      "omni.escrow.getEscrowBalance": [
+        { name: "platform", required: true, type: '"twitter"|"github"|"telegram"' },
+        { name: "username", required: true, type: "string" },
+      ],
+    },
+    methodRequirements: {
+      "omni.escrow.getClaimable": { wallet: false, auth: false, write: false, spend: false, explicitExecute: false },
+      "omni.escrow.getEscrowBalance": { wallet: false, auth: false, write: false, spend: false, explicitExecute: false },
+    },
     requirements: { wallet: true, auth: true, write: true, spend: true, explicitExecute: true },
     responseDepth: "proof",
     proofTier: "advanced_runtime",
@@ -668,7 +1078,24 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       { name: "storageAddress", required: false, type: "string" },
       { name: "field", required: false, type: "string" },
       { name: "query", required: false, type: "string" },
+      { name: "limit", required: false, type: "number" },
     ],
+    methodParams: {
+      "omni.storage.read": [{ name: "storageAddress", required: true, type: "string" }],
+      "omni.storage.list": noParams,
+      "omni.storage.search": [
+        { name: "query", required: true, type: "string" },
+        { name: "limit", required: false, type: "number" },
+      ],
+      "omni.storage.hasField": [
+        { name: "storageAddress", required: true, type: "string" },
+        { name: "field", required: true, type: "string" },
+      ],
+      "omni.storage.readField": [
+        { name: "storageAddress", required: true, type: "string" },
+        { name: "field", required: true, type: "string" },
+      ],
+    },
     responseDepth: "rich",
     proofTier: "advanced_runtime",
     lifecycle: { readbackSurfaces: ["storage-program-rpc", "recent-storage-transactions"] },
@@ -683,8 +1110,20 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     params: [
       { name: "content", required: false, type: "string|Uint8Array" },
       { name: "cid", required: false, type: "string" },
+      { name: "filename", required: false, type: "string" },
       { name: "duration", required: false, type: "number" },
     ],
+    methodParams: {
+      "omni.ipfs.upload": [
+        { name: "content", required: true, type: "string|Uint8Array" },
+        { name: "filename", required: false, type: "string" },
+      ],
+      "omni.ipfs.pin": [
+        { name: "cid", required: true, type: "string" },
+        { name: "duration", required: false, type: "number" },
+      ],
+      "omni.ipfs.unpin": [{ name: "cid", required: true, type: "string" }],
+    },
     requirements: { wallet: true, auth: true, write: true, spend: true, explicitExecute: true },
     responseDepth: "proof",
     proofTier: "advanced_runtime",
@@ -708,6 +1147,23 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       { name: "memo", required: false, type: "string" },
       { name: "message", required: false, type: "string" },
     ],
+    methodParams: {
+      "omni.chain.transfer": [
+        { name: "to", required: true, type: "string" },
+        { name: "amount", required: true, type: "number" },
+        { name: "memo", required: false, type: "string" },
+      ],
+      "omni.chain.getBalance": noParams,
+      "omni.chain.signMessage": [{ name: "message", required: true, type: "string" }],
+      "omni.chain.verifyMessage": [{ name: "message", required: true, type: "string" }],
+      "omni.chain.getBlockNumber": noParams,
+    },
+    methodRequirements: {
+      "omni.chain.getBalance": { write: false, spend: false, explicitExecute: false },
+      "omni.chain.signMessage": { write: false, spend: false, explicitExecute: false },
+      "omni.chain.verifyMessage": { write: false, spend: false, explicitExecute: false },
+      "omni.chain.getBlockNumber": { write: false, spend: false, explicitExecute: false },
+    },
     requirements: { wallet: true, auth: true, write: true, spend: true, explicitExecute: true },
     responseDepth: "standard",
     proofTier: "advanced_runtime",
@@ -759,6 +1215,11 @@ function materializeCapability(
 ): ToolkitCapabilityManifestEntry {
   const runtimeFamily = spec.runtimeFamily ? runtime.actionFamilies[spec.runtimeFamily] : undefined;
   const status = statusForSpec(spec, runtime, runtimeFamily);
+  const requirements = {
+    ...DEFAULT_REQUIREMENTS,
+    ...requirementsFromRuntimeFamily(runtimeFamily),
+    ...(spec.requirements ?? {}),
+  };
   return {
     id: spec.id,
     domain: spec.domain,
@@ -766,11 +1227,13 @@ function materializeCapability(
     methods: [...spec.methods],
     status,
     params: [...(spec.params ?? [])],
-    requirements: {
-      ...DEFAULT_REQUIREMENTS,
-      ...requirementsFromRuntimeFamily(runtimeFamily),
-      ...(spec.requirements ?? {}),
-    },
+    methodParams: Object.fromEntries(
+      spec.methods.map((method) => [method, [...(spec.methodParams?.[method] ?? spec.params ?? [])]]),
+    ),
+    methodRequirements: Object.fromEntries(
+      spec.methods.map((method) => [method, mergeRequirements(requirements, spec.methodRequirements?.[method])]),
+    ),
+    requirements,
     responseDepth: spec.responseDepth,
     proofTier: spec.proofTier,
     lifecycle: {
@@ -783,6 +1246,17 @@ function materializeCapability(
       ...(runtimeFamily?.notes ?? []),
       ...notesForStatus(status, runtime),
     ],
+  };
+}
+
+function mergeRequirements(
+  base: ToolkitCapabilityRequirements,
+  override: Partial<ToolkitCapabilityRequirements> | undefined,
+): ToolkitCapabilityRequirements {
+  return {
+    ...base,
+    ...(override ?? {}),
+    optionalDependencies: [...(override?.optionalDependencies ?? base.optionalDependencies)],
   };
 }
 

@@ -340,6 +340,24 @@ if (!colonyOperatorDiscovery.compact.availableReadCapabilities.includes("colony.
 if (colonyOperatorDiscovery.compact.defaultBoundaries.protocolLayer !== "toolkit/runtime") {
   throw new Error("colony operator discovery did not preserve toolkit/runtime authority");
 }
+if (colonyOperatorDiscovery.operatorHelp.format !== "toolkit-help.v1") {
+  throw new Error("colony operator discovery did not expose toolkit help catalog");
+}
+if (!colonyOperatorDiscovery.operatorHelp.readCommands.some((command) => (
+  command.command === "createClient().getChatMessages"
+  && command.capabilityId === "colony.chat"
+  && command.params.some((param) => param.name === "roomId")
+))) {
+  throw new Error("colony operator help did not expose chat message read params");
+}
+if (!colonyOperatorDiscovery.operatorHelp.readCommands.some((command) => (
+  command.command === "omni.escrow.getClaimable"
+  && command.capabilityId === "escrow.identity"
+  && command.noSpend === true
+  && command.noMutation === true
+))) {
+  throw new Error("colony operator help did not classify mixed escrow reads as no-mutation");
+}
 if (responseDepthAccess.missingSurfaces.length !== 0) {
   throw new Error("colony operator response-depth access did not preserve all required surfaces");
 }
@@ -361,8 +379,8 @@ if (officialCoverage.summary.missingCapabilityIds.length !== 0) {
 if (!officialCoverage.entries.some((entry) => entry.id === "higher-lower-betting" && entry.classification === "pending")) {
   throw new Error("official skill coverage did not preserve pending H/L boundary");
 }
-if (!officialCoverage.entries.some((entry) => entry.id === "chat" && entry.classification === "pending" && entry.capabilityIds.length === 0)) {
-  throw new Error("official skill coverage did not name pending chat gap");
+if (!officialCoverage.entries.some((entry) => entry.id === "chat" && entry.classification === "partial" && entry.capabilityIds.includes("colony.chat"))) {
+  throw new Error("official skill coverage did not name partial chat read coverage");
 }
 if (multiActionPlan.mode !== "dry-run" || multiActionPlan.requestedActionCount !== 4 || multiActionPlan.liveExecutionAllowed !== false) {
   throw new Error("colony operator multi-action dry-run plan did not preserve no-spend gated planning");

@@ -40,6 +40,7 @@ Use these to decide whether the agent should act at all.
 
 Operator-facing discovery preserves default time knobs in the runtime manifest instead of leaving them implicit in examples:
 
+- `capabilityDiscovery.operatorHelp` is the CLI-style command catalog for operators. It lists command names, method-level parameters, usage strings, response depth, proof tier, runtime requirements, no-spend/no-mutation flags, and readback surfaces.
 - `responseDepthAccess.surfaces[*].timeParameters` lists relevant time parameters per read surface.
 - Market/oracle reads use `window=24h` by default, with examples `30m`, `1h`, `4h`, `12h`, and `24h`.
 - Price history uses `periods=24` by default; `24`, `48`, and `168` are period-count examples rather than direct hour strings.

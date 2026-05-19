@@ -163,9 +163,59 @@ export interface ColonyOperatorCapabilityDiscovery {
   fullDetailAccess: {
     manifestField: "toolkitCapabilityManifest";
     capabilityIds: string[];
-    includes: Array<"methods" | "params" | "requirements" | "responseDepth" | "proofTier" | "lifecycle" | "status">;
+    includes: Array<
+      | "methods"
+      | "params"
+      | "methodParams"
+      | "requirements"
+      | "methodRequirements"
+      | "responseDepth"
+      | "proofTier"
+      | "lifecycle"
+      | "status"
+    >;
   };
+  operatorHelp: ColonyOperatorToolkitHelp;
   responseDepthAccess: ColonyOperatorResponseDepthAccess;
+}
+
+export interface ColonyOperatorToolkitHelpCommand {
+  command: string;
+  capabilityId: string;
+  domain: ToolkitCapabilityManifestEntry["domain"];
+  kind: ToolkitCapabilityManifestEntry["kind"];
+  status: ToolkitCapabilityManifestEntry["status"];
+  params: ToolkitCapabilityManifestEntry["params"];
+  requirements: ToolkitCapabilityManifestEntry["requirements"];
+  responseDepth: ToolkitCapabilityManifestEntry["responseDepth"];
+  proofTier: ToolkitCapabilityManifestEntry["proofTier"];
+  readbackSurfaces: string[];
+  writesLifecycleRecord: boolean;
+  noSpend: boolean;
+  noMutation: boolean;
+  requiresExplicitExecute: boolean;
+  usage: string;
+  notes: string[];
+}
+
+export interface ColonyOperatorToolkitHelp {
+  format: "toolkit-help.v1";
+  manifestField: "toolkitCapabilityManifest";
+  intent: "discover_toolkit_surface";
+  defaultMode: "read-first-no-spend";
+  filters: {
+    domains: ToolkitCapabilityManifestEntry["domain"][];
+    kinds: ToolkitCapabilityManifestEntry["kind"][];
+    statuses: ToolkitCapabilityManifestEntry["status"][];
+    responseDepths: ToolkitCapabilityManifestEntry["responseDepth"][];
+    proofTiers: ToolkitCapabilityManifestEntry["proofTier"][];
+  };
+  commands: ColonyOperatorToolkitHelpCommand[];
+  readCommands: ColonyOperatorToolkitHelpCommand[];
+  writeCommands: ColonyOperatorToolkitHelpCommand[];
+  commandCount: number;
+  readCommandCount: number;
+  writeCommandCount: number;
 }
 
 export type ColonyOperatorResponseDepthSurfaceId =
@@ -634,9 +684,50 @@ export function buildColonyOperatorCapabilityDiscovery(
     fullDetailAccess: {
       manifestField: "toolkitCapabilityManifest",
       capabilityIds: manifest.capabilities.map((capability) => capability.id),
-      includes: ["methods", "params", "requirements", "responseDepth", "proofTier", "lifecycle", "status"],
+      includes: [
+        "methods",
+        "params",
+        "methodParams",
+        "requirements",
+        "methodRequirements",
+        "responseDepth",
+        "proofTier",
+        "lifecycle",
+        "status",
+      ],
     },
+    operatorHelp: buildColonyOperatorToolkitHelp(manifest),
     responseDepthAccess: buildColonyOperatorResponseDepthAccess(manifest),
+  };
+}
+
+export function buildColonyOperatorToolkitHelp(
+  manifest: ToolkitCapabilityManifest,
+): ColonyOperatorToolkitHelp {
+  const commands = manifest.capabilities.flatMap((capability) => (
+    capability.methods.map((method) => buildHelpCommand(capability, method))
+  ));
+  const readCommands = commands.filter((command) => !command.requirements.write);
+  const writeCommands = commands.filter((command) => command.requirements.write);
+
+  return {
+    format: "toolkit-help.v1",
+    manifestField: "toolkitCapabilityManifest",
+    intent: "discover_toolkit_surface",
+    defaultMode: "read-first-no-spend",
+    filters: {
+      domains: uniqueStrings(commands.map((command) => command.domain)),
+      kinds: uniqueStrings(commands.map((command) => command.kind)),
+      statuses: uniqueStrings(commands.map((command) => command.status)),
+      responseDepths: uniqueStrings(commands.map((command) => command.responseDepth)),
+      proofTiers: uniqueStrings(commands.map((command) => command.proofTier)),
+    },
+    commands,
+    readCommands,
+    writeCommands,
+    commandCount: commands.length,
+    readCommandCount: readCommands.length,
+    writeCommandCount: writeCommands.length,
   };
 }
 
@@ -693,6 +784,40 @@ function capabilityIdsWith(
   return capabilities
     .filter((capability) => capability.kind === filters.kind && filters.statuses.includes(capability.status))
     .map((capability) => capability.id);
+}
+
+function buildHelpCommand(
+  capability: ToolkitCapabilityManifestEntry,
+  method: string,
+): ColonyOperatorToolkitHelpCommand {
+  const params = capability.methodParams[method] ?? capability.params;
+  const requirements = capability.methodRequirements[method] ?? capability.requirements;
+  return {
+    command: method,
+    capabilityId: capability.id,
+    domain: capability.domain,
+    kind: capability.kind,
+    status: capability.status,
+    params: params.map((parameter) => ({ ...parameter })),
+    requirements: { ...requirements, optionalDependencies: [...requirements.optionalDependencies] },
+    responseDepth: capability.responseDepth,
+    proofTier: capability.proofTier,
+    readbackSurfaces: [...capability.lifecycle.readbackSurfaces],
+    writesLifecycleRecord: capability.lifecycle.writesLifecycleRecord,
+    noSpend: !requirements.spend,
+    noMutation: !requirements.write,
+    requiresExplicitExecute: requirements.explicitExecute,
+    usage: usageFor(method, params),
+    notes: [...capability.notes],
+  };
+}
+
+function usageFor(method: string, params: ToolkitCapabilityManifestEntry["params"]): string {
+  const renderedParams = params.map((parameter) => {
+    const rendered = `--${parameter.name} <${parameter.type}>`;
+    return parameter.required ? rendered : `[${rendered}]`;
+  });
+  return [method, ...renderedParams].join(" ");
 }
 
 interface ResponseDepthSurfaceRequirement {

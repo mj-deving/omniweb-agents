@@ -6,6 +6,7 @@ import {
 import {
   OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS,
   buildColonyOperatorResponseDepthAccess,
+  buildColonyOperatorToolkitHelp,
   buildOfficialSkillCoverageReport,
   getOfficialSkillSurfaceAreas,
 } from "../../packages/omniweb-toolkit/src/agent.js";
@@ -57,6 +58,22 @@ describe("toolkit capability manifest", () => {
       "colony.publish-vote",
       "colony.bet-fixed",
     ]));
+    expect(manifest.capabilities.find((capability) => capability.id === "colony.feed")?.methods).toEqual(expect.arrayContaining([
+      "createClient().getFeed",
+      "createClient().getFeedRss",
+      "createClient().planFeedStream",
+      "omni.colony.getRss",
+    ]));
+    expect(manifest.capabilities.find((capability) => capability.id === "colony.post-detail")?.methods).toContain("createClient().getThread");
+    expect(manifest.capabilities.find((capability) => capability.id === "colony.chat")).toMatchObject({
+      kind: "read",
+      methods: expect.arrayContaining(["createClient().getChatRooms", "createClient().getChatMessages"]),
+      params: expect.arrayContaining([
+        expect.objectContaining({ name: "roomId" }),
+        expect.objectContaining({ name: "cursor" }),
+        expect.objectContaining({ name: "limit" }),
+      ]),
+    });
 
     expect(manifest.capabilities.find((capability) => capability.id === "colony.publish")).toMatchObject({
       domain: "colony",
@@ -82,8 +99,11 @@ describe("toolkit capability manifest", () => {
 
     expect(manifest.capabilities.find((capability) => capability.id === "colony.post-detail")).toMatchObject({
       kind: "read",
-      methods: ["omni.colony.getPostDetail"],
+      methods: expect.arrayContaining(["createClient().getPostDetail", "createClient().getThread", "omni.colony.getPostDetail"]),
       params: [{ name: "txHash", required: true, type: "string", description: expect.any(String) }],
+      methodParams: {
+        "createClient().getThread": [{ name: "txHash", required: true, type: "string", description: expect.any(String) }],
+      },
       responseDepth: "rich",
       proofTier: "read_live_audited",
       lifecycle: {
@@ -217,6 +237,68 @@ describe("toolkit capability manifest", () => {
     });
   });
 
+  it("builds CLI-style operator help without omitting manifest params", () => {
+    const manifest = buildToolkitCapabilityManifest({ runtimeCapabilities: readyRuntime() });
+    const help = buildColonyOperatorToolkitHelp(manifest);
+
+    expect(help).toMatchObject({
+      format: "toolkit-help.v1",
+      manifestField: "toolkitCapabilityManifest",
+      intent: "discover_toolkit_surface",
+      defaultMode: "read-first-no-spend",
+    });
+    expect(help.commandCount).toBe(help.commands.length);
+    expect(help.readCommandCount).toBe(help.readCommands.length);
+    expect(help.writeCommandCount).toBe(help.writeCommands.length);
+    expect(help.readCommands).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        command: "createClient().getFeed",
+        capabilityId: "colony.feed",
+        noSpend: true,
+        noMutation: true,
+        usage: expect.stringContaining("--limit"),
+      }),
+      expect.objectContaining({
+        command: "createClient().getFeedRss",
+        capabilityId: "colony.feed",
+        params: [],
+        usage: "createClient().getFeedRss",
+      }),
+      expect.objectContaining({
+        command: "createClient().getThread",
+        capabilityId: "colony.post-detail",
+        responseDepth: "rich",
+      }),
+      expect.objectContaining({
+        command: "createClient().getChatMessages",
+        capabilityId: "colony.chat",
+      }),
+      expect.objectContaining({
+        command: "omni.escrow.getClaimable",
+        capabilityId: "escrow.identity",
+        noSpend: true,
+        noMutation: true,
+        requiresExplicitExecute: false,
+      }),
+      expect.objectContaining({
+        command: "omni.identity.lookup",
+        capabilityId: "identity.web2",
+        noSpend: true,
+        noMutation: true,
+        requiresExplicitExecute: false,
+      }),
+    ]));
+
+    for (const command of help.commands) {
+      const capability = manifest.capabilities.find((item) => item.id === command.capabilityId);
+      expect(capability, command.capabilityId).toBeDefined();
+      expect(command.params.map((param) => param.name)).toEqual(
+        (capability?.methodParams[command.command] ?? capability?.params ?? []).map((param) => param.name),
+      );
+      expect(command.usage).toContain(command.command);
+    }
+  });
+
   it("classifies the official SuperColony skill surface against manifest truth", () => {
     const manifest = buildToolkitCapabilityManifest({
       runtimeCapabilities: readyRuntime(),
@@ -290,9 +372,9 @@ describe("toolkit capability manifest", () => {
       ],
     });
     expect(report.entries.find((entry) => entry.id === "chat")).toMatchObject({
-      classification: "pending",
-      capabilityIds: [],
-      notes: expect.arrayContaining(["Official chat is a known surface not yet represented by the toolkit capability manifest."]),
+      classification: "partial",
+      capabilityIds: ["colony.chat"],
+      notes: expect.arrayContaining(["Chat room/message reads are represented; chat-send remains outside maintained write actions."]),
     });
     expect(report.entries.find((entry) => entry.id === "integration-packages")).toMatchObject({
       classification: "intentionally_excluded",

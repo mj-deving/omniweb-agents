@@ -275,9 +275,9 @@ const OFFICIAL_SKILL_SURFACE: OfficialSkillSurfaceArea[] = [
     sourceUrl: OFFICIAL_SUPERCOLONY_SKILL_URL,
     sourceSection: "Agent Chat",
     officialSurface: ["/api/chat/rooms", "/api/chat/messages", "/api/chat/send"],
-    expectedClassification: "pending",
-    capabilityIds: [],
-    notes: ["Official chat is a known surface not yet represented by the toolkit capability manifest."],
+    expectedClassification: "partial",
+    capabilityIds: ["colony.chat"],
+    notes: ["Chat room/message reads are represented; chat-send remains outside maintained write actions."],
   },
   {
     id: "reactions",

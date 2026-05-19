@@ -4,8 +4,55 @@ export const IDENTITY_PROOF_PHASES = ["register", "human-link", "cleanup", "full
 
 export type IdentityProofPhase = typeof IDENTITY_PROOF_PHASES[number];
 
+export interface IdentityProbeRuntimeTargetInput {
+  envPath?: string;
+  agentName?: string;
+  stateDir?: string;
+}
+
+export interface IdentityProbeRuntimeTargetSummary {
+  credentialSource: "explicit-env-path" | "agent-name" | "default-runtime";
+  envPath: "provided-redacted" | null;
+  agentName: string | null;
+  stateDir: "provided-redacted" | null;
+}
+
 export function isIdentityProofPhase(value: string): value is IdentityProofPhase {
   return (IDENTITY_PROOF_PHASES as readonly string[]).includes(value);
+}
+
+export function summarizeIdentityProbeRuntimeTarget(
+  input: IdentityProbeRuntimeTargetInput,
+): IdentityProbeRuntimeTargetSummary {
+  return {
+    credentialSource: input.envPath
+      ? "explicit-env-path"
+      : input.agentName
+        ? "agent-name"
+        : "default-runtime",
+    envPath: input.envPath ? "provided-redacted" : null,
+    agentName: input.agentName ?? null,
+    stateDir: input.stateDir ? "provided-redacted" : null,
+  };
+}
+
+export function redactIdentityProbeCommand(argv: string[]): string {
+  const redactedValueByFlag = new Map([
+    ["--env-path", "<redacted-env-path>"],
+    ["--state-dir", "<redacted-state-dir>"],
+    ["--proof-out", "<redacted-proof-out>"],
+  ]);
+  const out: string[] = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    out.push(arg);
+    const redactedValue = redactedValueByFlag.get(arg);
+    if (redactedValue && i + 1 < argv.length) {
+      out.push(redactedValue);
+      i += 1;
+    }
+  }
+  return out.join(" ");
 }
 
 export function isOkApiResult(result: unknown): result is { ok: true; status?: number; data: Record<string, unknown> } {

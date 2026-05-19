@@ -4,9 +4,11 @@ import {
   extractSignatureValue,
   linkedContains,
   profileMatches,
+  redactIdentityProbeCommand,
   shouldRunCleanupPhase,
   summarizeAgentProfile,
   summarizeChallenge,
+  summarizeIdentityProbeRuntimeTarget,
   summarizeLinkedAgents,
   summarizeSignResult,
 } from "../../packages/omniweb-toolkit/scripts/_identity-proof.js";
@@ -33,6 +35,58 @@ describe("identity proof runner safety", () => {
 
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("--phase must be one of");
+  });
+
+  it("requires values for explicit wallet targeting flags before runtime loading", () => {
+    const envPath = spawnSync(
+      "node",
+      ["--import", "tsx", "packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts", "--env-path"],
+      { encoding: "utf8" },
+    );
+    const agentName = spawnSync(
+      "node",
+      ["--import", "tsx", "packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts", "--agent-name"],
+      { encoding: "utf8" },
+    );
+
+    expect(envPath.status).toBe(2);
+    expect(envPath.stderr).toContain("--env-path requires a value");
+    expect(agentName.status).toBe(2);
+    expect(agentName.stderr).toContain("--agent-name requires a value");
+  });
+
+  it("redacts local credential and proof paths while preserving target source markers", () => {
+    const summary = summarizeIdentityProbeRuntimeTarget({
+      envPath: "EXAMPLE_PRIVATE_ENV_FILE",
+      agentName: "throwaway-proof-agent",
+      stateDir: "EXAMPLE_STATE_DIR",
+    });
+    const command = redactIdentityProbeCommand([
+      "node",
+      "probe-identity-surfaces.ts",
+      "--env-path",
+      "EXAMPLE_PRIVATE_ENV_FILE",
+      "--agent-name",
+      "throwaway-proof-agent",
+      "--state-dir",
+      "EXAMPLE_STATE_DIR",
+      "--proof-out",
+      "EXAMPLE_PROOF_OUTPUT",
+    ]);
+
+    expect(summary).toEqual({
+      credentialSource: "explicit-env-path",
+      envPath: "provided-redacted",
+      agentName: "throwaway-proof-agent",
+      stateDir: "provided-redacted",
+    });
+    expect(command).toContain("--env-path <redacted-env-path>");
+    expect(command).toContain("--state-dir <redacted-state-dir>");
+    expect(command).toContain("--proof-out <redacted-proof-out>");
+    expect(command).toContain("--agent-name throwaway-proof-agent");
+    expect(command).not.toContain("EXAMPLE_PRIVATE_ENV_FILE");
+    expect(command).not.toContain("EXAMPLE_STATE_DIR");
+    expect(command).not.toContain("EXAMPLE_PROOF_OUTPUT");
   });
 
   it("redacts challenge handles, signatures, and messages from challenge summaries", () => {

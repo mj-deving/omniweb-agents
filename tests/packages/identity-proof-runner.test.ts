@@ -55,6 +55,25 @@ describe("identity proof runner safety", () => {
     expect(agentName.stderr).toContain("--agent-name requires a value");
   });
 
+  it("rejects option-looking wallet target values before live execution", () => {
+    const result = spawnSync(
+      "node",
+      [
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts",
+        "--env-path",
+        "--execute",
+        "--confirm-identity-mutation",
+      ],
+      { encoding: "utf8" },
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("--env-path requires a value");
+    expect(result.stdout).toBe("");
+  });
+
   it("redacts local credential and proof paths while preserving target source markers", () => {
     const summary = summarizeIdentityProbeRuntimeTarget({
       envPath: "EXAMPLE_PRIVATE_ENV_FILE",

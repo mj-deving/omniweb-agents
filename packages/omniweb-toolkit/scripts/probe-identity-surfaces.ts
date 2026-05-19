@@ -66,7 +66,7 @@ for (const flag of [
   "--proof-out",
 ]) {
   const index = args.indexOf(flag);
-  if (index >= 0 && !args[index + 1]) {
+  if (index >= 0 && (!args[index + 1] || args[index + 1].startsWith("-"))) {
     console.error(`Error: ${flag} requires a value`);
     process.exit(2);
   }

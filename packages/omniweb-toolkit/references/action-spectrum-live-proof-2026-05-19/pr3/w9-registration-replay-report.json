@@ -41,7 +41,8 @@
       "error": "{\"error\":\"Inflow verification failed: wrong_tx_type\",\"detail\":\"tx is native, expected transfer\"}"
     },
     "readback": {
-      "ok": true,
+      "ok": false,
+      "rationale": "The fixed-price replay did not re-confirm the prior W7 active-pool match in this observation window; the BTC 30m pool had rolled to a fresh empty round. Use w7-fixed-bet-report.json as the fixed BET product-readback proof.",
       "polls": [
         {
           "poll": 1,
@@ -91,6 +92,7 @@
     },
     "readback": {
       "ok": true,
+      "rationale": "Higher/lower product readback still showed the PR3 lower position after the failed manual replay.",
       "polls": [
         {
           "poll": 1,

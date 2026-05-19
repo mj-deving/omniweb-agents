@@ -1,6 +1,6 @@
 ---
 type: master-prd
-status: active
+status: completed
 created: 2026-05-19
 source_contract: docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md
 owner_bead: omniweb-agents-hosted
@@ -13,7 +13,7 @@ summary: "GoalMode execution surface for the hosted/external-style no-spend oper
 
 - Author: Codex
 - Created: 2026-05-19
-- Status: ACTIVE
+- Status: COMPLETED
 - Source contract: `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`
 - Stable anchors: AC-1 through AC-9
 - Owner bead: `omniweb-agents-hosted`
@@ -216,12 +216,14 @@ PR5:
 
 ## Section 8. Launch Preconditions
 
-Do not launch `/goal` until:
+Historical launch preconditions were satisfied before PR1 started:
 
 1. PR0 lands on `main`.
 2. The Beads graph exists and has no dependency cycles.
 3. `omniweb-agents-hosted.1` is the next ready implementation bead.
 4. The operator confirms the run remains no-release, no-registry, no-spend, and no-mutation.
+
+Do not relaunch this completed GoalMode lane as release, public-registry, live-spend, or production hosted activation work. Those require a separate explicit contract.
 
 ## Section 9. Stop And Degraded Rules
 
@@ -373,3 +375,24 @@ Do not use this PRD to:
   - `git diff --check`
 - PR4 satisfies AC-6. AC-8 remains for PR5 package/frontdoor wiring.
 - No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.
+
+### 2026-05-19 - PR5 GoalMode closeout and Beads memory
+
+- Claimed `omniweb-agents-hosted.5` after PR3 and PR4 merged.
+- Wired `check:hosted-operator-consumer` into `packages/omniweb-toolkit` `check:frontdoor`, making the hosted proof part of the package front-door gate without weakening consumer-spectrum, colony-operator, guardrail, or admissibility checks.
+- Final AC status:
+  - AC-1 roadmap and colony-operator re-entry mirrors synced.
+  - AC-2 clean local-tarball hosted consumer fixture satisfied.
+  - AC-3 package-name imports only satisfied.
+  - AC-4 repeated no-spend operator cycles satisfied.
+  - AC-5 full action-family alternatives satisfied.
+  - AC-6 drift and degraded classifications preserved.
+  - AC-7 optional hosted runtime smoke remains dry-run only.
+  - AC-8 package/front-door check wiring satisfied.
+  - AC-9 closeout and audit satisfied after Beads closeout and memory push.
+- Final validation passed:
+  - `npm --prefix packages/omniweb-toolkit run check:frontdoor`
+  - `git diff --check`
+  - `bd ready --json`
+  - `bd dolt push`
+- Final audit: no npm release, public registry proof, live spend, broadcast, live write, production hosted activation, or identity mutation was performed or claimed.

@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
+import { ensureLocalPackageResolution, hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
 
 interface OperatorEnvelope {
   mode: "dry-run" | "execute";
@@ -136,6 +136,7 @@ if (unsupportedArgs.length > 0) {
 
 const stateDir = mkdtempSync(join(tmpdir(), "omniweb-colony-operator-entrypoint-"));
 const started = Date.now();
+ensureLocalPackageResolution(resolve(PACKAGE_ROOT, "agents/openclaw/colony-operator"));
 const starterModule = await import(pathToFileURL(resolve(
   PACKAGE_ROOT,
   "agents/openclaw/colony-operator/skills/omniweb-colony-operator/starter.ts",

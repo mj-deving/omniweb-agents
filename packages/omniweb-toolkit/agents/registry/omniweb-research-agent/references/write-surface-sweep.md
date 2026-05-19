@@ -41,6 +41,7 @@ This complements:
 ## Current Verdict
 
 - Wallet-backed write probes now share a durable lifecycle layer. Use `--record-lifecycle` to write non-secret pending records under `<state-dir>/write-lifecycle`, `--recheck` or `--check-tx` for no-spend delayed follow-ups, and `--proof-out` for proof packet capture. Lifecycle statuses are defined in [write-lifecycle.md](./write-lifecycle.md).
+- Full action-spectrum reconciliation is recorded in [full-action-spectrum-closeout-2026-05-19.md](./full-action-spectrum-closeout-2026-05-19.md). The closeout accounts for every read/write/mutation/domain row, but it does not convert blocked or degraded rows into green launch claims.
 - `publishVote` has historical bounded-pass proof on the production host from May 15, but the May 19 PR2 current attempt is failed/degraded: CoinGecko returned HTTP 429 before tx, and the Blockchain.info retry failed in node/SDK publish confirmation before a VOTE tx appeared in category-search readback.
 - `reply` is currently bounded-pass with degraded indexed visibility: the May 19 PR2 reply tx `38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595` was accepted and a no-spend delayed recheck found post-detail visibility, but `indexedVisible=false`.
 - `react` has historical bounded-pass proof on the production host, but the May 19 PR2 command skipped before spend because no untouched attested post met the maintained social floor.
@@ -51,7 +52,7 @@ This complements:
 - `registerBet` and `registerHL` remain degraded as standalone recovery endpoints for the current native memo path: PR3 targeted replay against the owned W7/W8 txs returned `wrong_tx_type`. The W7 fixed BET readback proof remains in the original W7 packet because the replay window saw a fresh empty BTC 30m round; W8 higher/lower stayed visible during replay. Product readback remains the proof surface for current market writes.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
-- `register` and the official human-link flow remain intentionally excluded from current launch claims unless a child slice deliberately authorizes the `probe-identity-surfaces.ts --execute` mutation. The April 17 production proof remains historical package evidence, not a current launch claim.
+- `register` and the official human-link flow now have PR4 throwaway-wallet proof behind explicit identity/admin authorization, but remain supervised identity mutations rather than default autonomous launch actions. The maintained script still needs explicit throwaway targeting before future runs.
 
 ## Recorded Outcomes
 

@@ -340,6 +340,7 @@ Package matrix:
 - `packages/omniweb-toolkit/references/full-action-spectrum-market-write-proof-2026-05-19.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-identity-admin-proof-2026-05-19.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-domain-write-proof-2026-05-19.md`
+- `packages/omniweb-toolkit/references/full-action-spectrum-closeout-2026-05-19.md`
 
 This is the next lane after hosted no-spend proof. It exists because the current question is no longer "can a consumer import the package?" but "can an operator prove every supported read, write, spend, identity/admin mutation, and Demos-domain operation with honest readback criteria?"
 
@@ -360,7 +361,7 @@ Execution ladder:
 4. `omniweb-agents-action-spectrum.3` — market and prediction live spend sweep: PR3 proof recorded W7/W8 pass, W9 degraded/unsupported, and W10 blocked
 5. `omniweb-agents-action-spectrum.4` — identity admin and delivery mutation sweep: PR4 proof records throwaway wallet registration/human-link/cleanup pass, default-wallet script caveat degraded, deprecated linkIdentity excluded, and webhook create/delete blocked without controlled callback
 6. `omniweb-agents-action-spectrum.5` — non-colony domain spend and mutation sweep: PR5 proof records throwaway wallet readiness, concrete escrow/storage/IPFS/raw-transfer dry-run payloads, blocked write verdicts due missing PR5 budget gate, and degraded chain sign/verify smoke
-7. `omniweb-agents-action-spectrum.6` — action-spectrum closeout and release gating
+7. `omniweb-agents-action-spectrum.6` — action-spectrum closeout and release gating: PR6 reconciles every matrix row as proven, degraded, unsupported, blocked, failed, or skipped; it does not authorize npm release, public registry proof, webhook mutation, PR5 domain broadcasts, or broad "all operations work" claims
 
 Explicit boundaries:
 - do not reuse historical completed `omniweb-agents-spectrum` as the new Beads lane; that ID remains the completed consumer-spectrum history in docs
@@ -404,7 +405,7 @@ These are not next steps today:
 | `omniweb-agents-spectrum` | consumer-spectrum/codebase reality | complete via PRs #432-#441; do not reuse this ID for the new full action-spectrum lane |
 | blind dead-code cleanup | codebase ballast | blocked until consumer-spectrum/codebase inventory proves what is unused, duplicate, or superseded |
 | feature widening before inventory | consumer spectrum | blocked until official docs, live response shapes, and local toolkit/code reachability are compared |
-| live multi-action spend / identity mutation | execution authority | authorized only through future `omniweb-agents-action-spectrum` child beads with explicit budget, controlled targets, command flags, and readback criteria; PR0 remains no-spend |
+| live multi-action spend / identity mutation | execution authority | action-spectrum PR2-PR5 executed only the rows explicitly authorized in their child beads; further spend, webhook mutation, PR5 domain broadcasts, or identity reruns still require explicit budget, controlled targets, command flags, and readback criteria |
 
 ---
 
@@ -414,10 +415,12 @@ These remain outside the current colony-operator execution band. They matter lat
 
 | ID | P | Item | Status |
 |----|---|------|--------|
-| `omniweb-agents-028` | P2 | npm publish | Deferred until explicit release authorization plus npm auth; not part of the consumer-spectrum inventory lane |
-| `omniweb-agents-l4h` | P3 | StorageProgram write probe | Deferred follow-up |
-| `omniweb-agents-p5l` | P3 | Escrow live test | Deferred follow-up |
-| `omniweb-agents-ubn` | P3 | IPFS live test | Deferred follow-up |
+| `omniweb-agents-028` | P2 | npm publish | Deferred until explicit release authorization plus npm auth; PR6 made no npm release or public registry claim |
+| `omniweb-agents-km3g` | P1 | Identity probe targeting and configured-wallet restore | Restore after PR4 cooldown and add throwaway target selection |
+| `omniweb-agents-vhat` | P2 | Domain probe targeting and chain sign/verify classification | Add explicit throwaway targeting to escrow/storage/IPFS probes before future broadcasts |
+| `omniweb-agents-l4h` | P3 | StorageProgram write probe | Superseded as broad deferred item by PR5 blocked write verdict plus `omniweb-agents-vhat` targeting follow-up |
+| `omniweb-agents-p5l` | P3 | Escrow live test | Superseded as broad deferred item by PR5 blocked write verdict plus `omniweb-agents-vhat` targeting follow-up |
+| `omniweb-agents-ubn` | P3 | IPFS live test | Superseded as broad deferred item by PR5 blocked write verdict plus `omniweb-agents-vhat` targeting follow-up |
 | `omniweb-agents-xdq` | P3 | TLSN relay fix | External (KyneSys) |
 
 **Still large-scope future:**

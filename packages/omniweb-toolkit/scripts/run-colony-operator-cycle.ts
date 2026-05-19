@@ -4,7 +4,7 @@ import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { getNumberArg, getStringArg, hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
+import { ensureLocalPackageResolution, getNumberArg, getStringArg, hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
 import { createWriteLifecycleStore, readCurrentGitCommit } from "./_write-lifecycle.js";
 
 interface OperatorEnvelope {
@@ -107,6 +107,7 @@ const connect = await loadPackageExport<(opts?: Record<string, unknown>) => Prom
   "../src/connect.ts",
   "connect",
 );
+ensureLocalPackageResolution(resolve(PACKAGE_ROOT, "agents/openclaw/colony-operator"));
 const starterModule = await import(pathToFileURL(resolve(
   PACKAGE_ROOT,
   "agents/openclaw/colony-operator/skills/omniweb-colony-operator/starter.ts",

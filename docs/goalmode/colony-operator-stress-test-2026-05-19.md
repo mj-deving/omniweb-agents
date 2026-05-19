@@ -1,6 +1,6 @@
 ---
 type: goal-launch
-status: active
+status: blocked-after-no-spend-pass
 created: 2026-05-19
 source_contract: docs/ROADMAP.md#phase-23-colony-operator-capability-stress-test-and-goalmode-readiness
 owner_bead: omniweb-agents-operator-stress
@@ -14,6 +14,24 @@ summary: "Long-running GoalMode launch packet for colony operator capability str
 Execute `omniweb-agents-operator-stress` as a long-running GoalMode lane. Prove that a fresh colony operator can use toolkit-owned discovery to understand current read/write capability, stress-test every read surface without spend, produce reviewable proposed action packets for every write command without mutation, and only then decide whether a later reviewed live-write tranche is safe.
 
 Default mode is read-only plus write previews. Live writes are not part of the first stress pass unless the active child bead explicitly authorizes them with budget, target, command flag, and readback criteria.
+
+## Run Status
+
+Status as of PR #460 merge on 2026-05-19:
+
+- AC-1: complete. PR #458 created the Beads graph, GoalMode packet, dependency wiring, Roadmap state, and re-entry mirror updates.
+- AC-2: complete. PR #459 captured `operator-help-dump.json` with 120 commands, 92 reads, and 28 writes.
+- AC-3: complete. PR #459 captured `read-command-matrix.json`: 48 green, 33 thin, 6 auth-gated, 5 degraded, and 0 missing-param/dev-only/broken read rows.
+- AC-4: complete with degraded evidence. Maintained read checks passed, and targeted horizon samples recorded 30m/4h/24h pool horizons passing while sampled 1h/12h fixed and higher/lower pool horizons returned HTTP 400.
+- AC-5: complete. PR #460 captured proposed action packets for all 28 write commands with no spend, no mutation, no broadcast, and live gates on every row.
+- AC-6: STUCK/BLOCKED. `omniweb-agents-km3g` remains open, so identity/profile mutation and configured-wallet restore are not part of this default pass.
+- AC-7: STUCK/BLOCKED. `omniweb-agents-vhat` remains open, so escrow/storage/IPFS/raw-chain live probes are not part of this default pass.
+- AC-8: BLOCKED. `omniweb-agents-operator-stress.5` remains open and blocked until `.3`, `.4`, `km3g`, `vhat`, and explicit live-write approval are all satisfied.
+- AC-9: in closeout. `omniweb-agents-operator-stress.6` owns this final status propagation.
+
+Proof directory:
+
+- `packages/omniweb-toolkit/references/operator-stress-2026-05-19/`
 
 ## Source Truth
 
@@ -83,6 +101,7 @@ Evidence target: final report updates Roadmap/Beads with what is green, thin, mi
 4. `omniweb-agents-operator-stress.3`: write-preview proposed action packets.
 5. `omniweb-agents-operator-stress.4`: credential/profile safety blocker wiring.
 6. `omniweb-agents-operator-stress.5`: optional reviewed live-write tranche.
+7. `omniweb-agents-operator-stress.6`: final closeout and blocked/STUCK propagation.
 
 Dependency shape:
 
@@ -92,6 +111,7 @@ Dependency shape:
 - `.4` blocks `.5`.
 - `omniweb-agents-km3g` blocks `.5`.
 - `omniweb-agents-vhat` blocks `.5`.
+- `.3` blocks `.6`.
 
 ## OperatorHelp Dump Command
 

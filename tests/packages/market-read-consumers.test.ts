@@ -27,6 +27,19 @@ describe("market read consumers", () => {
     ]));
     expect(summary.driftedFamilies).toEqual(["eth-fixed-price", "eth-higher-lower", "graduation"]);
     expect(MARKET_READ_SURFACE.every((entry) => entry.noSpend && entry.noMutation)).toBe(true);
+    expect(MARKET_READ_SURFACE.find((entry) => entry.family === "fixed-price")?.timeParameters).toEqual([
+      expect.objectContaining({
+        name: "horizon",
+        defaultValue: "30m",
+        examples: expect.arrayContaining(["30m", "1h", "4h", "12h", "24h"]),
+      }),
+    ]);
+    expect(MARKET_READ_SURFACE.find((entry) => entry.family === "commodity")?.timeParameters).toEqual([
+      expect.objectContaining({
+        name: "horizon",
+        defaultValue: "30m",
+      }),
+    ]);
   });
 
   it("classifies family-specific shapes instead of treating one pool as proof for all markets", () => {

@@ -25,6 +25,15 @@ Use this file when the task touches discovery, A2A, manifest support, or source-
 
 Do not compress those into a single "agent manifest" concept when writing docs or code.
 
+## Package Runtime Discovery
+
+The package-level colony operator envelope also carries structured discovery that is not present in the public well-known files. `capabilityDiscovery.responseDepthAccess.surfaces[*].timeParameters` exposes the default and example time knobs an operator needs before choosing read depth:
+
+- market/oracle reads: `window=24h`, examples `30m`, `1h`, `4h`, `12h`, `24h`
+- price-history reads: `periods=24`, examples `24`, `48`, `168`
+- pool reads: `horizon=30m`, examples `30m`, `1h`, `4h`, `12h`, `24h`
+- feed/search reads: no server-side `since`/`window`; use `limit`/`cursor` and timestamp-filter client-side
+
 ## Audit Result
 
 The committed discovery snapshots matched the live versions during the audit window on 2026-04-14 for:

@@ -7,6 +7,13 @@ interface ToolkitCapabilityManifest {
   capabilities: Array<{
     id: string;
     methods: string[];
+    params: Array<{
+      name: string;
+      required: boolean;
+      type: string;
+      defaultValue?: string | number | boolean;
+      examples?: string[];
+    }>;
     responseDepth: string;
     proofTier: string;
     lifecycle: {
@@ -27,6 +34,13 @@ interface ResponseDepthAccess {
     responseDepths: string[];
     proofTiers: string[];
     readbackSurfaces: string[];
+    timeParameters: Array<{
+      name: string;
+      required: boolean;
+      type: string;
+      defaultValue?: string | number | boolean;
+      examples?: string[];
+    }>;
     envelopeFields: string[];
     preservationStatus: string;
   }>;
@@ -108,11 +122,22 @@ const checks = {
     readbackSurfaces: ["price-history"],
     depths: ["rich"],
   }),
+  priceHistoryTimeKnobs: surfaceHasTimeParameters("price-history", [
+    { name: "window", defaultValue: "24h", examples: ["30m", "1h", "4h", "12h", "24h"] },
+    { name: "periods", defaultValue: 24, examples: ["24", "48", "168"] },
+  ]),
   poolState: surfaceHas("pool-state", {
     methods: ["omni.colony.getPool", "omni.colony.getHigherLowerPool"],
     readbackSurfaces: ["active-pool", "higher-lower-pool", "winners-history"],
     depths: ["rich"],
   }),
+  poolStateTimeKnobs: surfaceHasTimeParameters("pool-state", [
+    { name: "horizon", defaultValue: "30m", examples: ["30m", "1h", "4h", "12h", "24h"] },
+  ]),
+  postDetailHasNoServerWindow: surfaceHasTimeParameters("post-detail-thread", []),
+  timeKnobsExcludePagination: responseDepthAccess.surfaces.every((surface) => (
+    surface.timeParameters.every((parameter) => !["limit", "cursor"].includes(parameter.name))
+  )),
   reactionsTipStats: surfaceHas("reactions-tip-stats", {
     methods: ["omni.colony.getReactions", "omni.colony.getTipStats", "omni.colony.getAgentTipStats"],
     readbackSurfaces: ["reaction-summary", "post-tip-stats", "agent-tip-stats"],
@@ -141,6 +166,10 @@ console.log(JSON.stringify({
     responseDepthPreserved: ok,
     sourceOfTruth: "toolkitCapabilityManifest",
     noSkillProseRequired: true,
+    timeKnobsExposed: checks.priceHistoryTimeKnobs
+      && checks.poolStateTimeKnobs
+      && checks.postDetailHasNoServerWindow
+      && checks.timeKnobsExcludePagination,
     liveWriteProven: false,
     spendsDem: false,
   },
@@ -164,6 +193,21 @@ function surfaceHas(
     && expected.readbackSurfaces.every((readbackSurface) => surface.readbackSurfaces.includes(readbackSurface))
     && expected.depths.every((depth) => surface.responseDepths.includes(depth))
     && (expected.envelopeFields ?? []).every((field) => surface.envelopeFields.includes(field));
+}
+
+function surfaceHasTimeParameters(
+  id: string,
+  expected: Array<{ name: string; defaultValue?: string | number | boolean; examples?: string[] }>,
+): boolean {
+  const surface = surfaces[id];
+  if (!surface) return false;
+  if (expected.length === 0) return surface.timeParameters.length === 0;
+  return expected.every((parameter) => {
+    const actual = surface.timeParameters.find((candidate) => candidate.name === parameter.name);
+    if (!actual) return false;
+    if ("defaultValue" in parameter && actual.defaultValue !== parameter.defaultValue) return false;
+    return (parameter.examples ?? []).every((example) => actual.examples?.includes(example));
+  });
 }
 
 function readyActionFamily(overrides: Record<string, unknown> = {}): Record<string, unknown> {

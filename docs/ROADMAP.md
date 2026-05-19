@@ -337,6 +337,7 @@ Package matrix:
 - `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-read-discovery-proof-2026-05-19.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-social-write-proof-2026-05-19.md`
+- `packages/omniweb-toolkit/references/full-action-spectrum-market-write-proof-2026-05-19.md`
 
 This is the next lane after hosted no-spend proof. It exists because the current question is no longer "can a consumer import the package?" but "can an operator prove every supported read, write, spend, identity/admin mutation, and Demos-domain operation with honest readback criteria?"
 
@@ -354,7 +355,7 @@ Execution ladder:
 1. `omniweb-agents-action-spectrum.0` — full action-spectrum matrix scaffold
 2. `omniweb-agents-action-spectrum.1` — read and discovery spectrum refresh
 3. `omniweb-agents-action-spectrum.2` — social publish and tip live spend sweep: PR2 proof recorded W1/W2 pass, W3 degraded, W4/W5 skipped before spend, and W6 failed/degraded
-4. `omniweb-agents-action-spectrum.3` — market and prediction live spend sweep
+4. `omniweb-agents-action-spectrum.3` — market and prediction live spend sweep: PR3 proof recorded W7/W8 pass, W9 degraded/unsupported, and W10 blocked
 5. `omniweb-agents-action-spectrum.4` — identity admin and delivery mutation sweep
 6. `omniweb-agents-action-spectrum.5` — non-colony domain spend and mutation sweep
 7. `omniweb-agents-action-spectrum.6` — action-spectrum closeout and release gating

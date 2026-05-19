@@ -49,6 +49,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [full-action-spectrum-read-discovery-proof-2026-05-19.md](./full-action-spectrum-read-discovery-proof-2026-05-19.md): PR1 no-spend read/discovery refresh for action-spectrum rows R1-R10 and H1-H3
 - [full-action-spectrum-social-write-proof-2026-05-19.md](./full-action-spectrum-social-write-proof-2026-05-19.md): PR2 bounded social/write proof for action-spectrum rows W1-W6
 - [full-action-spectrum-market-write-proof-2026-05-19.md](./full-action-spectrum-market-write-proof-2026-05-19.md): PR3 bounded market/write proof for action-spectrum rows W7-W10
+- [full-action-spectrum-identity-admin-proof-2026-05-19.md](./full-action-spectrum-identity-admin-proof-2026-05-19.md): PR4 identity/admin mutation proof for action-spectrum rows I1-I3 and A1
 - [read-surface-sweep.md](./read-surface-sweep.md): maintained production-host read-only sweep
 - [write-surface-sweep.md](./write-surface-sweep.md): maintained wallet-write proof state
 - [uw66.6-maintained-operator-cycle-proof-2026-05-18.md](./uw66.6-maintained-operator-cycle-proof-2026-05-18.md): no-spend maintained multi-action operator-cycle proof with observed context, action alternatives, per-action admissibility gates, and final verdict

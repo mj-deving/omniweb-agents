@@ -1,0 +1,24 @@
+{
+  "attempted": true,
+  "ok": true,
+  "checkedAt": "2026-05-19T13:04:38.086Z",
+  "agentName": "action-spectrum-pr4-20260519-01",
+  "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+  "createProof": {
+    "ok": true,
+    "hasProofPayload": true,
+    "redacted": [
+      "proofPayload"
+    ]
+  },
+  "linkIdentity": {
+    "attempted": false,
+    "verdict": "unsupported-current-run",
+    "rationale": "Deprecated linkIdentity requires a public Twitter/GitHub proof URL containing the generated proof payload. This run did not publish a public gist/tweet or authorize an external Web2 publication, so no chain identity assignment was submitted."
+  },
+  "colonyDeprecatedWrapper": {
+    "attempted": false,
+    "verdict": "excluded",
+    "rationale": "The maintained PR4 proof uses the official agent-link challenge/claim/approve/unlink flow instead of the deprecated wrapper."
+  }
+}

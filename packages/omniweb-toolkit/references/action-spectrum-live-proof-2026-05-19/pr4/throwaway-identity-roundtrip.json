@@ -1,0 +1,135 @@
+{
+  "attempted": true,
+  "ok": true,
+  "checkedAt": "2026-05-19T12:58:15.942Z",
+  "phase": "full",
+  "command": "node --input-type=module --import tsx -e <throwaway identity roundtrip using connect({ agentName })>",
+  "agentName": "action-spectrum-pr4-20260519-01",
+  "stateDir": ".action-spectrum-state/pr4/agents/action-spectrum-pr4-20260519-01",
+  "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+  "execution": {
+    "mode": "execute",
+    "confirmedIdentityMutation": true,
+    "credentialSource": "<local-demos-credentials-file>"
+  },
+  "publicInputs": {
+    "registerName": "action-spectrum-pr4-20260519-01",
+    "registerDescription": "Throwaway testnet identity for action-spectrum PR4 mutation proof.",
+    "registerSpecialties": [
+      "testing",
+      "identity",
+      "proof"
+    ]
+  },
+  "verdicts": {
+    "register": "pass",
+    "humanLink": "pass",
+    "cleanup": "pass"
+  },
+  "register": {
+    "ok": true,
+    "status": null,
+    "detail": "register() accepted the public profile update",
+    "data": {
+      "ok": true,
+      "agent": {
+        "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+        "name": "action-spectrum-pr4-20260519-01",
+        "description": "Throwaway testnet identity for action-spectrum PR4 mutation proof.",
+        "specialties": [
+          "testing",
+          "identity",
+          "proof"
+        ],
+        "registeredAt": 1779195494017,
+        "lastSeen": 1779195494017,
+        "nameChangedAt": 1779195494017,
+        "level": 1,
+        "referralCount": 0
+      }
+    }
+  },
+  "profileAfterRegister": {
+    "ok": true,
+    "status": null,
+    "matchesAddress": true,
+    "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+    "name": null,
+    "description": null,
+    "specialties": [],
+    "registeredAt": null,
+    "lastSeen": null
+  },
+  "challenge": {
+    "ok": true,
+    "status": null,
+    "hasChallengeHandle": true,
+    "hasMessage": true,
+    "humanAddress": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+    "expiresAt": "2026-05-19T13:08:14.180Z",
+    "redacted": [
+      "challenge",
+      "challengeId",
+      "nonce",
+      "message"
+    ]
+  },
+  "sign": {
+    "ok": true,
+    "hasSignature": true,
+    "redacted": [
+      "signature"
+    ]
+  },
+  "claim": {
+    "ok": true,
+    "status": null,
+    "detail": "claimAgentLink() accepted the redacted challenge handle",
+    "data": {
+      "ok": true,
+      "status": "pending",
+      "humanAddress": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+      "agentAddress": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09"
+    }
+  },
+  "approve": {
+    "ok": true,
+    "status": null,
+    "detail": "approveAgentLink() accepted the redacted challenge handle plus agentAddress",
+    "data": {
+      "ok": true,
+      "action": "approve",
+      "agentAddress": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09"
+    }
+  },
+  "linked": {
+    "ok": true,
+    "status": null,
+    "count": 1,
+    "containsAgent": true,
+    "agents": [
+      {
+        "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+        "name": "action-spectrum-pr4-20260519-01",
+        "relationship": "owner",
+        "status": null,
+        "linkedAt": 1779195494341
+      }
+    ]
+  },
+  "unlink": {
+    "ok": true,
+    "status": null,
+    "detail": "unlinkAgent() cleaned up the live link",
+    "data": {
+      "success": true
+    }
+  },
+  "linkedAfter": {
+    "ok": true,
+    "status": null,
+    "count": 0,
+    "containsAgent": false,
+    "agents": []
+  }
+}

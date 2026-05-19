@@ -1,0 +1,10 @@
+{
+  "attempted": false,
+  "ok": true,
+  "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "platform": "github",
+  "username": "action-spectrum-pr5-20260519",
+  "amount": 0.1,
+  "message": "action-spectrum-pr5 dry-run escrow target",
+  "note": "Dry run only. Re-run with --broadcast to execute the real escrow send."
+}

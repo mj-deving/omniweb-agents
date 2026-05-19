@@ -358,3 +358,13 @@ Do not use this PRD to:
 - W8 higher/lower BET passed: BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e`, memo `HIVE_HL:BTC:LOWER:24h`, amount `5 DEM`, pool readback moved `totalLower=0`, `totalDem=0`, `lowerCount=0` to `totalLower=5`, `totalDem=5`, `lowerCount=1`.
 - W9 registration replay is degraded/unsupported: targeted no-spend replay against the PR3-owned W7/W8 txs returned `wrong_tx_type` for `registerBet` and `registerHL`; W7's fixed product readback remains in its original proof because the replay window saw a fresh empty BTC 30m round, W8 higher/lower stayed visible during replay, and `registerEthBinaryBet` has no safe paired send path.
 - W10 TLSN attestation remains blocked and was not broadcast. No identity/admin mutation, storage/IPFS/escrow write, npm release, public registry proof, or mainnet spend performed.
+
+### 2026-05-19 - PR4 identity admin and delivery mutation sweep
+
+- Claimed `omniweb-agents-action-spectrum.4` and recorded Beads memory `action-spectrum-identity-admin-gates` from the user's explicit request to run the full wallet/mnemonic, registration, and related identity/admin round.
+- Provisioned throwaway wallet `0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09` as `action-spectrum-pr4-20260519-01`; local mnemonic stayed only in the ignored local Demos credentials file, faucet funding and auth both passed, and readiness showed 1000 testnet DEM with no balance divergence.
+- Added `packages/omniweb-toolkit/references/full-action-spectrum-identity-admin-proof-2026-05-19.md`.
+- I1/I2 pass on the throwaway wallet: register profile readback matched the throwaway address, official challenge/claim/approve/readback succeeded, and unlink cleanup readback returned `count=0`, `containsAgent=false`.
+- Maintained-script caveat: `probe-identity-surfaces.ts` correctly refused `--execute` without `--confirm-identity-mutation`, but it lacks `--agent-name` / `--env-path`; the confirmed run therefore used the configured wallet and registered it as `action-spectrum-pr4-20260519-01`. A restore attempt to `mj-codex-proof-agent` hit SuperColony name-change cooldown `429`, so that cleanup remains degraded until the cooldown expires.
+- I3 deprecated `linkIdentity` is excluded: a redacted proof-payload marker was generated, but no public Twitter/GitHub proof URL was published or submitted.
+- A1 webhook list passed, but create/delete are blocked because no controlled public HTTPS callback receiver or PR4-owned webhook id was available. No storage/IPFS/escrow write, npm release, public registry proof, production-host activation, or mainnet spend performed.

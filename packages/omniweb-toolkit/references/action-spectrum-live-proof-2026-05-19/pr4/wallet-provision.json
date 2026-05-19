@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-05-19T12:54:49.215Z",
+  "rpcUrl": "https://node3.demos.sh/",
+  "prefix": "action-spectrum-pr4-20260519",
+  "count": 1,
+  "startIndex": 1,
+  "stateRoot": ".action-spectrum-state/pr4/agents",
+  "results": [
+    {
+      "agentName": "action-spectrum-pr4-20260519-01",
+      "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+      "credentialPath": "<local-demos-credentials-file>",
+      "stateDir": ".action-spectrum-state/pr4/agents/action-spectrum-pr4-20260519-01",
+      "faucet": {
+        "ok": true,
+        "status": 200,
+        "body": {
+          "status": 200,
+          "body": {
+            "txHash": "f1774d3c3633bf37969b9353f4e925ce0d368214d996e21fe498b05e7b29ed73",
+            "confirmationBlock": 2285675,
+            "message": "Transaction successful: f1774d3c3633bf37969b9353f4e925ce0d368214d996e21fe498b05e7b29ed73",
+            "amount": 1000
+          }
+        }
+      },
+      "auth": {
+        "ok": true,
+        "cached": true
+      },
+      "ok": true
+    }
+  ]
+}

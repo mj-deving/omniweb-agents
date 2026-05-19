@@ -187,6 +187,7 @@ export interface ColonyOperatorResponseDepthSurface {
   responseDepths: ToolkitCapabilityManifestEntry["responseDepth"][];
   proofTiers: ToolkitCapabilityManifestEntry["proofTier"][];
   readbackSurfaces: string[];
+  timeParameters: ToolkitCapabilityManifestEntry["params"];
   envelopeFields: string[];
   preservationStatus: ColonyOperatorResponseDepthPreservationStatus;
 }
@@ -650,6 +651,7 @@ export function buildColonyOperatorResponseDepthAccess(
     const responseDepths = uniqueStrings(capabilities.map((capability) => capability.responseDepth));
     const proofTiers = uniqueStrings(capabilities.map((capability) => capability.proofTier));
     const readbackSurfaces = uniqueStrings(capabilities.flatMap((capability) => capability.lifecycle.readbackSurfaces));
+    const timeParameters = uniqueParameters(capabilities.flatMap((capability) => capability.params.filter(isTimeParameter)));
     const preservationStatus: ColonyOperatorResponseDepthPreservationStatus = capabilities.length === requirement.capabilityIds.length
       && requirement.requiredMethods.every((method) => methods.includes(method))
       && requirement.requiredReadbackSurfaces.every((surface) => readbackSurfaces.includes(surface))
@@ -665,6 +667,7 @@ export function buildColonyOperatorResponseDepthAccess(
       responseDepths,
       proofTiers,
       readbackSurfaces,
+      timeParameters,
       envelopeFields: [...requirement.envelopeFields],
       preservationStatus,
     };
@@ -796,6 +799,20 @@ const RESPONSE_DEPTH_SURFACE_REQUIREMENTS: ResponseDepthSurfaceRequirement[] = [
 
 function uniqueStrings<T extends string>(values: T[]): T[] {
   return Array.from(new Set(values));
+}
+
+function isTimeParameter(parameter: ToolkitCapabilityManifestEntry["params"][number]): boolean {
+  return ["window", "horizon", "periods"].includes(parameter.name);
+}
+
+function uniqueParameters(
+  parameters: ToolkitCapabilityManifestEntry["params"],
+): ToolkitCapabilityManifestEntry["params"] {
+  const byName = new Map<string, ToolkitCapabilityManifestEntry["params"][number]>();
+  for (const parameter of parameters) {
+    if (!byName.has(parameter.name)) byName.set(parameter.name, parameter);
+  }
+  return Array.from(byName.values());
 }
 
 function buildObservedContextSummary<TState extends MinimalAgentState>(

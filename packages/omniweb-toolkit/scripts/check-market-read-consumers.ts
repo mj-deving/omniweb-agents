@@ -112,6 +112,11 @@ const checks = {
   coverageOk: coverage.ok,
   allNoSpend: MARKET_READ_SURFACE.every((entry) => entry.noSpend === true),
   allNoMutation: MARKET_READ_SURFACE.every((entry) => entry.noMutation === true),
+  poolHorizonKnobsAdvertised: (["fixed-price", "higher-lower", "eth-fixed-price", "eth-higher-lower", "commodity"] satisfies MarketReadFamily[]).every((family) => {
+    const horizon = MARKET_READ_SURFACE.find((entry) => entry.family === family)?.timeParameters.find((parameter) => parameter.name === "horizon");
+    return horizon?.defaultValue === "30m"
+      && ["30m", "1h", "4h", "12h", "24h"].every((example) => horizon.examples?.includes(example));
+  }),
   fixedHigherBinaryCovered: (["fixed-price", "higher-lower", "binary"] satisfies MarketReadFamily[]).every((family) => (
     coverage.coveredFamilies.includes(family)
   )),
@@ -171,6 +176,7 @@ console.log(JSON.stringify({
     noMutation: true,
     publicRegistryProof: false,
     release: false,
+    timeKnobsAdvertised: checks.poolHorizonKnobsAdvertised,
   },
 }, null, 2));
 

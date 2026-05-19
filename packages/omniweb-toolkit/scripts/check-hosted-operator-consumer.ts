@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
-import { PACKAGE_ROOT, hasFlag } from "./_shared.js";
+import { PACKAGE_ROOT, getStringArg, hasFlag } from "./_shared.js";
 
 interface CommandResult {
   command: string[];
@@ -39,10 +39,14 @@ interface PackSummary {
 const args = process.argv.slice(2);
 const skipBuild = hasFlag(args, "--skip-build");
 const keepTemp = hasFlag(args, "--keep-temp");
+const runHostedRuntimeSmoke = hasFlag(args, "--run-hosted-runtime-smoke");
+const hostedSmokeCommand = getStringArg(args, "--hosted-smoke-command");
 
 const allowedArgs = new Set([
   "--skip-build",
   "--keep-temp",
+  "--run-hosted-runtime-smoke",
+  "--hosted-smoke-command",
   "--help",
   "-h",
 ]);
@@ -57,6 +61,10 @@ by package name only.
 Options:
   --skip-build   Do not run npm run build before packing
   --keep-temp    Keep the temporary consumer workspace for debugging
+  --run-hosted-runtime-smoke
+                 Run optional host prerequisite probes. Default is static-only.
+  --hosted-smoke-command <command>
+                 Optional explicit dry-run smoke command to run with --run-hosted-runtime-smoke
   --help, -h     Show this help
 
 Output: JSON no-spend hosted local-tarball consumer proof
@@ -64,9 +72,21 @@ Exit codes: 0 = proof passed, 1 = proof failed, 2 = invalid args`);
   process.exit(0);
 }
 
-const unsupportedArgs = args.filter((arg) => !allowedArgs.has(arg));
+const unsupportedArgs: string[] = [];
+for (let index = 0; index < args.length; index += 1) {
+  const arg = args[index];
+  if (arg === "--hosted-smoke-command") {
+    index += 1;
+    continue;
+  }
+  if (!allowedArgs.has(arg)) unsupportedArgs.push(arg);
+}
 if (unsupportedArgs.length > 0) {
   console.error(`Error: unsupported arguments: ${unsupportedArgs.join(" ")}`);
+  process.exit(2);
+}
+if (hostedSmokeCommand && !runHostedRuntimeSmoke) {
+  console.error("Error: --hosted-smoke-command requires --run-hosted-runtime-smoke");
   process.exit(2);
 }
 
@@ -80,8 +100,14 @@ let consumerResult: CommandResult | null = null;
 let packEntry: PackSummary | null = null;
 let consumerSummary: unknown = null;
 let consumerScriptAudit: unknown = null;
+let hostedRuntimeSmoke: unknown = null;
 
 try {
+  hostedRuntimeSmoke = buildHostedRuntimeSmoke({
+    run: runHostedRuntimeSmoke,
+    smokeCommand: hostedSmokeCommand,
+  });
+
   if (!skipBuild) {
     buildResult = runCommand(["npm", "run", "build"], PACKAGE_ROOT);
     if (buildResult.exitCode !== 0) {
@@ -167,8 +193,9 @@ try {
     },
     consumerScriptAudit,
     consumer: consumerSummary,
+    hostedRuntimeSmoke,
     contract: {
-      ownerBead: "omniweb-agents-hosted.2",
+      ownerBead: "omniweb-agents-hosted.3",
       localTarballInstall: ok,
       packageNameImportsOnly: ok,
       repoRelativeImports: false,
@@ -178,6 +205,8 @@ try {
       liveExecution: false,
       publicRegistryProof: false,
       release: false,
+      hostedRuntimeSmokeDefaultStaticOnly: !runHostedRuntimeSmoke,
+      hostedRuntimeSmokeDryRunOnly: true,
     },
   }, null, 2));
 
@@ -220,6 +249,120 @@ function summarizeCommand(result: CommandResult | null): unknown {
     stdout: result.stdout.trim().slice(0, 1600),
     stderr: result.stderr.trim().slice(0, 1600),
   };
+}
+
+function buildHostedRuntimeSmoke(options: {
+  run: boolean;
+  smokeCommand?: string;
+}): unknown {
+  const staticContract = {
+    hostStyle: "OpenClaw/Gregor-style hosted runtime",
+    defaultMode: "static-only",
+    nonMutating: true,
+    noSpend: true,
+    noBroadcast: true,
+    noIdentityMutation: true,
+    runtimeProbeRequiresExplicitFlag: true,
+    dryRunSmokeRequiresExplicitCommand: true,
+  };
+  const plannedDryRunCommand = [
+    "openclaw agent --agent colony-operator --local --session-id hosted-operator-smoke-$(date +%s)",
+    "--message \"Describe the active OmniWeb skill and return a dry-run plan only. Do not publish or spend DEM.\"",
+  ].join(" ");
+
+  if (!options.run) {
+    return {
+      mode: "static-only",
+      probesRun: false,
+      ok: true,
+      staticContract,
+      hostPrerequisites: [
+        { id: "node", status: "not_probed", command: "node --version" },
+        { id: "openclaw-cli", status: "not_probed", command: "command -v openclaw" },
+        { id: "gregor-cli", status: "not_probed", command: "command -v gregor" },
+      ],
+      dryRunSmoke: {
+        status: "not_run",
+        reason: "Default hosted consumer check is deterministic and non-mutating. Pass --run-hosted-runtime-smoke and --hosted-smoke-command to run a dry-run probe.",
+        plannedCommand: plannedDryRunCommand,
+      },
+    };
+  }
+
+  const nodeVersion = runCommand(["node", "--version"], PACKAGE_ROOT);
+  const openclaw = runCommand(["sh", "-lc", "command -v openclaw"], PACKAGE_ROOT);
+  const gregor = runCommand(["sh", "-lc", "command -v gregor"], PACKAGE_ROOT);
+  const hostPrerequisites = [
+    prerequisite("node", "node --version", nodeVersion),
+    prerequisite("openclaw-cli", "command -v openclaw", openclaw),
+    prerequisite("gregor-cli", "command -v gregor", gregor),
+  ];
+  const dryRunSmoke = options.smokeCommand
+    ? runDryRunSmokeCommand(options.smokeCommand)
+    : {
+      status: "skipped",
+      reason: "--hosted-smoke-command not provided; prerequisite probe only",
+      plannedCommand: plannedDryRunCommand,
+    };
+
+  return {
+    mode: "runtime-probe",
+    probesRun: true,
+    ok: dryRunSmoke.status !== "blocked_unsafe",
+    staticContract,
+    hostPrerequisites,
+    dryRunSmoke,
+  };
+}
+
+function prerequisite(id: string, command: string, result: CommandResult): unknown {
+  return {
+    id,
+    command,
+    status: result.exitCode === 0 ? "pass" : "missing",
+    summary: result.exitCode === 0
+      ? result.stdout.trim().split("\n")[0] ?? ""
+      : result.stderr.trim() || "command not found",
+  };
+}
+
+function runDryRunSmokeCommand(command: string): unknown {
+  const safety = classifyHostedSmokeCommand(command);
+  if (!safety.safe) {
+    return {
+      status: "blocked_unsafe",
+      command,
+      reason: safety.reason,
+      noSpend: true,
+      noBroadcast: true,
+      mutatesIdentity: false,
+    };
+  }
+  const result = runCommand(["sh", "-lc", command], PACKAGE_ROOT);
+  const output = `${result.stdout}\n${result.stderr}`;
+  const forbiddenOutput = /(spent\s+DEM|broadcast(?:ed)?|transactionHash|txHash|published\s+live|executed\s+live)/i.test(output);
+  return {
+    status: result.exitCode === 0 && !forbiddenOutput ? "pass" : "failed_or_unsafe_output",
+    command,
+    exitCode: result.exitCode,
+    durationMs: result.durationMs,
+    stdout: result.stdout.trim().slice(0, 1600),
+    stderr: result.stderr.trim().slice(0, 1600),
+    noSpend: !forbiddenOutput,
+    noBroadcast: !forbiddenOutput,
+    mutatesIdentity: false,
+    safety,
+  };
+}
+
+function classifyHostedSmokeCommand(command: string): { safe: true; reason: string } | { safe: false; reason: string } {
+  if (/(^|\s)(--execute|--broadcast)(\s|$)/.test(command)) {
+    return { safe: false, reason: "command includes an execute or broadcast flag" };
+  }
+  if (!/(dry[- ]run|no[- ]spend|do not publish|do not spend|without publish|without spend)/i.test(command)) {
+    return { safe: false, reason: "command lacks an explicit dry-run/no-spend instruction" };
+  }
+  return { safe: true, reason: "command is explicitly dry-run/no-spend and has no execute/broadcast flag" };
 }
 
 function auditHostedConsumerProofScript(source: string): {

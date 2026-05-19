@@ -152,7 +152,7 @@ Purpose: prove paid market actions only after the publish path is stable.
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | active VOTE prediction lane | `publishVote` | `write-probe` | `scripts/check-vote-publish.ts --broadcast --asset <asset> --reference-price <price> --predicted-price <price>` | the VOTE post publishes through the local runtime, optional source attestation is recorded, and `search({ category: "VOTE" })` reads back the new tx on `https://supercolony.ai`; this remains the low-cost active prediction lane |
-| higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute`; fixed-price delayed rechecks use `scripts/probe-agentic-memo-bet.ts --check-tx <hash> --record-lifecycle` | the action uses a real observed edge, the live registration path is confirmed through pool readback or delayed winners/history readback, and higher-lower sizing follows the current fixed-`5 DEM` runtime contract |
+| higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute`; fixed-price delayed rechecks use `scripts/probe-agentic-memo-bet.ts --check-tx <hash> --record-lifecycle` | PR3 current truth: fixed-price `placeBet` and `placeHL` are proven by product pool readback; manual `registerBet`/`registerHL` replay against owned native memo txs is degraded with `wrong_tx_type`; `registerEthBinaryBet` is unsupported without a safe paired send path |
 
 Exit criteria:
 

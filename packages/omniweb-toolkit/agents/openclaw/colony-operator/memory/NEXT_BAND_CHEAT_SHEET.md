@@ -1,8 +1,8 @@
 # NEXT_BAND_CHEAT_SHEET.md
 
 Status: active
-Updated: 2026-05-18
-Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane.
+Updated: 2026-05-19
+Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane and the new hosted no-spend operator consumer packet.
 
 ## Do first
 
@@ -20,9 +20,11 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - PRs #428/#429 completed `omniweb-agents-admissibility`: runtime now has the decision layer that says whether a requested operator action can be planned or executed right now.
 - PR #431 completed `uw66.6`: the maintained operator-cycle proof observes live context, selects an action, surfaces maintained alternatives, reports capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and keeps the default verdict no-spend.
 - PRs #432-#441 completed the no-release consumer-spectrum and codebase reality lane: official docs/discovery and live endpoint shapes were compared, code reachability/ballast was classified, public exports were normalized, consumer transport/read/chat/webhook/market surfaces were widened, no-spend market write intents were added, and `check:consumer-spectrum-tarball` proves a clean local tarball whole-spectrum consumer install without registry publication.
-- Beads epic `omniweb-agents-spectrum` is complete/closeable after the roadmap re-entry mirror update.
+- Beads epic `omniweb-agents-spectrum` is complete.
+- New next band: `omniweb-agents-hosted` proves a hosted/external-style no-spend operator consumer flow over the local tarball. Packet: `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`.
+- Do not launch `/goal` for `omniweb-agents-hosted` until PR0 lands and this Beads graph is pushed.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
-- `bd ready` may be empty when all current consumer-spectrum work is closed.
+- `bd ready` should surface `omniweb-agents-hosted.1` after PR0 lands and closes.
 
 ## Then do
 
@@ -33,6 +35,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - **Wave E — capability surface:** complete via `omniweb-agents-capsurf` and PRs #420-#426.
 - **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
 - **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
+- **Hosted no-spend operator consumer proof:** active next lane via `omniweb-agents-hosted`; start with clean local-tarball fixture, then repeated no-spend operator cycles, optional dry-run hosted smoke, drift/degraded ledger, and closeout.
 
 ## Keep frozen for this wave
 
@@ -42,6 +45,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
 - no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
+- hosted proof means local tarball plus optional dry-run runtime smoke, not production deployment
 
 ## Do not touch yet
 
@@ -50,6 +54,8 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - StorageProgram / escrow / IPFS proof bands
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend, and unsupervised identity mutation
+- `/goal` execution before PR0 lands and the Beads graph is pushed
+- production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it
 - feature widening that skips actual live endpoint response-shape comparison or the completed consumer-spectrum checks
 

@@ -1,0 +1,60 @@
+{
+  "ok": true,
+  "attemptedBroadcast": false,
+  "agentName": "action-spectrum-pr4-20260519-01",
+  "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+  "authorization": {
+    "verdict": "blocked",
+    "reason": "PR5 domain mutations are not covered by action-spectrum-live-spend-gates; no later child-bead budget/recipient/storage/IPFS/transfer execution record exists."
+  },
+  "escrowDryRun": {
+    "platform": "github",
+    "username": "action-spectrum-pr5-20260519",
+    "amount": 0.1,
+    "message": "action-spectrum-pr5 dry-run escrow target",
+    "attempted": false,
+    "verdict": "blocked_no_pr5_budget"
+  },
+  "storageDryRun": {
+    "programName": "action-spectrum-pr5-20260519",
+    "storageAddress": "stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5",
+    "estimatedCreateFeeDem": "1",
+    "createPayload": {
+      "operation": "CREATE_STORAGE_PROGRAM",
+      "storageAddress": "stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5",
+      "programName": "action-spectrum-pr5-20260519",
+      "encoding": "json",
+      "data": {
+        "marker": "omniweb-storage-probe",
+        "createdAt": "2026-05-19T13:24:00.000Z",
+        "version": 1
+      },
+      "acl": {
+        "mode": "public"
+      },
+      "storageLocation": "onchain"
+    },
+    "setPayload": {
+      "operation": "SET_FIELD",
+      "storageAddress": "stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5",
+      "field": "lastProbe",
+      "value": "2026-05-19T13:24:00.000Z"
+    },
+    "attempted": false,
+    "verdict": "blocked_no_pr5_budget"
+  },
+  "ipfsDryRun": {
+    "filename": "action-spectrum-pr5-20260519.txt",
+    "sizeBytes": 104,
+    "quote": "{ error: \"Unknown message\"}",
+    "attempted": false,
+    "verdict": "blocked_no_pr5_budget"
+  },
+  "chainDryRun": {
+    "to": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+    "amount": 0.1,
+    "memo": "ACTION_SPECTRUM_PR5_DRY_RUN",
+    "attempted": false,
+    "verdict": "blocked_no_pr5_budget"
+  }
+}

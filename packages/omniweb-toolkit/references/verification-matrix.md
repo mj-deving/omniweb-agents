@@ -91,6 +91,15 @@ The colony-operator proof surface now also exposes one lifecycle-aware capabilit
 | --- | --- | --- | --- | --- |
 | `getWebhooks`, `createWebhook`, `deleteWebhook` | `live-supercolony` for list; `blocked` for create/delete | `basic` | `references/full-action-spectrum-identity-admin-proof-2026-05-19.md` | PR4 proved `getWebhooks()` on the throwaway wallet. Create/delete remain blocked because no controlled public HTTPS callback receiver or PR4-owned webhook id was available; mutating an unowned callback URL would violate the cleanup/readback gate. |
 
+## Demos Domain Surface
+
+| Methods | Proof | Shape | Example | Notes |
+| --- | --- | --- | --- | --- |
+| `omni.escrow.sendToIdentity`, `claimEscrow`, `refundExpired`, `getClaimable`, `getEscrowBalance` | `blocked-current-launch` | `basic` | `references/full-action-spectrum-domain-write-proof-2026-05-19.md` | PR5 produced throwaway-wallet dry-run intent for escrow send but did not broadcast because no PR5 bounded spend gate was recorded. Claim/refund were not attempted because no PR5-owned escrow existed; query wrappers returned `Method not implemented` for current claimable/balance reads. |
+| `omni.storage.read`, `list`, `search`, `hasField`, `readField`, StorageProgram CREATE + SET_FIELD | `blocked-current-launch` with auth-read fallback | `basic` | `references/full-action-spectrum-domain-write-proof-2026-05-19.md` | PR5 derived storage address `stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5`, estimated create cost `1 DEM`, and produced CREATE + SET_FIELD payloads, but no storage write was broadcast. Readback correctly stayed absent: `Storage program not found`, `hasField=false`, `readField=null`. |
+| `omni.ipfs.upload`, `pin`, `unpin` | `blocked-current-launch` | `basic` | `references/full-action-spectrum-domain-write-proof-2026-05-19.md` | PR5 targeted a 104-byte upload dry-run; quote returned `{ error: "Unknown message" }`, and no upload/pin/unpin was attempted without a PR5 budget and owned CID. |
+| `omni.chain.transfer`, `signMessage`, `verifyMessage`, `getBalance`, `getAddress`, `getBlockNumber` | `blocked-current-launch` for transfer; `degraded` for sign/verify smoke | `basic` | `references/full-action-spectrum-domain-write-proof-2026-05-19.md` | PR5 raw transfer stayed dry-run only because no transfer budget/recipient gate existed. Chain reads passed on the throwaway wallet (`getBalance=1000`, `getBlockNumber=2285764`), and `signMessage` produced a redacted signature object, but `verifyMessage` returned `false`. |
+
 ## Package-Level Helper Exports
 
 | Helpers | Proof | Example | Notes |

@@ -339,6 +339,7 @@ Package matrix:
 - `packages/omniweb-toolkit/references/full-action-spectrum-social-write-proof-2026-05-19.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-market-write-proof-2026-05-19.md`
 - `packages/omniweb-toolkit/references/full-action-spectrum-identity-admin-proof-2026-05-19.md`
+- `packages/omniweb-toolkit/references/full-action-spectrum-domain-write-proof-2026-05-19.md`
 
 This is the next lane after hosted no-spend proof. It exists because the current question is no longer "can a consumer import the package?" but "can an operator prove every supported read, write, spend, identity/admin mutation, and Demos-domain operation with honest readback criteria?"
 
@@ -358,7 +359,7 @@ Execution ladder:
 3. `omniweb-agents-action-spectrum.2` — social publish and tip live spend sweep: PR2 proof recorded W1/W2 pass, W3 degraded, W4/W5 skipped before spend, and W6 failed/degraded
 4. `omniweb-agents-action-spectrum.3` — market and prediction live spend sweep: PR3 proof recorded W7/W8 pass, W9 degraded/unsupported, and W10 blocked
 5. `omniweb-agents-action-spectrum.4` — identity admin and delivery mutation sweep: PR4 proof records throwaway wallet registration/human-link/cleanup pass, default-wallet script caveat degraded, deprecated linkIdentity excluded, and webhook create/delete blocked without controlled callback
-6. `omniweb-agents-action-spectrum.5` — non-colony domain spend and mutation sweep
+6. `omniweb-agents-action-spectrum.5` — non-colony domain spend and mutation sweep: PR5 proof records throwaway wallet readiness, concrete escrow/storage/IPFS/raw-transfer dry-run payloads, blocked write verdicts due missing PR5 budget gate, and degraded chain sign/verify smoke
 7. `omniweb-agents-action-spectrum.6` — action-spectrum closeout and release gating
 
 Explicit boundaries:

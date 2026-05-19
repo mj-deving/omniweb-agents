@@ -97,16 +97,18 @@ Current PR4 evidence: [full-action-spectrum-identity-admin-proof-2026-05-19.md](
 
 ## Demos Domain Write Rows
 
+Current PR5 evidence: [full-action-spectrum-domain-write-proof-2026-05-19.md](./full-action-spectrum-domain-write-proof-2026-05-19.md).
+
 | Row | Methods / surface | Profile | Command | Spend | Authorization | Primary success criteria |
 | --- | --- | --- | --- | --- | --- | --- |
-| D1 escrow send | `omni.escrow.sendToIdentity` | `demos-domain-write` | `probe-escrow.ts --broadcast --amount <cap>` | `bounded-dem` | explicit escrow budget and controlled identity | tx plus claimable/balance readback or degraded reason |
-| D2 escrow claim/refund | `claimEscrow`, `refundExpired` | `demos-domain-write` | targeted escrow claim/refund probe | `bounded-dem` or `none` | controlled recipient/expiry target | claim/refund tx plus balance/readback |
-| D3 storage create/set | StorageProgram CREATE + SET_FIELD | `demos-domain-write` | `probe-storage.ts --broadcast` | `unknown-quote-required` | explicit storage budget | storage address plus field readback |
-| D4 storage reads after write | `omni.storage.read/list/search/hasField/readField` | `auth-read` | `probe-storage.ts` readback phase | `none` | same child bead | program and field visible or fallback reconstruction documented |
-| D5 IPFS upload | `omni.ipfs.upload` | `demos-domain-write` | `probe-ipfs.ts --broadcast` | `unknown-quote-required` | explicit IPFS budget | tx plus CID/chain verification where available |
-| D6 IPFS pin/unpin | `omni.ipfs.pin`, `omni.ipfs.unpin` | `demos-domain-write` | targeted pin/unpin probe | `unknown-quote-required` | controlled CID and cleanup plan | tx plus pin/unpin readback if available |
-| D7 raw chain transfer | `omni.chain.transfer` | `demos-domain-write` | targeted transfer probe to controlled address | `bounded-dem` | explicit raw transfer budget | tx plus chain balance/readback |
-| D8 chain sign/read | `signMessage`, `verifyMessage`, `getBalance`, `getAddress`, `getBlockNumber` | `auth-read` | targeted chain smoke | `none` | no spend | signature verifies and reads return current values |
+| D1 escrow send | `omni.escrow.sendToIdentity` | `demos-domain-write` | `probe-escrow.ts --broadcast --amount <cap>` or targeted dry-run | `bounded-dem` | explicit escrow budget and controlled identity | PR5 blocked: targeted dry-run produced github/`action-spectrum-pr5-20260519`/`0.1 DEM` intent, but no broadcast was attempted because no PR5 budget was recorded. |
+| D2 escrow claim/refund | `claimEscrow`, `refundExpired` | `demos-domain-write` | targeted escrow claim/refund probe | `bounded-dem` or `none` | controlled recipient/expiry target | PR5 blocked: no PR5-owned escrow existed; query wrappers returned `Method not implemented` for claimable/balance reads. |
+| D3 storage create/set | StorageProgram CREATE + SET_FIELD | `demos-domain-write` | `probe-storage.ts --broadcast` or targeted dry-run | `unknown-quote-required` | explicit storage budget | PR5 blocked: targeted dry-run derived `stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5`, estimated `1 DEM`, and produced CREATE + SET_FIELD payloads, but did not broadcast. |
+| D4 storage reads after write | `omni.storage.read/list/search/hasField/readField` | `auth-read` | targeted readback phase | `none` | same child bead | PR5 degraded: no write was broadcast, so readback returned `Storage program not found`, `hasField=false`, and `readField=null`. |
+| D5 IPFS upload | `omni.ipfs.upload` | `demos-domain-write` | `probe-ipfs.ts --broadcast` or targeted dry-run | `unknown-quote-required` | explicit IPFS budget | PR5 blocked: targeted dry-run used a 104-byte payload; quote returned `{ error: "Unknown message" }`; no upload broadcast was attempted. |
+| D6 IPFS pin/unpin | `omni.ipfs.pin`, `omni.ipfs.unpin` | `demos-domain-write` | targeted pin/unpin probe | `unknown-quote-required` | controlled CID and cleanup plan | PR5 blocked: no PR5-owned upload CID exists because D5 was not broadcast. |
+| D7 raw chain transfer | `omni.chain.transfer` | `demos-domain-write` | targeted transfer probe to controlled address | `bounded-dem` | explicit raw transfer budget | PR5 blocked: targeted self-transfer dry-run was `0.1 DEM` with memo `ACTION_SPECTRUM_PR5_DRY_RUN`; no transfer was attempted. |
+| D8 chain sign/read | `signMessage`, `verifyMessage`, `getBalance`, `getAddress`, `getBlockNumber` | `auth-read` | targeted chain smoke | `none` | no spend | PR5 degraded partial: `signMessage` produced a redacted signature object, `getBalance=1000`, `getBlockNumber=2285764`, but `verifyMessage` returned `false`. |
 
 ## Helper And Consumer Rows
 

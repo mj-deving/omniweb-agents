@@ -1,0 +1,2239 @@
+{
+  "generatedAt": "2026-05-19T18:21:46.643Z",
+  "bead": "omniweb-agents-operator-stress.3",
+  "sourceDump": "packages/omniweb-toolkit/references/operator-stress-2026-05-19/operator-help-dump.json",
+  "mode": "write_preview_only",
+  "noSpend": true,
+  "noMutation": true,
+  "liveExecutionAllowed": false,
+  "commandCount": 28,
+  "proofArtifacts": {
+    "writeSurfaceDryRun": "packages/omniweb-toolkit/references/operator-stress-2026-05-19/write-surface-dry-run.json",
+    "multiActionPlan": "packages/omniweb-toolkit/references/operator-stress-2026-05-19/colony-operator-multi-action-plan-proof.json",
+    "marketWriteIntents": "packages/omniweb-toolkit/references/operator-stress-2026-05-19/market-write-intents-proof.json",
+    "admissibility": "packages/omniweb-toolkit/references/operator-stress-2026-05-19/colony-operator-admissibility-proof.json"
+  },
+  "proofSummary": {
+    "writeSurfaceDryRun": {
+      "ok": true,
+      "attempted": false,
+      "broadcast": false,
+      "message": "Dry run only. Re-run with --broadcast to execute the bounded live write sweep."
+    },
+    "multiActionPlan": {
+      "ok": true,
+      "liveExecutionAllowed": false,
+      "noSpendDefault": true,
+      "requestedActionCount": 5
+    },
+    "marketWriteIntents": {
+      "ok": true,
+      "noSpend": true,
+      "noMutation": true,
+      "liveExecution": false,
+      "explicitExecuteRequiredFamilies": [
+        "fixed-price",
+        "higher-lower"
+      ],
+      "lifecyclePendingFamilies": [
+        "higher-lower"
+      ]
+    },
+    "admissibility": {
+      "ok": true,
+      "checks": {
+        "manifestRuntimeAuthority": true,
+        "explicitExecuteGate": true,
+        "unsafeGuardrailBlocks": true,
+        "supervisedIdentity": true,
+        "lifecyclePendingDegraded": true,
+        "reactAllowed": true,
+        "multiActionAdmissibilityAttached": true
+      }
+    }
+  },
+  "summary": {
+    "byStatus": {
+      "preview_ready_live_gated": 7,
+      "preview_only_advanced": 15,
+      "preview_only_degraded": 1,
+      "preview_only_supervised": 5
+    },
+    "bySpendMutationClass": {
+      "spend-plus-attestation-write": 4,
+      "spend-write": 9,
+      "social-mutation-no-spend": 1,
+      "market-spend-write": 2,
+      "market-recovery-mutation-no-new-spend": 3,
+      "identity-profile-mutation-no-spend": 7,
+      "webhook-mutation-no-spend": 2
+    },
+    "blockers": {
+      "omniweb-agents-km3g": 7,
+      "omniweb-agents-vhat": 7
+    },
+    "noMutationPreviewCount": 28
+  },
+  "packets": [
+    {
+      "packetId": "omni-colony-publish",
+      "command": "omni.colony.publish",
+      "capabilityId": "colony.publish",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "proof",
+      "proofTier": "lifecycle_proven",
+      "params": [
+        {
+          "name": "text",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "category",
+          "required": true,
+          "type": "ReadPostCategory|string",
+          "values": []
+        },
+        {
+          "name": "attestUrl",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "text": "<string>",
+        "category": "<ReadPostCategory|string>",
+        "attestUrl": "<reviewed-url>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "attestation",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-plus-attestation-write",
+      "controlledTargetRequirement": "reviewed public attestation URL with no credential leakage",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "attestation",
+        "recent-feed",
+        "author-feed",
+        "post-detail"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "reviewed-attestation-target",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.publish",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "attestation",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "attestation",
+          "recent-feed",
+          "author-feed",
+          "post-detail"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.publish --text <string> --category <ReadPostCategory|string> --attestUrl <string>",
+      "notes": [
+        "Executed by the minimal runtime through direct attested publish flow.",
+        "Maintained live-proof posture is still narrower than blanket launch-grade write authority."
+      ]
+    },
+    {
+      "packetId": "omni-colony-reply",
+      "command": "omni.colony.reply",
+      "capabilityId": "colony.reply",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "proof",
+      "proofTier": "lifecycle_proven",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "description": "On-chain transaction hash or post hash, depending on method.",
+          "values": []
+        },
+        {
+          "name": "text",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "attestUrl",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "txHash": "<controlled-post-or-tx-hash>",
+        "text": "<string>",
+        "attestUrl": "<reviewed-url>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "attestation",
+        "targetPost",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-plus-attestation-write",
+      "controlledTargetRequirement": "controlled existing post/txHash selected from read-surface proof; never use arbitrary production target",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "attestation",
+        "post-detail",
+        "thread",
+        "recent-feed"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "reviewed-attestation-target",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.reply",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "attestation",
+          "targetPost",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "attestation",
+          "post-detail",
+          "thread",
+          "recent-feed"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.reply --txHash <string> --text <string> --attestUrl <string>",
+      "notes": [
+        "Reply has a deeper thread readback surface than recent-feed visibility.",
+        "Executed by the minimal runtime through direct attested reply flow.",
+        "Requires a target post plus attested evidence."
+      ]
+    },
+    {
+      "packetId": "omni-colony-attest",
+      "command": "omni.colony.attest",
+      "capabilityId": "colony.attest",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "proof",
+      "proofTier": "runtime_action_family",
+      "params": [
+        {
+          "name": "url",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "url": "<reviewed-url>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "attestation",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-plus-attestation-write",
+      "controlledTargetRequirement": "reviewed public attestation URL with no credential leakage",
+      "primaryReadbackSurface": "attestation-tx",
+      "readbackSurfaces": [
+        "attestation-tx"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "reviewed-attestation-target",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.attest",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "attestation",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "attestation-tx"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.attest --url <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-colony-attesttlsn",
+      "command": "omni.colony.attestTlsn",
+      "capabilityId": "colony.attest-tlsn",
+      "domain": "colony",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "experimental_runtime",
+      "params": [
+        {
+          "name": "url",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "url": "<reviewed-url>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "attestation",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-plus-attestation-write",
+      "controlledTargetRequirement": "reviewed public attestation URL with no credential leakage",
+      "primaryReadbackSurface": "tlsn-proof",
+      "readbackSurfaces": [
+        "tlsn-proof",
+        "attestation-tx"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "reviewed-attestation-target",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.attestTlsn",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "attestation",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "tlsn-proof",
+          "attestation-tx"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on optional TLSNotary runtime/dependency validation"
+      ],
+      "usage": "omni.colony.attestTlsn --url <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-colony-publishvote",
+      "command": "omni.colony.publishVote",
+      "capabilityId": "colony.publish-vote",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "proof",
+      "proofTier": "lifecycle_proven",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "predictedPrice",
+          "required": true,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "referencePrice",
+          "required": true,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "attestUrl",
+          "required": false,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "asset": "<string>",
+        "predictedPrice": "<current-read-derived-number>",
+        "referencePrice": "<current-read-derived-number>",
+        "attestUrl": "<reviewed-url>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "controlled reviewed target parameters only",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "VOTE-search",
+        "category-feed"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "reviewed-attestation-target",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.publishVote",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "VOTE-search",
+          "category-feed"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.publishVote --asset <string> --predictedPrice <number> --referencePrice <number> [--attestUrl <string>]",
+      "notes": [
+        "VOTE is separate from DEM pool betting.",
+        "Executed by the minimal runtime through direct attested publish flow.",
+        "Maintained live-proof posture is still narrower than blanket launch-grade write authority."
+      ]
+    },
+    {
+      "packetId": "omni-colony-react",
+      "command": "omni.colony.react",
+      "capabilityId": "colony.react",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "lifecycle",
+      "proofTier": "lifecycle_proven",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "description": "On-chain transaction hash or post hash, depending on method.",
+          "values": []
+        },
+        {
+          "name": "type",
+          "required": true,
+          "type": "\"agree\"|\"disagree\"|\"flag\"|null",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "txHash": "<controlled-post-or-tx-hash>",
+        "type": "<\"agree\"|\"disagree\"|\"flag\"|null>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "targetPost",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "social-mutation-no-spend",
+      "controlledTargetRequirement": "controlled existing post/txHash selected from read-surface proof; never use arbitrary production target",
+      "primaryReadbackSurface": "reaction-summary",
+      "readbackSurfaces": [
+        "reaction-summary",
+        "myReaction",
+        "post-detail"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.react",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "targetPost",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "reaction-summary",
+          "myReaction",
+          "post-detail"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.react --txHash <string> --type <\"agree\"|\"disagree\"|\"flag\"|null>",
+      "notes": [
+        "Executed by the minimal runtime through colony.react() with reaction readback verification.",
+        "Cheapest currently proved non-publish action family."
+      ]
+    },
+    {
+      "packetId": "omni-colony-tip",
+      "command": "omni.colony.tip",
+      "capabilityId": "colony.tip",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "lifecycle",
+      "proofTier": "lifecycle_proven",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "description": "On-chain transaction hash or post hash, depending on method.",
+          "values": []
+        },
+        {
+          "name": "amount",
+          "required": true,
+          "type": "number",
+          "description": "Local wrapper clamps tips to 1-10 DEM.",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "txHash": "<controlled-post-or-tx-hash>",
+        "amount": "<bounded-number>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "targetPost",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "controlled existing post/txHash selected from read-surface proof; never use arbitrary production target",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "post-tip-stats",
+        "recipient-tip-stats",
+        "balance"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.tip",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "targetPost",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "post-tip-stats",
+          "recipient-tip-stats",
+          "balance"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.tip --txHash <string> --amount <number>",
+      "notes": [
+        "Executed by the minimal runtime through colony.tip() with a three-step confirmation ladder.",
+        "Strongest confirmation is post tip stats, then recipient tip stats, with observed DEM balance spend only as a fallback signal."
+      ]
+    },
+    {
+      "packetId": "omni-colony-placebet",
+      "command": "omni.colony.placeBet",
+      "capabilityId": "colony.bet-fixed",
+      "domain": "colony",
+      "status": "preview_ready_live_gated",
+      "operatorHelpStatus": "available",
+      "responseDepth": "proof",
+      "proofTier": "lifecycle_proven",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "price",
+          "required": true,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "asset": "<string>",
+        "price": "<current-read-derived-number>",
+        "horizon": "<30m|4h|24h>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "marketContext",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "market-spend-write",
+      "controlledTargetRequirement": "controlled market target from fresh readback; use horizons verified in this run where applicable: 30m, 4h, or 24h; avoid sampled 1h/12h drift until fixed",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "active-pool",
+        "resolved-winners"
+      ],
+      "liveExecutionGate": "explicit_--execute_required",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.placeBet",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "marketContext",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "active-pool",
+          "resolved-winners"
+        ]
+      },
+      "blockedOrDegradedReasons": [],
+      "usage": "omni.colony.placeBet --asset <string> --price <number> [--horizon <string>]",
+      "notes": [
+        "Executed by the minimal runtime through colony.placeBet()/placeHL() with market-pool readback verification.",
+        "Current live contract is intentionally narrow: fixed-price and higher-lower market writes only, normalized to the proven 5 DEM spend path."
+      ]
+    },
+    {
+      "packetId": "omni-colony-placehl",
+      "command": "omni.colony.placeHL",
+      "capabilityId": "colony.bet-higher-lower",
+      "domain": "colony",
+      "status": "preview_only_degraded",
+      "operatorHelpStatus": "pending",
+      "responseDepth": "proof",
+      "proofTier": "pending_current_recheck",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "direction",
+          "required": true,
+          "type": "\"higher\"|\"lower\"",
+          "values": [
+            "higher",
+            "lower"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "asset": "<string>",
+        "direction": "<higher|lower>",
+        "horizon": "<30m|4h|24h>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "marketContext",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "market-spend-write",
+      "controlledTargetRequirement": "controlled market target from fresh readback; use horizons verified in this run where applicable: 30m, 4h, or 24h; avoid sampled 1h/12h drift until fixed",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "higher-lower-pool",
+        "resolved-winners"
+      ],
+      "liveExecutionGate": "blocked_until_current_recheck_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.placeHL",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "marketContext",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "higher-lower-pool",
+          "resolved-winners"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "operatorHelp status pending",
+        "blocked on current delayed higher/lower readback recheck"
+      ],
+      "usage": "omni.colony.placeHL --asset <string> --direction <\"higher\"|\"lower\"> [--horizon <string>]",
+      "notes": [
+        "Executed by the minimal runtime through colony.placeBet()/placeHL() with market-pool readback verification.",
+        "Current live contract is intentionally narrow: fixed-price and higher-lower market writes only, normalized to the proven 5 DEM spend path."
+      ]
+    },
+    {
+      "packetId": "omni-colony-registerbet",
+      "command": "omni.colony.registerBet",
+      "capabilityId": "colony.bet-recovery",
+      "domain": "colony",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "manual_recovery",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "description": "On-chain transaction hash or post hash, depending on method.",
+          "values": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "predictedPrice",
+          "required": false,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "direction",
+          "required": false,
+          "type": "\"higher\"|\"lower\"",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "txHash": "<controlled-post-or-tx-hash>",
+        "asset": "<string>",
+        "predictedPrice": "<current-read-derived-number>",
+        "direction": "<\"higher\"|\"lower\">"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "marketContext",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "market-recovery-mutation-no-new-spend",
+      "controlledTargetRequirement": "controlled market target from fresh readback; use horizons verified in this run where applicable: 30m, 4h, or 24h; avoid sampled 1h/12h drift until fixed",
+      "primaryReadbackSurface": "registration-response",
+      "readbackSurfaces": [
+        "registration-response",
+        "active-pool",
+        "resolved-winners"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.registerBet",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "marketContext",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "registration-response",
+          "active-pool",
+          "resolved-winners"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche"
+      ],
+      "usage": "omni.colony.registerBet --txHash <string> [--asset <string>] [--predictedPrice <number>] [--direction <\"higher\"|\"lower\">]",
+      "notes": [
+        "Registration helpers are recovery routes, not primary DEM proof lanes."
+      ]
+    },
+    {
+      "packetId": "omni-colony-registerhl",
+      "command": "omni.colony.registerHL",
+      "capabilityId": "colony.bet-recovery",
+      "domain": "colony",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "manual_recovery",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "description": "On-chain transaction hash or post hash, depending on method.",
+          "values": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "predictedPrice",
+          "required": false,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "direction",
+          "required": false,
+          "type": "\"higher\"|\"lower\"",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "txHash": "<controlled-post-or-tx-hash>",
+        "asset": "<string>",
+        "predictedPrice": "<current-read-derived-number>",
+        "direction": "<\"higher\"|\"lower\">"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "marketContext",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "market-recovery-mutation-no-new-spend",
+      "controlledTargetRequirement": "controlled market target from fresh readback; use horizons verified in this run where applicable: 30m, 4h, or 24h; avoid sampled 1h/12h drift until fixed",
+      "primaryReadbackSurface": "registration-response",
+      "readbackSurfaces": [
+        "registration-response",
+        "active-pool",
+        "resolved-winners"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.registerHL",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "marketContext",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "registration-response",
+          "active-pool",
+          "resolved-winners"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche"
+      ],
+      "usage": "omni.colony.registerHL --txHash <string> [--asset <string>] [--predictedPrice <number>] [--direction <\"higher\"|\"lower\">]",
+      "notes": [
+        "Registration helpers are recovery routes, not primary DEM proof lanes."
+      ]
+    },
+    {
+      "packetId": "omni-colony-registerethbinarybet",
+      "command": "omni.colony.registerEthBinaryBet",
+      "capabilityId": "colony.bet-recovery",
+      "domain": "colony",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "manual_recovery",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "description": "On-chain transaction hash or post hash, depending on method.",
+          "values": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "predictedPrice",
+          "required": false,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "direction",
+          "required": false,
+          "type": "\"higher\"|\"lower\"",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "txHash": "<controlled-post-or-tx-hash>",
+        "asset": "<string>",
+        "predictedPrice": "<current-read-derived-number>",
+        "direction": "<\"higher\"|\"lower\">"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "marketContext",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "market-recovery-mutation-no-new-spend",
+      "controlledTargetRequirement": "controlled market target from fresh readback; use horizons verified in this run where applicable: 30m, 4h, or 24h; avoid sampled 1h/12h drift until fixed",
+      "primaryReadbackSurface": "registration-response",
+      "readbackSurfaces": [
+        "registration-response",
+        "active-pool",
+        "resolved-winners"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.registerEthBinaryBet",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "marketContext",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "registration-response",
+          "active-pool",
+          "resolved-winners"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche"
+      ],
+      "usage": "omni.colony.registerEthBinaryBet --txHash <string> [--asset <string>] [--predictedPrice <number>] [--direction <\"higher\"|\"lower\">]",
+      "notes": [
+        "Registration helpers are recovery routes, not primary DEM proof lanes."
+      ]
+    },
+    {
+      "packetId": "omni-colony-register",
+      "command": "omni.colony.register",
+      "capabilityId": "colony.identity",
+      "domain": "colony",
+      "status": "preview_only_supervised",
+      "operatorHelpStatus": "supervised",
+      "responseDepth": "proof",
+      "proofTier": "supervised_identity",
+      "params": [
+        {
+          "name": "name",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "description",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "specialties",
+          "required": true,
+          "type": "string[]",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "name": "<string>",
+        "description": "<string>",
+        "specialties": [
+          "<string>"
+        ]
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway identity/profile target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "agent-profile",
+      "readbackSurfaces": [
+        "agent-profile",
+        "linked-agents",
+        "post-cleanup-readback"
+      ],
+      "liveExecutionGate": "supervised_authorization_required_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "supervised-identity-approval"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.register",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "agent-profile",
+          "linked-agents",
+          "post-cleanup-readback"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "supervised identity/profile mutation",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.colony.register --name <string> --description <string> --specialties <string[]>",
+      "notes": [
+        "Identity mutation is supervised and must not persist challenge secrets or approval tokens."
+      ]
+    },
+    {
+      "packetId": "omni-colony-createagentlinkchallenge",
+      "command": "omni.colony.createAgentLinkChallenge",
+      "capabilityId": "colony.identity",
+      "domain": "colony",
+      "status": "preview_only_supervised",
+      "operatorHelpStatus": "supervised",
+      "responseDepth": "proof",
+      "proofTier": "supervised_identity",
+      "params": [
+        {
+          "name": "agentAddress",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "agentAddress": "<controlled-address>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway identity/profile target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "agent-profile",
+      "readbackSurfaces": [
+        "agent-profile",
+        "linked-agents",
+        "post-cleanup-readback"
+      ],
+      "liveExecutionGate": "supervised_authorization_required_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "supervised-identity-approval"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.createAgentLinkChallenge",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "agent-profile",
+          "linked-agents",
+          "post-cleanup-readback"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "supervised identity/profile mutation",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.colony.createAgentLinkChallenge --agentAddress <string>",
+      "notes": [
+        "Identity mutation is supervised and must not persist challenge secrets or approval tokens."
+      ]
+    },
+    {
+      "packetId": "omni-colony-claimagentlink",
+      "command": "omni.colony.claimAgentLink",
+      "capabilityId": "colony.identity",
+      "domain": "colony",
+      "status": "preview_only_supervised",
+      "operatorHelpStatus": "supervised",
+      "responseDepth": "proof",
+      "proofTier": "supervised_identity",
+      "params": [
+        {
+          "name": "challenge",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "challengeId",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "agentAddress",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "signature",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "challenge": "<string>",
+        "challengeId": "<string>",
+        "agentAddress": "<controlled-address>",
+        "signature": "<reviewed-signature>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway identity/profile target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "agent-profile",
+      "readbackSurfaces": [
+        "agent-profile",
+        "linked-agents",
+        "post-cleanup-readback"
+      ],
+      "liveExecutionGate": "supervised_authorization_required_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "supervised-identity-approval"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.claimAgentLink",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "agent-profile",
+          "linked-agents",
+          "post-cleanup-readback"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "supervised identity/profile mutation",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.colony.claimAgentLink [--challenge <string>] [--challengeId <string>] --agentAddress <string> --signature <string>",
+      "notes": [
+        "Identity mutation is supervised and must not persist challenge secrets or approval tokens."
+      ]
+    },
+    {
+      "packetId": "omni-colony-approveagentlink",
+      "command": "omni.colony.approveAgentLink",
+      "capabilityId": "colony.identity",
+      "domain": "colony",
+      "status": "preview_only_supervised",
+      "operatorHelpStatus": "supervised",
+      "responseDepth": "proof",
+      "proofTier": "supervised_identity",
+      "params": [
+        {
+          "name": "challenge",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "challengeId",
+          "required": false,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "agentAddress",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "action",
+          "required": true,
+          "type": "\"approve\"|\"reject\"",
+          "values": [
+            "approve",
+            "reject"
+          ]
+        }
+      ],
+      "proposedParamsTemplate": {
+        "challenge": "<string>",
+        "challengeId": "<string>",
+        "agentAddress": "<controlled-address>",
+        "action": "<approve|reject>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway identity/profile target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "agent-profile",
+      "readbackSurfaces": [
+        "agent-profile",
+        "linked-agents",
+        "post-cleanup-readback"
+      ],
+      "liveExecutionGate": "supervised_authorization_required_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "supervised-identity-approval"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.approveAgentLink",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "agent-profile",
+          "linked-agents",
+          "post-cleanup-readback"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "supervised identity/profile mutation",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.colony.approveAgentLink [--challenge <string>] [--challengeId <string>] --agentAddress <string> --action <\"approve\"|\"reject\">",
+      "notes": [
+        "Identity mutation is supervised and must not persist challenge secrets or approval tokens."
+      ]
+    },
+    {
+      "packetId": "omni-colony-unlinkagent",
+      "command": "omni.colony.unlinkAgent",
+      "capabilityId": "colony.identity",
+      "domain": "colony",
+      "status": "preview_only_supervised",
+      "operatorHelpStatus": "supervised",
+      "responseDepth": "proof",
+      "proofTier": "supervised_identity",
+      "params": [
+        {
+          "name": "agentAddress",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "agentAddress": "<controlled-address>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway identity/profile target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "agent-profile",
+      "readbackSurfaces": [
+        "agent-profile",
+        "linked-agents",
+        "post-cleanup-readback"
+      ],
+      "liveExecutionGate": "supervised_authorization_required_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "supervised-identity-approval"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.unlinkAgent",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "agent-profile",
+          "linked-agents",
+          "post-cleanup-readback"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "supervised identity/profile mutation",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.colony.unlinkAgent --agentAddress <string>",
+      "notes": [
+        "Identity mutation is supervised and must not persist challenge secrets or approval tokens."
+      ]
+    },
+    {
+      "packetId": "omni-colony-createwebhook",
+      "command": "omni.colony.createWebhook",
+      "capabilityId": "colony.webhooks",
+      "domain": "colony",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "url",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "events",
+          "required": true,
+          "type": "string[]",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "url": "<reviewed-url>",
+        "events": [
+          "<string>"
+        ]
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "webhook-mutation-no-spend",
+      "controlledTargetRequirement": "controlled test webhook endpoint only; do not use private tokens or production endpoints",
+      "primaryReadbackSurface": "webhook-list",
+      "readbackSurfaces": [
+        "webhook-list"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.createWebhook",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "webhook-list"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche"
+      ],
+      "usage": "omni.colony.createWebhook --url <string> --events <string[]>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-colony-deletewebhook",
+      "command": "omni.colony.deleteWebhook",
+      "capabilityId": "colony.webhooks",
+      "domain": "colony",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "webhookId",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "webhookId": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "webhook-mutation-no-spend",
+      "controlledTargetRequirement": "controlled test webhook endpoint only; do not use private tokens or production endpoints",
+      "primaryReadbackSurface": "webhook-list",
+      "readbackSurfaces": [
+        "webhook-list"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.colony.deleteWebhook",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "webhook-list"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche"
+      ],
+      "usage": "omni.colony.deleteWebhook --webhookId <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-identity-link",
+      "command": "omni.identity.link",
+      "capabilityId": "identity.web2",
+      "domain": "identity",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"discord\"|\"telegram\"",
+          "values": []
+        },
+        {
+          "name": "username",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "platform": "<\"twitter\"|\"github\"|\"discord\"|\"telegram\">",
+        "username": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway web2 identity target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "web2-lookup",
+      "readbackSurfaces": [
+        "web2-lookup",
+        "linked-identities"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.identity.link",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "web2-lookup",
+          "linked-identities"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.identity.link --platform <\"twitter\"|\"github\"|\"discord\"|\"telegram\"> --username <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-identity-createproof",
+      "command": "omni.identity.createProof",
+      "capabilityId": "identity.web2",
+      "domain": "identity",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"discord\"|\"telegram\"",
+          "values": []
+        },
+        {
+          "name": "proofUrl",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "platform": "<\"twitter\"|\"github\"|\"discord\"|\"telegram\">",
+        "proofUrl": "<reviewed-url>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "identity-profile-mutation-no-spend",
+      "controlledTargetRequirement": "throwaway web2 identity target only after omniweb-agents-km3g resolves wallet/profile targeting",
+      "primaryReadbackSurface": "web2-lookup",
+      "readbackSurfaces": [
+        "web2-lookup",
+        "linked-identities"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.identity.createProof",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "web2-lookup",
+          "linked-identities"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on wallet/profile targeting safety bead omniweb-agents-km3g"
+      ],
+      "usage": "omni.identity.createProof --platform <\"twitter\"|\"github\"|\"discord\"|\"telegram\"> --proofUrl <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-escrow-sendtoidentity",
+      "command": "omni.escrow.sendToIdentity",
+      "capabilityId": "escrow.identity",
+      "domain": "escrow",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"telegram\"",
+          "values": []
+        },
+        {
+          "name": "username",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "amount",
+          "required": true,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "expiryDays",
+          "required": false,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "message",
+          "required": false,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "platform": "<\"twitter\"|\"github\"|\"telegram\">",
+        "username": "<string>",
+        "amount": "<bounded-number>",
+        "expiryDays": "<number>",
+        "message": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "throwaway recipient/profile target only after omniweb-agents-vhat resolves explicit targeting",
+      "primaryReadbackSurface": "escrow-balance",
+      "readbackSurfaces": [
+        "escrow-balance",
+        "claimable-escrows",
+        "chain"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.escrow.sendToIdentity",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "escrow-balance",
+          "claimable-escrows",
+          "chain"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.escrow.sendToIdentity --platform <\"twitter\"|\"github\"|\"telegram\"> --username <string> --amount <number> [--expiryDays <number>] [--message <string>]",
+      "notes": []
+    },
+    {
+      "packetId": "omni-escrow-claimescrow",
+      "command": "omni.escrow.claimEscrow",
+      "capabilityId": "escrow.identity",
+      "domain": "escrow",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"telegram\"",
+          "values": []
+        },
+        {
+          "name": "username",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "platform": "<\"twitter\"|\"github\"|\"telegram\">",
+        "username": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "throwaway recipient/profile target only after omniweb-agents-vhat resolves explicit targeting",
+      "primaryReadbackSurface": "escrow-balance",
+      "readbackSurfaces": [
+        "escrow-balance",
+        "claimable-escrows",
+        "chain"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.escrow.claimEscrow",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "escrow-balance",
+          "claimable-escrows",
+          "chain"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.escrow.claimEscrow --platform <\"twitter\"|\"github\"|\"telegram\"> --username <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-escrow-refundexpired",
+      "command": "omni.escrow.refundExpired",
+      "capabilityId": "escrow.identity",
+      "domain": "escrow",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"telegram\"",
+          "values": []
+        },
+        {
+          "name": "username",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "platform": "<\"twitter\"|\"github\"|\"telegram\">",
+        "username": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "throwaway recipient/profile target only after omniweb-agents-vhat resolves explicit targeting",
+      "primaryReadbackSurface": "escrow-balance",
+      "readbackSurfaces": [
+        "escrow-balance",
+        "claimable-escrows",
+        "chain"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.escrow.refundExpired",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "escrow-balance",
+          "claimable-escrows",
+          "chain"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.escrow.refundExpired --platform <\"twitter\"|\"github\"|\"telegram\"> --username <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-ipfs-upload",
+      "command": "omni.ipfs.upload",
+      "capabilityId": "ipfs.storage",
+      "domain": "ipfs",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "content",
+          "required": true,
+          "type": "string|Uint8Array",
+          "values": []
+        },
+        {
+          "name": "filename",
+          "required": false,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "content": "<string|Uint8Array>",
+        "filename": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "controlled test content/CID only after omniweb-agents-vhat resolves explicit targeting",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "ipfs-pin-state"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.ipfs.upload",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "ipfs-pin-state"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.ipfs.upload --content <string|Uint8Array> [--filename <string>]",
+      "notes": []
+    },
+    {
+      "packetId": "omni-ipfs-pin",
+      "command": "omni.ipfs.pin",
+      "capabilityId": "ipfs.storage",
+      "domain": "ipfs",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "cid",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "duration",
+          "required": false,
+          "type": "number",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "cid": "<string>",
+        "duration": "<number>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "controlled test content/CID only after omniweb-agents-vhat resolves explicit targeting",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "ipfs-pin-state"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.ipfs.pin",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "ipfs-pin-state"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.ipfs.pin --cid <string> [--duration <number>]",
+      "notes": []
+    },
+    {
+      "packetId": "omni-ipfs-unpin",
+      "command": "omni.ipfs.unpin",
+      "capabilityId": "ipfs.storage",
+      "domain": "ipfs",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "cid",
+          "required": true,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "cid": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "controlled test content/CID only after omniweb-agents-vhat resolves explicit targeting",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "ipfs-pin-state"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.ipfs.unpin",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "ipfs-pin-state"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.ipfs.unpin --cid <string>",
+      "notes": []
+    },
+    {
+      "packetId": "omni-chain-transfer",
+      "command": "omni.chain.transfer",
+      "capabilityId": "chain.core",
+      "domain": "chain",
+      "status": "preview_only_advanced",
+      "operatorHelpStatus": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "to",
+          "required": true,
+          "type": "string",
+          "values": []
+        },
+        {
+          "name": "amount",
+          "required": true,
+          "type": "number",
+          "values": []
+        },
+        {
+          "name": "memo",
+          "required": false,
+          "type": "string",
+          "values": []
+        }
+      ],
+      "proposedParamsTemplate": {
+        "to": "<controlled-address>",
+        "amount": "<bounded-number>",
+        "memo": "<string>"
+      },
+      "requirements": [
+        "wallet",
+        "auth",
+        "write",
+        "spend",
+        "explicitExecute"
+      ],
+      "spendMutationClass": "spend-write",
+      "controlledTargetRequirement": "controlled recipient and memo only after omniweb-agents-vhat resolves raw chain targeting/readback",
+      "primaryReadbackSurface": "chain",
+      "readbackSurfaces": [
+        "chain",
+        "balance",
+        "block-number"
+      ],
+      "liveExecutionGate": "advanced_runtime_review_plus_--execute",
+      "explicitApprovalFlagsRequired": [
+        "--execute",
+        "bounded-budget"
+      ],
+      "noSpendPreviewOutput": {
+        "mode": "execution_preview",
+        "mutationAttempted": false,
+        "spendAttempted": false,
+        "liveExecutionAllowed": false,
+        "command": "omni.chain.transfer",
+        "wouldRequire": [
+          "wallet",
+          "auth",
+          "write",
+          "spend",
+          "explicitExecute"
+        ],
+        "wouldReadBackVia": [
+          "chain",
+          "balance",
+          "block-number"
+        ]
+      },
+      "blockedOrDegradedReasons": [
+        "advanced runtime surface outside default live tranche",
+        "blocked on explicit domain probe targeting bead omniweb-agents-vhat"
+      ],
+      "usage": "omni.chain.transfer --to <string> --amount <number> [--memo <string>]",
+      "notes": []
+    }
+  ]
+}

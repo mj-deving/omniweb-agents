@@ -95,6 +95,7 @@ When you need a single-family explicit proof, use the matching probe:
 - `scripts/probe-escrow.ts`
 - `scripts/probe-storage.ts`
 - `scripts/probe-ipfs.ts`
+- `scripts/probe-chain-smoke.ts`
 
 ## OpenClaw
 

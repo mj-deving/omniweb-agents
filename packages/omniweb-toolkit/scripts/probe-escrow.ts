@@ -9,9 +9,18 @@
  * escrow failure, 2 on invalid args.
  */
 
+import { getNumberArg, getStringArg, hasFlag, loadConnect } from "./_shared.js";
+import {
+  assertExplicitCredentialTargetExists,
+  emitJsonReport,
+  redactProbeCommand,
+  summarizeProbeRuntimeTarget,
+  validateRequiredValueFlags,
+} from "./_probe-targeting.js";
+
 const args = process.argv.slice(2);
 
-if (args.includes("--help") || args.includes("-h")) {
+if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-escrow.ts [options]
 
 Options:
@@ -19,7 +28,10 @@ Options:
   --username NAME      Username on that platform
   --amount N           DEM amount to escrow (default: 0.1)
   --message TEXT       Optional escrow message
+  --env-path PATH      Override wallet credentials file passed to connect()
+  --agent-name NAME    Use a named credentials profile if present
   --state-dir PATH     Override state directory
+  --proof-out PATH     Write the JSON proof report to this path
   --broadcast          Execute the real escrow send
   --help, -h           Show this help
 
@@ -28,34 +40,33 @@ Exit codes: 0 = success, 1 = runtime or escrow failure, 2 = invalid args`);
   process.exit(0);
 }
 
-function getStringArg(flag: string): string | undefined {
-  const index = args.indexOf(flag);
-  if (index < 0) return undefined;
-  return args[index + 1];
+const flagError = validateRequiredValueFlags(args, [
+  "--platform",
+  "--username",
+  "--amount",
+  "--message",
+  "--env-path",
+  "--agent-name",
+  "--state-dir",
+  "--proof-out",
+]);
+if (flagError) {
+  console.error(flagError);
+  process.exit(2);
 }
 
-function getNumberArg(flag: string, fallback: number): number {
-  const raw = getStringArg(flag);
-  if (raw === undefined) return fallback;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
-for (const flag of ["--platform", "--username", "--amount", "--message", "--state-dir"]) {
-  const index = args.indexOf(flag);
-  if (index >= 0 && !args[index + 1]) {
-    console.error(`Error: ${flag} requires a value`);
-    process.exit(2);
-  }
-}
-
-const platform = getStringArg("--platform");
-const username = getStringArg("--username");
-const amount = getNumberArg("--amount", 0.1);
-const message = getStringArg("--message");
-const stateDirArg = getStringArg("--state-dir");
+const platform = getStringArg(args, "--platform");
+const username = getStringArg(args, "--username");
+const amount = getNumberArg(args, "--amount") ?? 0.1;
+const message = getStringArg(args, "--message");
+const envPath = getStringArg(args, "--env-path") || undefined;
+const agentName = getStringArg(args, "--agent-name") || undefined;
+const stateDirArg = getStringArg(args, "--state-dir");
 const stateDir = stateDirArg || undefined;
-const broadcast = args.includes("--broadcast");
+const proofOut = getStringArg(args, "--proof-out") || undefined;
+const broadcast = hasFlag(args, "--broadcast");
+const runtimeTarget = summarizeProbeRuntimeTarget({ envPath, agentName, stateDir });
+const command = redactProbeCommand(process.argv);
 
 if (!platform || !username) {
   console.error("Error: --platform and --username are required");
@@ -73,20 +84,23 @@ if (!Number.isFinite(amount) || amount <= 0) {
 }
 
 try {
+  assertExplicitCredentialTargetExists({ envPath, agentName, stateDir });
   const connect = await loadConnect();
-  const omni = await connect({ stateDir });
+  const omni = await connect({ envPath, agentName, stateDir });
 
   if (!broadcast) {
-    console.log(JSON.stringify({
+    emitJsonReport({
       attempted: false,
       ok: true,
+      command,
       address: omni.address,
+      runtimeTarget,
       platform,
       username,
       amount,
       message,
       note: "Dry run only. Re-run with --broadcast to execute the real escrow send.",
-    }, null, 2));
+    }, proofOut);
     process.exit(0);
   }
 
@@ -95,49 +109,34 @@ try {
   });
 
   if (!result.ok) {
-    console.log(JSON.stringify({
+    emitJsonReport({
       attempted: true,
       ok: false,
+      command,
       address: omni.address,
+      runtimeTarget,
       platform,
       username,
       amount,
       message,
       result,
-    }, null, 2));
+    }, proofOut);
     process.exit(1);
   }
 
-  console.log(JSON.stringify({
+  emitJsonReport({
     attempted: true,
     ok: true,
+    command,
     address: omni.address,
+    runtimeTarget,
     platform,
     username,
     amount,
     message,
     txHash: result.txHash,
-  }, null, 2));
+  }, proofOut);
 } catch (err) {
   console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
-}
-
-async function loadConnect(): Promise<(opts?: {
-  stateDir?: string;
-}) => Promise<any>> {
-  try {
-    const mod = await import("../dist/runtime.js");
-    if (typeof mod.connect === "function") {
-      return mod.connect;
-    }
-  } catch {
-    // Fall back to source during local development before build output exists.
-  }
-
-  const mod = await import("../src/runtime.ts");
-  if (typeof mod.connect !== "function") {
-    throw new Error("connect() export not found in dist/runtime.js or src/runtime.ts");
-  }
-  return mod.connect;
 }

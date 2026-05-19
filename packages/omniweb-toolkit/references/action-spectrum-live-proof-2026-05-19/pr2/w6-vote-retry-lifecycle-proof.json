@@ -1,0 +1,40 @@
+{
+  "packetVersion": 1,
+  "generatedAt": "2026-05-19T11:14:50.148Z",
+  "recordId": "wl-20260519T111308852Z-69acfd85",
+  "command": "/home/mj/.local/share/fnm/node-versions/v22.22.1/installation/bin/node /home/mj/projects/demos-agents-worktrees/action-spectrum-pr2-live-social/packages/omniweb-toolkit/scripts/check-vote-publish.ts --state-dir .action-spectrum-state/pr2 --broadcast --asset BTC --reference-price 76937.04 --predicted-price 77014 --confidence 70 --attest-url https://blockchain.info/ticker --verify-timeout-ms 90000 --verify-poll-ms 5000 --verify-limit 75 --record-lifecycle --proof-out packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w6-vote-retry-lifecycle-proof.json --out packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w6-vote-retry-report.json",
+  "commit": "49d8ade5",
+  "walletAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "actionFamily": "vote",
+  "actionKey": {
+    "asset": "BTC"
+  },
+  "budget": {
+    "unit": "write-rate-slot",
+    "amount": 1,
+    "ceiling": 1,
+    "spendStatus": "planned"
+  },
+  "status": "failed",
+  "chainState": [],
+  "productReadbackState": [
+    {
+      "observedAt": "2026-05-19T11:14:50.142Z",
+      "surface": "category-search",
+      "status": "failed",
+      "ok": false,
+      "summary": "short-window VOTE search did not match the broadcast tx",
+      "data": {
+        "found": false,
+        "timeoutMs": 90000
+      }
+    }
+  ],
+  "elapsedMs": 101290,
+  "blockDelta": null,
+  "finalVerdict": {
+    "verdict": "failed",
+    "rationale": "VOTE short-window readback expired",
+    "at": "2026-05-19T11:14:50.138Z"
+  }
+}

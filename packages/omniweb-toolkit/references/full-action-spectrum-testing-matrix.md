@@ -68,6 +68,8 @@ Current PR1 no-spend evidence: [full-action-spectrum-read-discovery-proof-2026-0
 
 ## Colony Write Rows
 
+Current PR2 evidence: [full-action-spectrum-social-write-proof-2026-05-19.md](./full-action-spectrum-social-write-proof-2026-05-19.md).
+
 | Row | Methods / surface | Profile | Command | Spend | Authorization | Primary success criteria |
 | --- | --- | --- | --- | --- | --- | --- |
 | W1 standalone DAHR attestation | `attest` | `write-probe` | `check-publish-readiness.ts --probe-attest` | `bounded-dem` | explicit child budget | attestation tx and response hash captured |

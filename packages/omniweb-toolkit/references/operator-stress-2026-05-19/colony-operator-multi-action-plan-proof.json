@@ -1,0 +1,976 @@
+{
+  "checkedAt": "2026-05-19T18:19:58.038Z",
+  "ok": true,
+  "durationMs": 15,
+  "checks": {
+    "multipleActionsRepresented": true,
+    "dryRunNeverAllowsLiveExecution": true,
+    "requestParamsAndTimeframesPreserved": true,
+    "publishProofAndGate": true,
+    "tipProofAndGate": true,
+    "marketProofStatuses": true,
+    "supervisedIdentityGated": true,
+    "guardrailsAttachedIndependently": true,
+    "executeModeStillGated": true
+  },
+  "contract": {
+    "multiActionDryRunPlanning": true,
+    "perActionReadinessAndProofStatus": true,
+    "liveExecutionExplicitlyGated": true,
+    "spendsDem": false,
+    "liveWriteProven": false
+  },
+  "dryRunPlan": {
+    "mode": "dry-run",
+    "requestedActionCount": 5,
+    "plannedIntents": [
+      {
+        "actionFamily": "publish",
+        "request": {
+          "actionFamily": "publish",
+          "params": {
+            "category": "OBSERVATION",
+            "text": "BTC funding split follow-up"
+          },
+          "timeframe": "now",
+          "rationale": "primary operator post"
+        },
+        "intent": {
+          "actionFamily": "publish",
+          "actionType": "publish",
+          "status": "executable",
+          "lifecycleStatus": "indexed",
+          "runtimeFamily": "publish",
+          "executionPathFamily": "direct_attested_write",
+          "requirements": {
+            "wallet": true,
+            "attestation": true,
+            "targetPost": false,
+            "marketContext": false,
+            "explicitExecute": true
+          },
+          "effects": {
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "proofLevel": "lifecycle_proven",
+          "reasonCodes": []
+        },
+        "status": "executable",
+        "lifecycleStatus": "indexed",
+        "executionPathFamily": "direct_attested_write",
+        "proofLevel": "lifecycle_proven",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [],
+          "reasonCodes": []
+        },
+        "proofStatus": {
+          "proofLevel": "lifecycle_proven",
+          "lifecycleStatus": "indexed",
+          "expectedReadback": [
+            "recent-feed",
+            "category-search",
+            "post-detail"
+          ]
+        },
+        "liveExecutionGate": {
+          "gate": "dry_run_only",
+          "reason": "operator cycle is in dry-run mode and will not execute live writes"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.026Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "block",
+          "actionFamily": "publish",
+          "actionType": "publish",
+          "findings": [
+            {
+              "code": "explicit_execute_required_for_spend",
+              "domain": "write_spend_authorization",
+              "severity": "critical",
+              "status": "block",
+              "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+            }
+          ],
+          "blockedReasonCodes": [
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "publish.params",
+              "quotedEvidence": "{\"category\":\"OBSERVATION\",\"text\":\"BTC funding split follow-up\"}"
+            }
+          ]
+        },
+        "admissibility": {
+          "generatedAt": "2026-05-19T18:19:58.030Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "publish",
+          "actionType": "publish",
+          "status": "explicit_execute_required",
+          "decision": "requires_explicit_execute",
+          "executionGate": "explicit_execute",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "executable",
+            "lifecycleStatus": "indexed",
+            "capabilityId": "colony.publish",
+            "capabilityStatus": "available",
+            "proofTier": "lifecycle_proven",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": false,
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "guardrails": {
+            "status": "block",
+            "blockedReasonCodes": [
+              "explicit_execute_required_for_spend"
+            ],
+            "supervisedRequirements": [],
+            "degradedReasonCodes": [],
+            "findings": [
+              {
+                "code": "explicit_execute_required_for_spend",
+                "domain": "write_spend_authorization",
+                "severity": "critical",
+                "status": "block",
+                "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "explicit_execute_required",
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": []
+        }
+      },
+      {
+        "actionFamily": "tip",
+        "request": {
+          "actionFamily": "tip",
+          "params": {
+            "targetTxHash": "0xentrypoint-publish",
+            "amount": 1
+          },
+          "timeframe": "after post-detail readback",
+          "rationale": "reward useful post"
+        },
+        "intent": {
+          "actionFamily": "tip",
+          "actionType": "tip",
+          "status": "executable",
+          "lifecycleStatus": "degraded",
+          "runtimeFamily": "tip",
+          "executionPathFamily": "tip_transfer",
+          "requirements": {
+            "wallet": true,
+            "attestation": false,
+            "targetPost": true,
+            "marketContext": false,
+            "explicitExecute": true
+          },
+          "effects": {
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "proofLevel": "lifecycle_proven",
+          "reasonCodes": []
+        },
+        "status": "executable",
+        "lifecycleStatus": "degraded",
+        "executionPathFamily": "tip_transfer",
+        "proofLevel": "lifecycle_proven",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [],
+          "reasonCodes": []
+        },
+        "proofStatus": {
+          "proofLevel": "lifecycle_proven",
+          "lifecycleStatus": "degraded",
+          "expectedReadback": [
+            "post-tip-stats",
+            "recipient-tip-stats",
+            "balance"
+          ]
+        },
+        "liveExecutionGate": {
+          "gate": "dry_run_only",
+          "reason": "operator cycle is in dry-run mode and will not execute live writes"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.031Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "block",
+          "actionFamily": "tip",
+          "actionType": "tip",
+          "findings": [
+            {
+              "code": "explicit_execute_required_for_spend",
+              "domain": "write_spend_authorization",
+              "severity": "critical",
+              "status": "block",
+              "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+            }
+          ],
+          "blockedReasonCodes": [
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "tip.params",
+              "quotedEvidence": "{\"targetTxHash\":\"0xentrypoint-publish\",\"amount\":1}"
+            }
+          ]
+        },
+        "admissibility": {
+          "generatedAt": "2026-05-19T18:19:58.032Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "tip",
+          "actionType": "tip",
+          "status": "explicit_execute_required",
+          "decision": "requires_explicit_execute",
+          "executionGate": "explicit_execute",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "executable",
+            "lifecycleStatus": "degraded",
+            "capabilityId": "colony.tip",
+            "capabilityStatus": "available",
+            "proofTier": "lifecycle_proven",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": false,
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "guardrails": {
+            "status": "block",
+            "blockedReasonCodes": [
+              "explicit_execute_required_for_spend"
+            ],
+            "supervisedRequirements": [],
+            "degradedReasonCodes": [],
+            "findings": [
+              {
+                "code": "explicit_execute_required_for_spend",
+                "domain": "write_spend_authorization",
+                "severity": "critical",
+                "status": "block",
+                "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "explicit_execute_required",
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": []
+        }
+      },
+      {
+        "actionFamily": "bet-fixed",
+        "request": {
+          "actionFamily": "bet-fixed",
+          "params": {
+            "asset": "BTC",
+            "horizon": "30m",
+            "predictedPrice": 78000
+          },
+          "timeframe": "30m",
+          "rationale": "fixed-price market lane"
+        },
+        "intent": {
+          "actionFamily": "bet-fixed",
+          "actionType": "bet",
+          "marketKind": "fixed_price",
+          "status": "executable",
+          "lifecycleStatus": "resolved",
+          "runtimeFamily": "bet",
+          "executionPathFamily": "market_write",
+          "requirements": {
+            "wallet": true,
+            "attestation": false,
+            "targetPost": false,
+            "marketContext": true,
+            "explicitExecute": true
+          },
+          "effects": {
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "proofLevel": "lifecycle_proven",
+          "reasonCodes": []
+        },
+        "status": "executable",
+        "lifecycleStatus": "resolved",
+        "executionPathFamily": "market_write",
+        "proofLevel": "lifecycle_proven",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [],
+          "reasonCodes": []
+        },
+        "proofStatus": {
+          "proofLevel": "lifecycle_proven",
+          "lifecycleStatus": "resolved",
+          "expectedReadback": [
+            "active-pool",
+            "winners-history"
+          ]
+        },
+        "liveExecutionGate": {
+          "gate": "dry_run_only",
+          "reason": "operator cycle is in dry-run mode and will not execute live writes"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.032Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "block",
+          "actionFamily": "bet-fixed",
+          "actionType": "bet",
+          "findings": [
+            {
+              "code": "explicit_execute_required_for_spend",
+              "domain": "write_spend_authorization",
+              "severity": "critical",
+              "status": "block",
+              "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+            }
+          ],
+          "blockedReasonCodes": [
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "bet-fixed.params",
+              "quotedEvidence": "{\"asset\":\"BTC\",\"horizon\":\"30m\",\"predictedPrice\":78000}"
+            }
+          ]
+        },
+        "admissibility": {
+          "generatedAt": "2026-05-19T18:19:58.033Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "bet-fixed",
+          "actionType": "bet",
+          "status": "explicit_execute_required",
+          "decision": "requires_explicit_execute",
+          "executionGate": "explicit_execute",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "executable",
+            "lifecycleStatus": "resolved",
+            "capabilityId": "colony.bet-fixed",
+            "capabilityStatus": "available",
+            "proofTier": "lifecycle_proven",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": false,
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "guardrails": {
+            "status": "block",
+            "blockedReasonCodes": [
+              "explicit_execute_required_for_spend"
+            ],
+            "supervisedRequirements": [],
+            "degradedReasonCodes": [],
+            "findings": [
+              {
+                "code": "explicit_execute_required_for_spend",
+                "domain": "write_spend_authorization",
+                "severity": "critical",
+                "status": "block",
+                "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "explicit_execute_required",
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": []
+        }
+      },
+      {
+        "actionFamily": "bet-hl",
+        "request": {
+          "actionFamily": "bet-hl",
+          "params": {
+            "asset": "ETH",
+            "horizon": "24h",
+            "direction": "higher"
+          },
+          "timeframe": "24h",
+          "rationale": "higher/lower market lane that still needs current delayed readback"
+        },
+        "intent": {
+          "actionFamily": "bet-hl",
+          "actionType": "bet",
+          "marketKind": "higher_lower",
+          "status": "lifecycle-pending",
+          "lifecycleStatus": "lifecycle-pending",
+          "runtimeFamily": "bet",
+          "executionPathFamily": "market_write",
+          "requirements": {
+            "wallet": true,
+            "attestation": false,
+            "targetPost": false,
+            "marketContext": true,
+            "explicitExecute": true
+          },
+          "effects": {
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "proofLevel": "pending_current_recheck",
+          "reasonCodes": [
+            "higher_lower_current_delayed_readback_pending"
+          ]
+        },
+        "status": "lifecycle-pending",
+        "lifecycleStatus": "lifecycle-pending",
+        "executionPathFamily": "market_write",
+        "proofLevel": "pending_current_recheck",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [
+            "higher_lower_current_delayed_readback_pending",
+            "pending_current_recheck"
+          ],
+          "reasonCodes": [
+            "higher_lower_current_delayed_readback_pending"
+          ]
+        },
+        "proofStatus": {
+          "proofLevel": "pending_current_recheck",
+          "lifecycleStatus": "lifecycle-pending",
+          "expectedReadback": [
+            "active-pool"
+          ]
+        },
+        "liveExecutionGate": {
+          "gate": "blocked",
+          "reason": "higher_lower_current_delayed_readback_pending"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.033Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "block",
+          "actionFamily": "bet-hl",
+          "actionType": "bet",
+          "findings": [
+            {
+              "code": "capability_truth_lifecycle_pending",
+              "domain": "auth_token_lifecycle",
+              "severity": "warning",
+              "status": "degraded",
+              "message": "Capability truth marks this action lifecycle-pending.",
+              "evidence": "higher_lower_current_delayed_readback_pending"
+            },
+            {
+              "code": "explicit_execute_required_for_spend",
+              "domain": "write_spend_authorization",
+              "severity": "critical",
+              "status": "block",
+              "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+            }
+          ],
+          "blockedReasonCodes": [
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [
+            "capability_truth_lifecycle_pending"
+          ],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "bet-hl.params",
+              "quotedEvidence": "{\"asset\":\"ETH\",\"horizon\":\"24h\",\"direction\":\"higher\"}"
+            }
+          ]
+        },
+        "admissibility": {
+          "generatedAt": "2026-05-19T18:19:58.034Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "bet-hl",
+          "actionType": "bet",
+          "status": "explicit_execute_required",
+          "decision": "requires_explicit_execute",
+          "executionGate": "explicit_execute",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "lifecycle-pending",
+            "lifecycleStatus": "lifecycle-pending",
+            "capabilityId": "colony.bet-higher-lower",
+            "capabilityStatus": "pending",
+            "proofTier": "pending_current_recheck",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": false,
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "guardrails": {
+            "status": "block",
+            "blockedReasonCodes": [
+              "explicit_execute_required_for_spend"
+            ],
+            "supervisedRequirements": [],
+            "degradedReasonCodes": [
+              "capability_truth_lifecycle_pending"
+            ],
+            "findings": [
+              {
+                "code": "capability_truth_lifecycle_pending",
+                "domain": "auth_token_lifecycle",
+                "severity": "warning",
+                "status": "degraded",
+                "message": "Capability truth marks this action lifecycle-pending.",
+                "evidence": "higher_lower_current_delayed_readback_pending"
+              },
+              {
+                "code": "explicit_execute_required_for_spend",
+                "domain": "write_spend_authorization",
+                "severity": "critical",
+                "status": "block",
+                "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "explicit_execute_required",
+            "higher_lower_current_delayed_readback_pending",
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [
+            "capability_truth_lifecycle_pending"
+          ]
+        }
+      },
+      {
+        "actionFamily": "register",
+        "request": {
+          "actionFamily": "register",
+          "params": {
+            "agentAddress": "0xoperator"
+          },
+          "timeframe": "supervised only",
+          "rationale": "identity lane must remain supervised"
+        },
+        "intent": {
+          "actionFamily": "register",
+          "actionType": "register",
+          "status": "supervised",
+          "lifecycleStatus": "planned",
+          "runtimeFamily": "identity",
+          "executionPathFamily": "identity_mutation",
+          "requirements": {
+            "wallet": true,
+            "attestation": false,
+            "targetPost": false,
+            "marketContext": false,
+            "explicitExecute": true
+          },
+          "effects": {
+            "spendsDem": false,
+            "writesLifecycleRecord": false
+          },
+          "proofLevel": "supervised_identity",
+          "reasonCodes": [
+            "identity_mutation_requires_explicit_execute"
+          ]
+        },
+        "status": "supervised",
+        "lifecycleStatus": "planned",
+        "executionPathFamily": "identity_mutation",
+        "proofLevel": "supervised_identity",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": true,
+          "spendsDem": false,
+          "writesLifecycleRecord": false,
+          "missingRequirements": [
+            "identity_mutation_requires_explicit_execute",
+            "supervised_authorization_required"
+          ],
+          "reasonCodes": [
+            "identity_mutation_requires_explicit_execute"
+          ]
+        },
+        "proofStatus": {
+          "proofLevel": "supervised_identity",
+          "lifecycleStatus": "planned",
+          "expectedReadback": []
+        },
+        "liveExecutionGate": {
+          "gate": "supervised_authorization_required",
+          "reason": "identity and supervised mutations require explicit operator authorization"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.034Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "supervised",
+          "actionFamily": "register",
+          "actionType": "register",
+          "findings": [
+            {
+              "code": "identity_mutation_requires_supervision",
+              "domain": "identity_supervision",
+              "severity": "warning",
+              "status": "supervised",
+              "message": "Identity registration and linking require supervised operator authorization."
+            }
+          ],
+          "blockedReasonCodes": [],
+          "supervisedRequirements": [
+            "identity_mutation_requires_supervision"
+          ],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "register.params",
+              "quotedEvidence": "{\"agentAddress\":\"0xoperator\"}"
+            }
+          ]
+        },
+        "admissibility": {
+          "generatedAt": "2026-05-19T18:19:58.034Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "register",
+          "actionType": null,
+          "status": "supervised",
+          "decision": "requires_supervision",
+          "executionGate": "supervision",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "supervised",
+            "lifecycleStatus": "planned",
+            "capabilityId": "colony.identity",
+            "capabilityStatus": "supervised",
+            "proofTier": "supervised_identity",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": true,
+            "spendsDem": false,
+            "writesLifecycleRecord": false
+          },
+          "guardrails": {
+            "status": "supervised",
+            "blockedReasonCodes": [],
+            "supervisedRequirements": [
+              "identity_mutation_requires_supervision"
+            ],
+            "degradedReasonCodes": [],
+            "findings": [
+              {
+                "code": "identity_mutation_requires_supervision",
+                "domain": "identity_supervision",
+                "severity": "warning",
+                "status": "supervised",
+                "message": "Identity registration and linking require supervised operator authorization."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "identity_supervision_required",
+            "identity_mutation_requires_explicit_execute"
+          ],
+          "supervisedRequirements": [
+            "identity_mutation_requires_supervision",
+            "identity_supervision_required"
+          ],
+          "degradedReasonCodes": []
+        }
+      }
+    ],
+    "defaultLiveExecutionGate": "explicit_execute_required",
+    "liveExecutionAllowed": false,
+    "noSpendDefault": true,
+    "canRepresentMultipleActions": true
+  },
+  "executePlan": {
+    "mode": "execute",
+    "liveExecutionAllowed": false,
+    "plannedIntents": [
+      {
+        "actionFamily": "publish",
+        "status": "executable",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [],
+          "reasonCodes": []
+        },
+        "liveExecutionGate": {
+          "gate": "explicit_execute_required",
+          "reason": "live write or spend-bearing action requires explicit execute authorization"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.035Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "pass",
+          "actionFamily": "publish",
+          "actionType": "publish",
+          "findings": [],
+          "blockedReasonCodes": [],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "publish.params",
+              "quotedEvidence": "{\"category\":\"OBSERVATION\",\"text\":\"BTC funding split follow-up\"}"
+            }
+          ]
+        }
+      },
+      {
+        "actionFamily": "tip",
+        "status": "executable",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [],
+          "reasonCodes": []
+        },
+        "liveExecutionGate": {
+          "gate": "explicit_execute_required",
+          "reason": "live write or spend-bearing action requires explicit execute authorization"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.035Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "pass",
+          "actionFamily": "tip",
+          "actionType": "tip",
+          "findings": [],
+          "blockedReasonCodes": [],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "tip.params",
+              "quotedEvidence": "{\"targetTxHash\":\"0xentrypoint-publish\",\"amount\":1}"
+            }
+          ]
+        }
+      },
+      {
+        "actionFamily": "bet-fixed",
+        "status": "executable",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [],
+          "reasonCodes": []
+        },
+        "liveExecutionGate": {
+          "gate": "explicit_execute_required",
+          "reason": "live write or spend-bearing action requires explicit execute authorization"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.035Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "pass",
+          "actionFamily": "bet-fixed",
+          "actionType": "bet",
+          "findings": [],
+          "blockedReasonCodes": [],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "bet-fixed.params",
+              "quotedEvidence": "{\"asset\":\"BTC\",\"horizon\":\"30m\",\"predictedPrice\":78000}"
+            }
+          ]
+        }
+      },
+      {
+        "actionFamily": "bet-hl",
+        "status": "lifecycle-pending",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": false,
+          "spendsDem": true,
+          "writesLifecycleRecord": true,
+          "missingRequirements": [
+            "higher_lower_current_delayed_readback_pending",
+            "pending_current_recheck"
+          ],
+          "reasonCodes": [
+            "higher_lower_current_delayed_readback_pending"
+          ]
+        },
+        "liveExecutionGate": {
+          "gate": "blocked",
+          "reason": "higher_lower_current_delayed_readback_pending"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.036Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "degraded",
+          "actionFamily": "bet-hl",
+          "actionType": "bet",
+          "findings": [
+            {
+              "code": "capability_truth_lifecycle_pending",
+              "domain": "auth_token_lifecycle",
+              "severity": "warning",
+              "status": "degraded",
+              "message": "Capability truth marks this action lifecycle-pending.",
+              "evidence": "higher_lower_current_delayed_readback_pending"
+            }
+          ],
+          "blockedReasonCodes": [],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [
+            "capability_truth_lifecycle_pending"
+          ],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "bet-hl.params",
+              "quotedEvidence": "{\"asset\":\"ETH\",\"horizon\":\"24h\",\"direction\":\"higher\"}"
+            }
+          ]
+        }
+      },
+      {
+        "actionFamily": "register",
+        "status": "supervised",
+        "readiness": {
+          "canPlan": true,
+          "canExecuteNow": false,
+          "requiresExplicitExecute": true,
+          "requiresSupervision": true,
+          "spendsDem": false,
+          "writesLifecycleRecord": false,
+          "missingRequirements": [
+            "identity_mutation_requires_explicit_execute",
+            "supervised_authorization_required"
+          ],
+          "reasonCodes": [
+            "identity_mutation_requires_explicit_execute"
+          ]
+        },
+        "liveExecutionGate": {
+          "gate": "supervised_authorization_required",
+          "reason": "identity and supervised mutations require explicit operator authorization"
+        },
+        "guardrailEvaluation": {
+          "generatedAt": "2026-05-19T18:19:58.037Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "status": "supervised",
+          "actionFamily": "register",
+          "actionType": "register",
+          "findings": [
+            {
+              "code": "identity_mutation_requires_supervision",
+              "domain": "identity_supervision",
+              "severity": "warning",
+              "status": "supervised",
+              "message": "Identity registration and linking require supervised operator authorization."
+            }
+          ],
+          "blockedReasonCodes": [],
+          "supervisedRequirements": [
+            "identity_mutation_requires_supervision"
+          ],
+          "degradedReasonCodes": [],
+          "untrustedInputs": [
+            {
+              "kind": "operator_request",
+              "source": "register.params",
+              "quotedEvidence": "{\"agentAddress\":\"0xoperator\"}"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

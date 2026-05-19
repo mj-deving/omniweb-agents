@@ -316,3 +316,20 @@ Do not use this PRD to:
   - `git diff --check`
 - PR1 satisfies AC-2 and AC-3. AC-4 through AC-7 remain for later beads; AC-8 front-door wiring remains for PR5.
 - No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.
+
+### 2026-05-19 - PR2 repeated no-spend operator cycles
+
+- Claimed `omniweb-agents-hosted.2` after PR1 merged.
+- Extended `check:hosted-operator-consumer` to emit repeated proof packets from the clean local-tarball consumer.
+- Proof packet 1 selects `react`; proof packet 2 selects `bet-fixed`.
+- Each packet includes observed context, selected action, skipped alternatives, all action-family entries, drift ledger, no-spend verdict, release verdict, identity-mutation verdict, and validation commands.
+- Each packet covers `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, `bet-hl`, `register`, and `human-link` with capability, guardrail, lifecycle, supervision, explicit-execute, admissibility, selected, and reason fields.
+- The spend-bearing `bet-fixed` packet remains no-spend: mode is dry-run, live execution is disabled, `canExecuteNow` is false, and `actualSpendPerformed` is false.
+- Validation passed:
+  - `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer`
+  - `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball`
+  - `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
+  - `npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts`
+  - `git diff --check`
+- PR2 satisfies AC-4 and AC-5. AC-6 through AC-8 remain for later beads.
+- No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.

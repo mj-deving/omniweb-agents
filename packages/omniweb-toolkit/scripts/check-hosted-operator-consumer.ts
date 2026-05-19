@@ -19,6 +19,7 @@ interface CommandResult {
 }
 
 interface RawPackEntry {
+  version?: string;
   filename: string;
   size?: number;
   packageSize?: number;
@@ -28,6 +29,7 @@ interface RawPackEntry {
 }
 
 interface PackSummary {
+  version?: string;
   filename: string;
   packageSize?: number;
   unpackedSize?: number;
@@ -104,6 +106,7 @@ try {
     throw new Error("npm pack did not report a tarball filename");
   }
   packEntry = {
+    version: rawPackEntry.version,
     filename: rawPackEntry.filename,
     packageSize: rawPackEntry.packageSize ?? rawPackEntry.size,
     unpackedSize: rawPackEntry.unpackedSize,
@@ -131,7 +134,7 @@ try {
     throw new Error("clean hosted consumer npm install failed");
   }
 
-  const proofScript = renderHostedConsumerProofScript();
+  const proofScript = renderHostedConsumerProofScript(rawPackEntry.version ?? "unknown");
   consumerScriptAudit = auditHostedConsumerProofScript(proofScript);
   writeFileSync(join(tempRoot, "hosted-operator-proof.mjs"), proofScript);
   consumerResult = runCommand(["node", "hosted-operator-proof.mjs"], tempRoot);
@@ -165,7 +168,7 @@ try {
     consumerScriptAudit,
     consumer: consumerSummary,
     contract: {
-      ownerBead: "omniweb-agents-hosted.1",
+      ownerBead: "omniweb-agents-hosted.2",
       localTarballInstall: ok,
       packageNameImportsOnly: ok,
       repoRelativeImports: false,
@@ -253,7 +256,7 @@ function auditHostedConsumerProofScript(source: string): {
   };
 }
 
-function renderHostedConsumerProofScript(): string {
+function renderHostedConsumerProofScript(packageVersion: string): string {
   return `const root = await import("omniweb-toolkit");
 const runtime = await import("omniweb-toolkit/runtime");
 const agent = await import("omniweb-toolkit/agent");
@@ -337,6 +340,16 @@ const marketWriteMatrix = root.buildMarketWriteIntentMatrix({
   now: new Date("2026-05-19T00:00:00.000Z"),
   runtimeCapabilities: syntheticRuntimeCapabilities,
 });
+const proofPackets = buildProofPackets({
+  packageVersion: ${JSON.stringify(packageVersion)},
+  consumerWorkspace: process.cwd(),
+  actualReadiness,
+  actualRuntimeCapabilities,
+  toolkitManifest,
+  capabilityTruth,
+  requestedActions,
+  marketWriteMatrix,
+});
 
 const fixedMemo = write.buildBetMemo("btc", 70000, { horizon: "30m" });
 const higherLowerMemo = write.buildHigherLowerMemo("btc", "higher", { horizon: "24h" });
@@ -387,6 +400,14 @@ const checks = {
     && marketWriteMatrix.summary.lifecyclePendingFamilies.includes("higher-lower")
     && marketWriteMatrix.summary.unsupportedFamilies.includes("sports")
     && marketByFamily.get("graduation").capabilityStatus === "server_error",
+  repeatedProofPackets: proofPackets.length >= 2
+    && proofPackets.every((packet) => packet.noSpendVerdict.ok === true)
+    && proofPackets.every((packet) => packet.releaseVerdict.publicRegistryProof === false)
+    && proofPackets.every((packet) => packet.identityMutationVerdict.mutatesIdentity === false)
+    && proofPackets.every((packet) => packet.actions.length === requiredActionFamilies.length)
+    && proofPackets.every((packet) => packet.skippedAlternatives.length === requiredActionFamilies.length - 1)
+    && proofPackets.some((packet) => packet.selectedAction.family === "react")
+    && proofPackets.some((packet) => packet.selectedAction.family === "bet-fixed"),
 };
 const ok = Object.values(checks).every(Boolean);
 if (!ok) {
@@ -438,9 +459,10 @@ console.log(JSON.stringify({
       normalizedWalletTransferShape,
       extractedTxHash,
     },
+    proofPackets,
   },
   contract: {
-    ownerBead: "omniweb-agents-hosted.1",
+    ownerBead: "omniweb-agents-hosted.2",
     localTarballInstall: true,
     packageNameImportsOnly: true,
     repoRelativeImports: false,
@@ -452,6 +474,146 @@ console.log(JSON.stringify({
     liveExecution: false,
   },
 }, null, 2));
+
+function buildProofPackets(input) {
+  const scenarios = [
+    {
+      cycleIndex: 1,
+      selectedFamily: "react",
+      topic: "hosted read-only engagement rehearsal",
+      observedSignals: ["clean_tarball_imports", "read_only_runtime", "existing_thread_candidate"],
+      selectionReason: "Prefer a non-spend reaction candidate while hosted credentials are absent.",
+    },
+    {
+      cycleIndex: 2,
+      selectedFamily: "bet-fixed",
+      topic: "hosted market-write admissibility rehearsal",
+      observedSignals: ["market_write_intents_available", "fixed_price_lifecycle_proven", "explicit_execute_required"],
+      selectionReason: "Exercise spend-bearing market intent truth without execute authority.",
+    },
+  ];
+  return scenarios.map((scenario) => {
+    const plan = agent.buildColonyOperatorMultiActionPlan({
+      mode: "dry-run",
+      capabilityTruth: input.capabilityTruth,
+      toolkitCapabilityManifest: input.toolkitManifest,
+      requestedActions: input.requestedActions,
+    });
+    const actions = plan.plannedIntents.map((intent) => proofAction(intent, scenario.selectedFamily));
+    const selectedAction = actions.find((action) => action.selected);
+    if (!selectedAction) {
+      throw new Error("proof packet selected action missing: " + scenario.selectedFamily);
+    }
+    const skippedAlternatives = actions
+      .filter((action) => !action.selected)
+      .map((action) => ({
+        family: action.family,
+        capability: action.capability,
+        guardrail: action.guardrail,
+        lifecycle: action.lifecycle,
+        supervision: action.supervision,
+        explicitExecute: action.explicitExecute,
+        admissibility: action.admissibility,
+        reason: action.reason,
+      }));
+    return {
+      runId: "hosted-operator-no-spend-" + scenario.cycleIndex,
+      generatedAt: "2026-05-19T00:00:00.000Z",
+      packageVersion: input.packageVersion,
+      tarballPath: "local npm pack tarball installed through file: dependency",
+      consumerWorkspace: input.consumerWorkspace,
+      cycleIndex: scenario.cycleIndex,
+      observedContext: {
+        topic: scenario.topic,
+        observedSignals: scenario.observedSignals,
+        runtime: {
+          canRead: input.actualReadiness.canRead,
+          canWrite: input.actualReadiness.canWrite,
+          missingEnv: input.actualReadiness.missingEnv,
+          recommendedMode: input.actualRuntimeCapabilities.recommendedMode,
+          blockers: input.actualRuntimeCapabilities.blockers,
+        },
+        capabilityCoverage: input.capabilityTruth.coverage,
+      },
+      selectedAction: {
+        ...selectedAction,
+        selectionReason: scenario.selectionReason,
+      },
+      skippedAlternatives,
+      actions,
+      driftLedger: [
+        ...input.marketWriteMatrix.intents
+          .filter((intent) => intent.capabilityStatus !== "available")
+          .map((intent) => ({
+            family: intent.family,
+            classification: intent.capabilityStatus,
+            lifecycle: intent.lifecycleStatus,
+            supervision: intent.supervision,
+            explicitExecute: intent.explicitExecute,
+            admissibility: intent.admissibilityStatus,
+            reason: intent.reasonCodes.join(", ") || intent.notes.join(" "),
+          })),
+        {
+          family: "hosted-runtime",
+          classification: input.actualReadiness.canWrite ? "write_ready" : "auth_needed",
+          lifecycle: input.actualReadiness.canWrite ? "write-ready" : "read-only",
+          supervision: "none",
+          explicitExecute: "required_for_live_writes",
+          admissibility: input.actualReadiness.canWrite ? "dry_run_only" : "blocked",
+          reason: input.actualReadiness.missingEnv.join(", ") || input.actualRuntimeCapabilities.blockers.join(", "),
+        },
+      ],
+      noSpendVerdict: {
+        ok: plan.mode === "dry-run"
+          && plan.liveExecutionAllowed === false
+          && actions.every((action) => action.canExecuteNow === false)
+          && actions.every((action) => action.liveExecutionGate !== "execute_now"),
+        mode: plan.mode,
+        liveExecutionAllowed: plan.liveExecutionAllowed,
+        spendBearingFamiliesSelected: selectedAction.spendsDem ? [selectedAction.family] : [],
+        actualSpendPerformed: false,
+      },
+      releaseVerdict: {
+        release: false,
+        publicRegistryProof: false,
+        localTarballOnly: true,
+      },
+      identityMutationVerdict: {
+        mutatesIdentity: false,
+        supervisedFamilies: actions
+          .filter((action) => action.supervision === "required")
+          .map((action) => action.family),
+      },
+      validationCommands: [
+        "npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer",
+        "npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball",
+        "npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer",
+        "npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts",
+      ],
+    };
+  });
+}
+
+function proofAction(intent, selectedFamily) {
+  const reasonCodes = [
+    ...intent.readiness.reasonCodes,
+    ...intent.admissibility.reasonCodes,
+  ];
+  return {
+    family: intent.actionFamily,
+    capability: intent.status,
+    guardrail: intent.guardrailEvaluation.status,
+    lifecycle: intent.lifecycleStatus,
+    supervision: intent.readiness.requiresSupervision ? "required" : "none",
+    explicitExecute: intent.readiness.requiresExplicitExecute ? "required" : "not_required",
+    admissibility: intent.admissibility.status,
+    liveExecutionGate: intent.liveExecutionGate.gate,
+    canExecuteNow: intent.readiness.canExecuteNow,
+    spendsDem: intent.readiness.spendsDem,
+    selected: intent.actionFamily === selectedFamily,
+    reason: reasonCodes.length > 0 ? Array.from(new Set(reasonCodes)).join(", ") : intent.liveExecutionGate.reason,
+  };
+}
 
 function deterministicRuntimeCapabilities() {
   const readiness = {

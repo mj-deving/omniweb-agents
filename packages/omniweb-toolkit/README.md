@@ -367,6 +367,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts)
 - [scripts/probe-storage.ts](scripts/probe-storage.ts)
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
+- [scripts/probe-chain-smoke.ts](scripts/probe-chain-smoke.ts)
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - maintained research-agent publish path with optional `--broadcast-family <family>`
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) - maintained supervised reply path with delayed-verdict queue support
 - [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts) - maintained single-source factual `OBSERVATION` path with deterministic `--draft-template` / `--preflight-only` gating before optional pending-verdict publish runs

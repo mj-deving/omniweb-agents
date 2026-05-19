@@ -244,6 +244,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts): execute one explicit escrow send probe to a linked or controlled social identity
 - [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
+- [scripts/probe-chain-smoke.ts](scripts/probe-chain-smoke.ts): run a non-mutating chain sign/read smoke with redacted signature output
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish
 - [scripts/check-research-agent-consumer.ts](scripts/check-research-agent-consumer.ts): verify the research-agent archetype as an external consumer entrypoint instead of a repo-internal harness
 - [scripts/check-research-agent-dry-run.ts](scripts/check-research-agent-dry-run.ts): exercise the research-agent path without live writes when you want output-shaping evidence first
@@ -305,7 +306,7 @@ For a new consumer integration, the safest progression is:
 7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report; use `node --import tsx scripts/check-consumer-journeys.ts --skip-release-gate` only when the active proof slice deliberately excludes AC-9 registry readiness
 8. `scripts/check-write-surface-sweep.ts --broadcast` once you are intentionally ready to spend DEM on the maintained live write proof
 9. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>` for the immediate publish artifact, then `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the delayed verdict window
-10. `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep
+10. `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep; use `scripts/probe-chain-smoke.ts` first when you only need non-mutating chain sign/read proof
 11. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
 12. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
 

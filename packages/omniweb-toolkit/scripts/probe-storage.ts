@@ -12,15 +12,26 @@
 
 import { DemosTransactions } from "@kynesyslabs/demosdk/websdk";
 import { StorageProgram } from "@kynesyslabs/demosdk/storage";
+import { getStringArg, hasFlag, loadConnect } from "./_shared.js";
+import {
+  assertExplicitCredentialTargetExists,
+  emitJsonReport,
+  redactProbeCommand,
+  summarizeProbeRuntimeTarget,
+  validateRequiredValueFlags,
+} from "./_probe-targeting.js";
 
 const args = process.argv.slice(2);
 
-if (args.includes("--help") || args.includes("-h")) {
+if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-storage.ts [options]
 
 Options:
   --program-name NAME   Storage program name (default: unique omniweb probe name)
+  --env-path PATH       Override wallet credentials file passed to connect()
+  --agent-name NAME     Use a named credentials profile if present
   --state-dir PATH      Override state directory
+  --proof-out PATH      Write the JSON proof report to this path
   --broadcast           Execute the real CREATE + SET_FIELD probe
   --help, -h            Show this help
 
@@ -29,24 +40,27 @@ Exit codes: 0 = success, 1 = runtime or transaction failure, 2 = invalid args`);
   process.exit(0);
 }
 
-function getStringArg(flag: string, fallback: string): string {
-  const index = args.indexOf(flag);
-  if (index < 0) return fallback;
-  return args[index + 1] ?? fallback;
+const flagError = validateRequiredValueFlags(args, [
+  "--program-name",
+  "--env-path",
+  "--agent-name",
+  "--state-dir",
+  "--proof-out",
+]);
+if (flagError) {
+  console.error(flagError);
+  process.exit(2);
 }
 
-for (const flag of ["--program-name", "--state-dir"]) {
-  const index = args.indexOf(flag);
-  if (index >= 0 && !args[index + 1]) {
-    console.error(`Error: ${flag} requires a value`);
-    process.exit(2);
-  }
-}
-
-const programName = getStringArg("--program-name", `omniweb-probe-${Date.now()}`);
-const stateDirArg = getStringArg("--state-dir", "");
+const programName = getStringArg(args, "--program-name") ?? `omniweb-probe-${Date.now()}`;
+const envPath = getStringArg(args, "--env-path") || undefined;
+const agentName = getStringArg(args, "--agent-name") || undefined;
+const stateDirArg = getStringArg(args, "--state-dir") ?? "";
 const stateDir = stateDirArg || undefined;
-const broadcast = args.includes("--broadcast");
+const proofOut = getStringArg(args, "--proof-out") || undefined;
+const broadcast = hasFlag(args, "--broadcast");
+const runtimeTarget = summarizeProbeRuntimeTarget({ envPath, agentName, stateDir });
+const command = redactProbeCommand(process.argv);
 
 const initialData = {
   marker: "omniweb-storage-probe",
@@ -55,8 +69,9 @@ const initialData = {
 };
 
 try {
+  assertExplicitCredentialTargetExists({ envPath, agentName, stateDir });
   const connect = await loadConnect();
-  const omni = await connect({ stateDir });
+  const omni = await connect({ envPath, agentName, stateDir });
   const address = omni.address;
   const nonce = 1;
   const storageAddress = StorageProgram.deriveStorageAddress(address, programName, nonce);
@@ -72,17 +87,19 @@ try {
   const setPayload = StorageProgram.setField(storageAddress, "lastProbe", setFieldValue);
 
   if (!broadcast) {
-    console.log(JSON.stringify({
+    emitJsonReport({
       attempted: false,
       ok: true,
+      command,
       address,
+      runtimeTarget,
       programName,
       storageAddress,
       estimatedCreateFeeDem: StorageProgram.calculateStorageFee(initialData, "json").toString(),
       createPayload,
       setPayload,
       message: "Dry run only. Re-run with --broadcast to execute the real StorageProgram CREATE + SET_FIELD probe.",
-    }, null, 2));
+    }, proofOut);
     process.exit(0);
   }
 
@@ -94,17 +111,19 @@ try {
   await sleep(3000);
   const fieldAfterSet = await StorageProgram.getValue("https://node3.demos.sh", storageAddress, "lastProbe", address);
 
-  console.log(JSON.stringify({
+  emitJsonReport({
     attempted: true,
     ok: true,
+    command,
     address,
+    runtimeTarget,
     programName,
     storageAddress,
     create: createTx,
     readAfterCreate,
     setField: setTx,
     fieldAfterSet,
-  }, null, 2));
+  }, proofOut);
 } catch (err) {
   console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
@@ -140,23 +159,4 @@ async function submitStorageTransaction(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function loadConnect(): Promise<(opts?: {
-  stateDir?: string;
-}) => Promise<any>> {
-  try {
-    const mod = await import("../dist/runtime.js");
-    if (typeof mod.connect === "function") {
-      return mod.connect;
-    }
-  } catch {
-    // Fall back to source during local development before build output exists.
-  }
-
-  const mod = await import("../src/runtime.ts");
-  if (typeof mod.connect !== "function") {
-    throw new Error("connect() export not found in dist/runtime.js or src/runtime.ts");
-  }
-  return mod.connect;
 }

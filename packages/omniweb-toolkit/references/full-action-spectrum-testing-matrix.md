@@ -1,6 +1,11 @@
 ---
 summary: "Full read/write action-spectrum matrix for live OmniWeb operator proving, including spend, mutation, authorization, and readback criteria."
-read_when: ["full action spectrum", "live spend matrix", "every read write", "operator proof", "what operations can we do"]
+topic_hint:
+  - "full action spectrum"
+  - "live spend matrix"
+  - "every read write"
+  - "operator proof"
+  - "what operations can we do"
 ---
 
 # Full Action Spectrum Testing Matrix
@@ -45,6 +50,8 @@ This matrix complements:
 | `not-authorized` | do not run until operator authorizes this row |
 
 ## Read And Discovery Rows
+
+Current PR1 no-spend evidence: [full-action-spectrum-read-discovery-proof-2026-05-19.md](./full-action-spectrum-read-discovery-proof-2026-05-19.md).
 
 | Row | Methods / surface | Profile | Command | Spend | Success criteria |
 | --- | --- | --- | --- | --- | --- |

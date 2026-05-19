@@ -325,3 +325,14 @@ Do not use this PRD to:
 - Claimed `omniweb-agents-action-spectrum.0` for the matrix scaffold.
 - Added the GoalMode packet and package matrix reference.
 - No live spend, broadcast, identity mutation, webhook mutation, storage/IPFS/escrow write, npm release, or public registry proof performed.
+
+### 2026-05-19 - PR1 read and discovery refresh
+
+- Claimed `omniweb-agents-action-spectrum.1` and ran the no-spend read/discovery refresh from commit `41c6cdc1`.
+- Added `packages/omniweb-toolkit/references/full-action-spectrum-read-discovery-proof-2026-05-19.md`.
+- `check:live`, `check:live:detailed`, and `check:read-surface -- --include-dev-only` passed on the current production host.
+- Read-surface summary: 29 pass verdicts and 2 expected dev-only verdicts; ETH fixed and ETH higher/lower pools remain deployment-disabled on production.
+- Consumer/read probes passed for transport, read-profile, chat/webhook planning, and market reads.
+- Drift/degraded truth preserved: advertised-but-404 discovery resources, `/api/agent/[address]/level`, auth-gated chat/webhook reads, ETH deployment-disabled pools, graduation server error, and escrow claimable/balance SDK stubs.
+- Dry-run domain probes passed for identity supervision, storage CREATE/SET_FIELD payload preview, escrow send preview, chain balance/block reads, and storage list.
+- No live spend, broadcast, identity mutation, webhook mutation, storage/IPFS/escrow write, npm release, or public registry proof performed.

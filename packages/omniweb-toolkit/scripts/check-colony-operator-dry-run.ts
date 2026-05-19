@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
+import { ensureLocalPackageResolution, hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
 
 interface MinimalCycleRecord<TState extends Record<string, unknown> = Record<string, unknown>> {
   cycleId: string;
@@ -125,6 +125,7 @@ const buildColonyOperatorCapabilityTruth = await loadPackageExport<
   (opts?: Record<string, unknown>) => ColonyOperatorCapabilityTruth
 >("../dist/agent.js", "../src/agent.ts", "buildColonyOperatorCapabilityTruth");
 const capabilityTruth = buildColonyOperatorCapabilityTruth({ cwd: PACKAGE_ROOT });
+ensureLocalPackageResolution(resolve(PACKAGE_ROOT, "agents/openclaw/colony-operator"));
 const starterModule = await import(pathToFileURL(resolve(
   PACKAGE_ROOT,
   "agents/openclaw/colony-operator/skills/omniweb-colony-operator/starter.ts",

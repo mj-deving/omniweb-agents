@@ -351,3 +351,25 @@ Do not use this PRD to:
   - `git diff --check`
 - PR3 satisfies AC-7. AC-6 and AC-8 remain for later beads.
 - No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.
+
+### 2026-05-19 - PR4 drift and degraded endpoint ledger
+
+- Claimed `omniweb-agents-hosted.4` after PR3 merged.
+- Added a hosted proof `degradedClassificationLedger` to preserve consumer-spectrum drift and degraded endpoint truth in both the top-level proof output and every repeated proof packet.
+- The ledger validates all required PR4 classifications:
+  - `advertised_but_404`
+  - `auth_needed`
+  - `unsupported`
+  - `deployment_drift`
+  - `server_error`
+  - `supervised`
+  - `explicit_execute_required`
+- Each degraded ledger entry carries `noSpend: true`, `liveExecution: false`, `publicRegistryProof: false`, `release: false`, and `mutatesIdentity: false`.
+- Validation passed:
+  - `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer`
+  - `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball`
+  - `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
+  - `npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts`
+  - `git diff --check`
+- PR4 satisfies AC-6. AC-8 remains for PR5 package/frontdoor wiring.
+- No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.

@@ -195,7 +195,7 @@ try {
     consumer: consumerSummary,
     hostedRuntimeSmoke,
     contract: {
-      ownerBead: "omniweb-agents-hosted.3",
+      ownerBead: "omniweb-agents-hosted.4",
       localTarballInstall: ok,
       packageNameImportsOnly: ok,
       repoRelativeImports: false,
@@ -450,6 +450,13 @@ if (typeof client.getFeed !== "function") {
   throw new Error("root createClient did not expose read client methods");
 }
 
+const readCoverage = root.summarizeReadProfileCoverage();
+const chatPlans = [
+  root.buildChatWebhookPlan({ operation: "chat.rooms.list" }),
+  root.buildChatWebhookPlan({ operation: "chat.message.send", token: "chat-token-123456", execute: true }),
+  root.buildChatWebhookPlan({ operation: "webhooks.create", token: "webhook-token-123456", execute: true }),
+  root.buildChatWebhookPlan({ operation: "webhooks.event.receive" }),
+];
 const actualReadiness = runtime.checkWriteReadiness({ cwd: process.cwd(), homeDir: process.cwd(), env: {} });
 const actualRuntimeCapabilities = runtime.describeRuntimeCapabilities({ cwd: process.cwd(), homeDir: process.cwd(), env: {} });
 const toolkitManifest = runtime.buildToolkitCapabilityManifest({
@@ -483,6 +490,14 @@ const marketWriteMatrix = root.buildMarketWriteIntentMatrix({
   now: new Date("2026-05-19T00:00:00.000Z"),
   runtimeCapabilities: syntheticRuntimeCapabilities,
 });
+const degradedClassificationLedger = buildDegradedClassificationLedger({
+  readCoverage,
+  chatPlans,
+  marketWriteMatrix,
+  multiActionPlan,
+  actualReadiness,
+  actualRuntimeCapabilities,
+});
 const proofPackets = buildProofPackets({
   packageVersion: ${JSON.stringify(packageVersion)},
   consumerWorkspace: process.cwd(),
@@ -492,6 +507,7 @@ const proofPackets = buildProofPackets({
   capabilityTruth,
   requestedActions,
   marketWriteMatrix,
+  degradedClassificationLedger,
 });
 
 const fixedMemo = write.buildBetMemo("btc", 70000, { horizon: "30m" });
@@ -503,7 +519,17 @@ const extractedTxHash = write.extractWalletNativeTxHash({ nested: { transactionH
 
 const plannedByFamily = new Map(multiActionPlan.plannedIntents.map((intent) => [intent.actionFamily, intent]));
 const marketByFamily = new Map(marketWriteMatrix.intents.map((intent) => [intent.family, intent]));
+const ledgerByClassification = new Set(degradedClassificationLedger.map((entry) => entry.classification));
 const requiredActionFamilies = requestedActions.map((action) => action.actionFamily);
+const requiredDegradedClassifications = [
+  "advertised_but_404",
+  "auth_needed",
+  "unsupported",
+  "deployment_drift",
+  "server_error",
+  "supervised",
+  "explicit_execute_required",
+];
 const checks = {
   packageNameImports: true,
   rootSurface: requiredRootExports.every((exportName) => typeof root[exportName] === "function"),
@@ -551,6 +577,17 @@ const checks = {
     && proofPackets.every((packet) => packet.skippedAlternatives.length === requiredActionFamilies.length - 1)
     && proofPackets.some((packet) => packet.selectedAction.family === "react")
     && proofPackets.some((packet) => packet.selectedAction.family === "bet-fixed"),
+  degradedClassificationsPreserved: requiredDegradedClassifications.every((classification) => ledgerByClassification.has(classification))
+    && proofPackets.every((packet) => requiredDegradedClassifications.every((classification) => (
+      packet.degradedClassificationLedger.some((entry) => entry.classification === classification)
+    )))
+    && proofPackets.every((packet) => packet.degradedClassificationLedger.every((entry) => (
+      entry.noSpend === true
+      && entry.liveExecution === false
+      && entry.publicRegistryProof === false
+      && entry.release === false
+      && entry.mutatesIdentity === false
+    ))),
 };
 const ok = Object.values(checks).every(Boolean);
 if (!ok) {
@@ -594,6 +631,7 @@ console.log(JSON.stringify({
       admissibilityStatus: intent.admissibilityStatus,
       canExecuteNow: intent.canExecuteNow,
     })),
+    degradedClassificationLedger,
     writeHelpers: {
       fixedMemo,
       higherLowerMemo,
@@ -605,7 +643,7 @@ console.log(JSON.stringify({
     proofPackets,
   },
   contract: {
-    ownerBead: "omniweb-agents-hosted.2",
+    ownerBead: "omniweb-agents-hosted.4",
     localTarballInstall: true,
     packageNameImportsOnly: true,
     repoRelativeImports: false,
@@ -706,6 +744,7 @@ function buildProofPackets(input) {
           reason: input.actualReadiness.missingEnv.join(", ") || input.actualRuntimeCapabilities.blockers.join(", "),
         },
       ],
+      degradedClassificationLedger: input.degradedClassificationLedger,
       noSpendVerdict: {
         ok: plan.mode === "dry-run"
           && plan.liveExecutionAllowed === false
@@ -735,6 +774,153 @@ function buildProofPackets(input) {
       ],
     };
   });
+}
+
+function buildDegradedClassificationLedger(input) {
+  const entries = [];
+  for (const item of input.readCoverage.entries) {
+    if (item.status === "advertised_but_404") {
+      entries.push(ledgerEntry({
+        family: "read-profile:" + item.family,
+        classification: "advertised_but_404",
+        capability: item.status,
+        lifecycle: "advertised_endpoint_missing",
+        supervision: "none",
+        explicitExecute: "not_supported",
+        admissibility: "degraded",
+        reason: item.notes.join(", ") || item.endpoints.join(", "),
+      }));
+    }
+  }
+
+  for (const plan of input.chatPlans) {
+    if (plan.executionGate === "auth_required") {
+      entries.push(ledgerEntry({
+        family: "chat-webhook:" + plan.operation,
+        classification: "auth_needed",
+        capability: plan.executionGate,
+        lifecycle: "auth-gated",
+        supervision: "none",
+        explicitExecute: "not_required",
+        admissibility: "blocked",
+        reason: plan.reasonCodes.join(", "),
+      }));
+    }
+    if (plan.executionGate === "explicit_execute_required") {
+      entries.push(ledgerEntry({
+        family: "chat-webhook:" + plan.operation,
+        classification: "explicit_execute_required",
+        capability: plan.executionGate,
+        lifecycle: "mutating_remote_lifecycle_plan_only",
+        supervision: "none",
+        explicitExecute: "required",
+        admissibility: "blocked",
+        reason: plan.reasonCodes.join(", "),
+      }));
+    }
+  }
+
+  for (const intent of input.marketWriteMatrix.intents) {
+    if (intent.capabilityStatus === "unsupported") {
+      entries.push(ledgerEntry({
+        family: "market-write:" + intent.family,
+        classification: "unsupported",
+        capability: intent.capabilityStatus,
+        lifecycle: intent.lifecycleStatus,
+        supervision: intent.supervision,
+        explicitExecute: intent.explicitExecute,
+        admissibility: intent.admissibilityStatus,
+        reason: intent.reasonCodes.join(", ") || intent.notes.join(", "),
+      }));
+    } else if (intent.capabilityStatus === "server_error") {
+      entries.push(ledgerEntry({
+        family: "market-write:" + intent.family,
+        classification: "server_error",
+        capability: intent.capabilityStatus,
+        lifecycle: intent.lifecycleStatus,
+        supervision: intent.supervision,
+        explicitExecute: intent.explicitExecute,
+        admissibility: intent.admissibilityStatus,
+        reason: intent.reasonCodes.join(", ") || intent.notes.join(", "),
+      }));
+    } else if (intent.capabilityStatus === "deployment_disabled" || intent.capabilityStatus === "recovery_only") {
+      entries.push(ledgerEntry({
+        family: "market-write:" + intent.family,
+        classification: "deployment_drift",
+        capability: intent.capabilityStatus,
+        lifecycle: intent.lifecycleStatus,
+        supervision: intent.supervision,
+        explicitExecute: intent.explicitExecute,
+        admissibility: intent.admissibilityStatus,
+        reason: intent.reasonCodes.join(", ") || intent.notes.join(", "),
+      }));
+    }
+    if (intent.explicitExecute === "required" || intent.admissibilityStatus === "explicit_execute_required") {
+      entries.push(ledgerEntry({
+        family: "market-write:" + intent.family,
+        classification: "explicit_execute_required",
+        capability: intent.capabilityStatus,
+        lifecycle: intent.lifecycleStatus,
+        supervision: intent.supervision,
+        explicitExecute: intent.explicitExecute,
+        admissibility: intent.admissibilityStatus,
+        reason: intent.reasonCodes.join(", ") || "explicit execute required for spend-bearing market writes",
+      }));
+    }
+  }
+
+  for (const intent of input.multiActionPlan.plannedIntents) {
+    if (intent.liveExecutionGate.gate === "supervised_authorization_required") {
+      entries.push(ledgerEntry({
+        family: "operator-action:" + intent.actionFamily,
+        classification: "supervised",
+        capability: intent.status,
+        lifecycle: intent.lifecycleStatus,
+        supervision: "required",
+        explicitExecute: intent.readiness.requiresExplicitExecute ? "required" : "not_required",
+        admissibility: intent.admissibility.status,
+        reason: intent.liveExecutionGate.reason,
+      }));
+    }
+    if (intent.admissibility.reasonCodes.includes("explicit_execute_required_for_spend")) {
+      entries.push(ledgerEntry({
+        family: "operator-action:" + intent.actionFamily,
+        classification: "explicit_execute_required",
+        capability: intent.status,
+        lifecycle: intent.lifecycleStatus,
+        supervision: intent.readiness.requiresSupervision ? "required" : "none",
+        explicitExecute: "required",
+        admissibility: intent.admissibility.status,
+        reason: intent.admissibility.reasonCodes.join(", "),
+      }));
+    }
+  }
+
+  if (!input.actualReadiness.canWrite) {
+    entries.push(ledgerEntry({
+      family: "hosted-runtime",
+      classification: "auth_needed",
+      capability: "read_only",
+      lifecycle: "read-only",
+      supervision: "none",
+      explicitExecute: "required_for_live_writes",
+      admissibility: "blocked",
+      reason: input.actualReadiness.missingEnv.join(", ") || input.actualRuntimeCapabilities.blockers.join(", "),
+    }));
+  }
+
+  return entries;
+}
+
+function ledgerEntry(entry) {
+  return {
+    ...entry,
+    noSpend: true,
+    liveExecution: false,
+    publicRegistryProof: false,
+    release: false,
+    mutatesIdentity: false,
+  };
 }
 
 function proofAction(intent, selectedFamily) {

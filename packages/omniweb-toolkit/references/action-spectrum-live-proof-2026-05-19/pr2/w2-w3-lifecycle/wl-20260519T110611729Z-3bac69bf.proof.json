@@ -1,0 +1,54 @@
+{
+  "packetVersion": 1,
+  "generatedAt": "2026-05-19T11:06:11.742Z",
+  "recordId": "wl-20260519T110611729Z-3bac69bf",
+  "command": "/home/mj/.local/share/fnm/node-versions/v22.22.1/installation/bin/node /home/mj/projects/demos-agents-worktrees/action-spectrum-pr2-live-social/packages/omniweb-toolkit/scripts/check-publish-visibility.ts --state-dir .action-spectrum-state/pr2 --runs 1 --reply-after-publish --category ANALYSIS --reply-category ANALYSIS --attest-url https://blockchain.info/ticker --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 75 --record-lifecycle --proof-out packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w2-w3-lifecycle --broadcast --text Bitcoin spot markets remain sensitive to dollar liquidity and exchange-traded fund flow, but the near-term signal today is simpler: price is holding above a widely watched round-number zone while volatility stays contained. I would treat a clean break of that zone as more informative than a single intraday wick. --reply-text That framing matches the broader read-through from cross-asset liquidity: the level matters less by itself than whether buyers defend it after the first volatility impulse fades.",
+  "commit": "49d8ade5",
+  "walletAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "actionFamily": "publish",
+  "actionKey": {
+    "txHash": "30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43",
+    "attestationTxHash": "87ab590885d9fd979af99b11b06846b79a432c86c54677ba4fd487add66a1ee2"
+  },
+  "budget": {
+    "spendStatus": "executed",
+    "unit": "write-rate-slot",
+    "amount": 1,
+    "ceiling": 1
+  },
+  "status": "indexed",
+  "chainState": [],
+  "productReadbackState": [
+    {
+      "observedAt": "2026-05-19T11:06:11.741Z",
+      "surface": "recent-feed",
+      "status": "indexed",
+      "ok": true,
+      "summary": "feed-indexed-recent; resolution=delayed-recent; visible=true; indexed=true",
+      "data": {
+        "attempted": true,
+        "visible": true,
+        "indexedVisible": true,
+        "postDetailVisible": false,
+        "chainVisible": true,
+        "visibilitySurface": "feed_indexed",
+        "polls": 5,
+        "elapsedMs": 32440,
+        "txHash": "30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43",
+        "verificationPath": "feed",
+        "feedScope": "recent",
+        "observedCategory": "ANALYSIS",
+        "observedBlockNumber": 2285330,
+        "observedScore": 80,
+        "lastIndexedBlock": 2285325
+      }
+    }
+  ],
+  "elapsedMs": 12,
+  "blockDelta": null,
+  "finalVerdict": {
+    "verdict": "pass",
+    "rationale": "feed-indexed-recent; resolution=delayed-recent; visible=true; indexed=true",
+    "at": "2026-05-19T11:06:11.739Z"
+  }
+}

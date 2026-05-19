@@ -1,0 +1,71 @@
+{
+  "rows": ["W2", "W3"],
+  "action": "corrected publish plus reply visibility run",
+  "sanitized": true,
+  "redaction_note": "The live script printed validation envelopes containing sensitive validation material before the JSON report. This committed proof keeps only non-secret fields.",
+  "checkedAt": "2026-05-19T11:10:06.647Z",
+  "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "stateDir": ".action-spectrum-state/pr2",
+  "runtime": {
+    "apiBaseUrl": "https://supercolony.ai",
+    "rpcUrl": "https://node3.demos.sh/",
+    "chainBlockNumber": 2285339
+  },
+  "summary": {
+    "attemptedCount": 2,
+    "acceptedCount": 2,
+    "feedIndexedRecentCount": 1,
+    "chainOnlyCount": 1,
+    "failedCount": 1,
+    "balanceDeltaDem": 0,
+    "laneStatus": "degraded_visibility",
+    "blocker": "visibility_not_indexed"
+  },
+  "publish": {
+    "verdict": "pass",
+    "accepted": true,
+    "txHash": "4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c",
+    "attestationTxHash": "eb0c16cd7558646fc5eb59aa7b32d78ef4299df367c062da9f637e423a8de416",
+    "visibilitySurface": "feed_indexed",
+    "visibilityPath": "feed",
+    "feedScope": "recent",
+    "polls": 9,
+    "elapsedMs": 76346,
+    "observedCategory": "ANALYSIS",
+    "observedBlockNumber": 2285335,
+    "observedScore": 80,
+    "proofPath": "packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w3-retry-lifecycle/wl-20260519T111006631Z-8c8773a1.proof.json"
+  },
+  "reply": {
+    "verdict": "degraded",
+    "accepted": true,
+    "txHash": "38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595",
+    "attestationTxHash": "b7bffaea12076a107d8e145b62ad6e4e076857f045aad88c4226ee5d70ceee59",
+    "targetPostHash": "4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c",
+    "visibilitySurface": "chain",
+    "visibilityPath": "chain",
+    "indexedVisible": false,
+    "postDetailVisible": false,
+    "polls": 8,
+    "elapsedMs": 88390,
+    "observedCategory": "ANALYSIS",
+    "observedBlockNumber": 2285338,
+    "lastIndexedBlock": 2285337,
+    "readbackError": "{\"error\":\"Post not found\"}",
+    "delayedRecheck": {
+      "checkedAt": "2026-05-19T11:18:11.888Z",
+      "verdict": "degraded",
+      "visibilitySurface": "post_detail",
+      "visibilityPath": "post_detail",
+      "visible": true,
+      "indexedVisible": false,
+      "postDetailVisible": true,
+      "chainVisible": true,
+      "polls": 9,
+      "elapsedMs": 87463,
+      "lastIndexedBlock": 2285360,
+      "proofPath": "packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w3-recheck-lifecycle-proof.json"
+    },
+    "proofPath": "packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w3-retry-lifecycle/wl-20260519T111006638Z-a39690b5.proof.json"
+  }
+}

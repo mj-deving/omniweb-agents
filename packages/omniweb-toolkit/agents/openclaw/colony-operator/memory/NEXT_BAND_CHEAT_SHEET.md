@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-19
-Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane and the new hosted no-spend operator consumer packet.
+Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane and the completed hosted no-spend operator consumer proof.
 
 ## Do first
 
@@ -21,10 +21,10 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - PR #431 completed `uw66.6`: the maintained operator-cycle proof observes live context, selects an action, surfaces maintained alternatives, reports capability/guardrail/lifecycle/supervision/explicit-execute/admissibility truth, and keeps the default verdict no-spend.
 - PRs #432-#441 completed the no-release consumer-spectrum and codebase reality lane: official docs/discovery and live endpoint shapes were compared, code reachability/ballast was classified, public exports were normalized, consumer transport/read/chat/webhook/market surfaces were widened, no-spend market write intents were added, and `check:consumer-spectrum-tarball` proves a clean local tarball whole-spectrum consumer install without registry publication.
 - Beads epic `omniweb-agents-spectrum` is complete.
-- New next band: `omniweb-agents-hosted` proves a hosted/external-style no-spend operator consumer flow over the local tarball. Packet: `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`.
-- Do not launch `/goal` for `omniweb-agents-hosted` until PR0 lands and this Beads graph is pushed.
+- Hosted no-spend operator consumer proof is complete through `omniweb-agents-hosted`: clean local-tarball install, package-name imports, repeated full-spectrum no-spend operator cycles, optional dry-run hosted smoke, drift/degraded ledger, and front-door check wiring. Packet: `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`.
+- Do not relaunch `/goal` for `omniweb-agents-hosted`; future release, public-registry, live-spend, or production hosted-activation work needs a separate explicit lane.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
-- `bd ready` should surface `omniweb-agents-hosted.1` after PR0 lands and closes.
+- `bd ready` should not surface `omniweb-agents-hosted.*` after PR5 closes; follow-up work should be new, explicitly scoped Beads.
 
 ## Then do
 
@@ -35,7 +35,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - **Wave E — capability surface:** complete via `omniweb-agents-capsurf` and PRs #420-#426.
 - **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
 - **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
-- **Hosted no-spend operator consumer proof:** active next lane via `omniweb-agents-hosted`; start with clean local-tarball fixture, then repeated no-spend operator cycles, optional dry-run hosted smoke, drift/degraded ledger, and closeout.
+- **Hosted no-spend operator consumer proof:** complete via `omniweb-agents-hosted`; use `npm --prefix packages/omniweb-toolkit run check:frontdoor` or `check:hosted-operator-consumer` for current package proof.
 
 ## Keep frozen for this wave
 
@@ -54,7 +54,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - StorageProgram / escrow / IPFS proof bands
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend, and unsupervised identity mutation
-- `/goal` execution before PR0 lands and the Beads graph is pushed
+- relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it
 - feature widening that skips actual live endpoint response-shape comparison or the completed consumer-spectrum checks

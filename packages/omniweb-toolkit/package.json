@@ -80,6 +80,7 @@
     "check:market-read-consumers": "node --import tsx ./scripts/check-market-read-consumers.ts",
     "check:market-write-intents": "node --import tsx ./scripts/check-market-write-intents.ts",
     "check:consumer-spectrum-tarball": "node --import tsx ./scripts/check-consumer-spectrum-tarball.ts",
+    "check:hosted-operator-consumer": "node --import tsx ./scripts/check-hosted-operator-consumer.ts",
     "check:colony-operator-decision-coverage": "node --import tsx ./scripts/check-colony-operator-decision-coverage.ts",
     "check:colony-operator-guardrails": "npm --prefix ../.. run test -- tests/packages/toolkit-guardrails.test.ts && node --import tsx ./scripts/check-colony-operator-guardrails.ts",
     "check:colony-operator-admissibility": "npm --prefix ../.. run test -- tests/packages/toolkit-action-admissibility.test.ts && node --import tsx ./scripts/check-colony-operator-admissibility.ts",

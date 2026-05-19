@@ -298,3 +298,21 @@ Do not use this PRD to:
 - Added the hosted no-spend GoalMode packet.
 - No `/goal` launch performed.
 - No npm release, public registry proof, live spend, broadcast, or identity mutation performed.
+
+### 2026-05-19 - PR1 clean hosted consumer fixture
+
+- Claimed `omniweb-agents-hosted.1` after PR0 merged.
+- Added `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer`.
+- The hosted check builds, packs, and installs the local `omniweb-toolkit` tarball into a temporary clean consumer workspace.
+- The generated consumer proof imports only package-name surfaces: `omniweb-toolkit`, `omniweb-toolkit/runtime`, `omniweb-toolkit/agent`, `omniweb-toolkit/types`, and `omniweb-toolkit/write`.
+- The proof script audits its import specifiers and fails on repo-relative or workspace-local package shortcuts.
+- The `/write` package subpath now avoids broad toolkit-barrel runtime imports so no-spend helper imports do not require the optional Demos SDK peer at module-load time.
+- Validation passed:
+  - `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer`
+  - `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball`
+  - `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
+  - `npm --prefix packages/omniweb-toolkit run check:public-export-coverage`
+  - `npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts`
+  - `git diff --check`
+- PR1 satisfies AC-2 and AC-3. AC-4 through AC-7 remain for later beads; AC-8 front-door wiring remains for PR5.
+- No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.

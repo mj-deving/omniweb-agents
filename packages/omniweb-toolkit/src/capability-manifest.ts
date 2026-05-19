@@ -56,6 +56,8 @@ export interface ToolkitCapabilityParameter {
   required: boolean;
   type: string;
   description?: string;
+  defaultValue?: string | number | boolean;
+  examples?: string[];
   values?: string[];
 }
 
@@ -186,15 +188,20 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     kind: "read",
     methods: ["createClient().getFeed", "omni.colony.getFeed"],
     params: [
-      { name: "limit", required: false, type: "number" },
+      { name: "limit", required: false, type: "number", defaultValue: 50 },
+      { name: "cursor", required: false, type: "string" },
       { name: "category", required: false, type: "ReadPostCategory|string" },
+      { name: "asset", required: false, type: "string" },
       { name: "author", required: false, type: "string" },
       { name: "replies", required: false, type: "boolean" },
     ],
     responseDepth: "standard",
     proofTier: "read_live_audited",
     lifecycle: { readbackSurfaces: ["recent-feed", "category-feed", "author-feed"] },
-    notes: ["Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible."],
+    notes: [
+      "Feed has no server-side since/window parameter in the typed surface; fetch with limit/cursor and filter timestamps client-side.",
+      "Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible.",
+    ],
   },
   {
     id: "colony.search",
@@ -205,6 +212,10 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       { name: "text", required: false, type: "string" },
       { name: "category", required: false, type: "ReadPostCategory|string" },
       { name: "limit", required: false, type: "number" },
+      { name: "cursor", required: false, type: "string" },
+      { name: "asset", required: false, type: "string" },
+      { name: "author", required: false, type: "string" },
+      { name: "replies", required: false, type: "boolean" },
     ],
     responseDepth: "standard",
     proofTier: "read_live_audited",
@@ -275,9 +286,24 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       "omni.colony.getPredictionRecommendations",
     ],
     params: [
-      { name: "assets", required: false, type: "string[]" },
+      { name: "assets", required: false, type: "string[]", examples: ["BTC", "ETH", "XAU"] },
       { name: "asset", required: false, type: "string" },
-      { name: "periods", required: false, type: "number" },
+      {
+        name: "window",
+        required: false,
+        type: "string",
+        defaultValue: "24h",
+        examples: ["30m", "1h", "4h", "12h", "24h"],
+        description: "Oracle lookback window; passed through to the host when supported.",
+      },
+      {
+        name: "periods",
+        required: false,
+        type: "number",
+        defaultValue: 24,
+        examples: ["24", "48", "168"],
+        description: "Price-history period count, not a direct hours string.",
+      },
       { name: "userAddress", required: false, type: "string" },
     ],
     responseDepth: "rich",
@@ -300,9 +326,19 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       "omni.colony.getCommodityPool",
     ],
     params: [
-      { name: "asset", required: false, type: "string" },
-      { name: "horizon", required: false, type: "string" },
+      { name: "asset", required: false, type: "string", defaultValue: "BTC", examples: ["BTC", "ETH", "XAU"] },
+      {
+        name: "horizon",
+        required: false,
+        type: "string",
+        defaultValue: "30m",
+        examples: ["30m", "1h", "4h", "12h", "24h"],
+        description: "Pool horizon for fixed, higher/lower, ETH, and commodity pool reads.",
+      },
       { name: "fixtureId", required: false, type: "string" },
+      { name: "status", required: false, type: "string", defaultValue: "upcoming", examples: ["upcoming", "active", "settled"] },
+      { name: "category", required: false, type: "string" },
+      { name: "limit", required: false, type: "number" },
     ],
     responseDepth: "rich",
     proofTier: "read_live_audited",

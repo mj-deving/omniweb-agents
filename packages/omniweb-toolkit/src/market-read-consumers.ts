@@ -29,6 +29,12 @@ export interface MarketReadSurfaceEntry {
   status: MarketReadStatus;
   noSpend: true;
   noMutation: true;
+  timeParameters: Array<{
+    name: "horizon" | "window" | "periods";
+    defaultValue?: string | number;
+    examples?: string[];
+    notes?: string;
+  }>;
   expectedKeys: string[];
   notes: string[];
 }
@@ -51,6 +57,13 @@ export interface MarketReadShapeCheck {
   error?: string;
 }
 
+const POOL_HORIZON_PARAMETER: MarketReadSurfaceEntry["timeParameters"][number] = {
+  name: "horizon",
+  defaultValue: "30m",
+  examples: ["30m", "1h", "4h", "12h", "24h"],
+  notes: "Typed client passes horizon through to the host for active pool reads.",
+};
+
 export const MARKET_READ_SURFACE: MarketReadSurfaceEntry[] = [
   entry("fixed-price", ["getPool"], ["/api/bets/pool"], "covered", [
     "asset",
@@ -62,7 +75,7 @@ export const MARKET_READ_SURFACE: MarketReadSurfaceEntry[] = [
     "bets",
   ], [
     "Live GET /api/bets/pool?asset=BTC&horizon=30m returned 200 on 2026-05-18.",
-  ]),
+  ], [POOL_HORIZON_PARAMETER]),
   entry("higher-lower", ["getHigherLowerPool"], ["/api/bets/higher-lower/pool"], "covered", [
     "asset",
     "horizon",
@@ -73,7 +86,7 @@ export const MARKET_READ_SURFACE: MarketReadSurfaceEntry[] = [
     "currentPrice",
   ], [
     "Live GET /api/bets/higher-lower/pool?asset=BTC&horizon=30m returned 200 on 2026-05-18.",
-  ]),
+  ], [POOL_HORIZON_PARAMETER]),
   entry("binary", ["getBinaryPools"], ["/api/bets/binary/pools"], "covered", ["pools", "count"], [
     "Live GET /api/bets/binary/pools returned 200 with keyed pools on 2026-05-18.",
   ]),
@@ -85,7 +98,7 @@ export const MARKET_READ_SURFACE: MarketReadSurfaceEntry[] = [
     "contractAddress",
   ], [
     "Live GET /api/bets/eth/pool?asset=BTC&horizon=30m returned 503 on 2026-05-18: ETH betting not enabled.",
-  ]),
+  ], [POOL_HORIZON_PARAMETER]),
   entry("eth-winners", ["getEthWinners"], ["/api/bets/eth/winners"], "covered", ["winners", "count"], [
     "Live GET /api/bets/eth/winners?asset=BTC returned 200 on 2026-05-18 even while ETH pool deployment is disabled.",
   ]),
@@ -98,7 +111,7 @@ export const MARKET_READ_SURFACE: MarketReadSurfaceEntry[] = [
     "contractAddress",
   ], [
     "Live GET /api/bets/eth/hl/pool?asset=BTC&horizon=30m returned 503 on 2026-05-18: ETH Higher/Lower not enabled.",
-  ]),
+  ], [POOL_HORIZON_PARAMETER]),
   entry("eth-binary", ["getEthBinaryPools"], ["/api/bets/eth/binary/pools"], "covered", ["pools", "count", "enabled"], [
     "Live GET /api/bets/eth/binary/pools returned 200 with enabled=false on 2026-05-18.",
   ]),
@@ -127,7 +140,7 @@ export const MARKET_READ_SURFACE: MarketReadSurfaceEntry[] = [
     "currentPrice",
   ], [
     "Live GET /api/bets/commodity/pool?asset=XAU&horizon=30m returned 200 on 2026-05-18.",
-  ]),
+  ], [POOL_HORIZON_PARAMETER]),
   entry("graduation", ["getGraduationMarkets"], ["/api/bets/graduation/markets"], "live_shape_drifted", ["markets"], [
     "Live GET /api/bets/graduation/markets?limit=2&status=active returned 500 on 2026-05-18: no such table graduation_markets.",
   ]),
@@ -204,6 +217,7 @@ function entry(
   status: MarketReadStatus,
   expectedKeys: string[],
   notes: string[] = [],
+  timeParameters: MarketReadSurfaceEntry["timeParameters"] = [],
 ): MarketReadSurfaceEntry {
   return {
     family,
@@ -212,6 +226,7 @@ function entry(
     status,
     noSpend: true,
     noMutation: true,
+    timeParameters,
     expectedKeys,
     notes,
   };

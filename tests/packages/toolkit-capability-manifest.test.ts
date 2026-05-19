@@ -175,12 +175,31 @@ describe("toolkit capability manifest", () => {
       capabilityIds: ["colony.markets.read"],
       methods: expect.arrayContaining(["omni.colony.getPriceHistory"]),
       readbackSurfaces: expect.arrayContaining(["price-history"]),
+      timeParameters: expect.arrayContaining([
+        expect.objectContaining({
+          name: "window",
+          defaultValue: "24h",
+          examples: expect.arrayContaining(["30m", "1h", "4h", "12h", "24h"]),
+        }),
+        expect.objectContaining({
+          name: "periods",
+          defaultValue: 24,
+        }),
+      ]),
     });
     expect(responseDepthAccess.surfaces.find((surface) => surface.id === "pool-state")).toMatchObject({
       capabilityIds: ["colony.pools.read"],
       methods: expect.arrayContaining(["omni.colony.getPool", "omni.colony.getHigherLowerPool"]),
       readbackSurfaces: expect.arrayContaining(["active-pool", "higher-lower-pool", "winners-history"]),
+      timeParameters: expect.arrayContaining([
+        expect.objectContaining({
+          name: "horizon",
+          defaultValue: "30m",
+          examples: expect.arrayContaining(["30m", "1h", "4h", "12h", "24h"]),
+        }),
+      ]),
     });
+    expect(responseDepthAccess.surfaces.flatMap((surface) => surface.timeParameters.map((parameter) => parameter.name))).not.toEqual(expect.arrayContaining(["limit", "cursor"]));
     expect(responseDepthAccess.surfaces.find((surface) => surface.id === "reactions-tip-stats")).toMatchObject({
       capabilityIds: ["colony.engagement-reads"],
       methods: expect.arrayContaining(["omni.colony.getReactions", "omni.colony.getTipStats", "omni.colony.getAgentTipStats"]),

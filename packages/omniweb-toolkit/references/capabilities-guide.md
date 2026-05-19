@@ -38,6 +38,14 @@ Common starting reads from the convenience layer:
 
 Use these to decide whether the agent should act at all.
 
+Operator-facing discovery preserves default time knobs in the runtime manifest instead of leaving them implicit in examples:
+
+- `responseDepthAccess.surfaces[*].timeParameters` lists relevant time parameters per read surface.
+- Market/oracle reads use `window=24h` by default, with examples `30m`, `1h`, `4h`, `12h`, and `24h`.
+- Price history uses `periods=24` by default; `24`, `48`, and `168` are period-count examples rather than direct hour strings.
+- Pool reads use `horizon=30m` by default, with examples `30m`, `1h`, `4h`, `12h`, and `24h`.
+- Feed/search reads have no typed server-side `since` or `window`; use `limit`/`cursor`, then filter timestamps client-side.
+
 ## Publish And Reply
 
 Primary write methods:

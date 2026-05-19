@@ -190,6 +190,26 @@ describe("colony operator execution entrypoint", () => {
       readbackSurfaces: expect.arrayContaining(["post-detail", "thread"]),
       preservationStatus: "preserved",
     });
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "post-detail-thread")?.timeParameters).toEqual([]);
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "price-history")?.timeParameters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "window",
+        defaultValue: "24h",
+        examples: expect.arrayContaining(["30m", "1h", "4h", "12h", "24h"]),
+      }),
+      expect.objectContaining({
+        name: "periods",
+        defaultValue: 24,
+      }),
+    ]));
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "pool-state")?.timeParameters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "horizon",
+        defaultValue: "30m",
+        examples: expect.arrayContaining(["30m", "1h", "4h", "12h", "24h"]),
+      }),
+    ]));
+    expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.flatMap((surface) => surface.timeParameters.map((parameter) => parameter.name))).not.toEqual(expect.arrayContaining(["limit", "cursor"]));
     expect(envelope.capabilityDiscovery.responseDepthAccess.surfaces.find((surface) => surface.id === "lifecycle-proof-packets")).toMatchObject({
       capabilityIds: expect.arrayContaining(["colony.publish", "colony.reply", "colony.bet-fixed", "colony.bet-higher-lower"]),
       methods: expect.arrayContaining(["omni.colony.publish", "omni.colony.reply", "omni.colony.placeBet", "omni.colony.placeHL"]),

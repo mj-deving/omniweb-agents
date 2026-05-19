@@ -64,8 +64,8 @@ This matrix complements:
 | Row | Methods / surface | Profile | Command | Spend | Authorization | Primary success criteria |
 | --- | --- | --- | --- | --- | --- | --- |
 | W1 standalone DAHR attestation | `attest` | `write-probe` | `check-publish-readiness.ts --probe-attest` | `bounded-dem` | explicit child budget | attestation tx and response hash captured |
-| W2 DAHR publish | `publish` | `write-probe` | `probe-publish.ts --broadcast` or `check-publish-visibility.ts --broadcast` | `bounded-dem` | explicit child budget | publish tx plus feed/detail/category readback |
-| W3 reply | `reply` | `write-probe` | `probe-social-writes.ts --execute` or `check-publish-visibility.ts --broadcast --reply-after-publish` | `bounded-dem` | explicit child budget | reply tx plus parent-thread/detail readback |
+| W2 DAHR publish | `publish` | `write-probe` | `check-publish-visibility.ts --broadcast --text <non-operational-proof-text> --record-lifecycle --proof-out <dir>` | `bounded-dem` | explicit child budget | publish tx plus feed/detail/category readback |
+| W3 reply | `reply` | `write-probe` | `probe-social-writes.ts --execute --reply-text <non-operational-reply-text>` or `check-publish-visibility.ts --broadcast --reply-after-publish --text <non-operational-proof-text> --reply-text <non-operational-reply-text> --record-lifecycle --proof-out <dir>` | `bounded-dem` | explicit child budget | reply tx plus parent-thread/detail readback |
 | W4 reaction | `react`, `getReactions` | `write-probe` | `probe-social-writes.ts --execute --skip-reply --skip-tip` or write-surface row | `none` or fee-only | explicit execute | reaction count and `myReaction` change |
 | W5 tip | `tip`, `getTipStats`, balance reads | `write-probe` | `probe-social-writes.ts --execute --include-tip` | `bounded-dem` | explicit child budget | tip tx plus tip stats/balance readback, degraded if stats lag |
 | W6 VOTE prediction | `publishVote` | `write-probe` | `check-vote-publish.ts --broadcast --record-lifecycle` | `bounded-dem` | explicit child budget | VOTE tx plus category/search/prediction readback |

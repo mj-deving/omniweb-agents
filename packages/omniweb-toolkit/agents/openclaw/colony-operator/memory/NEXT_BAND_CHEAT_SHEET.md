@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-19
-Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spectrum lane and the completed hosted no-spend operator consumer proof; current next lane is `omniweb-agents-action-spectrum`.
+Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, and full action-spectrum matrix; current next lane is `omniweb-agents-operator-stress`.
 
 ## Do first
 
@@ -23,7 +23,10 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - Beads epic `omniweb-agents-spectrum` is complete.
 - Hosted no-spend operator consumer proof is complete through `omniweb-agents-hosted`: clean local-tarball install, package-name imports, repeated full-spectrum no-spend operator cycles, optional dry-run hosted smoke, drift/degraded ledger, and front-door check wiring. Packet: `docs/HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md`, `docs/HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md`, `docs/HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md`.
 - Do not relaunch `/goal` for `omniweb-agents-hosted`; future release, public-registry, live-spend, or production hosted-activation work needs a separate explicit lane.
-- The new explicit live-spend successor lane is `omniweb-agents-action-spectrum`. PR0 is matrix-only and no-spend: `docs/FULL_ACTION_SPECTRUM_GOAL_BRIEF.md`, `docs/FULL_ACTION_SPECTRUM_MASTER_PRD.md`, `docs/FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md`, and `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`.
+- The full action-spectrum matrix lane is complete.
+- The new active successor lane is `omniweb-agents-operator-stress`. GoalMode packet: `docs/goalmode/colony-operator-stress-test-2026-05-19.md`.
+- Default work is read-only plus write previews: stress-test `capabilityDiscovery.operatorHelp.readCommands`, then produce execution previews / proposed action packets for `operatorHelp.writeCommands`.
+- Optional live writes stay blocked by `omniweb-agents-operator-stress.4`, `omniweb-agents-km3g`, and `omniweb-agents-vhat` until resolved or explicitly STUCK with evidence.
 - Do not confuse `omniweb-agents-action-spectrum` with historical `omniweb-agents-spectrum`; the latter is the completed consumer-spectrum lane in docs.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` should not surface `omniweb-agents-hosted.*` after PR5 closes; follow-up work should be new, explicitly scoped Beads.
@@ -38,7 +41,8 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - **Post-Wave-E — action admissibility:** complete via PRs #428/#429; capability answers what exists, guardrails answer whether it is safe, admissibility answers whether this action can proceed now.
 - **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
 - **Hosted no-spend operator consumer proof:** complete via `omniweb-agents-hosted`; use `npm --prefix packages/omniweb-toolkit run check:frontdoor` or `check:hosted-operator-consumer` for current package proof.
-- **Full action-spectrum matrix:** active via `omniweb-agents-action-spectrum`; land PR0 before any live spend or mutation run.
+- **Full action-spectrum matrix:** complete via `omniweb-agents-action-spectrum`; use it as the prior evidence base.
+- **OperatorHelp stress-test:** active via `omniweb-agents-operator-stress`; run AC-1 through AC-9 without stopping at the first green slice.
 
 ## Keep frozen for this wave
 
@@ -46,7 +50,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
-- full action-spectrum PR0 remains no-spend matrix work only
+- operator-stress prep and read/write-preview work remains no-spend by default
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
 - no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
 - hosted proof means local tarball plus optional dry-run runtime smoke, not production deployment
@@ -58,7 +62,7 @@ Scope: terse operator re-entry card after PRs #432-#441 / completed consumer-spe
 - StorageProgram / escrow / IPFS execution outside `omniweb-agents-action-spectrum.5`
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend outside explicit `omniweb-agents-action-spectrum` child budgets, and unsupervised identity mutation
-- live spend or mutation from `omniweb-agents-action-spectrum.0`; use later child beads with explicit budget and controlled targets
+- live spend or mutation from `omniweb-agents-operator-stress.0` or `.1`; optional live-write tranche is `.5` and remains blocked by `.4`, `km3g`, and `vhat`
 - relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it

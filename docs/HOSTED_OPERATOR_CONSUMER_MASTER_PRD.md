@@ -333,3 +333,21 @@ Do not use this PRD to:
   - `git diff --check`
 - PR2 satisfies AC-4 and AC-5. AC-6 through AC-8 remain for later beads.
 - No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.
+
+### 2026-05-19 - PR3 optional hosted runtime smoke
+
+- Claimed `omniweb-agents-hosted.3` after PR2 merged.
+- Added optional hosted runtime smoke support to `check:hosted-operator-consumer`.
+- Default hosted smoke output is static-only, deterministic, non-mutating, no-spend, no-broadcast, and no-identity-mutation.
+- Runtime host prerequisite probes require `--run-hosted-runtime-smoke`.
+- Dry-run smoke command execution additionally requires an explicit `--hosted-smoke-command` value and is blocked if the command includes `--execute`, `--broadcast`, or lacks an explicit dry-run/no-spend instruction.
+- Optional prerequisite probe validation ran with `--run-hosted-runtime-smoke`; it recorded Node, OpenClaw, and Gregor CLI prerequisite statuses, skipped smoke command execution because no explicit command was provided, and did not publish, spend, broadcast, or mutate identity.
+- Validation passed:
+  - `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer`
+  - `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer -- --skip-build --run-hosted-runtime-smoke`
+  - `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball`
+  - `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
+  - `npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts`
+  - `git diff --check`
+- PR3 satisfies AC-7. AC-6 and AC-8 remain for later beads.
+- No npm release, public registry proof, live spend, broadcast, live write, or identity mutation performed.

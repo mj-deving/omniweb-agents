@@ -69,6 +69,7 @@ Current PR1 no-spend evidence: [full-action-spectrum-read-discovery-proof-2026-0
 ## Colony Write Rows
 
 Current PR2 evidence: [full-action-spectrum-social-write-proof-2026-05-19.md](./full-action-spectrum-social-write-proof-2026-05-19.md).
+Current PR3 evidence: [full-action-spectrum-market-write-proof-2026-05-19.md](./full-action-spectrum-market-write-proof-2026-05-19.md).
 
 | Row | Methods / surface | Profile | Command | Spend | Authorization | Primary success criteria |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -78,10 +79,10 @@ Current PR2 evidence: [full-action-spectrum-social-write-proof-2026-05-19.md](./
 | W4 reaction | `react`, `getReactions` | `write-probe` | `probe-social-writes.ts --execute --skip-reply --skip-tip` or write-surface row | `none` or fee-only | explicit execute | reaction count and `myReaction` change |
 | W5 tip | `tip`, `getTipStats`, balance reads | `write-probe` | `probe-social-writes.ts --execute --include-tip` | `bounded-dem` | explicit child budget | tip tx plus tip stats/balance readback, degraded if stats lag |
 | W6 VOTE prediction | `publishVote` | `write-probe` | `check-vote-publish.ts --broadcast --record-lifecycle` | `bounded-dem` | explicit child budget | VOTE tx plus category/search/prediction readback |
-| W7 fixed-price BET | `placeBet`, lifecycle recheck | `write-probe` | `probe-agentic-memo-bet.ts --execute --record-lifecycle`; no-spend `--check-tx` for follow-up | `bounded-dem` | explicit market budget | pool/winners/history readback, not tx alone |
-| W8 higher/lower BET | `placeHL` | `write-probe` | `probe-market-writes.ts --execute --only hl` | `bounded-dem` | explicit market budget | higher/lower pool readback movement |
-| W9 market registration recovery | `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` or `unsupported-current-host` | `probe-market-writes.ts --execute` recovery rows or targeted tx replay | `none` after source tx | explicit tx ownership and child budget | registration response plus product readback; unsupported if no safe paired send path |
-| W10 TLSN attestation | `attestTlsn` | `write-probe` | dedicated TLSN probe once stable | `bounded-dem` | explicit experimental authorization | TLSN proof plus attestation tx; blocked until runtime path is stable |
+| W7 fixed-price BET | `placeBet`, lifecycle recheck | `write-probe` | `probe-agentic-memo-bet.ts --execute --record-lifecycle`; no-spend `--check-tx` for follow-up | `bounded-dem` | explicit market budget | PR3 pass: BTC 30m fixed-price tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched active-pool readback by tx hash. |
+| W8 higher/lower BET | `placeHL` | `write-probe` | `probe-market-writes.ts --execute --only hl` | `bounded-dem` | explicit market budget | PR3 pass: BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moved higher/lower pool totals and count. |
+| W9 market registration recovery | `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` or `unsupported-current-host` | `probe-market-writes.ts --execute` recovery rows or targeted tx replay | `none` after source tx | explicit tx ownership and child budget | PR3 degraded/unsupported: targeted replay against PR3-owned fixed and higher/lower txs returned `wrong_tx_type`; product pool readback stayed true; `registerEthBinaryBet` has no safe paired send path. |
+| W10 TLSN attestation | `attestTlsn` | `write-probe` | dedicated TLSN probe once stable | `bounded-dem` | explicit experimental authorization | PR3 blocked: not executed; still experimental/runtime-sensitive. |
 
 ## Identity, Admin, And Delivery Rows
 

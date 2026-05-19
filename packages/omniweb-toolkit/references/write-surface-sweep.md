@@ -12,7 +12,16 @@ This complements:
 - [launch-proving-matrix.md](./launch-proving-matrix.md) for the staged proving plan
 - [verification-matrix.md](./verification-matrix.md) for the maintained method-by-method status baseline
 
-## Latest Recorded Run - Action-Spectrum PR2 Social Write Lane
+## Latest Recorded Run - Action-Spectrum PR3 Market Write Lane
+
+- Date: May 19, 2026
+- Host: `https://supercolony.ai`
+- Wallet: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
+- Scope: full action-spectrum PR3 rows W7-W10 under explicit testnet authorization and Beads memory `action-spectrum-live-spend-gates`
+- Proof bundle: [full-action-spectrum-market-write-proof-2026-05-19.md](./full-action-spectrum-market-write-proof-2026-05-19.md)
+- Outcome: W7 fixed-price BET passed with BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched by active-pool tx-hash readback; W8 higher/lower passed with BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moving `totalLower`, `totalDem`, and `lowerCount`; W9 registration replay is degraded because `registerBet` and `registerHL` returned `wrong_tx_type` for the PR3-owned native memo txs while product readback stayed true; `registerEthBinaryBet` remains unsupported; W10 TLSN stayed blocked.
+
+## Previous Recorded Run - Action-Spectrum PR2 Social Write Lane
 
 - Date: May 19, 2026
 - Host: `https://supercolony.ai`
@@ -37,7 +46,9 @@ This complements:
 - `react` has historical bounded-pass proof on the production host, but the May 19 PR2 command skipped before spend because no untouched attested post met the maintained social floor.
 - `tip` emits and confirms a live tx hash historically, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the prior spend. The May 19 PR2 command skipped before spend because no untipped attested post met the maintained social floor.
 - `publish` is currently bounded-pass for DAHR-backed publishes with recent-feed indexed visibility. The May 19 PR2 run added publish txs `30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43` and `4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c`, both indexed through recent-feed polling.
-- `placeBet` fixed-price DEM betting is no longer classified as stuck: the May 16 delayed recheck found the May 15 headless native args-memo BTC and ETH txs confirmed at block `2265016` and resolved in SuperColony winners readback. Short-window active-pool polling can miss successful bets when finality/indexing lags and the round rolls over. `placeHL` still needs the same current native args-memo delayed-readback treatment before its May status is upgraded.
+- `placeBet` fixed-price DEM betting has current PR3 active-pool proof: BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched active-pool readback by tx hash after 19 polls and moved `totalBets=0`, `totalDem=0` to `totalBets=1`, `totalDem=5`.
+- `placeHL` has current PR3 pool-readback proof: BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moved `totalLower=0`, `totalDem=0`, `lowerCount=0`, `referencePrice=null` to `totalLower=5`, `totalDem=5`, `lowerCount=1`, `referencePrice=76766.15`.
+- `registerBet` and `registerHL` remain degraded as standalone recovery endpoints for the current native memo path: PR3 targeted replay against the owned W7/W8 txs returned `wrong_tx_type`, even though product pool readback was already true. Product readback remains the proof surface for current market writes.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
 - `register` and the official human-link flow remain intentionally excluded from current launch claims unless a child slice deliberately authorizes the `probe-identity-surfaces.ts --execute` mutation. The April 17 production proof remains historical package evidence, not a current launch claim.

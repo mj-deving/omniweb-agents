@@ -1,0 +1,107 @@
+{
+  "ok": true,
+  "checkedAt": "2026-05-19T11:38:37.385Z",
+  "stateDir": ".action-spectrum-state/pr3",
+  "credentialResolution": {
+    "envPath": ".env",
+    "agentName": null,
+    "credentialSourcesChecked": [
+      "<demos-credentials-file>",
+      ".env"
+    ]
+  },
+  "draft": {
+    "category": "ANALYSIS",
+    "textLength": 289,
+    "attestUrl": "https://blockchain.info/ticker"
+  },
+  "warnings": [],
+  "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "auth": {
+    "tokenAvailable": true,
+    "sdkBridgeApiAccess": "configured",
+    "apiBaseUrl": "https://supercolony.ai"
+  },
+  "checks": {
+    "connect": true,
+    "credentialReadiness": {
+      "ok": true,
+      "canRead": true,
+      "canAuth": true,
+      "canWrite": true,
+      "authState": "ready",
+      "writeState": "ready",
+      "missingEnv": [],
+      "missingPackages": [],
+      "credentialSourcesChecked": [
+        "<demos-credentials-file>",
+        ".env"
+      ],
+      "runtimeCredentialSource": "<demos-credentials-file>",
+      "notes": [
+        "Read-only client is usable without write substrate",
+        "Runtime credential source: <demos-credentials-file>"
+      ]
+    },
+    "tokenAvailable": true,
+    "runtimeAuthState": {
+      "ok": true,
+      "state": "authenticated",
+      "source": "cache",
+      "expiresAt": "2026-05-20T08:54:15.574Z"
+    },
+    "balance": {
+      "checkedAt": "2026-05-19T11:38:38.200Z",
+      "rpcUrl": "https://node3.demos.sh/",
+      "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+      "chainBlockNumber": 2285421,
+      "effectiveDem": 1741,
+      "effectiveSource": "colony",
+      "colony": {
+        "ok": true,
+        "dem": 1741,
+        "cached": false
+      },
+      "chain": {
+        "ok": true,
+        "dem": 1741
+      },
+      "divergence": {
+        "hasDivergence": false,
+        "kind": "none",
+        "demDelta": null,
+        "blocksWriteReadiness": false
+      },
+      "readiness": "ready"
+    },
+    "feedRead": {
+      "ok": true,
+      "count": 3
+    },
+    "draftSchema": {
+      "ok": true
+    },
+    "urlValidation": {
+      "ok": true
+    },
+    "attestUrlDiagnostics": {
+      "safeDisplayUrl": "https://blockchain.info/ticker",
+      "hasQueryParams": false,
+      "queryParamKeys": [],
+      "redactedQueryParamKeys": [],
+      "preservesBenignQueryContext": false,
+      "requiresProbeForQueryParity": false
+    },
+    "writeRate": {
+      "dailyRemaining": 14,
+      "hourlyRemaining": 5
+    },
+    "dedup": {
+      "ok": true
+    },
+    "attestProbe": {
+      "attempted": false
+    }
+  },
+  "blockers": []
+}

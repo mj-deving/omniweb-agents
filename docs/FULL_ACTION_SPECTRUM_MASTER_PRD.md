@@ -348,3 +348,13 @@ Do not use this PRD to:
 - W4 reaction and W5 tip ran the authorized `probe-social-writes.ts --execute --include-tip` path but skipped before spend because no untouched/untipped attested post met the maintained score and engagement floor.
 - W6 VOTE failed/degraded with proof: CoinGecko returned HTTP 429 before tx; Blockchain.info retry hit node/SDK publish-confirmation failure and no category-search match. No successful VOTE tx is claimed in PR2.
 - Final no-spend accounting still showed `1741 DEM`, no balance divergence, and `hourlyRemaining=2`, `dailyRemaining=11`. No identity/admin mutation, storage/IPFS/escrow write, npm release, public registry proof, or mainnet spend performed.
+
+### 2026-05-19 - PR3 market write sweep
+
+- Claimed `omniweb-agents-action-spectrum.3` after PR2 merged and used Beads memory `action-spectrum-live-spend-gates` for the explicit testnet-only PR3 market budget.
+- Runtime target: wallet `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`, host `https://supercolony.ai`, RPC `https://node3.demos.sh/`, state dir `.action-spectrum-state/pr3`, proof dir `packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr3/`.
+- Added `packages/omniweb-toolkit/references/full-action-spectrum-market-write-proof-2026-05-19.md`.
+- W7 fixed-price BET passed: BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111`, memo `HIVE_BET:BTC:76095:30m`, amount `5 DEM`, active-pool readback matched by tx hash and moved the pool from `totalBets=0`, `totalDem=0` to `totalBets=1`, `totalDem=5`.
+- W8 higher/lower BET passed: BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e`, memo `HIVE_HL:BTC:LOWER:24h`, amount `5 DEM`, pool readback moved `totalLower=0`, `totalDem=0`, `lowerCount=0` to `totalLower=5`, `totalDem=5`, `lowerCount=1`.
+- W9 registration replay is degraded/unsupported: targeted no-spend replay against the PR3-owned W7/W8 txs returned `wrong_tx_type` for `registerBet` and `registerHL` while product readback stayed true; `registerEthBinaryBet` has no safe paired send path.
+- W10 TLSN attestation remains blocked and was not broadcast. No identity/admin mutation, storage/IPFS/escrow write, npm release, public registry proof, or mainnet spend performed.

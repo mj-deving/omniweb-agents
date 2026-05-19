@@ -86,12 +86,14 @@ Current PR3 evidence: [full-action-spectrum-market-write-proof-2026-05-19.md](./
 
 ## Identity, Admin, And Delivery Rows
 
+Current PR4 evidence: [full-action-spectrum-identity-admin-proof-2026-05-19.md](./full-action-spectrum-identity-admin-proof-2026-05-19.md).
+
 | Row | Methods / surface | Profile | Command | Spend | Authorization | Primary success criteria |
 | --- | --- | --- | --- | --- | --- | --- |
-| I1 profile register | `register` | `identity-mutation` | `probe-identity-surfaces.ts --execute --register-name ...` | `none` or fee-only | explicit identity mutation | profile readback matches controlled target |
-| I2 official human-link | `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `identity-mutation` | `probe-identity-surfaces.ts --execute` | `none` or fee-only | explicit identity mutation | link readback then cleanup readback |
-| I3 deprecated wrapper | `linkIdentity`, `omni.identity.link` | `unsupported-current-host` unless deliberately revived | none by default | `not-authorized` | explicit revival decision | remains excluded until a safe proof path exists |
-| A1 webhook create/delete | `getWebhooks`, `createWebhook`, `deleteWebhook` | `admin-mutation` | targeted controlled-callback probe | `none` or fee-only | explicit callback target and cleanup plan | list after create and list after delete |
+| I1 profile register | `register` | `identity-mutation` | `probe-identity-surfaces.ts --execute --register-name ...` or targeted `connect({ agentName })` throwaway proof | `none` or fee-only | explicit identity mutation | PR4 pass with caveat: throwaway registration response returned requested public fields, but follow-up profile readback only matched the controlled wallet address and returned null/empty public fields; maintained script lacks `--agent-name` and accidentally mutated the configured wallet, whose restore is blocked by name-change cooldown. |
+| I2 official human-link | `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `identity-mutation` | `probe-identity-surfaces.ts --execute` or targeted `connect({ agentName })` throwaway proof | `none` or fee-only | explicit identity mutation | PR4 pass: throwaway challenge/claim/approve/readback/unlink completed and post-cleanup linked-agent readback was empty. |
+| I3 deprecated wrapper | `linkIdentity`, `omni.identity.link` | `unsupported-current-host` unless deliberately revived | none by default | `not-authorized` | explicit revival decision | PR4 unsupported/excluded: proof payload creation was redacted, but no public Twitter/GitHub proof URL was published or submitted. |
+| A1 webhook create/delete | `getWebhooks`, `createWebhook`, `deleteWebhook` | `admin-mutation` | targeted controlled-callback probe | `none` or fee-only | explicit callback target and cleanup plan | PR4 blocked: webhook list passed, but create/delete were not attempted because no controlled public HTTPS callback receiver or owned webhook id was available. |
 
 ## Demos Domain Write Rows
 

@@ -11,6 +11,7 @@ This complements [verification-matrix.md](./verification-matrix.md):
 
 - `verification-matrix.md` tracks **method-level proof state**
 - this file tracks the **operator execution plan** for primitive sweeps and outside-in user journeys
+- `full-action-spectrum-testing-matrix.md` tracks the **row-level all-operations live proof plan**, including spend, mutation, authorization, and readback criteria
 
 ## What Counts As Launch-Grade Proof
 

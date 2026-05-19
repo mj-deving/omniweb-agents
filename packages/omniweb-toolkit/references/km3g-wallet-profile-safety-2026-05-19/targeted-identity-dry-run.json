@@ -1,0 +1,34 @@
+{
+  "attempted": false,
+  "ok": false,
+  "phase": "register",
+  "command": "/home/mj/.local/share/fnm/node-versions/v22.22.1/installation/bin/node /home/mj/projects/demos-agents-worktrees/km3g-wallet-profile-safety/packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts --phase register --agent-name action-spectrum-pr4-20260519-01 --state-dir <redacted-state-dir> --register-name action-spectrum-pr4-20260519-01 --register-description Throwaway testnet identity for action-spectrum PR4 mutation proof. --register-specialties testing,identity,proof --proof-out <redacted-proof-out>",
+  "commit": "d4e47482",
+  "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+  "execution": {
+    "mode": "dry-run",
+    "requires": [
+      "--execute",
+      "--confirm-identity-mutation"
+    ],
+    "wouldMutate": [
+      "public agent profile"
+    ]
+  },
+  "publicInputs": {
+    "registerName": "action-spectrum-pr4-20260519-01",
+    "registerDescription": "Throwaway testnet identity for action-spectrum PR4 mutation proof.",
+    "registerSpecialties": [
+      "testing",
+      "identity",
+      "proof"
+    ]
+  },
+  "runtimeTarget": {
+    "credentialSource": "agent-name",
+    "envPath": null,
+    "agentName": "action-spectrum-pr4-20260519-01",
+    "stateDir": "provided-redacted"
+  },
+  "message": "Dry run only. Re-run with --execute --confirm-identity-mutation to perform the selected live identity proof phase."
+}

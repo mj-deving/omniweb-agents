@@ -17,10 +17,12 @@ import {
   isOkApiResult,
   linkedContains,
   profileMatches,
+  redactIdentityProbeCommand,
   shouldRunCleanupPhase,
   shortCommit,
   summarizeAgentProfile,
   summarizeChallenge,
+  summarizeIdentityProbeRuntimeTarget,
   summarizeLinkedAgents,
   summarizeMutationResult,
   summarizeSignResult,
@@ -40,6 +42,8 @@ Options:
   --register-name NAME       Agent name for the live register() proof
   --register-description TXT Agent description for the live register() proof
   --register-specialties CSV Agent specialties for the live register() proof
+  --env-path PATH            Override wallet credentials file passed to connect()
+  --agent-name NAME          Use a named credentials profile if present
   --state-dir PATH           Override state directory for runtime guards
   --proof-out PATH           Write the JSON proof report to this path
   --execute                  Perform the selected live identity mutation phase
@@ -56,11 +60,13 @@ for (const flag of [
   "--register-name",
   "--register-description",
   "--register-specialties",
+  "--env-path",
+  "--agent-name",
   "--state-dir",
   "--proof-out",
 ]) {
   const index = args.indexOf(flag);
-  if (index >= 0 && !args[index + 1]) {
+  if (index >= 0 && (!args[index + 1] || args[index + 1].startsWith("-"))) {
     console.error(`Error: ${flag} requires a value`);
     process.exit(2);
   }
@@ -73,10 +79,14 @@ const registerSpecialties = ((getStringArg(args, "--register-specialties") ?? DE
   .split(",")
   .map((value) => value.trim())
   .filter(Boolean));
+const envPath = getStringArg(args, "--env-path") || undefined;
+const agentName = getStringArg(args, "--agent-name") || undefined;
 const stateDir = getStringArg(args, "--state-dir") || undefined;
 const proofOut = getStringArg(args, "--proof-out") || undefined;
 const execute = hasFlag(args, "--execute");
 const confirmed = hasFlag(args, "--confirm-identity-mutation");
+const runtimeTarget = summarizeIdentityProbeRuntimeTarget({ envPath, agentName, stateDir });
+const command = redactIdentityProbeCommand(process.argv);
 
 if (!isIdentityProofPhase(phase)) {
   console.error(`Error: --phase must be one of: ${IDENTITY_PROOF_PHASES.join(", ")}`);
@@ -94,7 +104,7 @@ if (execute && !confirmed) {
 }
 
 const connect = await loadConnect();
-const omni = await connect({ stateDir });
+const omni = await connect({ envPath, agentName, stateDir });
 const agentAddress = omni.address;
 
 if (!execute) {
@@ -102,7 +112,7 @@ if (!execute) {
     attempted: false,
     ok: false,
     phase,
-    command: process.argv.join(" "),
+    command,
     commit: shortCommit(),
     address: agentAddress,
     execution: {
@@ -115,6 +125,7 @@ if (!execute) {
       registerDescription,
       registerSpecialties,
     },
+    runtimeTarget,
     message: "Dry run only. Re-run with --execute --confirm-identity-mutation to perform the selected live identity proof phase.",
   });
   process.exit(0);
@@ -192,7 +203,7 @@ emit({
   attempted: true,
   ok,
   phase,
-  command: process.argv.join(" "),
+  command,
   commit: shortCommit(),
   address: agentAddress,
   execution: {
@@ -204,6 +215,7 @@ emit({
     registerDescription,
     registerSpecialties,
   },
+  runtimeTarget,
   verdicts: {
     register: phase === "register" || phase === "full" ? registerOk ? "pass" : "degraded" : "not_applicable",
     humanLink: phase === "human-link" || phase === "full" ? linkOk ? "pass" : "degraded" : "not_applicable",

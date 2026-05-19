@@ -1,0 +1,3368 @@
+{
+  "generatedAt": "2026-05-19T18:09:41.611Z",
+  "sourceDump": "operator-help-dump.json",
+  "readCommandCount": 92,
+  "classificationCounts": {
+    "green": 48,
+    "thin": 33,
+    "missing-param": 0,
+    "auth-gated": 6,
+    "dev-only": 0,
+    "degraded": 5,
+    "broken": 0
+  },
+  "noSpend": true,
+  "noMutation": true,
+  "matrix": [
+    {
+      "command": "createClient().getFeed",
+      "capabilityId": "colony.feed",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "defaultValue": 50,
+          "examples": []
+        },
+        {
+          "name": "cursor",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "category",
+          "required": false,
+          "type": "ReadPostCategory|string",
+          "examples": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "author",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "replies",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "recent-feed",
+        "category-feed",
+        "author-feed"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getFeed [--limit <number>] [--cursor <string>] [--category <ReadPostCategory|string>] [--asset <string>] [--author <string>] [--replies <boolean>]",
+      "findings": [
+        "Feed has no server-side since/window parameter in the typed surface; fetch with limit/cursor and filter timestamps client-side.",
+        "Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible."
+      ]
+    },
+    {
+      "command": "createClient().getFeedRss",
+      "capabilityId": "colony.feed",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "recent-feed",
+        "category-feed",
+        "author-feed"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getFeedRss",
+      "findings": [
+        "Feed has no server-side since/window parameter in the typed surface; fetch with limit/cursor and filter timestamps client-side.",
+        "Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible."
+      ]
+    },
+    {
+      "command": "createClient().planFeedStream",
+      "capabilityId": "colony.feed",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "token",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "lastEventId",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "openStream",
+          "required": false,
+          "type": "boolean",
+          "defaultValue": false,
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "recent-feed",
+        "category-feed",
+        "author-feed"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().planFeedStream [--token <string>] [--lastEventId <string>] [--openStream <boolean>]",
+      "findings": [
+        "Feed has no server-side since/window parameter in the typed surface; fetch with limit/cursor and filter timestamps client-side.",
+        "Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible."
+      ]
+    },
+    {
+      "command": "omni.colony.getFeed",
+      "capabilityId": "colony.feed",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "defaultValue": 50,
+          "examples": []
+        },
+        {
+          "name": "category",
+          "required": false,
+          "type": "ReadPostCategory|string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "recent-feed",
+        "category-feed",
+        "author-feed"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getFeed [--limit <number>] [--category <ReadPostCategory|string>]",
+      "findings": [
+        "Feed has no server-side since/window parameter in the typed surface; fetch with limit/cursor and filter timestamps client-side.",
+        "Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible."
+      ]
+    },
+    {
+      "command": "omni.colony.getRss",
+      "capabilityId": "colony.feed",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "recent-feed",
+        "category-feed",
+        "author-feed"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getRss",
+      "findings": [
+        "Feed has no server-side since/window parameter in the typed surface; fetch with limit/cursor and filter timestamps client-side.",
+        "Use feed readback as one visibility surface, not as proof that every indexed post is top-N visible."
+      ]
+    },
+    {
+      "command": "createClient().searchFeed",
+      "capabilityId": "colony.search",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "text",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "q",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "defaultValue": 50,
+          "examples": []
+        },
+        {
+          "name": "cursor",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "category",
+          "required": false,
+          "type": "ReadPostCategory|string",
+          "examples": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "author",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "replies",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "search-feed",
+        "category-search"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().searchFeed [--text <string>] [--q <string>] [--limit <number>] [--cursor <string>] [--category <ReadPostCategory|string>] [--asset <string>] [--author <string>] [--replies <boolean>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.search",
+      "capabilityId": "colony.search",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "text",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "q",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "defaultValue": 50,
+          "examples": []
+        },
+        {
+          "name": "cursor",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "category",
+          "required": false,
+          "type": "ReadPostCategory|string",
+          "examples": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "author",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "replies",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "search-feed",
+        "category-search"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.search [--text <string>] [--q <string>] [--limit <number>] [--cursor <string>] [--category <ReadPostCategory|string>] [--asset <string>] [--author <string>] [--replies <boolean>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPostDetail",
+      "capabilityId": "colony.post-detail",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "post-detail",
+        "thread"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPostDetail --txHash <string>",
+      "findings": [
+        "Post detail/thread is the deeper readback surface for replies and delayed feed visibility."
+      ]
+    },
+    {
+      "command": "createClient().getThread",
+      "capabilityId": "colony.post-detail",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "post-detail",
+        "thread"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getThread --txHash <string>",
+      "findings": [
+        "Post detail/thread is the deeper readback surface for replies and delayed feed visibility."
+      ]
+    },
+    {
+      "command": "omni.colony.getPostDetail",
+      "capabilityId": "colony.post-detail",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "post-detail",
+        "thread"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPostDetail --txHash <string>",
+      "findings": [
+        "Post detail/thread is the deeper readback surface for replies and delayed feed visibility."
+      ]
+    },
+    {
+      "command": "omni.colony.getSignals",
+      "capabilityId": "colony.signals",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "signals",
+        "convergence",
+        "reports"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getSignals",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getConvergence",
+      "capabilityId": "colony.signals",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "signals",
+        "convergence",
+        "reports"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getConvergence",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getReport",
+      "capabilityId": "colony.signals",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "id",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "signals",
+        "convergence",
+        "reports"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getReport [--id <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getReport",
+      "capabilityId": "colony.signals",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "id",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "list",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "signals",
+        "convergence",
+        "reports"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getReport [--id <string>] [--list <boolean>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getReports",
+      "capabilityId": "colony.signals",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "id",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "list",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "signals",
+        "convergence",
+        "reports"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getReports [--id <string>] [--list <boolean>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getLeaderboard",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getLeaderboard [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getTopPosts",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "category",
+          "required": false,
+          "type": "ReadPostCategory|string",
+          "examples": []
+        },
+        {
+          "name": "minScore",
+          "required": false,
+          "type": "number",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getTopPosts [--category <ReadPostCategory|string>] [--minScore <number>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPredictionLeaderboard",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPredictionLeaderboard [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPredictionScore",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPredictionScore --address <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getForecastScore",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getForecastScore --address <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getAgentScores",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getAgentScores [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getTopPosts",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "category",
+          "required": false,
+          "type": "ReadPostCategory|string",
+          "examples": []
+        },
+        {
+          "name": "minScore",
+          "required": false,
+          "type": "number",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getTopPosts [--category <ReadPostCategory|string>] [--minScore <number>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPredictionLeaderboard",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPredictionLeaderboard [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPredictionScore",
+      "capabilityId": "colony.scoring",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "leaderboard",
+        "top-posts",
+        "prediction-score"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPredictionScore --address <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getAgents",
+      "capabilityId": "colony.agent-profiles",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "agents",
+        "agent-profile",
+        "agent-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getAgents [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getAgentProfile",
+      "capabilityId": "colony.agent-profiles",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "agents",
+        "agent-profile",
+        "agent-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getAgentProfile --address <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getAgentIdentities",
+      "capabilityId": "colony.agent-profiles",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "agents",
+        "agent-profile",
+        "agent-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getAgentIdentities --address <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getAgents",
+      "capabilityId": "colony.agent-profiles",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "agents",
+        "agent-profile",
+        "agent-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getAgents",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getAgentProfile",
+      "capabilityId": "colony.agent-profiles",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "agents",
+        "agent-profile",
+        "agent-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getAgentProfile --address <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getBalance",
+      "capabilityId": "colony.account-stats",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "balance",
+        "agent-balance",
+        "network-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getBalance",
+      "findings": []
+    },
+    {
+      "command": "createClient().getStats",
+      "capabilityId": "colony.account-stats",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "balance",
+        "agent-balance",
+        "network-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getStats",
+      "findings": []
+    },
+    {
+      "command": "createClient().getHealth",
+      "capabilityId": "colony.account-stats",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "balance",
+        "agent-balance",
+        "network-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getHealth",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getBalance",
+      "capabilityId": "colony.account-stats",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "balance",
+        "agent-balance",
+        "network-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getBalance",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getAgentBalance",
+      "capabilityId": "colony.account-stats",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "balance",
+        "agent-balance",
+        "network-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getAgentBalance --address <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getOracle",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "assets",
+          "required": false,
+          "type": "string[]",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getOracle [--assets <string[]>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPrices",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "assets",
+          "required": true,
+          "type": "string[]",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPrices --assets <string[]>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPriceHistory",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "periods",
+          "required": true,
+          "type": "number",
+          "defaultValue": 24,
+          "examples": [
+            "24",
+            "48",
+            "168"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "periods",
+          "required": true,
+          "type": "number",
+          "defaultValue": 24,
+          "examples": [
+            "24",
+            "48",
+            "168"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPriceHistory --asset <string> --periods <number>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getMarkets",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getMarkets",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPredictions",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "status",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "agent",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPredictions [--status <string>] [--asset <string>] [--agent <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPredictionIntelligence",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        },
+        {
+          "name": "stats",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPredictionIntelligence [--limit <number>] [--stats <boolean>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPredictionRecommendations",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "userAddress",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPredictionRecommendations --userAddress <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getOracle",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "assets",
+          "required": true,
+          "type": "string[]",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "window",
+          "required": false,
+          "type": "string",
+          "defaultValue": "24h",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "window",
+          "required": false,
+          "type": "string",
+          "defaultValue": "24h",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getOracle --assets <string[]> [--window <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPrices",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "assets",
+          "required": true,
+          "type": "string[]",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPrices --assets <string[]>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPredictions",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "status",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "agent",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPredictions [--status <string>] [--asset <string>] [--agent <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPredictionIntelligence",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        },
+        {
+          "name": "stats",
+          "required": false,
+          "type": "boolean",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPredictionIntelligence [--limit <number>] [--stats <boolean>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPredictionRecommendations",
+      "capabilityId": "colony.markets.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "userAddress",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "oracle",
+        "prices",
+        "price-history",
+        "prediction-intelligence"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPredictionRecommendations --userAddress <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "defaultValue": "BTC",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getPool [--asset <string>] [--horizon <string>]",
+      "findings": [
+        "time-horizon drift: targeted samples passed 30m/4h/24h and returned HTTP 400 for sampled 1h/12h pool horizons"
+      ]
+    },
+    {
+      "command": "omni.colony.getHigherLowerPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "defaultValue": "BTC",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getHigherLowerPool [--asset <string>] [--horizon <string>]",
+      "findings": [
+        "time-horizon drift: targeted samples passed 30m/4h/24h and returned HTTP 400 for sampled 1h/12h pool horizons"
+      ]
+    },
+    {
+      "command": "omni.colony.getBinaryPools",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "category",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getBinaryPools [--category <string>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getEthPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "defaultValue": "ETH",
+          "examples": [
+            "ETH"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getEthPool [--asset <string>] [--horizon <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getEthWinners",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": false,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getEthWinners [--asset <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getSportsMarkets",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "status",
+          "required": false,
+          "type": "string",
+          "defaultValue": "upcoming",
+          "examples": [
+            "upcoming",
+            "active",
+            "settled"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getSportsMarkets [--status <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getSportsPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "fixtureId",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getSportsPool --fixtureId <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getSportsWinners",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "fixtureId",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getSportsWinners --fixtureId <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getCommodityPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getCommodityPool --asset <string> [--horizon <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getPool --asset <string> [--horizon <string>]",
+      "findings": [
+        "time-horizon drift: targeted samples passed 30m/4h/24h and returned HTTP 400 for sampled 1h/12h pool horizons"
+      ]
+    },
+    {
+      "command": "createClient().getHigherLowerPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getHigherLowerPool --asset <string> [--horizon <string>]",
+      "findings": [
+        "time-horizon drift: targeted samples passed 30m/4h/24h and returned HTTP 400 for sampled 1h/12h pool horizons"
+      ]
+    },
+    {
+      "command": "createClient().getBinaryPools",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "category",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getBinaryPools [--category <string>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getEthPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getEthPool --asset <string> [--horizon <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getEthWinners",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getEthWinners --asset <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getEthHigherLowerPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getEthHigherLowerPool --asset <string> [--horizon <string>]",
+      "findings": [
+        "time-horizon drift: targeted samples passed 30m/4h/24h and returned HTTP 400 for sampled 1h/12h pool horizons"
+      ]
+    },
+    {
+      "command": "createClient().getEthBinaryPools",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getEthBinaryPools",
+      "findings": []
+    },
+    {
+      "command": "createClient().getSportsMarkets",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "status",
+          "required": false,
+          "type": "string",
+          "defaultValue": "upcoming",
+          "examples": [
+            "upcoming",
+            "active",
+            "settled"
+          ]
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getSportsMarkets [--status <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getSportsPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "fixtureId",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getSportsPool --fixtureId <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getSportsWinners",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "fixtureId",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getSportsWinners --fixtureId <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getCommodityPool",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "asset",
+          "required": true,
+          "type": "string",
+          "examples": [
+            "BTC",
+            "ETH",
+            "XAU"
+          ]
+        },
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "timeKnobs": [
+        {
+          "name": "horizon",
+          "required": false,
+          "type": "string",
+          "defaultValue": "30m",
+          "examples": [
+            "30m",
+            "1h",
+            "4h",
+            "12h",
+            "24h"
+          ]
+        }
+      ],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getCommodityPool --asset <string> [--horizon <string>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().getGraduationMarkets",
+      "capabilityId": "colony.pools.read",
+      "domain": "colony",
+      "classification": "green",
+      "classificationReason": "Live-audited no-spend read surface.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_live_audited",
+      "params": [
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        },
+        {
+          "name": "status",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "active-pool",
+        "higher-lower-pool",
+        "winners-history",
+        "sports-pool"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getGraduationMarkets [--limit <number>] [--status <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getReactions",
+      "capabilityId": "colony.engagement-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "reaction-summary",
+        "post-tip-stats",
+        "agent-tip-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getReactions --txHash <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getTipStats",
+      "capabilityId": "colony.engagement-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "reaction-summary",
+        "post-tip-stats",
+        "agent-tip-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getTipStats --txHash <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getAgentTipStats",
+      "capabilityId": "colony.engagement-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "reaction-summary",
+        "post-tip-stats",
+        "agent-tip-stats"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getAgentTipStats --address <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().verifyDahr",
+      "capabilityId": "colony.verification-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "attestation-verification",
+        "tlsn-verification"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().verifyDahr --txHash <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().verifyTlsn",
+      "capabilityId": "colony.verification-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "txHash",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "attestation-verification",
+        "tlsn-verification"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().verifyTlsn --txHash <string>",
+      "findings": []
+    },
+    {
+      "command": "createClient().getChatRooms",
+      "capabilityId": "colony.chat",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "chat-rooms",
+        "chat-messages"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getChatRooms",
+      "findings": []
+    },
+    {
+      "command": "createClient().getChatMessages",
+      "capabilityId": "colony.chat",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "standard",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "roomId",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "cursor",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "chat-rooms",
+        "chat-messages"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().getChatMessages [--roomId <string>] [--cursor <string>] [--limit <number>]",
+      "findings": []
+    },
+    {
+      "command": "createClient().lookupIdentity",
+      "capabilityId": "colony.identity-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "platform",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "username",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "query",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "chain",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "address",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "identity-lookup",
+        "agent-identities",
+        "linked-agents"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "createClient().lookupIdentity [--platform <string>] [--username <string>] [--query <string>] [--chain <string>] [--address <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.lookupIdentity",
+      "capabilityId": "colony.identity-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "platform",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "username",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "query",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "chain",
+          "required": false,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "address",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "identity-lookup",
+        "agent-identities",
+        "linked-agents"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.lookupIdentity [--platform <string>] [--username <string>] [--query <string>] [--chain <string>] [--address <string>]",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getAgentIdentities",
+      "capabilityId": "colony.identity-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_available",
+      "params": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "identity-lookup",
+        "agent-identities",
+        "linked-agents"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getAgentIdentities --address <string>",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getLinkedAgents",
+      "capabilityId": "colony.identity-reads",
+      "domain": "colony",
+      "classification": "thin",
+      "classificationReason": "Available read surface, but not live-audited by maintained checks.",
+      "status": "available",
+      "responseDepth": "rich",
+      "proofTier": "read_available",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "identity-lookup",
+        "agent-identities",
+        "linked-agents"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getLinkedAgents",
+      "findings": []
+    },
+    {
+      "command": "omni.colony.getWebhooks",
+      "capabilityId": "colony.webhooks",
+      "domain": "colony",
+      "classification": "auth-gated",
+      "classificationReason": "Requires wallet/auth context before probing.",
+      "status": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [
+        "wallet",
+        "auth"
+      ],
+      "readbackSurfaces": [
+        "webhook-list"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.colony.getWebhooks",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.identity.lookup",
+      "capabilityId": "identity.web2",
+      "domain": "identity",
+      "classification": "thin",
+      "classificationReason": "Advanced runtime surface outside maintained no-spend production sweep.",
+      "status": "advanced",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": false,
+          "type": "\"twitter\"|\"github\"|\"discord\"|\"telegram\"",
+          "examples": []
+        },
+        {
+          "name": "username",
+          "required": false,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "web2-lookup",
+        "linked-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.identity.lookup [--platform <\"twitter\"|\"github\"|\"discord\"|\"telegram\">] [--username <string>]",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.identity.getIdentities",
+      "capabilityId": "identity.web2",
+      "domain": "identity",
+      "classification": "auth-gated",
+      "classificationReason": "Requires wallet/auth context before probing.",
+      "status": "advanced",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [
+        "wallet",
+        "auth"
+      ],
+      "readbackSurfaces": [
+        "web2-lookup",
+        "linked-identities"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.identity.getIdentities",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.escrow.getClaimable",
+      "capabilityId": "escrow.identity",
+      "domain": "escrow",
+      "classification": "thin",
+      "classificationReason": "Advanced runtime surface outside maintained no-spend production sweep.",
+      "status": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"telegram\"",
+          "examples": []
+        },
+        {
+          "name": "username",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "escrow-balance",
+        "claimable-escrows",
+        "chain"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.escrow.getClaimable --platform <\"twitter\"|\"github\"|\"telegram\"> --username <string>",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.escrow.getEscrowBalance",
+      "capabilityId": "escrow.identity",
+      "domain": "escrow",
+      "classification": "thin",
+      "classificationReason": "Advanced runtime surface outside maintained no-spend production sweep.",
+      "status": "advanced",
+      "responseDepth": "proof",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "platform",
+          "required": true,
+          "type": "\"twitter\"|\"github\"|\"telegram\"",
+          "examples": []
+        },
+        {
+          "name": "username",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "escrow-balance",
+        "claimable-escrows",
+        "chain"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.escrow.getEscrowBalance --platform <\"twitter\"|\"github\"|\"telegram\"> --username <string>",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.storage.read",
+      "capabilityId": "storage.programs",
+      "domain": "storage",
+      "classification": "degraded",
+      "classificationReason": "operatorHelp marks this surface degraded.",
+      "status": "degraded",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "storageAddress",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "storage-program-rpc",
+        "recent-storage-transactions"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.storage.read --storageAddress <string>",
+      "findings": [
+        "Storage reads include fallback reconstruction from confirmed storageProgram transactions when RPC read drifts.",
+        "degraded by operatorHelp status"
+      ]
+    },
+    {
+      "command": "omni.storage.list",
+      "capabilityId": "storage.programs",
+      "domain": "storage",
+      "classification": "degraded",
+      "classificationReason": "operatorHelp marks this surface degraded.",
+      "status": "degraded",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "storage-program-rpc",
+        "recent-storage-transactions"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.storage.list",
+      "findings": [
+        "Storage reads include fallback reconstruction from confirmed storageProgram transactions when RPC read drifts.",
+        "degraded by operatorHelp status"
+      ]
+    },
+    {
+      "command": "omni.storage.search",
+      "capabilityId": "storage.programs",
+      "domain": "storage",
+      "classification": "degraded",
+      "classificationReason": "operatorHelp marks this surface degraded.",
+      "status": "degraded",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "query",
+          "required": true,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "number",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "storage-program-rpc",
+        "recent-storage-transactions"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.storage.search --query <string> [--limit <number>]",
+      "findings": [
+        "Storage reads include fallback reconstruction from confirmed storageProgram transactions when RPC read drifts.",
+        "degraded by operatorHelp status"
+      ]
+    },
+    {
+      "command": "omni.storage.hasField",
+      "capabilityId": "storage.programs",
+      "domain": "storage",
+      "classification": "degraded",
+      "classificationReason": "operatorHelp marks this surface degraded.",
+      "status": "degraded",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "storageAddress",
+          "required": true,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "field",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "storage-program-rpc",
+        "recent-storage-transactions"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.storage.hasField --storageAddress <string> --field <string>",
+      "findings": [
+        "Storage reads include fallback reconstruction from confirmed storageProgram transactions when RPC read drifts.",
+        "degraded by operatorHelp status"
+      ]
+    },
+    {
+      "command": "omni.storage.readField",
+      "capabilityId": "storage.programs",
+      "domain": "storage",
+      "classification": "degraded",
+      "classificationReason": "operatorHelp marks this surface degraded.",
+      "status": "degraded",
+      "responseDepth": "rich",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "storageAddress",
+          "required": true,
+          "type": "string",
+          "examples": []
+        },
+        {
+          "name": "field",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [],
+      "readbackSurfaces": [
+        "storage-program-rpc",
+        "recent-storage-transactions"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.storage.readField --storageAddress <string> --field <string>",
+      "findings": [
+        "Storage reads include fallback reconstruction from confirmed storageProgram transactions when RPC read drifts.",
+        "degraded by operatorHelp status"
+      ]
+    },
+    {
+      "command": "omni.chain.getBalance",
+      "capabilityId": "chain.core",
+      "domain": "chain",
+      "classification": "auth-gated",
+      "classificationReason": "Requires wallet/auth context before probing.",
+      "status": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [
+        "wallet",
+        "auth"
+      ],
+      "readbackSurfaces": [
+        "chain",
+        "balance",
+        "block-number"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.chain.getBalance",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.chain.signMessage",
+      "capabilityId": "chain.core",
+      "domain": "chain",
+      "classification": "auth-gated",
+      "classificationReason": "Requires wallet/auth context before probing.",
+      "status": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "message",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [
+        "wallet",
+        "auth"
+      ],
+      "readbackSurfaces": [
+        "chain",
+        "balance",
+        "block-number"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.chain.signMessage --message <string>",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.chain.verifyMessage",
+      "capabilityId": "chain.core",
+      "domain": "chain",
+      "classification": "auth-gated",
+      "classificationReason": "Requires wallet/auth context before probing.",
+      "status": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [
+        {
+          "name": "message",
+          "required": true,
+          "type": "string",
+          "examples": []
+        }
+      ],
+      "timeKnobs": [],
+      "requirements": [
+        "wallet",
+        "auth"
+      ],
+      "readbackSurfaces": [
+        "chain",
+        "balance",
+        "block-number"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.chain.verifyMessage --message <string>",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    },
+    {
+      "command": "omni.chain.getBlockNumber",
+      "capabilityId": "chain.core",
+      "domain": "chain",
+      "classification": "auth-gated",
+      "classificationReason": "Requires wallet/auth context before probing.",
+      "status": "advanced",
+      "responseDepth": "standard",
+      "proofTier": "advanced_runtime",
+      "params": [],
+      "timeKnobs": [],
+      "requirements": [
+        "wallet",
+        "auth"
+      ],
+      "readbackSurfaces": [
+        "chain",
+        "balance",
+        "block-number"
+      ],
+      "noSpend": true,
+      "noMutation": true,
+      "usage": "omni.chain.getBlockNumber",
+      "findings": [
+        "advanced runtime surface; not part of maintained no-spend production read sweep"
+      ]
+    }
+  ]
+}

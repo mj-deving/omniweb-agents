@@ -1,0 +1,175 @@
+{
+  "generatedAt": "2026-05-19T18:06:11.054Z",
+  "noSpend": true,
+  "noMutation": true,
+  "samples": [
+    {
+      "name": "getOracle BTC window=30m",
+      "startedAt": "2026-05-19T18:06:07.078Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "overallSentiment",
+          "assets",
+          "polymarket",
+          "divergences",
+          "meta"
+        ]
+      }
+    },
+    {
+      "name": "getOracle BTC window=24h",
+      "startedAt": "2026-05-19T18:06:08.546Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "overallSentiment",
+          "assets",
+          "polymarket",
+          "divergences",
+          "meta"
+        ]
+      }
+    },
+    {
+      "name": "getPool BTC horizon=30m",
+      "startedAt": "2026-05-19T18:06:08.619Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "totalDem",
+          "totalBets",
+          "asset",
+          "horizon",
+          "poolAddress",
+          "roundEnd",
+          "bets"
+        ]
+      }
+    },
+    {
+      "name": "getPool BTC horizon=1h",
+      "startedAt": "2026-05-19T18:06:08.675Z",
+      "ok": false,
+      "error": "HTTP 400 for https://supercolony.ai/api/bets/pool?asset=BTC&horizon=1h"
+    },
+    {
+      "name": "getPool BTC horizon=4h",
+      "startedAt": "2026-05-19T18:06:08.737Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "totalDem",
+          "totalBets",
+          "asset",
+          "horizon",
+          "poolAddress",
+          "roundEnd",
+          "bets"
+        ]
+      }
+    },
+    {
+      "name": "getPool BTC horizon=12h",
+      "startedAt": "2026-05-19T18:06:08.912Z",
+      "ok": false,
+      "error": "HTTP 400 for https://supercolony.ai/api/bets/pool?asset=BTC&horizon=12h"
+    },
+    {
+      "name": "getPool BTC horizon=24h",
+      "startedAt": "2026-05-19T18:06:10.020Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "totalDem",
+          "totalBets",
+          "asset",
+          "horizon",
+          "poolAddress",
+          "roundEnd",
+          "bets"
+        ]
+      }
+    },
+    {
+      "name": "getHigherLowerPool BTC horizon=30m",
+      "startedAt": "2026-05-19T18:06:10.082Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "asset",
+          "horizon",
+          "totalHigher",
+          "totalLower",
+          "totalDem",
+          "higherCount",
+          "lowerCount",
+          "roundEnd",
+          "referencePrice",
+          "poolAddress",
+          "currentPrice"
+        ]
+      }
+    },
+    {
+      "name": "getHigherLowerPool BTC horizon=1h",
+      "startedAt": "2026-05-19T18:06:10.149Z",
+      "ok": false,
+      "error": "HTTP 400 for https://supercolony.ai/api/bets/higher-lower/pool?asset=BTC&horizon=1h"
+    },
+    {
+      "name": "getHigherLowerPool BTC horizon=4h",
+      "startedAt": "2026-05-19T18:06:10.217Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "asset",
+          "horizon",
+          "totalHigher",
+          "totalLower",
+          "totalDem",
+          "higherCount",
+          "lowerCount",
+          "roundEnd",
+          "referencePrice",
+          "poolAddress",
+          "currentPrice"
+        ]
+      }
+    },
+    {
+      "name": "getHigherLowerPool BTC horizon=12h",
+      "startedAt": "2026-05-19T18:06:10.745Z",
+      "ok": false,
+      "error": "HTTP 400 for https://supercolony.ai/api/bets/higher-lower/pool?asset=BTC&horizon=12h"
+    },
+    {
+      "name": "getHigherLowerPool BTC horizon=24h",
+      "startedAt": "2026-05-19T18:06:10.807Z",
+      "ok": true,
+      "summary": {
+        "type": "object",
+        "keys": [
+          "asset",
+          "horizon",
+          "totalHigher",
+          "totalLower",
+          "totalDem",
+          "higherCount",
+          "lowerCount",
+          "roundEnd",
+          "referencePrice",
+          "poolAddress",
+          "currentPrice"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "ok": true,
+  "checkedAt": "2026-05-19T13:23:18.933Z",
+  "stateDir": ".action-spectrum-state/pr5/agents/action-spectrum-pr4-20260519-01",
+  "credentialResolution": {
+    "envPath": ".env",
+    "agentName": "action-spectrum-pr4-20260519-01",
+    "credentialSourcesChecked": [
+      "<local-demos-credentials-file>",
+      "<local-demos-credentials-file>",
+      "<worktree-env-file>"
+    ]
+  },
+  "draft": {
+    "category": "ANALYSIS",
+    "textLength": 289,
+    "attestUrl": "https://blockchain.info/ticker"
+  },
+  "warnings": [],
+  "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+  "auth": {
+    "tokenAvailable": true,
+    "sdkBridgeApiAccess": "configured",
+    "apiBaseUrl": "https://supercolony.ai"
+  },
+  "checks": {
+    "connect": true,
+    "credentialReadiness": {
+      "ok": true,
+      "canRead": true,
+      "canAuth": true,
+      "canWrite": true,
+      "authState": "ready",
+      "writeState": "ready",
+      "missingEnv": [],
+      "missingPackages": [],
+      "credentialSourcesChecked": [
+        "<local-demos-credentials-file>",
+        "<local-demos-credentials-file>",
+        "<worktree-env-file>"
+      ],
+      "runtimeCredentialSource": "<local-demos-credentials-file>",
+      "notes": [
+        "Read-only client is usable without write substrate",
+        "Runtime credential source: <local-demos-credentials-file>"
+      ]
+    },
+    "tokenAvailable": true,
+    "runtimeAuthState": {
+      "ok": true,
+      "state": "authenticated",
+      "source": "cache",
+      "expiresAt": "2026-05-20T12:54:48.907Z"
+    },
+    "balance": {
+      "checkedAt": "2026-05-19T13:23:22.551Z",
+      "rpcUrl": "https://node3.demos.sh/",
+      "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+      "chainBlockNumber": 2285754,
+      "effectiveDem": 1000,
+      "effectiveSource": "colony",
+      "colony": {
+        "ok": true,
+        "dem": 1000,
+        "cached": false
+      },
+      "chain": {
+        "ok": true,
+        "dem": 1000
+      },
+      "divergence": {
+        "hasDivergence": false,
+        "kind": "none",
+        "demDelta": null,
+        "blocksWriteReadiness": false
+      },
+      "readiness": "ready"
+    },
+    "feedRead": {
+      "ok": true,
+      "count": 3
+    },
+    "draftSchema": {
+      "ok": true
+    },
+    "urlValidation": {
+      "ok": true
+    },
+    "attestUrlDiagnostics": {
+      "safeDisplayUrl": "https://blockchain.info/ticker",
+      "hasQueryParams": false,
+      "queryParamKeys": [],
+      "redactedQueryParamKeys": [],
+      "preservesBenignQueryContext": false,
+      "requiresProbeForQueryParity": false
+    },
+    "writeRate": {
+      "dailyRemaining": 14,
+      "hourlyRemaining": 5
+    },
+    "dedup": {
+      "ok": true
+    },
+    "attestProbe": {
+      "attempted": false
+    }
+  },
+  "blockers": []
+}

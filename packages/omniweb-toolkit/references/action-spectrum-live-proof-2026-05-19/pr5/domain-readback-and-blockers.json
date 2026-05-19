@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "attemptedBroadcast": false,
+  "authorization": {
+    "verdict": "blocked",
+    "reason": "PR5 domain mutations are not covered by action-spectrum-live-spend-gates; no later child-bead budget/recipient/storage/IPFS/transfer execution record exists."
+  },
+  "scriptTargetingCaveat": "Maintained escrow/storage/IPFS probes do not accept --agent-name; PR5 includes their configured-wallet dry-run outputs as script-gap evidence and uses targeted-domain-dry-run.json plus this readback file for throwaway-wallet proof.",
+  "agentName": "action-spectrum-pr4-20260519-01",
+  "address": "0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09",
+  "target": {
+    "platform": "github",
+    "username": "action-spectrum-pr5-20260519"
+  },
+  "escrow": {
+    "send": {
+      "attempted": false,
+      "verdict": "blocked_no_pr5_budget",
+      "dryRunFile": "targeted-domain-dry-run.json"
+    },
+    "claimRefund": {
+      "attempted": false,
+      "verdict": "blocked_no_pr5_owned_escrow",
+      "claimable": {
+        "ok": true,
+        "data": "Method not implemented: get_claimable_escrows"
+      },
+      "escrowBalance": {
+        "ok": true,
+        "data": "Method not implemented: get_escrow_balance"
+      }
+    }
+  },
+  "storage": {
+    "createSet": {
+      "attempted": false,
+      "verdict": "blocked_no_pr5_budget",
+      "dryRunFile": "targeted-domain-dry-run.json",
+      "storageAddress": "stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5"
+    },
+    "readbackBeforeWrite": {
+      "storageRead": {
+        "ok": false,
+        "error": "Storage program not found"
+      },
+      "listCount": null,
+      "searchCount": null,
+      "hasLastProbe": false,
+      "lastProbe": null
+    }
+  },
+  "ipfs": {
+    "upload": {
+      "attempted": false,
+      "verdict": "blocked_no_pr5_budget",
+      "dryRunFile": "targeted-domain-dry-run.json"
+    },
+    "pinUnpin": {
+      "attempted": false,
+      "verdict": "blocked_no_pr5_uploaded_cid_or_callback_cleanup",
+      "reason": "No PR5-owned CID was created because upload broadcast was not authorized."
+    }
+  },
+  "chain": {
+    "transfer": {
+      "attempted": false,
+      "verdict": "blocked_no_pr5_budget",
+      "reason": "Raw DEM transfer is a domain write and no PR5 spend cap/recipient gate was recorded."
+    },
+    "readback": {
+      "chainBalance": {
+        "ok": true,
+        "balance": "1000"
+      },
+      "blockNumber": 2285762
+    }
+  }
+}

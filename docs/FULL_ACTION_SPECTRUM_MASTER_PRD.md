@@ -368,3 +368,13 @@ Do not use this PRD to:
 - Maintained-script caveat: `probe-identity-surfaces.ts` correctly refused `--execute` without `--confirm-identity-mutation`, but it lacks `--agent-name` / `--env-path`; the confirmed run therefore used the configured wallet and registered it as `action-spectrum-pr4-20260519-01`. A restore attempt to `mj-codex-proof-agent` hit SuperColony name-change cooldown `429`, so that cleanup remains degraded until the cooldown expires.
 - I3 deprecated `linkIdentity` is excluded: a redacted proof-payload marker was generated, but no public Twitter/GitHub proof URL was published or submitted.
 - A1 webhook list passed, but create/delete are blocked because no controlled public HTTPS callback receiver or PR4-owned webhook id was available. No storage/IPFS/escrow write, npm release, public registry proof, production-host activation, or mainnet spend performed.
+
+### 2026-05-19 - PR5 non-colony domain spend and mutation sweep
+
+- Claimed `omniweb-agents-action-spectrum.5` and used the throwaway wallet `0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09` from PR4 for no-spend domain proving.
+- Added `packages/omniweb-toolkit/references/full-action-spectrum-domain-write-proof-2026-05-19.md`.
+- PR5 did not broadcast escrow, storage, IPFS, pin/unpin, or raw transfer writes because Beads memory `action-spectrum-live-spend-gates` explicitly covers PR2/PR3 only and says PR5 domain mutation needs a later bounded execution record. No such PR5 budget/target/cleanup gate was recorded.
+- D1/D3/D5/D7 dry-runs produced concrete throwaway-wallet intents: escrow github target `action-spectrum-pr5-20260519` for `0.1 DEM`, storage address `stor-88bc0ec8b17cd2efa76540a01a9ec636bbffe7f5` with estimated create cost `1 DEM`, IPFS 104-byte upload quote returning `{ error: "Unknown message" }`, and raw self-transfer dry-run `0.1 DEM` with memo `ACTION_SPECTRUM_PR5_DRY_RUN`.
+- D2/D4/D6 are blocked/degraded because no PR5-owned escrow, storage program, or CID exists. Escrow query wrappers returned `Method not implemented`; storage readback returned `Storage program not found`, `hasField=false`, and `readField=null`.
+- D8 chain sign/read is degraded partial: `getBalance=1000`, `getBlockNumber=2285764`, and `signMessage` produced a redacted signature object, but `verifyMessage` returned `false`.
+- Maintained domain probes currently lack `--agent-name` / `--env-path`, so PR5 records their configured-wallet dry-runs as a script-targeting gap and uses a targeted `connect({ agentName })` report for throwaway-wallet proof.

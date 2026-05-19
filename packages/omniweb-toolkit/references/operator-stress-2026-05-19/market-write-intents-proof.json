@@ -1,0 +1,438 @@
+{
+  "checkedAt": "2026-05-19T18:19:57.530Z",
+  "ok": true,
+  "checks": {
+    "allFamiliesPresent": true,
+    "noSpendDefault": true,
+    "noMutationDefault": true,
+    "liveExecutionDisabled": true,
+    "fixedPriceUsesExistingAdmissibility": true,
+    "higherLowerRemainsPending": true,
+    "unsupportedFamiliesHonest": true,
+    "deploymentAndServerBlocksHonest": true,
+    "ethBinaryRecoveryOnly": true,
+    "explicitExecuteOnlyForMaintainedSpendProofs": true
+  },
+  "matrix": {
+    "generatedAt": "2026-05-18T19:20:00.000Z",
+    "source": "omniweb-toolkit",
+    "ownerBead": "omniweb-agents-spectrum.9",
+    "noSpend": true,
+    "noMutation": true,
+    "liveExecutionDisabled": true,
+    "intents": [
+      {
+        "family": "fixed-price",
+        "actionFamily": "bet-fixed",
+        "endpoint": "native DEM transfer with HIVE_BET memo + /api/bets/place recovery",
+        "method": "NATIVE_TRANSFER",
+        "capabilityStatus": "available",
+        "guardrailStatus": "block",
+        "lifecycleStatus": "lifecycle_proven",
+        "supervision": "none",
+        "explicitExecute": "required",
+        "admissibilityStatus": "explicit_execute_required",
+        "canPlan": true,
+        "canExecuteNow": false,
+        "spendsDem": true,
+        "noSpendDefault": true,
+        "reasonCodes": [
+          "explicit_execute_required",
+          "explicit_execute_required_for_spend",
+          "live_execution_disabled_for_consumer_spectrum_epic"
+        ],
+        "readbackSurfaces": [
+          "chain",
+          "active-pool",
+          "resolved-winners"
+        ],
+        "notes": [
+          "Fixed-price DEM pool writes are lifecycle-proven but still spend-bearing and require explicit execute."
+        ],
+        "toolkitAdmissibility": {
+          "generatedAt": "2026-05-18T19:20:00.000Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "bet-fixed",
+          "actionType": "bet",
+          "status": "explicit_execute_required",
+          "decision": "requires_explicit_execute",
+          "executionGate": "explicit_execute",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "executable",
+            "lifecycleStatus": "resolved",
+            "capabilityId": "colony.bet-fixed",
+            "capabilityStatus": "available",
+            "proofTier": "lifecycle_proven",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": false,
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "guardrails": {
+            "status": "block",
+            "blockedReasonCodes": [
+              "explicit_execute_required_for_spend"
+            ],
+            "supervisedRequirements": [],
+            "degradedReasonCodes": [],
+            "findings": [
+              {
+                "code": "explicit_execute_required_for_spend",
+                "domain": "write_spend_authorization",
+                "severity": "critical",
+                "status": "block",
+                "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "explicit_execute_required",
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": []
+        }
+      },
+      {
+        "family": "higher-lower",
+        "actionFamily": "bet-hl",
+        "endpoint": "native DEM transfer with HIVE_HL memo + /api/bets/higher-lower/place recovery",
+        "method": "NATIVE_TRANSFER",
+        "capabilityStatus": "lifecycle_pending",
+        "guardrailStatus": "block",
+        "lifecycleStatus": "pending_current_recheck",
+        "supervision": "none",
+        "explicitExecute": "required",
+        "admissibilityStatus": "explicit_execute_required",
+        "canPlan": true,
+        "canExecuteNow": false,
+        "spendsDem": true,
+        "noSpendDefault": true,
+        "reasonCodes": [
+          "higher_lower_current_delayed_readback_pending",
+          "explicit_execute_required",
+          "explicit_execute_required_for_spend",
+          "live_execution_disabled_for_consumer_spectrum_epic"
+        ],
+        "readbackSurfaces": [
+          "chain",
+          "higher-lower-pool",
+          "resolved-winners"
+        ],
+        "notes": [
+          "Higher/lower writes stay lifecycle-pending until a current delayed readback proof closes the gap."
+        ],
+        "toolkitAdmissibility": {
+          "generatedAt": "2026-05-18T19:20:00.000Z",
+          "source": "omniweb-toolkit",
+          "authority": "toolkit-runtime",
+          "actionFamily": "bet-hl",
+          "actionType": "bet",
+          "status": "explicit_execute_required",
+          "decision": "requires_explicit_execute",
+          "executionGate": "explicit_execute",
+          "canPlan": true,
+          "canExecuteNow": false,
+          "explicitExecute": false,
+          "mode": "dry-run",
+          "capability": {
+            "actionTruthStatus": "lifecycle-pending",
+            "lifecycleStatus": "lifecycle-pending",
+            "capabilityId": "colony.bet-higher-lower",
+            "capabilityStatus": "pending",
+            "proofTier": "pending_current_recheck",
+            "requiresExplicitExecute": true,
+            "requiresSupervision": false,
+            "spendsDem": true,
+            "writesLifecycleRecord": true
+          },
+          "guardrails": {
+            "status": "block",
+            "blockedReasonCodes": [
+              "explicit_execute_required_for_spend"
+            ],
+            "supervisedRequirements": [],
+            "degradedReasonCodes": [
+              "capability_truth_lifecycle_pending"
+            ],
+            "findings": [
+              {
+                "code": "capability_truth_lifecycle_pending",
+                "domain": "auth_token_lifecycle",
+                "severity": "warning",
+                "status": "degraded",
+                "message": "Capability truth marks this action lifecycle-pending.",
+                "evidence": "higher_lower_current_delayed_readback_pending"
+              },
+              {
+                "code": "explicit_execute_required_for_spend",
+                "domain": "write_spend_authorization",
+                "severity": "critical",
+                "status": "block",
+                "message": "Spend-bearing action is blocked until explicit execute authorization is present."
+              }
+            ]
+          },
+          "reasonCodes": [
+            "explicit_execute_required",
+            "higher_lower_current_delayed_readback_pending",
+            "explicit_execute_required_for_spend"
+          ],
+          "supervisedRequirements": [],
+          "degradedReasonCodes": [
+            "capability_truth_lifecycle_pending"
+          ]
+        }
+      },
+      {
+        "family": "binary",
+        "actionFamily": null,
+        "method": "NONE",
+        "guardrailStatus": "block",
+        "canPlan": false,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": null,
+        "capabilityStatus": "unsupported",
+        "lifecycleStatus": "read_surface_only",
+        "supervision": "unsupported",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "unsupported",
+        "spendsDem": true,
+        "reasonCodes": [
+          "binary_market_write_not_first_class",
+          "read_surface_only"
+        ],
+        "readbackSurfaces": [
+          "binary-pools"
+        ],
+        "notes": [
+          "Binary pools are readable, but a first-class DEM binary write path is not exposed by the maintained toolkit surface."
+        ]
+      },
+      {
+        "family": "graduation",
+        "actionFamily": null,
+        "method": "POST",
+        "guardrailStatus": "degraded",
+        "canPlan": true,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": "/api/bets/graduation/markets",
+        "capabilityStatus": "server_error",
+        "lifecycleStatus": "server_error",
+        "supervision": "deployment_required",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "degraded",
+        "spendsDem": true,
+        "reasonCodes": [
+          "graduation_markets_live_500",
+          "graduation_markets_table_missing"
+        ],
+        "readbackSurfaces": [
+          "graduation-markets"
+        ],
+        "notes": [
+          "Graduation markets currently return a server error on the read surface, so write intent is blocked before spend."
+        ]
+      },
+      {
+        "family": "commodity",
+        "actionFamily": null,
+        "method": "NONE",
+        "guardrailStatus": "block",
+        "canPlan": false,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": null,
+        "capabilityStatus": "unsupported",
+        "lifecycleStatus": "read_surface_only",
+        "supervision": "unsupported",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "unsupported",
+        "spendsDem": true,
+        "reasonCodes": [
+          "commodity_market_write_not_first_class",
+          "read_surface_only"
+        ],
+        "readbackSurfaces": [
+          "commodity-pool"
+        ],
+        "notes": [
+          "Commodity pools are readable, but no maintained commodity write method or admissible execution path exists yet."
+        ]
+      },
+      {
+        "family": "sports",
+        "actionFamily": null,
+        "method": "NONE",
+        "guardrailStatus": "block",
+        "canPlan": false,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": null,
+        "capabilityStatus": "unsupported",
+        "lifecycleStatus": "read_surface_only",
+        "supervision": "unsupported",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "unsupported",
+        "spendsDem": true,
+        "reasonCodes": [
+          "sports_market_write_not_first_class",
+          "read_surface_only"
+        ],
+        "readbackSurfaces": [
+          "sports-markets",
+          "sports-pool",
+          "sports-winners"
+        ],
+        "notes": [
+          "Sports markets are readable, but no maintained sports write method or admissible execution path exists yet."
+        ]
+      },
+      {
+        "family": "eth-fixed-price",
+        "actionFamily": null,
+        "method": "POST",
+        "guardrailStatus": "degraded",
+        "canPlan": true,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": "/api/bets/eth/pool",
+        "capabilityStatus": "deployment_disabled",
+        "lifecycleStatus": "deployment_blocked",
+        "supervision": "deployment_required",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "degraded",
+        "spendsDem": false,
+        "reasonCodes": [
+          "eth_betting_contract_not_deployed",
+          "live_read_returned_503"
+        ],
+        "readbackSurfaces": [
+          "eth-pool"
+        ],
+        "notes": [
+          "Current host reports ETH betting is not enabled; do not widen spend authority from the DEM fixed-price proof."
+        ]
+      },
+      {
+        "family": "eth-higher-lower",
+        "actionFamily": null,
+        "method": "POST",
+        "guardrailStatus": "degraded",
+        "canPlan": true,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": "/api/bets/eth/hl/pool",
+        "capabilityStatus": "deployment_disabled",
+        "lifecycleStatus": "deployment_blocked",
+        "supervision": "deployment_required",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "degraded",
+        "spendsDem": false,
+        "reasonCodes": [
+          "eth_higher_lower_contract_not_deployed",
+          "live_read_returned_503"
+        ],
+        "readbackSurfaces": [
+          "eth-higher-lower-pool"
+        ],
+        "notes": [
+          "Current host reports ETH higher/lower is not enabled; it remains a deployment-blocked intent only."
+        ]
+      },
+      {
+        "family": "eth-binary",
+        "actionFamily": null,
+        "method": "POST",
+        "guardrailStatus": "degraded",
+        "canPlan": true,
+        "canExecuteNow": false,
+        "noSpendDefault": true,
+        "endpoint": "/api/bets/eth/binary/place",
+        "capabilityStatus": "recovery_only",
+        "lifecycleStatus": "deployment_blocked",
+        "supervision": "manual_recovery",
+        "explicitExecute": "not_supported",
+        "admissibilityStatus": "degraded",
+        "spendsDem": false,
+        "reasonCodes": [
+          "eth_binary_enabled_false",
+          "manual_registration_recovery_only"
+        ],
+        "readbackSurfaces": [
+          "eth-binary-pools"
+        ],
+        "notes": [
+          "The toolkit has an ETH binary registration helper, but live reads report enabled=false; keep it recovery-only."
+        ]
+      }
+    ],
+    "summary": {
+      "allFamiliesPresent": true,
+      "allNoSpendDefault": true,
+      "allLiveExecutionDisabled": true,
+      "explicitExecuteRequiredFamilies": [
+        "fixed-price",
+        "higher-lower"
+      ],
+      "unsupportedFamilies": [
+        "binary",
+        "commodity",
+        "sports"
+      ],
+      "deploymentBlockedFamilies": [
+        "graduation",
+        "eth-fixed-price",
+        "eth-higher-lower",
+        "eth-binary"
+      ],
+      "lifecyclePendingFamilies": [
+        "higher-lower"
+      ]
+    }
+  },
+  "liveEvidence": {
+    "source": "omniweb-agents-spectrum.8 market-read probes",
+    "checkedAt": "2026-05-18T18:58:47Z/2026-05-18T18:59:30Z",
+    "readSurfaceOnly": [
+      "binary",
+      "commodity",
+      "sports"
+    ],
+    "deploymentBlocked": [
+      {
+        "family": "eth-fixed-price",
+        "endpoint": "/api/bets/eth/pool?asset=BTC&horizon=30m",
+        "status": 503,
+        "error": "ETH betting not enabled (contract not deployed)"
+      },
+      {
+        "family": "eth-higher-lower",
+        "endpoint": "/api/bets/eth/hl/pool?asset=BTC&horizon=30m",
+        "status": 503,
+        "error": "ETH Higher/Lower betting not enabled (contract not deployed)"
+      },
+      {
+        "family": "graduation",
+        "endpoint": "/api/bets/graduation/markets?limit=2&status=active",
+        "status": 500,
+        "error": "SqliteError: no such table: graduation_markets"
+      }
+    ]
+  },
+  "contract": {
+    "ownerBead": "omniweb-agents-spectrum.9",
+    "noSpend": true,
+    "noMutation": true,
+    "liveExecution": false,
+    "publicRegistryProof": false,
+    "release": false
+  }
+}

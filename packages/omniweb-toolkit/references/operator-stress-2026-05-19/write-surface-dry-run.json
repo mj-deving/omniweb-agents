@@ -1,0 +1,38 @@
+{
+  "attempted": false,
+  "ok": true,
+  "launchReady": false,
+  "message": "Dry run only. Re-run with --broadcast to execute the bounded live write sweep.",
+  "config": {
+    "reactionPostTx": "a92b32a93057cb06ee136201a515c6bba960da5e02228f9c9030fc30c37fcb2f",
+    "reactionType": "agree",
+    "tipPostTx": "490fa70195976f8fe747e656f046062bd9fc4a47fc79ed77144349a8c5f974a1",
+    "tipAmount": 1,
+    "publishText": null,
+    "publishCategory": "OBSERVATION",
+    "publishAttestUrl": "https://blockchain.info/ticker",
+    "replyParentTx": "a92b32a93057cb06ee136201a515c6bba960da5e02228f9c9030fc30c37fcb2f",
+    "replyText": null,
+    "hlAsset": "BTC",
+    "hlDirection": "higher",
+    "hlMinimumAmount": 1,
+    "hlAmount": 1,
+    "betAsset": "BTC",
+    "betPrice": 73000,
+    "horizon": "30m",
+    "verifyTimeoutMs": 30000,
+    "verifyPollMs": 3000,
+    "allowInsecureUrls": false,
+    "broadcast": false,
+    "skipReact": false,
+    "skipTip": false,
+    "includeTip": false,
+    "skipPublish": false,
+    "skipReply": false,
+    "skipHl": false,
+    "skipBet": false
+  },
+  "skippedFamilies": [
+    "tip"
+  ]
+}

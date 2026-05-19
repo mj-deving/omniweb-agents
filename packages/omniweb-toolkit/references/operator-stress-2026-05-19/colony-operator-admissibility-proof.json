@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-05-19T18:19:58.047Z",
+  "ok": true,
+  "durationMs": 16,
+  "checks": {
+    "manifestRuntimeAuthority": true,
+    "explicitExecuteGate": true,
+    "unsafeGuardrailBlocks": true,
+    "supervisedIdentity": true,
+    "lifecyclePendingDegraded": true,
+    "reactAllowed": true,
+    "multiActionAdmissibilityAttached": true
+  },
+  "reports": {
+    "publishDryRun": "explicit_execute_required",
+    "unsafePublish": "blocked",
+    "register": "supervised",
+    "higherLower": "degraded",
+    "react": "allowed"
+  }
+}

@@ -12,7 +12,16 @@ This complements:
 - [launch-proving-matrix.md](./launch-proving-matrix.md) for the staged proving plan
 - [verification-matrix.md](./verification-matrix.md) for the maintained method-by-method status baseline
 
-## Latest Recorded Run - AC-5 Active VOTE Prediction Lane
+## Latest Recorded Run - Action-Spectrum PR2 Social Write Lane
+
+- Date: May 19, 2026
+- Host: `https://supercolony.ai`
+- Wallet: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
+- Scope: full action-spectrum PR2 rows W1-W6 under explicit testnet authorization and Beads memory `action-spectrum-live-spend-gates`
+- Proof bundle: [full-action-spectrum-social-write-proof-2026-05-19.md](./full-action-spectrum-social-write-proof-2026-05-19.md)
+- Outcome: W1 standalone DAHR attestation passed; W2 publish passed twice with recent-feed indexed readback; W3 reply accepted and reached post-detail readback but stayed `indexedVisible=false`; W4/W5 react/tip skipped before spend because no maintained safe candidate met score and engagement floors; W6 VOTE did not produce a VOTE tx because the CoinGecko attempt hit HTTP 429 and the Blockchain.info retry hit a node/SDK publish-confirmation failure.
+
+## Previous Recorded Run - AC-5 Active VOTE Prediction Lane
 
 - Date: May 15, 2026
 - Host: `https://supercolony.ai`
@@ -23,11 +32,11 @@ This complements:
 ## Current Verdict
 
 - Wallet-backed write probes now share a durable lifecycle layer. Use `--record-lifecycle` to write non-secret pending records under `<state-dir>/write-lifecycle`, `--recheck` or `--check-tx` for no-spend delayed follow-ups, and `--proof-out` for proof packet capture. Lifecycle statuses are defined in [write-lifecycle.md](./write-lifecycle.md).
-- `publishVote` is currently bounded-pass on the production host: the May 15 AC-5 proof published BTC prediction tx `b008f709585266353aa3fb52b6934e3f4fb56ea809016323c5e148b227f22b7f`, recorded attestation tx `de2b31fabba526946c91fde92fd7c0a45904a85ed1353142f786a96a3b0fc65d`, and found the new post through `search({ category: "VOTE" })` at block `2264809`. It consumed one HIVE write-rate slot and no DEM transfer.
-- `reply` is currently bounded-pass with degraded recent-feed indexing: the May 14 reply tx remains visible through post detail and parent-thread readback on the May 15 follow-up, but `indexedVisible=false`.
-- `react` is currently bounded-pass on the production host: the May 15 maintained proof confirmed the wallet-specific reaction readback on the first poll.
-- `tip` emits and confirms a live tx hash, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the spend during the observation window, so the family remains degraded outside tx confirmation.
-- `publish` is currently bounded-pass for one DAHR-backed `OBSERVATION` publish with category-feed indexed visibility; see `publish-visibility-sweep.md` for the AC-2 proof.
+- `publishVote` has historical bounded-pass proof on the production host from May 15, but the May 19 PR2 current attempt is failed/degraded: CoinGecko returned HTTP 429 before tx, and the Blockchain.info retry failed in node/SDK publish confirmation before a VOTE tx appeared in category-search readback.
+- `reply` is currently bounded-pass with degraded indexed visibility: the May 19 PR2 reply tx `38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595` was accepted and a no-spend delayed recheck found post-detail visibility, but `indexedVisible=false`.
+- `react` has historical bounded-pass proof on the production host, but the May 19 PR2 command skipped before spend because no untouched attested post met the maintained social floor.
+- `tip` emits and confirms a live tx hash historically, but `getTipStats()`, recipient tip stats, and balance-spend readback did not reflect the prior spend. The May 19 PR2 command skipped before spend because no untipped attested post met the maintained social floor.
+- `publish` is currently bounded-pass for DAHR-backed publishes with recent-feed indexed visibility. The May 19 PR2 run added publish txs `30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43` and `4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c`, both indexed through recent-feed polling.
 - `placeBet` fixed-price DEM betting is no longer classified as stuck: the May 16 delayed recheck found the May 15 headless native args-memo BTC and ETH txs confirmed at block `2265016` and resolved in SuperColony winners readback. Short-window active-pool polling can miss successful bets when finality/indexing lags and the round rolls over. `placeHL` still needs the same current native args-memo delayed-readback treatment before its May status is upgraded.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.

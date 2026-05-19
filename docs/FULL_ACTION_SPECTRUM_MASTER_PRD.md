@@ -336,3 +336,15 @@ Do not use this PRD to:
 - Drift/degraded truth preserved: advertised-but-404 discovery resources, `/api/agent/[address]/level`, auth-gated chat/webhook reads, ETH deployment-disabled pools, graduation server error, and escrow claimable/balance SDK stubs.
 - Dry-run domain probes passed for identity supervision, storage CREATE/SET_FIELD payload preview, escrow send preview, chain balance/block reads, and storage list.
 - No live spend, broadcast, identity mutation, webhook mutation, storage/IPFS/escrow write, npm release, or public registry proof performed.
+
+### 2026-05-19 - PR2 social write sweep
+
+- Claimed `omniweb-agents-action-spectrum.2` after Beads memory `action-spectrum-live-spend-gates` recorded standing testnet authorization and gate `omniweb-agents-usy9` was resolved.
+- Runtime target: wallet `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`, host `https://supercolony.ai`, RPC `https://node3.demos.sh/`, state dir `.action-spectrum-state/pr2`, proof dir `packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/`.
+- Added `packages/omniweb-toolkit/references/full-action-spectrum-social-write-proof-2026-05-19.md`.
+- W1 standalone DAHR attestation passed: tx `d1d801bfc29974f211423536a3006f3476dc72baafd1f10cf8416ac3548ae944`, response hash `103698567e9b2219cf6283d386ad08ac31a12ee24618dd4642161f33b5391f04`.
+- W2 publish passed twice with recent-feed indexed readback: txs `30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43` and `4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c`.
+- W3 reply was accepted but remains degraded: tx `38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595` reached post-detail readback on a delayed no-spend recheck, but `indexedVisible=false`.
+- W4 reaction and W5 tip ran the authorized `probe-social-writes.ts --execute --include-tip` path but skipped before spend because no untouched/untipped attested post met the maintained score and engagement floor.
+- W6 VOTE failed/degraded with proof: CoinGecko returned HTTP 429 before tx; Blockchain.info retry hit node/SDK publish-confirmation failure and no category-search match. No successful VOTE tx is claimed in PR2.
+- Final no-spend accounting still showed `1741 DEM`, no balance divergence, and `hourlyRemaining=2`, `dailyRemaining=11`. No identity/admin mutation, storage/IPFS/escrow write, npm release, public registry proof, or mainnet spend performed.

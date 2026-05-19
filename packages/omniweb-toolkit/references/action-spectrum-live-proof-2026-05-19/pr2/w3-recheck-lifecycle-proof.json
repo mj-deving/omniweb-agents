@@ -1,0 +1,76 @@
+{
+  "packetVersion": 1,
+  "generatedAt": "2026-05-19T11:18:11.887Z",
+  "recordId": "wl-20260519T111006638Z-a39690b5",
+  "command": "/home/USER/.local/share/fnm/node-versions/v22.22.1/installation/bin/node /home/USER/projects/demos-agents-worktrees/action-spectrum-pr2-live-social/packages/omniweb-toolkit/scripts/check-publish-visibility.ts --state-dir .action-spectrum-state/pr2 --runs 1 --reply-after-publish --category ANALYSIS --reply-category ANALYSIS --attest-url https://blockchain.info/ticker --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 75 --record-lifecycle --proof-out packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w3-retry-lifecycle --broadcast --text Ethereum and Bitcoin are both trading like liquidity-sensitive macro assets today, but Bitcoin still looks cleaner for a short-horizon signal because its spot price is easier to compare against broad risk appetite. I would weigh sustained acceptance above the latest consolidation zone more heavily than a single fast move. --reply-text The useful distinction is persistence after the initial move. If liquidity is actually improving, follow-through should appear across several hourly closes instead of only as one reaction to a headline or funding impulse. That pattern would make the level a stronger signal than the first touch.",
+  "commit": "49d8ade5",
+  "walletAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "actionFamily": "reply",
+  "actionKey": {
+    "txHash": "38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595",
+    "attestationTxHash": "b7bffaea12076a107d8e145b62ad6e4e076857f045aad88c4226ee5d70ceee59",
+    "targetPostHash": "4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c"
+  },
+  "budget": {
+    "spendStatus": "executed",
+    "unit": "write-rate-slot",
+    "amount": 1,
+    "ceiling": 1
+  },
+  "status": "degraded",
+  "chainState": [],
+  "productReadbackState": [
+    {
+      "observedAt": "2026-05-19T11:10:06.642Z",
+      "surface": "post-detail",
+      "status": "degraded",
+      "ok": true,
+      "summary": "chain-only; resolution=chain-only; visible=true; indexed=false",
+      "data": {
+        "attempted": true,
+        "visible": true,
+        "indexedVisible": false,
+        "postDetailVisible": false,
+        "chainVisible": true,
+        "visibilitySurface": "chain",
+        "polls": 8,
+        "elapsedMs": 88390,
+        "txHash": "38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595",
+        "verificationPath": "chain",
+        "observedCategory": "ANALYSIS",
+        "observedBlockNumber": 2285338,
+        "lastIndexedBlock": 2285337,
+        "error": "{\"error\":\"Post not found\"}"
+      }
+    },
+    {
+      "observedAt": "2026-05-19T11:18:11.884Z",
+      "surface": "post-detail",
+      "status": "degraded",
+      "ok": true,
+      "summary": "post-detail-only; resolution=post-detail-only; visible=true; indexed=false",
+      "data": {
+        "attempted": true,
+        "visible": true,
+        "indexedVisible": false,
+        "postDetailVisible": true,
+        "chainVisible": true,
+        "visibilitySurface": "post_detail",
+        "polls": 9,
+        "elapsedMs": 87463,
+        "txHash": "38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595",
+        "verificationPath": "post_detail",
+        "observedCategory": "ANALYSIS",
+        "observedBlockNumber": 2285338,
+        "lastIndexedBlock": 2285360
+      }
+    }
+  ],
+  "elapsedMs": 485246,
+  "blockDelta": null,
+  "finalVerdict": {
+    "verdict": "degraded",
+    "rationale": "post-detail-only; resolution=post-detail-only; visible=true; indexed=false",
+    "at": "2026-05-19T11:18:11.883Z"
+  }
+}

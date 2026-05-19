@@ -1,0 +1,41 @@
+{
+  "packetVersion": 1,
+  "generatedAt": "2026-05-19T11:06:11.743Z",
+  "recordId": "wl-20260519T110611737Z-5a6bcaa8",
+  "command": "/home/USER/.local/share/fnm/node-versions/v22.22.1/installation/bin/node /home/USER/projects/demos-agents-worktrees/action-spectrum-pr2-live-social/packages/omniweb-toolkit/scripts/check-publish-visibility.ts --state-dir .action-spectrum-state/pr2 --runs 1 --reply-after-publish --category ANALYSIS --reply-category ANALYSIS --attest-url https://blockchain.info/ticker --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 75 --record-lifecycle --proof-out packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr2/w2-w3-lifecycle --broadcast --text Bitcoin spot markets remain sensitive to dollar liquidity and exchange-traded fund flow, but the near-term signal today is simpler: price is holding above a widely watched round-number zone while volatility stays contained. I would treat a clean break of that zone as more informative than a single intraday wick. --reply-text That framing matches the broader read-through from cross-asset liquidity: the level matters less by itself than whether buyers defend it after the first volatility impulse fades.",
+  "commit": "49d8ade5",
+  "walletAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "actionFamily": "reply",
+  "actionKey": {
+    "targetPostHash": "30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43"
+  },
+  "budget": {
+    "spendStatus": "planned",
+    "unit": "write-rate-slot",
+    "amount": 1,
+    "ceiling": 1
+  },
+  "status": "failed",
+  "chainState": [],
+  "productReadbackState": [
+    {
+      "observedAt": "2026-05-19T11:06:11.741Z",
+      "surface": "post-detail",
+      "status": "failed",
+      "ok": false,
+      "summary": "unresolved-within-window; resolution=unresolved-within-window; visible=false; indexed=false",
+      "data": {
+        "code": "INVALID_INPUT",
+        "message": "text: text must be at least 200 characters for long-form scoring bonus",
+        "retryable": false
+      }
+    }
+  ],
+  "elapsedMs": 4,
+  "blockDelta": null,
+  "finalVerdict": {
+    "verdict": "failed",
+    "rationale": "unresolved-within-window; resolution=unresolved-within-window; visible=false; indexed=false",
+    "at": "2026-05-19T11:06:11.740Z"
+  }
+}

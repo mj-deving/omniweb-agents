@@ -378,3 +378,11 @@ Do not use this PRD to:
 - D2/D4/D6 are blocked/degraded because no PR5-owned escrow, storage program, or CID exists. Escrow query wrappers returned `Method not implemented`; storage readback returned `Storage program not found`, `hasField=false`, and `readField=null`.
 - D8 chain sign/read is degraded partial: `getBalance=1000`, `getBlockNumber=2285764`, and `signMessage` produced a redacted signature object, but `verifyMessage` returned `false`.
 - Maintained domain probes currently lack `--agent-name` / `--env-path`, so PR5 records their configured-wallet dry-runs as a script-targeting gap and uses a targeted `connect({ agentName })` report for throwaway-wallet proof.
+
+### 2026-05-19 - PR6 action-spectrum closeout and release gating
+
+- Claimed `omniweb-agents-action-spectrum.6` after PR5 merged and added `packages/omniweb-toolkit/references/full-action-spectrum-closeout-2026-05-19.md`.
+- Reconciled every matrix row from `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`: R1-R10 and H1-H3 are no-spend read/helper rows proven or explicitly degraded by PR1; W1/W2/W7/W8 passed; W3/D4/D8 are degraded; W4/W5 skipped before spend in the current run; W6 failed/degraded in the current run with historical proof retained; W9 is degraded/unsupported; W10/I3/A1/D1-D3/D5-D7 are blocked or unsupported with named reasons.
+- Updated `verification-matrix.md`, `launch-proving-matrix.md`, `write-surface-sweep.md`, package README references, and roadmap status so closeout is no longer a future gap.
+- Release posture remains explicitly gated: PR6 did not run `npm publish`, did not claim public registry install proof, `check:package` and `check:release` passed, and `check:publish` reported `ready_to_publish_but_not_authorized`.
+- Follow-up beads remain open for the non-green edges: `omniweb-agents-km3g` for configured-wallet restore and identity probe targeting, `omniweb-agents-vhat` for domain probe targeting plus chain sign/verify classification, `omniweb-agents-xdq` for TLSN relay proof, and `omniweb-agents-028` for npm release/public registry proof.

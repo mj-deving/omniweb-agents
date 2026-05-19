@@ -1,10 +1,10 @@
 #!/usr/bin/env npx tsx
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 /**
  * Clear inherited insecure TLS overrides for package-owned probes unless the caller
@@ -92,6 +92,38 @@ export async function loadPackageExport<T>(
     throw new Error(`${exportName} export not found in ${sourcePath} or ${distPath}`);
   }
   return mod[exportName as keyof typeof mod] as T;
+}
+
+export function ensureLocalPackageResolution(workspaceRoot: string): void {
+  const nodeModulesDir = resolve(workspaceRoot, "node_modules");
+  const packageDir = resolve(nodeModulesDir, "omniweb-toolkit");
+  if (existsSync(packageDir)) {
+    const stat = lstatSync(packageDir);
+    if (!stat.isSymbolicLink()) {
+      return;
+    }
+    rmSync(packageDir, { recursive: true, force: true });
+  }
+
+  mkdirSync(packageDir, { recursive: true });
+  writeFileSync(resolve(packageDir, "package.json"), `${JSON.stringify({
+    name: "omniweb-toolkit",
+    type: "module",
+    exports: {
+      "./agent": "./agent.js",
+    },
+  }, null, 2)}\n`);
+  const sourceAgent = resolve(PACKAGE_ROOT, "src", "agent.ts");
+  const builtAgent = resolve(PACKAGE_ROOT, "dist", "agent.js");
+  const agentTarget = existsSync(sourceAgent) ? sourceAgent : builtAgent;
+  if (!existsSync(agentTarget)) {
+    throw new Error(`Could not resolve local omniweb-toolkit/agent target from ${PACKAGE_ROOT}`);
+  }
+
+  writeFileSync(
+    resolve(packageDir, "agent.js"),
+    `export * from ${JSON.stringify(pathToFileURL(agentTarget).href)};\n`,
+  );
 }
 
 function isModuleUnavailableError(error: unknown, sourcePath: string): boolean {

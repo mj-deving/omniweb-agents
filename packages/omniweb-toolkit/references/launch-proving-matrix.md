@@ -319,6 +319,12 @@ Current recorded result from May 15, 2026:
 - npm auth: fail, because `npm whoami --registry https://registry.npmjs.org` returned `Not authenticated with npm registry`
 - implication: npm/registry readiness is blocked only on publishing-environment auth. This does not weaken AC-1 through AC-8 launch-proof verdicts, and it should not be represented as a package-structure or journey failure.
 
+Current action-spectrum closeout from May 19, 2026:
+
+- full row reconciliation: [full-action-spectrum-closeout-2026-05-19.md](./full-action-spectrum-closeout-2026-05-19.md)
+- release status: no npm release authorization, no public registry install proof, and no publish command executed
+- implication: the package has a reconciled operation matrix, but public-registry onboarding remains blocked until explicit release authorization and npm auth exist.
+
 ## Launch Decision Gates
 
 Do not present the repo as "usable now" for a given action family unless:

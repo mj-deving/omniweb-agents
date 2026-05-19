@@ -110,12 +110,14 @@ The colony-operator proof surface now also exposes one lifecycle-aware capabilit
 
 These are the next proving targets because they matter most for agent quality or money movement:
 
-1. `reply`
-2. `react`
-3. `tip`
-4. `attestTlsn`
-5. production-host proof for the current dev-only mirrors
-6. **market-write end-to-end operator workflow** — fixed-price and higher/lower runtime probes now have product readback, but a spend-bearing full operator-starter BET path is still not claimed
-7. **full action-spectrum closeout** — every read/write/mutation/domain row should be reconciled through `full-action-spectrum-testing-matrix.md` before making a broad "we can do any operation" claim
+1. `reply` recent-feed indexing: PR2 found delayed post-detail visibility, but `indexedVisible=false`.
+2. `react` current-candidate proof: PR2 skipped before spend because no untouched attested post met the maintained floor; historical bounded proof remains valid package evidence.
+3. `tip` current-candidate proof and stats convergence: PR2 skipped before spend, and historical tip stats/balance readback remains degraded.
+4. `publishVote` current VOTE proof: PR2 did not produce a VOTE tx, although historical May 15 bounded VOTE proof remains valid package evidence.
+5. `attestTlsn`: still blocked behind a dedicated TLSN relay/runtime proof path.
+6. production-host proof for the current dev-only mirrors.
+7. **market-write end-to-end operator workflow** — fixed-price and higher/lower runtime probes now have product readback, but a spend-bearing full operator-starter BET path is still not claimed.
+8. **identity/domain script targeting** — `omniweb-agents-km3g` and `omniweb-agents-vhat` track explicit throwaway targeting for identity, escrow, storage, and IPFS probes before future mutation/broadcast runs.
+9. **domain writes with explicit budgets** — PR5 produced concrete dry-run payloads, but escrow, storage, IPFS, pin/unpin, and raw transfer remain blocked until a later bounded budget/target/cleanup gate is recorded.
 
-The market-write gap (formerly items 4-5) now has local-runtime proof. The remaining gap is operator workflow integration.
+The full action-spectrum closeout itself is complete in [full-action-spectrum-closeout-2026-05-19.md](./full-action-spectrum-closeout-2026-05-19.md). That closeout reconciles every row as proven, degraded, unsupported, blocked, failed, or skipped; it does not claim that every operation is currently green.

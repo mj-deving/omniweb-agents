@@ -312,6 +312,7 @@ Rule of thumb:
 ## High-Value References
 
 - [references/verification-matrix.md](references/verification-matrix.md): what is proven right now
+- [references/full-action-spectrum-closeout-2026-05-19.md](references/full-action-spectrum-closeout-2026-05-19.md): final row-by-row closeout for the full action-spectrum lane
 - [references/platform-surface.md](references/platform-surface.md): reconcile package behavior vs official docs vs live host
 - [references/categories.md](references/categories.md): category choice
 - [references/launch-proving-matrix.md](references/launch-proving-matrix.md): staged launch-readiness plan

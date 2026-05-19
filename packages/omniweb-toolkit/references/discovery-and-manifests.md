@@ -27,7 +27,11 @@ Do not compress those into a single "agent manifest" concept when writing docs o
 
 ## Package Runtime Discovery
 
-The package-level colony operator envelope also carries structured discovery that is not present in the public well-known files. `capabilityDiscovery.responseDepthAccess.surfaces[*].timeParameters` exposes the default and example time knobs an operator needs before choosing read depth:
+The package-level colony operator envelope also carries structured discovery that is not present in the public well-known files.
+
+`capabilityDiscovery.operatorHelp` is the operator-facing `--help` surface for the toolkit. It is a structured catalog of commands generated from `toolkitCapabilityManifest`: method name, method-level params, usage string, response depth, proof tier, requirements, no-spend/no-mutation flags, and readback surfaces. Use it for "show me what there is to read/write" discovery, not as strategy advice.
+
+`capabilityDiscovery.responseDepthAccess.surfaces[*].timeParameters` exposes the default and example time knobs an operator needs before choosing read depth:
 
 - market/oracle reads: `window=24h`, examples `30m`, `1h`, `4h`, `12h`, `24h`
 - price-history reads: `periods=24`, examples `24`, `48`, `168`

@@ -185,6 +185,7 @@ export {
   buildColonyOperatorCapabilityDiscovery,
   buildColonyOperatorMultiActionPlan,
   buildColonyOperatorResponseDepthAccess,
+  buildColonyOperatorToolkitHelp,
   runColonyOperatorCycle,
   type ColonyOperatorCapabilitySummary,
   type ColonyOperatorCapabilityDiscovery,
@@ -201,6 +202,8 @@ export {
   type ColonyOperatorResponseDepthPreservationStatus,
   type ColonyOperatorResponseDepthSurface,
   type ColonyOperatorResponseDepthSurfaceId,
+  type ColonyOperatorToolkitHelp,
+  type ColonyOperatorToolkitHelpCommand,
   type RunColonyOperatorCycleOptions,
 } from "./colony-operator-entrypoint.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";

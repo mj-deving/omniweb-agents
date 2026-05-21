@@ -25,8 +25,8 @@ No mainnet operation, real-money operation, npm release, public registry proof, 
 | AC-L5 identity/profile mutation | SKIPPED | No identity/profile mutation was rerun in this slice. Configured-wallet restore was already proven by PR #464; this tranche avoided unnecessary profile cooldown churn. |
 | AC-L6 social mutation | DEGRADED | Social write dry-runs over 20 and 80 feed items found no untouched target meeting the maintained proof floor, so no react/reply mutation was broadcast. |
 | AC-L7 domain/chain mutation | SKIPPED | Escrow/storage/IPFS/raw-chain live probes were not part of this first live tranche slice. Prior targeting blockers remain resolved by PR #463. |
-| AC-L8 budget ledger | GREEN | Tranche spend is `5 / 25` testnet DEM. No repeat spend ran after the first BET. |
-| AC-L9 closeout | PARTIAL | This report and proof packet close the first live slice. The broader tranche should continue only after the BET readback fix in this branch lands. |
+| AC-L8 budget ledger | GREEN | Tranche nominal spend is `10 / 25` testnet DEM across the fixed-price BET and HL BET. Observed balance delta across the HL operation was `6`, while the requested pool amount was `5`. |
+| AC-L9 closeout | PARTIAL | This report and proof packets close the fixed-price and HL live slices. Remaining tranche families should continue one operation at a time from fresh `main`. |
 
 ## Live Operation Record
 
@@ -48,6 +48,25 @@ The authoritative readback is the no-spend recheck proof, not the initial execut
 
 The same fix also redacts local executable/proof/env paths from persisted lifecycle command strings. The committed proof command is repo-relative and contains no local credential path.
 
+## Higher/Lower Operation Record
+
+After PR #466 landed the fixed-price readback hardening, a second live operation was run through the maintained `probe-market-writes.ts --only hl` path.
+
+| Field | Value |
+| --- | --- |
+| Operation | higher/lower BET |
+| Amount | `5` testnet DEM |
+| Observed balance delta | `6` |
+| Asset / horizon | BTC / `24h` |
+| Direction | `lower` |
+| Pool | `0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42` |
+| Tx | `5ccfd73ad106c26507234a762488b0f337d6fdf16e5e07eea0839b7fd88e30d5` |
+| Readback | higher/lower pool moved from `totalLower=0`, `lowerCount=0`, `totalDem=0` to `totalLower=5`, `lowerCount=1`, `totalDem=5` |
+| Preview proof | `hl-preview-stdout.json` |
+| Execute proof | `hl-execute-proof.json` |
+
+The raw execute stdout was not committed because SDK diagnostics printed private diagnostic material before the JSON report. The maintained market-write probe now suppresses SDK `console.log` diagnostics around live `placeHL` and `placeBet` calls, and the committed HL proof is sanitized to preserve only operation, budget, tx, and readback fields.
+
 ## Verification Commands
 
 ```bash
@@ -55,8 +74,10 @@ npm --prefix packages/omniweb-toolkit run check:colony-operator-admissibility
 npm --prefix packages/omniweb-toolkit run check:market-write-intents
 npm --prefix packages/omniweb-toolkit run check:colony-operator-multi-action-plan
 node --import tsx packages/omniweb-toolkit/scripts/probe-agentic-memo-bet.ts --asset BTC --horizon 30m --predicted-price 90000 --amount 5 --check-tx 8106af43beb489eb747e7e11e82d3156ffcdee39e5a2722d143c3dd0729bf7fe --bettor 0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b --timeout-ms 90000 --poll-ms 5000 --record-lifecycle --proof-out packages/omniweb-toolkit/references/testnet-live-write-tranche-2026-05-21/bet-fixed-recheck-8106.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts --only hl --assets BTC,ETH,SOL --hl-timeout-ms 60000 --poll-ms 5000
+node --import tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts --only hl --assets BTC,ETH,SOL --hl-timeout-ms 60000 --poll-ms 5000 --execute
 ```
 
 ## Stop Condition
 
-The run stopped after the first live spend because the first readback path revealed a proof-script false-positive risk. Further live spend should resume after this branch lands, so future tranche operations use the corrected exact-tx-first and same-round fallback readback logic.
+The first slice stopped after the fixed-price BET because the first readback path revealed a proof-script false-positive risk. After PR #466 landed that fix, the next slice ran one HL BET and stopped because the raw execute path exposed SDK diagnostic output that should not be committed. Further live spend should resume after the market-write diagnostic suppression in this branch lands.

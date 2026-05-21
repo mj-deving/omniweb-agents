@@ -133,6 +133,7 @@ if (recheckId) {
       status: txHash ? "broadcasted" : "planned",
       metadata: { recheckOnly: true },
     });
+  const recheckTarget = buildVoteTargetFromLifecycleRecord(baseRecord, voteTarget);
   const updated = await lifecycleStore!.update(baseRecord.id, {
         status,
         transitionReason: readbackCheck.found ? "VOTE category search matched tx" : "VOTE category search recheck expired",
@@ -162,7 +163,7 @@ if (recheckId) {
     broadcast: false,
     mode: "lifecycle-recheck",
     rpcSelection,
-    target: voteTarget,
+    target: recheckTarget,
     txHash,
     readback: readbackCheck,
     lifecycle: {
@@ -191,6 +192,7 @@ if (broadcast) {
         commit: readCurrentGitCommit(),
         budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: "planned" },
         asset,
+        predictedPrice,
         expectedReadback: ["category-search"],
         nextRecheck: { afterMs: verifyTimeoutMs, policy: "short-window" },
         metadata: { confidence, referencePrice, predictedPrice, attestUrl },
@@ -592,6 +594,34 @@ function redactRuntimeCommand(argv: string[]): string {
     out.push(part);
   }
   return out.join(" ");
+}
+
+type VoteTarget = typeof voteTarget;
+
+function buildVoteTargetFromLifecycleRecord(
+  record: {
+    asset?: unknown;
+    predictedPrice?: unknown;
+    metadata?: Record<string, unknown>;
+  } | null,
+  fallback: VoteTarget,
+): VoteTarget {
+  const metadata = record?.metadata ?? {};
+  return {
+    asset: typeof record?.asset === "string" && record.asset.trim() ? record.asset.trim().toUpperCase() : fallback.asset,
+    predictedPrice: numberOrNull(record?.predictedPrice ?? metadata.predictedPrice ?? fallback.predictedPrice),
+    referencePrice: numberOrNull(metadata.referencePrice ?? fallback.referencePrice),
+    confidence: numberOrFallback(metadata.confidence, fallback.confidence),
+    attestUrl: typeof metadata.attestUrl === "string" ? metadata.attestUrl : fallback.attestUrl,
+  };
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function numberOrFallback(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
 async function withSuppressedConsoleLog<T>(operation: () => Promise<T>): Promise<T> {

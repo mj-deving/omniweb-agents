@@ -1,10 +1,10 @@
 ---
 type: goal-launch
-status: blocked-after-no-spend-pass
+status: live-tranche-ready-after-safety-closeout
 created: 2026-05-19
 source_contract: docs/ROADMAP.md#phase-23-colony-operator-capability-stress-test-and-goalmode-readiness
 owner_bead: omniweb-agents-operator-stress
-summary: "Long-running GoalMode launch packet for colony operator capability stress-test and write-preview readiness."
+summary: "Long-running GoalMode launch packet for colony operator capability stress-test and write-preview readiness, with follow-on testnet live-write tranche prepared."
 ---
 
 # Colony Operator Stress-Test GoalMode Packet
@@ -17,17 +17,17 @@ Default mode is read-only plus write previews. Live writes are not part of the f
 
 ## Run Status
 
-Status as of PR #460 merge on 2026-05-19:
+Status as of the May 21, 2026 testnet live-write preparation:
 
 - AC-1: complete. PR #458 created the Beads graph, GoalMode packet, dependency wiring, Roadmap state, and re-entry mirror updates.
 - AC-2: complete. PR #459 captured `operator-help-dump.json` with 120 commands, 92 reads, and 28 writes.
 - AC-3: complete. PR #459 captured `read-command-matrix.json`: 48 green, 33 thin, 6 auth-gated, 5 degraded, and 0 missing-param/dev-only/broken read rows.
 - AC-4: complete with degraded evidence. Maintained read checks passed, and targeted horizon samples recorded 30m/4h/24h pool horizons passing while sampled 1h/12h fixed and higher/lower pool horizons returned HTTP 400.
 - AC-5: complete. PR #460 captured proposed action packets for all 28 write commands with no spend, no mutation, no broadcast, and live gates on every row.
-- AC-6: STUCK/BLOCKED. `omniweb-agents-km3g` remains open, so identity/profile mutation and configured-wallet restore are not part of this default pass.
-- AC-7: STUCK/BLOCKED. `omniweb-agents-vhat` remains open, so escrow/storage/IPFS/raw-chain live probes are not part of this default pass.
-- AC-8: BLOCKED. `omniweb-agents-operator-stress.5` remains open and blocked until `.3`, `.4`, `km3g`, `vhat`, and explicit live-write approval are all satisfied.
-- AC-9: in closeout. `omniweb-agents-operator-stress.6` owns this final status propagation.
+- AC-6: complete for the next tranche. `omniweb-agents-km3g` closed via PR #462, and the configured/default wallet restore follow-up `omniweb-agents-wck6` closed via PR #464.
+- AC-7: complete for the next tranche. `omniweb-agents-vhat` closed via PR #463 with explicit escrow/storage/IPFS targeting and chain sign/verify proof.
+- AC-8: ready for bounded testnet execution. `omniweb-agents-operator-stress.5` remains the owner bead; the follow-on launch packet is `docs/goalmode/testnet-live-write-tranche-2026-05-21.md`.
+- AC-9: no-spend closeout is complete via `omniweb-agents-operator-stress.6`; the live tranche must produce its own closeout after execution.
 
 Proof directory:
 
@@ -39,9 +39,10 @@ Proof directory:
 - Use Beads as the durable execution ledger.
 - Owner epic: `omniweb-agents-operator-stress`.
 - Current discovery surface: `capabilityDiscovery.operatorHelp`.
-- Current safety blockers:
-  - `omniweb-agents-km3g` blocks identity/profile mutation and configured-wallet cleanup.
-  - `omniweb-agents-vhat` blocks escrow/storage/IPFS/raw-chain live probes.
+- Safety closeout:
+  - `omniweb-agents-km3g` closed via PR #462 with explicit identity probe targeting.
+  - `omniweb-agents-vhat` closed via PR #463 with explicit domain probe targeting.
+  - `omniweb-agents-wck6` closed via PR #464 with configured/default wallet profile restore readback.
 
 Do not record secrets, mnemonics, signatures, tokens, private URLs, or local credential paths in docs, proof packets, or Beads.
 
@@ -87,7 +88,7 @@ Evidence target: `omniweb-agents-vhat` is closed with proof, or this lane record
 
 AC-8. Optional live-write tranche is gated.
 
-Evidence target: `omniweb-agents-operator-stress.5` remains blocked until AC-3 through AC-7 are complete, degraded, or STUCK. Any live write must have explicit review/approval, active child bead, budget or mutation target, exact command with `--execute`, `--broadcast`, or equivalent flag, and product readback proof. Tx confirmation alone is not success.
+Evidence target: `omniweb-agents-operator-stress.5` remains the active live-write owner until the tranche closes. The May 21 packet records the user's broad approval for bounded testnet live operations without per-operation human prompts. Any live write must still have an active child bead/run record, budget or mutation target, exact command with `--execute`, `--broadcast`, `--confirm-identity-mutation`, or equivalent flag, and product readback proof. Tx confirmation alone is not success.
 
 AC-9. Final report and ledger closeout.
 
@@ -100,7 +101,7 @@ Evidence target: final report updates Roadmap/Beads with what is green, thin, mi
 3. `omniweb-agents-operator-stress.2`: read-surface stress run.
 4. `omniweb-agents-operator-stress.3`: write-preview proposed action packets.
 5. `omniweb-agents-operator-stress.4`: credential/profile safety blocker wiring.
-6. `omniweb-agents-operator-stress.5`: optional reviewed live-write tranche.
+6. `omniweb-agents-operator-stress.5`: bounded testnet live-write tranche using `docs/goalmode/testnet-live-write-tranche-2026-05-21.md`.
 7. `omniweb-agents-operator-stress.6`: final closeout and blocked/STUCK propagation.
 
 Dependency shape:
@@ -142,10 +143,10 @@ Stop and record `STUCK` after three failed attempts on the same blocker when the
 
 Stop immediately before:
 
-- spending DEM without an explicit active child-bead budget
+- spending DEM outside the May 21 testnet live-write packet budget or outside a more specific active child-bead budget
 - using a local credential path in docs or Beads
 - mutating a long-lived identity/profile without a controlled target and cleanup/readback plan
-- running domain writes while `omniweb-agents-vhat` remains open
+- running domain writes without explicit target/readback proof from the maintained probe path
 - treating tx confirmation as product success without product readback
 - skipping Codex/GitHub review gates for PR landing
 
@@ -203,19 +204,22 @@ Execute `omniweb-agents-operator-stress` end to end from `docs/goalmode/colony-o
 
 Keep Beads as the durable execution ledger. Continue across AC-1 through AC-9 until every anchor has evidence, an explicit DEGRADED verdict, or a STUCK note after three repeated failed attempts on the same blocker. Do not stop at AC-1 or the first successful read pass.
 
-Default to read-only plus write previews. Do not spend DEM, broadcast, mutate identity/profile, create/delete webhooks, write escrow/storage/IPFS/raw-chain state, publish to npm, claim public registry proof, or claim production hosted activation unless the active child bead explicitly authorizes that operation with budget, controlled target, exact command flag, and readback criteria.
+The default no-spend pass is complete. For the follow-on live tranche, use `docs/goalmode/testnet-live-write-tranche-2026-05-21.md`: the user has granted broad approval for bounded testnet live operations without per-operation human approval prompts. Keep explicit script flags mandatory, keep the packet budget, run one operation at a time, and require product readback.
 
 Start from fresh `origin/main`, run `bd dolt pull || true`, inspect `bd ready --json`, claim the next unblocked `omniweb-agents-operator-stress.*` child, branch one PR-sized slice, run the smallest meaningful validation, open a PR, inspect CI and Codex review, update Beads with proof paths, and push Beads after durable state changes.
 
-Hard blockers:
-- `omniweb-agents-km3g` blocks identity/profile mutation and configured-wallet restore work.
-- `omniweb-agents-vhat` blocks escrow/storage/IPFS/raw-chain live probes.
+Hard boundaries:
+- no mainnet or real-money operations
+- no npm release, public registry proof, or production hosted activation
+- no secret, mnemonic, signature, token, private URL, or local credential-path persistence
+- no repeated spend before no-spend readback/recheck
+- no tx-only success claims where product readback is the success criterion
 
 Required outputs:
 - operatorHelp dump with read/write command counts
 - read-command classification matrix
 - maintained read-sweep proof
 - proposed action packets for every write command
-- blocker verdicts for km3g and vhat
-- final report with green, thin, missing-param, auth-gated, dev-only, degraded, broken, blocked, and STUCK truth
+- safety closeout verdicts for km3g, vhat, and wck6
+- testnet live-write closeout with budget ledger, operation records, readback proof, and green/degraded/STUCK truth
 ```

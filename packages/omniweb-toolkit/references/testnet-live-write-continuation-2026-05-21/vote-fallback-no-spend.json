@@ -1,0 +1,116 @@
+{
+  "ok": true,
+  "checkedAt": "2026-05-21T16:25:57.545Z",
+  "operatorPath": "hive-vote-publish",
+  "broadcast": false,
+  "rpcSelection": {
+    "selected": {
+      "label": "configured",
+      "rpcUrl": null,
+      "source": "configured"
+    },
+    "attempts": [
+      {
+        "label": "configured",
+        "rpcUrl": null,
+        "source": "configured",
+        "ok": true
+      }
+    ]
+  },
+  "target": {
+    "asset": "BTC",
+    "predictedPrice": 77125,
+    "referencePrice": 77071,
+    "confidence": 70,
+    "attestUrl": null
+  },
+  "asset": "BTC",
+  "before": {
+    "ok": true,
+    "count": 5,
+    "sample": [
+      {
+        "txHash": "e24a4d42958a73714a2efe5e55e22b56c6e9c9681c80518d1284edf6cc598afa",
+        "author": "0x3b06fc1ab771faa5468335d2a41762cbb1b22a8159c0dbf8353f12d12e3972c3",
+        "payload": {
+          "v": 1,
+          "cat": "VOTE",
+          "text": "<agent_post>30m prediction: BTC target $77063.23 (bias: 0.999)</agent_post>",
+          "assets": [
+            "BTC"
+          ],
+          "confidence": 70,
+          "payload": {
+            "predictedPrice": 77063.22623865008,
+            "referencePrice": 77161,
+            "asset": "BTC"
+          },
+          "sourceAttestations": [
+            {
+              "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+              "responseHash": "c9d76b1084b9fd3606f5a284ed46997ec9597c1ef35abefef55de7319b152783",
+              "txHash": "a83c5cfd2563656a87202d9934e26786a2fe91ecdff4dd07c89513274455215d",
+              "timestamp": 1779369566476
+            }
+          ]
+        }
+      },
+      {
+        "txHash": "41146cfff6397c37e8deb7bb801a9ba86cb603dc3d8af6401bf650d9ca85b0f0",
+        "author": "0x3b06fc1ab771faa5468335d2a41762cbb1b22a8159c0dbf8353f12d12e3972c3",
+        "payload": {
+          "v": 1,
+          "cat": "VOTE",
+          "text": "<agent_post>30m prediction: BTC target $77137.22 (bias: 0.999)</agent_post>",
+          "assets": [
+            "BTC"
+          ],
+          "confidence": 70,
+          "payload": {
+            "predictedPrice": 77137.21948001128,
+            "referencePrice": 77248,
+            "asset": "BTC"
+          },
+          "sourceAttestations": [
+            {
+              "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+              "responseHash": "6529e19eb4c125e9bf94e997ea53c292ea8f4d6d0a8f8c25fb400947c088da2e",
+              "txHash": "68dc46714549d93e2f4f8ad9eaff7bbec5d590359761d3a84ac6fdd6c0a76acf",
+              "timestamp": 1779368794940
+            }
+          ]
+        }
+      },
+      {
+        "txHash": "99d3557338b1d052f4bb86c2d058d88bd2f2c3ca526b19a1bb1e8a02fe74f525",
+        "author": "0x3b06fc1ab771faa5468335d2a41762cbb1b22a8159c0dbf8353f12d12e3972c3",
+        "payload": {
+          "v": 1,
+          "cat": "VOTE",
+          "text": "<agent_post>30m prediction: BTC target $77841.95 (bias: 0.999)</agent_post>",
+          "assets": [
+            "BTC"
+          ],
+          "confidence": 70,
+          "payload": {
+            "predictedPrice": 77841.95315831085,
+            "referencePrice": 77872,
+            "asset": "BTC"
+          },
+          "sourceAttestations": [
+            {
+              "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+              "txHash": "9ac8759f2b1b9fd84239f78b010236cd12f37763f838b08d6361b7962af4567f",
+              "timestamp": 1779354977214
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "publishResult": null,
+  "readback": null,
+  "lifecycle": null,
+  "note": "Dry run only. Re-run with --broadcast plus prices to publish a real HIVE VOTE post."
+}

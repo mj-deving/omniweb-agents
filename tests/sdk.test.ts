@@ -239,6 +239,22 @@ describe("connectWallet", () => {
     expect(mockConnect).toHaveBeenCalledWith(getRpcUrl());
   });
 
+  it("lets an explicit rpcUrl override credentials RPC_URL", async () => {
+    vi.mocked(existsSync).mockImplementation((p) =>
+      String(p) === XDG_CREDENTIALS
+    );
+    vi.mocked(readFileSync).mockReturnValue(
+      'DEMOS_MNEMONIC="test mnemonic"\nRPC_URL=https://node3.demos.sh/'
+    );
+
+    const result = await connectWallet(".env", undefined, {
+      rpcUrl: "https://node2.demos.sh/",
+    });
+
+    expect(mockConnect).toHaveBeenCalledWith("https://node2.demos.sh/");
+    expect(result.rpcUrl).toBe("https://node2.demos.sh/");
+  });
+
   it("calls connectWallet with loaded mnemonic", async () => {
     vi.mocked(existsSync).mockImplementation((p) =>
       String(p) === XDG_CREDENTIALS

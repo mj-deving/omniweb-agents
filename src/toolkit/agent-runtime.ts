@@ -48,6 +48,7 @@ export interface AgentRuntime {
 export interface AgentRuntimeOptions {
   envPath?: string;
   agentName?: string;
+  rpcUrl?: string;
   apiBaseUrl?: string; // default: https://supercolony.ai
   /** Enable colony DB for source caching + evidence computation. Default: true if agent data dir exists. */
   enableColonyDb?: boolean;
@@ -65,7 +66,10 @@ export async function createAgentRuntime(opts?: AgentRuntimeOptions): Promise<Ag
   const envPath = opts?.envPath ?? ".env";
 
   // Step 1: Connect wallet (SDK + mnemonic)
-  const { demos, address, rpcUrl, algorithm } = await connectWallet(envPath, opts?.agentName);
+  const walletOpts = opts?.rpcUrl ? { rpcUrl: opts.rpcUrl } : undefined;
+  const { demos, address, rpcUrl, algorithm } = walletOpts
+    ? await connectWallet(envPath, opts?.agentName, walletOpts)
+    : await connectWallet(envPath, opts?.agentName);
 
   // Step 2: Create SDK bridge
   const effectiveApiBaseUrl = opts?.apiBaseUrl ?? getApiUrl();

@@ -139,6 +139,7 @@ function isModuleUnavailableError(error: unknown, sourcePath: string): boolean {
 export async function loadConnect(): Promise<(opts?: {
   envPath?: string;
   agentName?: string;
+  rpcUrl?: string;
   stateDir?: string;
   allowInsecureUrls?: boolean;
 }) => Promise<any>> {

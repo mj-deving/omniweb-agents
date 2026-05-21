@@ -15,6 +15,11 @@ import {
 const DEFAULT_VERIFY_TIMEOUT_MS = 45_000;
 const DEFAULT_VERIFY_POLL_MS = 5_000;
 const DEFAULT_VERIFY_LIMIT = 50;
+const DEFAULT_RPC_CANDIDATES = [
+  "https://node3.demos.sh/",
+  "https://node2.demos.sh/",
+  "https://demosnode.discus.sh/",
+] as const;
 
 const args = process.argv.slice(2);
 
@@ -30,6 +35,8 @@ Options:
   --attest-url URL          Optional DAHR source URL to attach to the VOTE post
   --env-path PATH           Override wallet credentials file passed to connect()
   --agent-name NAME         Use named wallet credentials when present
+  --rpc-url URL             Use one explicit Demos RPC URL
+  --rpc-candidates LIST     Comma-separated Demos RPC URLs to try before declaring connect STUCK
   --state-dir PATH          Forwarded to connect()/state persistence
   --record-lifecycle        Persist a write lifecycle record under --state-dir/write-lifecycle
   --recheck ID_OR_TX        Recheck an existing lifecycle record or tx hash without broadcasting
@@ -52,6 +59,8 @@ const confidence = getNumberArg(args, "--confidence") ?? 70;
 const attestUrl = getStringArg(args, "--attest-url");
 const envPath = getStringArg(args, "--env-path");
 const agentName = getStringArg(args, "--agent-name");
+const rpcUrl = getStringArg(args, "--rpc-url");
+const rpcCandidatesArg = getStringArg(args, "--rpc-candidates");
 const stateDir = getStringArg(args, "--state-dir");
 const recordLifecycle = lifecycleFlagEnabled(args);
 const recheckId = getStringArg(args, "--recheck");
@@ -62,6 +71,8 @@ const verifyLimit = getPositiveIntegerArg("--verify-limit", DEFAULT_VERIFY_LIMIT
 const outputPath = getStringArg(args, "--out");
 const proofOut = getStringArg(args, "--proof-out");
 const command = redactRuntimeCommand(process.argv);
+const rpcCandidates = buildRpcCandidates({ rpcUrl, rpcCandidatesArg });
+let rpcSelection: RpcSelectionReport | null = null;
 let fatalEmitted = false;
 
 process.on("uncaughtException", (error) => {
@@ -84,7 +95,14 @@ if (broadcast) {
 }
 
 const connect = await loadConnect();
-const omni = await connect({ envPath, agentName, stateDir, allowInsecureUrls });
+const selected = await connectWithRpcCandidates(connect, {
+  envPath,
+  agentName,
+  stateDir,
+  allowInsecureUrls,
+}, rpcCandidates);
+const omni = selected.omni;
+rpcSelection = selected.selection;
 const lifecycleStore = recordLifecycle || recheckId ? createWriteLifecycleStore({ stateDir }) : null;
 
 if (recheckId) {
@@ -136,6 +154,7 @@ if (recheckId) {
     operatorPath: "hive-vote-publish",
     broadcast: false,
     mode: "lifecycle-recheck",
+    rpcSelection,
     txHash,
     readback: readbackCheck,
     lifecycle: {
@@ -233,6 +252,7 @@ const report = {
   checkedAt: new Date().toISOString(),
   operatorPath: "hive-vote-publish",
   broadcast,
+  rpcSelection,
   asset,
   before,
   publishResult,
@@ -329,6 +349,7 @@ async function emitFatalError(error: unknown): Promise<never> {
     broadcast,
     asset,
     mode: recheckId ? "lifecycle-recheck" : broadcast ? "broadcast" : "dry-run",
+    rpcSelection,
     error: summarizeRuntimeError(error),
   };
   await maybeWriteOutput(outputPath, report);
@@ -359,6 +380,176 @@ function summarizeRuntimeError(error: unknown): Record<string, unknown> {
     statusText: typeof record.response?.statusText === "string" ? record.response.statusText : null,
     retryable: record.code === "ERR_BAD_RESPONSE" || record.response?.status === 502,
   };
+}
+
+interface RpcCandidate {
+  label: string;
+  rpcUrl?: string;
+  source: "configured" | "--rpc-url" | "--rpc-candidates" | "default";
+}
+
+interface RpcAttemptReport {
+  label: string;
+  rpcUrl: string | null;
+  source: RpcCandidate["source"];
+  ok: boolean;
+  error?: Record<string, unknown>;
+}
+
+interface RpcSelectionReport {
+  selected: {
+    label: string;
+    rpcUrl: string | null;
+    source: RpcCandidate["source"];
+  } | null;
+  attempts: RpcAttemptReport[];
+}
+
+function buildRpcCandidates(input: {
+  rpcUrl?: string;
+  rpcCandidatesArg?: string;
+}): RpcCandidate[] {
+  if (input.rpcUrl?.trim()) {
+    return [{
+      label: "explicit",
+      rpcUrl: normalizeRpcUrl(input.rpcUrl),
+      source: "--rpc-url",
+    }];
+  }
+
+  const rawCandidates = input.rpcCandidatesArg?.trim()
+    ? splitCandidateList(input.rpcCandidatesArg)
+    : splitCandidateList(process.env.DEMOS_RPC_CANDIDATES ?? DEFAULT_RPC_CANDIDATES.join(","));
+
+  const candidates: RpcCandidate[] = [{
+    label: "configured",
+    rpcUrl: undefined,
+    source: "configured",
+  }];
+
+  const seen = new Set<string>();
+  for (const raw of rawCandidates) {
+    const normalized = normalizeRpcUrl(raw);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    candidates.push({
+      label: hostLabel(normalized),
+      rpcUrl: normalized,
+      source: input.rpcCandidatesArg?.trim() ? "--rpc-candidates" : "default",
+    });
+  }
+
+  return candidates;
+}
+
+function splitCandidateList(value: string): string[] {
+  return value
+    .split(",")
+    .map((candidate) => candidate.trim())
+    .filter((candidate) => candidate.length > 0);
+}
+
+function normalizeRpcUrl(value: string | undefined): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+  try {
+    const url = new URL(trimmed);
+    if (!url.pathname || url.pathname === "") {
+      url.pathname = "/";
+    }
+    return url.toString();
+  } catch {
+    return trimmed;
+  }
+}
+
+function hostLabel(value: string): string {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value;
+  }
+}
+
+async function connectWithRpcCandidates(
+  connect: Awaited<ReturnType<typeof loadConnect>>,
+  opts: {
+    envPath?: string;
+    agentName?: string;
+    stateDir?: string;
+    allowInsecureUrls?: boolean;
+  },
+  candidates: RpcCandidate[],
+): Promise<{ omni: any; selection: RpcSelectionReport }> {
+  const attempts: RpcAttemptReport[] = [];
+
+  for (const candidate of candidates) {
+    try {
+      const omni = await connect({
+        ...opts,
+        rpcUrl: candidate.rpcUrl,
+      });
+      attempts.push({
+        label: candidate.label,
+        rpcUrl: candidate.rpcUrl ?? null,
+        source: candidate.source,
+        ok: true,
+      });
+      return {
+        omni,
+        selection: {
+          selected: {
+            label: candidate.label,
+            rpcUrl: candidate.rpcUrl ?? null,
+            source: candidate.source,
+          },
+          attempts,
+        },
+      };
+    } catch (error) {
+      const summary = summarizeRuntimeError(error);
+      attempts.push({
+        label: candidate.label,
+        rpcUrl: candidate.rpcUrl ?? null,
+        source: candidate.source,
+        ok: false,
+        error: summary,
+      });
+
+      if (!isRetryableRpcConnectError(summary)) {
+        break;
+      }
+    }
+  }
+
+  rpcSelection = {
+    selected: null,
+    attempts,
+  };
+  const error = new Error("Unable to connect to any configured Demos RPC candidate");
+  Object.assign(error, {
+    rpcSelection,
+  });
+  throw error;
+}
+
+function isRetryableRpcConnectError(error: Record<string, unknown>): boolean {
+  const message = typeof error.message === "string" ? error.message.toLowerCase() : "";
+  const code = typeof error.code === "string" ? error.code : "";
+  const status = typeof error.status === "number" ? error.status : null;
+
+  return Boolean(
+    error.retryable === true ||
+    code === "ERR_BAD_RESPONSE" ||
+    status === 502 ||
+    message.includes("bad gateway") ||
+    message.includes("gateway") ||
+    message.includes("timed out") ||
+    message.includes("timeout") ||
+    message.includes("econnreset") ||
+    message.includes("enotfound") ||
+    message.includes("econnrefused"),
+  );
 }
 
 function redactRuntimeCommand(argv: string[]): string {

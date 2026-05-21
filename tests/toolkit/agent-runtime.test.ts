@@ -145,6 +145,13 @@ describe("createAgentRuntime", () => {
     expect(mockConnectWallet).toHaveBeenCalledWith(".env", "sentinel");
   });
 
+  it("forwards explicit rpcUrl to connectWallet", async () => {
+    await createAgentRuntime({ envPath: ".env", rpcUrl: "https://node2.demos.sh/" });
+    expect(mockConnectWallet).toHaveBeenCalledWith(".env", undefined, {
+      rpcUrl: "https://node2.demos.sh/",
+    });
+  });
+
   it("calls createSdkBridge with demos, apiBaseUrl, and AUTH_PENDING_TOKEN", async () => {
     await createAgentRuntime({ apiBaseUrl: "https://custom.api.com" });
     expect(createSdkBridge).toHaveBeenCalledWith(fakeDemos, "https://custom.api.com", "__AUTH_PENDING__");

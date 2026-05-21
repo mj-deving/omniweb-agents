@@ -28,6 +28,8 @@ import type { ChainAPI } from "./chain-api.js";
 export interface ConnectOptions {
   envPath?: string;
   agentName?: string;
+  /** Override the Demos RPC URL for this runtime connection. */
+  rpcUrl?: string;
   /** Override state directory for write guard persistence */
   stateDir?: string;
   /** URL allowlist for attestation — only these origins can be attested */

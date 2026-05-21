@@ -267,10 +267,10 @@ try {
   }
 
   const hlResult = hlPlan
-    ? await omni.colony.placeHL(hlPlan.asset, hlPlan.direction, {
+    ? await withSuppressedConsoleLog(() => omni.colony.placeHL(hlPlan.asset, hlPlan.direction, {
         amount: hlPlan.amount,
         horizon: hlPlan.horizon,
-      })
+      }))
     : null;
   let hlVerification = hlPlan && hlResult?.ok
     ? await verifyHigherLowerReadback(omni, hlPlan, hlBefore, {
@@ -289,9 +289,9 @@ try {
   }
 
   const fixedResult = fixedPlan
-    ? await omni.colony.placeBet(fixedPlan.asset, fixedPlan.predictedPrice, {
+    ? await withSuppressedConsoleLog(() => omni.colony.placeBet(fixedPlan.asset, fixedPlan.predictedPrice, {
         horizon: fixedPlan.horizon,
-      })
+      }))
     : null;
   let fixedVerification = fixedPlan && fixedResult?.ok
     ? await verifyFixedBetReadback(omni, fixedPlan, fixedBefore, fixedResult.data?.txHash, {
@@ -706,6 +706,16 @@ async function loadConnect(): Promise<(opts?: {
     throw new Error("connect() export not found in dist/runtime.js or src/runtime.ts");
   }
   return mod.connect;
+}
+
+async function withSuppressedConsoleLog<T>(operation: () => Promise<T>): Promise<T> {
+  const originalLog = console.log;
+  console.log = () => undefined;
+  try {
+    return await operation();
+  } finally {
+    console.log = originalLog;
+  }
 }
 
 async function sleep(ms: number): Promise<void> {

@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-05-21T16:43:00Z",
+  "bead": "omniweb-agents-5mnk",
+  "status": "planned",
+  "scope": "Phase 24 continuation advanced-domain decomposition before any mutation",
+  "sharedRules": {
+    "network": "testnet only",
+    "budgetLedgerStart": "10 / 25 testnet DEM",
+    "singleOperationDefaultCeilingDem": 5,
+    "liveFlagsMandatory": true,
+    "productReadbackRequired": true,
+    "noLocalCredentialPathsInProofs": true,
+    "noMainnetNoReleaseNoProductionActivation": true
+  },
+  "targets": [
+    {
+      "domain": "raw-chain",
+      "beadTitle": "Controlled raw-chain sign/read proof",
+      "priority": 1,
+      "risk": "lowest",
+      "target": {
+        "messageLabel": "phase24-continuation-2026-05-21",
+        "wallet": "configured testnet wallet; no new wallet/profile target"
+      },
+      "mutationClass": "no-spend sign/read smoke; no transfer",
+      "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-chain-smoke.ts --message-label phase24-continuation-2026-05-21 --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/raw-chain-sign-read-smoke.json",
+      "explicitLiveFlag": "none; script is no-broadcast sign/read only",
+      "budget": {
+        "plannedDem": 0,
+        "ceilingDem": 0
+      },
+      "readbackProof": [
+        "chain balance read",
+        "block number read",
+        "redacted sign/verify classification"
+      ],
+      "executeFirst": true,
+      "stopIf": "signing emits secret material, verify/readback cannot be classified, or RPC/account readback fails"
+    },
+    {
+      "domain": "storage",
+      "beadTitle": "Controlled storage create/set target and readback",
+      "priority": 2,
+      "risk": "medium",
+      "target": {
+        "programName": "phase24-continuation-20260521-storage",
+        "field": "lastProbe",
+        "value": "probe-generated timestamp value"
+      },
+      "mutationClass": "CREATE_STORAGE_PROGRAM plus SET_FIELD",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json",
+      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --program-name phase24-continuation-20260521-storage --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-live.json",
+      "explicitLiveFlag": "--broadcast",
+      "budget": {
+        "plannedDem": 1,
+        "ceilingDem": 5
+      },
+      "readbackProof": [
+        "storage address from probe",
+        "omni.storage.read returns created program or honest degraded result",
+        "omni.storage.hasField/readField prove probe-generated lastProbe value or classify drift"
+      ],
+      "stopIf": "preview cannot name storage address/cost, broadcast would exceed budget, or readback surface is absent"
+    },
+    {
+      "domain": "ipfs",
+      "beadTitle": "Controlled IPFS upload target and readback",
+      "priority": 3,
+      "risk": "medium",
+      "target": {
+        "filename": "phase24-continuation-2026-05-21.txt",
+        "content": "Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets."
+      },
+      "mutationClass": "IPFS upload plus chain verification where available",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --filename phase24-continuation-2026-05-21.txt --content \"Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.\" --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-preview.json",
+      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --filename phase24-continuation-2026-05-21.txt --content \"Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.\" --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-live.json",
+      "explicitLiveFlag": "--broadcast",
+      "budget": {
+        "plannedDem": null,
+        "ceilingDem": 5,
+        "note": "Preview must produce a concrete quote before live upload."
+      },
+      "readbackProof": [
+        "CID or upload identifier",
+        "chain verification result when available",
+        "honest degraded classification if current quote/upload still returns Unknown message"
+      ],
+      "stopIf": "preview returns Unknown message without a usable quote, no CID/readback surface is available, or budget is not concrete"
+    },
+    {
+      "domain": "escrow",
+      "beadTitle": "Controlled escrow send target and readback",
+      "priority": 4,
+      "risk": "spendful",
+      "target": {
+        "platform": "github",
+        "username": "phase24-continuation-20260521",
+        "message": "Phase 24 continuation controlled escrow proof"
+      },
+      "mutationClass": "escrow send to identity target",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --platform github --username phase24-continuation-20260521 --amount 0.1 --message \"Phase 24 continuation controlled escrow proof\" --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-preview.json",
+      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --platform github --username phase24-continuation-20260521 --amount 0.1 --message \"Phase 24 continuation controlled escrow proof\" --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-live.json",
+      "explicitLiveFlag": "--broadcast",
+      "budget": {
+        "plannedDem": 0.1,
+        "ceilingDem": 5
+      },
+      "readbackProof": [
+        "escrow send tx or mutation result",
+        "claimable/balance readback when query wrappers support it",
+        "explicit degraded classification if claimable/balance wrappers remain Method not implemented"
+      ],
+      "stopIf": "preview cannot name target/cost, claimable or balance readback cannot be classified, or cleanup/readback would be unavailable after send"
+    }
+  ],
+  "nextRecommendedExecution": "Run the raw-chain sign/read proof first because it is no-spend and no-broadcast."
+}

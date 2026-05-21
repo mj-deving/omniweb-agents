@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
 export interface ProbeRuntimeTargetInput {
   envPath?: string;
@@ -47,7 +47,7 @@ export function redactProbeCommand(argv: string[]): string {
   const out: string[] = [];
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    out.push(arg);
+    out.push(redactProbeCommandArg(arg));
     const redactedValue = redactedValueByFlag.get(arg);
     if (redactedValue && i + 1 < argv.length) {
       out.push(redactedValue);
@@ -55,6 +55,20 @@ export function redactProbeCommand(argv: string[]): string {
     }
   }
   return out.join(" ");
+}
+
+function redactProbeCommandArg(arg: string): string {
+  if (!isAbsolute(arg)) return arg;
+
+  const relativeToCwd = relative(process.cwd(), arg);
+  if (relativeToCwd && !relativeToCwd.startsWith("..") && !isAbsolute(relativeToCwd)) {
+    return relativeToCwd;
+  }
+
+  const name = basename(arg);
+  if (name === "node" || name === "tsx") return name;
+
+  return `<redacted-local-path>/${name}`;
 }
 
 export function assertExplicitCredentialTargetExists(input: ProbeRuntimeTargetInput): void {

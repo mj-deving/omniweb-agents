@@ -61,6 +61,15 @@ const verifyPollMs = getPositiveIntegerArg("--verify-poll-ms", DEFAULT_VERIFY_PO
 const verifyLimit = getPositiveIntegerArg("--verify-limit", DEFAULT_VERIFY_LIMIT);
 const outputPath = getStringArg(args, "--out");
 const proofOut = getStringArg(args, "--proof-out");
+const command = redactRuntimeCommand(process.argv);
+let fatalEmitted = false;
+
+process.on("uncaughtException", (error) => {
+  void emitFatalError(error);
+});
+process.on("unhandledRejection", (error) => {
+  void emitFatalError(error);
+});
 
 if (broadcast) {
   if (!Number.isFinite(predictedPrice) || predictedPrice! <= 0) {
@@ -91,7 +100,7 @@ if (recheckId) {
     ?? await lifecycleStore!.create({
       actionFamily: "vote",
       walletAddress: omni.address ?? null,
-      command: process.argv.join(" "),
+      command,
       commit: readCurrentGitCommit(),
       budget: { unit: "write-rate-slot", spendStatus: "no-spend" },
       txHash,
@@ -151,7 +160,7 @@ if (broadcast) {
     ? await lifecycleStore.create({
         actionFamily: "vote",
         walletAddress: omni.address ?? null,
-        command: process.argv.join(" "),
+        command,
         commit: readCurrentGitCommit(),
         budget: { unit: "write-rate-slot", amount: 1, ceiling: 1, spendStatus: "planned" },
         asset,
@@ -160,13 +169,13 @@ if (broadcast) {
         metadata: { confidence, referencePrice, predictedPrice, attestUrl },
       })
     : null;
-  publishResult = await omni.colony.publishVote({
+  publishResult = await withSuppressedConsoleLog(() => omni.colony.publishVote({
     asset,
     predictedPrice,
     referencePrice,
     confidence,
     attestUrl,
-  });
+  }));
 
   const txHash = publishResult && typeof publishResult === "object" && "data" in publishResult
     ? (publishResult as { data?: { txHash?: string } }).data?.txHash
@@ -308,4 +317,88 @@ async function maybeWriteOutput(path: string | undefined, data: unknown): Promis
   if (!path) return;
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(data, null, 2)}\n`);
+}
+
+async function emitFatalError(error: unknown): Promise<never> {
+  if (fatalEmitted) process.exit(1);
+  fatalEmitted = true;
+  const report = {
+    ok: false,
+    checkedAt: new Date().toISOString(),
+    operatorPath: "hive-vote-publish",
+    broadcast,
+    asset,
+    mode: recheckId ? "lifecycle-recheck" : broadcast ? "broadcast" : "dry-run",
+    error: summarizeRuntimeError(error),
+  };
+  await maybeWriteOutput(outputPath, report);
+  console.error(JSON.stringify(report, null, 2));
+  process.exit(1);
+}
+
+function summarizeRuntimeError(error: unknown): Record<string, unknown> {
+  if (!error || typeof error !== "object") {
+    return { message: String(error) };
+  }
+  const record = error as {
+    name?: unknown;
+    message?: unknown;
+    code?: unknown;
+    status?: unknown;
+    response?: { status?: unknown; statusText?: unknown };
+  };
+  return {
+    name: typeof record.name === "string" ? record.name : "Error",
+    message: typeof record.message === "string" ? record.message : String(error),
+    code: typeof record.code === "string" ? record.code : null,
+    status: typeof record.status === "number"
+      ? record.status
+      : typeof record.response?.status === "number"
+        ? record.response.status
+        : null,
+    statusText: typeof record.response?.statusText === "string" ? record.response.statusText : null,
+    retryable: record.code === "ERR_BAD_RESPONSE" || record.response?.status === 502,
+  };
+}
+
+function redactRuntimeCommand(argv: string[]): string {
+  const out: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const part = argv[index];
+    if (index === 0) {
+      out.push("node");
+      continue;
+    }
+    const marker = "packages/omniweb-toolkit/";
+    const markerIndex = part.indexOf(marker);
+    if (markerIndex >= 0) {
+      out.push(part.slice(markerIndex));
+      continue;
+    }
+    if (part.startsWith("/") && ["--env-path", "--state-dir", "--out", "--proof-out"].includes(argv[index - 1] ?? "")) {
+      out.push("[redacted-path]");
+      continue;
+    }
+    const [flag, value] = part.split("=", 2);
+    if (value?.startsWith("/") && ["--env-path", "--state-dir", "--out", "--proof-out"].includes(flag)) {
+      out.push(`${flag}=[redacted-path]`);
+      continue;
+    }
+    if (part.startsWith("/")) {
+      out.push("[redacted-path]");
+      continue;
+    }
+    out.push(part);
+  }
+  return out.join(" ");
+}
+
+async function withSuppressedConsoleLog<T>(operation: () => Promise<T>): Promise<T> {
+  const originalLog = console.log;
+  console.log = () => undefined;
+  try {
+    return await operation();
+  } finally {
+    console.log = originalLog;
+  }
 }

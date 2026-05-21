@@ -1,0 +1,186 @@
+{
+  "attempted": false,
+  "ok": true,
+  "mode": "readback-check-no-broadcast",
+  "officialPath": "native memo transfer; no /api/bets/place registration call",
+  "txHash": "8106af43beb489eb747e7e11e82d3156ffcdee39e5a2722d143c3dd0729bf7fe",
+  "expected": {
+    "asset": "BTC",
+    "horizon": "30m",
+    "predictedPrice": 90000,
+    "amount": 5,
+    "bettor": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b"
+  },
+  "readback": {
+    "ok": true,
+    "polls": 1,
+    "matchedBy": "active-txHash",
+    "before": {
+      "asset": "BTC",
+      "horizon": "30m",
+      "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42",
+      "totalBets": 1,
+      "totalDem": 5,
+      "roundEnd": 1779359400000,
+      "betCount": 1
+    },
+    "activeAfter": {
+      "asset": "BTC",
+      "horizon": "30m",
+      "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42",
+      "totalBets": 1,
+      "totalDem": 5,
+      "roundEnd": 1779359400000,
+      "betCount": 1
+    },
+    "winners": {
+      "count": 20,
+      "matched": null
+    }
+  },
+  "lifecycle": {
+    "record": {
+      "version": 1,
+      "id": "wl-20260521T102002708Z-217a5bfd",
+      "createdAt": "2026-05-21T10:20:02.708Z",
+      "updatedAt": "2026-05-21T10:20:02.712Z",
+      "actionFamily": "bet-fixed",
+      "status": "indexed",
+      "walletAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+      "command": "node packages/omniweb-toolkit/scripts/probe-agentic-memo-bet.ts --asset BTC --horizon 30m --predicted-price 90000 --amount 5 --check-tx 8106af43beb489eb747e7e11e82d3156ffcdee39e5a2722d143c3dd0729bf7fe --bettor 0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b --timeout-ms 90000 --poll-ms 5000 --record-lifecycle --proof-out packages/omniweb-toolkit/references/testnet-live-write-tranche-2026-05-21/bet-fixed-recheck-8106.json",
+      "commit": "39122e7a",
+      "budget": {
+        "spendStatus": "no-spend",
+        "amount": 5,
+        "unit": "DEM",
+        "ceiling": 5
+      },
+      "txHash": "8106af43beb489eb747e7e11e82d3156ffcdee39e5a2722d143c3dd0729bf7fe",
+      "asset": "BTC",
+      "horizon": "30m",
+      "memo": "HIVE_BET:BTC:90000:30m",
+      "predictedPrice": 90000,
+      "expectedReadback": [
+        "chain-rpc",
+        "active-pool",
+        "winners-history"
+      ],
+      "nextRecheck": {
+        "afterMs": 0,
+        "policy": "delayed-indexing"
+      },
+      "observations": [
+        {
+          "observedAt": "2026-05-21T10:20:02.712Z",
+          "surface": "active-pool",
+          "status": "indexed",
+          "ok": true,
+          "summary": "BET readback matched by active-txHash",
+          "data": {
+            "ok": true,
+            "polls": 1,
+            "matchedBy": "active-txHash",
+            "before": {
+              "asset": "BTC",
+              "horizon": "30m",
+              "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42",
+              "totalBets": 1,
+              "totalDem": 5,
+              "roundEnd": 1779359400000,
+              "betCount": 1
+            },
+            "activeAfter": {
+              "asset": "BTC",
+              "horizon": "30m",
+              "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42",
+              "totalBets": 1,
+              "totalDem": 5,
+              "roundEnd": 1779359400000,
+              "betCount": 1
+            },
+            "winners": {
+              "count": 20,
+              "matched": null
+            }
+          }
+        }
+      ],
+      "transitions": [],
+      "metadata": {
+        "officialPath": "native memo transfer; no /api/bets/place registration call"
+      },
+      "finalVerdict": {
+        "verdict": "pass",
+        "rationale": "BET readback matched by active-txHash",
+        "at": "2026-05-21T10:20:02.711Z"
+      }
+    },
+    "proofPath": "packages/omniweb-toolkit/references/testnet-live-write-tranche-2026-05-21/bet-fixed-recheck-8106.json",
+    "proofPacket": {
+      "packetVersion": 1,
+      "generatedAt": "2026-05-21T10:20:02.713Z",
+      "recordId": "wl-20260521T102002708Z-217a5bfd",
+      "command": "node packages/omniweb-toolkit/scripts/probe-agentic-memo-bet.ts --asset BTC --horizon 30m --predicted-price 90000 --amount 5 --check-tx 8106af43beb489eb747e7e11e82d3156ffcdee39e5a2722d143c3dd0729bf7fe --bettor 0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b --timeout-ms 90000 --poll-ms 5000 --record-lifecycle --proof-out packages/omniweb-toolkit/references/testnet-live-write-tranche-2026-05-21/bet-fixed-recheck-8106.json",
+      "commit": "39122e7a",
+      "walletAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+      "actionFamily": "bet-fixed",
+      "actionKey": {
+        "txHash": "8106af43beb489eb747e7e11e82d3156ffcdee39e5a2722d143c3dd0729bf7fe",
+        "asset": "BTC",
+        "horizon": "30m",
+        "predictedPrice": 90000
+      },
+      "budget": {
+        "spendStatus": "no-spend",
+        "amount": 5,
+        "unit": "DEM",
+        "ceiling": 5
+      },
+      "status": "indexed",
+      "chainState": [],
+      "productReadbackState": [
+        {
+          "observedAt": "2026-05-21T10:20:02.712Z",
+          "surface": "active-pool",
+          "status": "indexed",
+          "ok": true,
+          "summary": "BET readback matched by active-txHash",
+          "data": {
+            "ok": true,
+            "polls": 1,
+            "matchedBy": "active-txHash",
+            "before": {
+              "asset": "BTC",
+              "horizon": "30m",
+              "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42",
+              "totalBets": 1,
+              "totalDem": 5,
+              "roundEnd": 1779359400000,
+              "betCount": 1
+            },
+            "activeAfter": {
+              "asset": "BTC",
+              "horizon": "30m",
+              "poolAddress": "0x8e39a7b63da4fc41e6680042a379fbeaf1623368ff8205ba2b2c8bd6918e7c42",
+              "totalBets": 1,
+              "totalDem": 5,
+              "roundEnd": 1779359400000,
+              "betCount": 1
+            },
+            "winners": {
+              "count": 20,
+              "matched": null
+            }
+          }
+        }
+      ],
+      "elapsedMs": 4,
+      "blockDelta": null,
+      "finalVerdict": {
+        "verdict": "pass",
+        "rationale": "BET readback matched by active-txHash",
+        "at": "2026-05-21T10:20:02.711Z"
+      }
+    }
+  }
+}

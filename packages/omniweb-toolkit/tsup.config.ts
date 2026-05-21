@@ -15,6 +15,7 @@ export default defineConfig({
     "publish-readiness-support": "src/publish-readiness-support.ts",
     "attestation-workflow-support": "src/attestation-workflow-support.ts",
     "attestation-workflow-check": "src/attestation-workflow-check.ts",
+    omniweb: "src/omniweb.ts",
   },
   format: ["esm"],
   target: "es2022",

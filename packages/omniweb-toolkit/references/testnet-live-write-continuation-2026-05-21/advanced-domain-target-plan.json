@@ -44,8 +44,8 @@
       "risk": "medium",
       "target": {
         "programName": "phase24-continuation-20260521-storage",
-        "field": "phase24-proof",
-        "value": "phase24-continuation-storage-proof"
+        "field": "lastProbe",
+        "value": "probe-generated timestamp value"
       },
       "mutationClass": "CREATE_STORAGE_PROGRAM plus SET_FIELD",
       "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json",
@@ -58,7 +58,7 @@
       "readbackProof": [
         "storage address from probe",
         "omni.storage.read returns created program or honest degraded result",
-        "omni.storage.hasField/readField prove field value or classify drift"
+        "omni.storage.hasField/readField prove probe-generated lastProbe value or classify drift"
       ],
       "stopIf": "preview cannot name storage address/cost, broadcast would exceed budget, or readback surface is absent"
     },

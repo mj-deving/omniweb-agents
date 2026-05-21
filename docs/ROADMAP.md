@@ -6,7 +6,7 @@ completed_phases: 23
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The no-spend colony operator stress pass is complete, wallet/profile and domain targeting blockers are resolved, and the bounded testnet live-write GoalMode tranche has green BET/HL proof with social degraded and VOTE blocked on runtime 502."
+summary: "The no-spend colony operator stress pass is complete, wallet/profile and domain targeting blockers are resolved, and the bounded testnet live-write GoalMode tranche has green BET/HL proof, social degraded, and VOTE ready for RPC-fallback retry after no-spend proof."
 topic_hint: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,12 +38,12 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | The consumer-spectrum, hosted no-spend proof, full action-spectrum matrix, and no-spend `omniweb-agents-operator-stress` read/write-preview pass are complete. The former safety blockers are resolved: `omniweb-agents-km3g` closed via PR #462, `omniweb-agents-vhat` closed via PR #463, and configured-wallet restore closed via `omniweb-agents-wck6` / PR #464. The bounded testnet live-write tranche has now run without per-operation human prompts: fixed-price BET and higher/lower BET are green; social is degraded because no eligible target met the maintained floor; VOTE publish is STUCK on `node3.demos.sh` 502 before tx/lifecycle creation. |
+| Current direction | The consumer-spectrum, hosted no-spend proof, full action-spectrum matrix, and no-spend `omniweb-agents-operator-stress` read/write-preview pass are complete. The former safety blockers are resolved: `omniweb-agents-km3g` closed via PR #462, `omniweb-agents-vhat` closed via PR #463, and configured-wallet restore closed via `omniweb-agents-wck6` / PR #464. The bounded testnet live-write tranche has now run without per-operation human prompts: fixed-price BET and higher/lower BET are green; social is degraded because no eligible target met the maintained floor; PR #470 changed the VOTE retry gate from node3-only recovery to healthy RPC candidate selection with `rpcSelection` proof. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam, capability surface, guardrails, and admissibility gate honestly instead of talking like those pivots are still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed historical consumer-spectrum `omniweb-agents-spectrum`, `omniweb-agents-hosted` completed the hosted no-spend operator consumer proof, `omniweb-agents-action-spectrum` completed the full-operation testing matrix, `omniweb-agents-operator-stress` completed roadmap/packet prep, read-surface stress, write-preview packets, and blocker wiring through PRs #458-#460, and `.5` has now run the Phase 24 testnet tranche through PRs #465-#468. |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed historical consumer-spectrum `omniweb-agents-spectrum`, `omniweb-agents-hosted` completed the hosted no-spend operator consumer proof, `omniweb-agents-action-spectrum` completed the full-operation testing matrix, `omniweb-agents-operator-stress` completed roadmap/packet prep, read-surface stress, write-preview packets, and blocker wiring through PRs #458-#460, `.5` ran the Phase 24 testnet tranche through PRs #465-#468, PR #470 added VOTE RPC candidate fallback, and `omniweb-agents-0d7f` carries the continuation graph. |
 | Remaining external edges | npm release/public registry proof and production hosted activation remain separately gated. Future live work may spend bounded testnet DEM without per-operation human prompts only inside the May 21 packet or a successor Bead/packet, only on testnet, only through explicit script live flags, and only with recorded budget, host, wallet, controlled target, command, mutation/tx evidence, and product readback criteria. Mainnet, real-money, npm release, production hosted activation, secret handling changes, and uncontrolled credential/profile changes remain out of scope. |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
@@ -366,10 +366,11 @@ Explicit boundaries:
 
 ## Phase 24: Testnet Live-Write GoalMode Tranche
 
-Owner bead: `omniweb-agents-operator-stress.5`
+Owner beads: `omniweb-agents-operator-stress.5` for the original tranche, `omniweb-agents-0d7f` for the continuation after PR #470
 
 Launch packet:
 - [docs/goalmode/testnet-live-write-tranche-2026-05-21.md](goalmode/testnet-live-write-tranche-2026-05-21.md)
+- [docs/goalmode/testnet-live-write-continuation-2026-05-21.md](goalmode/testnet-live-write-continuation-2026-05-21.md)
 
 Big picture:
 - Phase 21-22 built the simple attestation-first and leaderboard-pattern floor.
@@ -382,6 +383,7 @@ Current Phase 24 status:
 - PR #466 executed one fixed-price BTC `30m` BET for `5` testnet DEM and proved product readback by exact active-pool tx match after fixing stale-winner fallback risk.
 - PR #467 executed one BTC `24h` higher/lower `lower` BET for `5` testnet DEM and proved product readback by pool deltas: `totalLower 0 -> 5`, `lowerCount 0 -> 1`, and `totalDem 0 -> 5`.
 - PR #468 widened social preview to 200 posts and kept social writes `DEGRADED` because no untouched attested target met score `>=85` and engagement `>=5`; it also kept VOTE publish `STUCK` after a green no-spend preflight and a sanitized `--broadcast` retry failed at `node3.demos.sh` `502 Bad Gateway` before tx/lifecycle creation.
+- PR #470 fixed the VOTE node3-only blocker by adding runtime RPC override support and `check-vote-publish` RPC candidate fallback. The next VOTE run should prove `rpcSelection` first; the maintained candidates include `https://node2.demos.sh/` and `https://demosnode.discus.sh/` instead of waiting on node3 specifically.
 - Budget ledger: nominal testnet spend is `10 / 25` DEM. The VOTE retry did not create a tx and balance stayed `1737` before and after.
 
 Authorization model:
@@ -397,7 +399,7 @@ Default spend envelope for the next run:
 - identity/profile mutations count against the mutation budget even when they do not spend DEM, and need cleanup/readback evidence when they are temporary
 
 Remaining execution rule:
-1. Do not rerun VOTE live until `node3.demos.sh` is healthy and a fresh no-spend VOTE preflight is green.
+1. Do not rerun VOTE live until `check-vote-publish` has fresh no-spend fallback proof with `rpcSelection`, target prices, category-search readback surface, and no mutation.
 2. Do not lower the social target floor just to force a react/reply/tip mutation; wait for an eligible target or file a deliberate target-policy change.
 3. Keep the existing `10 / 25` DEM spend ledger unless a successor packet updates the budget before more spend.
 4. Any remaining advanced escrow/storage/IPFS/raw-chain work needs its own controlled target/readback bead, not a broad implicit continuation.

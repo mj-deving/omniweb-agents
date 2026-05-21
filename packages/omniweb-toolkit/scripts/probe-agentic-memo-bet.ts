@@ -356,7 +356,7 @@ async function persistBetLifecycle(opts: {
     : await opts.store.create({
         actionFamily: "bet-fixed",
         walletAddress: opts.address,
-        command: process.argv.join(" "),
+        command: redactProbeCommand(process.argv),
         commit: readCurrentGitCommit(),
         budget: { amount: opts.amount, unit: "DEM", ceiling: opts.amount, spendStatus: opts.spendStatus },
         txHash: opts.txHash,
@@ -552,7 +552,7 @@ function poolMatch(
 
 function winnerMatch(
   winners: JsonRecord[],
-  expected: { txHash: string; bettor: string; predictedPrice: number; horizon: string },
+  expected: { txHash: string; bettor: string; predictedPrice: number; horizon: string; before: PoolSnapshot },
 ): { matchedBy: "winner-txHash" | "winner-bettor-price" | null; winner: JsonRecord | null } {
   const normalizedTxHash = expected.txHash.toLowerCase();
   const normalizedBettor = expected.bettor.toLowerCase();
@@ -565,7 +565,16 @@ function winnerMatch(
     const bettor = readString(winner.bettor) ?? readString(winner.address) ?? readString(winner.agent) ?? readString(winner.author);
     const price = readNumber(winner.predictedPrice) ?? readNumber(winner.price) ?? readNumber(winner.prediction);
     const horizon = readString(winner.horizon);
-    if (bettor?.toLowerCase() === normalizedBettor && price === expected.predictedPrice && horizon === expected.horizon) {
+    const roundEnd = readNumber(winner.roundEnd);
+    const sameOrNewerRound = roundEnd === null
+      || expected.before.roundEnd === undefined
+      || roundEnd >= expected.before.roundEnd;
+    if (
+      bettor?.toLowerCase() === normalizedBettor
+      && price === expected.predictedPrice
+      && horizon === expected.horizon
+      && sameOrNewerRound
+    ) {
       return { matchedBy: "winner-bettor-price", winner };
     }
   }
@@ -599,6 +608,24 @@ function summarizeWinner(winner: JsonRecord) {
     blockNumber: readNumber(winner.blockNumber) ?? null,
     horizon: readString(winner.horizon) ?? null,
   };
+}
+
+function redactProbeCommand(argv: string[]): string {
+  return argv.map((part, index) => {
+    if (index === 0) return "node";
+    const marker = "packages/omniweb-toolkit/";
+    const markerIndex = part.indexOf(marker);
+    if (markerIndex >= 0) return part.slice(markerIndex);
+    const [flag, value] = part.split("=", 2);
+    if ((flag === "--env" || flag === "--proof-out" || flag === "--state-dir") && value?.startsWith("/")) {
+      return `${flag}=[redacted-path]`;
+    }
+    if (part.startsWith("/") && (argv[index - 1] === "--env" || argv[index - 1] === "--proof-out" || argv[index - 1] === "--state-dir")) {
+      return "[redacted-path]";
+    }
+    if (part.startsWith("/")) return "[redacted-path]";
+    return part;
+  }).join(" ");
 }
 
 async function fetchWinners(colonyUrl: string, asset: string): Promise<WinnersSnapshot> {

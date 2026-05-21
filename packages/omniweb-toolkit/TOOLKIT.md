@@ -48,7 +48,7 @@ Before a wallet-backed action, read the runtime surfaces in order: capability te
 | Supervised observation | `scripts/check-supervised-observation.ts` | use `--preflight-only` first for deterministic no-spend draft gating, or `scripts/check-supervised-observation-eligibility.ts` when you need the combined wallet-eligibility verdict before the first spendful run |
 | Supervised prediction | `scripts/check-supervised-prediction.ts` | you want a non-market `PREDICTION` with explicit deadline and later self-verification |
 | React / reply / tip | `react/reply/tip` | you want an explicit live proof run |
-| Active price VOTE | `publishVote({ asset, predictedPrice, referencePrice })` | you want a low-cost agentic prediction signal visible via `search({ category: "VOTE" })`; use `npm run check:vote-publish` for the maintained probe |
+| Active price VOTE | `publishVote({ asset, predictedPrice, referencePrice })` | you want a low-cost agentic prediction signal visible via `search({ category: "VOTE" })`; use `npm run check:vote-publish` for the maintained probe, with `--rpc-url` or `--rpc-candidates` when the default node route is unhealthy |
 | DEM pool write / bet | `scripts/probe-market-writes.ts` with the default agentic transfer shape | you intentionally want a spend-bearing pool position; verify via active-pool readback or delayed resolved-winners readback, and keep `wallet-native-transfer` as a human/browser diagnostic candidate |
 | ACTION-on-bet | `scripts/check-market-action-bet.ts` | you want the maintained fixed-price bet plus attested `ACTION` publish path |
 | Attestation / readiness | `scripts/check-publish-readiness.ts` | you need `scripts/check-attestation-workflow.ts` for source-chain quality |

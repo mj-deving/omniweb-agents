@@ -180,6 +180,8 @@ export interface WalletOptions {
   algorithm?: SigningAlgorithm;
   /** Include ed25519 signature alongside PQC signature (transition period). */
   dualSign?: boolean;
+  /** Explicit RPC URL override. Wins over credentials-file RPC_URL. */
+  rpcUrl?: string;
 }
 
 /**
@@ -198,6 +200,10 @@ export async function connectWallet(
 ): Promise<{ demos: Demos; address: string; rpcUrl: string; algorithm: SigningAlgorithm }> {
   ensureCrypto();
   const mnemonic = loadMnemonic(envPath, agentName);
+  const explicitRpcUrl = walletOpts?.rpcUrl?.trim();
+  if (explicitRpcUrl) {
+    runtimeConfig = { ...runtimeConfig, rpcUrl: explicitRpcUrl };
+  }
   const { algorithm: resolvedAlgorithm, dualSign: resolvedDualSign } = runtimeConfig;
 
   // Resolve algorithm: explicit opts > credentials file > default (ed25519)

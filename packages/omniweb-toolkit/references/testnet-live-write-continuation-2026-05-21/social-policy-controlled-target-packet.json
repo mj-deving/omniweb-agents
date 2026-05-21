@@ -1,0 +1,79 @@
+{
+  "packetVersion": 1,
+  "checkedAt": "2026-05-21T17:02:00Z",
+  "bead": "omniweb-agents-0d7f.5",
+  "sourceBead": "omniweb-agents-j333",
+  "sourceProof": {
+    "classification": "target-thin",
+    "previewReport": "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/social-target-recheck-preview.json",
+    "classificationReport": "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/social-target-recheck-classification.json",
+    "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000",
+    "executeFlag": false,
+    "mutationAttempted": false,
+    "topRankedCandidate": {
+      "txHash": "346149add9b7cb3edd789602ad3da08aeddded5dd5b93aae06f3523d4e4a883b",
+      "score": 80,
+      "engagementTotal": 3,
+      "selectionScore": 86
+    }
+  },
+  "policyDecision": {
+    "classification": "target-thin",
+    "minScore": 85,
+    "minEngagement": 5,
+    "floorChanged": false,
+    "reason": "The latest 500-post preview found no untouched attested post satisfying both score and engagement floors. Lowering the floor would force a mutation without proving that the target meets the maintained product-quality policy.",
+    "socialMutationAuthorizedNow": false
+  },
+  "allowedNextRoutes": [
+    {
+      "route": "fresh-target-recheck",
+      "description": "Re-run the maintained preview until an untouched external attested post satisfies the unchanged floor.",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000",
+      "liveCommandTemplate": "node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000 --execute",
+      "explicitLiveFlag": "--execute",
+      "eligibleWhen": [
+        "preview attempted is false and ok is true",
+        "preview target exists",
+        "target score is >= 85",
+        "target engagementTotal is >= 5",
+        "target is not authored by the active wallet",
+        "target has not already been reacted to or tipped by the active wallet"
+      ],
+      "readbackRequired": [
+        "reaction readback shows myReaction agree or an increased agree count",
+        "reply result has a tx hash",
+        "reply visibility passes through post_detail, parent thread, or feed readback"
+      ],
+      "budget": {
+        "demPlanned": 0,
+        "singleOperationCeilingDem": 5,
+        "tipAllowed": false
+      }
+    },
+    {
+      "route": "controlled-target-plan",
+      "description": "Create a separate reviewed target bead before any controlled self-created target is used.",
+      "requiredBeforeMutation": [
+        "name the controlled parent target and its author wallet",
+        "state whether the parent target requires a separate live publish and count that publish in the tranche ledger",
+        "prove the parent indexed through product readback before any social mutation",
+        "explain why the target is not a trivial self-loop and what product behavior the social mutation proves",
+        "name cleanup or non-cleanup rationale; immutable chain posts cannot be deleted, so cleanup must be documented as non-applicable or replaced by follow-up labeling/readback",
+        "keep score >= 85 and engagement >= 5 unless a reviewed policy bead changes the floor with evidence",
+        "define the exact one-mutation command and explicit --execute flag",
+        "define reaction, reply, or tip readback as the success criterion before execution"
+      ],
+      "authorizedByThisPacket": false
+    }
+  ],
+  "blockedRoute": {
+    "route": "forced-low-floor-mutation",
+    "blocked": true,
+    "reason": "The packet does not authorize lowering score or engagement thresholds to mutate the current top candidate."
+  },
+  "verdict": {
+    "status": "DEGRADED",
+    "summary": "Social write lane is not live-mutation ready because current feed conditions are target-thin under the maintained policy. The next social mutation bead may only proceed after a fresh eligible preview or a separate controlled-target plan bead."
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "packetVersion": 1,
+  "closedAt": "2026-05-21T17:24:00Z",
+  "ownerBead": "omniweb-agents-0d7f",
+  "status": "DEGRADED",
+  "summary": "Phase 24 continuation completed required VOTE and lowest-risk advanced-domain proof. Social remains target-thin and spendful advanced domains remain follow-up work.",
+  "budgetLedger": {
+    "unit": "testnet DEM",
+    "totalCeiling": 25,
+    "startingNominalSpent": 10,
+    "endingNominalSpent": 10,
+    "remainingNominal": 15,
+    "entries": [
+      {
+        "status": "GREEN",
+        "pr": 466,
+        "family": "fixed-price BET",
+        "amountDem": 5,
+        "readback": "active-pool exact tx match"
+      },
+      {
+        "status": "GREEN",
+        "pr": 467,
+        "family": "higher/lower BET",
+        "amountDem": 5,
+        "readback": "higher/lower pool deltas"
+      },
+      {
+        "status": "GREEN",
+        "pr": 476,
+        "family": "VOTE",
+        "amountDem": 0,
+        "budgetUnit": "write-rate-slot",
+        "txHash": "68532c333cd78f2451cad8c3f376be4292399807c4552fb38d788f7a52e482af",
+        "readback": "category-search matched tx"
+      },
+      {
+        "status": "GREEN",
+        "pr": 478,
+        "family": "raw-chain",
+        "amountDem": 0,
+        "readback": "balance read, block-number read, redacted sign/verify"
+      }
+    ]
+  },
+  "acceptanceCriteria": {
+    "AC-C1": {
+      "status": "GREEN",
+      "evidence": "Continuation branches started from fresh origin/main and Beads graph was current."
+    },
+    "AC-C2": {
+      "status": "GREEN",
+      "evidence": "PR #471 synced Roadmap and colony-operator mirrors for PR #470 rpcSelection and node2/discus fallback truth."
+    },
+    "AC-C3": {
+      "status": "GREEN",
+      "evidence": "Budget ledger started at 10/25 testnet DEM and ends at 10/25 nominal DEM."
+    },
+    "AC-C4": {
+      "status": "GREEN",
+      "evidence": "vote-fallback-no-spend.json records broadcast=false, rpcSelection, target prices, and no mutation."
+    },
+    "AC-C5": {
+      "status": "GREEN",
+      "evidence": "vote-live-report.json and vote-live-lifecycle-proof.json record one broadcast, tx 68532c333cd78f2451cad8c3f376be4292399807c4552fb38d788f7a52e482af, lifecycle pass, and category-search readback."
+    },
+    "AC-C6": {
+      "status": "GREEN",
+      "evidence": "social-target-recheck-classification.json classifies social as target-thin after a 500-post preview with no mutation."
+    },
+    "AC-C7": {
+      "status": "BLOCKED",
+      "evidence": "social-policy-controlled-target-packet.json preserves score >=85 and engagement >=5 and does not authorize mutation without fresh eligible target or reviewed controlled-target plan."
+    },
+    "AC-C8": {
+      "status": "GREEN",
+      "evidence": "advanced-domain-target-plan.json and child beads split raw-chain, storage, IPFS, and escrow with targets, commands, explicit live flags, and readback criteria."
+    },
+    "AC-C9": {
+      "status": "GREEN",
+      "evidence": "raw-chain-sign-read-smoke.json records no-spend/no-broadcast sign/read proof with verify.verified=true."
+    },
+    "AC-C10": {
+      "status": "GREEN",
+      "evidence": "Roadmap, memory mirrors, proof references, Beads notes, and successor packet were reconciled in closeout."
+    }
+  },
+  "proofReferences": [
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/vote-fallback-no-spend.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/vote-live-preflight.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/vote-live-report.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/vote-live-lifecycle-proof.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/social-target-recheck-preview.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/social-target-recheck-classification.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/social-policy-controlled-target-packet.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/advanced-domain-target-plan.json",
+    "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/raw-chain-sign-read-smoke.json"
+  ],
+  "leftovers": [
+    {
+      "status": "BLOCKED",
+      "bead": "omniweb-agents-0d7f.6",
+      "lane": "social mutation",
+      "reason": "target-thin under maintained floor; no mutation authorized"
+    },
+    {
+      "status": "READY_FOLLOW_UP",
+      "bead": "omniweb-agents-5mnk.2",
+      "lane": "storage",
+      "reason": "target decomposed; no-spend preview required before any broadcast"
+    },
+    {
+      "status": "READY_FOLLOW_UP",
+      "bead": "omniweb-agents-5mnk.3",
+      "lane": "IPFS",
+      "reason": "target decomposed; no-spend preview required before any broadcast"
+    },
+    {
+      "status": "READY_FOLLOW_UP",
+      "bead": "omniweb-agents-5mnk.4",
+      "lane": "escrow",
+      "reason": "target decomposed; no-spend preview required before any broadcast"
+    }
+  ]
+}

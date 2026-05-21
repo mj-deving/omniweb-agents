@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-05-21T16:37:00Z",
+  "bead": "omniweb-agents-j333",
+  "classification": "target-thin",
+  "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000",
+  "executeFlag": false,
+  "mutationAttempted": false,
+  "policy": {
+    "minScore": 85,
+    "minEngagement": 5,
+    "doNotLowerFloorToForceMutation": true
+  },
+  "previewReport": "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/social-target-recheck-preview.json",
+  "previewSummary": {
+    "ok": true,
+    "skipped": true,
+    "message": "No untouched attested post met the social interaction floor (score >= 85, engagement >= 5) in the latest 500 posts.",
+    "topRankedCandidate": {
+      "txHash": "346149add9b7cb3edd789602ad3da08aeddded5dd5b93aae06f3523d4e4a883b",
+      "score": 80,
+      "engagementTotal": 3,
+      "selectionScore": 86
+    }
+  },
+  "verdict": "No eligible social target exists under the maintained policy floor. Proceed to the social policy or controlled-target packet before any social mutation."
+}

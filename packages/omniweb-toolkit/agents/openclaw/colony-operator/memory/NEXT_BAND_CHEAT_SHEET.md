@@ -1,7 +1,7 @@
 # NEXT_BAND_CHEAT_SHEET.md
 
 Status: active
-Updated: 2026-05-21
+Updated: 2026-05-22
 Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, and Phase 24 continuation.
 
 ## Do first
@@ -27,7 +27,9 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - The no-spend successor lane `omniweb-agents-operator-stress` is complete through PRs #458-#460. GoalMode packet/status: `docs/goalmode/colony-operator-stress-test-2026-05-19.md`.
 - PR #459 stress-tested `capabilityDiscovery.operatorHelp.readCommands`: 92 reads, 48 green, 33 thin, 6 auth-gated, 5 degraded, 0 missing-param/dev-only/broken. Pool horizon samples passed 30m/4h/24h and returned HTTP 400 for sampled 1h/12h fixed and higher/lower pool horizons.
 - PR #460 produced execution previews / proposed action packets for all 28 `operatorHelp.writeCommands` without spend, mutation, or broadcast.
-- Phase 24 continuation `omniweb-agents-0d7f` is complete through PRs #471-#478. VOTE is green with tx `68532c333cd78f2451cad8c3f376be4292399807c4552fb38d788f7a52e482af` and category-search readback after PR #470/#472 fallback proof. Social remains target-thin DEGRADED/BLOCKED under score >=85 and engagement >=5. Raw-chain advanced proof is green with no spend/no broadcast; storage/IPFS/escrow remain explicit follow-up child beads.
+- Phase 24 continuation `omniweb-agents-0d7f` is complete through PRs #471-#478. VOTE is green with tx `68532c333cd78f2451cad8c3f376be4292399807c4552fb38d788f7a52e482af` and category-search readback after PR #470/#472 fallback proof. Social remains target-thin DEGRADED/BLOCKED under score >=85 and engagement >=5. Raw-chain advanced proof is green with no spend/no broadcast.
+- PR #482 completed the no-spend write/spend sweep. PR #483 closed `omniweb-agents-0ctx.6`: live identity/storage/IPFS/escrow mutation probes now require explicit existing `--agent-name` or `--env-path`.
+- Current advanced-domain launch packet: `docs/goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md`. It keeps storage/IPFS/escrow in `omniweb-agents-5mnk.2` / `.3` / `.4`, requires no-spend preview first, and requires explicit credential target selection before live `--broadcast`.
 - Do not confuse `omniweb-agents-action-spectrum` with historical `omniweb-agents-spectrum`; the latter is the completed consumer-spectrum lane in docs.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` should not surface `omniweb-agents-hosted.*` after PR5 closes; follow-up work should be new, explicitly scoped Beads.
@@ -43,7 +45,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
 - **Hosted no-spend operator consumer proof:** complete via `omniweb-agents-hosted`; use `npm --prefix packages/omniweb-toolkit run check:frontdoor` or `check:hosted-operator-consumer` for current package proof.
 - **Full action-spectrum matrix:** complete via `omniweb-agents-action-spectrum`; use it as the prior evidence base.
-- **OperatorHelp stress-test and Phase 24 live-write tranche:** default no-spend pass complete via PRs #458-#460; Phase 24 live continuation is complete through PRs #471-#478, with only social target-thin and spendful advanced child beads left for a successor lane.
+- **OperatorHelp stress-test and Phase 24 live-write tranche:** default no-spend pass complete via PRs #458-#460; Phase 24 live continuation is complete through PRs #471-#478, post-sweep hardening is complete through PRs #482-#483, and the current successor lane is storage/IPFS/escrow under the May 22 packet.
 
 ## Keep frozen for this wave
 
@@ -51,7 +53,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
-- operator-stress live writes are no longer the active lane; Phase 24 continuation closed the VOTE retry and raw-chain proof, while remaining social/advanced spend needs a successor packet
+- operator-stress live writes are no longer the active lane; Phase 24 continuation closed the VOTE retry and raw-chain proof, while remaining storage/IPFS/escrow spend needs the May 22 successor packet and explicit credential target
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
 - no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
 - hosted proof means local tarball plus optional dry-run runtime smoke, not production deployment
@@ -60,10 +62,10 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 
 - broad seam rewrite
 - default substrate fork
-- StorageProgram / escrow / IPFS execution outside the explicit successor child beads and no-spend preview gates
+- StorageProgram / escrow / IPFS execution outside the explicit successor child beads, no-spend preview gates, and PR #483 explicit credential-target guardrail
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend outside explicit `omniweb-agents-action-spectrum` child budgets, and unsupervised identity mutation
-- live spend or mutation from old `omniweb-agents-operator-stress`; the live-write tranche moved through `omniweb-agents-0d7f`, and remaining spendful storage/IPFS/escrow work must use the successor packet and child beads
+- live spend or mutation from old `omniweb-agents-operator-stress`; the live-write tranche moved through `omniweb-agents-0d7f`, and remaining spendful storage/IPFS/escrow work must use the May 22 successor packet, child beads, and explicit `--agent-name` or `--env-path`
 - relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it

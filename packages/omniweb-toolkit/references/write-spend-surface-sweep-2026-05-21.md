@@ -72,7 +72,7 @@ These are planning ceilings only. They are not authorization to execute.
 3. React/tip still need a durable owned/current target selection bead before live mutation. A fresh dry-run found a candidate reaction target, but no committed target packet authorizes a mutation or tip spend.
 4. Higher/lower docs and intent metadata still need to stop implying a fractional minimum where the live path required integer DEM.
 5. Market registration recovery is degraded for current native memo txs and should be documented as recovery-only, owned-tx-only behavior.
-6. Identity and domain probe scripts need explicit throwaway `--agent-name` / env targeting before future mutations; PR4/PR5 showed configured-wallet ambiguity.
+6. Identity and domain probe scripts now require explicit existing `--agent-name` / `--env-path` targeting before future live identity, escrow, storage, or IPFS mutations; dry-runs still report the selected public address and redacted runtime target.
 7. Chat-send mutation is not a maintained proof lane; current checks are read/classification only.
 8. Raw chain transfer has no maintained bounded transfer proof lane even though sign/read is proven.
 9. Controlled webhook receiver, storage, IPFS, and escrow live lanes already exist as beads but must be blocked by this sweep until their budgets/readbacks are reconciled.

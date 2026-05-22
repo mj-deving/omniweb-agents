@@ -69,7 +69,16 @@ const runtimeTarget = summarizeProbeRuntimeTarget({ envPath, agentName, stateDir
 const command = redactProbeCommand(process.argv);
 
 try {
-  assertExplicitCredentialTargetExists({ envPath, agentName, stateDir });
+  assertExplicitCredentialTargetExists(
+    { envPath, agentName, stateDir },
+    { requireExplicit: broadcast, purpose: "Live IPFS mutation" },
+  );
+} catch (err) {
+  console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(2);
+}
+
+try {
   const connect = await loadConnect();
   const omni = await connect({ envPath, agentName, stateDir });
   const sizeBytes = Buffer.byteLength(content);

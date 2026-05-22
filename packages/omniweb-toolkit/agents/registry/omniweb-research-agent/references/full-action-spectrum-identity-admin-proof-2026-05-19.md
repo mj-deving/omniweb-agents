@@ -60,7 +60,7 @@ node --import tsx packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts \
   --execute
 ```
 
-That command refused to run until `--confirm-identity-mutation` was present. The confirmed maintained-script run did execute, but because the script lacks `--agent-name` / `--env-path`, it used the configured default wallet instead of the throwaway wallet. This is recorded as a degraded script-surface finding, not hidden.
+That command refused to run until `--confirm-identity-mutation` was present. The confirmed maintained-script run did execute, but because the script then lacked `--agent-name` / `--env-path`, it used the configured default wallet instead of the throwaway wallet. This is recorded as historical degraded script-surface evidence; the maintained script now refuses live mutation without an explicit existing credential target.
 
 Throwaway identity round trip:
 
@@ -79,7 +79,7 @@ node --input-type=module --import tsx -e '<deprecated linkIdentity classificatio
 
 | Row | Verdict | Evidence |
 | --- | --- | --- |
-| I1 profile register | pass with degraded script caveat | Throwaway wallet `0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09` submitted `register()` for `action-spectrum-pr4-20260519-01`; the registration response returned the requested public fields, while follow-up profile readback matched the address but returned null/empty public profile fields. The first maintained-script run accidentally registered the configured wallet because the script cannot select `--agent-name`; a restore attempt hit SuperColony name-change cooldown `429`, so the default wallet profile remains a documented cleanup blocker until the cooldown expires. |
+| I1 profile register | pass with degraded historical script caveat | Throwaway wallet `0x0b7468ded5583cb02c964d2bb93146b24824fe89db09f4ddefe3054383061f09` submitted `register()` for `action-spectrum-pr4-20260519-01`; the registration response returned the requested public fields, while follow-up profile readback matched the address but returned null/empty public profile fields. The first maintained-script run accidentally registered the configured wallet before script targeting existed; a restore attempt hit SuperColony name-change cooldown `429`, so the default wallet profile remains a documented cleanup blocker until the cooldown expires. Future maintained-script live runs require explicit existing `--agent-name` / `--env-path` targeting. |
 | I2 official human-link | pass | Throwaway challenge/claim/approve/readback/unlink completed. Linked-agent readback contained the throwaway address before cleanup and `linkedAfter.count=0`, `containsAgent=false` after unlink. Challenge handles, messages, and signatures are redacted. The configured-wallet maintained-script run also completed link cleanup. |
 | I3 deprecated wrapper | unsupported / excluded | `omni.identity.createProof()` produced a redacted proof payload marker, but `linkIdentity` / `omni.identity.link` was not submitted because it requires a public Twitter/GitHub proof URL. PR4 used the official human-link flow instead. |
 | A1 webhook create/delete | blocked with read proof | `getWebhooks()` succeeded for the throwaway wallet. `createWebhook` and `deleteWebhook` were not attempted because no controlled public HTTPS callback receiver and no PR4-owned webhook id were available. Creating an unowned callback registration would violate the cleanup/readback gate. |
@@ -99,4 +99,4 @@ packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr4/
 
 ## Current Truth
 
-The official register and human-link routes are currently live-proven through an isolated throwaway wallet with cleanup readback. The maintained script should be widened later with `--agent-name` / `--env-path` so future throwaway runs do not accidentally use the configured default wallet. Webhook mutation remains blocked without a controlled callback receiver, and the deprecated Web2 identity wrapper remains excluded from current launch claims.
+The official register and human-link routes are currently live-proven through an isolated throwaway wallet with cleanup readback. The maintained script now accepts `--agent-name` / `--env-path`, reports the selected public address with redacted runtime target metadata, and refuses live identity mutation without an explicit existing credential target. Webhook mutation remains blocked without a controlled callback receiver, and the deprecated Web2 identity wrapper remains excluded from current launch claims.

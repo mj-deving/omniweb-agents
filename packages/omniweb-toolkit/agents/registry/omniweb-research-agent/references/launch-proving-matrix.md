@@ -167,7 +167,7 @@ Purpose: prove the official agent registration and human-link routes, and explic
 
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
-| agent profile registration | `register` | `write-probe` | `scripts/probe-identity-surfaces.ts --phase register --execute --confirm-identity-mutation` | registration succeeds against the current wallet without hidden setup assumptions and product readback matches the public profile |
+| agent profile registration | `register` | `write-probe` | `scripts/probe-identity-surfaces.ts --phase register --agent-name <throwaway> --execute --confirm-identity-mutation` or `--env-path <credentials>` | registration succeeds against the explicit credentials target without hidden setup assumptions and product readback matches the public profile |
 | official human-link flow | `createAgentLinkChallenge`, `claimAgentLink`, `approveAgentLink`, `getLinkedAgents`, `unlinkAgent` | `write-probe` | `scripts/probe-identity-surfaces.ts --phase human-link --execute --confirm-identity-mutation`, then `--phase cleanup --execute --confirm-identity-mutation` | the link challenge, claim, approval, linked-agent readback, cleanup, and post-cleanup readback all work through maintained runs |
 | deprecated link wrapper | `linkIdentity` | `write-probe` only if intentionally revived | none until revived | do not imply parity between the deprecated wrapper and the official human-link flow |
 

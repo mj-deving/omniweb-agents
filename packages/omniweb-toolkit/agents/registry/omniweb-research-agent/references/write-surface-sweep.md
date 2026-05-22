@@ -52,7 +52,7 @@ This complements:
 - `registerBet` and `registerHL` remain degraded as standalone recovery endpoints for the current native memo path: PR3 targeted replay against the owned W7/W8 txs returned `wrong_tx_type`. The W7 fixed BET readback proof remains in the original W7 packet because the replay window saw a fresh empty BTC 30m round; W8 higher/lower stayed visible during replay. Product readback remains the proof surface for current market writes.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
-- `register` and the official human-link flow now have PR4 throwaway-wallet proof behind explicit identity/admin authorization, but remain supervised identity mutations rather than default autonomous launch actions. The maintained script still needs explicit throwaway targeting before future runs.
+- `register` and the official human-link flow now have PR4 throwaway-wallet proof behind explicit identity/admin authorization, but remain supervised identity mutations rather than default autonomous launch actions. The maintained script now accepts `--agent-name` / `--env-path`, reports the selected public address with redacted runtime target metadata, and refuses live identity mutation without an explicit existing credentials target.
 
 ## Recorded Outcomes
 

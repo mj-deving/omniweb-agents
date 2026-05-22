@@ -2,8 +2,9 @@
   "artifactVersion": 1,
   "artifactKind": "phase24-agent-name-selection",
   "createdAt": "2026-05-22T10:00:00Z",
+  "updatedAt": "2026-05-22T10:22:26Z",
   "bead": "omniweb-agents-97o2",
-  "status": "SELECTED_NOT_PROVISIONED",
+  "status": "PROVISIONED_PREVIEW_GREEN",
   "selectedAgentName": "colony-operator",
   "officialGuidance": {
     "source": "https://supercolony.ai/skill",
@@ -19,17 +20,27 @@
     "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview-colony-operator.json",
     "broadcastRequested": false,
     "mutationAttempted": false,
-    "proofOutWrittenByProbe": false,
-    "exitCode": 2,
-    "stderr": "Error: --agent-name credentials profile not found"
+    "proofOutWrittenByProbe": true,
+    "exitCode": 0,
+    "stderr": null
   },
   "previewRequirements": {
-    "publicAddress": "unavailable until profile is provisioned",
-    "runtimeTarget": "unavailable until profile is provisioned",
+    "publicAddress": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+    "runtimeTarget": {
+      "credentialSource": "agent-name",
+      "agentName": "colony-operator",
+      "envPath": null,
+      "stateDir": null
+    },
     "runtimeTargetRedacted": true,
-    "costQuoteDem": "unavailable until profile is provisioned",
+    "storageAddress": "stor-b2248cf13f55ded07e66cca0d1dea6787ba8c0c6",
+    "costQuoteDem": "1",
     "singleOperationCeilingDem": 5,
-    "readbackSurface": "unavailable until profile is provisioned"
+    "readbackSurface": [
+      "storage address from preview",
+      "live broadcast must prove readAfterCreate",
+      "live broadcast must prove fieldAfterSet for lastProbe"
+    ]
   },
   "budgetLedger": {
     "unit": "testnet DEM",
@@ -38,5 +49,5 @@
     "totalCeiling": 25,
     "selectionAmountDem": 0
   },
-  "nextRequiredStep": "Provision a local credentials profile named colony-operator, then rerun the no-spend storage preview before any live --broadcast."
+  "nextRequiredStep": "The colony-operator explicit target is provisioned and storage no-spend preview is green. The next Phase 24 storage step, if authorized by the successor packet, is the single live --broadcast with the 5 DEM operation ceiling and product readback."
 }

@@ -12,6 +12,7 @@
  */
 
 import { DEFAULT_BASE_URL, fetchText, getNumberArg, hasFlag } from "./_shared.js";
+import type { HiveAPI } from "../src/hive.js";
 
 type Verdict =
   | "pass"
@@ -37,14 +38,75 @@ type SweepResult = {
   error?: string | null;
 };
 
+type HiveReadMethod = keyof Pick<
+  HiveAPI,
+  | "getFeed"
+  | "search"
+  | "getPostDetail"
+  | "getRss"
+  | "getOracle"
+  | "getPrices"
+  | "getPriceHistory"
+  | "getBalance"
+  | "getAgentBalance"
+  | "getPool"
+  | "getHigherLowerPool"
+  | "getBinaryPools"
+  | "getEthPool"
+  | "getEthWinners"
+  | "getEthHigherLowerPool"
+  | "getEthBinaryPools"
+  | "getSportsMarkets"
+  | "getSportsPool"
+  | "getSportsWinners"
+  | "getCommodityPool"
+  | "getPredictionIntelligence"
+  | "getPredictionRecommendations"
+  | "getSignals"
+  | "getConvergence"
+  | "getReport"
+  | "getLeaderboard"
+  | "getTopPosts"
+  | "getPredictionLeaderboard"
+  | "getPredictionScore"
+  | "getAgents"
+  | "getAgentProfile"
+  | "getAgentIdentities"
+  | "lookupIdentity"
+  | "getReactions"
+  | "getTipStats"
+  | "getAgentTipStats"
+  | "getWebhooks"
+  | "getLinkedAgents"
+  | "getMarkets"
+  | "getPredictions"
+  | "getForecastScore"
+>;
+
+type CoverageMode = "probed" | "reported";
+type CoverageScope =
+  | "production"
+  | "extended"
+  | "current_host_disabled"
+  | "reported_only";
+
+type CoverageEntry = {
+  method: HiveReadMethod;
+  mode: CoverageMode;
+  scope: CoverageScope;
+  note: string;
+};
+
 type ColonyReadApi = {
   getFeed(opts?: { limit?: number; category?: string }): Promise<any>;
   search(opts: { text?: string; category?: string }): Promise<any>;
   getPostDetail(txHash: string): Promise<any>;
+  getRss(): Promise<any>;
   getOracle(opts?: { assets?: string[] }): Promise<any>;
   getPrices(assets: string[]): Promise<any>;
   getPriceHistory(asset: string, periods: number): Promise<any>;
   getBalance(): Promise<any>;
+  getAgentBalance(address: string): Promise<any>;
   getPool(opts?: { asset?: string; horizon?: string }): Promise<any>;
   getHigherLowerPool(opts?: { asset?: string; horizon?: string }): Promise<any>;
   getBinaryPools(opts?: { category?: string; limit?: number }): Promise<any>;
@@ -63,13 +125,65 @@ type ColonyReadApi = {
   getReport(opts?: { id?: string }): Promise<any>;
   getLeaderboard(opts?: { limit?: number }): Promise<any>;
   getTopPosts(opts?: { category?: string; minScore?: number; limit?: number }): Promise<any>;
+  getPredictionLeaderboard(opts?: { limit?: number }): Promise<any>;
+  getPredictionScore(address: string): Promise<any>;
   getAgents(): Promise<any>;
+  getAgentProfile(address: string): Promise<any>;
+  getAgentIdentities(address: string): Promise<any>;
+  lookupIdentity(opts: { chain?: string; address?: string; platform?: string; username?: string; query?: string }): Promise<any>;
   getMarkets(opts?: { category?: string; limit?: number }): Promise<any>;
   getPredictions(opts?: { status?: string; asset?: string; agent?: string }): Promise<any>;
   getForecastScore(address: string): Promise<any>;
   getReactions(txHash: string): Promise<any>;
   getTipStats(txHash: string): Promise<any>;
+  getAgentTipStats(address: string): Promise<any>;
+  getWebhooks(): Promise<any>;
+  getLinkedAgents(): Promise<any>;
 };
+
+const READ_SURFACE_COVERAGE = [
+  { method: "getFeed", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "search", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getPostDetail", mode: "probed", scope: "production", note: "sample feed tx hash required" },
+  { method: "getRss", mode: "reported", scope: "reported_only", note: "public RSS wrapper is outside the authenticated production sweep; track separately before claiming current-host pass" },
+  { method: "getSignals", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getConvergence", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getReport", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getLeaderboard", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getTopPosts", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getAgents", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getAgentProfile", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getAgentIdentities", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "lookupIdentity", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep using the current wallet address as a query" },
+  { method: "getOracle", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getPrices", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getPriceHistory", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getBalance", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getAgentBalance", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getMarkets", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getPredictions", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getForecastScore", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getPredictionLeaderboard", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getPredictionScore", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getPool", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getHigherLowerPool", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getBinaryPools", mode: "probed", scope: "production", note: "default production read sweep" },
+  { method: "getReactions", mode: "probed", scope: "production", note: "sample feed tx hash required" },
+  { method: "getTipStats", mode: "probed", scope: "production", note: "sample feed tx hash required" },
+  { method: "getAgentTipStats", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getWebhooks", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getLinkedAgents", mode: "probed", scope: "production", note: "authenticated runtime-basic read sweep" },
+  { method: "getEthPool", mode: "probed", scope: "current_host_disabled", note: "extended sweep; current host returns deployment-disabled 503" },
+  { method: "getEthWinners", mode: "probed", scope: "extended", note: "extended non-default read sweep" },
+  { method: "getEthHigherLowerPool", mode: "probed", scope: "current_host_disabled", note: "extended sweep; current host returns deployment-disabled 503" },
+  { method: "getEthBinaryPools", mode: "probed", scope: "extended", note: "extended non-default read sweep" },
+  { method: "getSportsMarkets", mode: "probed", scope: "extended", note: "extended non-default read sweep" },
+  { method: "getSportsPool", mode: "probed", scope: "extended", note: "extended non-default read sweep; fixture id required" },
+  { method: "getSportsWinners", mode: "probed", scope: "extended", note: "extended non-default read sweep; fixture id required" },
+  { method: "getCommodityPool", mode: "probed", scope: "extended", note: "extended non-default read sweep" },
+  { method: "getPredictionIntelligence", mode: "probed", scope: "extended", note: "extended non-default read sweep" },
+  { method: "getPredictionRecommendations", mode: "probed", scope: "extended", note: "extended non-default read sweep" },
+] satisfies readonly CoverageEntry[];
 
 type OmniWebRuntime = {
   address: string;
@@ -142,6 +256,14 @@ try {
       ok: productionFailures.length === 0,
       verdictCounts: countVerdicts(readChecks),
       results: readChecks,
+    },
+    coverage: {
+      ok: coverageCompleteForSelectedSweep(readChecks, includeDevOnly),
+      fullSweep: includeDevOnly,
+      methods: READ_SURFACE_COVERAGE,
+      reportOnlyMethods: READ_SURFACE_COVERAGE
+        .filter((entry) => entry.mode === "reported")
+        .map((entry) => entry.method),
     },
     failures: {
       discovery: discoveryFailures.map((entry) => entry.path),
@@ -236,6 +358,13 @@ async function runReadChecks(
     { method: "getLeaderboard", scope: "production", run: () => omni.colony.getLeaderboard({ limit: 5 }) },
     { method: "getTopPosts", scope: "production", run: () => omni.colony.getTopPosts({ limit: 5 }) },
     { method: "getAgents", scope: "production", run: () => omni.colony.getAgents() },
+    { method: "getAgentProfile", scope: "production", run: () => omni.colony.getAgentProfile(omni.address) },
+    { method: "getAgentIdentities", scope: "production", run: () => omni.colony.getAgentIdentities(omni.address) },
+    {
+      method: "lookupIdentity",
+      scope: "production",
+      run: () => omni.colony.lookupIdentity({ query: omni.address }),
+    },
     { method: "getOracle", scope: "production", run: () => omni.colony.getOracle({ assets: ["BTC"] }) },
     { method: "getPrices", scope: "production", run: () => omni.colony.getPrices(["BTC"]) },
     {
@@ -244,9 +373,12 @@ async function runReadChecks(
       run: () => omni.colony.getPriceHistory("BTC", options.priceHistoryPeriods),
     },
     { method: "getBalance", scope: "production", run: () => omni.colony.getBalance() },
+    { method: "getAgentBalance", scope: "production", run: () => omni.colony.getAgentBalance(omni.address) },
     { method: "getMarkets", scope: "production", run: () => omni.colony.getMarkets({ limit: 5 }) },
     { method: "getPredictions", scope: "production", run: () => omni.colony.getPredictions({}) },
     { method: "getForecastScore", scope: "production", run: () => omni.colony.getForecastScore(omni.address) },
+    { method: "getPredictionLeaderboard", scope: "production", run: () => omni.colony.getPredictionLeaderboard({ limit: 5 }) },
+    { method: "getPredictionScore", scope: "production", run: () => omni.colony.getPredictionScore(omni.address) },
     { method: "getPool", scope: "production", run: () => omni.colony.getPool({ asset: "BTC", horizon: "30m" }) },
     {
       method: "getHigherLowerPool",
@@ -266,6 +398,9 @@ async function runReadChecks(
       skip: () => sampleContext.samplePostTxHash ? null : "no sample post tx hash from feed",
       run: () => omni.colony.getTipStats(sampleContext.samplePostTxHash!),
     },
+    { method: "getAgentTipStats", scope: "production", run: () => omni.colony.getAgentTipStats(omni.address) },
+    { method: "getWebhooks", scope: "production", run: () => omni.colony.getWebhooks() },
+    { method: "getLinkedAgents", scope: "production", run: () => omni.colony.getLinkedAgents() },
     {
       method: "getEthPool",
       scope: "dev_only",
@@ -498,6 +633,18 @@ function countVerdicts(results: SweepResult[]): Record<string, number> {
     acc[result.verdict] = (acc[result.verdict] ?? 0) + 1;
     return acc;
   }, {});
+}
+
+function coverageCompleteForSelectedSweep(
+  results: SweepResult[],
+  includeExtended: boolean,
+): boolean {
+  const resultMethods = new Set(results.map((result) => result.method));
+  return READ_SURFACE_COVERAGE.every((entry) => (
+    entry.mode === "reported"
+      || (!includeExtended && (entry.scope === "extended" || entry.scope === "current_host_disabled"))
+      || resultMethods.has(entry.method)
+  ));
 }
 
 function extractFixtureId(data: unknown): string | null {

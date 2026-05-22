@@ -1,0 +1,57 @@
+{
+  "artifactVersion": 1,
+  "artifactKind": "storage-preview-blocked-record",
+  "createdAt": "2026-05-22T08:38:46Z",
+  "bead": "omniweb-agents-5mnk.2",
+  "status": "BLOCKED",
+  "verdict": "explicit credential target missing",
+  "scope": "Phase 24 advanced-domain successor storage preview",
+  "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name mj-codex-proof-agent --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json",
+  "target": {
+    "mode": "agent-name",
+    "agentName": "mj-codex-proof-agent",
+    "programName": "phase24-continuation-20260521-storage",
+    "mutationClass": "CREATE_STORAGE_PROGRAM plus SET_FIELD",
+    "field": "lastProbe"
+  },
+  "attempt": {
+    "broadcastRequested": false,
+    "mutationAttempted": false,
+    "proofOutWrittenByProbe": false,
+    "exitCode": 2,
+    "stderr": "Error: --agent-name credentials profile not found"
+  },
+  "stopCondition": {
+    "triggered": true,
+    "packetRule": "Stop before mutation if no explicit existing credential target is selected.",
+    "reason": "--agent-name mj-codex-proof-agent did not resolve to an existing credentials profile."
+  },
+  "previewRequirements": {
+    "publicAddress": "unavailable",
+    "runtimeTarget": "unavailable",
+    "runtimeTargetRedacted": true,
+    "costQuoteDem": "unavailable",
+    "singleOperationCeilingDem": 5,
+    "readbackSurface": "unavailable"
+  },
+  "budgetLedger": {
+    "unit": "testnet DEM",
+    "startingNominalSpent": 10,
+    "endingNominalSpent": 10,
+    "totalCeiling": 25,
+    "storageAmountDem": 0
+  },
+  "outOfScopePreserved": [
+    "no VOTE rerun",
+    "no social mutation",
+    "no raw transfer",
+    "no IPFS mutation",
+    "no escrow mutation",
+    "no npm release",
+    "no public registry proof",
+    "no production hosting",
+    "no mainnet",
+    "no secret or local credential path persisted"
+  ],
+  "nextRequiredStep": "Provision or select an explicit existing credential target, then rerun the no-spend storage preview before any live --broadcast."
+}

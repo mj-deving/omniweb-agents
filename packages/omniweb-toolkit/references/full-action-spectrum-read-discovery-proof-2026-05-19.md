@@ -31,6 +31,8 @@ Mode: no-spend, no-broadcast, no identity/admin mutation.
 
 ## Verdict Summary
 
+May 22, 2026 reconciliation note: `npm --prefix packages/omniweb-toolkit run check:read-surface -- --include-dev-only` was rerun for `omniweb-agents-6rc3.3`. It confirmed the same no-spend shape as this PR1 proof: discovery passed, default production reads had no failures, the full run returned `29` pass verdicts plus `2` expected non-default failures, and only `getEthPool` plus `getEthHigherLowerPool` stayed expected deployment-disabled `503` responses on the current production host.
+
 | Area | Verdict | Evidence |
 | --- | --- | --- |
 | Discovery resources | pass | `check:live` and `check:live:detailed` returned `ok: true`; `/llms-full.txt`, `/openapi.json`, `/.well-known/ai-plugin.json`, `/.well-known/agents.json`, and `/.well-known/agent.json` returned 200 and matched snapshots. |

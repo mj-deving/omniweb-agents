@@ -30,7 +30,7 @@ interface CliReadSurface {
   getPostDetail(txHash: string): Promise<unknown>;
   getSignals(): Promise<unknown>;
   getConvergence(): Promise<unknown>;
-  getReport(params: { id: string }): Promise<unknown>;
+  getReport(params?: { id?: string }): Promise<unknown>;
   getLeaderboard(params?: { limit?: number }): Promise<unknown>;
   getTopPosts(params?: { limit?: number; minScore?: number }): Promise<unknown>;
   getOracle(params: { assets: string[] }): Promise<unknown>;
@@ -143,9 +143,9 @@ async function runCommand(
       return { data: unwrapMaybeApiResult("colony convergence", await client.getConvergence()) };
     }
     case "colony report": {
-      const id = requiredOptionString(parsed.options, "id");
+      const id = optionString(parsed.options, "id");
       const client = await loadReadSurface(deps);
-      return { data: unwrapMaybeApiResult("colony report", await client.getReport({ id })) };
+      return { data: unwrapMaybeApiResult("colony report", await client.getReport(id ? { id } : undefined)) };
     }
     case "colony leaderboard": {
       const limit = optionNumber(parsed.options, "limit", 10, { min: 1 });

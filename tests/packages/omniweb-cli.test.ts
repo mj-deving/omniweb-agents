@@ -203,6 +203,17 @@ describe("omniweb CLI foundation", () => {
     expect(read).toHaveBeenCalledWith(...expectedArgs);
   });
 
+  it("allows colony report to read the default/latest report without --id", async () => {
+    const getReport = vi.fn().mockResolvedValue({ ok: true, data: { report: "latest" } });
+    const envelope = await runCli(["colony", "report"], {
+      connect: fakeConnect({ getReport }),
+      now: () => NOW,
+      version: "test-version",
+    });
+    expect(envelope).toMatchObject({ ok: true, command: "colony report", data: { report: "latest" } });
+    expect(getReport).toHaveBeenCalledWith(undefined);
+  });
+
   it("returns structured INVALID_ARGUMENT errors for missing required read options", async () => {
     const envelope = await runCli(["colony", "post"], {
       connect: fakeConnect({ getPostDetail: vi.fn() }),

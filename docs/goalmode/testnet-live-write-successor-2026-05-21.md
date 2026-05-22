@@ -4,14 +4,17 @@ status: successor-ready
 created: 2026-05-21
 source_contract: docs/ROADMAP.md#phase-24-testnet-live-write-goalmode-tranche
 predecessor_packet: docs/goalmode/testnet-live-write-continuation-2026-05-21.md
+successor_packet: docs/goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md
 owner_beads:
   - omniweb-agents-5mnk.2
   - omniweb-agents-5mnk.3
   - omniweb-agents-5mnk.4
-summary: "Successor packet for Phase 24 leftovers after VOTE and raw-chain proof closed."
+summary: "Historical successor packet for Phase 24 leftovers after VOTE and raw-chain proof closed; superseded for launch by the May 22 explicit-target packet."
 ---
 
 # Testnet Live-Write Successor Packet
+
+> Current launch packet: [testnet-live-write-advanced-domain-successor-2026-05-22.md](testnet-live-write-advanced-domain-successor-2026-05-22.md). Use that packet for new `/goal` runs because PR #483 added explicit live credential-targeting requirements after this packet was written.
 
 ## Objective
 

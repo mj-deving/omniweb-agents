@@ -1,12 +1,12 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-21
+updated: 2026-05-22
 completed_phases: 23
 tests: 3442
 suites: 295
 tsc_errors: 0
-summary: "The no-spend colony operator stress pass is complete, wallet/profile and domain targeting blockers are resolved, and the bounded testnet live-write GoalMode tranche has green BET/HL/VOTE proof, social target-thin degraded, and raw-chain no-spend advanced-domain proof."
+summary: "The no-spend colony operator stress pass is complete, wallet/profile and domain targeting blockers are resolved, PR #483 added explicit mutation-probe credential targeting, and the bounded testnet live-write GoalMode tranche has green BET/HL/VOTE proof, social target-thin degraded, and raw-chain no-spend advanced-domain proof."
 topic_hint: ["roadmap", "next steps", "what's next", "backlog", "future work", "consumer toolkit", "attestation-first", "leaderboard pattern", "colony-operator", "action-intent"]
 ---
 
@@ -38,12 +38,12 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | The consumer-spectrum, hosted no-spend proof, full action-spectrum matrix, and no-spend `omniweb-agents-operator-stress` read/write-preview pass are complete. The former safety blockers are resolved: `omniweb-agents-km3g` closed via PR #462, `omniweb-agents-vhat` closed via PR #463, and configured-wallet restore closed via `omniweb-agents-wck6` / PR #464. The bounded testnet live-write tranche has now run without per-operation human prompts: fixed-price BET, higher/lower BET, and VOTE are green with product readback; social is degraded/blocked because no eligible target met the maintained floor; the first advanced-domain proof is green as a raw-chain no-spend sign/read smoke. |
+| Current direction | The consumer-spectrum, hosted no-spend proof, full action-spectrum matrix, and no-spend `omniweb-agents-operator-stress` read/write-preview pass are complete. The former safety blockers are resolved: `omniweb-agents-km3g` closed via PR #462, `omniweb-agents-vhat` closed via PR #463, configured-wallet restore closed via `omniweb-agents-wck6` / PR #464, and explicit mutation-probe credential targeting closed via `omniweb-agents-0ctx.6` / PR #483. The bounded testnet live-write tranche has now run without per-operation human prompts: fixed-price BET, higher/lower BET, and VOTE are green with product readback; social is degraded/blocked because no eligible target met the maintained floor; the first advanced-domain proof is green as a raw-chain no-spend sign/read smoke. The next prepared `/goal` run is the advanced-domain successor packet for storage/IPFS/escrow child beads, starting with no-spend preview and explicit credential target selection before any live `--broadcast`. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
 | Documentation | Colony-operator remains the honest default front door, and README/reference/proof surfaces now describe the landed seam, capability surface, guardrails, and admissibility gate honestly instead of talking like those pivots are still ahead |
-| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed historical consumer-spectrum `omniweb-agents-spectrum`, `omniweb-agents-hosted` completed the hosted no-spend operator consumer proof, `omniweb-agents-action-spectrum` completed the full-operation testing matrix, `omniweb-agents-operator-stress` completed roadmap/packet prep, read-surface stress, write-preview packets, and blocker wiring through PRs #458-#460, `.5` ran the initial Phase 24 tranche through PRs #465-#468, PR #470 added VOTE RPC candidate fallback, and `omniweb-agents-0d7f` completed the continuation graph through PRs #471-#478 plus closeout. |
+| Beads | PR #360 is the planning checkpoint, PR #371 is the market-write merge checkpoint, PR #372 closes `5xp4.15`, PR #376 closes the intent-boundary cleanup, PR #377 closes `5xp4.8`, PRs #379-#382 captured the blocker-truth/diagnosis follow-ups, `uw66.1` through `uw66.4` prove bounded live publish/reply/react/tip, AC-5 proves VOTE prediction, PR #409 / `omniweb-agents-dnoy` proves fixed-price agentic DEM betting through delayed winners readback, PR #411 / `omniweb-agents-zg11` completed durable write lifecycle/readback, PR #413 is only the `omniweb-agents-zqnh` capability-truth/dry-run checkpoint, `omniweb-agents-8tga` carries the live maintained operator proof, higher/lower readback proof, earlier identity blocker, and accepted OpenClaw/Gregor no-spend runtime-host proof, `omniweb-agents-q5k8` carries the Wave C supervised identity participation GoalMode run, PR #419 completes Wave D release-readiness without npm release, `omniweb-agents-capsurf` completed Wave E capability-surface execution through PRs #420-#426, PR #427 completed toolkit guardrails, PRs #428/#429 completed action admissibility, PR #431 completed `uw66.6`, PRs #432-#441 completed historical consumer-spectrum `omniweb-agents-spectrum`, `omniweb-agents-hosted` completed the hosted no-spend operator consumer proof, `omniweb-agents-action-spectrum` completed the full-operation testing matrix, `omniweb-agents-operator-stress` completed roadmap/packet prep, read-surface stress, write-preview packets, and blocker wiring through PRs #458-#460, `.5` ran the initial Phase 24 tranche through PRs #465-#468, PR #470 added VOTE RPC candidate fallback, `omniweb-agents-0d7f` completed the continuation graph through PRs #471-#478 plus closeout, PR #482 completed the write/spend sweep, and PR #483 closed `omniweb-agents-0ctx.6` so storage/IPFS/escrow live probes now require explicit credential targeting. |
 | Remaining external edges | npm release/public registry proof and production hosted activation remain separately gated. Future live work may spend bounded testnet DEM without per-operation human prompts only inside the May 21 packet or a successor Bead/packet, only on testnet, only through explicit script live flags, and only with recorded budget, host, wallet, controlled target, command, mutation/tx evidence, and product readback criteria. Mainnet, real-money, npm release, production hosted activation, secret handling changes, and uncontrolled credential/profile changes remain out of scope. |
 
 **North star:** a substrate-complete OmniWeb package plus replaceable skills/playbooks above it; reference `supercolony-agent-starter` (KyneSys repo) + `supercolony.ai/llms-full.txt`
@@ -366,12 +366,13 @@ Explicit boundaries:
 
 ## Phase 24: Testnet Live-Write GoalMode Tranche
 
-Owner beads: `omniweb-agents-operator-stress.5` for the original tranche, `omniweb-agents-0d7f` for the continuation after PR #470
+Owner beads: `omniweb-agents-operator-stress.5` for the original tranche, `omniweb-agents-0d7f` for the continuation after PR #470, and `omniweb-agents-5mnk.2` / `.3` / `.4` for the advanced-domain successor execution.
 
 Launch packet:
 - [docs/goalmode/testnet-live-write-tranche-2026-05-21.md](goalmode/testnet-live-write-tranche-2026-05-21.md)
 - [docs/goalmode/testnet-live-write-continuation-2026-05-21.md](goalmode/testnet-live-write-continuation-2026-05-21.md)
-- [docs/goalmode/testnet-live-write-successor-2026-05-21.md](goalmode/testnet-live-write-successor-2026-05-21.md)
+- [docs/goalmode/testnet-live-write-successor-2026-05-21.md](goalmode/testnet-live-write-successor-2026-05-21.md) (historical successor packet)
+- [docs/goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md](goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md) (current launch packet)
 
 Big picture:
 - Phase 21-22 built the simple attestation-first and leaderboard-pattern floor.
@@ -392,6 +393,8 @@ Current Phase 24 status:
 - PR #476 executed exactly one bounded VOTE live publish after green preflight: tx `68532c333cd78f2451cad8c3f376be4292399807c4552fb38d788f7a52e482af`, lifecycle verdict `pass`, category-search product readback matched the tx.
 - PR #477 recorded the social policy packet. It preserves score `>=85` and engagement `>=5`, does not authorize a social mutation now, and marks the social mutation lane `BLOCKED/DEGRADED` until a fresh eligible target or separately reviewed controlled-target plan exists.
 - PR #478 recorded the lowest-risk advanced-domain proof: raw-chain no-spend/no-broadcast sign/read smoke, `attemptedBroadcast=false`, `ok=true`, `verify.verified=true`, balance read `1737`, block number `2298490`; storage/IPFS/escrow remain follow-up beads.
+- PR #482 completed the no-spend write/spend sweep and opened/connected the follow-up hardening beads.
+- PR #483 closed `omniweb-agents-0ctx.6`: identity, storage, IPFS, and escrow probes now refuse live mutation unless an explicit existing `--agent-name` or `--env-path` credential target is provided.
 - Budget ledger: nominal DEM spend remains `10 / 25` testnet DEM. VOTE recorded a write-rate-slot lifecycle budget rather than a DEM amount, and the raw-chain proof balance read stayed `1737`.
 
 Authorization model:
@@ -411,6 +414,7 @@ Remaining execution rule:
 2. Do not lower the social target floor just to force a react/reply/tip mutation; wait for an eligible target or file a deliberate target-policy change.
 3. Keep the existing `10 / 25` DEM spend ledger unless a successor packet updates the budget before more spend.
 4. Remaining advanced storage, IPFS, and escrow work must use their existing controlled child beads (`omniweb-agents-5mnk.2`, `.3`, `.4`) and start with no-spend preview before any `--broadcast`.
+5. Any live storage/IPFS/escrow `--broadcast` must use an explicit existing credential target through `--agent-name` or `--env-path`; dry-run `default-runtime` reporting is acceptable only before the explicit-target preview rerun.
 
 ## Completed Band — full action-spectrum matrix
 
@@ -504,11 +508,11 @@ These remain outside the current colony-operator execution band. They matter lat
 | ID | P | Item | Status |
 |----|---|------|--------|
 | `omniweb-agents-028` | P2 | npm publish | Deferred until explicit release authorization plus npm auth; PR6 made no npm release or public registry claim |
-| `omniweb-agents-km3g` | P1 | Identity probe targeting and configured-wallet restore | Restore after PR4 cooldown and add throwaway target selection |
-| `omniweb-agents-vhat` | P2 | Domain probe targeting and chain sign/verify classification | Add explicit throwaway targeting to escrow/storage/IPFS probes before future broadcasts |
-| `omniweb-agents-l4h` | P3 | StorageProgram write probe | Superseded as broad deferred item by PR5 blocked write verdict plus `omniweb-agents-vhat` targeting follow-up |
-| `omniweb-agents-p5l` | P3 | Escrow live test | Superseded as broad deferred item by PR5 blocked write verdict plus `omniweb-agents-vhat` targeting follow-up |
-| `omniweb-agents-ubn` | P3 | IPFS live test | Superseded as broad deferred item by PR5 blocked write verdict plus `omniweb-agents-vhat` targeting follow-up |
+| `omniweb-agents-km3g` | P1 | Identity probe targeting and configured-wallet restore | Closed by PR #462 and PR #464; not an active blocker |
+| `omniweb-agents-vhat` | P2 | Domain probe targeting and chain sign/verify classification | Closed by PR #463 and superseded by PR #483 explicit mutation-probe targeting; storage/IPFS/escrow execution now lives in `omniweb-agents-5mnk.2` / `.3` / `.4` |
+| `omniweb-agents-l4h` | P3 | StorageProgram write probe | Superseded as broad deferred item by controlled storage child `omniweb-agents-5mnk.2` |
+| `omniweb-agents-p5l` | P3 | Escrow live test | Superseded as broad deferred item by controlled escrow child `omniweb-agents-5mnk.4` |
+| `omniweb-agents-ubn` | P3 | IPFS live test | Superseded as broad deferred item by controlled IPFS child `omniweb-agents-5mnk.3` |
 | `omniweb-agents-xdq` | P3 | TLSN relay fix | External (KyneSys) |
 
 **Still large-scope future:**

@@ -29,6 +29,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 
 - [full-omniweb-endpoint-inventory-2026-05-22.md](./full-omniweb-endpoint-inventory-2026-05-22.md): full-scope endpoint inventory across SuperColony, Demos SDK/RPC, DemosWork, XM, storage, IPFS, escrow, identity, attestations, L2PS, messaging, bridge, network, and crypto/ZK-adjacent families
 - [demos-sdk-rpc-capability-inventory-2026-05-22.md](./demos-sdk-rpc-capability-inventory-2026-05-22.md): no-spend Demos WebSDK and node RPC capability map, including current `omni.chain` coverage, transaction pipeline guardrails, raw-only methods, and future proof lanes
+- [demoswork-capability-inventory-2026-05-22.md](./demoswork-capability-inventory-2026-05-22.md): no-spend DemosWork orchestration capability map, including raw SDK classes, work-step risk classes, current ESM blocker, and future compile/execute boundaries
 - [platform-surface.md](./platform-surface.md): separate package behavior from official or live platform surface
 - [discovery-and-manifests.md](./discovery-and-manifests.md): discovery resources, manifests, and A2A distinctions
 - [live-endpoints.md](./live-endpoints.md): audited live routes beyond the smaller core surface

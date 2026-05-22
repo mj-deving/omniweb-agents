@@ -4,23 +4,25 @@
 ![Tests](https://img.shields.io/badge/tests-Vitest-brightgreen.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Colony-operator-first OmniWeb toolkit for the [Demos Network](https://demos.sh/) and [SuperColony](https://supercolony.ai/).
+Agent-general OmniWeb toolkit for the [Demos Network](https://demos.sh/) and [SuperColony](https://supercolony.ai/).
 
-The current product direction is a substrate-complete `omniweb-toolkit` package with thin, replaceable skills and playbooks above it. A cold visitor should start at the maintained Colony operator bundle:
+The current product direction is a substrate-complete `omniweb-toolkit` package that any agent can build on. The first maintained consumer is Colony Operator: a simple capability surface for operating across the full Colony surface without making the toolkit itself specific to Colony Operator.
+
+A cold visitor should start at the maintained Colony Operator bundle:
 
 - [`packages/omniweb-toolkit/agents/openclaw/colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/)
 
 ## 30-Second Truth
 
-This repo is being shaped into a trustworthy, general-purpose Colony operator.
+This repo is building an agent-general OmniWeb substrate. Colony Operator is the first consumer we are building against it.
 
 What is true as of **May 22, 2026**:
 
-- The maintained front door is the `colony-operator` OpenClaw bundle.
+- The maintained first-consumer front door is the `colony-operator` OpenClaw bundle.
 - The default proof path is read-first and no-spend.
 - The bounded testnet proof lane has green BET, higher/lower, and VOTE proof with product readback.
 - The current storage lane has a green no-spend preview through the explicit `colony-operator` credential target.
-- `omniweb-toolkit` is the shared substrate below the operator bundle.
+- `omniweb-toolkit` is the shared substrate for agent consumers, not a package scoped to Colony Operator.
 
 What is not claimed:
 
@@ -35,10 +37,10 @@ For current status, use [docs/ROADMAP.md](docs/ROADMAP.md). For dated proof, use
 
 ```mermaid
 flowchart TB
-  subgraph Skill["Skill / Playbook Layer"]
-    ColonyOperator["colony-operator"]
-    SpecialistSkills["specialist skills"]
-    OpenClawBundles["OpenClaw bundles"]
+  subgraph Agent["Agent / Consumer Layer"]
+    ColonyOperator["first consumer: colony-operator"]
+    OtherAgents["other agents"]
+    OpenClawBundles["OpenClaw bundle packaging"]
   end
 
   subgraph CLI["CLI Layer"]
@@ -75,8 +77,8 @@ flowchart TB
     DemosNetwork["Demos Network"]
   end
 
-  Skill --> CLI
-  Skill --> Intent
+  Agent --> CLI
+  Agent --> Intent
   CLI --> Substrate
   Intent --> Runtime
   Runtime --> Substrate
@@ -88,15 +90,15 @@ flowchart TB
 - The substrate answers what exists: typed read APIs, capability metadata, domain surfaces, and package-level helpers.
 - The runtime handles wallet-backed execution and proof: credential targets, Demos SDK calls, explicit live flags, write probes, lifecycle state, and readback.
 - The CLI exposes safe operator and consumer reads: JSON envelopes, no-spend discovery, preview briefs, and package checks.
-- Skills and playbooks decide what an agent should try: read strategy, action selection, skip logic, and operator-facing behavior.
+- Agent consumers decide what to try: read strategy, action selection, skip logic, and operator-facing behavior.
 
-The boundary matters. Skills should not hide auth ceremony, spend safety, or product readback in prose. Those belong in the toolkit/runtime layer.
+The boundary matters. Agent and bundle surfaces should not hide auth ceremony, spend safety, or product readback in prose. Those belong in the toolkit/runtime layer.
 
 ## Quick Start
 
-### Read The Current Front Door
+### Read The First Consumer
 
-Start with the maintained operator bundle:
+Start with the first maintained consumer:
 
 1. [`packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md`](packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md)
 2. [`packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md`](packages/omniweb-toolkit/agents/openclaw/colony-operator/memory/CURRENT_DOCTRINE.md)
@@ -153,16 +155,16 @@ Use the runtime path only when credentials, budget, live flags, and readback exp
 
 | Path | Purpose |
 |---|---|
-| [`packages/omniweb-toolkit/`](packages/omniweb-toolkit/) | Consumer package, public entrypoints, CLI, examples, references, and validation scripts |
-| [`packages/omniweb-toolkit/agents/openclaw/colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/) | Maintained Colony operator front door |
-| [`packages/omniweb-toolkit/playbooks/`](packages/omniweb-toolkit/playbooks/) | Skill/playbook layer for strategy and thin scaffolding |
+| [`packages/omniweb-toolkit/`](packages/omniweb-toolkit/) | Agent-general package, public entrypoints, CLI, examples, references, and validation scripts |
+| [`packages/omniweb-toolkit/agents/openclaw/colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/) | First maintained Colony Operator consumer |
+| [`packages/omniweb-toolkit/playbooks/`](packages/omniweb-toolkit/playbooks/) | Agent/consumer policy and thin scaffolding, not the toolkit boundary |
 | [`packages/omniweb-toolkit/references/`](packages/omniweb-toolkit/references/) | Dated proof files, platform maps, response shapes, guardrails, and verification matrices |
 | [`packages/omniweb-toolkit/src/`](packages/omniweb-toolkit/src/) | Package source for read client, runtime, CLI, capability metadata, and typed domains |
 | [`src/`](src/) | Repo-local runtime, strategy, action, guard, and integration code used by the package during development |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Current strategic tracker; Beads and GitHub remain execution truth |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |
 
-Older specialist bundles such as `research-agent`, `market-analyst`, and `engagement-optimizer` remain useful reference material, but they are not the default front door.
+Older specialist bundles such as `research-agent`, `market-analyst`, and `engagement-optimizer` remain useful reference material, but they are not the first consumer path.
 
 ## Evidence
 

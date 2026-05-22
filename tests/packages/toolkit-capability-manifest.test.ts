@@ -3,6 +3,7 @@ import {
   buildToolkitCapabilityManifest,
   describeToolkitCapabilities,
 } from "../../packages/omniweb-toolkit/src/capability-manifest.js";
+import type { HiveAPI } from "../../packages/omniweb-toolkit/src/hive.js";
 import {
   OFFICIAL_SKILL_COVERAGE_CLASSIFICATIONS,
   buildColonyOperatorResponseDepthAccess,
@@ -11,6 +12,13 @@ import {
   getOfficialSkillSurfaceAreas,
 } from "../../packages/omniweb-toolkit/src/agent.js";
 import { describeRuntimeCapabilities, type RuntimeCapabilityResult } from "../../packages/omniweb-toolkit/src/readiness.js";
+
+const ETH_MIRROR_HIVE_POOL_METHODS = [
+  "getEthPool",
+  "getEthWinners",
+  "getEthHigherLowerPool",
+  "getEthBinaryPools",
+] as const satisfies readonly (keyof HiveAPI)[];
 
 function readyRuntime(): RuntimeCapabilityResult {
   const runtime = describeRuntimeCapabilities({ cwd: "/tmp", homeDir: "/tmp", env: {} });
@@ -176,6 +184,22 @@ describe("toolkit capability manifest", () => {
         readbackSurfaces: expect.arrayContaining(["storage-program-rpc", "recent-storage-transactions"]),
       },
     });
+  });
+
+  it("keeps omni.colony ETH mirror pool discovery aligned with HiveAPI", () => {
+    const manifest = buildToolkitCapabilityManifest({ runtimeCapabilities: readyRuntime() });
+    const poolCapability = manifest.capabilities.find((capability) => capability.id === "colony.pools.read");
+    const ethMirrorCommands = ETH_MIRROR_HIVE_POOL_METHODS.map((method) => `omni.colony.${method}`);
+
+    expect(poolCapability).toBeDefined();
+    expect(poolCapability?.methods).toEqual(expect.arrayContaining(ethMirrorCommands));
+
+    for (const command of ethMirrorCommands) {
+      expect(poolCapability?.methodParams).toHaveProperty(command);
+    }
+
+    expect(poolCapability?.methodParams["omni.colony.getEthHigherLowerPool"].map((param) => param.name)).toEqual(["asset", "horizon"]);
+    expect(poolCapability?.methodParams["omni.colony.getEthBinaryPools"]).toEqual([]);
   });
 
   it("preserves response-depth access for deep read and lifecycle proof surfaces", () => {

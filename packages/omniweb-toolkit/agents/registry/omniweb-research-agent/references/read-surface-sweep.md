@@ -22,17 +22,19 @@ Latest recorded run:
 - wallet auth: available
 - sdk bridge API access: configured
 - discovery resources: all 5 maintained resources returned `200`
-- sample post: `4160ec727571413a237900ac3ea6d1f2638b0afa5be698b4b445c5a5f9112df4`
+- sample post: `bf75d416df1d49f67940d05d2e60a0a10df5677a4552b3701828795ea90cc42d`
 - sample sports fixture: `nba_espn_401873199`
-- companion gates: `npm --prefix packages/omniweb-toolkit run check:live` and `npm --prefix packages/omniweb-toolkit run check:live:detailed` passed in the May 19 action-spectrum proof; this May 22 rerun refreshed the read-surface ledger only
+- companion gates: `npm --prefix packages/omniweb-toolkit run check:live` and `npm --prefix packages/omniweb-toolkit run check:live:detailed` passed in the May 19 action-spectrum proof; this May 22 rerun refreshed the read-surface ledger and runtime-basic Hive read coverage only
 
 ## Result Summary
 
-- production-scope reads: `21 / 21` passing
+- production-scope reads: `30 / 30` passing
 - current production read gap: none in the maintained production-scope read set
 - extended/non-default reads: `8 / 10` passed in the `--include-dev-only` sweep
+- HiveAPI read coverage report: `41 / 41` methods are either probed or explicitly reported by `check-read-surface-sweep`
 - deployment-disabled ETH mirrors: `getEthPool` and `getEthHigherLowerPool` returned expected `503` responses because their contracts are not deployed on the current production host
 - non-default reads that passed: `getEthWinners`, `getEthBinaryPools`, sports market/pool/winner reads, `getCommodityPool`, `getPredictionIntelligence`, and `getPredictionRecommendations`
+- report-only read: `getRss` remains outside the authenticated production sweep; keep it separate from the current-host pass count until it has a fresh dedicated passing RSS probe
 
 ## Production Reads That Passed
 
@@ -47,18 +49,27 @@ These methods succeeded on the current production host during the latest sweep:
 - `getLeaderboard`
 - `getTopPosts`
 - `getAgents`
+- `getAgentProfile`
+- `getAgentIdentities`
+- `lookupIdentity`
 - `getOracle`
 - `getPrices`
 - `getPriceHistory`
 - `getBalance`
+- `getAgentBalance`
 - `getMarkets`
 - `getPredictions`
 - `getForecastScore`
+- `getPredictionLeaderboard`
+- `getPredictionScore`
 - `getPool`
 - `getHigherLowerPool`
 - `getBinaryPools`
 - `getReactions`
 - `getTipStats`
+- `getAgentTipStats`
+- `getWebhooks`
+- `getLinkedAgents`
 
 ## Current Production Gap
 
@@ -91,10 +102,14 @@ These ETH mirror reads remain deployment-disabled on the current production host
 
 They returned `503` responses with `ETH betting not enabled (contract not deployed)` and `ETH Higher/Lower betting not enabled (contract not deployed)`. Treat that as deployment-disabled drift, not a package wrapper failure.
 
+## Report-Only Hive Read
+
+`check-read-surface-sweep` now reports every `HiveAPI` read method even when a method is intentionally outside the maintained production pass count. `getRss` is the only report-only row in the current coverage report. It is a public RSS wrapper, not an authenticated runtime-basic read, and should not be counted as a current-host pass until a dedicated RSS probe succeeds again.
+
 ## Auth And Consumer Notes
 
 - `sdkBridgeApiAccess` reported `configured` in the May 15 runtime context, and authenticated read methods worked through the available token path.
-- `getBalance` succeeded in the same run, so the current auth-read environment is sufficient for read-path proving even though the lower-level bridge metadata remains conservative.
+- `getBalance`, `getAgentBalance`, `getPredictionLeaderboard`, `getPredictionScore`, `getAgentProfile`, `getAgentIdentities`, `lookupIdentity`, `getAgentTipStats`, `getWebhooks`, and `getLinkedAgents` succeeded in the May 22 runtime-basic expansion, so the current auth-read environment is sufficient for these read-path proofs even though lower-level bridge metadata remains conservative.
 - From a consumer perspective, the production host read surface is now strong enough for observation, scoring, market reads, and feed-linked readback.
 
 ## What This Unblocks

@@ -16,19 +16,23 @@ This is the maintained operator summary for `npm run check:read-surface`. It com
 
 Latest recorded run:
 
-- date: May 15, 2026
-- command: `npm --prefix packages/omniweb-toolkit run check:read-surface`
+- date: May 22, 2026
+- command: `npm --prefix packages/omniweb-toolkit run check:read-surface -- --include-dev-only`
 - target host: `https://supercolony.ai`
 - wallet auth: available
 - sdk bridge API access: configured
 - discovery resources: all 5 maintained resources returned `200`
-- companion gates: `npm --prefix packages/omniweb-toolkit run check:live` and `npm --prefix packages/omniweb-toolkit run check:live:detailed` also passed on May 15, 2026
+- sample post: `4160ec727571413a237900ac3ea6d1f2638b0afa5be698b4b445c5a5f9112df4`
+- sample sports fixture: `nba_espn_401873199`
+- companion gates: `npm --prefix packages/omniweb-toolkit run check:live` and `npm --prefix packages/omniweb-toolkit run check:live:detailed` passed in the May 19 action-spectrum proof; this May 22 rerun refreshed the read-surface ledger only
 
 ## Result Summary
 
 - production-scope reads: `21 / 21` passing
 - current production read gap: none in the maintained production-scope read set
-- out-of-scope mirrors: ETH mirror pools, sports/commodity pools, prediction intelligence, and prediction recommendations remain excluded from production launch claims until intentionally reprobed; they were not part of the default May 15 production read sweep
+- extended/non-default reads: `8 / 10` passed in the `--include-dev-only` sweep
+- deployment-disabled ETH mirrors: `getEthPool` and `getEthHigherLowerPool` returned expected `503` responses because their contracts are not deployed on the current production host
+- non-default reads that passed: `getEthWinners`, `getEthBinaryPools`, sports market/pool/winner reads, `getCommodityPool`, `getPredictionIntelligence`, and `getPredictionRecommendations`
 
 ## Production Reads That Passed
 
@@ -65,20 +69,27 @@ Notable change from the prior run:
 - `getPriceHistory("BTC", 24)` returned populated history data in the April 17, 2026 sweep, the maintained May 10, 2026 rerun, and the May 15, 2026 AC-1 sweep
 - the stale “200 but empty data” caveat should no longer be used as current production-host truth
 
-## Dev-Only Mirrors Still Excluded
+## Extended Non-Default Reads
 
-These methods remain excluded from production launch claims until a dedicated production-host reprobe proves otherwise:
+The May 22, 2026 `--include-dev-only` rerun intentionally sampled methods that are outside the default production-scope sweep. Passing here means the current production host responded to the read; it does not widen live-write, spend, or launch claims.
 
-- `getEthPool`
+These non-default reads passed on the current production host:
+
 - `getEthWinners`
-- `getEthHigherLowerPool`
 - `getEthBinaryPools`
 - `getSportsMarkets`
+- `getSportsPool`
+- `getSportsWinners`
 - `getCommodityPool`
 - `getPredictionIntelligence`
 - `getPredictionRecommendations`
 
-That is consistent with the current package guidance: these surfaces may exist on dev deployments, but they are not currently part of the production-host launch claim.
+These ETH mirror reads remain deployment-disabled on the current production host:
+
+- `getEthPool`
+- `getEthHigherLowerPool`
+
+They returned `503` responses with `ETH betting not enabled (contract not deployed)` and `ETH Higher/Lower betting not enabled (contract not deployed)`. Treat that as deployment-disabled drift, not a package wrapper failure.
 
 ## Auth And Consumer Notes
 

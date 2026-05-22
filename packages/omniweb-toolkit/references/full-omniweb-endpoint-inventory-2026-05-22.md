@@ -40,6 +40,7 @@ Colony Operator remains the first maintained consumer. It is not the whole produ
 - `packages/omniweb-toolkit/references/xm-rubic-capability-inventory-2026-05-22.md`
 - `packages/omniweb-toolkit/references/storage-ipfs-escrow-capability-inventory-2026-05-22.md`
 - `packages/omniweb-toolkit/references/identity-attestation-messaging-network-crypto-inventory-2026-05-22.md`
+- `packages/omniweb-toolkit/references/future-omniweb-manifest-cli-namespace-design-2026-05-22.md`
 - `docs/research/supercolony-api-reference.md`
 - `docs/research/supercolony-discovery/openapi.json`
 - `packages/omniweb-toolkit/references/colony-surface-sweep-2026-05-21.md`
@@ -112,7 +113,7 @@ The CLI intentionally does not execute writes. Publish, reply, react, tip, bet, 
 | Bridge / Rubic | SDK `bridge.RubicBridge`: `getTrade`, `executeTrade`, `executeMockTrade` | No package surface | None | `raw-only` | Quote read vs bridge execution spend; cross-chain transfer risk | Wallet/runtime on source and destination chains, quote/slippage limits | No controlled test target, no budget/readback model, no namespace design | New `omniweb-agents-3005.3` |
 | Governance, validators, peers, network reads | Demos WebSDK/node RPC: peer identity/list, node calls, blocks, transactions; SDK references mention governance/validator builders in broader docs; `references/identity-attestation-messaging-network-crypto-inventory-2026-05-22.md` | `omni.chain.getBlockNumber/getBalance/sign/verify`, raw runtime SDK access | None | `partial`: `3005.5` inventory-green; chain sign/read smoke green; peer/governance/validator surface is raw-only | Reads no-spend; governance/validator builders can mutate/stake/spend | RPC connectivity, wallet for signed actions, product/readback definition | Avoid exposing topology or implying validator/governance readiness without pinned sources and redaction | `omniweb-agents-3005.1` chain inventory-green; `omniweb-agents-3005.5` network/governance inventory-green |
 | Encryption / ZK-adjacent helpers | SDK `encryption`, `PQC`, `FHE`, `UnifiedCrypto`, `zK.identity`, interactive ZK helpers; `references/identity-attestation-messaging-network-crypto-inventory-2026-05-22.md` | No package surface | None | `raw-only`: `3005.5` inventory-green; `@kynesyslabs/demosdk/encryption` imports, but no package threat model exists | Mostly local crypto/proof generation until paired with chain/storage actions | Correct runtime environment, key material handling, proof artifacts, redaction policy | No package threat model, no proof storage/readback convention | `omniweb-agents-3005.5` inventory-green; future design in `omniweb-agents-3005.6` |
-| Future manifest and CLI namespaces | Package `capability-manifest.ts`, `cli/commands.ts`, operatorHelp | Existing manifest covers colony plus advanced domains; CLI covers colony reads only | Colony read CLI only | `design-needed` | Interface design only until inventories settle | Compatibility with current no-spend defaults and explicit live flags | Need endpoint family maps first to avoid speculative namespace/API churn | New `omniweb-agents-3005.6` |
+| Future manifest and CLI namespaces | Package `capability-manifest.ts`, `cli/commands.ts`, operatorHelp; `references/future-omniweb-manifest-cli-namespace-design-2026-05-22.md` | Existing manifest covers colony plus advanced domains; CLI covers colony reads only; future design is additive metadata plus staged namespaces | Colony read CLI only | `design-green` | Interface design only; no implementation in this lane | Compatibility with current no-spend defaults, explicit live flags, and current public-interface stability | Future implementation still needs fixtures, import guards, budgets, proof lanes, and readback contracts per namespace | `omniweb-agents-3005.6` design-green |
 
 ## Beads Created Or Linked
 
@@ -144,6 +145,7 @@ Existing beads linked rather than duplicated:
 2. Reconcile no-spend documentation and capability truth first: `6rc3.2`, `6rc3.3`, `6rc3.4`.
 3. Work the broad endpoint-family inventory children (`3005.1` through `3005.5`) before adding non-colony wrappers or namespaces.
 4. Only after the family maps are stable, design manifest and CLI namespaces in `3005.6`.
+   - Current design artifact: [future-omniweb-manifest-cli-namespace-design-2026-05-22.md](./future-omniweb-manifest-cli-namespace-design-2026-05-22.md).
 5. Live proof lanes remain bounded, separate, and explicit. Storage/IPFS/escrow successor work stays in `5mnk.*`; write/spend hardening stays in `0ctx.*`.
 
 ## No-Spend Boundary

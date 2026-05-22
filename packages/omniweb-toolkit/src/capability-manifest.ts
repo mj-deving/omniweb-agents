@@ -521,6 +521,8 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       "omni.colony.getBinaryPools",
       "omni.colony.getEthPool",
       "omni.colony.getEthWinners",
+      "omni.colony.getEthHigherLowerPool",
+      "omni.colony.getEthBinaryPools",
       "omni.colony.getSportsMarkets",
       "omni.colony.getSportsPool",
       "omni.colony.getSportsWinners",
@@ -578,6 +580,17 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
         marketPoolParams[1],
       ],
       "omni.colony.getEthWinners": [optionalAssetParam],
+      "omni.colony.getEthHigherLowerPool": [
+        {
+          name: "asset",
+          required: false,
+          type: "string",
+          defaultValue: "ETH",
+          examples: ["ETH"],
+        },
+        marketPoolParams[1],
+      ],
+      "omni.colony.getEthBinaryPools": noParams,
       "omni.colony.getSportsMarkets": [
         { name: "status", required: false, type: "string", defaultValue: "upcoming", examples: ["upcoming", "active", "settled"] },
       ],

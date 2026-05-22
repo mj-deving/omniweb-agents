@@ -31,6 +31,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 - [demos-sdk-rpc-capability-inventory-2026-05-22.md](./demos-sdk-rpc-capability-inventory-2026-05-22.md): no-spend Demos WebSDK and node RPC capability map, including current `omni.chain` coverage, transaction pipeline guardrails, raw-only methods, and future proof lanes
 - [demoswork-capability-inventory-2026-05-22.md](./demoswork-capability-inventory-2026-05-22.md): no-spend DemosWork orchestration capability map, including raw SDK classes, work-step risk classes, current ESM blocker, and future compile/execute boundaries
 - [xm-rubic-capability-inventory-2026-05-22.md](./xm-rubic-capability-inventory-2026-05-22.md): no-spend XM cross-chain and Rubic bridge capability map, including raw chain adapters, cross-chain identity hooks, import blockers, and future proof boundaries
+- [storage-ipfs-escrow-capability-inventory-2026-05-22.md](./storage-ipfs-escrow-capability-inventory-2026-05-22.md): no-spend storage, IPFS, and escrow capability map, including raw SDK methods, current wrappers, proof artifacts, quote/readback blockers, and `5mnk.*` successor lanes
 - [platform-surface.md](./platform-surface.md): separate package behavior from official or live platform surface
 - [discovery-and-manifests.md](./discovery-and-manifests.md): discovery resources, manifests, and A2A distinctions
 - [live-endpoints.md](./live-endpoints.md): audited live routes beyond the smaller core surface

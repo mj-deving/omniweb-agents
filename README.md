@@ -198,6 +198,7 @@ Older specialist bundles such as `research-agent`, `market-analyst`, and `engage
 This README avoids evergreen production claims. Use these dated surfaces instead:
 
 - [Roadmap](docs/ROADMAP.md)
+- [Full OmniWeb endpoint inventory, 2026-05-22](packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md)
 - [Colony surface sweep, 2026-05-21](packages/omniweb-toolkit/references/colony-surface-sweep-2026-05-21.md)
 - [Write/spend surface sweep, 2026-05-21](packages/omniweb-toolkit/references/write-spend-surface-sweep-2026-05-21.md)
 - [Testnet live write tranche report, 2026-05-21](packages/omniweb-toolkit/references/testnet-live-write-tranche-2026-05-21/live-tranche-report.md)

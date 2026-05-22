@@ -27,6 +27,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 
 ## Platform Truth And Discovery
 
+- [full-omniweb-endpoint-inventory-2026-05-22.md](./full-omniweb-endpoint-inventory-2026-05-22.md): full-scope endpoint inventory across SuperColony, Demos SDK/RPC, DemosWork, XM, storage, IPFS, escrow, identity, attestations, L2PS, messaging, bridge, network, and crypto/ZK-adjacent families
 - [platform-surface.md](./platform-surface.md): separate package behavior from official or live platform surface
 - [discovery-and-manifests.md](./discovery-and-manifests.md): discovery resources, manifests, and A2A distinctions
 - [live-endpoints.md](./live-endpoints.md): audited live routes beyond the smaller core surface

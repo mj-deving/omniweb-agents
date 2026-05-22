@@ -15,9 +15,10 @@
   "selectedCredentialTarget": {
     "mode": "agent-name",
     "agentName": "colony-operator",
-    "status": "selected-not-provisioned",
+    "status": "provisioned-preview-green",
     "selectionProof": "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/agent-name-selection-2026-05-22.json",
-    "stopIf": "colony-operator does not resolve to an existing credentials profile before preview"
+    "previewProof": "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview-colony-operator.json",
+    "stopIf": "colony-operator stops resolving to an existing credentials profile before broadcast"
   },
   "targets": [
     {
@@ -55,7 +56,7 @@
         "value": "probe-generated timestamp value"
       },
       "mutationClass": "CREATE_STORAGE_PROGRAM plus SET_FIELD",
-      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview-colony-operator.json",
       "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-live.json",
       "explicitLiveFlag": "--broadcast",
       "budget": {
@@ -120,5 +121,5 @@
       "stopIf": "preview cannot name target/cost, claimable or balance readback cannot be classified, or cleanup/readback would be unavailable after send"
     }
   ],
-  "nextRecommendedExecution": "Provision the selected colony-operator credentials profile, then rerun the storage no-spend preview before any live --broadcast."
+  "nextRecommendedExecution": "The selected colony-operator credentials profile resolves and storage no-spend preview is green. If continuing the Phase 24 storage lane, run at most one storage --broadcast and prove product readback."
 }

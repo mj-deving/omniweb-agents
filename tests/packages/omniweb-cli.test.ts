@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseArgs } from "../../packages/omniweb-toolkit/src/cli/args.js";
+import type { OmniWeb } from "../../packages/omniweb-toolkit/src/colony.js";
 import { runCli } from "../../packages/omniweb-toolkit/src/cli/commands.js";
 import {
   buildStyleBrief,
@@ -84,6 +85,10 @@ function fakeClient(overrides: {
   return client as unknown as OmniwebReadClient;
 }
 
+function fakeConnect(colony: Record<string, unknown>): () => Promise<Pick<OmniWeb, "colony">> {
+  return async () => ({ colony } as unknown as Pick<OmniWeb, "colony">);
+}
+
 describe("omniweb CLI foundation", () => {
   it("parses top-reply arguments without heavy dependencies", () => {
     const parsed = parseArgs(["colony", "brief", "top-reply", "--min-score", "90", "--exemplars=5", "--feed-limit", "100"]);
@@ -100,6 +105,153 @@ describe("omniweb CLI foundation", () => {
     });
     expect(envelope).toMatchObject({ ok: true, command: "colony feed", version: "test-version", startedAt: NOW.toISOString(), finishedAt: NOW.toISOString() });
     expect(getFeed).toHaveBeenCalledWith({ limit: 7 });
+  });
+
+  it.each([
+    {
+      command: "colony search",
+      argv: ["colony", "search", "--text", "BTC", "--category", "ANALYSIS", "--limit", "3"],
+      method: "search",
+      expectedArgs: [{ text: "BTC", category: "ANALYSIS", limit: 3 }],
+    },
+    {
+      command: "colony post",
+      argv: ["colony", "post", "--tx-hash", "0xpost"],
+      method: "getPostDetail",
+      expectedArgs: ["0xpost"],
+    },
+    {
+      command: "colony convergence",
+      argv: ["colony", "convergence"],
+      method: "getConvergence",
+      expectedArgs: [],
+    },
+    {
+      command: "colony report",
+      argv: ["colony", "report", "--id", "daily"],
+      method: "getReport",
+      expectedArgs: [{ id: "daily" }],
+    },
+    {
+      command: "colony oracle",
+      argv: ["colony", "oracle", "--assets", "BTC,ETH"],
+      method: "getOracle",
+      expectedArgs: [{ assets: ["BTC", "ETH"] }],
+    },
+    {
+      command: "colony prices",
+      argv: ["colony", "prices", "--assets", "BTC,ETH"],
+      method: "getPrices",
+      expectedArgs: [["BTC", "ETH"]],
+    },
+    {
+      command: "colony price-history",
+      argv: ["colony", "price-history", "--asset", "BTC", "--periods", "24"],
+      method: "getPriceHistory",
+      expectedArgs: ["BTC", 24],
+    },
+    {
+      command: "colony markets",
+      argv: ["colony", "markets", "--category", "crypto", "--limit", "2"],
+      method: "getMarkets",
+      expectedArgs: [{ category: "crypto", limit: 2 }],
+    },
+    {
+      command: "colony predictions",
+      argv: ["colony", "predictions", "--status", "open", "--asset", "BTC", "--agent", "0xagent"],
+      method: "getPredictions",
+      expectedArgs: [{ status: "open", asset: "BTC", agent: "0xagent" }],
+    },
+    {
+      command: "colony pool",
+      argv: ["colony", "pool", "--asset", "BTC", "--horizon", "30m"],
+      method: "getPool",
+      expectedArgs: [{ asset: "BTC", horizon: "30m" }],
+    },
+    {
+      command: "colony higher-lower-pool",
+      argv: ["colony", "higher-lower-pool", "--asset", "BTC", "--horizon", "24h"],
+      method: "getHigherLowerPool",
+      expectedArgs: [{ asset: "BTC", horizon: "24h" }],
+    },
+    {
+      command: "colony binary-pools",
+      argv: ["colony", "binary-pools", "--category", "crypto", "--limit", "2"],
+      method: "getBinaryPools",
+      expectedArgs: [{ category: "crypto", limit: 2 }],
+    },
+    {
+      command: "colony reactions",
+      argv: ["colony", "reactions", "--tx-hash", "0xpost"],
+      method: "getReactions",
+      expectedArgs: ["0xpost"],
+    },
+    {
+      command: "colony tip-stats",
+      argv: ["colony", "tip-stats", "--tx-hash", "0xpost"],
+      method: "getTipStats",
+      expectedArgs: ["0xpost"],
+    },
+  ])("maps $command to the runtime read method", async ({ argv, method, expectedArgs }) => {
+    const read = vi.fn().mockResolvedValue({ ok: true, data: { method } });
+    const envelope = await runCli(argv, {
+      connect: fakeConnect({ [method]: read }),
+      now: () => NOW,
+      version: "test-version",
+    });
+    expect(envelope).toMatchObject({ ok: true, data: { method } });
+    expect(read).toHaveBeenCalledWith(...expectedArgs);
+  });
+
+  it("allows colony report to read the default/latest report without --id", async () => {
+    const getReport = vi.fn().mockResolvedValue({ ok: true, data: { report: "latest" } });
+    const envelope = await runCli(["colony", "report"], {
+      connect: fakeConnect({ getReport }),
+      now: () => NOW,
+      version: "test-version",
+    });
+    expect(envelope).toMatchObject({ ok: true, command: "colony report", data: { report: "latest" } });
+    expect(getReport).toHaveBeenCalledWith(undefined);
+  });
+
+  it("returns structured INVALID_ARGUMENT errors for missing required read options", async () => {
+    const envelope = await runCli(["colony", "post"], {
+      connect: fakeConnect({ getPostDetail: vi.fn() }),
+      now: () => NOW,
+      version: "test-version",
+    });
+    expect(envelope).toMatchObject({
+      ok: false,
+      command: "colony post",
+      error: { code: "INVALID_ARGUMENT", retryable: false },
+    });
+    expect(envelope.ok ? "" : envelope.error.message).toContain("--tx-hash is required");
+  });
+
+  it("does not accept write execution commands from the JSON CLI", async () => {
+    const envelope = await runCli(["colony", "publish", "--text", "No writes here"], {
+      connect: fakeConnect({ publish: vi.fn() }),
+      now: () => NOW,
+      version: "test-version",
+    });
+    expect(envelope).toMatchObject({
+      ok: false,
+      command: "colony publish",
+      error: { code: "INVALID_ARGUMENT", retryable: false },
+    });
+    expect(envelope.ok ? "" : envelope.error.message).toContain("Write execution is intentionally not exposed");
+  });
+
+  it("lists expanded read commands and the no-write policy in help output", async () => {
+    const envelope = await runCli(["help"], {
+      now: () => NOW,
+      version: "test-version",
+    });
+    expect(envelope).toMatchObject({ ok: true, command: "help" });
+    expect(envelope.ok ? envelope.data : null).toMatchObject({
+      commands: expect.arrayContaining(["colony search", "colony price-history", "colony tip-stats"]),
+      writeExecution: expect.stringContaining("intentionally not exposed"),
+    });
   });
 
   it("returns a structured retryable error envelope for upstream read failures", async () => {

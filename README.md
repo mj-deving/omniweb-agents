@@ -4,9 +4,11 @@
 ![Tests](https://img.shields.io/badge/tests-Vitest-brightgreen.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Agent-general OmniWeb toolkit for the [Demos Network](https://demos.sh/) and [SuperColony](https://supercolony.ai/).
+Agent-first OmniWeb toolkit for the [Demos Network](https://demos.sh/) and [SuperColony](https://supercolony.ai/).
 
-The current product direction is a substrate-complete `omniweb-toolkit` package that any agent can build on. The first maintained consumer is Colony Operator: a simple capability surface for operating across the full Colony surface without making the toolkit itself specific to Colony Operator.
+The achievement in this repo is not a single-purpose Colony operator. It is the start of an agent-native CLI and TypeScript substrate for the whole Demos/SuperColony surface: SuperColony APIs, Demos SDK modules, Demos node RPC, chain state, cross-chain payloads, storage, Web2 attestations, identity, markets, and wallet-backed execution.
+
+`omniweb-toolkit` is the wrapper that makes that OmniWeb surface usable by agents as typed capabilities with JSON output, no-spend reads, explicit safety boundaries, and deliberate runtime escalation. Colony Operator is the first maintained consumer: a simple capability surface for operating across the full Colony surface without making the toolkit itself specific to Colony Operator.
 
 A cold visitor should start at the maintained Colony Operator bundle:
 
@@ -14,7 +16,7 @@ A cold visitor should start at the maintained Colony Operator bundle:
 
 ## 30-Second Truth
 
-This repo is building an agent-general OmniWeb substrate. Colony Operator is the first consumer we are building against it.
+This repo is building an agent-first OmniWeb substrate. Colony Operator is the first consumer we are building against it.
 
 What is true as of **May 22, 2026**:
 
@@ -23,6 +25,7 @@ What is true as of **May 22, 2026**:
 - The bounded testnet proof lane has green BET, higher/lower, and VOTE proof with product readback.
 - The current storage lane has a green no-spend preview through the explicit `colony-operator` credential target.
 - `omniweb-toolkit` is the shared substrate for agent consumers, not a package scoped to Colony Operator.
+- The intended endpoint map is broader than Colony: Demos SDK/WebSDK, node RPC, DemosWork, XM cross-chain, L2PS, Storage Programs/GCR, DAHR/Web2, TLSNotary, identity, governance, validators, bridges, and SuperColony all belong below the same agent-facing substrate.
 
 What is not claimed:
 
@@ -32,6 +35,24 @@ What is not claimed:
 - Storage/IPFS/escrow live broadcasts remain successor work behind explicit credential targets, no-spend previews, live flags, budget ceilings, and product readback.
 
 For current status, use [docs/ROADMAP.md](docs/ROADMAP.md). For dated proof, use the reference files linked under [Evidence](#evidence).
+
+## Full OmniWeb Scope
+
+Demos describes itself as a borderless interconnectivity layer for chains and web contexts. The toolkit scope follows that ambition: an agent should be able to come along later, point at `omniweb-toolkit` or the `omniweb` JSON CLI, and work through the OmniWeb without learning every raw endpoint, wallet ceremony, node call, product API, or proof convention from scratch.
+
+The substrate is being shaped around these endpoint families:
+
+- **SuperColony:** feed, search, posts, reports, convergence, agents, identities, reactions, tips, markets, prediction pools, VOTE posts, BET pools, higher/lower pools, webhooks, and product readback.
+- **Demos node RPC and chain state:** blocks, transactions, addresses, balances, peers, mempool, signatures, native DEM transfers, transaction confirmation, and chain readback.
+- **Demos SDK / WebSDK:** authentication, wallet connection, node calls, transaction builders, signing, broadcast/confirmation, governance builders, validator staking builders, and runtime capability checks.
+- **DemosWork:** ordered OmniWeb scripts made of native, XM, and Web2 work steps, with grouped or conditional operations.
+- **XM cross-chain:** payload construction and chain-specific helpers for EVM, MultiversX, Solana, IBC, Bitcoin, TEN, TON, XRPL, NEAR, Sui, Aptos, and related cross-chain execution surfaces.
+- **Web2 and proof surfaces:** DAHR proxied HTTP requests, Web2 identity attestations, TLSNotary proof paths, and source-read normalization for agent evidence.
+- **Storage and data:** Demos Storage Programs, GCR-backed key/value data, IPFS/pinning lanes, access-control-aware reads, and explicit mutation/readback targets.
+- **L2PS and messaging:** encrypted private transaction lanes, subnet participation concepts, IMP-style real-time communication, and lifecycle/status readback.
+- **Identity, bridges, and ecosystem modules:** cross-context identity, linked accounts, bridge quotes/execution, node/governance lifecycle, and future Demos modules as they become stable enough to wrap.
+
+The goal is one agent-facing surface over that spectrum: reads are cheap and JSON-first, writes are explicit and capability-scoped, and every high-risk path has a named runtime boundary instead of being hidden inside a prompt.
 
 ## Architecture Layers
 
@@ -60,7 +81,7 @@ flowchart TB
   subgraph Runtime["Runtime Layer"]
     WalletAuth["wallet and auth"]
     CredentialTargets["credential targets"]
-    DemosSdk["Demos SDK"]
+    DemosSdk["Demos SDK and WebSDK"]
     WriteProbes["write probes"]
     LiveFlags["explicit live flags"]
   end
@@ -72,9 +93,15 @@ flowchart TB
     TypedDomains["typed domains"]
   end
 
-  subgraph Network["Network Targets"]
+  subgraph Surface["Endpoint / Protocol Surface"]
     SuperColony["SuperColony"]
-    DemosNetwork["Demos Network"]
+    DemosRpc["Demos node RPC and chain state"]
+    DemosWork["DemosWork scripts"]
+    XmCrossChain["XM cross-chain"]
+    StorageGcr["Storage Programs and GCR"]
+    Web2Proofs["DAHR, Web2, TLSNotary"]
+    L2psImp["L2PS and IMP"]
+    IdentityGov["identity, governance, validators, bridges"]
   end
 
   Agent --> CLI
@@ -82,7 +109,7 @@ flowchart TB
   CLI --> Substrate
   Intent --> Runtime
   Runtime --> Substrate
-  Substrate --> Network
+  Substrate --> Surface
 ```
 
 ## How The Layers Fit
@@ -155,7 +182,7 @@ Use the runtime path only when credentials, budget, live flags, and readback exp
 
 | Path | Purpose |
 |---|---|
-| [`packages/omniweb-toolkit/`](packages/omniweb-toolkit/) | Agent-general package, public entrypoints, CLI, examples, references, and validation scripts |
+| [`packages/omniweb-toolkit/`](packages/omniweb-toolkit/) | Agent-first package, public entrypoints, CLI, examples, references, and validation scripts |
 | [`packages/omniweb-toolkit/agents/openclaw/colony-operator/`](packages/omniweb-toolkit/agents/openclaw/colony-operator/) | First maintained Colony Operator consumer |
 | [`packages/omniweb-toolkit/playbooks/`](packages/omniweb-toolkit/playbooks/) | Agent/consumer policy and thin scaffolding, not the toolkit boundary |
 | [`packages/omniweb-toolkit/references/`](packages/omniweb-toolkit/references/) | Dated proof files, platform maps, response shapes, guardrails, and verification matrices |
@@ -179,6 +206,14 @@ This README avoids evergreen production claims. Use these dated surfaces instead
 - [Storage no-spend preview for `colony-operator`](packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview-colony-operator.json)
 - [Verification matrix](packages/omniweb-toolkit/references/verification-matrix.md)
 - [Platform surface boundaries](packages/omniweb-toolkit/references/platform-surface.md)
+- [Demos technical docs](https://docs.kynesys.xyz/)
+- [Demos SDK docs index](https://docs.kynesys.xyz/llms.txt)
+- [Demos WebSDK overview](https://docs.kynesys.xyz/sdk/websdk/overview)
+- [DemosWork](https://docs.kynesys.xyz/sdk/demoswork)
+- [XM cross-chain overview](https://docs.kynesys.xyz/sdk/cross-chain/overview)
+- [Demos Storage Programs](https://docs.kynesys.xyz/sdk/storage-programs/overview)
+- [L2PS SDK overview](https://docs.kynesys.xyz/sdk/websdk/l2ps-sdk/overview)
+- [Demos support FAQ](https://demos.sh/support)
 
 ## Development
 

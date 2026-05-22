@@ -423,10 +423,15 @@ Remaining execution rule:
 
 Owner bead: `omniweb-agents-3005`
 
+GoalMode packet:
+- [docs/goalmode/full-omniweb-reconciliation-2026-05-22.md](goalmode/full-omniweb-reconciliation-2026-05-22.md)
+
 Reference:
 - [packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md](../packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md)
 
 This is the active inventory-first lane after the colony/live-write proof bands. It exists because the toolkit is no longer just a Colony Operator demo: Colony Operator is the first consumer, while the package is intended to be the shared agent-facing OmniWeb substrate over SuperColony, Demos SDK/WebSDK, Demos node RPC, DemosWork, XM cross-chain, storage, IPFS, escrow, identity, attestations, privacy, messaging, bridge, network, and crypto/ZK-adjacent surfaces.
+
+The next `/goal` run is no-spend reconciliation first, broad inventory second, and future design last. It should run through `omniweb-agents-6rc3.2`, `.3`, `.4`, then `omniweb-agents-3005.1` through `.6`, stopping only when each item has evidence, a merged PR, or an explicit `DEGRADED`, `STUCK`, or `BLOCKED` verdict.
 
 Scope boundaries:
 - no new wrappers
@@ -437,7 +442,7 @@ Scope boundaries:
 
 Execution order:
 1. Use the full inventory as the map of record.
-2. Reconcile no-spend colony coverage and docs through existing `omniweb-agents-6rc3.2`, `.3`, and `.4`.
+2. Reconcile no-spend colony coverage and docs through existing `omniweb-agents-6rc3.2`, `.3`, and `.4`; the only allowed manifest change in this reconciliation pass is the narrow ETH mirror coverage fix in `6rc3.2`.
 3. Work broad raw-source family inventories through `omniweb-agents-3005.1` through `.5`.
 4. Design future non-colony manifest and CLI namespaces only after the family inventories settle in `omniweb-agents-3005.6`.
 5. Keep spendful successor proofs separate in existing beads such as `omniweb-agents-0ctx.*` and `omniweb-agents-5mnk.*`.

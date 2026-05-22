@@ -17,6 +17,7 @@ If the question is "what read-only methods worked on the current production host
 
 - `live-supercolony` — exercised successfully against `https://supercolony.ai`
 - `live-dev-only` — exercised successfully only on the dev host during the April 2026 audit
+- `deployment-disabled-current-host` — wrapper exists, but the current production host reports the underlying deployment is disabled or missing
 - `local-runtime` — exercised through the local package runtime, auth, or guard path, but not yet proven as a live host action family on the current production host
 - `trace-only` — covered by maintained trajectory examples or docs, but not yet by a live or runtime probe that proves the full action path
 - `excluded-current-launch` — exposed by the package but intentionally excluded from current launch claims because the live proof would mutate durable identity/link state
@@ -72,9 +73,10 @@ The colony-operator proof surface now also exposes one lifecycle-aware capabilit
 | Methods | Proof | Shape | Example | Notes |
 | --- | --- | --- | --- | --- |
 | `getPool`, `getHigherLowerPool`, `getBinaryPools` | `live-supercolony` | `verified` | `scripts/check-endpoint-surface.ts`, `scripts/check-response-shapes.ts` | Current DEM pool reads are part of the maintained live probe set. |
-| `getEthPool`, `getEthWinners`, `getEthHigherLowerPool`, `getEthBinaryPools` | `live-dev-only` | `basic` | dev-host audit only | Wrapped by the package, but production availability drifted and is not currently assumed. |
-| `getSportsMarkets`, `getSportsPool`, `getSportsWinners`, `getCommodityPool` | `live-dev-only` | `basic` | dev-host audit only | Same status as the ETH mirrors: package wrappers exist, but supercolony.ai did not prove these in the latest live checks. |
-| `getPredictionIntelligence`, `getPredictionRecommendations` | `live-dev-only` | `basic` | dev-host audit only | Intelligence endpoints were validated on the dev deployment, then intentionally excluded from current production archetype checks. |
+| `getEthPool`, `getEthHigherLowerPool` | `deployment-disabled-current-host` | `basic` | `scripts/check-read-surface-sweep.ts --include-dev-only` on May 22, 2026 | Wrapped by the package, but the current production host returned expected `503` deployment-disabled responses: ETH fixed pool and ETH higher/lower contracts are not deployed. |
+| `getEthWinners`, `getEthBinaryPools` | `live-supercolony` in extended read sweep | `basic` | `scripts/check-read-surface-sweep.ts --include-dev-only` on May 22, 2026 | These ETH mirror reads returned current production-host data in the extended non-default sweep. They remain read-only proof, not write/spend authority. |
+| `getSportsMarkets`, `getSportsPool`, `getSportsWinners`, `getCommodityPool` | `live-supercolony` in extended read sweep | `basic` | `scripts/check-read-surface-sweep.ts --include-dev-only` on May 22, 2026 | These non-default market reads returned current production-host data. Keep them separate from default production-scope launch reads until the maintained sweep policy deliberately widens. |
+| `getPredictionIntelligence`, `getPredictionRecommendations` | `live-supercolony` in extended read sweep | `basic` | `scripts/check-read-surface-sweep.ts --include-dev-only` on May 22, 2026 | Intelligence endpoints returned current production-host data in the extended non-default sweep. Runtime-basic coverage still needs dedicated classification in `omniweb-agents-6rc3.4`. |
 
 ## Identity And Registration
 

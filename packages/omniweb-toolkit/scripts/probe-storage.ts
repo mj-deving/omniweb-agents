@@ -69,7 +69,16 @@ const initialData = {
 };
 
 try {
-  assertExplicitCredentialTargetExists({ envPath, agentName, stateDir });
+  assertExplicitCredentialTargetExists(
+    { envPath, agentName, stateDir },
+    { requireExplicit: broadcast, purpose: "Live storage mutation" },
+  );
+} catch (err) {
+  console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(2);
+}
+
+try {
   const connect = await loadConnect();
   const omni = await connect({ envPath, agentName, stateDir });
   const address = omni.address;

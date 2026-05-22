@@ -55,7 +55,7 @@ node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts \
   --state-dir .action-spectrum-state/pr5/agents/action-spectrum-pr4-20260519-01
 ```
 
-The maintained escrow/storage/IPFS probes do not accept `--agent-name` / `--env-path`, so their dry-run outputs still report the configured wallet. PR5 keeps those files as script-gap evidence and uses `targeted-domain-dry-run.json`, generated via `connect({ agentName })`, as the throwaway-wallet payload proof.
+The maintained escrow/storage/IPFS probes now accept `--agent-name` / `--env-path`. Dry-runs report the selected public address and redacted runtime target metadata, and broadcasts refuse to run unless one of those explicit credential targets resolves. PR5's `targeted-domain-dry-run.json`, generated via `connect({ agentName })`, remains the historical throwaway-wallet payload proof from before the maintained probes were widened.
 
 Targeted no-spend readback and chain smoke:
 
@@ -91,4 +91,4 @@ packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr5/
 
 ## Current Truth
 
-The non-colony domain surfaces are wired enough to derive escrow, storage, IPFS, and chain payloads from a throwaway wallet, but PR5 did not have an explicit bounded execution gate. Storage/IPFS also need clearer quote and readback behavior before they should be called fully proven, and the maintained domain probes should gain explicit `--agent-name` / `--env-path` targeting before future throwaway broadcasts.
+The non-colony domain surfaces are wired enough to derive escrow, storage, IPFS, and chain payloads from a throwaway wallet, but PR5 did not have an explicit bounded execution gate. Storage/IPFS also need clearer quote and readback behavior before they should be called fully proven. The maintained domain probes now require explicit existing `--agent-name` / `--env-path` targeting before future throwaway broadcasts.

@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import {
+  assertExplicitCredentialTargetExists,
   extractSignatureString,
   publicKeyToHex,
   redactProbeCommand,
@@ -10,6 +11,28 @@ import {
 } from "../../packages/omniweb-toolkit/scripts/_probe-targeting.js";
 
 describe("domain probe credential targeting safety", () => {
+  it("requires an explicit existing credentials target for live mutation probes", () => {
+    expect(() => assertExplicitCredentialTargetExists(
+      {},
+      { requireExplicit: true, purpose: "Live domain mutation" },
+    )).toThrow("Live domain mutation requires --env-path or --agent-name");
+
+    const result = spawnSync(
+      "node",
+      [
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/probe-storage.ts",
+        "--broadcast",
+      ],
+      { encoding: "utf8" },
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Live storage mutation requires --env-path or --agent-name");
+    expect(result.stdout).toBe("");
+  });
+
   it("rejects missing and option-looking target values before runtime loading", () => {
     expect(validateRequiredValueFlags(["--env-path"], ["--env-path"])).toBe("Error: --env-path requires a value");
     expect(validateRequiredValueFlags(["--env-path", "--broadcast"], ["--env-path"])).toBe("Error: --env-path requires a value");
@@ -32,6 +55,24 @@ describe("domain probe credential targeting safety", () => {
 
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("--env-path requires a value");
+    expect(result.stdout).toBe("");
+  });
+
+  it("rejects explicit missing agent profiles in dry-run mode before runtime loading", () => {
+    const result = spawnSync(
+      "node",
+      [
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/probe-ipfs.ts",
+        "--agent-name",
+        "definitely-missing",
+      ],
+      { encoding: "utf8" },
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("--agent-name credentials profile not found");
     expect(result.stdout).toBe("");
   });
 

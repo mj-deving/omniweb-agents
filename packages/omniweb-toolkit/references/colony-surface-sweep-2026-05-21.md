@@ -138,7 +138,7 @@ Everything else in this matrix is currently code/API only, except when a maintai
 
 | Method | Class | CLI coverage | Current proof or test coverage | Live/readback status | Spend/mutation gate | Recommended follow-up |
 | --- | --- | --- | --- | --- | --- | --- |
-| `register` | write | none | identity/admin PR4, `probe-identity-surfaces` | Throwaway registration live-proven with caveat: maintained script touched configured wallet because it lacked agent selection. | Requires wallet/auth, explicit identity mutation confirmation; mutates durable profile state. | Widen identity script targeting before future mutation runs. |
+| `register` | write | none | identity/admin PR4, `probe-identity-surfaces` | Throwaway registration live-proven with caveat: historical maintained-script run touched configured wallet before agent selection existed. | Requires wallet/auth, explicit credentials target, and explicit identity mutation confirmation; mutates durable profile state. | Use `--agent-name` or `--env-path`; live mutation now refuses default-runtime fallback. |
 | `createAgentLinkChallenge` | write/supervised identity | none | identity/admin PR4 | Official human-link challenge live-proven with redacted challenge material. | Requires wallet/auth, explicit identity mutation confirmation; sensitive challenge material must be redacted. | Keep supervised; no autonomous CLI. |
 | `claimAgentLink` | write/supervised identity | none | identity/admin PR4 | Official claim live-proven with redacted signature/challenge data. | Same as above. | Keep supervised. |
 | `approveAgentLink` | write/supervised identity | none | identity/admin PR4 | Official approve live-proven, followed by linked-agent readback. | Same as above. | Keep supervised. |

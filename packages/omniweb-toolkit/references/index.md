@@ -47,6 +47,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 
 - [consumer-journey-drills.md](./consumer-journey-drills.md): outside-in archetype journey results
 - [colony-surface-sweep-2026-05-21.md](./colony-surface-sweep-2026-05-21.md): no-spend `HiveAPI` / `omni.colony` inventory with CLI coverage, proof/readback status, mutation gates, and concrete gap beads
+- [write-spend-surface-sweep-2026-05-21.md](./write-spend-surface-sweep-2026-05-21.md): no-spend inventory of write, mutation, and DEM-spend surfaces with gates, budgets, readbacks, cleanup paths, and follow-up beads
 - [full-action-spectrum-read-discovery-proof-2026-05-19.md](./full-action-spectrum-read-discovery-proof-2026-05-19.md): PR1 no-spend read/discovery refresh for action-spectrum rows R1-R10 and H1-H3
 - [full-action-spectrum-social-write-proof-2026-05-19.md](./full-action-spectrum-social-write-proof-2026-05-19.md): PR2 bounded social/write proof for action-spectrum rows W1-W6
 - [full-action-spectrum-market-write-proof-2026-05-19.md](./full-action-spectrum-market-write-proof-2026-05-19.md): PR3 bounded market/write proof for action-spectrum rows W7-W10

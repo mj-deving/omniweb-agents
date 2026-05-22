@@ -35,6 +35,7 @@ This packet is a prep artifact only. It does not run a live write, spend DEM, mu
 - VOTE is `GREEN` via PR #476 with category-search product readback.
 - Social remains `BLOCKED/DEGRADED` via PR #477 because no eligible untouched attested target met score `>=85` and engagement `>=5`.
 - Raw-chain advanced-domain proof is `GREEN` via PR #478 with no spend and no broadcast.
+- Official SuperColony agent identity guidance says profile names are slugified with lowercase `a-z`, digits, and hyphens only. The selected Phase 24 credential profile name is `colony-operator`; it is a valid role-style slug but must still resolve locally before any preview can count as green.
 - Nominal spend remains `10 / 25` testnet DEM.
 
 ## Execution Order
@@ -89,8 +90,8 @@ bd dep cycles --json
 Choose one explicit credential target form before any live `--broadcast`:
 
 ```bash
-# Existing agent target, preferred when the agent is already provisioned.
---agent-name <existing-agent-name>
+# Selected Phase 24 agent target. It must already be provisioned locally.
+--agent-name colony-operator
 
 # Existing env target, allowed when the path is available locally.
 --env-path <existing-env-file>
@@ -99,37 +100,37 @@ Choose one explicit credential target form before any live `--broadcast`:
 Storage preview:
 
 ```bash
-node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name <existing-agent-name> --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json
 ```
 
 Storage live, only after green preview:
 
 ```bash
-node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name <existing-agent-name> --program-name phase24-continuation-20260521-storage --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-live.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-live.json
 ```
 
 IPFS preview:
 
 ```bash
-node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name <existing-agent-name> --filename phase24-continuation-2026-05-21.txt --content 'Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.' --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-preview.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name colony-operator --filename phase24-continuation-2026-05-21.txt --content 'Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.' --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-preview.json
 ```
 
 IPFS live, only after green preview:
 
 ```bash
-node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name <existing-agent-name> --filename phase24-continuation-2026-05-21.txt --content 'Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.' --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-live.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name colony-operator --filename phase24-continuation-2026-05-21.txt --content 'Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.' --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-live.json
 ```
 
 Escrow preview:
 
 ```bash
-node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name <existing-agent-name> --platform github --username phase24-continuation-20260521 --amount 0.1 --message 'Phase 24 continuation controlled escrow proof' --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-preview.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name colony-operator --platform github --username phase24-continuation-20260521 --amount 0.1 --message 'Phase 24 continuation controlled escrow proof' --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-preview.json
 ```
 
 Escrow live, only after green preview:
 
 ```bash
-node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name <existing-agent-name> --platform github --username phase24-continuation-20260521 --amount 0.1 --message 'Phase 24 continuation controlled escrow proof' --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-live.json
+node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name colony-operator --platform github --username phase24-continuation-20260521 --amount 0.1 --message 'Phase 24 continuation controlled escrow proof' --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-live.json
 ```
 
 ## Launch Prompt
@@ -139,7 +140,7 @@ node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name 
 
 Start from fresh origin/main, run bd dolt pull, inspect bd ready, and claim exactly one of omniweb-agents-5mnk.2, omniweb-agents-5mnk.3, or omniweb-agents-5mnk.4. Prefer storage first unless current preview evidence makes it blocked. Do not run VOTE, social mutation, raw transfer, npm release, public registry proof, production hosted activation, mainnet, or secret-handling work.
 
-Before any live --broadcast, choose an explicit existing credential target with --agent-name or --env-path. Run the selected child bead's no-spend preview first and record public address, redacted runtimeTarget, target, budget/quote, explicit live flag, and readback surface. Missing explicit target must fail before mutation.
+Use --agent-name colony-operator as the selected role-style credential target. If that local credentials profile does not resolve, stop before mutation and record BLOCKED against omniweb-agents-97o2. Run the selected child bead's no-spend preview first and record public address, redacted runtimeTarget, target, budget/quote, explicit live flag, and readback surface. Missing explicit target must fail before mutation.
 
 If preview is green and stop conditions are clear, execute at most one spendful advanced-domain mutation in the PR. Count success only with product/readback evidence, keep the ledger within 10/25 used and 25 total testnet DEM, and keep the single-operation ceiling at 5 DEM. Close out Roadmap, Beads, proof references, budget ledger, and final GREEN/DEGRADED/STUCK/BLOCKED verdict before ending.
 ```

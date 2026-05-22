@@ -26,6 +26,44 @@ describe("identity proof runner safety", () => {
     expect(result.stdout).toBe("");
   });
 
+  it("fails confirmed live execution before runtime loading unless a credential target is explicit", () => {
+    const result = spawnSync(
+      "node",
+      [
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts",
+        "--execute",
+        "--confirm-identity-mutation",
+      ],
+      { encoding: "utf8" },
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Live identity mutation requires --env-path or --agent-name");
+    expect(result.stdout).toBe("");
+  });
+
+  it("fails confirmed live execution when the explicit agent target is missing", () => {
+    const result = spawnSync(
+      "node",
+      [
+        "--import",
+        "tsx",
+        "packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts",
+        "--execute",
+        "--confirm-identity-mutation",
+        "--agent-name",
+        "definitely-missing",
+      ],
+      { encoding: "utf8" },
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("--agent-name credentials profile not found");
+    expect(result.stdout).toBe("");
+  });
+
   it("rejects unknown identity proof phases", () => {
     const result = spawnSync(
       "node",

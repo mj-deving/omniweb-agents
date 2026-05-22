@@ -40,7 +40,7 @@ Mode: evidence reconciliation and release-gate closeout. PR6 does not execute li
 | W8 higher/lower BET | Passed in PR3 with BTC 24h LOWER tx moving pool totals and count. |
 | W9 market registration recovery | Degraded/unsupported in PR3: replay against owned W7/W8 tx hashes returned `wrong_tx_type`; product pool readback remains the current proof surface, and ETH binary registration lacks a safe paired send path. |
 | W10 TLSN attestation | Blocked; not broadcast. |
-| I1 profile register | Passed with caveat in PR4 on a throwaway wallet: register response returned requested public fields, but follow-up profile readback only matched address and returned null/empty public fields. The maintained script also needs explicit throwaway targeting. |
+| I1 profile register | Passed with caveat in PR4 on a throwaway wallet: register response returned requested public fields, but follow-up profile readback only matched address and returned null/empty public fields. The maintained script now has explicit `--agent-name` / `--env-path` targeting and refuses live mutation without one of those targets. |
 | I2 official human-link | Passed in PR4 on a throwaway wallet with challenge/claim/approve/readback and unlink cleanup. |
 | I3 deprecated `linkIdentity` | Unsupported/excluded in PR4; no public proof URL was published or submitted. |
 | A1 webhook create/delete | List passed in PR4; create/delete blocked without a controlled public HTTPS callback receiver or PR4-owned webhook id. |
@@ -69,8 +69,8 @@ PR6 records the package release posture only as readiness evidence:
 
 | Bead | Reason |
 | --- | --- |
-| `omniweb-agents-km3g` | Restore the configured wallet profile after the PR4 name-change cooldown and add explicit `--agent-name` / `--env-path` targeting to the identity probe. |
-| `omniweb-agents-vhat` | Add explicit throwaway targeting to escrow/storage/IPFS probes and resolve or precisely classify the chain sign/verify smoke mismatch. |
+| `omniweb-agents-km3g` | Restore the configured wallet profile after the PR4 name-change cooldown; identity probe explicit `--agent-name` / `--env-path` targeting has been added. |
+| `omniweb-agents-vhat` | Escrow/storage/IPFS probes now require explicit `--agent-name` / `--env-path` targeting for broadcasts; the remaining follow-up is to resolve or precisely classify the chain sign/verify smoke mismatch. |
 | `omniweb-agents-xdq` | TLSN relay/runtime proof remains external. |
 | `omniweb-agents-028` | npm release and public registry proof remain deferred until explicit release authorization plus npm auth. |
 

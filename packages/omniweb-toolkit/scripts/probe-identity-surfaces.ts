@@ -3,8 +3,9 @@
  * probe-identity-surfaces.ts — maintained live proof for production register()
  * and the official human-link challenge/claim/approve flow.
  *
- * Default behavior is dry-run only. Pass --execute to mutate the current wallet's
- * public profile and run a full link + cleanup round trip against supercolony.ai.
+ * Default behavior is dry-run only. Pass --execute plus an explicit credentials
+ * target to mutate the selected wallet's public profile and run a full link +
+ * cleanup round trip against supercolony.ai.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -12,6 +13,7 @@ import { dirname } from "node:path";
 import { getStringArg, hasFlag, loadConnect } from "./_shared.js";
 import {
   IDENTITY_PROOF_PHASES,
+  assertIdentityProbeCredentialTargetExists,
   extractSignatureValue,
   isIdentityProofPhase,
   isOkApiResult,
@@ -100,6 +102,16 @@ if (registerSpecialties.length === 0) {
 
 if (execute && !confirmed) {
   console.error("Error: --execute requires --confirm-identity-mutation for live identity mutation");
+  process.exit(2);
+}
+
+try {
+  assertIdentityProbeCredentialTargetExists(
+    { envPath, agentName, stateDir },
+    { requireExplicit: execute, purpose: "Live identity mutation" },
+  );
+} catch (err) {
+  console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(2);
 }
 

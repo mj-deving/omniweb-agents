@@ -84,7 +84,16 @@ if (!Number.isFinite(amount) || amount <= 0) {
 }
 
 try {
-  assertExplicitCredentialTargetExists({ envPath, agentName, stateDir });
+  assertExplicitCredentialTargetExists(
+    { envPath, agentName, stateDir },
+    { requireExplicit: broadcast, purpose: "Live escrow mutation" },
+  );
+} catch (err) {
+  console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(2);
+}
+
+try {
   const connect = await loadConnect();
   const omni = await connect({ envPath, agentName, stateDir });
 

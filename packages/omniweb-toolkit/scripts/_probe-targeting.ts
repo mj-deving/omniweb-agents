@@ -15,6 +15,11 @@ export interface ProbeRuntimeTargetSummary {
   stateDir: "provided-redacted" | null;
 }
 
+export interface ExplicitCredentialTargetOptions {
+  requireExplicit?: boolean;
+  purpose?: string;
+}
+
 export function validateRequiredValueFlags(args: string[], flags: readonly string[]): string | null {
   for (const flag of flags) {
     const index = args.indexOf(flag);
@@ -71,7 +76,18 @@ function redactProbeCommandArg(arg: string): string {
   return `<redacted-local-path>/${name}`;
 }
 
-export function assertExplicitCredentialTargetExists(input: ProbeRuntimeTargetInput): void {
+export function assertExplicitCredentialTargetExists(
+  input: ProbeRuntimeTargetInput,
+  options: ExplicitCredentialTargetOptions = {},
+): void {
+  if (!input.envPath && !input.agentName) {
+    if (options.requireExplicit) {
+      const purpose = options.purpose ?? "Live mutation";
+      throw new Error(`${purpose} requires --env-path or --agent-name targeting an existing credentials profile`);
+    }
+    return;
+  }
+
   if (input.envPath) {
     const resolved = resolve(input.envPath.replace(/^~/, homedir()));
     if (!existsSync(resolved)) {

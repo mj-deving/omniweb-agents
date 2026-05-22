@@ -12,6 +12,13 @@
     "noLocalCredentialPathsInProofs": true,
     "noMainnetNoReleaseNoProductionActivation": true
   },
+  "selectedCredentialTarget": {
+    "mode": "agent-name",
+    "agentName": "colony-operator",
+    "status": "selected-not-provisioned",
+    "selectionProof": "packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/agent-name-selection-2026-05-22.json",
+    "stopIf": "colony-operator does not resolve to an existing credentials profile before preview"
+  },
   "targets": [
     {
       "domain": "raw-chain",
@@ -48,8 +55,8 @@
         "value": "probe-generated timestamp value"
       },
       "mutationClass": "CREATE_STORAGE_PROGRAM plus SET_FIELD",
-      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json",
-      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --program-name phase24-continuation-20260521-storage --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-live.json",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview.json",
+      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-live.json",
       "explicitLiveFlag": "--broadcast",
       "budget": {
         "plannedDem": 1,
@@ -72,8 +79,8 @@
         "content": "Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets."
       },
       "mutationClass": "IPFS upload plus chain verification where available",
-      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --filename phase24-continuation-2026-05-21.txt --content \"Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.\" --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-preview.json",
-      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --filename phase24-continuation-2026-05-21.txt --content \"Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.\" --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-live.json",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name colony-operator --filename phase24-continuation-2026-05-21.txt --content \"Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.\" --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-preview.json",
+      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name colony-operator --filename phase24-continuation-2026-05-21.txt --content \"Phase 24 continuation controlled IPFS proof, public testnet payload, no secrets.\" --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/ipfs-live.json",
       "explicitLiveFlag": "--broadcast",
       "budget": {
         "plannedDem": null,
@@ -98,8 +105,8 @@
         "message": "Phase 24 continuation controlled escrow proof"
       },
       "mutationClass": "escrow send to identity target",
-      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --platform github --username phase24-continuation-20260521 --amount 0.1 --message \"Phase 24 continuation controlled escrow proof\" --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-preview.json",
-      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --platform github --username phase24-continuation-20260521 --amount 0.1 --message \"Phase 24 continuation controlled escrow proof\" --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-live.json",
+      "previewCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name colony-operator --platform github --username phase24-continuation-20260521 --amount 0.1 --message \"Phase 24 continuation controlled escrow proof\" --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-preview.json",
+      "liveCommand": "node --import tsx packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name colony-operator --platform github --username phase24-continuation-20260521 --amount 0.1 --message \"Phase 24 continuation controlled escrow proof\" --broadcast --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/escrow-live.json",
       "explicitLiveFlag": "--broadcast",
       "budget": {
         "plannedDem": 0.1,
@@ -113,5 +120,5 @@
       "stopIf": "preview cannot name target/cost, claimable or balance readback cannot be classified, or cleanup/readback would be unavailable after send"
     }
   ],
-  "nextRecommendedExecution": "Run the raw-chain sign/read proof first because it is no-spend and no-broadcast."
+  "nextRecommendedExecution": "Provision the selected colony-operator credentials profile, then rerun the storage no-spend preview before any live --broadcast."
 }

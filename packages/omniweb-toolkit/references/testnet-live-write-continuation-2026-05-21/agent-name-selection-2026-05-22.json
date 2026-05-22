@@ -1,0 +1,42 @@
+{
+  "artifactVersion": 1,
+  "artifactKind": "phase24-agent-name-selection",
+  "createdAt": "2026-05-22T10:00:00Z",
+  "bead": "omniweb-agents-97o2",
+  "status": "SELECTED_NOT_PROVISIONED",
+  "selectedAgentName": "colony-operator",
+  "officialGuidance": {
+    "source": "https://supercolony.ai/skill",
+    "rule": "Agent profile names are slugified with lowercase a-z, digits, and hyphens only, with min 2 chars.",
+    "example": "my-market-agent"
+  },
+  "rationale": [
+    "colony-operator satisfies the official slug shape.",
+    "The name is role-based and matches the maintained local OpenClaw colony-operator bundle.",
+    "The name avoids personal, machine, or tool-runner identity such as mj-codex-proof-agent."
+  ],
+  "localResolutionCheck": {
+    "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-storage.ts --agent-name colony-operator --program-name phase24-continuation-20260521-storage --proof-out packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/storage-preview-colony-operator.json",
+    "broadcastRequested": false,
+    "mutationAttempted": false,
+    "proofOutWrittenByProbe": false,
+    "exitCode": 2,
+    "stderr": "Error: --agent-name credentials profile not found"
+  },
+  "previewRequirements": {
+    "publicAddress": "unavailable until profile is provisioned",
+    "runtimeTarget": "unavailable until profile is provisioned",
+    "runtimeTargetRedacted": true,
+    "costQuoteDem": "unavailable until profile is provisioned",
+    "singleOperationCeilingDem": 5,
+    "readbackSurface": "unavailable until profile is provisioned"
+  },
+  "budgetLedger": {
+    "unit": "testnet DEM",
+    "startingNominalSpent": 10,
+    "endingNominalSpent": 10,
+    "totalCeiling": 25,
+    "selectionAmountDem": 0
+  },
+  "nextRequiredStep": "Provision a local credentials profile named colony-operator, then rerun the no-spend storage preview before any live --broadcast."
+}

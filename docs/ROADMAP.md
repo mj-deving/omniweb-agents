@@ -463,9 +463,9 @@ market registration helpers as owned-transaction recovery surfaces rather than
 standalone spend proof. The next band is controlled proof execution through the
 packet above.
 
-Immediate order:
-1. `omniweb-agents-0ctx.1` - VOTE proof refresh.
-2. `omniweb-agents-0ctx.3` - social react/tip target selection and at most one eligible mutation.
+Lane status:
+1. `omniweb-agents-0ctx.1` - `GREEN`: VOTE proof refresh completed through [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md).
+2. `omniweb-agents-0ctx.3` - next: social react/tip target selection and at most one eligible mutation.
 3. `omniweb-agents-0ctx.8` - raw transfer lane only after explicit transfer gate/readback exists.
 4. `omniweb-agents-5mnk.3` - IPFS quote-gated proof.
 5. `omniweb-agents-5mnk.4` - escrow controlled send proof.

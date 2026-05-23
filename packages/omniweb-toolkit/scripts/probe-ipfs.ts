@@ -22,6 +22,7 @@ import {
 import {
   classifyIPFSPayloadSafety,
   classifyIPFSQuoteSupport,
+  classifyIPFSSuccessorReadiness,
   type IPFSQuoteSupport,
 } from "../src/ipfs-quote-classifier.js";
 
@@ -131,12 +132,17 @@ try {
     readbackExpectation,
     broadcast,
   });
+  const successorReadiness = classifyIPFSSuccessorReadiness({
+    quoteSupport,
+    payloadSafety,
+    hasReadbackExpectation: Boolean(readbackExpectation),
+  });
 
   if (!broadcast) {
     emitJsonReport({
       attempted: false,
       ok: previewGate.ok,
-      status: previewGate.ok ? "PREVIEW_GREEN" : "BLOCKED",
+      status: previewGate.ok ? "PREVIEW_GREEN" : successorReadiness.status,
       command,
       address: omni.address,
       runtimeTarget,
@@ -148,6 +154,7 @@ try {
       quoteSupport,
       payloadSafety,
       previewGate,
+      successorReadiness,
       uploadPlan: buildUploadPlan({ filename, sizeBytes, quoteSupport, readbackExpectation }),
       message: "Dry run only. Re-run with --broadcast to execute the real IPFS upload probe.",
     }, proofOut);
@@ -170,6 +177,7 @@ try {
       quoteSupport,
       payloadSafety,
       previewGate,
+      successorReadiness,
       uploadPlan: buildUploadPlan({ filename, sizeBytes, quoteSupport, readbackExpectation }),
       error: "Live IPFS upload blocked because preview gate is not green.",
     }, proofOut);
@@ -214,6 +222,7 @@ try {
     quoteSupport,
     payloadSafety,
     previewGate,
+    successorReadiness,
     uploadPlan: buildUploadPlan({ filename, sizeBytes, quoteSupport, readbackExpectation }),
     txHash: upload.txHash,
     confirmationBlock: upload.confirmationBlock,
@@ -245,15 +254,15 @@ function buildPreviewGate(input: {
     quoteWithinBudget: input.quoteSupport.withinBudget === true,
     readbackExpectationPresent: Boolean(input.readbackExpectation),
   };
-  const reasons = Object.entries(checks).flatMap(([key, ok]) => {
+  const reasons = new Set(Object.entries(checks).flatMap(([key, ok]) => {
     if (ok) return [];
     if (key === "quoteConcrete" || key === "quoteWithinBudget") return input.quoteSupport.reasonCodes;
     return [key];
-  });
+  }));
   return {
-    ok: reasons.length === 0,
+    ok: reasons.size === 0,
     checks,
-    reasons,
+    reasons: [...reasons],
     explicitLiveFlag: "--broadcast",
     liveRequested: input.broadcast,
   };

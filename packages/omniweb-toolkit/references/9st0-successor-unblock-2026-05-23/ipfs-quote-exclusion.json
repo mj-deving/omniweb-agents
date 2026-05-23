@@ -1,0 +1,39 @@
+{
+  "bead": "omniweb-agents-9st0.4",
+  "status": "EXCLUDED",
+  "recommendation": "exclude-ipfs-from-successor-live-packet",
+  "includeInSuccessor": false,
+  "noSpend": true,
+  "noUpload": true,
+  "noBroadcast": true,
+  "budgetDem": 5,
+  "command": "node --import tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts --agent-name colony-operator --budget-dem 5 --readback tx-confirmation --state-dir /tmp/sc96-readiness-state/ipfs --proof-out packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/ipfs-preview.json",
+  "artifacts": [
+    "packages/omniweb-toolkit/references/9st0-successor-unblock-2026-05-23/ipfs-quote-exclusion.json",
+    "packages/omniweb-toolkit/references/9st0-successor-unblock-2026-05-23/ipfs-quote-exclusion.md"
+  ],
+  "sourceArtifacts": [
+    "packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/ipfs-preview.json",
+    "packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md"
+  ],
+  "quoteAttempt": {
+    "runtimePath": "omni.runtime.demos.ipfs.quote",
+    "sdkNodeCallMessage": "ipfsQuote",
+    "args": {
+      "file_size_bytes": 199,
+      "operation": "IPFS_ADD"
+    }
+  },
+  "quoteResponse": "{ error: \"Unknown message\"}",
+  "reasonCodes": [
+    "ipfs_quote_unknown_message",
+    "successor_ipfs_excluded_unsupported_quote"
+  ],
+  "evidence": [
+    "quote_path=omni.runtime.demos.ipfs.quote",
+    "node_call=ipfsQuote",
+    "quote_args={\"file_size_bytes\":199,\"operation\":\"IPFS_ADD\"}",
+    "quote_response={ error: \"unknown message\"}"
+  ],
+  "aggregationHint": "9st0.9 should treat IPFS as explicitly excluded from successor live execution unless a later no-spend preview produces a concrete fee within budget."
+}

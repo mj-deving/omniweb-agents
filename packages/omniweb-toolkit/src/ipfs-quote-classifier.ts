@@ -23,6 +23,19 @@ export interface IPFSPayloadSafety {
   reasonCodes: string[];
 }
 
+export type IPFSSuccessorReadinessStatus = "READY" | "EXCLUDED" | "BLOCKED" | "DEGRADED";
+
+export interface IPFSSuccessorReadiness {
+  status: IPFSSuccessorReadinessStatus;
+  includeInSuccessor: boolean;
+  recommendation:
+    | "include-ipfs-upload-in-successor-live-packet"
+    | "exclude-ipfs-from-successor-live-packet"
+    | "keep-ipfs-blocked-pending-concrete-quote";
+  reasonCodes: string[];
+  evidence: string[];
+}
+
 export function classifyIPFSQuoteSupport(input: {
   quote: unknown;
   quoteError?: string;
@@ -138,6 +151,80 @@ export function classifyIPFSPayloadSafety(content: string | Uint8Array): IPFSPay
   return hits.length === 0
     ? { ok: true, reasonCodes: [] }
     : { ok: false, reasonCodes: hits.map((marker) => `payload_secret_marker:${marker.replace(/\W+/g, "_")}`) };
+}
+
+export function classifyIPFSSuccessorReadiness(input: {
+  quoteSupport: IPFSQuoteSupport;
+  payloadSafety: IPFSPayloadSafety;
+  hasReadbackExpectation: boolean;
+}): IPFSSuccessorReadiness {
+  const reasonCodes = new Set<string>([
+    ...input.quoteSupport.reasonCodes,
+    ...input.payloadSafety.reasonCodes,
+  ]);
+  if (!input.hasReadbackExpectation) reasonCodes.add("readback_expectation_missing");
+
+  if (!input.payloadSafety.ok) {
+    return {
+      status: "BLOCKED",
+      includeInSuccessor: false,
+      recommendation: "keep-ipfs-blocked-pending-concrete-quote",
+      reasonCodes: [...reasonCodes, "successor_ipfs_payload_not_public_safe"],
+      evidence: input.quoteSupport.evidence,
+    };
+  }
+
+  if (input.quoteSupport.concrete && input.quoteSupport.withinBudget === true && input.hasReadbackExpectation) {
+    return {
+      status: "READY",
+      includeInSuccessor: true,
+      recommendation: "include-ipfs-upload-in-successor-live-packet",
+      reasonCodes: [],
+      evidence: input.quoteSupport.evidence,
+    };
+  }
+
+  if (input.quoteSupport.concrete) {
+    reasonCodes.add("successor_ipfs_quote_concrete_but_blocked");
+    return {
+      status: "BLOCKED",
+      includeInSuccessor: false,
+      recommendation: "keep-ipfs-blocked-pending-concrete-quote",
+      reasonCodes: [...reasonCodes],
+      evidence: input.quoteSupport.evidence,
+    };
+  }
+
+  if (input.quoteSupport.classification === "unsupported-runtime") {
+    reasonCodes.add("successor_ipfs_excluded_unsupported_quote");
+    return {
+      status: "EXCLUDED",
+      includeInSuccessor: false,
+      recommendation: "exclude-ipfs-from-successor-live-packet",
+      reasonCodes: [...reasonCodes],
+      evidence: input.quoteSupport.evidence,
+    };
+  }
+
+  if (input.quoteSupport.classification === "degraded-runtime") {
+    reasonCodes.add("successor_ipfs_degraded_quote_missing_fee");
+    return {
+      status: "DEGRADED",
+      includeInSuccessor: false,
+      recommendation: "exclude-ipfs-from-successor-live-packet",
+      reasonCodes: [...reasonCodes],
+      evidence: input.quoteSupport.evidence,
+    };
+  }
+
+  reasonCodes.add("successor_ipfs_quote_not_concrete");
+  return {
+    status: "BLOCKED",
+    includeInSuccessor: false,
+    recommendation: "keep-ipfs-blocked-pending-concrete-quote",
+    reasonCodes: [...reasonCodes],
+    evidence: input.quoteSupport.evidence,
+  };
 }
 
 function extractDemFee(quote: unknown): number | null {

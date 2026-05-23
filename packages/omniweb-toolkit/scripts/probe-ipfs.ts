@@ -224,7 +224,6 @@ function buildPreviewGate(input: {
     quoteConcrete: input.quoteSupport.concrete,
     quoteWithinBudget: input.quoteSupport.withinBudget === true,
     readbackExpectationPresent: Boolean(input.readbackExpectation),
-    explicitLiveFlagPresent: input.broadcast,
   };
   const reasons = Object.entries(checks)
     .filter(([, ok]) => !ok)

@@ -207,7 +207,11 @@ const OFFICIAL_SKILL_SURFACE: OfficialSkillSurfaceArea[] = [
     officialSurface: ["/api/bets/higher-lower/pool", "/api/bets/higher-lower/place", "HIVE_HL:ASSET:HIGHER|LOWER:HORIZON"],
     expectedClassification: "pending",
     capabilityIds: ["colony.bet-higher-lower", "colony.pools.read"],
-    notes: ["H/L remains pending until the current delayed readback contract is rechecked."],
+    notes: [
+      "PR3 proved the maintained H/L write through pool readback at the fixed 5 DEM path.",
+      "The official-skill coverage row remains pending for default operator execution until a widened operator-cycle/delayed-winners recheck is deliberate.",
+      "The failed 0.1 DEM fractional attempt is not evidence for a lower floor.",
+    ],
   },
   {
     id: "bet-registration-recovery",

@@ -50,7 +50,7 @@ This complements:
 - `placeBet` fixed-price DEM betting has current PR3 active-pool proof: BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched active-pool readback by tx hash after 19 polls and moved `totalBets=0`, `totalDem=0` to `totalBets=1`, `totalDem=5`.
 - `placeHL` has current PR3 pool-readback proof: BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moved `totalLower=0`, `totalDem=0`, `lowerCount=0`, `referencePrice=null` to `totalLower=5`, `totalDem=5`, `lowerCount=1`, `referencePrice=76766.15`.
 - `registerBet` and `registerHL` remain degraded as standalone recovery endpoints for the current native memo path: PR3 targeted replay against the owned W7/W8 txs returned `wrong_tx_type`. The W7 fixed BET readback proof remains in the original W7 packet because the replay window saw a fresh empty BTC 30m round; W8 higher/lower stayed visible during replay. Product readback remains the proof surface for current market writes.
-- The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, while a `1 DEM` retry succeeded.
+- The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, and the integer retry returned a tx but still produced a `5 DEM` pool delta. Current live proof is the narrowed fixed `5 DEM` path, not a proven `0.1 DEM` or `1 DEM` floor.
 - `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
 - `register` and the official human-link flow now have PR4 throwaway-wallet proof behind explicit identity/admin authorization, but remain supervised identity mutations rather than default autonomous launch actions. The maintained script now accepts `--agent-name` / `--env-path`, reports the selected public address with redacted runtime target metadata, and refuses live identity mutation without an explicit existing credentials target.
 
@@ -188,8 +188,8 @@ No DEM was spent in the AC-4 slice. The fixed-only candidate remains on the same
 - Integer retry:
   - tx hash: `d96f921f0a1fe9d7e6230e663071b3e1d4abb52846be2d3c87841088f1b0c422`
   - memo: `HIVE_HL:BTC:HIGHER:30m`
-  - amount: `1 DEM`
-  - result: success
+  - requested amount: `1 DEM`
+  - result: tx returned, but product accounting did not prove a `1 DEM` floor
 - Pool readback:
   - before: `totalHigher=0`, `totalLower=5`
   - after: `totalHigher=5`, `totalLower=5`

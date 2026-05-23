@@ -17,6 +17,11 @@ import {
   summarizeProbeRuntimeTarget,
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
+import {
+  classifyEscrowProofReadback,
+  classifyEscrowReadbackSupport,
+  type EscrowReadbackResult,
+} from "../src/escrow-readback-classifier.js";
 
 const args = process.argv.slice(2);
 const MAX_ESCROW_PROOF_AMOUNT = 5;
@@ -121,12 +126,16 @@ try {
   const connect = await loadConnect();
   const omni = await connect({ envPath, agentName, stateDir });
   const readbackBefore = await readEscrowReadback(omni, platform as "github" | "twitter" | "telegram", username);
-  const previewGate = buildPreviewGate(readbackBefore);
+  const previewGate = buildPreviewGate(readbackBefore, recheckTxHash ? "--recheck-tx-hash" : "--broadcast");
 
   if (recheckTxHash) {
     const verification = await waitForEscrowVerification(omni, recheckTxHash);
     const readbackAfter = await readEscrowReadback(omni, platform as "github" | "twitter" | "telegram", username);
-    const readbackClassification = classifyLiveReadback(readbackAfter, Boolean(verification.confirmed));
+    const readbackClassification = classifyEscrowProofReadback(
+      readbackAfter,
+      Boolean(verification.confirmed),
+      verification.reason,
+    );
     emitJsonReport({
       attempted: false,
       recheck: true,
@@ -228,7 +237,11 @@ try {
   const verification = result.txHash && result.txHash !== "pending"
     ? await waitForEscrowVerification(omni, result.txHash)
     : { confirmed: false, reason: "tx hash missing or pending", attempts: 0, timeoutMs: verifyTimeoutMs };
-  const readbackClassification = classifyLiveReadback(readbackAfter, Boolean(verification.confirmed));
+  const readbackClassification = classifyEscrowProofReadback(
+    readbackAfter,
+    Boolean(verification.confirmed),
+    verification.reason,
+  );
 
   emitJsonReport({
     attempted: true,
@@ -263,37 +276,25 @@ async function readEscrowReadback(
 ): Promise<{
   claimable: EscrowReadbackResult;
   escrowBalance: EscrowReadbackResult;
-  classification: "supported" | "degraded-wrapper" | "error-classified" | "unclassified";
+  classification: ReturnType<typeof classifyEscrowReadbackSupport>["classification"];
+  reasonCodes: string[];
+  sanitizedErrors: string[];
 }> {
   const [claimable, escrowBalance] = await Promise.all([
     callEscrowReadback(() => omni.escrow.getClaimable(readPlatform, readUsername)),
     callEscrowReadback(() => omni.escrow.getEscrowBalance(readPlatform, readUsername)),
   ]);
-  const readbackText = [
-    claimable.error,
-    escrowBalance.error,
-    stringifyReadbackData(claimable.data),
-    stringifyReadbackData(escrowBalance.data),
-  ].filter(Boolean).join(" | ").toLowerCase();
-  const classification = claimable.ok && escrowBalance.ok && !readbackText.includes("method not implemented")
-    ? "supported"
-    : readbackText.includes("method not implemented") || readbackText.includes("not available")
-      ? "degraded-wrapper"
-      : "error-classified";
-  return { claimable, escrowBalance, classification };
+  return classifyEscrowReadbackSupport(claimable, escrowBalance);
 }
 
-interface EscrowReadbackResult {
-  ok: boolean;
-  data?: unknown;
-  error?: string;
-}
-
-function buildPreviewGate(readback: Awaited<ReturnType<typeof readEscrowReadback>>): {
+function buildPreviewGate(
+  readback: Awaited<ReturnType<typeof readEscrowReadback>>,
+  liveFlag: "--broadcast" | "--recheck-tx-hash",
+): {
   ok: boolean;
   checks: Record<string, boolean>;
   reasons: string[];
-  liveFlag: "--broadcast";
+  liveFlag: "--broadcast" | "--recheck-tx-hash";
 } {
   const checks = {
     controlledTargetNamed: Boolean(platform && username),
@@ -308,7 +309,7 @@ function buildPreviewGate(readback: Awaited<ReturnType<typeof readEscrowReadback
     ok: reasons.length === 0,
     checks,
     reasons,
-    liveFlag: "--broadcast",
+    liveFlag,
   };
 }
 
@@ -325,16 +326,6 @@ async function callEscrowReadback(fn: () => Promise<EscrowReadbackResult>): Prom
       ok: false,
       error: err instanceof Error ? err.message : String(err),
     };
-  }
-}
-
-function stringifyReadbackData(data: unknown): string {
-  if (typeof data === "string") return data;
-  if (data === undefined || data === null) return "";
-  try {
-    return JSON.stringify(data);
-  } catch {
-    return String(data);
   }
 }
 
@@ -368,19 +359,6 @@ async function waitForEscrowVerification(omni: any, txHash: string): Promise<{
     await sleep(verifyPollMs);
   }
   return { confirmed: false, attempts, timeoutMs: verifyTimeoutMs, reason };
-}
-
-function classifyLiveReadback(
-  readback: Awaited<ReturnType<typeof readEscrowReadback>>,
-  txConfirmed: boolean,
-): { ok: boolean; status: "GREEN" | "DEGRADED"; confirmationSurface: string } {
-  if (txConfirmed && readback.classification === "supported") {
-    return { ok: true, status: "GREEN", confirmationSurface: "tx_and_readback_wrappers" };
-  }
-  if (txConfirmed && readback.classification === "degraded-wrapper") {
-    return { ok: false, status: "DEGRADED", confirmationSurface: "tx_confirmed_readback_wrappers_degraded" };
-  }
-  return { ok: false, status: "DEGRADED", confirmationSurface: txConfirmed ? "tx_only" : "none" };
 }
 
 async function withSuppressedSdkLogs<T>(fn: () => Promise<T>, onSuppressed: (count: number) => void): Promise<T> {

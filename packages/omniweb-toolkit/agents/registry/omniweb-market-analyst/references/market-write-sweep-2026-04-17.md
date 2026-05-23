@@ -19,8 +19,8 @@ read_when: ["market write proof", "placeBet placeHL proof", "bet registration pr
 
 - `placeBet`: pass
 - `placeHL`: pass, after narrowing the local contract to a fixed `5 DEM` write
-- `registerBet` and `registerHL`: route proven through the integrated success path used by `placeBet()` and `placeHL()`
-- `registerEthBinaryBet`: still not proven on the current production host
+- `registerBet` and `registerHL`: historically succeeded in this April integrated path, but current PR3 native-memo replay is degraded and these helpers are recovery-only, owned-source-tx surfaces
+- `registerEthBinaryBet`: still not proven on the current production host and blocked until there is both a safe paired send path and an owned tx
 
 ## Evidence
 

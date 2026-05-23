@@ -199,7 +199,9 @@ export function buildMarketWriteIntentMatrix(
       spendsDem: false,
       reasonCodes: ["eth_binary_enabled_false", "manual_registration_recovery_only"],
       readbackSurfaces: ["eth-binary-pools"],
-      notes: ["The toolkit has an ETH binary registration helper, but live reads report enabled=false; keep it recovery-only."],
+      notes: [
+        "The toolkit has an ETH binary registration helper, but it remains blocked until there is both a safe paired send path and an owned tx.",
+      ],
     }),
   ];
 

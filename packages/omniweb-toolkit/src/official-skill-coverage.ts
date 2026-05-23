@@ -220,8 +220,12 @@ const OFFICIAL_SKILL_SURFACE: OfficialSkillSurfaceArea[] = [
     sourceSection: "Prediction Markets / API Endpoints",
     officialSurface: ["/api/bets/place", "/api/bets/higher-lower/place", "fallback txHash registration"],
     expectedClassification: "advanced",
-    capabilityIds: ["colony.bet-recovery"],
-    notes: ["Registration helpers are recovery routes, not the default execution lane."],
+    capabilityIds: ["colony.bet-recovery", "colony.bet-eth-binary-recovery"],
+    notes: [
+      "Registration helpers are owned-source-tx recovery routes, not standalone spend proof.",
+      "Current PR3-owned native memo replay returned wrong_tx_type for registerBet/registerHL; product pool readback remains mandatory.",
+      "registerEthBinaryBet remains blocked until there is both a safe paired send path and an owned tx.",
+    ],
   },
   {
     id: "binary-commodity-sports-markets",

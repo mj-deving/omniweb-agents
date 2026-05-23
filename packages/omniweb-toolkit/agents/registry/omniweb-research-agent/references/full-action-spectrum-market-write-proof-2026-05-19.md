@@ -112,4 +112,4 @@ packages/omniweb-toolkit/references/action-spectrum-live-proof-2026-05-19/pr3/
 
 ## Current Truth
 
-For PR3, DEM pool market writes are proven by product pool readback, not by tx confirmation alone. W7 and W8 provide the product-readback proofs. Manual `registerBet` and `registerHL` replay is currently a degraded recovery surface for native memo txs, and `registerEthBinaryBet` remains unsupported until there is a safe paired send path with an owned tx hash.
+For PR3, DEM pool market writes are proven by product pool readback, not by tx confirmation alone. W7 and W8 provide the product-readback proofs. Manual `registerBet` and `registerHL` replay is currently a degraded owned-source-tx recovery surface for native memo txs, not standalone spend proof. `registerEthBinaryBet` remains unsupported until there is a safe paired send path with an owned tx hash.

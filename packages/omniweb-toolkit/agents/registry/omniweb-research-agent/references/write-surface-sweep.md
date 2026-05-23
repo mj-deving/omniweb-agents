@@ -19,7 +19,7 @@ This complements:
 - Wallet: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
 - Scope: full action-spectrum PR3 rows W7-W10 under explicit testnet authorization and Beads memory `action-spectrum-live-spend-gates`
 - Proof bundle: [full-action-spectrum-market-write-proof-2026-05-19.md](./full-action-spectrum-market-write-proof-2026-05-19.md)
-- Outcome: W7 fixed-price BET passed with BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched by active-pool tx-hash readback; W8 higher/lower passed with BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moving `totalLower`, `totalDem`, and `lowerCount`; W9 registration replay is degraded because `registerBet` and `registerHL` returned `wrong_tx_type` for the PR3-owned native memo txs, the fixed-price replay window saw a fresh empty round, and only the higher/lower replay still showed product readback; `registerEthBinaryBet` remains unsupported; W10 TLSN stayed blocked.
+- Outcome: W7 fixed-price BET passed with BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched by active-pool tx-hash readback; W8 higher/lower passed with BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moving `totalLower`, `totalDem`, and `lowerCount`; W9 registration replay is degraded because `registerBet` and `registerHL` returned `wrong_tx_type` for the PR3-owned native memo txs, the fixed-price replay window saw a fresh empty round, and only the higher/lower replay still showed product readback; `registerEthBinaryBet` remains blocked until a safe paired send path and owned tx exist; W10 TLSN stayed blocked.
 
 ## Previous Recorded Run - Action-Spectrum PR2 Social Write Lane
 
@@ -49,9 +49,9 @@ This complements:
 - `publish` is currently bounded-pass for DAHR-backed publishes with recent-feed indexed visibility. The May 19 PR2 run added publish txs `30cd113ad5aeac4aa0c1efa59853662ecfe951b33e5c9ff4caaab8d5e7f93b43` and `4fb3ff39c2290b96665d64b1f1975689ecf89ae840a4d0dc7a47f05cbf2e443c`, both indexed through recent-feed polling.
 - `placeBet` fixed-price DEM betting has current PR3 active-pool proof: BTC 30m tx `824cbe8e14ec27a848679ed0d33949abff8431eaad87e5a4a862af6f09a7e111` matched active-pool readback by tx hash after 19 polls and moved `totalBets=0`, `totalDem=0` to `totalBets=1`, `totalDem=5`.
 - `placeHL` has current PR3 pool-readback proof: BTC 24h LOWER tx `23501a444cc024d4e9c2d726c2263a4d60a0363431293928e9e41f26c8ec0a3e` moved `totalLower=0`, `totalDem=0`, `lowerCount=0`, `referencePrice=null` to `totalLower=5`, `totalDem=5`, `lowerCount=1`, `referencePrice=76766.15`.
-- `registerBet` and `registerHL` remain degraded as standalone recovery endpoints for the current native memo path: PR3 targeted replay against the owned W7/W8 txs returned `wrong_tx_type`. The W7 fixed BET readback proof remains in the original W7 packet because the replay window saw a fresh empty BTC 30m round; W8 higher/lower stayed visible during replay. Product readback remains the proof surface for current market writes.
+- `registerBet` and `registerHL` are owned-source-tx recovery helpers, not standalone spend proof. Current native memo recovery is degraded: PR3 targeted replay against the owned W7/W8 txs returned `wrong_tx_type`. The W7 fixed BET readback proof remains in the original W7 packet because the replay window saw a fresh empty BTC 30m round; W8 higher/lower stayed visible during replay. Product pool readback remains the proof surface for current market writes.
 - The documented `0.1 DEM` higher/lower floor is currently misleading: the `0.1` attempt failed with `Not an integer`, and the integer retry returned a tx but still produced a `5 DEM` pool delta. Current live proof is the narrowed fixed `5 DEM` path, not a proven `0.1 DEM` or `1 DEM` floor.
-- `registerEthBinaryBet` is still excluded from the maintained sweep because the package does not expose a safe binary-bet send path to pair with it.
+- `registerEthBinaryBet` remains blocked until the package exposes both a safe paired binary-bet send path and an owned ETH binary tx hash for replay.
 - `register` and the official human-link flow now have PR4 throwaway-wallet proof behind explicit identity/admin authorization, but remain supervised identity mutations rather than default autonomous launch actions. The maintained script now accepts `--agent-name` / `--env-path`, reports the selected public address with redacted runtime target metadata, and refuses live identity mutation without an explicit existing credentials target.
 
 ## Recorded Outcomes
@@ -194,7 +194,8 @@ No DEM was spent in the AC-4 slice. The fixed-only candidate remains on the same
   - before: `totalHigher=0`, `totalLower=5`
   - after: `totalHigher=5`, `totalLower=5`
 - Manual registration replay:
-  - `registerHL(...)` returned success for the live tx hash on the production host
+  - `registerHL(...)` returned success for the April live tx hash on the production host
+  - current PR3-owned native memo replay is degraded with `wrong_tx_type`, so this historical success is not standalone current-host proof
 
 ### Historical April Price Bet
 
@@ -208,7 +209,8 @@ No DEM was spent in the AC-4 slice. The fixed-only candidate remains on the same
   - before: `totalDem=5`, `totalBets=1`
   - after: `totalDem=10`, `totalBets=2`
 - Manual registration replay:
-  - `registerBet(...)` returned success for the live tx hash on the production host
+  - `registerBet(...)` returned success for the April live tx hash on the production host
+  - current PR3-owned native memo replay is degraded with `wrong_tx_type`, so this historical success is not standalone current-host proof
 
 ## What Still Blocks A Stronger Launch Claim
 
@@ -216,5 +218,5 @@ No DEM was spent in the AC-4 slice. The fixed-only candidate remains on the same
 2. reply recent-feed indexing remains degraded even though post-detail/thread readback passed
 3. tip stats and balance readback must reflect live spend reliably instead of relying on tx confirmation alone
 4. the higher/lower amount contract must stop advertising `0.1` if the send path requires integers
-5. `registerEthBinaryBet` still lacks a safe, packaged production-host proving path
+5. `registerEthBinaryBet` still lacks a safe paired send path plus owned current-host tx for replay
 6. generic `register` and the official human-link flow still need a deliberate operator-profile proving plan rather than an incidental shared proving-wallet mutation

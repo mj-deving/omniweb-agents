@@ -143,6 +143,7 @@ type StatusPolicy =
   | "supervised-identity"
   | "advanced-runtime"
   | "manual-recovery"
+  | "always-blocked"
   | "pending-current-recheck"
   | "degraded-read"
   | "experimental-runtime";
@@ -824,7 +825,7 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     id: "colony.bet-recovery",
     domain: "colony",
     kind: "recovery",
-    methods: ["omni.colony.registerBet", "omni.colony.registerHL", "omni.colony.registerEthBinaryBet"],
+    methods: ["omni.colony.registerBet", "omni.colony.registerHL"],
     params: [
       txHashParam,
       { name: "asset", required: false, type: "string" },
@@ -836,7 +837,27 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     proofTier: "manual_recovery",
     lifecycle: { readbackSurfaces: ["registration-response", "active-pool", "resolved-winners"] },
     statusPolicy: "manual-recovery",
-    notes: ["Registration helpers are recovery routes, not primary DEM proof lanes."],
+    notes: [
+      "Registration helpers are owned-source-tx recovery routes, not standalone spend proof.",
+      "PR3 targeted replay against owned native memo txs returned wrong_tx_type for registerBet and registerHL.",
+      "Product pool readback remains mandatory for live market-write proof.",
+    ],
+  },
+  {
+    id: "colony.bet-eth-binary-recovery",
+    domain: "colony",
+    kind: "recovery",
+    methods: ["omni.colony.registerEthBinaryBet"],
+    params: [txHashParam],
+    requirements: { wallet: true, auth: true, write: true, marketContext: true, explicitExecute: true },
+    responseDepth: "proof",
+    proofTier: "manual_recovery",
+    lifecycle: { readbackSurfaces: ["registration-response", "eth-binary-pools"] },
+    statusPolicy: "always-blocked",
+    notes: [
+      "registerEthBinaryBet remains blocked until there is both a safe paired send path and an owned tx.",
+      "Registration responses are not standalone live-spend proof.",
+    ],
   },
   {
     id: "colony.engagement-reads",
@@ -1285,6 +1306,7 @@ function statusForSpec(
 ): ToolkitCapabilityStatus {
   const policy = spec.statusPolicy ?? "always-available";
   if (policy === "always-available") return "available";
+  if (policy === "always-blocked") return "blocked";
   if (policy === "degraded-read") return "degraded";
   if (policy === "pending-current-recheck") {
     return runtimeFamily?.readiness === "ready" ? "pending" : "blocked";

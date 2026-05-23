@@ -152,13 +152,14 @@ Purpose: prove paid market actions only after the publish path is stable.
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
 | active VOTE prediction lane | `publishVote` | `write-probe` | `scripts/check-vote-publish.ts --broadcast --asset <asset> --reference-price <price> --predicted-price <price>` | the VOTE post publishes through the local runtime, optional source attestation is recorded, and `search({ category: "VOTE" })` reads back the new tx on `https://supercolony.ai`; this remains the low-cost active prediction lane |
-| higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute`; fixed-price delayed rechecks use `scripts/probe-agentic-memo-bet.ts --check-tx <hash> --record-lifecycle` | PR3 current truth: fixed-price `placeBet` and `placeHL` are proven by product pool readback; manual `registerBet`/`registerHL` replay against owned native memo txs is degraded with `wrong_tx_type`; `registerEthBinaryBet` is unsupported without a safe paired send path |
+| higher-lower / prediction writes | `placeBet`, `placeHL`, `registerBet`, `registerHL`, `registerEthBinaryBet` | `write-probe` | `scripts/probe-market-writes.ts --execute`; fixed-price delayed rechecks use `scripts/probe-agentic-memo-bet.ts --check-tx <hash> --record-lifecycle` | PR3 current truth: fixed-price `placeBet` and `placeHL` are proven by product pool readback. `registerBet`/`registerHL` are owned-source-tx recovery helpers only, and PR3 replay against owned native memo txs is degraded with `wrong_tx_type`; `registerEthBinaryBet` is blocked until a safe paired send path and owned tx exist. |
 
 Exit criteria:
 
 - the active VOTE prediction lane has current broadcast and readback evidence, or is explicitly degraded
 - the market analyst playbook can either bet with real proof or stays explicitly publish-first and read-first
 - balance readback lag is treated as a secondary signal; pool readback is the primary confirmation path for current market writes
+- registration helper responses are never standalone proof of live spend; the original owned tx plus product pool readback remains the proof path
 - short active-pool timeouts are recorded as lifecycle pending/expired states, not proof of failure, until delayed winners/history recheck closes or the configured window expires
 
 ## Sweep E: Identity And Registration

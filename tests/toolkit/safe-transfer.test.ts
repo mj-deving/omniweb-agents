@@ -62,4 +62,19 @@ describe("safeTransfer", () => {
     expect(execute).toHaveBeenCalledWith("0xpool", 5, "");
     expect(result.txHash).toBe("0xtx");
   });
+
+  it("rejects fractional DEM amounts before execution", async () => {
+    const execute = vi.fn();
+
+    await expect(safeTransfer({
+      recipient: "0xpool",
+      amount: 0.1,
+      memo: "",
+      recipientAllowlist: ["0xpool"],
+      recipientSource: "operator",
+      execute,
+    })).rejects.toThrow("integer DEM amounts");
+
+    expect(execute).not.toHaveBeenCalled();
+  });
 });

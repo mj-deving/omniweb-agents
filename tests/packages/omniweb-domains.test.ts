@@ -245,6 +245,16 @@ describe("OmniWeb domain APIs", () => {
       expect(mockSdkBridge.transferDem).toHaveBeenCalledWith("demos1target", 10, "test memo");
     });
 
+    it("transfer rejects fractional DEM before sdkBridge", async () => {
+      mockSdkBridge.transferDem.mockClear();
+
+      const result = await chain.transfer("demos1target", 0.1);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("integer DEM amounts");
+      expect(mockSdkBridge.transferDem).not.toHaveBeenCalled();
+    });
+
     it("getBalance returns address balance", async () => {
       const result = await chain.getBalance("demos1test");
       expect(result.ok).toBe(true);

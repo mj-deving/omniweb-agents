@@ -22,7 +22,7 @@ import { safeTransfer } from "../src/write.js";
 
 const args = process.argv.slice(2);
 const MAX_TRANSFER_DEM = 5;
-const DEFAULT_AMOUNT_DEM = 0.1;
+const DEFAULT_AMOUNT_DEM = 1;
 const DEFAULT_VERIFY_TIMEOUT_MS = 90_000;
 const DEFAULT_VERIFY_POLL_MS = 5_000;
 
@@ -35,7 +35,7 @@ Options:
   --recipient-agent-name NAME   Owned recipient credentials profile; preferred
   --recipient-address ADDRESS   Controlled recipient address; requires --recipient-label
   --recipient-label TEXT        Public label for controlled recipient-address mode
-  --amount DEM                  Transfer amount; default 0.1, maximum 5
+  --amount DEM                  Integer DEM amount; default 1, maximum 5
   --broadcast                   Execute one live transfer after preview gates pass
   --state-dir PATH              Override sender state directory
   --proof-out PATH              Write the JSON proof report to this path
@@ -114,6 +114,7 @@ try {
       amountDem: amount,
       ceilingDem: MAX_TRANSFER_DEM,
       amountSupport,
+      unitContract: buildUnitContract(amountSupport),
       memo: "",
       explicitLiveFlag: "--broadcast",
       previewGate,
@@ -143,6 +144,7 @@ try {
       amountDem: amount,
       ceilingDem: MAX_TRANSFER_DEM,
       amountSupport,
+      unitContract: buildUnitContract(amountSupport),
       previewGate,
       error: "Live transfer blocked because preview gate is not green",
     }, proofOut);
@@ -181,6 +183,7 @@ try {
       amountDem: amount,
       ceilingDem: MAX_TRANSFER_DEM,
       amountSupport,
+      unitContract: buildUnitContract(amountSupport),
       memo: "",
       explicitLiveFlag: "--broadcast",
       previewGate,
@@ -192,7 +195,7 @@ try {
       },
       balancesBefore: before,
       balancesAfter: afterFailure,
-      verdict: "No tx hash was produced and the packet ceiling forbids retrying with a higher integer amount.",
+      verdict: "No tx hash was produced. The current raw transfer contract is integer DEM only; do not retry with a different amount unless a separate bead records an explicit integer budget, target, and readback gate.",
     }, proofOut);
     process.exit(0);
   }
@@ -213,6 +216,8 @@ try {
     recipient,
     amountDem: amount,
     ceilingDem: MAX_TRANSFER_DEM,
+    amountSupport,
+    unitContract: buildUnitContract(amountSupport),
     memo: "",
     explicitLiveFlag: "--broadcast",
     previewGate,
@@ -252,6 +257,22 @@ function validateArgs(): void {
   if (recipientAgentName) {
     assertExplicitCredentialTargetExists({ agentName: recipientAgentName });
   }
+}
+
+function buildUnitContract(amountSupport: ReturnType<typeof classifyDemTransferAmount>): {
+  supportedUnit: "integer-dem";
+  baseUnitConversion: "not_proven";
+  fractionalAmounts: "unsupported";
+  amountSupported: boolean;
+  reason?: string;
+} {
+  return {
+    supportedUnit: "integer-dem",
+    baseUnitConversion: "not_proven",
+    fractionalAmounts: "unsupported",
+    amountSupported: amountSupport.ok,
+    reason: amountSupport.reason,
+  };
 }
 
 async function resolveRecipient(connect: Awaited<ReturnType<typeof loadConnect>>): Promise<{

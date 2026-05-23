@@ -12,11 +12,17 @@ Packet: [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](../../../../docs
 
 ## Result
 
-The maintained raw transfer proof gate now exists as
+The raw transfer proof gate exists as
 `scripts/probe-chain-transfer.ts` and package script `check:chain-transfer`.
-It previews by default, requires explicit `--broadcast` for live execution, caps
-the lane at `0.1 DEM`, requires an explicit sender credential target, and records
-sender and recipient balance readback.
+It previews by default, requires explicit `--broadcast` for live execution,
+requires an explicit sender credential target, and records sender and recipient
+balance readback.
+
+Current contract note: `omniweb-agents-sc96.1` supersedes this packet's
+fractional budget assumption for future raw-transfer previews. The current
+maintained raw-transfer surface is integer-only DEM; `0.1 DEM` remains
+historical evidence of an unsupported fractional amount, not a supported proof
+template.
 
 The no-spend preview was green, but the live-gated `0.1 DEM` transfer stopped
 before broadcast because the Demos SDK confirmation rejected the amount with

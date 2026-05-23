@@ -1,4 +1,4 @@
-import type { TransferDemResult } from "./sdk-bridge.js";
+import { classifyDemTransferAmount, type TransferDemResult } from "./sdk-bridge.js";
 
 export type TransferInputSource = "runtime" | "api" | "operator" | "llm";
 
@@ -24,6 +24,10 @@ export async function safeTransfer(opts: SafeTransferOptions): Promise<TransferD
   }
   if (opts.memoSource === "llm") {
     throw new Error("safeTransfer: LLM-sourced memos are not allowed");
+  }
+  const amountSupport = classifyDemTransferAmount(opts.amount);
+  if (!amountSupport.ok) {
+    throw new Error(`safeTransfer: ${amountSupport.reason}`);
   }
 
   return opts.execute(opts.recipient, opts.amount, opts.memo ?? "");

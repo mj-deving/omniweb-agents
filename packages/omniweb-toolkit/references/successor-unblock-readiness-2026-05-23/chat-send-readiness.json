@@ -1,0 +1,114 @@
+{
+  "checkedAt": "2026-05-23T19:37:35Z",
+  "ownerBead": "omniweb-agents-9st0.7",
+  "surface": "chat.message.send",
+  "endpoint": "/api/chat/send",
+  "verdict": "EXCLUDED",
+  "successorLiveEligible": false,
+  "noSpend": true,
+  "liveMutationExecuted": false,
+  "broadcasts": 0,
+  "uploads": 0,
+  "credentialMutation": false,
+  "profileMutation": false,
+  "existingEvidence": {
+    "gateArtifact": "packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/chat-gate-preview.json",
+    "gateReport": "packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/chat-gate-report.md",
+    "inventory": "packages/omniweb-toolkit/references/identity-attestation-messaging-network-crypto-inventory-2026-05-22.md",
+    "plannerOperation": "chat.message.send",
+    "plannerExecutionGate": "explicit_execute_required",
+    "plannerCanExecuteNow": false,
+    "plannerReasonCodes": [
+      "explicit_execute_required",
+      "mutating_remote_lifecycle_plan_only",
+      "execute_requested_but_not_implemented_by_consumer_plan"
+    ]
+  },
+  "controlledTargetRequirement": {
+    "status": "missing",
+    "roomId": null,
+    "requiredRoomProperties": [
+      "dedicated controlled test room or operator-owned private room",
+      "room can be listed with createClient().getChatRooms using explicit auth target",
+      "room membership is known and limited to controlled participants",
+      "room retention or cleanup behavior is documented before send"
+    ],
+    "disallowedTargets": [
+      "public or production user-facing rooms",
+      "rooms discovered only by name without stable id readback",
+      "rooms containing unrelated users or private operational history",
+      "any room requiring credential or profile mutation to access during this bead"
+    ]
+  },
+  "cleanupPolicy": {
+    "status": "missing",
+    "deleteEndpointKnown": false,
+    "minimumPolicy": [
+      "prefer a dedicated disposable room whose contents are acceptable to persist",
+      "if platform TTL exists, record TTL and expiry readback before send",
+      "if no delete or TTL exists, message content must be harmless, self-identifying, non-secret, and tagged as a test artifact",
+      "do not rely on undeclared message deletion as cleanup"
+    ]
+  },
+  "ownedMessageIdStrategy": {
+    "status": "designed_not_proven",
+    "clientNonceFormat": "omniweb-agents-9st0.7:<utc-compact>:<git-short-sha>",
+    "messageTextRequirements": [
+      "include the client nonce exactly once",
+      "include owner bead omniweb-agents-9st0.7",
+      "include no secrets, credentials, private room history, user PII, or operational tokens",
+      "stay short enough for deterministic readback matching"
+    ],
+    "requiredResponseIdentity": [
+      "message id returned by /api/chat/send if provided",
+      "server timestamp if provided",
+      "room id echoed or tied to response",
+      "sender address or agent id if provided"
+    ],
+    "fallbackIdentity": "match by controlled room id plus exact client nonce in getChatMessages readback"
+  },
+  "executeGate": {
+    "status": "not_implemented",
+    "minimumFlags": [
+      "--execute",
+      "--confirm-chat-mutation",
+      "--room-id <controlled-room-id>",
+      "--client-nonce <owned-nonce>",
+      "--proof-out <artifact-path>"
+    ],
+    "mustStopWhenMissing": [
+      "explicit credential target",
+      "controlled room id",
+      "readback plan",
+      "cleanup or acceptable-retention policy",
+      "sanitized artifact path"
+    ]
+  },
+  "readbackContract": {
+    "status": "missing",
+    "requiredSteps": [
+      "pre-read getChatMessages for controlled room and record last seen cursor/count without persisting private message bodies",
+      "send exactly one message with the owned client nonce",
+      "post-read getChatMessages for controlled room until the returned message id or exact client nonce appears",
+      "record bounded polling window, final verdict, and sanitized response shape",
+      "if a delete or expiry path exists, prove cleanup or expiry readback; otherwise classify as acceptable persistent test artifact only if the controlled room policy allowed it before send"
+    ],
+    "successCriteria": [
+      "send response identity captured or fallback nonce readback matched",
+      "message appears only in the controlled room",
+      "sender identity matches the explicit credential target",
+      "no unrelated room content or credential material is persisted"
+    ]
+  },
+  "exclusionReasons": [
+    "no controlled room id or room ownership evidence exists",
+    "no cleanup, expiry, or acceptable-retention policy is proven",
+    "no owned message id strategy is implemented in a maintained probe",
+    "no maintained execute gate exists for chat.message.send",
+    "no post-send getChatMessages readback lane is proven"
+  ],
+  "successorAggregation": {
+    "recommendedStatus": "EXCLUDED",
+    "recommendation": "Do not include chat-send in the successor live proof packet. Re-open only after a no-spend room/readback fixture and maintained execute-gated probe exist."
+  }
+}

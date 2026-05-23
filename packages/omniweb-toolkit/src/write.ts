@@ -8,6 +8,7 @@ export {
 export {
   DEFAULT_TRANSFER_SHAPE,
   WALLET_NATIVE_TRANSFER_SHAPE,
+  classifyDemTransferAmount,
   executeWalletNativeTransfer,
   extractWalletNativeTxHash,
   getInjectedDemosProvider,
@@ -16,6 +17,7 @@ export {
 export { safeTransfer } from "../../../src/toolkit/safe-transfer.js";
 
 export type {
+  DemTransferAmountSupport,
   DemosProviderLike,
   TransferShape,
 } from "../../../src/toolkit/sdk-bridge.js";

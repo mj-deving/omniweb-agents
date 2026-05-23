@@ -6,11 +6,11 @@
  * These are Demos chain primitives, not SuperColony-specific.
  */
 
-import type { SdkBridge } from "../../../src/toolkit/sdk-bridge.js";
+import { classifyDemTransferAmount, type SdkBridge } from "../../../src/toolkit/sdk-bridge.js";
 import type { Demos } from "@kynesyslabs/demosdk/websdk";
 
 export interface ChainAPI {
-  /** Transfer DEM to an address with optional memo. */
+  /** Transfer integer DEM to an address with optional memo. Fractional DEM is unsupported until base-unit conversion is proven. */
   transfer(to: string, amount: number, memo?: string): Promise<{ ok: boolean; txHash?: string; error?: string }>;
   /** Get DEM balance for an address. */
   getBalance(address: string): Promise<{ ok: boolean; balance?: string; error?: string }>;
@@ -30,6 +30,10 @@ export function createChainAPI(demos: Demos, sdkBridge: SdkBridge, address: stri
       // Amount validation — raw transfer, money-moving path
       if (!Number.isFinite(amount) || amount <= 0) {
         return { ok: false, error: "Amount must be a positive finite number" };
+      }
+      const amountSupport = classifyDemTransferAmount(amount);
+      if (!amountSupport.ok) {
+        return { ok: false, error: amountSupport.reason };
       }
       if (amount > 1000) {
         return { ok: false, error: `Amount ${amount} exceeds safety ceiling of 1000 DEM per transfer` };

@@ -226,7 +226,7 @@ export interface SdkBridge {
   /** Publish a HIVE-encoded post to the Demos chain */
   publishHivePost(post: HivePost): Promise<{ txHash: string }>;
 
-  /** Transfer DEM tokens to a recipient */
+  /** Transfer integer DEM tokens to a recipient. Decimal/base-unit conversion is not proven in the current SDK-native path. */
   transferDem(to: string, amount: number, memo: string): Promise<TransferDemResult>;
 
   /** Settle a D402 payment (createPayment + settle, nonce-safe) */
@@ -663,8 +663,10 @@ export function createSdkBridge(
     },
 
     /**
-     * Transfer DEM tokens to a recipient address.
+     * Transfer integer DEM tokens to a recipient address.
      *
+     * Fractional DEM is fail-closed until the runtime proves a decimal-to-base-unit
+     * conversion path; the current SDK-native path confirms only integer DEM.
      * Empty memos use the SDK's native transfer helper. Non-empty memos must use an
      * explicit memo-bearing path; if the current runtime cannot build or sign one,
      * this fails closed instead of silently broadcasting an un-attributable transfer.

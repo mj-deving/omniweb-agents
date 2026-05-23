@@ -441,6 +441,14 @@ describe("SDK Bridge Adapter", () => {
       expect(demos.broadcast).not.toHaveBeenCalled();
     });
 
+    it("classifies integer DEM transfers as supported", () => {
+      expect(classifyDemTransferAmount(1)).toEqual({
+        ok: true,
+        amount: 1,
+        unit: "DEM",
+      });
+    });
+
     it("prefers the broadcast txHash for plain transfers when available", async () => {
       const result = await bridge.transferDem("demos1recipient", 3, "");
       expect(result.txHash).toBe("mock-broadcast-hash");

@@ -214,7 +214,11 @@ export function buildColonyOperatorCapabilityTruth(
       spendsDem: true,
       proofLevel: "pending_current_recheck",
       reasonCodes: ["higher_lower_current_delayed_readback_pending"],
-      notes: ["Higher/lower remains represented explicitly but cannot be upgraded until the current delayed-readback proof exists."],
+      notes: [
+        "Higher/lower has maintained PR3 pool-readback proof at the fixed 5 DEM path.",
+        "The default operator action remains lifecycle-pending until the full operator-cycle/delayed-winners path is deliberately widened.",
+        "Do not infer a 0.1 DEM live floor from historical H/L evidence; the fractional attempt failed before broadcast.",
+      ],
     }),
     identityAction("register", runtime),
     identityAction("human-link", runtime),

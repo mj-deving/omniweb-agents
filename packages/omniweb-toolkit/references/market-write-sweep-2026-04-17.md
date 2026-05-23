@@ -59,6 +59,8 @@ Then a second live attempt used `amount: 1` and returned a tx hash, but the pool
 - tx: `32fe25af2efed059f55b4ca6601366c31c7d55f01360bc82f885499e8ed4ff00`
 - observed readback delta: `totalLower +5`, `totalDem +5`
 
+That retry is proof that an integer request could reach the live path, but it is not proof of a `1 DEM` higher/lower floor. The product effect observed on the current host was still the narrowed `5 DEM` pool write.
+
 That is why the package was narrowed during this sweep:
 
 - `placeHL()` now treats the live path as an exact `5 DEM` action

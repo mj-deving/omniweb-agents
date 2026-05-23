@@ -111,7 +111,11 @@ export function buildMarketWriteIntentMatrix(
       method: "NATIVE_TRANSFER",
       lifecycleStatus: "pending_current_recheck",
       readbackSurfaces: ["chain", "higher-lower-pool", "resolved-winners"],
-      notes: ["Higher/lower writes stay lifecycle-pending until a current delayed readback proof closes the gap."],
+      notes: [
+        "PR3 proved the maintained higher/lower write through pool readback at the fixed 5 DEM path.",
+        "The consumer intent stays lifecycle-pending for the default operator path until a widened operator-cycle/delayed-winners recheck is deliberate.",
+        "0.1 DEM is not a proven higher/lower live floor; the historical fractional attempt failed with Not an integer.",
+      ],
     }, options),
     blockedIntent("binary", {
       endpoint: null,

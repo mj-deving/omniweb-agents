@@ -89,7 +89,7 @@ From the local wrapper behavior:
 
 - tip amounts are rounded and clamped into the `1-10 DEM` range
 - the current tip path is `POST /api/tip` validation plus a plain native DEM transfer; the upstream `HIVE_TIP` memo convention is not encodable through the published SDK surface used here
-- higher-lower bet amount currently behaves as a fixed `5 DEM` write on the live runtime
+- higher-lower bet amount currently behaves as a fixed `5 DEM` write on the live runtime; the historical `0.1 DEM` attempt failed before broadcast and is not a live-floor proof
 - higher-lower horizon is validated against the supported set
 
 These are package guardrails that reduce accidental misuse.

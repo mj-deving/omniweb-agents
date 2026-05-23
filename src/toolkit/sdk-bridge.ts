@@ -92,6 +92,13 @@ export interface TransferDemResult {
   transferShape: TransferShape;
 }
 
+export interface DemTransferAmountSupport {
+  ok: boolean;
+  amount: number;
+  unit: "DEM";
+  reason?: string;
+}
+
 /** Error keywords indicating auth/rate-limit failures in DAHR proxy responses */
 const DAHR_ERROR_KEYWORDS = ["unauthorized", "forbidden", "rate limit", "api key", "access denied"] as const;
 const DAHR_CREATE_TIMEOUT_MS = 10_000;
@@ -276,6 +283,26 @@ export function normalizeTransferShape(value: string | undefined): MemoTransferS
   const normalized = (value ?? DEFAULT_TRANSFER_SHAPE).trim();
   if (normalized === WALLET_NATIVE_TRANSFER_SHAPE) return WALLET_NATIVE_TRANSFER_SHAPE;
   return normalizeMemoTransferShape(normalized);
+}
+
+export function classifyDemTransferAmount(amount: number): DemTransferAmountSupport {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return {
+      ok: false,
+      amount,
+      unit: "DEM",
+      reason: `transferDem: invalid amount ${amount} — must be a positive finite number`,
+    };
+  }
+  if (!Number.isInteger(amount)) {
+    return {
+      ok: false,
+      amount,
+      unit: "DEM",
+      reason: `transferDem: amount ${amount} DEM is unsupported by the current SDK-native transfer path because Demos confirms only integer DEM amounts and no base-unit conversion is proven`,
+    };
+  }
+  return { ok: true, amount, unit: "DEM" };
 }
 
 export function extractWalletNativeTxHash(response: unknown): string | undefined {
@@ -646,8 +673,9 @@ export function createSdkBridge(
       if (!to || typeof to !== "string") {
         throw new Error("transferDem: 'to' address is required");
       }
-      if (!Number.isFinite(amount) || amount <= 0) {
-        throw new Error(`transferDem: invalid amount ${amount} — must be a positive finite number`);
+      const amountSupport = classifyDemTransferAmount(amount);
+      if (!amountSupport.ok) {
+        throw new Error(amountSupport.reason);
       }
       const normalizedMemo = memo.trim();
       if (normalizedMemo.length > 0) {

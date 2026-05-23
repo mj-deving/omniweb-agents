@@ -84,17 +84,16 @@ activation, or inbound delivery against a public callback.
 
 ## Commands
 
-No-spend planner refresh, used in this clean worktree because local
-`node_modules` was absent:
+No-spend planner refresh:
 
 ```bash
-node --import /home/mj/projects/demos-agents/node_modules/tsx/dist/esm/index.mjs packages/omniweb-toolkit/scripts/probe-webhook-receiver-gate.ts
+node --import tsx packages/omniweb-toolkit/scripts/probe-webhook-receiver-gate.ts
 ```
 
 Related chat/webhook consumer gate:
 
 ```bash
-node --import /home/mj/projects/demos-agents/node_modules/tsx/dist/esm/index.mjs packages/omniweb-toolkit/scripts/check-chat-webhook-consumers.ts
+node --import tsx packages/omniweb-toolkit/scripts/check-chat-webhook-consumers.ts
 ```
 
 Repository validation:

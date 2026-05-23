@@ -157,6 +157,20 @@ export function classifyEscrowProofReadback(
   };
 }
 
+export function classifyEscrowRecheckRuntimeBlock(reason: string): EscrowProofClassification {
+  const reasonCodes = new Set<string>(["escrow_recheck_runtime_unavailable"]);
+  if (containsRuntimeApi502(reason)) {
+    reasonCodes.add("runtime_api_502");
+    reasonCodes.add("runtime_or_api_502");
+  }
+  return {
+    ok: false,
+    status: "BLOCKED",
+    confirmationSurface: "runtime_or_api_blocked",
+    reasonCodes: [...reasonCodes],
+  };
+}
+
 function containsRuntimeApi502(text: string): boolean {
   const lower = text.toLowerCase();
   return /\b502\s+bad gateway\b/.test(lower)

@@ -20,6 +20,7 @@ import {
 import {
   classifyEscrowProofReadback,
   classifyEscrowReadbackSupport,
+  classifyEscrowRecheckRuntimeBlock,
   type EscrowReadbackResult,
 } from "../src/escrow-readback-classifier.js";
 
@@ -27,6 +28,13 @@ const args = process.argv.slice(2);
 const MAX_ESCROW_PROOF_AMOUNT = 5;
 const DEFAULT_VERIFY_TIMEOUT_MS = 90_000;
 const DEFAULT_VERIFY_POLL_MS = 5_000;
+const EXISTING_ESCROW_PROOF = {
+  txHash: "2c225acd869c0041606ba7c7981f3d68ce8cd97c6a7feac83a4221f125be92b1",
+  platform: "github" as const,
+  username: "phase24-continuation-20260521",
+  amount: 0.1,
+  message: "Phase 24 continuation controlled escrow proof",
+};
 
 if (hasFlag(args, "--help", "-h")) {
   console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-escrow.ts [options]
@@ -41,6 +49,7 @@ Options:
   --state-dir PATH     Override state directory
   --proof-out PATH     Write the JSON proof report to this path
   --recheck-tx-hash H  Read-only recheck of an existing escrow tx hash
+  --recheck-existing-proof Read-only recheck of the maintained 0ctx escrow tx
   --verify-timeout-ms N Max tx confirmation polling time; default ${DEFAULT_VERIFY_TIMEOUT_MS}
   --verify-poll-ms N  Tx confirmation poll interval; default ${DEFAULT_VERIFY_POLL_MS}
   --broadcast          Execute the real escrow send
@@ -69,16 +78,17 @@ if (flagError) {
   process.exit(2);
 }
 
-const platform = getStringArg(args, "--platform");
-const username = getStringArg(args, "--username");
-const amount = getNumberArg(args, "--amount") ?? 0.1;
-const message = getStringArg(args, "--message");
+const recheckExistingProof = hasFlag(args, "--recheck-existing-proof");
+const platform = getStringArg(args, "--platform") || (recheckExistingProof ? EXISTING_ESCROW_PROOF.platform : undefined);
+const username = getStringArg(args, "--username") || (recheckExistingProof ? EXISTING_ESCROW_PROOF.username : undefined);
+const amount = getNumberArg(args, "--amount") ?? (recheckExistingProof ? EXISTING_ESCROW_PROOF.amount : 0.1);
+const message = getStringArg(args, "--message") || (recheckExistingProof ? EXISTING_ESCROW_PROOF.message : undefined);
 const envPath = getStringArg(args, "--env-path") || undefined;
 const agentName = getStringArg(args, "--agent-name") || undefined;
 const stateDirArg = getStringArg(args, "--state-dir");
 const stateDir = stateDirArg || undefined;
 const proofOut = getStringArg(args, "--proof-out") || undefined;
-const recheckTxHash = getStringArg(args, "--recheck-tx-hash") || undefined;
+const recheckTxHash = getStringArg(args, "--recheck-tx-hash") || (recheckExistingProof ? EXISTING_ESCROW_PROOF.txHash : undefined);
 const verifyTimeoutMs = getNumberArg(args, "--verify-timeout-ms") ?? DEFAULT_VERIFY_TIMEOUT_MS;
 const verifyPollMs = getNumberArg(args, "--verify-poll-ms") ?? DEFAULT_VERIFY_POLL_MS;
 const broadcast = hasFlag(args, "--broadcast");
@@ -265,6 +275,28 @@ try {
     suppressedSdkLogCount,
   }, proofOut);
 } catch (err) {
+  if (recheckTxHash) {
+    const reason = err instanceof Error ? err.message : String(err);
+    const readbackClassification = classifyEscrowRecheckRuntimeBlock(reason);
+    emitJsonReport({
+      attempted: false,
+      recheck: true,
+      ok: false,
+      status: readbackClassification.status,
+      command,
+      runtimeTarget,
+      platform,
+      username,
+      amount,
+      ceilingDem: MAX_ESCROW_PROOF_AMOUNT,
+      message,
+      txHash: recheckTxHash,
+      verification: { confirmed: false, reason, attempts: 0, timeoutMs: verifyTimeoutMs },
+      readbackClassification,
+      note: "Read-only escrow tx recheck could not reach runtime/readback; no escrow send attempted.",
+    }, proofOut);
+    process.exit(0);
+  }
   console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 }

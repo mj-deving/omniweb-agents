@@ -73,7 +73,7 @@ describe("safeTransfer", () => {
       recipientAllowlist: ["0xpool"],
       recipientSource: "operator",
       execute,
-    })).rejects.toThrow("integer DEM amounts");
+    })).rejects.toThrow("no base-unit conversion is proven");
 
     expect(execute).not.toHaveBeenCalled();
   });

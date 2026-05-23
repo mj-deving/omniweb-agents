@@ -135,6 +135,9 @@ for tip.
 Before any live transfer, add or verify a maintained transfer preview/live gate.
 The lane must use an owned or controlled recipient, cap the live transfer at
 `0.1` DEM, and record sender and recipient balance readback plus tx evidence.
+That `0.1` DEM cap is historical packet context, not current raw-transfer
+support; the maintained successor contract is integer DEM only until a
+decimal-to-base-unit conversion path is proven.
 
 Until that gate and readback exist, live transfer remains `BLOCKED`.
 

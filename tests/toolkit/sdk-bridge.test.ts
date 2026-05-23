@@ -432,10 +432,11 @@ describe("SDK Bridge Adapter", () => {
         ok: false,
         amount: 0.1,
         unit: "DEM",
+        reason: expect.stringContaining("no base-unit conversion is proven"),
       });
 
       await expect(bridge.transferDem("demos1recipient", 0.1, ""))
-        .rejects.toThrow("integer DEM amounts");
+        .rejects.toThrow("no base-unit conversion is proven");
       expect(demos.transfer).not.toHaveBeenCalled();
       expect(demos.confirm).not.toHaveBeenCalled();
       expect(demos.broadcast).not.toHaveBeenCalled();

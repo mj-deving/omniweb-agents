@@ -1,0 +1,336 @@
+{
+  "checkedAt": "2026-05-23T11:11:33.170Z",
+  "ok": true,
+  "checks": {
+    "allOperationsPresent": true,
+    "allNoSpend": true,
+    "unauthenticatedReadsGateAuth": true,
+    "remoteMutationsDoNotExecute": true,
+    "secretsRedacted": true,
+    "webhookEventClassified": true
+  },
+  "surface": [
+    {
+      "operation": "chat.rooms.list",
+      "method": "GET",
+      "endpoint": "/api/chat/rooms",
+      "status": "auth_required",
+      "noSpend": true,
+      "mutatesRemote": false,
+      "notes": [
+        "Live GET without auth returned 401 on 2026-05-18 with the standard auth challenge hint."
+      ]
+    },
+    {
+      "operation": "chat.messages.list",
+      "method": "GET",
+      "endpoint": "/api/chat/messages",
+      "status": "auth_required",
+      "noSpend": true,
+      "mutatesRemote": false,
+      "notes": []
+    },
+    {
+      "operation": "chat.message.send",
+      "method": "POST",
+      "endpoint": "/api/chat/send",
+      "status": "explicit_execute_required",
+      "noSpend": true,
+      "mutatesRemote": true,
+      "notes": []
+    },
+    {
+      "operation": "webhooks.list",
+      "method": "GET",
+      "endpoint": "/api/webhooks",
+      "status": "auth_required",
+      "noSpend": true,
+      "mutatesRemote": false,
+      "notes": [
+        "Live GET without auth returned 401 on 2026-05-18 with the standard auth challenge hint."
+      ]
+    },
+    {
+      "operation": "webhooks.create",
+      "method": "POST",
+      "endpoint": "/api/webhooks",
+      "status": "explicit_execute_required",
+      "noSpend": true,
+      "mutatesRemote": true,
+      "notes": []
+    },
+    {
+      "operation": "webhooks.update",
+      "method": "PATCH",
+      "endpoint": "/api/webhooks/[id]",
+      "status": "explicit_execute_required",
+      "noSpend": true,
+      "mutatesRemote": true,
+      "notes": [
+        "Update is represented as a lifecycle plan only until a maintained non-mutating proof exists."
+      ]
+    },
+    {
+      "operation": "webhooks.delete",
+      "method": "DELETE",
+      "endpoint": "/api/webhooks/[id]",
+      "status": "explicit_execute_required",
+      "noSpend": true,
+      "mutatesRemote": true,
+      "notes": []
+    },
+    {
+      "operation": "webhooks.event.receive",
+      "method": "LOCAL",
+      "endpoint": "local:webhook-event",
+      "status": "plan_only",
+      "noSpend": true,
+      "mutatesRemote": false,
+      "notes": [
+        "Inbound webhook events are local untrusted input; they are classified, not executed."
+      ]
+    }
+  ],
+  "plans": [
+    {
+      "operation": "chat.rooms.list",
+      "method": "GET",
+      "endpoint": "/api/chat/rooms",
+      "headers": {
+        "accept": "application/json"
+      },
+      "auth": {
+        "state": "missing_token",
+        "hasToken": false,
+        "redactedToken": null,
+        "reasonCodes": [
+          "auth_token_missing"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": false,
+      "executionGate": "auth_required",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "auth_token_missing",
+        "auth_required"
+      ]
+    },
+    {
+      "operation": "chat.messages.list",
+      "method": "GET",
+      "endpoint": "/api/chat/messages",
+      "headers": {
+        "accept": "application/json",
+        "authorization": "chat...[redacted]...3456"
+      },
+      "auth": {
+        "state": "ready",
+        "hasToken": true,
+        "redactedToken": "chat...[redacted]...3456",
+        "reasonCodes": [
+          "auth_token_ready"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": false,
+      "executionGate": "dry_run_only",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "dry_run_only"
+      ]
+    },
+    {
+      "operation": "chat.message.send",
+      "method": "POST",
+      "endpoint": "/api/chat/send",
+      "headers": {
+        "accept": "application/json",
+        "authorization": "chat...[redacted]...3456"
+      },
+      "auth": {
+        "state": "ready",
+        "hasToken": true,
+        "redactedToken": "chat...[redacted]...3456",
+        "reasonCodes": [
+          "auth_token_ready"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": true,
+      "executionGate": "explicit_execute_required",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "explicit_execute_required",
+        "mutating_remote_lifecycle_plan_only",
+        "execute_requested_but_not_implemented_by_consumer_plan"
+      ]
+    },
+    {
+      "operation": "webhooks.list",
+      "method": "GET",
+      "endpoint": "/api/webhooks",
+      "headers": {
+        "accept": "application/json"
+      },
+      "auth": {
+        "state": "missing_token",
+        "hasToken": false,
+        "redactedToken": null,
+        "reasonCodes": [
+          "auth_token_missing"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": false,
+      "executionGate": "auth_required",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "auth_token_missing",
+        "auth_required"
+      ]
+    },
+    {
+      "operation": "webhooks.create",
+      "method": "POST",
+      "endpoint": "/api/webhooks",
+      "headers": {
+        "accept": "application/json",
+        "authorization": "webh...[redacted]...3456"
+      },
+      "auth": {
+        "state": "ready",
+        "hasToken": true,
+        "redactedToken": "webh...[redacted]...3456",
+        "reasonCodes": [
+          "auth_token_ready"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": true,
+      "executionGate": "explicit_execute_required",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "explicit_execute_required",
+        "mutating_remote_lifecycle_plan_only",
+        "execute_requested_but_not_implemented_by_consumer_plan"
+      ]
+    },
+    {
+      "operation": "webhooks.update",
+      "method": "PATCH",
+      "endpoint": "/api/webhooks/hook-1",
+      "headers": {
+        "accept": "application/json",
+        "authorization": "webh...[redacted]...3456"
+      },
+      "auth": {
+        "state": "ready",
+        "hasToken": true,
+        "redactedToken": "webh...[redacted]...3456",
+        "reasonCodes": [
+          "auth_token_ready"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": true,
+      "executionGate": "explicit_execute_required",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "explicit_execute_required",
+        "mutating_remote_lifecycle_plan_only",
+        "execute_requested_but_not_implemented_by_consumer_plan"
+      ]
+    },
+    {
+      "operation": "webhooks.delete",
+      "method": "DELETE",
+      "endpoint": "/api/webhooks/hook-1",
+      "headers": {
+        "accept": "application/json",
+        "authorization": "webh...[redacted]...3456"
+      },
+      "auth": {
+        "state": "ready",
+        "hasToken": true,
+        "redactedToken": "webh...[redacted]...3456",
+        "reasonCodes": [
+          "auth_token_ready"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": true,
+      "executionGate": "explicit_execute_required",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "explicit_execute_required",
+        "mutating_remote_lifecycle_plan_only",
+        "execute_requested_but_not_implemented_by_consumer_plan"
+      ]
+    },
+    {
+      "operation": "webhooks.event.receive",
+      "method": "LOCAL",
+      "endpoint": "local:webhook-event",
+      "headers": {
+        "accept": "application/json"
+      },
+      "auth": {
+        "state": "missing_token",
+        "hasToken": false,
+        "redactedToken": null,
+        "reasonCodes": [
+          "auth_token_missing"
+        ]
+      },
+      "noSpend": true,
+      "mutatesRemote": false,
+      "executionGate": "dry_run_only",
+      "canExecuteNow": false,
+      "reasonCodes": [
+        "auth_token_missing",
+        "dry_run_only"
+      ]
+    }
+  ],
+  "webhookEvents": {
+    "validEvent": {
+      "ok": true,
+      "untrusted": true,
+      "event": "post.created",
+      "hasPayload": true,
+      "reasonCodes": [
+        "webhook_payload_untrusted"
+      ]
+    },
+    "invalidEvent": {
+      "ok": false,
+      "untrusted": true,
+      "event": null,
+      "hasPayload": true,
+      "reasonCodes": [
+        "webhook_payload_untrusted",
+        "webhook_event_missing"
+      ]
+    }
+  },
+  "liveEvidence": {
+    "checkedAt": "2026-05-18T18:46:38Z",
+    "chatRooms": {
+      "endpoint": "/api/chat/rooms",
+      "unauthenticatedStatus": 401,
+      "classification": "auth_required"
+    },
+    "webhooks": {
+      "endpoint": "/api/webhooks",
+      "unauthenticatedStatus": 401,
+      "classification": "auth_required"
+    }
+  },
+  "contract": {
+    "ownerBead": "omniweb-agents-spectrum.7",
+    "noSpend": true,
+    "noMutation": true,
+    "liveMutationExecuted": false
+  }
+}

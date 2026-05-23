@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyEscrowProofReadback,
   classifyEscrowReadbackSupport,
+  classifyEscrowRecheckRuntimeBlock,
 } from "../../packages/omniweb-toolkit/src/escrow-readback-classifier.js";
 
 describe("escrow readback classifier", () => {
@@ -44,6 +45,18 @@ describe("escrow readback classifier", () => {
     expect(readback.classification).toBe("runtime-api-error");
     expect(proof.status).toBe("BLOCKED");
     expect(proof.confirmationSurface).toBe("runtime_or_api_blocked");
+    expect(proof.reasonCodes).toContain("runtime_or_api_502");
+  });
+
+  it("returns BLOCKED with reason codes when the recheck runtime fails before readback", () => {
+    const proof = classifyEscrowRecheckRuntimeBlock("Request failed with status code 502");
+
+    expect(proof).toMatchObject({
+      ok: false,
+      status: "BLOCKED",
+      confirmationSurface: "runtime_or_api_blocked",
+    });
+    expect(proof.reasonCodes).toContain("escrow_recheck_runtime_unavailable");
     expect(proof.reasonCodes).toContain("runtime_or_api_502");
   });
 

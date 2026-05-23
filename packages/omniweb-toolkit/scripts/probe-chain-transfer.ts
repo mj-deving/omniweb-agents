@@ -4,7 +4,7 @@
  *
  * Preview is no-spend by default. Live transfer requires --broadcast, an
  * explicit sender credential target, an owned recipient target, and amount <=
- * 0.1 DEM. Success requires tx evidence plus sender and recipient balance
+ * 5 DEM. Success requires tx evidence plus sender and recipient balance
  * readback; tx confirmation alone is reported as degraded.
  */
 
@@ -21,7 +21,7 @@ import { classifyDemTransferAmount } from "../../../src/toolkit/sdk-bridge.js";
 import { safeTransfer } from "../src/write.js";
 
 const args = process.argv.slice(2);
-const MAX_TRANSFER_DEM = 0.1;
+const MAX_TRANSFER_DEM = 5;
 const DEFAULT_AMOUNT_DEM = 0.1;
 const DEFAULT_VERIFY_TIMEOUT_MS = 90_000;
 const DEFAULT_VERIFY_POLL_MS = 5_000;
@@ -35,7 +35,7 @@ Options:
   --recipient-agent-name NAME   Owned recipient credentials profile; preferred
   --recipient-address ADDRESS   Controlled recipient address; requires --recipient-label
   --recipient-label TEXT        Public label for controlled recipient-address mode
-  --amount DEM                  Transfer amount; default 0.1, maximum 0.1
+  --amount DEM                  Transfer amount; default 0.1, maximum 5
   --broadcast                   Execute one live transfer after preview gates pass
   --state-dir PATH              Override sender state directory
   --proof-out PATH              Write the JSON proof report to this path

@@ -280,7 +280,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts): run the maintained fixed-price bet plus attested `ACTION` publish path once registration and pool readback are confirmed
 - [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts): compatibility alias for the same supervised reply path while older runbooks migrate
 - [scripts/check-supervised-publish-verdict.ts](scripts/check-supervised-publish-verdict.ts): evaluate a supervised publish at the category-appropriate delayed verdict window
-- [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify registration through live pool readbacks
+- [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify market writes through live product pool readbacks; registration helpers are recovery-only for owned source txs
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts): execute one explicit reaction proof against a live post, add `--reply-text <text>` when you intentionally want a real reply, and add `--include-tip` only when you intentionally want the extra tip readback check
 - [scripts/probe-identity-surfaces.ts](scripts/probe-identity-surfaces.ts): execute one explicit register + official human-link round trip and verify cleanup on the current wallet
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts): compare live discovery resources against committed snapshots

@@ -4522,7 +4522,8 @@
       "requiresExplicitExecute": true,
       "usage": "omni.colony.registerBet --txHash <string> [--asset <string>] [--predictedPrice <number>] [--direction <\"higher\"|\"lower\">]",
       "notes": [
-        "Registration helpers are recovery routes, not primary DEM proof lanes."
+        "Registration helpers are owned-source-tx recovery routes, not standalone spend proof.",
+        "PR3 native-memo replay returned wrong_tx_type; product pool readback remains mandatory."
       ]
     },
     {
@@ -4578,36 +4579,22 @@
       "requiresExplicitExecute": true,
       "usage": "omni.colony.registerHL --txHash <string> [--asset <string>] [--predictedPrice <number>] [--direction <\"higher\"|\"lower\">]",
       "notes": [
-        "Registration helpers are recovery routes, not primary DEM proof lanes."
+        "Registration helpers are owned-source-tx recovery routes, not standalone spend proof.",
+        "PR3 native-memo replay returned wrong_tx_type; product pool readback remains mandatory."
       ]
     },
     {
       "command": "omni.colony.registerEthBinaryBet",
-      "capabilityId": "colony.bet-recovery",
+      "capabilityId": "colony.bet-eth-binary-recovery",
       "domain": "colony",
       "kind": "recovery",
-      "status": "advanced",
+      "status": "blocked",
       "params": [
         {
           "name": "txHash",
           "required": true,
           "type": "string",
           "description": "On-chain transaction hash or post hash, depending on method."
-        },
-        {
-          "name": "asset",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "predictedPrice",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "direction",
-          "required": false,
-          "type": "\"higher\"|\"lower\""
         }
       ],
       "requirements": {
@@ -4625,16 +4612,16 @@
       "proofTier": "manual_recovery",
       "readbackSurfaces": [
         "registration-response",
-        "active-pool",
-        "resolved-winners"
+        "eth-binary-pools"
       ],
       "writesLifecycleRecord": false,
       "noSpend": true,
       "noMutation": false,
       "requiresExplicitExecute": true,
-      "usage": "omni.colony.registerEthBinaryBet --txHash <string> [--asset <string>] [--predictedPrice <number>] [--direction <\"higher\"|\"lower\">]",
+      "usage": "omni.colony.registerEthBinaryBet --txHash <string>",
       "notes": [
-        "Registration helpers are recovery routes, not primary DEM proof lanes."
+        "registerEthBinaryBet remains blocked until there is both a safe paired send path and an owned tx.",
+        "Registration responses are not standalone live-spend proof."
       ]
     },
     {

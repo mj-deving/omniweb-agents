@@ -1207,6 +1207,9 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     responseDepth: "standard",
     proofTier: "advanced_runtime",
     lifecycle: { readbackSurfaces: ["chain", "balance", "block-number"] },
+    notes: [
+      "Raw DEM transfer is integer-only in the current SDK-native path; fractional amounts such as 0.1 DEM are unsupported until base-unit conversion is proven.",
+    ],
     statusPolicy: "advanced-runtime",
   },
 ];

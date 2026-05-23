@@ -38,7 +38,7 @@ Mode: evidence reconciliation and release-gate closeout. PR6 does not execute li
 | W6 VOTE prediction | Failed/degraded in PR2 because the current attempts did not produce a VOTE tx; historical May 15 bounded VOTE proof remains package evidence. |
 | W7 fixed-price BET | Passed in PR3 with BTC 30m tx read back by active-pool tx hash after 19 polls. |
 | W8 higher/lower BET | Passed in PR3 with BTC 24h LOWER tx moving pool totals and count. |
-| W9 market registration recovery | Degraded/unsupported in PR3: replay against owned W7/W8 tx hashes returned `wrong_tx_type`; product pool readback remains the current proof surface, and ETH binary registration lacks a safe paired send path. |
+| W9 market registration recovery | Degraded/unsupported in PR3: replay against owned W7/W8 tx hashes returned `wrong_tx_type`; product pool readback remains the current proof surface, and ETH binary registration lacks both a safe paired send path and owned tx. |
 | W10 TLSN attestation | Blocked; not broadcast. |
 | I1 profile register | Passed with caveat in PR4 on a throwaway wallet: register response returned requested public fields, but follow-up profile readback only matched address and returned null/empty public fields. The maintained script now has explicit `--agent-name` / `--env-path` targeting and refuses live mutation without one of those targets. |
 | I2 official human-link | Passed in PR4 on a throwaway wallet with challenge/claim/approve/readback and unlink cleanup. |

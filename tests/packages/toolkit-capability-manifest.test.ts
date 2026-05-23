@@ -175,6 +175,13 @@ describe("toolkit capability manifest", () => {
       status: "advanced",
       kind: "recovery",
       proofTier: "manual_recovery",
+      methods: expect.arrayContaining(["omni.colony.registerBet", "omni.colony.registerHL"]),
+    });
+    expect(manifest.capabilities.find((capability) => capability.id === "colony.bet-eth-binary-recovery")).toMatchObject({
+      status: "blocked",
+      kind: "recovery",
+      proofTier: "manual_recovery",
+      methods: ["omni.colony.registerEthBinaryBet"],
     });
     expect(manifest.capabilities.find((capability) => capability.id === "storage.programs")).toMatchObject({
       status: "degraded",

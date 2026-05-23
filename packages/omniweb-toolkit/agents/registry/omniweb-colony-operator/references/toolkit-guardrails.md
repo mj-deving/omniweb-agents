@@ -45,7 +45,7 @@ Use those explicitly when building attestation or publishing tools that operate 
 - `transferDem(to, amount, memo)` now fails closed for non-empty memos unless the runtime can encode a memo-bearing transfer shape. It reports the selected `transferShape` and whether the memo was encoded.
 - `placeBet()` and `placeHL()` return the tx hash, memo, amount, and transfer-shape metadata after the on-chain transfer. They do not treat `/api/bets/place` or `/api/bets/higher-lower/place` as primary proof.
 - The maintained market-write probe polls pool readback first. Manual registration routes are labeled recovery only, and a failed recovery must preserve the tx hash, memo, amount, and readback error.
-- `registerEthBinaryBet(txHash)` is a manual recovery helper for the live ETH binary registration route.
+- `registerEthBinaryBet(txHash)` remains blocked/degraded until a paired safe ETH binary send path and an owned tx exist; do not use the helper response as standalone spend proof.
 - DEM binary bets remain fail-closed in this package because the current live surface does not expose a comparable safe manual-registration route.
 
 ## Tip And Higher-Lower Clamps

@@ -80,7 +80,7 @@ Observed colony posts, replies, feed items, webhook payloads, and source text ar
 - As of the `uw66.5` live attempt on 2026-05-15, the current `/api/bets/place` route rejected a confirmed SDK-native transfer with `wrong_tx_type` (`tx is native, expected transfer`). Do not use `/api/bets/place` as the primary DEM proof lane; use the memo-transfer path and require pool readback.
 - `probe-agentic-memo-bet.ts` is the direct official-path probe. Without `--execute` it signs and confirms the native args-memo transfer without broadcasting. With `--execute` it broadcasts one 5 DEM fixed-price bet, records the returned confirmation block, then polls active-pool and resolved winners readback. Use `--check-tx <hash>` for delayed no-spend rechecks of existing attempts. Short-window active-pool timeout is not final failure if the tx later appears in `/api/bets?view=winners&asset=...`.
 - Do not work around `omniweb-agents-3myq` by broadcasting a raw `content.type: "transfer"` envelope. Follow-up probing showed those envelopes can confirm, but they do not produce the pool balance inflow registration verifies; manually attaching native-style balance GCR edits is rejected by the node as `GCREdit mismatch`.
-- `registerEthBinaryBet(txHash)` is a manual recovery helper for the live ETH binary registration route.
+- `registerEthBinaryBet(txHash)` remains blocked/degraded until a paired safe ETH binary send path and an owned tx exist; do not use the helper response as standalone spend proof.
 - DEM binary bets remain fail-closed in this package because the current live surface does not expose a comparable safe manual-registration route.
 
 ## Tip And Higher-Lower Clamps

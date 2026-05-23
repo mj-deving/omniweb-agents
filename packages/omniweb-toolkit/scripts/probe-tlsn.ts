@@ -21,6 +21,7 @@ import {
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
 import { validateUrl } from "../../../src/toolkit/url-validator.js";
+import { classifyTLSNReadiness } from "../src/tlsn-readiness-classifier.js";
 
 const args = process.argv.slice(2);
 const require = createRequire(import.meta.url);
@@ -100,6 +101,23 @@ try {
   const dependencyReadiness = await inspectDependencyReadiness();
   const quote = buildQuoteSummary(maxProofBytes, budgetDem);
   const redactionPlan = buildRedactionPlan();
+  const readiness = classifyTLSNReadiness({
+    targetUrlValid: target.validation.valid,
+    requiredDependenciesReady:
+      dependencyOk(dependencyReadiness, "localBridge")
+      && dependencyOk(dependencyReadiness, "packageRuntime")
+      && dependencyOk(dependencyReadiness, "playwright")
+      && dependencyOk(dependencyReadiness, "tlsnJs")
+      && dependencyOk(dependencyReadiness, "tlsnJsBuild"),
+    optionalDependencyWarnings: dependencyOk(dependencyReadiness, "sdkTlsnotarySubpath")
+      ? []
+      : ["tlsn_sdk_tlsnotary_subpath_unreliable"],
+    concreteQuote: quote.concrete,
+    estimatedWorstCaseDem: quote.estimatedWorstCaseDem,
+    hardBudgetDem: quote.hardBudgetDem,
+    sanitizedProofMaterialPath: null,
+    proofMaterialSanitizerProven: redactionPlan.proofMaterialSanitizableBeforeLive,
+  });
   const liveGate = buildLiveGate({
     broadcast,
     targetOk: target.validation.valid,
@@ -112,15 +130,16 @@ try {
   emitJsonReport({
     attemptedBroadcast: false,
     liveFlagPresent: broadcast,
-    ok: liveGate.ok,
-    status: liveGate.ok ? "PREVIEW_GREEN" : "BLOCKED",
+    ok: readiness.ok,
+    status: readiness.verdict,
     command,
-    bead: "omniweb-agents-0ctx.2",
+    bead: "omniweb-agents-9st0.5",
     runtimeTarget: summarizeProbeRuntimeTarget({ envPath, agentName, stateDir }),
     target,
     dependencyReadiness,
     quote,
     redactionPlan,
+    successorReadiness: readiness,
     liveGate,
     noSpendGuarantee: [
       "does not call omni.colony.attestTlsn",

@@ -1,8 +1,8 @@
 # NEXT_BAND_CHEAT_SHEET.md
 
 Status: active
-Updated: 2026-05-22
-Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, and Phase 24 continuation.
+Updated: 2026-05-23
+Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, Phase 24 continuation, and full OmniWeb endpoint reconciliation.
 
 ## Do first
 
@@ -29,6 +29,8 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - PR #460 produced execution previews / proposed action packets for all 28 `operatorHelp.writeCommands` without spend, mutation, or broadcast.
 - Phase 24 continuation `omniweb-agents-0d7f` is complete through PRs #471-#478. VOTE is green with tx `68532c333cd78f2451cad8c3f376be4292399807c4552fb38d788f7a52e482af` and category-search readback after PR #470/#472 fallback proof. Social remains target-thin DEGRADED/BLOCKED under score >=85 and engagement >=5. Raw-chain advanced proof is green with no spend/no broadcast.
 - PR #482 completed the no-spend write/spend sweep. PR #483 closed `omniweb-agents-0ctx.6`: live identity/storage/IPFS/escrow mutation probes now require explicit existing `--agent-name` or `--env-path`.
+- `omniweb-agents-3005` is complete after PRs #490, #491, and #495-#500. Keep `packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md` as map-of-record evidence, not the immediate next lane.
+- Next active work is bounded write/spend truth hardening: `omniweb-agents-0ctx.4` for higher/lower amount-floor and proof-status alignment, then `omniweb-agents-0ctx.5` for market registration recovery classification.
 - Current advanced-domain launch packet: `docs/goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md`. It keeps storage/IPFS/escrow in `omniweb-agents-5mnk.2` / `.3` / `.4`, requires no-spend preview first, and requires explicit credential target selection before live `--broadcast`.
 - Do not confuse `omniweb-agents-action-spectrum` with historical `omniweb-agents-spectrum`; the latter is the completed consumer-spectrum lane in docs.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
@@ -46,6 +48,8 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - **Hosted no-spend operator consumer proof:** complete via `omniweb-agents-hosted`; use `npm --prefix packages/omniweb-toolkit run check:frontdoor` or `check:hosted-operator-consumer` for current package proof.
 - **Full action-spectrum matrix:** complete via `omniweb-agents-action-spectrum`; use it as the prior evidence base.
 - **OperatorHelp stress-test and Phase 24 live-write tranche:** default no-spend pass complete via PRs #458-#460; Phase 24 live continuation is complete through PRs #471-#478, post-sweep hardening is complete through PRs #482-#483, and the current successor lane is storage/IPFS/escrow under the May 22 packet.
+- **Full OmniWeb endpoint reconciliation:** complete via `omniweb-agents-3005`; use the landed inventories and design doc as reference inputs before later non-colony implementation.
+- **Current hardening band:** work `0ctx.4` then `0ctx.5` before controlled proof expansion.
 
 ## Keep frozen for this wave
 
@@ -53,7 +57,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
-- operator-stress live writes are no longer the active lane; Phase 24 continuation closed the VOTE retry and raw-chain proof, while remaining storage/IPFS/escrow spend needs the May 22 successor packet and explicit credential target
+- operator-stress live writes are no longer the active lane; Phase 24 continuation closed the VOTE retry and raw-chain proof, full OmniWeb reconciliation is complete, and remaining controlled proof expansion needs its child bead, packet gates, and explicit credential target where relevant
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
 - no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
 - hosted proof means local tarball plus optional dry-run runtime smoke, not production deployment
@@ -66,6 +70,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend outside explicit `omniweb-agents-action-spectrum` child budgets, and unsupervised identity mutation
 - live spend or mutation from old `omniweb-agents-operator-stress`; the live-write tranche moved through `omniweb-agents-0d7f`, and remaining spendful storage/IPFS/escrow work must use the May 22 successor packet, child beads, and explicit `--agent-name` or `--env-path`
+- live write, broadcast, DEM spend, registration replay, transfer, tip, publish, vote, storage/IPFS, escrow, webhook mutation, release, or production-host activation while handling `0ctx.4` / `0ctx.5` documentation and metadata truth hardening
 - relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
 - blind deletion or refactor of old toolkit code before reachability/coverage classifies it

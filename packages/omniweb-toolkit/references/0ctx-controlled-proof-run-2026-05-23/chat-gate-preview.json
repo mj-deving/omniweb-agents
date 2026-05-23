@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-05-23T11:11:33.170Z",
+  "checkedAt": "2026-05-23T11:20:17.424Z",
   "ok": true,
   "checks": {
     "allOperationsPresent": true,
@@ -328,7 +328,7 @@
     }
   },
   "contract": {
-    "ownerBead": "omniweb-agents-spectrum.7",
+    "ownerBead": "omniweb-agents-0ctx.7",
     "noSpend": true,
     "noMutation": true,
     "liveMutationExecuted": false

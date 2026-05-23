@@ -47,6 +47,18 @@ describe("escrow readback classifier", () => {
     expect(proof.reasonCodes).toContain("runtime_or_api_502");
   });
 
+  it("does not classify successful readback payload values containing 502 as runtime API errors", () => {
+    const readback = classifyEscrowReadbackSupport(
+      { ok: true, data: [{ escrowId: "escrow-502" }] },
+      { ok: true, data: { balance: 0.502 } },
+    );
+    const proof = classifyEscrowProofReadback(readback, true);
+
+    expect(readback.classification).toBe("supported");
+    expect(readback.reasonCodes).not.toContain("runtime_api_502");
+    expect(proof.status).toBe("GREEN");
+  });
+
   it("returns STUCK when tx confirmation is still absent", () => {
     const readback = classifyEscrowReadbackSupport(
       { ok: false, error: "Method not implemented: get_claimable_escrows" },

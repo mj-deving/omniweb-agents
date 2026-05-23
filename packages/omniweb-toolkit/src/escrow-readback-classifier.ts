@@ -40,6 +40,7 @@ export function classifyEscrowReadbackSupport(
   const sanitizedErrors = [claimable.error, escrowBalance.error]
     .filter((value): value is string => Boolean(value))
     .map(sanitizeEscrowReadbackText);
+  const errorText = sanitizedErrors.join(" | ").toLowerCase();
   const readbackText = [
     ...sanitizedErrors,
     stringifyReadbackData(claimable.data),
@@ -47,7 +48,7 @@ export function classifyEscrowReadbackSupport(
   ].filter(Boolean).join(" | ").toLowerCase();
   const reasonCodes = new Set<string>();
 
-  if (containsRuntimeApi502(readbackText)) {
+  if (containsRuntimeApi502(errorText)) {
     reasonCodes.add("runtime_api_502");
     return {
       claimable,
@@ -158,7 +159,11 @@ export function classifyEscrowProofReadback(
 
 function containsRuntimeApi502(text: string): boolean {
   const lower = text.toLowerCase();
-  return lower.includes("502") || lower.includes("bad gateway");
+  return /\b502\s+bad gateway\b/.test(lower)
+    || /\bbad gateway\s+502\b/.test(lower)
+    || /\bhttp(?:\s+status|\s+code)?\s+502\b/.test(lower)
+    || /\bstatus(?:\s+code)?\s+502\b/.test(lower)
+    || lower.includes("bad gateway");
 }
 
 function sanitizeEscrowReadbackText(text: string): string {

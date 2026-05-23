@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyIPFSPayloadSafety,
   classifyIPFSQuoteSupport,
+  classifyIPFSSuccessorReadiness,
 } from "../../packages/omniweb-toolkit/src/ipfs-quote-classifier.js";
 
 describe("IPFS quote classifier", () => {
@@ -118,5 +119,77 @@ describe("IPFS quote classifier", () => {
 
     expect(safety.ok).toBe(false);
     expect(safety.reasonCodes).toContain("payload_secret_marker:token_");
+  });
+
+  it("recommends excluding IPFS from successor packets when the quote runtime is unsupported", () => {
+    const quoteSupport = classifyIPFSQuoteSupport({
+      quote: "{ error: \"Unknown message\"}",
+      budgetDem: 5,
+      quotePath: "omni.runtime.demos.ipfs.quote",
+      quoteMessage: "ipfsQuote",
+      quoteArgs: { file_size_bytes: 199, operation: "IPFS_ADD" },
+    });
+    const successorReadiness = classifyIPFSSuccessorReadiness({
+      quoteSupport,
+      payloadSafety: { ok: true, reasonCodes: [] },
+      hasReadbackExpectation: true,
+    });
+
+    expect(successorReadiness).toMatchObject({
+      status: "EXCLUDED",
+      includeInSuccessor: false,
+      recommendation: "exclude-ipfs-from-successor-live-packet",
+    });
+    expect(successorReadiness.reasonCodes).toEqual([
+      "ipfs_quote_unknown_message",
+      "successor_ipfs_excluded_unsupported_quote",
+    ]);
+    expect(successorReadiness.evidence).toEqual(expect.arrayContaining([
+      "quote_path=omni.runtime.demos.ipfs.quote",
+      "node_call=ipfsQuote",
+      "quote_args={\"file_size_bytes\":199,\"operation\":\"IPFS_ADD\"}",
+    ]));
+  });
+
+  it("allows successor inclusion only for concrete quotes within budget and with readback", () => {
+    const quoteSupport = classifyIPFSQuoteSupport({
+      quote: { cost_dem: "0.25" },
+      budgetDem: 5,
+    });
+    const successorReadiness = classifyIPFSSuccessorReadiness({
+      quoteSupport,
+      payloadSafety: { ok: true, reasonCodes: [] },
+      hasReadbackExpectation: true,
+    });
+
+    expect(successorReadiness).toMatchObject({
+      status: "READY",
+      includeInSuccessor: true,
+      recommendation: "include-ipfs-upload-in-successor-live-packet",
+      reasonCodes: [],
+    });
+  });
+
+  it("keeps over-budget concrete quotes blocked without calling them non-concrete", () => {
+    const quoteSupport = classifyIPFSQuoteSupport({
+      quote: { cost_dem: "7.5" },
+      budgetDem: 5,
+    });
+    const successorReadiness = classifyIPFSSuccessorReadiness({
+      quoteSupport,
+      payloadSafety: { ok: true, reasonCodes: [] },
+      hasReadbackExpectation: true,
+    });
+
+    expect(successorReadiness).toMatchObject({
+      status: "BLOCKED",
+      includeInSuccessor: false,
+      recommendation: "keep-ipfs-blocked-pending-concrete-quote",
+    });
+    expect(successorReadiness.reasonCodes).toEqual([
+      "ipfs_quote_exceeds_budget",
+      "successor_ipfs_quote_concrete_but_blocked",
+    ]);
+    expect(successorReadiness.reasonCodes).not.toContain("successor_ipfs_quote_not_concrete");
   });
 });

@@ -1,0 +1,82 @@
+{
+  "checkedAt": "2026-05-23T20:53:41Z",
+  "ownerBead": "omniweb-agents-9st0.10",
+  "status": "BLOCKED",
+  "decision": "do_not_author_successor_controlled_proof_packet",
+  "sourceAggregation": "packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/readiness-aggregation.json",
+  "noLiveAuthorityCreated": true,
+  "noSpend": true,
+  "ledger": {
+    "priorNominalTestnetDem": "10.1 / 25",
+    "runwaySpendDem": 0,
+    "finalNominalTestnetDem": "10.1 / 25"
+  },
+  "blockedReasonCodes": [
+    "successor_readiness_not_strong_enough",
+    "raw_transfer_green_integer_dem_only",
+    "fractional_dem_blocked_until_base_unit_conversion_proven",
+    "escrow_degraded_requires_policy_acceptance",
+    "ipfs_excluded_no_concrete_quote",
+    "tlsn_excluded_no_concrete_quote_or_sanitized_proof_material",
+    "social_blocked_target_thin",
+    "chat_send_excluded_controlled_room_missing",
+    "webhook_receiver_excluded_controlled_callback_missing",
+    "live_execution_not_authorized"
+  ],
+  "laneDecisions": [
+    {
+      "name": "raw_transfer",
+      "status": "GREEN",
+      "packetDecision": "not_sufficient_alone",
+      "reason": "Integer DEM preview remains satisfiable, but fractional DEM remains blocked."
+    },
+    {
+      "name": "escrow",
+      "status": "DEGRADED",
+      "packetDecision": "exclude_until_policy_acceptance",
+      "reason": "Existing tx is confirmed, but claimable and balance wrappers remain degraded."
+    },
+    {
+      "name": "ipfs",
+      "status": "EXCLUDED",
+      "packetDecision": "exclude",
+      "reason": "Quote path returns Unknown message before any upload and no concrete fee exists."
+    },
+    {
+      "name": "tlsn",
+      "status": "EXCLUDED",
+      "packetDecision": "exclude",
+      "reason": "No concrete quote, sanitized proof-material path, or bounded proof authority exists."
+    },
+    {
+      "name": "social",
+      "status": "BLOCKED",
+      "packetDecision": "exclude_until_target_found",
+      "reason": "No current candidate meets the unchanged score and engagement floors."
+    },
+    {
+      "name": "chat_send",
+      "status": "EXCLUDED",
+      "packetDecision": "exclude",
+      "reason": "Controlled room, owned message id, cleanup or retention policy, execute gate, and readback lane are missing."
+    },
+    {
+      "name": "webhook_receiver",
+      "status": "EXCLUDED",
+      "packetDecision": "exclude",
+      "reason": "Controlled HTTPS callback, owned webhook id, cleanup policy, hosted activation authority, and create/delete readback are missing."
+    }
+  ],
+  "forbiddenActions": [
+    "live_spend",
+    "broadcast",
+    "upload",
+    "mainnet",
+    "npm_release",
+    "proof_execution",
+    "hosted_activation",
+    "credential_mutation",
+    "profile_mutation"
+  ],
+  "nextAction": "Create follow-up unblock work for the blocked and excluded lanes before authoring any successor live proof packet."
+}

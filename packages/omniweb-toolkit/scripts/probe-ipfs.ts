@@ -78,6 +78,14 @@ const proofOut = getStringArg(args, "--proof-out") || undefined;
 const broadcast = hasFlag(args, "--broadcast");
 const runtimeTarget = summarizeProbeRuntimeTarget({ envPath, agentName, stateDir });
 const command = redactProbeCommand(process.argv);
+const quoteAttempt = {
+  runtimePath: "omni.runtime.demos.ipfs.quote",
+  sdkNodeCallMessage: "ipfsQuote",
+  args: {
+    file_size_bytes: Buffer.byteLength(content),
+    operation: "IPFS_ADD",
+  },
+};
 
 if (budgetDem !== undefined && (!Number.isFinite(budgetDem) || budgetDem <= 0)) {
   console.error("Error: --budget-dem must be a positive finite number");
@@ -107,7 +115,15 @@ try {
   } catch (error) {
     quoteError = error instanceof Error ? error.message : String(error);
   }
-  const quoteSupport = classifyIPFSQuoteSupport({ quote, quoteError, budgetDem });
+  const quoteSupport = classifyIPFSQuoteSupport({
+    quote,
+    quoteError,
+    budgetDem,
+    quotePath: quoteAttempt.runtimePath,
+    quoteMessage: quoteAttempt.sdkNodeCallMessage,
+    quoteArgs: quoteAttempt.args,
+  });
+  const uploadCustomCharges = buildUploadCustomCharges(quoteSupport, quote);
   const previewGate = buildPreviewGate({
     quoteSupport,
     payloadSafe: payloadSafety.ok,
@@ -126,6 +142,7 @@ try {
       runtimeTarget,
       filename,
       sizeBytes,
+      quoteAttempt,
       quote,
       quoteError,
       quoteSupport,
@@ -147,6 +164,7 @@ try {
       runtimeTarget,
       filename,
       sizeBytes,
+      quoteAttempt,
       quote,
       quoteError,
       quoteSupport,
@@ -158,7 +176,7 @@ try {
     process.exit(0);
   }
 
-  const upload = await omni.ipfs.upload(content, { filename });
+  const upload = await omni.ipfs.upload(content, { filename, customCharges: uploadCustomCharges ?? undefined });
   if (!upload.ok || !upload.txHash) {
     emitJsonReport({
       attempted: true,
@@ -168,6 +186,7 @@ try {
       runtimeTarget,
       filename,
       sizeBytes,
+      quoteAttempt,
       quote,
       quoteError,
       quoteSupport,
@@ -189,6 +208,7 @@ try {
     runtimeTarget,
     filename,
     sizeBytes,
+    quoteAttempt,
     quote,
     quoteError,
     quoteSupport,
@@ -225,15 +245,39 @@ function buildPreviewGate(input: {
     quoteWithinBudget: input.quoteSupport.withinBudget === true,
     readbackExpectationPresent: Boolean(input.readbackExpectation),
   };
-  const reasons = Object.entries(checks)
-    .filter(([, ok]) => !ok)
-    .map(([key]) => key);
+  const reasons = Object.entries(checks).flatMap(([key, ok]) => {
+    if (ok) return [];
+    if (key === "quoteConcrete" || key === "quoteWithinBudget") return input.quoteSupport.reasonCodes;
+    return [key];
+  });
   return {
     ok: reasons.length === 0,
     checks,
     reasons,
     explicitLiveFlag: "--broadcast",
     liveRequested: input.broadcast,
+  };
+}
+
+function buildUploadCustomCharges(
+  quoteSupport: IPFSQuoteSupport,
+  quote: unknown,
+): { maxCostDem: string; estimatedBreakdown?: { base_cost?: string; size_cost?: string } } | null {
+  if (!quoteSupport.concrete || !quote || typeof quote !== "object") return null;
+  const record = quote as Record<string, unknown>;
+  const costDem = record.cost_dem;
+  if (typeof costDem !== "string" && typeof costDem !== "number") return null;
+  const breakdown = record.breakdown && typeof record.breakdown === "object"
+    ? record.breakdown as Record<string, unknown>
+    : undefined;
+  return {
+    maxCostDem: String(costDem),
+    estimatedBreakdown: breakdown
+      ? {
+          base_cost: typeof breakdown.base_cost === "string" ? breakdown.base_cost : undefined,
+          size_cost: typeof breakdown.size_cost === "string" ? breakdown.size_cost : undefined,
+        }
+      : undefined,
   };
 }
 

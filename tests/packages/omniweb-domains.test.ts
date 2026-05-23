@@ -287,6 +287,29 @@ describe("OmniWeb domain APIs", () => {
       expect(mockDemos.confirm).toHaveBeenCalledTimes(1);
       expect(mockDemos.broadcast).toHaveBeenCalledTimes(1);
     });
+
+    it("upload carries quote-derived custom charges into the signed IPFS payload", async () => {
+      const result = await ipfs.upload("quoted ipfs", {
+        filename: "quoted.txt",
+        customCharges: {
+          maxCostDem: "0.25",
+          estimatedBreakdown: { base_cost: "0.1", size_cost: "0.15" },
+        },
+      });
+
+      const signedTx = mockDemos.sign.mock.calls[0]?.[0];
+      const payload = signedTx?.content?.data?.[1];
+
+      expect(result.ok).toBe(true);
+      expect(payload.custom_charges).toEqual({
+        ipfs: {
+          max_cost_dem: "0.25",
+          file_size_bytes: Buffer.byteLength("quoted ipfs"),
+          operation: "IPFS_ADD",
+          estimated_breakdown: { base_cost: "0.1", size_cost: "0.15" },
+        },
+      });
+    });
   });
 
   // OmniWeb type structure verified by tsc --noEmit (0 errors).

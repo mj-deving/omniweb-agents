@@ -1,0 +1,111 @@
+{
+  "attemptedBroadcast": false,
+  "liveFlagPresent": false,
+  "ok": false,
+  "status": "BLOCKED",
+  "command": "node scripts/probe-tlsn.ts --agent-name colony-operator --url https://supercolony.ai/llms-full.txt --proof-out <redacted-proof-out>",
+  "bead": "omniweb-agents-0ctx.2",
+  "runtimeTarget": {
+    "credentialSource": "agent-name",
+    "envPath": null,
+    "agentName": "colony-operator",
+    "stateDir": null
+  },
+  "target": {
+    "reviewedUrl": "https://supercolony.ai/llms-full.txt",
+    "queryRedacted": false,
+    "method": "GET",
+    "validation": {
+      "valid": true,
+      "resolvedIp": "172.67.197.198"
+    }
+  },
+  "dependencyReadiness": {
+    "localBridge": {
+      "ok": true,
+      "path": "src/lib/tlsn-playwright-bridge.ts"
+    },
+    "packageRuntime": {
+      "ok": true,
+      "path": "packages/omniweb-toolkit/src/tlsn-runtime.ts"
+    },
+    "playwright": {
+      "ok": true,
+      "specifier": "playwright",
+      "resolved": "present-redacted"
+    },
+    "tlsnJs": {
+      "ok": true,
+      "specifier": "tlsn-js",
+      "resolved": "present-redacted"
+    },
+    "tlsnJsBuild": {
+      "ok": true,
+      "lib": "tlsn-js/build/lib.js",
+      "wasmAsset": "present-redacted"
+    },
+    "sdkTlsnotarySubpath": {
+      "ok": false,
+      "specifier": "@kynesyslabs/demosdk/tlsnotary",
+      "error": "The requested module 'tlsn-js' does not provide an export named 'NotaryServer'",
+      "requiredForMaintainedBridge": false,
+      "note": "The maintained bridge uses tlsn-js browser/WASM assets; this SDK subpath is tracked because prior inventory found it unreliable in Node."
+    }
+  },
+  "quote": {
+    "concrete": false,
+    "reason": "No maintained no-spend TLSN quote endpoint is available; this is a policy estimate from SDK/reference fee rules, not a product quote.",
+    "source": "identity-attestation-messaging-network-crypto-inventory-2026-05-22.md plus tlsn-playwright-bridge.ts fee formula",
+    "tokenRequestDem": 1,
+    "maxProofBytes": 16384,
+    "estimatedProofSizeKb": 16,
+    "protocolStorageFeeDem": 17,
+    "bridgeSafetyMultiplier": 2,
+    "estimatedStorageFeeDem": 34,
+    "estimatedWorstCaseDem": 35,
+    "hardBudgetDem": 5,
+    "withinBudget": false
+  },
+  "redactionPlan": {
+    "persistAllowed": [
+      "reviewed URL origin/path with query redacted",
+      "HTTP method",
+      "dependency readiness booleans",
+      "fee estimate metadata",
+      "credential target kind and public agent name",
+      "future tx hashes/token id only if live proof passes all gates"
+    ],
+    "persistForbidden": [
+      "TLSN presentation JSON",
+      "raw transcript sent/received bytes",
+      "attestationHex",
+      "secretsHex",
+      "proof byte ranges",
+      "session URL",
+      "proxy URL",
+      "notary websocket URL",
+      "signed transactions or signatures",
+      "credentials, tokens, or local credential paths"
+    ],
+    "proofMaterialSanitizableBeforeLive": false,
+    "blocker": "The current maintained bridge returns presentation material from the browser proof path; no sanitizer has been proven on a real proof artifact in this no-spend preview."
+  },
+  "liveGate": {
+    "ok": false,
+    "explicitLiveFlag": "--broadcast",
+    "liveRequested": false,
+    "liveExecutionAttempted": false,
+    "reasons": [
+      "storage quote is not concrete",
+      "estimated worst-case fee exceeds hard lane budget",
+      "sanitized proof material path is not proven"
+    ]
+  },
+  "noSpendGuarantee": [
+    "does not call omni.colony.attestTlsn",
+    "does not request tlsnotary token",
+    "does not start browser TLSN proof",
+    "does not store proof on-chain or IPFS",
+    "does not emit TLSN presentation, transcript, secrets, attestation hex, or signed payload"
+  ]
+}

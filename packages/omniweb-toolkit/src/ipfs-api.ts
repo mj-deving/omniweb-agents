@@ -14,7 +14,7 @@ import { pathToFileURL } from "node:url";
 
 export interface IPFSAPI {
   /** Upload content to IPFS (auto-pinned). Returns txHash on chain confirmation. */
-  upload(content: string | Uint8Array, opts?: { filename?: string }): Promise<{
+  upload(content: string | Uint8Array, opts?: { filename?: string; customCharges?: IPFSPayloadCustomCharges }): Promise<{
     ok: boolean;
     txHash?: string;
     confirmationBlock?: number;
@@ -37,6 +37,14 @@ export interface IPFSAPI {
     broadcastMessage?: string;
     error?: string;
   }>;
+}
+
+export interface IPFSPayloadCustomCharges {
+  maxCostDem: string;
+  estimatedBreakdown?: {
+    base_cost?: string;
+    size_cost?: string;
+  };
 }
 
 export function createIPFSAPI(demos: Demos): IPFSAPI {
@@ -137,7 +145,10 @@ export function createIPFSAPI(demos: Demos): IPFSAPI {
     async upload(content, opts) {
       try {
         const IPFSOperations = await getIPFSModule();
-        const payload = IPFSOperations.createAddPayload(content, { filename: opts?.filename });
+        const payload = IPFSOperations.createAddPayload(content, {
+          filename: opts?.filename,
+          customCharges: opts?.customCharges,
+        });
         return submitPayload(payload);
       } catch (e) {
         return { ok: false, error: (e as Error).message };

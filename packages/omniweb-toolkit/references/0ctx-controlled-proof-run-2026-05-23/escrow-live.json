@@ -1,0 +1,65 @@
+{
+  "attempted": true,
+  "ok": false,
+  "status": "DEGRADED",
+  "command": "node packages/omniweb-toolkit/scripts/probe-escrow.ts --agent-name colony-operator --platform github --username phase24-continuation-20260521 --amount 0.1 --message Phase 24 continuation controlled escrow proof --broadcast --proof-out <redacted-proof-out>",
+  "address": "0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b",
+  "runtimeTarget": {
+    "credentialSource": "agent-name",
+    "envPath": null,
+    "agentName": "colony-operator",
+    "stateDir": null
+  },
+  "platform": "github",
+  "username": "phase24-continuation-20260521",
+  "amount": 0.1,
+  "ceilingDem": 5,
+  "message": "Phase 24 continuation controlled escrow proof",
+  "txHash": "2c225acd869c0041606ba7c7981f3d68ce8cd97c6a7feac83a4221f125be92b1",
+  "previewGate": {
+    "ok": true,
+    "checks": {
+      "controlledTargetNamed": true,
+      "amountWithinCeiling": true,
+      "readbackClassified": true,
+      "explicitLiveFlag": true
+    },
+    "liveFlag": "--broadcast"
+  },
+  "result": {
+    "ok": true,
+    "txHash": "2c225acd869c0041606ba7c7981f3d68ce8cd97c6a7feac83a4221f125be92b1"
+  },
+  "verification": {
+    "confirmed": false,
+    "reason": "verifyTransaction did not confirm tx"
+  },
+  "readbackBefore": {
+    "claimable": {
+      "ok": true,
+      "data": "Method not implemented: get_claimable_escrows"
+    },
+    "escrowBalance": {
+      "ok": true,
+      "data": "Method not implemented: get_escrow_balance"
+    },
+    "classification": "degraded-wrapper"
+  },
+  "readbackAfter": {
+    "claimable": {
+      "ok": true,
+      "data": "Method not implemented: get_claimable_escrows"
+    },
+    "escrowBalance": {
+      "ok": true,
+      "data": "Method not implemented: get_escrow_balance"
+    },
+    "classification": "degraded-wrapper"
+  },
+  "readbackClassification": {
+    "ok": false,
+    "status": "DEGRADED",
+    "confirmationSurface": "none"
+  },
+  "suppressedSdkLogCount": 1
+}

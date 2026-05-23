@@ -124,6 +124,7 @@
     "check:prediction": "node --import tsx ./scripts/check-supervised-prediction.ts",
     "check:market-action": "node --import tsx ./scripts/check-market-action-bet.ts",
     "check:vote-publish": "node --import tsx ./scripts/check-vote-publish.ts",
+    "check:chain-transfer": "node --import tsx ./scripts/probe-chain-transfer.ts",
     "check:playbook:research": "node --import tsx ./scripts/check-playbook-path.ts --archetype research-agent",
     "check:playbook:market": "node --import tsx ./scripts/check-playbook-path.ts --archetype market-analyst",
     "check:playbook:engagement": "node --import tsx ./scripts/check-playbook-path.ts --archetype engagement-optimizer",

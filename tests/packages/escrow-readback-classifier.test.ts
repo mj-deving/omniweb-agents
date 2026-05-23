@@ -35,6 +35,26 @@ describe("escrow readback classifier", () => {
     expect(proof.reasonCodes).toContain("readback_wrappers_degraded");
   });
 
+  it("returns DEGRADED when SDK escrow query methods return not-implemented payloads", () => {
+    const readback = classifyEscrowReadbackSupport(
+      { ok: true, data: "Method not implemented: get_claimable_escrows" },
+      { ok: true, data: "Method not implemented: get_escrow_balance" },
+    );
+    const proof = classifyEscrowProofReadback(readback, true);
+
+    expect(readback.classification).toBe("degraded-wrapper");
+    expect(readback.reasonCodes).toEqual(["escrow_query_method_not_implemented"]);
+    expect(proof).toMatchObject({
+      ok: false,
+      status: "DEGRADED",
+      confirmationSurface: "tx_confirmed_readback_wrappers_degraded",
+    });
+    expect(proof.reasonCodes).toEqual([
+      "escrow_query_method_not_implemented",
+      "readback_wrappers_degraded",
+    ]);
+  });
+
   it("returns BLOCKED for runtime or API 502 rechecks", () => {
     const readback = classifyEscrowReadbackSupport(
       { ok: false, error: "502 Bad Gateway" },

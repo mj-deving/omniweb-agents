@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   buildMemoTransferTransaction,
+  classifyDemTransferAmount,
   createSdkBridge,
   executeWalletNativeTransfer,
   normalizeTransferShape,
@@ -424,6 +425,20 @@ describe("SDK Bridge Adapter", () => {
       expect(demos.confirm).toHaveBeenCalled();
       // Step 3: broadcast submits to network
       expect(demos.broadcast).toHaveBeenCalled();
+    });
+
+    it("classifies fractional DEM transfers as unsupported before SDK confirmation", async () => {
+      expect(classifyDemTransferAmount(0.1)).toMatchObject({
+        ok: false,
+        amount: 0.1,
+        unit: "DEM",
+      });
+
+      await expect(bridge.transferDem("demos1recipient", 0.1, ""))
+        .rejects.toThrow("integer DEM amounts");
+      expect(demos.transfer).not.toHaveBeenCalled();
+      expect(demos.confirm).not.toHaveBeenCalled();
+      expect(demos.broadcast).not.toHaveBeenCalled();
     });
 
     it("prefers the broadcast txHash for plain transfers when available", async () => {

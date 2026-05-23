@@ -17,6 +17,7 @@ import {
   summarizeProbeRuntimeTarget,
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
+import { classifyDemTransferAmount } from "../../../src/toolkit/sdk-bridge.js";
 import { safeTransfer } from "../src/write.js";
 
 const args = process.argv.slice(2);
@@ -97,6 +98,7 @@ try {
 
   const before = await readTransferBalances(omni, senderAddress, recipient.address);
   const previewGate = buildPreviewGate(before);
+  const amountSupport = classifyDemTransferAmount(amount);
 
   if (!broadcast) {
     emitJsonReport({
@@ -111,6 +113,7 @@ try {
       recipient,
       amountDem: amount,
       ceilingDem: MAX_TRANSFER_DEM,
+      amountSupport,
       memo: "",
       explicitLiveFlag: "--broadcast",
       previewGate,
@@ -127,6 +130,8 @@ try {
   if (!previewGate.ok) {
     emitJsonReport({
       attemptedBroadcast: false,
+      liveFlagPresent: true,
+      attemptedTransfer: false,
       ok: false,
       status: "BLOCKED",
       command,
@@ -137,6 +142,7 @@ try {
       recipient,
       amountDem: amount,
       ceilingDem: MAX_TRANSFER_DEM,
+      amountSupport,
       previewGate,
       error: "Live transfer blocked because preview gate is not green",
     }, proofOut);
@@ -174,6 +180,7 @@ try {
       recipient,
       amountDem: amount,
       ceilingDem: MAX_TRANSFER_DEM,
+      amountSupport,
       memo: "",
       explicitLiveFlag: "--broadcast",
       previewGate,
@@ -323,9 +330,12 @@ function buildPreviewGate(balances: Awaited<ReturnType<typeof readTransferBalanc
   ok: boolean;
   checks: Record<string, boolean>;
   reasons: string[];
+  unsupported?: Record<string, string>;
 } {
+  const amountSupport = classifyDemTransferAmount(amount);
   const checks = {
     amountWithinCeiling: amount > 0 && amount <= MAX_TRANSFER_DEM,
+    amountSupportedByTransferRuntime: amountSupport.ok,
     recipientControlled: Boolean(recipientAgentName || recipientLabel),
     senderBalanceReadable: balances.sender.ok && balances.sender.balanceDem !== null,
     recipientBalanceReadable: balances.recipient.ok && balances.recipient.balanceDem !== null,
@@ -334,7 +344,14 @@ function buildPreviewGate(balances: Awaited<ReturnType<typeof readTransferBalanc
   const reasons = Object.entries(checks)
     .filter(([, ok]) => !ok)
     .map(([key]) => key);
-  return { ok: reasons.length === 0, checks, reasons };
+  return {
+    ok: reasons.length === 0,
+    checks,
+    reasons,
+    unsupported: amountSupport.ok ? undefined : {
+      amountSupportedByTransferRuntime: amountSupport.reason ?? "unsupported transfer amount",
+    },
+  };
 }
 
 async function waitForTransferVerification(omni: any, txHash: string): Promise<{

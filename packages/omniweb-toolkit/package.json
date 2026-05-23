@@ -81,6 +81,7 @@
     "check:transport-consumers": "node --import tsx ./scripts/check-transport-consumers.ts",
     "check:read-profile-consumers": "node --import tsx ./scripts/check-read-profile-consumers.ts",
     "check:chat-webhook-consumers": "node --import tsx ./scripts/check-chat-webhook-consumers.ts",
+    "check:webhook-receiver-gate": "node --import tsx ./scripts/probe-webhook-receiver-gate.ts",
     "check:market-read-consumers": "node --import tsx ./scripts/check-market-read-consumers.ts",
     "check:market-write-intents": "node --import tsx ./scripts/check-market-write-intents.ts",
     "check:consumer-spectrum-tarball": "node --import tsx ./scripts/check-consumer-spectrum-tarball.ts",

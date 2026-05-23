@@ -42,9 +42,8 @@ eligible from this bead.
 Commands:
 
 ```bash
-bun install --no-save
-bunx tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000
-bunx tsx packages/omniweb-toolkit/scripts/check-tip-visibility.ts --feed-limit 500 --tip-amount 1 --tip-timeout-ms 60000 --poll-ms 3000
+node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000
+node --import tsx packages/omniweb-toolkit/scripts/check-tip-visibility.ts --feed-limit 500 --tip-amount 1 --tip-timeout-ms 60000 --poll-ms 3000
 ```
 
 Both preview commands printed Node's experimental SQLite warning on stderr, then

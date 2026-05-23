@@ -1,0 +1,156 @@
+{
+  "checkedAt": "2026-05-23T20:38:00Z",
+  "ownerBead": "omniweb-agents-9st0.9",
+  "status": "BLOCKED",
+  "recommendation": "do_not_create_successor_live_packet_yet",
+  "noSpend": true,
+  "ledger": {
+    "priorNominalTestnetDem": "10.1 / 25",
+    "runwaySpendDem": 0,
+    "finalNominalTestnetDem": "10.1 / 25"
+  },
+  "lanes": [
+    {
+      "id": "omniweb-agents-9st0.2",
+      "name": "raw_transfer",
+      "status": "GREEN",
+      "artifact": "packages/omniweb-toolkit/references/9st0.2-raw-transfer-readiness-2026-05-23.md",
+      "reasonCodes": [
+        "integer_dem_preview_satisfiable",
+        "fractional_dem_blocked_until_base_unit_conversion_proven"
+      ],
+      "budgetDem": 1,
+      "includeInSuccessorPacket": true,
+      "constraints": [
+        "integer DEM only",
+        "no fractional DEM without proven base-unit conversion",
+        "no live authority from readiness artifact"
+      ]
+    },
+    {
+      "id": "omniweb-agents-9st0.3",
+      "name": "escrow",
+      "status": "DEGRADED",
+      "artifact": "packages/omniweb-toolkit/references/9st0.3-escrow-readiness-2026-05-23/readiness-report.md",
+      "reasonCodes": [
+        "escrow_query_method_not_implemented",
+        "readback_wrappers_degraded"
+      ],
+      "budgetDem": 0,
+      "includeInSuccessorPacket": false,
+      "constraints": [
+        "existing tx confirmed at block 2312202",
+        "claimable and balance wrappers are degraded",
+        "requires explicit acceptance of degraded adapter semantics"
+      ]
+    },
+    {
+      "id": "omniweb-agents-9st0.4",
+      "name": "ipfs",
+      "status": "EXCLUDED",
+      "artifact": "packages/omniweb-toolkit/references/9st0-successor-unblock-2026-05-23/ipfs-quote-exclusion.md",
+      "reasonCodes": [
+        "ipfs_quote_unknown_message",
+        "successor_ipfs_excluded_unsupported_quote"
+      ],
+      "budgetDem": 0,
+      "includeInSuccessorPacket": false,
+      "constraints": [
+        "no concrete no-upload quote",
+        "no upload or broadcast"
+      ]
+    },
+    {
+      "id": "omniweb-agents-9st0.5",
+      "name": "tlsn",
+      "status": "EXCLUDED",
+      "artifact": "packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/tlsn-readiness-report.md",
+      "reasonCodes": [
+        "tlsn_concrete_quote_missing",
+        "tlsn_quote_exceeds_budget",
+        "tlsn_sanitized_proof_material_path_missing",
+        "tlsn_proof_material_sanitizer_unproven",
+        "tlsn_sdk_tlsnotary_subpath_unreliable"
+      ],
+      "budgetDem": 0,
+      "includeInSuccessorPacket": false,
+      "constraints": [
+        "no proof execution",
+        "35 DEM worst-case estimate exceeds 5 DEM lane budget"
+      ]
+    },
+    {
+      "id": "omniweb-agents-9st0.6",
+      "name": "social",
+      "status": "BLOCKED",
+      "artifact": "packages/omniweb-toolkit/references/9st0-social-target-policy-2026-05-23/social-target-policy-report.md",
+      "reasonCodes": [
+        "NO_ELIGIBLE_SOCIAL_TARGET",
+        "TOP_CANDIDATE_SCORE_BELOW_FLOOR",
+        "TOP_CANDIDATE_ENGAGEMENT_BELOW_FLOOR",
+        "FLOOR_UNCHANGED",
+        "NO_EXECUTE_NO_MUTATION",
+        "TIP_PATH_TARGET_THIN"
+      ],
+      "budgetDem": 0,
+      "includeInSuccessorPacket": false,
+      "constraints": [
+        "maintained floor remains score >=85 and engagement >=5",
+        "top candidate score 80 and engagement 0"
+      ]
+    },
+    {
+      "id": "omniweb-agents-9st0.7",
+      "name": "chat_send",
+      "status": "EXCLUDED",
+      "artifact": "packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/chat-send-readiness.md",
+      "reasonCodes": [
+        "controlled_room_missing",
+        "owned_message_id_strategy_unproven",
+        "cleanup_or_retention_policy_missing",
+        "execute_gated_probe_missing",
+        "post_send_readback_missing"
+      ],
+      "budgetDem": 0,
+      "includeInSuccessorPacket": false,
+      "constraints": [
+        "no chat mutation",
+        "future lane needs controlled room and readback"
+      ]
+    },
+    {
+      "id": "omniweb-agents-9st0.8",
+      "name": "webhook_receiver",
+      "status": "EXCLUDED",
+      "artifact": "packages/omniweb-toolkit/references/successor-unblock-9st0-2026-05-23/webhook-receiver-readiness-report.md",
+      "reasonCodes": [
+        "controlled_callback_missing",
+        "cleanup_policy_missing",
+        "owned_webhook_id_missing",
+        "create_readback_missing",
+        "delete_readback_missing",
+        "hosted_activation_not_authorized",
+        "successor_packet_exclude_webhook_receiver"
+      ],
+      "budgetDem": 0,
+      "includeInSuccessorPacket": false,
+      "constraints": [
+        "no webhook mutation",
+        "no hosted activation",
+        "future lane needs callback, owned id, cleanup, and create/delete readback"
+      ]
+    }
+  ],
+  "goNoGo": {
+    "go": false,
+    "reasonCodes": [
+      "successor_readiness_not_strong_enough",
+      "escrow_degraded_requires_policy_acceptance",
+      "ipfs_excluded_no_quote",
+      "social_blocked_target_thin",
+      "tlsn_chat_webhook_excluded"
+    ],
+    "nextBead": "omniweb-agents-9st0.10",
+    "nextAction": "record blocked packet decision; do not author live successor packet"
+  }
+}

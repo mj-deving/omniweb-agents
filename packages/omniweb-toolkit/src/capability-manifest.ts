@@ -812,6 +812,11 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
       readbackSurfaces: ["chain", "higher-lower-pool", "resolved-winners"],
       statusVocabulary: WRITE_LIFECYCLE_VOCABULARY,
     },
+    notes: [
+      "PR3 proved the maintained placeHL write through higher/lower pool readback at the fixed 5 DEM path.",
+      "The manifest status remains pending for the default operator surface until a widened operator-cycle/delayed-winners path is deliberately rechecked.",
+      "Do not treat the historical 0.1 DEM attempt as a live floor; it failed before broadcast with Not an integer.",
+    ],
     statusPolicy: "pending-current-recheck",
     runtimeFamily: "bet",
   },

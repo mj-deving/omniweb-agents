@@ -125,7 +125,7 @@
           "resolved-winners"
         ],
         "notes": [
-          "Higher/lower writes stay lifecycle-pending until a current delayed readback proof closes the gap."
+          "PR3 proved the maintained higher/lower write through pool readback at the fixed 5 DEM path; the default operator intent stays lifecycle-pending until a widened operator-cycle/delayed-winners recheck is deliberate."
         ],
         "toolkitAdmissibility": {
           "generatedAt": "2026-05-18T19:20:00.000Z",

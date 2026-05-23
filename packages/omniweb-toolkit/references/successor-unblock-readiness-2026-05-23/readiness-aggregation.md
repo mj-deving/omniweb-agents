@@ -56,10 +56,10 @@ The child artifacts record their exact validation and preview commands. This
 aggregation did not rerun live probes. The relevant no-spend commands were:
 
 ```bash
-bunx vitest run tests/toolkit/sdk-bridge.test.ts tests/toolkit/safe-transfer.test.ts
-bunx vitest run tests/packages/escrow-readback-classifier.test.ts
-bunx vitest run tests/packages/ipfs-quote-classifier.test.ts
-bun run test -- tests/packages/tlsn-readiness-classifier.test.ts
+node ./node_modules/vitest/vitest.mjs run tests/toolkit/sdk-bridge.test.ts tests/toolkit/safe-transfer.test.ts
+node ./node_modules/vitest/vitest.mjs run tests/packages/escrow-readback-classifier.test.ts
+node ./node_modules/vitest/vitest.mjs run tests/packages/ipfs-quote-classifier.test.ts
+node ./node_modules/vitest/vitest.mjs run tests/packages/tlsn-readiness-classifier.test.ts
 node --import tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts --feed-limit 500 --reaction-timeout-ms 45000 --tip-timeout-ms 60000 --poll-ms 3000
 node --import tsx packages/omniweb-toolkit/scripts/check-tip-visibility.ts --feed-limit 500 --tip-amount 1 --tip-timeout-ms 60000 --poll-ms 3000
 node --import tsx packages/omniweb-toolkit/scripts/check-chat-webhook-consumers.ts

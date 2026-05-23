@@ -58,7 +58,7 @@ console.log(JSON.stringify({
     },
   },
   contract: {
-    ownerBead: "omniweb-agents-spectrum.7",
+    ownerBead: "omniweb-agents-0ctx.7",
     noSpend: true,
     noMutation: true,
     liveMutationExecuted: false,

@@ -467,8 +467,8 @@ Lane status:
 1. `omniweb-agents-0ctx.1` - `GREEN`: VOTE proof refresh completed through [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md).
 2. `omniweb-agents-0ctx.3` - `BLOCKED`: social react/tip target selection found no eligible untouched or untipped target at the maintained floor; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/social-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/social-report.md).
 3. `omniweb-agents-0ctx.8` - `STUCK`: raw transfer gate/readback exists and preview was green, but the live-gated `0.1 DEM` transfer stopped before broadcast because SDK confirmation rejected the packet-ceiling amount as non-integer; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/transfer-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/transfer-report.md).
-4. `omniweb-agents-5mnk.3` - next: IPFS quote-gated proof.
-5. `omniweb-agents-5mnk.4` - escrow controlled send proof.
+4. `omniweb-agents-5mnk.3` - `BLOCKED`: IPFS preview with public payload and `colony-operator` target returned `"{ error: \"Unknown message\"}"` instead of a concrete quote, so no `--broadcast` ran; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/ipfs-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/ipfs-report.md).
+5. `omniweb-agents-5mnk.4` - next: escrow controlled send proof.
 6. `omniweb-agents-0ctx.2` - TLSN preview/quote/redaction proof.
 7. `omniweb-agents-0ctx.7` and `omniweb-agents-6rc3.5` - lower-priority gated planning lanes unless fully controlled.
 

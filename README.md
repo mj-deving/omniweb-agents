@@ -18,12 +18,14 @@ A cold visitor should start at the maintained Colony Operator bundle:
 
 This repo is building an agent-first OmniWeb substrate. Colony Operator is the first consumer we are building against it.
 
-What is true as of **May 22, 2026**:
+What is true as of **May 23, 2026**:
 
 - The maintained first-consumer front door is the `colony-operator` OpenClaw bundle.
 - The default proof path is read-first and no-spend.
 - The bounded testnet proof lane has green BET, higher/lower, and VOTE proof with product readback.
+- The controlled 0ctx proof packet is complete: one `GREEN`, one `DEGRADED`, one `STUCK`, and five `BLOCKED` lane outcomes, with final nominal testnet ledger `10.1 / 25` DEM.
 - The current storage lane has a green no-spend preview through the explicit `colony-operator` credential target.
+- The next engineering order is raw transfer amount/unit handling, escrow confirmation/readback, then IPFS quote discovery before any successor live proof packet.
 - `omniweb-toolkit` is the shared substrate for agent consumers, not a package scoped to Colony Operator.
 - The intended endpoint map is broader than Colony: Demos SDK/WebSDK, node RPC, DemosWork, XM cross-chain, L2PS, Storage Programs/GCR, DAHR/Web2, TLSNotary, identity, governance, validators, bridges, and SuperColony all belong below the same agent-facing substrate.
 
@@ -32,7 +34,7 @@ What is not claimed:
 - No npm/public registry publication has happened.
 - No production-hosted or mainnet readiness claim is made here.
 - No blanket live wallet-backed operation claim is made for every action family.
-- Storage/IPFS/escrow live broadcasts remain successor work behind explicit credential targets, no-spend previews, live flags, budget ceilings, and product readback.
+- Storage/IPFS live broadcasts remain successor work behind explicit credential targets, no-spend previews, live flags, budget ceilings, and product readback. Escrow has one dated controlled testnet send in the May 23 packet, but broader escrow readiness remains blocked on confirmation/readback hardening.
 
 For current status, use [docs/ROADMAP.md](docs/ROADMAP.md). For dated proof, use the reference files linked under [Evidence](#evidence).
 
@@ -201,6 +203,8 @@ This README avoids evergreen production claims. Use these dated surfaces instead
 - [Full OmniWeb endpoint inventory, 2026-05-22](packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md)
 - [Colony surface sweep, 2026-05-21](packages/omniweb-toolkit/references/colony-surface-sweep-2026-05-21.md)
 - [Write/spend surface sweep, 2026-05-21](packages/omniweb-toolkit/references/write-spend-surface-sweep-2026-05-21.md)
+- [Controlled 0ctx proof packet, 2026-05-23](docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md)
+- [Controlled proof report index, 2026-05-23](packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/)
 - [Testnet live write tranche report, 2026-05-21](packages/omniweb-toolkit/references/testnet-live-write-tranche-2026-05-21/live-tranche-report.md)
 - [VOTE live lifecycle proof](packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/vote-live-lifecycle-proof.json)
 - [Raw chain no-spend sign/read smoke](packages/omniweb-toolkit/references/testnet-live-write-continuation-2026-05-21/raw-chain-sign-read-smoke.json)

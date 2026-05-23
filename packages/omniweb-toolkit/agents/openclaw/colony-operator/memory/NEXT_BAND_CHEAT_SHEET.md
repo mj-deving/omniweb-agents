@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-23
-Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, Phase 24 continuation, full OmniWeb endpoint reconciliation, and 0ctx truth hardening.
+Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, Phase 24 continuation, full OmniWeb endpoint reconciliation, 0ctx truth hardening, completed controlled proof, and sc96 hardening.
 
 ## Do first
 
@@ -31,8 +31,10 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - PR #482 completed the no-spend write/spend sweep. PR #483 closed `omniweb-agents-0ctx.6`: live identity/storage/IPFS/escrow mutation probes now require explicit existing `--agent-name` or `--env-path`.
 - `omniweb-agents-3005` is complete after PRs #490, #491, and #495-#500. Keep `packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md` as map-of-record evidence, not the immediate next lane.
 - `omniweb-agents-0ctx.4` and `omniweb-agents-0ctx.5` are complete; bounded write/spend truth hardening is closed.
-- Current launch packet: `docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md`. It preserves the 10/25 nominal testnet DEM ledger, uses `--agent-name colony-operator` for wallet-backed advanced-domain proofs unless a lane records a safer explicit target, and orders lanes as `0ctx.1`, `0ctx.3`, `0ctx.8`, `5mnk.3`, `5mnk.4`, `0ctx.2`, then lower-priority `0ctx.7` / `6rc3.5`.
-- Bounded testnet writes are authorized only inside that packet after green no-spend preview, explicit live flag, controlled target/readback, and packet budget. Tx confirmation alone is never success.
+- Historical controlled proof packet: `docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md`. It preserved the 10/25 nominal testnet DEM ledger, used `--agent-name colony-operator`, and closed all lanes as `GREEN`, `DEGRADED`, `STUCK`, or `BLOCKED`.
+- `omniweb-agents-sc96` is complete. The successor readiness packet is `packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md`; verdict is still `BLOCKED`.
+- Active runway: `omniweb-agents-9st0` with packet `docs/goalmode/successor-unblock-runway-2026-05-23.md`. Start with `9st0.1`, then parallel no-spend children `9st0.2` through `9st0.8`, then `9st0.9` readiness aggregation, then `9st0.10` packet decision.
+- No bounded testnet writes are currently authorized. Tx confirmation alone is never success.
 - Do not confuse `omniweb-agents-action-spectrum` with historical `omniweb-agents-spectrum`; the latter is the completed consumer-spectrum lane in docs.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
 - `bd ready` should not surface `omniweb-agents-hosted.*` after PR5 closes; follow-up work should be new, explicitly scoped Beads.
@@ -48,7 +50,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - **Consumer-spectrum lane:** complete via PRs #432-#441; use the landed checks before proposing cleanup, widening, or release work.
 - **Hosted no-spend operator consumer proof:** complete via `omniweb-agents-hosted`; use `npm --prefix packages/omniweb-toolkit run check:frontdoor` or `check:hosted-operator-consumer` for current package proof.
 - **Full action-spectrum matrix:** complete via `omniweb-agents-action-spectrum`; use it as the prior evidence base.
-- **OperatorHelp stress-test and Phase 24 live-write tranche:** default no-spend pass complete via PRs #458-#460; Phase 24 live continuation is complete through PRs #471-#478, post-sweep hardening is complete through PRs #482-#483, and the current successor lane is the ordered 0ctx controlled proof packet.
+- **OperatorHelp stress-test and Phase 24 live-write tranche:** default no-spend pass complete via PRs #458-#460; Phase 24 live continuation is complete through PRs #471-#478, post-sweep hardening is complete through PRs #482-#483, the 0ctx controlled proof packet is complete, sc96 hardening is complete, and the current successor lane is the no-spend unblock runway `omniweb-agents-9st0`.
 - **Full OmniWeb endpoint reconciliation:** complete via `omniweb-agents-3005`; use the landed inventories and design doc as reference inputs before later non-colony implementation.
 - **Current controlled proof band:** launch from `docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md`; claim each proof bead only when its lane starts.
 
@@ -67,10 +69,10 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 
 - broad seam rewrite
 - default substrate fork
-- StorageProgram / escrow / IPFS execution outside the explicit controlled packet, no-spend preview gates, and PR #483 explicit credential-target guardrail
+- StorageProgram / escrow / IPFS execution outside an explicit future successor packet, no-spend preview gates, and PR #483 explicit credential-target guardrail
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend outside explicit `omniweb-agents-action-spectrum` child budgets, and unsupervised identity mutation
-- live spend or mutation from old `omniweb-agents-operator-stress`; the live-write tranche moved through `omniweb-agents-0d7f`, and remaining controlled proof work must use the May 23 packet, child beads, and explicit `--agent-name colony-operator` or a safer lane-recorded explicit target
+- live spend or mutation from old `omniweb-agents-operator-stress`, the completed May 23 controlled packet, sc96, or `omniweb-agents-9st0`; remaining controlled proof work must use a future packet created only after `9st0.9` readiness aggregation and explicit `--agent-name colony-operator` or a safer lane-recorded explicit target
 - mainnet, real-money, npm release, production hosted activation, secret handling changes, uncontrolled credential/profile mutation, or tx-only success claims while handling the controlled proof packet
 - relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke

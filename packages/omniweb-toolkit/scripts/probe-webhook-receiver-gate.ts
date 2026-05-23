@@ -9,15 +9,21 @@ import {
   classifyWebhookEventPayload,
 } from "../src/index.js";
 
-const webhookOperations = new Set([
+const webhookOperations = [
   "webhooks.list",
   "webhooks.create",
   "webhooks.update",
   "webhooks.delete",
   "webhooks.event.receive",
-]);
+] as const;
+const webhookOperationSet = new Set<string>(webhookOperations);
 
-const surface = CHAT_WEBHOOK_SURFACE.filter((entry) => webhookOperations.has(entry.operation));
+const surface = CHAT_WEBHOOK_SURFACE.filter((entry) => webhookOperationSet.has(entry.operation));
+const presentWebhookOperations = new Set(surface.map((entry) => entry.operation));
+const duplicateWebhookOperations = surface
+  .map((entry) => entry.operation)
+  .filter((operation, index, operations) => operations.indexOf(operation) !== index);
+const missingWebhookOperations = webhookOperations.filter((operation) => !presentWebhookOperations.has(operation));
 const plans = [
   buildChatWebhookPlan({ operation: "webhooks.list" }),
   buildChatWebhookPlan({ operation: "webhooks.create", token: "webhook-token-123456", execute: true }),
@@ -49,7 +55,7 @@ const missingLivePrerequisites = [
 
 const mutationPlans = plans.filter((plan) => plan.mutatesRemote);
 const checks = {
-  webhookOperationsPresent: surface.length === webhookOperations.size,
+  webhookOperationsPresent: missingWebhookOperations.length === 0 && duplicateWebhookOperations.length === 0,
   allNoSpend: surface.every((entry) => entry.noSpend),
   listRequiresAuth: plans[0]?.operation === "webhooks.list" && plans[0]?.executionGate === "auth_required",
   mutationsRequireExplicitExecute: mutationPlans.every(
@@ -69,6 +75,12 @@ console.log(JSON.stringify({
   status: "BLOCKED",
   ok,
   checks,
+  coverage: {
+    expectedOperations: webhookOperations,
+    presentOperations: [...presentWebhookOperations],
+    missingOperations: missingWebhookOperations,
+    duplicateOperations: duplicateWebhookOperations,
+  },
   surface,
   plans,
   webhookEvents: {

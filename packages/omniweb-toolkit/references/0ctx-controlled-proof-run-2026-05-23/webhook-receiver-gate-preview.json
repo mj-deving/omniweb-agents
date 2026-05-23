@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-05-23T11:30:45.101Z",
+  "checkedAt": "2026-05-23T11:38:19.049Z",
   "status": "BLOCKED",
   "ok": true,
   "checks": {
@@ -11,6 +11,24 @@
     "syntheticSecretsRedacted": true,
     "livePrerequisitesAbsent": true,
     "noLiveMutationExecuted": true
+  },
+  "coverage": {
+    "expectedOperations": [
+      "webhooks.list",
+      "webhooks.create",
+      "webhooks.update",
+      "webhooks.delete",
+      "webhooks.event.receive"
+    ],
+    "presentOperations": [
+      "webhooks.list",
+      "webhooks.create",
+      "webhooks.update",
+      "webhooks.delete",
+      "webhooks.event.receive"
+    ],
+    "missingOperations": [],
+    "duplicateOperations": []
   },
   "surface": [
     {

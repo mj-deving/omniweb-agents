@@ -34,7 +34,7 @@ What is not claimed:
 - No npm/public registry publication has happened.
 - No production-hosted or mainnet readiness claim is made here.
 - No blanket live wallet-backed operation claim is made for every action family.
-- Storage/IPFS/escrow live broadcasts remain successor work behind explicit credential targets, no-spend previews, live flags, budget ceilings, and product readback.
+- Storage/IPFS live broadcasts remain successor work behind explicit credential targets, no-spend previews, live flags, budget ceilings, and product readback. Escrow has one dated controlled testnet send in the May 23 packet, but broader escrow readiness remains blocked on confirmation/readback hardening.
 
 For current status, use [docs/ROADMAP.md](docs/ROADMAP.md). For dated proof, use the reference files linked under [Evidence](#evidence).
 

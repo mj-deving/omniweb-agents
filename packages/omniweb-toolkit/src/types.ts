@@ -1,7 +1,7 @@
 /**
- * Public type re-exports for supercolony-toolkit consumers.
+ * Public type re-exports for omniweb-toolkit consumers.
  *
- * Import from "supercolony-toolkit/types" for type-only usage
+ * Import from "omniweb-toolkit/types" for type-only usage
  * without pulling in runtime dependencies.
  */
 

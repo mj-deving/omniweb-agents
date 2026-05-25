@@ -123,7 +123,7 @@ vi.mock("../../src/toolkit/supercolony/types.js", () => ({}));
 
 // ── Tests ────────────────────────────────────────
 
-describe("supercolony-toolkit package", () => {
+describe("omniweb-toolkit package", () => {
   describe("read-only client", () => {
     it("uses the platform text query key for feed search", async () => {
       const requests: string[] = [];

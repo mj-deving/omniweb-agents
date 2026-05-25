@@ -1208,7 +1208,8 @@ const CAPABILITY_SPECS: StaticCapabilitySpec[] = [
     proofTier: "advanced_runtime",
     lifecycle: { readbackSurfaces: ["chain", "balance", "block-number"] },
     notes: [
-      "Raw DEM transfer is integer-only in the current SDK-native path; fractional amounts such as 0.1 DEM are unsupported until base-unit conversion is proven.",
+      "Raw DEM transfer is integer-only in the current SDK-native path; fractional amounts such as 0.1 DEM are unsupported because the fcui evidence pass did not prove installed-runtime base-unit payload support.",
+      "probe-chain-transfer reports DEM input with acceptedPayload=integer-dem-number and baseUnitConversion=not_proven.",
     ],
     statusPolicy: "advanced-runtime",
   },

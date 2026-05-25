@@ -110,6 +110,7 @@ const ARCHETYPE_SPECS: Record<Archetype, ArchetypeSpec> = {
       "references/research-agent-launch-proof-2026-04-17.md",
       "references/identity-surface-sweep-2026-04-17.md",
       "references/verification-matrix.md",
+      "references/hardening-readiness-evidence-model-2026-05-25.md",
       "references/full-action-spectrum-testing-matrix.md",
       "references/full-action-spectrum-read-discovery-proof-2026-05-19.md",
       "references/full-action-spectrum-social-write-proof-2026-05-19.md",

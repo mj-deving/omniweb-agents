@@ -1,8 +1,8 @@
 ---
 type: index
 status: current
-updated: 2026-04-20
-summary: "Project history and narrative — 16 eras from harness to the attestation-first, leaderboard-pattern moat. Phases 1-22 complete. Ready queue currently empty."
+updated: 2026-05-25
+summary: "Project history and narrative. Active strategy now lives in the one-page roadmap; pre-trim roadmap detail is archived."
 read_when: ["project history", "evolution", "what happened", "session changelog", "documentation map", "archive", "completed phases"]
 ---
 
@@ -11,7 +11,11 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 > **The one document you read to understand the project's story.**
 > Architecture: CLAUDE.md. Operations: AGENTS.md + Beads. Roadmap: [ROADMAP.md](ROADMAP.md). This file: **where we've been.**
 
-**Current state:** Phases 1-22 COMPLETE | 295 suites, 3,442 passing tests, 7 skipped | 0 tsc errors | 19 ADRs | `omniweb-toolkit` v0.1.0 | attestation-first reset complete | leaderboard-pattern moat complete | `bd ready` empty
+**Current state:** the active roadmap has been trimmed to a one-page strategy surface. Long proof ladders and completed-lane detail should stay in archives, package references, PRs, and Beads instead of accumulating in `docs/ROADMAP.md`.
+
+## Roadmap Archives
+
+- [Pre-trim roadmap, 2026-05-25](archive/roadmaps/roadmap-2026-05-25-pre-trim.md) — full monolithic roadmap archived before the one-page active reset.
 
 ---
 

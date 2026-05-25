@@ -21,7 +21,7 @@
   </defs>
   <rect width="1200" height="760" fill="#ffffff"/>
   <text x="60" y="62" class="title">OmniWeb Agent Stack</text>
-  <text x="60" y="90" class="subtitle">Thin playbooks over a typed runtime, safety gates, proof loops, and Demos Network substrate.</text>
+  <text x="60" y="90" class="subtitle">Thin playbooks over one runtime registry, one proof/operations harness, and the Demos Network substrate.</text>
 
   <rect x="50" y="120" width="1100" height="120" rx="10" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.4" stroke-dasharray="7,5"/>
   <text x="70" y="145" class="layer-label">PLAYBOOK AND STRATEGY LAYER</text>
@@ -39,34 +39,34 @@
   <text x="921" y="207" class="node-sub">operator packaging</text>
 
   <rect x="50" y="282" width="1100" height="120" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.4" stroke-dasharray="7,5"/>
-  <text x="70" y="307" class="layer-label">OPERATOR SURFACE</text>
+  <text x="70" y="307" class="layer-label">PROOF &amp; OPERATIONS</text>
   <rect x="105" y="327" width="215" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
   <text x="126" y="350" class="node-title">CLI Probes</text>
-  <text x="126" y="369" class="node-sub">dry-run and live gates</text>
+  <text x="126" y="369" class="node-sub">dry-run plus live gates</text>
   <rect x="370" y="327" width="215" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
-  <text x="391" y="350" class="node-title">Package Checks</text>
+  <text x="391" y="350" class="node-title">Package Gates</text>
   <text x="391" y="369" class="node-sub">skill, release, matrix</text>
   <rect x="635" y="327" width="215" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
   <text x="656" y="350" class="node-title">Proof Packets</text>
   <text x="656" y="369" class="node-sub">evidence and readback</text>
   <rect x="900" y="327" width="190" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
-  <text x="921" y="350" class="node-title">No-Spend Preview</text>
+  <text x="921" y="350" class="node-title">No-Spend Previews</text>
   <text x="921" y="369" class="node-sub">plan before effects</text>
 
   <rect x="50" y="444" width="1100" height="120" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4" stroke-dasharray="7,5"/>
-  <text x="70" y="469" class="layer-label">OMNIWEB RUNTIME</text>
+  <text x="70" y="469" class="layer-label">OMNIWEB RUNTIME REGISTRY</text>
   <rect x="105" y="489" width="215" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
-  <text x="126" y="512" class="node-title">Capabilities</text>
-  <text x="126" y="531" class="node-sub">what exists</text>
+  <text x="126" y="512" class="node-title">Capability Registry</text>
+  <text x="126" y="531" class="node-sub">single authority</text>
   <rect x="370" y="489" width="215" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
-  <text x="391" y="512" class="node-title">Guardrails</text>
-  <text x="391" y="531" class="node-sub">what is safe</text>
+  <text x="391" y="512" class="node-title">Readiness View</text>
+  <text x="391" y="531" class="node-sub">green to blocked</text>
   <rect x="635" y="489" width="215" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
-  <text x="656" y="512" class="node-title">Admissibility</text>
+  <text x="656" y="512" class="node-title">Admissibility View</text>
   <text x="656" y="531" class="node-sub">what can run now</text>
   <rect x="900" y="489" width="190" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
-  <text x="921" y="512" class="node-title">Write Lifecycle</text>
-  <text x="921" y="531" class="node-sub">tx plus product readback</text>
+  <text x="921" y="512" class="node-title">Lifecycle View</text>
+  <text x="921" y="531" class="node-sub">tx plus readback</text>
 
   <rect x="50" y="606" width="1100" height="96" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.4" stroke-dasharray="7,5"/>
   <text x="70" y="631" class="layer-label">DEMOS NETWORK SUBSTRATE</text>
@@ -87,7 +87,7 @@
   <rect x="506" y="251" width="188" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
   <text x="600" y="267" text-anchor="middle" class="small">requests become checked operations</text>
   <rect x="506" y="413" width="188" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
-  <text x="600" y="429" text-anchor="middle" class="small">tools execute only after gates</text>
+  <text x="600" y="429" text-anchor="middle" class="small">one harness proves or blocks effects</text>
   <rect x="506" y="575" width="188" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
   <text x="600" y="591" text-anchor="middle" class="small">substrate supplies live truth</text>
 </svg>

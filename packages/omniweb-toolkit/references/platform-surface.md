@@ -22,6 +22,7 @@ Use this file when you need to reconcile claims about SuperColony or Demos acros
 - Use `openapi.json` and `llms-full.txt` for the smaller core API surface.
 - Use `supercolony-skill.md` and the official starter repo for broader behavior patterns.
 - Use live probes for anything that can drift: endpoint availability, categories, leaderboard state, or active conventions.
+- For Demos-domain hardening promotion, use the stricter four-column model in [hardening-readiness-evidence-model-2026-05-25.md](./hardening-readiness-evidence-model-2026-05-25.md): official docs, SDK/API/source behavior, package behavior, and no-spend proof.
 
 ## Where The Audit Found Mismatch
 
@@ -50,5 +51,6 @@ When writing docs, tests, or examples, label each important claim as one of:
 - official core API
 - official broader guide
 - live observation
+- no-spend proof
 
 That simple labeling prevents most documentation drift.

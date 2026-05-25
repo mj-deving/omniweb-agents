@@ -90,7 +90,7 @@ From the local wrapper behavior:
 - tip amounts are rounded and clamped into the `1-10 DEM` range
 - the current tip path is `POST /api/tip` validation plus a plain native DEM transfer; the upstream `HIVE_TIP` memo convention is not encodable through the published SDK surface used here
 - higher-lower bet amount currently behaves as a fixed `5 DEM` write on the live runtime; the historical `0.1 DEM` attempt failed before broadcast and is not a live-floor proof
-- raw `transferDem()` requires integer DEM amounts in the current SDK-native path. Decimal amounts such as `0.1 DEM` are classified as unsupported before SDK confirmation because no base-unit conversion is proven.
+- raw `transferDem()` requires integer DEM amounts in the current SDK-native path. Decimal amounts such as `0.1 DEM` are classified as unsupported before SDK confirmation because the `fcui.1` evidence pass did not prove installed-runtime base-unit payload support. `probe-chain-transfer.ts` reports this as DEM input with accepted payload `integer-dem-number`.
 - higher-lower horizon is validated against the supported set
 
 These are package guardrails that reduce accidental misuse.

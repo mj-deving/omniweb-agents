@@ -418,6 +418,7 @@ Use Bun for maintainer invocation. These scripts intentionally keep npm packagin
 - Packaged trajectory examples are kept one-scenario-per-file and use the filename pattern `evals/examples/<scenario-id>.trace.json`.
 - Packaged captured playbook run examples are kept one-archetype-per-file and use the filename pattern `evals/playbook-runs/<archetype>.run.json`.
 - `bun run check:package` is the default package gate: operator-core regression checks plus front-door honesty checks.
+- `bun run check:skill` is an explicit manual skill-package hygiene gate for `SKILL.md`, `GUIDE.md`, `references/`, `scripts/`, `assets/`, and packaged skill artifacts. It is intentionally not part of `check:package`; run it when those surfaces change or before making release-facing skill/registry claims.
 - `bun run check:package:full` adds the heavier release/claim proof bundle on top of `check:package`.
 - Treat `check:package` as the normal integrity gate and `check:package:full` / live proof commands as claim-grade guardrails.
 - `bun run check:package-consumer` builds and packs the package, installs the tarball into a clean temporary consumer workspace, imports `omniweb-toolkit` by package name, renders a plan-only dry-run prompt, runs one safe live read, and verifies missing wallet env is reported without spending DEM.

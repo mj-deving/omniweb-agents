@@ -44,6 +44,7 @@ From repo root:
 
 - `bun run --cwd packages/omniweb-toolkit build`
 - `bun run --cwd packages/omniweb-toolkit check:package`
+- `bun run --cwd packages/omniweb-toolkit check:skill` for explicit skill-package hygiene when changing `SKILL.md`, `GUIDE.md`, `references/`, `scripts/`, `assets/`, or packaged registry/openclaw skill artifacts
 - `bun run --cwd packages/omniweb-toolkit check:evals`
 - `bun run --cwd packages/omniweb-toolkit check:release`
 - `bun run --cwd packages/omniweb-toolkit check:live`

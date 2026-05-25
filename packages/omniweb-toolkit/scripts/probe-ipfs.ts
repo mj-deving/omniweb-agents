@@ -11,7 +11,7 @@
  * upload failure, 2 on invalid args.
  */
 
-import { getNumberArg, getStringArg, hasFlag, loadConnect } from "./_shared.js";
+import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageModule } from "./_shared.js";
 import {
   assertExplicitCredentialTargetExists,
   emitJsonReport,
@@ -19,12 +19,28 @@ import {
   summarizeProbeRuntimeTarget,
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
-import {
+
+interface IPFSQuoteSupport {
+  concrete: boolean;
+  quotedFeeDem: number | null;
+  withinBudget: boolean | null;
+  budgetDem: number | null;
+  reasonCodes: string[];
+}
+type IPFSQuoteClassifierModule = {
+  classifyIPFSPayloadSafety(content: string | Uint8Array): { ok: boolean; reasonCodes: string[] };
+  classifyIPFSQuoteSupport(input: Record<string, unknown>): IPFSQuoteSupport;
+  classifyIPFSSuccessorReadiness(input: Record<string, unknown>): Record<string, unknown>;
+};
+
+const {
   classifyIPFSPayloadSafety,
   classifyIPFSQuoteSupport,
   classifyIPFSSuccessorReadiness,
-  type IPFSQuoteSupport,
-} from "../src/ipfs-quote-classifier.js";
+} = await loadPackageModule<IPFSQuoteClassifierModule>(
+  "../dist/ipfs-quote-classifier.js",
+  "../src/ipfs-quote-classifier.js",
+);
 
 const DEFAULT_FILENAME = "omniweb-toolkit-ipfs-probe.txt";
 const DEFAULT_TEXT =

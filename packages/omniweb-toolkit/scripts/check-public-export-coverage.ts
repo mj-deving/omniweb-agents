@@ -4,8 +4,19 @@
  */
 
 import { resolve } from "node:path";
-import { buildToolkitCodebaseReachabilityReport } from "../src/codebase-reachability-inventory.js";
-import { PACKAGE_ROOT } from "./_shared.js";
+import { loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
+
+type CodebaseReachabilityReport = {
+  packageExports: Array<{ coveredByTests: boolean; exportPath: string }>;
+};
+
+const buildToolkitCodebaseReachabilityReport = await loadPackageExport<
+  (input: { repoRoot: string; packageDir: string }) => CodebaseReachabilityReport
+>(
+  "../dist/codebase-reachability-inventory.js",
+  "../src/codebase-reachability-inventory.js",
+  "buildToolkitCodebaseReachabilityReport",
+);
 
 const repoRoot = resolve(PACKAGE_ROOT, "../..");
 const report = buildToolkitCodebaseReachabilityReport({

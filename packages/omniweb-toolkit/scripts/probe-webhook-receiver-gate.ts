@@ -4,10 +4,35 @@
  */
 
 import {
-  CHAT_WEBHOOK_SURFACE,
-  buildChatWebhookPlan,
-  classifyWebhookEventPayload,
-} from "../src/index.js";
+  loadPackageExport,
+} from "./_shared.js";
+
+type ChatWebhookSurfaceEntry = { operation: string; noSpend: boolean };
+type ChatWebhookPlan = {
+  operation?: string;
+  mutatesRemote: boolean;
+  executionGate: string;
+  canExecuteNow: boolean;
+};
+type WebhookEventClassification = { ok: boolean; untrusted?: boolean };
+
+const CHAT_WEBHOOK_SURFACE = await loadPackageExport<ChatWebhookSurfaceEntry[]>(
+  "../dist/index.js",
+  "../src/index.js",
+  "CHAT_WEBHOOK_SURFACE",
+);
+const buildChatWebhookPlan = await loadPackageExport<(input: Record<string, unknown>) => ChatWebhookPlan>(
+  "../dist/index.js",
+  "../src/index.js",
+  "buildChatWebhookPlan",
+);
+const classifyWebhookEventPayload = await loadPackageExport<
+  (input: Record<string, unknown>) => WebhookEventClassification
+>(
+  "../dist/index.js",
+  "../src/index.js",
+  "classifyWebhookEventPayload",
+);
 
 const webhookOperations = [
   "webhooks.list",

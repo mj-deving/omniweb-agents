@@ -76,22 +76,38 @@ export async function loadPackageExport<T>(
   exportName: string,
 ): Promise<T> {
   try {
-    const mod = await import(sourcePath);
+    const mod = await import(distPath);
     if (exportName in mod) {
       return mod[exportName as keyof typeof mod] as T;
     }
   } catch (error) {
-    if (!isModuleUnavailableError(error, sourcePath)) {
+    if (!isModuleUnavailableError(error, distPath)) {
       throw error;
     }
-    // Fall back to built output when source import is unavailable.
+    // Fall back to source only in repo/dev mode before the package has been built.
   }
 
-  const mod = await import(distPath);
+  const mod = await import(sourcePath);
   if (!(exportName in mod)) {
-    throw new Error(`${exportName} export not found in ${sourcePath} or ${distPath}`);
+    throw new Error(`${exportName} export not found in ${distPath} or ${sourcePath}`);
   }
   return mod[exportName as keyof typeof mod] as T;
+}
+
+export async function loadPackageModule<T extends Record<string, unknown>>(
+  distPath: string,
+  sourcePath: string,
+): Promise<T> {
+  try {
+    return await import(distPath) as T;
+  } catch (error) {
+    if (!isModuleUnavailableError(error, distPath)) {
+      throw error;
+    }
+    // Fall back to source only in repo/dev mode before the package has been built.
+  }
+
+  return await import(sourcePath) as T;
 }
 
 export function ensureLocalPackageResolution(workspaceRoot: string): void {

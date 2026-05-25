@@ -9,7 +9,7 @@
  * report is emitted, 1 on runtime failure before reporting, 2 on invalid args.
  */
 
-import { getNumberArg, getStringArg, hasFlag, loadConnect } from "./_shared.js";
+import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageModule } from "./_shared.js";
 import {
   assertExplicitCredentialTargetExists,
   emitJsonReport,
@@ -17,12 +17,35 @@ import {
   summarizeProbeRuntimeTarget,
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
-import {
+
+interface EscrowReadbackResult {
+  ok: boolean;
+  data?: unknown;
+  error?: string;
+}
+type EscrowReadbackSupport = {
+  classification: string;
+  reasonCodes: string[];
+  sanitizedErrors: string[];
+};
+type EscrowClassifierModule = {
+  classifyEscrowProofReadback(input: Record<string, unknown>, txConfirmed: boolean, verificationReason?: string): Record<string, unknown>;
+  classifyEscrowReadbackSupport(
+    claimable: EscrowReadbackResult,
+    escrowBalance: EscrowReadbackResult,
+    expected?: Record<string, unknown>,
+  ): EscrowReadbackSupport;
+  classifyEscrowRecheckRuntimeBlock(reason: string): Record<string, unknown>;
+};
+
+const {
   classifyEscrowProofReadback,
   classifyEscrowReadbackSupport,
   classifyEscrowRecheckRuntimeBlock,
-  type EscrowReadbackResult,
-} from "../src/escrow-readback-classifier.js";
+} = await loadPackageModule<EscrowClassifierModule>(
+  "../dist/escrow-readback-classifier.js",
+  "../src/escrow-readback-classifier.js",
+);
 
 const args = process.argv.slice(2);
 const MAX_ESCROW_PROOF_AMOUNT = 5;
@@ -312,7 +335,7 @@ async function readEscrowReadback(
 ): Promise<{
   claimable: EscrowReadbackResult;
   escrowBalance: EscrowReadbackResult;
-  classification: ReturnType<typeof classifyEscrowReadbackSupport>["classification"];
+  classification: string;
   reasonCodes: string[];
   sanitizedErrors: string[];
 }> {

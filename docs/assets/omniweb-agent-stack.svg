@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    .title { fill: #111827; font-size: 30px; font-weight: 700; }
+    .subtitle { fill: #6b7280; font-size: 15px; }
+    .layer-label { fill: #374151; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+    .node-title { fill: #111827; font-size: 16px; font-weight: 700; }
+    .node-sub { fill: #4b5563; font-size: 12px; }
+    .small { fill: #6b7280; font-size: 12px; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9333ea"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#ffffff"/>
+  <text x="60" y="62" class="title">OmniWeb Agent Stack</text>
+  <text x="60" y="90" class="subtitle">Thin playbooks over a typed runtime, safety gates, proof loops, and Demos Network substrate.</text>
+
+  <rect x="50" y="120" width="1100" height="120" rx="10" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.4" stroke-dasharray="7,5"/>
+  <text x="70" y="145" class="layer-label">PLAYBOOK AND STRATEGY LAYER</text>
+  <rect x="105" y="165" width="215" height="52" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="126" y="188" class="node-title">Colony Operator</text>
+  <text x="126" y="207" class="node-sub">first maintained consumer</text>
+  <rect x="370" y="165" width="215" height="52" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="391" y="188" class="node-title">Research / Market</text>
+  <text x="391" y="207" class="node-sub">archetype playbooks</text>
+  <rect x="635" y="165" width="215" height="52" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="656" y="188" class="node-title">Policy Requests</text>
+  <text x="656" y="207" class="node-sub">strategy asks runtime</text>
+  <rect x="900" y="165" width="190" height="52" rx="8" fill="#ffffff" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="921" y="188" class="node-title">OpenClaw Skills</text>
+  <text x="921" y="207" class="node-sub">operator packaging</text>
+
+  <rect x="50" y="282" width="1100" height="120" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.4" stroke-dasharray="7,5"/>
+  <text x="70" y="307" class="layer-label">OPERATOR SURFACE</text>
+  <rect x="105" y="327" width="215" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="126" y="350" class="node-title">CLI Probes</text>
+  <text x="126" y="369" class="node-sub">dry-run and live gates</text>
+  <rect x="370" y="327" width="215" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="391" y="350" class="node-title">Package Checks</text>
+  <text x="391" y="369" class="node-sub">skill, release, matrix</text>
+  <rect x="635" y="327" width="215" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="656" y="350" class="node-title">Proof Packets</text>
+  <text x="656" y="369" class="node-sub">evidence and readback</text>
+  <rect x="900" y="327" width="190" height="52" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="921" y="350" class="node-title">No-Spend Preview</text>
+  <text x="921" y="369" class="node-sub">plan before effects</text>
+
+  <rect x="50" y="444" width="1100" height="120" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4" stroke-dasharray="7,5"/>
+  <text x="70" y="469" class="layer-label">OMNIWEB RUNTIME</text>
+  <rect x="105" y="489" width="215" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="126" y="512" class="node-title">Capabilities</text>
+  <text x="126" y="531" class="node-sub">what exists</text>
+  <rect x="370" y="489" width="215" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="391" y="512" class="node-title">Guardrails</text>
+  <text x="391" y="531" class="node-sub">what is safe</text>
+  <rect x="635" y="489" width="215" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="656" y="512" class="node-title">Admissibility</text>
+  <text x="656" y="531" class="node-sub">what can run now</text>
+  <rect x="900" y="489" width="190" height="52" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+  <text x="921" y="512" class="node-title">Write Lifecycle</text>
+  <text x="921" y="531" class="node-sub">tx plus product readback</text>
+
+  <rect x="50" y="606" width="1100" height="96" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.4" stroke-dasharray="7,5"/>
+  <text x="70" y="631" class="layer-label">DEMOS NETWORK SUBSTRATE</text>
+  <rect x="105" y="652" width="165" height="32" rx="8" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="128" y="673" class="node-sub">SuperColony API</text>
+  <rect x="310" y="652" width="165" height="32" rx="8" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="345" y="673" class="node-sub">Demos SDK/RPC</text>
+  <rect x="515" y="652" width="165" height="32" rx="8" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="548" y="673" class="node-sub">Chain + DEM</text>
+  <rect x="720" y="652" width="165" height="32" rx="8" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="748" y="673" class="node-sub">Storage + IPFS</text>
+  <rect x="925" y="652" width="165" height="32" rx="8" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="956" y="673" class="node-sub">Identity + Escrow</text>
+
+  <path d="M 600 240 L 600 274" stroke="#9333ea" stroke-width="2" marker-end="url(#arrow-purple)" fill="none"/>
+  <path d="M 600 402 L 600 436" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)" fill="none"/>
+  <path d="M 600 564 L 600 598" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)" fill="none"/>
+  <rect x="506" y="251" width="188" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
+  <text x="600" y="267" text-anchor="middle" class="small">requests become checked operations</text>
+  <rect x="506" y="413" width="188" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
+  <text x="600" y="429" text-anchor="middle" class="small">tools execute only after gates</text>
+  <rect x="506" y="575" width="188" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
+  <text x="600" y="591" text-anchor="middle" class="small">substrate supplies live truth</text>
+</svg>

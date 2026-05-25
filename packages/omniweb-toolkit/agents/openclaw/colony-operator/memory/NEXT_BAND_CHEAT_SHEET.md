@@ -2,7 +2,7 @@
 
 Status: active
 Updated: 2026-05-25
-Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, Phase 24 continuation, full OmniWeb endpoint reconciliation, 0ctx truth hardening, completed controlled proof, sc96 hardening, and completed 9st0 successor unblock runway.
+Scope: terse operator re-entry card after completed consumer-spectrum, hosted no-spend operator proof, full action-spectrum matrix, no-spend operatorHelp stress pass, Phase 24 continuation, full OmniWeb endpoint reconciliation, 0ctx truth hardening, completed controlled proof, sc96 hardening, completed 9st0 successor unblock runway, completed 04c5 docs-backed hardening, and cleanup closeout through PR #543.
 
 ## Do first
 
@@ -34,8 +34,11 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - Historical controlled proof packet: `docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md`. It preserved the 10/25 nominal testnet DEM ledger, used `--agent-name colony-operator`, and closed all lanes as `GREEN`, `DEGRADED`, `STUCK`, or `BLOCKED`.
 - `omniweb-agents-sc96` is complete. The successor readiness packet is `packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md`; verdict is still `BLOCKED`.
 - `omniweb-agents-9st0` is complete after PR #522, PR #530, and PR #531. It ended in a no-go readiness aggregation and a blocked packet decision with no live authority.
-- Active hardening lane: `omniweb-agents-04c5`. Start with `04c5.1` truth sync, then `04c5.2` official Demos docs source map, `04c5.3` storage/IPFS/escrow reconciliation, `04c5.4` XM/Rubic/DemosWork reconciliation, `04c5.5` four-column readiness evidence model, and `04c5.6` next executable lane decision.
-- Parallel audit lane: `omniweb-agents-xqlb`. Run classify-first source/API, docs/reference, tests/evals/scripts, and package/distribution audits before any broad cleanup deletion.
+- `omniweb-agents-04c5` is complete after PRs #532-#537. It left docs-backed evidence, the four-column readiness model, and the next-lane decision without live authority.
+- `omniweb-agents-8afw` is complete via PR #538: escrow existing-tx readback hardening stayed no-spend and classified the existing tx honestly.
+- `omniweb-agents-xqlb` is complete, and cleanup follow-ups `7yvt`, `zpd6`, `pl96`, `e4xu`, and `6tn0` are closed through PR #543.
+- After PR #543, open PRs and `bd ready` were empty.
+- Active self-audit lane: `omniweb-agents-g2iv`. Work order: `g2iv.1` bundled registry reference links, `g2iv.2` shipped-vs-repo-only script classification, `g2iv.3` shipped script docs/help wiring, `g2iv.4` packaged top-level reference frontmatter, `g2iv.5` `check:skill` gate classification, and `g2iv.6` decision-only next product hardening record.
 - No bounded testnet writes are currently authorized. Tx confirmation alone is never success.
 - Do not confuse `omniweb-agents-action-spectrum` with historical `omniweb-agents-spectrum`; the latter is the completed consumer-spectrum lane in docs.
 - `omniweb-agents-uw66` is the umbrella band tracker, not the next claimable PR bead.
@@ -54,7 +57,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - **Full action-spectrum matrix:** complete via `omniweb-agents-action-spectrum`; use it as the prior evidence base.
 - **OperatorHelp stress-test and Phase 24 live-write tranche:** default no-spend pass complete via PRs #458-#460; Phase 24 live continuation is complete through PRs #471-#478, post-sweep hardening is complete through PRs #482-#483, the 0ctx controlled proof packet is complete, sc96 hardening is complete, and the 9st0 no-spend successor unblock runway is complete with no successor live packet.
 - **Full OmniWeb endpoint reconciliation:** complete via `omniweb-agents-3005`; use the landed inventories and design doc as reference inputs before later non-colony implementation.
-- **Current hardening band:** launch from `omniweb-agents-04c5`; official Demos docs and no-spend proof must precede new wrapper/public API work.
+- **Current self-audit band:** launch from `omniweb-agents-g2iv`; make `check:skill` / public package-surface debt green before choosing the next product hardening lane.
 
 ## Keep frozen for this wave
 
@@ -62,7 +65,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - resolved status truth: `executable | blocked | supervised | unsupported`
 - shared execution / verification envelope
 - live multi-action execution remains dry-run only unless explicitly widened and authorized
-- operator-stress live writes are no longer the active lane; Phase 24 continuation closed the VOTE retry and raw-chain proof, full OmniWeb reconciliation is complete, and remaining controlled proof expansion needs its child bead, packet gates, and explicit credential target where relevant
+- operator-stress live writes are no longer the active lane; Phase 24 continuation closed the VOTE retry and raw-chain proof, full OmniWeb reconciliation is complete, 04c5/xqlb cleanup is complete, and remaining controlled proof expansion needs its child bead, packet gates, and explicit credential target where relevant
 - BET/higher-lower widening is deliberate follow-up, not default spend authority
 - no-release posture unless a separate release/auth/public-registry lane is explicitly authorized
 - hosted proof means local tarball plus optional dry-run runtime smoke, not production deployment
@@ -74,7 +77,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - StorageProgram / escrow / IPFS execution outside an explicit future successor packet, no-spend preview gates, and PR #483 explicit credential-target guardrail
 - launch / consumer polish that skips the completed consumer-spectrum/live-shape/codebase evidence
 - npm release, public registry proof, broad substrate rewrite, live multi-action spend outside explicit `omniweb-agents-action-spectrum` child budgets, and unsupervised identity mutation
-- live spend or mutation from old `omniweb-agents-operator-stress`, the completed May 23 controlled packet, sc96, 9st0, 04c5, or xqlb; remaining controlled proof work must use a future packet created only after docs-backed evidence, no-spend proof, and explicit `--agent-name colony-operator` or a safer lane-recorded explicit target
+- live spend or mutation from old `omniweb-agents-operator-stress`, the completed May 23 controlled packet, sc96, 9st0, 04c5, xqlb, cleanup follow-ups, or g2iv; remaining controlled proof work must use a future packet created only after docs-backed evidence, no-spend proof, and explicit `--agent-name colony-operator` or a safer lane-recorded explicit target
 - mainnet, real-money, npm release, production hosted activation, secret handling changes, uncontrolled credential/profile mutation, or tx-only success claims while handling the controlled proof packet
 - relaunching the completed hosted `/goal` lane as release, public-registry, live-spend, or production hosted-activation work
 - production OpenClaw/Gregor activation claims from optional dry-run hosted smoke
@@ -88,7 +91,7 @@ Scope: terse operator re-entry card after completed consumer-spectrum, hosted no
 - inspect first: `bd show <id>`
 - claim before coding: `bd update <id> --claim`
 - claim the concrete PR bead, not the umbrella epic
-- for 04c5, PR0 gates all later hardening/audit children; work from `refs/remotes/origin/main`
+- for g2iv, keep the ordered ladder unless a child records why a later self-audit failure must move earlier; work from `refs/remotes/origin/main`
 - serialize `bd` calls in this repo; parallel access to the shared `.beads/embeddeddolt` DB can fail
 - keep new follow-up work and durable notes in Beads, not scratch TODO files
 

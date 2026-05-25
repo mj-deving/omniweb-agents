@@ -4,6 +4,7 @@
  */
 
 import {
+  hasFlag,
   loadPackageExport,
 } from "./_shared.js";
 
@@ -15,6 +16,21 @@ type ChatWebhookPlan = {
   canExecuteNow: boolean;
 };
 type WebhookEventClassification = { ok: boolean; untrusted?: boolean };
+
+const args = process.argv.slice(2);
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: bun ./scripts/check-chat-webhook-consumers.ts
+
+No-spend proof for auth-gated chat and webhook lifecycle consumers.
+
+Options:
+  --help, -h  Show this help`);
+  process.exit(0);
+}
+if (args.length > 0) {
+  console.error(`Error: unsupported arguments: ${args.join(" ")}`);
+  process.exit(2);
+}
 
 const CHAT_WEBHOOK_SURFACE = await loadPackageExport<ChatWebhookSurfaceEntry[]>(
   "../dist/index.js",

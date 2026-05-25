@@ -3,7 +3,7 @@
  * check-market-write-intents.ts — No-spend proof for market write intent coverage.
  */
 
-import { loadPackageExport } from "./_shared.js";
+import { hasFlag, loadPackageExport } from "./_shared.js";
 
 type MarketWriteFamily = string;
 type MarketWriteIntentMatrix = {
@@ -33,6 +33,21 @@ type MarketWriteIntentMatrix = {
     explicitExecuteRequiredFamilies: string[];
   };
 };
+
+const args = process.argv.slice(2);
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: bun ./scripts/check-market-write-intents.ts
+
+No-spend proof for market write intent coverage.
+
+Options:
+  --help, -h  Show this help`);
+  process.exit(0);
+}
+if (args.length > 0) {
+  console.error(`Error: unsupported arguments: ${args.join(" ")}`);
+  process.exit(2);
+}
 
 const buildMarketWriteIntentMatrix = await loadPackageExport<
   (input: Record<string, unknown>) => MarketWriteIntentMatrix

@@ -4,11 +4,26 @@
  */
 
 import { resolve } from "node:path";
-import { loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
+import { hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
 
 type CodebaseReachabilityReport = {
   packageExports: Array<{ coveredByTests: boolean; exportPath: string }>;
 };
+
+const args = process.argv.slice(2);
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: bun ./scripts/check-public-export-coverage.ts
+
+Ensure package exports have deterministic consumer coverage.
+
+Options:
+  --help, -h  Show this help`);
+  process.exit(0);
+}
+if (args.length > 0) {
+  console.error(`Error: unsupported arguments: ${args.join(" ")}`);
+  process.exit(2);
+}
 
 const buildToolkitCodebaseReachabilityReport = await loadPackageExport<
   (input: { repoRoot: string; packageDir: string }) => CodebaseReachabilityReport

@@ -1,5 +1,6 @@
 ---
 summary: "PR3 live market/write proof for full action-spectrum rows W7-W10, with pool readback, registration replay truth, and bounded spend accounting."
+read_when: ["action spectrum market proof", "W7 W8 W9 W10", "placeBet placeHL registerBet registerHL", "market write proof"]
 topic_hint:
   - "action spectrum market proof"
   - "W7 W8 W9 W10"

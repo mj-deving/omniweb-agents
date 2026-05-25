@@ -1,5 +1,6 @@
 ---
 summary: "PR6 closeout for the full action-spectrum lane, reconciling every read, write, identity/admin, Demos-domain, helper, and release-gate row without claiming npm release or public registry proof."
+read_when: ["action spectrum closeout", "full operation verdict", "release gate", "every row proven degraded blocked unsupported"]
 topic_hint:
   - "action spectrum closeout"
   - "full operation verdict"

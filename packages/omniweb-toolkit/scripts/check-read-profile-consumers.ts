@@ -4,12 +4,28 @@
  */
 
 import {
+  hasFlag,
   loadPackageExport,
 } from "./_shared.js";
 
 type ReadProfileSurfaceEntry = { family: string; noSpend: boolean; noMutation: boolean; status?: string };
 type ReadProfileCoverage = { ok: boolean; coveredFamilies: string[]; unsupportedFamilies: string[] };
 type ReadProfileShapeCheck = { verdict: string };
+
+const args = process.argv.slice(2);
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: bun ./scripts/check-read-profile-consumers.ts
+
+No-spend proof for root read/profile/scoring/verification consumers.
+
+Options:
+  --help, -h  Show this help`);
+  process.exit(0);
+}
+if (args.length > 0) {
+  console.error(`Error: unsupported arguments: ${args.join(" ")}`);
+  process.exit(2);
+}
 
 const READ_PROFILE_SURFACE = await loadPackageExport<ReadProfileSurfaceEntry[]>(
   "../dist/index.js",

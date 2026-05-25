@@ -4,6 +4,7 @@
  */
 
 import {
+  hasFlag,
   loadPackageExport,
 } from "./_shared.js";
 
@@ -22,6 +23,21 @@ type MarketReadCoverage = {
   unsupportedFamilies: string[];
 };
 type MarketReadShapeCheck = { verdict: string };
+
+const args = process.argv.slice(2);
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: bun ./scripts/check-market-read-consumers.ts
+
+No-spend proof for the root market-read matrix.
+
+Options:
+  --help, -h  Show this help`);
+  process.exit(0);
+}
+if (args.length > 0) {
+  console.error(`Error: unsupported arguments: ${args.join(" ")}`);
+  process.exit(2);
+}
 
 const MARKET_READ_SURFACE = await loadPackageExport<MarketReadSurfaceEntry[]>(
   "../dist/index.js",

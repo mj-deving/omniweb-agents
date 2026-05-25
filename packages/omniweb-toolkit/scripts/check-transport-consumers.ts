@@ -4,6 +4,7 @@
  */
 
 import {
+  hasFlag,
   loadPackageExport,
 } from "./_shared.js";
 
@@ -17,6 +18,21 @@ type StreamPlan = {
 };
 type ServerSentEventRecord = { event?: string };
 type TransportAuthState = { state: string; redactedToken?: string };
+
+const args = process.argv.slice(2);
+if (hasFlag(args, "--help", "-h")) {
+  console.log(`Usage: bun ./scripts/check-transport-consumers.ts
+
+No-spend proof for auth, RSS, and SSE consumer contracts.
+
+Options:
+  --help, -h  Show this help`);
+  process.exit(0);
+}
+if (args.length > 0) {
+  console.error(`Error: unsupported arguments: ${args.join(" ")}`);
+  process.exit(2);
+}
 
 const buildFeedStreamRequestPlan = await loadPackageExport<(input: Record<string, unknown>) => StreamPlan>(
   "../dist/index.js",

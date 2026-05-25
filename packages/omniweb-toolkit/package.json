@@ -68,6 +68,7 @@
     "check:package": "npm run check:core && npm run check:frontdoor",
     "check:package:full": "npm run check:package && npm run check:release-proof",
     "check:imports": "bash ./scripts/check-imports.sh",
+    "probe:import-boundary": "node --import tsx ./scripts/probe-import-boundary.ts",
     "check:colony-operator-primary": "node --import tsx ./scripts/check-colony-operator-primary.ts",
     "check:colony-operator-dry-run": "node --import tsx ./scripts/check-colony-operator-dry-run.ts",
     "check:colony-operator-entrypoint": "node --import tsx ./scripts/check-colony-operator-entrypoint.ts",

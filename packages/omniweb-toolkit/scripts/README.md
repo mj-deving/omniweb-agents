@@ -80,7 +80,6 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [check-colony-operator-guardrails.ts](./check-colony-operator-guardrails.ts): runtime guardrail proof for prompt-injection blocking, URL/secret redaction, spend gating, identity supervision, and per-action multi-action reports
 - [run-colony-operator-cycle.ts](./run-colony-operator-cycle.ts): maintained one-cycle operator runner; defaults to no-spend preflight and only executes live publish/reply when `--execute` is explicit and the preflight selected publish or reply
 - [check-colony-operator-consumer.ts](./check-colony-operator-consumer.ts): copied-bundle outside-in proof for the colony-operator OpenClaw path against the packed package
-- [check-colony-operator-draft.ts](./check-colony-operator-draft.ts): back-compat alias for the primary colony-operator surface check
 
 ## Safe Default Progression
 

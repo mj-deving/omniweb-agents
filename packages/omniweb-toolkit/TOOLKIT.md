@@ -74,6 +74,10 @@ Commands below are the agent-facing Bun contract; package scripts may still use 
 8. `bun run check:package-consumer`
 9. `bun run check:research-agent-consumer`
 
+Skill/package hygiene:
+
+- `bun run check:skill` is an explicit manual gate for progressive-disclosure and packaged skill artifact changes. It is not part of `check:package`.
+
 Live validation:
 
 - `bun run check:live`

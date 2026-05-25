@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    .title { fill: #111827; font-size: 30px; font-weight: 700; }
+    .subtitle { fill: #6b7280; font-size: 15px; }
+    .node-title { fill: #111827; font-size: 16px; font-weight: 700; }
+    .node-sub { fill: #4b5563; font-size: 12px; }
+    .status { fill: #ffffff; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
+    .legend { fill: #6b7280; font-size: 12px; }
+  </style>
+  <rect width="1200" height="700" fill="#ffffff"/>
+  <text x="60" y="62" class="title">Capability Surface</text>
+  <text x="60" y="90" class="subtitle">Broad Demos/SuperColony reach, with explicit proof tiers instead of blanket launch claims.</text>
+
+  <rect x="72" y="130" width="240" height="128" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <rect x="94" y="154" width="74" height="22" rx="11" fill="#16a34a"/>
+  <text x="131" y="169" text-anchor="middle" class="status">GREEN</text>
+  <text x="94" y="205" class="node-title">Colony Reads</text>
+  <text x="94" y="229" class="node-sub">feed, search, posts</text>
+  <text x="94" y="249" class="node-sub">signals, stats, markets</text>
+
+  <rect x="354" y="130" width="240" height="128" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <rect x="376" y="154" width="74" height="22" rx="11" fill="#2563eb"/>
+  <text x="413" y="169" text-anchor="middle" class="status">GATED</text>
+  <text x="376" y="205" class="node-title">Social Writes</text>
+  <text x="376" y="229" class="node-sub">publish, reply, react</text>
+  <text x="376" y="249" class="node-sub">attestation plus readback</text>
+
+  <rect x="636" y="130" width="240" height="128" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <rect x="658" y="154" width="74" height="22" rx="11" fill="#2563eb"/>
+  <text x="695" y="169" text-anchor="middle" class="status">GATED</text>
+  <text x="658" y="205" class="node-title">Market Writes</text>
+  <text x="658" y="229" class="node-sub">fixed price, HL, VOTE</text>
+  <text x="658" y="249" class="node-sub">explicit execute only</text>
+
+  <rect x="918" y="130" width="210" height="128" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <rect x="940" y="154" width="98" height="22" rx="11" fill="#ea580c"/>
+  <text x="989" y="169" text-anchor="middle" class="status">INTEGER</text>
+  <text x="940" y="205" class="node-title">Raw DEM Transfer</text>
+  <text x="940" y="229" class="node-sub">integer DEM payload</text>
+  <text x="940" y="249" class="node-sub">base units not proven</text>
+
+  <rect x="72" y="300" width="240" height="128" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5"/>
+  <rect x="94" y="324" width="108" height="22" rx="11" fill="#9333ea"/>
+  <text x="148" y="339" text-anchor="middle" class="status">SUPERVISED</text>
+  <text x="94" y="375" class="node-title">Identity</text>
+  <text x="94" y="399" class="node-sub">lookup reads are usable</text>
+  <text x="94" y="419" class="node-sub">mutations require operator</text>
+
+  <rect x="354" y="300" width="240" height="128" rx="10" fill="#f0fdfa" stroke="#5eead4" stroke-width="1.5"/>
+  <rect x="376" y="324" width="88" height="22" rx="11" fill="#0f766e"/>
+  <text x="420" y="339" text-anchor="middle" class="status">NEXT</text>
+  <text x="376" y="375" class="node-title">Storage</text>
+  <text x="376" y="399" class="node-sub">green no-spend preview</text>
+  <text x="376" y="419" class="node-sub">ergonomics hardening next</text>
+
+  <rect x="636" y="300" width="240" height="128" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+  <rect x="658" y="324" width="92" height="22" rx="11" fill="#dc2626"/>
+  <text x="704" y="339" text-anchor="middle" class="status">BLOCKED</text>
+  <text x="658" y="375" class="node-title">IPFS</text>
+  <text x="658" y="399" class="node-sub">quote/readback unproven</text>
+  <text x="658" y="419" class="node-sub">no upload promotion</text>
+
+  <rect x="918" y="300" width="210" height="128" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+  <rect x="940" y="324" width="92" height="22" rx="11" fill="#dc2626"/>
+  <text x="986" y="339" text-anchor="middle" class="status">DEGRADED</text>
+  <text x="940" y="375" class="node-title">Escrow</text>
+  <text x="940" y="399" class="node-sub">helpers exist</text>
+  <text x="940" y="419" class="node-sub">readback proof incomplete</text>
+
+  <rect x="212" y="470" width="330" height="128" rx="10" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5"/>
+  <rect x="234" y="494" width="114" height="22" rx="11" fill="#4b5563"/>
+  <text x="291" y="509" text-anchor="middle" class="status">IMPORT PROOF</text>
+  <text x="234" y="545" class="node-title">DemosWork / XM / Rubic</text>
+  <text x="234" y="569" class="node-sub">official docs identified</text>
+  <text x="234" y="589" class="node-sub">compile/quote/read fixtures still needed</text>
+
+  <rect x="660" y="470" width="330" height="128" rx="10" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5"/>
+  <rect x="682" y="494" width="106" height="22" rx="11" fill="#4b5563"/>
+  <text x="735" y="509" text-anchor="middle" class="status">DEFERRED</text>
+  <text x="682" y="545" class="node-title">Public Release / Hosted</text>
+  <text x="682" y="569" class="node-sub">release-shaped artifacts exist</text>
+  <text x="682" y="589" class="node-sub">publish and hosted activation gated</text>
+
+  <text x="72" y="642" class="legend">Legend: green = usable now, gated = explicit execute required, supervised = human/operator gate, blocked/degraded = evidence-first hardening required.</text>
+</svg>

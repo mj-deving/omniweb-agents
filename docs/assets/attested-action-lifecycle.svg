@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    .title { fill: #111827; font-size: 30px; font-weight: 700; }
+    .subtitle { fill: #6b7280; font-size: 15px; }
+    .node-title { fill: #111827; font-size: 16px; font-weight: 700; }
+    .node-sub { fill: #4b5563; font-size: 12px; }
+    .chip { fill: #374151; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
+    .small { fill: #6b7280; font-size: 12px; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-block" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="640" fill="#ffffff"/>
+  <text x="60" y="62" class="title">Attested Action Lifecycle</text>
+  <text x="60" y="90" class="subtitle">Every spend-bearing action moves through evidence, gates, execution, and product readback.</text>
+
+  <path d="M 245 270 L 305 270" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)" fill="none"/>
+  <path d="M 445 270 L 505 270" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)" fill="none"/>
+  <path d="M 645 270 L 705 270" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)" fill="none"/>
+  <path d="M 845 270 L 905 270" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)" fill="none"/>
+
+  <rect x="70" y="190" width="175" height="160" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="96" y="222" class="chip">1 OBSERVE</text>
+  <text x="96" y="256" class="node-title">Live Signals</text>
+  <text x="96" y="280" class="node-sub">feed, markets, reports</text>
+  <text x="96" y="300" class="node-sub">source snapshots</text>
+  <text x="96" y="320" class="node-sub">no wallet needed</text>
+
+  <rect x="305" y="190" width="140" height="160" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="330" y="222" class="chip">2 PROVE</text>
+  <text x="330" y="256" class="node-title">Attest</text>
+  <text x="330" y="280" class="node-sub">DAHR/TLSN path</text>
+  <text x="330" y="300" class="node-sub">claim provenance</text>
+  <text x="330" y="320" class="node-sub">evidence digest</text>
+
+  <rect x="505" y="190" width="140" height="160" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="530" y="222" class="chip">3 DECIDE</text>
+  <text x="530" y="256" class="node-title">Admit</text>
+  <text x="530" y="280" class="node-sub">capability truth</text>
+  <text x="530" y="300" class="node-sub">guardrails</text>
+  <text x="530" y="320" class="node-sub">execute gate</text>
+
+  <rect x="705" y="190" width="140" height="160" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="730" y="222" class="chip">4 ACT</text>
+  <text x="730" y="256" class="node-title">Execute</text>
+  <text x="730" y="280" class="node-sub">publish, tip, bet</text>
+  <text x="730" y="300" class="node-sub">chain tx</text>
+  <text x="730" y="320" class="node-sub">explicit only</text>
+
+  <rect x="905" y="190" width="215" height="160" rx="10" fill="#f0fdfa" stroke="#5eead4" stroke-width="1.5"/>
+  <text x="930" y="222" class="chip">5 CONFIRM</text>
+  <text x="930" y="256" class="node-title">Readback</text>
+  <text x="930" y="280" class="node-sub">chain accepted</text>
+  <text x="930" y="300" class="node-sub">product indexed</text>
+  <text x="930" y="320" class="node-sub">resolved/degraded/failed</text>
+
+  <path d="M 575 350 L 575 425 L 157 425 L 157 360" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)" fill="none"/>
+  <rect x="310" y="412" width="146" height="22" rx="6" fill="#ffffff" opacity="0.95"/>
+  <text x="383" y="428" text-anchor="middle" class="small">read-only feedback loop</text>
+
+  <path d="M 575 350 L 575 505 L 1012 505 L 1012 360" stroke="#dc2626" stroke-width="2" stroke-dasharray="7,5" marker-end="url(#arrow-block)" fill="none"/>
+  <rect x="656" y="492" width="268" height="22" rx="6" fill="#ffffff" opacity="0.98"/>
+  <text x="790" y="508" text-anchor="middle" class="small">blocked or degraded stops spend</text>
+
+  <rect x="156" y="548" width="888" height="44" rx="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="185" y="575" class="node-sub">Default mode: plan and preview with no spend. Live writes require explicit execute authority, wallet readiness, and post-action evidence.</text>
+</svg>

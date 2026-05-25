@@ -4,11 +4,40 @@
  */
 
 import {
-  buildFeedStreamRequestPlan,
-  classifyTransportAuth,
-  parseServerSentEvents,
-  summarizeRssFeed,
-} from "../src/index.js";
+  loadPackageExport,
+} from "./_shared.js";
+
+type RssSummary = { title?: string; entryCount: number };
+type StreamPlan = {
+  opensStream: boolean;
+  noSpend: boolean;
+  noMutation: boolean;
+  replay: { lastEventId?: string };
+  headers: { authorization?: string };
+};
+type ServerSentEventRecord = { event?: string };
+type TransportAuthState = { state: string; redactedToken?: string };
+
+const buildFeedStreamRequestPlan = await loadPackageExport<(input: Record<string, unknown>) => StreamPlan>(
+  "../dist/index.js",
+  "../src/index.js",
+  "buildFeedStreamRequestPlan",
+);
+const classifyTransportAuth = await loadPackageExport<(input: Record<string, unknown>) => TransportAuthState>(
+  "../dist/index.js",
+  "../src/index.js",
+  "classifyTransportAuth",
+);
+const parseServerSentEvents = await loadPackageExport<(input: string) => ServerSentEventRecord[]>(
+  "../dist/index.js",
+  "../src/index.js",
+  "parseServerSentEvents",
+);
+const summarizeRssFeed = await loadPackageExport<(input: string, contentType?: string) => RssSummary>(
+  "../dist/index.js",
+  "../src/index.js",
+  "summarizeRssFeed",
+);
 
 const rss = summarizeRssFeed(`<?xml version="1.0"?>
 <feed>

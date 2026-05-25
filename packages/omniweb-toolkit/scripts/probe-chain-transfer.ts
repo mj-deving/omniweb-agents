@@ -9,7 +9,7 @@
  */
 
 import { isAbsolute, resolve } from "node:path";
-import { getNumberArg, getStringArg, hasFlag, loadConnect, REPO_ROOT } from "./_shared.js";
+import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageExport, REPO_ROOT } from "./_shared.js";
 import {
   assertExplicitCredentialTargetExists,
   emitJsonReport,
@@ -17,8 +17,28 @@ import {
   summarizeProbeRuntimeTarget,
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
-import { classifyDemTransferAmount } from "../../../src/toolkit/sdk-bridge.js";
-import { safeTransfer } from "../src/write.js";
+
+type SafeTransferResult = { txHash: string };
+type SafeTransfer = (input: {
+  recipient: string;
+  amount: number;
+  memo: string;
+  recipientAllowlist: string[];
+  recipientSource: string;
+  memoSource: string;
+  execute: (to: string, transferAmount: number, memo: string) => Promise<unknown>;
+}) => Promise<SafeTransferResult>;
+
+const classifyDemTransferAmount = await loadPackageExport<(amount: number) => Record<string, unknown>>(
+  "../dist/write.js",
+  "../src/write.js",
+  "classifyDemTransferAmount",
+);
+const safeTransfer = await loadPackageExport<SafeTransfer>(
+  "../dist/write.js",
+  "../src/write.js",
+  "safeTransfer",
+);
 
 const args = process.argv.slice(2);
 const MAX_TRANSFER_DEM = 5;

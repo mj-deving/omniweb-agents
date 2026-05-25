@@ -12,7 +12,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, resolve } from "node:path";
-import { getNumberArg, getStringArg, hasFlag, PACKAGE_ROOT, REPO_ROOT } from "./_shared.js";
+import { getNumberArg, getStringArg, hasFlag, loadPackageExport, PACKAGE_ROOT, REPO_ROOT } from "./_shared.js";
 import {
   assertExplicitCredentialTargetExists,
   emitJsonReport,
@@ -20,8 +20,17 @@ import {
   summarizeProbeRuntimeTarget,
   validateRequiredValueFlags,
 } from "./_probe-targeting.js";
-import { validateUrl } from "../../../src/toolkit/url-validator.js";
-import { classifyTLSNReadiness } from "../src/tlsn-readiness-classifier.js";
+
+const validateUrl = await loadPackageExport<(url: string) => Promise<Record<string, unknown>>>(
+  "../dist/url-validator.js",
+  "../src/url-validator.js",
+  "validateUrl",
+);
+const classifyTLSNReadiness = await loadPackageExport<(input: Record<string, unknown>) => Record<string, unknown>>(
+  "../dist/tlsn-readiness-classifier.js",
+  "../src/tlsn-readiness-classifier.js",
+  "classifyTLSNReadiness",
+);
 
 const args = process.argv.slice(2);
 const require = createRequire(import.meta.url);

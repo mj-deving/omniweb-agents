@@ -4,11 +4,42 @@
  */
 
 import {
-  MARKET_READ_SURFACE,
-  classifyMarketReadShape,
-  summarizeMarketReadCoverage,
-} from "../src/index.js";
-import type { MarketReadFamily } from "../src/index.js";
+  loadPackageExport,
+} from "./_shared.js";
+
+type MarketReadFamily = string;
+type MarketReadSurfaceEntry = {
+  family: string;
+  noSpend: boolean;
+  noMutation: boolean;
+  timeParameters: Array<{ name: string; defaultValue?: string; examples?: string[] }>;
+  status?: string;
+};
+type MarketReadCoverage = {
+  ok: boolean;
+  coveredFamilies: string[];
+  driftedFamilies: string[];
+  unsupportedFamilies: string[];
+};
+type MarketReadShapeCheck = { verdict: string };
+
+const MARKET_READ_SURFACE = await loadPackageExport<MarketReadSurfaceEntry[]>(
+  "../dist/index.js",
+  "../src/index.js",
+  "MARKET_READ_SURFACE",
+);
+const classifyMarketReadShape = await loadPackageExport<
+  (family: string, payload: Record<string, unknown>) => MarketReadShapeCheck
+>(
+  "../dist/index.js",
+  "../src/index.js",
+  "classifyMarketReadShape",
+);
+const summarizeMarketReadCoverage = await loadPackageExport<() => MarketReadCoverage>(
+  "../dist/index.js",
+  "../src/index.js",
+  "summarizeMarketReadCoverage",
+);
 
 const coverage = summarizeMarketReadCoverage();
 const shapeChecks = [

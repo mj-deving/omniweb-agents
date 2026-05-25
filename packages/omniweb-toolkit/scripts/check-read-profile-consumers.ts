@@ -4,10 +4,30 @@
  */
 
 import {
-  READ_PROFILE_SURFACE,
-  classifyReadProfileShape,
-  summarizeReadProfileCoverage,
-} from "../src/index.js";
+  loadPackageExport,
+} from "./_shared.js";
+
+type ReadProfileSurfaceEntry = { family: string; noSpend: boolean; noMutation: boolean; status?: string };
+type ReadProfileCoverage = { ok: boolean; coveredFamilies: string[]; unsupportedFamilies: string[] };
+type ReadProfileShapeCheck = { verdict: string };
+
+const READ_PROFILE_SURFACE = await loadPackageExport<ReadProfileSurfaceEntry[]>(
+  "../dist/index.js",
+  "../src/index.js",
+  "READ_PROFILE_SURFACE",
+);
+const classifyReadProfileShape = await loadPackageExport<
+  (family: string, payload: Record<string, unknown>) => ReadProfileShapeCheck
+>(
+  "../dist/index.js",
+  "../src/index.js",
+  "classifyReadProfileShape",
+);
+const summarizeReadProfileCoverage = await loadPackageExport<() => ReadProfileCoverage>(
+  "../dist/index.js",
+  "../src/index.js",
+  "summarizeReadProfileCoverage",
+);
 
 const coverage = summarizeReadProfileCoverage();
 const shapeChecks = [

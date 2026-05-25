@@ -151,6 +151,7 @@ try {
       recheck: true,
       ok: readbackClassification.ok,
       status: readbackClassification.status,
+      finalVerdict: readbackClassification.status,
       command,
       address: omni.address,
       runtimeTarget,
@@ -165,7 +166,7 @@ try {
       readbackBefore,
       readbackAfter,
       readbackClassification,
-      note: "Read-only escrow tx verification/readback recheck; no escrow send attempted.",
+      note: "Read-only escrow tx verification/readback recheck; finalVerdict is GREEN only when claimable and balance wrappers prove product escrow state.",
     }, proofOut);
     process.exit(0);
   }
@@ -226,6 +227,7 @@ try {
       attempted: true,
       ok: false,
       status: "STUCK",
+      finalVerdict: "STUCK",
       command,
       address: omni.address,
       runtimeTarget,
@@ -257,6 +259,7 @@ try {
     attempted: true,
     ok: readbackClassification.ok,
     status: readbackClassification.status,
+    finalVerdict: readbackClassification.status,
     command,
     address: omni.address,
     runtimeTarget,
@@ -283,6 +286,7 @@ try {
       recheck: true,
       ok: false,
       status: readbackClassification.status,
+      finalVerdict: readbackClassification.status,
       command,
       runtimeTarget,
       platform,
@@ -316,7 +320,12 @@ async function readEscrowReadback(
     callEscrowReadback(() => omni.escrow.getClaimable(readPlatform, readUsername)),
     callEscrowReadback(() => omni.escrow.getEscrowBalance(readPlatform, readUsername)),
   ]);
-  return classifyEscrowReadbackSupport(claimable, escrowBalance);
+  return classifyEscrowReadbackSupport(claimable, escrowBalance, {
+    platform: readPlatform,
+    username: readUsername,
+    amount,
+    txHash: recheckTxHash,
+  });
 }
 
 function buildPreviewGate(
@@ -331,7 +340,7 @@ function buildPreviewGate(
   const checks = {
     controlledTargetNamed: Boolean(platform && username),
     amountWithinCeiling: amount > 0 && amount <= MAX_ESCROW_PROOF_AMOUNT,
-    readbackClassified: readback.classification === "supported" || readback.classification === "degraded-wrapper",
+    readbackClassified: ["supported", "degraded-wrapper", "inconclusive-readback"].includes(readback.classification),
     explicitLiveFlag: true,
   };
   const reasons = Object.entries(checks)

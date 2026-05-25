@@ -65,7 +65,7 @@ When the long-running goal is complete:
 
 ## Constraints
 
-- Node.js 22+ and `tsx` are the maintained runtime for repo scripts.
+- Node.js 22+ and `tsx` remain the script runtime, but repo-agent command invocation is Bun/Bunx-first.
 - Beads is the task ledger. Each implementation slice should be one bead, one branch, and one PR.
 - `main`, open PRs, Beads, and package docs are the current state authorities.
 - The package remains the public-surface authority for `omniweb-toolkit`.
@@ -93,7 +93,7 @@ When the long-running goal is complete:
 
 | Acceptance | Evidence |
 | --- | --- |
-| AC-1 | `npm --prefix packages/omniweb-toolkit run check:live`, `check:live:detailed`, and `check:read-surface` on the current host. |
+| AC-1 | `bun run --cwd packages/omniweb-toolkit check:live`, `check:live:detailed`, and `check:read-surface` on the current host. |
 | AC-2 | `check-publish-readiness`, `check:attestation`, and an explicit publish proof only when the PRD-approved spend gate is open. |
 | AC-3 | `probe-social-writes.ts` with explicit execute flags, plus readback evidence from reaction, reply, tip, balance, or stats surfaces. |
 | AC-4 | `probe-market-writes.ts` default headless transfer shape; success requires pool readback change. |
@@ -105,11 +105,11 @@ When the long-running goal is complete:
 
 ## Verification
 
-- Fast checkpoint: `npx tsc --noEmit --pretty false`
+- Fast checkpoint: `bunx tsc --noEmit --pretty false`
 - Focused tests: run targeted `vitest` files for changed code or script behavior.
-- Package structure gate: `npm --prefix packages/omniweb-toolkit run check:package`
-- Package evidence gate: `npm --prefix packages/omniweb-toolkit run check:evals`
-- Live read gate: `npm --prefix packages/omniweb-toolkit run check:live && npm --prefix packages/omniweb-toolkit run check:live:detailed`
+- Package structure gate: `bun run --cwd packages/omniweb-toolkit check:package`
+- Package evidence gate: `bun run --cwd packages/omniweb-toolkit check:evals`
+- Live read gate: `bun run --cwd packages/omniweb-toolkit check:live && bun run --cwd packages/omniweb-toolkit check:live:detailed`
 - Live write gates: matching `probe-*` scripts only when the PRD opens the spend gate.
 - GoalMode dependency gate: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/GOAL_BRIEF.md docs/MASTER_PRD.md`
 

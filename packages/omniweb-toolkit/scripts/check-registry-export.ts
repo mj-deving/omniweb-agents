@@ -131,6 +131,8 @@ const skillChecks = archetypes.map((archetype) => {
       runbookText.includes("metadata.openclaw.install") &&
       runbookText.includes("check-playbook-path.ts") &&
       readmeText.includes("publish-facing skill artifact") &&
+      readmeText.includes("## Archive-Only Decision") &&
+      readmeText.includes("not a default onboarding path, active release target, or required packed-package surface") &&
       skillText.includes("## Safety Gates") &&
       skillText.includes("## REQUIRED Stop-And-Ask Gates") &&
       skillText.includes("## Hard Stop Rules") &&

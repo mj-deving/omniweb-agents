@@ -4,6 +4,10 @@ This directory is the publish-facing skill artifact for the `omniweb-research-ag
 
 Treat it as a legacy specialist artifact: useful for reference, salvage, and narrow research-oriented releases, but not the default OmniWeb rebuild surface.
 
+## Archive-Only Decision
+
+This artifact stays as archive-only specialist/reference material. It is valid enough to inspect, regenerate, and use for narrow salvage experiments, but it is not a default onboarding path, active release target, or required packed-package surface. Use `omniweb-colony-operator/` for current OmniWeb operator work.
+
 ## What This Is
 
 - a single skill folder intended for ClawHub or thin GitHub skill distribution

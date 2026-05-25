@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S node --import tsx
 /**
  * probe-storage.ts — explicit live StorageProgram write probe for omniweb-toolkit.
  *
@@ -24,7 +24,7 @@ import {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-storage.ts [options]
+  console.log(`Usage: bun run preview:storage -- [options]
 
 Options:
   --program-name NAME   Storage program name (default: unique omniweb probe name)

@@ -87,8 +87,10 @@ Minimum local validation for the implementation lane:
 - targeted escrow tests or a focused no-spend escrow readback command
 - `bd dep cycles --json`
 - `bd ready --json`
-- `bun run check:package` if package docs, exported references, scripts, or package
-  surface change
+- run the maintained package check from `packages/omniweb-toolkit` if package
+  docs, exported references, scripts, or package surface change. This wave used
+  `bun run check:package`; repo-wide command-policy cleanup is tracked by
+  `omniweb-agents-zpd6`.
 
 CI and review gates:
 

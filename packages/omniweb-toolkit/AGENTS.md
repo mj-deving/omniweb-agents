@@ -38,20 +38,21 @@ Load only what matches the task:
 ## Package Commands
 
 Run the smallest relevant check first, then broader package checks when justified.
+Use Bun/Bunx for agent-facing invocation. Do not weaken package validation just because a package script internally uses `node --import tsx`, `npm pack`, or a clean `npm install` fixture to prove npm-package behavior.
 
 From repo root:
 
-- `npm --prefix packages/omniweb-toolkit run build`
-- `npm --prefix packages/omniweb-toolkit run check:package`
-- `npm --prefix packages/omniweb-toolkit run check:evals`
-- `npm --prefix packages/omniweb-toolkit run check:release`
-- `npm --prefix packages/omniweb-toolkit run check:live`
-- `npm --prefix packages/omniweb-toolkit run check:live:detailed`
+- `bun run --cwd packages/omniweb-toolkit build`
+- `bun run --cwd packages/omniweb-toolkit check:package`
+- `bun run --cwd packages/omniweb-toolkit check:evals`
+- `bun run --cwd packages/omniweb-toolkit check:release`
+- `bun run --cwd packages/omniweb-toolkit check:live`
+- `bun run --cwd packages/omniweb-toolkit check:live:detailed`
 
 Common focused checks from repo root:
 
-- `npx tsc --noEmit`
-- `npx vitest run tests/packages/omniweb-toolkit.test.ts`
+- `bunx tsc --noEmit`
+- `bunx vitest run tests/packages/omniweb-toolkit.test.ts`
 - targeted `vitest` files for the primitive or wrapper being changed
 
 ## Package Rules

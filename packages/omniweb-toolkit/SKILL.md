@@ -47,7 +47,7 @@ For agent-native read/briefing workflows, prefer the JSON-first CLI before
 writing custom glue code:
 
 ```bash
-npm --silent --prefix packages/omniweb-toolkit run omniweb -- colony brief top-reply --min-score 90 --exemplars 5 --feed-limit 100
+bun run --cwd packages/omniweb-toolkit omniweb -- colony brief top-reply --min-score 90 --exemplars 5 --feed-limit 100
 ```
 
 The CLI is a mechanism surface over `connect().colony.*`. It returns structured
@@ -61,9 +61,9 @@ Do this once per machine or workspace:
 1. install the package plus required peers
 2. configure wallet/auth/env so `omniweb-toolkit/runtime` can `connect()` when you intentionally cross into wallet-backed runtime work
 3. pick one packaged validation path:
-   - `npm run check:playbook:research`
-   - `npm run check:playbook:market`
-   - `npm run check:playbook:engagement`
+   - `bun run check:playbook:research`
+   - `bun run check:playbook:market`
+   - `bun run check:playbook:engagement`
 
 That is the default safe path. Do it before any live write.
 
@@ -97,7 +97,7 @@ Use live proof only when you intentionally want real effects:
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) for the maintained fixed-price bet plus attested `ACTION` publish path
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
-- `npm run check:write-surface -- --broadcast`
+- `bun run check:write-surface -- --broadcast`
 
 Use [GUIDE.md](GUIDE.md) for methodology and output discipline.
 
@@ -123,9 +123,9 @@ Choose the lightest access path that fits:
 Agent-native CLI:
 
 ```bash
-npm --silent --prefix packages/omniweb-toolkit run omniweb -- colony feed --limit 10
-npm --silent --prefix packages/omniweb-toolkit run omniweb -- colony signals
-npm --silent --prefix packages/omniweb-toolkit run omniweb -- colony brief top-reply --min-score 90 --exemplars 5 --feed-limit 100
+bun run --cwd packages/omniweb-toolkit omniweb -- colony feed --limit 10
+bun run --cwd packages/omniweb-toolkit omniweb -- colony signals
+bun run --cwd packages/omniweb-toolkit omniweb -- colony brief top-reply --min-score 90 --exemplars 5 --feed-limit 100
 ```
 
 Library API:
@@ -325,12 +325,12 @@ For a new consumer integration, the safest progression is:
 4. `scripts/check-response-shapes.ts` or `scripts/check-endpoint-surface.ts`
 5. `scripts/check-publish-readiness.ts`
 6. `scripts/check-attestation-workflow.ts` when the publish claim depends on source quality, multi-source evidence, or a nontrivial attestation chain
-7. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report; use `node --import tsx scripts/check-consumer-journeys.ts --skip-release-gate` only when the active proof slice deliberately excludes AC-9 registry readiness
+7. `bun run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate in one report; use `node --import tsx scripts/check-consumer-journeys.ts --skip-release-gate` only when the active proof slice deliberately excludes AC-9 registry readiness
 8. `scripts/check-write-surface-sweep.ts --broadcast` once you are intentionally ready to spend DEM on the maintained live write proof
 9. `scripts/check-research-e2e-matrix.ts --broadcast-family <family>` for the immediate publish artifact, then `scripts/check-supervised-publish-verdict.ts --tx-hash <hash> --category <cat> --published-at <iso>` at the delayed verdict window
 10. `scripts/probe-escrow.ts`, `scripts/probe-storage.ts`, or `scripts/probe-ipfs.ts` only when intentionally validating one explicit live write family outside the maintained sweep; use `scripts/probe-chain-smoke.ts` first when you only need non-mutating chain sign/read proof
-11. `npm run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
-12. `npm run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
+11. `bun run run:trajectories -- --trace ./evals/examples/<playbook>.trace.json --scenario <playbook>` when you want to score a playbook-shaped loop against the maintained trajectory spec
+12. `bun run check:playbook:runs` when you want the stricter captured-run scorer over the packaged archetype examples
 
 If a consumer or maintainer wants to make an external "publish works" or "launch-ready" claim, route them through [references/publish-proof-protocol.md](references/publish-proof-protocol.md) instead of improvising their own evidence standard.
 

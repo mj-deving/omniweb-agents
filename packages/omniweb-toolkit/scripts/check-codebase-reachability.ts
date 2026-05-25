@@ -8,8 +8,20 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { buildToolkitCodebaseReachabilityReport } from "../src/codebase-reachability-inventory.js";
-import { getStringArg, hasFlag, PACKAGE_ROOT } from "./_shared.js";
+import { getStringArg, hasFlag, loadPackageExport, PACKAGE_ROOT } from "./_shared.js";
+
+type CodebaseReachabilityReport = {
+  summary: { ok: boolean };
+  packageExports: unknown[];
+};
+
+const buildToolkitCodebaseReachabilityReport = await loadPackageExport<
+  (input: { repoRoot: string; packageDir: string }) => CodebaseReachabilityReport
+>(
+  "../dist/codebase-reachability-inventory.js",
+  "../src/codebase-reachability-inventory.js",
+  "buildToolkitCodebaseReachabilityReport",
+);
 
 const args = process.argv.slice(2);
 

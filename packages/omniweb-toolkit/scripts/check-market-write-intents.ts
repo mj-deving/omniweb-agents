@@ -3,9 +3,44 @@
  * check-market-write-intents.ts — No-spend proof for market write intent coverage.
  */
 
-import { buildMarketWriteIntentMatrix } from "../src/index.js";
-import type { MarketWriteFamily } from "../src/index.js";
-import type { RuntimeCapabilityResult } from "../src/readiness.js";
+import { loadPackageExport } from "./_shared.js";
+
+type MarketWriteFamily = string;
+type MarketWriteIntentMatrix = {
+  noSpend: boolean;
+  noMutation: boolean;
+  liveExecutionDisabled: boolean;
+  intents: Array<{
+    family: string;
+    actionFamily?: string;
+    explicitExecute?: string;
+    spendsDem?: boolean;
+    lifecycleStatus?: string;
+    toolkitAdmissibility?: { status?: string };
+    noSpendDefault?: boolean;
+    canExecuteNow?: boolean;
+    admissibilityStatus?: string;
+    capabilityStatus?: string;
+    supervision?: string;
+  }>;
+  summary: {
+    allFamiliesPresent: boolean;
+    allNoSpendDefault: boolean;
+    allLiveExecutionDisabled: boolean;
+    lifecyclePendingFamilies: string[];
+    unsupportedFamilies: string[];
+    deploymentBlockedFamilies: string[];
+    explicitExecuteRequiredFamilies: string[];
+  };
+};
+
+const buildMarketWriteIntentMatrix = await loadPackageExport<
+  (input: Record<string, unknown>) => MarketWriteIntentMatrix
+>(
+  "../dist/index.js",
+  "../src/index.js",
+  "buildMarketWriteIntentMatrix",
+);
 
 const matrix = buildMarketWriteIntentMatrix({
   now: new Date("2026-05-18T19:20:00.000Z"),
@@ -118,8 +153,8 @@ console.log(JSON.stringify({
 
 process.exit(ok ? 0 : 1);
 
-function deterministicRuntimeCapabilities(): RuntimeCapabilityResult {
-  const readiness: RuntimeCapabilityResult["readiness"] = {
+function deterministicRuntimeCapabilities() {
+  const readiness = {
     ok: true,
     canRead: true,
     canAuth: true,

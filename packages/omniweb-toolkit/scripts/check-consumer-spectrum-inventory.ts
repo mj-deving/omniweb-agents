@@ -9,6 +9,58 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import {
+  DEFAULT_BASE_URL,
+  fetchText,
+  getNumberArg,
+  getStringArg,
+  hasFlag,
+  loadPackageModule,
+  PACKAGE_ROOT,
+} from "./_shared.js";
+
+type ConsumerSpectrumActualStatus =
+  | "network_error"
+  | "ok"
+  | "redirect"
+  | "auth_required"
+  | "not_found"
+  | "unexpected_status"
+  | "not_fetched";
+interface ConsumerSpectrumProbe {
+  id: string;
+  path: string;
+  method: "GET" | "POST";
+  expected: string;
+  advertisedBy: string[];
+  notes: string[];
+}
+interface ConsumerSpectrumLiveProbeResult extends ConsumerSpectrumProbe {
+  actual: ConsumerSpectrumActualStatus;
+  httpStatus: number;
+  contentType: string | null;
+  classification: string;
+  shape: unknown;
+  error?: string;
+}
+interface DiscoveryProbeResult extends ConsumerSpectrumLiveProbeResult {
+  rawBodyForOpenApi?: string;
+}
+type AgentModule = {
+  buildConsumerSpectrumInventoryReport(input: Record<string, unknown>): { summary: { ok: boolean } };
+  buildOfficialSkillCoverageReport(manifest: unknown, input: Record<string, unknown>): unknown;
+  buildToolkitCapabilityManifest(input: Record<string, unknown>): unknown;
+  classifyConsumerSpectrumProbe(input: Record<string, unknown>): string;
+  CONSUMER_SPECTRUM_DISCOVERY_RESOURCES: ConsumerSpectrumProbe[];
+  CONSUMER_SPECTRUM_ENDPOINT_PROBES: ConsumerSpectrumProbe[];
+  extractOpenApiPaths(input: unknown): string[];
+  getOfficialSkillSurfaceAreas(): unknown;
+  summarizeConsumerSpectrumBodyShape(body: string, parseJson?: boolean): unknown;
+};
+type RuntimeModule = {
+  describeRuntimeCapabilities(input: Record<string, unknown>): unknown;
+};
+
+const {
   buildConsumerSpectrumInventoryReport,
   buildOfficialSkillCoverageReport,
   buildToolkitCapabilityManifest,
@@ -18,19 +70,11 @@ import {
   extractOpenApiPaths,
   getOfficialSkillSurfaceAreas,
   summarizeConsumerSpectrumBodyShape,
-  type ConsumerSpectrumDiscoveryResource,
-  type ConsumerSpectrumEndpointProbe,
-  type ConsumerSpectrumLiveProbeResult,
-} from "../src/agent.js";
-import { describeRuntimeCapabilities } from "../src/readiness.js";
-import {
-  DEFAULT_BASE_URL,
-  fetchText,
-  getNumberArg,
-  getStringArg,
-  hasFlag,
-  PACKAGE_ROOT,
-} from "./_shared.js";
+} = await loadPackageModule<AgentModule>("../dist/agent.js", "../src/agent.js");
+const { describeRuntimeCapabilities } = await loadPackageModule<RuntimeModule>(
+  "../dist/runtime.js",
+  "../src/runtime.js",
+);
 
 const args = process.argv.slice(2);
 
@@ -137,12 +181,8 @@ async function main(): Promise<void> {
   process.exit(report.summary.ok ? 0 : 1);
 }
 
-interface DiscoveryProbeResult extends ConsumerSpectrumLiveProbeResult {
-  rawBodyForOpenApi?: string;
-}
-
 async function fetchDiscoveryResource(
-  resource: ConsumerSpectrumDiscoveryResource,
+  resource: ConsumerSpectrumProbe,
   baseUrl: string,
   timeoutMs: number,
 ): Promise<DiscoveryProbeResult> {
@@ -174,7 +214,7 @@ async function fetchDiscoveryResource(
 }
 
 async function fetchEndpointProbe(
-  probe: ConsumerSpectrumEndpointProbe,
+  probe: ConsumerSpectrumProbe,
   baseUrl: string,
   timeoutMs: number,
   openapiPaths: string[],
@@ -228,7 +268,7 @@ function stripRawOpenApiBody(result: DiscoveryProbeResult): ConsumerSpectrumLive
   return rest;
 }
 
-function classifyActualStatus(status: number): ConsumerSpectrumLiveProbeResult["actual"] {
+function classifyActualStatus(status: number): ConsumerSpectrumActualStatus {
   if (status === 0) return "network_error";
   if (status >= 200 && status < 300) return "ok";
   if (status === 301 || status === 302 || status === 307 || status === 308) return "redirect";

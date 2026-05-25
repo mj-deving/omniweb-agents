@@ -292,8 +292,11 @@ const checks = [
   },
   {
     name: "package_files_include_skill_assets",
-    ok: ["agents/", "assets/", "references/", "scripts/"].every((entry) => packageJson.files?.includes(entry)),
-    detail: "package.json files should include agents/, assets/, references/, and scripts/",
+    ok:
+      ["agents/", "assets/", "scripts/"].every((entry) => packageJson.files?.includes(entry)) &&
+      (packageJson.files?.includes("references/") ||
+        packageJson.files?.some((entry) => entry.startsWith("references/"))),
+    detail: "package.json files should include agents/, assets/, scripts/, and a bounded references/ surface",
   },
   {
     name: "package_publish_metadata_present",

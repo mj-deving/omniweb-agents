@@ -10,8 +10,8 @@ Options:
 
 Output:
   JSON report describing the `npm pack --dry-run --json` tarball contents, required
-  package files, packaged trajectory examples, and forbidden repo-only docs that
-  must not ship.
+  package files, packaged trajectory examples, and forbidden repo-only docs or
+  nested proof payloads that must not ship.
 
 Exit codes:
   0 = tarball contents match the expected release surface
@@ -59,6 +59,7 @@ printf '%s' "$PACK_JSON" | node -e '
     "assets/market-analyst-starter.ts",
     "assets/engagement-optimizer-starter.ts",
     "evals/trajectories.yaml",
+    "references/index.md",
     "references/platform-surface.md",
     "references/categories.md",
     "references/verification-matrix.md",
@@ -74,12 +75,16 @@ printf '%s' "$PACK_JSON" | node -e '
   ];
 
   const forbidden = [
+    "docs/primitives/README.md",
     "docs/research-supercolony-skill-sources.md",
     "docs/skill-improvement-recommendations.md",
   ];
 
   const missing = [...required, ...exportTargets].filter((path) => !files.includes(path));
-  const leaked = forbidden.filter((path) => files.includes(path));
+  const leaked = [
+    ...forbidden.filter((path) => files.includes(path)),
+    ...files.filter((path) => /^references\/.+\/.+/.test(path)),
+  ].sort();
   const missingTraceExamples = expectedTraceFiles.filter((path) => !files.includes(path));
   const unexpectedTraceExamples = packagedTraceFiles.filter((path) => !expectedTraceFiles.includes(path));
   const ok =

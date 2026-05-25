@@ -423,6 +423,7 @@ ${references}
 
 function rewriteReferenceLinks(text: string): string {
   return normalizeText(text
+    .replaceAll("[write-lifecycle.md](./write-lifecycle.md)", "`references/write-lifecycle.md` in the package source")
     .replaceAll("../scripts/check-live-categories.ts", "../RUNBOOK.md")
     .replaceAll("../scripts/check-response-shapes.ts", "../RUNBOOK.md")
     .replaceAll("../scripts/leaderboard-snapshot.ts", "../RUNBOOK.md")

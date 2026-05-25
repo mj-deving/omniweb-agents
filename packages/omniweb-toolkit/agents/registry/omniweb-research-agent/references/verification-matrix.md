@@ -33,7 +33,7 @@ than inferred from old package history.
 
 ## Write Lifecycle Overlay
 
-Wallet-backed write verdicts now use the shared lifecycle vocabulary in [write-lifecycle.md](./write-lifecycle.md). A short readback timeout is not a final failure when a tx hash exists. Maintained probes should record `planned`, `broadcasted`, `pending-chain`, `chain-confirmed`, `pending-indexer`, `indexed`, `resolved`, `degraded`, `expired`, or `failed`, then emit a proof packet that separates chain state from product API readback.
+Wallet-backed write verdicts now use the shared lifecycle vocabulary in `references/write-lifecycle.md` in the package source. A short readback timeout is not a final failure when a tx hash exists. Maintained probes should record `planned`, `broadcasted`, `pending-chain`, `chain-confirmed`, `pending-indexer`, `indexed`, `resolved`, `degraded`, `expired`, or `failed`, then emit a proof packet that separates chain state from product API readback.
 
 Current lifecycle-capable probes:
 

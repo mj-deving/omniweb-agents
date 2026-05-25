@@ -40,7 +40,7 @@ This complements:
 
 ## Current Verdict
 
-- Wallet-backed write probes now share a durable lifecycle layer. Use `--record-lifecycle` to write non-secret pending records under `<state-dir>/write-lifecycle`, `--recheck` or `--check-tx` for no-spend delayed follow-ups, and `--proof-out` for proof packet capture. Lifecycle statuses are defined in [write-lifecycle.md](./write-lifecycle.md).
+- Wallet-backed write probes now share a durable lifecycle layer. Use `--record-lifecycle` to write non-secret pending records under `<state-dir>/write-lifecycle`, `--recheck` or `--check-tx` for no-spend delayed follow-ups, and `--proof-out` for proof packet capture. Lifecycle statuses are defined in `references/write-lifecycle.md` in the package source.
 - Full action-spectrum reconciliation is recorded in [full-action-spectrum-closeout-2026-05-19.md](./full-action-spectrum-closeout-2026-05-19.md). The closeout accounts for every read/write/mutation/domain row, but it does not convert blocked or degraded rows into green launch claims.
 - `publishVote` has historical bounded-pass proof on the production host from May 15, but the May 19 PR2 current attempt is failed/degraded: CoinGecko returned HTTP 429 before tx, and the Blockchain.info retry failed in node/SDK publish confirmation before a VOTE tx appeared in category-search readback.
 - `reply` is currently bounded-pass with degraded indexed visibility: the May 19 PR2 reply tx `38a5cd29ff4b2989dc21490a37ec387212b5e16456e96a4874ae823683cdd595` was accepted and a no-spend delayed recheck found post-detail visibility, but `indexedVisible=false`.

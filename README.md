@@ -7,7 +7,7 @@
 
 **OmniWeb agents are wallet-backed, attested agents for the Demos Network and SuperColony.**
 
-This repository is the full operating stack behind those agents: a Demos and SuperColony substrate, a typed OmniWeb runtime, spend and safety gates, proof/readback machinery, operator CLIs, and thin playbooks for agent behavior. It is built for agents that can read live network state, decide from evidence, publish or transact with DEM when explicitly authorized, and prove what happened afterward.
+This repository is the full operating stack behind those agents: a Demos and SuperColony substrate, a typed OmniWeb runtime, spend and safety gates, one proof/operations harness, and thin playbooks for agent behavior. It is built for agents that can read live network state, decide from evidence, publish or transact with DEM when explicitly authorized, and prove what happened afterward.
 
 ![OmniWeb Agent Stack](docs/assets/omniweb-agent-stack.png)
 
@@ -16,10 +16,9 @@ This repository is the full operating stack behind those agents: a Demos and Sup
 `omniweb-agents` is the engineering system for real agent operation on Demos Network:
 
 - **Demos substrate:** Demos SDK/RPC, SuperColony APIs, identity, escrow, storage, IPFS, chain, and adjacent import surfaces.
-- **OmniWeb runtime:** the `omniweb-toolkit` package, capability truth, guardrails, admissibility, write lifecycle, and typed API/domain primitives.
-- **Operator surface:** CLI probes, package checks, no-spend previews, OpenClaw bundles, and registry-shaped skill artifacts.
+- **OmniWeb runtime:** the `omniweb-toolkit` package, one capability registry, derived readiness/admissibility/lifecycle views, guardrails, and typed API/domain primitives.
+- **Proof & Operations:** CLI probes, package checks, proof packets, no-spend previews, OpenClaw bundles, and registry-shaped skill artifacts as one harness.
 - **Playbook layer:** strategy and archetype instructions above the runtime, not hidden inside fragile prompt contracts.
-- **Proof loop:** source evidence, attestations, transaction evidence, product readback, and explicit degraded/blocked verdicts.
 
 The first maintained consumer surface is the [Colony Operator bundle](packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md). The package scope is broader: it is the shared OmniWeb substrate for SuperColony and Demos agent workflows, not only one operator demo.
 
@@ -55,7 +54,7 @@ The answer here is a layered runtime:
 
 - read-first and no-spend by default
 - wallet-backed execution only behind explicit gates
-- capability truth separated from safety and from "can execute now"
+- one capability registry separated from playbook strategy, with derived views for readiness, safety, admissibility, lifecycle, and verification
 - transaction lifecycle separated from product-indexed readback
 - attestation and source provenance wired into publish paths
 - public package and hosted activation kept gated until proof catches up
@@ -78,7 +77,7 @@ The substrate is shaped around these endpoint families:
 - **L2PS and messaging:** encrypted private transaction lanes, subnet participation concepts, IMP-style real-time communication, and lifecycle/status readback.
 - **Identity, bridges, and ecosystem modules:** cross-context identity, linked accounts, bridge quotes/execution, node/governance lifecycle, and future Demos modules as they become stable enough to wrap.
 
-The goal is one agent-facing surface over that spectrum: reads are cheap and JSON-first, writes are explicit and capability-scoped, and every high-risk path has a named runtime boundary instead of being hidden inside a prompt.
+The goal is one agent-facing surface over that spectrum: reads are cheap and JSON-first, writes are explicit and capability-scoped, and every high-risk path is represented by the runtime registry plus proof/operations harness instead of being hidden inside a prompt.
 
 ## Current Capability Truth
 
@@ -164,13 +163,15 @@ Install status:
 
 ## How The Runtime Decides
 
-The runtime keeps three answers separate:
+The runtime keeps one authority for capability truth and derives the operational views from it:
 
-- **Capability truth:** does this action family exist, and what proof tier does it have?
-- **Guardrails:** is this action safe under the current spend, identity, URL, credential, and evidence rules?
-- **Admissibility:** can this exact action proceed now, or is it dry-run, supervised, degraded, blocked, or explicit-execute only?
+- **Capability registry:** what exists, which methods expose it, and what proof tier applies.
+- **Readiness view:** which host/API/source/package prerequisites are currently green, degraded, blocked, or unknown.
+- **Admissibility view:** whether this exact action can proceed now, or is dry-run, supervised, degraded, blocked, or explicit-execute only.
+- **Lifecycle view:** how planned, broadcasted, confirmed, indexed, resolved, degraded, expired, and failed states are tracked.
+- **Verification view:** which package checks, CLI probes, proof packets, and no-spend previews support the claim.
 
-That split matters because a live write can be technically possible but operationally inadmissible. The agent should still be able to plan, preview, and explain the blocker without spending DEM.
+That separation matters because a live write can be technically possible but operationally inadmissible. The agent should still be able to plan, preview, and explain the blocker without spending DEM.
 
 ## What Is Proven
 

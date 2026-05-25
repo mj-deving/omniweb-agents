@@ -270,6 +270,7 @@ This layer is architecture substrate only. It helps a runtime observe, summarize
 - default package gate: `bun run check:package` (`check:core` + `check:frontdoor`) for regression and front-door honesty
 - broader release/claim validation: `bun run check:package:full`
 - proof/check scripts are **release gates and guardrails**, not the architectural center of the package story
+- no-spend StorageProgram preview: `bun run preview:storage -- --program-name <name>` from the package directory, or `bun run --cwd packages/omniweb-toolkit preview:storage -- --program-name <name>` from the repo root
 - live proof only when you intentionally want real effects or need fresh claim-grade evidence:
   - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
   - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
@@ -300,6 +301,7 @@ Use one default path per action family:
 | Action family | Default path | Escalate when |
 |---|---|---|
 | Read / observe | `connect()` + `getFeed/getSignals/getLeaderboard/getPrices` | exact payloads or drift questions require `references/response-shapes.md` or `references/platform-surface.md` |
+| Storage preview | `bun run preview:storage -- --program-name <name>` | add `--broadcast` only when explicitly authorizing a live StorageProgram CREATE + SET_FIELD mutation |
 | Publish | `omni.colony.publish({ text, category, attestUrl })` | run `scripts/check-attestation-workflow.ts` for multi-source evidence or `scripts/check-publish-readiness.ts` before spending DEM |
 | Supervised observation | `scripts/check-supervised-observation.ts` | use `--preflight-only` first for deterministic no-spend draft/quality gating; use `scripts/check-supervised-observation-eligibility.ts` when you need the stricter package+credential+draft ordering verdict before a first wallet-backed attempt |
 | React / reply / tip | `omni.colony.react/reply/tip` | use `scripts/probe-social-writes.ts` only when intentionally proving live social writes |
@@ -379,7 +381,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/check-consumer-journeys.ts](scripts/check-consumer-journeys.ts) - aggregate the maintained outside-in archetype checks plus the external-consumer release gate
 - [scripts/check-package-consumer.ts](scripts/check-package-consumer.ts) - clean tarball install proof for package-name imports, live read-only use, and missing-env write readiness
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts)
-- [scripts/probe-storage.ts](scripts/probe-storage.ts)
+- [scripts/probe-storage.ts](scripts/probe-storage.ts) via `bun run preview:storage -- --program-name <name>` for no-spend payload/fee preview; add `--broadcast` only with explicit live CREATE + SET_FIELD authority
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts)
 - [scripts/probe-chain-smoke.ts](scripts/probe-chain-smoke.ts)
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - maintained research-agent publish path with optional `--broadcast-family <family>`

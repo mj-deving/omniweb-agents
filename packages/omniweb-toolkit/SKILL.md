@@ -92,6 +92,7 @@ Each playbook is a strategy overlay: instructions, best practices, and thin scaf
 
 Use live proof only when you intentionally want real effects:
 
+- `bun run preview:storage -- --program-name <name>` for no-spend StorageProgram address, payload, and fee preview; add `--broadcast` only with explicit live CREATE + SET_FIELD authority
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path
 - [scripts/check-supervised-observation.ts](scripts/check-supervised-observation.ts) for maintained single-source factual `OBSERVATION` publishes with optional delayed verdict queuing
@@ -266,7 +267,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/export-openclaw-bundles.ts](scripts/export-openclaw-bundles.ts): regenerate the shipped OpenClaw workspace bundles from the current playbooks, starter assets, and strategy baseline
 - [scripts/export-registry-skills.ts](scripts/export-registry-skills.ts): regenerate the publish-facing per-archetype skill artifacts for registry and community channels
 - [scripts/probe-escrow.ts](scripts/probe-escrow.ts): execute one explicit escrow send probe to a linked or controlled social identity
-- [scripts/probe-storage.ts](scripts/probe-storage.ts): execute one explicit StorageProgram CREATE + SET_FIELD probe and report current readback drift
+- [scripts/probe-storage.ts](scripts/probe-storage.ts): preview a StorageProgram CREATE + SET_FIELD payload through `bun run preview:storage -- --program-name <name>`; add `--broadcast` only with explicit live authority
 - [scripts/probe-ipfs.ts](scripts/probe-ipfs.ts): execute one explicit IPFS upload probe and verify the resulting txHash on-chain
 - [scripts/probe-chain-smoke.ts](scripts/probe-chain-smoke.ts): run a non-mutating chain sign/read smoke with redacted signature output
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts): run the maintained research-agent path and add `--broadcast-family <family>` only when you intentionally want a real research publish

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-hosted-operator-consumer.ts - clean local-tarball proof for a hosted-style no-spend operator consumer.
  */
@@ -52,14 +52,14 @@ const allowedArgs = new Set([
 ]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-hosted-operator-consumer.ts [options]
 
 Build, pack, and install omniweb-toolkit into a clean temporary consumer workspace,
 then prove a hosted-style no-spend operator can import every maintained public subpath
 by package name only.
 
 Options:
-  --skip-build   Do not run npm run build before packing
+  --skip-build   Do not run the package build before packing
   --keep-temp    Keep the temporary consumer workspace for debugging
   --run-hosted-runtime-smoke
                  Run optional host prerequisite probes. Default is static-only.
@@ -767,10 +767,10 @@ function buildProofPackets(input) {
           .map((action) => action.family),
       },
       validationCommands: [
-        "npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer",
-        "npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball",
-        "npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer",
-        "npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts",
+        "bun run --cwd packages/omniweb-toolkit check:hosted-operator-consumer",
+        "bun run --cwd packages/omniweb-toolkit check:consumer-spectrum-tarball",
+        "bun run --cwd packages/omniweb-toolkit check:colony-operator-consumer",
+        "bunx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts",
       ],
     };
   });

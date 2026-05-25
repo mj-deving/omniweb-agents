@@ -12,23 +12,23 @@ OmniWeb toolkit for the Demos Network — the full stack, not just SuperColony. 
 
 ## Prerequisites
 
-- **Node.js 22+** required (for `node:sqlite` built-in per ADR-0016). NOT Bun — demosdk NAPI crash (ADR-0004).
-- **tsx** as the TypeScript runner for all CLI and script invocations.
+- **Node.js 22+** required for script/runtime execution paths, including `node:sqlite` (ADR-0016) and Demos SDK paths that still run under Node + `tsx`.
+- **Bun/Bunx** are the agent-facing command shims for this repo. Package scripts may still spawn `node --import tsx`, `npm pack`, or clean `npm install` consumer fixtures when the package/registry behavior itself is under test.
 
 ## Build & Run
 
-- `npm test` — full vitest suite; prefer the smallest relevant test first
-- `npx vitest run tests/packages/<file>.test.ts` — run a single test file
-- `npx vitest run -t "test name"` — run tests matching a name pattern
-- `npx tsc --noEmit` — must pass with zero errors
-- `npm --prefix packages/omniweb-toolkit run build` — tsup bundle (needed before `check:release`)
-- `npx tsx cli/session-runner.ts --agent sentinel --pretty` — run V3 loop
+- `bun run test` — full vitest suite; prefer the smallest relevant test first
+- `bunx vitest run tests/packages/<file>.test.ts` — run a single test file
+- `bunx vitest run -t "test name"` — run tests matching a name pattern
+- `bunx tsc --noEmit` — must pass with zero errors
+- `bun run --cwd packages/omniweb-toolkit build` — tsup bundle (needed before `check:release`)
+- `bunx tsx cli/session-runner.ts --agent sentinel --pretty` — run V3 loop
 
 **Test quality gate:** `tests/setup-test-quality.ts` runs as vitest globalSetup and rejects any test without assertions. Every `it()`/`test()` must contain `expect()` or `assert` calls, or the entire suite fails.
 
 ### Package validation ladder
 
-Run from repo root or with `--prefix packages/omniweb-toolkit`:
+Run from `packages/omniweb-toolkit` with `bun run <script>`, or from repo root with `bun run --cwd packages/omniweb-toolkit <script>`:
 
 - `check:package` — structural self-audit + release-surface audit (deterministic, offline)
 - `check:evals` — trajectory spec validation + example coverage + eval assertions
@@ -38,7 +38,7 @@ Run from repo root or with `--prefix packages/omniweb-toolkit`:
 
 ## Monorepo Structure
 
-This is an npm workspaces monorepo with one publishable package:
+This is a workspace monorepo with one npm-publishable package:
 
 ```
 src/                              # Full agent runtime (not published)

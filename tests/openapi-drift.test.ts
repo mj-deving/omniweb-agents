@@ -5,7 +5,7 @@
  * our TypeScript interfaces. Allows supersets (our types may have extra
  * convenience fields not in the spec).
  *
- * Run: npx vitest run tests/openapi-drift.test.ts
+ * Run: bunx vitest run tests/openapi-drift.test.ts
  */
 
 import { describe, it, expect } from "vitest";

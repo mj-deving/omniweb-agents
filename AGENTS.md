@@ -298,14 +298,14 @@ Do not let a fast-lane model make the final call on product behavior, publish qu
 
 Use the smallest relevant check first, then broader checks when justified.
 
-For `packages/omniweb-toolkit`, important commands currently include:
+For `packages/omniweb-toolkit`, run these from the package root:
 
-- `npm run check:evals`
-- `npm run check:package`
-- `npm run check:release`
-- `npm run check:live`
-- `npm run check:live:detailed`
-- `npm run run:trajectories -- --trace ./evals/examples/<scenario>.trace.json --scenario <scenario>`
+- `bun run check:evals`
+- `bun run check:package`
+- `bun run check:release`
+- `bun run check:live`
+- `bun run check:live:detailed`
+- `bun run run:trajectories -- --trace ./evals/examples/<scenario>.trace.json --scenario <scenario>`
 
 For trajectory work:
 

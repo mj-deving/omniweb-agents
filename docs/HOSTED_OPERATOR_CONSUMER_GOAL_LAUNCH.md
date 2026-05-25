@@ -45,11 +45,11 @@ Acceptance anchors:
 - AC-9 Beads closeout and explicit no-release/no-spend/no-mutation audit
 
 Validation ladder:
-- `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer`
-- `npm --prefix packages/omniweb-toolkit run check:consumer-spectrum-tarball`
-- `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer`
-- `npx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts`
-- `npm --prefix packages/omniweb-toolkit run check:frontdoor`
+- `bun run --cwd packages/omniweb-toolkit check:hosted-operator-consumer`
+- `bun run --cwd packages/omniweb-toolkit check:consumer-spectrum-tarball`
+- `bun run --cwd packages/omniweb-toolkit check:colony-operator-consumer`
+- `bunx vitest run tests/packages/colony-operator-entrypoint.test.ts tests/packages/toolkit-action-admissibility.test.ts tests/packages/toolkit-guardrails.test.ts`
+- `bun run --cwd packages/omniweb-toolkit check:frontdoor`
 - `git diff --check`
 - `bd ready --json`
 - `bd dolt push`

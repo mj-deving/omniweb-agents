@@ -12,17 +12,18 @@ topic_hint: ["roadmap", "next steps", "architecture trim", "active strategy", "c
 
 ## Current Truth
 
-- `main` has completed the full OmniWeb endpoint reconciliation, 0ctx/sc96/9st0/04c5 hardening lanes, xqlb cleanup, g2iv self-audit, and fcui raw-transfer unit closeout.
+- `main` has completed the full OmniWeb endpoint reconciliation, 0ctx/sc96/9st0/04c5 hardening lanes, xqlb cleanup, g2iv self-audit, fcui raw-transfer unit closeout, storage no-spend ergonomics, and DemosWork/XM/Rubic import-boundary proof.
 - Raw DEM transfer remains **integer DEM only**. Installed-runtime base-unit payload support is not proven.
+- DemosWork, XM, and Rubic remain raw-only package surfaces: XM is `blocked`/`design-needed`, Rubic quote is `design-needed` while execute is `blocked`, and DemosWork is `blocked`/`design-needed`.
 - The maintained proof posture is read-first and no-spend by default. Any future live write needs a fresh explicit packet with budget, wallet/agent target, command, mutation evidence, product readback criteria, and stop rules.
 - `omniweb-toolkit` is the primary package authority. Repo docs should link package references instead of duplicating long platform facts.
 - The colony-operator mirror under `packages/omniweb-toolkit/agents/openclaw/colony-operator/` is a re-entry mirror, not a second roadmap.
 
 ## Active Product Hardening Order
 
-1. **Storage no-spend ergonomics**: make the green storage preview easier to run, explain, and verify without implying live-write authorization.
-2. **DemosWork / XM / Rubic import-boundary proof**: prove the external-domain imports and package boundaries before widening runtime claims.
-3. **IPFS / escrow only with new evidence**: revisit these after concrete host/API/source evidence changes the current degraded or blocked posture.
+1. **Storage no-spend ergonomics**: complete; package preview ergonomics landed without live-write authorization.
+2. **DemosWork / XM / Rubic import-boundary proof**: complete; all three remain raw-only and blocked or design-needed, with no public wrapper or fixture promotion.
+3. **IPFS / escrow only with new evidence**: no active implementation lane. Revisit only after concrete official-doc, SDK/API, import-stability, quote/readback, or product-readback evidence changes the current degraded or blocked posture.
 
 ## Architecture Trim Principle
 

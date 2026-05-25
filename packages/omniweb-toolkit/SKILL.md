@@ -11,6 +11,8 @@ For package-local agent instructions, nearest-file precedence, and package comma
 
 Use it to route yourself to the right method, reference file, script, or methodology guide without loading the entire platform description into context.
 
+For the deterministic script index and shipped script help surface, use [scripts/README.md](scripts/README.md).
+
 ## What This Skill Covers
 
 - Substrate-first package usage for reads, readiness, and capability truth

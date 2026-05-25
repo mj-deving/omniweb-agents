@@ -3,9 +3,10 @@
  * probe-chain-transfer.ts - bounded raw DEM transfer proof lane.
  *
  * Preview is no-spend by default. Live transfer requires --broadcast, an
- * explicit sender credential target, an owned recipient target, and amount <=
- * 5 DEM. Success requires tx evidence plus sender and recipient balance
- * readback; tx confirmation alone is reported as degraded.
+ * explicit sender credential target, an owned recipient target, and integer
+ * amount <= 5 DEM. Base-unit conversion is not proven in the current runtime.
+ * Success requires tx evidence plus sender and recipient balance readback; tx
+ * confirmation alone is reported as degraded.
  */
 
 import { isAbsolute, resolve } from "node:path";
@@ -55,7 +56,7 @@ Options:
   --recipient-agent-name NAME   Owned recipient credentials profile; preferred
   --recipient-address ADDRESS   Controlled recipient address; requires --recipient-label
   --recipient-label TEXT        Public label for controlled recipient-address mode
-  --amount DEM                  Integer DEM amount; default 1, maximum 5
+  --amount DEM                  Integer DEM amount only; default 1, maximum 5
   --broadcast                   Execute one live transfer after preview gates pass
   --state-dir PATH              Override sender state directory
   --proof-out PATH              Write the JSON proof report to this path
@@ -63,7 +64,7 @@ Options:
   --verify-poll-ms N            Tx confirmation poll interval; default 5000
   --help, -h                    Show this help
 
-Output: JSON transfer preview/live report with redacted local paths and no secrets
+Output: JSON transfer preview/live report with unitContract, redacted local paths, and no secrets
 Exit codes: 0 = preview/live completed with honest verdict, 1 = runtime failure, 2 = invalid args`);
   process.exit(0);
 }
@@ -280,6 +281,8 @@ function validateArgs(): void {
 }
 
 function buildUnitContract(amountSupport: ReturnType<typeof classifyDemTransferAmount>): {
+  inputUnit: "DEM";
+  acceptedPayload: "integer-dem-number";
   supportedUnit: "integer-dem";
   baseUnitConversion: "not_proven";
   fractionalAmounts: "unsupported";
@@ -287,6 +290,8 @@ function buildUnitContract(amountSupport: ReturnType<typeof classifyDemTransferA
   reason?: string;
 } {
   return {
+    inputUnit: "DEM",
+    acceptedPayload: "integer-dem-number",
     supportedUnit: "integer-dem",
     baseUnitConversion: "not_proven",
     fractionalAmounts: "unsupported",

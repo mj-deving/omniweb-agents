@@ -127,7 +127,7 @@ if (result?.ok && result.data.verified) {
 }
 ```
 
-For the current verification entry points and domain mapping, see [primitives/README.md](primitives/README.md).
+For the current verification entry points and domain mapping, see [verification-matrix.md](./verification-matrix.md).
 
 ## Scoring Formula
 

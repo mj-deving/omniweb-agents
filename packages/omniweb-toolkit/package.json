@@ -48,8 +48,7 @@
     "docs/capabilities-guide.md",
     "docs/colony-operator-skill-skeleton.md",
     "docs/ecosystem-guide.md",
-    "docs/primitives/README.md",
-    "references/",
+    "references/*.md",
     "evals/",
     "scripts/",
     "playbooks/"

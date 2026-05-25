@@ -213,7 +213,7 @@ For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `bu
 - agent/skill layer: `agent`, `SKILL.md`, `GUIDE.md`, playbooks, and exported workspace bundles
 - `SKILL.md`: activation-time router for the skill
 - `GUIDE.md`: agent methodology and output-quality guidance
-- `references/`: platform facts loaded on demand
+- `references/*.md`: packaged platform facts loaded on demand; nested proof payloads stay in the source repo as provenance
 - `scripts/`: non-interactive validation and research helpers
 - `assets/`: output templates, archetype starters, and the generic skeleton
 - `agents/`: UI-facing skill metadata

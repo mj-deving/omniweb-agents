@@ -46,6 +46,7 @@ All scripts are non-interactive, print structured output, and support `--help`.
 - [probe-escrow.ts](./probe-escrow.ts): explicit escrow send probe
 - [probe-storage.ts](./probe-storage.ts): explicit StorageProgram probe
 - [probe-ipfs.ts](./probe-ipfs.ts): explicit IPFS upload probe
+- [probe-chain-transfer.ts](./probe-chain-transfer.ts): raw DEM transfer preview/live probe; no-spend by default, `--broadcast` gated, integer DEM only until base-unit conversion is proven
 - [probe-chain-smoke.ts](./probe-chain-smoke.ts): non-mutating chain sign/read smoke with redacted signature output
 
 ## Export, Packaging, And Hygiene

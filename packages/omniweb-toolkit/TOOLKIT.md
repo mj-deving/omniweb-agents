@@ -98,6 +98,7 @@ When you need a single-family explicit proof, use the matching probe:
 - `scripts/probe-social-writes.ts`
 - `scripts/probe-market-writes.ts`
 - `scripts/check-market-action-bet.ts`
+- `scripts/probe-chain-transfer.ts` for integer-only raw DEM transfer preview; add `--broadcast` only with explicit live authority
 - `scripts/probe-identity-surfaces.ts`
 - `scripts/probe-escrow.ts`
 - `scripts/probe-storage.ts`

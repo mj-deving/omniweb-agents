@@ -99,6 +99,7 @@ Use live proof only when you intentionally want real effects:
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) for the maintained fixed-price bet plus attested `ACTION` publish path
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts)
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
+- [scripts/probe-chain-transfer.ts](scripts/probe-chain-transfer.ts) for raw DEM transfer preview; no-spend by default and integer-only until base-unit conversion is proven
 - `bun run check:write-surface -- --broadcast`
 
 Use [GUIDE.md](GUIDE.md) for methodology and output discipline.

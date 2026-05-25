@@ -15,10 +15,19 @@
 
 set -euo pipefail
 
+# Cron starts with a minimal PATH; provide Bun/default CLI roots before the
+# shared policy file applies any local ordering.
+export PATH="$HOME/.bun/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
 if [ -f "$HOME/.config/agent-env/paths.sh" ]; then
   # Shared agent PATH policy; source last so cron gets the same CLI roots as shells.
   # shellcheck disable=SC1091
   source "$HOME/.config/agent-env/paths.sh"
+fi
+
+if ! command -v bunx >/dev/null 2>&1; then
+  echo "bunx not found; install Bun or update ~/.config/agent-env/paths.sh" >&2
+  exit 127
 fi
 
 # Prevent stdin hangs under cron (session-runner needs --oversight autonomous, not stdin)

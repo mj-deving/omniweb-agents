@@ -12,8 +12,15 @@ This is the maintained baseline for the hardening cycle. It tracks the public `H
 If the question is "what is the maintained operator plan for proving launch readiness next?", use [launch-proving-matrix.md](./launch-proving-matrix.md).
 If the question is "how do we prove every read/write/mutation family with spending and explicit authorization?", use [full-action-spectrum-testing-matrix.md](./full-action-spectrum-testing-matrix.md).
 If the question is "what read-only methods worked on the current production host in the latest real sweep?", use [read-surface-sweep.md](./read-surface-sweep.md).
+If the question is "can a Demos-domain inventory or wrapper become a maintained package/API/CLI/live lane?", use the stricter [hardening-readiness-evidence-model-2026-05-25.md](./hardening-readiness-evidence-model-2026-05-25.md).
 
 ## Proof Labels
+
+For Demos-domain hardening rows, proof labels are not enough. Promotion now
+requires four explicit evidence columns: official docs, SDK/API/source behavior,
+package behavior, and no-spend proof. Missing official docs, unstable imports,
+spendful wrapper existence, or absent readback must be recorded as gaps rather
+than inferred from old package history.
 
 - `live-supercolony` — exercised successfully against `https://supercolony.ai`
 - `live-dev-only` — exercised successfully only on the dev host during the April 2026 audit

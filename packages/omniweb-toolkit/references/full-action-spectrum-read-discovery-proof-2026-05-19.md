@@ -1,5 +1,6 @@
 ---
 summary: "No-spend read/discovery proof for full action-spectrum PR1, covering R1-R10 and H1-H3 with current drift and degraded classifications."
+read_when: ["full action spectrum read proof", "read discovery refresh", "R1 R10 proof", "current endpoint drift"]
 topic_hint:
   - "full action spectrum read proof"
   - "read discovery refresh"

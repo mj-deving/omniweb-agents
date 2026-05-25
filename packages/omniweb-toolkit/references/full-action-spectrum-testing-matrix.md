@@ -1,5 +1,6 @@
 ---
 summary: "Full read/write action-spectrum matrix for live OmniWeb operator proving, including spend, mutation, authorization, and readback criteria."
+read_when: ["full action spectrum", "live spend matrix", "every read write", "operator proof", "what operations can we do"]
 topic_hint:
   - "full action spectrum"
   - "live spend matrix"

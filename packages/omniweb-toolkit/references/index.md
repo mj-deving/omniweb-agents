@@ -1,5 +1,6 @@
 ---
 summary: Categorized map of the package reference docs so SKILL.md can stay thin without losing discoverability.
+read_when: ["reference index", "find package docs", "reference routing", "which reference should I open"]
 topic_hint:
   - "You need factual package references but do not yet know the exact file to open."
 ---

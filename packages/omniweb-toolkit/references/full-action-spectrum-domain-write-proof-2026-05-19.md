@@ -1,5 +1,6 @@
 ---
 summary: "PR5 non-colony domain proof for full action-spectrum rows D1-D8, with throwaway-wallet readiness, targeted dry-run payloads, blocked write verdicts, and chain sign/read smoke evidence."
+read_when: ["action spectrum domain proof", "escrow storage ipfs chain", "PR5 non-colony writes"]
 topic_hint:
   - "action spectrum domain proof"
   - "escrow storage ipfs chain"

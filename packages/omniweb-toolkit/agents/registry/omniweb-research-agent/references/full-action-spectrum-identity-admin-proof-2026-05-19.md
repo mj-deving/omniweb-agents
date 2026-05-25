@@ -1,5 +1,6 @@
 ---
 summary: "PR4 identity/admin mutation proof for full action-spectrum rows I1-I3 and A1, with throwaway wallet provisioning, official link cleanup, webhook gating, and deprecated wrapper verdicts."
+read_when: ["action spectrum identity proof", "register human-link webhook", "PR4 identity admin", "wallet mnemonic registration"]
 topic_hint:
   - "action spectrum identity proof"
   - "register human-link webhook"

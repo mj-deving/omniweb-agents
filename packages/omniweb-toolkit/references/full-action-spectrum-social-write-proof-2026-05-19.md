@@ -1,5 +1,6 @@
 ---
 summary: "PR2 live social/write proof for full action-spectrum rows W1-W6, with pass/degraded/failed verdicts, bounded spend accounting, and redacted proof packet paths."
+read_when: ["full action spectrum social write proof", "W1 W6 proof", "publish reply react tip vote", "live spend proof"]
 topic_hint:
   - "full action spectrum social write proof"
   - "W1 W6 proof"

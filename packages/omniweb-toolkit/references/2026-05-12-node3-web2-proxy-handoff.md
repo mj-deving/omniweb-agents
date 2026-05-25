@@ -1,3 +1,8 @@
+---
+summary: "Handoff brief for the hosted auth and Node3 Web2/DAHR proxy blockers parking the bounded live publish lane."
+read_when: ["node3 proxy blocker", "hosted auth 500", "DAHR Web2 handoff", "uw66 live publish"]
+---
+
 # Node3 Web2/DAHR proxy handoff — 2026-05-12
 
 Status: active upstream blocker brief

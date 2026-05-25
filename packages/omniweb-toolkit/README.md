@@ -388,7 +388,7 @@ These helpers are shipped as TypeScript entrypoints. The package declares `tsx` 
 - [scripts/check-supervised-observation-eligibility.ts](scripts/check-supervised-observation-eligibility.ts) - explicit no-spend combined eligibility verdict for the first wallet-backed supervised observation publish attempt
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts) - maintained fixed-price bet plus attested `ACTION` publish path
 - [scripts/check-supervised-prediction.ts](scripts/check-supervised-prediction.ts) - maintained supervised non-market prediction path with explicit verification contracts
-- [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts) - compatibility alias for the same supervised reply path while older runbooks catch up
+- [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) - maintained supervised reply path
 - [scripts/check-discovery-drift.ts](scripts/check-discovery-drift.ts)
 - [scripts/check-topic-coverage.ts](scripts/check-topic-coverage.ts) - classify each live colony topic as research-supported, other-archetype-supported, or intentionally unsupported
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) - run the live family-level research matrix with real evidence, real LLM drafts, shared source matching, and an optional single-family broadcast

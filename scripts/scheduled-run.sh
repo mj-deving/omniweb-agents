@@ -1,22 +1,34 @@
 #!/usr/bin/env bash
-# Scheduled multi-agent session runner.
-# Runs sentinel, pioneer, crawler sequentially via session-runner.ts (V2 autonomous).
+# Scheduled sentinel session runner.
+# Runs the maintained V3 loop via session-runner.ts.
 # Post-session: source lifecycle transitions.
 # Logs to ~/.demos-agent-logs/{agent}-{timestamp}.log
 #
 # Usage:
-#   bash scripts/scheduled-run.sh              # run all 3 agents
-#   bash scripts/scheduled-run.sh sentinel     # run specific agent(s)
+#   bash scripts/scheduled-run.sh              # run sentinel
+#   bash scripts/scheduled-run.sh sentinel     # run sentinel explicitly
 #   bash scripts/scheduled-run.sh --dry-run    # show what would run
 #
 # Crontab (every 6 hours UTC):
 #   CRON_TZ=UTC
-#   0 0,6,12,18 * * * /home/mj/projects/omniweb-agents/scripts/scheduled-run.sh >> ~/.demos-agent-logs/cron.log 2>&1
+#   0 0,6,12,18 * * * /home/mj/projects/demos-agents/scripts/scheduled-run.sh >> ~/.demos-agent-logs/cron.log 2>&1
 
 set -euo pipefail
 
-# Ensure PATH includes node/npx (nvm/fnm installs aren't in cron's minimal PATH)
-export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.nvm/versions/node/v22.22.1/bin:/usr/local/bin:$PATH"
+# Cron starts with a minimal PATH; provide Bun/default CLI roots before the
+# shared policy file applies any local ordering.
+export PATH="$HOME/.bun/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+if [ -f "$HOME/.config/agent-env/paths.sh" ]; then
+  # Shared agent PATH policy; source last so cron gets the same CLI roots as shells.
+  # shellcheck disable=SC1091
+  source "$HOME/.config/agent-env/paths.sh"
+fi
+
+if ! command -v bunx >/dev/null 2>&1; then
+  echo "bunx not found; install Bun or update ~/.config/agent-env/paths.sh" >&2
+  exit 127
+fi
 
 # Prevent stdin hangs under cron (session-runner needs --oversight autonomous, not stdin)
 exec < /dev/null
@@ -30,15 +42,15 @@ LOG_DIR="$HOME/.demos-agent-logs"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 DRY_RUN=false
 
-# Default agents
-AGENTS=(sentinel pioneer crawler)
+# Default agent
+AGENTS=(sentinel)
 
 # Parse args
 CUSTOM_AGENTS=()
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=true ;;
-    sentinel|pioneer|crawler) CUSTOM_AGENTS+=("$arg") ;;
+    sentinel) CUSTOM_AGENTS+=("$arg") ;;
     *) echo "Unknown arg: $arg"; exit 1 ;;
   esac
 done
@@ -65,11 +77,10 @@ for AGENT in "${AGENTS[@]}"; do
   AGENT_LOG="$LOG_DIR/${AGENT}-${TIMESTAMP}.log"
   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Starting $AGENT session..."
 
-  if npx tsx "$REPO/cli/session-runner.ts" \
+  if bunx tsx "$REPO/cli/session-runner.ts" \
     --agent "$AGENT" \
     --oversight autonomous \
     --env "$CREDS" \
-    --loop-version 2 \
     > "$AGENT_LOG" 2>&1; then
     # Count published posts from log
     POSTS=$(grep -c "Published:" "$AGENT_LOG" 2>/dev/null || true)
@@ -89,7 +100,7 @@ done
 
 # Post-session: source lifecycle transitions
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Running source lifecycle..."
-npx tsx "$REPO/cli/source-lifecycle.ts" apply \
+bunx tsx "$REPO/cli/source-lifecycle.ts" apply \
   > "$LOG_DIR/lifecycle-${TIMESTAMP}.log" 2>&1 || true
 
 # Summary

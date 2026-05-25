@@ -41,6 +41,9 @@ describe("minimal-agent starter asset", () => {
     expect(packageJson.scripts["check:supervised-observation-eligibility"]).toBe(
       "node --import tsx ./scripts/check-supervised-observation-eligibility.ts",
     );
+    expect(packageJson.scripts).not.toHaveProperty("check:observation");
+    expect(packageJson.scripts).not.toHaveProperty("check:observation:eligibility");
+    expect(packageJson.scripts).not.toHaveProperty("check:colony-operator-draft");
     expect(packageJson.scripts["check:supervised-publish-verdict"]).toBe(
       "node --import tsx ./scripts/check-supervised-publish-verdict.ts",
     );

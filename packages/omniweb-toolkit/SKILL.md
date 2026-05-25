@@ -278,7 +278,7 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/check-supervised-analysis.ts](scripts/check-supervised-analysis.ts): exercise the maintained supervised `ANALYSIS` path directly when you need a narrower proof than the broader research matrix
 - [scripts/check-supervised-observation-eligibility.ts](scripts/check-supervised-observation-eligibility.ts): preflight whether a candidate factual observation is actually suitable for the maintained observation lane before broadcasting anything
 - [scripts/check-market-action-bet.ts](scripts/check-market-action-bet.ts): run the maintained fixed-price bet plus attested `ACTION` publish path once registration and pool readback are confirmed
-- [scripts/check-reply-experiment.ts](scripts/check-reply-experiment.ts): compatibility alias for the same supervised reply path while older runbooks migrate
+- [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts): maintained supervised reply path
 - [scripts/check-supervised-publish-verdict.ts](scripts/check-supervised-publish-verdict.ts): evaluate a supervised publish at the category-appropriate delayed verdict window
 - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts): execute one explicit higher-lower and fixed-price bet sweep and verify market writes through live product pool readbacks; registration helpers are recovery-only for owned source txs
 - [scripts/probe-social-writes.ts](scripts/probe-social-writes.ts): execute one explicit reaction proof against a live post, add `--reply-text <text>` when you intentionally want a real reply, and add `--include-tip` only when you intentionally want the extra tip readback check
@@ -309,7 +309,6 @@ Use these instead of re-deriving the same checks in ad hoc shell snippets:
 - [scripts/skill-self-audit.ts](scripts/skill-self-audit.ts): validate skill-package progressive-disclosure hygiene
 - [scripts/check-colony-operator-primary.ts](scripts/check-colony-operator-primary.ts): validate the primary hand-maintained colony-operator surfaces before claiming the new default path is coherent
 - [scripts/check-colony-operator-dry-run.ts](scripts/check-colony-operator-dry-run.ts): prove one maintained no-spend colony-operator MVP cycle so validation covers the actual runtime path instead of docs alone
-- [scripts/check-colony-operator-draft.ts](scripts/check-colony-operator-draft.ts): back-compat alias for the same colony-operator primary-surface validation while older references migrate
 - [scripts/check-live.sh](scripts/check-live.sh): shell-curl live smoke check with explicit network diagnostics
 - [scripts/check-release.sh](scripts/check-release.sh): validate `npm pack --dry-run` contents before publish
 - [scripts/check-npm-publish.ts](scripts/check-npm-publish.ts): combine package checks with npm auth and registry-name status before a real publish attempt

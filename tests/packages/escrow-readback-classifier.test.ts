@@ -9,8 +9,9 @@ import {
 describe("escrow readback classifier", () => {
   it("returns GREEN when tx confirmation and readback wrappers are both supported", () => {
     const readback = classifyEscrowReadbackSupport(
-      { ok: true, data: [] },
+      { ok: true, data: [{ platform: "github", username: "phase24-continuation-20260521" }] },
       { ok: true, data: { balance: 0.1 } },
+      { platform: "github", username: "phase24-continuation-20260521", amount: 0.1 },
     );
     const proof = classifyEscrowProofReadback(readback, true);
 
@@ -20,6 +21,85 @@ describe("escrow readback classifier", () => {
       status: "GREEN",
       confirmationSurface: "tx_and_readback_wrappers",
     });
+  });
+
+  it("returns DEGRADED when tx is confirmed but readback payloads do not prove product escrow state", () => {
+    const readback = classifyEscrowReadbackSupport(
+      { ok: true, data: [] },
+      { ok: true, data: { balance: 0 } },
+      { platform: "github", username: "phase24-continuation-20260521", amount: 0.1 },
+    );
+    const proof = classifyEscrowProofReadback(readback, true);
+
+    expect(readback.classification).toBe("inconclusive-readback");
+    expect(readback.reasonCodes).toEqual([
+      "claimable_product_state_not_proven",
+      "escrow_balance_product_state_not_proven",
+    ]);
+    expect(proof).toMatchObject({
+      ok: false,
+      status: "DEGRADED",
+      confirmationSurface: "tx_confirmed_readback_inconclusive",
+    });
+    expect(proof.reasonCodes).toContain("readback_product_state_not_proven");
+  });
+
+  it("returns DEGRADED when claimable readback does not match the expected identity", () => {
+    const readback = classifyEscrowReadbackSupport(
+      { ok: true, data: [{ platform: "github", username: "someone-else" }] },
+      { ok: true, data: { balance: 0.1 } },
+      { platform: "github", username: "phase24-continuation-20260521", amount: 0.1 },
+    );
+    const proof = classifyEscrowProofReadback(readback, true);
+
+    expect(readback.classification).toBe("inconclusive-readback");
+    expect(readback.reasonCodes).toContain("claimable_product_state_not_proven");
+    expect(proof.status).toBe("DEGRADED");
+  });
+
+  it("accepts tx-hash or combined identity claimable rows as product evidence", () => {
+    const readback = classifyEscrowReadbackSupport(
+      { ok: true, data: [{ txHash: "ABC123", identity: "github:phase24-continuation-20260521" }] },
+      { ok: true, data: { claimableAmount: "0.1 DEM" } },
+      {
+        platform: "github",
+        username: "phase24-continuation-20260521",
+        amount: 0.1,
+        txHash: "abc123",
+      },
+    );
+
+    expect(readback.classification).toBe("supported");
+    expect(readback.reasonCodes).toEqual([]);
+  });
+
+  it("rejects username-only combined identity rows when the explicit platform mismatches", () => {
+    const readback = classifyEscrowReadbackSupport(
+      { ok: true, data: [{ platform: "twitter", identity: "phase24-continuation-20260521" }] },
+      { ok: true, data: { claimableAmount: "0.1 DEM" } },
+      { platform: "github", username: "phase24-continuation-20260521", amount: 0.1 },
+    );
+
+    expect(readback.classification).toBe("inconclusive-readback");
+    expect(readback.reasonCodes).toContain("claimable_product_state_not_proven");
+  });
+
+  it("does not treat nested message text as an SDK missing-method signal", () => {
+    const readback = classifyEscrowReadbackSupport(
+      {
+        ok: true,
+        data: [{
+          platform: "github",
+          username: "phase24-continuation-20260521",
+          message: "This note says not a function, but it is user text.",
+        }],
+      },
+      { ok: true, data: { balance: 0.1 } },
+      { platform: "github", username: "phase24-continuation-20260521", amount: 0.1 },
+    );
+
+    expect(readback.classification).toBe("supported");
+    expect(readback.reasonCodes).not.toContain("escrow_query_method_not_implemented");
   });
 
   it("returns DEGRADED when SDK escrow query methods are not implemented after tx confirmation", () => {

@@ -82,6 +82,7 @@ Live validation:
 
 - `bun run check:live`
 - `bun run check:live:detailed`
+- `bun run preview:storage -- --program-name <name>` for no-spend StorageProgram address/payload/fee preview
 - `bun run check:write-surface -- --broadcast`
 - `scripts/check-live.sh`
 - `scripts/check-release.sh`
@@ -101,7 +102,7 @@ When you need a single-family explicit proof, use the matching probe:
 - `scripts/probe-chain-transfer.ts` for integer-only raw DEM transfer preview; add `--broadcast` only with explicit live authority
 - `scripts/probe-identity-surfaces.ts`
 - `scripts/probe-escrow.ts`
-- `scripts/probe-storage.ts`
+- `scripts/probe-storage.ts` through `bun run preview:storage -- --program-name <name>` for no-spend preview; add `--broadcast` only with explicit live CREATE + SET_FIELD authority
 - `scripts/probe-ipfs.ts`
 - `scripts/probe-chain-smoke.ts`
 

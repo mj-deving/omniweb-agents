@@ -38,7 +38,7 @@ Anti-drift rule:
 | Metric | Value |
 |--------|-------|
 | Tests | 3,442 passing, 7 skipped, 295 suites, **0 tsc errors** (latest full-repo baseline recorded 2026-04-20; rerun before making fresh launch-grade claims) |
-| Current direction | The consumer-spectrum, hosted no-spend proof, full action-spectrum matrix, no-spend `omniweb-agents-operator-stress` read/write-preview pass, Phase 24 VOTE/raw-chain continuation, write/spend sweep, explicit mutation-probe targeting, storage no-spend preview, full OmniWeb endpoint reconciliation, `0ctx.4` / `0ctx.5` write/spend truth-hardening, the controlled bounded 0ctx proof packet, sc96 hardening/readiness pass, 9st0 successor unblock runway, 04c5 docs-backed hardening lane, xqlb cleanup closeout through PR #543, g2iv toolkit skill/package self-audit cleanup, and fcui raw-transfer unit closeout are complete. `omniweb-agents-3005` closed after PRs #490, #491, and #495-#500 mapped the Demos SDK/RPC, DemosWork, XM/Rubic, storage/IPFS/escrow, identity/attestation/messaging/network/crypto, and future manifest/CLI design surfaces without live writes or spend. The controlled proof packet [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](goalmode/0ctx-controlled-proof-run-2026-05-23.md) produced one `GREEN`, one `DEGRADED`, one `STUCK`, and five `BLOCKED` lane outcomes. sc96 then fixed/classified raw transfer units, escrow readback, and IPFS quote discovery enough to run [packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md](../packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md), which remained `BLOCKED`. 9st0 then ran the full no-spend unblock sequence through PRs #522-#531 and recorded a no-go packet decision: raw transfer is green only for integer DEM, escrow is degraded on product readback, social is blocked, and IPFS/TLSN/chat/webhook are excluded. PRs #532-#537 completed 04c5 docs-backed hardening, PR #538 completed escrow existing-tx readback hardening, and PRs #539-#543 completed the xqlb cleanup follow-ups. fcui then proved that installed-runtime base-unit payload support is not established, kept raw transfer integer-only, and aligned the preview/report contract. The next product hardening order is storage no-spend ergonomics, DemosWork/XM/Rubic import-boundary proof, then IPFS/escrow only if new evidence appears. |
+| Current direction | The consumer-spectrum, hosted no-spend proof, full action-spectrum matrix, no-spend `omniweb-agents-operator-stress` read/write-preview pass, Phase 24 VOTE/raw-chain continuation, write/spend sweep, explicit mutation-probe targeting, storage no-spend preview, full OmniWeb endpoint reconciliation, `0ctx.4` / `0ctx.5` write/spend truth-hardening, the controlled bounded 0ctx proof packet, sc96 hardening/readiness pass, 9st0 successor unblock runway, 04c5 docs-backed hardening lane, xqlb cleanup closeout through PR #543, g2iv toolkit skill/package self-audit cleanup, and fcui raw-transfer unit closeout are complete. `omniweb-agents-3005` closed after PRs #490, #491, and #495-#500 mapped the Demos SDK/RPC, DemosWork, XM/Rubic, storage/IPFS/escrow, identity/attestation/messaging/network/crypto, and future manifest/CLI design surfaces without live writes or spend. The controlled proof packet [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](../../goalmode/0ctx-controlled-proof-run-2026-05-23.md) produced one `GREEN`, one `DEGRADED`, one `STUCK`, and five `BLOCKED` lane outcomes. sc96 then fixed/classified raw transfer units, escrow readback, and IPFS quote discovery enough to run [packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md](../../../packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md), which remained `BLOCKED`. 9st0 then ran the full no-spend unblock sequence through PRs #522-#531 and recorded a no-go packet decision: raw transfer is green only for integer DEM, escrow is degraded on product readback, social is blocked, and IPFS/TLSN/chat/webhook are excluded. PRs #532-#537 completed 04c5 docs-backed hardening, PR #538 completed escrow existing-tx readback hardening, and PRs #539-#543 completed the xqlb cleanup follow-ups. fcui then proved that installed-runtime base-unit payload support is not established, kept raw transfer integer-only, and aligned the preview/report contract. The next product hardening order is storage no-spend ergonomics, DemosWork/XM/Rubic import-boundary proof, then IPFS/escrow only if new evidence appears. |
 | Shipped moat | Leaderboard-pattern rollout remains complete, and `main` now also includes the shared request/resolution/execution seam across social, tip, and market action families plus the front-door/docs/proofs realignment that makes that seam the honest default story |
 | Consumer Package | `omniweb-toolkit` v0.1.0 — repo install and shipped checks are usable now; npm publish remains deferred until explicit release authorization plus npm auth, and no public registry install is claimed |
 | Doctrine | Current shipped truth is read-first / no-spend by default on the maintained proof path, **playbook-owned strategy above the seam**, an explicit intent layer for normalized routing, substrate/runtime ownership of capability truth/readiness/execution/verification, and a three-layer runtime model: capability answers what exists, guardrails answer whether it is safe, and admissibility answers whether this action can proceed now |
@@ -173,17 +173,17 @@ Only after that floor is real should the repo spend a wave on broader consumer h
 - treat active-pool, recent-feed, post-detail/thread, stats, balance, winners/history, and chain/explorer as distinct readback surfaces rather than interchangeable proof ✅
 - define timeouts and recheck windows from observed behavior: short operator feedback, long delayed-indexing recheck, explicit expiration ✅
 - produce proof packets that preserve the full lifecycle, not just the final verdict ✅
-- next GoalMode packet: [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md)
+- next GoalMode packet: [WRITE_LIFECYCLE_GOAL_BRIEF.md](../../WRITE_LIFECYCLE_GOAL_BRIEF.md), [WRITE_LIFECYCLE_MASTER_PRD.md](../../WRITE_LIFECYCLE_MASTER_PRD.md), and [WRITE_LIFECYCLE_GOAL_LAUNCH.md](../../WRITE_LIFECYCLE_GOAL_LAUNCH.md)
 
 #### Wave B.6 — lifecycle-aware Colony Operator checkpoints
-- [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](COLONY_OPERATOR_MEGAGOAL_BRIEF.md) is the frozen source contract for the post-lifecycle MegaGoal
-- [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md) is the frozen GoalMode execution surface
-- [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](COLONY_OPERATOR_MEGAGOAL_LAUNCH.md) contains the copy/paste `/goal` launch prompt and preflight
+- [COLONY_OPERATOR_MEGAGOAL_BRIEF.md](../../COLONY_OPERATOR_MEGAGOAL_BRIEF.md) is the frozen source contract for the post-lifecycle MegaGoal
+- [COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md](../../COLONY_OPERATOR_MEGAGOAL_MASTER_PRD.md) is the frozen GoalMode execution surface
+- [COLONY_OPERATOR_MEGAGOAL_LAUNCH.md](../../COLONY_OPERATOR_MEGAGOAL_LAUNCH.md) contains the copy/paste `/goal` launch prompt and preflight
 - owner bead: `omniweb-agents-zqnh`
 - PR #411 / `omniweb-agents-zg11` completed the durable write lifecycle/readback prerequisite, so M0 is an audit gate rather than a blocker
 - PR #413 is the capability-truth/dry-run checkpoint: all required families are surfaced, VOTE is separated from DEM pool betting, fixed-price BET is resolved through no-spend lifecycle readback, higher/lower is explicitly `lifecycle-pending`, identity is supervised/explicit, and the copied-bundle outside-in proof passes without DEM spend
 - Wave B.6 now has one maintained operator entrypoint proof: the runner read live state, selected publish, executed under explicit `--execute`, recorded lifecycle state, and proved product readback. This is a bounded live operator proof, not blanket launch-grade authority for every action family.
-- The live execution packet is [LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md](LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md), [LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md](LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md), and [LIVE_COLONY_OPERATOR_EXECUTION_LAUNCH.md](LIVE_COLONY_OPERATOR_EXECUTION_LAUNCH.md); parent bead `omniweb-agents-8tga`; external M6b gate `omniweb-agents-aick` is closed by explicit human acceptance of Gregor/OpenClaw runtime-host evidence
+- The live execution packet is [LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md](../../LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md), [LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md](../../LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md), and [LIVE_COLONY_OPERATOR_EXECUTION_LAUNCH.md](../../LIVE_COLONY_OPERATOR_EXECUTION_LAUNCH.md); parent bead `omniweb-agents-8tga`; external M6b gate `omniweb-agents-aick` is closed by explicit human acceptance of Gregor/OpenClaw runtime-host evidence
 - MegaGoal sequence:
   - M0: durable write lifecycle/readback audit
   - M1: multi-action Colony Operator runtime with lifecycle integration
@@ -192,7 +192,7 @@ Only after that floor is real should the repo spend a wave on broader consumer h
   - M4: completion audit across roadmap, package references, Beads, PRs, gates, and proof packets
 
 #### Wave C — full colony participation surface
-- launch the prep packet [LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md](LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md), [LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md](LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md), and [LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md](LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md); parent bead `omniweb-agents-q5k8` ✅
+- launch the prep packet [LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md](../../LIVE_COLONY_IDENTITY_PARTICIPATION_BRIEF.md), [LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md](../../LIVE_COLONY_IDENTITY_PARTICIPATION_MASTER_PRD.md), and [LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md](../../LIVE_COLONY_IDENTITY_PARTICIPATION_LAUNCH.md); parent bead `omniweb-agents-q5k8` ✅
 - prove official `register` with product readback under explicit `--execute --confirm-identity-mutation` ✅
 - prove official human-link challenge / claim / approve / cleanup with linked-agent and post-cleanup readback under explicit `--execute --confirm-identity-mutation` ✅
 - widen the maintained operator/starter contract toward generic action-intent coverage instead of a narrow publish/reply bias
@@ -250,9 +250,9 @@ This lane is complete through PRs #432-#441. It was not release follow-up and no
 Completed Beads epic: `omniweb-agents-spectrum`. Closeout docs slice: `omniweb-agents-gh1x`.
 
 GoalMode scaffold for end-to-end execution:
-- [CONSUMER_SPECTRUM_GOAL_BRIEF.md](CONSUMER_SPECTRUM_GOAL_BRIEF.md)
-- [CONSUMER_SPECTRUM_MASTER_PRD.md](CONSUMER_SPECTRUM_MASTER_PRD.md)
-- [CONSUMER_SPECTRUM_GOAL_LAUNCH.md](CONSUMER_SPECTRUM_GOAL_LAUNCH.md)
+- [CONSUMER_SPECTRUM_GOAL_BRIEF.md](../../CONSUMER_SPECTRUM_GOAL_BRIEF.md)
+- [CONSUMER_SPECTRUM_MASTER_PRD.md](../../CONSUMER_SPECTRUM_MASTER_PRD.md)
+- [CONSUMER_SPECTRUM_GOAL_LAUNCH.md](../../CONSUMER_SPECTRUM_GOAL_LAUNCH.md)
 
 Initial live research already shows two important truths to preserve in the inventory:
 - current `openapi.json` is much narrower than `supercolony-skill.md`; the skill advertises chat, agent levels, commodity/sports/binary/graduation markets, ETH/Base Sepolia contract-write markets, forecast scoring, user-agent linking, tips, webhooks, reports, convergence, stats, and health surfaces that are not all present in the current OpenAPI path list
@@ -263,9 +263,9 @@ Initial live research already shows two important truths to preserve in the inve
 This lane is complete under Beads epic `omniweb-agents-hosted`. PR #443 created the GoalMode packet, PR #444 added the clean local-tarball hosted consumer fixture, PR #445 added repeated no-spend full-spectrum operator proof packets, PR #446 added optional dry-run hosted runtime smoke probes, PR #447 preserved degraded/drift endpoint classifications, and the PR5 closeout wired the proof into the package front-door gate.
 
 GoalMode scaffold:
-- [HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md](HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md)
-- [HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md](HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md)
-- [HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md](HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md)
+- [HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md](../../HOSTED_OPERATOR_CONSUMER_GOAL_BRIEF.md)
+- [HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md](../../HOSTED_OPERATOR_CONSUMER_MASTER_PRD.md)
+- [HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md](../../HOSTED_OPERATOR_CONSUMER_GOAL_LAUNCH.md)
 
 Purpose:
 - proved a fresh hosted/external-style consumer can install the local `omniweb-toolkit` tarball
@@ -329,7 +329,7 @@ Still not authorized by this completed band:
 Owner bead: `omniweb-agents-operator-stress`
 
 GoalMode packet:
-- [docs/goalmode/colony-operator-stress-test-2026-05-19.md](goalmode/colony-operator-stress-test-2026-05-19.md)
+- [docs/goalmode/colony-operator-stress-test-2026-05-19.md](../../goalmode/colony-operator-stress-test-2026-05-19.md)
 
 This is the completed no-spend successor lane after the action-spectrum matrix. It exists because the repo now has the command catalog and proof vocabulary, but a fresh colony operator needed the current surface stress-tested as an operational help system before more live operations could even be considered.
 
@@ -353,7 +353,7 @@ Execution ladder:
 GoalMode stop rule:
 - keep working until AC-1 through AC-9 in the packet have evidence, an explicit `DEGRADED` verdict, or a `STUCK` note after repeated attempts on the same blocker
 - do not stop at AC-1 or the first successful read pass
-- the default stress pass was read-only plus write previews; the next tranche is live testnet execution under [docs/goalmode/testnet-live-write-tranche-2026-05-21.md](goalmode/testnet-live-write-tranche-2026-05-21.md)
+- the default stress pass was read-only plus write previews; the next tranche is live testnet execution under [docs/goalmode/testnet-live-write-tranche-2026-05-21.md](../../goalmode/testnet-live-write-tranche-2026-05-21.md)
 
 Explicit boundaries:
 - no npm release
@@ -369,11 +369,11 @@ Explicit boundaries:
 Owner beads: `omniweb-agents-operator-stress.5` for the original tranche, `omniweb-agents-0d7f` for the continuation after PR #470, `omniweb-agents-5mnk.2` / `.3` / `.4` for the historical advanced-domain successor execution, and `omniweb-agents-0ctx.9` plus child proof beads for the completed controlled proof packet.
 
 Launch packet:
-- [docs/goalmode/testnet-live-write-tranche-2026-05-21.md](goalmode/testnet-live-write-tranche-2026-05-21.md)
-- [docs/goalmode/testnet-live-write-continuation-2026-05-21.md](goalmode/testnet-live-write-continuation-2026-05-21.md)
-- [docs/goalmode/testnet-live-write-successor-2026-05-21.md](goalmode/testnet-live-write-successor-2026-05-21.md) (historical successor packet)
-- [docs/goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md](goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md) (historical advanced-domain successor packet)
-- [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](goalmode/0ctx-controlled-proof-run-2026-05-23.md) (completed controlled proof packet)
+- [docs/goalmode/testnet-live-write-tranche-2026-05-21.md](../../goalmode/testnet-live-write-tranche-2026-05-21.md)
+- [docs/goalmode/testnet-live-write-continuation-2026-05-21.md](../../goalmode/testnet-live-write-continuation-2026-05-21.md)
+- [docs/goalmode/testnet-live-write-successor-2026-05-21.md](../../goalmode/testnet-live-write-successor-2026-05-21.md) (historical successor packet)
+- [docs/goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md](../../goalmode/testnet-live-write-advanced-domain-successor-2026-05-22.md) (historical advanced-domain successor packet)
+- [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](../../goalmode/0ctx-controlled-proof-run-2026-05-23.md) (completed controlled proof packet)
 
 Big picture:
 - Phase 21-22 built the simple attestation-first and leaderboard-pattern floor.
@@ -423,7 +423,7 @@ Default spend envelope for any successor run:
 - identity/profile mutations count against the mutation budget even when they do not spend DEM, and need cleanup/readback evidence when they are temporary
 
 Post-packet execution rule:
-1. Treat [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](goalmode/0ctx-controlled-proof-run-2026-05-23.md) as completed evidence, not active authority for more live writes.
+1. Treat [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](../../goalmode/0ctx-controlled-proof-run-2026-05-23.md) as completed evidence, not active authority for more live writes.
 2. Do not relaunch a broad proof run before closing the highest-signal engineering blockers.
 3. Raw transfer amount/unit handling is complete as integer-only under `omniweb-agents-fcui`; work the next product hardening debt in this order unless Beads or a fresh packet records a better reason: storage no-spend ergonomics, DemosWork/XM/Rubic import-boundary proof, then IPFS/escrow only if new evidence appears.
 4. Keep the existing `10.1 / 25` DEM spend ledger unless a successor packet updates the budget before more spend.
@@ -435,10 +435,10 @@ Post-packet execution rule:
 Owner bead: `omniweb-agents-3005`
 
 GoalMode packet:
-- [docs/goalmode/full-omniweb-reconciliation-2026-05-22.md](goalmode/full-omniweb-reconciliation-2026-05-22.md)
+- [docs/goalmode/full-omniweb-reconciliation-2026-05-22.md](../../goalmode/full-omniweb-reconciliation-2026-05-22.md)
 
 Reference:
-- [packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md](../packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md)
+- [packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md](../../../packages/omniweb-toolkit/references/full-omniweb-endpoint-inventory-2026-05-22.md)
 
 This inventory-first lane is complete. It exists because the toolkit is no longer just a Colony Operator demo: Colony Operator is the first consumer, while the package is intended to be the shared agent-facing OmniWeb substrate over SuperColony, Demos SDK/WebSDK, Demos node RPC, DemosWork, XM cross-chain, storage, IPFS, escrow, identity, attestations, privacy, messaging, bridge, network, and crypto/ZK-adjacent surfaces.
 
@@ -462,7 +462,7 @@ Closeout:
 Owner bead: `omniweb-agents-0ctx`
 
 GoalMode packet:
-- [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](goalmode/0ctx-controlled-proof-run-2026-05-23.md)
+- [docs/goalmode/0ctx-controlled-proof-run-2026-05-23.md](../../goalmode/0ctx-controlled-proof-run-2026-05-23.md)
 
 Prep bead: `omniweb-agents-0ctx.9`
 
@@ -473,14 +473,14 @@ standalone spend proof. The controlled proof packet above is now complete after
 PRs #504-#512.
 
 Lane status:
-1. `omniweb-agents-0ctx.1` - `GREEN`: VOTE proof refresh completed through [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md).
-2. `omniweb-agents-0ctx.3` - `BLOCKED`: social react/tip target selection found no eligible untouched or untipped target at the maintained floor; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/social-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/social-report.md).
-3. `omniweb-agents-0ctx.8` - `STUCK`: raw transfer gate/readback exists and preview was green, but the live-gated `0.1 DEM` transfer stopped before broadcast because SDK confirmation rejected the packet-ceiling amount as non-integer; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/transfer-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/transfer-report.md).
-4. `omniweb-agents-5mnk.3` - `BLOCKED`: IPFS preview with public payload and `colony-operator` target returned `"{ error: \"Unknown message\"}"` instead of a concrete quote, so no `--broadcast` ran; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/ipfs-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/ipfs-report.md).
-5. `omniweb-agents-5mnk.4` - `DEGRADED`: escrow controlled send returned tx hash `2c225acd869c0041606ba7c7981f3d68ce8cd97c6a7feac83a4221f125be92b1`, but tx confirmation/readback wrappers did not prove claimable escrow state; packet ledger is now `10.1 / 25` nominal testnet DEM; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/escrow-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/escrow-report.md).
-6. `omniweb-agents-0ctx.2` - `BLOCKED`: TLSN preview validated the public target URL and local bridge dependencies, but no concrete no-spend quote or sanitized proof-material path is available; the worst-case estimate exceeds the `5 DEM` lane budget; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/tlsn-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/tlsn-report.md).
-7. `omniweb-agents-0ctx.7` - `BLOCKED`: chat-send remains a no-spend plan-only surface; no controlled room, cleanup policy, owned message id, or readback lane exists; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/chat-gate-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/chat-gate-report.md).
-8. `omniweb-agents-6rc3.5` - `BLOCKED`: webhook receiver remains a no-spend plan-only surface; no controlled public HTTPS callback, cleanup policy, owned webhook id, or create/delete readback lane exists; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/webhook-receiver-gate-report.md](../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/webhook-receiver-gate-report.md).
+1. `omniweb-agents-0ctx.1` - `GREEN`: VOTE proof refresh completed through [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/vote-report.md).
+2. `omniweb-agents-0ctx.3` - `BLOCKED`: social react/tip target selection found no eligible untouched or untipped target at the maintained floor; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/social-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/social-report.md).
+3. `omniweb-agents-0ctx.8` - `STUCK`: raw transfer gate/readback exists and preview was green, but the live-gated `0.1 DEM` transfer stopped before broadcast because SDK confirmation rejected the packet-ceiling amount as non-integer; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/transfer-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/transfer-report.md).
+4. `omniweb-agents-5mnk.3` - `BLOCKED`: IPFS preview with public payload and `colony-operator` target returned `"{ error: \"Unknown message\"}"` instead of a concrete quote, so no `--broadcast` ran; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/ipfs-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/ipfs-report.md).
+5. `omniweb-agents-5mnk.4` - `DEGRADED`: escrow controlled send returned tx hash `2c225acd869c0041606ba7c7981f3d68ce8cd97c6a7feac83a4221f125be92b1`, but tx confirmation/readback wrappers did not prove claimable escrow state; packet ledger is now `10.1 / 25` nominal testnet DEM; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/escrow-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/escrow-report.md).
+6. `omniweb-agents-0ctx.2` - `BLOCKED`: TLSN preview validated the public target URL and local bridge dependencies, but no concrete no-spend quote or sanitized proof-material path is available; the worst-case estimate exceeds the `5 DEM` lane budget; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/tlsn-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/tlsn-report.md).
+7. `omniweb-agents-0ctx.7` - `BLOCKED`: chat-send remains a no-spend plan-only surface; no controlled room, cleanup policy, owned message id, or readback lane exists; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/chat-gate-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/chat-gate-report.md).
+8. `omniweb-agents-6rc3.5` - `BLOCKED`: webhook receiver remains a no-spend plan-only surface; no controlled public HTTPS callback, cleanup policy, owned webhook id, or create/delete readback lane exists; see [packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/webhook-receiver-gate-report.md](../../../packages/omniweb-toolkit/references/0ctx-controlled-proof-run-2026-05-23/webhook-receiver-gate-report.md).
 
 Boundaries:
 - bounded testnet writes only inside the packet, after green no-spend preview, with explicit live flags, controlled target/readback, and packet budget
@@ -490,8 +490,8 @@ Boundaries:
 - tx confirmation alone is not success
 
 Completed successor unblock, docs-backed hardening, and cleanup closeout:
-1. `omniweb-agents-sc96` is complete. Its readiness packet [packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md](../packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md) was `BLOCKED`: transfer preview is green for integer `1 DEM`, escrow is still `DEGRADED`, and IPFS remains `BLOCKED`.
-2. `omniweb-agents-9st0` is complete. PR #522 prepared the no-spend runway, PR #530 aggregated readiness under [packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/readiness-aggregation.md](../packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/readiness-aggregation.md), and PR #531 recorded the blocked packet decision under [packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/packet-decision.md](../packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/packet-decision.md). No successor live authority was created.
+1. `omniweb-agents-sc96` is complete. Its readiness packet [packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md](../../../packages/omniweb-toolkit/references/sc96-successor-readiness-2026-05-23/readiness-report.md) was `BLOCKED`: transfer preview is green for integer `1 DEM`, escrow is still `DEGRADED`, and IPFS remains `BLOCKED`.
+2. `omniweb-agents-9st0` is complete. PR #522 prepared the no-spend runway, PR #530 aggregated readiness under [packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/readiness-aggregation.md](../../../packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/readiness-aggregation.md), and PR #531 recorded the blocked packet decision under [packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/packet-decision.md](../../../packages/omniweb-toolkit/references/successor-unblock-readiness-2026-05-23/packet-decision.md). No successor live authority was created.
 3. `omniweb-agents-04c5` is complete. It reset the hardening lane around official Demos docs, installed SDK/API/source behavior, package truth, and no-spend proof before new wrappers or public APIs. PRs #532-#537 closed truth sync, official Demos source map, storage/IPFS/escrow reconciliation, XM/Rubic/DemosWork reconciliation, four-column readiness evidence, and the next-lane decision.
 4. `omniweb-agents-8afw` is complete. PR #538 hardened escrow existing-tx readback classification without authorizing escrow send, claim, refund, broadcast, or spend.
 5. `omniweb-agents-xqlb` is complete. Its cleanup follow-ups are also closed: `7yvt` stale naming (PR #539), `zpd6` Bun command policy (PR #540), `pl96` runner/script aliases (PR #541), `e4xu` legacy bundle archive-only decision (PR #542), and `6tn0` package reference surface narrowing (PR #543).
@@ -503,9 +503,9 @@ Completed successor unblock, docs-backed hardening, and cleanup closeout:
 Owner bead: `omniweb-agents-action-spectrum`
 
 GoalMode packet:
-- [FULL_ACTION_SPECTRUM_GOAL_BRIEF.md](FULL_ACTION_SPECTRUM_GOAL_BRIEF.md)
-- [FULL_ACTION_SPECTRUM_MASTER_PRD.md](FULL_ACTION_SPECTRUM_MASTER_PRD.md)
-- [FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md](FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md)
+- [FULL_ACTION_SPECTRUM_GOAL_BRIEF.md](../../FULL_ACTION_SPECTRUM_GOAL_BRIEF.md)
+- [FULL_ACTION_SPECTRUM_MASTER_PRD.md](../../FULL_ACTION_SPECTRUM_MASTER_PRD.md)
+- [FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md](../../FULL_ACTION_SPECTRUM_GOAL_LAUNCH.md)
 
 Package matrix:
 - `packages/omniweb-toolkit/references/full-action-spectrum-testing-matrix.md`
@@ -561,7 +561,7 @@ Explicit boundaries:
 - Current live execution parent: `omniweb-agents-8tga` owns the real maintained-operator cycle. M0-M6b now have evidence or exact blocker records, and gate `omniweb-agents-aick` was closed by explicit human acceptance after Gregor's archive-level audit. The durable evidence archive is `/home/openclaw/.openclaw/workspace/local/demos-agents-worktrees/gregor-aick-proof/tmp/evidence/openclaw-m6b/openclaw-colony-m6b-rerun-20260516181351-redacted.tar.gz` with SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
 - Current Wave C packet: `omniweb-agents-q5k8` owns the supervised identity participation GoalMode run. It proved live `register`, human-link approve/readback, and unlink cleanup behind explicit `--execute` plus identity-specific confirmation; identity remains supervised and is not a default autonomous action.
 - PR #427 completed toolkit guardrails, and PRs #428/#429 completed action admissibility. Fresh sessions should not route back into capability, guardrail, or admissibility as upcoming architecture work.
-- Completed GoalMode paths: [GOAL_BRIEF.md](GOAL_BRIEF.md) / [MASTER_PRD.md](MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. PR #431 completed `uw66.6`; PRs #432-#441 completed the consumer-spectrum/codebase reality map and no-spend local tarball consumer proof.
+- Completed GoalMode paths: [GOAL_BRIEF.md](../../GOAL_BRIEF.md) / [MASTER_PRD.md](../../MASTER_PRD.md) captured the prior launch-proof contract, and [WRITE_LIFECYCLE_GOAL_BRIEF.md](../../WRITE_LIFECYCLE_GOAL_BRIEF.md) / [WRITE_LIFECYCLE_MASTER_PRD.md](../../WRITE_LIFECYCLE_MASTER_PRD.md) / [WRITE_LIFECYCLE_GOAL_LAUNCH.md](../../WRITE_LIFECYCLE_GOAL_LAUNCH.md) captured the completed lifecycle goal. PR #431 completed `uw66.6`; PRs #432-#441 completed the consumer-spectrum/codebase reality map and no-spend local tarball consumer proof.
 
 ## Explicitly not next
 

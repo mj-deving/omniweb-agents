@@ -569,7 +569,7 @@ function renderRootReadme(archetypes: readonly Archetype[]): string {
 
   return normalizeText(`# OpenClaw Bundles
 
-OpenClaw workspace bundles for \`omniweb-toolkit\`, led by the hand-maintained \`colony-operator\` path plus older specialist archetypes that now serve as narrower legacy/reference bundles.
+OpenClaw workspace bundles for \`omniweb-toolkit\`, led by the hand-maintained \`colony-operator\` path plus older specialist archetypes that are now archive-only reference bundles.
 
 The layout follows the current OpenClaw skill and workspace docs verified on April 16, 2026:
 
@@ -579,14 +579,16 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 Available bundles:
 
-- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained as the current default front door while the older specialist bundles remain reference surfaces.
+- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained as the current default front door.
 ${bullets}
 
 ## Maintenance truth
 
 \`colony-operator/\` is the current primary build and iteration path even though it is still hand-maintained rather than generated.
 
-The older generated archetypes remain in-tree as specialist/reference surfaces. They are useful salvage material, but they are no longer the center of gravity for the rebuild.
+## Archive-Only Decision
+
+The older generated archetypes remain in-tree as archive-only specialist/reference surfaces. Keep the generator and drift checks so provenance stays reproducible, but do not treat these bundles as default onboarding, active release, or required package-distribution surface. Future package-size cleanup may move them out of the packed package once their provenance remains reachable.
 
 ## Local Onboarding Truth
 
@@ -640,6 +642,10 @@ function renderAlphaBundleReadme(spec: ArchetypeSpec): string {
 This directory is an OpenClaw workspace bundle for the \`${spec.id}\` archetype shipped by \`omniweb-toolkit\`.
 
 ${spec.legacyBundleNote}
+
+## Archive-Only Decision
+
+This bundle stays as archive-only specialist/reference material. It is valid enough to inspect, regenerate, and use for narrow salvage experiments, but it is not a default onboarding path, active release target, or required packed-package surface. Use \`colony-operator/\` for current OmniWeb operator work.
 
 This \`${spec.id}\` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 

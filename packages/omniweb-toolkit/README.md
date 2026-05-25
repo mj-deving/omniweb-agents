@@ -35,7 +35,7 @@ For current repo truth, the important distinction is:
 
 - `colony-operator` is the default consumer path
 - `omniweb-toolkit` is the shared substrate under that path
-- legacy specialist archetypes are narrower reference surfaces, not the main onboarding story
+- legacy specialist archetypes are archive-only reference surfaces, not the main onboarding story
 
 The long-term direction is to make it possible for many different OmniWeb skills to sit above the same substrate. That means the full colony surface should be reachable below — through the intent/capability layer for normal agent behavior, and directly where operator or advanced flows need it — even when any one shipped skill only scaffolds part of that surface.
 
@@ -217,8 +217,8 @@ For external-wallet flows, `omniweb-toolkit/write` exports `buildBetMemo()`, `bu
 - `scripts/`: non-interactive validation and research helpers
 - `assets/`: output templates, archetype starters, and the generic skeleton
 - `agents/`: UI-facing skill metadata
-- `agents/openclaw/`: exported OpenClaw workspace bundles, with `colony-operator` as the default front door
-- `agents/registry/`: generated per-archetype publish-facing skill artifacts for registry/community channels
+- `agents/openclaw/`: exported OpenClaw workspace bundles, with `colony-operator` as the default front door and older generated specialist bundles as archive-only references
+- `agents/registry/`: generated skill artifacts for registry/community channels; `omniweb-colony-operator` is active, older specialist artifacts are archive-only
 - `playbooks/`: agent archetypes and legacy specialist reference material
 - `docs/`: published compatibility stubs for older doc paths
 

@@ -1,6 +1,6 @@
 # OpenClaw Bundles
 
-OpenClaw workspace bundles for `omniweb-toolkit`, led by the hand-maintained `colony-operator` path plus older specialist archetypes that now serve as narrower legacy/reference bundles.
+OpenClaw workspace bundles for `omniweb-toolkit`, led by the hand-maintained `colony-operator` path plus older specialist archetypes that are now archive-only reference bundles.
 
 The layout follows the current OpenClaw skill and workspace docs verified on April 16, 2026:
 
@@ -10,7 +10,7 @@ The layout follows the current OpenClaw skill and workspace docs verified on Apr
 
 Available bundles:
 
-- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained as the current default front door while the older specialist bundles remain reference surfaces.
+- [colony-operator/README.md](./colony-operator/README.md) — Primary general-purpose Colony operator path; hand-maintained as the current default front door.
 - [research-agent/README.md](./research-agent/README.md) — Legacy specialist bundle kept as research-oriented reference/advisory material while colony-operator becomes the default path.
 - [market-analyst/README.md](./market-analyst/README.md) — Legacy specialist bundle kept as divergence-focused reference/advisory material while colony-operator becomes the default path.
 - [engagement-optimizer/README.md](./engagement-optimizer/README.md) — Legacy specialist bundle kept as community-ops reference/advisory material while colony-operator becomes the default path.
@@ -19,7 +19,9 @@ Available bundles:
 
 `colony-operator/` is the current primary build and iteration path even though it is still hand-maintained rather than generated.
 
-The older generated archetypes remain in-tree as specialist/reference surfaces. They are useful salvage material, but they are no longer the center of gravity for the rebuild.
+## Archive-Only Decision
+
+The older generated archetypes remain in-tree as archive-only specialist/reference surfaces. Keep the generator and drift checks so provenance stays reproducible, but do not treat these bundles as default onboarding, active release, or required package-distribution surface. Future package-size cleanup may move them out of the packed package once their provenance remains reachable.
 
 ## Local Onboarding Truth
 

@@ -4,6 +4,10 @@ This directory is an OpenClaw workspace bundle for the `market-analyst` archetyp
 
 This is now a legacy specialist bundle: keep it for reference, salvage, and narrow divergence-oriented experiments, not as the default OmniWeb rebuild path. `colony-operator` is the primary hand-maintained path.
 
+## Archive-Only Decision
+
+This bundle stays as archive-only specialist/reference material. It is valid enough to inspect, regenerate, and use for narrow salvage experiments, but it is not a default onboarding path, active release target, or required packed-package surface. Use `colony-operator/` for current OmniWeb operator work.
+
 This `market-analyst` bundle is currently an alpha portable bundle. It is portable enough to inspect and wire as an OpenClaw workspace, but it is not yet clone-and-go or public / ClawHub distribution ready.
 
 Architecturally, treat this bundle as a consumer-facing playbook layer over the shared `omniweb-toolkit` substrate. The bundle should stay legible and lightweight; auth, credential handling, spend safety, verification, and capability truth belong below it.

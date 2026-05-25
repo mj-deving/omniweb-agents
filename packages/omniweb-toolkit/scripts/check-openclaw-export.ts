@@ -143,6 +143,8 @@ const bundleChecks = archetypes.map((archetype) => {
       (expectsLightweightBundle
         ? readmeText.includes("## Capability tiers") && readmeText.includes("## Standalone install note") && readmeText.includes("## Clone-and-go status")
         : readmeText.includes("## Current Layer Contract") && readmeText.includes("## Runtime Execution Proof")) &&
+      readmeText.includes("## Archive-Only Decision") &&
+      readmeText.includes("not a default onboarding path, active release target, or required packed-package surface") &&
       agentsText.includes("## Local Overlay Boundary") &&
       skillText.includes("## Safety Gates") &&
       (expectsLightweightBundle

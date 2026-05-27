@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * skill-self-audit.ts — Validate progressive-disclosure hygiene for this skill package.
  *
@@ -20,7 +20,7 @@ import {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/skill-self-audit.ts [--package-root PATH]
+  console.log(`Usage: bunx tsx scripts/skill-self-audit.ts [--package-root PATH]
 
 Options:
   --package-root PATH  Skill package root (default: current package root)

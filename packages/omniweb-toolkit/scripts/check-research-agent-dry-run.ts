@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
@@ -9,7 +9,7 @@ const keepStdout = hasFlag(args, "--stdout");
 
 const allowedArgs = new Set(["--stdout", "--help", "-h"]);
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-agent-dry-run.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-research-agent-dry-run.ts [options]
 
 Run the exported OpenClaw research-agent minimal starter in forced dry-run mode from the source workspace and assert the deferred-runtime no-spend path.
 

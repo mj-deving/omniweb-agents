@@ -2,12 +2,12 @@
  * TLSN diagnostic script — tests each pipeline step with timing.
  *
  * Usage:
- *   npx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials
- *   npx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --bridge node
- *   npx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --url "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
- *   npx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --step notary   # stop after notary check
- *   npx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --step token    # stop after token
- *   npx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --step full     # full attestation (default)
+ *   bunx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials
+ *   bunx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --bridge node
+ *   bunx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --url "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+ *   bunx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --step notary   # stop after notary check
+ *   bunx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --step token    # stop after token
+ *   bunx tsx tools/tlsn-diagnose.ts --env ~/.config/demos/credentials --step full     # full attestation (default)
  */
 
 import { parseArgs } from "node:util";

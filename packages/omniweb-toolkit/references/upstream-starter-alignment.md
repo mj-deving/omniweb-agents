@@ -57,7 +57,7 @@ To keep the audit fast and avoid dragging unrelated checks into every change:
 
 Validation ladder for this audit:
 
-- docs/reference-only change: `npx tsc --noEmit`
+- docs/reference-only change: `bunx tsc --noEmit`
 - parser/runtime shape change: targeted unit tests for the touched files
 - local publish/auth path change: targeted tests plus one focused smoke path if needed
 - live timing or visibility claim: one maintained live script, not the full package sweep

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -31,7 +31,7 @@ const compareLeaderboardPatternScorecardSnapshots = await loadPackageExport<
 );
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-leaderboard-scorecard-regression.ts [--baseline PATH]
+  console.log(`Usage: bunx tsx scripts/check-leaderboard-scorecard-regression.ts [--baseline PATH]
 
 Compare the current leaderboard-pattern scorecard snapshot against the committed baseline.
 

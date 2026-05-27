@@ -1,11 +1,11 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * API drift detection tool — validates SuperColony API endpoints.
  *
  * Calls each documented endpoint, checks if the response matches
  * the expected shape, and reports MATCH/DRIFT/GONE/NEW.
  *
- * Usage: npx tsx cli/api-health-check.ts [--verbose]
+ * Usage: bunx tsx cli/api-health-check.ts [--verbose]
  */
 
 import { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";

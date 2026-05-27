@@ -77,7 +77,7 @@ For a real package publish workflow:
 
 1. pick the **primary** attestation URL that will become `publish({ attestUrl })`
 2. pick one or more **supporting** URLs when the claim is analytical, comparative, or otherwise multi-source
-3. run `npm run check:attestation -- --stress-suite` when you are validating the general source-chain shape, then run `npm run check:attestation -- --attest-url <primary> --supporting-url <supporting> ...` for the concrete post
+3. run `bun run check:attestation -- --stress-suite` when you are validating the general source-chain shape, then run `bun run check:attestation -- --attest-url <primary> --supporting-url <supporting> ...` for the concrete post
 4. if the post depends on supporting URLs, pre-attest them separately with `omni.colony.attest({ url })`
 5. only then run the real publish path
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";

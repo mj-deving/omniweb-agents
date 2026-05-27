@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-chat-webhook-consumers.ts — No-spend proof for auth-gated chat and webhook lifecycle consumers.
  */

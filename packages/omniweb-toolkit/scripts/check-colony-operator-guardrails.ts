@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { hasFlag, loadPackageExport } from "./_shared.js";
 
@@ -33,7 +33,7 @@ const args = process.argv.slice(2);
 const allowedArgs = new Set(["--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-guardrails.ts
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-guardrails.ts
 
 Assert that the colony-operator guardrail API is exported, runtime-owned, fail-closed for unsafe inputs, and attached to multi-action plans.
 

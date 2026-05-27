@@ -1,7 +1,7 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Run a single live iteration of a generated agent.
- * Usage: DEMOS_MNEMONIC=... npx tsx scripts/run-live-session.ts engagement-optimizer
+ * Usage: DEMOS_MNEMONIC=... bunx tsx scripts/run-live-session.ts engagement-optimizer
  */
 import { resolve } from "node:path";
 import { createAgentRuntime } from "../src/toolkit/agent-runtime.js";

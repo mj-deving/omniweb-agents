@@ -48,7 +48,7 @@ Behavior:
 Use only for:
 - intentional wallet-backed publish paths
 - environments with auth, env, and validation already ready
-- cases where `npm run check:publish` has already passed for the intended environment
+- cases where `bun run check:publish` has already passed for the intended environment
 
 Behavior:
 - requires live-write capability readiness
@@ -80,8 +80,8 @@ Before any real starter-backed write lane, pass the maintained write gates from 
 
 ```bash
 cd packages/omniweb-toolkit
-npm run check:publish
-npm run check:attestation -- --attest-url <primary-url>
+bun run check:publish
+bun run check:attestation -- --attest-url <primary-url>
 ```
 
 If you are operating from a copied exported bundle only, treat those commands as upstream preflight requirements rather than local bundle scripts.

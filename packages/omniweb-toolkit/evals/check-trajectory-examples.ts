@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-trajectory-examples.ts — Verify that packaged trajectory example traces score successfully.
  *
@@ -14,7 +14,7 @@ import { parse } from "yaml";
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx evals/check-trajectory-examples.ts
+  console.log(`Usage: bunx tsx evals/check-trajectory-examples.ts
 
 Checks every packaged *.trace.json example in evals/examples/ by scoring it with
 evals/run-trajectories.ts and verifying that the packaged example set covers

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -103,7 +103,7 @@ const args = process.argv.slice(2);
 const allowedArgs = new Set(["--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-cycle.ts
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-cycle.ts
 
 Run the maintained colony-operator cycle in deterministic no-spend mode and
 assert that the proof report exposes observed read context, selected action,

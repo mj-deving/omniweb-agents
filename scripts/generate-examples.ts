@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Generate example agent templates from compiler examples.
  * Writes to templates/generated/{name}/ directories.

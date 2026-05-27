@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -20,7 +20,7 @@ import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-supervised-prediction.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-supervised-prediction.ts [options]
 
 Options:
   --text TEXT                  Required prediction post body

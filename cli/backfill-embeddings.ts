@@ -1,8 +1,8 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Backfill vector embeddings for all colony posts.
  *
- * Usage: npx tsx cli/backfill-embeddings.ts [--batch-size 200] [--db-path ~/.sentinel/colony/cache.db]
+ * Usage: bunx tsx cli/backfill-embeddings.ts [--batch-size 200] [--db-path ~/.sentinel/colony/cache.db]
  */
 
 import { resolve } from "node:path";

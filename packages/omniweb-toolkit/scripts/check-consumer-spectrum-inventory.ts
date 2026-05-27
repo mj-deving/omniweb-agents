@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-consumer-spectrum-inventory.ts — Build the no-spend consumer-spectrum inventory gate.
  *
@@ -79,7 +79,7 @@ const { describeRuntimeCapabilities } = await loadPackageModule<RuntimeModule>(
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-consumer-spectrum-inventory.ts [--base-url URL] [--timeout-ms N] [--out PATH]
+  console.log(`Usage: bunx tsx scripts/check-consumer-spectrum-inventory.ts [--base-url URL] [--timeout-ms N] [--out PATH]
 
 Options:
   --base-url URL   SuperColony base URL (default: ${DEFAULT_BASE_URL})

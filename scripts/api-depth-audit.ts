@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * api-depth-audit.ts — Fetch EVERY read endpoint and capture full response shapes.
  *
@@ -7,9 +7,9 @@
  * This is the ground truth — what the API actually returns, not what types.ts says.
  *
  * Usage:
- *   npx tsx scripts/api-depth-audit.ts > api-depth-report.json
- *   npx tsx scripts/api-depth-audit.ts --samples > api-depth-report-with-samples.json
- *   npx tsx scripts/api-depth-audit.ts --samples --auth > api-depth-report-auth.json
+ *   bunx tsx scripts/api-depth-audit.ts > api-depth-report.json
+ *   bunx tsx scripts/api-depth-audit.ts --samples > api-depth-report-with-samples.json
+ *   bunx tsx scripts/api-depth-audit.ts --samples --auth > api-depth-report-auth.json
  *
  * Cross-check: python3 scripts/shape-cross-check.py <report.json>
  */

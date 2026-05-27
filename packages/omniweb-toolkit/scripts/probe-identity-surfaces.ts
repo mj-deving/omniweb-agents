@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-identity-surfaces.ts — maintained live proof for production register()
  * and the official human-link challenge/claim/approve flow.
@@ -37,7 +37,7 @@ const DEFAULT_REGISTER_SPECIALTIES = ["testing", "proof"];
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-identity-surfaces.ts [options]
 
 Options:
   --phase PHASE              Proof phase: register, human-link, cleanup, or full (default: full)

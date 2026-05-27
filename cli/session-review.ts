@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Structured Review Template — Sentinel Phase 2 tool
  *
@@ -9,7 +9,7 @@
  * Scoped to existing SessionLogEntry fields only — no schema extensions.
  *
  * Usage:
- *   npx tsx tools/session-review.ts [--log PATH] [--session N] [--pretty] [--json]
+ *   bunx tsx tools/session-review.ts [--log PATH] [--session N] [--pretty] [--json]
  */
 
 import { readSessionLog, resolveLogPath } from "../src/lib/util/log.js";
@@ -48,7 +48,7 @@ function printHelp(): void {
 Structured Review Template — Sentinel REVIEW phase tool
 
 USAGE:
-  npx tsx tools/session-review.ts [flags]
+  bunx tsx tools/session-review.ts [flags]
 
 FLAGS:
   --agent NAME     Agent name (default: sentinel)
@@ -59,9 +59,9 @@ FLAGS:
   --help, -h       Show this help
 
 EXAMPLES:
-  npx tsx tools/session-review.ts --pretty
-  npx tsx tools/session-review.ts --log ~/.sentinel-session-log.jsonl --last 5 --pretty
-  npx tsx tools/session-review.ts --json
+  bunx tsx tools/session-review.ts --pretty
+  bunx tsx tools/session-review.ts --log ~/.sentinel-session-log.jsonl --last 5 --pretty
+  bunx tsx tools/session-review.ts --json
 `);
 }
 

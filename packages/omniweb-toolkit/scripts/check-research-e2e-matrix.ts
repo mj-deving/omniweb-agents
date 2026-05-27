@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { existsSync, readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
@@ -128,7 +128,7 @@ const args = process.argv.slice(2);
 const workerMode = args.includes("--worker-mode");
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-e2e-matrix.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-research-e2e-matrix.ts [options]
 
 Options:
   --broadcast-family FAMILY   Execute one real publish for the named family

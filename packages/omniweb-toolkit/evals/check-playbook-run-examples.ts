@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readdirSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -13,7 +13,7 @@ const SUPPORTED_ARCHETYPES = [
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx evals/check-playbook-run-examples.ts
+  console.log(`Usage: bunx tsx evals/check-playbook-run-examples.ts
 
 Scores every packaged *.run.json example in evals/playbook-runs/ with
 evals/score-playbook-run.ts and verifies that the packaged example set covers

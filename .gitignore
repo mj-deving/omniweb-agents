@@ -31,6 +31,12 @@ tests/.tmp-*
 /scorecard.png
 /scripts/auth-refresh.ts
 
+# Understand Anything local graph artifacts
+/.understand-anything/*
+!/.understand-anything/.understandignore
+/packages/omniweb-toolkit/.understand-anything/
+/packages/omniweb-toolkit/src/.understand-anything/
+
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db

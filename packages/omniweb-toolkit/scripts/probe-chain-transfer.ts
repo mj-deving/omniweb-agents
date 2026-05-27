@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-chain-transfer.ts - bounded raw DEM transfer proof lane.
  *
@@ -48,7 +48,7 @@ const DEFAULT_VERIFY_TIMEOUT_MS = 90_000;
 const DEFAULT_VERIFY_POLL_MS = 5_000;
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-chain-transfer.ts --agent-name NAME --recipient-agent-name NAME [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-chain-transfer.ts --agent-name NAME --recipient-agent-name NAME [options]
 
 Options:
   --agent-name NAME             Sender credentials profile; required

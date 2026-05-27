@@ -22,7 +22,7 @@ These are the default blocking checks for normal development and PR work.
 
 Run:
 
-- `npm run check:core`
+- `bun run check:core`
 
 What it protects:
 
@@ -40,7 +40,7 @@ Run these when the touched code matches the slice.
 
 Run:
 
-- `npm run check:frontdoor`
+- `bun run check:frontdoor`
 
 Use when changing:
 
@@ -53,7 +53,7 @@ Use when changing:
 
 Run:
 
-- `npm run check:write-slice`
+- `bun run check:write-slice`
 
 Use when changing:
 
@@ -68,8 +68,8 @@ These are not default development gates.
 
 Run:
 
-- `npm run check:release-proof`
-- `npm run check:live-proof`
+- `bun run check:release-proof`
+- `bun run check:live-proof`
 
 Use when:
 
@@ -82,7 +82,7 @@ Use when:
 
 Run:
 
-- `npm run check:legacy-compat`
+- `bun run check:legacy-compat`
 
 Use when touching legacy or compatibility surfaces that are no longer the repo's default center of gravity:
 
@@ -95,8 +95,8 @@ These checks still have value, but they should not dominate the normal operator-
 
 ## Default package commands
 
-- `npm run check:package` → current normal package gate (`check:core` + `check:frontdoor`)
-- `npm run check:package:full` → broader release-oriented package pass (`check:package` + `check:release-proof`)
+- `bun run check:package` → current normal package gate (`check:core` + `check:frontdoor`)
+- `bun run check:package:full` → broader release-oriented package pass (`check:package` + `check:release-proof`)
 
 ## Why this split exists
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-social-writes.ts — maintained live proof path for reactions, with
  * reply and tip kept as explicit optional extensions.
@@ -67,7 +67,7 @@ type OmniInstance = Awaited<ReturnType<Awaited<ReturnType<typeof loadConnect>>>>
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-social-writes.ts [options]
 
 Options:
   --feed-limit N          Number of recent feed posts to scan for a target (default: ${DEFAULT_FEED_LIMIT})

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * smoke-test-omniweb.ts — Live read-only validation of the OmniWeb consumer path.
  *
@@ -6,8 +6,8 @@
  * Zero DEM cost — read operations only.
  *
  * Usage:
- *   npx tsx scripts/smoke-test-omniweb.ts
- *   npx tsx scripts/smoke-test-omniweb.ts --json    # Machine-readable output
+ *   bunx tsx scripts/smoke-test-omniweb.ts
+ *   bunx tsx scripts/smoke-test-omniweb.ts --json    # Machine-readable output
  *
  * Requires: DEMOS_MNEMONIC in .env
  */

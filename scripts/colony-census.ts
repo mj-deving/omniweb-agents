@@ -1,9 +1,9 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Colony Census — one-time analysis of the full SuperColony feed.
  * Fetches up to 10,000 posts, runs analyzeColony, and prints structured results.
  *
- * Usage: npx tsx scripts/colony-census.ts [--limit 5000] [--env .env]
+ * Usage: bunx tsx scripts/colony-census.ts [--limit 5000] [--env .env]
  */
 
 import { webcrypto } from "node:crypto";

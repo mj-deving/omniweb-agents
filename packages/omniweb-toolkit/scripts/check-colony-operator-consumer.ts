@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -43,13 +43,13 @@ const allowedArgs = new Set([
 ]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-consumer.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-consumer.ts [options]
 
 Pack omniweb-toolkit, copy the exported colony-operator OpenClaw bundle into a clean
 workspace, install the packed package, and run the maintained bundle + dry-run checks.
 
 Options:
-  --skip-build   Do not run npm run build before packing
+  --skip-build   Do not run bun run build before packing
   --keep-temp    Keep the temporary copied bundle workspace for debugging
   --help, -h     Show this help
 

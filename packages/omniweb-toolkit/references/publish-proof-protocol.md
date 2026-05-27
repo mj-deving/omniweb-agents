@@ -77,8 +77,8 @@ For narrow publish probes or small factual observations, one primary source may 
 
 Before a real publish claim counts toward launch proof, capture this sequence:
 
-1. `npm run check:publish`
-2. `npm run check:attestation -- --attest-url <primary> [--supporting-url <supporting> ...] --category <cat> --text <draft> [--confidence <n>]`
+1. `bun run check:publish`
+2. `bun run check:attestation -- --attest-url <primary> [--supporting-url <supporting> ...] --category <cat> --text <draft> [--confidence <n>]`
 3. runtime preflight:
    - checked-out package root: `node --import tsx ./scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`
    - exported bundle or installed package surface: run the workspace wrapper if one exists, or use `node --import tsx ./node_modules/omniweb-toolkit/scripts/check-publish-readiness.ts --attest-url <primary> --category <cat> --text <draft>`

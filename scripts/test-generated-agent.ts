@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Quick smoke test for generated agents.
  * Runs one observe iteration in DRY_RUN mode and reports results.

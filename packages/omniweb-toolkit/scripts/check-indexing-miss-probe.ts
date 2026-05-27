@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { resolve } from "node:path";
 import { connectWallet } from "../../../src/lib/network/sdk.js";

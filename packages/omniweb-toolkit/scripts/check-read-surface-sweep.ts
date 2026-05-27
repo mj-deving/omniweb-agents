@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-read-surface-sweep.ts — Exercise the package's read-only colony surface
  * against the current live host and report which methods are production-ready,
@@ -199,7 +199,7 @@ type OmniWebRuntime = {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-read-surface-sweep.ts [--price-history-periods N] [--search-text TEXT] [--include-dev-only]
+  console.log(`Usage: bunx tsx scripts/check-read-surface-sweep.ts [--price-history-periods N] [--search-text TEXT] [--include-dev-only]
 
 Options:
   --price-history-periods N  Period count for getPriceHistory (default: 24)

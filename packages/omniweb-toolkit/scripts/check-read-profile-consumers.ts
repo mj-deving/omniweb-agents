@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-read-profile-consumers.ts — No-spend proof for root read/profile/scoring/verification consumers.
  */

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Confidence Gate Checker — Sentinel Phase 2 tool
  *
@@ -7,7 +7,7 @@
  * No interactive prompts — pure CLI, fully agentic.
  *
  * Usage:
- *   npx tsx tools/gate.ts --topic TEXT [--text TEXT] [--category TEXT] [--confidence N] [--env PATH] [--pretty] [--json]
+ *   bunx tsx tools/gate.ts --topic TEXT [--text TEXT] [--category TEXT] [--confidence N] [--env PATH] [--pretty] [--json]
  */
 
 import { resolve } from "node:path";
@@ -47,7 +47,7 @@ function printHelp(): void {
 Confidence Gate Checker — Agent GATE phase tool
 
 USAGE:
-  npx tsx tools/gate.ts --topic TEXT [flags]
+  bunx tsx tools/gate.ts --topic TEXT [flags]
 
 FLAGS:
   --agent NAME       Agent name (default: sentinel)
@@ -73,9 +73,9 @@ GATE ITEMS (from strategy.yaml):
   7. Reply target reactions           [AUTO — checks --reply-to parent, if provided]
 
 EXAMPLES:
-  npx tsx tools/gate.ts --topic "bitcoin" --pretty
-  npx tsx tools/gate.ts --topic "oil-prices" --text "My analysis of..." --category ANALYSIS --confidence 85 --pretty
-  npx tsx tools/gate.ts --topic "eth-staking" --json
+  bunx tsx tools/gate.ts --topic "bitcoin" --pretty
+  bunx tsx tools/gate.ts --topic "oil-prices" --text "My analysis of..." --category ANALYSIS --confidence 85 --pretty
+  bunx tsx tools/gate.ts --topic "eth-staking" --json
 `);
 }
 

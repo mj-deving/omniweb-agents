@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { hasFlag, loadPackageExport } from "./_shared.js";
 
@@ -55,7 +55,7 @@ const args = process.argv.slice(2);
 const allowedArgs = new Set(["--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-official-skill-coverage.ts
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-official-skill-coverage.ts
 
 Assert that the toolkit-owned capability manifest has a maintained comparison against the official SuperColony skill surface.
 

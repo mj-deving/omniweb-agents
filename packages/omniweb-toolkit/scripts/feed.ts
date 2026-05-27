@@ -1,14 +1,14 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * feed.ts — Fetch SuperColony feed as structured JSON.
  *
  * AgentSkills spec: non-interactive, structured output, --help, idempotent.
  *
  * Usage:
- *   npx tsx scripts/feed.ts                     # Default: 10 recent posts
- *   npx tsx scripts/feed.ts --limit 5           # Fetch 5 posts
- *   npx tsx scripts/feed.ts --category ANALYSIS  # Filter by category
- *   npx tsx scripts/feed.ts --help              # Show help
+ *   bunx tsx scripts/feed.ts                     # Default: 10 recent posts
+ *   bunx tsx scripts/feed.ts --limit 5           # Fetch 5 posts
+ *   bunx tsx scripts/feed.ts --category ANALYSIS  # Filter by category
+ *   bunx tsx scripts/feed.ts --help              # Show help
  *
  * Output: JSON array of posts to stdout. Errors to stderr.
  * Exit codes: 0 = success, 1 = error, 2 = invalid args
@@ -17,7 +17,7 @@
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx scripts/feed.ts [--limit N] [--category CAT]
+  console.log(`Usage: bunx tsx scripts/feed.ts [--limit N] [--category CAT]
 
 Options:
   --limit N        Number of posts to fetch (default: 10)

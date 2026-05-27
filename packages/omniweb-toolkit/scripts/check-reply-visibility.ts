@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-reply-visibility.ts - live reply visibility and thread readback proof.
  *
@@ -26,7 +26,7 @@ const DEFAULT_FEED_LIMIT = 100;
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-reply-visibility.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-reply-visibility.ts [options]
 
 Options:
   --parent-tx TX          Parent post tx hash to reply to (required)

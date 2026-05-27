@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Source Scan CLI — Phase 2 of intent-driven scanning.
  *
@@ -6,11 +6,11 @@
  * detects signals, and optionally outputs gate suggestions.
  *
  * Usage:
- *   npx tsx cli/source-scan.ts --agent sentinel --pretty
- *   npx tsx cli/source-scan.ts --agent sentinel --intent "check crypto for big moves" --pretty
- *   npx tsx cli/source-scan.ts --agent sentinel --domain crypto --pretty
- *   npx tsx cli/source-scan.ts --agent sentinel --dry-run --pretty
- *   npx tsx cli/source-scan.ts --agent sentinel --json
+ *   bunx tsx cli/source-scan.ts --agent sentinel --pretty
+ *   bunx tsx cli/source-scan.ts --agent sentinel --intent "check crypto for big moves" --pretty
+ *   bunx tsx cli/source-scan.ts --agent sentinel --domain crypto --pretty
+ *   bunx tsx cli/source-scan.ts --agent sentinel --dry-run --pretty
+ *   bunx tsx cli/source-scan.ts --agent sentinel --json
  */
 
 import { homedir } from "node:os";

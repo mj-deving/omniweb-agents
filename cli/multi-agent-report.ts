@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Multi-Agent Report — cross-agent dashboard for all SuperColony agents.
  *
@@ -6,8 +6,8 @@
  * Outputs consolidated view: posts published, avg scores, failure rates, calibration offsets.
  *
  * Usage:
- *   npx tsx tools/multi-agent-report.ts --pretty    # Human-readable table
- *   npx tsx tools/multi-agent-report.ts --json      # Machine-readable JSON
+ *   bunx tsx tools/multi-agent-report.ts --pretty    # Human-readable table
+ *   bunx tsx tools/multi-agent-report.ts --json      # Machine-readable JSON
  */
 
 import { resolve } from "node:path";

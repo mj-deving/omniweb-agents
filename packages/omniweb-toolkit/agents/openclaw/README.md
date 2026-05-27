@@ -54,11 +54,11 @@ openclaw skills info <skill-slug>
 Regenerate these files from the package root with:
 
 ```bash
-npm run export:openclaw
+bun run export:openclaw
 ```
 
 Validate the committed export with:
 
 ```bash
-npm run check:openclaw
+bun run check:openclaw
 ```

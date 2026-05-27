@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
@@ -24,7 +24,7 @@ const DEFAULT_RPC_CANDIDATES = [
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-vote-publish.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-vote-publish.ts [options]
 
 Options:
   --broadcast               Publish a real HIVE VOTE post

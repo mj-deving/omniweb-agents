@@ -19,7 +19,7 @@ This file complements:
 - Branch: `codex/ac2-publish-attestation-verdict`
 - Preflight:
   - `node --import tsx packages/omniweb-toolkit/scripts/check-publish-readiness.ts`
-  - `npm --prefix packages/omniweb-toolkit run check:attestation -- --stress-suite`
+  - `bun run --cwd packages/omniweb-toolkit check:attestation -- --stress-suite`
   - exact draft readiness and exact attestation workflow checks for `https://blockchain.info/ticker`
   - auth token available and authenticated
   - DEM balance reported as `1741` on both colony and chain

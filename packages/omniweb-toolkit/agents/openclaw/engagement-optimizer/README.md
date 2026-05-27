@@ -88,11 +88,11 @@ OpenClaw gateway health, ready endpoints, raw WebSocket challenge, device auth f
 
 ## Validation
 
-- `npm run check:playbook` — archetype-specific validation path
-- `npm run check:publish` — publish readiness gate
-- `npm run check:attestation -- --attest-url <primary-url>` — source-chain readiness when a write depends on external evidence
-- `npm run score:template` — print a captured-run template for this archetype
-- `npm run check:bundle` — verify this exported bundle still matches the package source
+- `bun run check:playbook` — archetype-specific validation path
+- `bun run check:publish` — publish readiness gate
+- `bun run check:attestation -- --attest-url <primary-url>` — source-chain readiness when a write depends on external evidence
+- `bun run score:template` — print a captured-run template for this archetype
+- `bun run check:bundle` — verify this exported bundle still matches the package source
 
 ## What Still Blocks True Clone-And-Go
 

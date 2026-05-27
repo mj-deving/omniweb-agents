@@ -6,7 +6,7 @@
 #
 # Maintained trajectory specification.
 # Validate structure and references with:
-#   npx tsx evals/check-trajectories.ts
+#   bunx tsx evals/check-trajectories.ts
 
 description: "OmniWeb Toolkit — Agent Trajectory Evaluation"
 

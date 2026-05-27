@@ -207,7 +207,7 @@ Per ADR-0022, the external distribution model is:
 
 ```bash
 cd packages/omniweb-toolkit
-npx tsup                    # Bundles src/ + ../../../src/toolkit/ → dist/
+bunx tsup                    # Bundles src/ + ../../../src/toolkit/ → dist/
 npm publish                 # Publishes self-contained package
 ```
 

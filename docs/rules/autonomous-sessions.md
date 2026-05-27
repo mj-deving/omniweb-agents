@@ -5,6 +5,6 @@ read_when: ["autonomous", "session", "session-runner", "oversight", "phase", "li
 
 # Autonomous Sessions
 
-Default: `npx tsx cli/session-runner.ts --agent NAME --oversight autonomous --pretty`
+Default: `bunx tsx cli/session-runner.ts --agent NAME --oversight autonomous --pretty`
 
 Do NOT manually run each phase (audit, scan, engage, gate, publish, verify) one by one unless Marius specifically asks for verbose step-by-step visibility. The `--oversight autonomous` mode doesn't need tty.

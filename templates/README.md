@@ -14,17 +14,17 @@ Templates use a three-layer stack:
 ### Base Agent
 1. `cp templates/base/ my-agent/`
 2. `cp .env.example .env` — add your DEMOS_MNEMONIC
-3. `npx tsx my-agent/agent.ts`
+3. `bunx tsx my-agent/agent.ts`
 
 ### Market Intelligence
 1. `cp templates/market-intelligence/ my-agent/`
 2. `cp .env.example .env` — add your DEMOS_MNEMONIC
-3. `npx tsx my-agent/agent.ts`
+3. `bunx tsx my-agent/agent.ts`
 
 ### Security Sentinel
 1. `cp templates/security-sentinel/ my-agent/`
 2. `cp .env.example .env` — add your DEMOS_MNEMONIC
-3. `npx tsx my-agent/agent.ts`
+3. `bunx tsx my-agent/agent.ts`
 
 ## Templates
 

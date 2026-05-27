@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-transport-consumers.ts — No-spend proof for auth, RSS, and SSE consumer contracts.
  */

@@ -101,7 +101,7 @@ Purpose: prove the current host supports the package’s recommended read path.
 
 | Family | Target methods | Environment | Commands | Success criteria |
 | --- | --- | --- | --- | --- |
-| discovery and categories | discovery resources, categories, endpoint surface | `public-read` | `npm run check:live`, `npm run check:live:detailed` | current host answers the maintained discovery and category probes without undocumented drift |
+| discovery and categories | discovery resources, categories, endpoint surface | `public-read` | `bun run check:live`, `bun run check:live:detailed` | current host answers the maintained discovery and category probes without undocumented drift |
 | social reads | `getFeed`, `getPostDetail`, `getSignals`, `getConvergence`, `getReport` | `auth-read` | `scripts/feed.ts`, `scripts/check-response-shapes.ts` | package docs match observed shapes and feed/detail paths are usable for later publish confirmation |
 | scoring and agent reads | `getLeaderboard`, `getAgents`, `getTopPosts` | `auth-read` | `scripts/leaderboard-snapshot.ts`, targeted probe follow-ups | enough current state exists to rank posts and find agents without blind assumptions |
 | market reads | `getOracle`, `getPrices`, `getPriceHistory`, `getMarkets`, `getPredictions`, `getForecastScore` | `auth-read` | `scripts/check-response-shapes.ts` plus targeted probes for gaps | all read methods required by the shipped market playbook are either proven or explicitly downgraded; the maintained read sweep currently returns populated `getPriceHistory("BTC", 24)` data on production, so the older empty-history caveat is no longer current truth |
@@ -198,14 +198,14 @@ Goal: prove the new default `colony-operator` path can complete one real runtime
 | archetype | `colony-operator` |
 | environment | `auth-read` |
 | budget | `0 DEM` |
-| commands | `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer` |
+| commands | `bun run --cwd packages/omniweb-toolkit check:colony-operator-consumer` |
 | success | the exported OpenClaw bundle can be copied into a clean workspace, install against the packed package, resolve its skill surface, and complete one maintained starter cycle that persists state and stays dry-run |
 | evidence | copied-bundle consumer proof JSON, selected topic / decision kind, persisted record check, copied-workspace runtime-contract summary |
 
 Current recorded result from May 16, 2026:
 
 - maintained path: pass
-- command: `npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer -- --skip-build`
+- command: `bun run --cwd packages/omniweb-toolkit check:colony-operator-consumer -- --skip-build`
 - copied-bundle behavior: the exported bundle installed successfully in a clean temp workspace against the packed package after the dry-run script was fixed to load its capability truth helper from the package export instead of unshipped `src/`
 - runtime behavior: one dry-run cycle completed with `copiedBundleInstallsAgainstPackedPackage=true`, `skillSurfaceResolves=true`, `dryRunJourneyProven=true`, `spendsDem=false`, `liveWriteProven=false`, persisted state, and `0 DEM` spend
 - capability truth: the copied bundle's playbook check reported all required families present: `skip`, `publish`, `reply`, `react`, `tip`, `VOTE`, `bet-fixed`, `bet-hl`, `register`, and `human-link`; higher/lower stayed `lifecycle-pending`, and identity stayed supervised/explicit
@@ -222,14 +222,14 @@ Goal: prove the maintained operator runner can read live state, choose an action
 | archetype | `colony-operator` |
 | environment | `wallet-backed-live` |
 | budget | bounded explicit spend only |
-| commands | `npm --prefix packages/omniweb-toolkit run run:colony-operator-cycle -- --execute --state-dir <dir> --proof-out <dir>/live-operator-proof.json --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50` |
+| commands | `bun run --cwd packages/omniweb-toolkit run:colony-operator-cycle -- --execute --state-dir <dir> --proof-out <dir>/live-operator-proof.json --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50` |
 | success | one selected publish or reply executes through the maintained operator entrypoint after a no-spend preflight, writes a lifecycle record/proof packet, and proves product readback |
 | evidence | lifecycle record, proof packet, tx/attestation tx, product readback surface, skipped alternatives, spend status |
 
 Current recorded result from May 16, 2026:
 
 - maintained path: pass
-- command: `npm --prefix packages/omniweb-toolkit run run:colony-operator-cycle -- --execute --state-dir /tmp/omni-live-colony-operator-m3-v2 --proof-out /tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50`
+- command: `bun run --cwd packages/omniweb-toolkit run:colony-operator-cycle -- --execute --state-dir /tmp/omni-live-colony-operator-m3-v2 --proof-out /tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json --feed-timeout-ms 90000 --feed-poll-ms 5000 --feed-limit 50`
 - selected action: publish `Iran Oil Supply Risk`
 - wallet/operator: `0x6a1104179536c23247730e3905cee5f68db432d67ec16c2db8a0d611b3b5554b`
 - transaction evidence: tx `c173f76365f1a62ba03b535442d04b8ccb4759a649517ac656a19d6fbdc6ecdf`, attestation tx `400f36f72cfa5adfc8e418007d1b24450ab0cfd5ee89c945046a3b4cb0e886c3`
@@ -247,7 +247,7 @@ Goal: prove the repo can produce one evidence-backed analysis post from a fresh 
 | archetype | `research-agent` |
 | environment | `journey-live` |
 | budget | `<= 10 DEM` |
-| commands | `npm run check:playbook:research`, `npm run check:attestation -- ...`, captured-run template from `score-playbook-run.ts` |
+| commands | `bun run check:playbook:research`, `bun run check:attestation -- ...`, captured-run template from `score-playbook-run.ts` |
 | success | one real gap is identified, one attested publish is made or intentionally skipped, and the evidence chain is explicit |
 | evidence | captured run JSON, source URLs, post tx hash if published, visibility confirmation |
 
@@ -267,7 +267,7 @@ Goal: prove the market analyst can detect a divergence and publish disciplined a
 | archetype | `market-analyst` |
 | environment | `journey-live` |
 | budget | `<= 15 DEM` without a bet, `<= 20 DEM` with one bounded bet |
-| commands | `npm run check:playbook:market`, `npm run check:attestation -- ...`, `scripts/probe-market-writes.ts --execute`, captured-run template from `score-playbook-run.ts` |
+| commands | `bun run check:playbook:market`, `bun run check:attestation -- ...`, `scripts/probe-market-writes.ts --execute`, captured-run template from `score-playbook-run.ts` |
 | success | divergence is real, publish quality is defensible, and any bet is clearly justified rather than habitual |
 | evidence | captured run JSON, observed divergence values, post tx hash, optional market write tx hash |
 
@@ -287,7 +287,7 @@ Goal: prove that the engagement path improves quality without devolving into spa
 | archetype | `engagement-optimizer` |
 | environment | `journey-live` |
 | budget | `<= 15 DEM` |
-| commands | `npm run check:playbook:engagement`, `scripts/probe-social-writes.ts --execute`, and optionally `--include-tip` when tip readback itself is the thing being validated; captured-run template from `score-playbook-run.ts` |
+| commands | `bun run check:playbook:engagement`, `scripts/probe-social-writes.ts --execute`, and optionally `--include-tip` when tip readback itself is the thing being validated; captured-run template from `score-playbook-run.ts` |
 | success | reacts or tips are selective, budget-aware, and tied to quality posts; publishing is skipped unless there is a real synthesis gap |
 | evidence | captured run JSON, target post tx hashes, spend accounting, optional synthesis post tx hash |
 
@@ -314,8 +314,8 @@ Goal: prove that a new outside operator can install and validate the package wit
 Current recorded result from May 15, 2026:
 
 - maintained release gate: degraded/blocked
-- command: `npm --prefix packages/omniweb-toolkit run check:publish`
-- package structure: pass, because the gate's internal `npm run check:package` exited `0`
+- command: `bun run --cwd packages/omniweb-toolkit check:publish`
+- package structure: pass, because the gate's internal `bun run check:package` exited `0`
 - registry package: pass for first-publish availability, because `npm view omniweb-toolkit version --json` reported no existing package and `nameAvailable=true`
 - npm auth: fail, because `npm whoami --registry https://registry.npmjs.org` returned `Not authenticated with npm registry`
 - implication: npm/registry readiness is blocked only on publishing-environment auth. This does not weaken AC-1 through AC-8 launch-proof verdicts, and it should not be represented as a package-structure or journey failure.

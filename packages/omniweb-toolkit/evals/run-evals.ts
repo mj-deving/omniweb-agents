@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * run-evals.ts — On-demand eval runner for omniweb-toolkit skill quality.
  *
@@ -7,15 +7,15 @@
  * consistency check that the eval descriptions match the actual API surface.
  *
  * For trajectory-spec validation, use:
- *   npx tsx evals/check-trajectories.ts
+ *   bunx tsx evals/check-trajectories.ts
  * For trace scoring against the trajectory spec, use:
- *   npx tsx evals/run-trajectories.ts --trace ./path/to/trace.json
+ *   bunx tsx evals/run-trajectories.ts --trace ./path/to/trace.json
  *
  * Usage:
- *   npx tsx evals/run-evals.ts              # Run all evals
- *   npx tsx evals/run-evals.ts --id tip-*   # Run matching evals
- *   npx tsx evals/run-evals.ts --summary    # Counts only
- *   npx tsx evals/run-evals.ts --help       # Show help
+ *   bunx tsx evals/run-evals.ts              # Run all evals
+ *   bunx tsx evals/run-evals.ts --id tip-*   # Run matching evals
+ *   bunx tsx evals/run-evals.ts --summary    # Counts only
+ *   bunx tsx evals/run-evals.ts --help       # Show help
  *
  * Output: JSON report to stdout. Errors to stderr.
  * Exit codes: 0 = all pass, 1 = failures found, 2 = invalid args
@@ -44,11 +44,11 @@ interface EvalResult {
 // ── Help ────────────────────────────────────────
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx evals/run-evals.ts [--id PATTERN] [--summary]
+  console.log(`Usage: bunx tsx evals/run-evals.ts [--id PATTERN] [--summary]
 
 Validates eval cases against SKILL.md API surface.
-For trajectory-spec validation, run: npx tsx evals/check-trajectories.ts
-For trajectory trace scoring, run: npx tsx evals/run-trajectories.ts --trace ./path/to/trace.json
+For trajectory-spec validation, run: bunx tsx evals/check-trajectories.ts
+For trajectory trace scoring, run: bunx tsx evals/run-trajectories.ts --trace ./path/to/trace.json
 
 Options:
   --id PATTERN   Filter evals by id glob (e.g. --id "redteam-*")

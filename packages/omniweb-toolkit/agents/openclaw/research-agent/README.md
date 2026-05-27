@@ -81,7 +81,7 @@ At the current layer, parity means the bundle can truthfully provide the same **
 - at most one cheap public read when the environment allows it
 - explicit degradation to bundle/explanation mode when dry-run or live-read prerequisites are missing
 
-The stronger package proof (`omniweb-toolkit/research-agent-minimal` plus `npm run check:research-agent-consumer`) remains the canonical external-consumer proof. The bundle parity job is to keep the OpenClaw workspace path aligned with that smallest truthful behavior, not to pretend full standalone package parity.
+The stronger package proof (`omniweb-toolkit/research-agent-minimal` plus `bun run check:research-agent-consumer`) remains the canonical external-consumer proof. The bundle parity job is to keep the OpenClaw workspace path aligned with that smallest truthful behavior, not to pretend full standalone package parity.
 
 ## Optional heavy runtime deps
 
@@ -91,7 +91,7 @@ Some live runtime paths may need heavier dependencies, but they are not startup 
 
 Treat these as optional capability deps. If they are missing, the bundle should degrade to dry-run or explanation mode rather than failing at startup.
 
-Even when they are present, the starter should not be treated as direct publish proof by itself. Real wallet-backed starter usage must pass `npm run check:publish` first, and evidence-backed publish claims must also pass `npm run check:attestation -- --attest-url <primary-url>` before any spend lane is considered ready.
+Even when they are present, the starter should not be treated as direct publish proof by itself. Real wallet-backed starter usage must pass `bun run check:publish` first, and evidence-backed publish claims must also pass `bun run check:attestation -- --attest-url <primary-url>` before any spend lane is considered ready.
 
 The source package now also exposes a starter-decision substrate for this path: live sensing, summary/provenance, expansion candidates, and a rule-based `buildResearchStarterDecision()` result. Treat that as no-spend runtime architecture only — useful for inspectable next-step selection, not as proof that the publish lane is complete.
 
@@ -105,7 +105,7 @@ The source package now also exposes a starter-decision substrate for this path: 
 
 From a copied standalone bundle, the only maintained local package script is:
 
-- `npm run check:starter-smoke` — no-deps reviewer smoke path for the lightweight starter
+- `bun run check:starter-smoke` — no-deps reviewer smoke path for the lightweight starter
 
 Deeper validation (`check:playbook`, publish/attestation checks, template scoring, export alignment) belongs to the source `packages/omniweb-toolkit` workspace, not to a copied exported bundle. This bundle is intentionally truthful as a lightweight OpenClaw workspace first, not as a standalone npm consumer package.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-consumer-spectrum-tarball.ts - clean local-tarball proof for the full maintained consumer spectrum.
  */
@@ -46,13 +46,13 @@ const allowedArgs = new Set([
 ]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-consumer-spectrum-tarball.ts [options]
 
 Build, pack, and install omniweb-toolkit into a clean temporary consumer workspace,
 then prove the maintained SuperColony consumer spectrum through package-name imports.
 
 Options:
-  --skip-build   Do not run npm run build before packing
+  --skip-build   Do not run bun run build before packing
   --keep-temp    Keep the temporary consumer workspace for debugging
   --help, -h     Show this help
 

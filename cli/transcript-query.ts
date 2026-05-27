@@ -1,12 +1,12 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Transcript Query CLI — analyze session transcripts.
  *
  * Usage:
- *   npx tsx cli/transcript-query.ts --agent sentinel --pretty
- *   npx tsx cli/transcript-query.ts --agent sentinel --session 42 --pretty
- *   npx tsx cli/transcript-query.ts --agent sentinel --last 5 --pretty
- *   npx tsx cli/transcript-query.ts --agent sentinel --json
+ *   bunx tsx cli/transcript-query.ts --agent sentinel --pretty
+ *   bunx tsx cli/transcript-query.ts --agent sentinel --session 42 --pretty
+ *   bunx tsx cli/transcript-query.ts --agent sentinel --last 5 --pretty
+ *   bunx tsx cli/transcript-query.ts --agent sentinel --json
  */
 
 import { resolve } from "node:path";

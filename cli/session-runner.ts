@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Session Runner — Sentinel Phase 3 orchestrator
  *
@@ -9,7 +9,7 @@
  * Phase sequence: AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN
  *
  * Usage:
- *   npx tsx tools/session-runner.ts [--env PATH] [--log PATH] [--oversight LEVEL] [--resume] [--skip-to PHASE] [--dry-run] [--pretty]
+ *   bunx tsx tools/session-runner.ts [--env PATH] [--log PATH] [--oversight LEVEL] [--resume] [--skip-to PHASE] [--dry-run] [--pretty]
  *
  * Oversight levels:
  *   full       (default) GATE interactive, PUBLISH manual, REVIEW interactive
@@ -365,7 +365,7 @@ function printHelp(): void {
 Session Runner — Agent 8-phase loop orchestrator
 
 USAGE:
-  npx tsx tools/session-runner.ts [flags]
+  bunx tsx tools/session-runner.ts [flags]
 
 FLAGS:
   --agent NAME           Agent name (default: sentinel)
@@ -406,15 +406,15 @@ PHASE SEQUENCE:
   8. HARDEN   (varies)   — Classify and apply REVIEW findings via improvement lifecycle
 
 EXAMPLES:
-  npx tsx tools/session-runner.ts --pretty
-  npx tsx tools/session-runner.ts --loop-version 3 --skip-to act --pretty
-  npx tsx tools/session-runner.ts --legacy-loop --pretty
-  npx tsx tools/session-runner.ts --legacy-loop --oversight approve --pretty
-  npx tsx tools/session-runner.ts --oversight autonomous --pretty
-  npx tsx tools/session-runner.ts --exec-backend tmux --oversight autonomous --pretty
-  SESSION_RUNNER_TMUX_ADAPTER=tmux-cli npx tsx tools/session-runner.ts --exec-backend tmux --pretty
-  npx tsx tools/session-runner.ts --resume --pretty
-  npx tsx tools/session-runner.ts --dry-run --oversight autonomous
+  bunx tsx tools/session-runner.ts --pretty
+  bunx tsx tools/session-runner.ts --loop-version 3 --skip-to act --pretty
+  bunx tsx tools/session-runner.ts --legacy-loop --pretty
+  bunx tsx tools/session-runner.ts --legacy-loop --oversight approve --pretty
+  bunx tsx tools/session-runner.ts --oversight autonomous --pretty
+  bunx tsx tools/session-runner.ts --exec-backend tmux --oversight autonomous --pretty
+  SESSION_RUNNER_TMUX_ADAPTER=tmux-cli bunx tsx tools/session-runner.ts --exec-backend tmux --pretty
+  bunx tsx tools/session-runner.ts --resume --pretty
+  bunx tsx tools/session-runner.ts --dry-run --oversight autonomous
 `);
 }
 
@@ -1140,7 +1140,7 @@ async function main(): Promise<void> {
     saveState(state, sessionsDir);
     try { if (isV3(state)) writeV3SessionReport(state, flags.oversight, sessionsDir); } catch { /* best-effort */ }
     try { releaseLock(sessionNumber, sessionsDir, flags.agent); } catch { /* best-effort */ }
-    console.error(`  Resume with: npx tsx cli/session-runner.ts --agent ${flags.agent} --resume --pretty`);
+    console.error(`  Resume with: bunx tsx cli/session-runner.ts --agent ${flags.agent} --resume --pretty`);
     process.exit(2);
   }, SESSION_TIMEOUT_MS);
   sessionTimer.unref(); // Don't prevent clean exit
@@ -1151,7 +1151,7 @@ async function main(): Promise<void> {
     shuttingDown = true;
     console.log("\n\n  ⚠️ Interrupted — saving state...");
     saveState(state, sessionsDir);
-    console.log(`  Resume with: npx tsx tools/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
+    console.log(`  Resume with: bunx tsx tools/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
     console.log();
     process.exit(0);
   });
@@ -1228,7 +1228,7 @@ async function main(): Promise<void> {
       if (isV3(state)) writeV3SessionReport(state, flags.oversight, sessionsDir);
     } catch { /* non-fatal — report is best-effort on error path */ }
     console.error(`\nFATAL: ${message}`);
-    console.error(`Session state saved. Resume with: npx tsx cli/session-runner.ts --agent ${flags.agent} --resume --pretty`);
+    console.error(`Session state saved. Resume with: bunx tsx cli/session-runner.ts --agent ${flags.agent} --resume --pretty`);
     process.exit(1);
   } finally {
     // H2: Always release lock — prevent stale locks blocking future sessions

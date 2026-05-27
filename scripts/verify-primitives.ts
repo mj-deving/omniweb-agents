@@ -2,9 +2,9 @@
  * Phase 19b: Live primitive verification + doc generation.
  *
  * Modes:
- *   npx tsx scripts/verify-primitives.ts           — verify all endpoints
- *   npx tsx scripts/verify-primitives.ts --snapshot — save response shapes to tmp/primitives-shapes.json
- *   npx tsx scripts/verify-primitives.ts --generate — generate markdown doc skeletons to tmp/generated-docs/
+ *   bunx tsx scripts/verify-primitives.ts           — verify all endpoints
+ *   bunx tsx scripts/verify-primitives.ts --snapshot — save response shapes to tmp/primitives-shapes.json
+ *   bunx tsx scripts/verify-primitives.ts --generate — generate markdown doc skeletons to tmp/generated-docs/
  *
  * Auth-required endpoints are tested but marked "needs auth" (not broken).
  */

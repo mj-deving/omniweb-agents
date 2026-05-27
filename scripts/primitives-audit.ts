@@ -1,12 +1,12 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * primitives-audit.ts — Exercise ALL read primitives with ALL parameter variants.
  *
  * Structured output: JSON array of { primitive, params, ok, latencyMs, summary, error? }
  *
  * Usage:
- *   npx tsx scripts/primitives-audit.ts          # Human-readable table
- *   npx tsx scripts/primitives-audit.ts --json   # Machine-readable JSON
+ *   bunx tsx scripts/primitives-audit.ts          # Human-readable table
+ *   bunx tsx scripts/primitives-audit.ts --json   # Machine-readable JSON
  */
 
 import { connect } from "../packages/omniweb-toolkit/src/colony.js";

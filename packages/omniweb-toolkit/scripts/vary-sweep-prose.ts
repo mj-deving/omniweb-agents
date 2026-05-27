@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -316,7 +316,7 @@ function ngrams(text: string, size: number): Set<string> {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (hasFlag(args, "--help", "-h")) {
-    console.log(`Usage: npx tsx scripts/vary-sweep-prose.ts --in PATH [--out PATH]
+    console.log(`Usage: bunx tsx scripts/vary-sweep-prose.ts --in PATH [--out PATH]
 
 Analyze sweep drafts for duplicate-risk and structural variation.
 

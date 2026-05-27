@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-publish-readiness.ts — non-destructive publish preflight for omniweb-toolkit.
  *
@@ -34,7 +34,7 @@ const DEFAULT_CATEGORY = "ANALYSIS";
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-publish-readiness.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-publish-readiness.ts [options]
 
 Options:
   --attest-url URL     Attestation URL to validate (default: Blockchain.info ticker JSON)

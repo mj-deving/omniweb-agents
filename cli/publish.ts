@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Standalone publish tool for lean autonomous loop.
  *
@@ -117,7 +117,7 @@ function printHelp(): void {
 Standalone Publish Tool
 
 USAGE:
-  npx tsx tools/publish.ts [flags]
+  bunx tsx tools/publish.ts [flags]
 
 FLAGS:
   --agent NAME         Agent name (default: sentinel)
@@ -136,9 +136,9 @@ FLAGS:
   --help, -h           Show this help
 
 EXAMPLES:
-  npx tsx tools/publish.ts --agent sentinel --topic "ETH" --dry-run
-  npx tsx tools/publish.ts --agent pioneer --topic "quantum" --category QUESTION --text "..." --predicted-reactions 14
-  npx tsx tools/publish.ts --agent crawler --gated-file /tmp/gated.json --scan-file /tmp/scan.json --json
+  bunx tsx tools/publish.ts --agent sentinel --topic "ETH" --dry-run
+  bunx tsx tools/publish.ts --agent pioneer --topic "quantum" --category QUESTION --text "..." --predicted-reactions 14
+  bunx tsx tools/publish.ts --agent crawler --gated-file /tmp/gated.json --scan-file /tmp/scan.json --json
 `);
 }
 

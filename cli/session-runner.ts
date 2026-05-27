@@ -9,7 +9,7 @@
  * Phase sequence: AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN
  *
  * Usage:
- *   bunx tsx tools/session-runner.ts [--env PATH] [--log PATH] [--oversight LEVEL] [--resume] [--skip-to PHASE] [--dry-run] [--pretty]
+ *   bunx tsx cli/session-runner.ts [--env PATH] [--log PATH] [--oversight LEVEL] [--resume] [--skip-to PHASE] [--dry-run] [--pretty]
  *
  * Oversight levels:
  *   full       (default) GATE interactive, PUBLISH manual, REVIEW interactive
@@ -365,7 +365,7 @@ function printHelp(): void {
 Session Runner — Agent 8-phase loop orchestrator
 
 USAGE:
-  bunx tsx tools/session-runner.ts [flags]
+  bunx tsx cli/session-runner.ts [flags]
 
 FLAGS:
   --agent NAME           Agent name (default: sentinel)
@@ -406,15 +406,15 @@ PHASE SEQUENCE:
   8. HARDEN   (varies)   — Classify and apply REVIEW findings via improvement lifecycle
 
 EXAMPLES:
-  bunx tsx tools/session-runner.ts --pretty
-  bunx tsx tools/session-runner.ts --loop-version 3 --skip-to act --pretty
-  bunx tsx tools/session-runner.ts --legacy-loop --pretty
-  bunx tsx tools/session-runner.ts --legacy-loop --oversight approve --pretty
-  bunx tsx tools/session-runner.ts --oversight autonomous --pretty
-  bunx tsx tools/session-runner.ts --exec-backend tmux --oversight autonomous --pretty
-  SESSION_RUNNER_TMUX_ADAPTER=tmux-cli bunx tsx tools/session-runner.ts --exec-backend tmux --pretty
-  bunx tsx tools/session-runner.ts --resume --pretty
-  bunx tsx tools/session-runner.ts --dry-run --oversight autonomous
+  bunx tsx cli/session-runner.ts --pretty
+  bunx tsx cli/session-runner.ts --loop-version 3 --skip-to act --pretty
+  bunx tsx cli/session-runner.ts --legacy-loop --pretty
+  bunx tsx cli/session-runner.ts --legacy-loop --oversight approve --pretty
+  bunx tsx cli/session-runner.ts --oversight autonomous --pretty
+  bunx tsx cli/session-runner.ts --exec-backend tmux --oversight autonomous --pretty
+  SESSION_RUNNER_TMUX_ADAPTER=tmux-cli bunx tsx cli/session-runner.ts --exec-backend tmux --pretty
+  bunx tsx cli/session-runner.ts --resume --pretty
+  bunx tsx cli/session-runner.ts --dry-run --oversight autonomous
 `);
 }
 
@@ -1151,7 +1151,7 @@ async function main(): Promise<void> {
     shuttingDown = true;
     console.log("\n\n  ⚠️ Interrupted — saving state...");
     saveState(state, sessionsDir);
-    console.log(`  Resume with: bunx tsx tools/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
+    console.log(`  Resume with: bunx tsx cli/session-runner.ts --agent ${flags.agent} --resume${isV2(state) ? " --loop-version 2" : ""} --pretty`);
     console.log();
     process.exit(0);
   });

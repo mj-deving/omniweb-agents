@@ -1,0 +1,77 @@
+# Root Understand boundary for control-oriented whole-project scans.
+#
+# Goal: keep live code, package/public docs, and operator-control surfaces visible
+# while excluding archives, generated outputs, sessions, local proof residue, and
+# broad historical research that would swamp graph signal.
+
+# Build/dependency/generated defaults
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+.cache/
+*.lock
+package-lock.json
+
+# Repo-local tool state
+.git/
+.beads/
+.dolt/
+.understand-anything/intermediate/
+.understand-anything/tmp/
+.understand-anything/knowledge-graph.json
+.understand-anything/meta.json
+.claude/
+.codex/
+.sessions/
+.desloppify/
+MEMORY/WORK/
+
+# Secrets/session/log residue
+.env
+*.env
+*.log
+*.db
+.supercolony-auth.json
+.supercolony-token.json
+.*-session-log.jsonl
+.session-log*.jsonl
+.session-summary.json
+
+# Historical or research-heavy docs
+docs/archive/
+docs/research/
+docs/primitives/
+docs/assets/
+.ai/guides/
+Plans/
+
+# Generated or captured runtime sessions
+sessions/
+packages/omniweb-toolkit/sessions/
+packages/omniweb-toolkit/evals/examples/
+packages/omniweb-toolkit/evals/playbook-runs/
+packages/omniweb-toolkit/references/artifacts/
+packages/omniweb-toolkit/references/*/
+
+# Generated package views and package build output
+packages/omniweb-toolkit/dist/
+packages/omniweb-toolkit/agents/registry/
+packages/omniweb-toolkit/.understand-anything/
+packages/omniweb-toolkit/src/.understand-anything/
+
+# Low-signal local/generated assets
+agents/reference/scores.jsonl
+scorecard.png
+templates/generated/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.pdf
+*.zip
+*.tar
+*.gz

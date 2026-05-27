@@ -10,6 +10,7 @@
   "scripts": {
     "scan-feed": "tsx cli/scan-feed.ts",
     "audit": "tsx cli/audit.ts",
+    "check:generated-templates": "tsx scripts/check-generated-templates.ts",
     "improvements": "tsx cli/improvements.ts",
     "session-review": "tsx cli/session-review.ts",
     "gate": "tsx cli/gate.ts",

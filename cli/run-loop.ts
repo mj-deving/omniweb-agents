@@ -91,7 +91,7 @@ function printHelp(): void {
 Run Loop — Lean Autonomous Orchestrator
 
 USAGE:
-  bunx tsx tools/run-loop.ts --schedule sentinel:1,crawler:2 [flags]
+  bunx tsx cli/run-loop.ts --schedule sentinel:1,crawler:2 [flags]
 
 FLAGS:
   --schedule SPEC    Required schedule spec: agent:count[,agent:count...]
@@ -102,8 +102,8 @@ FLAGS:
   --help, -h         Show this help
 
 EXAMPLES:
-  bunx tsx tools/run-loop.ts --schedule sentinel:1 --dry-run --pretty
-  bunx tsx tools/run-loop.ts --schedule sentinel:1,crawler:2 --env ~/.config/demos/credentials --json
+  bunx tsx cli/run-loop.ts --schedule sentinel:1 --dry-run --pretty
+  bunx tsx cli/run-loop.ts --schedule sentinel:1,crawler:2 --env ~/.config/demos/credentials --json
 `);
 }
 

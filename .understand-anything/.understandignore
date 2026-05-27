@@ -64,7 +64,6 @@ packages/omniweb-toolkit/src/.understand-anything/
 # Low-signal local/generated assets
 agents/reference/scores.jsonl
 scorecard.png
-templates/generated/
 *.png
 *.jpg
 *.jpeg

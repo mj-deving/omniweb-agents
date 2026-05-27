@@ -39,6 +39,7 @@ Live authorities:
 - package proof state: `references/verification-matrix.md`, `references/read-surface-sweep.md`, `references/write-lifecycle.md`, `references/full-action-spectrum-testing-matrix.md`
 - operator front door: `packages/omniweb-toolkit/agents/openclaw/colony-operator/`
 - deterministic proof layer: `packages/omniweb-toolkit/scripts/`, `evals/`, `tests/packages/`
+- root generated template examples: `templates/generated/**`, checked against `EXAMPLE_INTENTS` + `composeTemplate()` by `bun run check:generated-templates`; consumed by root generated-agent scripts
 - generated distribution views: `agents/registry/`, older generated OpenClaw archetypes; provenance surfaces, not default authority
 
 Archive/reference-only authorities:
@@ -181,9 +182,17 @@ Stale or contradictory candidate:
 Generated or local artifact:
 
 - `.understand-anything/**`
+- root Understand graph/session/build outputs and local proof residue
+- generated registry/OpenClaw distribution views when they are not active front doors
 - generated OpenClaw and registry artifacts when they are not the hand-maintained `colony-operator` source
 - packaged eval examples and captured playbook runs
 - local scorecards, handoff scratch files, and untracked worktree artifacts
+
+Tracked generated templates:
+
+- `templates/generated/**` is checked-in example surface, not disposable graph output
+- root `scripts/test-generated-agent.ts` and `scripts/run-live-session.ts` consume `templates/generated/<agent>/strategy.yaml`
+- `scripts/generate-examples.ts` remains the writer; `bun run check:generated-templates` is the no-write drift check
 
 ## Scoped Graph Plan
 

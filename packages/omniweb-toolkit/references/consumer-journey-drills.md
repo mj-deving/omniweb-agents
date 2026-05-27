@@ -17,9 +17,9 @@ This file complements:
 
 - Date: May 15, 2026
 - Command set:
-  - `npm --prefix packages/omniweb-toolkit run check:journeys`
+  - `bun run --cwd packages/omniweb-toolkit check:journeys`
   - `node --import tsx packages/omniweb-toolkit/scripts/check-consumer-journeys.ts --skip-release-gate`
-- Aggregated harness: `npm --prefix packages/omniweb-toolkit run check:journeys`
+- Aggregated harness: `bun run --cwd packages/omniweb-toolkit check:journeys`
 - Current note: the default aggregated harness still includes the npm release gate, so the May 15 full run exited `1` with `6` pass and `1` fail on the release/registry member. The non-release journey set exited `0` with `6` pass, `0` degraded, and `0` fail. Treat the release/registry result as AC-9, not as an AC-7 journey failure.
 
 ## Current Verdict
@@ -45,8 +45,8 @@ This file complements:
 - Status: pass on the maintained path; current May 15, 2026 non-release journey harness proof
 - Evidence:
   - `check:colony-operator-consumer` packed `omniweb-toolkit`, copied `agents/openclaw/colony-operator/` into a clean temp workspace, and installed it successfully at `2026-05-15T18:00:11.755Z`
-  - the copied bundle passed `npm run check:bundle`, including the maintained runtime-contract probe against the copied workspace
-  - the copied bundle passed `npm run check:playbook`, which completed one starter cycle with `ok: true`
+  - the copied bundle passed `bun run check:bundle`, including the maintained runtime-contract probe against the copied workspace
+  - the copied bundle passed `bun run check:playbook`, which completed one starter cycle with `ok: true`
   - the harness reported `copiedBundleInstallsAgainstPackedPackage=true`, `skillSurfaceResolves=true`, `dryRunJourneyProven=true`, `spendsDem=false`, and `liveWriteProven=false`
   - the returned decision kind was observable, and when the decision was `kind=action` the action family matched the runtime-resolved intent truth
   - the outcome stayed `dry_run` with `0 DEM` spend and persisted state under a temporary state dir
@@ -106,7 +106,7 @@ This file complements:
 
 - Status: pass; current May 15, 2026 non-release journey harness proof
 - Evidence:
-  - `npm run check:package-consumer` builds and packs the package
+  - `bun run check:package-consumer` builds and packs the package
   - the packed tarball installs into a clean temporary consumer workspace
   - the consumer imports `omniweb-toolkit`, `omniweb-toolkit/agent`, and `omniweb-toolkit/types` by package name
   - the consumer renders a plan-only dry-run prompt with explicit no-publish / no-spend rules
@@ -120,7 +120,7 @@ This file complements:
 
 - Status: pass; current May 15, 2026 non-release journey harness proof
 - Evidence:
-  - `npm run check:research-agent-consumer` installs the packed tarball into a clean temporary consumer workspace
+  - `bun run check:research-agent-consumer` installs the packed tarball into a clean temporary consumer workspace
   - the consumer imports `omniweb-toolkit/research-agent-minimal` by package name
   - the path preserves no-spend dry-run behavior
   - the path performs one safe live read
@@ -134,7 +134,7 @@ This file complements:
 - Status: pass at the minimal layer
 - Evidence:
   - a copied `agents/openclaw/research-agent/` bundle installs cleanly in a standalone temp workspace
-  - `npm run check:starter-smoke` selects `bundle` mode when runtime deps are absent
+  - `bun run check:starter-smoke` selects `bundle` mode when runtime deps are absent
   - the starter performs one cheap public stats read and emits a no-spend prompt scaffold
   - the bundle degrades honestly instead of pretending dry-run or live-read readiness
 - Interpretation:
@@ -145,7 +145,7 @@ This file complements:
 
 - Status: pass at the bundle-contract layer
 - Evidence:
-  - `check:colony-operator-consumer` includes `npm run check:bundle` inside the copied bundle workspace
+  - `check:colony-operator-consumer` includes `bun run check:bundle` inside the copied bundle workspace
   - workspace, `openclaw.json`, `SKILL.md`, and bundle package contract checks all passed there
   - the runtime-contract probe emitted an explicit external runtime handoff instead of pretending runtime activation was already proven
 - Interpretation:

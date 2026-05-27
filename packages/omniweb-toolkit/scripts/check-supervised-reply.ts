@@ -1,9 +1,9 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-supervised-reply.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-supervised-reply.ts [options]
 
 Maintained supervised reply path.
 Supports the legacy reply-experiment flags, including:

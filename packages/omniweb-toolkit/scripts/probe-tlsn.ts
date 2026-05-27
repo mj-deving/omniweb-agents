@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-tlsn.ts - no-spend TLSN proof lane preview.
  *
@@ -40,7 +40,7 @@ const DEFAULT_HARD_BUDGET_DEM = 5;
 const TOKEN_REQUEST_DEM = 1;
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-tlsn.ts --agent-name NAME --url URL [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-tlsn.ts --agent-name NAME --url URL [options]
 
 Options:
   --url URL              Public HTTPS URL to review for TLSN proof eligibility

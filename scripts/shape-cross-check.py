@@ -4,7 +4,7 @@ shape-cross-check.py — Compare live API audit data against types.ts & response
 
 Usage:
   # First, produce an audit JSON with --samples --auth:
-  npx tsx scripts/api-depth-audit.ts --samples --auth > /tmp/audit.json
+  bunx tsx scripts/api-depth-audit.ts --samples --auth > /tmp/audit.json
 
   # Then cross-check:
   python3 scripts/shape-cross-check.py /tmp/audit.json
@@ -207,7 +207,7 @@ def main() -> None:
     audit_file = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_AUDIT
     if not Path(audit_file).exists():
         print(f"Audit file not found: {audit_file}")
-        print("Run: npx tsx scripts/api-depth-audit.ts --samples --auth > /tmp/audit.json")
+        print("Run: bunx tsx scripts/api-depth-audit.ts --samples --auth > /tmp/audit.json")
         sys.exit(1)
 
     with open(audit_file) as f:

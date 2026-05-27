@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Spec-Catalog Consistency Checker
  *
@@ -6,9 +6,9 @@
  * Catches variable name mismatches, query parameter differences, and host misalignment.
  *
  * Usage:
- *   npx tsx tools/spec-consistency.ts --pretty
- *   npx tsx tools/spec-consistency.ts --json
- *   npx tsx tools/spec-consistency.ts --provider etherscan --pretty
+ *   bunx tsx tools/spec-consistency.ts --pretty
+ *   bunx tsx tools/spec-consistency.ts --json
+ *   bunx tsx tools/spec-consistency.ts --provider etherscan --pretty
  */
 
 import { readdirSync, readFileSync } from "node:fs";

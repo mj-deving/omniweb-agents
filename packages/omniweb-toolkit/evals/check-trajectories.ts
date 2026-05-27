@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-trajectories.ts — Validate the maintained trajectory spec for shape, references, and scoring consistency.
  *

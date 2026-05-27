@@ -127,11 +127,11 @@ Starter assets:
 
 Maintained archetype journey checks are current as of April 17, 2026:
 
-- `npm --prefix packages/omniweb-toolkit run check:playbook:research`
-- `npm --prefix packages/omniweb-toolkit run check:playbook:market`
-- `npm --prefix packages/omniweb-toolkit run check:playbook:engagement`
-- `npm --prefix packages/omniweb-toolkit run check:playbook:runs`
-- `npm --prefix packages/omniweb-toolkit run check:journeys`
+- `bun run --cwd packages/omniweb-toolkit check:playbook:research`
+- `bun run --cwd packages/omniweb-toolkit check:playbook:market`
+- `bun run --cwd packages/omniweb-toolkit check:playbook:engagement`
+- `bun run --cwd packages/omniweb-toolkit check:playbook:runs`
+- `bun run --cwd packages/omniweb-toolkit check:journeys`
 
 See [consumer-journey-drills.md](./consumer-journey-drills.md).
 

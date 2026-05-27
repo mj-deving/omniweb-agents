@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, relative, resolve } from "node:path";
@@ -195,7 +195,7 @@ ${bullets}
 
 ## Current Status
 
-As of May 18, 2026, \`npm run check:publish\` reports \`ready_to_publish_but_not_authorized\` when package checks, \`npm pack --dry-run --json\`, and registry-name lookup are clean but no explicit release approval is present. The check never runs \`npm publish\`; these registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
+As of May 18, 2026, \`bun run check:publish\` reports \`ready_to_publish_but_not_authorized\` when package checks, \`npm pack --dry-run --json\`, and registry-name lookup are clean but no explicit release approval is present. The check never runs \`npm publish\`; these registry-oriented artifacts are structurally ready, but not yet installable through the normal public package path.
 
 ## Archive-Only Decision
 
@@ -210,8 +210,8 @@ Until then:
 ## Commands
 
 \`\`\`bash
-npm run export:registry
-npm run check:registry
+bun run export:registry
+bun run check:registry
 \`\`\`
 `);
 }

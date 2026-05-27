@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 /**
  * check-colony-operator-primary.ts — Validate the primary hand-maintained colony-operator surfaces.
@@ -20,7 +20,7 @@ type FileCheck = {
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx scripts/check-colony-operator-primary.ts
+  console.log(`Usage: bunx tsx scripts/check-colony-operator-primary.ts
 
 Options:
   --help, -h   Show this help
@@ -155,7 +155,7 @@ const checks: FileCheck[] = [
       "explicit bounded action intent over the seam",
       "let the substrate/runtime own readiness, resolved-intent truth, execution shape, and verification",
       "### Smallest honest supervised wallet-backed checkpoint",
-      "npm run check:supervised-observation-eligibility",
+      "bun run check:supervised-observation-eligibility",
       "--confirm-live-publish",
       "### Manual, host-specific, or not yet proved",
       "not yet the full MVP ceiling",

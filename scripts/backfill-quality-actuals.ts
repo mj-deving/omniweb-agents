@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Backfill quality data entries with actual_reactions from session logs.
  *
@@ -7,8 +7,8 @@
  *   2. Fuzzy timestamp — within 60s window + matching topic (for old entries without txHash)
  *
  * Usage:
- *   npx tsx scripts/backfill-quality-actuals.ts --agent sentinel --pretty
- *   npx tsx scripts/backfill-quality-actuals.ts --agent sentinel --dry-run
+ *   bunx tsx scripts/backfill-quality-actuals.ts --agent sentinel --pretty
+ *   bunx tsx scripts/backfill-quality-actuals.ts --agent sentinel --dry-run
  */
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";

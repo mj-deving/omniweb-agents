@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Base Agent Template — Learn-first SuperColony agent.
  *
@@ -8,7 +8,7 @@
  *
  * Usage:
  *   cp .env.example .env    # Add your DEMOS_MNEMONIC
- *   DRY_RUN=false npx tsx agent.ts  # Run live (default: dry-run)
+ *   DRY_RUN=false bunx tsx agent.ts  # Run live (default: dry-run)
  */
 import { resolve } from "node:path";
 import { createAgentRuntime } from "../../src/toolkit/agent-runtime.js";

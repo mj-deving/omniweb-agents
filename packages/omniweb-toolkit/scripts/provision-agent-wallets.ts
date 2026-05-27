@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { chmodSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -13,7 +13,7 @@ import { getStringArg, hasFlag } from "./_shared.ts";
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/provision-agent-wallets.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/provision-agent-wallets.ts [options]
 
 Options:
   --prefix NAME            Agent-name prefix (default: sweep)

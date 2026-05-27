@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Engagement Automation — Sentinel Phase 3 tool
  *
@@ -10,11 +10,11 @@
  * Outputs structured JSON (composable) instead of console.log.
  *
  * Usage:
- *   npx tsx tools/engage.ts [--max N] [--env PATH] [--pretty] [--json]
+ *   bunx tsx tools/engage.ts [--max N] [--env PATH] [--pretty] [--json]
  *
  * Examples:
- *   npx tsx tools/engage.ts --max 5 --pretty
- *   npx tsx tools/engage.ts --max 3 --json
+ *   bunx tsx tools/engage.ts --max 5 --pretty
+ *   bunx tsx tools/engage.ts --max 3 --json
  */
 
 import { resolve } from "node:path";
@@ -55,7 +55,7 @@ function printHelp(): void {
 Engagement Automation — Sentinel ENGAGE phase tool (reactions only)
 
 USAGE:
-  npx tsx tools/engage.ts [flags]
+  bunx tsx tools/engage.ts [flags]
 
 FLAGS:
   --agent NAME      Agent name (default: sentinel)
@@ -73,9 +73,9 @@ REACTION HEURISTICS:
   skip:      everything else
 
 EXAMPLES:
-  npx tsx tools/engage.ts --max 5 --pretty
-  npx tsx tools/engage.ts --max 3 --json
-  npx tsx tools/engage.ts --env ~/projects/DEMOS-Work/.env --pretty
+  bunx tsx tools/engage.ts --max 5 --pretty
+  bunx tsx tools/engage.ts --max 3 --json
+  bunx tsx tools/engage.ts --env ~/projects/DEMOS-Work/.env --pretty
 `);
 }
 

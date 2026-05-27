@@ -1,7 +1,7 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Run API backfill to fill colony DB sync gaps.
- * Usage: npx tsx cli/run-api-backfill.ts [--limit N]
+ * Usage: bunx tsx cli/run-api-backfill.ts [--limit N]
  */
 
 import { SuperColonyApiClient } from "../src/toolkit/supercolony/api-client.js";

@@ -16,8 +16,8 @@ The package currently ships three OpenClaw workspace bundles:
 The static bundle contract is checked by:
 
 ```bash
-npm --prefix packages/omniweb-toolkit run check:openclaw
-npm --prefix packages/omniweb-toolkit run check:openclaw-runtime
+bun run --cwd packages/omniweb-toolkit check:openclaw
+bun run --cwd packages/omniweb-toolkit check:openclaw-runtime
 ```
 
 That is not the same as execution proof. Execution proof requires a configured OpenClaw host, provider auth, workspace activation, skill resolution, and a no-spend dry-run smoke turn.
@@ -47,7 +47,7 @@ SKILL="omniweb-research-agent"
 Activation sequence for an external OpenClaw runtime:
 
 ```bash
-npm --prefix packages/omniweb-toolkit run check:openclaw-runtime -- --workspace "$WORKSPACE"
+bun run --cwd packages/omniweb-toolkit check:openclaw-runtime -- --workspace "$WORKSPACE"
 
 openclaw onboard --accept-risk --workspace "$WORKSPACE"
 # or, where the runtime uses setup instead of onboard:

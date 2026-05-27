@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -370,7 +370,7 @@ export async function buildSourceHealthReport(
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (hasFlag(args, "--help", "-h")) {
-    console.log(`Usage: npx tsx scripts/check-sources-health.ts --manifest PATH [--include-session-files] [--out PATH]
+    console.log(`Usage: bunx tsx scripts/check-sources-health.ts --manifest PATH [--include-session-files] [--out PATH]
 
 Check that sweep manifest sources return JSON and that their declared jsonPath resolves.
 

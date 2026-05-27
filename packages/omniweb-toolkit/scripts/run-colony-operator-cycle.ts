@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -52,7 +52,7 @@ interface OperatorEnvelope {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/run-colony-operator-cycle.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/run-colony-operator-cycle.ts [options]
 
 Run one maintained Colony Operator cycle. Default is no-spend dry-run. Passing
 --execute first runs a no-spend preflight and only proceeds if the selected

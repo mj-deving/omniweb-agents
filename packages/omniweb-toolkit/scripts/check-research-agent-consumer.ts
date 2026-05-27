@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -45,13 +45,13 @@ const allowedArgs = new Set([
 ]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-agent-consumer.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-research-agent-consumer.ts [options]
 
 Build, pack, and install omniweb-toolkit into a clean temporary consumer workspace,
 then run the smallest research-agent-facing package entrypoint by package name.
 
 Options:
-  --skip-build       Do not run npm run build before packing
+  --skip-build       Do not run bun run build before packing
   --skip-live-read   Prove dry-run/readiness only; skip live SuperColony read
   --keep-temp        Keep the temporary consumer workspace for debugging
   --help, -h         Show this help

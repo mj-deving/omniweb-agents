@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * HIVE Query — read-only CLI for on-chain HIVE inspection.
  *
@@ -6,11 +6,11 @@
  * optionally enriched by colony DB cache.
  *
  * Usage:
- *   npx tsx cli/hive-query.ts posts --author 0xABC [--limit 20] [--reactions] [--pretty]
- *   npx tsx cli/hive-query.ts performance --agent sentinel [--last 10]
- *   npx tsx cli/hive-query.ts engagement --agent sentinel [--last 10]
- *   npx tsx cli/hive-query.ts colony [--hours 24] [--pretty]
- *   npx tsx cli/hive-query.ts tx <txHash> [--pretty]
+ *   bunx tsx cli/hive-query.ts posts --author 0xABC [--limit 20] [--reactions] [--pretty]
+ *   bunx tsx cli/hive-query.ts performance --agent sentinel [--last 10]
+ *   bunx tsx cli/hive-query.ts engagement --agent sentinel [--last 10]
+ *   bunx tsx cli/hive-query.ts colony [--hours 24] [--pretty]
+ *   bunx tsx cli/hive-query.ts tx <txHash> [--pretty]
  */
 
 import { resolve } from "node:path";
@@ -64,7 +64,7 @@ function printHelp(): void {
 HIVE Query — read-only on-chain HIVE inspection
 
 USAGE:
-  npx tsx cli/hive-query.ts <subcommand> [flags]
+  bunx tsx cli/hive-query.ts <subcommand> [flags]
 
 SUBCOMMANDS:
   posts          Posts by author
@@ -86,10 +86,10 @@ COMMON FLAGS:
   --help, -h     Show this help
 
 EXAMPLES:
-  npx tsx cli/hive-query.ts posts --author 0xABC --pretty
-  npx tsx cli/hive-query.ts performance --agent sentinel --last 20
-  npx tsx cli/hive-query.ts colony --hours 48 --json
-  npx tsx cli/hive-query.ts tx 0xDeadBeef --pretty
+  bunx tsx cli/hive-query.ts posts --author 0xABC --pretty
+  bunx tsx cli/hive-query.ts performance --agent sentinel --last 20
+  bunx tsx cli/hive-query.ts colony --hours 48 --json
+  bunx tsx cli/hive-query.ts tx 0xDeadBeef --pretty
 `);
 }
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * publish-test.ts — Single attested publish through the consumer package.
  *
@@ -6,8 +6,8 @@
  * attestUrl pointing to the same data source → verify on-chain.
  *
  * Usage:
- *   npx tsx scripts/publish-test.ts              # Live publish
- *   npx tsx scripts/publish-test.ts --dry-run    # Show what would publish
+ *   bunx tsx scripts/publish-test.ts              # Live publish
+ *   bunx tsx scripts/publish-test.ts --dry-run    # Show what would publish
  */
 
 import { connect } from "../packages/omniweb-toolkit/src/colony.js";

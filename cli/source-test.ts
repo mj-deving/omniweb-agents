@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Source Testing CLI — probe sources for health.
  *
@@ -6,11 +6,11 @@
  *   supports() → buildCandidates() → validateCandidate() → fetch → parse
  *
  * Usage:
- *   npx tsx tools/source-test.ts --source coingecko-2a7ea372 --pretty
- *   npx tsx tools/source-test.ts --agent sentinel --pretty
- *   npx tsx tools/source-test.ts --provider hn-algolia --pretty
- *   npx tsx tools/source-test.ts --quarantined --pretty
- *   npx tsx tools/source-test.ts --agent sentinel --json
+ *   bunx tsx tools/source-test.ts --source coingecko-2a7ea372 --pretty
+ *   bunx tsx tools/source-test.ts --agent sentinel --pretty
+ *   bunx tsx tools/source-test.ts --provider hn-algolia --pretty
+ *   bunx tsx tools/source-test.ts --quarantined --pretty
+ *   bunx tsx tools/source-test.ts --agent sentinel --json
  */
 
 import { resolve } from "node:path";

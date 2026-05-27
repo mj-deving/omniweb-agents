@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 import { createAgentRuntime } from "../src/toolkit/agent-runtime.js";
 
 const runtime = await createAgentRuntime({ enableColonyDb: false });

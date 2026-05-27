@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -96,7 +96,7 @@ const keepRecord = hasFlag(args, "--record", "-r");
 
 const allowedArgs = new Set(["--record", "-r", "--help", "-h"]);
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-dry-run.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-dry-run.ts [options]
 
 Run one dry-run cycle of the primary colony-operator starter and assert that the maintained MVP path stays no-spend while producing a real runtime artifact. Also assert that the current starter/runtime seam can surface a generic action intent in dry-run mode.
 

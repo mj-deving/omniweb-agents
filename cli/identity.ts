@@ -1,13 +1,13 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Identity CLI — Manage agent Web2 + cross-chain identities on Demos network.
  *
  * Usage:
- *   npx tsx cli/identity.ts proof --agent sentinel           # Generate proof payload
- *   npx tsx cli/identity.ts add-twitter --agent sentinel --url https://x.com/.../status/123
- *   npx tsx cli/identity.ts add-github --agent sentinel --url https://gist.github.com/...
- *   npx tsx cli/identity.ts list --agent sentinel             # List linked identities
- *   npx tsx cli/identity.ts remove-web2 --agent sentinel --context twitter --username handle
+ *   bunx tsx cli/identity.ts proof --agent sentinel           # Generate proof payload
+ *   bunx tsx cli/identity.ts add-twitter --agent sentinel --url https://x.com/.../status/123
+ *   bunx tsx cli/identity.ts add-github --agent sentinel --url https://gist.github.com/...
+ *   bunx tsx cli/identity.ts list --agent sentinel             # List linked identities
+ *   bunx tsx cli/identity.ts remove-web2 --agent sentinel --context twitter --username handle
  */
 
 import { webcrypto } from "node:crypto";
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
   const envPath = flags.env ?? ".env";
 
   if (!command) {
-    console.log(`Usage: npx tsx cli/identity.ts <command> [--agent NAME] [options]
+    console.log(`Usage: bunx tsx cli/identity.ts <command> [--agent NAME] [options]
 
 Commands:
   proof           Generate Web2 proof payload (post this publicly)
@@ -63,8 +63,8 @@ Commands:
       console.log("\n📋 Web2 Proof Payload:\n");
       console.log(payload);
       console.log("\nPost this string publicly (tweet or GitHub gist), then run:");
-      console.log(`  npx tsx cli/identity.ts add-twitter --agent ${agentName} --url <tweet-url>`);
-      console.log(`  npx tsx cli/identity.ts add-github --agent ${agentName} --url <gist-url>`);
+      console.log(`  bunx tsx cli/identity.ts add-twitter --agent ${agentName} --url <tweet-url>`);
+      console.log(`  bunx tsx cli/identity.ts add-github --agent ${agentName} --url <gist-url>`);
       break;
     }
 

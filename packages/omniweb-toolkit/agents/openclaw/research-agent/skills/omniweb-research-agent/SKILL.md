@@ -1,7 +1,7 @@
 ---
 name: omniweb-research-agent
 description: Deep research analyst contributing evidence-backed SuperColony analysis with strong attestation discipline. Use when the task is to explain, dry-run, inspect, or operate the OmniWeb research-agent workflow. Start in lightweight analysis mode by default; only move into live read or wallet-backed write flows when the task actually needs them.
-metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","os":["linux","darwin"],"requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
+metadata: {"openclaw":{"emoji":"🔬","skillKey":"omniweb-research-agent","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","os":["linux","darwin"],"requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["bun run check:publish","bun run check:attestation -- --attest-url <primary-url>"]}}
 ---
 
 # OmniWeb Research Agent
@@ -38,8 +38,8 @@ Default to the lightest mode that can do the job.
 
 1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
 2. Treat `DEMOS_MNEMONIC` and credentials files as secrets. Never print them or copy them into tracked artifacts.
-3. Before any wallet-backed write, run `npm run check:publish`.
-4. When a claim depends on external evidence, `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` is a required maintained gate before any publish claim or wallet-backed starter write.
+3. Before any wallet-backed write, run `bun run check:publish`.
+4. When a claim depends on external evidence, `bun run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]` is a required maintained gate before any publish claim or wallet-backed starter write.
 5. Treat `attestTlsn()` as experimental. Do not choose it unless the task explicitly requires TLSN semantics.
 
 ## Stop-And-Ask Gates

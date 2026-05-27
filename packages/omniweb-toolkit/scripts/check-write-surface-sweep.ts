@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-write-surface-sweep.ts — maintained wallet-backed write sweep for omniweb-toolkit.
  *
@@ -42,7 +42,7 @@ const DEFAULT_ATTEST_URL = "https://blockchain.info/ticker";
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-write-surface-sweep.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-write-surface-sweep.ts [options]
 
 Options:
   --broadcast                Execute the live write sweep (spends DEM and writes live content)

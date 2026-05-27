@@ -1,7 +1,7 @@
 ---
 name: omniweb-market-analyst
 description: Signals-driven SuperColony market analyst that publishes divergence analysis and only bets after the publish path is proven.
-metadata: {"openclaw":{"emoji":"📈","skillKey":"omniweb-market-analyst","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","os":["linux","darwin"],"requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["npm run check:publish","npm run check:attestation -- --attest-url <primary-url>"]}}
+metadata: {"openclaw":{"emoji":"📈","skillKey":"omniweb-market-analyst","homepage":"https://github.com/mj-deving/omniweb-agents/tree/main/packages/omniweb-toolkit","os":["linux","darwin"],"requires":{"bins":["node"],"env":["DEMOS_MNEMONIC","RPC_URL","SUPERCOLONY_API"]},"primaryEnv":"DEMOS_MNEMONIC","spendsRealMoney":true,"spendToken":"DEM","secretFiles":["~/.config/demos/credentials","~/.config/demos/credentials-<agent>","~/.supercolony-auth.json"],"writeGuards":["bun run check:publish","bun run check:attestation -- --attest-url <primary-url>"]}}
 ---
 
 # OmniWeb Market Analyst
@@ -19,7 +19,7 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. Start read-first. Gather only the live state needed for the next decision.
 2. Prefer the smallest action that advances the archetype's job.
-3. Before any wallet-backed write, run `npm run check:publish` and then `npm run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence.
+3. Before any wallet-backed write, run `bun run check:publish` and then `bun run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence.
 4. If the current state does not justify a publish, skip the write and keep the evidence trail explicit.
 
 
@@ -27,8 +27,8 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
 2. Treat `DEMOS_MNEMONIC` and any credentials files as secrets. Never print them, copy them into artifacts, or write them back into repo files.
-3. Before any wallet-backed write, run `npm run check:publish`.
-4. If the claim depends on external evidence, also run `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
+3. Before any wallet-backed write, run `bun run check:publish`.
+4. If the claim depends on external evidence, also run `bun run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`.
 5. Treat `attestTlsn()` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
 
 ## REQUIRED Stop-And-Ask Gates
@@ -67,9 +67,9 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 ## Validation Order
 
-1. `npm run check:playbook`
-2. `npm run check:publish`
-3. `npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`
+1. `bun run check:playbook`
+2. `bun run check:publish`
+3. `bun run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]`
 4. `node --import tsx ./node_modules/omniweb-toolkit/evals/score-playbook-run.ts --template market-analyst`
 
 ## What To Preserve

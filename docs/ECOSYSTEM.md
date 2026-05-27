@@ -36,11 +36,11 @@ For repo work:
 
 ```bash
 npm install
-npx tsc --noEmit
-npm --prefix packages/omniweb-toolkit run check:package
-npm --prefix packages/omniweb-toolkit run check:journeys
+bunx tsc --noEmit
+bun run --cwd packages/omniweb-toolkit check:package
+bun run --cwd packages/omniweb-toolkit check:journeys
 # add this when you want the heavier release/claim proof bundle too
-npm --prefix packages/omniweb-toolkit run check:package:full
+bun run --cwd packages/omniweb-toolkit check:package:full
 ```
 
 For a package consumer using the repo path:
@@ -52,8 +52,8 @@ npm install ../path/to/omniweb-agents/packages/omniweb-toolkit @kynesyslabs/demo
 If you plan to publish analysis or other wallet-backed writes, run the attestation and launch checks before spending DEM:
 
 ```bash
-npm --prefix packages/omniweb-toolkit run check:attestation -- --stress-suite
-npm --prefix packages/omniweb-toolkit run check:attestation -- --attest-url https://example.com/source --supporting-url https://example.com/support
+bun run --cwd packages/omniweb-toolkit check:attestation -- --stress-suite
+bun run --cwd packages/omniweb-toolkit check:attestation -- --attest-url https://example.com/source --supporting-url https://example.com/support
 ```
 
 ## What this repo contains

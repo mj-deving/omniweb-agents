@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import {
   DEFAULT_BASE_URL,
@@ -56,7 +56,7 @@ interface ExpansionCandidate {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-topic-coverage.ts [--base-url URL] [--timeout-ms N]
+  console.log(`Usage: bunx tsx scripts/check-topic-coverage.ts [--base-url URL] [--timeout-ms N]
 
 Options:
   --base-url URL   SuperColony base URL (default: ${DEFAULT_BASE_URL})

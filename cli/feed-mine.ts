@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Feed Mine — Extract source URLs from SuperColony feed attestations.
  *
@@ -7,8 +7,8 @@
  * persists new sources as quarantined entries.
  *
  * Usage:
- *   npx tsx cli/feed-mine.ts --agent sentinel --pretty
- *   npx tsx cli/feed-mine.ts --agent sentinel --dry-run --limit 500
+ *   bunx tsx cli/feed-mine.ts --agent sentinel --pretty
+ *   bunx tsx cli/feed-mine.ts --agent sentinel --dry-run --limit 500
  */
 
 import { webcrypto } from "node:crypto";

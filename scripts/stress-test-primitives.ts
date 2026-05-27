@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Colony Stress Test — Exhaustive Primitive Test (Workstream C)
  *

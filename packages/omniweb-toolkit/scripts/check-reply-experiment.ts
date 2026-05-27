@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -26,7 +26,7 @@ const DEFAULT_MIN_SCORE = 80;
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-reply-experiment.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-reply-experiment.ts [options]
 
 Options:
   --broadcast                   Execute the real reply instead of dry-run

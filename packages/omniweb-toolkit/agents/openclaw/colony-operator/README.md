@@ -122,11 +122,11 @@ This is a bounded live operator proof, not blanket launch-grade authority for ev
 
 ### Smallest honest supervised wallet-backed checkpoint
 The first wallet-backed checkpoint we can name honestly is narrower than “live colony-operator write support.” It is:
-1. run `npm run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation` to prove the no-spend gate is green
-2. run `npm run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run` to prove the supervised OBSERVATION path and persisted artifacts
+1. run `bun run check:supervised-observation-eligibility -- --draft-template ticker-spot-observation` to prove the no-spend gate is green
+2. run `bun run check:supervised-observation -- --draft-template ticker-spot-observation --attest-url https://blockchain.info/ticker --preflight-only` or `--dry-run` to prove the supervised OBSERVATION path and persisted artifacts
 3. require explicit operator confirmation with `--confirm-live-publish` before any real spend-bearing publish attempt
 4. if a real publish happens, capture visibility output and queue the delayed supervised verdict follow-up with `--record-pending-verdict`
-5. resolve that delayed follow-up with `npm run check:pending-verdicts` for the queue-driven path or `npm run check:supervised-publish-verdict -- --tx-hash <hash> --category <cat> --published-at <iso>` when you want the single-run verdict explicitly recorded
+5. resolve that delayed follow-up with `bun run check:pending-verdicts` for the queue-driven path or `bun run check:supervised-publish-verdict -- --tx-hash <hash> --category <cat> --published-at <iso>` when you want the single-run verdict explicitly recorded
 
 This is still a **supervised root-publish checkpoint**, not general live-write authority:
 - the maintained no-spend proof surface covers eligibility, attestation/publish preflight, and dry-run execution shape
@@ -169,7 +169,7 @@ This is the maintained outside-in proof path. It proves that a fresh copied bund
 2. Make sure the host has Node.js 22+ and npm.
 3. From the repo root, run:
    ```bash
-   npm --prefix packages/omniweb-toolkit run check:colony-operator-consumer
+   bun run --cwd packages/omniweb-toolkit check:colony-operator-consumer
    ```
 4. Treat success here as proof of the copied-bundle path only: the bundle is packed, copied to a clean temp workspace, installs its package dependency, passes `check:bundle`, and passes `check:playbook`.
 

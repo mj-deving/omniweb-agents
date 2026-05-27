@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-webhook-receiver-gate.ts — no-spend gate for the controlled webhook receiver lane.
  */

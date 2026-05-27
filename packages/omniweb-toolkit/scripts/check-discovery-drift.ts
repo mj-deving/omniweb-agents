@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-discovery-drift.ts — Compare live discovery resources against committed snapshots.
  *
@@ -23,7 +23,7 @@ import {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-discovery-drift.ts [--base-url URL] [--snapshot-dir PATH] [--timeout-ms N]
+  console.log(`Usage: bunx tsx scripts/check-discovery-drift.ts [--base-url URL] [--snapshot-dir PATH] [--timeout-ms N]
 
 Options:
   --base-url URL      SuperColony base URL (default: ${DEFAULT_BASE_URL})

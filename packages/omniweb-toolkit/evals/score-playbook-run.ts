@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -146,7 +146,7 @@ const runPath = getStringArg(args, "--run");
 const templateArchetype = getStringArg(args, "--template");
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx evals/score-playbook-run.ts [--run PATH] [--template ARCHETYPE]
+  console.log(`Usage: bunx tsx evals/score-playbook-run.ts [--run PATH] [--template ARCHETYPE]
 
 Options:
   --run PATH            Score a captured playbook run JSON document

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -14,7 +14,7 @@ import { getStringArg } from "./_shared.ts";
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/record-pending-verdict.ts --from-run PATH [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/record-pending-verdict.ts --from-run PATH [options]
 
 Options:
   --from-run PATH             Path to a JSON run/report file containing one published result

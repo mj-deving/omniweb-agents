@@ -1,4 +1,4 @@
-#!/usr/bin/env -S npx tsx
+#!/usr/bin/env -S bunx tsx
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 
@@ -13,7 +13,7 @@ const HINT_FIELDS = new Set(['use_when', 'read_when', 'topic_hint']);
 
 function usage(): never {
   console.log([
-    'Usage: npx tsx scripts/normalize-doc-frontmatter.ts [--apply] [--path DIR_OR_FILE ...]',
+    'Usage: bunx tsx scripts/normalize-doc-frontmatter.ts [--apply] [--path DIR_OR_FILE ...]',
     '',
     'Default is check-only. Default paths: .ai/guides docs/research',
     '',

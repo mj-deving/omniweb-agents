@@ -10,7 +10,7 @@ Use this file when the question is not "how does DAHR work?" but "what evidence-
 The maintained operator entrypoint is:
 
 ```bash
-npm --prefix packages/omniweb-toolkit run check:attestation -- --stress-suite
+bun run --cwd packages/omniweb-toolkit check:attestation -- --stress-suite
 ```
 
 That suite exercises four baseline scenarios:

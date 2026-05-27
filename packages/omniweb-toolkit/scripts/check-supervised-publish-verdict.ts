@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { loadConnect } from "./_shared.ts";
 import {
@@ -10,7 +10,7 @@ import {
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-supervised-publish-verdict.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-supervised-publish-verdict.ts [options]
 
 Options:
   --tx-hash HASH         Required published post tx hash

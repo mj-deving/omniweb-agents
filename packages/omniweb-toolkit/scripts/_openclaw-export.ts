@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import {
   existsSync,
@@ -387,8 +387,8 @@ export function buildOpenClawMetadata(spec: ArchetypeSpec): { openclaw: OpenClaw
         "~/.supercolony-auth.json",
       ],
       writeGuards: [
-        "npm run check:publish",
-        "npm run check:attestation -- --attest-url <primary-url>",
+        "bun run check:publish",
+        "bun run check:attestation -- --attest-url <primary-url>",
       ],
     },
   };
@@ -400,8 +400,8 @@ function renderSafetyRules(spec: ArchetypeSpec): string {
 
 1. This skill can spend real DEM through wallet-backed publish, reply, tip, attest, and market-write paths.
 2. Treat \`DEMOS_MNEMONIC\` and any credentials files as secrets. Never print them, copy them into artifacts, or write them back into repo files.
-3. Before any wallet-backed write, run \`npm run check:publish\`.
-4. If the claim depends on external evidence, also run \`npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\`.
+3. Before any wallet-backed write, run \`bun run check:publish\`.
+4. If the claim depends on external evidence, also run \`bun run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\`.
 5. Treat \`attestTlsn()\` as experimental and slower than the maintained DAHR path. Do not choose it unless the task explicitly requires TLSN semantics.
 
 ## REQUIRED Stop-And-Ask Gates
@@ -621,13 +621,13 @@ openclaw skills info <skill-slug>
 Regenerate these files from the package root with:
 
 \`\`\`bash
-npm run export:openclaw
+bun run export:openclaw
 \`\`\`
 
 Validate the committed export with:
 
 \`\`\`bash
-npm run check:openclaw
+bun run check:openclaw
 \`\`\`
 `);
 }
@@ -727,11 +727,11 @@ OpenClaw gateway health, ready endpoints, raw WebSocket challenge, device auth f
 
 ## Validation
 
-- \`npm run check:playbook\` — archetype-specific validation path
-- \`npm run check:publish\` — publish readiness gate
-- \`npm run check:attestation -- --attest-url <primary-url>\` — source-chain readiness when a write depends on external evidence
-- \`npm run score:template\` — print a captured-run template for this archetype
-- \`npm run check:bundle\` — verify this exported bundle still matches the package source
+- \`bun run check:playbook\` — archetype-specific validation path
+- \`bun run check:publish\` — publish readiness gate
+- \`bun run check:attestation -- --attest-url <primary-url>\` — source-chain readiness when a write depends on external evidence
+- \`bun run score:template\` — print a captured-run template for this archetype
+- \`bun run check:bundle\` — verify this exported bundle still matches the package source
 
 ## What Still Blocks True Clone-And-Go
 
@@ -994,7 +994,7 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. Start read-first. Gather only the live state needed for the next decision.
 2. Prefer the smallest action that advances the archetype's job.
-3. Before any wallet-backed write, run \`npm run check:publish\` and then \`npm run check:attestation -- --attest-url <primary-url>\` when the claim depends on external evidence.
+3. Before any wallet-backed write, run \`bun run check:publish\` and then \`bun run check:attestation -- --attest-url <primary-url>\` when the claim depends on external evidence.
 4. If the current state does not justify a publish, skip the write and keep the evidence trail explicit.
 
 ${renderSafetyRules(spec)}
@@ -1003,9 +1003,9 @@ ${renderSessionLedgerProtocol()}
 
 ## Validation Order
 
-1. \`npm run check:playbook\`
-2. \`npm run check:publish\`
-3. \`npm run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\`
+1. \`bun run check:playbook\`
+2. \`bun run check:publish\`
+3. \`bun run check:attestation -- --attest-url <primary-url> [--supporting-url <url> ...]\`
 4. \`${spec.runTemplateScript}\`
 
 ## What To Preserve

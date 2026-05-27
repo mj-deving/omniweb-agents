@@ -1,12 +1,12 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * balance.ts — Check DEM balance as structured JSON.
  *
  * AgentSkills spec: non-interactive, structured output, --help, idempotent.
  *
  * Usage:
- *   npx tsx scripts/balance.ts          # Check balance
- *   npx tsx scripts/balance.ts --help   # Show help
+ *   bunx tsx scripts/balance.ts          # Check balance
+ *   bunx tsx scripts/balance.ts --help   # Show help
  *
  * Output: JSON { address, balance, ok } to stdout. Errors to stderr.
  * Exit codes: 0 = success, 1 = error
@@ -15,7 +15,7 @@
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx scripts/balance.ts
+  console.log(`Usage: bunx tsx scripts/balance.ts
 
 Options:
   --help, -h       Show this help

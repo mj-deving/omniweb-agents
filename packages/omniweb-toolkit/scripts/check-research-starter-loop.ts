@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -108,7 +108,7 @@ interface StarterArtifact {
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-starter-loop.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-research-starter-loop.ts [options]
 
 Options:
   --out PATH               Write the JSON artifact to a file as well as stdout

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-live-categories.ts — Report active category coverage from live stats and feed probes.
  *
@@ -19,7 +19,7 @@ import {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-live-categories.ts [--base-url URL] [--limit N] [--timeout-ms N]
+  console.log(`Usage: bunx tsx scripts/check-live-categories.ts [--base-url URL] [--limit N] [--timeout-ms N]
 
 Options:
   --base-url URL   SuperColony base URL (default: ${DEFAULT_BASE_URL})

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * colony-state-reader.ts — Read ALL colony endpoints and synthesize a full state picture.
  *
@@ -7,8 +7,8 @@
  *
  * Usage:
  *   set -a && . .env && set +a
- *   npx tsx scripts/colony-state-reader.ts
- *   npx tsx scripts/colony-state-reader.ts --json > colony-state.json
+ *   bunx tsx scripts/colony-state-reader.ts
+ *   bunx tsx scripts/colony-state-reader.ts --json > colony-state.json
  */
 
 import { readFileSync, existsSync } from "node:fs";

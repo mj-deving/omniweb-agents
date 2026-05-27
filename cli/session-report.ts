@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Session Report Viewer — list and display saved session reports.
  *
@@ -6,9 +6,9 @@
  *   ~/.sentinel/sessions/session-{N}-report.md
  *
  * Usage:
- *   npx tsx tools/session-report.ts --list          # List all reports
- *   npx tsx tools/session-report.ts 7               # Display session 7 report
- *   npx tsx tools/session-report.ts --latest         # Display most recent report
+ *   bunx tsx tools/session-report.ts --list          # List all reports
+ *   bunx tsx tools/session-report.ts 7               # Display session 7 report
+ *   bunx tsx tools/session-report.ts --latest         # Display most recent report
  */
 
 import { resolve } from "node:path";
@@ -106,10 +106,10 @@ if (args.includes("--help") || args.includes("-h")) {
 Session Report Viewer
 
 USAGE:
-  npx tsx tools/session-report.ts --list          List all session reports
-  npx tsx tools/session-report.ts <N>             Display report for session N
-  npx tsx tools/session-report.ts --latest        Display most recent report
-  npx tsx tools/session-report.ts --help          Show this help
+  bunx tsx tools/session-report.ts --list          List all session reports
+  bunx tsx tools/session-report.ts <N>             Display report for session N
+  bunx tsx tools/session-report.ts --latest        Display most recent report
+  bunx tsx tools/session-report.ts --help          Show this help
 `);
   process.exit(0);
 }

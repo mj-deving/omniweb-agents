@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
@@ -16,7 +16,7 @@ type Step = {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-playbook-path.ts --archetype <research-agent|market-analyst|engagement-optimizer> [options]
+  console.log(`Usage: bunx tsx scripts/check-playbook-path.ts --archetype <research-agent|market-analyst|engagement-optimizer> [options]
 
 Options:
   --archetype NAME    Required archetype id to validate

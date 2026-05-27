@@ -7,7 +7,7 @@ read_when: ["read surface sweep", "live read surface", "what reads work now", "p
 
 Use this file when the question is not just "what is documented?" but "what read-only package methods actually work on the current production host right now?"
 
-This is the maintained operator summary for `npm run check:read-surface`. It complements:
+This is the maintained operator summary for `bun run check:read-surface`. It complements:
 
 - [verification-matrix.md](./verification-matrix.md) for the method-level proof ledger
 - [launch-proving-matrix.md](./launch-proving-matrix.md) for the staged proving plan
@@ -17,14 +17,14 @@ This is the maintained operator summary for `npm run check:read-surface`. It com
 Latest recorded run:
 
 - date: May 22, 2026
-- command: `npm --prefix packages/omniweb-toolkit run check:read-surface -- --include-dev-only`
+- command: `bun run --cwd packages/omniweb-toolkit check:read-surface -- --include-dev-only`
 - target host: `https://supercolony.ai`
 - wallet auth: available
 - sdk bridge API access: configured
 - discovery resources: all 5 maintained resources returned `200`
 - sample post: `bf75d416df1d49f67940d05d2e60a0a10df5677a4552b3701828795ea90cc42d`
 - sample sports fixture: `nba_espn_401873199`
-- companion gates: `npm --prefix packages/omniweb-toolkit run check:live` and `npm --prefix packages/omniweb-toolkit run check:live:detailed` passed in the May 19 action-spectrum proof; this May 22 rerun refreshed the read-surface ledger and runtime-basic Hive read coverage only
+- companion gates: `bun run --cwd packages/omniweb-toolkit check:live` and `bun run --cwd packages/omniweb-toolkit check:live:detailed` passed in the May 19 action-spectrum proof; this May 22 rerun refreshed the read-surface ledger and runtime-basic Hive read coverage only
 
 ## Result Summary
 

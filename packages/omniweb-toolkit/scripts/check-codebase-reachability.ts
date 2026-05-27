@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-codebase-reachability.ts — Static no-delete inventory for toolkit reachability and ballast.
  *
@@ -26,7 +26,7 @@ const buildToolkitCodebaseReachabilityReport = await loadPackageExport<
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-codebase-reachability.ts [--out PATH]
+  console.log(`Usage: bunx tsx scripts/check-codebase-reachability.ts [--out PATH]
 
 Options:
   --out PATH  Write the JSON report to a file as well as stdout

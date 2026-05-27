@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { hasFlag, loadPackageExport } from "./_shared.js";
 
@@ -58,7 +58,7 @@ const args = process.argv.slice(2);
 const allowedArgs = new Set(["--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-multi-action-plan.ts
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-multi-action-plan.ts
 
 Assert that the colony-operator runtime can represent multiple requested actions in one dry-run plan with per-action readiness, proof status, params, timeframe, and live-execution gates.
 

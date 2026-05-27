@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Source Lifecycle CLI — evaluate and apply status transitions.
  *
@@ -6,11 +6,11 @@
  * lifecycle state machine to recommend promotions/degradations.
  *
  * Usage:
- *   npx tsx tools/source-lifecycle.ts check --pretty           # dry-run all
- *   npx tsx tools/source-lifecycle.ts apply --pretty           # apply transitions
- *   npx tsx tools/source-lifecycle.ts check --quarantined --pretty  # promotions only
- *   npx tsx tools/source-lifecycle.ts check --provider coingecko --pretty
- *   npx tsx tools/source-lifecycle.ts check --json
+ *   bunx tsx tools/source-lifecycle.ts check --pretty           # dry-run all
+ *   bunx tsx tools/source-lifecycle.ts apply --pretty           # apply transitions
+ *   bunx tsx tools/source-lifecycle.ts check --quarantined --pretty  # promotions only
+ *   bunx tsx tools/source-lifecycle.ts check --provider coingecko --pretty
+ *   bunx tsx tools/source-lifecycle.ts check --json
  */
 
 import { resolve } from "node:path";

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Pending Improvements CRUD — Sentinel Phase 2 tool
  *
@@ -10,7 +10,7 @@
  *   { version, nextSession, nextSequence, items[] }
  *
  * Usage:
- *   npx tsx tools/improvements.ts <command> [flags]
+ *   bunx tsx tools/improvements.ts <command> [flags]
  *
  * Commands:
  *   list                     List all improvements
@@ -127,7 +127,7 @@ function printHelp(): void {
 Pending Improvements CRUD — Sentinel REVIEW phase tool
 
 USAGE:
-  npx tsx tools/improvements.ts <command> [flags]
+  bunx tsx tools/improvements.ts <command> [flags]
 
 COMMANDS:
   list                     List all improvements
@@ -152,12 +152,12 @@ FLAGS:
   --help, -h               Show this help
 
 EXAMPLES:
-  npx tsx tools/improvements.ts list --pretty
-  npx tsx tools/improvements.ts propose "Add --max flag to react script" --evidence "49 reactions last session" --target "react-to-posts.ts" --source "Q2"
-  npx tsx tools/improvements.ts approve IMP-7-1
-  npx tsx tools/improvements.ts verify IMP-7-1 --evidence "5 reactions vs 49 last session"
-  npx tsx tools/improvements.ts reject IMP-7-2 "Not reproducible"
-  npx tsx tools/improvements.ts session next
+  bunx tsx tools/improvements.ts list --pretty
+  bunx tsx tools/improvements.ts propose "Add --max flag to react script" --evidence "49 reactions last session" --target "react-to-posts.ts" --source "Q2"
+  bunx tsx tools/improvements.ts approve IMP-7-1
+  bunx tsx tools/improvements.ts verify IMP-7-1 --evidence "5 reactions vs 49 last session"
+  bunx tsx tools/improvements.ts reject IMP-7-2 "Not reproducible"
+  bunx tsx tools/improvements.ts session next
 `);
 }
 

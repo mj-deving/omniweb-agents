@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Room Temperature Assessment — SCAN phase tool
  *
@@ -123,7 +123,7 @@ function printHelp(): void {
 Room Temperature Assessment — SCAN phase tool
 
 USAGE:
-  npx tsx cli/scan-feed.ts [flags]
+  bunx tsx cli/scan-feed.ts [flags]
 
 FLAGS:
   --agent NAME       Agent name (default: sentinel)
@@ -139,9 +139,9 @@ FLAGS:
   --help, -h         Show this help
 
 EXAMPLES:
-  npx tsx cli/scan-feed.ts --mode lightweight --agent sentinel --pretty
-  npx tsx cli/scan-feed.ts --mode topic-search --topics quantum,biotech --agent pioneer --json
-  npx tsx cli/scan-feed.ts --mode since-last --since 1730764800000 --agent sentinel --json
+  bunx tsx cli/scan-feed.ts --mode lightweight --agent sentinel --pretty
+  bunx tsx cli/scan-feed.ts --mode topic-search --topics quantum,biotech --agent pioneer --json
+  bunx tsx cli/scan-feed.ts --mode since-last --since 1730764800000 --agent sentinel --json
 `);
 }
 

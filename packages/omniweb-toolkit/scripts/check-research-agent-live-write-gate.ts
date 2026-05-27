@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
@@ -10,7 +10,7 @@ const skipPrepare = hasFlag(args, "--skip-prepare");
 const allowedArgs = new Set(["--stdout", "--skip-prepare", "--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-research-agent-live-write-gate.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-research-agent-live-write-gate.ts [options]
 
 Run the exported OpenClaw research-agent minimal starter in explicit live-write mode without wallet/runtime env and assert that it fails early, clearly, and without attempting a write.
 

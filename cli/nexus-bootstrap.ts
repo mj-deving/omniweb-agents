@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * NEXUS Bootstrap — create the agent's first on-chain Storage Program.
  *
@@ -12,7 +12,7 @@
  * 7. Lists agent's programs
  *
  * Usage:
- *   npx tsx tools/nexus-bootstrap.ts [--env PATH] [--dry-run]
+ *   bunx tsx tools/nexus-bootstrap.ts [--env PATH] [--dry-run]
  */
 
 import { Demos, DemosTransactions } from "@kynesyslabs/demosdk/websdk";

@@ -5,7 +5,7 @@
  * urlPattern, and emits a single catalog.json file with SourceRecordV2 records.
  *
  * Usage:
- *   npx tsx tools/source-migrate.ts \
+ *   bunx tsx tools/source-migrate.ts \
  *     --sentinel agents/sentinel/sources-registry.yaml \
  *     --crawler agents/crawler/sources-registry.yaml \
  *     --pioneer agents/pioneer/sources-registry.yaml \

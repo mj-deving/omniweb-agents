@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Session Audit — Sentinel Phase 2 tool
  *
@@ -10,7 +10,7 @@
  * Score is computed locally from the deterministic scoring formula.
  *
  * Usage:
- *   npx tsx tools/audit.ts [--log PATH] [--env PATH] [--update] [--pretty]
+ *   bunx tsx tools/audit.ts [--log PATH] [--env PATH] [--update] [--pretty]
  */
 
 import { connectWallet, info, setLogAgent } from "../src/lib/network/sdk.js";
@@ -55,7 +55,7 @@ function printHelp(): void {
 Session Audit — Sentinel AUDIT phase tool
 
 USAGE:
-  npx tsx tools/audit.ts [flags]
+  bunx tsx tools/audit.ts [flags]
 
 FLAGS:
   --agent NAME   Agent name (default: sentinel)
@@ -67,9 +67,9 @@ FLAGS:
   --help, -h     Show this help
 
 EXAMPLES:
-  npx tsx tools/audit.ts --pretty
-  npx tsx tools/audit.ts --log ~/.sentinel-session-log.jsonl --pretty
-  npx tsx tools/audit.ts --log ~/.sentinel-session-log.jsonl --update --pretty
+  bunx tsx tools/audit.ts --pretty
+  bunx tsx tools/audit.ts --log ~/.sentinel-session-log.jsonl --pretty
+  bunx tsx tools/audit.ts --log ~/.sentinel-session-log.jsonl --update --pretty
 `);
 }
 

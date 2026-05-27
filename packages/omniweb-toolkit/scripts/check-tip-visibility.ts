@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-tip-visibility.ts - live tip execution and readback proof.
  *
@@ -40,7 +40,7 @@ type AgentTipReadback = ReturnType<typeof normalizeAgentTipReadback>;
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-tip-visibility.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-tip-visibility.ts [options]
 
 Options:
   --target-tx TX          Existing post tx hash to tip; otherwise select from feed

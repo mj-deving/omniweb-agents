@@ -7,7 +7,7 @@
  * - If this succeeds, the problem was our sendRequest() call
  *
  * Usage:
- *   npx tsx cli/tlsn-sdk-test.ts --env ~/.config/demos/credentials
+ *   bunx tsx cli/tlsn-sdk-test.ts --env ~/.config/demos/credentials
  */
 
 import { parseArgs } from "node:util";

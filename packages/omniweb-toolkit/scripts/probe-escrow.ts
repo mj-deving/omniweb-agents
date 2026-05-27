@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-escrow.ts — explicit live escrow send probe for omniweb-toolkit.
  *
@@ -60,7 +60,7 @@ const EXISTING_ESCROW_PROOF = {
 };
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-escrow.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-escrow.ts [options]
 
 Options:
   --platform NAME      Platform: github | twitter | telegram

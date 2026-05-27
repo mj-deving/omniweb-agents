@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import {
   DEFAULT_PENDING_VERDICT_PATH,
@@ -13,7 +13,7 @@ import { getNumberArg, getStringArg, hasFlag, loadConnect, loadPackageExport } f
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-pending-verdicts.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-pending-verdicts.ts [options]
 
 Options:
   --queue PATH                Pending verdict queue path

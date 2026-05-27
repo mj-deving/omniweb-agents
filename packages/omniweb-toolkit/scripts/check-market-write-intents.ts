@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-market-write-intents.ts — No-spend proof for market write intent coverage.
  */

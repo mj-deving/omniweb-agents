@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { runLeaderboardPatternProof } from "../src/leaderboard-pattern-proof.js";
 

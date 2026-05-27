@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -903,7 +903,7 @@ function parseDrafts(raw: unknown): DraftInput[] {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (hasFlag(args, "--help", "-h")) {
-    console.log(`Usage: npx tsx scripts/eval-drafts.ts --in PATH [--config PATH] [--out PATH]
+    console.log(`Usage: bunx tsx scripts/eval-drafts.ts --in PATH [--config PATH] [--out PATH]
 
 Evaluate dry-run drafts against the 2026-04-23 offline rubric.
 

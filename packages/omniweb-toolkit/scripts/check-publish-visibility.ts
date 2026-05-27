@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-publish-visibility.ts — repeated live publish/reply visibility harness.
  *
@@ -65,7 +65,7 @@ interface ProbeAttempt {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-publish-visibility.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-publish-visibility.ts [options]
 
 Options:
   --runs N                Number of publish probes to execute (default: 1)

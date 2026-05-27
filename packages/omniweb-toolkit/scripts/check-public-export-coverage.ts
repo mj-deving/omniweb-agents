@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-public-export-coverage.ts — Ensure package exports have deterministic consumer coverage.
  */

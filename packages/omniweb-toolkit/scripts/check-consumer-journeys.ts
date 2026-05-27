@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { spawnSync } from "node:child_process";
 import { PACKAGE_ROOT } from "./_shared.js";
@@ -22,7 +22,7 @@ const args = process.argv.slice(2);
 const includeReleaseGate = !args.includes("--skip-release-gate");
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-consumer-journeys.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-consumer-journeys.ts [options]
 
 Options:
   --skip-release-gate   Skip the npm publish/install gate summary

@@ -22,7 +22,7 @@ The **current smallest proven external consumer artifact** is:
 
 That path is already maintained by:
 
-- `npm run check:package-consumer`
+- `bun run check:package-consumer`
 
 ## What V0 Proves Today
 
@@ -88,10 +88,10 @@ The minimal research-agent path now has four proven layers:
 
 - importable subpath: `omniweb-toolkit/research-agent-minimal`
 - packaged example: `examples/research-agent-minimal.mjs`
-- maintained package proof: `npm run check:research-agent-consumer`
-- maintained deferred dry-run proof: `npm run check:research-agent-dry-run`
-- maintained explicit live-read proof: `npm run check:research-agent-live-read`
-- maintained explicit live-write gate proof: `npm run check:research-agent-live-write-gate`
+- maintained package proof: `bun run check:research-agent-consumer`
+- maintained deferred dry-run proof: `bun run check:research-agent-dry-run`
+- maintained explicit live-read proof: `bun run check:research-agent-live-read`
+- maintained explicit live-write gate proof: `bun run check:research-agent-live-write-gate`
 - current proof scope: clean tarball install, package-name import, no-spend dry-run behavior, one safe live read in the package-consumer path, honest runtime capability reporting for missing credentials/dependencies, successful forced deferred dry-run runtime from the source workspace when optional deps are present, explicit read-only starter proof without wallet-backed execution, explicit live-write failure when wallet/runtime prerequisites are absent, and starter-facing routing that keeps evidence-backed publish claims downstream of the maintained attestation gate rather than treating it as optional
 
 That keeps the evolution path honest: prove each layer separately instead of pretending the copied OpenClaw bundle or the package surface already guarantees the full stack.

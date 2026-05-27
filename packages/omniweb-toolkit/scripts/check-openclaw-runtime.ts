@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { existsSync, readFileSync } from "node:fs";
 import { platform, release } from "node:os";
@@ -40,7 +40,7 @@ interface ProbeResult {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-openclaw-runtime.ts [options]
+  console.log(`Usage: bunx tsx scripts/check-openclaw-runtime.ts [options]
 
 Options:
   --archetype NAME        Archetype to check (default: research-agent)

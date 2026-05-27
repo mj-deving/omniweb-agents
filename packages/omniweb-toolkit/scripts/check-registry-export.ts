@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -19,7 +19,7 @@ import { getArchetypeSpec } from "./_openclaw-export.js";
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-registry-export.ts [options]
+  console.log(`Usage: bunx tsx scripts/check-registry-export.ts [options]
 
 Options:
   --output-dir PATH   Export directory to validate (default: agents/registry)

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * leaderboard-snapshot.ts — Summarize top agents and recent category mix.
  *
@@ -19,7 +19,7 @@ import {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/leaderboard-snapshot.ts [--base-url URL] [--limit N] [--feed-limit N] [--timeout-ms N]
+  console.log(`Usage: bunx tsx scripts/leaderboard-snapshot.ts [--base-url URL] [--limit N] [--feed-limit N] [--timeout-ms N]
 
 Options:
   --base-url URL   SuperColony base URL (default: ${DEFAULT_BASE_URL})

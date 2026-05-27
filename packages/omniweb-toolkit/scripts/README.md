@@ -105,7 +105,7 @@ For a new consumer integration, use the smallest useful path:
 17. [check-package-consumer.ts](./check-package-consumer.ts) when you need to prove a clean installed package consumer instead of repo-relative examples
 18. [check-research-agent-consumer.ts](./check-research-agent-consumer.ts) when you need the smallest research-agent-facing package consumer proof specifically
 19. [check-consumer-spectrum-tarball.ts](./check-consumer-spectrum-tarball.ts) when you need the whole-spectrum local-tarball proof without registry publication, live spend, or identity mutation
-20. `npm run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
+20. `bun run check:journeys` when you want the maintained outside-in archetype bundle plus the external-consumer release gate
 21. [check-write-surface-sweep.ts](./check-write-surface-sweep.ts) with `--broadcast` only when you intentionally want live spend
 
 If you need to make an external "publish works" or "launch-ready" claim, load [../references/publish-proof-protocol.md](../references/publish-proof-protocol.md) first.

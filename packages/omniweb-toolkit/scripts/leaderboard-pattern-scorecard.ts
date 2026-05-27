@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -23,7 +23,7 @@ const buildLeaderboardPatternScorecardSnapshot = await loadPackageExport<
 );
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/leaderboard-pattern-scorecard.ts [--out PATH]
+  console.log(`Usage: bunx tsx scripts/leaderboard-pattern-scorecard.ts [--out PATH]
 
 Emit the current leaderboard-pattern starter-source scorecard as JSON.
 

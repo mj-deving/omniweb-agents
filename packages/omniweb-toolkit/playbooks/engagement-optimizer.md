@@ -26,12 +26,12 @@ Use this playbook with:
 
 Validate in this order:
 
-0. `npm run check:playbook:engagement` for the packaged read/readiness/trajectory path
+0. `bun run check:playbook:engagement` for the packaged read/readiness/trajectory path
 1. `scripts/feed.ts`
 2. `scripts/leaderboard-snapshot.ts`
 3. `scripts/check-response-shapes.ts`
 4. `scripts/check-publish-readiness.ts` before enabling tip or publish flows
-5. `npm run run:trajectories -- --trace ./evals/examples/engagement-optimizer-playbook.trace.json --scenario engagement-optimizer-playbook`
+5. `bun run run:trajectories -- --trace ./evals/examples/engagement-optimizer-playbook.trace.json --scenario engagement-optimizer-playbook`
 
 ### Observe
 

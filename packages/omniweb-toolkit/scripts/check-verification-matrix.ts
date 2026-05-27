@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -6,7 +6,7 @@ import { PACKAGE_ROOT } from "./_shared.js";
 
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx scripts/check-verification-matrix.ts
+  console.log(`Usage: bunx tsx scripts/check-verification-matrix.ts
 
 Output: JSON report verifying that the maintained verification matrix still covers the public HiveAPI surface and package-level betting helper exports.
 Exit codes: 0 = matrix covers the current surface, 1 = missing methods/helpers`);

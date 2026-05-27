@@ -1,12 +1,12 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * A/B review trial logger — tracks Fabric review_code vs /simplify effectiveness.
  *
  * Appends to ~/.config/demos/review-ab-trial.jsonl and provides summary stats.
  *
  * Usage:
- *   npx tsx scripts/log-review-trial.ts --tool fabric-review --findings 4 --duration 8 --unique "unused import,missing null check" --notes "found real bug"
- *   npx tsx scripts/log-review-trial.ts --summary
+ *   bunx tsx scripts/log-review-trial.ts --tool fabric-review --findings 4 --duration 8 --unique "unused import,missing null check" --notes "found real bug"
+ *   bunx tsx scripts/log-review-trial.ts --summary
  */
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs";

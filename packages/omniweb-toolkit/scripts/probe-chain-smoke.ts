@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-chain-smoke.ts — non-mutating chain sign/read smoke for omniweb-toolkit.
  *
@@ -23,7 +23,7 @@ const DEFAULT_MESSAGE_LABEL = "omniweb-toolkit-chain-smoke";
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-chain-smoke.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-chain-smoke.ts [options]
 
 Options:
   --message-label TEXT Label included in the signed smoke-test message

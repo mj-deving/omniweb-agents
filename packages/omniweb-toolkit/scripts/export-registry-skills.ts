@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { resolve } from "node:path";
 import { getStringArg, hasFlag } from "./_shared.js";
@@ -13,7 +13,7 @@ import {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/export-registry-skills.ts [options]
+  console.log(`Usage: bunx tsx scripts/export-registry-skills.ts [options]
 
 Options:
   --output-dir PATH   Destination directory (default: agents/registry)

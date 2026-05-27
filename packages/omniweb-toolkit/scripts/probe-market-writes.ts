@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-market-writes.ts — maintained live proof path for placeHL and placeBet.
  *
@@ -63,7 +63,7 @@ type RecoveryResult = {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-market-writes.ts [options]
 
 Options:
   --assets CSV             Assets to inspect (default: ${DEFAULT_ASSETS.join(",")})

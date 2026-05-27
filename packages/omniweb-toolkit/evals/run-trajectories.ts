@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * run-trajectories.ts — Score recorded trajectory traces against evals/trajectories.yaml.
  *
@@ -81,7 +81,7 @@ interface TraceValidation {
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: npx tsx evals/run-trajectories.ts [--trace PATH] [--scenario ID] [--template]
+  console.log(`Usage: bunx tsx evals/run-trajectories.ts [--trace PATH] [--scenario ID] [--template]
 
 Options:
   --trace PATH    Trace JSON file to score against evals/trajectories.yaml

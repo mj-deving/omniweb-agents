@@ -56,9 +56,9 @@ Current PR1 no-spend evidence: [full-action-spectrum-read-discovery-proof-2026-0
 
 | Row | Methods / surface | Profile | Command | Spend | Success criteria |
 | --- | --- | --- | --- | --- | --- |
-| R1 discovery/category drift | live discovery, categories, endpoint surface | `public-read` | `npm --prefix packages/omniweb-toolkit run check:live` and `check:live:detailed` | `none` | current host answers maintained probes or rows classify drift |
-| R2 response shapes | `getSignals`, `getConvergence`, `getReport`, market/score shapes | `auth-read` | `npm --prefix packages/omniweb-toolkit run check:responses` | `none` | maintained docs match current payload envelopes |
-| R3 read surface sweep | full maintained read set | `auth-read` | `npm --prefix packages/omniweb-toolkit run check:read-surface` | `none` | every row returns pass/degraded/dev-only/unsupported |
+| R1 discovery/category drift | live discovery, categories, endpoint surface | `public-read` | `bun run --cwd packages/omniweb-toolkit check:live` and `check:live:detailed` | `none` | current host answers maintained probes or rows classify drift |
+| R2 response shapes | `getSignals`, `getConvergence`, `getReport`, market/score shapes | `auth-read` | `bun run --cwd packages/omniweb-toolkit check:responses` | `none` | maintained docs match current payload envelopes |
+| R3 read surface sweep | full maintained read set | `auth-read` | `bun run --cwd packages/omniweb-toolkit check:read-surface` | `none` | every row returns pass/degraded/dev-only/unsupported |
 | R4 social/feed reads | `getFeed`, `search`, `getPostDetail`, `getRss`, `getTopPosts` | `auth-read` | `scripts/feed.ts`, `check-read-surface-sweep.ts` | `none` | feed/detail/search usable for later write readback; no server-side `since`/`window`, use `limit`/`cursor` then timestamp-filter client-side |
 | R5 agent/scoring reads | `getLeaderboard`, `getAgents`, `getAgentProfile`, `getAgentIdentities`, `getAgentBalance`, `getAgentTipStats` | `auth-read` | `scripts/leaderboard-snapshot.ts`, `check-read-surface-sweep.ts` | `none` | profile and score data current or explicitly degraded |
 | R6 market/oracle reads | `getOracle`, `getPrices`, `getPriceHistory`, `getMarkets`, `getPredictions`, `getPredictionLeaderboard`, `getPredictionScore`, `getForecastScore` | `auth-read` | `check-response-shapes.ts`, `check-read-surface-sweep.ts` | `none` | active market context available for VOTE/BET decisions; operator discovery advertises `window=24h` with `30m`/`1h`/`4h`/`12h`/`24h` examples and `periods=24` for price history |
@@ -116,9 +116,9 @@ Final PR6 reconciliation: [full-action-spectrum-closeout-2026-05-19.md](./full-a
 
 | Row | Methods / surface | Profile | Command | Spend | Success criteria |
 | --- | --- | --- | --- | --- | --- |
-| H1 write helper exports | `buildBetMemo`, `buildHigherLowerMemo`, `buildBinaryBetMemo`, `VALID_BET_HORIZONS` | `auth-read` or static | `npm --prefix packages/omniweb-toolkit run check:verification-matrix` | `none` | helpers remain import-covered |
+| H1 write helper exports | `buildBetMemo`, `buildHigherLowerMemo`, `buildBinaryBetMemo`, `VALID_BET_HORIZONS` | `auth-read` or static | `bun run --cwd packages/omniweb-toolkit check:verification-matrix` | `none` | helpers remain import-covered |
 | H2 capability truth | capability manifest, guardrails, admissibility | static/dry-run | `check:colony-operator-cycle`, `check:colony-operator-response-depth`, `check:colony-operator-admissibility` | `none` | every live row maps to capability/guardrail/admissibility truth, including default time/horizon knobs in runtime discovery |
-| H3 hosted consumer proof | clean local tarball proof | static/dry-run | `npm --prefix packages/omniweb-toolkit run check:hosted-operator-consumer` | `none` | package-name imports and no-spend packets still pass |
+| H3 hosted consumer proof | clean local tarball proof | static/dry-run | `bun run --cwd packages/omniweb-toolkit check:hosted-operator-consumer` | `none` | package-name imports and no-spend packets still pass |
 
 ## PR Slice Ownership
 

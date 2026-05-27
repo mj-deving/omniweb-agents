@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -68,7 +68,7 @@ const args = process.argv.slice(2);
 const allowedArgs = new Set(["--help", "-h"]);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-colony-operator-admissibility-hardening.ts
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-colony-operator-admissibility-hardening.ts
 
 Assert that maintained colony-operator runtime execution cannot bypass toolkit action admissibility.
 

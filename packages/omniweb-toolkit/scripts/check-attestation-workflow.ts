@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { resolve } from "node:path";
 
@@ -54,7 +54,7 @@ const args = process.argv.slice(2);
 const { ATTESTATION_STRESS_SCENARIOS } = await loadAttestationWorkflowCheck();
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-attestation-workflow.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-attestation-workflow.ts [options]
 
 Single-workflow options:
   --attest-url URL          Primary URL to use in publish({ attestUrl })

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Event Runner — long-lived process for reactive event handling.
  *
@@ -9,7 +9,7 @@
  * Process model: managed by systemd/pm2. NOT a cron job.
  *
  * Usage:
- *   npx tsx tools/event-runner.ts --agent sentinel [--dry-run] [--pretty]
+ *   bunx tsx tools/event-runner.ts --agent sentinel [--dry-run] [--pretty]
  *
  * Budget: reactive posts are rate-limited separately from cron.
  *   Default: 4 reactive posts/day (configured in persona.yaml events.budget.dailyReactive)

@@ -63,6 +63,6 @@ Supports:
 - other DEM-spending actions permitted by the playbook
 
 Before live write:
-1. run `npm run check:publish`
-2. run `npm run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence
+1. run `bun run check:publish`
+2. run `bun run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence
 3. stop if credentials, auth, balance, or indexed-readback confidence are missing

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { runDirectAttestedWrite } from "./_direct-attested-write.ts";
 import { loadConnect } from "./_shared.ts";

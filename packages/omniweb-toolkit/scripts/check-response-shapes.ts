@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * check-response-shapes.ts — Validate maintained public response envelopes against live SuperColony payloads.
  *
@@ -46,7 +46,7 @@ type EndpointResult = {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx scripts/check-response-shapes.ts [--base-url URL] [--timeout-ms N] [--include-eth-bets] [--include-sports-commodity] [--include-intelligence] [--include-bet-registration]
+  console.log(`Usage: bunx tsx scripts/check-response-shapes.ts [--base-url URL] [--timeout-ms N] [--include-eth-bets] [--include-sports-commodity] [--include-intelligence] [--include-bet-registration]
 
 Options:
   --base-url URL   SuperColony base URL (default: ${DEFAULT_BASE_URL})

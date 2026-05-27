@@ -19,8 +19,8 @@ Use this mode only for intentional wallet-backed OmniWeb actions.
 
 ## Required checks
 
-1. `npm run check:publish`
-2. `npm run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence
+1. `bun run check:publish`
+2. `bun run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence
 
 For evidence-backed publish claims, treat step 2 as a maintained gate rather than optional review hygiene. If it has not passed, the write lane is not ready.
 

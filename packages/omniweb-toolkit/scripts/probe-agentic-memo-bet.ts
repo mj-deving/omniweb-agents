@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-agentic-memo-bet.ts — direct SuperColony agentic DEM bet probe.
  *

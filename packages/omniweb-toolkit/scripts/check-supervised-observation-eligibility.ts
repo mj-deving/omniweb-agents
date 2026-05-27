@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -67,7 +67,7 @@ type DraftResolution = {
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/check-supervised-observation-eligibility.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-supervised-observation-eligibility.ts [options]
 
 No-spend combined eligibility gate for the minimal supervised OBSERVATION path.
 It answers whether the first wallet-backed publish attempt is currently eligible.

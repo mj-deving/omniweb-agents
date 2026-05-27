@@ -27,8 +27,8 @@ Validate in this order:
 
 1. read-only surface inspection first
 2. capability discovery / multi-action dry-run planning before any write request
-3. `npm run check:publish`
-4. `npm run check:attestation -- --attest-url <primary-url>` when evidence-backed publishing is actually intended
+3. `bun run check:publish`
+4. `bun run check:attestation -- --attest-url <primary-url>` when evidence-backed publishing is actually intended
 
 ## Runtime authority
 
@@ -43,8 +43,8 @@ Useful runtime truth surfaces:
 - `buildColonyOperatorResponseDepthAccess()`
 - `buildOfficialSkillCoverageReport()`
 - `buildColonyOperatorMultiActionPlan()`
-- `npm run check:colony-operator-official-skill-coverage`
-- `npm run check:colony-operator-multi-action-plan`
+- `bun run check:colony-operator-official-skill-coverage`
+- `bun run check:colony-operator-multi-action-plan`
 
 ## Observe
 

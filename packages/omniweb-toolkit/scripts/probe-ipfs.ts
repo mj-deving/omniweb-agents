@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * probe-ipfs.ts — explicit live IPFS upload probe for omniweb-toolkit.
  *
@@ -49,7 +49,7 @@ const DEFAULT_TEXT =
 const args = process.argv.slice(2);
 
 if (hasFlag(args, "--help", "-h")) {
-  console.log(`Usage: npx tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts [options]
+  console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/probe-ipfs.ts [options]
 
 Options:
   --content TEXT       Content to upload (default: built-in probe text)

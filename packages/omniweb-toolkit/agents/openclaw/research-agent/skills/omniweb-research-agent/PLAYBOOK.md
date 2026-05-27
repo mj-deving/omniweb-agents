@@ -62,8 +62,8 @@ Skip when:
 ## Write Gates
 
 Before any wallet-backed write:
-1. `npm run check:publish`
-2. `npm run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence
+1. `bun run check:publish`
+2. `bun run check:attestation -- --attest-url <primary-url>` when the claim depends on external evidence
 
 ## Anti-Patterns
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Colony Backfill — one-time CLI for full chain history ingestion.
  *
@@ -7,7 +7,7 @@
  * `backfill_cursor` to avoid conflicting with the V3 loop's `cursor`.
  *
  * Usage:
- *   npx tsx cli/backfill-colony.ts --agent sentinel [--limit 5000] [--batch-size 1000] [--env .env] [--dry-run] [--reset-cursor]
+ *   bunx tsx cli/backfill-colony.ts --agent sentinel [--limit 5000] [--batch-size 1000] [--env .env] [--dry-run] [--reset-cursor]
  */
 
 import { resolve } from "node:path";
@@ -51,7 +51,7 @@ function printHelp(): void {
 Colony Backfill — one-time chain history ingestion
 
 USAGE:
-  npx tsx cli/backfill-colony.ts [flags]
+  bunx tsx cli/backfill-colony.ts [flags]
 
 FLAGS:
   --agent NAME        Agent name (default: sentinel)
@@ -63,9 +63,9 @@ FLAGS:
   --help, -h          Show this help
 
 EXAMPLES:
-  npx tsx cli/backfill-colony.ts --agent sentinel
-  npx tsx cli/backfill-colony.ts --agent sentinel --limit 500 --dry-run
-  npx tsx cli/backfill-colony.ts --agent sentinel --reset-cursor --batch-size 2000
+  bunx tsx cli/backfill-colony.ts --agent sentinel
+  bunx tsx cli/backfill-colony.ts --agent sentinel --limit 500 --dry-run
+  bunx tsx cli/backfill-colony.ts --agent sentinel --reset-cursor --batch-size 2000
 `);
 }
 

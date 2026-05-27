@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Post Verification — Sentinel Phase 3 tool
  *
@@ -7,12 +7,12 @@
  * and optionally confirms matching entries in the session log.
  *
  * Usage:
- *   npx tsx tools/verify.ts [txHash...] [--log PATH] [--env PATH] [--wait N] [--pretty] [--json]
+ *   bunx tsx tools/verify.ts [txHash...] [--log PATH] [--env PATH] [--wait N] [--pretty] [--json]
  *
  * Examples:
- *   npx tsx tools/verify.ts abc123 def456 --pretty
- *   npx tsx tools/verify.ts abc123 --wait 30 --json
- *   npx tsx tools/verify.ts --agent sentinel --pretty
+ *   bunx tsx tools/verify.ts abc123 def456 --pretty
+ *   bunx tsx tools/verify.ts abc123 --wait 30 --json
+ *   bunx tsx tools/verify.ts --agent sentinel --pretty
  */
 
 import { resolve } from "node:path";
@@ -58,7 +58,7 @@ function printHelp(): void {
 Post Verification — Sentinel VERIFY phase tool
 
 USAGE:
-  npx tsx tools/verify.ts [txHash...] [flags]
+  bunx tsx tools/verify.ts [txHash...] [flags]
 
 ARGS:
   [txHash...]       One or more txHashes to verify (positional)
@@ -74,10 +74,10 @@ FLAGS:
   --help, -h        Show this help
 
 EXAMPLES:
-  npx tsx tools/verify.ts abc123 --pretty
-  npx tsx tools/verify.ts abc123 def456 --wait 30 --json
-  npx tsx tools/verify.ts --agent sentinel --pretty
-  npx tsx tools/verify.ts abc123 --log ~/.sentinel-session-log.jsonl --pretty
+  bunx tsx tools/verify.ts abc123 --pretty
+  bunx tsx tools/verify.ts abc123 def456 --wait 30 --json
+  bunx tsx tools/verify.ts --agent sentinel --pretty
+  bunx tsx tools/verify.ts abc123 --log ~/.sentinel-session-log.jsonl --pretty
 `);
 }
 

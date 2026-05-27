@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S bunx tsx
 /**
  * Improve Skill — On-demand observation processor
  *
@@ -9,11 +9,11 @@
  * NOT a loop phase — invoked manually when operator wants to improve.
  *
  * Usage:
- *   npx tsx tools/improve.ts --agent sentinel --pretty
- *   npx tsx tools/improve.ts --agent sentinel --since 5 --pretty
- *   npx tsx tools/improve.ts --agent sentinel --unresolved --pretty
- *   npx tsx tools/improve.ts --agent sentinel --trace obs-15-1773404767-0ee4
- *   npx tsx tools/improve.ts --agent sentinel --auto-apply --dry-run --pretty
+ *   bunx tsx tools/improve.ts --agent sentinel --pretty
+ *   bunx tsx tools/improve.ts --agent sentinel --since 5 --pretty
+ *   bunx tsx tools/improve.ts --agent sentinel --unresolved --pretty
+ *   bunx tsx tools/improve.ts --agent sentinel --trace obs-15-1773404767-0ee4
+ *   bunx tsx tools/improve.ts --agent sentinel --auto-apply --dry-run --pretty
  */
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -77,7 +77,7 @@ function printHelp(): void {
 Improve Skill — On-demand observation processor
 
 USAGE:
-  npx tsx tools/improve.ts [flags]
+  bunx tsx tools/improve.ts [flags]
 
 FLAGS:
   --agent NAME           Agent name (default: sentinel)
@@ -92,11 +92,11 @@ FLAGS:
   --help, -h             Show this help
 
 EXAMPLES:
-  npx tsx tools/improve.ts --agent sentinel --pretty
-  npx tsx tools/improve.ts --agent sentinel --since 5 --pretty
-  npx tsx tools/improve.ts --agent sentinel --unresolved --pretty
-  npx tsx tools/improve.ts --agent sentinel --trace obs-15-1773404767-0ee4
-  npx tsx tools/improve.ts --agent sentinel --auto-apply --dry-run --pretty
+  bunx tsx tools/improve.ts --agent sentinel --pretty
+  bunx tsx tools/improve.ts --agent sentinel --since 5 --pretty
+  bunx tsx tools/improve.ts --agent sentinel --unresolved --pretty
+  bunx tsx tools/improve.ts --agent sentinel --trace obs-15-1773404767-0ee4
+  bunx tsx tools/improve.ts --agent sentinel --auto-apply --dry-run --pretty
 `);
 }
 

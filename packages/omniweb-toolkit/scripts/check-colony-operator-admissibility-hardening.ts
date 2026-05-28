@@ -138,6 +138,10 @@ function checkSourceContracts(): Record<string, boolean> {
   );
   const minimalAgent = readFileSync(resolve(PACKAGE_ROOT, "src", "minimal-agent.ts"), "utf8");
   const colonyOperatorEntrypoint = readFileSync(resolve(PACKAGE_ROOT, "src", "colony-operator-entrypoint.ts"), "utf8");
+  const colonyOperatorActionLifecycle = readFileSync(
+    resolve(PACKAGE_ROOT, "src", "colony-operator-action-lifecycle.ts"),
+    "utf8",
+  );
 
   const admissibilityCall = actionExecutor.indexOf("await evaluateToolkitActionAdmissibility");
   const failClosedBranch = actionExecutor.indexOf("if (admissibility.status !== \"allowed\")");
@@ -166,9 +170,9 @@ function checkSourceContracts(): Record<string, boolean> {
       && actionExecutorResultHelpers.includes("admissibility: execution.admissibility"),
     selectedActionSurfacePreservesAdmissibility: colonyOperatorEntrypoint.includes("selectedAction: {")
       && colonyOperatorEntrypoint.includes("admissibility: selectedAdmissibility"),
-    multiActionPlanPreservesAdmissibility: colonyOperatorEntrypoint.includes("const admissibility = evaluateToolkitActionAdmissibilitySync")
-      && colonyOperatorEntrypoint.includes("liveExecutionGate: liveExecutionGateForPlannedAction")
-      && colonyOperatorEntrypoint.includes("admissibility,"),
+    multiActionPlanPreservesAdmissibility: colonyOperatorActionLifecycle.includes("const admissibility = evaluateToolkitActionAdmissibilitySync")
+      && colonyOperatorActionLifecycle.includes("liveExecutionGate: liveExecutionGateForPlannedAction")
+      && colonyOperatorActionLifecycle.includes("admissibility,"),
   };
 }
 

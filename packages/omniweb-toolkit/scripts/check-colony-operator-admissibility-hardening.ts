@@ -132,6 +132,10 @@ process.exit(ok ? 0 : 1);
 
 function checkSourceContracts(): Record<string, boolean> {
   const actionExecutor = readFileSync(resolve(PACKAGE_ROOT, "src", "action-executor.ts"), "utf8");
+  const actionExecutorResultHelpers = readFileSync(
+    resolve(PACKAGE_ROOT, "src", "action-executor", "result-helpers.ts"),
+    "utf8",
+  );
   const minimalAgent = readFileSync(resolve(PACKAGE_ROOT, "src", "minimal-agent.ts"), "utf8");
   const colonyOperatorEntrypoint = readFileSync(resolve(PACKAGE_ROOT, "src", "colony-operator-entrypoint.ts"), "utf8");
 
@@ -154,10 +158,12 @@ function checkSourceContracts(): Record<string, boolean> {
     blockedPathPreservesAdmissibility: actionExecutor.includes("message: `admissibility_${admissibility.status}")
       && actionExecutor.includes("admissibility,\n      })"),
     dryRunAndSkippedPathsPreserveAdmissibility: countOccurrences(actionExecutor, "guardrailEvaluation,\n        admissibility,") >= 2,
-    successfulDispatchPreservesAdmissibility: actionExecutor.includes("withRuntimeGateReports(")
-      && countOccurrences(actionExecutor, "withRuntimeGateReports(") >= 5,
+    successfulDispatchPreservesAdmissibility: countOccurrences(actionExecutor, "withExecutionGateReports(") >= 5
+      && actionExecutorResultHelpers.includes("withRuntimeGateReports(")
+      && actionExecutorResultHelpers.includes("guardrailEvaluation,")
+      && actionExecutorResultHelpers.includes("admissibility,"),
     minimalOutcomePreservesAdmissibility: minimalAgent.includes("admissibility?: ToolkitActionAdmissibilityReport")
-      && actionExecutor.includes("admissibility: execution.admissibility"),
+      && actionExecutorResultHelpers.includes("admissibility: execution.admissibility"),
     selectedActionSurfacePreservesAdmissibility: colonyOperatorEntrypoint.includes("selectedAction: {")
       && colonyOperatorEntrypoint.includes("admissibility: selectedAdmissibility"),
     multiActionPlanPreservesAdmissibility: colonyOperatorEntrypoint.includes("const admissibility = evaluateToolkitActionAdmissibilitySync")

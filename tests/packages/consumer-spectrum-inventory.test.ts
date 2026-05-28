@@ -55,12 +55,18 @@ describe("consumer spectrum inventory", () => {
         expected: probe.expected,
         actual: probe.expected === "external_or_mutating" || probe.expected === "streaming"
           ? "not_fetched" as const
-          : "ok" as const,
-        httpStatus: probe.expected === "external_or_mutating" || probe.expected === "streaming" ? 0 : 200,
+          : probe.expected === "auth_required" ? "auth_required" as const : "ok" as const,
+        httpStatus: probe.expected === "external_or_mutating" || probe.expected === "streaming"
+          ? 0
+          : probe.expected === "auth_required" ? 401 : 200,
         contentType: "application/json",
         classification: probe.expected === "external_or_mutating" || probe.expected === "streaming"
           ? "blocked_external_or_mutating" as const
-          : classifyConsumerSpectrumProbe({ probe, httpStatus: 200, openapiPaths }),
+          : classifyConsumerSpectrumProbe({
+            probe,
+            httpStatus: probe.expected === "auth_required" ? 401 : 200,
+            openapiPaths,
+          }),
         advertisedBy: probe.advertisedBy,
         shape: summarizeConsumerSpectrumBodyShape("{}"),
         notes: probe.notes,
@@ -91,8 +97,9 @@ describe("consumer spectrum inventory", () => {
       "/api/mcp/tools",
       "/api/capabilities",
     ]));
-    expect(report.summary.advertisedButMissingLocally).toContain("chat");
+    expect(report.summary.advertisedButMissingLocally).not.toContain("chat");
     expect(report.summary.partialAreas).toEqual(expect.arrayContaining([
+      "chat",
       "rss",
       "sse-stream",
       "binary-commodity-sports-markets",

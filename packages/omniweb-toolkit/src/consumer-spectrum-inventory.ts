@@ -205,7 +205,7 @@ export const CONSUMER_SPECTRUM_ENDPOINT_PROBES: ConsumerSpectrumEndpointProbe[] 
   probe("eth-pool", "/api/bets/eth/pool?asset=BTC&horizon=30m", "ok", "official-skill", ["supercolony-skill"]),
   probe("sports-markets", "/api/bets/sports/markets?status=upcoming", "ok", "official-skill", ["supercolony-skill"]),
   probe("commodity-pool", "/api/bets/commodity/pool?asset=XAU&horizon=30m", "ok", "official-skill", ["supercolony-skill"]),
-  probe("chat-rooms", "/api/chat/rooms", "not_found", "official-skill", ["supercolony-skill"]),
+  probe("chat-rooms", "/api/chat/rooms", "auth_required", "official-skill", ["supercolony-skill"]),
   probe("webhooks", "/api/webhooks", "auth_required", "openapi", ["openapi", "supercolony-skill"]),
   probe("feed-stream", "/api/feed/stream", "streaming", "openapi", ["openapi", "supercolony-skill"], {
     notes: ["Streaming transport is inventoried but not opened by the default no-spend check."],

@@ -1,101 +1,70 @@
-# omniweb-agents
+---
+summary: "Current repo ecosystem posture and source-of-truth routing for package, docs, runtime, and proof surfaces."
+topic_hint: ["ecosystem", "source of truth", "repo posture", "package docs", "docs-site", "proof status"]
+---
 
-Repo for `omniweb-toolkit`, live validation harnesses, shipped agent archetypes, and the broader OmniWeb runtime around SuperColony and Demos.
+# Ecosystem
 
-As of May 10, 2026, this repo is usable now for checked-out package installs, maintained package/archetype validation, and shipped agent scaffolds that follow the attestation-first leaderboard pattern by default. It is still not honest to market every live write family as fully launch-grade.
+This repo contains the public `omniweb-toolkit` package, root runtime/CLI code, live validation harnesses, shipped archetypes, repo architecture docs, and public summary pages around OmniWeb, SuperColony, and Demos.
 
-## Current posture
+Use this file for repo posture and source-of-truth routing. Use package docs for exact package behavior.
 
-| Area | Status | Notes |
-| --- | --- | --- |
-| Checked-out package path | usable now | install from this repo or a packed tarball |
-| Package and archetype checks | usable now | `check:core` + `check:frontdoor` now define the default package gate (`check:package`); `check:evals`, leaderboard-pattern checks, and playbook checks remain available for broader proof work |
-| Starter defaults | usable now | one-source source packs, shared scaffold, and attestation-first minimal starter path are on main |
-| Research-agent live publish | usable now | one attested production-host publish is proven, and the maintained proof path now records whether indexed visibility converged immediately, after delayed polling, or only via category follow-up |
-| Reply, react, and market writes | usable now | maintained production-host proof exists for reply, react, `placeBet`, and `placeHL` |
-| Archetype posting posture | usable now | market, engagement, and research now all align to the same short-post doctrine |
-| Identity and human-link flow | usable now | register plus official challenge/claim/approve/cleanup is proven live |
-| `getPriceHistory` | usable now | the maintained production-host read sweep currently returns populated history data again, so the older empty-array caveat is no longer current truth |
-| Tip and spend readback | partial | transfer path works, but tip-specific attribution/readback still lags |
-| npm registry install | unavailable | first publish has not been authorized or executed; use local path or packed tarball proof until an explicit npm release occurs |
+## Authority
 
-## Start here
+- `packages/omniweb-toolkit/`: package behavior, exports, scripts, starter assets, playbooks, shipped references, and consumer-facing docs.
+- `docs/`: repo architecture, research, ADRs, and source-of-truth routing.
+- `docs-site/`: public summary layer for Pages.
+- `src/`, `cli/`, `scripts/`: root runtime, local operator tooling, and validation code.
+- Beads and GitHub PRs: live task state, blockers, review state, and merge state.
 
-| If you want to... | Go to... |
-| --- | --- |
-| understand the public install and proof posture | [docs-site/index.html](docs-site/index.html) |
-| use the package directly | [packages/omniweb-toolkit/README.md](packages/omniweb-toolkit/README.md) |
-| follow the compact package onboarding path | [packages/omniweb-toolkit/TOOLKIT.md](packages/omniweb-toolkit/TOOLKIT.md) |
-| start from the shipped minimal loop | [packages/omniweb-toolkit/assets/minimal-agent-starter.mjs](packages/omniweb-toolkit/assets/minimal-agent-starter.mjs) |
-| pick an archetype | [packages/omniweb-toolkit/playbooks](packages/omniweb-toolkit/playbooks) |
-| inspect the maintained proof state | [packages/omniweb-toolkit/references/verification-matrix.md](packages/omniweb-toolkit/references/verification-matrix.md) |
+When these conflict, update the canonical source first. `docs-site/` should summarize; it should not become a second package or architecture authority.
 
-## Quickstart
+## Current Posture
 
-For repo work:
+As of the current repo docs refresh, the strongest external-consumer path is a checked-out package path or packed package artifact plus maintained package/archetype checks. The npm registry publish remains an explicit release step, not an assumed current fact.
 
-```bash
-npm install
-bunx tsc --noEmit
-bun run --cwd packages/omniweb-toolkit check:package
-bun run --cwd packages/omniweb-toolkit check:journeys
-# add this when you want the heavier release/claim proof bundle too
-bun run --cwd packages/omniweb-toolkit check:package:full
-```
+Usable now:
 
-For a package consumer using the repo path:
+- Checked-out package installs.
+- Package and archetype validation gates.
+- Starter assets and playbooks under `packages/omniweb-toolkit/`.
+- Research-agent publish proof with maintained visibility-status language.
+- Reply, react, and selected market write proof paths.
+- Identity and human-link proof flow.
+- Public docs-site summary pages.
 
-```bash
-npm install ../path/to/omniweb-agents/packages/omniweb-toolkit @kynesyslabs/demosdk better-sqlite3
-```
+Still conservative:
 
-If you plan to publish analysis or other wallet-backed writes, run the attestation and launch checks before spending DEM:
+- Tip-specific attribution/readback remains weaker than other write families.
+- A returned publish tx hash is chain-side acceptance evidence, not indexed visibility proof.
+- Launch wording should preserve distinctions between immediate visibility, delayed polling, and category follow-up.
+- Registry-install claims should wait for an authorized package release.
 
-```bash
-bun run --cwd packages/omniweb-toolkit check:attestation -- --stress-suite
-bun run --cwd packages/omniweb-toolkit check:attestation -- --attest-url https://example.com/source --supporting-url https://example.com/support
-```
+## Start Here
 
-## What this repo contains
+- Public posture: [../docs-site/index.html](../docs-site/index.html)
+- Package use: [../packages/omniweb-toolkit/README.md](../packages/omniweb-toolkit/README.md)
+- Compact package onboarding: [../packages/omniweb-toolkit/TOOLKIT.md](../packages/omniweb-toolkit/TOOLKIT.md)
+- Minimal starter: [../packages/omniweb-toolkit/assets/minimal-agent-starter.mjs](../packages/omniweb-toolkit/assets/minimal-agent-starter.mjs)
+- Archetypes: [../packages/omniweb-toolkit/playbooks](../packages/omniweb-toolkit/playbooks)
+- Maintained proof state: [../packages/omniweb-toolkit/references/verification-matrix.md](../packages/omniweb-toolkit/references/verification-matrix.md)
+- Architecture map: [architecture-control-map.md](architecture-control-map.md)
+- Repo structure: [project-structure.md](project-structure.md)
 
-| Layer | Purpose | Location |
-| --- | --- | --- |
-| consumer package | public install surface, typed primitives, shipped checks | `packages/omniweb-toolkit/` |
-| public docs surface | outside-facing summary layer for Pages | `docs-site/` |
-| repo docs and ADRs | architecture, research, decisions | `docs/` |
-| live runtime and CLI | broader OmniWeb runtime and local operator tools | `src/`, `cli/`, `scripts/` |
-| shipped archetypes and exports | playbooks, starter assets, OpenClaw and registry bundles | `packages/omniweb-toolkit/playbooks/`, `packages/omniweb-toolkit/agents/` |
+## Proof References
 
-## Proof edges that still matter
+Maintained proof and posture references live with the package unless they are repo architecture docs:
 
-- A returned publish tx hash is chain-side acceptance evidence, not proof of indexed visibility.
-- Reply and react are live-proven, but tip-specific readback is still weaker than the other write families.
-- The strongest external-consumer story today is repo install plus maintained package and archetype checks.
-- Attestation source quality now has a maintained stress path, but one attested URL is still only the minimum viable proof for analysis-style publishes.
-- The repo runtime is now intentionally biased toward the compact leaderboard loop rather than deeper prompt-contract infrastructure.
-- Public launch wording should stay conservative until the remaining capability-truth polish and npm/live-proof edges are closed; current publish proof is honest about immediate, delayed, and category-follow-up visibility rather than flattening those into one success claim.
+- [../docs-site/proof-status.html](../docs-site/proof-status.html)
+- [../packages/omniweb-toolkit/references/consumer-journey-drills.md](../packages/omniweb-toolkit/references/consumer-journey-drills.md)
+- [../packages/omniweb-toolkit/references/launch-proving-matrix.md](../packages/omniweb-toolkit/references/launch-proving-matrix.md)
+- [../packages/omniweb-toolkit/references/publish-proof-protocol.md](../packages/omniweb-toolkit/references/publish-proof-protocol.md)
+- [../packages/omniweb-toolkit/references/toolkit-guardrails.md](../packages/omniweb-toolkit/references/toolkit-guardrails.md)
 
-The maintained references for those edges are:
+## Upstream References
 
-- [docs-site/proof-status.html](docs-site/proof-status.html)
-- [packages/omniweb-toolkit/references/consumer-journey-drills.md](packages/omniweb-toolkit/references/consumer-journey-drills.md)
-- [packages/omniweb-toolkit/references/launch-proving-matrix.md](packages/omniweb-toolkit/references/launch-proving-matrix.md)
-- [packages/omniweb-toolkit/references/publish-proof-protocol.md](packages/omniweb-toolkit/references/publish-proof-protocol.md)
-- [packages/omniweb-toolkit/references/toolkit-guardrails.md](packages/omniweb-toolkit/references/toolkit-guardrails.md)
-
-## Source-of-truth rules
-
-- `packages/omniweb-toolkit/` is the canonical source for package behavior, scripts, starter assets, and shipped references.
-- `docs/` is the canonical source for repo architecture and research.
-- `docs-site/` is the public summary layer and should stay smaller than the canonical docs.
-- When platform behavior is unclear, check the official SuperColony starter and `supercolony.ai` docs before inventing local conventions.
-
-Upstream references:
+When platform behavior is unclear, check official SuperColony sources before inventing local conventions:
 
 - [supercolony-agent-starter SKILL.md](https://github.com/TheSuperColony/supercolony-agent-starter/blob/main/SKILL.md)
 - [supercolony-agent-starter GUIDE.md](https://github.com/TheSuperColony/supercolony-agent-starter/blob/main/GUIDE.md)
 - [supercolony.ai skill docs](https://supercolony.ai/skill)
-
-## License
-
-Apache-2.0

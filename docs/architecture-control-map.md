@@ -1,6 +1,6 @@
 ---
 summary: "Architecture control map for repo/package/runtime/docs authority boundaries and evidence-led refactor follow-up."
-read_when: ["architecture control map", "repo architecture", "docs authority", "refactor queue", "runtime topology", "package boundary"]
+topic_hint: ["architecture control map", "repo architecture", "docs authority", "refactor queue", "runtime topology", "package boundary"]
 ---
 
 # Architecture Control Map
@@ -14,11 +14,11 @@ This map keeps architecture truth separate from task truth.
 
 ## Evidence Snapshot
 
-Checked on `origin/main` at `30b06c22`.
+Checked on `origin/main` at `fd1f49e2`.
 
 - `docs-list` shows the current docs authority set and flags `docs/ECOSYSTEM.md` as missing front matter.
 - Scoped import-edge scan covered `packages/omniweb-toolkit/src`, `src/toolkit`, `src/lib`, `cli`, `docs`, `docs-site`, package docs, and package references.
-- Scan counts: package source 43 files, root toolkit 161 files, root lib 62 files, CLI 42 files, package docs 6 files, package references 36 files.
+- Scan counts: package source 121 files, root toolkit 163 files, root lib 62 files, CLI 42 files, docs-site 5 files, package docs 7 files, package references 136 files.
 - Import-edge leads: package source imports root toolkit heavily, package source imports root lib only in narrow cases, CLI imports both toolkit and lib, toolkit still has some `../lib` edges that must be source-checked before refactor claims.
 - Prior Beads triage classified the root CLI/sdk bridge leads before this doc was written.
 
@@ -28,9 +28,10 @@ The graph-style scan is a lead generator only. Every claim below is tied back to
 
 Package public surface:
 
-- `packages/omniweb-toolkit/package.json` exports only `.`, `./agent`, and `./types`.
-- `packages/omniweb-toolkit/src/index.ts` exports `connect`, domain API types, toolkit types, bet memo helpers, and SuperColony response types.
-- `packages/omniweb-toolkit/src/colony.ts` defines the `OmniWeb` runtime returned by `connect()` with `colony`, `identity`, `escrow`, `storage`, `ipfs`, `chain`, `toolkit`, `runtime`, and `address`.
+- `packages/omniweb-toolkit/package.json` exports `.`, `./agent`, `./types`, `./runtime`, `./write`, and `./research-agent-minimal`.
+- `packages/omniweb-toolkit/src/index.ts` is the substrate-first read/client entrypoint. It exports `createClient`, endpoint constants, transport/read/profile/chat/market consumer helpers, market write intent helpers, and read/client types.
+- `packages/omniweb-toolkit/src/runtime.ts` is the runtime-heavy subpath. It exports `connect`, runtime readiness/capability helpers, capability/guardrail/action-admissibility manifests, official skill coverage helpers, and consumer-spectrum inventory helpers.
+- `packages/omniweb-toolkit/src/colony.ts` defines the wallet-backed `OmniWeb` runtime returned by runtime `connect()` with `colony`, `identity`, `escrow`, `storage`, `ipfs`, `chain`, `toolkit`, `runtime`, and `address`.
 - `packages/omniweb-toolkit/src/agent.ts` owns the package agent subpath. It promotes minimal-runtime helpers and keeps legacy `runAgentLoop` as a compatibility export.
 - `packages/omniweb-toolkit/AGENTS.md`, `TOOLKIT.md`, `SKILL.md`, `GUIDE.md`, and `references/` are the package authority files. Repo docs should link or summarize; they should not fork package API truth.
 
@@ -60,13 +61,18 @@ Docs:
 
 ## Runtime Flows
 
-Consumer package flow:
+Consumer package read flow:
 
-1. Consumer imports `connect` from `omniweb-toolkit`.
-2. `packages/omniweb-toolkit/src/connect.ts` forwards to package `connect`.
+1. Consumer imports `createClient` from `omniweb-toolkit`.
+2. `packages/omniweb-toolkit/src/index.ts` exposes the substrate/read client surface and related read/transport helpers.
+3. Package docs and references describe this public read surface. Root docs describe how the repo pieces fit.
+
+Consumer package runtime flow:
+
+1. Consumer imports `connect` from `omniweb-toolkit/runtime`.
+2. `packages/omniweb-toolkit/src/runtime.ts` exports the runtime-heavy helpers and forwards `connect`.
 3. `packages/omniweb-toolkit/src/colony.ts` calls `createAgentRuntime` from root toolkit.
 4. The returned `OmniWeb` object wires package domain APIs around the runtime, SDK bridge, Demos instance, toolkit, and wallet address.
-5. Package docs and references describe this public surface. Root docs describe how the repo pieces fit.
 
 Package agent flow:
 

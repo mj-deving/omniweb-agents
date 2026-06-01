@@ -1,214 +1,154 @@
 ---
-summary: "Project architecture — monorepo with publishing facade, module boundaries, dependency graph."
-read_when: ["project structure", "directory", "file layout", "where does code go", "codebase tree", "folder structure", "architecture overview"]
+summary: "Project structure for repo architecture, package ownership, runtime layers, and docs authority."
+topic_hint: ["project structure", "repo layout", "architecture overview", "directory ownership", "where code belongs", "docs authority"]
 ---
 
 # Project Structure
 
-## Architecture Model
+This repo contains the public `omniweb-toolkit` package, root runtime/CLI code, repo architecture docs, public summary pages, shipped archetypes, and validation harnesses.
 
-This is a **monorepo with a publishing facade**. All implementation lives in `src/toolkit/` and `src/lib/`. The consumer package (`packages/omniweb-toolkit/`) is a thin adapter that re-exports and wraps internal logic — it becomes self-contained only after the build step (tsup bundles everything into `dist/`).
+Use [architecture-control-map.md](architecture-control-map.md) for the current authority map. This file is the broad layout companion: it explains where source lives and which layer owns which kind of truth.
 
-```
-                ┌────────────────────────────────┐
-                │  packages/omniweb-toolkit/  │ ← Publishing facade
-                │  (11 adapter files)             │   npm: omniweb-toolkit
-                └────────────┬───────────────────┘
-                             │ imports ../../../src/toolkit/
-                             ▼
-                ┌────────────────────────────────┐
-                │  src/toolkit/                   │ ← ALL implementation
-                │  (158 files, 15 domains)        │   Framework-agnostic
-                └────────────┬───────────────────┘
-                             │ imports
-                             ▼
-                ┌────────────────────────────────┐
-                │  src/lib/                       │ ← Business logic
-                │  (auth, llm, attestation, etc.) │   Strategy, pipeline
-                └────────────────────────────────┘
-```
+## Source Of Truth
 
-**For consumers:** `npm install omniweb-toolkit` — self-contained, no monorepo needed.
-**For contributors:** Clone the repo — `packages/omniweb-toolkit/src/` files import from `src/toolkit/` via relative paths.
+- Package public contracts: `packages/omniweb-toolkit/`.
+- Repo architecture and research: `docs/`.
+- Accepted architecture decisions: `docs/decisions/`.
+- Public summary pages: `docs-site/`.
+- Runtime task state: Beads and GitHub PRs, not docs.
+- Merged source truth: `main`.
 
-## Directory Tree
+Root docs may summarize package behavior, but package docs and package source own package API details.
 
-```
+## Top-Level Layout
+
+```text
 omniweb-agents/
-├── CLAUDE.md                            # Architecture + principles (≤100 lines)
-├── README.md                            # Public-facing repo docs
-├── LICENSE                              # MIT
-├── package.json                         # Root workspace config
-├── tsconfig.json                        # Root TypeScript config
-├── vitest.config.ts                     # Test runner config
-│
-├── packages/omniweb-toolkit/        # Consumer package + skill/export surface
-│   ├── SKILL.md                         #   Agent integration skill (463 lines) — SOURCE OF TRUTH
-│   ├── GUIDE.md                         #   Perceive-then-prompt methodology (444 lines)
-│   ├── TOOLKIT.md                       #   Quick-start bridge
-│   ├── README.md                        #   npm README
-│   ├── package.json                     #   v0.1.0, published to npm
-│   ├── tsup.config.ts                   #   Bundles src/ + src/toolkit/ into dist/
-│   ├── src/                             #   Adapter layer (11 .ts files)
-│   │   ├── colony.ts                    #     connect() → OmniWeb (6 domains)
-│   │   ├── hive.ts                      #     HiveAPI (24 colony methods)
-│   │   ├── identity-api.ts              #     Identity linking + lookup
-│   │   ├── escrow-api.ts                #     Trustless tipping
-│   │   ├── storage-api.ts               #     On-chain databases
-│   │   ├── ipfs-api.ts                  #     File storage
-│   │   ├── chain-api.ts                 #     Core chain ops
-│   │   ├── session-factory.ts           #     AgentRuntime → DemosSession
-│   │   └── index.ts, agent.ts, types.ts #     Barrel + agent loop + types
-│   ├── agents/
-│   │   ├── openai.yaml                  #   UI-facing skill metadata
-│   │   ├── openclaw/                    #   Generated local workspace bundles per archetype
-│   │   └── registry/                    #   Generated publish-facing skill artifacts per archetype
-│   └── docs/                            #   Shipped with npm package
-│       ├── ecosystem-guide.md           #     What is SuperColony
-│       ├── capabilities-guide.md        #     What you can do
-│       ├── attestation-pipeline.md      #     How attestation works
-│       └── primitives/README.md         #     Domain index
-│
-├── src/                                 # Core source (all implementation)
-│   ├── index.ts                         #   Root barrel
-│   ├── types.ts                         #   FrameworkPlugin, Action, EventPlugin
-│   ├── toolkit/                         #   Core implementation (ADR-0002: mechanism, 158 files)
-│   │   ├── index.ts                     #     Barrel export
-│   │   ├── types.ts                     #     ToolResult, DemosError, DemosSession
-│   │   ├── session.ts                   #     Typed SigningHandle, expiry, bridge
-│   │   ├── agent-runtime.ts             #     6-step SDK init factory
-│   │   ├── sdk-bridge.ts               #     ChainTxPipeline for all chain writes
-│   │   ├── schemas.ts                   #     Zod schemas (11 + CatalogEntry)
-│   │   ├── url-validator.ts             #     SSRF validator + createPinnedFetch
-│   │   ├── primitives/                  #     15 domain primitives (types.ts + per-domain .ts)
-│   │   ├── tools/                       #     10 atomic tools (publish, attest, tip, scan, etc.)
-│   │   ├── guards/                      #     6 guards (rate-limit, dedup, tip-cap, pay-cap, etc.)
-│   │   ├── sources/                     #     Source catalog, fetch, health, rate-limit
-│   │   ├── providers/                   #     Declarative engine, generic adapter
-│   │   ├── reactive/                    #     EventLoop<TAction>, watermark-store
-│   │   ├── chain/                       #     tx-pipeline (executeChainTx), tx-simulator
-│   │   ├── math/                        #     Ring buffer, MAD, z-score, winsorize
-│   │   ├── network/                     #     fetch-with-timeout, storage-client
-│   │   ├── supercolony/                 #     api-client (46 methods), types, scoring
-│   │   ├── colony/                      #     Colony DB: schema, posts, reactions, search
-│   │   ├── publish/                     #     quality-gate (pre-publish validation)
-│   │   └── util/                        #     errors, subprocess, timed-phase, hook-dispatch
-│   ├── lib/                             #   Business logic (ADR-0002: policy)
-│   │   ├── auth/                        #     Challenge-response auth, token cache, identity
-│   │   ├── llm/                         #     Provider-agnostic LLM adapter
-│   │   ├── attestation/                 #     Claim extraction, attestation planner/policy
-│   │   ├── scoring/                     #     Expected score, quality signals
-│   │   ├── sources/                     #     Legacy shims → toolkit/sources/
-│   │   ├── network/                     #     SDK wrapper (connectWallet, apiCall)
-│   │   └── pipeline/                    #     Source scanning, observe
-│   ├── plugins/                         #   24 FrameworkPlugin implementations
-│   ├── actions/                         #   Executor, publish pipeline (ChainTxPipeline)
-│   ├── adapters/                        #   Framework adapters
-│   └── reactive/                        #   @deprecated shims → toolkit/reactive/
-│
-├── cli/                                 # CLI entry points (42 scripts)
-│   ├── session-runner.ts                #   Cron loop (V3: SENSE→ACT→CONFIRM)
-│   ├── v3-loop.ts                       #   V3 loop implementation
-│   ├── publish-executor.ts              #   Full attestation publish
-│   ├── action-executor.ts               #   Lightweight engage/tip
-│   └── ...                              #   audit, scan-feed, gate, verify, identity, etc.
-│
-├── agents/                              # Agent definitions (YAML persona + strategy)
-│   └── sentinel/                        #   General-purpose verification (active)
-│
-├── templates/                           # Agent starter templates (ADR-0019)
-│   ├── base/                            #   Minimal agent (agent.ts, observe.ts, strategy.yaml)
-│   ├── market-intelligence/             #   Market analysis template
-│   ├── security-sentinel/               #   Security monitoring template
-│   ├── shared/                          #   Shared template utilities
-│   └── generated/                       #   Agent compiler output
-│
-├── config/
-│   ├── sources/catalog.json             #   Unified source catalog (226 sources)
-│   └── strategies/base-loop.yaml        #   Base loop strategy
-│
-├── vendor/                              # Vendored native dependencies (ADR-0016)
-│   ├── better-sqlite3/                  #   Patched SQLite binding
-│   └── types-better-sqlite3/            #   Type declarations
-│
-├── docs/                                # All docs have read_when frontmatter
-│   ├── INDEX.md                         #   Project history (12 eras, phases 1-19)
-│   ├── ROADMAP.md                       #   Open work + metrics
-│   ├── project-structure.md             #   This file
-│   ├── design-consumer-toolkit.md       #   Active design spec (Phase 20)
-│   ├── architecture-plumbing-vs-strategy.md  # Toolkit/strategy boundary (ADR-0002)
-│   ├── decisions/                       #   19 ADRs (all accepted)
-│   ├── primitives/                      #   14 domain docs + README index
-│   ├── rules/                           #   7 project behavioral rules
-│   ├── research/                        #   SDK refs, API refs, discovery layer
-│   │   └── supercolony-discovery/       #     llms-full.txt, openapi.json, A2A card
-│   └── archive/                         #   Completed docs, plans, designs
-│
-├── .ai/guides/                          # Internal dev guides (not consumer-facing)
-│   ├── cli-reference.md                 #   V3 loop, event runner, audit tools
-│   ├── sdk-interaction-guidelines.md    #   Transaction 3-step pipeline
-│   ├── sdk-rpc-reference.md             #   SDK method signatures
-│   ├── gotchas-detail.md                #   Scoring formula, TLSN status
-│   ├── agent-template-guide.md          #   Template architecture
-│   └── colony-db-research.md            #   Colony DB exploration notes
-│
-├── .github/workflows/                   # CI
-│   └── validate-plugin.yml             #   OpenAPI drift check
-│
-├── .githooks/                           # Git hooks
-│   └── pre-push                         #   Pre-push validation
-│
-├── scripts/                             # Operational scripts
-│   ├── stress-test-primitives.ts        #   Live primitive test (52 tests, all domains)
-│   └── ...                              #   Cron wrapper, log rotation, doc verification
-│
-└── tests/                               # vitest test suites (259 files, 3152 tests)
-    ├── architecture/                    #   Boundary enforcement (ADR-0014)
-    ├── toolkit/                         #   Primitives, tools, guards, colony
-    ├── openapi-drift.test.ts            #   Type drift detection vs OpenAPI spec
-    └── ...                              #   Integration, action executor, etc.
+├── CLAUDE.md                         # repo principles and architecture baseline
+├── AGENTS.md                         # agent workflow, Beads, branch, and PR rules
+├── README.md                         # public repo entrypoint
+├── package.json                      # root workspace config
+├── packages/
+│   └── omniweb-toolkit/              # public package, shipped refs, archetypes
+├── src/
+│   ├── toolkit/                      # reusable mechanism boundary
+│   ├── lib/                          # policy, strategy, auth, LLM, scoring, state
+│   ├── plugins/                      # agent/plugin implementations
+│   ├── actions/                      # root action execution surfaces
+│   ├── adapters/                     # framework adapters
+│   └── reactive/                     # root reactive runtime surfaces and shims
+├── cli/                              # operator CLIs and V3 session runner
+├── config/                           # source catalog and strategy config
+├── templates/                        # starter templates and generated starter output
+├── agents/                           # repo agent definitions and exported bundles
+├── docs/                             # repo architecture, decisions, research
+├── docs-site/                        # public summary layer
+├── scripts/                          # validation and operational scripts
+└── tests/                            # repo and package validation
 ```
 
-## Module Boundaries (ADR-0002)
+## Package Layer
 
-| Layer | Location | Contains | Rule |
-|-------|----------|----------|------|
-| **Mechanism** | `src/toolkit/` | How things work | No policy, no LLM calls |
-| **Policy** | `src/lib/` | What to do, when | Can import toolkit |
-| **Facade** | `packages/omniweb-toolkit/src/` | Consumer API | Wraps toolkit primitives |
-| **CLI** | `cli/` | Entry points | Wires policy + toolkit |
-| **Templates** | `templates/` | Agent starters | Use toolkit via omniweb-toolkit |
-| **Tests** | `tests/` | Verification | Mirrors src/ structure |
+`packages/omniweb-toolkit/` owns the public package contract.
 
-Enforced by `tests/architecture/boundary.test.ts`. See `docs/architecture-plumbing-vs-strategy.md`.
+Important package files:
 
-## Consumer Skill (Three-File Context)
+- `package.json`: package exports and package-local scripts.
+- `src/index.ts`: substrate-first read/client entrypoint.
+- `src/runtime.ts`: runtime-heavy subpath that exports `connect` and runtime helpers.
+- `src/colony.ts`: wallet-backed `OmniWeb` runtime object.
+- `src/agent.ts`: package agent subpath and starter/runtime helpers.
+- `src/write.ts`: write-intent and write helper package surface.
+- `README.md`, `TOOLKIT.md`, `SKILL.md`, `GUIDE.md`: package-facing docs.
+- `references/`: maintained package proof, posture, and validation references.
+- `agents/`, `playbooks/`, `assets/`: shipped archetypes, generated exports, and starter assets.
 
-External agents integrate via three files shipped in the npm package:
+The package imports root toolkit mechanism where needed, but public API truth still belongs in the package. Repo docs should link to package docs when exact package usage, scripts, or consumer behavior matters.
 
-1. **`llms-full.txt`** — Raw SuperColony API reference (365 lines, from supercolony.ai)
-2. **`SKILL.md`** — Full OmniWeb toolkit reference (463 lines, 6 domains)
-3. **`GUIDE.md`** — Perceive-then-prompt methodology (444 lines)
+## Root Toolkit Layer
 
-These live at `packages/omniweb-toolkit/` and ship with `npm install omniweb-toolkit`.
+`src/toolkit/` is the reusable mechanism boundary described by ADR-0002.
 
-## External Distribution Model
+It contains chain/session mechanisms, SDK bridge behavior, data-source routing, primitives, tools, guards, schemas, network helpers, storage helpers, and bounded utility code. Toolkit code should be opinion-light and reusable by more than one runtime surface.
 
-Per ADR-0022, the external distribution model is:
+Important current surfaces:
 
-- this repo is the canonical source of truth
-- `omniweb-toolkit` is the runtime package
-- OpenClaw workspace bundles under `packages/omniweb-toolkit/agents/openclaw/` are the current local/operator export
-- registry/community skill artifacts under `packages/omniweb-toolkit/agents/registry/` are the current publish-facing export target
-- future registry/community skill artifacts should be generated per archetype rather than hand-maintained in separate source repos
-- public docs should publish from versioned repo content to a docs site, not a wiki-first surface
+- `src/toolkit/index.ts`: broad internal toolkit barrel.
+- `src/toolkit/sdk-bridge.ts`: guarded SDK/session bridge, chain writes, API call bridge, and chain read delegation.
+- `src/toolkit/data-source.ts`: API, chain, and auto data-source routing.
+- `src/toolkit/tools/`: atomic toolkit tools such as scan, publish, react, tip, pay, verify, attest.
+- `src/toolkit/primitives/`: domain primitive factories and the toolkit facade.
+- `src/toolkit/guards/`: rate, spend, dedup, and state invariants.
+- `src/toolkit/chain/`, `network/`, `providers/`, `sources/`, `reactive/`, `math/`, `supercolony/`: shared mechanism subdomains.
 
-## Build & Publish
+Do not use file size or graph centrality alone as a reason to move toolkit code. Refactors need source evidence: duplicated ownership, real behavior mismatch, security boundary concern, or validation gap.
 
-```bash
-cd packages/omniweb-toolkit
-bunx tsup                    # Bundles src/ + ../../../src/toolkit/ → dist/
-npm publish                 # Publishes self-contained package
-```
+## Policy And Runtime Layer
 
-The `tsconfig.build.json` sets `rootDir: "../../.."` and includes `../../../src/toolkit/**/*.ts` + `../../../src/lib/**/*.ts` — this is how the facade bundles the monorepo's internals into a standalone npm package.
+`src/lib/` owns root policy and strategy code.
+
+Examples:
+
+- Auth, identity, and token/cache policy.
+- LLM provider selection and prompt-facing logic.
+- Attestation policy and claim extraction.
+- Source selection, source policy, and pipeline orchestration.
+- Scoring, state, transcripts, mentions, review findings, and agent config.
+
+`cli/` wires runtime flows for local operators and root validation. The legacy V3 session-runner flow starts in `cli/session-runner.ts`, runs through `cli/v3-loop.ts`, and delegates heavy publish/reply/vote/bet work to `cli/publish-executor.ts`.
+
+Policy code may compose toolkit mechanisms. Toolkit code should not absorb policy just because a root runtime currently uses it.
+
+## Docs Layer
+
+`docs/` owns repo architecture, research, and decisions.
+
+Key docs:
+
+- `architecture-control-map.md`: current control map and docs authority model.
+- `project-structure.md`: this layout overview.
+- `architecture-plumbing-vs-strategy.md`: ADR-0002 boundary companion.
+- `ECOSYSTEM.md`: current repo/package/docs ecosystem posture.
+- `decisions/`: accepted repo architecture decisions.
+- `research/`: source-backed research and platform references.
+- `archive/`: historical material that is no longer current operating guidance.
+
+Docs should avoid task queues, live owner state, and stale phase ladders. Put live work in Beads and GitHub.
+
+## Public Summary Layer
+
+`docs-site/` is a smaller public-facing surface. It can summarize canonical docs and package references, but it should not fork package contracts or repo architecture.
+
+If a docs-site page disagrees with package docs or `docs/`, update the canonical source first, then regenerate or refresh the summary layer.
+
+## Runtime Flows
+
+Consumer read flow:
+
+1. Consumer imports `createClient` from `omniweb-toolkit`.
+2. `packages/omniweb-toolkit/src/index.ts` exposes the read/client surface.
+3. Package docs and references own exact consumer guidance.
+
+Consumer runtime flow:
+
+1. Consumer imports `connect` from `omniweb-toolkit/runtime`.
+2. `packages/omniweb-toolkit/src/runtime.ts` forwards runtime helpers and `connect`.
+3. `packages/omniweb-toolkit/src/colony.ts` wires package domain APIs around root toolkit runtime pieces.
+
+Root V3 runtime flow:
+
+1. `cli/session-runner.ts` loads local runtime context and starts the loop.
+2. `cli/v3-loop.ts` handles SENSE/ACT/CONFIRM orchestration.
+3. `cli/action-executor.ts` handles lighter actions.
+4. `cli/publish-executor.ts` handles heavier publish and write actions.
+5. Toolkit bridge/session/chain helpers perform guarded chain operations.
+
+## Boundary Checks
+
+- Package API detail belongs in `packages/omniweb-toolkit/`.
+- Shared mechanism belongs in `src/toolkit/`.
+- Strategy and operator policy belong in `src/lib/` and `cli/`.
+- Public summary belongs in `docs-site/`.
+- Runtime work state belongs in Beads and GitHub.
+
+When adding or moving code, check the closest `AGENTS.md`, relevant package docs, ADR-0002, and this control map before choosing a home.

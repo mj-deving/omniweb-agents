@@ -21,8 +21,8 @@ The question: do we wait for the API to come back, or do we eliminate the depend
 
 All session phases must operate using blockchain RPC + SDK only. The SuperColony API is optional enrichment — if it returns, it can provide convenience features, but the system must function without it.
 
-**V3 phases (current):** SENSE → ACT → CONFIRM (3-phase loop, see ADR-0015).
-**V1 phases (legacy, behind `--legacy-loop`):** AUDIT → SCAN → ENGAGE → GATE → PUBLISH → VERIFY → REVIEW → HARDEN.
+**Current route:** package CLI/starter → colony operator → minimal cycle → policy intent → action executor → readback/proof.
+**Retired route:** the old 8-phase root loop remains historical context only under `docs/archive`.
 
 ## Alternatives Considered
 

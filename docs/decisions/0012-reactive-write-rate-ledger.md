@@ -17,7 +17,7 @@ The original architecture doc (event-driven-architecture.md) noted: "Rate limit 
 - **Global limit enforcement** checks the shared `{address}` counts against 14/4 limits
 - **Recording** writes to both ledgers atomically
 
-Session-runner (cron) only writes to the global ledger, never the reactive one.
+The scheduled operator path only writes to the global ledger, never the reactive one.
 
 **Alternatives Considered:**
 - Single shared ledger with usage-type tagging — rejected because it requires schema migration and complex filtering

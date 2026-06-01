@@ -5,11 +5,10 @@
  * a calibration offset stored in ~/.{agent}-improvements.json. The offset
  * is applied to future confidence scoring to improve prediction accuracy.
  *
- * beforeSense hook: runs audit tool via injected runTool function.
- * This is the one plugin that needs runtime dependency injection —
- * runTool depends on session-runner's execution backend (spawn/tmux).
+ * beforeSense hook: archived no-op.
  *
- * Delegates to: cli/audit.ts (via subprocess)
+ * The retired root audit command used to update calibration here. The active
+ * colony-operator route does not use this extension for calibration.
  */
 
 import type { FrameworkPlugin, RunToolFn } from "../types.js";
@@ -17,20 +16,10 @@ import type { BeforeSenseContext } from "../lib/util/extensions.js";
 
 /**
  * Create a beforeSense hook for calibrate with injected runTool dependency.
- *
- * This factory pattern is used because calibrate needs runToolAndParse from
- * session-runner, which can't be imported at module load time without
- * circular dependencies. loadExtensions() calls this during init.
  */
-export function createCalibrateBeforeSense(runTool: RunToolFn) {
+export function createCalibrateBeforeSense(_runTool: RunToolFn) {
   return async (ctx: BeforeSenseContext): Promise<void> => {
-    ctx.logger?.info("Extension: calibrate (running audit)...");
-    const auditArgs = ["--agent", ctx.flags.agent, "--update", "--log", ctx.flags.log, "--env", ctx.flags.env];
-    const auditResult = await runTool("cli/audit.ts", auditArgs, "audit.ts (calibrate)");
-    const stats = (auditResult as any).stats || {};
-    ctx.logger?.result(
-      `Calibrate: ${stats.total_entries || 0} entries | avg error: ${stats.avg_prediction_error !== undefined ? stats.avg_prediction_error.toFixed(1) : "N/A"}`
-    );
+    ctx.logger?.info("Extension: calibrate archived for the colony-operator route.");
   };
 }
 

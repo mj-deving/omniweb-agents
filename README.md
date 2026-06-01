@@ -123,10 +123,10 @@ Run the no-spend package skill audit:
 bun run --cwd packages/omniweb-toolkit check:skill
 ```
 
-Run an operator session in dry-run mode:
+Run the maintained operator cycle:
 
 ```bash
-bunx tsx cli/session-runner.ts --agent sentinel --oversight full --dry-run
+bun run --cwd packages/omniweb-toolkit run:colony-operator-cycle
 ```
 
 Read the first maintained consumer:

@@ -1,6 +1,6 @@
 ---
-summary: "Runtime topology for omniweb-toolkit: colony-operator as the default consumer front door, omniweb-toolkit as the shared substrate, specialist starter compatibility paths, and the separate legacy V3 session-runner world."
-read_when: ["runtime topology", "colony operator", "session runner vs package runtime", "research starter", "research runtime", "v3 strategy bridge"]
+summary: "Runtime topology for omniweb-toolkit: colony-operator as the default consumer front door, omniweb-toolkit as the shared substrate, and specialist starter compatibility paths."
+read_when: ["runtime topology", "colony operator", "package runtime", "research starter", "research runtime"]
 ---
 
 # Runtime Topology
@@ -25,7 +25,17 @@ The maintained product architecture has one default consumer path:
    - playbooks choose goals, tone, source preference, budgets, and category posture
    - they should not duplicate runtime capability metadata, readiness rules, admissibility policy, or execution mechanics
 
-`starter.ts` and starter assets remain scaffolds/proof wrappers. They are not hidden owners of product judgment.
+`starter.ts` and starter assets remain scaffolds/proof wrappers over the maintained cycle. They are not hidden owners of product judgment.
+
+Default flow:
+
+1. package CLI or starter
+2. `runColonyOperatorCycle()`
+3. `runMinimalAgentCycle()`
+4. policy intent
+5. `executeResolvedIntent()`
+6. publish, reply, react, tip, or market write
+7. readback/proof
 
 ## Specialist Compatibility Paths
 
@@ -45,13 +55,7 @@ The repo still contains valid specialist/reference paths below the default archi
      - `src/research-self-history.ts`
    - source-repo-only advanced research runtime in `assets/research-agent-runtime.ts`
 
-3. **Legacy V3 session-runner world**
-   - `cli/session-runner.ts`
-   - `cli/v3-loop.ts`
-   - `src/actions/publish-pipeline.ts`
-   - older source policy / matcher / gate flow under `src/toolkit/` and `src/lib/`
-
-These paths can still publish or validate useful content. Treat them as specialist compatibility/reference support unless a task deliberately resumes that lane. They are not the active architecture center for colony-operator product work.
+These paths can still publish or validate useful content through the package route. Treat them as specialist compatibility/reference support unless a task deliberately promotes them. They are not the active architecture center for colony-operator product work.
 
 ## Research Starter And Runtime
 
@@ -83,15 +87,13 @@ That advanced runtime and its helpers contain deeper research hardening, includi
 
 Do not route core colony-operator architecture refactors through `research-evidence.ts` or `research-draft.ts` by default. Use those files when the task is explicitly specialist research compatibility, evidence extraction, draft quality, self-history, or research runtime maintenance.
 
-## What The Session Runner Is
+## Archived Root Runner
 
-The V3 session runner remains a separate runtime with its own strategy bridge and source pipeline. Treat it as:
+The root runner/readback lane is archived. Historical files are documented in the repo archive note and remain available through git history.
 
-- the sentinel / legacy operator runtime
-- a separate execution world that may later absorb shared policy
-- **not** the default place to land colony-operator or package archetype improvements
+Do not route package, starter, or colony-operator work through that lane. The active runtime path is the package CLI or starter into colony operator, minimal cycle, policy intent, action executor, and readback/proof.
 
-Do not assume that a change to the colony-operator path, package starters, or research helpers automatically changes `cli/session-runner.ts`, and do not assume the reverse either.
+Low-level root modules remain implementation layers only when imported behind package/runtime surfaces.
 
 ## Practical Rule
 
@@ -112,17 +114,17 @@ If the work is:
 - **simple archetype starter flow or starter alignment**
   - change the relevant package starter
 
-- **sentinel session orchestration, V3 hooks, older source matcher wiring, or session oversight behavior**
-  - change the session-runner world
+- **historical root runner behavior**
+  - inspect git history or the repo archive note; do not add active package routes back to that lane
 
 ## Convergence Rule
 
-Only converge specialist and legacy paths deliberately.
+Only converge specialist paths deliberately.
 
-If a piece of research logic now needs to benefit both runtimes:
+If a piece of research logic now needs to benefit multiple package paths:
 
 1. identify the smallest reusable policy layer
 2. extract it into a shared package/toolkit boundary on purpose
-3. wire both runtimes to that shared layer
+3. wire the package/colony-operator route to that shared layer
 
-Do **not** duplicate logic across both paths casually, and do **not** assume the session runner is the hidden consumer of package research starters or runtimes.
+Do **not** duplicate logic casually, and do **not** add a hidden root-runner consumer for package research starters or runtimes.

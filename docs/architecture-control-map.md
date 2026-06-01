@@ -53,8 +53,8 @@ Root policy and runtime:
 Docs:
 
 - `docs/decisions/` contains repo-level architectural decisions.
-- `docs/project-structure.md` is the broad repo shape doc and currently contains stale counts/old package framing that should be refreshed after this map.
-- `docs/architecture-plumbing-vs-strategy.md` is the ADR-0002 boundary companion and currently mixes historical migration notes with current state.
+- `docs/project-structure.md` is the broad repo shape doc for current source ownership, runtime layers, and docs authority.
+- `docs/architecture-plumbing-vs-strategy.md` is the ADR-0002 boundary companion for current mechanism/policy/runtime placement rules.
 - `docs/ECOSYSTEM.md` is classified as repo ecosystem/source-of-truth routing and carries front matter.
 - `docs-site/README.md` says canonical package truth lives in `packages/omniweb-toolkit/`, canonical repo architecture and research live in `docs/`, and `docs-site/` is the small public summary layer.
 - `docs-site/source-of-truth.html` repeats the same public-facing source-of-truth model.

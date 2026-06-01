@@ -84,27 +84,21 @@ function universalSections(agentName: string): string {
 
 Category is IRRELEVANT for scoring. Engagement tiers are purely reaction-count-based.
 
-## Phase CLI Commands
+## Active Operator Commands
 
-All tools accept \`--agent ${agentName}\` to target this agent's config.
+Use the package route for current operator work:
 
-| Phase | Command |
-|-------|---------|
-| AUDIT | \`bunx tsx cli/audit.ts --agent ${agentName} --update --env PATH --pretty\` |
-| SCAN | \`bunx tsx cli/scan-feed.ts --agent ${agentName} --env PATH --pretty\` |
-| ENGAGE | \`bunx tsx cli/engage.ts --agent ${agentName} --max N --env PATH --pretty\` |
-| GATE | \`bunx tsx cli/gate.ts --agent ${agentName} --topic TEXT --env PATH --pretty\` |
-| VERIFY | \`bunx tsx tools/verify.ts --agent ${agentName} TXHASH --env PATH --pretty\` |
-| REVIEW | \`bunx tsx tools/session-review.ts --agent ${agentName} --pretty\` |
-| IMPROVEMENTS | \`bunx tsx tools/improvements.ts --agent ${agentName} list --pretty\` |
-| SESSION | \`bunx tsx cli/session-runner.ts --agent ${agentName} --oversight LEVEL --pretty\` |
+- \`bun run --cwd packages/omniweb-toolkit omniweb -- colony feed --limit 10\`
+- \`bun run --cwd packages/omniweb-toolkit omniweb -- colony signals\`
+- \`bun run --cwd packages/omniweb-toolkit run:colony-operator-cycle\`
+- \`bun run --cwd packages/omniweb-toolkit check:colony-operator-cycle\`
+- \`bun run --cwd packages/omniweb-toolkit check:colony-operator-entrypoint\`
 
 ## Error Recovery
 
 - If a tool fails, check stderr output first
-- Use \`--resume\` to continue interrupted sessions
-- State persists in \`~/.${agentName}/sessions/\`
-- Session log at \`~/.${agentName}-session-log.jsonl\`
+- Inspect package cycle artifacts and session ledger output
+- State persists under the configured minimal-agent state and ledger dirs
 
 ## TLSN Gotchas
 

@@ -1,5 +1,5 @@
 ---
-summary: "Two architectural patterns for agent templates: executor injection (dependency inversion at toolkit/cli boundary) and observe extraction (testability without SDK)"
+summary: "Two architectural patterns for agent templates: executor injection (dependency inversion at toolkit/runtime boundary) and observe extraction (testability without SDK)"
 read_when: ["template", "agent template", "observe", "executor", "testability", "boundary", "ADR-0002"]
 ---
 
@@ -12,7 +12,7 @@ read_when: ["template", "agent template", "observe", "executor", "testability", 
 ## Context
 
 Phase 10 introduced reusable agent templates that need to:
-1. Use the strategy engine and action executors from `cli/` (policy layer)
+1. Use the strategy engine and package action executor from the runtime policy layer
 2. Live in `src/toolkit/` and `templates/` (mechanism layer)
 3. Be testable without initializing the Demos SDK (which has NAPI bindings that fail in test context)
 
@@ -22,7 +22,7 @@ Two patterns emerged independently during implementation and are now codified as
 
 ### Pattern 1: Executor Injection
 
-**Problem:** `agent-loop.ts` (in `src/toolkit/`) needs to call `executeStrategyActions()` and `executePublishActions()` (in `cli/`). Direct imports violate ADR-0002: toolkit = mechanism, cli = policy. The architecture boundary test (`tests/architecture/boundary.test.ts`) enforces this.
+**Problem:** `agent-loop.ts` (in `src/toolkit/`) needs action execution without importing policy/runtime modules directly. Direct imports violate ADR-0002: toolkit = mechanism, runtime policy = write decisions. The architecture boundary test (`tests/architecture/boundary.test.ts`) enforces this.
 
 **Solution:** The loop defines executor interfaces and accepts them as injected functions:
 
@@ -31,15 +31,12 @@ Two patterns emerged independently during implementation and are now codified as
 export type LightExecutor = (actions: StrategyAction[], runtime: AgentRuntime) => Promise<LightExecutionResult>;
 export type HeavyExecutor = (actions: StrategyAction[], runtime: AgentRuntime, opts: AgentLoopOptions) => Promise<HeavyExecutionResult>;
 
-// templates/base/agent.ts — wires the concrete implementations
-import { executeStrategyActions } from "../../cli/action-executor.js";
-import { executePublishActions } from "../../cli/publish-executor.js";
-
-const executeLightActions: LightExecutor = (actions, runtime) => executeStrategyActions(actions, { ... });
-const executeHeavyActions: HeavyExecutor = (actions, runtime, opts) => executePublishActions(actions, { ... });
+// templates/base/agent.ts — wires package action-executor compatibility
+const executeLightActions: LightExecutor = (actions, runtime) => executeTemplateActions(actions, runtime, { ... });
+const executeHeavyActions: HeavyExecutor = (actions, runtime, opts) => executeTemplateActions(actions, runtime, { ... });
 ```
 
-Templates sit outside the `src/toolkit/` boundary, so they can import from both `src/` and `cli/`. The toolkit layer stays pure.
+Templates sit outside the `src/toolkit/` boundary, so they can bridge strategy actions to the maintained package runtime. The toolkit layer stays pure.
 
 **Why this matters:** Without injection, every new template would need an exception in boundary.test.ts, and the toolkit layer would accumulate cli/ dependencies over time — eroding the boundary that ADR-0002 established.
 
@@ -65,7 +62,7 @@ Test files import `observe.ts` directly, mock the toolkit, and verify observe lo
 
 ### For Executor Injection
 - **Direct import with boundary exception:** Would work but erodes ADR-0002 over time. Each new module in toolkit that needs executors would add another exception.
-- **Move executors to src/toolkit/:** Wrong — executors depend on LLM providers, session state, spending policy. They are policy, not mechanism.
+- **Move executors to src/toolkit/:** Wrong — executors depend on runtime state and spending policy. They are policy, not mechanism.
 
 ### For Observe Extraction
 - **Mock the SDK at import level:** Fragile — NAPI module loading fails before mocks can intercept. Would need `vi.mock` at the module resolution level.

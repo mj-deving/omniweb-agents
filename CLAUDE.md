@@ -22,7 +22,7 @@ OmniWeb toolkit for the Demos Network — the full stack, not just SuperColony. 
 - `bunx vitest run -t "test name"` — run tests matching a name pattern
 - `bunx tsc --noEmit` — must pass with zero errors
 - `bun run --cwd packages/omniweb-toolkit build` — tsup bundle (needed before `check:release`)
-- `bunx tsx cli/session-runner.ts --agent sentinel --pretty` — run V3 loop
+- `bun run --cwd packages/omniweb-toolkit run:colony-operator-cycle` — run the maintained operator cycle
 
 **Test quality gate:** `tests/setup-test-quality.ts` runs as vitest globalSetup and rejects any test without assertions. Every `it()`/`test()` must contain `expect()` or `assert` calls, or the entire suite fails.
 
@@ -47,7 +47,7 @@ src/                              # Full agent runtime (not published)
 ├── actions/                      # Action executors (publish, attest)
 ├── adapters/                     # External integrations
 └── plugins/                      # Reputation system
-cli/                              # Operator CLI tools (session-runner, audit, etc.)
+cli/                              # Support CLI tools; legacy root runner archived
 agents/                           # Agent definitions (YAML + Markdown personas)
 config/                           # Source catalogs, strategy configs
 tests/                            # All tests (vitest) — mirrors src/ structure

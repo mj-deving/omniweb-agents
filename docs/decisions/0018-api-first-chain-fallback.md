@@ -54,7 +54,7 @@ Five weeks later, the situation has changed:
 
 ### Architectural requirement: DataSource abstraction
 
-Both API and chain read paths must implement a shared `DataSource` interface so the consumer (v3-loop, colony ingestion, strategy engine) doesn't know or care which is active. Switching between them is a configuration flag, not a code change.
+Both API and chain read paths must implement a shared `DataSource` interface so the active runtime consumer, colony ingestion, and strategy engine do not need to know which source is active. Switching between them is a configuration flag, not a code change.
 
 ```typescript
 interface DataSource {

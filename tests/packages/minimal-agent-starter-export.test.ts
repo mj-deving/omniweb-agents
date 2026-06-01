@@ -22,11 +22,13 @@ describe("minimal-agent starter exports", () => {
     const files = buildRegistryExport(["research-agent"]);
     const starter = files.find((file) => file.path === "omniweb-research-agent/minimal-agent-starter.mjs");
 
-    expect(starter?.content).toContain('import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime"');
-    expect(starter?.content).toContain("Wallet-backed starter is not ready to publish.");
     expect(starter?.content).toContain('from "omniweb-toolkit/agent"');
+    expect(starter?.content).toContain("runMinimalAgentLoop,");
     expect(starter?.content).toContain('getMinimalAgentRuntimeConfig,');
     expect(starter?.content).toContain("getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir())");
+    expect(starter?.content).toContain("await runMinimalAgentLoop(observe,");
+    expect(starter?.content).not.toContain('import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime"');
+    expect(starter?.content).not.toContain("omni.colony.publish({");
     expect(starter?.content).not.toContain('../src/index.js');
     expect(starter?.content).not.toContain('../src/agent.js');
   });

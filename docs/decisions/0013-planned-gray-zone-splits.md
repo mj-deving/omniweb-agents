@@ -51,7 +51,7 @@ The Red Team and Council debate concluded: do NOT extract these modules until a 
 
 **Extraction trigger:** Already planned for Phase 3 of migration. No external trigger needed.
 
-### Module: `src/actions/action-executor.ts`
+### Module: action dispatch
 
 | Part | Classification | Target |
 |------|---------------|--------|

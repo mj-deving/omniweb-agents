@@ -97,7 +97,7 @@ Colony DB goes live. Session 59: first V3 post with 4 on-chain DAHR attestations
 
 - Full chain backfill: 188,239 posts from 183 authors, 29 reactions, 293MB
 - Discovered reactions are API-only, not on-chain (three-layer data model established)
-- hive-query CLI (5 subcommands), backfill-colony tool
+- root readback CLI (5 subcommands, now archived), backfill-colony tool
 - ADR-0017 (colony DB: no ORM, disposable cache, numbered migrations)
 - SuperColony API came back online after March 26 NXDOMAIN outage
 
@@ -155,12 +155,12 @@ ADR-0018 established the principle: API-first for reads, chain-first for writes.
 
 **The fifth pivot: "Extract battle-tested patterns into reusable toolkit primitives."**
 
-Comprehensive sweep of all open items from the V3 production audit, followed by Codex security review and legacy session-runner pattern extraction. 12 commits in one session.
+Comprehensive sweep of all open items from the V3 production audit, followed by Codex security review and retired runner pattern extraction. 12 commits in one session.
 
 **Phase A: Full sweep (8 workstreams, 48 ISC criteria)**
 - Doc health: 23 stale file references fixed across 6 docs via `doc-health-check.ts --counts`
-- Phase C configurability: 12 hardcoded v3-loop limits extracted to `LoopLimitsConfig` in strategy YAML
-- v3-loop refactor: 539→295 lines. SENSE phase extracted to `v3-loop-sense.ts` (231 lines)
+- Phase C configurability: 12 hardcoded root runner limits extracted to `LoopLimitsConfig` in strategy YAML
+- Root runner refactor: 539→295 lines. SENSE phase extracted to a helper module
 - Strategy tuning from score-100 insights: confidence threshold 70%, 5+ agents minimum, cross-domain +10 bonus, no random fallback
 - Faucet/balance primitives: `requestFaucet()` + `ensureMinimum()` with chain address safety
 - TX simulation gate: `simulateTransaction()` via eth_call, fail-closed by default (ADR-0018 security)
@@ -173,8 +173,8 @@ Comprehensive sweep of all open items from the V3 production audit, followed by 
 - Re-review: **GO** with line-level evidence per finding
 - Post-fix audit: 2 additional findings fixed (dbPath leak, unchecked Promise.allSettled)
 
-**Phase C: Legacy pattern extraction (session-runner.ts → toolkit primitives)**
-- 13 patterns extracted from 4528-line legacy session-runner.ts (see `docs/archive/session-runner-patterns.md`)
+**Phase C: Legacy pattern extraction (retired runner → toolkit primitives)**
+- 13 patterns extracted from the 4528-line retired runner (see docs/archive for the historical extraction note)
 - Classified: 4 ADOPT, 5 PRESERVE, 4 DEAD (negative knowledge)
 - 7 patterns being implemented as toolkit-layer primitives for auto-flow to agent templates:
   - `toolkit/util/subprocess.ts` — SIGTERM→SIGKILL kill escalation
@@ -188,7 +188,7 @@ Comprehensive sweep of all open items from the V3 production audit, followed by 
 **Template alignment verified:** 6/10 improvements auto-flow to agent templates via `createToolkit()` / `createAgentRuntime()`. 3 are V3-only by design. 1 (strategy tuning) needs per-template strategy.yaml customization.
 
 - 19 ADRs (ADR-0019: template architectural patterns)
-- `docs/archive/session-runner-patterns.md`: legacy wisdom preservation
+- Archived retired-runner pattern note: legacy wisdom preservation
 - Production audit: ALL items closed (was 6 remaining + 2 deferred → 0)
 
 **Tests at era end:** 230 suites, 2996 passing. 0 tsc errors. 19 ADRs. Schema v8.
@@ -354,10 +354,10 @@ What Demos offers vs what we use. SDK v2.11.5. See [demos-sdk-capabilities.md](r
 
 | Directory | Contents |
 |-----------|----------|
-| `archive/` | Completed design docs: V3 design, Phase 5/6 plans, loop heuristics, toolkit audit, TLSN report, claim/attestation specs, colony plans, scanning design, session transcript, **session-runner-patterns.md** (legacy extraction) |
+| `archive/` | Completed design docs: V3 design, Phase 5/6 plans, loop heuristics, toolkit audit, TLSN report, claim/attestation specs, colony plans, scanning design, session transcript, retired-runner pattern extraction |
 | `archive/reference/` | Agent workspace format, attestation reference, ElizaOS comparison, SDK exploration, Skill Dojo research |
 | `archive/plans/` | 27 Claude Code session plan artifacts |
-| `archive/designs/` | Completed Phase 5.1/5.3 designs (hive-query, backfill) |
+| `archive/designs/` | Completed Phase 5.1/5.3 designs (root readback, backfill) |
 | `archive/claude-codex-coop/` | Full Claude-Codex collaboration workflow (Phase 4 + PR1-4, pre-V3) |
 
 ### Agent Guides (.ai/guides/)

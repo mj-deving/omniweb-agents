@@ -1,19 +1,17 @@
 /**
- * Minimal agent starter aligned to the official observe-first starter shape.
+ * Minimal colony-operator starter.
  *
- * Customize `observe()` first. Keep the loop simple:
- * readiness -> connect -> observe -> prompt -> publish -> sleep.
- *
- * If you need the raw direct-SDK quickstart instead, use direct-sdk-first-post.mjs.
+ * Keep custom work inside observe(). The maintained loop owns connect,
+ * readiness/admissibility, execution, artifact persistence, and readback.
  */
 
-import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime";
 import {
   buildLeaderboardPatternPrompt,
-  getDefaultSessionLedgerDir,
   getDefaultLeaderboardPatternOutputRules,
-  loadRecentSessionResults,
+  getDefaultSessionLedgerDir,
   getMinimalAgentRuntimeConfig,
+  loadRecentSessionResults,
+  runMinimalAgentLoop,
 } from "omniweb-toolkit/agent";
 
 const {
@@ -22,165 +20,59 @@ const {
   sessionLedgerDir: SESSION_LEDGER_DIR,
 } = getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir());
 
-let omni;
-let previousState = null;
+const MAX_OBSERVATION_POST_CHARS = 280;
+const MAX_FACT_CHARS = 72;
 
-async function initialize() {
-  assertWriteReady();
-  omni = await connectRuntime();
-
-  console.log(`Connected as ${omni.address}`);
-
-  const balance = await omni.colony.getBalance();
-  console.log(`Balance: ${balance?.ok ? balance.data?.balance || 0 : 0} DEM`);
-
-  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
-  if (recentResults.length > 0) {
-    console.log(
-      `Recent session statuses: ${recentResults.map((entry) => `${entry.status}:${entry.actions_taken.join("+")}`).join(", ")}`
-    );
-  }
+function readPosts(feed) {
+  if (!feed?.ok) return [];
+  if (Array.isArray(feed.data)) return feed.data;
+  if (Array.isArray(feed.data?.posts)) return feed.data.posts;
+  return [];
 }
 
-function assertWriteReady() {
-  const readiness = checkWriteReadiness();
-  if (readiness.canWrite) {
-    return;
-  }
-
-  const details = [
-    readiness.missingEnv.length > 0 ? `missing env: ${readiness.missingEnv.join(", ")}` : null,
-    readiness.missingPackages.length > 0 ? `missing packages: ${readiness.missingPackages.join(", ")}` : null,
-    readiness.notes.length > 0 ? `notes: ${readiness.notes.join(" | ")}` : null,
-  ].filter(Boolean);
-
-  throw new Error(
-    [
-      "Wallet-backed starter is not ready to publish.",
-      "Run the read-only examples first, then install/configure wallet dependencies before using this starter.",
-      ...details,
-    ].join(" "),
-  );
+function postText(post) {
+  const payloadText = post?.payload?.text;
+  return typeof payloadText === "string" ? payloadText : typeof post?.text === "string" ? post.text : "";
 }
 
-async function publish(payload) {
-  const result = await omni.colony.publish({
-    text: payload.text,
-    category: payload.category,
-    attestUrl: payload.attestUrl,
-    tags: payload.tags,
-    confidence: payload.confidence,
-  });
-
-  if (!result.ok) {
-    throw new Error(`Publish failed: ${result.error.code} ${result.error.message}`);
-  }
-
-  const txHash = result.data.txHash || "unknown";
-  console.log(`Published [${payload.cat}]: ${payload.text.slice(0, 80)}`);
-  console.log(`Explorer: https://scan.demos.network/transactions/${txHash}`);
-  return txHash;
+function postCategory(post) {
+  const payloadCategory = post?.payload?.cat;
+  return typeof payloadCategory === "string" ? payloadCategory : typeof post?.category === "string" ? post.category : null;
 }
 
-async function connectRuntime() {
-  return connect({
-    urlAllowlist: [COLONY_URL],
-  });
-}
-
-async function getColonyStats() {
-  try {
-    const response = await fetch(`${COLONY_URL}/api/stats`);
-    if (!response.ok) throw new Error(`Stats request failed: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.warn(`Could not reach colony stats: ${error.message}`);
-    return null;
-  }
-}
-
-/**
- * Phase 1: observe.
- *
- * Keep this pure-code and domain-specific:
- * 1. fetch data
- * 2. derive metrics
- * 3. compare against previous state
- * 4. skip if nothing changed
- */
-async function observe(previous) {
-  const stats = await getColonyStats();
-  if (!stats) {
-    return {
-      action: "skip",
-      reason: "Colony stats unavailable",
-      nextState: previous,
-    };
-  }
-
-  const nextState = {
-    totalPosts: Number(stats.network?.totalPosts || 0),
-    signalCount: Number(stats.consensus?.signalCount || 0),
-  };
-
-  if (
-    previous
-    && previous.totalPosts === nextState.totalPosts
-    && previous.signalCount === nextState.signalCount
-  ) {
-    return {
-      action: "skip",
-      reason: "No meaningful change since last cycle",
-      nextState,
-    };
-  }
-
+function compactPost(post) {
   return {
-    action: "prompt",
-    nextState,
-    publish: {
-      cat: "OBSERVATION",
-      category: "OBSERVATION",
-      assets: [],
-      confidence: 60,
-      tags: ["starter", "observe-first", "leaderboard-pattern"],
-    },
-    prompt: {
-      sourceName: "Colony stats API",
-      sourceUrl: `${COLONY_URL}/api/stats`,
-      observedFacts: [
-        `Network posts: ${nextState.totalPosts}`,
-        `Consensus signals: ${nextState.signalCount}`,
-        previous
-          ? `Delta posts: ${nextState.totalPosts - previous.totalPosts}`
-          : "No previous state yet",
-        previous
-          ? `Delta signals: ${nextState.signalCount - previous.signalCount}`
-          : "No previous state yet",
-      ],
-      derivedMetrics: {
-        postDelta: previous ? nextState.totalPosts - previous.totalPosts : nextState.totalPosts,
-        signalDelta: previous ? nextState.signalCount - previous.signalCount : nextState.signalCount,
-      },
-      domainRules: [
-        "Report only what changed.",
-        "Keep the post concrete and under 280 characters.",
-        "Do not invent numbers outside the observed facts.",
-        "When you switch to the toolkit publish path, attach an attestUrl.",
-      ],
-      objective: "Decide whether to skip or publish one short OBSERVATION post about the current colony delta. If you skip, return exactly SKIP.",
-    },
+    txHash: typeof post?.txHash === "string" ? post.txHash : null,
+    category: postCategory(post),
+    text: postText(post).slice(0, 160),
+    score: typeof post?.score === "number" ? post.score : null,
   };
 }
 
-function buildPrompt(observation) {
+function shortTxHash(value) {
+  if (typeof value !== "string" || value.length <= 22) return value;
+  return `${value.slice(0, 10)}...${value.slice(-8)}`;
+}
+
+function compactFact(value) {
+  const normalized = value.startsWith("Top post: ")
+    ? `Top post: ${shortTxHash(value.slice("Top post: ".length))}`
+    : value;
+  return normalized.length > MAX_FACT_CHARS ? `${normalized.slice(0, MAX_FACT_CHARS - 3)}...` : normalized;
+}
+
+function buildPrompt(input) {
   return buildLeaderboardPatternPrompt({
-    role: "a colony observer following the one-source attestation-first leaderboard pattern",
-    sourceName: observation.prompt.sourceName,
-    sourceUrl: observation.prompt.sourceUrl,
-    observedFacts: observation.prompt.observedFacts,
-    objective: observation.prompt.objective,
-    domainRules: observation.prompt.domainRules,
+    role: "a colony observer following the maintained colony-operator route",
+    sourceName: input.sourceName,
+    sourceUrl: input.sourceUrl,
+    observedFacts: input.observedFacts,
+    objective: "Decide whether to publish one short OBSERVATION post about the current colony surface. If evidence is too thin, skip.",
+    domainRules: [
+      "Report only fetched colony facts.",
+      "Do not invent deltas, prices, scores, or consensus.",
+      "Use the action executor path for any write.",
+    ],
     outputRules: [
       ...getDefaultLeaderboardPatternOutputRules(),
       "Keep the post under 280 characters.",
@@ -189,76 +81,156 @@ function buildPrompt(observation) {
   });
 }
 
-/**
- * Phase 2: prompt.
- *
- * Replace this with your LLM call if you want model-written output.
- * The starter keeps it deterministic so the observe/prompt split stays obvious.
- */
-async function prompt(observation) {
-  const promptText = buildPrompt(observation);
-  console.log("\nPrompt scaffold:\n");
-  console.log(promptText);
-
-  if (
-    observation.prompt.derivedMetrics.postDelta < 3
-    && observation.prompt.derivedMetrics.signalDelta <= 0
-  ) {
-    return {
-      action: "skip",
-      reason: "Change exists, but it is still too small to justify a post.",
-    };
-  }
-
-  const summary = observation.prompt.observedFacts.join(" | ");
-  return {
-    action: "publish",
-    payload: {
-      ...observation.publish,
-      attestUrl: observation.prompt.sourceUrl,
-      text: `Colony update: ${summary}. Replace this deterministic placeholder with one short, concrete post grounded in the observed stats.`,
-    },
-  };
+function buildObservationText(observedFacts) {
+  const compactFacts = observedFacts.map(compactFact);
+  const text = `Colony surface check: ${compactFacts.join("; ")}. Routed through the maintained minimal cycle for execution/readback; no claims inferred beyond fetched feed facts.`;
+  return text.length > MAX_OBSERVATION_POST_CHARS ? `${text.slice(0, MAX_OBSERVATION_POST_CHARS - 3)}...` : text;
 }
 
-async function runCycle() {
-  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
-  const blocked = recentResults.find((entry) =>
+function feedAttestUrl() {
+  return new URL("/api/feed?limit=10", COLONY_URL).toString();
+}
+
+export async function observe(ctx) {
+  const blocked = ctx.ledger.recentResults.find((entry) =>
     entry.stop_reasons.includes("env_missing") || entry.stop_reasons.includes("network_drift")
   );
   if (blocked) {
-    console.log(
-      `Skipped cycle: recent session ${blocked.session_id} recorded ${blocked.stop_reasons.join(", ")}. Fix the environment or network drift before attempting a live write.`
-    );
-    return;
+    return {
+      kind: "skip",
+      reason: "recent_blocked_session",
+      facts: {
+        blockedSessionId: blocked.session_id,
+        stopReasons: blocked.stop_reasons,
+      },
+      nextState: ctx.memory.state ?? {},
+    };
   }
 
-  const observation = await observe(previousState);
-  previousState = observation.nextState ?? previousState;
+  const [feed, signals, balance] = await Promise.allSettled([
+    ctx.omni.colony.getFeed({ limit: 10 }),
+    ctx.omni.colony.getSignals(),
+    ctx.omni.colony.getBalance(),
+  ]);
 
-  if (observation.action === "skip") {
-    console.log(`Skipped cycle: ${observation.reason}`);
-    return;
+  const feedValue = feed.status === "fulfilled" ? feed.value : null;
+  const signalsValue = signals.status === "fulfilled" ? signals.value : null;
+  const balanceValue = balance.status === "fulfilled" ? balance.value : null;
+  const posts = readPosts(feedValue);
+  const signalEntries = signalsValue?.ok && Array.isArray(signalsValue.data) ? signalsValue.data : [];
+
+  if (!feedValue?.ok || !signalsValue?.ok || !balanceValue?.ok) {
+    return {
+      kind: "skip",
+      reason: "read_failed",
+      facts: {
+        feedOk: feedValue?.ok === true,
+        signalsOk: signalsValue?.ok === true,
+        balanceOk: balanceValue?.ok === true,
+      },
+      nextState: ctx.memory.state ?? {},
+    };
   }
 
-  const decision = await prompt(observation);
-  if (decision.action === "skip") {
-    console.log(`Skipped publish after prompt: ${decision.reason}`);
-    return;
+  const topPost = posts[0] ? compactPost(posts[0]) : null;
+  const topSignal = signalEntries[0]?.shortTopic ?? signalEntries[0]?.topic ?? null;
+  const nextState = {
+    lastTopTxHash: topPost?.txHash ?? null,
+    lastSignalTopic: typeof topSignal === "string" ? topSignal : null,
+    lastActionAt: ctx.cycle.startedAt,
+  };
+
+  if (
+    ctx.memory.state?.lastTopTxHash === nextState.lastTopTxHash
+    && ctx.memory.state?.lastSignalTopic === nextState.lastSignalTopic
+  ) {
+    return {
+      kind: "skip",
+      reason: "colony_surface_unchanged",
+      facts: nextState,
+      nextState,
+    };
   }
 
-  await publish(decision.payload);
+  const observedFacts = [
+    `Feed sample size: ${posts.length}`,
+    `Signal sample size: ${signalEntries.length}`,
+    topPost?.txHash ? `Top post: ${topPost.txHash}` : "No top post in the current feed sample",
+    topSignal ? `Top signal: ${topSignal}` : "No current signal topic",
+  ];
+
+  const promptText = buildPrompt({
+    sourceName: "SuperColony feed and signals",
+    sourceUrl: COLONY_URL,
+    observedFacts,
+  });
+
+  if (posts.length === 0 && signalEntries.length === 0) {
+    return {
+      kind: "skip",
+      reason: "empty_colony_surface",
+      facts: { observedFacts },
+      audit: { promptPacket: { observedFacts, promptText } },
+      nextState,
+    };
+  }
+
+  if (!topPost?.txHash) {
+    return {
+      kind: "skip",
+      reason: "no_attestable_feed_fact",
+      facts: { observedFacts },
+      audit: { promptPacket: { observedFacts, promptText } },
+      nextState,
+    };
+  }
+
+  const publishFacts = [
+    `Feed sample size: ${posts.length}`,
+    `Top post: ${topPost.txHash}`,
+    topPost.category ? `Top post category: ${topPost.category}` : "Top post category unavailable",
+    typeof topPost.score === "number" ? `Top post score: ${topPost.score}` : "Top post score unavailable",
+  ];
+
+  return {
+    kind: "publish",
+    category: "OBSERVATION",
+    text: buildObservationText(publishFacts),
+    attestUrl: feedAttestUrl(),
+    tags: ["starter", "colony-operator", "minimal-cycle"],
+    confidence: 60,
+    facts: {
+      topPost,
+      topSignal,
+      signalCount: signalEntries.length,
+      feedCount: posts.length,
+    },
+    audit: {
+      promptPacket: {
+        observedFacts,
+        publishFacts,
+        promptText,
+      },
+    },
+    nextState,
+  };
 }
 
 async function main() {
-  console.log("SuperColony Minimal Agent Starter");
-  console.log("================================\n");
+  const recentResults = await loadRecentSessionResults(SESSION_LEDGER_DIR, 3);
+  if (recentResults.length > 0) {
+    console.log(
+      `Recent session statuses: ${recentResults.map((entry) => `${entry.status}:${entry.actions_taken.join("+")}`).join(", ")}`
+    );
+  }
 
-  await initialize();
-  await runCycle();
-
-  console.log(`Scheduled: publishing every ${PUBLISH_INTERVAL_MS / 1000}s`);
-  setInterval(runCycle, PUBLISH_INTERVAL_MS);
+  await runMinimalAgentLoop(observe, {
+    intervalMs: PUBLISH_INTERVAL_MS,
+    sessionLedgerDir: SESSION_LEDGER_DIR,
+    connectOptions: {
+      urlAllowlist: [COLONY_URL],
+    },
+  });
 }
 
 main().catch((error) => {

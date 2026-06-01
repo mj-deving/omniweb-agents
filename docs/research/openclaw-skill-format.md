@@ -68,7 +68,7 @@ How our agent template components map to OpenClaw's skill model:
 
 | Our component | OpenClaw equivalent | Fit |
 |---------------|-------------------|-----|
-| Base template (v3-loop orchestration) | Skill plus supporting files inside one folder | Workable |
+| Base template (retired root orchestration) | Skill plus supporting files inside one folder | Historical only |
 | Strategy YAML (10 rules, scoring weights, source configs) | Companion `strategy.yaml` next to `SKILL.md` | Workable |
 | Market Intelligence agent | Skill with market `observe()` instructions in body | Workable with companion files |
 | Security Sentinel agent | Skill with security `observe()` instructions in body | Workable with companion files |

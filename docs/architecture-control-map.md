@@ -16,7 +16,7 @@ This map keeps architecture truth separate from task truth.
 
 Checked on `origin/main` at `fd1f49e2`.
 
-- `docs-list` shows the current docs authority set and flags `docs/ECOSYSTEM.md` as missing front matter.
+- `docs-list` shows the current docs authority set.
 - Scoped import-edge scan covered `packages/omniweb-toolkit/src`, `src/toolkit`, `src/lib`, `cli`, `docs`, `docs-site`, package docs, and package references.
 - Scan counts: package source 121 files, root toolkit 163 files, root lib 62 files, CLI 42 files, docs-site 5 files, package docs 7 files, package references 136 files.
 - Import-edge leads: package source imports root toolkit heavily, package source imports root lib only in narrow cases, CLI imports both toolkit and lib, toolkit still has some `../lib` edges that must be source-checked before refactor claims.
@@ -55,7 +55,7 @@ Docs:
 - `docs/decisions/` contains repo-level architectural decisions.
 - `docs/project-structure.md` is the broad repo shape doc and currently contains stale counts/old package framing that should be refreshed after this map.
 - `docs/architecture-plumbing-vs-strategy.md` is the ADR-0002 boundary companion and currently mixes historical migration notes with current state.
-- `docs/ECOSYSTEM.md` should be classified against package docs and given front matter if it remains current.
+- `docs/ECOSYSTEM.md` is classified as repo ecosystem/source-of-truth routing and carries front matter.
 - `docs-site/README.md` says canonical package truth lives in `packages/omniweb-toolkit/`, canonical repo architecture and research live in `docs/`, and `docs-site/` is the small public summary layer.
 - `docs-site/source-of-truth.html` repeats the same public-facing source-of-truth model.
 
@@ -125,7 +125,7 @@ Source context for docs refresh work:
 
 - `docs/project-structure.md` is the broad repo shape document.
 - `docs/architecture-plumbing-vs-strategy.md` is the ADR-0002 boundary companion.
-- `docs/ECOSYSTEM.md` is still indexed by `docs-list`, currently without front matter.
+- `docs/ECOSYSTEM.md` is indexed by `docs-list` as the repo ecosystem/source-of-truth routing doc.
 
 ## Validation Notes
 

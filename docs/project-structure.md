@@ -5,7 +5,7 @@ topic_hint: ["project structure", "repo layout", "architecture overview", "direc
 
 # Project Structure
 
-This repo contains the public `omniweb-toolkit` package, root runtime/CLI code, repo architecture docs, public summary pages, shipped archetypes, and validation harnesses.
+This repo contains the public `omniweb-toolkit` package, internal toolkit/runtime layers, repo architecture docs, public summary pages, shipped archetypes, and validation harnesses.
 
 Use [architecture-control-map.md](architecture-control-map.md) for the current authority map. This file is the broad layout companion: it explains where source lives and which layer owns which kind of truth.
 
@@ -37,7 +37,7 @@ omniweb-agents/
 │   ├── actions/                      # root action execution surfaces
 │   ├── adapters/                     # framework adapters
 │   └── reactive/                     # root reactive runtime surfaces and shims
-├── cli/                              # operator CLIs and V3 session runner
+├── cli/                              # support CLIs; legacy root runner archived
 ├── config/                           # source catalog and strategy config
 ├── templates/                        # starter templates and generated starter output
 ├── agents/                           # repo agent definitions and exported bundles
@@ -95,7 +95,7 @@ Examples:
 - Source selection, source policy, and pipeline orchestration.
 - Scoring, state, transcripts, mentions, review findings, and agent config.
 
-`cli/` wires runtime flows for local operators and root validation. The legacy V3 session-runner flow starts in `cli/session-runner.ts`, runs through `cli/v3-loop.ts`, and delegates heavy publish/reply/vote/bet work to `cli/publish-executor.ts`.
+`cli/` now holds support utilities only. The legacy root runner/readback lane is archived in [archive/legacy-root-runner.md](archive/legacy-root-runner.md). Active operator runtime starts from the package CLI or starter, then routes through the colony operator and maintained minimal agent cycle.
 
 Policy code may compose toolkit mechanisms. Toolkit code should not absorb policy just because a root runtime currently uses it.
 
@@ -135,13 +135,24 @@ Consumer runtime flow:
 2. `packages/omniweb-toolkit/src/runtime.ts` forwards runtime helpers and `connect`.
 3. `packages/omniweb-toolkit/src/colony.ts` wires package domain APIs around root toolkit runtime pieces.
 
-Root V3 runtime flow:
+Active operator flow:
 
-1. `cli/session-runner.ts` loads local runtime context and starts the loop.
-2. `cli/v3-loop.ts` handles SENSE/ACT/CONFIRM orchestration.
-3. `cli/action-executor.ts` handles lighter actions.
-4. `cli/publish-executor.ts` handles heavier publish and write actions.
-5. Toolkit bridge/session/chain helpers perform guarded chain operations.
+1. Consumer uses the package `omniweb` CLI or a package starter.
+2. The starter imports `omniweb-toolkit/agent`.
+3. `runColonyOperatorCycle()` provides the operator envelope.
+4. `runMinimalAgentCycle()` runs observe, policy intent, execution, artifacts, and proof.
+5. `executeResolvedIntent()` dispatches publish, reply, react, tip, or market write through guardrails and readback.
+
+Internal shared layer flow:
+
+1. `omniweb-toolkit/runtime` exposes `connect()`.
+2. Runtime `connect()` returns `OmniWeb`.
+3. `OmniWeb` composes SDK bridge, data sources, toolkit primitives, and domain APIs.
+4. Action executor and guardrails turn policy intent into bounded writes and readback/proof.
+
+Archived root runner flow:
+
+- Historical only; see [archive/legacy-root-runner.md](archive/legacy-root-runner.md).
 
 ## Boundary Checks
 

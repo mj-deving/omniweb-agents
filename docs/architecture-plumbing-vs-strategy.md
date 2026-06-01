@@ -51,14 +51,12 @@ Policy code may call toolkit code. Toolkit code should not import policy code un
 
 ## Runtime Wiring
 
-Runtime wiring generally belongs in `cli/`, package runtime entrypoints, or scripts.
+Runtime wiring generally belongs in package runtime entrypoints, package scripts, or support CLIs.
 
-Current root runtime:
+Archived root runtime:
 
-- `cli/session-runner.ts`: root operator entrypoint.
-- `cli/v3-loop.ts`: V3 SENSE/ACT/CONFIRM orchestration.
-- `cli/action-executor.ts`: lighter action execution.
-- `cli/publish-executor.ts`: heavier publish/reply/vote/bet execution.
+- Historical root runner/readback files are no longer active route surfaces.
+- Use [archive/legacy-root-runner.md](archive/legacy-root-runner.md) and git history for old behavior.
 
 Current package runtime:
 
@@ -66,7 +64,7 @@ Current package runtime:
 - `packages/omniweb-toolkit/src/colony.ts`: wallet-backed `OmniWeb` runtime.
 - `packages/omniweb-toolkit/src/agent.ts`: package agent subpath and starter/runtime helpers.
 
-Do not casually merge package minimal-runtime work into the older root V3 session-runner world. Extract a shared layer only when both surfaces need the same behavior and validation can cover both.
+Do not reintroduce an active root runner route while improving package minimal-runtime work. Extract a shared layer only when the active package route needs it and validation can cover the behavior.
 
 ## Placement Rules
 
@@ -118,7 +116,7 @@ When evidence is confirmed, create a small Bead with file/line evidence, accepta
 
 Writes are security-sensitive because the project can handle real DEM on mainnet.
 
-Any refactor touching package domain writes, `src/toolkit/sdk-bridge.ts`, chain transaction helpers, `cli/publish-executor.ts`, or spend/tip guards needs a narrow proof plan. Prefer small PRs with explicit validation over broad cleanup.
+Any refactor touching package domain writes, `src/toolkit/sdk-bridge.ts`, chain transaction helpers, package action execution, or spend/tip guards needs a narrow proof plan. Prefer small PRs with explicit validation over broad cleanup.
 
 ## Related Docs
 

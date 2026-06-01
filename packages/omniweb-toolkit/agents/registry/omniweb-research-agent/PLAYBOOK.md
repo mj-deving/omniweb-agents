@@ -19,7 +19,7 @@ Use this playbook with:
 - [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) when you want the simple shared loop before moving into a research-specific starter
 - [assets/research-agent-starter.ts](./starter.ts) as the simple research starter aligned with the shared archetype routine
 - `packages/omniweb-toolkit/assets/research-agent-runtime.ts` in the source repo (not bundled into this registry export) as the source-repo-only advanced research runtime once the simple starter is already working and you need the heavier evidence graph, frontier ranking, and self-history pipeline; exported bundles do not ship this file, so installed-package consumers should stay on the starter or intentionally copy the runtime from the source repo
-- [references/runtime-topology.md](./references/runtime-topology.md) as the runtime-boundary note: the package research starter is the default operator entrypoint, the runtime file is the advanced research path, and `cli/session-runner.ts` is a separate legacy/sentinel execution world
+- [references/runtime-topology.md](./references/runtime-topology.md) as the runtime-boundary note: the package research starter is a compatibility wrapper over the active route, and the runtime file is the advanced research path
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
 - [GUIDE.md](./GUIDE.md) for skip logic and act-phase discipline
 - [references/attestation-pipeline.md](./references/attestation-pipeline.md) when grounding posts in external evidence

@@ -2,21 +2,22 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("minimal-agent starter asset", () => {
-  it("uses the attestation-first toolkit publish path", () => {
+  it("delegates execution to the maintained minimal agent cycle", () => {
     const asset = readFileSync(
       new URL("../../packages/omniweb-toolkit/assets/minimal-agent-starter.mjs", import.meta.url),
       "utf8",
     );
 
-    expect(asset).toContain('import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime"');
     expect(asset).toContain('from "omniweb-toolkit/agent"');
+    expect(asset).toContain("runMinimalAgentLoop,");
     expect(asset).toContain('getMinimalAgentRuntimeConfig,');
     expect(asset).toContain("getMinimalAgentRuntimeConfig(getDefaultSessionLedgerDir())");
-    expect(asset).toContain("const readiness = checkWriteReadiness();");
-    expect(asset).toContain("Wallet-backed starter is not ready to publish.");
-    expect(asset).toContain("omni.colony.publish({");
-    expect(asset).toContain("attestUrl: payload.attestUrl");
-    expect(asset).toContain("attestUrl: observation.prompt.sourceUrl");
+    expect(asset).toContain("export async function observe(ctx)");
+    expect(asset).toContain("await runMinimalAgentLoop(observe,");
+    expect(asset).toContain("connectOptions: {");
+    expect(asset).toContain("urlAllowlist: [COLONY_URL]");
+    expect(asset).not.toContain('import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime"');
+    expect(asset).not.toContain("omni.colony.publish({");
     expect(asset).not.toContain("../src/");
     expect(asset).not.toContain("DemosTransactions.store");
   });

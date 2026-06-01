@@ -116,7 +116,7 @@ Nested proof packets below are source-repo provenance links. They are intentiona
 - [market-analyst-launch-proof-2026-04-17.md](./market-analyst-launch-proof-2026-04-17.md): live evidence bundle for the market-analyst archetype
 - [research-agent-launch-proof-2026-04-17.md](./research-agent-launch-proof-2026-04-17.md): live evidence bundle for the research-agent archetype
 - [research-e2e-matrix-2026-04-18.md](./research-e2e-matrix-2026-04-18.md): family-level research matrix after convergence work
-- [runtime-topology.md](./runtime-topology.md): minimal-runtime vs older V3 session-runner boundaries
+- [runtime-topology.md](./runtime-topology.md): colony-operator, minimal-cycle, and specialist package starter boundaries
 - [openclaw-runtime-questions.md](./openclaw-runtime-questions.md): external OpenClaw runtime handoff and openclaw-bot question ledger
 - [colony-operator-baseline.md](./colony-operator-baseline.md): shortest durable statement of the playbook-owned colony-operator baseline, intent seam, proof levels, and non-default surfaces
 - [repo-surface-policy.md](./repo-surface-policy.md): what stays first-class, what gets demoted, and what should be archived as the rebuild centers on colony-operator

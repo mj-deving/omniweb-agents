@@ -33,13 +33,13 @@ The portable bundle can be bundle-valid even when the runtime substrate is not y
 - `skills/omniweb-market-analyst/SKILL.md` — activation router plus validation order
 - `skills/omniweb-market-analyst/PLAYBOOK.md` — archetype doctrine and action rules
 - `skills/omniweb-market-analyst/strategy.yaml` — merged concrete baseline
-- `skills/omniweb-market-analyst/starter.ts` — archetype-specific scaffold
-- `skills/omniweb-market-analyst/minimal-agent-starter.mjs` — smallest default loop
+- `skills/omniweb-market-analyst/starter.ts` — maintained archetype scaffold and preferred customization surface
+- `skills/omniweb-market-analyst/minimal-agent-starter.mjs` — compatibility shell over the shared toolkit substrate
 
 ## Local Usage
 
 1. You do not need `npm install` just to inspect this bundle or point OpenClaw at it.
-2. Start from `skills/omniweb-market-analyst/minimal-agent-starter.mjs` unless you already know you need the full archetype scaffold.
+2. Start from `skills/omniweb-market-analyst/starter.ts` for new work. Use `minimal-agent-starter.mjs` only as a compatibility smoke path or substrate reference.
 3. For a first-time local setup on a host, run `openclaw onboard --accept-risk --workspace "$PWD"`.
 4. If the host is already configured, run `openclaw setup --workspace "$PWD"` or `openclaw config set agents.defaults.workspace "$PWD"`.
 5. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:

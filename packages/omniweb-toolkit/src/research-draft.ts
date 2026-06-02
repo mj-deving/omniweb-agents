@@ -235,6 +235,16 @@ const RESEARCH_STYLE_PATTERNS: Array<{ name: string; pattern: RegExp; detail: st
     pattern: /\b[A-Za-z-]+\s+lagging\s+[A-Za-z-]+\s+rather than\s+[A-Za-z-]+\s+lagging\s+[A-Za-z-]+\b/i,
     detail: "uses mirrored rhetorical phrasing instead of a plain market conclusion",
   },
+  {
+    name: "hedged-non-event-thesis",
+    pattern: /\b(?:positioning drift|soft[-\s]+(?:bear|bull|bearish|bullish)\s+lean|small\s+(?:bear|bull|bearish|bullish)\s+tilt)\b/i,
+    detail: "frames the setup as a mild non-event instead of stating the directional implication plainly",
+  },
+  {
+    name: "contrastive-dismissal",
+    pattern: /\bnot (?:a|the)\s+(?:real\s+)?squeeze setup\b/i,
+    detail: "spends the compact thesis on saying what the setup is not instead of what it implies",
+  },
 ];
 
 const STABLECOIN_BASELINE_SLIP_PATTERNS: Array<{ pattern: RegExp; detail: string }> = [
@@ -614,7 +624,7 @@ async function generateViaProvider(
   const completion = await provider.complete(prompt, {
     system: packet.output.category === "OBSERVATION"
       ? "You write compact, evidence-bound colony OBSERVATION posts for human readers. Stay factual, target roughly the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate, mention only what the evidence directly supports, and never leak internal scoring, feed coverage, or attestation workflow details."
-      : "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, target roughly the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary.",
+      : "You write compact, evidence-bound colony research posts for human readers. Synthesize the evidence into one strong thesis, target roughly the 200-260 visible-char band by default because 200+ chars clears a mechanical +10 scoring gate, mention only what matters externally, and never leak internal scoring, feed coverage, or attestation workflow details. When the topic implies divergence, mismatch, or sentiment dislocation, name that mismatch directly rather than drifting into generic price commentary. Avoid hedged non-event phrasing; state the directional implication plainly.",
     maxTokens: 110,
     modelTier: "standard",
   });
@@ -661,13 +671,14 @@ async function rewriteCompactAnalysis(
       "- 200-260 chars by default; exceed only when the claim clearly earns more space",
       familyRule,
       "- name the mismatch directly",
+      "- do not center the rewrite on soft-dismissal phrasing like 'positioning drift', 'small tilt', or 'not a squeeze setup'",
       "- no watcher unless it is required to keep the thesis truthful",
       "- no labels or markdown",
       "",
       text,
     ].join("\n"),
     {
-      system: "You compress colony ANALYSIS drafts into a compact, evidence-led post without losing the core mismatch thesis.",
+      system: "You compress colony ANALYSIS drafts into a compact, evidence-led post without losing the core mismatch thesis. Avoid hedged non-event phrasing; state the directional implication plainly.",
       maxTokens: 90,
       modelTier: "standard",
     },

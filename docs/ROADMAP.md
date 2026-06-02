@@ -1,9 +1,9 @@
 ---
 type: roadmap
 status: active
-updated: 2026-05-25
-summary: "One-page active strategy surface. Historical proof ladders now live in the roadmap archive and package references; Beads/GitHub remain execution truth."
-topic_hint: ["roadmap", "next steps", "architecture trim", "active strategy", "colony-operator"]
+updated: 2026-06-02
+summary: "One-page active strategy surface. Current lane: converge runtime/product story on colony-operator while keeping minimal-agent as shared substrate and agent policy as callable, opt-in knowledge."
+topic_hint: ["roadmap", "next steps", "active strategy", "colony-operator", "minimal-agent", "callable policy"]
 ---
 
 # Roadmap
@@ -12,43 +12,87 @@ topic_hint: ["roadmap", "next steps", "architecture trim", "active strategy", "c
 
 ## Current Truth
 
-- `main` has completed the full OmniWeb endpoint reconciliation, 0ctx/sc96/9st0/04c5 hardening lanes, xqlb cleanup, g2iv self-audit, fcui raw-transfer unit closeout, storage no-spend ergonomics, and DemosWork/XM/Rubic import-boundary proof.
-- Raw DEM transfer remains **integer DEM only**. Installed-runtime base-unit payload support is not proven.
-- DemosWork, XM, and Rubic remain raw-only package surfaces: XM is `blocked`/`design-needed`, Rubic quote is `design-needed` while execute is `blocked`, and DemosWork is `blocked`/`design-needed`.
-- The maintained proof posture is read-first and no-spend by default. Any future live write needs a fresh explicit packet with budget, wallet/agent target, command, mutation evidence, product readback criteria, and stop rules.
-- `omniweb-toolkit` is the primary package authority. Repo docs should link package references instead of duplicating long platform facts.
-- The colony-operator mirror under `packages/omniweb-toolkit/agents/openclaw/colony-operator/` is a re-entry mirror, not a second roadmap.
+- `main` has completed the prior endpoint reconciliation, no-spend hardening, raw-transfer closeout, storage no-spend ergonomics, DemosWork/XM/Rubic import-boundary proof, worktree cleanup, and PR-sprawl repair lanes.
+- Open PR count is currently zero after the stale Paperclip PR cleanup. Branch and remote-prune operations remain separate from product strategy.
+- `colony-operator` is the single maintained user-facing operator path.
+- `minimal-agent` is shared runtime substrate under colony-operator, not a second product story.
+- Generic `minimal-agent starter` language is now considered parallel-path smell unless it is clearly framed as a colony-operator minimal starter or compatibility scaffold.
+- `omniweb-toolkit` should provide callable knowledge, policy, checks, guardrails, execution primitives, and proof helpers. It should not force agents into a prompt harness or own their reasoning loop.
+- Playbooks and policies own topic choice, thesis choice, tone, budgets, and action preference. The runtime owns capability truth, readiness, admissibility, execution, verification, and proof shape.
+- The maintained proof posture remains read-first and no-spend by default. Any future live write needs a fresh explicit packet with budget, wallet/agent target, command, mutation evidence, product readback criteria, and stop rules.
 
-## Active Product Hardening Order
+## Active Lane
 
-1. **Storage no-spend ergonomics**: complete; package preview ergonomics landed without live-write authorization.
-2. **DemosWork / XM / Rubic import-boundary proof**: complete; all three remain raw-only and blocked or design-needed, with no public wrapper or fixture promotion.
-3. **IPFS / escrow only with new evidence**: no active implementation lane. Revisit only after concrete official-doc, SDK/API, import-stability, quote/readback, or product-readback evidence changes the current degraded or blocked posture.
+**Colony-operator convergence.**
 
-## Architecture Trim Principle
+Make the repo read as one operator product:
 
-One concept gets one authority:
+1. A user starts from the colony-operator bundle, package CLI, or colony-operator docs.
+2. The operator calls `runColonyOperatorCycle()`.
+3. `runColonyOperatorCycle()` uses the shared minimal cycle machinery internally.
+4. The agent/playbook supplies observation and action preference.
+5. Toolkit policy/admissibility/guardrail layers answer whether the request is executable.
+6. Execution uses shared action primitives.
+7. Readback/proof records what actually happened.
 
-- package API, capability, readiness, admissibility, lifecycle, and verification truth belongs in `packages/omniweb-toolkit/`
-- active strategy belongs here in `docs/ROADMAP.md`
-- execution state belongs in Beads and GitHub PRs
-- historical proof ladders belong in `docs/archive/` or package reference artifacts
-- colony-operator memory mirrors the current re-entry contract and should stay short
+The desired public message:
 
-The runtime story should read as one capability registry with derived readiness, admissibility, lifecycle, and verification views. The proof/ops story should read as one harness that includes CLI probes, package checks, proof packets, and no-spend previews.
+- **default path:** colony-operator
+- **substrate:** omniweb-toolkit runtime/capability/action/proof layers
+- **internal cycle engine:** minimal-agent
+- **strategy:** playbooks and agent policy
+- **optional knowledge:** callable checks such as draft quality, guardrails, admissibility, readiness, and capability truth
 
-## Explicitly Not Next
+## Next Steps
 
-- no runtime/code/API cleanup in this architecture-trim lane
-- no npm publish, public registry claim, or production hosted activation without explicit release authorization
-- no mainnet spend, wallet mutation, or live broadcast from this roadmap reset
-- no new broad architecture ladder appended to the active roadmap
-- no duplicate control-plane concepts when a link to the package authority or archive is enough
+1. **Converge exported runtime guidance**
+   - Make `omniweb-toolkit/agent` present colony-operator first.
+   - Keep `runMinimalAgentCycle()` available as low-level substrate.
+   - Demote `runMinimalAgentLoop()` to opt-in scaffold/compatibility language.
+   - Do not break public exports without a deliberate deprecation path.
+
+2. **Converge starters**
+   - Rename/reword generic `minimal-agent-starter` surfaces as colony-operator minimal starters where they remain active.
+   - Ensure OpenClaw colony-operator bundle routes through `runColonyOperatorCycle()` instead of a hand-rolled connect/prompt/publish lane.
+   - Keep prompt-building examples skill/playbook-local, not package doctrine.
+
+3. **Extract callable policy, not prompt harnesses**
+   - Continue `omniweb-agents-2vk5`: extract research draft quality gates into callable modules.
+   - The output should help agents inspect or validate drafts; it must not require agents to use a package-owned prompt harness.
+
+4. **Reduce proof/tooling duplication**
+   - Continue `omniweb-agents-y2vz`: extract shared validation script helpers.
+   - Keep validation scripts as release/proof tooling, not runtime dependencies.
+
+5. **Archive or relabel parallel-path docs**
+   - Audit package docs, references, starter comments, OpenClaw bundle docs, and old guide text for standalone minimal-agent/product-route claims.
+   - Archive stale root-runner or generic-agent-loop language rather than preserving it as an active option.
+
+6. **Prove the converged route**
+   - Run the smallest no-spend consumer proof showing colony-operator -> minimal substrate -> policy intent -> executor -> readback/proof.
+   - Record proof tier honestly; do not claim maintained live-write authority from a dry-run.
+
+## Non-Negotiable Design Rules
+
+- No second active operator path beside colony-operator.
+- No hidden prompt harness as the default product route.
+- No runtime-owned topic/thesis/action choice.
+- No live write, wallet mutation, or mainnet spend without an explicit proof packet and operator authorization.
+- No broad refactor without a bead, owner, proof gate, and closure condition.
+- No roadmap-as-task-ledger: execution status belongs in Beads and GitHub.
+
+## Current Beads
+
+- `omniweb-agents-2vk5`: extract research draft quality gates as callable policy.
+- `omniweb-agents-y2vz`: extract shared validation script helpers.
+
+Follow-up beads from this roadmap refresh should cover export guidance, starter convergence, parallel-path doc cleanup, and no-spend proof of the converged route.
 
 ## Pointers
 
+- Runtime topology: [packages/omniweb-toolkit/references/runtime-topology.md](../packages/omniweb-toolkit/references/runtime-topology.md)
+- Colony-operator baseline: [packages/omniweb-toolkit/references/colony-operator-baseline.md](../packages/omniweb-toolkit/references/colony-operator-baseline.md)
+- Repo state and branch policy: [docs/REPO-STATE.md](REPO-STATE.md)
 - Archived pre-trim roadmap: [docs/archive/roadmaps/roadmap-2026-05-25-pre-trim.md](archive/roadmaps/roadmap-2026-05-25-pre-trim.md)
-- Package verification matrix: [packages/omniweb-toolkit/references/verification-matrix.md](../packages/omniweb-toolkit/references/verification-matrix.md)
-- Endpoint inventory: [packages/omniweb-toolkit/references/live-endpoints.md](../packages/omniweb-toolkit/references/live-endpoints.md)
 - Package front door: [packages/omniweb-toolkit/README.md](../packages/omniweb-toolkit/README.md)
 - Repo front door: [README.md](../README.md)

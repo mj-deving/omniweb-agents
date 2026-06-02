@@ -1230,6 +1230,31 @@ describe("buildResearchDraft", () => {
     expect(result.promptPacket.input.brief.falseInferenceGuards[1]).toContain("credit spread");
   });
 
+  it("allows vix-credit drafts to contrast fear repricing with real stress", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "VIX is jumping, but the rates backdrop makes this fear repricing, not real stress yet: VIX closed at 21.34 after a 7.78% move while bills still pay 5.22% against 4.61% on notes. " +
+        "Until that front-end pressure eases, the risk read is tighter funding meeting rising fear."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeVixOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeVixEvidenceSummary(),
+      supportingEvidenceSummaries: [makeTreasurySupportingEvidenceSummary()],
+      llmProvider: provider,
+      minTextLength: 260,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected success");
+    expect(result.qualityGate.checks.find((check) => check.name === "research-style")?.pass).toBe(true);
+  });
+
   it("adds a family dossier brief for network-activity topics", async () => {
     const provider = {
       name: "test-provider",
@@ -1397,8 +1422,8 @@ describe("buildResearchDraft", () => {
     const provider = {
       name: "test-provider",
       complete: vi.fn().mockResolvedValue(
-        "BTC futures lean bearish without panic: spot is holding around $67,240 while the premium side stays negative, so the tape still shows traders paying short before spot breaks. " +
-        "That is positioning drift, not generic mood. If the premium normalizes and price pushes through resistance, the bearish read weakens."
+        "BTC futures lean bearish without panic: spot is holding around $67,240 while the premium side stays negative, so traders are still paying short before spot breaks. " +
+        "That keeps downside pressure in derivatives. If the premium normalizes and price pushes through resistance, the bearish read weakens."
       ),
     };
 
@@ -1768,6 +1793,58 @@ describe("buildResearchDraft", () => {
       evidenceSummary: makeEvidenceSummary(),
       llmProvider: provider,
       minTextLength: 300,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "research-style")?.pass).toBe(false);
+  });
+
+  it("rejects hedged non-event funding phrasing even when the numbers are real", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC at 67,250 with funding at -120 bps and mark $5 under index is a soft-bear lean, not a squeeze setup. " +
+        "With open interest thin, this is positioning drift rather than conviction. " +
+        "If premium returns or funding flattens, the bearish read loses force."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 200,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "research-style")?.pass).toBe(false);
+  });
+
+  it("rejects isolated soft-bear funding phrasing as a hedged non-event thesis", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC at 67,250 with funding at -120 bps and mark $5 under index is a soft-bear lean while open interest stays thin. " +
+        "The setup keeps derivatives mildly negative before spot confirms the direction. " +
+        "If premium returns or funding flattens, the bearish read loses force."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 200,
     });
 
     expect(result.ok).toBe(false);

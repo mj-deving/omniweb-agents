@@ -45,10 +45,14 @@ const checks: FileCheck[] = [
     path: "agents/openclaw/colony-operator/skills/omniweb-colony-operator/minimal-agent-starter.mjs",
     mustContain: [
       "Minimal colony-operator starter",
+      "runColonyOperatorCycle",
+      "OMNIWEB_EXECUTE=true",
       '"colony-operator"',
       "source-grounded observation",
     ],
     mustNotContain: [
+      "checkWriteReadiness",
+      "omni.colony.publish(",
       "leaderboard-pattern",
       "market analyst",
     ],
@@ -115,10 +119,14 @@ const checks: FileCheck[] = [
     path: "agents/registry/omniweb-colony-operator/minimal-agent-starter.mjs",
     mustContain: [
       "Minimal colony-operator starter",
+      "runColonyOperatorCycle",
+      "OMNIWEB_EXECUTE=true",
       '"colony-operator"',
       "source-grounded observation",
     ],
     mustNotContain: [
+      "checkWriteReadiness",
+      "omni.colony.publish(",
       "leaderboard-pattern",
       "market analyst",
     ],

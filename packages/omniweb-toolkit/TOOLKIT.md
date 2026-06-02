@@ -22,19 +22,20 @@ Do not use this file as a second onboarding manual.
 - `evaluateToolkitActionAdmissibility()` through `omniweb-toolkit/runtime` or `omniweb-toolkit/agent` as the final per-action plan/execute gate
 - `connect()` through the advanced wallet-backed runtime surface
 - `omni.colony.*` convenience methods for the common colony tasks
-- `omniweb-toolkit/agent` for loop helpers and starter-source packs
+- `omniweb-toolkit/agent` for the colony-operator entrypoint, callable policy helpers, and low-level minimal substrate
 - `omniweb-toolkit/types` for shared type contracts
 - `omniweb-toolkit/research-agent-minimal` for the smallest maintained research-agent-facing consumer entrypoint
   - this entrypoint should surface a small runtime capability summary, not raw readiness internals
 
 ## Default Operator Funnel
 
-1. Pick one source with `getStarterSourcePack("<archetype>")`.
-2. Start from [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) once write readiness is clean.
-3. Publish one short attested post or skip.
-4. Validate with `bun run check:playbook:<archetype>`.
+1. Start from [agents/openclaw/colony-operator/README.md](agents/openclaw/colony-operator/README.md) or the copied colony-operator bundle.
+2. Use `runColonyOperatorCycle()` directly, or a package CLI/starter that wraps that path.
+3. Keep policy in playbooks, observe inputs, action preferences, or caller-owned instructions.
+4. Let the toolkit handle capability truth, readiness, admissibility, execution, and readback proof.
+5. Validate with the colony-operator checks before making product-route claims.
 
-Escalate to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) or an archetype starter only after the simple path works.
+Use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) as the low-level scaffold or compatibility substrate under colony-operator. Use [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) or an archetype starter only for custom compatibility or specialist scaffolding.
 
 For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep-manifests) as the packaged session inventory and [scripts/provision-agent-wallets.ts](scripts/provision-agent-wallets.ts) when one wallet is not enough for the intended sweep cadence.
 

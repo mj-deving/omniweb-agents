@@ -13,8 +13,9 @@
 | Shipping package | `packages/omniweb-toolkit` |
 | Trunk | `origin/main` (single trunk) |
 | Trunk tip @ generation | `95ab8673` — `refactor: split research evidence source helpers (#591)` (2026-06-02) |
+| Trunk tip @ repair audit | `64734ec4` — `docs(repo-state): canonical repo, branch/worktree inventory + trunk policy (OMN-2) (#592)` (2026-06-02) |
 | Trunk protection (origin) | **active** — PR required, deletion + non-fast-forward blocked, review threads must resolve, required workflow `.github/workflows/validate-plugin.yml` |
-| Open PRs | **0** |
+| Open PRs @ repair audit | **3 stale / 0 mergeable** — #593, #594, #595 all `DIRTY`; all superseded by merged main commits and scheduled for closure |
 
 **Confirmation method:** `git remote -v` (origin → omniweb-agents.git), `git log origin/main`,
 `gh api repos/mj-deving/omniweb-agents/branches/main` → `protected: true`. The repo folder is
@@ -36,13 +37,23 @@ no CEO escalation required for repo location.**
 - Rogue `refs/heads/origin/main` local branch caused ambiguous-ref warnings (pruned by OMN-2)
 - 536 local + 296 remote branches, 0 open PRs
 
-**After OMN-12 (current):**
-- Primary checkout is on `main`, synced to `origin/main` (`95ab8673`, 2026-06-02)
+**After OMN-12 (as generated):**
+- Primary checkout was on `main`, synced to `origin/main` (`95ab8673`, 2026-06-02)
 - All 5 stashes dropped (all contents verified superseded or targeting deleted files)
 - Local branch count: **5** (`main` + `docs/repo-state-omn2` worktree + 3 rescued keeper branches with open PRs)
 - Remote branch count: **~300** (pending CEO-gated prune; see §3c and §5)
 - Open PRs: 5 (#592 OMN-2 doc, #593 colony-operator fix, #594 arch docs, #595 control-map, plus OMN-12 tracking)
 - Worktree count: 2 (`/home/USER/projects/demos-agents` on `main`; `/home/USER/projects/demos-agents-worktrees/omn2-repo-state` on `docs/repo-state-omn2`)
+
+**Repair audit (2026-06-02, after #592 merged):**
+- `origin/main` is `64734ec4`.
+- Open GitHub PRs are **3**, all `DIRTY`: #593, #594, #595.
+- #593 has no remaining starter-cap delta: current main already contains `MAX_OBSERVATION_POST_CHARS = 280` in the package asset, generated OpenClaw starter bundles, and `tests/packages/minimal-agent-starter-asset.test.ts`.
+- #594 is superseded by merged PR #586 plus the current main control map; its remaining alignment commit cherry-picks empty.
+- #595 is superseded by merged PR #585 plus the current main control map; its export-alignment commit conflicts by trying to restore older package-only wording over the newer active-operator flow.
+- Local worktrees before this repair branch: root checkout only. During this repair: root checkout plus `/home/USER/projects/demos-agents-worktrees/pr-surface-repair`.
+- Local branches during this repair: `main`, three stale rescued `codex/*` branches, and `fix/pr-surface-repair`.
+- Remote branch count after `git fetch --prune`: **299** heads. Remote prune remains CEO-gated and is not part of this corrective PR.
 
 ## 3. Branch Inventory
 
@@ -85,12 +96,18 @@ Post-OMN-12 (2026-06-02): **5 local heads, ~300 remote heads** (remote prune pen
 
 ## 4. Worktree Inventory
 
-Post-OMN-12 state: **2 valid worktrees, 0 prunable.**
+Post-OMN-12 generated state: **2 valid worktrees, 0 prunable.**
 
 | Path | Branch | Status | Notes |
 |------|--------|--------|-------|
 | `/home/USER/projects/demos-agents` | `main` | ✅ live | Primary checkout, now on trunk |
 | `/home/USER/projects/demos-agents-worktrees/omn2-repo-state` | `docs/repo-state-omn2` | ✅ active | OMN-2 doc PR worktree; removed on merge |
+
+Repair audit state after #592 merged:
+
+- `/home/USER/projects/demos-agents` remains the coordination/root checkout.
+- `/home/USER/projects/demos-agents-worktrees/omn2-repo-state` is gone.
+- `/home/USER/projects/demos-agents-worktrees/pr-surface-repair` is the temporary repair worktree for this corrective PR and should be removed after merge/closeout.
 
 **Previously stale worktree — removed by OMN-12:**
 - `nkw19-delayed-verdict` (was on `main`, pinning stale local main, last active 2026-04-27) → removed
@@ -134,6 +151,12 @@ Post-OMN-12 state: **2 valid worktrees, 0 prunable.**
     - [codex/architecture-control-map-clean] → PR #595 (align control map with exports)
   - 457 branches deleted
 - `codex/eval-drafts-rubric`: All 20 local commits verified superseded by merged PRs; branch deleted.
+
+### PR surface repair (2026-06-02) ✅
+- #592 is merged and `origin/main` is `64734ec4`.
+- #593, #594, and #595 were re-audited against current `origin/main`; each branch is stale/dirty and no longer contains a safe, unmerged delta to merge as-is.
+- Repair action: close #593, #594, and #595 as superseded rather than force-pushing or merging their stale branch histories.
+- Corrective evidence lives in this document; no code/runtime behavior changes are part of this repair.
 
 ### Remaining: CEO-gated remote prune
 - ~300 remote branches still pending deletion.

@@ -159,16 +159,22 @@ Pattern:
 git fetch origin
 git switch main
 git pull --ff-only
-git switch -c codex/<short-task-name>
+git switch -c <type>/<short-slug>   # type ∈ feat | fix | docs | refactor | chore | test
 ```
 
 Rules:
 
+- branch naming is `<type>/<short-slug>` (`feat|fix|docs|refactor|chore|test`); the legacy
+  `codex/*`, `gregor/*`, and `worktree-agent-*` prefixes are **retired** — do not create them
 - one bead = one branch = one PR
 - do not mix unrelated fixes
 - if a task grows, split follow-up work into new beads and new PRs
 - do not push directly to `main` unless the user explicitly instructs an emergency exception
 - do not force-reset or discard user work
+- max branch age is **14 days**: merge or close within 14 days of the first commit
+- **delete the source branch on merge** (local and remote)
+- `docs/REPO-STATE.md` is the source of truth for the trunk + branching policy; this section
+  follows it
 
 ### Shared Additions First
 

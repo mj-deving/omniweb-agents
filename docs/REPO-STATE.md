@@ -27,98 +27,119 @@ no CEO escalation required for repo location.**
 
 ## 2. State of Trunk & Working Copy (the problem this resets)
 
-- **Primary checkout is off-trunk and dirty.** `/home/mj/projects/demos-agents` is on feature
-  branch `codex/eval-drafts-rubric` (ahead 20 / behind 40 of its own remote), with ~26
-  modified/untracked paths and **5 stashes** (one labeled "pre-rebase parking"). Other
-  sessions are mid-flight here — surgery on this tree is deferred, not done blind.
-- **Local `main` is 360 commits behind `origin/main`** (0 ahead). Last local-main commit
-  2026-04-27; trunk is 2026-06-02. The local mirror is stale, not divergent → fast-forward only.
-- **Rogue local branch literally named `origin/main`** existed (`refs/heads/origin/main` @ old
-  tip `30b06c22`), causing `warning: refname 'origin/main' is ambiguous` on every git op.
-  **Pruned this ticket** (see §5).
-- **Sprawl:** 536 local + 296 remote branches, **0 open PRs**. The pattern is: PRs merged,
-  branches never deleted.
+> **✅ OMN-12 EXECUTED 2026-06-02.** All local prune steps below are complete. Remote prune
+> (296 branches) is pending CEO acknowledgment. See §5 for the updated action log.
+
+**Before (at generation — 2026-06-02):**
+- Primary checkout was on `codex/eval-drafts-rubric` (ahead 20 / behind 40), ~26 untracked paths, 5 stashes
+- Local `main` was 360 commits behind `origin/main` (pure fast-forward)
+- Rogue `refs/heads/origin/main` local branch caused ambiguous-ref warnings (pruned by OMN-2)
+- 536 local + 296 remote branches, 0 open PRs
+
+**After OMN-12 (current):**
+- Primary checkout is on `main`, synced to `origin/main` (`95ab8673`, 2026-06-02)
+- All 5 stashes dropped (all contents verified superseded or targeting deleted files)
+- Local branch count: **5** (`main` + `docs/repo-state-omn2` worktree + 3 rescued keeper branches with open PRs)
+- Remote branch count: **~300** (pending CEO-gated prune; see §3c and §5)
+- Open PRs: 5 (#592 OMN-2 doc, #593 colony-operator fix, #594 arch docs, #595 control-map, plus OMN-12 tracking)
+- Worktree count: 2 (`/home/mj/projects/demos-agents` on `main`; `/home/mj/projects/demos-agents-worktrees/omn2-repo-state` on `docs/repo-state-omn2`)
 
 ## 3. Branch Inventory
 
-Baseline at generation (excludes the transient `docs/repo-state-omn2` doc branch created for
-this PR): **536 local heads, 296 remote heads.**
+Baseline at generation (2026-06-02): **536 local heads, 296 remote heads.**
+Post-OMN-12 (2026-06-02): **5 local heads, ~300 remote heads** (remote prune pending CEO ack).
 
-### 3a. By age (last commit) — the headline
+### 3a. By age (last commit) — baseline at generation
 
-| Age bucket | Local | Remote |
-|------------|------:|-------:|
+| Age bucket | Local (baseline) | Remote (baseline) |
+|------------|---------------:|------------------:|
 | ≤ 7 days   |   31  |    1   |
 | 8–14 days  |  115  |    1   |
 | 15–30 days |   41  |   28   |
 | **> 30 days (dead)** | **350** | **266** |
 
-With **0 open PRs**, every branch older than the trunk merge that absorbed it is dead weight.
-
 ### 3b. By namespace + disposition
 
-| Namespace | Local | Remote | Disposition | Rationale |
-|-----------|------:|-------:|-------------|-----------|
-| `codex/*` | 383 | 166 | **prune** (merged → now; unmerged → OMN-7) | Agent PR branches; merged ones are in trunk, rest are dead experiments (0 open PRs). |
-| `worktree-agent-*` | 38 | 0 | **prune now** | Ephemeral per-agent scratch branches; 35 already merged into trunk, zero work lost. |
-| `gregor/*` | 0 | 30 | **prune** (OMN-7, CEO ack) | Remote-only legacy author branches, all > 14 days, 0 open PRs. |
-| `claude/*` | 17 | 16 | **prune** (OMN-7) | Agent analysis/audit branches, merged or dead. |
-| `openclaw/*` | 0 | 8 | **prune** (OMN-7, CEO ack) | Remote-only proof/preflight branches, all > 30 days. |
-| `xiih-*`, `ez4*`, `nkw*`, `repair-pr*`, `omniweb-agents-*`, misc | ~98 | ~76 | **prune** (OMN-7) | One-off experiment/proof lanes, 0 open PRs. |
-| `main` | 1 | 1 | **keep** | Trunk. Local mirror fast-forwarded to `origin/main` under OMN-7. |
-| `codex/eval-drafts-rubric` | 1 (checked out) | 1 | **convert-to-ticket** (OMN-7) | Current dirty primary checkout, ahead 20 unpushed. Audit → land or abandon, then move checkout to `main`. |
-| `origin/main` (rogue local) | — | — | **PRUNED this ticket** | Mis-named local branch; caused ambiguous-ref warnings. |
+| Namespace | Local (baseline) | Remote (baseline) | Disposition | Status |
+|-----------|-------:|-------:|-------------|--------|
+| `codex/*` | 383 | 166 | **prune** | ✅ Local pruned (OMN-12); remote pending CEO ack |
+| `worktree-agent-*` | 38 | 0 | **prune** | ✅ Local pruned (OMN-12) |
+| `gregor/*` | 0 | 30 | **prune (CEO ack)** | ⏳ Remote pending CEO ack |
+| `claude/*` | 17 | 16 | **prune** | ✅ Local pruned (OMN-12); remote pending CEO ack |
+| `openclaw/*` | 0 | 8 | **prune (CEO ack)** | ⏳ Remote pending CEO ack |
+| `xiih-*`, `ez4*`, `nkw*`, `repair-pr*`, `omniweb-agents-*`, misc | ~98 | ~76 | **prune** | ✅ Local pruned (OMN-12); remote pending CEO ack |
+| `main` | 1 | 1 | **keep** | ✅ Local `main` fast-forwarded to `origin/main` |
+| `codex/eval-drafts-rubric` | 1 | 1 | **abandoned** | ✅ All 20 local commits verified superseded; branch deleted (OMN-12) |
+| Rescued keepers (3) | 3 | 3 | **keep — open PRs** | ✅ PRs #593 #594 #595 opened (OMN-12) |
+| `origin/main` (rogue local) | — | — | **PRUNED** | ✅ Done (OMN-2) |
 
 ### 3c. Merge status vs trunk (drives the safe-prune set)
 
-- **73 local branches are fully merged into `origin/main`** → zero-loss to delete (35
-  `worktree-agent-*` + 38 others). Exact list: ticket OMN-7 attachment `merged-local-safe-prune.txt`.
-- **460 local branches are NOT merged into trunk** → audit-then-prune (attachment
-  `unmerged-local.txt`). With 0 open PRs and 350 of them > 30 days, the default is prune.
-- **296 remote branches** (attachment `remote-branches.txt`) → prune campaign with CEO ack,
-  because remote deletion is high-blast-radius / harder to reverse.
+- **73 local branches were fully merged into `origin/main`** → deleted zero-loss (OMN-12). 35
+  `worktree-agent-*` + 38 others. Source: OMN-12 attachment `merged-local-safe-prune.txt`.
+- **460 local branches were NOT merged into trunk** → audited and pruned (OMN-12). 4 had genuine
+  unlanded work; PRs opened (#592, #593, #594, #595). Remaining 456 deleted. 3 keepers remain as
+  active PR branches. Source: OMN-12 attachment `unmerged-local.txt`.
+- **~300 remote branches** remain → prune campaign with CEO ack required. Source: OMN-12
+  attachment `remote-branches.txt`. Pending approval request (see §5).
 
 ## 4. Worktree Inventory
 
-Git-registered worktrees (`git worktree list`): **2 valid, 0 prunable** (`git worktree prune
---dry-run` is empty).
+Post-OMN-12 state: **2 valid worktrees, 0 prunable.**
 
-| Path | Branch | Last active | Disposition | Rationale |
-|------|--------|-------------|-------------|-----------|
-| `/home/mj/projects/demos-agents` | `codex/eval-drafts-rubric` | live | **keep** | THE primary checkout / connected workspace. Move onto `main` per policy (OMN-7). |
-| `/home/mj/projects/demos-agents-worktrees/nkw19-delayed-verdict` | `main` | 2026-04-27 | **prune (worktree)** | Stale; pins the stale local `main`. Remove worktree under OMN-7. |
-| `/home/mj/projects/demos-agents-worktrees/omn2-repo-state` | `docs/repo-state-omn2` | live | **transient** | Created for this doc PR; removed on merge. |
+| Path | Branch | Status | Notes |
+|------|--------|--------|-------|
+| `/home/mj/projects/demos-agents` | `main` | ✅ live | Primary checkout, now on trunk |
+| `/home/mj/projects/demos-agents-worktrees/omn2-repo-state` | `docs/repo-state-omn2` | ✅ active | OMN-2 doc PR worktree; removed on merge |
 
-On-disk directories under the worktree roots that are **not** git-registered worktrees (leftover
-output/archive — safe filesystem cleanup, OMN-7):
+**Previously stale worktree — removed by OMN-12:**
+- `nkw19-delayed-verdict` (was on `main`, pinning stale local main, last active 2026-04-27) → removed
 
-- `demos-agents-worktrees/architecture-map-output` — build output, not a worktree → **prune**
-- `demos-agents-worktrees/demos-agents-worktrees` — accidental nested dir → **prune**
-- `demos-agents-worktree-archive/2026*` (3 timestamped) — explicit archive → **keep ≤ 14 days, then prune**
-- `.claude/worktrees/agent-a2325e5d` — Claude agent scratch → **prune**
+**Non-worktree leftover directories — removed by OMN-12:**
+- `demos-agents-worktrees/architecture-map-output` — ✅ removed (build output images)
+- `demos-agents-worktrees/demos-agents-worktrees` — ✅ removed (accidental nested dir)
+- `.claude/worktrees/agent-a2325e5d` — ✅ removed (empty Claude agent scratch)
 
-**Stashes:** 5 present on the primary checkout, owners unknown. **Do not drop** — audit and
-attribute under OMN-7 before any reset of the primary checkout.
+**Archive:**
+- `demos-agents-worktree-archive/2026*` (3 timestamped, all from 2026-06-02) — within 14-day retention; apply ≤14-day policy on next hygiene pass
 
-## 5. Actions Taken This Ticket vs. Ticketed Follow-up
+**Stashes:** All 5 audited and dropped by OMN-12:
+- stash@{0}: `.gitignore` + AGENTS.md — superseded
+- stash@{1}: `.gitignore` worktree entries — stale worktrees
+- stash@{2}: `cli/action-executor.ts` code — file deleted from main in `98c002a3`
+- stash@{3}: `.gitignore` worktree entry — stale
+- stash@{4}: `.gitignore` worktree entries — stale
 
-**Done now (safe, isolated, reversible):**
+## 5. Actions Taken
+
+### OMN-2 (this document)
 - Confirmed canonical repo + connected it as the project's primary workspace.
 - Fetched latest trunk; produced this inventory.
 - Pruned the rogue `refs/heads/origin/main` local branch (ended the ambiguous-ref warnings).
-- Landed this document to trunk via PR `docs/repo-state-omn2`.
+- Landed this document to trunk via PR `docs/repo-state-omn2` (#592).
+- Deferred all branch surgery to [OMN-12](/OMN/issues/OMN-12) (primary checkout was dirty).
 
-**Deferred to follow-up ticket OMN-7 (deliberately not done blind on an actively-dirty repo):**
-- Delete the 73 merged-into-trunk local branches (zero-loss).
-- Fast-forward local `main` to `origin/main`; move the primary checkout off
-  `codex/eval-drafts-rubric` onto `main` (after auditing its 20 unpushed commits + 5 stashes).
-- Audit-then-prune the 460 unmerged local branches and 296 remote branches (remote deletion
-  gated on CEO acknowledgment).
-- Filesystem cleanup of the non-worktree leftover directories and the stale `nkw19` worktree.
+### OMN-12 (prune campaign — 2026-06-02) ✅
+- **Stash audit:** All 5 stashes attributed and dropped (all superseded or targeting deleted files).
+- **Checkout moved:** Discarded stale `.gitignore` change; switched primary checkout to `main`;
+  fast-forwarded 360 commits to `origin/main` (`95ab8673`).
+- **Worktree:** Removed stale `nkw19-delayed-verdict` worktree (April test artifacts, empty pending-verdicts.json).
+- **Filesystem:** Removed 3 leftover dirs (`architecture-map-output`, nested `demos-agents-worktrees`, `.claude/worktrees/agent-a2325e5d`).
+- **73 merged local branches deleted** (zero-loss; from `merged-local-safe-prune.txt`).
+- **460 unmerged local branches audited:**
+  - 4 branches with genuine unlanded work rescued with open PRs:
+    - [docs/repo-state-omn2] → PR #592 (OMN-2 deliverable)
+    - [codex/colony-operator-convergence] → PR #593 (cap starter observation text)
+    - [codex/refresh-architecture-docs] → PR #594 (refresh architecture docs)
+    - [codex/architecture-control-map-clean] → PR #595 (align control map with exports)
+  - 457 branches deleted
+- `codex/eval-drafts-rubric`: All 20 local commits verified superseded by merged PRs; branch deleted.
 
-Rationale for deferral: the primary checkout has unpushed work, untracked files, and 5
-stashes from other in-flight sessions. Mass branch/worktree surgery while the tree is hot is
-high blast radius. OMN-7 executes it when the repo is quiescent, with exact target lists attached.
+### Remaining: CEO-gated remote prune
+- ~300 remote branches still pending deletion.
+- Approval requested from CEO (all > 14 days, 0 open PRs, high blast-radius operation).
+- Closure condition for OMN-12: CEO acknowledges → `git push origin --delete` for all branches
+  in the `remote-branches.txt` attachment that have no open PR.
 
 ## 6. Trunk & Branching Policy (enforced going forward)
 

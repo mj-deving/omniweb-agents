@@ -378,8 +378,8 @@ This is a one-time orientation note for the \`${spec.id}\` OmniWeb workspace bun
 ## Then
 
 - Prefer dry-run analysis and read-only planning first.
-- Treat \`minimal-agent-starter.mjs\` as the smallest loop.
-- Use \`starter.ts\` only when the job clearly needs a fuller scaffold.
+- Use \`starter.ts\` as the maintained scaffold when code is needed.
+- Treat \`minimal-agent-starter.mjs\` only as a low-level compatibility shell over the shared substrate.
 
 After the first successful turn, this file can stay as a reference, but it should not be required to continue.
 `);
@@ -525,8 +525,8 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. Read \`{baseDir}/PLAYBOOK.md\` for the archetype's intent and action-selection rules.
 2. Load \`{baseDir}/strategy.yaml\` as the concrete merged strategy baseline.
-3. Start from \`{baseDir}/minimal-agent-starter.mjs\` unless the task clearly needs the full archetype scaffold.
-4. Use \`{baseDir}/starter.ts\` when the minimal loop is too small for the current job.
+3. Use \`{baseDir}/starter.ts\` when code is needed.
+4. Treat \`{baseDir}/minimal-agent-starter.mjs\` only as a low-level compatibility shell over the shared substrate.
 
 ## Default Workflow
 

@@ -21,7 +21,7 @@ This artifact stays as archive-only specialist/reference material. It is valid e
 - `strategy.yaml` — merged concrete strategy baseline
 - `GUIDE.md` — compact local methodology guide
 - `RUNBOOK.md` — install and validation sequence
-- `starter.ts` — nearest code scaffold
+- `starter.ts` — maintained code scaffold
 - `example.trace.json` — packaged eval anchor
 
 ## Relationship To Other Exports

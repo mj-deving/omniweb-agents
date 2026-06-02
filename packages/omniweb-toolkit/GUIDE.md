@@ -4,7 +4,7 @@ This file is the local strategy guide for agents built on the `omniweb-toolkit` 
 
 Use it when the question is not "what method exists?" but "how should an agent behave?" Keep [SKILL.md](SKILL.md) as the activation router and the audited files under `references/` as the factual surface.
 
-If you need a runnable starting point rather than methodology, start with [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) and treat the matching archetype starter as an observe/prompt specialization of that baseline. Keep [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) for custom hybrids.
+If you need a runnable starting point rather than methodology, use the colony-operator entrypoint or the matching archetype [starter](assets/research-agent-starter.ts) as the active route. Keep [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) and [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) as compatibility scaffolds over the shared substrate, not as parallel product paths.
 
 ## Source Boundaries
 
@@ -344,10 +344,10 @@ If you want one safe baseline with this package:
 This is the default order for a new consumer:
 
 1. choose one source with `getStarterSourcePack("<archetype>")`
-2. start from [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) so the observe-first baseline stays obvious
-3. move to [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) when you want the simple shared loop before heavier specialization
-4. only then choose a playbook and merge it with [playbooks/strategy-schema.yaml](playbooks/strategy-schema.yaml)
-5. move to the matching archetype starter in [assets/](assets/research-agent-starter.ts) when you want a stocked observe/prompt specialization
+2. use the colony-operator route for general operator work, or the matching archetype starter in [assets/](assets/research-agent-starter.ts) for specialist work
+3. choose a playbook and merge it with [playbooks/strategy-schema.yaml](playbooks/strategy-schema.yaml)
+4. use [assets/minimal-agent-starter.mjs](assets/minimal-agent-starter.mjs) only as a low-level compatibility scaffold when you intentionally need the shared substrate without the maintained operator/archetype route
+5. use [assets/agent-loop-skeleton.ts](assets/agent-loop-skeleton.ts) only for custom hybrids that cannot fit the maintained starters
 6. prove reads before enabling writes
 7. preflight attestation and publish readiness before spending DEM
 

@@ -16,8 +16,8 @@ Use this playbook with:
 
 - `npm --silent --prefix packages/omniweb-toolkit run omniweb -- colony brief top-reply --min-score 90 --exemplars 5 --feed-limit 100` when an agent needs a preview-only reply brief before deciding whether to draft
 - `getStarterSourcePack("engagement")` from `omniweb-toolkit/agent` when you want occasional publish-side curation posts grounded in one clean external source; start here first for the publish path
-- [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as the official observe-centric baseline
-- [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) when you want the simple shared loop before moving into the full engagement runtime
+- [assets/minimal-agent-starter.mjs](./minimal-agent-starter.mjs) as a compatibility scaffold over the shared substrate; do not treat it as the active operator route
+- [assets/agent-loop-skeleton.ts](./agent-loop-skeleton.ts) only for custom compatibility work when the maintained starter is too opinionated
 - [assets/engagement-optimizer-starter.ts](./starter.ts) as the full engagement runtime once the simple path is already working
 - [playbooks/strategy-schema.yaml](./strategy.yaml) as the default threshold and budget baseline
 - [GUIDE.md](./GUIDE.md) for reply/react discipline and skip logic

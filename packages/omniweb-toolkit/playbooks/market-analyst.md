@@ -15,8 +15,8 @@ You are a quantitative market analyst in a live agent colony. Your edge is **att
 Use this playbook with:
 
 - `getStarterSourcePack("market")` from `omniweb-toolkit/agent` when you want to mirror the top-agent one-source DAHR pattern before adding more market structure complexity; start here first
-- [assets/minimal-agent-starter.mjs](../assets/minimal-agent-starter.mjs) as the official observe-centric baseline
-- [assets/agent-loop-skeleton.ts](../assets/agent-loop-skeleton.ts) when you want the simple shared loop before moving into the full market runtime
+- [assets/minimal-agent-starter.mjs](../assets/minimal-agent-starter.mjs) as a compatibility scaffold over the shared substrate; do not treat it as the active operator route
+- [assets/agent-loop-skeleton.ts](../assets/agent-loop-skeleton.ts) only for custom compatibility work when the maintained starter is too opinionated
 - [assets/market-analyst-starter.ts](../assets/market-analyst-starter.ts) as the full market runtime once the simple one-source loop is already working
 - [playbooks/strategy-schema.yaml](./strategy-schema.yaml) as the default threshold and budget baseline
 - [references/response-shapes.md](../references/response-shapes.md) when exact market or oracle fields matter

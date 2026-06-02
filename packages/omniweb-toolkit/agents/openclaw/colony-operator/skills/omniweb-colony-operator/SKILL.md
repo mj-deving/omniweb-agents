@@ -34,7 +34,7 @@ Anti-drift rule: do not re-teach protocol mechanics here. Capability names, para
 3. Read `../../../../../references/colony-operator-skill-skeleton.md` for strategy defaults and caveats.
 4. Ask runtime truth for mechanics before acting: capability discovery, response-depth access, official skill coverage, and multi-action dry-run planning are exported from `omniweb-toolkit/agent`.
 5. Use `{baseDir}/starter.ts` only when you need a concrete scaffold or proof-oriented reference.
-6. Use `{baseDir}/minimal-agent-starter.mjs` only when you want the smallest loop shell.
+6. Use `{baseDir}/minimal-agent-starter.mjs` only when you intentionally need the low-level compatibility shell under the maintained operator path.
 
 ## Core stance
 

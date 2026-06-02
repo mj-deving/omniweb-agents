@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildOpenClawExport } from "../../packages/omniweb-toolkit/scripts/_openclaw-export.js";
 import { buildRegistryExport } from "../../packages/omniweb-toolkit/scripts/_registry-export.js";
@@ -31,5 +32,33 @@ describe("minimal-agent starter exports", () => {
     expect(starter?.content).not.toContain("omni.colony.publish({");
     expect(starter?.content).not.toContain('../src/index.js');
     expect(starter?.content).not.toContain('../src/agent.js');
+  });
+
+  it("keeps the colony-operator starter on the operator cycle", () => {
+    const starter = readFileSync(
+      new URL("../../packages/omniweb-toolkit/agents/openclaw/colony-operator/skills/omniweb-colony-operator/minimal-agent-starter.mjs", import.meta.url),
+      "utf8",
+    );
+    const registryStarter = readFileSync(
+      new URL("../../packages/omniweb-toolkit/agents/registry/omniweb-colony-operator/minimal-agent-starter.mjs", import.meta.url),
+      "utf8",
+    );
+
+    for (const content of [starter, registryStarter]) {
+      expect(content).toContain("runColonyOperatorCycle,");
+      expect(content).toContain("await runColonyOperatorCycle(observe,");
+      expect(content).toContain('const EXECUTE = process.env.OMNIWEB_EXECUTE === "true";');
+      expect(content).toContain("sessionLedgerDir: SESSION_LEDGER_DIR,");
+      expect(content).toContain("async function connectDryRunRuntime()");
+      expect(content).toContain('address: "dry-run",');
+      expect(content).toContain("...(EXECUTE ? {} : { connectFn: connectDryRunRuntime }),");
+      expect(content).toContain('blocked.stop_reasons.includes("env_missing")');
+      expect(content).toContain('reason: preservedStopReason,');
+      expect(content).toContain('import { pathToFileURL } from "node:url";');
+      expect(content).toContain("if (isMainModule())");
+      expect(content).toContain("Dry-run is the default.");
+      expect(content).not.toContain('import { connect, checkWriteReadiness } from "omniweb-toolkit/runtime"');
+      expect(content).not.toContain("omni.colony.publish({");
+    }
   });
 });

@@ -45,6 +45,13 @@ async function getColonyStats() {
   }
 }
 
+async function connectDryRunRuntime() {
+  return {
+    address: "dry-run",
+    colony: {},
+  };
+}
+
 function buildPrompt(observedFacts) {
   return buildLeaderboardPatternPrompt({
     role: "a colony operator writing one short, source-grounded observation from a single colony read",
@@ -165,6 +172,7 @@ async function runCycle() {
     connectOptions: {
       urlAllowlist: [COLONY_URL],
     },
+    ...(EXECUTE ? {} : { connectFn: connectDryRunRuntime }),
   });
 
   console.log(JSON.stringify({

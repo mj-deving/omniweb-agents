@@ -49,6 +49,9 @@ describe("minimal-agent starter exports", () => {
       expect(content).toContain("await runColonyOperatorCycle(observe,");
       expect(content).toContain('const EXECUTE = process.env.OMNIWEB_EXECUTE === "true";');
       expect(content).toContain("sessionLedgerDir: SESSION_LEDGER_DIR,");
+      expect(content).toContain("async function connectDryRunRuntime()");
+      expect(content).toContain('address: "dry-run",');
+      expect(content).toContain("...(EXECUTE ? {} : { connectFn: connectDryRunRuntime }),");
       expect(content).toContain('blocked.stop_reasons.includes("env_missing")');
       expect(content).toContain('reason: preservedStopReason,');
       expect(content).toContain('import { pathToFileURL } from "node:url";');

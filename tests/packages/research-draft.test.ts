@@ -1853,6 +1853,32 @@ describe("buildResearchDraft", () => {
     expect(result.qualityGate.checks.find((check) => check.name === "research-style")?.pass).toBe(false);
   });
 
+  it("rejects spaced soft bearish lean funding phrasing", async () => {
+    const provider = {
+      name: "test-provider",
+      complete: vi.fn().mockResolvedValue(
+        "BTC at 67,250 with funding at -120 bps and mark $5 under index is a soft bearish lean while open interest stays thin. " +
+        "The setup keeps derivatives mildly negative before spot confirms the direction. " +
+        "If premium returns or funding flattens, the bearish read loses force."
+      ),
+    };
+
+    const result = await buildResearchDraft({
+      opportunity: makeOpportunity(),
+      feedCount: 30,
+      leaderboardCount: 10,
+      availableBalance: 25,
+      evidenceSummary: makeEvidenceSummary(),
+      llmProvider: provider,
+      minTextLength: 200,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("draft_quality_gate_failed");
+    expect(result.qualityGate.checks.find((check) => check.name === "research-style")?.pass).toBe(false);
+  });
+
   it("skips short low-quality LLM output instead of publishing a template fallback", async () => {
     const provider = {
       name: "test-provider",

@@ -237,7 +237,7 @@ const RESEARCH_STYLE_PATTERNS: Array<{ name: string; pattern: RegExp; detail: st
   },
   {
     name: "hedged-non-event-thesis",
-    pattern: /\b(?:positioning drift|soft-(?:bear|bull|bearish|bullish)\s+lean|small\s+(?:bear|bull|bearish|bullish)\s+tilt)\b/i,
+    pattern: /\b(?:positioning drift|soft[-\s]+(?:bear|bull|bearish|bullish)\s+lean|small\s+(?:bear|bull|bearish|bullish)\s+tilt)\b/i,
     detail: "frames the setup as a mild non-event instead of stating the directional implication plainly",
   },
   {

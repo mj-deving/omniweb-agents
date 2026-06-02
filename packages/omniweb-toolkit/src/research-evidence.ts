@@ -3,6 +3,15 @@ import { fetchSource } from "../../../src/toolkit/sources/fetch.js";
 import type { FetchedResponse } from "../../../src/toolkit/providers/types.js";
 import { inferAssetAlias } from "../../../src/toolkit/chain/asset-helpers.js";
 import type { MinimalAttestationCandidate } from "./minimal-attestation-plan.js";
+import { parseResearchEvidencePayload } from "./research-evidence/payload.js";
+import {
+  classifyResearchEvidenceSemanticClass,
+  type ResearchEvidenceSemanticClass,
+} from "./research-evidence/semantic-class.js";
+import {
+  classifyResearchEvidenceSource,
+  type ResearchEvidenceSourceKind,
+} from "./research-evidence/source-kind.js";
 
 const DEFAULT_RESEARCH_EVIDENCE_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_VALUES = 5;
@@ -40,29 +49,10 @@ export interface FetchResearchEvidenceSummaryOptions {
   maxValues?: number;
 }
 
-type ResearchEvidenceSourceKind =
-  | "binance-24hr-ticker"
-  | "binance-premium-index"
-  | "binance-open-interest"
-  | "coingecko-market-chart"
-  | "coingecko-coins-markets"
-  | "coingecko-simple-price"
-  | "btcetfdata-current"
-  | "blockchair-stats"
-  | "defillama-protocols"
-  | "defillama-stablecoins"
-  | "fred-liquidity-series"
-  | "treasury-interest-rates"
-  | "cboe-vix-history"
-  | "generic";
-
-export type ResearchEvidenceSemanticClass =
-  | "market"
-  | "macro"
-  | "liquidity"
-  | "network"
-  | "metadata"
-  | "generic";
+export {
+  classifyResearchEvidenceSemanticClass,
+  type ResearchEvidenceSemanticClass,
+} from "./research-evidence/semantic-class.js";
 
 export async function fetchResearchEvidenceSummary(
   opts: FetchResearchEvidenceSummaryOptions,
@@ -121,67 +111,6 @@ export async function fetchResearchEvidenceSummary(
       note,
     };
   }
-}
-
-export function classifyResearchEvidenceSemanticClass(
-  sourceKind: ResearchEvidenceSourceKind,
-  values: Record<string, string>,
-  derivedMetrics: Record<string, string>,
-): ResearchEvidenceSemanticClass {
-  if (
-    sourceKind === "binance-24hr-ticker"
-    || sourceKind === "binance-premium-index"
-    || sourceKind === "binance-open-interest"
-    || sourceKind === "coingecko-market-chart"
-    || sourceKind === "coingecko-coins-markets"
-    || sourceKind === "coingecko-simple-price"
-    || sourceKind === "btcetfdata-current"
-    || sourceKind === "cboe-vix-history"
-  ) {
-    return "market";
-  }
-
-  if (sourceKind === "treasury-interest-rates") {
-    return "macro";
-  }
-
-  if (sourceKind === "fred-liquidity-series") {
-    return "liquidity";
-  }
-
-  if (sourceKind === "defillama-protocols") {
-    return "liquidity";
-  }
-
-  if (sourceKind === "defillama-stablecoins") {
-    return "liquidity";
-  }
-
-  if (sourceKind === "blockchair-stats") {
-    return "network";
-  }
-
-  const keys = Object.keys(values).concat(Object.keys(derivedMetrics)).map((key) => key.toLowerCase());
-  const has = (patterns: RegExp[]) => patterns.some((pattern) => keys.some((key) => pattern.test(key)));
-
-  if (has([/price/, /volume/, /funding/, /openinterest/, /holdings/, /flow/, /vix/, /high/, /low/, /spread/])) {
-    return "market";
-  }
-
-  if (has([/rate/, /yield/, /treasury/, /bill/, /note/, /curve/])) {
-    return "macro";
-  }
-
-  if (has([/supply/, /circulating/, /peg/, /stablecoin/, /deviation/])) {
-    return "liquidity";
-  }
-
-  const metadataPatterns = [/nbhits/, /nbpages/, /page$/, /hitsperpage/, /processingtimems/, /query/, /count$/, /total$/];
-  if (keys.length > 0 && keys.every((key) => metadataPatterns.some((pattern) => pattern.test(key)))) {
-    return "metadata";
-  }
-
-  return "generic";
 }
 
 async function fetchResearchEvidence(
@@ -371,33 +300,6 @@ function extractResearchEvidenceValues(
   return Object.fromEntries(entries);
 }
 
-function isBinancePremiumIndexUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "fapi.binance.com" && parsed.pathname.includes("/premiumIndex");
-  } catch {
-    return false;
-  }
-}
-
-function isBinance24hrTickerUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.binance.com" && parsed.pathname.includes("/ticker/24hr");
-  } catch {
-    return false;
-  }
-}
-
-function isBinanceOpenInterestUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "fapi.binance.com" && parsed.pathname.includes("/openInterest");
-  } catch {
-    return false;
-  }
-}
-
 function extractBinance24hrTickerValues(payload: unknown): Record<string, string> {
   if (!isRecord(payload)) {
     return {};
@@ -414,101 +316,6 @@ function extractBinance24hrTickerValues(payload: unknown): Record<string, string
     high24hUsd: normalizeScalarValue(payload.highPrice),
     low24hUsd: normalizeScalarValue(payload.lowPrice),
   });
-}
-
-function isCoinGeckoMarketChartUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.coingecko.com" && parsed.pathname.includes("/market_chart");
-  } catch {
-    return false;
-  }
-}
-
-function isCoinGeckoCoinsMarketsUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.coingecko.com" && parsed.pathname.includes("/coins/markets");
-  } catch {
-    return false;
-  }
-}
-
-function isCoinGeckoSimplePriceUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.coingecko.com" && parsed.pathname.includes("/simple/price");
-  } catch {
-    return false;
-  }
-}
-
-function isBtcEtfDataCurrentUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return (parsed.hostname === "www.btcetfdata.com" || parsed.hostname === "btcetfdata.com")
-      && parsed.pathname === "/v1/current.json";
-  } catch {
-    return false;
-  }
-}
-
-function isDefiLlamaStablecoinsUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "stablecoins.llama.fi" && parsed.pathname === "/stablecoins";
-  } catch {
-    return false;
-  }
-}
-
-function isDefiLlamaProtocolsUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.llama.fi" && parsed.pathname === "/protocols";
-  } catch {
-    return false;
-  }
-}
-
-function isBlockchairStatsUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.blockchair.com" && parsed.pathname.endsWith("/stats");
-  } catch {
-    return false;
-  }
-}
-
-function isTreasuryRatesUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "api.fiscaldata.treasury.gov" && parsed.pathname.includes("/avg_interest_rates");
-  } catch {
-    return false;
-  }
-}
-
-function isFredGraphSeriesUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "fred.stlouisfed.org" && parsed.pathname === "/graph/fredgraph.csv";
-  } catch {
-    return false;
-  }
-}
-
-function isCboeVixUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "cdn.cboe.com"
-      && (
-        parsed.pathname.endsWith("/VIX_History.csv")
-        || parsed.pathname.endsWith("/delayed_quotes/quotes/_VIX.json")
-      );
-  } catch {
-    return false;
-  }
 }
 
 function extractBinancePremiumValues(payload: unknown): Record<string, string> {
@@ -981,111 +788,6 @@ function deriveVixMetrics(values: Record<string, string>): Record<string, string
   return compactMetrics({
     vixSessionChangePct: percentChange(values.vixClose, values.vixPreviousClose),
     vixIntradayRange: subtractValues(values.vixHigh, values.vixLow),
-  });
-}
-
-function parseResearchEvidencePayload(
-  source: MinimalAttestationCandidate,
-  _sourceKind: ResearchEvidenceSourceKind,
-  contentType: string,
-  body: string,
-): unknown {
-  if (
-    source.responseFormat === "csv"
-    || contentType.includes("text/csv")
-    || source.url.toLowerCase().endsWith(".csv")
-  ) {
-    return parseCsv(body);
-  }
-
-  return JSON.parse(body) as unknown;
-}
-
-function classifyResearchEvidenceSource(source: MinimalAttestationCandidate): ResearchEvidenceSourceKind {
-  const sourceId = source.sourceId.toLowerCase();
-  const provider = source.provider.toLowerCase();
-  const name = source.name.toLowerCase();
-
-  if (sourceId === "cboe-vix-daily" || provider === "cboe") {
-    return "cboe-vix-history";
-  }
-
-  if (sourceId === "treasury-interest-rates" || (provider === "treasury" && name.includes("rates"))) {
-    return "treasury-interest-rates";
-  }
-
-  if (sourceId.startsWith("fred-graph-") || provider === "fred-graph") {
-    return "fred-liquidity-series";
-  }
-
-  if (sourceId === "defillama-stablecoins" || (provider === "defillama" && name.includes("stablecoins"))) {
-    return "defillama-stablecoins";
-  }
-
-  if (sourceId === "defillama-protocols" || (provider === "defillama" && name.includes("protocols"))) {
-    return "defillama-protocols";
-  }
-
-  if (sourceId.startsWith("blockchair-") || provider === "blockchair") {
-    return "blockchair-stats";
-  }
-
-  if (sourceId.startsWith("btcetfdata-current") || provider === "btcetfdata") {
-    return "btcetfdata-current";
-  }
-
-  if (sourceId === "coingecko-42ff8c85" || (provider === "coingecko" && name.includes("market"))) {
-    return "coingecko-market-chart";
-  }
-
-  if (sourceId === "coingecko-coins-markets" || (provider === "coingecko" && name.includes("coins-markets"))) {
-    return "coingecko-coins-markets";
-  }
-
-  if (sourceId === "coingecko-2a7ea372" || (provider === "coingecko" && name.includes("simple"))) {
-    return "coingecko-simple-price";
-  }
-
-  if (sourceId.startsWith("binance-24hr-") || (provider === "binance" && name.includes("24hr"))) {
-    return "binance-24hr-ticker";
-  }
-
-  if (sourceId.startsWith("binance-futures-oi-") || (provider === "binance-futures" && name.includes("open-interest"))) {
-    return "binance-open-interest";
-  }
-
-  if (sourceId.startsWith("binance-futures-") || (provider === "binance-futures" && name.includes("premium"))) {
-    return "binance-premium-index";
-  }
-
-  // Compatibility fallback for feed-derived or older opaque candidates.
-  if (isCboeVixUrl(source.url)) return "cboe-vix-history";
-  if (isTreasuryRatesUrl(source.url)) return "treasury-interest-rates";
-  if (isFredGraphSeriesUrl(source.url)) return "fred-liquidity-series";
-  if (isDefiLlamaStablecoinsUrl(source.url)) return "defillama-stablecoins";
-  if (isDefiLlamaProtocolsUrl(source.url)) return "defillama-protocols";
-  if (isBlockchairStatsUrl(source.url)) return "blockchair-stats";
-  if (isBtcEtfDataCurrentUrl(source.url)) return "btcetfdata-current";
-  if (isCoinGeckoMarketChartUrl(source.url)) return "coingecko-market-chart";
-  if (isCoinGeckoCoinsMarketsUrl(source.url)) return "coingecko-coins-markets";
-  if (isCoinGeckoSimplePriceUrl(source.url)) return "coingecko-simple-price";
-  if (isBinance24hrTickerUrl(source.url)) return "binance-24hr-ticker";
-  if (isBinanceOpenInterestUrl(source.url)) return "binance-open-interest";
-  if (isBinancePremiumIndexUrl(source.url)) return "binance-premium-index";
-  return "generic";
-}
-
-function parseCsv(body: string): Array<Record<string, string>> {
-  const lines = body.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  const [header, ...rows] = lines;
-  if (!header) {
-    return [];
-  }
-
-  const columns = header.split(",").map((value) => value.trim());
-  return rows.map((row) => {
-    const values = row.split(",").map((value) => value.trim());
-    return Object.fromEntries(columns.map((column, index) => [column, values[index] ?? ""]));
   });
 }
 

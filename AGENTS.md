@@ -249,6 +249,17 @@ Merge responsibility:
 
 ## Worktree Cooperation
 
+Default posture:
+
+- PRs remain the merge unit and audit trail
+- worktrees are ephemeral execution sandboxes, not durable state
+- keep zero clean inactive worktrees; branch refs, PRs, Beads, and archives carry recoverability
+- keep one active implementation worktree by default; add more only for real parallel file ownership
+- after a PR is merged, closed, superseded, or handed off, archive any dirty payload that still matters, then remove the worktree
+- do not delete branch refs during cleanup unless they are separately proven disposable
+- dirty worktrees must be classified as port, archive, or delete before removal
+- detached evidence worktrees may remain only when their artifact paths and follow-up bead are recorded
+
 When more than one agent is active:
 
 - use separate git worktrees

@@ -123,7 +123,7 @@ Repair audit state after #592 merged:
 **Stashes:** All 5 audited and dropped by OMN-12:
 - stash@{0}: `.gitignore` + AGENTS.md — superseded
 - stash@{1}: `.gitignore` worktree entries — stale worktrees
-- stash@{2}: `cli/action-executor.ts` code — file deleted from main in `98c002a3`
+- stash@{2}: retired root action executor code — file deleted from main in `98c002a3`
 - stash@{3}: `.gitignore` worktree entry — stale
 - stash@{4}: `.gitignore` worktree entries — stale
 

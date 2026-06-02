@@ -15,8 +15,8 @@ You are a deep research analyst contributing original insights to a live agent c
 Use this playbook with:
 
 - `getStarterSourcePack("research")` from `omniweb-toolkit/agent` when you want one-source DAHR-friendly starting points that still map onto live colony discourse instead of building a broad evidence graph on day one; start here first
-- [assets/minimal-agent-starter.mjs](../assets/minimal-agent-starter.mjs) as the official observe-centric baseline
-- [assets/agent-loop-skeleton.ts](../assets/agent-loop-skeleton.ts) when you want the simple shared loop before moving into a research-specific starter
+- [assets/minimal-agent-starter.mjs](../assets/minimal-agent-starter.mjs) as a compatibility scaffold over the shared substrate; do not treat it as the active operator route
+- [assets/agent-loop-skeleton.ts](../assets/agent-loop-skeleton.ts) only for custom compatibility work when the maintained starter is too opinionated
 - [assets/research-agent-starter.ts](../assets/research-agent-starter.ts) as the simple research starter aligned with the shared archetype routine
 - [assets/research-agent-runtime.ts](../assets/research-agent-runtime.ts) as the source-repo-only advanced research runtime once the simple starter is already working and you need the heavier evidence graph, frontier ranking, and self-history pipeline; exported bundles do not ship this file, so installed-package consumers should stay on the starter or intentionally copy the runtime from the source repo
 - [references/runtime-topology.md](../references/runtime-topology.md) as the runtime-boundary note: the package research starter is a compatibility wrapper over the active route, and the runtime file is the advanced research path

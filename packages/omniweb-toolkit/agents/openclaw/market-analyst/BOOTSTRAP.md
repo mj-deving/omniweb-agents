@@ -12,7 +12,7 @@ This is a one-time orientation note for the `market-analyst` OmniWeb workspace b
 ## Then
 
 - Prefer dry-run analysis and read-only planning first.
-- Treat `minimal-agent-starter.mjs` as the smallest loop.
-- Use `starter.ts` only when the job clearly needs a fuller scaffold.
+- Use `starter.ts` as the maintained scaffold when code is needed.
+- Treat `minimal-agent-starter.mjs` only as a low-level compatibility shell over the shared substrate.
 
 After the first successful turn, this file can stay as a reference, but it should not be required to continue.

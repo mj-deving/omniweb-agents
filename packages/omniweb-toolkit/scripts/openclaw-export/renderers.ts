@@ -210,13 +210,13 @@ The portable bundle can be bundle-valid even when the runtime substrate is not y
 - \`skills/${spec.skillName}/SKILL.md\` — activation router plus validation order
 - \`skills/${spec.skillName}/PLAYBOOK.md\` — archetype doctrine and action rules
 - \`skills/${spec.skillName}/strategy.yaml\` — merged concrete baseline
-- \`skills/${spec.skillName}/starter.ts\` — archetype-specific scaffold
-- \`skills/${spec.skillName}/minimal-agent-starter.mjs\` — smallest default loop
+- \`skills/${spec.skillName}/starter.ts\` — maintained archetype scaffold and preferred customization surface
+- \`skills/${spec.skillName}/minimal-agent-starter.mjs\` — compatibility shell over the shared toolkit substrate
 
 ## Local Usage
 
 1. You do not need \`npm install\` just to inspect this bundle or point OpenClaw at it.
-2. Start from \`skills/${spec.skillName}/minimal-agent-starter.mjs\` unless you already know you need the full archetype scaffold.
+2. Start from \`skills/${spec.skillName}/starter.ts\` for new work. Use \`minimal-agent-starter.mjs\` only as a compatibility smoke path or substrate reference.
 3. For a first-time local setup on a host, run \`openclaw onboard --accept-risk --workspace "$PWD"\`.
 4. If the host is already configured, run \`openclaw setup --workspace "$PWD"\` or \`openclaw config set agents.defaults.workspace "$PWD"\`.
 5. If you want to dogfood this bundle through the OpenClaw CLI, register an agent that points at this workspace:
@@ -378,8 +378,8 @@ This is a one-time orientation note for the \`${spec.id}\` OmniWeb workspace bun
 ## Then
 
 - Prefer dry-run analysis and read-only planning first.
-- Treat \`minimal-agent-starter.mjs\` as the smallest loop.
-- Use \`starter.ts\` only when the job clearly needs a fuller scaffold.
+- Use \`starter.ts\` as the maintained scaffold when code is needed.
+- Treat \`minimal-agent-starter.mjs\` only as a low-level compatibility shell over the shared substrate.
 
 After the first successful turn, this file can stay as a reference, but it should not be required to continue.
 `);
@@ -525,8 +525,8 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. Read \`{baseDir}/PLAYBOOK.md\` for the archetype's intent and action-selection rules.
 2. Load \`{baseDir}/strategy.yaml\` as the concrete merged strategy baseline.
-3. Start from \`{baseDir}/minimal-agent-starter.mjs\` unless the task clearly needs the full archetype scaffold.
-4. Use \`{baseDir}/starter.ts\` when the minimal loop is too small for the current job.
+3. Use \`{baseDir}/starter.ts\` when code is needed.
+4. Treat \`{baseDir}/minimal-agent-starter.mjs\` only as a low-level compatibility shell over the shared substrate.
 
 ## Default Workflow
 

@@ -12,8 +12,8 @@ Use this skill when the user wants an OpenClaw-style agent that follows the ship
 
 1. Read `{baseDir}/PLAYBOOK.md` for the archetype's intent and action-selection rules.
 2. Load `{baseDir}/strategy.yaml` as the concrete merged strategy baseline.
-3. Start from `{baseDir}/minimal-agent-starter.mjs` unless the task clearly needs the full archetype scaffold.
-4. Use `{baseDir}/starter.ts` when the minimal loop is too small for the current job.
+3. Use `{baseDir}/starter.ts` when code is needed.
+4. Treat `{baseDir}/minimal-agent-starter.mjs` only as a low-level compatibility shell over the shared substrate.
 
 ## Default Workflow
 

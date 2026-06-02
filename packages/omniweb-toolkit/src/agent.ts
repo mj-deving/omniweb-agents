@@ -2,13 +2,50 @@
  * Runtime-facing exports for `omniweb-toolkit/agent`.
  *
  * Honest center of gravity:
- * - `omniweb-toolkit` main entry is still the substrate-first front door
- * - this subpath is the runtime/loop convenience surface
- * - broader research/market/starter helpers below remain compatibility exports,
- *   not the architectural center of the package
+ * - colony-operator is the maintained user-facing operator route
+ * - minimal-agent exports are the low-level substrate and compatibility scaffold
+ * - broader research/market/starter helpers are optional callable knowledge
+ *   surfaces, not the architectural center of the package
  */
 
-// Explicit policy compile/run shell
+// Colony-operator front door
+export {
+  buildColonyOperatorCapabilityTruth,
+  type ColonyOperatorActionFamily,
+  type ColonyOperatorActionIntentContract,
+  type ColonyOperatorActionTruth,
+  type ColonyOperatorCapabilityTruth,
+  type ColonyOperatorIntentActionType,
+  type ColonyOperatorLifecycleStatus,
+  type ColonyOperatorTruthStatus,
+} from "./colony-operator-capability-truth.js";
+export {
+  buildColonyOperatorCapabilityDiscovery,
+  buildColonyOperatorMultiActionPlan,
+  buildColonyOperatorResponseDepthAccess,
+  buildColonyOperatorToolkitHelp,
+  runColonyOperatorCycle,
+  type ColonyOperatorCapabilitySummary,
+  type ColonyOperatorCapabilityDiscovery,
+  type ColonyOperatorExecutionEnvelope,
+  type ColonyOperatorExecutionMode,
+  type ColonyOperatorLifecyclePlan,
+  type ColonyOperatorLifecyclePlanStatus,
+  type ColonyOperatorLifecycleStore,
+  type ColonyOperatorMultiActionPlan,
+  type ColonyOperatorPlannedAction,
+  type ColonyOperatorPlannedActionGate,
+  type ColonyOperatorRequestedAction,
+  type ColonyOperatorResponseDepthAccess,
+  type ColonyOperatorResponseDepthPreservationStatus,
+  type ColonyOperatorResponseDepthSurface,
+  type ColonyOperatorResponseDepthSurfaceId,
+  type ColonyOperatorToolkitHelp,
+  type ColonyOperatorToolkitHelpCommand,
+  type RunColonyOperatorCycleOptions,
+} from "./colony-operator-entrypoint.js";
+
+// Callable policy, guardrail, admissibility, and execution surfaces
 export {
   executeResolvedIntent,
   isPlaceholderAttestUrl,
@@ -30,7 +67,7 @@ export {
   runPolicyWithTrace,
 } from "./policy/run.js";
 
-// Core runtime loop + seam helpers
+// Low-level substrate and compatibility scaffolds under the colony-operator route
 export {
   getDefaultMinimalStateDir,
   normalizeDecisionToActionIntent,
@@ -52,7 +89,7 @@ export { getPrimaryAttestationCandidate } from "./minimal-attestation-plan.js";
 export { getPrimaryAttestationSourceName } from "./minimal-attestation-plan.js";
 export { getPrimaryAttestUrl } from "./minimal-attestation-plan.js";
 
-// Compatibility/helper exports
+// Optional callable policy/helper exports
 export { deriveEngagementOpportunities } from "./engagement-opportunities.js";
 export { buildEngagementDraft } from "./engagement-draft.js";
 export {
@@ -95,16 +132,6 @@ export { buildResearchCompositionPacket } from "./research-draft.js";
 export { buildResearchDraft } from "./research-draft.js";
 export { validateResearchComposition } from "./research-draft.js";
 export { collectColonySurfaceSnapshot } from "./colony-surface.js";
-export {
-  buildColonyOperatorCapabilityTruth,
-  type ColonyOperatorActionFamily,
-  type ColonyOperatorActionIntentContract,
-  type ColonyOperatorActionTruth,
-  type ColonyOperatorCapabilityTruth,
-  type ColonyOperatorIntentActionType,
-  type ColonyOperatorLifecycleStatus,
-  type ColonyOperatorTruthStatus,
-} from "./colony-operator-capability-truth.js";
 export {
   buildToolkitCapabilityManifest,
   describeToolkitCapabilities,
@@ -181,31 +208,6 @@ export {
   type ConsumerSpectrumResourceKind,
   type ConsumerSpectrumShapeObservation,
 } from "./consumer-spectrum-inventory.js";
-export {
-  buildColonyOperatorCapabilityDiscovery,
-  buildColonyOperatorMultiActionPlan,
-  buildColonyOperatorResponseDepthAccess,
-  buildColonyOperatorToolkitHelp,
-  runColonyOperatorCycle,
-  type ColonyOperatorCapabilitySummary,
-  type ColonyOperatorCapabilityDiscovery,
-  type ColonyOperatorExecutionEnvelope,
-  type ColonyOperatorExecutionMode,
-  type ColonyOperatorLifecyclePlan,
-  type ColonyOperatorLifecyclePlanStatus,
-  type ColonyOperatorLifecycleStore,
-  type ColonyOperatorMultiActionPlan,
-  type ColonyOperatorPlannedAction,
-  type ColonyOperatorPlannedActionGate,
-  type ColonyOperatorRequestedAction,
-  type ColonyOperatorResponseDepthAccess,
-  type ColonyOperatorResponseDepthPreservationStatus,
-  type ColonyOperatorResponseDepthSurface,
-  type ColonyOperatorResponseDepthSurfaceId,
-  type ColonyOperatorToolkitHelp,
-  type ColonyOperatorToolkitHelpCommand,
-  type RunColonyOperatorCycleOptions,
-} from "./colony-operator-entrypoint.js";
 export { getStarterSourcePack, listStarterSourcePacks } from "./starter-source-packs.js";
 export { getMinimalAgentRuntimeConfig } from "./starter-runtime-config.js";
 export { toPreflightCandidates } from "./minimal-attestation-plan.js";
@@ -446,5 +448,7 @@ export type {
   ResearchDraftFailure,
   ResearchDraftResult,
 } from "./research-draft.js";
+
+// Legacy root-loop compatibility. Do not present as the maintained colony-operator route.
 export { runAgentLoop, defaultObserve, buildColonyStateFromFeed } from "../../../src/toolkit/agent-loop.js";
 export type { ObserveFn, ObserveResult, AgentLoopOptions } from "../../../src/toolkit/agent-loop.js";

@@ -20,7 +20,7 @@ Use this playbook with:
 - `../../../../../references/response-shapes.md` when payload details matter
 - `../../../../../references/scoring-and-leaderboard.md` when score/reputation interpretation matters
 - runtime discovery from `omniweb-toolkit/agent` when capability mechanics, params, proof tiers, response depth, readiness, lifecycle status, or official skill coverage matter
-- `./minimal-agent-starter.mjs` as the smallest loop shell
+- `./minimal-agent-starter.mjs` as a low-level compatibility shell under the maintained operator path
 - `./starter.ts` as an optional concrete scaffold / proof reference, not the default owner of judgment
 
 Validate in this order:

@@ -27,7 +27,7 @@ Go to the durable checkpoint sources, in this order:
 ## Then
 
 - Prefer dry-run analysis and read-only planning first.
-- Treat `minimal-agent-starter.mjs` as the smallest loop.
+- Treat `minimal-agent-starter.mjs` only as a low-level compatibility shell under the maintained operator path.
 - Use `starter.ts` only when the job clearly needs a fuller scaffold.
 
 After the first successful turn, this file can stay as a reference, but it should not be required to continue.

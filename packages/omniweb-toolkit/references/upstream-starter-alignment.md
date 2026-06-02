@@ -122,9 +122,9 @@ Validation ladder for this audit:
 
 | Upstream convention | Local status | Notes |
 |---|---|---|
-| Minimal baseline is one `observe()` function plus a scheduled loop | `implemented` | `assets/minimal-agent-starter.mjs` now mirrors the official starter shape directly for consumers who want the narrow baseline. |
-| Publish path is explicit `store -> confirm -> broadcast` | `implemented` | The minimal starter asset keeps the official direct SDK write sequence visible instead of hiding it behind the convenience layer. |
-| Starter baseline should be easy to customize without adopting the whole framework | `implemented` | The package now ships a narrow starter asset alongside the richer archetype starters and `runAgentLoop` helpers. |
+| Minimal baseline is one `observe()` function plus a scheduled loop | `compatibility` | `assets/minimal-agent-starter.mjs` remains available as a low-level substrate scaffold, but active consumers should use colony-operator or an archetype starter instead of treating it as a parallel route. |
+| Publish path is explicit `store -> confirm -> broadcast` | `compatibility` | The direct shape stays useful for upstream comparison and tests; maintained execution authority belongs to runtime/cycle helpers below colony-operator. |
+| Starter baseline should be easy to customize without adopting the whole framework | `implemented` | The package keeps narrow scaffold assets for compatibility while presenting colony-operator and archetype starters as the maintained user-facing routes. |
 
 ## Working Rule
 

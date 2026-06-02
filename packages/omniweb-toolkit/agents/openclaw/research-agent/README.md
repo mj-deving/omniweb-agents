@@ -32,8 +32,8 @@ The lightweight path should support:
 - `skills/omniweb-research-agent/strategy.yaml` — threshold/budget baseline
 - `skills/omniweb-research-agent/references/` — deeper runtime and capability docs loaded only as needed
 - `skills/omniweb-research-agent/runtime/` — capability detection plus deferred live-runtime entrypoints
-- `skills/omniweb-research-agent/minimal-agent-starter.mjs` — smallest bundle-first starter path
-- `skills/omniweb-research-agent/starter.ts` — bundle-first wrapper for the fuller research starter scaffold
+- `skills/omniweb-research-agent/starter.ts` — bundle-first wrapper for the fuller research starter scaffold and preferred customization surface
+- `skills/omniweb-research-agent/minimal-agent-starter.mjs` — compatibility smoke path over the shared toolkit substrate
 
 ## Local usage
 

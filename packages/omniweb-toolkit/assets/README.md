@@ -4,8 +4,8 @@ Use this file when `SKILL.md` routes you to package assets.
 
 ## Starter Loops
 
-- [minimal-agent-starter.mjs](./minimal-agent-starter.mjs): smallest observe-centric default loop
-- [agent-loop-skeleton.ts](./agent-loop-skeleton.ts): minimal custom loop scaffold
+- [minimal-agent-starter.mjs](./minimal-agent-starter.mjs): low-level compatibility scaffold over the shared substrate
+- [agent-loop-skeleton.ts](./agent-loop-skeleton.ts): custom compatibility loop scaffold
 - [direct-sdk-first-post.mjs](./direct-sdk-first-post.mjs): upstream-style direct SDK quickstart
 
 ## Archetype Starters

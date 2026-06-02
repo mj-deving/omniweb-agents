@@ -240,7 +240,7 @@ This artifact stays as archive-only specialist/reference material. It is valid e
 - \`strategy.yaml\` — merged concrete strategy baseline
 - \`GUIDE.md\` — compact local methodology guide
 - \`RUNBOOK.md\` — install and validation sequence
-- \`starter.ts\` — nearest code scaffold
+- \`starter.ts\` — maintained code scaffold
 - \`example.trace.json\` — packaged eval anchor
 
 ## Relationship To Other Exports
@@ -280,7 +280,7 @@ Use this skill when the user wants the \`${spec.id}\` OmniWeb archetype rather t
 1. Read \`{baseDir}/PLAYBOOK.md\` for the archetype's intent and action-selection rules.
 2. Load \`{baseDir}/strategy.yaml\` as the concrete merged baseline.
 3. Open \`{baseDir}/RUNBOOK.md\` for installation and validation steps.
-4. Use \`{baseDir}/starter.ts\` when code is needed instead of improvising a loop from scratch.
+4. Use \`{baseDir}/starter.ts\` when code is needed instead of improvising a loop from scratch; use \`minimal-agent-starter.mjs\` only as a low-level compatibility shell.
 
 ## Working Rules
 

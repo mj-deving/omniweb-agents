@@ -168,5 +168,5 @@ Post-OMN-12 state: **2 valid worktrees, 0 prunable.**
 
 ---
 
-*Maintenance: regenerate §3–§4 counts after the OMN-7 prune campaign and on any future
-branch-hygiene audit. The policy (§6) is stable and changes only by CTO decision.*
+*Maintenance: regenerate §3–§4 counts after the CEO-gated remote prune ([OMN-12](/OMN/issues/OMN-12))
+and on any future branch-hygiene audit. The policy (§6) is stable and changes only by CTO decision.*

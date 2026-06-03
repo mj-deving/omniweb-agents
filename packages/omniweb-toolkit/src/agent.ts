@@ -128,6 +128,13 @@ export {
 } from "./research-self-history-store.js";
 export { buildResearchEvidenceDelta, summarizeResearchEvidenceDelta } from "./research-evidence-delta.js";
 export { defineResearchTopicFamilyContract } from "./research-family-contracts.js";
+export {
+  DEFAULT_RESEARCH_DRAFT_MAX_TEXT_LENGTH,
+  DEFAULT_RESEARCH_DRAFT_MIN_TEXT_LENGTH,
+  DEFAULT_RESEARCH_DRAFT_TARGET_MAX_TEXT_LENGTH,
+  checkResearchDraftQuality,
+  inferResearchDraftCategory,
+} from "./research-draft-quality.js";
 export { buildResearchCompositionPacket } from "./research-draft.js";
 export { buildResearchDraft } from "./research-draft.js";
 export { validateResearchComposition } from "./research-draft.js";
@@ -444,6 +451,7 @@ export type {
   ResearchCompositionValidationResult,
   ResearchPromptInput,
   ResearchPromptPacket,
+  ResearchDraftCategory,
   ResearchDraftSuccess,
   ResearchDraftFailure,
   ResearchDraftResult,

@@ -15,8 +15,24 @@ import {
   getStringArg,
   hasFlag,
 } from "./_shared.js";
+import {
+  describeJsonValue,
+  getArrayItem,
+  getFirstRecordValue,
+  getNestedObject,
+  getNestedValue,
+  isArray,
+  isBoolean,
+  isNullableNumber,
+  isNullableString,
+  isNumber,
+  isNumberLike,
+  isObject,
+  isString,
+  isStringArray,
+  type JsonObject,
+} from "./_validation-helpers.ts";
 
-type JsonObject = Record<string, unknown>;
 type Validator = (value: unknown) => boolean;
 type ShapeSpec = {
   required: Record<string, Validator>;
@@ -1206,7 +1222,7 @@ function validateShape(label: string, value: unknown, spec: ShapeSpec): ShapeChe
       ok: false,
       missingKeys: [],
       extraKeys: [],
-      typeErrors: [`expected object, got ${describeValue(value)}`],
+      typeErrors: [`expected object, got ${describeJsonValue(value)}`],
     };
   }
 
@@ -1227,7 +1243,7 @@ function validateShape(label: string, value: unknown, spec: ShapeSpec): ShapeChe
   const typeErrors = [...requiredEntries, ...optionalEntries]
     .filter(([key]) => key in value)
     .filter(([key, validator]) => !validator((value as JsonObject)[key]))
-    .map(([key]) => `${key}: ${describeValue((value as JsonObject)[key])}`);
+    .map(([key]) => `${key}: ${describeJsonValue((value as JsonObject)[key])}`);
 
   return {
     label,
@@ -1252,71 +1268,4 @@ function validateShapeFromMaybeObject(label: string, value: unknown, spec: Shape
   }
 
   return validateShape(label, value, spec);
-}
-
-function getArrayItem(value: unknown): unknown {
-  return Array.isArray(value) && value.length > 0 ? value[0] : undefined;
-}
-
-function getFirstRecordValue(value: JsonObject): unknown {
-  const firstKey = Object.keys(value)[0];
-  return firstKey ? value[firstKey] : undefined;
-}
-
-function getNestedValue(value: unknown, key: string): unknown {
-  return isObject(value) ? value[key] : undefined;
-}
-
-function getNestedObject(value: unknown, key: string): JsonObject | undefined {
-  const nested = getNestedValue(value, key);
-  return isObject(nested) ? nested : undefined;
-}
-
-function isObject(value: unknown): value is JsonObject {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function isArray(value: unknown): value is unknown[] {
-  return Array.isArray(value);
-}
-
-function isString(value: unknown): value is string {
-  return typeof value === "string";
-}
-
-function isNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
-function isBoolean(value: unknown): value is boolean {
-  return typeof value === "boolean";
-}
-
-function isNullableString(value: unknown): value is string | null {
-  return value === null || isString(value);
-}
-
-function isNullableNumber(value: unknown): value is number | null {
-  return value === null || isNumber(value);
-}
-
-function isNumberLike(value: unknown): value is number | string {
-  if (isNumber(value)) {
-    return true;
-  }
-  if (!isString(value)) {
-    return false;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 && Number.isFinite(Number(trimmed));
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
-}
-
-function describeValue(value: unknown): string {
-  if (value === null) return "null";
-  if (Array.isArray(value)) return "array";
-  return typeof value;
 }

@@ -2,7 +2,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import {
@@ -18,6 +18,14 @@ import {
 import { loadConnect, loadPackageExport } from "./_shared.ts";
 import { scheduleSupervisedVerdict } from "./_supervised-publish-verdict.js";
 import { describePublishVisibilityResult } from "./_publish-visibility-summary.ts";
+import {
+  compactProcessNotes,
+  getOptionalArg as getOptionalArgFromArgs,
+  getOptionalIntArg,
+  getPositiveIntArg,
+  stripArgsWithValues,
+  writeJsonOutput,
+} from "./_validation-helpers.ts";
 
 type MatrixFamily =
   | "funding-structure"
@@ -126,6 +134,30 @@ const SUPPORTED_FAMILIES: MatrixFamily[] = [
 
 const args = process.argv.slice(2);
 const workerMode = args.includes("--worker-mode");
+const getOptionalArg = (flag: string): string | undefined => getOptionalArgFromArgs(args, flag);
+const getPositiveInt = (flag: string, fallback: number): number => getPositiveIntArg(args, flag, fallback);
+const getOptionalInt = (flag: string): number | undefined => getOptionalIntArg(args, flag);
+const maybeWriteOutput = writeJsonOutput;
+const compactNotes = compactProcessNotes;
+
+function getOptionalFamilyList(flag: string): MatrixFamily[] {
+  const raw = getOptionalArg(flag);
+  if (!raw) return [];
+  const values = raw.split(",").map((entry) => entry.trim()).filter(Boolean);
+  const invalid = values.filter((entry) => !SUPPORTED_FAMILIES.includes(entry as MatrixFamily));
+  if (invalid.length > 0) {
+    throw new Error(`Invalid ${flag} value(s): ${invalid.join(", ")}`);
+  }
+  return [...new Set(values)] as MatrixFamily[];
+}
+
+function getOptionalCategory(flag: string): MatrixDraftCategory | null {
+  const value = getOptionalArg(flag);
+  if (!value) return null;
+  if (value === "ANALYSIS" || value === "OBSERVATION") return value;
+  console.error(`Unsupported ${flag} value: ${value}`);
+  process.exit(2);
+}
 
 if (args.includes("--help") || args.includes("-h")) {
   console.log(`Usage: bunx tsx packages/omniweb-toolkit/scripts/check-research-e2e-matrix.ts [options]
@@ -949,50 +981,6 @@ await maybeWriteOutput(outputPath, report);
 console.log(JSON.stringify(report, null, 2));
 process.exit(0);
 
-function getOptionalArg(flag: string): string | undefined {
-  const index = args.indexOf(flag);
-  return index >= 0 ? args[index + 1] : undefined;
-}
-
-function getPositiveInt(flag: string, fallback: number): number {
-  const raw = getOptionalArg(flag);
-  if (raw == null) return fallback;
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`Invalid ${flag} value: ${raw}`);
-  }
-  return parsed;
-}
-
-function getOptionalInt(flag: string): number | undefined {
-  const raw = getOptionalArg(flag);
-  if (raw == null) return undefined;
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`Invalid ${flag} value: ${raw}`);
-  }
-  return parsed;
-}
-
-function getOptionalFamilyList(flag: string): MatrixFamily[] {
-  const raw = getOptionalArg(flag);
-  if (!raw) return [];
-  const values = raw.split(",").map((entry) => entry.trim()).filter(Boolean);
-  const invalid = values.filter((entry) => !SUPPORTED_FAMILIES.includes(entry as MatrixFamily));
-  if (invalid.length > 0) {
-    throw new Error(`Invalid ${flag} value(s): ${invalid.join(", ")}`);
-  }
-  return [...new Set(values)] as MatrixFamily[];
-}
-
-function getOptionalCategory(flag: string): MatrixDraftCategory | null {
-  const value = getOptionalArg(flag);
-  if (!value) return null;
-  if (value === "ANALYSIS" || value === "OBSERVATION") return value;
-  console.error(`Unsupported ${flag} value: ${value}`);
-  process.exit(2);
-}
-
 type LlmResolutionMode = "explicit-provider" | "explicit-cli-command" | "api-key" | "autodetect";
 
 function detectExplicitLlmResolution(envPath: string): {
@@ -1078,13 +1066,6 @@ function samplePost(post: unknown): FeedSample {
     author: typeof (post as { author?: unknown }).author === "string" ? (post as { author: string }).author : null,
     timestamp: typeof (post as { timestamp?: unknown }).timestamp === "number" ? (post as { timestamp: number }).timestamp : null,
   };
-}
-
-async function maybeWriteOutput(path: string | undefined, report: unknown): Promise<void> {
-  if (!path) return;
-  const absolute = resolve(process.cwd(), path);
-  await mkdir(dirname(absolute), { recursive: true });
-  await writeFile(absolute, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 }
 
 async function runBoundedFamilyWorker(input: {
@@ -1296,23 +1277,4 @@ async function runMatrixLivePublish(input: {
       });
     }, input.timeoutMs);
   });
-}
-
-function stripArgsWithValues(argv: string[], flags: string[]): string[] {
-  const stripped: string[] = [];
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token) continue;
-    if (token === "--worker-mode") continue;
-    if (flags.includes(token)) {
-      index += 1;
-      continue;
-    }
-    stripped.push(token);
-  }
-  return stripped;
-}
-
-function compactNotes(stdout: string, stderr: string): string[] {
-  return [stdout.trim(), stderr.trim()].filter((entry) => entry.length > 0);
 }

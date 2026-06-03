@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildResearchDraft } from "../../packages/omniweb-toolkit/src/research-draft.js";
+import { buildResearchDraft, checkResearchDraftQuality, inferResearchDraftCategory } from "../../packages/omniweb-toolkit/src/agent.js";
 import type { ResearchColonySubstrate } from "../../packages/omniweb-toolkit/src/research-colony-substrate.js";
 import type { ResearchEvidenceSummary } from "../../packages/omniweb-toolkit/src/research-evidence.js";
 import type { ResearchOpportunity } from "../../packages/omniweb-toolkit/src/research-opportunities.js";
@@ -1441,6 +1441,26 @@ describe("buildResearchDraft", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected success");
     expect(result.qualityGate.checks.find((check) => check.name === "evidence-value-overlap")?.pass).toBe(true);
+  });
+
+  it("exposes callable research draft quality policy without the draft builder", () => {
+    const opportunity = makeOpportunity();
+    const text =
+      "BTC futures lean bearish without panic: mark is $67,250 against a $67,245 index while funding sits at -0.012, so shorts are paying before spot has actually broken. " +
+      "That is positioning stress, not confirmation. If funding normalizes or spot reclaims premium, the bearish read weakens.";
+    const category = inferResearchDraftCategory(text, opportunity);
+    const qualityGate = checkResearchDraftQuality(
+      text,
+      category,
+      260,
+      opportunity,
+      makeEvidenceSummary(),
+      [makeSupportingEvidenceSummary()],
+    );
+
+    expect(category).toBe("ANALYSIS");
+    expect(qualityGate.pass).toBe(true);
+    expect(qualityGate.checks.find((check) => check.name === "semantic-evidence-grounding")?.pass).toBe(true);
   });
 
   it("rejects a near-twin same-family draft when recent self-history reuses the thesis surface", async () => {

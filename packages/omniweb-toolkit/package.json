@@ -49,6 +49,7 @@
     "docs/colony-operator-skill-skeleton.md",
     "docs/ecosystem-guide.md",
     "references/*.md",
+    "references/*.json",
     "evals/",
     "scripts/",
     "playbooks/"

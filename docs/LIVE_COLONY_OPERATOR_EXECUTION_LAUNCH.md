@@ -1,6 +1,6 @@
 ---
 type: goal-launch
-status: ready
+status: historical-superseded
 created: 2026-05-16
 source_contract: docs/LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md
 master_prd: docs/LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md
@@ -9,7 +9,21 @@ owner_bead: omniweb-agents-8tga
 
 # Live Colony Operator Execution Launch Prompt
 
-## Preflight
+## Current Status: Reference Only
+
+This launch prompt is historical and superseded. It documents how the May 16
+live proof ladder was launched; it is not a current execution packet and must
+not be used to run live commands.
+
+Do not run publish, reply, identity, BET, wallet, provider-auth, OpenClaw probe,
+or `--execute` commands from this packet without a new explicit authorization
+packet. A fresh packet must include wallet/operator readiness, budget,
+lifecycle capture, product readback criteria, mutation evidence, and stop rules.
+
+Current default posture is no-spend. The 2026-06-04 OpenClaw colony-operator
+boundary proof was static/no-spend and kept `executionProven=false`.
+
+## Historical Preflight
 
 Run from a clean worktree based on `origin/main` after this packet lands:
 
@@ -26,7 +40,10 @@ npm --prefix packages/omniweb-toolkit run check:verification-matrix
 
 `bd ready --json` should show `omniweb-agents-8tga.2` as the next child milestone after M0.
 
-## Copy/Paste Prompt
+## Historical Copy/Paste Prompt
+
+Reference only. Do not paste this as an active `/goal` without first replacing
+it with a new authorization packet for the exact current live operation.
 
 ```text
 /goal Complete docs/LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md against docs/LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md without stopping until §11 definition of done is satisfied, or until the same blocker fails three times and a STUCK note is written in §13.

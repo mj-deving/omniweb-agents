@@ -24,6 +24,38 @@ summary: "Master PRD for one maintained live Colony Operator execution cycle wit
 - Package gates: `npm --prefix packages/omniweb-toolkit run check:package && npm --prefix packages/omniweb-toolkit run check:evals`
 - GoalMode specificity gate: `bun ~/.claude/skills/GoalMode/Tools/PrdSpecificityGate.ts docs/LIVE_COLONY_OPERATOR_EXECUTION_BRIEF.md docs/LIVE_COLONY_OPERATOR_EXECUTION_MASTER_PRD.md`
 
+## §0.5 2026-06-04 Addendum: Historical Evidence, Current Live Gates
+
+This PRD is frozen historical evidence for the May 16 live Colony Operator proof
+ladder. Its run log and acceptance checkmarks are preserved as historical proof,
+not as a current authorization to rerun live commands.
+
+Post-convergence work moved the active posture back to read-first and no-spend
+by default. Child bead `omniweb-agents-lng8.1` proved the OpenClaw
+colony-operator boundary with:
+
+- command: `bunx tsx packages/omniweb-toolkit/scripts/check-openclaw-runtime.ts --archetype colony-operator`
+- result: `ok=true`
+- static checks passed: workspace, openclaw-config, skill, workspace-config,
+  workspace-package, skill-frontmatter, and skill-body
+- execution proof: `executionProven=false`
+- intentionally omitted: `--run-openclaw-probes`, provider auth setup, wallet
+  setup, publish, reply, spend, mutation, and live command execution
+
+Any future live write or OpenClaw runtime handoff must be authorized by a new
+packet. Minimum gates:
+
+- explicit authorization for the exact live operation and command
+- wallet/operator readiness without secret persistence
+- budget and spend ceiling
+- lifecycle record path and proof packet path
+- product readback criteria before success can be claimed
+- mutation evidence and expected tx/attestation fields where applicable
+- stop rules for readback lag, provider/auth failure, invalid input, stale live
+  state, unexpected spend, and missing product visibility
+
+Without those gates, this document is reference-only.
+
 ## §1. Problem
 
 PR #413 made the Colony Operator truth surface more honest, but it did not close the roadmap's missing Wave B item: one maintained operator cycle that can read live state, choose among the action families, execute through the runtime, record lifecycle state, and prove product readback.

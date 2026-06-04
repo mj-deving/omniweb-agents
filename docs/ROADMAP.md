@@ -2,7 +2,7 @@
 type: roadmap
 status: active
 updated: 2026-06-04
-summary: "One-page active strategy surface. Current lane: post-convergence no-spend proof, adapter extraction, and gated live-packet refresh."
+summary: "One-page active strategy surface. Current lane: gated live-packet refresh after completed no-spend and adapter lanes."
 topic_hint: ["roadmap", "next steps", "active strategy", "post-convergence", "colony-operator", "no-spend proof", "research evidence"]
 ---
 
@@ -21,7 +21,9 @@ topic_hint: ["roadmap", "next steps", "active strategy", "post-convergence", "co
 - Playbooks and policies own topic choice, thesis choice, tone, budgets, and action preference. The runtime owns capability truth, readiness, admissibility, execution, verification, and proof shape.
 - The maintained proof posture remains read-first and no-spend by default. Any future live write needs a fresh explicit packet with budget, wallet/agent target, command, mutation evidence, product readback criteria, and stop rules.
 - The colony-operator convergence band is complete on `main`: PR #601 proved the no-spend colony-operator route, PR #602 extracted callable research draft quality gates, and PR #603 extracted shared validation script helpers.
-- The first research evidence helper split is complete on `main` via PR #591. Remaining research evidence work is an adapter extraction lane, not a continuation of the old convergence task list.
+- `omniweb-agents-lng8.1` is complete: the OpenClaw colony-operator boundary was proved as static/no-spend with `executionProven=false`; no OpenClaw probes, provider auth, wallet mutation, publish, reply, live command, or spend ran.
+- `omniweb-agents-lng8.2` is complete on `main` via PR #605: research evidence value adapters were extracted while preserving public behavior.
+- `omniweb-agents-lng8.3` is the active docs-only lane: refresh the old live execution packet so it is clearly historical/reference material and no longer reads like the next live task.
 
 ## Active Lane
 
@@ -47,24 +49,22 @@ The desired public message:
 
 ## Next Roadmap Lanes
 
-1. **OpenClaw colony-operator no-spend runtime smoke proof**
+1. **OpenClaw colony-operator no-spend runtime smoke proof: complete**
    - Bead: `omniweb-agents-lng8.1`.
-   - Run static/runtime contract checks for `colony-operator`.
-   - Use `packages/omniweb-toolkit/scripts/check-openclaw-runtime.ts`.
-   - Add OpenClaw CLI probes only on a configured runtime host.
-   - If provider auth or runtime config is absent, record the exact blocker; do not fake completion.
-   - No spend, no publish, no wallet mutation.
+   - Static/runtime contract check passed for `colony-operator`.
+   - Command: `bunx tsx packages/omniweb-toolkit/scripts/check-openclaw-runtime.ts --archetype colony-operator`.
+   - Result: `ok=true`, `executionProven=false`.
+   - No OpenClaw CLI probes, provider auth, wallet mutation, publish, reply, live command, or spend ran.
 
-2. **Research evidence value/metric adapter extraction**
+2. **Research evidence value/metric adapter extraction: complete**
    - Bead: `omniweb-agents-lng8.2`.
-   - Continue after PR #591's first slice.
-   - Move source-specific `extract*Values` helpers from `research-evidence.ts` into package-local `src/research-evidence/` modules.
-   - Preserve `fetchResearchEvidenceSummary` and `agent.ts` public behavior.
-   - Do not change evidence semantics unless tests prove a bug.
+   - Merged on `main` in PR #605.
+   - Source-specific value adapters moved into package-local `src/research-evidence/` modules.
+   - Public behavior for `fetchResearchEvidenceSummary` and `agent.ts` was preserved.
 
-3. **Live operator execution packet refresh**
-   - Bead: `omniweb-agents-lng8.3`, blocked on `omniweb-agents-lng8.1`.
-   - Planning/docs only unless explicit live-write authorization is later given.
+3. **Live operator execution packet refresh: active docs-only lane**
+   - Bead: `omniweb-agents-lng8.3`.
+   - Planning/docs only; no live-write authorization is currently active.
    - Reconcile old `LIVE_COLONY_OPERATOR_EXECUTION_*` docs with the current no-spend proof and live boundary.
    - Mark live publish/reply as gated by explicit `--execute`, wallet readiness, lifecycle capture, product readback, and stop rules.
    - No live commands and no spend in the packet refresh PR.
@@ -84,7 +84,10 @@ The desired public message:
 
 ## Current Beads
 
-None from the old convergence lane remain active. The next short-horizon queue was reseeded in Beads under `omniweb-agents-lng8`; execution truth lives there, not in this roadmap.
+The old convergence lane is closed. In the post-convergence queue,
+`omniweb-agents-lng8.1` and `omniweb-agents-lng8.2` are closed on `main`;
+`omniweb-agents-lng8.3` is the active docs-only packet refresh. Execution truth
+lives in Beads and GitHub, not in this roadmap.
 
 ## Pointers
 

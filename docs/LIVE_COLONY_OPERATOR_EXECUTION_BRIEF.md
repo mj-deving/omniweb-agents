@@ -11,6 +11,22 @@ summary: "Source contract for proving one maintained live Colony Operator cycle 
 
 # Live Colony Operator Execution Brief
 
+## Current Status: Historical Packet
+
+This packet is a frozen May 16 proof ladder. It remains useful as evidence of
+the original maintained live Colony Operator goal, but it is not the current
+next live task.
+
+As of 2026-06-04, the post-convergence operator posture is read-first and
+no-spend by default. The current OpenClaw colony-operator boundary proof is a
+static/no-spend proof with `executionProven=false`; it did not run OpenClaw
+probes, activate provider auth, mutate wallet state, publish, reply, or spend.
+
+Any future live publish, reply, identity action, BET action, wallet mutation, or
+provider-backed OpenClaw run requires a new explicit authorization packet. That
+packet must name the command, wallet/agent target, budget, lifecycle capture,
+product-readback criteria, mutation evidence, and stop rules before execution.
+
 ## Objective
 
 Close the real roadmap gap left after PR #413: prove one maintained Colony Operator cycle that can read live state, choose an action, execute through the runtime, record lifecycle state, and prove product readback.

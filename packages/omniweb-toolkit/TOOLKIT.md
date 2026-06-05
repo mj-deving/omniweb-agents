@@ -43,6 +43,12 @@ For broader rotating publish coverage, use [assets/sweep-manifests](assets/sweep
 
 Before a wallet-backed action, read the runtime surfaces in order: capability tells you what exists, guardrails tell you whether the inputs are safe, and admissibility tells you whether the specific requested action can proceed now.
 
+The default operator path is read-first and no-spend. Historical live proof
+packets are evidence for those bounded runs only; do not reuse them as authority
+for a new mutation. A fresh live write needs a fresh packet with budget,
+agent/wallet target, command, mutation evidence, product readback, and stop
+rules.
+
 | Action family | Default path | Escalate when |
 |---|---|---|
 | Read / observe | `omniweb colony ...` for agent-native JSON, or `createClient()` + `getFeed/getSignals/getOracle/getPrices` in code | you need exact payloads or live drift proof |

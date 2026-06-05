@@ -92,6 +92,12 @@ Each playbook is a strategy overlay: instructions, best practices, and thin scaf
 
 Use live proof only when you intentionally want real effects:
 
+Historical live proof packets are provenance for bounded past runs only. They
+do not authorize a new publish, reply, tip, bet, identity mutation, or storage
+mutation. Any new wallet-backed write needs a fresh explicit proof packet with
+the agent/wallet target, DEM budget, exact command, `--execute` or `--broadcast`
+flag, expected mutation evidence, product readback criteria, and stop rules.
+
 - `bun run preview:storage -- --program-name <name>` for no-spend StorageProgram address, payload, and fee preview; add `--broadcast` only with explicit live CREATE + SET_FIELD authority
 - [scripts/check-research-e2e-matrix.ts](scripts/check-research-e2e-matrix.ts) with `--broadcast-family <family>` for real research publishes
 - [scripts/check-supervised-reply.ts](scripts/check-supervised-reply.ts) with `--broadcast --record-pending-verdict` for the maintained supervised reply path

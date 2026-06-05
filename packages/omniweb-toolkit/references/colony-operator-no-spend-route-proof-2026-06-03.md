@@ -1,3 +1,8 @@
+---
+summary: "No-spend route proof for the colony-operator default path after the post-convergence package checks."
+read_when: ["colony-operator no-spend proof", "executionProven false", "post-convergence route proof", "lng8.1"]
+---
+
 # Colony Operator No-Spend Route Proof - 2026-06-03
 
 This is a dry-run/no-spend proof only. It does not claim a live write, product mutation, DEM spend, or OpenClaw provider-auth smoke turn.

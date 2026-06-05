@@ -45,9 +45,10 @@ This bundle is now the primary skill-surface and doctrine checkpoint for the reb
 - `strategy.yaml` pins a conservative default
 - `starter.ts` is a maintained scaffold/proof artifact over the seam, not the hidden owner of judgment
 
-## Current strategic checkpoint (2026-05-13)
+## Historical strategic checkpoint (2026-05-13)
 
-Before starting the next live-ops or docs slice, hold these truths together:
+Before reading older live-ops or docs slices, hold these historical truths
+together:
 
 - PR #360 is the durable planning checkpoint, but it is now **historical context**, not the current implementation frontier.
 - The repo already had a broad substrate; **boundary blur** was the main problem.
@@ -67,6 +68,21 @@ The durable source artifacts for this checkpoint remain:
 - `memory/CURRENT_DOCTRINE.md`
 - `memory/NEXT_BAND_CHEAT_SHEET.md`
 - Beads: `omniweb-agents-5xp4`, `omniweb-agents-5xp4.15`
+
+## Current strategic checkpoint (2026-06-05)
+
+The current front-door truth after the post-`lng8` packet refresh is:
+
+- `colony-operator` remains the default OmniWeb/OpenClaw consumer path.
+- The maintained default proof path is read-first and no-spend.
+- The May 2026 live operator packet is historical provenance for one bounded
+  run, not standing live-write authority.
+- A new live publish, reply, tip, bet, identity mutation, or storage mutation
+  needs a fresh explicit proof packet with agent/wallet target, DEM budget,
+  exact command, `--execute` or `--broadcast`, mutation evidence, product
+  readback criteria, and stop rules.
+- Older specialist bundles and low-level minimal-agent assets remain
+  compatibility or substrate surfaces, not equal default front doors.
 
 ## Current proof boundary
 
@@ -109,16 +125,22 @@ That loop is real because the maintained starter now acts like a thin chooser ov
 
 This is the current `bryz.3` floor: a truthful operator action loop beyond pure structure, without overclaiming live action authority.
 
-### Current maintained live-operator checkpoint
+### Historical maintained live-operator checkpoint
 
-The live execution packet has now proved one bounded maintained operator cycle through `run-colony-operator-cycle.ts`:
+The May 2026 live execution packet proved one bounded maintained operator cycle
+through `run-colony-operator-cycle.ts`:
 - live read and decision selected a publish action
 - explicit `--execute` was required after a no-spend preflight
 - lifecycle record `wl-20260516T142945874Z-8033b0b4` and proof packet `/tmp/omni-live-colony-operator-m3-v2/live-operator-proof.json` recorded the run
 - tx `c173f76365f1a62ba03b535442d04b8ccb4759a649517ac656a19d6fbdc6ecdf` and attestation tx `400f36f72cfa5adfc8e418007d1b24450ab0cfd5ee89c945046a3b4cb0e886c3` were written
 - category-feed product readback converged after 14 polls
 
-This is a bounded live operator proof, not blanket launch-grade authority for every action family. Identity remains explicit-authorization gated. OpenClaw/Gregor runtime-host activation now has accepted no-spend smoke evidence under gate `omniweb-agents-aick`; the durable redacted archive is stored on the runtime host with SHA256 `e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
+This is historical provenance for that run, not blanket launch-grade authority
+for every action family and not authorization to run a new live write. Identity
+remains explicit-authorization gated. OpenClaw/Gregor runtime-host activation
+has accepted no-spend smoke evidence under gate `omniweb-agents-aick`; the
+durable redacted archive is stored on the runtime host with SHA256
+`e9a89737b00c835d88c2b7ecc904b6be7c5aa1fe23b81af2e6a34fabcec23068`.
 
 ### Smallest honest supervised wallet-backed checkpoint
 The first wallet-backed checkpoint we can name honestly is narrower than “live colony-operator write support.” It is:

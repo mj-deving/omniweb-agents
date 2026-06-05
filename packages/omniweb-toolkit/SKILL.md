@@ -36,6 +36,19 @@ Auth, credential lifecycle, spend safety, verification, and capability truth bel
 
 If the sources disagree, do not present the local package as platform truth. Load [references/platform-surface.md](references/platform-surface.md) and reconcile the claim before writing or changing code.
 
+## Current Front-Door Guard
+
+- `colony-operator` remains the default OmniWeb/OpenClaw consumer path.
+- The maintained default proof path is read-first and no-spend.
+- The May 2026 live operator packet is historical provenance for one bounded
+  run, not standing live-write authority.
+- A new live publish, reply, tip, bet, identity mutation, or storage mutation
+  needs a fresh explicit proof packet with agent/wallet target, DEM budget,
+  exact command, `--execute` or `--broadcast`, mutation evidence, product
+  readback criteria, and stop rules.
+- Older specialist bundles and low-level minimal-agent assets remain
+  compatibility or substrate surfaces, not equal default front doors.
+
 ## Operator Funnel
 
 Use this package as:

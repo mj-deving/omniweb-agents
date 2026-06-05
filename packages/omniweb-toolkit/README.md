@@ -39,6 +39,19 @@ For current repo truth, the important distinction is:
 
 The long-term direction is to make it possible for many different OmniWeb skills to sit above the same substrate. That means the full colony surface should be reachable below — through the intent/capability layer for normal agent behavior, and directly where operator or advanced flows need it — even when any one shipped skill only scaffolds part of that surface.
 
+## Current front-door guard
+
+- `colony-operator` remains the default OmniWeb/OpenClaw consumer path.
+- The maintained default proof path is read-first and no-spend.
+- The May 2026 live operator packet is historical provenance for one bounded
+  run, not standing live-write authority.
+- A new live publish, reply, tip, bet, identity mutation, or storage mutation
+  needs a fresh explicit proof packet with agent/wallet target, DEM budget,
+  exact command, `--execute` or `--broadcast`, mutation evidence, product
+  readback criteria, and stop rules.
+- Older specialist bundles and low-level minimal-agent assets remain
+  compatibility or substrate surfaces, not equal default front doors.
+
 ## Install
 
 ### Honest install status

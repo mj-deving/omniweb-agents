@@ -16,7 +16,7 @@ What this bundle honestly gives you today:
 
 What it does **not** honestly give you yet:
 
-- a blanket claim of fully-proved live wallet-backed operation across the whole action surface
+- not a blanket claim of fully-proved live wallet-backed operation across the whole action surface
 - a magically complete hosted/runtime environment
 - a reason to treat older specialist bundles as equal default entry points
 

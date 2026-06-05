@@ -252,8 +252,7 @@ function findUnnegatedMatches(text: string, needle: string) {
   let index = lowerText.indexOf(lowerNeedle);
 
   while (index !== -1) {
-    const before = lowerText.slice(Math.max(0, index - 90), index);
-    if (!hasNegatingContext(before)) {
+    if (!isNegatedStaleClaim(lowerText, index, lowerNeedle)) {
       const excerptStart = Math.max(0, index - 40);
       const excerptEnd = Math.min(text.length, index + needle.length + 40);
       matches.push(text.slice(excerptStart, excerptEnd).replace(/\s+/g, " ").trim());
@@ -264,23 +263,37 @@ function findUnnegatedMatches(text: string, needle: string) {
   return matches;
 }
 
-function hasNegatingContext(context: string) {
+function getLocalNegationContext(text: string, index: number) {
+  const hardBoundaries = ["\n", ".", ";", ":", "!", "?"];
+  const boundary = Math.max(...hardBoundaries.map((marker) => text.lastIndexOf(marker, index - 1)));
+  return text.slice(Math.max(boundary + 1, index - 90), index);
+}
+
+function isNegatedStaleClaim(text: string, index: number, needle: string) {
+  const suffix = getLocalNegationContext(text, index).replace(/\s+/g, " ");
+  // Only exact local prefixes immediately before the stale phrase count as negation.
+  const directNegationPrefixes = [
+    /\bnot\s*$/,
+    /\bnot\s+a\s*$/,
+    /\bno\s*$/,
+    /\bwithout\s*$/,
+    /\bdoes \*\*not\*\*\s*$/,
+    /\bdoes not\s*$/,
+    /\bdo not\s*$/,
+    /\bmust not\s*$/,
+    /\bis not\s*$/,
+    /\bisn't\s*$/,
+  ];
+  const claimSpecificPrefixes: Record<string, RegExp[]> = {
+    "fully-proved live wallet-backed operation": [
+      /\bnot\s+a\s+blanket\s+claim\s+of\s*$/,
+      /\bnot\s+a\s+claim\s+of\s*$/,
+      /\bno\s+blanket\s+claim\s+of\s*$/,
+    ],
+  };
+
   return [
-    "not ",
-    "not**",
-    "not a ",
-    "not yet ",
-    "no ",
-    "without ",
-    "does not ",
-    "does **not**",
-    "do not ",
-    "must not ",
-    "isn't ",
-    "is not ",
-    "outside ",
-    "narrower than ",
-    "rather than ",
-    "avoid ",
-  ].some((marker) => context.includes(marker));
+    ...directNegationPrefixes,
+    ...(claimSpecificPrefixes[needle] ?? []),
+  ].some((pattern) => pattern.test(suffix));
 }

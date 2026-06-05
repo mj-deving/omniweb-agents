@@ -1,9 +1,9 @@
 ---
 type: roadmap
 status: active
-updated: 2026-06-04
-summary: "One-page active strategy surface. Current lane: gated live-packet refresh after completed no-spend and adapter lanes."
-topic_hint: ["roadmap", "next steps", "active strategy", "post-convergence", "colony-operator", "no-spend proof", "research evidence"]
+updated: 2026-06-05
+summary: "One-page active strategy surface. Current lane: post-lng8 roadmap reseed, local artifact hygiene, and front-door audit."
+topic_hint: ["roadmap", "next steps", "active strategy", "post-lng8", "post-convergence", "colony-operator", "no-spend proof", "research evidence"]
 ---
 
 # Roadmap
@@ -13,7 +13,7 @@ topic_hint: ["roadmap", "next steps", "active strategy", "post-convergence", "co
 ## Current Truth
 
 - `main` has completed the prior endpoint reconciliation, no-spend hardening, raw-transfer closeout, storage no-spend ergonomics, DemosWork/XM/Rubic import-boundary proof, worktree cleanup, and PR-sprawl repair lanes.
-- Open PR count was zero at the 2026-06-04 reseed. Branch and remote-prune operations remain separate from product strategy.
+- Open PR count and the ready/open/in-progress Beads queue were zero at the 2026-06-05 post-`lng8` reseed. Branch and remote-prune operations remain separate from product strategy.
 - `colony-operator` is the single maintained user-facing operator path.
 - `minimal-agent` is shared runtime substrate under colony-operator, not a second product story.
 - Generic `minimal-agent starter` language is now considered parallel-path smell unless it is clearly framed as a colony-operator minimal starter or compatibility scaffold.
@@ -23,13 +23,13 @@ topic_hint: ["roadmap", "next steps", "active strategy", "post-convergence", "co
 - The colony-operator convergence band is complete on `main`: PR #601 proved the no-spend colony-operator route, PR #602 extracted callable research draft quality gates, and PR #603 extracted shared validation script helpers.
 - `omniweb-agents-lng8.1` is complete: the OpenClaw colony-operator boundary was proved as static/no-spend with `executionProven=false`; no OpenClaw probes, provider auth, wallet mutation, publish, reply, live command, or spend ran.
 - `omniweb-agents-lng8.2` is complete on `main` via PR #605: research evidence value adapters were extracted while preserving public behavior.
-- `omniweb-agents-lng8.3` is the active docs-only lane: refresh the old live execution packet so it is clearly historical/reference material and no longer reads like the next live task.
+- `omniweb-agents-lng8.3` is complete on `main` via PR #606: the old live execution packet now reads as historical/reference material instead of the next live task.
 
 ## Active Lane
 
-**Post-convergence reseed.**
+**Post-`lng8` reseed and front-door hygiene.**
 
-Keep the repo on the completed operator story while seeding only the next short-horizon work:
+Keep the repo on the completed operator story while executing only the next short-horizon, no-spend work:
 
 1. A user starts from the colony-operator bundle, package CLI, or colony-operator docs.
 2. The operator calls `runColonyOperatorCycle()`.
@@ -62,16 +62,31 @@ The desired public message:
    - Source-specific value adapters moved into package-local `src/research-evidence/` modules.
    - Public behavior for `fetchResearchEvidenceSummary` and `agent.ts` was preserved.
 
-3. **Live operator execution packet refresh: active docs-only lane**
+3. **Live operator execution packet refresh: complete**
    - Bead: `omniweb-agents-lng8.3`.
+   - Merged on `main` in PR #606.
    - Planning/docs only; no live-write authorization is currently active.
-   - Reconcile old `LIVE_COLONY_OPERATOR_EXECUTION_*` docs with the current no-spend proof and live boundary.
-   - Mark live publish/reply as gated by explicit `--execute`, wallet readiness, lifecycle capture, product readback, and stop rules.
-   - No live commands and no spend in the packet refresh PR.
+   - Old `LIVE_COLONY_OPERATOR_EXECUTION_*` docs were reconciled with the current no-spend proof and live boundary.
+   - Live publish/reply remains gated by explicit `--execute`, wallet readiness, lifecycle capture, product readback, and stop rules.
+   - No live commands and no spend ran in the packet refresh PR.
 
-4. **Optional root untracked artifact triage**
-   - Only if the user explicitly wants local cleanup.
-   - Treat pre-existing untracked artifacts as local state, not roadmap product work.
+4. **Post-`lng8` roadmap state refresh: active docs-only lane**
+   - Bead: `omniweb-agents-rpmd`.
+   - Parent: `omniweb-agents-izeq`.
+   - Update this roadmap from stale `lng8.3` active state to completed `lng8` history.
+   - Record the current queue shape without turning the roadmap into the execution ledger.
+
+5. **Local review artifact hygiene: next**
+   - Bead: `omniweb-agents-2lm6`.
+   - Parent: `omniweb-agents-izeq`.
+   - Quiet machine/runtime cache paths that pollute `git status` and local review bundles.
+   - Keep April handoff drafts local-only; do not delete or commit them in this lane.
+
+6. **Colony-operator front-door audit: next**
+   - Bead: `omniweb-agents-7oxu`.
+   - Parent: `omniweb-agents-izeq`.
+   - Audit package front-door docs after the live packet refresh.
+   - Preserve the default `colony-operator` path, read-first/no-spend posture, and explicit fresh-packet requirement for any future live write.
 
 ## Non-Negotiable Design Rules
 
@@ -85,9 +100,13 @@ The desired public message:
 ## Current Beads
 
 The old convergence lane is closed. In the post-convergence queue,
-`omniweb-agents-lng8.1` and `omniweb-agents-lng8.2` are closed on `main`;
-`omniweb-agents-lng8.3` is the active docs-only packet refresh. Execution truth
-lives in Beads and GitHub, not in this roadmap.
+`omniweb-agents-lng8.1`, `omniweb-agents-lng8.2`, and
+`omniweb-agents-lng8.3` are closed on `main`. At the 2026-06-05 reseed,
+ready/open/in-progress Beads and open GitHub PRs were empty. The new
+short-horizon lane is parent `omniweb-agents-izeq`, ordered as
+`omniweb-agents-rpmd` -> `omniweb-agents-2lm6` ->
+`omniweb-agents-7oxu`. Execution truth lives in Beads and GitHub, not in this
+roadmap.
 
 ## Pointers
 

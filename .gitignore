@@ -17,9 +17,12 @@ tmp/
 /packages/omniweb-toolkit/sessions/
 
 # Tool artifacts
+.ccgram-uploads/
 .desloppify/
+.claude/scheduled_tasks.lock
 .claude/worktrees/
 .codex
+**/.openclaw/
 MEMORY/WORK/
 tests/.tmp-*
 

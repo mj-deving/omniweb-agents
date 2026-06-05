@@ -283,6 +283,9 @@ This layer is architecture substrate only. It helps a runtime observe, summarize
   - [scripts/probe-market-writes.ts](scripts/probe-market-writes.ts)
   - `bun run check:write-surface -- --broadcast`
 
+Historical live proof packets are bounded provenance, not standing authorization.
+Any new wallet-backed write needs a fresh explicit packet with target, budget, command, mutation evidence, readback criteria, and stop rules.
+
 Doc tiers:
 
 - [README.md](README.md): substrate install/runtime path

@@ -15,7 +15,34 @@ type FileCheck = {
   path: string;
   mustContain?: string[];
   mustNotContain?: string[];
+  mustNotContainUnlessNegated?: string[];
 };
+
+const currentFrontDoorDoctrine = [
+  "`colony-operator` remains the default OmniWeb/OpenClaw consumer path.",
+  "The maintained default proof path is read-first and no-spend.",
+  "The May 2026 live operator packet is historical provenance for one bounded",
+  "needs a fresh explicit proof packet with agent/wallet target, DEM budget,",
+  "not equal default front doors.",
+];
+
+const staleLiveWriteClaims = [
+  "standing live-write authority",
+  "standing authorization",
+  "blanket launch-grade authority",
+  "general live-write authority",
+  "fully-proved live wallet-backed operation",
+  "default live-write authority",
+  "default live write authority",
+  "live-write authorization",
+];
+
+const currentDoctrineSurfaces = [
+  "README.md",
+  "SKILL.md",
+  "TOOLKIT.md",
+  "agents/openclaw/colony-operator/README.md",
+];
 
 const args = process.argv.slice(2);
 
@@ -31,6 +58,11 @@ Exit codes: 0 = checks passed, 1 = one or more checks failed`);
 }
 
 const checks: FileCheck[] = [
+  ...currentDoctrineSurfaces.map((path) => ({
+    path,
+    mustContain: currentFrontDoorDoctrine,
+    mustNotContainUnlessNegated: staleLiveWriteClaims,
+  })),
   {
     path: "agents/openclaw/colony-operator/IDENTITY.md",
     mustContain: [
@@ -201,11 +233,67 @@ function runCheck(check: FileCheck) {
   const text = readFileSync(absolutePath, "utf8");
   const missing = (check.mustContain ?? []).filter((needle) => !text.includes(needle));
   const forbiddenFound = (check.mustNotContain ?? []).filter((needle) => text.includes(needle));
+  const staleClaimsFound = (check.mustNotContainUnlessNegated ?? []).flatMap((needle) =>
+    findUnnegatedMatches(text, needle),
+  );
 
   return {
     path: check.path,
-    ok: missing.length === 0 && forbiddenFound.length === 0,
+    ok: missing.length === 0 && forbiddenFound.length === 0 && staleClaimsFound.length === 0,
     missing,
-    forbiddenFound,
+    forbiddenFound: [...forbiddenFound, ...staleClaimsFound],
   };
+}
+
+function findUnnegatedMatches(text: string, needle: string) {
+  const lowerText = text.toLowerCase();
+  const lowerNeedle = needle.toLowerCase();
+  const matches: string[] = [];
+  let index = lowerText.indexOf(lowerNeedle);
+
+  while (index !== -1) {
+    if (!isNegatedStaleClaim(lowerText, index, lowerNeedle)) {
+      const excerptStart = Math.max(0, index - 40);
+      const excerptEnd = Math.min(text.length, index + needle.length + 40);
+      matches.push(text.slice(excerptStart, excerptEnd).replace(/\s+/g, " ").trim());
+    }
+    index = lowerText.indexOf(lowerNeedle, index + lowerNeedle.length);
+  }
+
+  return matches;
+}
+
+function getLocalNegationContext(text: string, index: number) {
+  const hardBoundaries = ["\n", ".", ";", ":", "!", "?"];
+  const boundary = Math.max(...hardBoundaries.map((marker) => text.lastIndexOf(marker, index - 1)));
+  return text.slice(Math.max(boundary + 1, index - 90), index);
+}
+
+function isNegatedStaleClaim(text: string, index: number, needle: string) {
+  const suffix = getLocalNegationContext(text, index).replace(/\s+/g, " ");
+  // Only exact local prefixes immediately before the stale phrase count as negation.
+  const directNegationPrefixes = [
+    /\bnot\s*$/,
+    /\bnot\s+a\s*$/,
+    /\bno\s*$/,
+    /\bwithout\s*$/,
+    /\bdoes \*\*not\*\*\s*$/,
+    /\bdoes not\s*$/,
+    /\bdo not\s*$/,
+    /\bmust not\s*$/,
+    /\bis not\s*$/,
+    /\bisn't\s*$/,
+  ];
+  const claimSpecificPrefixes: Record<string, RegExp[]> = {
+    "fully-proved live wallet-backed operation": [
+      /\bnot\s+a\s+blanket\s+claim\s+of\s*$/,
+      /\bnot\s+a\s+claim\s+of\s*$/,
+      /\bno\s+blanket\s+claim\s+of\s*$/,
+    ],
+  };
+
+  return [
+    ...directNegationPrefixes,
+    ...(claimSpecificPrefixes[needle] ?? []),
+  ].some((pattern) => pattern.test(suffix));
 }

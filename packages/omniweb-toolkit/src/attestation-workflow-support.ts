@@ -5,4 +5,4 @@ export {
   type SourceRecordV2,
 } from "../../../src/toolkit/sources/catalog.js";
 export { selectSourceForTopicV2 } from "../../../src/toolkit/sources/policy.js";
-export { validateUrl } from "../../../src/toolkit/url-validator.js";
+export { validateUrl } from "./url-validator.js";

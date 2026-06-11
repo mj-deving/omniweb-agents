@@ -132,7 +132,7 @@ if (supportingUrls.length === 0) {
 
 const loadAgentSourceView = await loadPackageExport<
   (agent: SourceAgent, catalogPath: string, overridePath: string, mode: string) => SourceView
->("../dist/attestation-workflow-support.js", "../src/attestation-workflow-support.ts", "loadAgentSourceView");
+>("../dist/attestation-workflow-check.js", "../src/attestation-workflow-check.ts", "loadAgentSourceView");
 const evaluateAttestationWorkflow = await loadPackageExport<
   (input: {
     attestUrl: string;

@@ -279,8 +279,8 @@ async function runDraftPreflight(opts: {
   const loadAgentSourceView = await loadPackageExport<
     (agent: string, primaryCatalogPath: string, fallbackCatalogPath: string, mode: string) => SourceView
   >(
-    "../dist/attestation-workflow-support.js",
-    "../src/attestation-workflow-support.ts",
+    "../dist/attestation-workflow-check.js",
+    "../src/attestation-workflow-check.ts",
     "loadAgentSourceView",
   );
   const evaluateAttestationWorkflow = await loadPackageExport<

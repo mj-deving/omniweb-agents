@@ -1,7 +1,10 @@
 ---
 summary: "Boundary map for using the control map to inspect the whole repo without letting archives, generated outputs, or sessions dominate the graph."
-read_when: ["whole project graph", "understandignore", "repo-wide control audit", "control boundary"]
 topic_hint:
+  - "whole project graph"
+  - "understandignore"
+  - "repo-wide control audit"
+  - "control boundary"
   - "You need to widen from package control-map work to a whole-project scan while preserving live authority signal."
 ---
 
@@ -70,6 +73,55 @@ Boundary result:
 Follow-up created:
 
 - `omniweb-agents-vxza`: normalize live command examples and CLI shebangs to Bun-facing policy; keep historical PRD evidence separate from live operator docs
+
+## Package/Root Ownership Decisions
+
+Use this map before treating same-name root and package files as duplicates.
+Most current overlaps are boundary adapters or distinct runtime layers, not
+deletion candidates.
+
+- URL validation: `src/toolkit/url-validator.ts` is the canonical
+  implementation. `packages/omniweb-toolkit/src/url-validator.ts` is the only
+  package boundary wrapper, and package `src/` plus `scripts/` callers should
+  import through that wrapper. Guard: `tests/packages/toolkit-guardrails.test.ts`
+  checks that direct package imports of `../../../src/toolkit/url-validator.js`
+  are limited to the wrapper.
+- Action execution: root `src/toolkit/reactive/event-loop.ts` and
+  `src/actions/action-executor.ts` remain active root event-loop execution
+  surfaces. Package `packages/omniweb-toolkit/src/action-executor.ts` remains
+  the resolved-intent executor for package minimal-agent/operator flows. Do not
+  collapse these without proving event-loop behavior and package
+  resolved-intent envelopes stay covered.
+- Connect/runtime: root `src/toolkit/tools/connect.ts` remains the session
+  lifecycle tool for root toolkit paths. Package `packages/omniweb-toolkit/src/connect.ts`
+  and `src/colony.ts` remain the public runtime adapter and `connect()`
+  surface. Keep both until a later task proves one call family is unused.
+- Tip: root `src/toolkit/tools/tip.ts` and `src/actions/action-executor.ts`
+  support root session/reactive flows. Package `packages/omniweb-toolkit/src/hive.ts`
+  and `src/action-executor/tip.ts` support runtime and resolved-intent package
+  flows. Treat tip overlap as separate execution ownership, not duplicate code.
+- Observe: root `src/lib/pipeline/observe.ts` is the append-only telemetry
+  logger. Package `packages/omniweb-toolkit/src/policy/observe.ts` is a policy
+  delegate that calls consumer-owned `observe(ctx)`. Both are retained.
+- Errors: package `packages/omniweb-toolkit/src/errors.ts` owns public package
+  error classes. Root `src/toolkit/util/errors.ts` owns the shared
+  `toErrorMessage()` utility shim for root internals. This is a low-priority
+  cleanup candidate only if a future public-error contract or root/package
+  utility boundary needs tightening.
+
+Next cleanup target:
+
+- `omniweb-agents-u36h` is a ranked helper-duplication audit only. It should
+  decide keep/extract per helper and create a new small bead for any accepted
+  extraction. It is not authority to delete or centralize helpers directly.
+
+Validation for ownership-map changes:
+
+- docs syntax and whitespace: `git diff --check`
+- package markdown front matter:
+  `bun scripts/normalize-doc-frontmatter.ts --check --path packages/omniweb-toolkit/references/whole-project-boundary-map.md`
+- URL boundary regression when the URL validator row changes:
+  `bunx vitest run tests/packages/toolkit-guardrails.test.ts`
 
 ## Command Policy Cleanup
 

@@ -12,9 +12,20 @@ This map keeps architecture truth separate from task truth.
 - Package truth: `packages/omniweb-toolkit/` for public package contracts, shipped docs, references, scripts, and exported starter artifacts.
 - Public summary truth: `docs-site/` only summarizes canonical docs; it is not a second architecture source.
 
+## 30-Second Map
+
+Start here when you need the shortest honest routing:
+
+- Front door: root `README.md` routes cold users to `packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md`.
+- Shared substrate: `packages/omniweb-toolkit/` is the public OmniWeb package and the main consumer-facing authority.
+- Runtime-heavy package path: `omniweb-toolkit/runtime` owns wallet-backed `connect()` plus readiness, guardrail, admissibility, and lifecycle helpers.
+- Root internals: `src/toolkit/` is reusable mechanism; `src/lib/` is policy and strategy; neither is the default external onboarding path.
+- Demoted legacy surfaces: older specialist bundles, generated registry/OpenClaw exports, and the archived root runner are not equal default front doors.
+- Proof ladder: package docs and references define claims; package checks and operator checks prove them; spend or mutation still requires explicit `--broadcast` or `--execute` authority plus readback.
+
 ## Evidence Snapshot
 
-Checked on `origin/main` at `fd1f49e2`.
+Checked on `origin/main` at `a11c50c2`.
 
 - `docs-list` shows the current docs authority set.
 - Scoped import-edge scan covered `packages/omniweb-toolkit/src`, `src/toolkit`, `src/lib`, active `cli`, `docs`, `docs-site`, package docs, and package references.
@@ -57,6 +68,13 @@ Docs:
 - `docs/ECOSYSTEM.md` is classified as repo ecosystem/source-of-truth routing and carries front matter.
 - `docs-site/README.md` says canonical package truth lives in `packages/omniweb-toolkit/`, canonical repo architecture and research live in `docs/`, and `docs-site/` is the small public summary layer.
 - `docs-site/source-of-truth.html` repeats the same public-facing source-of-truth model.
+
+Front-door precedence:
+
+- root `README.md` is the repo entry path
+- `packages/omniweb-toolkit/README.md` is the substrate/package entry path
+- `packages/omniweb-toolkit/agents/openclaw/colony-operator/README.md` is the maintained operator entry path
+- if another doc treats older specialist bundles as equal default onboarding, that doc is stale
 
 ## Runtime Flows
 
@@ -103,12 +121,24 @@ Write routing:
 - `src/toolkit/sdk-bridge.ts` uses the guarded store/confirm/broadcast pipeline for HIVE posts and DEM transfers.
 - Any refactor touching write paths is security-sensitive because the project handles real DEM on mainnet.
 
+## Proof And Check Ladder
+
+Use this order when deciding whether a route is current or stale:
+
+1. Source-of-truth docs: root `README.md`, package `README.md`, package `references/control-map.md`, and colony-operator `README.md`.
+2. Package no-spend gates: `bun run --cwd packages/omniweb-toolkit check:package`, `check:frontdoor`, `check:verification-matrix`.
+3. Operator path checks: `bun run --cwd packages/omniweb-toolkit check:colony-operator-primary`, `check:colony-operator-consumer`, `check:colony-operator-entrypoint`.
+4. Live gates: only commands with explicit `--broadcast` or `--execute` can claim write or spend proof.
+
+If a doc claim cannot survive that ladder, treat it as routing prose, not architecture truth.
+
 ## Control Rules
 
 - Do not put live task state in docs. Use Beads and GitHub for status, owners, blockers, and current queues.
 - Do not duplicate package API contracts in root docs. Link to package docs and references when the package is the authority.
 - Do not treat line count or graph centrality as a refactor by itself. It becomes a refactor only after source evidence shows a behavior, ownership, or validation problem.
 - Do not rediscover the archived root runner as an active runtime. Converge through the package/colony-operator path unless a future bead explicitly designs a new route.
+- Do not treat older specialist bundles, generated registry exports, or low-level minimal-agent assets as equal default front doors while `colony-operator` remains the maintained path.
 - Do not change runtime behavior inside docs/control-map beads.
 
 ## Triage References

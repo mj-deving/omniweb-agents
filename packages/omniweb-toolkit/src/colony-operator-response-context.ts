@@ -8,6 +8,7 @@ import type {
   MinimalAgentState,
   MinimalCycleRecord,
 } from "./colony-operator-entrypoint-types.js";
+import { uniqueStrings } from "./unique-strings.js";
 
 export function buildColonyOperatorResponseDepthAccess(
   manifest: ToolkitCapabilityManifest,
@@ -153,10 +154,6 @@ const RESPONSE_DEPTH_SURFACE_REQUIREMENTS: ResponseDepthSurfaceRequirement[] = [
     envelopeFields: ["lifecyclePlan.recordId", "lifecyclePlan.proofPath", "cycle.outcome.execution", "toolkitCapabilityManifest.capabilities"],
   },
 ];
-
-function uniqueStrings<T extends string>(values: T[]): T[] {
-  return Array.from(new Set(values));
-}
 
 function isTimeParameter(parameter: ToolkitCapabilityManifestEntry["params"][number]): boolean {
   return ["window", "horizon", "periods"].includes(parameter.name);

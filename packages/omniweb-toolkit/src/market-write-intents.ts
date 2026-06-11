@@ -10,6 +10,7 @@ import {
 } from "./colony-operator-capability-truth.js";
 import { evaluateToolkitGuardrailsSync, type ToolkitGuardrailStatus } from "./guardrails.js";
 import type { RuntimeCapabilityResult, WriteReadinessOptions } from "./readiness.js";
+import { uniqueNonEmptyStrings } from "./unique-strings.js";
 
 export type MarketWriteFamily =
   | "fixed-price"
@@ -277,7 +278,7 @@ function fromActionTruth(
     canExecuteNow: false,
     spendsDem: actionTruth.spendsDem,
     noSpendDefault: true,
-    reasonCodes: uniqueStrings([
+    reasonCodes: uniqueNonEmptyStrings([
       ...actionTruth.reasonCodes,
       ...toolkitAdmissibility.reasonCodes,
       "live_execution_disabled_for_consumer_spectrum_epic",
@@ -324,8 +325,4 @@ function requiredAction(
   const action = actions.find((item) => item.actionFamily === family);
   if (!action) throw new Error(`missing ${family} action truth`);
   return action;
-}
-
-function uniqueStrings(values: string[]): string[] {
-  return Array.from(new Set(values.filter((value) => value.length > 0)));
 }

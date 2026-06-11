@@ -113,7 +113,18 @@ for (const flag of [
 }
 
 const catalogPath = resolve(REPO_ROOT, "config", "sources", "catalog.json");
-const { loadAgentSourceView } = await loadAttestationWorkflowSupport();
+const loadAgentSourceView = await loadPackageExport<
+  (
+    agent: AgentName,
+    catalogPath: string,
+    overridePath: string,
+    mode: string,
+  ) => SourceView
+>(
+  "../dist/attestation-workflow-check.js",
+  "../src/attestation-workflow-check.ts",
+  "loadAgentSourceView",
+);
 const sourceView = loadAgentSourceView(agent, catalogPath, catalogPath, "catalog-only");
 const {
   evaluateAttestationWorkflow,
@@ -219,30 +230,6 @@ function validateFlagHasValue(flag: string, argv: string[]): void {
 
 function normalizeCategory(value: string): string {
   return value.trim().toUpperCase();
-}
-
-async function loadAttestationWorkflowSupport(): Promise<{
-  loadAgentSourceView: (
-    agent: AgentName,
-    catalogPath: string,
-    overridePath: string,
-    mode: string,
-  ) => SourceView;
-}> {
-  const loadAgentSourceView = await loadPackageExport<
-    (
-      agent: AgentName,
-      catalogPath: string,
-      overridePath: string,
-      mode: string,
-    ) => SourceView
-  >(
-    "../dist/attestation-workflow-support.js",
-    "../src/attestation-workflow-support.ts",
-    "loadAgentSourceView",
-  );
-
-  return { loadAgentSourceView };
 }
 
 async function loadAttestationWorkflowCheck(): Promise<{

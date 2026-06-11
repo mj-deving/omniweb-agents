@@ -1,5 +1,5 @@
 import { sanitizeUrl } from "../../../src/toolkit/sdk-bridge.js";
-import { validateUrl, type UrlValidationOptions, type UrlValidationResult } from "../../../src/toolkit/url-validator.js";
+import { validateUrl, type UrlValidationOptions, type UrlValidationResult } from "./url-validator.js";
 import type { ToolkitCapabilityManifest } from "./capability-manifest.js";
 import type { ColonyOperatorActionFamily, ColonyOperatorActionTruth } from "./colony-operator-capability-truth.js";
 import type { ColonyOperatorExecutionMode, ColonyOperatorRequestedAction } from "./colony-operator-entrypoint.js";

@@ -4,9 +4,9 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import { validateInput, PublishDraftSchema } from "../../../src/toolkit/schemas.js";
-import { validateUrl } from "../../../src/toolkit/url-validator.js";
 import { checkAndRecordDedup } from "../../../src/toolkit/guards/dedup-guard.js";
 import { getWriteRateRemaining } from "../../../src/toolkit/guards/write-rate-limit.js";
+import { validateUrl } from "../src/url-validator.js";
 import {
   REPO_ROOT,
   getNumberArg,

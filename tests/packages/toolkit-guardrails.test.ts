@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   buildColonyOperatorCapabilityTruth,
@@ -50,7 +52,30 @@ function makeOmni(): any {
   };
 }
 
+function listTsFiles(dir: string): string[] {
+  const entries = readdirSync(dir).flatMap((entry) => {
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) {
+      return listTsFiles(path);
+    }
+    return path.endsWith(".ts") ? [path] : [];
+  });
+  return entries.sort();
+}
+
 describe("toolkit guardrails", () => {
+  it("keeps package URL validation imports behind the package wrapper", () => {
+    const directImport = "../../../src/toolkit/url-validator.js";
+    const packageFiles = [
+      ...listTsFiles("packages/omniweb-toolkit/src"),
+      ...listTsFiles("packages/omniweb-toolkit/scripts"),
+    ];
+    const directImporters = packageFiles
+      .filter((path) => readFileSync(path, "utf8").includes(directImport));
+
+    expect(directImporters).toEqual(["packages/omniweb-toolkit/src/url-validator.ts"]);
+  });
+
   it("exports a runtime-owned guardrail manifest with every required domain", () => {
     const manifest = buildToolkitGuardrailManifest({ now: new Date("2026-05-18T10:00:00.000Z") });
 

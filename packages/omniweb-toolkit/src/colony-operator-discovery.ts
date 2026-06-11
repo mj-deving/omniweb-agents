@@ -6,6 +6,7 @@ import type {
   ColonyOperatorToolkitHelpCommand,
 } from "./colony-operator-entrypoint-types.js";
 import { buildColonyOperatorResponseDepthAccess } from "./colony-operator-response-context.js";
+import { uniqueStrings } from "./unique-strings.js";
 
 export function buildColonyOperatorCapabilityDiscovery(
   manifest: ToolkitCapabilityManifest,
@@ -152,9 +153,4 @@ function usageFor(method: string, params: ToolkitCapabilityManifestEntry["params
     return parameter.required ? rendered : `[${rendered}]`;
   });
   return [method, ...renderedParams].join(" ");
-}
-
-
-function uniqueStrings<T extends string>(values: T[]): T[] {
-  return Array.from(new Set(values));
 }

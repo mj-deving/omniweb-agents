@@ -23,6 +23,7 @@ import type {
   MinimalExecutionOutcome,
   ResolvedIntent,
 } from "./colony-operator-entrypoint-types.js";
+import { uniqueStrings } from "./unique-strings.js";
 
 export function buildColonyOperatorMultiActionPlan(args: {
   mode?: ColonyOperatorExecutionMode;
@@ -420,8 +421,4 @@ function lifecycleStatusForExecution(
   if (verification?.visible === true) return "pending-indexer";
   if (execution.txHash) return "pending-indexer";
   return "broadcasted";
-}
-
-function uniqueStrings<T extends string>(values: T[]): T[] {
-  return Array.from(new Set(values));
 }

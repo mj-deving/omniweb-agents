@@ -21,6 +21,7 @@ import {
 } from "./guardrails.js";
 import type { MinimalActionType, ResolvedIntent } from "./intent-types.js";
 import type { RuntimeCapabilityResult, WriteReadinessOptions } from "./readiness.js";
+import { uniqueNonEmptyStrings } from "./unique-strings.js";
 
 export type ToolkitActionAdmissibilityStatus =
   | "allowed"
@@ -366,17 +367,17 @@ function finalizeAdmissibility(
     reasonCode = "admissible";
   }
 
-  const reasonCodes = uniqueStrings([
+  const reasonCodes = uniqueNonEmptyStrings([
     reasonCode,
     ...(context.actionTruth?.reasonCodes ?? []),
     ...(input.resolution?.reasonCodes ?? []),
     ...guardrailEvaluation.blockedReasonCodes,
   ]);
-  const supervisedRequirements = uniqueStrings([
+  const supervisedRequirements = uniqueNonEmptyStrings([
     ...guardrailEvaluation.supervisedRequirements,
     ...(status === "supervised" ? ["identity_supervision_required"] : []),
   ]);
-  const degradedReasonCodes = uniqueStrings([
+  const degradedReasonCodes = uniqueNonEmptyStrings([
     ...guardrailEvaluation.degradedReasonCodes,
     ...(status === "degraded" ? [reasonCode] : []),
   ]);
@@ -508,8 +509,4 @@ function actionSpendsDem(actionType: MinimalActionType | undefined): boolean {
 
 function isMinimalActionType(value: string | undefined): value is MinimalActionType {
   return value === "publish" || value === "reply" || value === "react" || value === "tip" || value === "bet";
-}
-
-function uniqueStrings(values: string[]): string[] {
-  return Array.from(new Set(values.filter((value) => value.length > 0)));
 }

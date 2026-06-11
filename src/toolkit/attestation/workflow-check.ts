@@ -3,6 +3,8 @@ import { inferProvider, type SourceRecordV2 } from "../sources/catalog.js";
 import { selectSourceForTopicV2 } from "../sources/policy.js";
 import { validateUrl, type UrlValidationOptions, type UrlValidationResult } from "../url-validator.js";
 
+export { loadAgentSourceView } from "../sources/catalog.js";
+
 export type CheckResult = {
   name: string;
   pass: boolean;

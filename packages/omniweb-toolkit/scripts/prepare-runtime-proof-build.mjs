@@ -15,7 +15,6 @@ await build({
     "leaderboard-pattern-scorecard-regression": "src/leaderboard-pattern-scorecard-regression.ts",
     "publish-visibility": "src/publish-visibility.ts",
     "publish-readiness-support": "src/publish-readiness-support.ts",
-    "attestation-workflow-support": "src/attestation-workflow-support.ts",
     "attestation-workflow-check": "src/attestation-workflow-check.ts",
   },
   format: ["esm"],

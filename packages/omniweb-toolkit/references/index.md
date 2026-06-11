@@ -1,7 +1,11 @@
 ---
 summary: Categorized map of the package reference docs so SKILL.md can stay thin without losing discoverability.
-read_when: ["reference index", "find package docs", "reference routing", "which reference should I open"]
+read_when: "reference index, find package docs, reference routing, which reference should I open"
 topic_hint:
+  - "reference index"
+  - "find package docs"
+  - "reference routing"
+  - "which reference should I open"
   - "You need factual package references but do not yet know the exact file to open."
 ---
 
@@ -13,6 +17,7 @@ Use this file when `SKILL.md` routes you to `references/` but you do not yet kno
 
 - [control-map.md](./control-map.md): compact authority, runnable-surface, validation, write/spend-gate, and stale-risk classification map before scoped graph or cleanup work
 - [whole-project-boundary-map.md](./whole-project-boundary-map.md): root `.understandignore` boundary and included/excluded surfaces for repo-wide control scans
+- [helper-duplication-audit-2026-06-11.md](./helper-duplication-audit-2026-06-11.md): ranked package/root helper duplication audit with keep/extract decisions before utility extraction
 - [2026-05-08-supercolony-substrate-status-map.md](./2026-05-08-supercolony-substrate-status-map.md): current substrate map and the boundary-blur diagnosis behind the playbook-policy pivot
 - [playbook-owned-policy-contract.md](./playbook-owned-policy-contract.md): contract that playbooks own policy while the shared seam resolves, executes, and verifies truth
 - [playbook-policy-implementation-plan.md](./playbook-policy-implementation-plan.md): implementation ladder for moving policy above the request/resolution/execution seam

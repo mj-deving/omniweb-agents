@@ -1,7 +1,10 @@
 ---
 summary: "Boundary map for using the control map to inspect the whole repo without letting archives, generated outputs, or sessions dominate the graph."
-read_when: ["whole project graph", "understandignore", "repo-wide control audit", "control boundary"]
 topic_hint:
+  - "whole project graph"
+  - "understandignore"
+  - "repo-wide control audit"
+  - "control boundary"
   - "You need to widen from package control-map work to a whole-project scan while preserving live authority signal."
 ---
 
@@ -115,7 +118,8 @@ Next cleanup target:
 Validation for ownership-map changes:
 
 - docs syntax and whitespace: `git diff --check`
-- package markdown front matter: `bun scripts/normalize-doc-frontmatter.ts --check`
+- package markdown front matter:
+  `bun scripts/normalize-doc-frontmatter.ts --check --path packages/omniweb-toolkit/references/whole-project-boundary-map.md`
 - URL boundary regression when the URL validator row changes:
   `bunx vitest run tests/packages/toolkit-guardrails.test.ts`
 

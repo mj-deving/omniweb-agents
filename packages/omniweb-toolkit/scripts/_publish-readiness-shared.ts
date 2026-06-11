@@ -1,4 +1,4 @@
-import { sanitizeUrl } from "../../../src/toolkit/sdk-bridge.js";
+import { sanitizeUrl } from "../src/publish-readiness-support.js";
 
 const SENSITIVE_QUERY_PARAM_PATTERN = /(?:api[-_]?key|access[-_]?token|auth[-_]?token|id[-_]?token|refresh[-_]?token|client[-_]?secret|client[-_]?id|bearer|token|auth|signature|sig|secret|password|passwd|pass|session|code|key)/i;
 

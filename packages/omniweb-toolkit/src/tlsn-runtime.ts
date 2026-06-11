@@ -3,7 +3,7 @@ import { attestTlsnViaPlaywrightBridge } from "../../../src/lib/tlsn-playwright-
 import type { AttestResult, ToolResult } from "../../../src/toolkit/types.js";
 import { err } from "../../../src/toolkit/types.js";
 import type { DemosSession } from "../../../src/toolkit/session.js";
-import { validateUrl } from "../../../src/toolkit/url-validator.js";
+import { validateUrl } from "./url-validator.js";
 
 export async function attestTlsnWithSession(session: DemosSession, url: string): Promise<ToolResult<AttestResult>> {
   if (session.urlAllowlist.length > 0) {

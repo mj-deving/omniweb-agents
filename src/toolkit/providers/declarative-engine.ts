@@ -27,8 +27,8 @@ import type {
   EvidenceEntry,
   AttestationMethod,
   SurgicalCandidate,
+  ExtractedClaim,
 } from "./types.js";
-import type { ExtractedClaim } from "../../lib/attestation/claim-extraction.js";
 import { inferAssetAlias, inferMacroEntity } from "../chain/asset-helpers.js";
 
 // ── Spec Types ──────────────────────────────────────

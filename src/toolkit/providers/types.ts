@@ -10,6 +10,8 @@
 import type { SourceRecordV2 } from "../sources/catalog.js";
 import type { ExtractedClaim } from "../../lib/attestation/claim-extraction.js";
 
+export type { ExtractedClaim };
+
 // ── Attestation Method ──────────────────────────────
 
 export type AttestationMethod = "TLSN" | "DAHR";

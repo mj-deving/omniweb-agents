@@ -1,9 +1,9 @@
 ---
 type: roadmap
 status: active
-updated: 2026-06-11
-summary: "One-page active strategy surface. Current lane: package/root readability cleanup sequencing."
-topic_hint: ["roadmap", "next steps", "active strategy", "package/root cleanup", "helper extraction", "Understand refresh", "architecture map"]
+updated: 2026-06-12
+summary: "One-page active strategy surface. Current lane: post-cleanup architecture convergence."
+topic_hint: ["roadmap", "next steps", "active strategy", "architecture convergence", "Understand refresh", "refactor map"]
 ---
 
 # Roadmap
@@ -12,76 +12,82 @@ topic_hint: ["roadmap", "next steps", "active strategy", "package/root cleanup",
 
 ## Current Truth
 
-- `main` was re-grounded at `b31b5091` on 2026-06-11 with no open GitHub PRs.
-- The old post-`lng8` closeout lane is done and no longer the active queue:
-  `omniweb-agents-a8q1` and `omniweb-agents-li6j` are closed.
-- The current package/root cleanup band has already landed three merged PRs:
-  `omniweb-agents-rglh` via PR #612, `omniweb-agents-33p9` via PR #613, and
-  `omniweb-agents-u36h` via PR #614.
+- `main` is re-grounded at `d0a170a3` on 2026-06-12 with no open GitHub PRs at lane creation time.
+- The package/root cleanup band is no longer the active queue. It landed through
+  helper extraction, stale support-surface retirement, source-barrel retirement,
+  and the boundary type-import cap:
+  PR #616, PR #618, PR #619, plus commits `ff6ce8a1` and `d0a170a3`.
 - The local Understand graph snapshot still points at
-  `42bd41bf089340e535db1712c8e2f21909c89ad7`, so it is stale relative to
-  current `main` and should be refreshed only after the next package helper
-  extraction lands.
+  `dd8151e99a69382b89f9319c1ad30b35bb4cf4dd`, so it is stale relative to
+  current `main`.
 - Execution truth stays in Beads and GitHub. This file names the active order
   and boundaries; it is not the task ledger.
 
 ## Active Lane
 
-**Package/root readability cleanup.**
+**Post-cleanup architecture convergence.**
 
-The next band is no longer copied-bundle proof or post-`lng8` closeout. The
-current lane is to finish the small package-local helper cleanup, refresh the
-Understand graph against current code, then use that refreshed graph to publish
-the concise architecture map before attempting a bounded consolidation.
+The next lane is to refresh the roadmap after cleanup closeout, rebuild the
+whole-repo Understand graph at current `main`, turn graph evidence into a ranked
+architecture refactor map, then implement only the first proven bounded cluster.
+
+Do not start a broad refactor from stale graph output. Use the refreshed graph as
+a lead generator, then prove each candidate against source imports, package
+exports, checks, and architecture docs before changing code.
 
 ## Ordered Queue
 
 1. **Roadmap sync: active**
-   - Bead: `omniweb-agents-nj8x`
-   - Scope: docs-only update of this roadmap from live Beads + merged PR truth.
+   - Bead: `omniweb-agents-yctp`
+   - Scope: docs-only update of this roadmap from live Beads, GitHub, and graph metadata truth.
 
-2. **Package-local `uniqueStrings` extraction: next**
-   - Bead: `omniweb-agents-ah20`
-   - Scope: package `src/` only; no root imports, no public export widening.
+2. **Whole-repo Understand refresh**
+   - Bead: `omniweb-agents-au3k`
+   - Scope: refresh local graph at current `main`; keep `.understand-anything/`
+     artifacts local/untracked and record graph metadata in Beads.
 
-3. **Understand refresh after helper extraction**
-   - Bead: `omniweb-agents-uu0r`
-   - Scope: refresh local Understand graph after `ah20`; keep generated graph
-     state local/untracked and record the outcome in Beads.
+3. **Ranked architecture refactor map**
+   - Bead: `omniweb-agents-19d8`
+   - Scope: classify only source-backed candidates: package/root boundary drift,
+     duplicate concepts, stale compatibility surfaces, docs/code mismatch, and
+     public-export drift.
 
-4. **Current architecture map**
-   - Bead: `omniweb-agents-i713`
-   - Scope: concise human/agent-readable map from the refreshed graph and
-     current package/root ownership docs.
-
-5. **First consolidation cluster**
-   - Bead: `omniweb-agents-jypj`
-   - Scope: one bounded consolidation or demotion after the refreshed graph and
-     architecture map identify the best concrete cluster.
+4. **First proven convergence cluster**
+   - Bead: `omniweb-agents-xfs2`
+   - Scope: one bounded code/docs/checks PR from the top-ranked cluster. No
+     public API widening; create follow-up beads for anything outside the first
+     cluster.
 
 Current blocker chain:
-`omniweb-agents-nj8x -> omniweb-agents-ah20 -> omniweb-agents-uu0r -> omniweb-agents-i713 -> omniweb-agents-jypj`
+`omniweb-agents-yctp -> omniweb-agents-au3k -> omniweb-agents-19d8 -> omniweb-agents-xfs2`
+
+Parent epic:
+`omniweb-agents-f6f0`
 
 ## Design Boundaries
 
 - No live commands, no `--execute`, no wallet/provider setup, no provider auth,
   and no spend in this lane.
-- Package helper cleanup stays package-local unless a later bead explicitly
-  widens the ownership boundary with proof.
 - Understand artifacts under `.understand-anything/` stay local analysis state;
   durable results belong in Beads plus tracked docs only when needed.
+- The refactor map must name a problem, canonical owner, affected surface, proof
+  command, expected PR size, and stop rule for every ranked candidate.
+- Any removal or demotion needs importer proof. If importer proof shows a surface
+  is live, reclassify or migrate first instead of deleting.
+- Package exports remain controlled by `packages/omniweb-toolkit/package.json`
+  and the package public-export checks.
 - Keep the active roadmap short. Put historical detail in archives, references,
   and PR history instead of rebuilding a task ledger here.
 
 ## Pointers
 
-- Helper duplication audit:
-  [packages/omniweb-toolkit/references/helper-duplication-audit-2026-06-11.md](../packages/omniweb-toolkit/references/helper-duplication-audit-2026-06-11.md)
+- Architecture control map:
+  [docs/architecture-control-map.md](architecture-control-map.md)
 - Package/root ownership map:
   [packages/omniweb-toolkit/references/whole-project-boundary-map.md](../packages/omniweb-toolkit/references/whole-project-boundary-map.md)
 - Runtime/control map:
   [packages/omniweb-toolkit/references/control-map.md](../packages/omniweb-toolkit/references/control-map.md)
-- Archived pre-trim roadmap:
-  [docs/archive/roadmaps/roadmap-2026-05-25-pre-trim.md](archive/roadmaps/roadmap-2026-05-25-pre-trim.md)
+- Package public surface:
+  [packages/omniweb-toolkit/package.json](../packages/omniweb-toolkit/package.json)
 - Repo state and branch policy:
   [docs/REPO-STATE.md](REPO-STATE.md)

@@ -1,4 +1,4 @@
-import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gate.js";
+import type { QualityGateResult } from "./publish-quality.js";
 import { renderColonyPromptPacket, type ColonyPromptPacket } from "./colony-prompt.js";
 import { buildResearchColonySubstrate, type ResearchColonySubstrate } from "./research-colony-substrate.js";
 import type { ResearchEvidenceSummary } from "./research-evidence.js";

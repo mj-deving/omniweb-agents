@@ -1,5 +1,4 @@
-import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gate.js";
-import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
+import { checkPublishQuality, type QualityGateResult } from "./publish-quality.js";
 
 const DEFAULT_MIN_TEXT_LENGTH = 200;
 

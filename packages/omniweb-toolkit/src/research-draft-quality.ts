@@ -1,5 +1,4 @@
-import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gate.js";
-import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
+import { checkPublishQuality, type QualityGateResult } from "./publish-quality.js";
 import { classifyResearchEvidenceSemanticClass, type ResearchEvidenceSummary } from "./research-evidence.js";
 import type { ResearchOpportunity } from "./research-opportunities.js";
 import type { ResearchSelfHistorySummary } from "./research-self-history.js";

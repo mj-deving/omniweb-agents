@@ -210,6 +210,8 @@ describe("Architecture Boundary — ADR-0002", () => {
     // Cap 4: +1 from agent-runtime.ts (type LLMProvider from lib/llm) — Phase 10a
     // Cap 11: +4 from matcher.ts (AttestationType, LLMProvider, transcript types, providers/types)
     //         +3 from policy.ts (AttestationType, AttestationMethodPlan, AgentConfig)
+    //         +1 from providers/types.ts (ExtractedClaim provider contract)
+    //         +1 from toolkit/index.ts (LLMProvider compatibility type export)
     expect(typeImports.length).toBeLessThanOrEqual(11);
   });
 

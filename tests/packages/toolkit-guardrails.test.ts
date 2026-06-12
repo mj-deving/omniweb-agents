@@ -76,6 +76,18 @@ describe("toolkit guardrails", () => {
     expect(directImporters).toEqual(["packages/omniweb-toolkit/src/url-validator.ts"]);
   });
 
+  it("keeps package publish quality imports behind the package wrapper", () => {
+    const directImport = "../../../src/toolkit/publish/quality-gate.js";
+    const packageFiles = [
+      ...listTsFiles("packages/omniweb-toolkit/src"),
+      ...listTsFiles("packages/omniweb-toolkit/scripts"),
+    ];
+    const directImporters = packageFiles
+      .filter((path) => readFileSync(path, "utf8").includes(directImport));
+
+    expect(directImporters).toEqual(["packages/omniweb-toolkit/src/publish-quality.ts"]);
+  });
+
   it("exports a runtime-owned guardrail manifest with every required domain", () => {
     const manifest = buildToolkitGuardrailManifest({ now: new Date("2026-05-18T10:00:00.000Z") });
 

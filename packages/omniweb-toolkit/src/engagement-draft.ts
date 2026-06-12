@@ -1,5 +1,4 @@
-import type { QualityGateResult } from "../../../src/toolkit/publish/quality-gate.js";
-import { checkPublishQuality } from "../../../src/toolkit/publish/quality-gate.js";
+import { checkPublishQuality, type QualityGateResult } from "./publish-quality.js";
 import { renderColonyPromptPacket, type ColonyPromptPacket } from "./colony-prompt.js";
 import { getPrimaryAttestationSourceName } from "./minimal-attestation-plan.js";
 import type { EngagementOpportunity } from "./engagement-opportunities.js";

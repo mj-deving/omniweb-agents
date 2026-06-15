@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" role="img" aria-labelledby="title desc">
+  <title id="title">Whole Repo Authority Map</title>
+  <desc id="desc">Architecture authority map showing main, Beads, GitHub PRs, package authority, repo docs, docs-site, root internals, and tests.</desc>
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; fill: #111827; }
+    .title { font-size: 24px; font-weight: 700; }
+    .subtitle { font-size: 13px; fill: #6b7280; }
+    .section { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.5; rx: 10; ry: 10; }
+    .box { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.5; rx: 8; ry: 8; }
+    .blue { fill: #eff6ff; stroke: #bfdbfe; }
+    .green { fill: #f0fdf4; stroke: #bbf7d0; }
+    .purple { fill: #faf5ff; stroke: #ddd6fe; }
+    .orange { fill: #fff7ed; stroke: #fed7aa; }
+    .teal { fill: #f0fdfa; stroke: #99f6e4; }
+    .gray { fill: #f9fafb; stroke: #d1d5db; }
+    .label { font-size: 15px; font-weight: 650; }
+    .small { font-size: 12px; fill: #6b7280; }
+    .tiny { font-size: 11px; fill: #6b7280; }
+    .arrow { fill: none; stroke-width: 2; }
+    .dashed { stroke-dasharray: 6 4; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ea580c"/></marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9333ea"/></marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6b7280"/></marker>
+  </defs>
+  <rect width="1200" height="760" fill="#ffffff"/>
+
+  <text x="48" y="48" class="title">Whole Repo Authority Map</text>
+  <text x="48" y="72" class="subtitle">Where truth lives: task state, merged code, package contracts, architecture docs, and proof gates stay separate.</text>
+
+  <rect x="60" y="105" width="1080" height="145" class="section gray"/>
+  <text x="82" y="134" class="label">Execution Truth</text>
+  <rect x="105" y="160" width="210" height="56" class="box blue"/>
+  <text x="210" y="184" text-anchor="middle" class="label">main</text>
+  <text x="210" y="203" text-anchor="middle" class="small">merged source truth</text>
+  <rect x="495" y="160" width="210" height="56" class="box purple"/>
+  <text x="600" y="184" text-anchor="middle" class="label">GitHub PRs</text>
+  <text x="600" y="203" text-anchor="middle" class="small">in-flight code</text>
+  <rect x="885" y="160" width="210" height="56" class="box green"/>
+  <text x="990" y="184" text-anchor="middle" class="label">Beads</text>
+  <text x="990" y="203" text-anchor="middle" class="small">tasks, blockers, memory</text>
+  <path d="M 315 188 L 495 188" class="arrow" stroke="#9333ea" marker-end="url(#arrow-purple)"/>
+  <text x="405" y="179" text-anchor="middle" class="tiny">branch and review</text>
+  <path d="M 705 188 L 885 188" class="arrow" stroke="#16a34a" marker-end="url(#arrow-green)"/>
+  <text x="795" y="179" text-anchor="middle" class="tiny">bounded work</text>
+  <path d="M 495 204 C 410 238, 305 238, 230 216" class="arrow dashed" stroke="#6b7280" marker-end="url(#arrow-gray)"/>
+  <text x="365" y="240" text-anchor="middle" class="tiny">merge updates main</text>
+
+  <rect x="60" y="290" width="1080" height="310" class="section"/>
+  <text x="82" y="320" class="label">Architecture And Product Truth</text>
+
+  <rect x="105" y="355" width="250" height="90" class="box green"/>
+  <text x="230" y="382" text-anchor="middle" class="label">Package Authority</text>
+  <text x="230" y="405" text-anchor="middle" class="small">packages/omniweb-toolkit</text>
+  <text x="230" y="426" text-anchor="middle" class="tiny">exports, references, scripts, starters</text>
+
+  <rect x="475" y="355" width="250" height="90" class="box blue"/>
+  <text x="600" y="382" text-anchor="middle" class="label">Repo Docs</text>
+  <text x="600" y="405" text-anchor="middle" class="small">docs/ + accepted ADRs</text>
+  <text x="600" y="426" text-anchor="middle" class="tiny">architecture, research, decisions</text>
+
+  <rect x="845" y="355" width="250" height="90" class="box orange"/>
+  <text x="970" y="382" text-anchor="middle" class="label">Docs Site</text>
+  <text x="970" y="405" text-anchor="middle" class="small">docs-site/</text>
+  <text x="970" y="426" text-anchor="middle" class="tiny">public summary, not a fork</text>
+
+  <rect x="105" y="500" width="250" height="62" class="box teal"/>
+  <text x="230" y="525" text-anchor="middle" class="label">Root Internals</text>
+  <text x="230" y="546" text-anchor="middle" class="small">src/toolkit + src/lib + cli</text>
+
+  <rect x="475" y="500" width="250" height="62" class="box purple"/>
+  <text x="600" y="525" text-anchor="middle" class="label">Proof Gates</text>
+  <text x="600" y="546" text-anchor="middle" class="small">tests, evals, package checks</text>
+
+  <rect x="845" y="500" width="250" height="62" class="box gray"/>
+  <text x="970" y="525" text-anchor="middle" class="label">Understand Graph</text>
+  <text x="970" y="546" text-anchor="middle" class="small">lead generator, not task truth</text>
+
+  <path d="M 355 400 L 475 400" class="arrow" stroke="#2563eb" marker-end="url(#arrow-blue)"/>
+  <text x="415" y="389" text-anchor="middle" class="tiny">summarized by</text>
+  <path d="M 725 400 L 845 400" class="arrow dashed" stroke="#ea580c" marker-end="url(#arrow-orange)"/>
+  <text x="785" y="389" text-anchor="middle" class="tiny">publishes summary</text>
+  <path d="M 230 500 L 230 445" class="arrow" stroke="#16a34a" marker-end="url(#arrow-green)"/>
+  <text x="256" y="475" class="tiny">implements</text>
+  <path d="M 600 500 L 600 445" class="arrow" stroke="#9333ea" marker-end="url(#arrow-purple)"/>
+  <text x="626" y="475" class="tiny">proves</text>
+  <path d="M 970 500 L 970 445" class="arrow dashed" stroke="#6b7280" marker-end="url(#arrow-gray)"/>
+  <text x="997" y="475" class="tiny">aims review</text>
+
+  <rect x="60" y="635" width="1080" height="62" class="section gray"/>
+  <text x="82" y="663" class="label">Control Rule</text>
+  <text x="210" y="663" class="small">Package docs and checks define package claims. Root docs map architecture. Beads and GitHub carry live work. Graph evidence points to follow-up, then source and commands prove it.</text>
+
+  <g transform="translate(82, 720)">
+    <line x1="0" y1="0" x2="32" y2="0" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="42" y="4" class="tiny">architecture summary</text>
+    <line x1="190" y1="0" x2="222" y2="0" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <text x="232" y="4" class="tiny">implementation/proof</text>
+    <line x1="390" y1="0" x2="422" y2="0" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-gray)"/>
+    <text x="432" y="4" class="tiny">lead or downstream summary</text>
+  </g>
+</svg>

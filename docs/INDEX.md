@@ -13,6 +13,8 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 
 **Current state:** the active roadmap has been trimmed to a one-page strategy surface. Long proof ladders and completed-lane detail should stay in archives, package references, PRs, and Beads instead of accumulating in `docs/ROADMAP.md`.
 
+- [Architecture Diagram Atlas](architecture-atlas.md) — SVG and PNG maps for repo authority, package surface, runtime flow, substrate intent boundary, and Understand-backed refactor pressure.
+
 ## Roadmap Archives
 
 - [Pre-trim roadmap, 2026-05-25](archive/roadmaps/roadmap-2026-05-25-pre-trim.md) — full monolithic roadmap archived before the one-page active reset.

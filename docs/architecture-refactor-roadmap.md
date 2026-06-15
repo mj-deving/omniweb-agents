@@ -88,7 +88,10 @@ Affected surface:
 Proof command:
 
 ```bash
-rg -n "from ['\\\"]../../../src/toolkit" packages/omniweb-toolkit/src/write.ts packages/omniweb-toolkit/src
+# Replace write-adapter.ts with the actual adapter file(s); do not scan the whole package src tree.
+rg -n "from ['\\\"]../../../src/toolkit" \
+  packages/omniweb-toolkit/src/write.ts \
+  packages/omniweb-toolkit/src/write-adapter.ts
 bun run --cwd packages/omniweb-toolkit check:public-export-coverage
 bun run --cwd packages/omniweb-toolkit check:release
 ```

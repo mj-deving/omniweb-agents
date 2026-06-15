@@ -1,9 +1,16 @@
 ---
 type: index
 status: current
-updated: 2026-05-25
-summary: "Project history and narrative. Active strategy now lives in the one-page roadmap; pre-trim roadmap detail is archived."
-read_when: ["project history", "evolution", "what happened", "session changelog", "documentation map", "archive", "completed phases"]
+updated: 2026-06-15
+summary: "Project history and narrative. Active strategy now lives in the one-page roadmap and architecture refactor roadmap; pre-trim roadmap detail is archived."
+topic_hint:
+  - "project history"
+  - "evolution"
+  - "what happened"
+  - "session changelog"
+  - "documentation map"
+  - "archive"
+  - "completed phases"
 ---
 
 # omniweb-agents — Project Index
@@ -13,6 +20,7 @@ read_when: ["project history", "evolution", "what happened", "session changelog"
 
 **Current state:** the active roadmap has been trimmed to a one-page strategy surface. Long proof ladders and completed-lane detail should stay in archives, package references, PRs, and Beads instead of accumulating in `docs/ROADMAP.md`.
 
+- [Architecture Refactor Roadmap](architecture-refactor-roadmap.md) — stable lane plan for post-atlas architecture refactors; live claims, blockers, and sequencing stay in Beads.
 - [Architecture Diagram Atlas](architecture-atlas.md) — SVG and PNG maps for repo authority, package surface, runtime flow, substrate intent boundary, and Understand-backed refactor pressure.
 
 ## Roadmap Archives

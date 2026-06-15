@@ -1,9 +1,9 @@
 ---
 type: roadmap
 status: active
-updated: 2026-06-12
-summary: "One-page active strategy surface. Current lane: post-cleanup architecture convergence."
-topic_hint: ["roadmap", "next steps", "active strategy", "architecture convergence", "Understand refresh", "refactor map"]
+updated: 2026-06-15
+summary: "One-page active strategy surface. Current lane: roadmap-driven architecture refactors."
+topic_hint: ["roadmap", "next steps", "active strategy", "architecture refactor roadmap", "atlas", "refactor map"]
 ---
 
 # Roadmap
@@ -12,57 +12,37 @@ topic_hint: ["roadmap", "next steps", "active strategy", "architecture convergen
 
 ## Current Truth
 
-- `main` is re-grounded at `d0a170a3` on 2026-06-12 with no open GitHub PRs at lane creation time.
-- The package/root cleanup band is no longer the active queue. It landed through
-  helper extraction, stale support-surface retirement, source-barrel retirement,
-  and the boundary type-import cap:
-  PR #616, PR #618, PR #619, plus commits `ff6ce8a1` and `d0a170a3`.
-- The local Understand graph snapshot still points at
-  `dd8151e99a69382b89f9319c1ad30b35bb4cf4dd`, so it is stale relative to
-  current `main`.
-- Execution truth stays in Beads and GitHub. This file names the active order
-  and boundaries; it is not the task ledger.
+- `main` is re-grounded at `ebdf330e` on 2026-06-15 after the architecture
+  atlas landed in PR #625.
+- The graph and roadmap cluster is complete enough to drive the next lane:
+  roadmap sync in PR #622, ranked refactor map in PR #623, package-local
+  quality-gate boundary in PR #624, and architecture atlas in PR #625.
+- Active strategy now lives in
+  [Architecture Refactor Roadmap](architecture-refactor-roadmap.md).
+- Execution truth stays in Beads and GitHub. This file points to the active
+  strategic surface; it is not the task ledger.
 
 ## Active Lane
 
-**Post-cleanup architecture convergence.**
+**Roadmap-driven architecture refactors.**
 
-The next lane is to refresh the roadmap after cleanup closeout, rebuild the
-whole-repo Understand graph at current `main`, turn graph evidence into a ranked
-architecture refactor map, then implement only the first proven bounded cluster.
+Use the architecture refactor roadmap to choose the next bounded lane, then keep
+implementation work in Beads. Do not start broad source edits from graph
+centrality alone. Every code PR needs fresh importer proof, a stop rule, and the
+smallest meaningful validation ladder.
 
-Do not start a broad refactor from stale graph output. Use the refreshed graph as
-a lead generator, then prove each candidate against source imports, package
-exports, checks, and architecture docs before changing code.
+## Ordered Lanes
 
-## Ordered Queue
+See [Architecture Refactor Roadmap](architecture-refactor-roadmap.md) for the
+stable lane plan:
 
-1. **Roadmap sync: active**
-   - Bead: `omniweb-agents-yctp`
-   - Scope: docs-only update of this roadmap from live Beads, GitHub, and graph metadata truth.
+1. Package write subpath root-runtime import inventory.
+2. Package write boundary adapter/refactor, only if inventory proves a safe move.
+3. Legacy `./agent` compatibility export demotion, docs/tests first.
+4. Minimal-agent overload audit, implementation only after source proof.
+5. Deprecated root shim cleanup, one shim family per PR after empty importer proof.
 
-2. **Whole-repo Understand refresh**
-   - Bead: `omniweb-agents-au3k`
-   - Scope: refresh local graph at current `main`; keep `.understand-anything/`
-     artifacts local/untracked and record graph metadata in Beads.
-
-3. **Ranked architecture refactor map**
-   - Bead: `omniweb-agents-19d8`
-   - Scope: classify only source-backed candidates: package/root boundary drift,
-     duplicate concepts, stale compatibility surfaces, docs/code mismatch, and
-     public-export drift.
-
-4. **First proven convergence cluster**
-   - Bead: `omniweb-agents-xfs2`
-   - Scope: one bounded code/docs/checks PR from the top-ranked cluster. No
-     public API widening; create follow-up beads for anything outside the first
-     cluster.
-
-Current blocker chain:
-`omniweb-agents-yctp -> omniweb-agents-au3k -> omniweb-agents-19d8 -> omniweb-agents-xfs2`
-
-Parent epic:
-`omniweb-agents-f6f0`
+Parent Beads epic: `omniweb-agents-s993`.
 
 ## Design Boundaries
 

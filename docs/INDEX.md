@@ -21,6 +21,7 @@ topic_hint:
 **Current state:** the active roadmap has been trimmed to a one-page strategy surface. Long proof ladders and completed-lane detail should stay in archives, package references, PRs, and Beads instead of accumulating in `docs/ROADMAP.md`.
 
 - [Architecture Refactor Roadmap](architecture-refactor-roadmap.md) — stable lane plan for post-atlas architecture refactors; live claims, blockers, and sequencing stay in Beads.
+- [Package Write Boundary Inventory](package-write-boundary-inventory-2026-06-15.md) — inventory-only proof for the public `./write` subpath before any adapter refactor.
 - [Architecture Diagram Atlas](architecture-atlas.md) — SVG and PNG maps for repo authority, package surface, runtime flow, substrate intent boundary, and Understand-backed refactor pressure.
 
 ## Roadmap Archives

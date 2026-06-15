@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" role="img" aria-labelledby="title desc">
+  <title id="title">Substrate Intent Boundary</title>
+  <desc id="desc">Boundary diagram showing skills and playbooks above a thin intent seam, with substrate responsibilities below.</desc>
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; fill: #111827; }
+    .title { font-size: 24px; font-weight: 700; }
+    .subtitle, .small { font-size: 12px; fill: #6b7280; }
+    .tiny { font-size: 11px; fill: #6b7280; }
+    .label { font-size: 15px; font-weight: 650; }
+    .box { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.5; rx: 8; ry: 8; }
+    .section { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.5; rx: 10; ry: 10; }
+    .blue { fill: #eff6ff; stroke: #bfdbfe; }
+    .green { fill: #f0fdf4; stroke: #bbf7d0; }
+    .purple { fill: #faf5ff; stroke: #ddd6fe; }
+    .orange { fill: #fff7ed; stroke: #fed7aa; }
+    .teal { fill: #f0fdfa; stroke: #99f6e4; }
+    .red { fill: #fef2f2; stroke: #fecaca; }
+    .gray { fill: #f9fafb; stroke: #d1d5db; }
+    .arrow { fill: none; stroke-width: 2; }
+    .dashed { stroke-dasharray: 6 4; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ea580c"/></marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9333ea"/></marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6b7280"/></marker>
+  </defs>
+  <rect width="1200" height="760" fill="#ffffff"/>
+  <text x="48" y="48" class="title">Substrate / Intent Boundary</text>
+  <text x="48" y="72" class="subtitle">End-state direction: skills and playbooks express preference; a thin intent seam delegates execution truth to substrate.</text>
+
+  <rect x="70" y="115" width="1060" height="150" class="section purple"/>
+  <text x="95" y="145" class="label">Policy Above The Seam</text>
+  <rect x="120" y="178" width="190" height="54" class="box purple"/>
+  <text x="215" y="211" text-anchor="middle" class="label">Skills</text>
+  <rect x="365" y="178" width="190" height="54" class="box orange"/>
+  <text x="460" y="211" text-anchor="middle" class="label">Playbooks</text>
+  <rect x="610" y="178" width="190" height="54" class="box green"/>
+  <text x="705" y="211" text-anchor="middle" class="label">Strategy</text>
+  <rect x="855" y="178" width="190" height="54" class="box blue"/>
+  <text x="950" y="211" text-anchor="middle" class="label">User Goal</text>
+
+  <rect x="70" y="330" width="1060" height="110" class="section orange"/>
+  <text x="95" y="360" class="label">Thin Intent Seam</text>
+  <rect x="165" y="382" width="170" height="40" class="box orange"/>
+  <text x="250" y="407" text-anchor="middle" class="small">action intent</text>
+  <rect x="365" y="382" width="170" height="40" class="box green"/>
+  <text x="450" y="407" text-anchor="middle" class="small">executable</text>
+  <rect x="565" y="382" width="170" height="40" class="box gray"/>
+  <text x="650" y="407" text-anchor="middle" class="small">blocked</text>
+  <rect x="765" y="382" width="170" height="40" class="box purple"/>
+  <text x="850" y="407" text-anchor="middle" class="small">supervised</text>
+  <rect x="965" y="382" width="130" height="40" class="box red"/>
+  <text x="1030" y="407" text-anchor="middle" class="small">unsupported</text>
+
+  <rect x="70" y="510" width="1060" height="150" class="section blue"/>
+  <text x="95" y="540" class="label">Substrate Below The Seam</text>
+  <rect x="105" y="575" width="145" height="52" class="box blue"/>
+  <text x="178" y="605" text-anchor="middle" class="small">auth + session</text>
+  <rect x="275" y="575" width="145" height="52" class="box teal"/>
+  <text x="348" y="605" text-anchor="middle" class="small">reads</text>
+  <rect x="445" y="575" width="145" height="52" class="box green"/>
+  <text x="518" y="605" text-anchor="middle" class="small">readiness</text>
+  <rect x="615" y="575" width="145" height="52" class="box purple"/>
+  <text x="688" y="605" text-anchor="middle" class="small">attestation</text>
+  <rect x="785" y="575" width="145" height="52" class="box red"/>
+  <text x="858" y="605" text-anchor="middle" class="small">writes</text>
+  <rect x="955" y="575" width="145" height="52" class="box orange"/>
+  <text x="1028" y="605" text-anchor="middle" class="small">verification</text>
+
+  <path d="M 215 232 L 250 382" class="arrow" stroke="#9333ea" marker-end="url(#arrow-purple)"/>
+  <path d="M 460 232 L 450 382" class="arrow" stroke="#ea580c" marker-end="url(#arrow-orange)"/>
+  <path d="M 705 232 L 650 382" class="arrow" stroke="#16a34a" marker-end="url(#arrow-green)"/>
+  <path d="M 950 232 L 850 382" class="arrow" stroke="#2563eb" marker-end="url(#arrow-blue)"/>
+
+  <path d="M 250 422 L 178 575" class="arrow" stroke="#2563eb" marker-end="url(#arrow-blue)"/>
+  <path d="M 450 422 L 518 575" class="arrow" stroke="#16a34a" marker-end="url(#arrow-green)"/>
+  <path d="M 650 422 L 688 575" class="arrow" stroke="#9333ea" marker-end="url(#arrow-purple)"/>
+  <path d="M 850 422 L 858 575" class="arrow" stroke="#ea580c" marker-end="url(#arrow-orange)"/>
+  <path d="M 1030 422 L 1028 575" class="arrow dashed" stroke="#6b7280" marker-end="url(#arrow-gray)"/>
+
+  <path d="M 1028 575 C 1080 500, 1010 465, 850 422" class="arrow dashed" stroke="#9333ea" marker-end="url(#arrow-purple)"/>
+  <text x="1044" y="491" class="tiny">proof result</text>
+
+  <rect x="160" y="690" width="880" height="38" class="box gray"/>
+  <text x="600" y="714" text-anchor="middle" class="small">Boundary test: if skill logic must know auth, readiness, attestation, write ceremony, or verification details, the seam is too thick.</text>
+</svg>

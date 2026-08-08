@@ -49,3 +49,20 @@ claude-readback-audit/
 live-write-sweep/
 minimal-loop-runtime/
 research-rehearsal/
+
+# Interne Arbeitsartefakte, gehoeren nicht in ein oeffentliches Repo
+ISA.md
+AGENTS.md
+CLAUDE.md
+.beads/
+*.darc
+__dolt_remote_info__
+MEMORY/
+Plans/
+.autoreview/
+.claude/
+.mcp.json
+.desloppify/
+*.db
+*.db-wal
+*.db-shm
